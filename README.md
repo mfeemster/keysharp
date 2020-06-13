@@ -1,6 +1,6 @@
 # README #
 
-Keysharp is a fork and improvement of the abandoned IronAHK project, which itself was a C# re-write of the C++ AutoHotKey program.
+Keysharp is a fork and improvement of the abandoned IronAHK project, which itself was a C# re-write of the C++ AutoHotKey project.
 
 ### What is this repository for? ###
 
