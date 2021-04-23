@@ -1,0 +1,103 @@
+﻿using System;
+using System.Collections;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using Keysharp.Core;
+using static Keysharp.Core.Processes;
+using Microsoft.VisualBasic.CompilerServices;
+using NUnit.Framework;
+using static Keysharp.Core.Core;
+using Keysharp.Scripting;
+using static Keysharp.Core.Screen;
+using System.Globalization;
+using static Keysharp.Core.Mouse;
+
+namespace Keysharp.Tests
+{
+	public partial class Scripting
+	{
+		[Test, Category("Screen")]
+		public void ImageSearch()
+		{
+			CoordMode("Mouse", "Screen");
+			var screen = System.Windows.Forms.Screen.PrimaryScreen;
+			_ = GetScreenClip(1000, 1000, 100, 100, "./imagesearch.bmp");
+			var found = Keysharp.Core.Screen.ImageSearch(0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");
+
+			if (found.OutputVarX is long lx && lx == 1000 && found.OutputVarY is long ly && ly == 1000)
+				Assert.IsTrue(true);
+			else
+				Assert.IsTrue(false);
+
+			Assert.IsTrue(TestScript("screen-imagesearch", true));
+		}
+
+		[Test, Category("Screen")]
+		public void PixelGetColor()
+		{
+			int last = 0, white = 0xffffff, black = 0x000000;
+			CoordMode("Mouse", "Screen");
+
+			//There isn't really a sure way to tell whether this is working.
+			//So a pseudo-test is to just get pixels until the value is not white or black.
+			for (var i = 0; i < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height; i++)
+			{
+				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
+				{
+					var pix = Keysharp.Core.Screen.PixelGetColor(j, i);
+					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.culture, out var ii));
+
+					if (ii != last && ii != white && ii != black)
+						goto pass;
+
+					last = ii;
+				}
+			}
+
+			Assert.IsTrue(false);
+			pass:
+			Assert.IsTrue(true);
+			Assert.IsTrue(TestScript("screen-pixelgetcolor", true));
+		}
+
+		[Test, Category("Screen")]
+		public void PixelSearch()
+		{
+			int last = 0, white = 0xffffff, black = 0x000000;
+			CoordMode("Mouse", "Screen");
+
+			//There isn't really a sure way to tell whether this is working.
+			//So a pseudo-test is to just get pixels until the value is not white or black.
+			for (var i = 0; i < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height; i++)
+			{
+				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
+				{
+					var pix = Keysharp.Core.Screen.PixelGetColor(j, i);
+					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.culture, out var ii));
+
+					if (ii != last && ii != white && ii != black)
+					{
+						var loc = Keysharp.Core.Screen.PixelSearch(j, i, j + 1, i + 1, pix);
+						var outx = (long)loc.OutputVarX;
+						var outy = (long)loc.OutputVarY;
+
+						if (outx == j && outy == i)
+							goto pass;
+						else
+							goto fail;
+					}
+
+					last = ii;
+				}
+			}
+
+			pass:
+			Assert.IsTrue(true);
+			Assert.IsTrue(TestScript("screen-pixelsearch", true));
+			return;
+			fail:
+			Assert.IsTrue(false);
+		}
+	}
+}

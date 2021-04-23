@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Keysharp.Tests/obj/Release
+/Keysharp.Tests/obj

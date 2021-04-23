@@ -1,0 +1,38 @@
+﻿using System;
+using System.Collections;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using Keysharp.Core;
+using static Keysharp.Core.Processes;
+using Microsoft.VisualBasic.CompilerServices;
+using NUnit.Framework;
+using static Keysharp.Core.Core;
+
+namespace Keysharp.Tests
+{
+	public partial class Scripting
+	{
+		[Test, Category("Process")]
+		public void ProcessRunWaitClose()
+		{
+			var pid = Run("notepad.exe", "", "max");
+			ProcessWait(pid);
+			ProcessSetPriority("H", pid);
+
+			if (ProcessExist(pid) != 0)
+			{
+				System.Threading.Thread.Sleep(2000);
+				ProcessClose(pid);
+				ProcessWaitClose(pid);
+			}
+
+			pid = ProcessExist("notepad.exe");
+			Assert.AreEqual(0L, pid);
+			RunWait("notepad.exe", "", "max");
+			Assert.AreEqual(0L, ProcessExist("notepad.exe"));
+			Assert.IsTrue(TestScript("process-run-wait-close", false));
+			//Can't really test RunAs() or Shutdown(), but they have been manually tested individually.
+		}
+	}
+}
