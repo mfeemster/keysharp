@@ -7,6 +7,8 @@ using Keysharp.Core;
 using Microsoft.VisualBasic.CompilerServices;
 using NUnit.Framework;
 using static Keysharp.Core.Core;
+using Array = Keysharp.Core.Array;
+using Buffer = Keysharp.Core.Buffer;
 
 namespace Keysharp.Tests
 {
@@ -23,14 +25,14 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Disk.DirCopy(dir, "./DirCopy2");
 			Assert.IsTrue(Directory.Exists("./DirCopy2"));
-			Assert.IsTrue(File.Exists("./DirCopy2/file1.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy2/file2.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy2/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy2/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy2/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy2/file3txt"));
 			Disk.DirCopy(dir, "./DirCopy2", true);
 			Assert.IsTrue(Directory.Exists("./DirCopy2"));
-			Assert.IsTrue(File.Exists("./DirCopy2/file1.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy2/file2.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy2/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy2/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy2/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy2/file3txt"));
 
 			if (Directory.Exists("./DirCopy2"))
 				Directory.Delete("./DirCopy2", true);
@@ -98,15 +100,15 @@ namespace Keysharp.Tests
 			var val = Disk.DirExist(dir);
 			Assert.AreEqual(val, "D");
 			dir = string.Concat(path, "DirCopy/file1.txt");
-			Assert.IsTrue(File.Exists(dir));
+			Assert.IsTrue(System.IO.File.Exists(dir));
 			val = Disk.DirExist(dir);
 			Assert.AreEqual(val, "A");
 			dir = string.Concat(path, "DirCopy/file2.txt");
-			Assert.IsTrue(File.Exists(dir));
+			Assert.IsTrue(System.IO.File.Exists(dir));
 			val = Disk.DirExist(dir);
 			Assert.AreEqual(val, "A");
 			dir = string.Concat(path, "DirCopy/file3txt");
-			Assert.IsTrue(File.Exists(dir));
+			Assert.IsTrue(System.IO.File.Exists(dir));
 			val = Disk.DirExist(dir);
 			Assert.AreEqual(val, "A");
 			Assert.IsTrue(TestScript("file-direxist", true));
@@ -127,26 +129,26 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Disk.DirCopy(dir, "./DirMove");
 			Assert.IsTrue(Directory.Exists("./DirMove"));
-			Assert.IsTrue(File.Exists("./DirMove/file1.txt"));
-			Assert.IsTrue(File.Exists("./DirMove/file2.txt"));
-			Assert.IsTrue(File.Exists("./DirMove/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirMove/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirMove/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirMove/file3txt"));
 			Disk.DirMove("./DirMove", "./DirCopy3");
 			Assert.IsTrue(Directory.Exists("./DirCopy3"));
 			Assert.IsTrue(!Directory.Exists("./DirMove"));
-			Assert.IsTrue(!File.Exists("./DirMove/file1.txt"));
-			Assert.IsTrue(!File.Exists("./DirMove/file2.txt"));
-			Assert.IsTrue(!File.Exists("./DirMove/file3txt"));
-			Assert.IsTrue(File.Exists("./DirCopy3/file1.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy3/file2.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy3/file3txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./DirMove/file1.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./DirMove/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./DirMove/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy3/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy3/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy3/file3txt"));
 			Disk.DirMove("./DirCopy3", "./DirCopy3");//Both of these should just return, do nothing, and not throw because ./DirCopy3 exists.
 			Disk.DirMove("./DirCopy3", "./DirCopy3", 0);
 			Disk.DirCopy(dir, "./DirMove");
 			Disk.DirMove("./DirMove", "./DirCopy3", 1);//Will copy into because ./DirCopy3 already exists.
 			Assert.IsTrue(Directory.Exists("./DirCopy3/DirMove"));
-			Assert.IsTrue(File.Exists("./DirCopy3/DirMove/file1.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy3/DirMove/file2.txt"));
-			Assert.IsTrue(File.Exists("./DirCopy3/DirMove/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy3/DirMove/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy3/DirMove/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./DirCopy3/DirMove/file3txt"));
 			Disk.DirMove("./DirCopy3", "./DirCopy3-rename", "R");
 
 			if (Directory.Exists("./DirMove"))
@@ -164,33 +166,33 @@ namespace Keysharp.Tests
 		[Test, Category("FileAndDir")]
 		public void FileAppend()
 		{
-			if (File.Exists("./fileappend.txt"))
-				File.Delete("./fileappend.txt");
+			if (System.IO.File.Exists("./fileappend.txt"))
+				System.IO.File.Delete("./fileappend.txt");
 
-			if (File.Exists("./fileappend2.txt"))
-				File.Delete("./fileappend2.txt");
+			if (System.IO.File.Exists("./fileappend2.txt"))
+				System.IO.File.Delete("./fileappend2.txt");
 
 			Disk.FileAppend("test file text", "./fileappend.txt");
-			Assert.IsTrue(File.Exists("./fileappend.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./fileappend.txt"));
 			Disk.FileAppend("test file text", "./fileappend.txt");
-			var text = File.ReadAllText("./fileappend.txt");
+			var text = System.IO.File.ReadAllText("./fileappend.txt");
 			Assert.AreEqual("test file texttest file text", text);
 			//
-			var data = new ArrayList(new byte[] { 1, 2, 3, 4 });
+			var data = new Core.Array(new byte[] { 1, 2, 3, 4 });
 			Disk.FileAppend(data, "./fileappend2.txt", "utf-8-raw");
-			Assert.IsTrue(File.Exists("./fileappend2.txt"));
-			var data2 = new ArrayList(File.ReadAllBytes("./fileappend2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./fileappend2.txt"));
+			var data2 = new Core.Array(System.IO.File.ReadAllBytes("./fileappend2.txt"));
 			Assert.AreEqual(data, data2);
 			Disk.FileAppend("abcd", "./fileappend2.txt", "utf-16-raw");
-			data2 = new ArrayList(File.ReadAllBytes("./fileappend2.txt"));
+			data2 = new Core.Array(System.IO.File.ReadAllBytes("./fileappend2.txt"));
 			data.AddRange(new UnicodeEncoding(false, false).GetBytes("abcd"));
 			Assert.AreEqual(data, data2);
 
-			if (File.Exists("./fileappend.txt"))
-				File.Delete("./fileappend.txt");
+			if (System.IO.File.Exists("./fileappend.txt"))
+				System.IO.File.Delete("./fileappend.txt");
 
-			if (File.Exists("./fileappend2.txt"))
-				File.Delete("./fileappend2.txt");
+			if (System.IO.File.Exists("./fileappend2.txt"))
+				System.IO.File.Delete("./fileappend2.txt");
 
 			Assert.IsTrue(TestScript("file-fileappend", true));
 		}
@@ -204,78 +206,78 @@ namespace Keysharp.Tests
 			_ = Directory.CreateDirectory("./FileCopy");
 			var dir = string.Concat(path, "DirCopy");
 			Disk.FileCopy($"{dir}/file1.txt", "./FileCopy/file1.txt");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			File.Delete("./FileCopy/file1.txt");
-			Assert.IsTrue(!File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			System.IO.File.Delete("./FileCopy/file1.txt");
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file1.txt"));
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy/");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3txt"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3txt"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy/*.*");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3txt"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy/*.bak");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.bak"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.bak"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3.bak"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.bak"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.bak"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3.bak"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy/*");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3txt"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy/*.");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/file3.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/file3.txt"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*.txt", "./FileCopy/NonExistentDir/*");
-			Assert.IsTrue(!File.Exists("./FileCopy/NonExistentDir/file1.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/NonExistentDir/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/NonExistentDir/file3.txt"));
-			Assert.IsTrue(!File.Exists("./FileCopy/NonExistentDir/file3txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/NonExistentDir/file1.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/NonExistentDir/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/NonExistentDir/file3.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileCopy/NonExistentDir/file3txt"));
 
 			if (Directory.Exists("./FileCopy"))
 				Directory.Delete("./FileCopy", true);
 
 			_ = Directory.CreateDirectory("./FileCopy");
 			Disk.FileCopy($"{dir}/*", "./FileCopy/*");
-			Assert.IsTrue(File.Exists("./FileCopy/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file2.txt"));
-			Assert.IsTrue(File.Exists("./FileCopy/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileCopy/file3txt"));
 			Assert.IsTrue(TestScript("file-filecopy", true));
 		}
 
@@ -285,8 +287,8 @@ namespace Keysharp.Tests
 			if (Directory.Exists("./FileCreateShortcut"))
 				Directory.Delete("./FileCreateShortcut", true);
 
-			if (File.Exists("./testshortcut.lnk"))
-				File.Delete("./testshortcut.lnk");
+			if (System.IO.File.Exists("./testshortcut.lnk"))
+				System.IO.File.Delete("./testshortcut.lnk");
 
 			var dir = string.Concat(path, "DirCopy");
 			Disk.DirCopy(dir, "./FileCreateShortcut/");
@@ -300,13 +302,13 @@ namespace Keysharp.Tests
 				"../../../Keysharp.ico",
 				""
 			);
-			Assert.IsTrue(File.Exists("./testshortcut.lnk"));
+			Assert.IsTrue(System.IO.File.Exists("./testshortcut.lnk"));
 
 			if (Directory.Exists("./FileCreateShortcut"))
 				Directory.Delete("./FileCreateShortcut", true);
 
-			if (File.Exists("./testshortcut.lnk"))
-				File.Delete("./testshortcut.lnk");
+			if (System.IO.File.Exists("./testshortcut.lnk"))
+				System.IO.File.Delete("./testshortcut.lnk");
 
 			Assert.IsTrue(TestScript("file-filecreateshortcut", true));
 		}
@@ -321,11 +323,11 @@ namespace Keysharp.Tests
 			Disk.DirCopy(dir, "./FileDelete/");
 			Disk.FileDelete("./FileDelete/*.txt");
 			Assert.IsTrue(Directory.Exists("./FileDelete"));
-			Assert.IsTrue(!File.Exists("./FileDelete/file1.txt"));
-			Assert.IsTrue(!File.Exists("./FileDelete/file2.txt"));
-			Assert.IsTrue(File.Exists("./FileDelete/file3txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileDelete/file1.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileDelete/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileDelete/file3txt"));
 			Disk.FileDelete("./FileDelete/*");
-			Assert.IsTrue(!File.Exists("./FileDelete/file3txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileDelete/file3txt"));
 
 			if (Directory.Exists("./FileDelete"))
 				Directory.Delete("./FileDelete", true);
@@ -336,27 +338,27 @@ namespace Keysharp.Tests
 		[Test, Category("FileAndDir")]
 		public void FileEncoding()
 		{
-			Window.FileEncoding("utf-8");
+			Keysharp.Core.Core.FileEncoding("utf-8");
 			var fe = A_FileEncoding;
 			Assert.AreEqual(fe, Encoding.UTF8.BodyName);
-			Window.FileEncoding("utf-8-raw");
+			Keysharp.Core.Core.FileEncoding("utf-8-raw");
 			fe = A_FileEncoding;
 			Assert.AreEqual(fe, "utf-8-raw");
-			Window.FileEncoding("utf-16");
+			Keysharp.Core.Core.FileEncoding("utf-16");
 			fe = A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16");
 			Assert.AreEqual(fe, Encoding.Unicode.BodyName);
-			Window.FileEncoding("unicode");
+			Keysharp.Core.Core.FileEncoding("unicode");
 			fe = A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16");
-			Window.FileEncoding("utf-16-raw");
+			Keysharp.Core.Core.FileEncoding("utf-16-raw");
 			fe = A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16-raw");
-			Window.FileEncoding("ascii");
+			Keysharp.Core.Core.FileEncoding("ascii");
 			fe = A_FileEncoding;
 			Assert.AreEqual(fe, "us-ascii");
 			Assert.AreEqual(fe, Encoding.ASCII.BodyName);
-			Window.FileEncoding("us-ascii");
+			Keysharp.Core.Core.FileEncoding("us-ascii");
 			fe = A_FileEncoding;
 			Assert.AreEqual(fe, "us-ascii");
 			Assert.IsTrue(TestScript("file-fileencoding", true));
@@ -396,8 +398,8 @@ namespace Keysharp.Tests
 			if (Directory.Exists("./FileGetShortcut"))
 				Directory.Delete("./FileGetShortcut", true);
 
-			if (File.Exists("./testshortcut.lnk"))
-				File.Delete("./testshortcut.lnk");
+			if (System.IO.File.Exists("./testshortcut.lnk"))
+				System.IO.File.Delete("./testshortcut.lnk");
 
 			var dir = string.Concat(path, "DirCopy");
 			Disk.DirCopy(dir, "./FileGetShortcut/");
@@ -421,8 +423,8 @@ namespace Keysharp.Tests
 			Assert.AreEqual("0", shortcut.OutIconNum.ToString());
 			Assert.AreEqual("1", shortcut.OutRunState.ToString());
 
-			if (File.Exists("./testshortcut.lnk"))
-				File.Delete("./testshortcut.lnk");
+			if (System.IO.File.Exists("./testshortcut.lnk"))
+				System.IO.File.Delete("./testshortcut.lnk");
 
 			Assert.IsTrue(TestScript("file-filegetshortcut", true));
 		}
@@ -478,9 +480,9 @@ namespace Keysharp.Tests
 			_ = Directory.CreateDirectory("./FileMove");
 			var dir = string.Concat(path, "DirCopy");
 			Disk.FileCopy($"{dir}/*", "./FileMove/");
-			Assert.IsTrue(File.Exists("./FileMove/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileMove/file2.txt"));
-			Assert.IsTrue(File.Exists("./FileMove/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileMove/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileMove/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileMove/file3txt"));
 
 			if (Directory.Exists("./FileMove2"))
 				Directory.Delete("./FileMove2", true);
@@ -488,12 +490,12 @@ namespace Keysharp.Tests
 			_ = Directory.CreateDirectory("./FileMove2");
 			Assert.IsTrue(Directory.Exists("./FileMove2"));
 			Disk.FileMove($"./FileMove/*", "./FileMove2");
-			Assert.IsTrue(!File.Exists("./FileMove/file1.txt"));
-			Assert.IsTrue(!File.Exists("./FileMove/file2.txt"));
-			Assert.IsTrue(!File.Exists("./FileMove/file3txt"));
-			Assert.IsTrue(File.Exists("./FileMove2/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileMove2/file2.txt"));
-			Assert.IsTrue(File.Exists("./FileMove2/file3txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileMove/file1.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileMove/file2.txt"));
+			Assert.IsTrue(!System.IO.File.Exists("./FileMove/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileMove2/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileMove2/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileMove2/file3txt"));
 			Directory.Delete("./FileMove", true);
 			Directory.Delete("./FileMove2", true);
 			Assert.IsTrue(TestScript("file-filemove", true));
@@ -502,6 +504,221 @@ namespace Keysharp.Tests
 		[Test, Category("FileAndDir")]
 		public void FileOpen()
 		{
+			//Can't really test console in/out/err with * and ** here, but in manual testing it appears to work.
+			var filename = "./testfileobject1.txt";
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw"))//Simplest first, read/write.
+			{
+				var w = "testing";
+				var count = f.WriteLine(w);
+				f.Seek(0);//Test seeking from beginning.
+				var r = f.ReadLine();
+				Assert.AreEqual("testing", r);
+				Assert.AreEqual(w.Length + 1, (int)count);//Add one for the newline.
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw"))//Read/write integers.
+			{
+				uint val = 0x01020304;
+				var count = f.WriteUInt(val);
+				f.Seek(0);
+				var r = f.ReadUInt();
+				Assert.AreEqual(val, (uint)r);
+				Assert.AreEqual(sizeof(uint), (int)count);
+				var val2 = -12345678;
+				count = f.WriteInt(val2);
+				f.Seek(-4, 1);//Test seeking from current.
+				var r2 = f.ReadInt();
+				Assert.AreEqual(val2, (int)r2);
+				Assert.AreEqual(sizeof(int), (int)count);
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw"))//Read/write buffers and arrays.
+			{
+				var buf = new Buffer(4);
+				unsafe
+				{
+					var ptr = (byte*)buf.Ptr.ToPointer();
+
+					for (var i = 0; i < (int)buf.Size; i++)
+						ptr[i] = (byte)i;
+				}
+				//
+				var count = f.RawWrite(buf);
+				f.Seek(0);
+				var buf2 = new Buffer(4, 0);
+				f.RawRead(buf2);
+				unsafe
+				{
+					var p1 = (byte*)buf.Ptr.ToPointer();
+					var p2 = (byte*)buf2.Ptr.ToPointer();
+
+					for (var i = 0; i < (int)buf.Size; i++)
+					{
+						Assert.AreEqual(p1[i], p2[i]);
+						Assert.AreEqual(p1[i], i);
+						Assert.AreEqual(i, p2[i]);
+					}
+				}
+				//
+				f.Seek(0);
+				var arr = new Array(4);
+
+				for (var i = 0; i < (int)buf.Size; i++)
+					arr.Push((byte)i);
+
+				f.RawRead(arr);
+				unsafe
+				{
+					var p2 = (byte*)buf2.Ptr.ToPointer();
+
+					for (var i = 0; i < (int)buf.Size; i++)
+					{
+						Assert.AreEqual(arr[i + 1], p2[i]);//Array always expects a 1-based index.
+						Assert.AreEqual(arr[i + 1], i);
+						Assert.AreEqual(i, p2[i]);
+					}
+				}
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw", "Unicode"))//Test text encoding.
+			{
+				var w = "testing";
+				var count = f.Write(w);
+				f.Seek(2);//A unicode file will have a 2 byte long byte order mark.
+				var r = f.ReadLine();
+				Assert.AreEqual("testing", r);
+				Assert.AreEqual(w.Length * sizeof(char), (int)count);//Unicode is two bytes per char.
+				Assert.AreEqual(f.Length, 16);//BOM plus 2 bytes per char.
+			}
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw", "Unicode"))//Ensure reading an existing file with a BOM works.
+			{
+				var w = "testing";
+				var r = f.ReadLine();
+				Assert.AreEqual("testing", r);
+				Assert.AreEqual(w.Length, r.Length);
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw"))//Test position.
+			{
+				var w = "testing";
+				var count = f.Write(w);
+				var pos = f.Pos;
+				Assert.AreEqual(w.Length, pos);
+				var eof = f.AtEOF;
+				Assert.AreEqual(eof, 1L);
+				var len = f.Length;
+				Assert.AreEqual(len, 7L);
+				var enc = f.Encoding;
+				Assert.AreEqual(enc, "utf-8");
+			}
+
+			//Do not delete here, file is used for appending.
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "a"))//Test append.
+			{
+				var w = "testing";
+				var count = f.Write(w);
+				var pos = f.Pos;
+				var eof = f.AtEOF;
+				Assert.AreEqual(eof, 0L);//With append mode, you're never really at the "end" of the file.
+				var len = f.Length;
+				Assert.AreEqual(pos, 14L);
+				Assert.AreEqual(len, 14L);
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "w"))//Test write only.
+			{
+				var w = "testing";
+				var count = f.Write(w);
+			}
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "w"))//Test write only on an existing file, which should clear it.
+			{
+				var pos = f.Pos;
+				var eof = f.AtEOF;
+				var len = f.Length;
+				Assert.AreEqual(eof, 1L);//Overwrite should cause it to be an empty file.
+				Assert.AreEqual(pos, 0L);
+				Assert.AreEqual(len, 0L);
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "w"))//Test write only.
+			{
+				var w = "testing";
+				var count = f.Write(w);
+			}
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw"))//Test read/write on an existing file, which should not clear it.
+			{
+				var pos = f.Pos;
+				var eof = f.AtEOF;
+				var len = f.Length;
+				Assert.AreEqual(eof, 0L);//At position zero, so not at EOF.
+				Assert.AreEqual(pos, 0L);
+				Assert.AreEqual(len, 7L);
+			}
+
+			//Test modes and permissions by checking for expected exceptions.
+			TestException(() =>
+			{
+				using (var f = Keysharp.Core.Disk.FileOpen(filename, "r -r"))//Test read share.
+				{
+					using (var f2 = Keysharp.Core.Disk.FileOpen(filename, "r"))
+					{
+					}
+				}
+			});
+			TestException(() =>
+			{
+				using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw -w"))//Test write share.
+				{
+					using (var f2 = Keysharp.Core.Disk.FileOpen(filename, "rw"))
+					{
+					}
+				}
+			});
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "r -r"))//Test read share create from handle.
+			{
+				var handle = f.Handle;
+
+				using (var f2 = Keysharp.Core.Disk.FileOpen(handle, "r h"))
+				{
+				}
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			TestException(() =>
+			{
+				using (var f = Keysharp.Core.Disk.FileOpen(filename, "r"))//Test opening a non existent file in read mode which should crash.
+				{
+				}
+			});
+			Assert.IsTrue(TestScript("file-fileopen", true));
 		}
 
 		[Test, Category("FileAndDir")]
@@ -531,18 +748,18 @@ namespace Keysharp.Tests
 				_ = Directory.CreateDirectory("./FileRecycle");
 				var dir = string.Concat(path, "DirCopy");
 				Disk.FileCopy($"{dir}/*", "./FileRecycle/");
-				Assert.IsTrue(File.Exists("./FileRecycle/file1.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycle/file2.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycle/file3txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycle/file1.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycle/file2.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycle/file3txt"));
 				Disk.FileRecycle("./FileRecycle/file1.txt");
-				Assert.IsTrue(!File.Exists("./FileRecycle/file1.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycle/file2.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycle/file3txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycle/file1.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycle/file2.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycle/file3txt"));
 				Disk.FileRecycle("./FileRecycle/*.txt");
-				Assert.IsTrue(!File.Exists("./FileRecycle/file2.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycle/file3txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycle/file2.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycle/file3txt"));
 				Disk.FileRecycle("./FileRecycle/*");
-				Assert.IsTrue(!File.Exists("./FileRecycle/file3txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycle/file3txt"));
 				Directory.Delete("./FileRecycle", true);
 				Assert.IsTrue(TestScript("file-filerecycle", true));
 			}
@@ -559,13 +776,13 @@ namespace Keysharp.Tests
 				_ = Directory.CreateDirectory("./FileRecycleEmpty");
 				var dir = string.Concat(path, "DirCopy");
 				Disk.FileCopy($"{dir}/*", "./FileRecycleEmpty/");
-				Assert.IsTrue(File.Exists("./FileRecycleEmpty/file1.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycleEmpty/file2.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycleEmpty/file3txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycleEmpty/file1.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycleEmpty/file2.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycleEmpty/file3txt"));
 				Disk.FileRecycle("./FileRecycleEmpty/*");
-				Assert.IsTrue(!File.Exists("./FileRecycleEmpty/file1.txt"));
-				Assert.IsTrue(!File.Exists("./FileRecycleEmpty/file2.txt"));
-				Assert.IsTrue(!File.Exists("./FileRecycleEmpty/file3txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycleEmpty/file1.txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycleEmpty/file2.txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycleEmpty/file3txt"));
 				Disk.FileRecycleEmpty();
 
 				if (Directory.Exists("./FileRecycleEmpty"))
@@ -573,13 +790,13 @@ namespace Keysharp.Tests
 
 				_ = Directory.CreateDirectory("./FileRecycleEmpty");
 				Disk.FileCopy($"{dir}/*", "./FileRecycleEmpty/");
-				Assert.IsTrue(File.Exists("./FileRecycleEmpty/file1.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycleEmpty/file2.txt"));
-				Assert.IsTrue(File.Exists("./FileRecycleEmpty/file3txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycleEmpty/file1.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycleEmpty/file2.txt"));
+				Assert.IsTrue(System.IO.File.Exists("./FileRecycleEmpty/file3txt"));
 				Disk.FileRecycle("./FileRecycleEmpty/*");
-				Assert.IsTrue(!File.Exists("./FileRecycleEmpty/file1.txt"));
-				Assert.IsTrue(!File.Exists("./FileRecycleEmpty/file2.txt"));
-				Assert.IsTrue(!File.Exists("./FileRecycleEmpty/file3txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycleEmpty/file1.txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycleEmpty/file2.txt"));
+				Assert.IsTrue(!System.IO.File.Exists("./FileRecycleEmpty/file3txt"));
 				Disk.FileRecycleEmpty("C:\\");
 				Assert.IsTrue(TestScript("file-filerecycleempty", true));
 			}
@@ -594,9 +811,9 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Disk.DirCopy(dir, "./FileSetAttrib");
 			Assert.IsTrue(Directory.Exists("./FileSetAttrib"));
-			Assert.IsTrue(File.Exists("./FileSetAttrib/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileSetAttrib/file2.txt"));
-			Assert.IsTrue(File.Exists("./FileSetAttrib/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileSetAttrib/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileSetAttrib/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileSetAttrib/file3txt"));
 			dir = "./FileSetAttrib";
 			var attr = Disk.FileGetAttrib(dir);
 			Assert.AreEqual("D", attr);
@@ -631,9 +848,9 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Disk.DirCopy(dir, "./FileSetTime");
 			Assert.IsTrue(Directory.Exists("./FileSetTime"));
-			Assert.IsTrue(File.Exists("./FileSetTime/file1.txt"));
-			Assert.IsTrue(File.Exists("./FileSetTime/file2.txt"));
-			Assert.IsTrue(File.Exists("./FileSetTime/file3txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileSetTime/file1.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileSetTime/file2.txt"));
+			Assert.IsTrue(System.IO.File.Exists("./FileSetTime/file3txt"));
 			Disk.FileSetTime("20200101131415", "./FileSetTime/file1.txt", 'm');
 			var filetime = Disk.FileGetTime("./FileSetTime/file1.txt", 'm');
 			Assert.AreEqual("20200101131415", filetime);
@@ -653,12 +870,12 @@ namespace Keysharp.Tests
 		[Test, Category("FileAndDir")]
 		public void IniReadWriteDelete()
 		{
-			if (File.Exists("./testini2.ini"))
-				File.Delete("./testini2.ini");
+			if (System.IO.File.Exists("./testini2.ini"))
+				System.IO.File.Delete("./testini2.ini");
 
 			var dir = string.Concat(path, "/testini.ini");
 			Disk.FileCopy(dir, "./testini2.ini", true);
-			Assert.IsTrue(File.Exists("./testini2.ini"));
+			Assert.IsTrue(System.IO.File.Exists("./testini2.ini"));
 			var val = Ini.IniRead("./testini2.ini", "sectionone", "keyval");
 			Assert.AreEqual("theval", val);
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
@@ -683,8 +900,8 @@ groupkey13=groupval13
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
 			Assert.AreEqual("", val);
 
-			if (File.Exists("./testini2.ini"))
-				File.Delete("./testini2.ini");
+			if (System.IO.File.Exists("./testini2.ini"))
+				System.IO.File.Delete("./testini2.ini");
 
 			Assert.IsTrue(TestScript("file-inireadwritedelete", true));
 		}
@@ -713,7 +930,7 @@ groupkey13=groupval13
 			var namenoext = splitpath.OutNameNoExt;
 			var drive = splitpath.OutDrive;
 			Assert.AreEqual("file1.txt", filename);
-			Assert.AreEqual("C:\\D\\Dev\\Keysharp\\Keysharp.Tests\\Code\\DirCopy", dir);//This will be different on non-windows.//MATT
+			Assert.AreEqual("C:\\D\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy", dir);//This will be different on non-windows.//MATT
 			Assert.AreEqual("txt", ext);
 			Assert.AreEqual("file1", namenoext);
 			Assert.AreEqual("C:\\", drive);

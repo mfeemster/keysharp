@@ -3,7 +3,7 @@
 dir := "./Keysharp.Core.dll"
 ver := FileGetVersion(dir)
 split := StrSplit(ver, ".")
-len := split.Length()
+len := split.Length
 
 if (len == 4)
  	FileAppend, pass, *

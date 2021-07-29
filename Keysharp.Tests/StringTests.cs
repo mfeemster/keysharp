@@ -1,10 +1,8 @@
 ﻿using System;
-using Keysharp.Scripting;
-using Keysharp.Core;
-using NUnit.Framework;
-using System.Diagnostics;
 using System.Text;
-using System.Collections;
+using Keysharp.Core;
+using Keysharp.Scripting;
+using NUnit.Framework;
 
 namespace Keysharp.Tests
 {
@@ -35,13 +33,16 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void Ord()
+		public void CompareCaseEx() => Assert.IsTrue(TestScript("string-compare-case-ex", true));
+
+		[Test, Category("String")]
+		public void Format()
 		{
-			var chr = Strings.Ord("t");
-			Assert.AreEqual(116, chr);
-			chr = Strings.Ord("te", 2);
-			Assert.AreEqual(101, chr);
-			Assert.IsTrue(TestScript("string-ord", true));
+			var s = Strings.Format("{1}", 123);
+			Assert.AreEqual(s, "123");
+			s = Strings.Format("{1}", 123.456);
+			Assert.AreEqual(s, "123.456");
+			Assert.IsTrue(TestScript("string-format", true));
 		}
 
 		[Test, Category("String")]
@@ -136,9 +137,9 @@ namespace Keysharp.Tests
 			dtstr = Strings.FormatTime(str + " L1033", "");
 			Assert.AreEqual("7:08 AM Saturday, July 4, 2020", dtstr);
 			dtstr = Strings.FormatTime(str + " L2058", "");
-			Assert.AreEqual("7:08 a. m. sábado, julio 4, 2020", dtstr);
+			Assert.AreEqual("7:08 a. m. sábado, julio 4, 2020", dtstr);
 			dtstr = Strings.FormatTime(str + " L0x80A", "");
-			Assert.AreEqual("7:08 a. m. sábado, julio 4, 2020", dtstr);
+			Assert.AreEqual("7:08 a. m. sábado, julio 4, 2020", dtstr);
 			dtstr = Strings.FormatTime(str, "yyyy");
 			Assert.AreEqual("2020", dtstr);
 			dtstr = Strings.FormatTime(str, "yyyyM");
@@ -207,6 +208,115 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
+		public void LTrim()
+		{
+			var x = " test\t";
+			var y = Strings.LTrim(x);
+			Assert.AreEqual("test\t", y);
+			x = "test";
+			y = Strings.LTrim(x);
+			Assert.AreEqual("test", y);
+			x = "\ttest ";
+			y = Strings.LTrim(x);
+			Assert.AreEqual("test ", y);
+			x = " \ttest\t ";
+			y = Strings.LTrim(x);
+			Assert.AreEqual("test\t ", y);
+			Assert.IsTrue(TestScript("string-ltrim", true));
+		}
+
+		[Test, Category("String")]
+		public void Ord()
+		{
+			var chr = Strings.Ord("t");
+			Assert.AreEqual(116, chr);
+			chr = Strings.Ord("te", 2);
+			Assert.AreEqual(101, chr);
+			Assert.IsTrue(TestScript("string-ord", true));
+		}
+
+		[Test, Category("String")]
+		public void RegExMatch()
+		{
+			var x = " test\t";
+			var y = Strings.RTrim(x);
+			Assert.AreEqual(" test", y);
+			//Assert.IsTrue(TestScript("string-regexmatch", true));
+		}
+
+		[Test, Category("String")]
+		public void RTrim()
+		{
+			var x = " test\t";
+			var y = Strings.RTrim(x);
+			Assert.AreEqual(" test", y);
+			x = "test";
+			y = Strings.RTrim(x);
+			Assert.AreEqual("test", y);
+			x = "\ttest ";
+			y = Strings.RTrim(x);
+			Assert.AreEqual("\ttest", y);
+			x = " \ttest\t ";
+			y = Strings.RTrim(x);
+			Assert.AreEqual(" \ttest", y);
+			Assert.IsTrue(TestScript("string-rtrim", true));
+		}
+
+		[Test, Category("String")]
+		public void Sort()
+		{
+			var x = "Z,X,Y,F,D,B,C,A,E";
+			var y = Strings.Sort(x, "D,");
+			Assert.AreEqual("A,B,C,D,E,F,X,Y,Z", y);
+			y = Strings.Sort(x, "D, r");
+			Assert.AreEqual("Z,Y,X,F,E,D,C,B,A", y);
+			x = "Z,X,Y,F,D,B,C,A,E,a,b,c,d,e";
+			y = Strings.Sort(x, "D,");
+			Assert.AreEqual("A,a,B,b,C,c,D,d,E,e,F,X,Y,Z", y);
+			y = Strings.Sort(x, "D, r");
+			Assert.AreEqual("Z,Y,X,F,e,E,d,D,c,C,b,B,a,A", y);
+			y = Strings.Sort(x, "D, c");
+			Assert.AreEqual("A,B,C,D,E,F,X,Y,Z,a,b,c,d,e", y);
+			y = Strings.Sort(x, "D, c r");
+			Assert.AreEqual("e,d,c,b,a,Z,Y,X,F,E,D,C,B,A", y);
+			x = "200,100,300,500,600,111,222,1010";
+			y = Strings.Sort(x, "D, n");
+			Assert.AreEqual("100,111,200,222,300,500,600,1010", y);
+
+			for (var i = 0; i < 10; i++)
+			{
+				var z = Strings.Sort(x, "D, n random");
+				Compiler.Debug(z);
+				Assert.AreNotEqual(z, y);
+				y = z;
+			}
+
+			y = Strings.Sort(x, "D, n r");
+			Assert.AreEqual("1010,600,500,300,222,200,111,100", y);
+			x = "RED\nGREEN\nBLUE\n";
+			y = Strings.Sort(x);
+			Assert.AreEqual("BLUE\nGREEN\nRED", y);
+			y = Strings.Sort(x, "z");
+			Assert.AreEqual("\nBLUE\nGREEN\nRED", y);
+			x = "C:\\AAA\\BBB.txt,C:\\BBB\\AAA.txt";
+			y = Strings.Sort(x, "D, \\");
+			Assert.AreEqual("C:\\BBB\\AAA.txt,C:\\AAA\\BBB.txt", y);
+			x = "/usr/bin/AAA/BBB.txt,/usr/bin/BBB/AAA.txt";
+			y = Strings.Sort(x, "D, /");
+			Assert.AreEqual("/usr/bin/BBB/AAA.txt,/usr/bin/AAA/BBB.txt", y);
+			x = "co-op,comp,coop";
+			y = Strings.Sort(x, "D, CL");
+			Assert.AreEqual("comp,co-op,coop", y);
+			x = "Ä,Ü,A,a,B,b,u,U";
+			y = Strings.Sort(x, "D, CL");
+			Assert.AreEqual("A,a,Ä,B,b,u,U,Ü", y);
+			x = "AZB,BYX,CWM,LMN";
+			y = Strings.Sort(x, "D, P2");
+			Assert.AreEqual("LMN,CWM,BYX,AZB", y);
+			Assert.IsTrue(TestScript("string-sort", true));
+		}
+
+		[Test, Category("String")]
 		public void StrCompare()
 		{
 			var x = "a";
@@ -246,6 +356,21 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("string-strcompare", true));
 		}
 
+		[Test, Category("String")]
+		public void StrGet()
+		{
+			var x = "test";
+			var y = Encoding.Unicode.GetBytes(x);
+			var z = Strings.StrGet(y);
+			Assert.AreEqual(x, z);
+			y = Encoding.ASCII.GetBytes(x);
+			z = Strings.StrGet(y, "", "UTF-8");
+			Assert.AreEqual(x, z);
+			y = Encoding.Unicode.GetBytes(x);
+			z = Strings.StrGet(y, 2);
+			Assert.AreEqual("te", z);
+			Assert.IsTrue(TestScript("string-strget", true));
+		}
 
 		[Test, Category("String")]
 		public void String()
@@ -260,6 +385,18 @@ namespace Keysharp.Tests
 			y = Strings.String(x);
 			Assert.AreEqual(y, "1.234");
 			Assert.IsTrue(TestScript("string-string", true));
+		}
+
+		[Test, Category("String")]
+		public void StrLen()
+		{
+			var x = "test";
+			var y = Strings.StrLen(x);
+			Assert.AreEqual(y, 4);
+			x = "";
+			y = Strings.StrLen(x);
+			Assert.AreEqual(y, 0);
+			Assert.IsTrue(TestScript("string-strlen", true));
 		}
 
 		[Test, Category("String")]
@@ -290,61 +427,6 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void StrUpper()
-		{
-			var x = "ALL CAPS";
-			var y = Strings.StrUpper(x);
-			Assert.AreEqual(y, "ALL CAPS");
-			x = "AlL CaPs";
-			y = Strings.StrUpper(x);
-			Assert.AreEqual(y, "ALL CAPS");
-			x = "all caps";
-			y = Strings.StrUpper(x);
-			Assert.AreEqual(y, "ALL CAPS");
-			x = "";
-			y = Strings.StrUpper(x);
-			Assert.AreEqual(y, "");
-			x = "ALL CAPS";
-			y = Strings.StrUpper(x, "T");
-			Assert.AreEqual(y, "ALL CAPS");
-			x = "all caps";
-			y = Strings.StrUpper(x, "T");
-			Assert.AreEqual(y, "All Caps");
-			x = "All Caps";
-			y = Strings.StrUpper(x, "T");
-			Assert.AreEqual(y, "All Caps");
-			Assert.IsTrue(TestScript("string-strupper", true));
-		}
-
-		[Test, Category("String")]
-		public void StrLen()
-		{
-			var x = "test";
-			var y = Strings.StrLen(x);
-			Assert.AreEqual(y, 4);
-			x = "";
-			y = Strings.StrLen(x);
-			Assert.AreEqual(y, 0);
-			Assert.IsTrue(TestScript("string-strlen", true));
-		}
-
-		[Test, Category("String")]
-		public void StrGet()
-		{
-			var x = "test";
-			var y = Encoding.Unicode.GetBytes(x);
-			var z = Strings.StrGet(y);
-			Assert.AreEqual(x, z);
-			y = Encoding.ASCII.GetBytes(x);
-			z = Strings.StrGet(y, "", "UTF-8");
-			Assert.AreEqual(x, z);
-			y = Encoding.Unicode.GetBytes(x);
-			z = Strings.StrGet(y, 2);
-			Assert.AreEqual("te", z);
-			Assert.IsTrue(TestScript("string-strget", true));
-		}
-
-		[Test, Category("String")]
 		public void StrPut()
 		{
 			var x = "test";
@@ -357,6 +439,34 @@ namespace Keysharp.Tests
 			z = Strings.StrPut(x, 2);
 			Assert.AreEqual(new byte[] { 116, 0, 101, 0 }, z);
 			Assert.IsTrue(TestScript("string-strput", true));
+		}
+
+		[Test, Category("String")]
+		public void StrReplace()
+		{
+			var x = "a,b,c,d,e,f";
+			var y = Strings.StrReplace(x, ",");
+			Assert.AreEqual("abcdef", y);
+			y = Strings.StrReplace(x, ",", "");
+			Assert.AreEqual("abcdef", y);
+			y = Strings.StrReplace(x, ",", ".");
+			Assert.AreEqual("a.b.c.d.e.f", y);
+			y = Strings.StrReplace(x, ",", ".", "On");
+			Assert.AreEqual("a.b.c.d.e.f", y);
+			y = Strings.StrReplace(x, ",", ".", null, "varct");
+			Assert.AreEqual("a.b.c.d.e.f", y);
+			Assert.AreEqual(5L, Script.Vars[".varct"]);
+			y = Strings.StrReplace(x, ",", ".", null, "varct", 3);
+			Assert.AreEqual("a.b.c.d,e,f", y);
+			Assert.AreEqual(3L, Script.Vars[".varct"]);
+			y = Strings.StrReplace(x, "");
+			Assert.AreEqual("", y);
+			y = Strings.StrReplace(x, "a", "A", "On");
+			Assert.AreEqual("A,b,c,d,e,f", y);
+			y = Strings.StrReplace(x, "a", "A", "On", "varct", 9);
+			Assert.AreEqual("A,b,c,d,e,f", y);
+			Assert.AreEqual(1L, Script.Vars[".varct"]);
+			Assert.IsTrue(TestScript("string-strreplace", true));
 		}
 
 		[Test, Category("String")]
@@ -375,7 +485,7 @@ namespace Keysharp.Tests
 			x = "	a, b-c _d	";
 			y = Strings.StrSplit(x, new string[] { ",", "-", "_" }, "\t ");
 			Assert.AreEqual(exp, y);
-			y = Strings.StrSplit(x, new ArrayList(new string[] { ",", "-", "_" }), "\t ");
+			y = Strings.StrSplit(x, new Core.Array(new string[] { ",", "-", "_" }), "\t ");
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x, null, null, 1);
@@ -402,6 +512,33 @@ namespace Keysharp.Tests
 			exp = new string[] { "a", "b", "c _d" };
 			Assert.AreEqual(exp, y);
 			Assert.IsTrue(TestScript("string-strsplit", true));
+		}
+
+		[Test, Category("String")]
+		public void StrUpper()
+		{
+			var x = "ALL CAPS";
+			var y = Strings.StrUpper(x);
+			Assert.AreEqual(y, "ALL CAPS");
+			x = "AlL CaPs";
+			y = Strings.StrUpper(x);
+			Assert.AreEqual(y, "ALL CAPS");
+			x = "all caps";
+			y = Strings.StrUpper(x);
+			Assert.AreEqual(y, "ALL CAPS");
+			x = "";
+			y = Strings.StrUpper(x);
+			Assert.AreEqual(y, "");
+			x = "ALL CAPS";
+			y = Strings.StrUpper(x, "T");
+			Assert.AreEqual(y, "ALL CAPS");
+			x = "all caps";
+			y = Strings.StrUpper(x, "T");
+			Assert.AreEqual(y, "All Caps");
+			x = "All Caps";
+			y = Strings.StrUpper(x, "T");
+			Assert.AreEqual(y, "All Caps");
+			Assert.IsTrue(TestScript("string-strupper", true));
 		}
 
 		[Test, Category("String")]
@@ -486,133 +623,5 @@ namespace Keysharp.Tests
 			Assert.AreEqual("test", y);
 			Assert.IsTrue(TestScript("string-trim", true));
 		}
-
-		[Test, Category("String")]
-		public void LTrim()
-		{
-			var x = " test\t";
-			var y = Strings.LTrim(x);
-			Assert.AreEqual("test\t", y);
-			x = "test";
-			y = Strings.LTrim(x);
-			Assert.AreEqual("test", y);
-			x = "\ttest ";
-			y = Strings.LTrim(x);
-			Assert.AreEqual("test ", y);
-			x = " \ttest\t ";
-			y = Strings.LTrim(x);
-			Assert.AreEqual("test\t ", y);
-			Assert.IsTrue(TestScript("string-ltrim", true));
-		}
-
-		[Test, Category("String")]
-		public void RTrim()
-		{
-			var x = " test\t";
-			var y = Strings.RTrim(x);
-			Assert.AreEqual(" test", y);
-			x = "test";
-			y = Strings.RTrim(x);
-			Assert.AreEqual("test", y);
-			x = "\ttest ";
-			y = Strings.RTrim(x);
-			Assert.AreEqual("\ttest", y);
-			x = " \ttest\t ";
-			y = Strings.RTrim(x);
-			Assert.AreEqual(" \ttest", y);
-			Assert.IsTrue(TestScript("string-rtrim", true));
-		}
-
-		[Test, Category("String")]
-		public void StrReplace()
-		{
-			var x = "a,b,c,d,e,f";
-			var y = Strings.StrReplace(x, ",");
-			Assert.AreEqual("abcdef", y);
-			y = Strings.StrReplace(x, ",", "");
-			Assert.AreEqual("abcdef", y);
-			y = Strings.StrReplace(x, ",", ".");
-			Assert.AreEqual("a.b.c.d.e.f", y);
-			y = Strings.StrReplace(x, ",", ".", "On");
-			Assert.AreEqual("a.b.c.d.e.f", y);
-			y = Strings.StrReplace(x, ",", ".", null, "varct");
-			Assert.AreEqual("a.b.c.d.e.f", y);
-			Assert.AreEqual(5L, Script.Vars[".varct"]);
-			y = Strings.StrReplace(x, ",", ".", null, "varct", 3);
-			Assert.AreEqual("a.b.c.d,e,f", y);
-			Assert.AreEqual(3L, Script.Vars[".varct"]);
-			y = Strings.StrReplace(x, "");
-			Assert.AreEqual("", y);
-			y = Strings.StrReplace(x, "a", "A", "On");
-			Assert.AreEqual("A,b,c,d,e,f", y);
-			y = Strings.StrReplace(x, "a", "A", "On", "varct", 9);
-			Assert.AreEqual("A,b,c,d,e,f", y);
-			Assert.AreEqual(1L, Script.Vars[".varct"]);
-			Assert.IsTrue(TestScript("string-strreplace", true));
-		}
-
-		[Test, Category("String")]
-		public void Sort()
-		{
-			var x = "Z,X,Y,F,D,B,C,A,E";
-			var y = Strings.Sort(x, "D,");
-			Assert.AreEqual("A,B,C,D,E,F,X,Y,Z", y);
-			y = Strings.Sort(x, "D, r");
-			Assert.AreEqual("Z,Y,X,F,E,D,C,B,A", y);
-			x = "Z,X,Y,F,D,B,C,A,E,a,b,c,d,e";
-			y = Strings.Sort(x, "D,");
-			Assert.AreEqual("A,a,B,b,C,c,D,d,E,e,F,X,Y,Z", y);
-			y = Strings.Sort(x, "D, r");
-			Assert.AreEqual("Z,Y,X,F,e,E,d,D,c,C,b,B,a,A", y);
-			y = Strings.Sort(x, "D, c");
-			Assert.AreEqual("A,B,C,D,E,F,X,Y,Z,a,b,c,d,e", y);
-			y = Strings.Sort(x, "D, c r");
-			Assert.AreEqual("e,d,c,b,a,Z,Y,X,F,E,D,C,B,A", y);
-			x = "200,100,300,500,600,111,222,1010";
-			y = Strings.Sort(x, "D, n");
-			Assert.AreEqual("100,111,200,222,300,500,600,1010", y);
-
-			for (var i = 0; i < 10; i++)
-			{
-				var z = Strings.Sort(x, "D, n random");
-				Compiler.Debug(z);
-				Assert.AreNotEqual(z, y);
-				y = z;
-			}
-
-			y = Strings.Sort(x, "D, n r");
-			Assert.AreEqual("1010,600,500,300,222,200,111,100", y);
-			x = "RED\nGREEN\nBLUE\n";
-			y = Strings.Sort(x);
-			Assert.AreEqual("BLUE\nGREEN\nRED", y);
-			y = Strings.Sort(x, "z");
-			Assert.AreEqual("\nBLUE\nGREEN\nRED", y);
-			x = "C:\\AAA\\BBB.txt,C:\\BBB\\AAA.txt";
-			y = Strings.Sort(x, "D, \\");
-			Assert.AreEqual("C:\\BBB\\AAA.txt,C:\\AAA\\BBB.txt", y);
-			x = "/usr/bin/AAA/BBB.txt,/usr/bin/BBB/AAA.txt";
-			y = Strings.Sort(x, "D, /");
-			Assert.AreEqual("/usr/bin/BBB/AAA.txt,/usr/bin/AAA/BBB.txt", y);
-			x = "co-op,comp,coop";
-			y = Strings.Sort(x, "D, CL");
-			Assert.AreEqual("comp,co-op,coop", y);
-			x = "Ä,Ü,A,a,B,b,u,U";
-			y = Strings.Sort(x, "D, CL");
-			Assert.AreEqual("A,a,Ä,B,b,u,U,Ü", y);
-			x = "AZB,BYX,CWM,LMN";
-			y = Strings.Sort(x, "D, P2");
-			Assert.AreEqual("LMN,CWM,BYX,AZB", y);
-			Assert.IsTrue(TestScript("string-sort", true));
-		}
-
-		[Test, Category("String")]
-		public void RegExMatch()
-		{
-			var x = " test\t";
-			var y = Strings.RTrim(x);
-			Assert.AreEqual(" test", y);
-			//Assert.IsTrue(TestScript("string-regexmatch", true));
-		}
-
 	}
 }

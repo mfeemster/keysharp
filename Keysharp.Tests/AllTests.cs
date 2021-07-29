@@ -1,4 +1,7 @@
-﻿using NUnit.Framework;
+﻿using System.Windows.Forms;
+using Keysharp.Core.Windows;
+using NUnit.Framework;
+using Buffer = Keysharp.Core.Buffer;
 
 namespace Keysharp.Tests
 {
@@ -12,6 +15,9 @@ namespace Keysharp.Tests
 			//Environment.CurrentDirectory = dir;
 			// or
 			//Directory.SetCurrentDirectory(dir);
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			WindowsAPI.SetProcessDPIAware();
 		}
 	}
 
@@ -149,9 +155,6 @@ namespace Keysharp.Tests
 		public void ConcatEx() => Assert.IsTrue(TestScript("concat-ex", true));
 
 		[Test]
-		public void CompareStringCaseEx() => Assert.IsTrue(TestScript("compare-string-case-ex", true));
-
-		[Test]
 		public void MultiplyEx() => Assert.IsTrue(TestScript("multiply-ex", true));
 
 		[Test]
@@ -173,6 +176,30 @@ namespace Keysharp.Tests
 		public void AssociativeArrayEx() => Assert.IsTrue(TestScript("associative-array-ex", true));
 
 		[Test]
+		public void Buffer()
+		{
+			var buf = new Buffer(5, 10);
+			Assert.AreEqual(5L, (long)buf.Size);
+
+			for (var i = 1; i <= (long)buf.Size; i++)
+			{
+				var p = buf[i];
+				Assert.AreEqual(10L, p);
+			}
+
+			buf.Size = 10;
+			Assert.AreEqual(10L, (long)buf.Size);
+
+			for (var i = 1; i <= 5; i++)//Ensure original values were copied. Subsequent values are undefined.
+			{
+				var p = buf[i];
+				Assert.AreEqual(10L, p);
+			}
+
+			Assert.IsTrue(TestScript("buffer", true));
+		}
+
+		[Test]
 		public void Hex() => Assert.IsTrue(TestScript("hex", true));
 
 		[Test, Category("BuiltInVars")]
@@ -185,7 +212,7 @@ namespace Keysharp.Tests
 		public void PropsDateTime() => Assert.IsTrue(TestScript("props-date-time", true));
 
 		[Test, Category("BuiltInVars")]
-		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", true));
+		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", false));
 
 		[Test, Category("BuiltInVars")]
 		public void Suspend() => Assert.IsTrue(TestScript("suspend", true));

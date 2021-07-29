@@ -35,7 +35,7 @@ if (x = 10)
 else
 	FileAppend, fail, *
 
-len := arr.Length()
+len := arr.Length
 
 if (len == 3)
 	FileAppend, pass, *
@@ -153,7 +153,7 @@ else
 	FileAppend, fail, *
 
 arr.RemoveAt(4)
-len := arr.Length()
+len := arr.Length
 
 if (len == 3)
 	FileAppend, pass, *
@@ -161,7 +161,7 @@ else
 	FileAppend, fail, *
 
 val := arr.Pop()
-len := arr.Length()
+len := arr.Length
 
 if (len == 2 && val == 30)
 	FileAppend, pass, *
@@ -169,22 +169,22 @@ else
 	FileAppend, fail, *
 
 val := arr.Delete(2)
-len := arr.Length()
+len := arr.Length
 
 if (len == 2 && val == 20)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr.SetCapacity(200)
-cap := arr.GetCapacity()
+arr.Capacity := 200
+cap := arr.Capacity
 
 if (cap == 200)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-cap := arr.Capacity()
+cap := arr.Capacity
 
 if (cap == 200)
 	FileAppend, pass, *
@@ -219,7 +219,7 @@ else
 	FileAppend, fail, *
 
 arr.Clear()
-len := arr.Length()
+len := arr.Length
 
 if (len == 0)
 	FileAppend, pass, *

@@ -76,9 +76,21 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Flow")]
+		public void FlowUntil()
+		{
+			Assert.IsTrue(TestScript("flow-until", true));
+		}
+
+		[Test, Category("Flow")]
 		public void FlowLoopRead()
 		{
 			Assert.IsTrue(TestScript("flow-loop-read", true));
+		}
+
+		[Test, Category("Flow")]
+		public void FlowSwitch()
+		{
+			Assert.IsTrue(TestScript("flow-switch", true));
 		}
 
 		[Test, Category("Flow")]
@@ -150,6 +162,12 @@ namespace Keysharp.Tests
 			Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2");
 			Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");
 			Assert.IsTrue(TestScript("flow-loop-reg", true));
+		}
+
+		[Test, Category("Flow")]
+		public void FlowTryCatch()
+		{
+			Assert.IsTrue(TestScript("flow-trycatch", true));
 		}
 	}
 }

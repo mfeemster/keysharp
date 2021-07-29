@@ -1,5 +1,10 @@
 ; #Include %A_ScriptDir%/header.ahk
 
+if (A_IsSuspended == 0) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 Suspend, On
 
 if (A_IsSuspended == 1) 
@@ -8,6 +13,11 @@ else
 	FileAppend, fail, *
 
 Suspend, Off
+
+if (A_IsCritical == 0) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
 
 Critical, On
 x := A_IsCritical
@@ -21,6 +31,11 @@ Critical, Off
 x := A_IsCritical
 
 if (x == 0) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (A_TitleMatchMode == 2) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -60,6 +75,11 @@ if (A_TitleMatchMode == "regex")
 else
 	FileAppend, fail, *
 
+if (A_TitleMatchModeSpeed == "fast") 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 SetTitleMatchMode, fast
 
 if (A_TitleMatchModeSpeed == "fast") 
@@ -86,110 +106,85 @@ if (A_TitleMatchMode == "regex")
 else
 	FileAppend, fail, *
 
-DetectHiddenWindows, 0
+SetTitleMatchMode, 2 ; Reset it back for the function version of this test.
+SetTitleMatchMode, fast
 
-if (A_DetectHiddenWindows == "off") 
+if (A_DetectHiddenWindows == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-DetectHiddenWindows, Off
+DetectHiddenWindows, 0
 
-if (A_DetectHiddenWindows == "off") 
+if (A_DetectHiddenWindows == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, 1
 
-if (A_DetectHiddenWindows == "on") 
+if (A_DetectHiddenWindows == 1) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+DetectHiddenWindows, Off
+
+if (A_DetectHiddenWindows == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, On
 
-if (A_DetectHiddenWindows == "on") 
+if (A_DetectHiddenWindows == 1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, dummy
 
-if (A_DetectHiddenWindows == "on") 
+if (A_DetectHiddenWindows == 1) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+DetectHiddenWindows, 0 ; Reset it back for the function version of this test.
+
+if (A_DetectHiddenText == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenText, 0
 
-if (A_DetectHiddenText == "off") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-DetectHiddenText, Off
-
-if (A_DetectHiddenText == "off") 
+if (A_DetectHiddenText == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenText, 1
 
-if (A_DetectHiddenText == "on") 
+if (A_DetectHiddenText == 1) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+DetectHiddenText, Off
+
+if (A_DetectHiddenText == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenText, On
 
-if (A_DetectHiddenText == "on") 
+if (A_DetectHiddenText == 1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-DetectHiddenText, dummy
-
-if (A_DetectHiddenText == "on") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-StringCaseSense, 0
-
-if (A_StringCaseSense == "off") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-StringCaseSense, Off
-
-if (A_StringCaseSense == "off") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-StringCaseSense, 1
-
-if (A_StringCaseSense == "on") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-StringCaseSense, On
-
-if (A_StringCaseSense == "on") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-StringCaseSense, dummy
-
-if (A_StringCaseSense == "off") 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
+DetectHiddenText, 0 ; Reset it back for the function version of this test.
 
 FileEncoding, utf-8
 
@@ -240,6 +235,11 @@ if (A_FileEncoding == "utf-16")
 else
 	FileAppend, fail, *
 
+if (A_SendLevel == 0) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 SendLevel, 0
 
 if (A_SendLevel == 0) 
@@ -275,37 +275,65 @@ if (A_SendLevel == 100)
 else
 	FileAppend, fail, *
 
-SetStoreCapsLockMode, 0
+SendLevel, 0 ; Reset it back for the function version of this test.
 
-if (A_StoreCapsLockMode == "off") 
+if (A_StoreCapsLockMode == 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-SetStoreCapsLockMode, Off
+SetStoreCapsLockMode, 0
 
-if (A_StoreCapsLockMode == "off") 
+if (A_StoreCapsLockMode == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 SetStoreCapsLockMode, 1
 
-if (A_StoreCapsLockMode == "on") 
+if (A_StoreCapsLockMode == 1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
+SetStoreCapsLockMode, Off
+
+if (A_StoreCapsLockMode == 0) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
 SetStoreCapsLockMode, On
 
-if (A_StoreCapsLockMode == "on") 
+if (A_StoreCapsLockMode == 1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 SetStoreCapsLockMode, dummy
 
-if (A_StoreCapsLockMode == "on") 
+if (A_StoreCapsLockMode == 1) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+SetStoreCapsLockMode, 1 ; Reset it back for the function version of this test.
+
+if (A_KeyDelay == 10) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (A_KeyDelayPlay == -1) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (A_KeyPressDuration == -1) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (A_KeyPressDurationPlay == -1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -363,9 +391,24 @@ if (A_KeyPressDurationPlay == 60)
 else
 	FileAppend, fail, *
 
+SetKeyDelay, 10, -1 ; Reset it back for the function version of this test.
+SetKeyDelay, -1, -1, Play
+
+if (A_WinDelay == 100) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 SetWinDelay, 200
 
 if (A_WinDelay == 200) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+SetWinDelay, 100 ; Reset it back for the function version of this test.
+
+if (A_ControlDelay == 20) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -377,9 +420,21 @@ if (A_ControlDelay == 200)
 else
 	FileAppend, fail, *
 
+SetControlDelay, 20 ; Reset it back for the function version of this test.
+
+if (A_MouseDelay == 10) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 SetMouseDelay, 200
 
 if (A_MouseDelay == 200) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (A_MouseDelayPlay == -1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -396,9 +451,45 @@ if (A_MouseDelayPlay == 300)
 else
 	FileAppend, fail, *
 
+
+SetMouseDelay, 10 ; Reset it back for the function version of this test.
+SetMouseDelay, -1, Play
+
+if (A_DefaultMouseSpeed == 2)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 SetDefaultMouseSpeed, 500
 
 if (A_DefaultMouseSpeed == 500)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+SetDefaultMouseSpeed, 2 ; Reset it back for the function version of this test.
+
+if (A_CoordModeToolTip == "Client")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (A_CoordModePixel == "Client")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (A_CoordModeMouse == "Client")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (A_CoordModeCaret == "Client")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (A_CoordModeMenu == "Client")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -441,6 +532,18 @@ else
 CoordMode, Menu, Dummy
 
 if (A_CoordModeMenu == "Window")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+
+CoordMode, ToolTip, Client ; Reset it back for the function version of this test.
+CoordMode, Pixel, Client
+CoordMode, Mouse, Client
+CoordMode, Caret, Client
+CoordMode, Menu, Client
+
+if (A_RegView == 64)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

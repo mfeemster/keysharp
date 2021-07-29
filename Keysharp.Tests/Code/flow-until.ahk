@@ -1,0 +1,122 @@
+; #Include %A_ScriptDir%/header.ahk
+
+x := 1
+y := 20
+Loop
+	x *= 2
+Until x > y
+
+if (x == 32)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+y := 20
+Loop
+	x *= 2
+Until (x > y)
+
+if (x == 32)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+y := 20
+Loop
+{
+	x *= 2
+
+	if (Mod(x, 2) == 1)
+		continue
+}
+Until (x > y)
+
+if (x == 32)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+Loop
+{
+	x++
+}
+Until (A_Index == 5)
+
+if (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+
+while true
+{
+	x++
+}
+Until (A_Index == 5)
+
+if (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+y := 5
+
+Loop %y%
+{
+	x++
+
+	If A_Index = 10
+		break
+}
+Until (A_Index == 5)
+
+if (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+y := 5
+
+Loop %y%
+{
+	x++
+
+	If A_Index = 5
+		break
+}
+Until (A_Index == 10)
+
+if (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+y := 20
+z := 0
+
+Loop
+{
+	x *= 2
+
+	Loop
+		z++
+	Until z > x
+}
+Until x > y
+
+if (x == 32)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (z == 33)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

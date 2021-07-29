@@ -1,22 +1,17 @@
 using System;
-using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using Keysharp.Scripting;
 using NUnit.Framework;
-//using IronAHK.Rusty;
-//using IronAHK.Scripting;
-//using NUnit.Framework;
 
 namespace Keysharp.Tests
 {
 	public partial class Scripting
 	{
-		const string ext = ".ahk";
-		string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
+		private const string ext = ".ahk";
+		private string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
 
 		public bool TestScript(string source, bool testfunc)
 		{
@@ -37,11 +32,13 @@ namespace Keysharp.Tests
 
 			return b1 && b2;
 		}
+
 		public bool ValidateScript(string source, string name)
 		{
 			RunScript(string.Concat(path, source, ext), name, false);
 			return true;
 		}
+
 		public bool HasPassed(string output)
 		{
 			if (string.IsNullOrEmpty(output))
@@ -53,6 +50,7 @@ namespace Keysharp.Tests
 					output = output.Replace(remove, string.Empty);
 			return output.Length == 0;
 		}
+
 		public string WrapInFunc(string source)
 		{
 			var sb = new StringBuilder();
@@ -64,7 +62,7 @@ namespace Keysharp.Tests
 				string line;
 
 				while ((line = sr.ReadLine()) != null)
-					if ( !line.StartsWith("#") && !line.StartsWith(";"))
+					if (!line.StartsWith("#") && !line.StartsWith(";"))
 						_ = sb.AppendLine("\t" + line);
 			}
 
@@ -72,10 +70,28 @@ namespace Keysharp.Tests
 			sb.AppendLine("func()");
 			return sb.ToString();
 		}
+
 		public string RunScript(string source, string name, bool execute, bool wrapinfunction)
 		{
 			return RunScript(WrapInFunc(File.ReadAllText(source)), name, execute);
 		}
+
+		public void TestException(Action func)
+		{
+			var excthrown = false;
+
+			try
+			{
+				func();
+			}
+			catch (Exception e)
+			{
+				excthrown = true;
+			}
+
+			Assert.IsTrue(excthrown);
+		}
+
 		public string RunScript(string source, string name, bool execute)
 		{
 			Compiler.Debug(Environment.CurrentDirectory);
