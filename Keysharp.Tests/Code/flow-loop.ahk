@@ -156,9 +156,9 @@ x := 0
 
 Loop
 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -175,9 +175,9 @@ else
 x := 0
 
 Loop {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -195,9 +195,9 @@ x := 0
 
 Loop 100
 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -215,9 +215,9 @@ x := 0
 
 Loop (100)
 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -235,9 +235,9 @@ x := 0
 
 Loop(100)
 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -254,9 +254,9 @@ else
 x := 0
 
 Loop 100 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -276,9 +276,9 @@ z5 := 100
  
 Loop z%y%
 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -297,9 +297,9 @@ y := 5
 z5 := 100
  
 Loop z%y% {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 

@@ -140,9 +140,9 @@ z5 := 100
 
 while z%y%
 {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -161,9 +161,9 @@ y := 5
 z5 := 100
 
 while z%y% {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 
@@ -182,9 +182,9 @@ y := 5
 z5 := 100
 
 while (z%y%) {
-    if (A_Index > 25)
-        break
-    
+	if (A_Index > 25)
+		break
+	
 	x++
 }
 

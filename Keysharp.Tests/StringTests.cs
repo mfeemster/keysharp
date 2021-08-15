@@ -36,6 +36,9 @@ namespace Keysharp.Tests
 		public void CompareCaseEx() => Assert.IsTrue(TestScript("string-compare-case-ex", true));
 
 		[Test, Category("String")]
+		public void ConcatEx() => Assert.IsTrue(TestScript("string-concat-ex", true));
+
+		[Test, Category("String")]
 		public void Format()
 		{
 			var s = Strings.Format("{1}", 123);
@@ -238,10 +241,48 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void RegExMatch()
 		{
-			var x = " test\t";
-			var y = Strings.RTrim(x);
-			Assert.AreEqual(" test", y);
-			//Assert.IsTrue(TestScript("string-regexmatch", true));
+			var match = Strings.RegExMatch("abc123abc456", "abc\\d+", 1);
+			Assert.AreEqual(match[0], "abc123");
+			Assert.AreEqual(match.Pos(), 1);
+			match = Strings.RegExMatch("abc123abc456", "456", -1);
+			Assert.AreEqual(match[0], "456");
+			Assert.AreEqual(match.Pos(), 10);
+			match = Strings.RegExMatch("abc123abc456", "abc", -1);
+			Assert.AreEqual(match[0], "abc");
+			Assert.AreEqual(match.Pos(), 7);
+			match = Strings.RegExMatch("abc123abc456", "abc", -15);
+			Assert.AreEqual(match[0], "abc");
+			Assert.AreEqual(match.Pos(), 7);
+			match = Strings.RegExMatch("abc123abc456", "abc", -5);
+			Assert.AreEqual(match[0], "abc");
+			Assert.AreEqual(match.Pos(), 1);
+			match = Strings.RegExMatch("abc123abc456", "abc\\d+", 2);
+			Assert.AreEqual(match[0], "abc456");
+			Assert.AreEqual(match.Pos(), 7);
+			match = Strings.RegExMatch("abc123123", "123$", 1);
+			Assert.AreEqual(match.Pos(), 7);
+			match = Strings.RegExMatch("xxxabc123xyz", "abc.*xyz", 1);
+			Assert.AreEqual(match.Pos(), 4);
+			match = Strings.RegExMatch("abc123123", "123$");
+			Assert.AreEqual(match.Pos(), 7);
+			match = Strings.RegExMatch("abc123", "i)^ABC");
+			Assert.AreEqual(match.Pos(), 1);
+			match = Strings.RegExMatch("abcXYZ123", "abc(.*)123");
+			Assert.AreEqual(match[1], "XYZ");
+			Assert.AreEqual(match.Pos(1), 4);
+			match = Strings.RegExMatch("abcXYZ123", "abc(?<testname>.*)123");
+			Assert.AreEqual(match["testname"], "XYZ");
+			Assert.AreEqual(match.Pos("testname"), 4);
+			Assert.AreEqual(match.Name("testname"), "testname");
+			match = Strings.RegExMatch(@"C:\Foo\Bar\Baz.txt", @"\w+$");
+			Assert.AreEqual(match[0], "txt");
+			Assert.AreEqual(match.Pos(), 16);
+			match = Strings.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)");
+			Assert.AreEqual(match.Count, 2);
+			Assert.AreEqual(match[1], "Michiganroad");
+			Assert.AreEqual(match.Name(2), "nr");
+			Assert.AreEqual(match[2], "72");
+			Assert.IsTrue(TestScript("string-regex", true));
 		}
 
 		[Test, Category("String")]

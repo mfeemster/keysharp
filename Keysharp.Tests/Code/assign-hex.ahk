@@ -27,3 +27,10 @@ if (x = 221)
  	FileAppend, pass, *
 else
   	FileAppend, fail, *
+
+x := 0xDd
+
+if (x = 221)
+ 	FileAppend, pass, *
+else
+  	FileAppend, fail, *

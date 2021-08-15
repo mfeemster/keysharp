@@ -23,26 +23,52 @@ if (z = 3)
 else
 	FileAppend, fail, *
 
+b := false
 
-x := 1.234
-y := 2.456
-z := x & y
+try
+{
+	x := 1.234
+	y := 2.456
+	z := x & y
+}
+catch (TypeError as exc)
+{
+	b := true
+}
 
-if (z = 0)
+if (b == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-z := x | y
+b := false
 
-if (z = 3)
+try
+{
+	z := x | y
+}
+catch (TypeError as exc)
+{
+	b := true
+}
+
+if (b == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-z := x ^ y
+b := false
 
-if (z = 3)
+try
+{
+	z := x ^ y
+}
+catch (TypeError as exc)
+{
+	b := true
+}
+
+if (b == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

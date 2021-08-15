@@ -18,6 +18,7 @@ If (z = "123456")
 else
 	FileAppend, fail, *
 
+z := ""
 z := x y
 
 If (z = "123456")
