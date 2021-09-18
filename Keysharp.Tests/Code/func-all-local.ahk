@@ -1,45 +1,55 @@
-;#Include %A_ScriptDir%/header.ahk
+x := 1
+y := 2
+z := 3
 
-x = 11
-y11 = %x%
-z := y%x%
+func()
+{
+x := 11
+y := 22
+z := 33
+}
 
-If (z == 11)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
+func()
 
-If (y11 == 11)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-If (z == y11)
+If (x == 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-If (x == y11)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
-If (z == x)
+If (y == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-If (z != y11)
-	FileAppend, fail, *
-else
+If (z == 3)
 	FileAppend, pass, *
+else
+	FileAppend, fail, *
 
-If (x != y11)
-	FileAppend, fail, *
-else
+a := 100
+b := 200
+c := 300
+
+func2()
+{
+local a := 111
+local b := 222
+local c := 333
+}
+
+func2()
+
+If (a == 100)
 	FileAppend, pass, *
-	
-If (z != x)
-	FileAppend, fail, *
 else
+	FileAppend, fail, *
+
+If (b == 200)
 	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (c == 300)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

@@ -17,3 +17,39 @@ If y = hello world
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+y := x " world"
+	
+If y != hello world
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+If y = hello world
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+y := %x% . " world"
+	
+If y != hello world
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+If y = hello world
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+y := %x% " world"
+	
+If y != hello world
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+If y = hello world
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

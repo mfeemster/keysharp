@@ -132,7 +132,7 @@ else
 
 x := A_TickCount
 
-if (x != "") ; Not really a full test, but the code is clear enough to know it works.
+if (x > 0) ; Not really a full test, but the code is clear enough to know it works.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

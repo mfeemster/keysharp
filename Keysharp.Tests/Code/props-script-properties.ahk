@@ -11,7 +11,7 @@ else
 
 x := A_ScriptName
 
-if (x = "props-script-properties.ahk")
+if (x == "props-script-properties.ahk")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -72,7 +72,7 @@ myfunc()
 	y := A_ThisFunc
 	fn := A_ThisLabel
 
-	if (y != "")
+	if (y == "myfunc")
 		FileAppend, pass, *
 	else
 		FileAppend, fail, *

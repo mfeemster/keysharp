@@ -77,7 +77,7 @@ namespace Keysharp.Tests
 		public void PowerEx() => Assert.IsTrue(TestScript("op-power-ex", true));
 
 		[Test, Category("Operator")]
-		public void RightShiftEx() => Assert.IsTrue(TestScript("op-rsh-ex", true));
+		public void RightShiftEx() => Assert.IsTrue(TestScript("op-rsh-ex", false));
 
 		[Test, Category("Operator")]
 		public void TernaryEx() => Assert.IsTrue(TestScript("op-ternary-ex", true));

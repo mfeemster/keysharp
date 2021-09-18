@@ -13,7 +13,7 @@ namespace Keysharp.Tests
 		private const string ext = ".ahk";
 		private string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
 
-		public bool TestScript(string source, bool testfunc)
+		public bool TestScript(string source, bool testfunc, bool exeout = false)
 		{
 			var b1 = false;
 			var b2 = true;
@@ -25,19 +25,19 @@ namespace Keysharp.Tests
 			//})
 			//                 };
 			//Task.WaitAll(taskArray);
-			b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true));
+			b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true, exeout));
 
 			if (testfunc && b1)
-				b2 = HasPassed(RunScript(string.Concat(path, source, ext), source + "_func", true, true));
+				b2 = HasPassed(RunScript(string.Concat(path, source, ext), source + "_func", true, true, exeout));
 
 			return b1 && b2;
 		}
 
-		public bool ValidateScript(string source, string name)
-		{
-			RunScript(string.Concat(path, source, ext), name, false);
-			return true;
-		}
+		//public bool ValidateScript(string source, string name)
+		//{
+		//  RunScript(string.Concat(path, source, ext), name, false);
+		//  return true;
+		//}
 
 		public bool HasPassed(string output)
 		{
@@ -71,9 +71,9 @@ namespace Keysharp.Tests
 			return sb.ToString();
 		}
 
-		public string RunScript(string source, string name, bool execute, bool wrapinfunction)
+		public string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout)
 		{
-			return RunScript(WrapInFunc(File.ReadAllText(source)), name, execute);
+			return RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
 		}
 
 		public void TestException(Action func)
@@ -92,7 +92,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(excthrown);
 		}
 
-		public string RunScript(string source, string name, bool execute)
+		public string RunScript(string source, string name, bool execute, bool exeout)
 		{
 			Compiler.Debug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
@@ -121,7 +121,6 @@ namespace Keysharp.Tests
 				sourceWriter.WriteLine(code);
 			}
 
-			Assembly compiledasm;
 #if !WINDOWS
 			var (results, compileexc) = ch.Compile(code, string.Empty);
 
@@ -142,7 +141,7 @@ namespace Keysharp.Tests
 				return string.Empty;
 			}
 
-			compiledasm = results.CompiledAssembly;
+			CompilerHelper.compiledasm = results.CompiledAssembly;
 #else
 			var (results, ms, compileexc) = ch.Compile(code, name);
 
@@ -159,7 +158,14 @@ namespace Keysharp.Tests
 			{
 				ms.Seek(0, SeekOrigin.Begin);
 				var arr = ms.ToArray();
-				compiledasm = Assembly.Load(arr);
+
+				if (exeout)
+				{
+					File.WriteAllBytes("./" + name + ".exe", arr);
+					File.WriteAllText("./" + name + ".runtimeconfig.json", CompilerHelper.GenerateRuntimeConfig());//Probably not needed for test exe outputs.
+				}
+
+				CompilerHelper.compiledasm = Assembly.Load(arr);
 			}
 			else
 			{
@@ -180,11 +186,11 @@ namespace Keysharp.Tests
 						GC.Collect();
 						GC.WaitForPendingFinalizers();
 
-						if (compiledasm == null)
+						if (CompilerHelper.compiledasm == null)
 							throw new Exception("Compilation failed.");
 
 						//Environment.SetEnvironmentVariable("SCRIPT", script);
-						var program = compiledasm.GetType("Keysharp.Main.Program");
+						var program = CompilerHelper.compiledasm.GetType("Keysharp.Main.Program");
 						var main = program.GetMethod("Main");
 						var temp = new string[] { };
 						_ = main.Invoke(null, new object[] { temp });

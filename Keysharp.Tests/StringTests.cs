@@ -485,7 +485,7 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void StrReplace()
 		{
-			var x = "a,b,c,d,e,f";
+			var x = "a,b,c,d,e,f";//Can't test the ref var which holds the count here because those must be global. However it is tested in the script.
 			var y = Strings.StrReplace(x, ",");
 			Assert.AreEqual("abcdef", y);
 			y = Strings.StrReplace(x, ",", "");
@@ -494,20 +494,17 @@ namespace Keysharp.Tests
 			Assert.AreEqual("a.b.c.d.e.f", y);
 			y = Strings.StrReplace(x, ",", ".", "On");
 			Assert.AreEqual("a.b.c.d.e.f", y);
-			y = Strings.StrReplace(x, ",", ".", null, "varct");
+			y = Strings.StrReplace(x, ",", ".");
 			Assert.AreEqual("a.b.c.d.e.f", y);
-			Assert.AreEqual(5L, Script.Vars[".varct"]);
-			y = Strings.StrReplace(x, ",", ".", null, "varct", 3);
+			y = Strings.StrReplace(x, ",", ".", null, null, 3);
 			Assert.AreEqual("a.b.c.d,e,f", y);
-			Assert.AreEqual(3L, Script.Vars[".varct"]);
 			y = Strings.StrReplace(x, "");
 			Assert.AreEqual("", y);
 			y = Strings.StrReplace(x, "a", "A", "On");
 			Assert.AreEqual("A,b,c,d,e,f", y);
-			y = Strings.StrReplace(x, "a", "A", "On", "varct", 9);
+			y = Strings.StrReplace(x, "a", "A", "On", null, 9);
 			Assert.AreEqual("A,b,c,d,e,f", y);
-			Assert.AreEqual(1L, Script.Vars[".varct"]);
-			Assert.IsTrue(TestScript("string-strreplace", true));
+			Assert.IsTrue(TestScript("string-strreplace", false));//Don't test func version because the ref var must be global.
 		}
 
 		[Test, Category("String")]

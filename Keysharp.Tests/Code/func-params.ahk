@@ -1,45 +1,55 @@
-;#Include %A_ScriptDir%/header.ahk
+x := 1
+y := 2
+z := 3
 
-x = 11
-y11 = %x%
-z := y%x%
+func(a, b, c)
+{
+global x := a
+global y := b
+global z := c
+}
 
-If (z == 11)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
+func(11, 22, 33)
 
-If (y11 == 11)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-If (z == y11)
+If (x == 11)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-If (x == y11)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
-If (z == x)
+If (y == 22)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-If (z != y11)
-	FileAppend, fail, *
-else
+If (z == 33)
 	FileAppend, pass, *
+else
+	FileAppend, fail, *
 
-If (x != y11)
-	FileAppend, fail, *
-else
+func2(a, b, c := 123)
+{
+global x := a
+global y := b
+global z := c
+}
+
+x := 1
+y := 2
+z := 3
+
+func2(11, 22)
+
+If (x == 11)
 	FileAppend, pass, *
-	
-If (z != x)
-	FileAppend, fail, *
 else
+	FileAppend, fail, *
+
+If (y == 22)
 	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (z == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

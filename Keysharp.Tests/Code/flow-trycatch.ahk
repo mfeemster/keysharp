@@ -101,7 +101,6 @@ catch Error as errex
 else
 {
 	b := true
-	str := errex.Message
 }
 
 if (b == false)

@@ -24,7 +24,7 @@ Loop Read "../../../Keysharp.Tests/Code/test-text-file.txt", "../../../Keysharp.
 	x .= y
 	z := A_LoopReadLine
 	z .= y
-	FileAppend, %z%
+	FileAppend(z)
 }
 
 z := ""

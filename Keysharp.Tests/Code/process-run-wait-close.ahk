@@ -17,7 +17,7 @@ exists := ProcessExist("notepad.exe")
 if (exists == 0)
 	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
 pid := RunWait("notepad.exe", "", "max")
 exists := ProcessExist("notepad.exe")
@@ -25,4 +25,4 @@ exists := ProcessExist("notepad.exe")
 if (exists == 0)
 	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *

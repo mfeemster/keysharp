@@ -15,17 +15,29 @@ namespace Keysharp.Tests
 	{
 		[Test, Category("Env")]
 		[Apartment(ApartmentState.STA)]
+		public void ClipboardAll()
+		{
+			Accessors.A_Clipboard = "Asdf";
+			var arr = Env.ClipboardAll();
+			Accessors.A_Clipboard = "";
+			Accessors.A_Clipboard = arr;
+			var clip = Accessors.A_Clipboard as string;
+			Assert.AreEqual("Asdf", clip);
+		}
+
+		[Apartment(ApartmentState.STA)]
+		[Test, Category("Env")]
 		public void ClipWait()
 		{
 			Clipboard.Clear();
-			ErrorLevel = 0;
+			Accessors.A_ErrorLevel = 0;
 			var dt = DateTime.Now;
 			Env.ClipWait(0.5);
 			var dt2 = DateTime.Now;
 			var ms = (dt2 - dt).TotalMilliseconds;
-			Assert.AreEqual(1, ErrorLevel);//Will have timed out, so ErrorLevel will be 1.
+			Assert.AreEqual(1, Accessors.A_ErrorLevel);//Will have timed out, so ErrorLevel will be 1.
 			Assert.IsTrue(ms >= 500 && ms <= 600);
-			ErrorLevel = 0;
+			Accessors.A_ErrorLevel = 0;
 			var tcs = new TaskCompletionSource<bool>();
 			var thread = new Thread(() =>
 			{
@@ -42,10 +54,10 @@ namespace Keysharp.Tests
 			//Seems to take much longer than 100ms, but it's not too important.
 			//Assert.IsTrue(ms >= 500 && ms <= 1100);
 			tcs.Task.Wait();
-			Assert.AreEqual(0, ErrorLevel);//Will have detected clipboard data, so ErrorLevel will be 0.
+			Assert.AreEqual(0, Accessors.A_ErrorLevel);//Will have detected clipboard data, so ErrorLevel will be 0.
 			//Now test with file paths.
 			Clipboard.Clear();
-			ErrorLevel = 0;
+			Accessors.A_ErrorLevel = 0;
 			tcs = new TaskCompletionSource<bool>();
 			thread = new Thread(() =>
 			{
@@ -65,10 +77,10 @@ namespace Keysharp.Tests
 			dt2 = DateTime.Now;
 			ms = (dt2 - dt).TotalMilliseconds;
 			tcs.Task.Wait();
-			Assert.AreEqual(0, ErrorLevel);//Will have detected clipboard data, so ErrorLevel will be 0.
+			Assert.AreEqual(0, Accessors.A_ErrorLevel);//Will have detected clipboard data, so ErrorLevel will be 0.
 			//Wait specifically for text/files, and copy an image. This should time out, and ErrorLevel should be set to 1.
 			Clipboard.Clear();
-			ErrorLevel = 0;
+			Accessors.A_ErrorLevel = 0;
 			var bitmap = new Bitmap(640, 480);
 			tcs = new TaskCompletionSource<bool>();
 			thread = new Thread(() =>
@@ -84,7 +96,7 @@ namespace Keysharp.Tests
 			dt2 = DateTime.Now;
 			ms = (dt2 - dt).TotalMilliseconds;
 			tcs.Task.Wait();
-			Assert.AreEqual(1, ErrorLevel);//Will have timed out, so ErrorLevel will be 1.
+			Assert.AreEqual(1, Accessors.A_ErrorLevel);//Will have timed out, so ErrorLevel will be 1.
 			Assert.IsTrue(TestScript("clipwait", true));//For this to work, the bitmap from above must be on the clipboard.
 		}
 
@@ -116,7 +128,7 @@ namespace Keysharp.Tests
 		public void EnvUpdate()
 		{
 			Env.EnvUpdate();
-			Assert.AreEqual(0, ErrorLevel);
+			Assert.AreEqual(0, Accessors.A_ErrorLevel);
 			Assert.IsTrue(TestScript("envupdate", true));
 		}
 	}

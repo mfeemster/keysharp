@@ -48,7 +48,7 @@ namespace Keysharp.Tests
 
 			var dir = "./DirCreate/SubDir1/SubDir2/SubDir3";
 			Disk.DirCreate(dir);
-			Assert.AreEqual(Core.Core.ErrorLevel, 0);
+			Assert.AreEqual(Core.Accessors.A_ErrorLevel, 0);
 			Assert.IsTrue(Directory.Exists("./DirCreate"));
 			Assert.IsTrue(Directory.Exists("./DirCreate/SubDir1"));
 			Assert.IsTrue(Directory.Exists("./DirCreate/SubDir1/SubDir2"));
@@ -64,19 +64,19 @@ namespace Keysharp.Tests
 
 			var dir = "./DirDelete/SubDir1/SubDir2/SubDir3";
 			Disk.DirCreate(dir);
-			Assert.AreEqual(Core.Core.ErrorLevel, 0);
+			Assert.AreEqual(Core.Accessors.A_ErrorLevel, 0);
 			Assert.IsTrue(Directory.Exists("./DirDelete"));
 			Assert.IsTrue(Directory.Exists("./DirDelete/SubDir1"));
 			Assert.IsTrue(Directory.Exists("./DirDelete/SubDir1/SubDir2"));
 			Assert.IsTrue(Directory.Exists("./DirDelete/SubDir1/SubDir2/SubDir3"));
 			Disk.DirDelete("./DirDelete");
-			Assert.AreEqual(Core.Core.ErrorLevel, 1);
+			Assert.AreEqual(Core.Accessors.A_ErrorLevel, 1);
 			Assert.IsTrue(Directory.Exists("./DirDelete"));
 			Assert.IsTrue(Directory.Exists("./DirDelete/SubDir1"));
 			Assert.IsTrue(Directory.Exists("./DirDelete/SubDir1/SubDir2"));
 			Assert.IsTrue(Directory.Exists("./DirDelete/SubDir1/SubDir2/SubDir3"));
 			Disk.DirDelete("./DirDelete", true);
-			Assert.AreEqual(Core.Core.ErrorLevel, 0);
+			Assert.AreEqual(Core.Accessors.A_ErrorLevel, 0);
 			Assert.IsTrue(!Directory.Exists("./DirDelete"));
 			Assert.IsTrue(!Directory.Exists("./DirDelete/SubDir1"));
 			Assert.IsTrue(!Directory.Exists("./DirDelete/SubDir1/SubDir2"));
@@ -92,7 +92,7 @@ namespace Keysharp.Tests
 
 			var dir = "./DirExist/SubDir1/SubDir2/SubDir3";
 			Disk.DirCreate(dir);
-			Assert.AreEqual(Core.Core.ErrorLevel, 0);
+			Assert.AreEqual(Core.Accessors.A_ErrorLevel, 0);
 			Assert.IsTrue(Directory.Exists("./DirExist"));
 			Assert.IsTrue(Directory.Exists("./DirExist/SubDir1"));
 			Assert.IsTrue(Directory.Exists("./DirExist/SubDir1/SubDir2"));
@@ -339,27 +339,27 @@ namespace Keysharp.Tests
 		public void FileEncoding()
 		{
 			Keysharp.Core.Core.FileEncoding("utf-8");
-			var fe = A_FileEncoding;
+			var fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, Encoding.UTF8.BodyName);
 			Keysharp.Core.Core.FileEncoding("utf-8-raw");
-			fe = A_FileEncoding;
+			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-8-raw");
 			Keysharp.Core.Core.FileEncoding("utf-16");
-			fe = A_FileEncoding;
+			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16");
 			Assert.AreEqual(fe, Encoding.Unicode.BodyName);
 			Keysharp.Core.Core.FileEncoding("unicode");
-			fe = A_FileEncoding;
+			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16");
 			Keysharp.Core.Core.FileEncoding("utf-16-raw");
-			fe = A_FileEncoding;
+			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16-raw");
 			Keysharp.Core.Core.FileEncoding("ascii");
-			fe = A_FileEncoding;
+			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "us-ascii");
 			Assert.AreEqual(fe, Encoding.ASCII.BodyName);
 			Keysharp.Core.Core.FileEncoding("us-ascii");
-			fe = A_FileEncoding;
+			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "us-ascii");
 			Assert.IsTrue(TestScript("file-fileencoding", true));
 		}

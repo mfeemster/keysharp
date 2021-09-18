@@ -5,7 +5,7 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		[Test, Category("Assign")]
-		public void AssignDynVarEx() => Assert.IsTrue(TestScript("assign-dyn-var-ex", true));
+		public void AssignDynVarEx() => Assert.IsTrue(TestScript("assign-dyn-var-ex", false));//Dynamic variables only work as global statics, not function variables.
 
 		[Test, Category("Assign")]
 		public void AssignEmpty() => Assert.IsTrue(TestScript("assign-empty", true));
@@ -38,9 +38,6 @@ namespace Keysharp.Tests
 		public void AssignStringCaseCompareEx() => Assert.IsTrue(TestScript("assign-string-case-compare-ex", true));
 
 		[Test, Category("Assign")]
-		public void AssignStringConcat() => Assert.IsTrue(TestScript("assign-string-concat", true));
-
-		[Test, Category("Assign")]
 		public void AssignStringConcatEx() => Assert.IsTrue(TestScript("assign-string-concat-ex", true));
 
 		[Test, Category("Assign")]
@@ -53,15 +50,15 @@ namespace Keysharp.Tests
 		public void AssignVarEx() => Assert.IsTrue(TestScript("assign-var-ex", true));
 
 		[Test, Category("Assign")]
-		public void CompareDynVarEx() => Assert.IsTrue(TestScript("assign-compare-dyn-var-ex", true));
+		public void AssignCompareDynVarEx() => Assert.IsTrue(TestScript("assign-compare-dyn-var-ex", false));//Dynamic variables only work as global statics, not function variables.
 
 		[Test, Category("Assign")]
-		public void ExAssignInt() => Assert.IsTrue(TestScript("assign-int-ex", true));
+		public void AssignIntEx() => Assert.IsTrue(TestScript("assign-int-ex", true));
 
 		[Test, Category("Assign")]
-		public void Hex() => Assert.IsTrue(TestScript("assign-hex", true));
+		public void AssignHex() => Assert.IsTrue(TestScript("assign-hex", true));
 
 		[Test, Category("Assign")]
-		public void Numerics() => Assert.IsTrue(TestScript("assign-numerics", true));
+		public void AssignNumerics() => Assert.IsTrue(TestScript("assign-numerics", true));
 	}
 }

@@ -3,6 +3,7 @@
 x := "a,b,c,d,e,f"
 y := StrReplace(x, ",")
 z := "abcdef"
+varct := ""
 
 if (y = z)
 	FileAppend, pass, *

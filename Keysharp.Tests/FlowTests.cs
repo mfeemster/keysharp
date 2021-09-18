@@ -23,17 +23,17 @@ namespace Keysharp.Tests
 		{
 			const long n = 10L;
 			var x = 0L;
-			Assert.AreEqual(0L, A_Index);
+			Assert.AreEqual(0L, Accessors.A_Index);
 
 			foreach (long i in Loop(n))
 			{
 				Assert.AreEqual(++x, i);
-				Assert.AreEqual(i, A_Index);
+				Assert.AreEqual(i, Accessors.A_Index);
 			}
 
 			Pop();//Caller is always required to do this.
 			Assert.AreEqual(x, n);
-			Assert.AreEqual(0L, A_Index);
+			Assert.AreEqual(0L, Accessors.A_Index);
 			x = 0;
 
 			foreach (long i in Loop(n))
@@ -46,7 +46,7 @@ namespace Keysharp.Tests
 
 			Pop();//Caller is always required to do this.
 			Assert.AreEqual(x, 6L);
-			Assert.AreEqual(0L, A_Index);
+			Assert.AreEqual(0L, Accessors.A_Index);
 			Assert.IsTrue(TestScript("flow-loop", true));
 		}
 
@@ -55,17 +55,17 @@ namespace Keysharp.Tests
 		{
 			const long n = 10L;
 			var x = 0L;
-			Assert.AreEqual(0L, A_Index);
+			Assert.AreEqual(0L, Accessors.A_Index);
 
 			foreach (long i in Loop(n))
 			{
 				Assert.AreEqual(++x, i);
-				Assert.AreEqual(i, A_Index);
+				Assert.AreEqual(i, Accessors.A_Index);
 			}
 
 			Pop();//Caller is always required to do this.
 			Assert.AreEqual(x, n);
-			Assert.AreEqual(0L, A_Index);
+			Assert.AreEqual(0L, Accessors.A_Index);
 			Assert.IsTrue(TestScript("flow-while", true));
 		}
 
