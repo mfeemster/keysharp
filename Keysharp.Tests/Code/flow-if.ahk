@@ -20,8 +20,7 @@ else
 }
 
 if x = 1 {
-{
-	FileAppend, fail, *
+	FileAppend, pass, *
 	if x = 2
 		{
 			FileAppend, fail, *

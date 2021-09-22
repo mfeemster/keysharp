@@ -171,3 +171,24 @@ if (z == 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+x := 123
+z :=
+
+switch x, 1 ; this is a comment
+{
+	case "mismatch": ; another comment
+		mism:
+		z := 3
+	case "notthis":
+		z := 2
+	case 123:
+		goto mism ; last comment
+	case "Tester":
+		z := 1
+}
+
+if (z == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

@@ -17,7 +17,7 @@ else
 x := ""
 FileDelete ../../../Keysharp.Tests/Code/test-text-file-out.txt
 
-Loop Read "../../../Keysharp.Tests/Code/test-text-file.txt", "../../../Keysharp.Tests/Code/test-text-file-out.txt"
+Loop Read "../../../Keysharp.Tests/Code/test-text-file.txt", "../../../Keysharp.Tests/Code/test-text-file-out.txt" ; this is a comment
 {
 	y := Random()
 	x .= A_LoopReadLine
@@ -29,7 +29,7 @@ Loop Read "../../../Keysharp.Tests/Code/test-text-file.txt", "../../../Keysharp.
 
 z := ""
 
-Loop Read  "../../../Keysharp.Tests/Code/test-text-file-out.txt"
+Loop Read  "../../../Keysharp.Tests/Code/test-text-file-out.txt" ; another comment
 {
 	z.= A_LoopReadLine
 }

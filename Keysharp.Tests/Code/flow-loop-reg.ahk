@@ -53,7 +53,7 @@ i := 0
 
 ; You need to test the A_LoopReg* global properties here //TODO
 
-Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr"
+Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 {
 	val := RegRead()
 

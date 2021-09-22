@@ -101,15 +101,15 @@ x := 1
 y := 20
 z := 0
 
-Loop
+Loop ; this is a comment
 {
 	x *= 2
 
-	Loop
+	Loop ; and another
 		z++
 	Until z > x
-}
-Until x > y
+} ; more comments
+Until x > y ; last comment
 
 if (x == 32)
 	FileAppend, pass, *

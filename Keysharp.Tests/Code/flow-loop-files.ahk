@@ -33,7 +33,7 @@ else
 x = 0
 y = 0
 
-Loop, %y%
+Loop, %y% ; this is a comment
 {
 	x++
 }

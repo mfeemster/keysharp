@@ -138,7 +138,7 @@ x := 0
 y := 5
 z5 := 100
 
-while z%y%
+while z%y% ; this is a comment
 {
 	if (A_Index > 25)
 		break
@@ -160,7 +160,7 @@ x := 0
 y := 5
 z5 := 100
 
-while z%y% {
+while z%y% { ; another comment
 	if (A_Index > 25)
 		break
 	

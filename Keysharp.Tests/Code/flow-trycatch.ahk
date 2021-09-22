@@ -307,15 +307,15 @@ else
 
 b := false
 
-try
+try ; this is a comment
 {
 	throw ZeroDivisionError("tester")
 }
-catch ZeroDivisionError as errex
+catch ZeroDivisionError as errex ; another comment
 {
 	b := true
 }
-catch(KeysharpException)
+catch(KeysharpException) ; last comment
 {
 	b := false
 }

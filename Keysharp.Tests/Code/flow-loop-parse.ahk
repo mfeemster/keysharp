@@ -102,7 +102,7 @@ x := "hel,lo"
 y := ","
 z := ""
 
-Loop Parse x, y, "l"
+Loop Parse x, y, "l" ; this is a comment
 {
 	z .= A_LoopField
 }
@@ -117,7 +117,7 @@ x := "hel,lo"
 y := ","
 z := ""
 
-Loop Parse x, y, v
+Loop Parse x, y, v ; another comment
 {
 	z .= A_LoopField
 }
