@@ -8,7 +8,7 @@ if (x != "")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := A_ScriptName
 
 if (x == "props-script-properties.ahk")
@@ -70,7 +70,6 @@ else
 myfunc()
 {
 	y := A_ThisFunc
-	fn := A_ThisLabel
 
 	if (y == "myfunc")
 		FileAppend, pass, *
@@ -80,29 +79,7 @@ myfunc()
 
 myfunc()
 
-Label1:
-lx1 := 1
-ln1 := A_ThisLabel
-
-if (ln1 = "Label1")
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
-return
-
-Label2:
-lx2 := 2
-ln2 := A_ThisLabel
-
-if (ln2 = "Label2")
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-return
-
-if (A_IsUnicode = true)
+if (A_IsUnicode == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

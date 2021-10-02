@@ -3,6 +3,7 @@ using System.Text;
 using Keysharp.Core;
 using Keysharp.Scripting;
 using NUnit.Framework;
+using static Keysharp.Core.Strings;
 
 namespace Keysharp.Tests
 {
@@ -398,22 +399,6 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void StrGet()
-		{
-			var x = "test";
-			var y = Encoding.Unicode.GetBytes(x);
-			var z = Strings.StrGet(y);
-			Assert.AreEqual(x, z);
-			y = Encoding.ASCII.GetBytes(x);
-			z = Strings.StrGet(y, "", "UTF-8");
-			Assert.AreEqual(x, z);
-			y = Encoding.Unicode.GetBytes(x);
-			z = Strings.StrGet(y, 2);
-			Assert.AreEqual("te", z);
-			Assert.IsTrue(TestScript("string-strget", true));
-		}
-
-		[Test, Category("String")]
 		public void String()
 		{
 			object x = 123;
@@ -468,18 +453,26 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void StrPut()
+		public void StrPutStrGet()
 		{
-			var x = "test";
-			var y = Encoding.Unicode.GetBytes(x);
-			var z = Strings.StrPut(x);
-			Assert.AreEqual(y, z);
-			y = Encoding.ASCII.GetBytes(x);
-			z = Strings.StrPut(x, "", "UTF-8");
-			Assert.AreEqual(y, z);
-			z = Strings.StrPut(x, 2);
-			Assert.AreEqual(new byte[] { 116, 0, 101, 0 }, z);
-			Assert.IsTrue(TestScript("string-strput", true));
+			var buf1 = Script.Buffer(32);
+			var s = "tester";
+			//Unicode test.
+			var testlen = StrPut(s);
+			var lenwritten = StrPut(s, buf1);
+			Assert.AreEqual(testlen, lenwritten);
+			var gotten = StrGet(buf1, -s.Length);
+			Assert.AreEqual(s, gotten);
+			//ASCII test.
+			testlen = StrPut(s, null, null, "ASCII");
+			lenwritten = StrPut(s, buf1, null, "ASCII");
+			Assert.AreEqual(testlen, lenwritten);
+			gotten = StrGet(buf1, s.Length, "ASCII");
+			Assert.AreEqual(s, gotten);
+			//Substring test.
+			gotten = StrGet(buf1, s.Length - 2, "ASCII");
+			Assert.AreEqual(s.Substring(0, s.Length - 2), gotten);
+			Assert.IsTrue(TestScript("string-strputstrget", true));
 		}
 
 		[Test, Category("String")]

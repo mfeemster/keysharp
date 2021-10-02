@@ -53,7 +53,7 @@ if (A_TitleMatchMode == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 SetTitleMatchMode, 3
 
 if (A_TitleMatchMode == 3) 
@@ -113,7 +113,7 @@ if (A_DetectHiddenWindows == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 DetectHiddenWindows, 0
 
 if (A_DetectHiddenWindows == 0) 
@@ -162,7 +162,7 @@ if (A_DetectHiddenText == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 DetectHiddenText, 1
 
 if (A_DetectHiddenText == 1) 
@@ -192,7 +192,7 @@ if (A_FileEncoding == "utf-8")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 FileEncoding, utf-8-raw
 
 if (A_FileEncoding == "utf-8-raw") 
@@ -450,8 +450,7 @@ if (A_MouseDelayPlay == 300)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
-
+		
 SetMouseDelay, 10 ; Reset it back for the function version of this test.
 SetMouseDelay, -1, Play
 
@@ -536,7 +535,7 @@ if (A_CoordModeMenu == "Window")
 else
 	FileAppend, fail, *
 
-
+	
 CoordMode, ToolTip, Client ; Reset it back for the function version of this test.
 CoordMode, Pixel, Client
 CoordMode, Mouse, Client
@@ -547,7 +546,7 @@ if (A_RegView == 64)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 SetRegView, 32
 
 if (A_RegView == 32)
@@ -576,11 +575,11 @@ if (A_IconHidden == 0)
 else
 	FileAppend, fail, *
 
-if (A_IconTip == "")
+if (A_IconTip == "props-script-settings.ahk")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 if (A_IconFile == "")
 	FileAppend, pass, *
 else

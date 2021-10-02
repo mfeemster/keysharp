@@ -169,3 +169,21 @@ if (b1 == 0x03040000)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+buf := Buffer(4, 0)
+NumPut("int", 123, buf)
+val := false
+
+try
+{
+	NumPut("int", 123, buf, 2)
+}
+catch
+{
+	val := true
+}
+
+if (val == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
