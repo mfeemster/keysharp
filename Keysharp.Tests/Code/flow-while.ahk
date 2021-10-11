@@ -197,3 +197,34 @@ If A_Index = 0
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+x := 1
+b := false
+
+while (x  < 2) {
+	x++
+}
+else
+{
+	b := true
+}
+
+If (b == false)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+x := 1
+b := false
+
+while (x < 1)
+	x++
+else
+{
+	b := true
+}
+
+If (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

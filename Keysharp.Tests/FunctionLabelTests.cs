@@ -8,6 +8,9 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		[Test, Category("Function")]
+		public void BoundFunc() => Assert.IsTrue(TestScript("func-bound", false));
+
+		[Test, Category("Function")]
 		public void AllGlobalInFunc() => Assert.IsTrue(TestScript("func-all-global", false));
 
 		[Test, Category("Function")]

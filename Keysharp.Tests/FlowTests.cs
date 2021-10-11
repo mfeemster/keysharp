@@ -70,6 +70,12 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Flow")]
+		public void FlowForIn()
+		{
+			Assert.IsTrue(TestScript("flow-for-in", true));//Collections tests already test foreach in C#, so just test the script here.
+		}
+
+		[Test, Category("Flow")]
 		public void FlowLoopParse()
 		{
 			Assert.IsTrue(TestScript("flow-loop-parse", true));
@@ -108,7 +114,7 @@ namespace Keysharp.Tests
 			//
 			Registrys.RegWrite("stringone\nstringtwo\nstringthree", "REG_MULTI_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
-			Assert.AreEqual(new string[] { "stringone", "stringtwo", "stringthree" }, val);
+			Assert.AreEqual(Keysharp.Scripting.Script.Array(new string[] { "stringone", "stringtwo", "stringthree" }), val);
 			//
 			Registrys.RegWrite(1, "REG_DWORD", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
@@ -120,7 +126,7 @@ namespace Keysharp.Tests
 			//
 			Registrys.RegWrite("AABBCCDD", "REG_BINARY", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
-			Assert.AreEqual(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, val);
+			Assert.AreEqual(Keysharp.Scripting.Script.Array(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }), val);
 			//
 			var i = 0;
 
@@ -137,11 +143,9 @@ namespace Keysharp.Tests
 				else if (i == 2)
 					Assert.AreEqual(null, val);
 				else if (i == 3)
-					Assert.AreEqual(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, val);
-				else if (i == 4)
-					Assert.AreEqual(new string[] { "stringone", "stringtwo", "stringthree" }, val);
-				else if (i == 5)
-					Assert.AreEqual(new string[] { "stringone", "stringtwo", "stringthree" }, val);
+					Assert.AreEqual(Keysharp.Scripting.Script.Array(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD } ), val);
+				else if (i == 4 || i == 5)
+					Assert.AreEqual(Keysharp.Scripting.Script.Array(new string[] { "stringone", "stringtwo", "stringthree" } ), val);
 				else if (i == 6)
 					Assert.AreEqual(null, val);
 				else if (i == 7)

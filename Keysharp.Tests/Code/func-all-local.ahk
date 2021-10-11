@@ -53,3 +53,26 @@ If (c == 300)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+x := fa() . fb() . fc("fa()")
+
+if (x == "l!fa()z")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+fa()
+{
+	return "l"
+}
+
+fb(x)
+{
+;	return x
+	return "!" . x
+}
+
+fc(x, y := "z")
+{
+	return x . y
+}

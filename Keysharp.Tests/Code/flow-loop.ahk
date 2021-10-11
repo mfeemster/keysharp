@@ -62,7 +62,7 @@ If A_Index = 0
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+		
 x = 0
 
 Loop y {
@@ -97,7 +97,7 @@ If A_Index = 0
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x = 0
 
 Loop y
@@ -115,7 +115,7 @@ If A_Index = 0
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 x = 0
 y := ""
 
@@ -309,6 +309,38 @@ else
 	FileAppend, fail, *
 
 If A_Index = 0
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 1
+b := false
+
+Loop 1
+{
+	x++
+}
+else
+{
+	b := true
+}
+
+If (b == false)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+x := 1
+b := false
+
+Loop 0
+	x++
+else
+{
+	b := true
+}
+
+If (b == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

@@ -4,7 +4,7 @@ if (1 == Abs(1))
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := [ 1 ]
 
 if (1 == Abs(x))

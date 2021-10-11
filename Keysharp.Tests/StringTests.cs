@@ -505,7 +505,7 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d";
 			var y = Strings.StrSplit(x, ",");
-			var exp = new string[] { "a", "b", "c", "d" };
+			var exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c", "d" });
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x);
@@ -520,27 +520,27 @@ namespace Keysharp.Tests
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x, null, null, 1);
-			exp = new string[] { "abcd" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "abcd" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 2);
-			exp = new string[] { "a", "bcd" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "bcd" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 3);
-			exp = new string[] { "a", "b", "cd" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "cd" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 4);
-			exp = new string[] { "a", "b", "c", "d" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c", "d" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 5);
-			exp = new string[] { "a", "b", "c", "d" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c", "d" });
 			Assert.AreEqual(exp, y);
 			x = "a,b,c,d";
 			y = Strings.StrSplit(x, ",", null, 3);
-			exp = new string[] { "a", "b", "c,d" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c,d" });
 			Assert.AreEqual(exp, y);
 			x = "	a, b-c _d	";
 			y = Strings.StrSplit(x, new string[] { ",", "-", "_" }, "\t ", 3);
-			exp = new string[] { "a", "b", "c _d" };
+			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c _d" });
 			Assert.AreEqual(exp, y);
 			Assert.IsTrue(TestScript("string-strsplit", true));
 		}

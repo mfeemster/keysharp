@@ -1,58 +1,58 @@
 ; #Include %A_ScriptDir%/header.ahk
 
 x := "one"
-arr := { x : 1, "two" : 2, "three" : 3 }
-val := arr[x]
+m := { x : 1, "two" : 2, "three" : 3 }
+val := m[x]
 
 if (val = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := "one"
 y := 1
-arr := { x : y, "two" : 2, "three" : 3 }
-val := arr[x]
+m := { x : y, "two" : 2, "three" : 3 }
+val := m[x]
 
 if (val = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr := { "one" : 1, "two" : 2, "three" : 3 }
-val := arr["one"]
+m := { "one" : 1, "two" : 2, "three" : 3 }
+val := m["one"]
 
 if (val = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr := { 123 : 456, "two" : 2, "three" : 3 }
-val := arr[123]
+m := { 123 : 456, "two" : 2, "three" : 3 }
+val := m[123]
+
+if (val = 456)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+m := { 123.111 : 456, "two" : 2, "three" : 3 }
+val := m[123.111]
 
 if (val = 456)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr := { 123.111 : 456, "two" : 2, "three" : 3 }
-val := arr[123.111]
-
-if (val = 456)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-arr := { 123.111 : 456.222, "two" : 2, "three" : 3 }
-val := arr[123.111]
+m := { 123.111 : 456.222, "two" : 2, "three" : 3 }
+val := m[123.111]
 
 if (val = 456.222)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr := { 0xFEED : 0xF00D, "two" : 2, "three" : 3 }
-val := arr[0xFEED]
+m := { 0xFEED : 0xF00D, "two" : 2, "three" : 3 }
+val := m[0xFEED]
 
 if (val = 0xF00D)
 	FileAppend, pass, *
@@ -63,82 +63,152 @@ str1 := "one"
 str2 := "two"
 str3 := "three"
 
-arr := { (str1) : 1, (str2) : 2, (str3) : 3 }
-val := arr[str1]
+m := { (str1) : 1, (str2) : 2, (str3) : 3 }
+val := m[str1]
 
 if (val = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
-arr := { "one" : 1, "two" : 2, "three" : 3 }
-val := arr.Has("two")
+	
+m := { "one" : 1, "two" : 2, "three" : 3 }
+val := m.Has("two")
 
 if (val == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr2 := arr.Clone()
-len := arr2.Count
+m2 := m.Clone()
+len := m2.Count
 
 if (len == 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-val := arr.Delete("one")
+val := m.Delete("one")
 
 if (val == 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr.Clear()
-val := arr.Count
+m.Clear()
+val := m.Count
 
 if (val == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr.Set("one", 1, "two", 2, "three", 3)
-val := arr.Count
+m.Set("one", 1, "two", 2, "three", 3)
+val := m.Count
 
 if (val == 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr.Clear()
-arr.Set("one", 1, "two", 2, "three", 3, "fourbad")
-val := arr.Count
+m.Clear()
+m.Set("one", 1, "two", 2, "three", 3, "fourbad")
+val := m.Count
 
 if (val == 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr := Map()
-val := arr.Count
+m := Map()
+val := m.Count
 
 if (val == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-arr := Map("one", 1, "two", 2, "three", 3)
-val := arr.Count
+m := Map("one", 1, "two", 2, "three", 3)
+val := m.Count
 
 if (val == 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr := Map( ["one", 1, "two", 2, "three", 3] )
-val := arr.Count
+m := Map( ["one", 1, "two", 2, "three", 3] )
+val := m.Count
 
 if (val == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m1 := { "one" : 1, "two" : 2, "three" : 3 }
+m2 := { "four" : 4, "five" : 5, "six" : 6 }
+m3 := { "seven" : 7, "eight" : 8, "nine" : 9 }
+m := { (m1) : "mapone", (m2) : "maptwo", (m3) : "mapthree" }
+
+val := m.Count
+
+if (val == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m.Delete(m2)
+
+val := m.Count
+
+if (val == 2)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+val := m.Get(m1)
+
+if (val == "mapone")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+val := m.Get(m2, 123)
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+b := false
+
+try
+{
+	val := m.Get(m2)
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m.Default := 555
+
+val := m.Get(m2)
+
+if (val == 555)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (m.Has(m1))
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (!m.Has(m2))
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
