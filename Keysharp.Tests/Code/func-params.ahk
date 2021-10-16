@@ -52,7 +52,7 @@ If (z == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := 1
 y := 2
 z := 3
@@ -92,7 +92,7 @@ If (z == 33)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := 1
 y := 2
 z := 3
@@ -172,7 +172,7 @@ If (z == null)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := 1
 y := 2
 z := 3
@@ -192,7 +192,7 @@ If (z == null)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x := false
 
 func3(a, b, c := unset)
@@ -250,7 +250,7 @@ x := false
 
 func3(,,)
 
-If (x == true)
+If (x == false)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

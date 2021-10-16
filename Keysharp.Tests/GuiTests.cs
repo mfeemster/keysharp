@@ -54,7 +54,7 @@ namespace Keysharp.Tests
 				{
 					var wnd = WindowsAPI.FindWindow(null, title);
 
-					if (wnd != null && wnd.ToInt64() != 0)
+					if (wnd != IntPtr.Zero && wnd.ToInt64() != 0)
 					{
 						_ = WindowsAPI.SetForegroundWindow(wnd);
 						SendKeys.SendWait(" ");

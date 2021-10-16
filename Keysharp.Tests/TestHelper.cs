@@ -84,7 +84,7 @@ namespace Keysharp.Tests
 			{
 				func();
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				excthrown = true;
 			}
@@ -94,14 +94,14 @@ namespace Keysharp.Tests
 
 		public string RunScript(string source, string name, bool execute, bool exeout)
 		{
-			Compiler.Debug(Environment.CurrentDirectory);
+			Keysharp.Scripting.Script.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
 			var (domunits, domerrs) = ch.CreateDomFromFile(source);
 
 			if (domerrs.HasErrors)
 			{
 				foreach (CompilerError err in domerrs)
-					Compiler.Debug(err.ErrorText);
+					Keysharp.Scripting.Script.OutputDebug(err.ErrorText);
 
 				return string.Empty;
 			}
@@ -110,7 +110,7 @@ namespace Keysharp.Tests
 
 			if (exc is Exception e)
 			{
-				Compiler.Debug(e.Message);
+				Keysharp.Scripting.Script.OutputDebug(e.Message);
 				return string.Empty;
 			}
 
@@ -147,7 +147,7 @@ namespace Keysharp.Tests
 
 			if (compileexc != null)
 			{
-				Compiler.Debug(compileexc.Message);
+				Keysharp.Scripting.Script.OutputDebug(compileexc.Message);
 				return string.Empty;
 			}
 			else if (results == null)
@@ -193,7 +193,10 @@ namespace Keysharp.Tests
 						var program = CompilerHelper.compiledasm.GetType("Keysharp.Main.Program");
 						var main = program.GetMethod("Main");
 						var temp = new string[] { };
-						_ = main.Invoke(null, new object[] { temp });
+						var result = main.Invoke(null, new object[] { temp });
+
+						if (result is int i && i != 0)//This is for when an exception is thrown internally in the compiled program, the catch blocks make it return 1.
+							Console.Write("fail");
 					}
 					catch (Exception ex)
 					{
@@ -206,7 +209,8 @@ namespace Keysharp.Tests
 						_ = error.AppendLine();
 						_ = error.AppendLine(ex.StackTrace);
 						var msg = error.ToString();
-						Compiler.Debug(msg);//Will write to writer.
+						Keysharp.Scripting.Script.OutputDebug(msg);
+						Console.Write("fail");
 						Assert.IsTrue(false);
 					}
 					finally
