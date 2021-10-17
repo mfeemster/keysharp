@@ -9,6 +9,23 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		[Test, Category("Misc")]
+		public void MiscObject()
+		{
+			var a = Keysharp.Scripting.Script.Array(10, 20, 30);
+			var fo = a.GetMethod("Clear");
+			fo.Call();
+			Assert.AreEqual(0L, a.Length);
+			Assert.IsTrue((new KeysharpObject()).HasBase(new Any()));
+			Assert.IsTrue(TestScript("misc-object", true));
+		}
+
+		[Test, Category("Misc")]
+		public void MiscTimer()
+		{
+			Assert.IsTrue(TestScript("misc-timer", false));
+		}
+
+		[Test, Category("Misc")]
 		public void MiscIs()
 		{
 			var x = 1;

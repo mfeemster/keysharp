@@ -568,7 +568,10 @@ if (A_RegView == 64)
 else
 	FileAppend, fail, *
 
-; need to test with Menu() function here. TODO
+if (A_TrayMenu.Handle > 0)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
 
 if (A_IconHidden == 0)
 	FileAppend, pass, *

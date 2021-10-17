@@ -63,10 +63,40 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
+
+		if (A_LoopRegType == "REG_SZ")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "testval")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
 	}
 	else if (i == 1)
 	{
 		if (val = "ksdefval")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+		
+		if (A_LoopRegType == "REG_SZ")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest")
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
@@ -77,10 +107,40 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
+
+		if (A_LoopRegType == "KEY")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "ks_sub2")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
 	}
 	else if (i == 3)
 	{
 		if (val = [ 0xAA, 0xBB, 0xCC, 0xDD ])
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+		
+		if (A_LoopRegType == "REG_BINARY")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "bin1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2")
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
@@ -91,10 +151,40 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
+		
+		if (A_LoopRegType == "KEY")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "ks_sub1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
 	}
 	else if (i == 5)
 	{
 		if (val = [ "stringone", "stringtwo", "stringthree" ])
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+		
+		if (A_LoopRegType == "REG_MULTI_SZ")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1")
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
@@ -105,10 +195,40 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
+		
+		if (A_LoopRegType == "KEY")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "ks_sub1_sub1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
 	}
 	else if (i == 7)
 	{
 		if (val = 2)
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+		
+		if (A_LoopRegType == "REG_QWORD")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "qword1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1")
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
@@ -119,11 +239,25 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
+		
+		if (A_LoopRegType == "REG_DWORD")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegName == "dword1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
+			
+		if (A_LoopRegKey == "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1")
+			FileAppend, pass, *
+		else
+			FileAppend, fail, *
 	}
 
 	i++
 }
-
 
 RegDelete("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "testval")
 RegDelete("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "")
