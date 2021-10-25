@@ -7,7 +7,7 @@ if (arr = arr2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 if (arr == arr2)
 	FileAppend, fail, *
 else
@@ -42,6 +42,14 @@ if (len == 3)
 else
 	FileAppend, fail, *
 	
+arr.Length += 123
+len := arr.Length
+
+if (len == 126)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 arr := Array()
 
 arr.Push(10)
@@ -52,7 +60,7 @@ if (arr[1] = 10)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 arr.InsertAt(1, 100)
 
 if (arr[1] = 100)
@@ -101,23 +109,22 @@ if (arr[3] = 700)
 else
 	FileAppend, fail, *
 
-	/*
-if (arr[3] = 602)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
-if (arr[4] = 603)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
-if (arr[3] = 700)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	*/
-	
+; 
+; if (arr[3] = 602)
+; 	FileAppend, pass, *
+; else
+; 	FileAppend, fail, *
+; 	
+; if (arr[4] = 603)
+; 	FileAppend, pass, *
+; else
+; 	FileAppend, fail, *
+; 	
+; if (arr[3] = 700)
+; 	FileAppend, pass, *
+; else
+; 	FileAppend, fail, *
+
 arr := Array()
 
 arr.Push(10)
@@ -197,7 +204,7 @@ if (cap == 200)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 arr := Array(400, 500, 2, 1000, 10000)
 minin := arr.MinIndex()
 maxin := arr.MaxIndex()
@@ -229,6 +236,19 @@ arr.Clear()
 len := arr.Length
 
 if (len == 0)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+arr := [ "hello" ]
+x := arr[1] .= "world"
+
+if (arr[1] == "helloworld")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (x == "helloworld")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

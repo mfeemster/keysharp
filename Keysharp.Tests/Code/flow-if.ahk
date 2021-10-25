@@ -35,3 +35,10 @@ if (x == 1) {
 } else {
 	FileAppend, fail, *
 }
+
+arr := [123, 456, 789]
+
+if (arr) ; Objects are always considered true.
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

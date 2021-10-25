@@ -16,7 +16,7 @@ namespace Keysharp.Tests
 		public void DllCall()
 		{
 			var desktop = WindowsAPI.GetDesktopWindow();
-			var rect = new WindowsAPI.RECT();
+			var rect = new RECT();
 			var buf = Script.Buffer(16, 0);
 			_ = DllHelper.DllCall("user32.dll\\GetWindowRect", "ptr", desktop, "ptr", buf);
 			_ = WindowsAPI.GetWindowRect(desktop, out rect);

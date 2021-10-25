@@ -170,3 +170,24 @@ If ((x || y) = false)
 	FileAppend, fail, *
 else
 	FileAppend, pass, *
+
+A := "", B := False, C := 0, D := "String", E := 20 ; At least one operand is truthy. All operands up until D (including) will be evaluated
+x := A || B || C || D || ++E ; The first truthy operand is returned ("String"). E is not evaluated and is never incremented
+
+if (x == "String")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (E == 20)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+A := "", B := False, C := 0 ; All operands are falsey and will be evaluated
+x := A || B || C ; The last falsey operand is returned (0)
+
+if (x == 0)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

@@ -19,7 +19,7 @@ namespace Keysharp.Tests
 			//Directory.SetCurrentDirectory(dir);
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			WindowsAPI.SetProcessDPIAware();
+			Keysharp.Core.Window.SetProcessDPIAware();
 		}
 	}
 
@@ -84,6 +84,12 @@ namespace Keysharp.Tests
 
 		[Test, Category("BuiltInVars")]
 		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", false));
+
+		[Test, Category("BuiltInVars")]
+		public void CacheAllMethods() => Reflections.CacheAllMethods();
+
+		[Test, Category("BuiltInVars")]
+		public void CacheAllProperties() => Reflections.CacheAllProperties();
 
 		[Test, Category("BuiltInVars")]
 		public void Suspend() => Assert.IsTrue(TestScript("suspend", true));
