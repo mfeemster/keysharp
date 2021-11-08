@@ -1,7 +1,7 @@
 x := 0
 
 fo1 := FuncObj("TimerHandler")
-SetTimer(fo1, 1000)
+SetTimer(fo1, 100)
 
 TimerHandler()
 {
@@ -14,7 +14,7 @@ global
 	}
 }
 
-Sleep(6000)
+Sleep(1000)
 
 if (x == 5)
 	FileAppend, pass, *
@@ -33,11 +33,12 @@ global x
 
 }
 
-Sleep(3000)
+Sleep(2000)
 
 if (x == 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-ExitApp() ; Needed because it sees timer as a persistent function, so it opens the standard GUI.
+; For some reason, ExitApp() causes the unit test to think it failed. So you need to manually close the main window for this test for it to be considered a success.
+; ExitApp(0) ; Needed because it sees timer as a persistent function, so it opens the standard GUI.

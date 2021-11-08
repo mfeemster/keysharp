@@ -549,7 +549,7 @@ namespace Keysharp.Tests
 				{
 					var ptr = (byte*)buf.Ptr.ToPointer();
 
-					for (var i = 0; i < (int)buf.Size; i++)
+					for (var i = 0L; i < (long)buf.Size; i++)
 						ptr[i] = (byte)i;
 				}
 				//
@@ -562,31 +562,35 @@ namespace Keysharp.Tests
 					var p1 = (byte*)buf.Ptr.ToPointer();
 					var p2 = (byte*)buf2.Ptr.ToPointer();
 
-					for (var i = 0; i < (int)buf.Size; i++)
+					for (var i = 0L; i < (long)buf.Size; i++)
 					{
 						Assert.AreEqual(p1[i], p2[i]);
 						Assert.AreEqual(p1[i], i);
 						Assert.AreEqual(i, p2[i]);
 					}
 				}
-				//
-				f.Seek(0);
+			}
+
+			if (System.IO.File.Exists(filename))
+				System.IO.File.Delete(filename);
+
+			using (var f = Keysharp.Core.Disk.FileOpen(filename, "rw"))//Read/write buffers and arrays.
+			{
 				var arr = new Array(4);
 
-				for (var i = 0; i < (int)buf.Size; i++)
+				for (var i = 0; i < (long)arr.Count; i++)
 					arr.Push((byte)i);
 
-				f.RawRead(arr);
-				unsafe
-				{
-					var p2 = (byte*)buf2.Ptr.ToPointer();
+				var count = f.RawWrite(arr);
+				f.Seek(0);
+				var arr2 = new Array(4);
+				f.RawRead(arr2);
 
-					for (var i = 0; i < (int)buf.Size; i++)
-					{
-						Assert.AreEqual(arr[i + 1], p2[i]);//Array always expects a 1-based index.
-						Assert.AreEqual(arr[i + 1], i);
-						Assert.AreEqual(i, p2[i]);
-					}
+				for (var i = 1; i <= arr.Count; i++)
+				{
+					Assert.AreEqual(arr[i], arr2[i]);//Array always expects a 1-based index.
+					Assert.AreEqual(i - 1, arr[i]);
+					Assert.AreEqual(i - 1, arr2[i]);
 				}
 			}
 
@@ -732,7 +736,7 @@ namespace Keysharp.Tests
 			text = Disk.FileRead(dir, "m4 utf-8");
 			Assert.AreEqual("this", text);
 			var buf = Disk.FileRead(dir, "m4 raw");
-			var buf2 = new byte[] { (int)'t', (int)'h', (int)'i', (int)'s' };
+			var buf2 = new Keysharp.Core.Array(new object[] { (int)'t', (int)'h', (int)'i', (int)'s' });
 			Assert.AreEqual(buf2, buf);
 			Assert.IsTrue(TestScript("file-fileread", true));
 		}

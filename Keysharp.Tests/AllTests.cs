@@ -30,9 +30,6 @@ namespace Keysharp.Tests
 		{
 		}
 
-		[Test]
-		public void SimplePass() => Assert.IsTrue(TestScript("pass", true));
-
 		[Test, Category("BuiltInVars")]
 		public void PropsSpecialChars() => Assert.IsTrue(TestScript("props-special-chars", true));
 

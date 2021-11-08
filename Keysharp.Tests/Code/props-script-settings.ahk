@@ -400,7 +400,7 @@ else
 	FileAppend, fail, *
 
 SetWinDelay, 200
-
+	
 if (A_WinDelay == 200) 
 	FileAppend, pass, *
 else
@@ -438,7 +438,7 @@ if (A_MouseDelayPlay == -1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+								
 SetMouseDelay, 300, Play
 
 if (A_MouseDelay == 200) 

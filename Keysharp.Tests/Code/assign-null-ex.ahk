@@ -1,12 +1,24 @@
 ;#Include %A_ScriptDir%/header.ahk
-x := 
+x := ""
 
-If x != 
+If (x != "")
 	FileAppend, fail, *
 else
 	FileAppend, pass, *
 	
-If x = 
+If (x = "")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x :=
+
+If (x != "")
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+If (x = "")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

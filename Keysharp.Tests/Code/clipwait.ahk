@@ -2,18 +2,18 @@
 
 ; Clipboard should have been set before this test script is run.
 
-ErrorLevel = 0
+A_ErrorLevel := 0
 ClipWait, , true
 
-if (ErrorLevel = 0) ; Waited for any type indefinitely and successfully detected clipboard data because a bitmap was placed on the clipboard before this script was run.
+if (A_ErrorLevel = 0) ; Waited for any type indefinitely and successfully detected clipboard data because a bitmap was placed on the clipboard before this script was run.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-ErrorLevel = 0
+A_ErrorLevel := 0
 ClipWait, 0.5
 
-if (ErrorLevel = 1) ; Waited specifically for text/file data for 0.5s and did not detect that kind of clipboard data because a bitmap was placed on the clipboard before this script was run.
+if (A_ErrorLevel = 1) ; Waited specifically for text/file data for 0.5s and did not detect that kind of clipboard data because a bitmap was placed on the clipboard before this script was run.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

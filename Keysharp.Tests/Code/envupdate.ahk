@@ -2,7 +2,7 @@
 
 EnvUpdate
 
-if (ErrorLevel == 0) 
+if (A_ErrorLevel == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

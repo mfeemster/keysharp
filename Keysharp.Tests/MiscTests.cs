@@ -9,6 +9,9 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		[Test, Category("Misc")]
+		public void SimplePass() => Assert.IsTrue(TestScript("misc-pass", true));
+
+		[Test, Category("Misc")]
 		public void MiscObject()
 		{
 			var a = Keysharp.Scripting.Script.Array(10, 20, 30);

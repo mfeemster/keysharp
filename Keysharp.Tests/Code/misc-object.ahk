@@ -6,6 +6,11 @@ if (HasMethod(a, "Contains"))
 else
 	FileAppend, fail, *	
 
+if (HasMethod(a, "CoNtAiNs")) ; test case insensitive once.
+	FileAppend, pass, *
+else
+	FileAppend, fail, *	
+
 if (HasMethod(a, "Clear"))
 	FileAppend, pass, *
 else
@@ -27,6 +32,11 @@ else
 	FileAppend, fail, *
 
 if (a.HasMethod("Contains"))
+	FileAppend, pass, *
+else
+	FileAppend, fail, *	
+	
+if (a.HasMethod("CoNtAiNs")) ; test case insensitive once.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *	

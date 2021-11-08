@@ -37,6 +37,9 @@ namespace Keysharp.Tests
 		public void CompareCaseEx() => Assert.IsTrue(TestScript("string-compare-case-ex", true));
 
 		[Test, Category("String")]
+		public void Escape() => Assert.IsTrue(TestScript("string-escape", true));
+
+		[Test, Category("String")]
 		public void ConcatEx() => Assert.IsTrue(TestScript("string-concat-ex", true));
 
 		[Test, Category("String")]

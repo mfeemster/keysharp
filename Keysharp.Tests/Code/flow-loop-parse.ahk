@@ -127,7 +127,7 @@ If (z == "heo")
 else
 	FileAppend, fail, *
 	
-x := """first field"",SecondField,""the word """"special"""" is quoted literally"",,""last field, has literal comma"""
+x := "`"first field`",SecondField,`"the word `"`"special`"`" is quoted literally`",,`"last field, has literal comma`""
 z := ""
 
 Loop Parse x, "csv"
@@ -135,7 +135,7 @@ Loop Parse x, "csv"
 	z .= A_LoopField
 }
 
-If (z == "first fieldSecondFieldthe word ""special"" is quoted literallylast field, has literal comma")
+If (z == "first fieldSecondFieldthe word `"special`" is quoted literallylast field, has literal comma")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

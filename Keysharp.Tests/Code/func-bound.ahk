@@ -4,9 +4,9 @@ z := 0
 
 func(a, b, c)
 {
-global x := a
-global y := b
-global z := c
+	global x := a
+	global y := b
+	global z := c
 }
 
 fo := FuncObj("func")

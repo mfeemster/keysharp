@@ -8,9 +8,6 @@ namespace Keysharp.Tests
 		public void AssignDynVarEx() => Assert.IsTrue(TestScript("assign-dyn-var-ex", false));//Dynamic variables only work as global statics, not function variables.
 
 		[Test, Category("Assign")]
-		public void AssignEmpty() => Assert.IsTrue(TestScript("assign-empty", true));
-
-		[Test, Category("Assign")]
 		public void AssignEmptyEx() => Assert.IsTrue(TestScript("assign-empty-ex", true));
 
 		[Test, Category("Assign")]
@@ -23,13 +20,7 @@ namespace Keysharp.Tests
 		public void AssignInt() => Assert.IsTrue(TestScript("assign-int", true));
 
 		[Test, Category("Assign")]
-		public void AssignNull() => Assert.IsTrue(TestScript("assign-null", true));
-
-		[Test, Category("Assign")]
 		public void AssignNullEx() => Assert.IsTrue(TestScript("assign-null-ex", true));
-
-		[Test, Category("Assign")]
-		public void AssignQuoted() => Assert.IsTrue(TestScript("assign-quoted", true));
 
 		[Test, Category("Assign")]
 		public void AssignQuotedEx() => Assert.IsTrue(TestScript("assign-quoted-ex", true));
@@ -60,5 +51,8 @@ namespace Keysharp.Tests
 
 		[Test, Category("Assign")]
 		public void AssignNumerics() => Assert.IsTrue(TestScript("assign-numerics", true));
+
+		[Test, Category("Assign")]
+		public void AssignMultiline() => Assert.IsTrue(TestScript("assign-multiline", false));
 	}
 }

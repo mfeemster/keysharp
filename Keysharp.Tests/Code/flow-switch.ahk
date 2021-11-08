@@ -155,7 +155,7 @@ else
 
 x := 1
 z := ""
-y :=
+y := ""
 
 switch
 {
@@ -173,7 +173,7 @@ else
 	FileAppend, fail, *
 
 x := 123
-z :=
+z := ""
 
 switch x, 1 ; this is a comment
 {
