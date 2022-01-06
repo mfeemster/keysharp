@@ -485,8 +485,6 @@ if (IsAlnum(m) == 0)
 else
 	FileAppend, fail, *
 
-
-
 if (IsSpace(1) == 0)
 	FileAppend, pass, *
 else

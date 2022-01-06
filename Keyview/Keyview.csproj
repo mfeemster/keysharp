@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <StartupObject>Keyview.Program</StartupObject>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
+    <AssemblyVersion>0.0.0.1</AssemblyVersion>
+    <FileVersion>0.0.0.1</FileVersion>
+    <Version>0.0.0.1</Version>
+    <Authors>Matt Feemster</Authors>
+    <Description>A viewer which shows the C# code that is generated from compiling Keysharp script code</Description>
+    <Company>Keysharp</Company>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>..\bin\debug\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>..\bin\release\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

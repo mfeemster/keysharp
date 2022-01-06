@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Keysharp": {
+      "commandName": "Project",
+      "commandLineArgs": "-codeout -exeout -CP0 .\\assign.ahk"
+    }
+  }
+}

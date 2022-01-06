@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Keysharp.OutputTest": {
+      "commandName": "Project",
+      "commandLineArgs": "/force /restart /ErrorStdOut /Debug /include \"IncFile.ahk\""
+    }
+  }
+}

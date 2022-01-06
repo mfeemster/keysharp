@@ -4,3 +4,14 @@
 
 /Keysharp.Tests/obj/Release
 /Keysharp.Tests/obj
+/.vs/Keysharp
+/bin
+/Keysharp/obj
+/Keysharp.Core/obj
+/Keysharp.Forms/bin
+/Keysharp.Forms/obj
+/Keysharp.OutputTest/obj
+/Keysharp/Keysharp.csproj.user
+*.user
+/Keyview/obj
+/Keyview/bin

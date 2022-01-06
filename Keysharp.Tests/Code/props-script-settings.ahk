@@ -109,77 +109,77 @@ else
 SetTitleMatchMode, 2 ; Reset it back for the function version of this test.
 SetTitleMatchMode, fast
 
-if (A_DetectHiddenWindows == 0) 
+if (!A_DetectHiddenWindows) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
 DetectHiddenWindows, 0
 
-if (A_DetectHiddenWindows == 0) 
+if (!A_DetectHiddenWindows)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, 1
 
-if (A_DetectHiddenWindows == 1) 
+if (A_DetectHiddenWindows) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, Off
 
-if (A_DetectHiddenWindows == 0) 
+if (!A_DetectHiddenWindows)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, On
 
-if (A_DetectHiddenWindows == 1) 
+if (A_DetectHiddenWindows) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, dummy
 
-if (A_DetectHiddenWindows == 1) 
+if (A_DetectHiddenWindows) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenWindows, 0 ; Reset it back for the function version of this test.
 
-if (A_DetectHiddenText == 0) 
+if (!A_DetectHiddenText) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenText, 0
 
-if (A_DetectHiddenText == 0) 
+if (!A_DetectHiddenText) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
 DetectHiddenText, 1
 
-if (A_DetectHiddenText == 1) 
+if (A_DetectHiddenText) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenText, Off
 
-if (A_DetectHiddenText == 0) 
+if (!A_DetectHiddenText) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DetectHiddenText, On
 
-if (A_DetectHiddenText == 1) 
+if (A_DetectHiddenText) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

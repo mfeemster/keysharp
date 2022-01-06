@@ -170,7 +170,7 @@ namespace Keysharp.Tests
 			//
 			Assert.IsTrue(IsTime("2021") == 1);
 			Assert.IsTrue(IsTime("202106") == 1);
-			Assert.IsTrue(IsTime("202199") == 0);
+			Assert.IsTrue(IsTime("202199") == 0);//Unrepresentable
 			Assert.IsTrue(IsTime("20211201") == 1);
 			Assert.IsTrue(IsTime("20211299") == 0);
 			Assert.IsTrue(IsTime("2021121513") == 1);

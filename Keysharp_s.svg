@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   data-name="Layer 2"
+   viewBox="0 0 32 40"
+   x="0px"
+   y="0px"
+   version="1.1"
+   id="svg2144"
+   sodipodi:docname="Keysharp_s.svg"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   inkscape:export-filename="C:\D\Dev\keysharp\Keysharp_s.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
+  <metadata
+     id="metadata2150">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>24</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2148" />
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="3840"
+     inkscape:window-height="2014"
+     id="namedview2146"
+     showgrid="false"
+     inkscape:zoom="1"
+     inkscape:cx="13.857143"
+     inkscape:cy="20"
+     inkscape:window-x="-12"
+     inkscape:window-y="-12"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2144" />
+  <title
+     id="title2136">24</title>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:48.343px;line-height:1;font-family:'Microsoft Sans Serif';-inkscape-font-specification:'Microsoft Sans Serif';display:inline;fill:#94e06c;stroke-width:2.26608"
+     x="-73.930336"
+     y="135.17293"
+     id="text2719"
+     transform="matrix(0.83508105,-0.0094849,0,1.1974885,0,0)"
+     inkscape:export-xdpi="96"
+     inkscape:export-ydpi="96"><tspan
+       sodipodi:role="line"
+       id="tspan2717"
+       x="-73.930336"
+       y="135.17293"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:217.543px;line-height:1;font-family:'Microsoft Sans Serif';-inkscape-font-specification:'Microsoft Sans Serif';fill:#94e06c;stroke-width:2.26608"><tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Microsoft Sans Serif';-inkscape-font-specification:'Microsoft Sans Serif';fill:#94e06c;stroke-width:2.26608"
+   id="tspan2721">{  </tspan> <tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Microsoft Sans Serif';-inkscape-font-specification:'Microsoft Sans Serif';fill:#94e06c;stroke-width:2.26608"
+   id="tspan2727">}</tspan></tspan></text>
+  <path
+     inkscape:export-ydpi="96"
+     inkscape:export-xdpi="96"
+     id="path2831"
+     d="M 79.76535,-24.823011 C 57.09064,-25.831069 33.87452,-16.758043 19.31613,1.2510886 6.19943,16.578607 0.88717,37.315114 2.4255,57.343053 2.1488,81.180666 14.22331,105.25299 35.33434,116.55085 c 18.46906,11.38938 41.21658,12.25092 59.77866,23.22224 9.12764,6.77513 10.44919,22.10863 3.61914,30.88521 -11.07725,12.37855 -29.4509,10.57716 -44.17187,8.21899 -18.30532,-4.49193 -34.32717,-15.52521 -47.53711,-28.84485 -5.58314,-4.06416 -7.43908,1.48679 -6.16602,6.86735 0,16.8131 0,33.6262 0,50.4393 21.12218,11.59716 44.68961,20.0748 69.0367,18.30236 20.76087,0.62354 42.10018,-6.05712 56.98869,-21.20808 16.38758,-16.00085 24.2613,-39.68139 22.34465,-62.54829 0.46552,-17.48056 -4.65517,-35.65807 -17.84074,-47.601241 C 115.11013,76.704804 90.27246,73.152824 68.88407,65.361055 60.09706,62.567607 48.66604,57.686562 49.11495,46.464455 46.42119,32.18741 60.03759,20.592444 73.22433,20.570971 c 13.19061,-1.406958 26.67416,0.360806 38.40971,6.932953 9.61899,4.867647 18.69636,11.75645 26.10396,19.371381 7.95266,2.9854 4.37422,-7.079936 5.11914,-11.920609 0,-14.823686 0,-29.6473711 0,-44.4710572 -19.78909,-9.2836668 -41.0532,-16.1080378 -63.09179,-15.3066498 z"
+     style="fill:#af83f8;stroke-width:1.00965;paint-order:markers fill stroke" />
+</svg>
