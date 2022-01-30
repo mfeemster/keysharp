@@ -177,6 +177,32 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return pos;
 		}
 
+		public static int FindFirstNotOf(this string source, string chars, int offset = 0)
+		{
+			if (source.Length == 0) return -1;
+
+			if (chars.Length == 0) return -1;
+
+			for (var i = offset; i < source.Length; i++)
+				if (chars.IndexOf(source[i]) == -1)
+					return i;
+
+			return -1;
+		}
+
+		public static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
+		{
+			if (source.Length == 0) return -1;
+
+			if (chars.Length == 0) return -1;
+
+			for (var i = offset; i < source.Length; i++)
+				if (!chars.Contains(source[i]))
+					return i;
+
+			return -1;
+		}
+
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/141045/how-do-i-replace-the-first-instance-of-a-string-in-net
 		/// </summary>

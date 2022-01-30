@@ -138,7 +138,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static string sendKeyChars = "^+!#{}";
 		internal static int thisHotkeyModifiersLR;
 		internal bool abortArraySend;
-		internal int eventCount, maxEvents;
+		internal int maxEvents;
 		internal DateTime lastPeekTime;
 		internal int modifiersLRCtrlAltDelMask;
 		internal int modifiersLRLogical;

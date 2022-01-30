@@ -430,31 +430,31 @@ namespace Keysharp.Core.Windows
 				Keysharp.Core.Flow.SleepWithoutInterruption(mouseDelay);
 		}
 
-		internal ResultType ExpandEventArray()
-		{
-			if (abortArraySend) // A prior call failed (might be impossible).  Avoid malloc() in this case.
-				return ResultType.Fail;
+		//internal ResultType ExpandEventArray()
+		//{
+		//  if (abortArraySend) // A prior call failed (might be impossible).  Avoid malloc() in this case.
+		//      return ResultType.Fail;
 
-			// SendInput() appears to be limited to 5000 chars (10000 events in array), at least on XP.  This is
-			// either an undocumented SendInput limit or perhaps it's due to the system setting that determines
-			// how many messages can get backlogged in each thread's msg queue before some start to get dropped.
-			// Note that SendInput()'s return value always seems to indicate that all the characters were sent
-			// even when the ones beyond the limit were clearly never received by the target window.
-			// In any case, it seems best not to restrict to 5000 here in case the limit can vary for any reason.
-			// The 5000 limit is documented in the help file.
-			try
-			{
-				eventSi.Add(new INPUT());
-				eventPb.Add(new PlaybackEvent());
-				maxEvents = eventSi.Count;
-				return ResultType.Ok;
-			}
-			catch
-			{
-				abortArraySend = true;//Usually better to send nothing rather than partial.
-				return ResultType.Fail;//Leave sEventSI and sMaxEvents in their current valid state, to be freed by CleanupEventArray().
-			}
-		}
+		//  // SendInput() appears to be limited to 5000 chars (10000 events in array), at least on XP.  This is
+		//  // either an undocumented SendInput limit or perhaps it's due to the system setting that determines
+		//  // how many messages can get backlogged in each thread's msg queue before some start to get dropped.
+		//  // Note that SendInput()'s return value always seems to indicate that all the characters were sent
+		//  // even when the ones beyond the limit were clearly never received by the target window.
+		//  // In any case, it seems best not to restrict to 5000 here in case the limit can vary for any reason.
+		//  // The 5000 limit is documented in the help file.
+		//  try
+		//  {
+		//      eventSi.Add(new INPUT());
+		//      eventPb.Add(new PlaybackEvent());
+		//      maxEvents = eventSi.Count;
+		//      return ResultType.Ok;
+		//  }
+		//  catch
+		//  {
+		//      abortArraySend = true;//Usually better to send nothing rather than partial.
+		//      return ResultType.Fail;//Leave sEventSI and sMaxEvents in their current valid state, to be freed by CleanupEventArray().
+		//  }
+		//}
 
 		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
 		{
@@ -574,21 +574,13 @@ namespace Keysharp.Core.Windows
 
 		internal override void InitEventArray(int maxEvents, int modifiersLR)
 		{
-			eventSi = new List<INPUT>(maxEvents);
-			eventPb = new List<PlaybackEvent>(maxEvents);
-
-			for (var i = 0; i < eventSi.Count; i++)
-			{
-				eventSi.Add(new INPUT());
-				eventPb.Add(new PlaybackEvent());
-			}
-
+			eventSi.Clear();
+			eventPb.Clear();
 			base.maxEvents = maxEvents;
 			eventModifiersLR = modifiersLR;
 			sendInputCursorPos.X = CoordUnspecified;
 			sendInputCursorPos.Y = CoordUnspecified;
 			hooksToRemoveDuringSendInput = 0;
-			eventCount = 0;
 			abortArraySend = false; // If KeyEvent() ever sets it to true, that allows us to send nothing at all rather than a partial send.
 			firstCallForThisEvent = true;
 			// The above isn't a local static inside PlaybackProc because PlaybackProc might get aborted in the
@@ -728,7 +720,7 @@ namespace Keysharp.Core.Windows
 					// for the other modes: because dragging the title bar of one of this thread's windows with a
 					// remap such as F1::LButton doesn't work if that remap uses SendPlay internally (the window
 					// gets stuck to the mouse cursor).
-					if ((Accessors.SendMode == SendModes.Event || eventCount == 0) // See above.
+					if ((Accessors.SendMode == SendModes.Event || eventSi.Count == 0) // See above.
 							&& (eventType == KeyEventTypes.KeyDown || (eventType == KeyEventTypes.KeyUp && (workaroundVK != 0)))) // i.e. this is a down-only event or up-only event.
 					{
 						// v1.0.40.01: The following section corrects misbehavior caused by a thread sending
@@ -1185,9 +1177,9 @@ namespace Keysharp.Core.Windows
 					// Skip over any delays that are present to discover if there is a next event.
 					int u;
 
-					for (u = currentEvent; u < eventCount && eventPb[u].messagetype == 0; ++u) ;
+					for (u = currentEvent; u < eventPb.Count && eventPb[u].messagetype == 0; ++u) ;
 
-					if (u == eventCount) // No more events.
+					if (u == eventPb.Count) // No more events.
 					{
 						// MSDN implies in the following statement that it's acceptable (and perhaps preferable in
 						// the case of a playback hook) for the hook to unhook itself: "The hook procedure can be in the
@@ -1267,8 +1259,6 @@ namespace Keysharp.Core.Windows
 				PutKeybdEventIntoArray(MOD_LCONTROL, VK_CONTROL, SC_LCONTROL, eventFlags, extraInfo); // Recursive call to self.
 
 			// Above must be done prior to the capacity check below because above might add a new array item.
-			if (eventCount == maxEvents && ExpandEventArray() == ResultType.Fail)//Array's capacity needs expanding.
-				return;
 
 			// Keep track of the predicted modifier state for use in other places:
 			if (key_up)
@@ -1278,18 +1268,19 @@ namespace Keysharp.Core.Windows
 
 			if (Accessors.SendMode == SendModes.Input)
 			{
-				var this_event = eventSi[eventCount];//For performance and convenience.
-				this_event.type = WindowsAPI.INPUT_KEYBOARD;
-				this_event.i.k.wVk = (ushort)vk;
-				this_event.i.k.wScan = (ushort)((eventFlags & WindowsAPI.KEYEVENTF_UNICODE) != 0 ? sc : sc & 0xFF);
-				this_event.i.k.dwFlags = eventFlags;
-				this_event.i.k.dwExtraInfo = extraInfo; // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
-				this_event.i.k.time = 0; // Let the system provide its own timestamp, which might be more accurate for individual events if this will be a very long SendInput.
+				var thisEvent = new INPUT();
+				thisEvent.type = WindowsAPI.INPUT_KEYBOARD;
+				thisEvent.i.k.wVk = (ushort)vk;
+				thisEvent.i.k.wScan = (ushort)((eventFlags & WindowsAPI.KEYEVENTF_UNICODE) != 0 ? sc : sc & 0xFF);
+				thisEvent.i.k.dwFlags = eventFlags;
+				thisEvent.i.k.dwExtraInfo = extraInfo; // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
+				thisEvent.i.k.time = 0; // Let the system provide its own timestamp, which might be more accurate for individual events if this will be a very long SendInput.
+				eventSi.Add(thisEvent);
 				hooksToRemoveDuringSendInput |= HookKeyboard; // Presence of keyboard hook defeats uninterruptibility of keystrokes.
 			}
 			else // Playback hook.
 			{
-				var thisEvent = eventPb[eventCount];  // For performance and convenience.
+				var thisEvent = new PlaybackEvent();
 
 				if (vk == 0 && sc == 0)//Caller is signaling that aExtraInfo contains a delay/sleep event.
 				{
@@ -1327,9 +1318,9 @@ namespace Keysharp.Core.Windows
 					thisEvent.scvk.vk = (byte)vk;
 					thisEvent.scvk.sc = (ushort)sc; // Don't omit the extended-key-bit because it is used later on.
 				}
-			}
 
-			++eventCount;
+				eventPb.Add(thisEvent);
+			}
 		}
 
 		/// <summary>
@@ -1343,12 +1334,9 @@ namespace Keysharp.Core.Windows
 		/// <param name="y"></param>
 		internal void PutMouseEventIntoArray(uint eventFlags, uint data, int x, int y)
 		{
-			if (eventCount == maxEvents && ExpandEventArray() == ResultType.Fail) // Array's capacity needs expanding.
-				return;
-
 			if (Accessors.SendMode == SendModes.Input)
 			{
-				var thisEvent = eventSi[eventCount];  // For performance and convenience.
+				var thisEvent = new INPUT();// For performance and convenience.
 				thisEvent.type = WindowsAPI.INPUT_MOUSE;
 				thisEvent.i.m.dx = (x == CoordUnspecified) ? 0 : x; // v1.0.43.01: Must be zero if no change in position is
 				thisEvent.i.m.dy = (y == CoordUnspecified) ? 0 : y; // desired (fixes compatibility with certain apps/games).
@@ -1356,13 +1344,14 @@ namespace Keysharp.Core.Windows
 				thisEvent.i.m.mouseData = data;
 				thisEvent.i.m.dwExtraInfo = KeyIgnoreLevel((uint)Accessors.A_SendLevel); // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
 				thisEvent.i.m.time = 0; // Let the system provide its own timestamp, which might be more accurate for individual events if this will be a very long SendInput.
+				eventSi.Add(thisEvent);
 				hooksToRemoveDuringSendInput |= HookMouse; // Presence of mouse hook defeats uninterruptibility of mouse clicks/moves.
 			}
 			else // Playback hook.
 			{
 				// Note: Delay events (sleeps), which are supported in playback mode but not SendInput, are always inserted
 				// via PutKeybdEventIntoArray() rather than this function.
-				var thisEvent = eventPb[eventCount];  // For performance and convenience.
+				var thisEvent = new PlaybackEvent();
 
 				// Determine the type of event specified by caller, but also omit MOUSEEVENTF_MOVE so that the
 				// follow variations can be differentiated:
@@ -1411,9 +1400,9 @@ namespace Keysharp.Core.Windows
 
 				if ((eventFlags & MsgOffsetMouseMove) != 0) // Caller wants this event marked as a movement relative to cursor's current position.
 					thisEvent.messagetype |= MsgOffsetMouseMove;
-			}
 
-			++eventCount;
+				eventPb.Add(thisEvent);
+			}
 		}
 
 		/// <summary>
@@ -1502,6 +1491,9 @@ namespace Keysharp.Core.Windows
 		/// <param name="modsDuringSend"></param>
 		internal override void SendEventArray(ref int finalKeyDelay, int modsDuringSend)
 		{
+			if (eventSi.Count == 0)
+				return;
+
 			if (Accessors.SendMode == SendModes.Input)
 			{
 				// Remove hook(s) temporarily because the presence of low-level (LL) keybd hook completely disables
@@ -1524,7 +1516,7 @@ namespace Keysharp.Core.Windows
 					Keysharp.Scripting.Script.HookThread.AddRemoveHooks((HookType)((int)activeHooks & ~hooksToRemoveDuringSendInput), true);
 
 				//          _ = WindowsAPI.SendInput((uint)len, inputs, Marshal.SizeOf(typeof(INPUT)));
-				SendInput((uint)eventCount, eventSi.ToArray(), Marshal.SizeOf(typeof(INPUT))); // Must call dynamically-resolved version for Win95/NT compatibility.
+				SendInput((uint)eventSi.Count, eventSi.ToArray(), Marshal.SizeOf(typeof(INPUT))); // Must call dynamically-resolved version for Win95/NT compatibility.
 
 				// The return value is ignored because it never seems to be anything other than sEventCount, even if
 				// the Send seems to partially fail (e.g. due to hitting 5000 event maximum).
@@ -1638,8 +1630,8 @@ namespace Keysharp.Core.Windows
 			// MSDN: When an application sees a [system-generated] WM_CANCELJOURNAL message, it can assume
 			// two things: the user has intentionally cancelled the journal record or playback mode,
 			// and the system has already unhooked any journal record or playback hook procedures.
-			if (eventPb[eventCount - 1].messagetype == 0) // Playback hook can't do the final delay, so we do it here.
-				finalKeyDelay = (int)eventPb[eventCount - 1].time_to_wait;// Don't do delay right here because the delay would be put into the array instead.
+			if (eventPb.Count > 0 && eventPb[eventPb.Count - 1].messagetype == 0) // Playback hook can't do the final delay, so we do it here.
+				finalKeyDelay = (int)eventPb[eventPb.Count - 1].time_to_wait;// Don't do delay right here because the delay would be put into the array instead.
 
 			// GetModifierLRState(true) is not done because keystrokes generated by the playback hook
 			// aren't really keystrokes in the sense that they affect global key state or modifier state.
@@ -1867,7 +1859,7 @@ namespace Keysharp.Core.Windows
 				// But Send {Blind}{LControl down} will generate the extra events even if ctrl already down.
 				sub = keys.Substring(6);
 
-				for (i = 0; sub[i] != '}'; ++i)
+				for (i = 0; i < sub.Length && sub[i] != '}'; ++i)
 				{
 					switch (sub[i])
 					{
@@ -1905,7 +1897,7 @@ namespace Keysharp.Core.Windows
 				// being considerably faster than SendPlay, especially for long replacements when the CPU is under
 				// heavy load.
 				if (ht.SystemHasAnotherKeybdHook() // This function has been benchmarked to ensure it doesn't yield our timeslice, etc.  200 calls take 0ms according to tick-count, even when CPU is maxed.
-						|| ((sendRaw == SendRawModes.NotRaw) && ht.SystemHasAnotherMouseHook() && sub.StartsWith("{Click", StringComparison.OrdinalIgnoreCase))) // Ordered for short-circuit boolean performance.  v1.0.43.09: Fixed to be strcasestr vs. !strcasestr
+						|| ((sendRaw == SendRawModes.NotRaw) && ht.SystemHasAnotherMouseHook() && sub.Contains("{Click", StringComparison.OrdinalIgnoreCase))) // Ordered for short-circuit boolean performance.  v1.0.43.09: Fixed to be strcasestr vs. !strcasestr
 				{
 					// Need to detect in advance what type of array to build (for performance and code size).  That's why
 					// it done this way, and here are the comments about it:
@@ -2125,7 +2117,7 @@ namespace Keysharp.Core.Windows
 			// because otherwise lowercase letters would come through as uppercase and vice versa.
 			// Remember that apps like MS Word have an auto-correct feature that might make it
 			// wrongly seem that the turning off of Capslock below needs a Sleep(0) to take effect.
-			ToggleValueType priorCapslockState = (long)Accessors.A_StoreCapsLockMode != 0 && !inBlindMode && sendRaw != SendRawModes.RawText
+			ToggleValueType priorCapslockState = (bool)Accessors.A_StoreCapsLockMode && !inBlindMode && sendRaw != SendRawModes.RawText
 												 ? ToggleKeyState(VK_CAPITAL, ToggleValueType.Off)
 												 : ToggleValueType.Invalid; // In blind mode, don't do store capslock (helps remapping and also adds flexibility).
 			// sSendMode must be set only after setting Capslock state above, because the hook method
@@ -2138,9 +2130,7 @@ namespace Keysharp.Core.Windows
 			if (Accessors.SendMode != SendModes.Event) // Build an array.  We're also responsible for setting Accessors.SendMode to SM_EVENT prior to returning.
 			{
 				maxEvents = Accessors.SendMode == SendModes.Input ? MaxInitialEventsSI : MaxInitialEventsPB;
-				// _alloca() is used to avoid the overhead of malloc/free (99% of Sends will thus fit in stack memory).
-				// _alloca() never returns a failure code, it just raises an exception (e.g. stack overflow).
-				InitEventArray(maxEvents, modsCurrent);//This might be expensive to allocate every time.//TODO
+				InitEventArray(maxEvents, modsCurrent);
 			}
 
 			var blockinputPrev = Keyboard.blockInput;
@@ -2161,7 +2151,6 @@ namespace Keysharp.Core.Windows
 			var keyTextLength = 0;
 			var keyNameLength = 0;
 			int endPos, spacePos;
-			var nextWord = "";
 			char oldChar;
 			var keyDownType = KeyDownTypes.Temp;
 			var eventType = KeyEventTypes.KeyDown;
@@ -2215,32 +2204,35 @@ namespace Keysharp.Core.Windows
 
 						case '{':
 						{
-							sub = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab); // v1.0.43: Skip leading whitespace inside the braces to be more flexible.
-
-							//Switched the order of this from the original to be after the trim, so the indices are correct.
-							if ((endPos = sub.IndexOf('}', 1)) == -1) // Ignore it and due to rarity, don't reset mods_for_next_key.
+							if ((endPos = sub.IndexOf('}', keyIndex + 1)) == -1) // Ignore it and due to rarity, don't reset mods_for_next_key.
 								continue; // This check is relied upon by some things below that assume a '}' is present prior to the terminator.
 
+							keyIndex = sub.FindFirstNotOf(Keysharp.Core.Core.SpaceTab, 1);
+
+							//sub = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab); // v1.0.43: Skip leading whitespace inside the braces to be more flexible.
+
 							//if (   (key_text_length = (uint)(sub.Length - end_pos)) == 0   )
-							if ((keyTextLength = endPos) == 0)
+							if ((keyTextLength = (endPos - keyIndex)) == 0)
 							{
-								if (sub[endPos + 1] == '}')
+								var lenok = sub.Length > endPos + 1;
+
+								if (lenok && sub[endPos + 1] == '}')
 								{
 									// The literal string "{}}" has been encountered, which is interpreted as a single "}".
 									++endPos;
 									keyTextLength = 1;
 								}
-								else if (Strings.IsSpaceOrTab(sub[endPos + 1])) // v1.0.48: Support "{} down}", "{} downtemp}" and "{} up}".
+								else if (lenok && Strings.IsSpaceOrTab(sub[endPos + 1])) // v1.0.48: Support "{} down}", "{} downtemp}" and "{} up}".
 								{
-									nextWord = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);
+									var nextWord = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);
 
 									if (nextWord.StartsWith("Down", StringComparison.OrdinalIgnoreCase) // "Down" or "DownTemp" (or likely enough).
 											|| nextWord.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
 									{
-										if ((endPos = nextWord.IndexOf('}')) == -1)//See comments at similar section above.
+										if ((endPos = sub.IndexOf('}')) == -1)//See comments at similar section above.
 											continue;
 
-										keyTextLength = endPos; // This result must be non-zero due to the checks above.
+										keyTextLength = endPos - keyIndex; // This result must be non-zero due to the checks above.
 									}
 									else
 										goto bracecaseend;  // The loop's ++aKeys will now skip over the '}', ignoring it.
@@ -2249,14 +2241,17 @@ namespace Keysharp.Core.Windows
 									goto bracecaseend;  // The loop's ++aKeys will now skip over the '}', ignoring it.
 							}
 
-							if (sub.StartsWith("Click", StringComparison.OrdinalIgnoreCase))
+							var subspan = sub.AsSpan(keyIndex);
+
+							if (subspan.StartsWith("Click", StringComparison.OrdinalIgnoreCase))
 							{
 								//end_pos = sub.Length;// '\0';  // Temporarily terminate the string here to omit the closing brace from consideration below.
-								ht.ParseClickOptions(sub.Substring(5).TrimStart(Keysharp.Core.Core.SpaceTab), ref clickX, ref clickY, ref vk
+								ht.ParseClickOptions(subspan.Slice(5).TrimStart(Keysharp.Core.Core.SpaceTab).ToString(), ref clickX, ref clickY, ref vk
 													 , ref eventType, ref repeatCount, ref moveOffset);
 
 								//end_pos = '}';  // Undo temp termination.
 
+								//Mixing parsing with the sending actions seems like a pretty terrible design, so should separate later.//TODO
 								if (repeatCount < 1) // Allow {Click 100, 100, 0} to do a mouse-move vs. click (but modifiers like ^{Click..} aren't supported in this case.
 									MouseMove(ref clickX, ref clickY, ref placeholder, (int)Accessors.A_DefaultMouseSpeed, moveOffset);
 								else // Use SendKey because it supports modifiers (e.g. ^{Click}) SendKey requires repeat_count>=1.
@@ -2265,16 +2260,16 @@ namespace Keysharp.Core.Windows
 
 								goto bracecaseend; // This {} item completely handled, so move on to next.
 							}
-							else if (sub.StartsWith("Raw", StringComparison.OrdinalIgnoreCase)) // This is used by auto-replace hotstrings too.
+							else if (subspan.StartsWith("Raw", StringComparison.OrdinalIgnoreCase)) // This is used by auto-replace hotstrings too.
 							{
 								// As documented, there's no way to switch back to non-raw mode afterward since there's no
 								// correct way to support special (non-literal) strings such as {Raw Off} while in raw mode.
 								sendRaw = SendRawModes.Raw;
 								goto bracecaseend; // This {} item completely handled, so move on to next.
 							}
-							else if (sub.StartsWith("Text", StringComparison.OrdinalIgnoreCase)) // Added in v1.1.27
+							else if (subspan.StartsWith("Text", StringComparison.OrdinalIgnoreCase)) // Added in v1.1.27
 							{
-								if (sub.Substring(4).TrimStart(Keysharp.Core.Core.SpaceTab)?.Length == 1)//Pointing at the closing '}'.
+								if (subspan.Slice(4).TrimStart(Keysharp.Core.Core.SpaceTab).Length == 1)//Pointing at the closing '}'.
 									sendRaw = SendRawModes.RawText;
 
 								//else: ignore this {Text something} to reserve for future use.
@@ -2282,45 +2277,51 @@ namespace Keysharp.Core.Windows
 							}
 
 							// Since above didn't "goto", this item isn't {Click}.
+							var subspanstr = subspan.ToString();
 							eventType = KeyEventTypes.KeyDownAndUp;         // Set defaults.
 							repeatCount = 1;                  //
 							keyNameLength = keyTextLength;//TODO
-							var splits = sub.Split(Keysharp.Core.Core.SpaceTab, 1, StringSplitOptions.RemoveEmptyEntries);
+							var splits = subspanstr.Split(Keysharp.Core.Core.SpaceTab, 1, StringSplitOptions.RemoveEmptyEntries);
 
 							if (splits.Length > 0)
 							{
 								keyNameLength = splits[0].Length;//Unsure if this is exactly right.//TODO
 
-								if (splits[0].StartsWith("Down", StringComparison.OrdinalIgnoreCase))
+								if (splits.Length > 1)
 								{
-									eventType = KeyEventTypes.KeyDown;
+									var nextWord = splits[1];
 
-									// v1.0.44.05: Added key_down_is_persistent (which is not initialized except here because
-									// it's only applicable when event_type==KEYDOWN).  It avoids the following problem:
-									// When a key is remapped to become a modifier (such as F1::Control), launching one of
-									// the script's own hotkeys via F1 would lead to bad side-effects if that hotkey uses
-									// the Send command. This is because the Send command assumes that any modifiers pressed
-									// down by the script itself (such as Control) are intended to stay down during all
-									// keystrokes generated by that script. To work around this, something like KeyWait F1
-									// would otherwise be needed. within any hotkey triggered by the F1 key.
-									if (splits[0].StartsWith("DownTemp", StringComparison.OrdinalIgnoreCase)) // "DownTemp" means non-persistent.
-										keyDownType = KeyDownTypes.Temp;
-									else if (char.ToUpper(splits[0][1]) == 'R') // "DownR" means treated as a physical modifier (R = remap); i.e. not kept down during Send, but restored after Send (unlike Temp).
-										keyDownType = KeyDownTypes.Remap;
+									if (nextWord.StartsWith("Down", StringComparison.OrdinalIgnoreCase))
+									{
+										eventType = KeyEventTypes.KeyDown;
+
+										// v1.0.44.05: Added key_down_is_persistent (which is not initialized except here because
+										// it's only applicable when event_type==KEYDOWN).  It avoids the following problem:
+										// When a key is remapped to become a modifier (such as F1::Control), launching one of
+										// the script's own hotkeys via F1 would lead to bad side-effects if that hotkey uses
+										// the Send command. This is because the Send command assumes that any modifiers pressed
+										// down by the script itself (such as Control) are intended to stay down during all
+										// keystrokes generated by that script. To work around this, something like KeyWait F1
+										// would otherwise be needed. within any hotkey triggered by the F1 key.
+										if (nextWord.StartsWith("DownTemp", StringComparison.OrdinalIgnoreCase)) // "DownTemp" means non-persistent.
+											keyDownType = KeyDownTypes.Temp;
+										else if (nextWord.Length > 4 && char.ToUpper(nextWord[4]) == 'R') // "DownR" means treated as a physical modifier (R = remap); i.e. not kept down during Send, but restored after Send (unlike Temp).
+											keyDownType = KeyDownTypes.Remap;
+										else
+											keyDownType = KeyDownTypes.Persistent;
+									}
+									else if (nextWord.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
+										eventType = KeyEventTypes.KeyDownAndUp;
 									else
-										keyDownType = KeyDownTypes.Persistent;
+										repeatCount = nextWord.ParseInt(false).Value;
 								}
-								else if (splits[0].StartsWith("Up", StringComparison.OrdinalIgnoreCase))
-									eventType = KeyEventTypes.KeyDownAndUp;
-								else
-									repeatCount = splits[0].ParseInt().Value;
 
 								// Above: If negative or zero, that is handled further below.
 								// There is no complaint for values <1 to support scripts that want to conditionally send
 								// zero keystrokes, e.g. Send {a %Count%}
 							}
 
-							ht.TextToVKandSC(keys, ref vk, ref sc, ref modsForNextKey, targetKeybdLayout);
+							ht.TextToVKandSC(subspanstr, ref vk, ref sc, ref modsForNextKey, targetKeybdLayout);
 
 							if (repeatCount < 1)
 								goto bracecaseend; // Gets rid of one level of indentation. Well worth it.
@@ -2395,12 +2396,12 @@ namespace Keysharp.Core.Windows
 											WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, keys[0], 0);
 									}
 									else
-										SendKeySpecial(keys[0], repeatCount, modsForNextKey.Value | persistentModifiersForThisSendKeys);
+										SendKeySpecial(subspanstr[0], repeatCount, modsForNextKey.Value | persistentModifiersForThisSendKeys);
 								}
 							}
 							// See comment "else must never change sModifiersLR_persistent" above about why
 							// !aTargetWindow is used below:
-							else if ((vk = ht.TextToSpecial(keys, ref eventType
+							else if ((vk = ht.TextToSpecial(subspanstr, ref eventType
 															, ref persistentModifiersForThisSendKeys, targetWindow == IntPtr.Zero)) != 0) // Assign.
 							{
 								if (targetWindow == IntPtr.Zero)
@@ -2430,18 +2431,18 @@ namespace Keysharp.Core.Windows
 										LongOperationUpdateForSendKeys();
 								}
 							}
-							else if (keyTextLength > 4 && sub.StartsWith("ASC ", StringComparison.OrdinalIgnoreCase) && targetWindow == IntPtr.Zero) // {ASC nnnnn}
+							else if (keyTextLength > 4 && subspanstr.StartsWith("ASC ", StringComparison.OrdinalIgnoreCase) && targetWindow == IntPtr.Zero) // {ASC nnnnn}
 							{
 								// Include the trailing space in "ASC " to increase uniqueness (selectivity).
 								// Also, sending the ASC sequence to window doesn't work, so don't even try:
-								SendASC(System.Text.ASCIIEncoding.ASCII.GetBytes(sub.Substring(3).TrimStart()));
+								SendASC(System.Text.ASCIIEncoding.ASCII.GetBytes(subspanstr.Substring(3).TrimStart()));
 								// Do this only once at the end of the sequence:
 								DoKeyDelay(); // It knows not to do the delay for SM_INPUT.
 							}
-							else if (keyTextLength > 2 && sub.StartsWith("U+", StringComparison.OrdinalIgnoreCase))
+							else if (keyTextLength > 2 && subspanstr.StartsWith("U+", StringComparison.OrdinalIgnoreCase))
 							{
 								// L24: Send a unicode value as shown by Character Map.
-								var uCode = (uint)sub.Substring(2).ParseLong();//_tcstol(aKeys + 2, NULL, 16);
+								var uCode = (uint)subspanstr.Substring(2).ParseLong();//_tcstol(aKeys + 2, NULL, 16);
 								char wc1, wc2;
 
 								if (uCode >= 0x10000)
@@ -2499,7 +2500,8 @@ namespace Keysharp.Core.Windows
 							// In addition, reset the modifiers, since they were intended to apply only to
 							// the key inside {}.  Also, the below is done even if repeat-count is zero.
 							bracecaseend: // This label is used to simplify the code without sacrificing performance.
-							sub = sub.Substring(endPos);//This is probably completely wrong, you need to change how you do parsing, the AHK C++ pointer logic obviously doesn't apply here.//TODO  // In prep for aKeys++ done by the loop.
+							//sub = sub.Substring(endPos);//This is probably completely wrong, you need to change how you do parsing, the AHK C++ pointer logic obviously doesn't apply here.//TODO  // In prep for aKeys++ done by the loop.
+							keyIndex = endPos;
 							modsForNextKey = 0;
 							continue;
 						} // case '{'
@@ -2514,10 +2516,12 @@ namespace Keysharp.Core.Windows
 						// some controls (such as Scintilla) but has no effect in other common applications.
 						// \t has more utility if translated to VK_TAB.  SendKeySpecial('\t') has no effect in many
 						// common cases, and seems to only work in cases where {tab} would work just as well.
-						if (sub[0] == '\r' && sub[1] == '\n') // Translate \r but ignore any trailing \n, since \r\n -> {Enter 2} is counter-intuitive.
-							sub = sub.Substring(1);
+						if (sub[keyIndex] == '\r' && sub[keyIndex + 1] == '\n') // Translate \r but ignore any trailing \n, since \r\n -> {Enter 2} is counter-intuitive.
+							keyIndex++;
 
-						switch (sub[0])
+						//sub = sub.Substring(1);
+
+						switch (sub[keyIndex])
 						{
 							case '\n': vk = VK_RETURN; break;
 
@@ -2534,7 +2538,7 @@ namespace Keysharp.Core.Windows
 						// value of modifiers and the updated value is *not* guaranteed to be passed.
 						// In other words, SendKey(TextToVK(...), modifiers, ...) would often send the old
 						// value for modifiers.
-						vk = ht.CharToVKAndModifiers(sub[0], ref modsForNextKey, targetKeybdLayout
+						vk = ht.CharToVKAndModifiers(sub[keyIndex], ref modsForNextKey, targetKeybdLayout
 													 , (modsForNextKey | persistentModifiersForThisSendKeys) != 0 && sendRaw == SendRawModes.NotRaw); // v1.1.27.00: Disable the a-z to vk41-vk5A fallback translation when modifiers are present since it would produce the wrong printable characters.
 						// CharToVKAndModifiers() takes no measurable time compared to the amount of time SendKey takes.
 					}
@@ -2547,9 +2551,9 @@ namespace Keysharp.Core.Windows
 						if (targetWindow != IntPtr.Zero)
 							// Although MSDN says WM_CHAR uses UTF-16, it seems to really do automatic
 							// translation between ANSI and UTF-16; we rely on this for correct results:
-							WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, sub[0], 0);
+							WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, sub[keyIndex], 0);
 						else
-							SendKeySpecial(sub[0], 1, modsForNextKey.Value | persistentModifiersForThisSendKeys);
+							SendKeySpecial(sub[keyIndex], 1, modsForNextKey.Value | persistentModifiersForThisSendKeys);
 					}
 
 					modsForNextKey = 0;  // Safest to reset this regardless of whether a key was sent.
@@ -2562,7 +2566,7 @@ namespace Keysharp.Core.Windows
 			{
 				var finalKeyDelay = -1;  // Set default.
 
-				if (!abortArraySend && eventCount > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
+				if (!abortArraySend && eventSi.Count > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
 				{
 					// Add more events to the array (prior to sending) to support the following:
 					// Restore the modifiers to match those the user is physically holding down, but do it as *part*
@@ -3760,7 +3764,7 @@ namespace Keysharp.Core.Windows
 
 				if (eventType != KeyEventTypes.KeyDown)  // i.e. always do it for KEYDOWNANDUP
 				{
-					eventFlags |= (uint)KeyEventTypes.KeyUp;
+					eventFlags |= KEYEVENTF_KEYUP;
 
 					if (putEventIntoArray)
 						PutKeybdEventIntoArray(keyAsModifiersLR, vk, sc, eventFlags, extraInfo);

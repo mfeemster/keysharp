@@ -410,11 +410,9 @@ namespace Keysharp.Core.Common.Keyboard
 
 					if (endCharRequired && ((endChar = (char)(alParam & 0xFFFF)) != 0)) // Must now check mEndCharRequired because LOWORD has been overloaded with context-sensitive meanings.
 					{
-						sendBuf = sb.ToString();
-
 						// v1.0.43.02: Don't send "{Raw}" if already in raw mode!
 						// v1.1.27: Avoid adding {Raw} if it gets switched on within the replacement text.
-						if (sendRaw != 0 || sendBuf.StartsWith("{Raw}") || sendBuf.StartsWith("{Text}"))
+						if (sendRaw != 0 || replacement.Contains("{Raw}", StringComparison.OrdinalIgnoreCase) || replacement.Contains("{Text}", StringComparison.OrdinalIgnoreCase))
 							sb.Append(endChar);
 						else
 							sb.Append(string.Format("{0}{1}", "{Raw}", endChar));

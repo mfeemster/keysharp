@@ -606,10 +606,9 @@ namespace Keysharp.Core.Windows
 		internal const uint IOCTL_STORAGE_LOAD_MEDIA = 0x2d480c;
 
 		internal const int KEYEVENTF_EXTENDEDKEY = 1;
-
 		internal const int KEYEVENTF_KEYUP = 2;
-
 		internal const int KEYEVENTF_UNICODE = 4;
+		internal const int KEYEVENTF_SCANCODE = 8;
 
 		internal const int LWA_ALPHA = 0x2;
 

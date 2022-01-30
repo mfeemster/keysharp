@@ -451,47 +451,58 @@ namespace Keysharp.Core.Windows
 		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
 		{
 			var problem_activating_hooks = false;
-
-			if (((uint)hooksToBeActive & (uint)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
+			Action func = () =>
 			{
-				if (kbdHook == IntPtr.Zero)
+				if (((uint)hooksToBeActive & (uint)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
 				{
-					// v1.0.39: Reset *before* hook is installed to avoid any chance that events can
-					// flow into the hook prior to the reset:
-					if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
-						ResetHook(false, HookType.Keyboard, true);
+					if (kbdHook == IntPtr.Zero)
+					{
+						// v1.0.39: Reset *before* hook is installed to avoid any chance that events can
+						// flow into the hook prior to the reset:
+						if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
+							ResetHook(false, HookType.Keyboard, true);
 
-					if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
-													LowLevelKeybdHandler,
-													GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
-						problem_activating_hooks = true;
+						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
+														LowLevelKeybdHandler,
+														GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+							problem_activating_hooks = true;
+					}
 				}
-			}
-			else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
-				if (kbdHook != IntPtr.Zero)
-					if (UnhookWindowsHookEx(kbdHook))
-						kbdHook = IntPtr.Zero;
+				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
+					if (kbdHook != IntPtr.Zero)
+						if (UnhookWindowsHookEx(kbdHook))
+							kbdHook = IntPtr.Zero;
 
-			//It's impossible to debug with the mouse hook automatically enabled.//TODO
-			/*
-			    if (((uint)hooksToBeActive & (uint)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
-			    {
-			    if (mouseHook == IntPtr.Zero)
-			    {
-			        if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
-			            ResetHook(false, HookType.Mouse, true);
+				//It's impossible to debug with the mouse hook automatically enabled.//TODO
+				/*
+				    if (((uint)hooksToBeActive & (uint)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
+				    {
+				    if (mouseHook == IntPtr.Zero)
+				    {
+				        if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
+				            ResetHook(false, HookType.Mouse, true);
 
-			        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
-			                                          LowLevelMouseHandler,
-			                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
-			            problem_activating_hooks = true;
-			    }
-			    }
-			    else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
-			    if (mouseHook != IntPtr.Zero)
-			        if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
-			            mouseHook = IntPtr.Zero;
-			*/
+				        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
+				                                          LowLevelMouseHandler,
+				                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+				            problem_activating_hooks = true;
+				    }
+				    }
+				    else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
+				    if (mouseHook != IntPtr.Zero)
+				        if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
+				            mouseHook = IntPtr.Zero;
+				*/
+			};
+
+			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
+			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
+			//before Application.Run().
+			if (Keysharp.Scripting.Script.mainWindow != null)
+				Keysharp.Scripting.Script.mainWindow.Invoke(func);
+			else
+				func();
+
 			return problem_activating_hooks;
 		}
 
@@ -1514,7 +1525,7 @@ namespace Keysharp.Core.Windows
 					{
 						// Find out what case the user typed the string in so that we can have the
 						// replacement produced in similar case:
-						cpcaseEnd = HotstringDefinition.hsBuf.Count - 1;
+						cpcaseEnd = HotstringDefinition.hsBuf.Count;
 
 						if (hs.endCharRequired)
 							--cpcaseEnd;

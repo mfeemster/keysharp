@@ -12,6 +12,7 @@ namespace Keysharp.Scripting
 	public partial class MainWindow : Form
 	{
 		public static Font OurDefaultFont = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool success;
 		//Unsure if this is what we want because Control already has a DefaultFont member, also will need a different one for linux.//MATT
 
@@ -59,15 +60,9 @@ namespace Keysharp.Scripting
 			base.WndProc(ref m);
 		}
 
-		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-			Script.Edit();
-		}
+		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.Edit();
 
-		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-			Keysharp.Core.Flow.ExitApp();
-		}
+		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.ExitApp();
 
 		private TabPage GetTab(MainFocusedTab tab)
 		{
@@ -111,6 +106,33 @@ namespace Keysharp.Scripting
 
 		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
+		}
+
+		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			if (success)
+				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
+		}
+
+		private void MainWindow_Load(object sender, EventArgs e)
+		{
+		}
+
+		private void MainWindow_Shown(object sender, EventArgs e)
+		{
+		}
+
+		private void MainWindow_SizeChanged(object sender, EventArgs e)
+		{
+			if (WindowState == FormWindowState.Minimized)
+			{
+				ShowInTaskbar = false;
+			}
+			else
+			{
+				lastWindowState = WindowState;
+				ShowInTaskbar = true;
+			}
 		}
 
 		private void pauseScriptToolStripMenuItem_Click(object sender, System.EventArgs e)
@@ -210,19 +232,13 @@ namespace Keysharp.Scripting
 		{
 		}
 
-		private void TpVars_HandleCreated(object sender, System.EventArgs e)
-		{
-			ShowInternalVars();
-		}
+		private void TpVars_HandleCreated(object sender, System.EventArgs e) => ShowInternalVars();
 
 		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 		}
 
-		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-			Script.ListVars();
-		}
+		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.ListVars();
 
 		private void websiteToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
@@ -237,39 +253,8 @@ namespace Keysharp.Scripting
 			Main,
 			Debug,
 			Vars
-		};
+		}
 
 		public event Core.Core.ClipUpdateDel ClipboardUpdate;
-		internal FormWindowState lastWindowState = FormWindowState.Normal;
-
-		private void MainWindow_SizeChanged(object sender, EventArgs e)
-		{
-			if (WindowState == FormWindowState.Minimized)
-			{
-				ShowInTaskbar = false;
-				return;
-			}
-			else
-			{
-				lastWindowState = WindowState;
-				ShowInTaskbar = true;
-			}
-		}
-
-		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
-		{
-			if (success)
-				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
-		}
-
-		private void MainWindow_Load(object sender, EventArgs e)
-		{
-			//Keysharp.Core.Keyboard.Hotstring("::btw", "by the way");
-		}
-
-		private void MainWindow_Shown(object sender, EventArgs e)
-		{
-			//Keysharp.Core.Keyboard.Hotstring("::btw", "by the way");
-		}
 	}
 }
