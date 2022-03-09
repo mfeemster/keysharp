@@ -327,7 +327,7 @@ namespace Keysharp.Core
 					var tempindex = hotstringOptions.IndexOf(':');
 
 					if (tempindex != -1)
-						hotstringStart = hotstringOptions.Substring(1); // Points to the hotstring itself.
+						hotstringStart = hotstringOptions.Substring(tempindex + 1); // Points to the hotstring itself.
 				}
 				else // Double-colon, so it's a hotstring if there's more after this (but this means no options are present).
 					if (name.Length > 2)

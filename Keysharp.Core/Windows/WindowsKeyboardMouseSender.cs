@@ -1530,7 +1530,7 @@ namespace Keysharp.Core.Windows
 				//   MsgBox % GetKeyState("LShift")
 				// Furthermore, if the user manages to physically press or release a key during the call to
 				// SendInput, testing shows that such events are in effect immediately when SendInput returns
-				// to its caller, perhaps because SendInput clears out any backlog of physical keystrokes prior to
+				// to its caller, perhaps because SendInput clear out any backlog of physical keystrokes prior to
 				// returning, or perhaps because the part of the OS that updates key states is a very high priority.
 				if (activeHooks != HookType.None)
 				{

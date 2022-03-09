@@ -249,7 +249,7 @@ namespace Keysharp.Scripting
 
 		private bool IsPrimitiveObject(string code) => IsPrimitiveObject(code, out var result);
 
-		private bool IsRemap(string code)
+		private bool IsRemap(string code)//This is totally wrong and has nothing to do with how remaps are done in v2.//TODO
 		{
 			code = code.Trim(Spaces);
 

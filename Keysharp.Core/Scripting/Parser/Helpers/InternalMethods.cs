@@ -20,6 +20,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference HandleSingleInstance => new MethodReference(typeof(Script), "HandleSingleInstance");
 			internal static MethodReference Hotkey => new MethodReference(typeof(Core.Keyboard), "Hotkey");
 			internal static MethodReference Hotstring => new MethodReference(typeof(Core.Keyboard), "Hotstring");
+			internal static MethodReference AddHotstring => new MethodReference(typeof(Keysharp.Core.Common.Keyboard.HotstringDefinition), "AddHotstring");
 
 			//, new[] { typeof(string), typeof(string), typeof(string) });
 			internal static MethodReference HotstringLabel => new MethodReference(typeof(Core.Keyboard), "HotstringLabel");

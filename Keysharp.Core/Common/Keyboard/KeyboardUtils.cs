@@ -38,7 +38,7 @@
 	// FAIL = 0 to remind that FAIL should have the value zero instead of something arbitrary
 	// because some callers may simply evaluate the return result as true or false
 	// (and false is a failure):
-	internal enum ResultType
+	public enum ResultType
 	{
 		Fail = 0, Ok, Warn = Ok, CriticalError// Some things might rely on OK==1 (i.e. boolean "true")
 		, ConditionTrue, ConditionFalse

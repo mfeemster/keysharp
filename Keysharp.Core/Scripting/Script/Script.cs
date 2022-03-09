@@ -25,6 +25,7 @@ namespace Keysharp.Scripting
 		internal static DateTime timeLastInputMouse = timeLastInputPhysical;
 		internal static InputType input;//Unsure exactly where these globals should go. AHK spreads them across global vars, ThreadState (per thread) and ThreadSettings. Need to properly place.//TODO
 		internal static bool forceKeybdHook;
+		internal static bool validateThenExit;
 		internal static bool isReadyToExecute;
 		internal static Core.Core.GenericFunction lastHotFunc;
 		internal static int inputLevel;
@@ -215,6 +216,9 @@ namespace Keysharp.Scripting
 			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
 			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			Parser.Persistent = true;
+			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop)
+			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
+			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
 			Application.Run(mainWindow);
 		}
 

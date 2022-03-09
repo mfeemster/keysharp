@@ -1283,6 +1283,32 @@ namespace Keysharp.Core.Common.Keyboard
 				ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
 		}
 
+		internal static uint ConvertAltTab(string aBuf, bool aAllowOnOff)
+		{
+			if (string.IsNullOrEmpty(aBuf)) return 0;
+
+			if (string.Compare(aBuf, "AltTab") == 0) return HOTKEY_ID_ALT_TAB;
+
+			if (string.Compare(aBuf, "ShiftAltTab") == 0) return HOTKEY_ID_ALT_TAB_SHIFT;
+
+			if (string.Compare(aBuf, "AltTabMenu") == 0) return HOTKEY_ID_ALT_TAB_MENU;
+
+			if (string.Compare(aBuf, "AltTabAndMenu") == 0) return HOTKEY_ID_ALT_TAB_AND_MENU;
+
+			if (string.Compare(aBuf, "AltTabMenuDismiss") == 0) return HOTKEY_ID_ALT_TAB_MENU_DISMISS;
+
+			if (aAllowOnOff)
+			{
+				if (string.Compare(aBuf, "On") == 0) return HOTKEY_ID_ON;
+
+				if (string.Compare(aBuf, "Off") == 0) return HOTKEY_ID_OFF;
+
+				if (string.Compare(aBuf, "Toggle") == 0) return HOTKEY_ID_TOGGLE;
+			}
+
+			return 0;
+		}
+
 		internal static bool IsAltTab(uint id) => id > HOTKEY_ID_MAX&& id < HOTKEY_ID_INVALID;
 
 		/// <summary>

@@ -18,7 +18,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static string defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";//Should this be a platform specific newline instead of \r\n? //Make this a static as the default.//MATT
 		internal static uint enabledCount;      // Keep in sync with the above.
 		internal static List<char> hsBuf = new List<char>(256);
-		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
+		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);//Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
 		//internal Core.HotFunction callback;
 		internal IFuncObj funcObj;
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
@@ -27,7 +27,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int existingThreads, maxThreads;
 		internal HotkeyCriterion hotCriterion;
 		internal int inputLevel;
-		//internal string name;
 		internal int priority, keyDelay;
 		internal SendModes sendMode;
 		internal Keysharp.Core.Common.Keyboard.SendRawModes sendRaw;
@@ -159,8 +158,8 @@ namespace Keysharp.Core.Common.Keyboard
 		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
-		internal static ResultType AddHotstring(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring
-												, string _replacement, bool _hasContinuationSection, int _suspend)
+		public static ResultType AddHotstring(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring
+				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
 

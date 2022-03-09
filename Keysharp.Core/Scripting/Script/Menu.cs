@@ -100,7 +100,6 @@ namespace Keysharp.Scripting
 					Core.Core.Tray.Dispose();
 				}
 			};
-			isReadyToExecute = true;//Not sure if this should go somewhere else, but put it here for now.//TODO
 		}
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)
