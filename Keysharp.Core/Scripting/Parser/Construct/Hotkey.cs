@@ -10,6 +10,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
+		private string lastHotFunc = "";
 		private Dictionary<string, string> conditionIds;
 
 		private string HotkeyConditionId()
@@ -50,7 +51,6 @@ namespace Keysharp.Scripting
 			var cp = 0;
 			var cp1 = 0;
 			var hotkeyValidity = ResultType.Ok;
-			GenericFunction mLastHotFunc = null;//Need to figure out how to fill this in later.//TODO
 			CodeMethodInvokeExpression invoke;
 
 			if (buf.Length > 1 && buf[0] == ':')
@@ -71,7 +71,7 @@ namespace Keysharp.Scripting
 				}
 				else // Double-colon, so it's a hotstring if there's more after this (but this means no options are present).
 					if (buf.Length > 2)
-						hotstringOptionsIndex = 2;
+						hotstringStartIndex = 2;
 
 				//else it's just a naked "::", which is considered to be an ordinary label whose name is colon.
 			}
@@ -79,11 +79,16 @@ namespace Keysharp.Scripting
 			if (hotstringStartIndex > 0)
 			{
 				// Check for 'X' option early since escape sequence processing depends on it.
-				//hotstring_execute = g_HSSameLineAction;//Not exactly sure how to integrate this or what it does.//TODO
+				hotstringExecute = false;// g_HSSameLineAction;//This appeared to always be false in AHK.
+
 				for (cp = hotstringOptionsIndex; cp < hotstringStartIndex; ++cp)
 					if (char.ToUpper(buf[cp]) == 'X')
 					{
-						hotstringExecute = cp < buf.Length - 1;
+						if (cp < buf.Length - 1)
+							hotstringExecute = buf[cp + 1] != '0';
+						else
+							hotstringExecute = true;
+
 						break;
 					}
 
@@ -92,14 +97,19 @@ namespace Keysharp.Scripting
 				// ::abc```::::Replacement String
 				// The above hotstring translates literally into "abc`::".
 				// LPTSTR escaped_double_colon = NULL;
-				for (cp = hotstringStartIndex; ; ++cp)  // Increment to skip over the symbol just found by the inner for().
+				for (cp = hotstringStartIndex; cp < buf.Length; ++cp)  // Increment to skip over the symbol just found by the inner for().
 				{
 					for (; cp < buf.Length && buf[cp] != Escape && buf[cp] != ':'; ++cp)// Find the next escape char or colon.
 					{
 					}
 
-					if (cp > buf.Length - 1) // end of string.
+					if (cp >= buf.Length - 1) // end of string.
+					{
+						if (buf.Length > 1 && buf[buf.Length - 1] == '`' && buf[buf.Length - 2] != '`')
+							buf = buf.Substring(0, buf.Length - 1);
+
 						break;
+					}
 
 					cp1 = cp + 1;
 
@@ -146,6 +156,8 @@ namespace Keysharp.Scripting
 						case 'v': escChar = '\v'; break;  // vertical tab
 
 						case 's': escChar = ' '; break;   // space
+
+						case '`': escChar = '`'; break;   // tick (indicated by double tick)
 							// Otherwise, if it's not one of the above, the escape-char is considered to
 							// mark the next character as literal, regardless of what it is. Examples:
 							// `` -> `
@@ -155,7 +167,7 @@ namespace Keysharp.Scripting
 					}
 
 					//Omit the escape char, and copy it's real char to the original string.
-					buf = buf.Substring(0, cp) + escChar + buf.Substring(cp1);//Ensure this concat logic is correct.//TODO
+					buf = buf.Substring(0, cp) + escChar + buf.Substring(cp1 + 1);
 					// v2: The following is not done because 1) it is counter-intuitive for ` to affect two
 					// characters and 2) it hurts flexibility by preventing the escaping of a single colon
 					// immediately prior to the double-colon, such as ::lbl`:::.  Older comment:
@@ -191,7 +203,7 @@ namespace Keysharp.Scripting
 					// Note: Hotstrings can't suffer from this type of ambiguity because a leading colon or pair of
 					// colons makes them easier to detect.
 					var temp = buf.OmitTrailingWhitespace(hotkeyFlagIndex); // For maintainability.
-					hotkeyValidity = HotkeyDefinition.TextInterpret(buf.TrimStart(Keysharp.Core.Core.SpaceTab), null); // Passing NULL calls it in validate-only mode.
+					hotkeyValidity = HotkeyDefinition.TextInterpret(temp.TrimStart(Keysharp.Core.Core.SpaceTab), null); // Passing NULL calls it in validate-only mode.
 
 					switch (hotkeyValidity)
 					{
@@ -234,7 +246,7 @@ namespace Keysharp.Scripting
 				var hotstring = buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex);
 				hotkeyFlagIndex += HotkeySignal.Length;  // Now hotkey_flag is the hotkey's action, if any.
 				var otbBrace = buf.Substring(hotkeyFlagIndex).TrimStart(Keysharp.Core.Core.SpaceTab);
-				hotkeyUsesOtb = otbBrace[0] == '{' && /*!*omit_leading_whitespace(otb_brace + 1*/ otbBrace.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab).Length == 0;//Weird way of checking that there is no remaining text.
+				hotkeyUsesOtb = otbBrace.TrimEnd(Keysharp.Core.Core.SpaceTab) == "{";//otbBrace[0] == '{' && /*!*omit_leading_whitespace(otb_brace + 1*/ otbBrace.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab).Length == 0;//Weird way of checking that there is no remaining text.
 
 				if (hotstringStartIndex == -1)
 				{
@@ -328,7 +340,7 @@ namespace Keysharp.Scripting
 							//  return CallNextHookEx(g_KeybdHook, aCode, wParam, lParam);
 							// }
 							//Unsure exactly how we'll check for this, revisit later.//TODO
-							if (mLastHotFunc != null)
+							if (lastHotFunc != null)
 								// Checking this to disallow stacking, eg
 								// x::
 								// y::z
@@ -467,14 +479,9 @@ namespace Keysharp.Scripting
 				}
 
 				// else don't trim hotstrings since literal spaces in both substrings are significant.
-				Func<GenericFunction> set_last_hotfunc = () =>
+				Func<string, string> set_last_hotfunc = (string name) =>
 				{
-					//Figure this out later.
-					//if (!mLastHotFunc)
-					//  return CreateHotFunc();
-					//else
-					//  return mLastHotFunc;
-					return null;
+					return lastHotFunc == "" ? (lastHotFunc = LabelMethodName(name)) : lastHotFunc;
 				};
 
 				if (hotstringStartIndex != -1)
@@ -526,14 +533,15 @@ namespace Keysharp.Scripting
 							hotkeyUsesOtb = false;
 					}
 
-					// The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
-					if ((hotkeyFlagIndex == -1 || hotkeyUsesOtb) || hotstringExecute)
-					{
-						if (set_last_hotfunc() == null)// It is not auto-replace
-							return null;// ResultType.Fail;
-					}
-
+					//All of this here needs work.//TODO
 					/*
+					    // The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
+					    if ((hotkeyFlagIndex == -1 || hotkeyUsesOtb) || hotstringExecute)
+					    {
+					    if (set_last_hotfunc() == null)// It is not auto-replace
+					        return null;// ResultType.Fail;
+					    }
+
 					    else if (mLastHotFunc)//Need a way to keep track of current func.//TODO
 					    {
 					    // It is autoreplace but an earlier hotkey or hotstring
@@ -554,18 +562,98 @@ namespace Keysharp.Scripting
 					    return ScriptError(ERR_HOTKEY_MISSING_BRACE);
 					    }
 					*/
-					Parser.Persistent = true;
+					var funcname = "";
+					var nextIndex = index + 1;
+					var replacement = buf.Substring(hotkeyFlagIndex);
+
+					if (hotstringExecute)
+					{
+						funcname = LabelMethodName(name);
+						var method = LocalMethod(funcname);
+						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+						method.Statements.AddRange(expr);
+						methods.Add(method.Name, method);
+						lastHotFunc = "";
+					}
+					else if (nextIndex < lines.Count)//Merge this with detecting otb, and see how X fits into this above.//TODO
+					{
+						var nextLine = lines[nextIndex];
+						var nextBuf = nextLine.Code;
+
+						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
+						{
+							funcname = ParseFunctionName(nextBuf);
+							lastHotFunc = "";
+						}
+						else
+						{
+							var expect = nextBuf.StartsWith(BlockOpen);
+
+							if (hotkeyUsesOtb ^ expect)//This is a hotstring that performs a custom action, so treat the body of it as the start of a new function.
+							{
+								StartNewFunction();
+								funcname = set_last_hotfunc(name);
+								var method = LocalMethod(funcname);
+								var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
+								block.Type = expect ? CodeBlock.BlockType.Expect : CodeBlock.BlockType.Within;
+								_ = CloseTopSingleBlock();
+								blocks.Push(block);
+								methods.Add(method.Name, method);
+								lastHotFunc = "";
+							}
+							else if (replacement == "")//Check for stacked
+							{
+								if (IsHotstringLabel(nextBuf))
+								{
+									funcname = set_last_hotfunc(name);
+								}
+								else if (nextBuf != "")//Read all lines until a return statement is found, then treat them all as a function by inserting braces and marking all variable references as global.
+								{
+									var np1 = nextIndex + 1;
+									lines.Insert(nextIndex, new CodeLine(nextLine.FileName, np1, "{"));
+									lines.Insert(np1, new CodeLine(nextLine.FileName, ++np1, "global"));
+									var i = np1;
+
+									for (; i < lines.Count; i++)
+									{
+										lines[i].LineNumber += 2;
+
+										if (lines[i].Code.Trim() == "return")
+											break;
+									}
+
+									i++;
+									lines.Insert(i, new CodeLine(nextLine.FileName, i, "}"));
+
+									for (; i < lines.Count; i++)
+										lines[i].LineNumber = i + 1;
+
+									StartNewFunction();
+									funcname = set_last_hotfunc(name);
+									var method = LocalMethod(funcname);
+									var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
+									block.Type = CodeBlock.BlockType.Expect;
+									_ = CloseTopSingleBlock();
+									blocks.Push(block);
+									methods.Add(method.Name, method);
+									lastHotFunc = "";
+								}
+							}
+						}
+					}
+
+					Persistent = true;
 					var hasContinuationSection = false;//Figure out how to detect this.//TODO
-					invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotstring;//Should be AddHotstring().//TODO
+					invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotstring;
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(name));
-					_ = invoke.Parameters.Add(new CodePrimitiveExpression(null));//TODO
+					_ = invoke.Parameters.Add(funcname != "" ? new CodeSnippetExpression($"new FuncObj(\"{funcname}\", null)") : new CodePrimitiveExpression(null));
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(options));
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotstring));
-					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotstringExecute || hotkeyUsesOtb ? "" : buf.Substring(hotkeyFlagIndex)));
+					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotstringExecute || hotkeyUsesOtb ? "" : replacement));
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hasContinuationSection));
 					return invoke;
 					//if (HotstringDefinition.AddHotstring(buf, /*mLastHotFunc*/null, buf.Substring(hotstringOptionsIndex),
-					//                           buf.Substring(hotstringStartIndex), hotstringExecute || hotkeyUsesOtb ? "" : buf.Substring(hotkeyFlagIndex), hasContinuationSection) == ResultType.Fail)
+					//                           buf.Substring(hotstringStartIndex), hotstringExecute || hotkeyUsesOtb ? "" : replacement, hasContinuationSection) == ResultType.Fail)
 					//return null;// ResultType.Fail;
 					/*
 					    if (!mLastHotFunc)//Figure this out.//TODO
@@ -600,10 +688,10 @@ namespace Keysharp.Scripting
 								return null;// ScriptError(_T("Duplicate hotkey."), buf);
 							}
 
-							if (set_last_hotfunc() == null)
-								return null;// ResultType.Fail;
+							//if (set_last_hotfunc() == null)//TODO
+							//return null;// ResultType.Fail;
 
-							if (hk.AddVariant(mLastHotFunc, suffix_has_tilde) == null)
+							if (hk.AddVariant(new FuncObj(lastHotFunc, null), suffix_has_tilde) == null)
 								return null;// ScriptError(ERR_OUTOFMEM, buf);
 
 							if (hook_is_mandatory || Keysharp.Scripting.Script.forceKeybdHook)
@@ -617,18 +705,17 @@ namespace Keysharp.Scripting
 					}
 					else // No parent hotkey yet, so create it.
 					{
-						if (hook_action != (uint)HotkeyTypeEnum.Normal && mLastHotFunc != null)
+						if (hook_action != (uint)HotkeyTypeEnum.Normal && lastHotFunc != null)
 							// A hotkey is stacked above, eg,
 							// x::
 							// y & z::altTab
 							// Not supported.
 							return null; // ScriptError(ERR_HOTKEY_MISSING_BRACE);
 
-						if (hook_action == (uint)HotkeyTypeEnum.Normal
-								&& set_last_hotfunc() == null)
-							return null;// ResultType.Fail;
-
-						hk = HotkeyDefinition.AddHotkey(mLastHotFunc, hook_action, buf, suffix_has_tilde);
+						//if (hook_action == (uint)HotkeyTypeEnum.Normal//TODO
+						//      && set_last_hotfunc() == null)
+						//  return null;// ResultType.Fail;
+						hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
 
 						if (hk == null)
 						{

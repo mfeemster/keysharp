@@ -417,7 +417,7 @@ namespace Keysharp.Core.Common.Keyboard
 							CurrentHotkey = hotkey.ToString();
 
 							if (hotkey.Condition())
-								_ = hotkey.Proc(new object[] { });
+								_ = hotkey.Proc.Call(new object[] { });
 						}
 					}).Start();
 				}

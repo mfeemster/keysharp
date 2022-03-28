@@ -22,15 +22,9 @@ namespace Keysharp.Scripting
 		private Stack<Dictionary<string, CodeExpression>> staticFuncVars = new Stack<Dictionary<string, CodeExpression>>();
 		//This will probably not work with global funcs and class funcs with the same name, need some type of more granular scoping.//MATT
 
-		public void ParseFunction(CodeLine line)
+		public string ParseFunction(CodeLine line)
 		{
-			_ = CloseTopLabelBlock();
-			allGlobalVars.Push(false);
-			allStaticVars.Push(false);
-			globalFuncVars.Push(new List<string>());
-			localFuncVars.Push(new List<string>());
-			staticFuncVars.Push(new Dictionary<string, CodeExpression>());
-			currentFuncParams.Push(new List<string>());
+			StartNewFunction();
 			var code = line.Code;
 			int i;
 			var buf = new StringBuilder();
@@ -58,7 +52,7 @@ namespace Keysharp.Scripting
 			buf.Length = 0;
 
 			if (IsLocalMethodReference(name))
-				throw new ParseException("Duplicate function");
+				throw new ParseException($"Duplicate function {name}");
 
 			var blockType = CodeBlock.BlockType.Expect;
 			var str = false;
@@ -142,6 +136,40 @@ namespace Keysharp.Scripting
 			//allGlobalVars = false;
 			//globalFuncVars.Clear();
 			//localFuncVars.Clear();
+			return method.Name;
+		}
+
+		public string ParseFunctionName(string code)
+		{
+			var buf = new StringBuilder();
+
+			for (var i = 0; i < code.Length; i++)
+			{
+				var sym = code[i];
+
+				if (IsIdentifier(sym))
+					_ = buf.Append(sym);
+				else if (sym == ParenOpen)
+					break;
+				else
+					throw new ParseException(ExUnexpected);
+			}
+
+			if (buf.Length == 0)
+				throw new ParseException(ExUnexpected);
+
+			return buf.ToString();
+		}
+
+		internal void StartNewFunction()
+		{
+			_ = CloseTopLabelBlock();
+			allGlobalVars.Push(false);
+			allStaticVars.Push(false);
+			globalFuncVars.Push(new List<string>());
+			localFuncVars.Push(new List<string>());
+			staticFuncVars.Push(new Dictionary<string, CodeExpression>());
+			currentFuncParams.Push(new List<string>());
 		}
 
 		private (CodeStatementCollection, List<string>) ParseFunctionParameters(string code)

@@ -183,7 +183,6 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		internal const int AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
 
-
 		internal const int AT_LEAST_ONE_VARIANT_LACKS_TILDE = 0x04;
 
 		internal const int HOTKEY_ID_ALT_TAB = 0x7FFE;
@@ -196,14 +195,11 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int HOTKEY_ID_MAX = 0x7FF9;
 		internal const int HOTKEY_ID_OFF = 0x02;
 
-
 		internal const int HOTKEY_ID_ON = 0x01;
-
 
 		internal const int HOTKEY_ID_TOGGLE = 0x03;
 
 		internal const int HOTKEY_KEY_UP = 0x8000;
-
 
 		internal const int NO_SUPPRESS_NEXT_UP_EVENT = 0x08;
 
@@ -219,11 +215,11 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static List<HotkeyDefinition> shk = new List<HotkeyDefinition>(256);
 		internal bool allowExtraModifiers;
 		internal bool constructedOK;
+		internal HotkeyVariant firstVariant, lastVariant;
 		internal uint hookAction;
 		internal uint id = HOTKEY_ID_INVALID;
 		internal bool isRegistered;
 		internal bool keybdHookMandatory;
-
 
 		internal bool keyUp;
 
@@ -233,26 +229,21 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int modifiersLR;
 		internal int modifierVK;
 
-
 		internal uint nextHotkey;
 
 		internal int noSuppress;
-
 
 		internal bool parentEnabled;
 
 		internal int sc;
 
-
 		internal HotkeyTypeEnum type = HotkeyTypeEnum.Normal;
 
 		internal int vk;
 
-
 		internal bool vkWasSpecifiedByNumber;
 
 		private static bool dialogIsDisplayed;
-
 
 		private static uint throttledKeyCount;
 
@@ -260,12 +251,7 @@ namespace Keysharp.Core.Common.Keyboard
 		private static DateTime timePrev = DateTime.MinValue;
 		private static HookType whichHookAlways;
 
-
 		private static HookType whichHookNeeded;
-
-
-		internal HotkeyVariant firstVariant, lastVariant;
-
 		internal bool Enabled { get; set; }
 
 		internal Options EnabledOptions { get; }
@@ -276,13 +262,13 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal string Name { get; set; }
 
-		internal Keysharp.Core.Core.GenericFunction Precondition { get; set; }
+		internal FuncObj Precondition { get; set; }
 
-		internal Keysharp.Core.Core.GenericFunction Proc { get; set; }
+		internal FuncObj Proc { get; set; }
 
 		internal string Typed { get; set; }
 
-		internal HotkeyDefinition(Keys keys, Keys extra, Options options, Core.GenericFunction proc)
+		internal HotkeyDefinition(Keys keys, Keys extra, Options options, FuncObj proc)
 		{
 			Keys = keys;
 			Extra = extra;
@@ -291,7 +277,7 @@ namespace Keysharp.Core.Common.Keyboard
 			Enabled = true;
 		}
 
-		internal HotkeyDefinition(uint _id, Core.GenericFunction callback, uint _hookAction, string _name, bool suffixHasTilde)
+		internal HotkeyDefinition(uint _id, FuncObj callback, uint _hookAction, string _name, bool suffixHasTilde)
 		{
 			hookAction = _hookAction;
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -514,7 +500,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Returns the address of the new hotkey on success, or NULL otherwise.
 		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
 		/// </summary>
-		internal static HotkeyDefinition AddHotkey(Core.GenericFunction _callback, uint _hookAction, string _name, bool _suffixHasTilde)
+		internal static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
 		{
 			var hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
 
@@ -613,6 +599,32 @@ namespace Keysharp.Core.Common.Keyboard
 			//Keysharp.Core.Flow.ExitApp(exitCode); // exit() is insignificant in code size.  It does more than ExitProcess(), but perhaps nothing more that this application actually requires.
 			// By contrast to _exit(), exit() flushes all file buffers before terminating the process. It also
 			// calls any functions registered via atexit or _onexit.
+		}
+
+		internal static uint ConvertAltTab(string aBuf, bool aAllowOnOff)
+		{
+			if (string.IsNullOrEmpty(aBuf)) return 0;
+
+			if (string.Compare(aBuf, "AltTab") == 0) return HOTKEY_ID_ALT_TAB;
+
+			if (string.Compare(aBuf, "ShiftAltTab") == 0) return HOTKEY_ID_ALT_TAB_SHIFT;
+
+			if (string.Compare(aBuf, "AltTabMenu") == 0) return HOTKEY_ID_ALT_TAB_MENU;
+
+			if (string.Compare(aBuf, "AltTabAndMenu") == 0) return HOTKEY_ID_ALT_TAB_AND_MENU;
+
+			if (string.Compare(aBuf, "AltTabMenuDismiss") == 0) return HOTKEY_ID_ALT_TAB_MENU_DISMISS;
+
+			if (aAllowOnOff)
+			{
+				if (string.Compare(aBuf, "On") == 0) return HOTKEY_ID_ON;
+
+				if (string.Compare(aBuf, "Off") == 0) return HOTKEY_ID_OFF;
+
+				if (string.Compare(aBuf, "Toggle") == 0) return HOTKEY_ID_TOGGLE;
+			}
+
+			return 0;
 		}
 
 		//There is a function named PreparseHotkeyIfExpr() which is not implemented here because I'm not sure how to translate it
@@ -774,7 +786,7 @@ namespace Keysharp.Core.Common.Keyboard
 			return ref first;
 		}
 
-		internal static ResultType Dynamic(string hotkeyName, string options, Core.GenericFunction _callback, uint _hookAction)//Unsure if this should take a callback or a string/funcobj?//TODO
+		internal static ResultType Dynamic(string hotkeyName, string options, FuncObj _callback, uint _hookAction)//Unsure if this should take a callback or a string/funcobj?//TODO
 		// Creates, updates, enables, or disables a hotkey dynamically (while the script is running).
 		// Returns OK or FAIL.
 		{
@@ -1281,32 +1293,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 			if (!ht.HasMouseHook())
 				ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
-		}
-
-		internal static uint ConvertAltTab(string aBuf, bool aAllowOnOff)
-		{
-			if (string.IsNullOrEmpty(aBuf)) return 0;
-
-			if (string.Compare(aBuf, "AltTab") == 0) return HOTKEY_ID_ALT_TAB;
-
-			if (string.Compare(aBuf, "ShiftAltTab") == 0) return HOTKEY_ID_ALT_TAB_SHIFT;
-
-			if (string.Compare(aBuf, "AltTabMenu") == 0) return HOTKEY_ID_ALT_TAB_MENU;
-
-			if (string.Compare(aBuf, "AltTabAndMenu") == 0) return HOTKEY_ID_ALT_TAB_AND_MENU;
-
-			if (string.Compare(aBuf, "AltTabMenuDismiss") == 0) return HOTKEY_ID_ALT_TAB_MENU_DISMISS;
-
-			if (aAllowOnOff)
-			{
-				if (string.Compare(aBuf, "On") == 0) return HOTKEY_ID_ON;
-
-				if (string.Compare(aBuf, "Off") == 0) return HOTKEY_ID_OFF;
-
-				if (string.Compare(aBuf, "Toggle") == 0) return HOTKEY_ID_TOGGLE;
-			}
-
-			return 0;
 		}
 
 		internal static bool IsAltTab(uint id) => id > HOTKEY_ID_MAX&& id < HOTKEY_ID_INVALID;
@@ -2289,7 +2275,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="_callback"></param>
 		/// <param name="_suffixHasTilde"></param>
 		/// <returns></returns>
-		internal HotkeyVariant AddVariant(Core.GenericFunction _callback, bool _suffixHasTilde)
+		internal HotkeyVariant AddVariant(FuncObj _callback, bool _suffixHasTilde)
 		{
 			var vp = new HotkeyVariant
 			{
@@ -2348,7 +2334,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (Precondition == null)
 				return true;
 
-			var result = Precondition.Invoke(new object[] { });
+			var result = Precondition.Call(new object[] { });
 			return result is bool b ? b : result != null;
 		}
 
@@ -2427,18 +2413,6 @@ namespace Keysharp.Core.Common.Keyboard
 					return false;
 
 			return true;
-		}
-
-		internal bool PerformIsAllowed(HotkeyVariant variant)
-		{
-			// For now, attempts to launch another simultaneous instance of this subroutine
-			// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
-			// In the future, it might be better to have this user-configurable, i.e. to devise
-			// some way for the hotkeys to be kept queued up so that they take effect only when
-			// the number of currently active threads drops below the max.  But doing such
-			// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
-			// would be slowed down to prevent the subroutines from running concurrently:
-			return variant.existingThreads < variant.maxThreads;
 		}
 
 		internal bool IsExemptFromSuspend() // A hotkey is considered exempt if even one of its variants is exempt.
@@ -2526,7 +2500,7 @@ namespace Keysharp.Core.Common.Keyboard
 			KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
 			// LAUNCH HOTKEY SUBROUTINE:
 			++variant.existingThreads;  // This is the thread count for this particular hotkey only.
-			var tsk = Keysharp.Core.Core.LaunchInThread(variant.callback, new object[] { Keysharp.Scripting.Script.thisHotkeyName, Name }).ContinueWith((t) => { --variant.existingThreads; });
+			var tsk = Keysharp.Core.Core.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --variant.existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			tsk.Wait();
 
 			if (tsk.IsFaulted)//Original checked for result == FAIL, unsure if this accomplishes the same thing.//TODO
@@ -2556,6 +2530,18 @@ namespace Keysharp.Core.Common.Keyboard
 				// want a buffered hotkey to stay pending for a long time after it was pressed, because
 				// that might lead to unexpected behavior.
 			}
+		}
+
+		internal bool PerformIsAllowed(HotkeyVariant variant)
+		{
+			// For now, attempts to launch another simultaneous instance of this subroutine
+			// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
+			// In the future, it might be better to have this user-configurable, i.e. to devise
+			// some way for the hotkeys to be kept queued up so that they take effect only when
+			// the number of currently active threads drops below the max.  But doing such
+			// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
+			// would be slowed down to prevent the subroutines from running concurrently:
+			return variant.existingThreads < variant.maxThreads;
 		}
 
 		internal ResultType Register()
@@ -2757,7 +2743,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 	internal class HotkeyVariant
 	{
-		internal Keysharp.Core.Core.GenericFunction callback;
+		internal FuncObj callback;
 		internal bool enabled;
 		internal int existingThreads, maxThreads = int.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 
@@ -2773,7 +2759,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
 		internal bool noSuppress;
-		internal Keysharp.Core.Core.GenericFunction originalCallback;   // This is the callback set at load time.
+		internal FuncObj originalCallback;   // This is the callback set at load time.
 		internal int priority;
 
 		// v1.0.44: This became a per-variant attribute because it's more useful/flexible that way.
@@ -2783,7 +2769,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 		// Whether this variant has been disabled via the Hotkey command.
 		internal bool suspendExempt;
-
 
 		internal void RunAgainAfterFinished()
 		{

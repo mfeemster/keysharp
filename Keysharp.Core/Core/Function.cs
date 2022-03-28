@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Keysharp.Core.Common.Patterns;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Core
@@ -23,6 +22,21 @@ namespace Keysharp.Core
 			return del as Keysharp.Core.Core.GenericFunction;
 		}
 
+		public static FuncObj GetMethod(params object[] obj)
+		{
+			var (val, name, paramcount) = obj.Osi();
+			var mi = Reflections.FindMethod(val.GetType(), name);
+			return mi != null ? new FuncObj(mi, val)
+				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()}.");
+		}
+
+		public static long HasMethod(params object[] obj)
+		{
+			var (val, name, paramcount) = obj.Osi();
+			var mi = Reflections.FindMethod(val.GetType(), name);
+			return mi != null ? 1L : 0L;
+		}
+
 		public static BoundFunc ObjBindMethod(params object[] obj)
 		{
 			var (o, name) = obj.Os();
@@ -37,21 +51,6 @@ namespace Keysharp.Core
 			}
 
 			return null;
-		}
-
-		public static FuncObj GetMethod(params object[] obj)
-		{
-			var (val, name, paramcount) = obj.Osi();
-			var mi = Reflections.FindMethod(val.GetType(), name);
-			return mi != null ? new FuncObj(mi, val)
-				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()}.");
-		}
-
-		public static long HasMethod(params object[] obj)
-		{
-			var (val, name, paramcount) = obj.Osi();
-			var mi = Reflections.FindMethod(val.GetType(), name);
-			return mi != null ? 1L : 0L;
 		}
 
 		public static string ObjGetBase(params object[] obj) => obj[0].GetType().BaseType.Name;//Do not flatten, use obj[0] directly.
@@ -70,7 +69,7 @@ namespace Keysharp.Core
 		public override object Call(params object[] args)
 		{
 			int i = 0, argsused = 0;
-			var argslist = new List<object>(boundargs.Length +  args.Length);
+			var argslist = new List<object>(boundargs.Length + args.Length);
 
 			for (; i < boundargs.Length; i++)
 			{
@@ -195,11 +194,11 @@ namespace Keysharp.Core
 
 	public class FuncObj : KeysharpObject, IFuncObj
 	{
-		protected MethodInfo mi;
 		protected object inst;
-
+		protected MethodInfo mi;
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 
+		public bool IsValid => mi != null;
 		public bool IsVariadic => true;//All functions in keysharp are variadic because they use the params keyword.
 
 		public long MaxParams => 1;//All functions in keysharp are variadic so this property doesn't apply.
@@ -207,8 +206,6 @@ namespace Keysharp.Core
 		public long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 
 		public string Name { get => mi.Name; }
-
-		public bool IsValid => mi != null;
 
 		public FuncObj(string s, object o)
 			: this(Reflections.FindMethod(s), o)

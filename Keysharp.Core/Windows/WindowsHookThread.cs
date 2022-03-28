@@ -5303,6 +5303,7 @@ namespace Keysharp.Core.Windows
 								// the built-in variable A_EndChar:
 								Accessors.A_EndChar = hs.endCharRequired ? ((char)(lParamVal & 0xFFFF)).ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
 								priority = hs.priority;
+								SetHotNamesAndTimes(hs, hk);
 								Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
 								Accessors.A_SendLevel = hs.inputLevel;
 								Keysharp.Scripting.Script.hotCriterion = hs.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotstring by default.
@@ -5314,7 +5315,7 @@ namespace Keysharp.Core.Windows
 							case (uint)UserMessages.AHK_HOOK_HOTKEY:  // Sent from this app's keyboard or mouse hook.
 
 							//case (uint)UserMessages.AHK_HOTSTRING: // Added for v1.0.36.02 so that hotstrings work even while an InputBox or other non-standard msg pump is running.
-							//case (uint)UserMessages.AHK_CLIPBOARD_CHANGE: // Added for v1.0.44 so that clipboard notifications aren't lost while the script is displaying a MsgBox or other dialog.
+							//case (uint)UserMessages.AHK_CLIPBOARD_CHANGE: //Probably not needed because we handle OnClipboardChange() differently.//TODO// Added for v1.0.44 so that clipboard notifications aren't lost while the script is displaying a MsgBox or other dialog.
 							case (uint)UserMessages.AHK_INPUT_END:
 
 								// If the following facts are ever confirmed, there would be no need to post the message in cases where
@@ -5488,6 +5489,7 @@ namespace Keysharp.Core.Windows
 									criterion_found_hwnd = Keysharp.Scripting.Script.hotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
 
 								priority = variant.priority;
+								SetHotNamesAndTimes(hs, hk);
 
 								if (IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
 									Accessors.A_EventInfo = lParamVal; // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
@@ -5505,34 +5507,6 @@ namespace Keysharp.Core.Windows
 						if (priority < Accessors.A_Priority)
 							continue;
 
-						switch (msg.message)
-						{
-							case (uint)UserMessages.AHK_GUI_ACTION: // Listed first for performance.
-							case (uint)UserMessages.AHK_CLIPBOARD_CHANGE:
-							case (uint)UserMessages.AHK_INPUT_END:
-							case (uint)UserMessages.AHK_INPUT_KEYDOWN:
-							case (uint)UserMessages.AHK_INPUT_CHAR:
-							case (uint)UserMessages.AHK_INPUT_KEYUP:
-							case (uint)UserMessages.AHK_USER_MENU: // user-defined menu item
-								break; // Do nothing at this stage.
-
-							default: // hotkey or hotstring
-								if (hs != null || hk != null)
-								{
-									// Just prior to launching the hotkey, update these values to support built-in
-									// variables such as A_TimeSincePriorHotkey:
-									Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
-									Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
-									// Unlike hotkeys -- which can have a name independent of their label by being created or updated
-									// with the HOTKEY command -- a hot string's unique name is always its label since that includes
-									// the options that distinguish between (for example) :c:ahk:: and ::ahk::
-									Keysharp.Scripting.Script.thisHotkeyName = (msg.message == (uint)UserMessages.AHK_HOTSTRING) ? hs.Name : hk.Name;
-									Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI threads.
-								}
-
-								break;
-						}
-
 						//Original tries to do some type of thread init here.//TOOD
 						kbdMsSender.lastPeekTime = DateTime.Now;
 					}
@@ -5543,6 +5517,22 @@ namespace Keysharp.Core.Windows
 				System.Threading.Thread.Sleep(10);
 
 			//WindowsAPI.PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_START_LOOP, UIntPtr.Zero, IntPtr.Zero);
+		}
+
+		private void SetHotNamesAndTimes(HotstringDefinition hs, HotkeyDefinition hk)
+		{
+			if (hs != null || hk != null)
+			{
+				// Just prior to launching the hotkey, update these values to support built-in
+				// variables such as A_TimeSincePriorHotkey:
+				Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
+				Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
+				// Unlike hotkeys -- which can have a name independent of their label by being created or updated
+				// with the HOTKEY command -- a hot string's unique name is always its label since that includes
+				// the options that distinguish between (for example) :c:ahk:: and ::ahk::
+				Keysharp.Scripting.Script.thisHotkeyName = hs != null ? hs.Name : hk.Name;
+				Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI threads.
+			}
 		}
 
 		private IntPtr LowLevelKeybdHandler(int code, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)//Might be nice to see if this can just return an int.//TODO

@@ -79,8 +79,7 @@ namespace Keysharp.Main
 				HandleCommandLineParams(args);
 				SetProcessDPIAware();
 				CreateTrayMenu();
-				//AddHotstring(":*:btw", null, "*:btw", "btw", "by the way", false);
-				AddHotstring(":*:btw", null, "*:btw", "btw", "by the way", false);
+				AddHotstring(":*:ab\t", new FuncObj("label_65C03C52", null), "*:ab\t", "ab\t", "", false);
 				RunMainWindow(name);
 				ExitApp(0);
 				return 0;
@@ -101,6 +100,12 @@ namespace Keysharp.Main
 				ExitApp(1);
 				return 1;
 			}
+		}
+
+		public static object label_65C03C52(params object[] args)
+		{
+			MsgBox("hello");
+			return string.Empty;
 		}
 	}
 }

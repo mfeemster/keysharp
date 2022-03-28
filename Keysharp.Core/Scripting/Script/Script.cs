@@ -1,49 +1,98 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Dynamic;
-using System.Linq;
 using System.Windows.Forms;
-using Keysharp;
 using Keysharp.Core;
 using Keysharp.Core.Common;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
-using System.Threading.Channels;
 
 namespace Keysharp.Scripting
 {
 	public partial class Script : Core.Core
 	{
-		internal static Icon PausedIcon;
-		internal static Icon SuspendedIcon;
-		internal static string scriptName = "";
-		internal static DateTime timeLastInputPhysical = DateTime.Now;
-		internal static DateTime timeLastInputKeyboard = timeLastInputPhysical;
-		internal static DateTime timeLastInputMouse = timeLastInputPhysical;
-		internal static InputType input;//Unsure exactly where these globals should go. AHK spreads them across global vars, ThreadState (per thread) and ThreadSettings. Need to properly place.//TODO
-		internal static bool forceKeybdHook;
-		internal static bool validateThenExit;
-		internal static bool isReadyToExecute;
-		internal static Core.Core.GenericFunction lastHotFunc;
-		internal static int inputLevel;
-		[ThreadStatic]
-		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion hotCriterion;
-		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotCriterion, lastHotCriterion;
-		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotExpr, lastHotExpr;
-		internal static IntPtr hWndLastUsed = IntPtr.Zero;
-		internal static string thisHotkeyName, priorHotkeyName;
+		//public static event ClipFunction ClipboardUpdateEvent;
+		public static List<ClipFunction> ClipFunctions = new List<ClipFunction>();
+
+		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
+		internal const int SLEEP_INTERVAL = 10;
+		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
 		internal static bool calledByIsDialogMessageOrDispatch;
 		internal static uint calledByIsDialogMessageOrDispatchMsg;
-		internal static DateTime thisHotkeyStartTime = DateTime.Now;
+		internal static bool deferMessagesForUnderlyingPump;
+		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotCriterion, lastHotCriterion;
+		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotExpr, lastHotExpr;
+		internal static bool forceKeybdHook;
+		internal static IntPtr historyHwndPrev = IntPtr.Zero;
+		internal static DateTime historyTickNow = DateTime.Now;
+		internal static DateTime historyTickPrev = DateTime.Now;
+
+		[ThreadStatic]
+		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion hotCriterion;
+
+		internal static IntPtr hotExprLFW = IntPtr.Zero;
+		internal static bool hsCaseSensitive;
+		internal static bool hsConformToCase = true;
+		internal static bool hsDetectWhenInsideWord;
+		internal static bool hsDoBackspace = true;
+		internal static bool hsDoReset;
+		internal static bool hsEndCharRequired = true;
+		internal static int hsKeyDelay;
+		internal static bool hsOmitEndChar;
+
+		// Hot-string global settings:
+		internal static int hsPriority;
+
+		internal static bool hsResetUponMouseClick = true;
+		internal static bool hsSameLineAction;
+
+		// default priority is always 0
+		// Fast sends are much nicer for auto-replace and auto-backspace.
+		//internal static Keysharp.Core.Common.Keyboard.SendModes sendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
+		internal static Keysharp.Core.Common.Keyboard.SendModes hsSendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
+
+		// v1.0.43: New default for more reliable hotstrings.
+		internal static Keysharp.Core.Common.Keyboard.SendRawModes hsSendRaw = Keysharp.Core.Common.Keyboard.SendRawModes.NotRaw;
+
+		internal static IntPtr hWndLastUsed = IntPtr.Zero;
+		internal static InputType input;
+		internal static int inputLevel;
+
+		// Last Found Window of last #HotIf expression.
+		internal static DateTime inputTimeoutAt = DateTime.Now;
+
+		internal static bool inputTimerExists;
+		internal static bool isReadyToExecute;
+		internal static FuncObj lastHotFunc;
+		internal static MainWindow mainWindow;
+		internal static int MAX_THREADS_LIMIT = 0xFF;
+		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = Keysharp.Core.Common.Keyboard.MenuType.None;
+		internal static Keysharp.Core.Common.MsgMonitorList msgMonitor = new Keysharp.Core.Common.MsgMonitorList();
+
+		//internal static int timerEnabledCount;
+		internal static int nLayersNeedingTimer;
+
+		internal static Icon PausedIcon;
+		internal static IntPtr playbackHook = IntPtr.Zero;
 		internal static DateTime priorHotkeyStartTime = DateTime.Now;
+		internal static string scriptName = "";
+		internal static Icon SuspendedIcon;
+		internal static string thisHotkeyName, priorHotkeyName;
+		internal static DateTime thisHotkeyStartTime = DateTime.Now;
+		internal static DateTime timeLastInputKeyboard = timeLastInputPhysical;
+		internal static DateTime timeLastInputMouse = timeLastInputPhysical;
+		internal static DateTime timeLastInputPhysical = DateTime.Now;
+		internal static int totalExistingThreads;
+
+		//Unsure exactly where these globals should go. AHK spreads them across global vars, ThreadState (per thread) and ThreadSettings. Need to properly place.//TODO
+		internal static bool validateThenExit;
+
+		private static IntPtr mainWindowHandle;
 		public static Variables Vars { get; private set; }
 		internal static Keysharp.Core.Common.Threading.HookThread HookThread { get; private set; }
-		internal static IntPtr playbackHook = IntPtr.Zero;
-		internal static MainWindow mainWindow;
-		private static IntPtr mainWindowHandle;//Declare this separately so it can be accessed from other threads.
+		//Declare this separately so it can be accessed from other threads.
 
 		internal static IntPtr MainWindowHandle
 		{
@@ -56,43 +105,6 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		//public static event ClipFunction ClipboardUpdateEvent;
-		public static List<ClipFunction> ClipFunctions = new List<ClipFunction>();
-		internal static IntPtr historyHwndPrev = IntPtr.Zero;
-		internal static IntPtr hotExprLFW = IntPtr.Zero; // Last Found Window of last #HotIf expression.
-		internal static DateTime historyTickNow = DateTime.Now;
-		internal static DateTime historyTickPrev = DateTime.Now;
-		internal static DateTime inputTimeoutAt = DateTime.Now;
-		internal static bool inputTimerExists;
-		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = Keysharp.Core.Common.Keyboard.MenuType.None;
-
-		// Hot-string global settings:
-		internal static int hsPriority;  // default priority is always 0
-		internal static int hsKeyDelay;  // Fast sends are much nicer for auto-replace and auto-backspace.
-		//internal static Keysharp.Core.Common.Keyboard.SendModes sendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
-		internal static Keysharp.Core.Common.Keyboard.SendModes hsSendMode = Keysharp.Core.Common.Keyboard.SendModes.Input; // v1.0.43: New default for more reliable hotstrings.
-		internal static Keysharp.Core.Common.Keyboard.SendRawModes hsSendRaw = Keysharp.Core.Common.Keyboard.SendRawModes.NotRaw;
-		internal static bool hsCaseSensitive;
-		internal static bool hsConformToCase = true;
-		internal static bool hsDoBackspace = true;
-		internal static bool hsOmitEndChar;
-		internal static bool hsEndCharRequired = true;
-		internal static bool hsDetectWhenInsideWord;
-		internal static bool hsDoReset;
-		internal static bool hsResetUponMouseClick = true;
-		internal static bool hsSameLineAction;
-		internal static int MAX_THREADS_LIMIT = 0xFF;
-		internal static int totalExistingThreads;
-
-		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
-		{
-			if (totalExistingThreads > 0 || Parser.Persistent)
-				return;
-
-			Keysharp.Core.Flow.ExitApp((int)exitReason);
-		}
-
-
 		static Script()
 		{
 			if (Vars == null)
@@ -100,37 +112,6 @@ namespace Keysharp.Scripting
 
 			Application.EnableVisualStyles();
 			InitHook();
-		}
-
-		internal static bool InitHook()
-		{
-			if (HookThread != null)
-				return false;
-
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				HookThread = new Keysharp.Core.Windows.WindowsHookThread();
-				return true;
-			}
-			else if (Environment.OSVersion.Platform == PlatformID.Unix)
-			{
-				HookThread = new Keysharp.Core.Linux.LinuxHookThread();
-				Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");
-				return true;
-			}
-
-			return false;
-		}
-
-		public static void ListVars(params object[] obj)
-		{
-			var str = Reflections.GetVariableInfo();
-			mainWindow?.SetText(str, MainWindow.MainFocusedTab.Main);
-		}
-
-		public static void ListLines(params object[] obj)
-		{
-			throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
 		}
 
 		public static void Edit(params object[] obj)
@@ -166,60 +147,6 @@ namespace Keysharp.Scripting
 			{
 				wi.Active = true;
 			}
-		}
-
-		/// <summary>
-		/// Sends a string to the debugger (if any) for display.
-		/// </summary>
-		/// <param name="text">The text to send to the debugger for display.</param>
-		public static void OutputDebug(params object[] obj)
-		{
-			var (text, clear) = obj.L().Sb();
-			System.Diagnostics.Debug.WriteLine(text);
-
-			if (Script.mainWindow != null)
-				if (clear)
-					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
-				else
-					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
-
-			//if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			//WindowsAPI.OutputDebugString(text);//Unsure if this is really needed, or will Debug.WriteLine() suffice?
-		}
-
-		public static void SetName(string s) => scriptName = s;
-
-		private static void PrivateClipboardUpdate(params object[] o)
-		{
-			var i = 0;
-			var b = false;//False means keep going, true means stop.
-
-			if (Clipboard.ContainsText() || Clipboard.ContainsFileDropList())
-				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++](1));//Can't use foreach because the collection could be modified by the event.
-			else if (!Env.IsClipboardEmpty())
-				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++](2));
-			else
-				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++](0));
-		}
-
-		public static void RunMainWindow(string title)
-		{
-			mainWindow = new MainWindow();
-
-			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
-
-			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
-			mainWindow.FormClosing += (o, e) => { Accessors.A_ExitReason = "OnExit()"; };
-			mainWindow.WindowState = FormWindowState.Minimized;
-			//mainWindow.WindowState = FormWindowState.Maximized;
-			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
-			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
-			Parser.Persistent = true;
-			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop)
-			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
-			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
-			Application.Run(mainWindow);
 		}
 
 		public static void HandleSingleInstance(string name, eScriptInstance inst)
@@ -266,14 +193,87 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
-		internal const int SLEEP_INTERVAL = 10;
-		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
-		internal static bool deferMessagesForUnderlyingPump;
-		//internal static int timerEnabledCount;
-		internal static int nLayersNeedingTimer;//Also probably not needed.//TODO
-		internal static Keysharp.Core.Common.MsgMonitorList msgMonitor = new Keysharp.Core.Common.MsgMonitorList();
+		public static void ListLines(params object[] obj)
+		{
+			throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+		}
 
+		public static void ListVars(params object[] obj)
+		{
+			var str = Reflections.GetVariableInfo();
+			mainWindow?.SetText(str, MainWindow.MainFocusedTab.Main);
+		}
+
+		/// <summary>
+		/// Sends a string to the debugger (if any) for display.
+		/// </summary>
+		/// <param name="text">The text to send to the debugger for display.</param>
+		public static void OutputDebug(params object[] obj)
+		{
+			var (text, clear) = obj.L().Sb();
+			System.Diagnostics.Debug.WriteLine(text);
+
+			if (Script.mainWindow != null)
+				if (clear)
+					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
+				else
+					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
+
+			//if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+			//WindowsAPI.OutputDebugString(text);//Unsure if this is really needed, or will Debug.WriteLine() suffice?
+		}
+
+		public static void RunMainWindow(string title)
+		{
+			mainWindow = new MainWindow();
+
+			if (!string.IsNullOrEmpty(title))
+				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
+
+			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
+			mainWindow.FormClosing += (o, e) => { Accessors.A_ExitReason = "OnExit()"; };
+			mainWindow.WindowState = FormWindowState.Minimized;
+			//mainWindow.WindowState = FormWindowState.Maximized;
+			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
+			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+			Parser.Persistent = true;
+			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop)
+			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
+			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
+			Application.Run(mainWindow);
+		}
+
+		public static void SetName(string s) => scriptName = s;
+
+		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
+		{
+			if (totalExistingThreads > 0 || Parser.Persistent)
+				return;
+
+			Keysharp.Core.Flow.ExitApp((int)exitReason);
+		}
+
+		internal static bool InitHook()
+		{
+			if (HookThread != null)
+				return false;
+
+			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+			{
+				HookThread = new Keysharp.Core.Windows.WindowsHookThread();
+				return true;
+			}
+			else if (Environment.OSVersion.Platform == PlatformID.Unix)
+			{
+				HookThread = new Keysharp.Core.Linux.LinuxHookThread();
+				Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");
+				return true;
+			}
+
+			return false;
+		}
+
+		//Also probably not needed.//TODO
 		internal static ResultType IsCycleComplete(int aSleepDuration, DateTime aStartTime, bool aAllowEarlyReturn)
 		// This function is used just to make MsgSleep() more readable/understandable.
 		{
@@ -338,7 +338,6 @@ namespace Keysharp.Scripting
 
 			return result;
 		}
-
 
 		internal static bool MsgMonitor(MsgMonitorInstance aInstance, IntPtr aWnd, uint aMsg, IntPtr awParam, IntPtr alParam, Msg apMsg, ref long aMsgReply)
 		{
@@ -430,15 +429,6 @@ namespace Keysharp.Scripting
 			//Unsure what to return here.//TODO
 			return true;// block_further_processing; // If false, the caller will ignore aMsgReply and process this message normally. If true, aMsgReply contains the reply the caller should immediately send for this message.
 		}
-
-
-
-		/// <summary>
-		/// AHK does all sorts of complicated checking for this function which appears to be due to how it
-		/// simulates threading. Keysharp uses real threads and real timers, so it doesn't appear that such complexity is needed.
-		/// </summary>
-		/// <returns></returns>
-		//internal static bool CheckScriptTimers() => Keysharp.Core.Flow.timers != null&& Keysharp.Core.Flow.timers.Count > 0;
 
 		internal static bool MsgSleep(int aSleepDuration = INTERVAL_UNSPECIFIED, MessageMode aMode = MessageMode.ReturnAfterMessages)
 		{
@@ -1237,7 +1227,6 @@ namespace Keysharp.Scripting
 			                    priority = menu_item->mPriority;
 			                    break;
 
-
 			                        case AHK_HOTSTRING:
 			                            if (wparam >= Hotstring::sHotstringCount) // Invalid hotstring ID (perhaps spoofed by external app)
 			                                continue; // Do nothing.
@@ -1406,9 +1395,7 @@ namespace Keysharp.Scripting
 			                                criterion_found_hwnd = g_HotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
 
 			                            priority = variant->mPriority;
-
 			            } // switch(msg.message)
-
 
 			                if (g_nThreads >= g_MaxThreadsTotal)
 			                {
@@ -1965,7 +1952,6 @@ namespace Keysharp.Scripting
 			                // external ever explicitly posts a WM_QUIT to our thread's queue:
 			                g_script.ExitApp(EXIT_CLOSE);
 			                continue; // Since ExitApp() won't necessarily exit.
-
 			        } // switch()
 			        break_out_of_main_switch:
 			        ;
@@ -2022,5 +2008,25 @@ namespace Keysharp.Scripting
 			    return false;
 			*/
 		}
+
+		private static void PrivateClipboardUpdate(params object[] o)
+		{
+			var i = 0;
+			var b = false;//False means keep going, true means stop.
+
+			if (Clipboard.ContainsText() || Clipboard.ContainsFileDropList())
+				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++](1));//Can't use foreach because the collection could be modified by the event.
+			else if (!Env.IsClipboardEmpty())
+				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++](2));
+			else
+				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++](0));
+		}
+
+		/// <summary>
+		/// AHK does all sorts of complicated checking for this function which appears to be due to how it
+		/// simulates threading. Keysharp uses real threads and real timers, so it doesn't appear that such complexity is needed.
+		/// </summary>
+		/// <returns></returns>
+		//internal static bool CheckScriptTimers() => Keysharp.Core.Flow.timers != null&& Keysharp.Core.Flow.timers.Count > 0;
 	}
 }

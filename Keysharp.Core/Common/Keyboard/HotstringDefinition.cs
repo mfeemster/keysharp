@@ -19,12 +19,15 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static uint enabledCount;      // Keep in sync with the above.
 		internal static List<char> hsBuf = new List<char>(256);
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);//Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
-		//internal Core.HotFunction callback;
-		internal IFuncObj funcObj;
+
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
 
 		internal int existingThreads, maxThreads;
+
+		//internal Core.HotFunction callback;
+		internal IFuncObj funcObj;
+
 		internal HotkeyCriterion hotCriterion;
 		internal int inputLevel;
 		internal int priority, keyDelay;
@@ -92,6 +95,30 @@ namespace Keysharp.Core.Common.Keyboard
 			constructedOK = true; // Done at the very end.
 		}
 
+		/// <summary>
+		/// Returns OK or FAIL.
+		/// Caller has ensured that aHotstringOptions is blank if there are no options.  Otherwise, aHotstringOptions
+		/// should end in a colon, which marks the end of the options list.  aHotstring is the hotstring itself
+		/// (e.g. "ahk"), which does not have to be unique, unlike aName, which was made unique by also including
+		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
+		/// Caller has also ensured that aHotstring is not blank.
+		/// </summary>
+		public static ResultType AddHotstring(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring
+											  , string _replacement, bool _hasContinuationSection, int _suspend = 0)
+		{
+			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
+
+			if (!hs.constructedOK)
+				return ResultType.Fail;
+
+			shs.Add(hs);
+
+			if (!Keysharp.Scripting.Script.isReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
+				++enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
+
+			return ResultType.Ok;
+		}
+
 		// FALSE or a combination of one of the following:
 		public void DefaultHotFunction(object[] o)
 		{
@@ -149,30 +176,6 @@ namespace Keysharp.Core.Common.Keyboard
 		*/
 
 		public override string ToString() => Name;
-
-		/// <summary>
-		/// Returns OK or FAIL.
-		/// Caller has ensured that aHotstringOptions is blank if there are no options.  Otherwise, aHotstringOptions
-		/// should end in a colon, which marks the end of the options list.  aHotstring is the hotstring itself
-		/// (e.g. "ahk"), which does not have to be unique, unlike aName, which was made unique by also including
-		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
-		/// Caller has also ensured that aHotstring is not blank.
-		/// </summary>
-		public static ResultType AddHotstring(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring
-				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
-		{
-			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
-
-			if (!hs.constructedOK)
-				return ResultType.Fail;
-
-			shs.Add(hs);
-
-			if (!Keysharp.Scripting.Script.isReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
-				++enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
-
-			return ResultType.Ok;
-		}
 
 		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, HotkeyCriterion _hotCriterion)
 		{
@@ -481,7 +484,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// is still timely/accurate -- it seems best to set to "no modifiers":
 			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
 			++existingThreads;  // This is the thread count for this particular hotstring only.
-			Keysharp.Core.Core.LaunchInThread(funcObj, new object[] { Keysharp.Scripting.Script.thisHotkeyName, Name }).ContinueWith((t) => { --existingThreads; });
+			Keysharp.Core.Core.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			return ResultType.Ok;
 		}
 

@@ -422,7 +422,8 @@ namespace Keysharp.Scripting
 					if (code.EndsWith('=') && peek != '(' && peek != '[')//Very special case for ending with = If the next line is not a paren or bracket, it's an empty assignment, otherwise it's the start of a continuation statement.
 						cont = false;
 
-					var ll = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+					//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
+					var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 
 					if (cont || (ll && (!code.EndsWith('{') ||//Don't treat non-flow statements that end in {, such as constructing a map, as the start of a multiline statement.
 										(code.Length > 1 &&
@@ -434,8 +435,8 @@ namespace Keysharp.Scripting
 										 !code.StartsWith("try", StringComparison.OrdinalIgnoreCase) &&
 										 !code.StartsWith("catch", StringComparison.OrdinalIgnoreCase) &&
 										 !code.StartsWith("switch", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("loop", StringComparison.OrdinalIgnoreCase))
-										//return?
+										 !code.StartsWith("loop", StringComparison.OrdinalIgnoreCase)
+										)
 									   )))
 					{
 						if (cont)

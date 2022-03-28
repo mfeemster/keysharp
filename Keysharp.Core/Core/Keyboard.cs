@@ -18,7 +18,7 @@ namespace Keysharp.Core
 		internal static bool blockMouseMove;
 		internal static Dictionary<string, HotkeyDefinition> hotkeys = new Dictionary<string, HotkeyDefinition>();
 		internal static Dictionary<string, HotstringDefinition> hotstrings = new Dictionary<string, HotstringDefinition>();
-		private static Core.GenericFunction keyCondition;
+		private static FuncObj keyCondition;
 		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
 
 		/// <summary>
@@ -175,10 +175,10 @@ namespace Keysharp.Core
 				var cond = new string[4, 2];
 				cond[win, 0] = label; // title
 				cond[win, 1] = options; // text
-				keyCondition = new Core.GenericFunction(delegate
+				keyCondition = new FuncObj(new Core.GenericFunction(delegate
 				{
 					return HotkeyPrecondition(cond);
-				});
+				}), null);
 				return;
 			}
 
@@ -257,7 +257,7 @@ namespace Keysharp.Core
 					return;
 				}
 
-				key.Proc = (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
+				key.Proc = new FuncObj((Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method), null);
 				key.Precondition = keyCondition;
 				hotkeys.Add(id, key);
 				_ = kbdMouseSender.Add(key);
@@ -472,72 +472,78 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public static void HotstringFunc(params object[] obj)//Matt, probably don't need this.//TODO
-		{
-			var (sequence, replacement, options) = obj.L().S3();
-			Core.GenericFunction proc;
+		/*
+		    public static void HotstringFunc(params object[] obj)//Matt, probably don't need this.//TODO
+		    {
+		    var (sequence, replacement, options) = obj.L().S3();
+		    Core.GenericFunction proc;
 
-			//Core.HotFunction proc;//MATT
-			try
-			{
-				var method = Reflections.FindLocalMethod(replacement);
+		    //Core.HotFunction proc;//MATT
+		    try
+		    {
+		        var method = Reflections.FindLocalMethod(replacement);
 
-				if (method == null)
-					throw new ArgumentNullException();
+		        if (method == null)
+		            throw new ArgumentNullException();
 
-				proc = (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
-				//proc = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);//MATT
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e.Message);
-				Accessors.A_ErrorLevel = 1;
-				throw new ArgumentException();
-			}
+		        proc = (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
+		        //proc = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);//MATT
+		    }
+		    catch (Exception e)
+		    {
+		        Console.WriteLine(e.Message);
+		        Accessors.A_ErrorLevel = 1;
+		        throw new ArgumentException();
+		    }
 
-			//Figure out how to integrate, or remove this.//TODO
-			//var opts = HotstringDefinition.ParseOptions(options);//Need to figure out how to call new constructor (and get rid of the old one)//TODO
-			//var key = new HotstringDefinition(sequence, replacement) { Name = sequence, Enabled = true, EnabledOptions = opts };
-			////hotstrings.Add(Sequence, key);//MATT
-			//hotstrings[sequence] = key;
-			//_ = keyboardHook.Add(key);
-		}
-		/// <summary>
-		/// Creates a hotstring.
-		/// </summary>
-		/// <param name="sequence"></param>
-		/// <param name="label"></param>
-		/// <param name="options"></param>
-		public static void HotstringLabel(params object[] obj)//Matt
-		{
-			var (sequence, label, options) = obj.L().S3();
-			//Core.GenericFunction proc;
-			Core.HotFunction proc;//MATT
+		    //Figure out how to integrate, or remove this.//TODO
+		    //var opts = HotstringDefinition.ParseOptions(options);//Need to figure out how to call new constructor (and get rid of the old one)//TODO
+		    //var key = new HotstringDefinition(sequence, replacement) { Name = sequence, Enabled = true, EnabledOptions = opts };
+		    ////hotstrings.Add(Sequence, key);//MATT
+		    //hotstrings[sequence] = key;
+		    //_ = keyboardHook.Add(key);
+		    }
+		*/
 
-			try
-			{
-				var method = Reflections.FindLocalMethod(label);
+		/*
+		    /// <summary>
+		    /// Creates a hotstring.
+		    /// </summary>
+		    /// <param name="sequence"></param>
+		    /// <param name="label"></param>
+		    /// <param name="options"></param>
+		    public static void HotstringLabel(params object[] obj)//Matt
+		    {
+		    var (sequence, label, options) = obj.L().S3();
+		    //Core.GenericFunction proc;
+		    Core.HotFunction proc;//MATT
 
-				if (method == null)
-					throw new ArgumentNullException();
+		    try
+		    {
+		        var method = Reflections.FindLocalMethod(label);
 
-				//proc = (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
-				proc = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);//MATT
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e.Message);//Probably shouldn't even be a try/catch. Let the parent handle it.//TODO
-				Accessors.A_ErrorLevel = 1;
-				throw new ArgumentException();
-			}
+		        if (method == null)
+		            throw new ArgumentNullException();
 
-			//Figure out how to integrate, or remove this.//TODO
-			//var opts = HotstringDefinition.ParseOptions(options);//Need to figure out how to call new constructor (and get rid of the old one)//TODO
-			//var key = new HotstringDefinition(sequence, string.Empty, proc) { Name = sequence, Enabled = true, EnabledOptions = opts };
-			////hotstrings.Add(Sequence, key);//MATT
-			//hotstrings[sequence] = key;
-			//_ = keyboardHook.Add(key);
-		}
+		        //proc = (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
+		        proc = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);//MATT
+		    }
+		    catch (Exception e)
+		    {
+		        Console.WriteLine(e.Message);//Probably shouldn't even be a try/catch. Let the parent handle it.//TODO
+		        Accessors.A_ErrorLevel = 1;
+		        throw new ArgumentException();
+		    }
+
+		    //Figure out how to integrate, or remove this.//TODO
+		    //var opts = HotstringDefinition.ParseOptions(options);//Need to figure out how to call new constructor (and get rid of the old one)//TODO
+		    //var key = new HotstringDefinition(sequence, string.Empty, proc) { Name = sequence, Enabled = true, EnabledOptions = opts };
+		    ////hotstrings.Add(Sequence, key);//MATT
+		    //hotstrings[sequence] = key;
+		    //_ = keyboardHook.Add(key);
+		    }
+		*/
+
 		/// <summary>
 		/// Waits for the user to type a string (not supported on Windows 9x: it does nothing).
 		/// </summary>
@@ -662,6 +668,7 @@ namespace Keysharp.Core
 			result = abortReason.CatchedText;
 			Accessors.A_ErrorLevel = (int)abortReason.Reason;
 		}
+
 		/// <summary>
 		/// Waits for a key or mouse/joystick button to be released or pressed down.
 		/// </summary>
@@ -800,12 +807,24 @@ namespace Keysharp.Core
 
 			    keyWaitCommand.Wait(key);*/
 		}
+
+		public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero);
+
+		public static void SendEvent(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+
 		/// <summary>
 		/// Sends simulated keystrokes and mouse clicks to the active window.
 		/// </summary>
 		/// <param name="Keys">The sequence of keys to send.</param>
-		public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendMixed(obj.L().S1());
+		public static void SendInput(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+
+		//public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendMixed(obj.L().S1());
 		public static void SendMode(params object[] obj) => Accessors.A_SendMode = obj.L().S1();
+
+		public static void SendPlay(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+
+		public static void SendText(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero);
+
 		public static void SetKeyDelay(params object[] obj)
 		{
 			var o = obj.L();
@@ -835,6 +854,7 @@ namespace Keysharp.Core
 				Accessors.A_KeyDuration = dur;
 			}
 		}
+
 		/// <summary>
 		/// Sets the state of the NumLock, ScrollLock or CapsLock keys.
 		/// </summary>
@@ -858,6 +878,7 @@ namespace Keysharp.Core
 		{
 			var (key, mode) = obj.L().S2();
 		}
+
 		public static void SetStoreCapsLockMode(params object[] obj)
 		{
 			var s = obj.L().S1();
@@ -865,6 +886,7 @@ namespace Keysharp.Core
 			if (s != "")
 				Accessors.A_StoreCapsLockMode = s;
 		}
+
 		internal static ToggleValueType ConvertBlockInput(string buf)
 		{
 			var toggle = Keysharp.Core.Options.ConvertOnOff(buf);
@@ -886,6 +908,7 @@ namespace Keysharp.Core
 
 			return ToggleValueType.Invalid;
 		}
+
 		internal static string GetKeyNameHelper(int vk, int sc, string def)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -912,6 +935,7 @@ namespace Keysharp.Core
 
 			return def;// Since this key is unrecognized, return the caller-supplied default value.
 		}
+
 		/// <summary>
 		/// Always returns OK for caller convenience.
 		/// </summary>
@@ -927,6 +951,7 @@ namespace Keysharp.Core
 			blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
 		}
+
 		/// <summary>
 		///
 		/// </summary>
@@ -981,6 +1006,7 @@ namespace Keysharp.Core
 			// A new mode can be added to KeyWait & GetKeyState if Async is ever explicitly needed.
 			return ht.IsKeyDown(vk);
 		}
+
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -1004,6 +1030,7 @@ namespace Keysharp.Core
 
 			return "";
 		}
+
 		private static bool HotkeyPrecondition(string[,] win)
 		{
 			if (!string.IsNullOrEmpty(win[0, 0]) || !string.IsNullOrEmpty(win[0, 1]))

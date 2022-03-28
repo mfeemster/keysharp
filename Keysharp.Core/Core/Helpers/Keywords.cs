@@ -631,9 +631,9 @@
 		internal const string ExMultiStr = "Unrecognized multiline string option";
 		internal const string ExFlowArgReq = "Argument is required";
 		internal const string ExFlowArgNotReq = "Argument not expected";
-		internal const string ExUnbalancedParens = "Unbalanaced parentheses in expression";
-		internal const string ExUnbalancedBraces = "Unbalanaced braces in expression";
-		internal const string ExUnbalancedBrackets = "Unbalanaced brackets in expression";
+		internal const string ExUnbalancedParens = "Unbalanced parentheses in expression";
+		internal const string ExUnbalancedBraces = "Unbalanced braces in expression";
+		internal const string ExUnbalancedBrackets = "Unbalanced brackets in expression";
 		internal const string ExUntermStr = "Unterminated string";
 		internal const string ExUnknownDirv = "Unrecognized directive";
 		internal const string ExInvalidVarName = "Invalid variable name";

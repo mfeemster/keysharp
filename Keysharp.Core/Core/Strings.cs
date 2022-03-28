@@ -15,7 +15,7 @@ namespace Keysharp.Core
 {
 	public static class Strings
 	{
-		static internal RegexEntry regdkt = new ();
+		internal static RegexEntry regdkt = new ();
 
 		/// <summary>
 		/// Decodes a base 64 character string to binary data.
@@ -69,61 +69,58 @@ namespace Keysharp.Core
 		public static string FormatTime(params object[] obj)
 		{
 			var (stamp, format) = obj.L().S2();
-
-			if (stamp?.Length == 0)
-				return string.Empty;
-
 			DateTime time;
-			var ci = System.Globalization.CultureInfo.CurrentCulture;
 			var output = string.Empty;
 			var splits = stamp.Split(' ');
-			stamp = splits[0];
-			var haslsys = splits.Contains("LSys");
+			var ci = System.Globalization.CultureInfo.CurrentCulture;
 
-			if (haslsys)
-				ci = new CultureInfo(ci.LCID, false);
-
-			for (var i = 1; i < splits.Length; i++)
-			{
-				if (!haslsys && splits[i].StartsWith("L"))
-				{
-					var sub = splits[i].Substring(1);
-
-					if (!int.TryParse(sub, out var li))
-						li = Convert.ToInt32(sub, 16);
-
-					ci = new System.Globalization.CultureInfo(li, false);
-				}
-				else if (splits[i].StartsWith("D"))
-				{
-					var sub = splits[i].Substring(1);
-
-					if (!ulong.TryParse(sub, out var di))
-						di = Convert.ToUInt64(sub, 16);
-
-					if (di == 0x80000000)
-						if (!haslsys)
-							ci = new CultureInfo(ci.LCID, false);//No user overrides, if we haven't already done this above.
-				}
-				else if (splits[i].StartsWith("T"))
-				{
-					var sub = splits[i].Substring(1);
-
-					if (!ulong.TryParse(sub, out var ti))
-						ti = Convert.ToUInt64(sub, 16);
-
-					if (ti == 0x80000000)
-						if (!haslsys)
-							ci = new CultureInfo(ci.LCID, false);//No user overrides, if we haven't already done this above.
-				}
-			}
-
-			if (stamp.Length == 0)
+			if (stamp?.Length == 0)
 			{
 				time = DateTime.Now;
 			}
 			else
 			{
+				stamp = splits[0];
+				var haslsys = splits.Contains("LSys");
+
+				if (haslsys)
+					ci = new CultureInfo(ci.LCID, false);
+
+				for (var i = 1; i < splits.Length; i++)
+				{
+					if (!haslsys && splits[i].StartsWith("L"))
+					{
+						var sub = splits[i].Substring(1);
+
+						if (!int.TryParse(sub, out var li))
+							li = Convert.ToInt32(sub, 16);
+
+						ci = new System.Globalization.CultureInfo(li, false);
+					}
+					else if (splits[i].StartsWith("D"))
+					{
+						var sub = splits[i].Substring(1);
+
+						if (!ulong.TryParse(sub, out var di))
+							di = Convert.ToUInt64(sub, 16);
+
+						if (di == 0x80000000)
+							if (!haslsys)
+								ci = new CultureInfo(ci.LCID, false);//No user overrides, if we haven't already done this above.
+					}
+					else if (splits[i].StartsWith("T"))
+					{
+						var sub = splits[i].Substring(1);
+
+						if (!ulong.TryParse(sub, out var ti))
+							ti = Convert.ToUInt64(sub, 16);
+
+						if (ti == 0x80000000)
+							if (!haslsys)
+								ci = new CultureInfo(ci.LCID, false);//No user overrides, if we haven't already done this above.
+					}
+				}
+
 				try
 				{
 					time = Conversions.ToDateTime(stamp, ci.Calendar);
@@ -1212,15 +1209,23 @@ namespace Keysharp.Core
 
 		public static long VarSetStrCapacity(params object[] obj) => 0;
 
-		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
-		internal static bool Cisalpha(char c) => (c & 0x80) == 0 && char.IsLetter(c);
 		internal static bool Cisalnum(char c) => (c & 0x80) == 0 && char.IsLetterOrDigit(c);
+
+		internal static bool Cisalpha(char c) => (c & 0x80) == 0 && char.IsLetter(c);
+
 		internal static bool Cisdigit(char c) => (c & 0x80) == 0 && char.IsDigit(c);
-		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
-		internal static bool Cisupper(char c) => (c & 0x80) == 0 && char.IsUpper(c);
+
 		internal static bool Cislower(char c) => (c & 0x80) == 0 && char.IsLower(c);
+
 		internal static bool Cisprint(char c) => (c & 0x80) == 0 && !char.IsControl(c) || char.IsWhiteSpace(c);
+
 		internal static bool Cisspace(char c) => (c & 0x80) == 0 && char.IsWhiteSpace(c);
+
+		internal static bool Cisupper(char c) => (c & 0x80) == 0 && char.IsUpper(c);
+
+		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
+
+		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
 
 		/// <summary>
 		/// Reverse vesion of NthIndexOf().
@@ -1274,10 +1279,8 @@ namespace Keysharp.Core
 	{
 		private Match match;
 
-		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
-
 		public long Count => match.Groups.Count - 1;
-
+		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public bool Success => match.Success;
 
 		public RegExResults(Match m) => match = m;
@@ -1345,6 +1348,19 @@ namespace Keysharp.Core
 
 		static NaturalComparer() => regex = new Regex(@"[\W\.]*([\w-[\d]]+|[\d]+)", RegexOptions.Compiled);
 
+		public int Compare(string left, string right) => NaturalCompare(left, right);
+
+		public int Compare(object left, object right)
+		{
+			if (!(left is string s1))
+				throw new System.ArgumentException("Parameter type is not string", "left");
+
+			if (!(right is string s2))
+				throw new System.ArgumentException("Parameter type is not string", "right");
+
+			return Compare(s1, s2);
+		}
+
 		internal static int NaturalCompare(string left, string right)
 		{
 			// optimization: if left and right are the same object, then they compare as the same
@@ -1378,19 +1394,6 @@ namespace Keysharp.Core
 			// if there is more, then left was shorter, ie, lessthan
 			// if there's no more left in the righthand, then they were all equal
 			return enrm.MoveNext() ? -1 : 0;
-		}
-
-		public int Compare(string left, string right) => NaturalCompare(left, right);
-
-		public int Compare(object left, object right)
-		{
-			if (!(left is string s1))
-				throw new System.ArgumentException("Parameter type is not string", "left");
-
-			if (!(right is string s2))
-				throw new System.ArgumentException("Parameter type is not string", "right");
-
-			return Compare(s1, s2);
 		}
 
 		private static int CompareTokens(string left, string right)

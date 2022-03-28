@@ -75,6 +75,19 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		internal static MethodInfo FindExtensionMethod(Type t, string meth)
+		{
+			//if (typeof(IDictionary).IsAssignableFrom(t))
+			//  if (ExtensionMethods.TryGetValue(typeof(IDictionary).GUID, out var idkt))
+			//      if (idkt.TryGetValue(meth, out var mi))
+			//          return mi;
+			if (ExtensionMethods.TryGetValue(t.GUID, out var dkt))
+				if (dkt.TryGetValue(meth, out var mi))
+					return mi;
+
+			return null;
+		}
+
 		internal static MethodInfo FindLocalMethod(string name)
 		{
 			var stack = new StackTrace(false).GetFrames();
@@ -85,6 +98,95 @@ namespace Keysharp.Core
 
 				if (type.FullName.StartsWith("Keysharp.Main", StringComparison.OrdinalIgnoreCase))
 					return FindMethod(type, name);
+			}
+
+			return null;
+		}
+
+		internal static MethodInfo FindLocalRoutine(string name) => FindLocalMethod(Keysharp.Scripting.Parser.LabelMethodName(name));
+
+		internal static MethodInfo FindMethod(Type t, string name)
+		{
+			try
+			{
+				//while (t.Assembly == typeof(Any).Assembly)
+				do
+				{
+					if (Methods.TryGetValue(t, out var dkt))
+					{
+					}
+					else
+					{
+						foreach (var meth in (MethodInfo[])t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+							Methods.GetOrAdd(meth.DeclaringType, () => new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase)).Add(meth.Name, meth);
+					}
+
+					if (dkt == null && !Methods.TryGetValue(t, out dkt))
+					{
+						t = t.BaseType;
+						continue;
+					}
+
+					if (dkt.TryGetValue(name, out var mi))//Case sensitive match.
+						return mi;
+
+					//foreach (var kv in dkt)//Case insensitive match.
+					//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
+					//      return kv.Value;
+					t = t.BaseType;
+				} while (t.Assembly == typeof(Any).Assembly);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
+			}
+			catch (Exception)// e)
+			{
+				throw;
+			}
+
+			return null;
+		}
+
+		internal static MethodInfo FindMethod(string name)
+		{
+			if (FindLocalMethod(name) is MethodInfo mil)
+				return mil;
+
+			return FindBuiltInMethod(name);
+		}
+
+		internal static PropertyInfo FindProperty(Type t, string name)
+		{
+			try
+			{
+				//while (t.Assembly == typeof(Any).Assembly)//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
+				//while (t != typeof(object))//Traverse down to object becase properties of native objects are needed, such as for string.
+				do
+				{
+					if (Properties.TryGetValue(t, out var dkt))
+					{
+					}
+					else//Property on this type has not been used yet, so get all properties and cache.
+					{
+						foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+							Properties.GetOrAdd(prop.DeclaringType, () => new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase)).Add(prop.Name, prop);
+					}
+
+					if (dkt == null && !Properties.TryGetValue(t, out dkt))
+					{
+						t = t.BaseType;
+						continue;
+					}
+
+					if (dkt.TryGetValue(name, out var pi))
+						return pi;
+
+					//foreach (var kv in dkt)//Case insensitive match.
+					//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
+					//      return kv.Value;
+					t = t.BaseType;
+				} while (t != typeof(object));
+			}
+			catch (Exception)// e)
+			{
+				throw;
 			}
 
 			return null;
@@ -170,67 +272,6 @@ namespace Keysharp.Core
 			return sb.ToString();
 		}
 
-		internal static MethodInfo FindLocalRoutine(string name) => FindLocalMethod(LabelMethodName(name));
-
-		internal static MethodInfo FindMethod(Type t, string name)
-		{
-			try
-			{
-				//while (t.Assembly == typeof(Any).Assembly)
-				do
-				{
-					if (Methods.TryGetValue(t, out var dkt))
-					{
-					}
-					else
-					{
-						foreach (var meth in (MethodInfo[])t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-							Methods.GetOrAdd(meth.DeclaringType, () => new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase)).Add(meth.Name, meth);
-					}
-
-					if (dkt == null && !Methods.TryGetValue(t, out dkt))
-					{
-						t = t.BaseType;
-						continue;
-					}
-
-					if (dkt.TryGetValue(name, out var mi))//Case sensitive match.
-						return mi;
-
-					//foreach (var kv in dkt)//Case insensitive match.
-					//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-					//      return kv.Value;
-					t = t.BaseType;
-				} while (t.Assembly == typeof(Any).Assembly);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
-			}
-			catch (Exception)// e)
-			{
-				throw;
-			}
-
-			return null;
-		}
-
-		internal static MethodInfo FindMethod(string name)
-		{
-			if (FindLocalMethod(name) is MethodInfo mil)
-				return mil;
-
-			return FindBuiltInMethod(name);
-		}
-
-		internal static MethodInfo FindExtensionMethod(Type t, string meth)
-		{
-			//if (typeof(IDictionary).IsAssignableFrom(t))
-			//  if (ExtensionMethods.TryGetValue(typeof(IDictionary).GUID, out var idkt))
-			//      if (idkt.TryGetValue(meth, out var mi))
-			//          return mi;
-			if (ExtensionMethods.TryGetValue(t.GUID, out var dkt))
-				if (dkt.TryGetValue(meth, out var mi))
-					return mi;
-
-			return null;
-		}
 		/*
 		    public MethodInfo BestMatch(string name, int length)
 		    {
@@ -261,56 +302,6 @@ namespace Keysharp.Core
 		    return result;
 		    }
 		*/
-		internal static PropertyInfo FindProperty(Type t, string name)
-		{
-			try
-			{
-				//while (t.Assembly == typeof(Any).Assembly)//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
-				//while (t != typeof(object))//Traverse down to object becase properties of native objects are needed, such as for string.
-				do
-				{
-					if (Properties.TryGetValue(t, out var dkt))
-					{
-					}
-					else//Property on this type has not been used yet, so get all properties and cache.
-					{
-						foreach (var prop in t.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-							Properties.GetOrAdd(prop.DeclaringType, () => new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase)).Add(prop.Name, prop);
-					}
-
-					if (dkt == null && !Properties.TryGetValue(t, out dkt))
-					{
-						t = t.BaseType;
-						continue;
-					}
-
-					if (dkt.TryGetValue(name, out var pi))
-						return pi;
-
-					//foreach (var kv in dkt)//Case insensitive match.
-					//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-					//      return kv.Value;
-					t = t.BaseType;
-				} while (t != typeof(object));
-			}
-			catch (Exception)// e)
-			{
-				throw;
-			}
-
-			return null;
-		}
-
-		internal static string LabelMethodName(string raw)
-		{
-			foreach (var sym in raw)
-			{
-				if (!char.IsLetterOrDigit(sym))
-					return string.Concat("label_", raw.GetHashCode().ToString("X"));
-			}
-
-			return raw;
-		}
 
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
 
