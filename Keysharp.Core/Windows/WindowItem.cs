@@ -150,6 +150,8 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
+		internal override bool IsHung => Handle == IntPtr.Zero ? false : WindowsAPI.IsHungAppWindow(Handle);
+
 		internal override Rectangle Location
 		{
 			get => !IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect) ? Rectangle.Empty : new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
@@ -223,7 +225,7 @@ namespace Keysharp.Core.Windows
 				{
 					if ((bool)Accessors.A_DetectHiddenText || Windows.WindowsAPI.IsWindowVisible(hwnd))
 					{
-						var text = Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
+						var text = (string)Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
 						items.Add(text);
 					}
 
@@ -300,92 +302,8 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override bool IsHung => Handle == IntPtr.Zero ? false : WindowsAPI.IsHungAppWindow(Handle);
-
 		internal WindowItem(IntPtr handle) : base(handle)
 		{
-		}
-
-		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
-
-		internal override bool Hide() => IsSpecified&& WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_HIDE);
-
-		internal override bool Kill()
-		{
-			_ = Close();
-
-			if (!Exists)
-				return true;
-
-			var pid = PID.ToInt32();
-			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : IntPtr.Zero;
-
-			if (prc != IntPtr.Zero)
-			{
-				_ = WindowsAPI.TerminateProcess(prc, 0);
-				_ = WindowsAPI.CloseHandle(prc);
-			}
-
-			return !Exists;
-		}
-
-		internal override WindowItemBase RealChildWindowFromPoint(Point location)
-		{
-			WindowItemBase child = null;
-
-			if (IsSpecified)
-				child = new WindowItem(WindowsAPI.RealChildWindowFromPoint(Handle, location));
-
-			return child;
-		}
-
-		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
-
-		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, Point? location = null)
-		{
-			var click = new Point();
-
-			if (location.HasValue)
-			{
-				click = location.Value;
-			}
-			else
-			{
-				// if not specified find middlepoint of this window/control
-				var size = Size;
-				click.X = size.Width / 2;
-				click.Y = size.Height / 2;
-			}
-
-			var lparam = new IntPtr(Conversions.MakeInt((short)click.X, (short)click.Y));
-			_ = WindowsAPI.PostMessage(Handle, (uint)mouseevent, new IntPtr(1), lparam);
-		}
-
-		internal override void SetTransparency(byte level, Color color)
-		{
-			if (!IsSpecified)
-				return;
-
-			if (level == byte.MaxValue)
-				ExStyle &= ~WindowsAPI.WS_EX_LAYERED;
-			else
-			{
-				var flags = WindowsAPI.LWA_ALPHA;
-				var c = (color.B << 16) | (color.G << 8) | color.R;
-
-				if (c != 0)
-					flags |= WindowsAPI.LWA_COLORKEY;
-
-				ExStyle |= WindowsAPI.WS_EX_LAYERED;
-				_ = WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)c, level, (uint)flags);
-			}
-		}
-
-		internal override bool Show()
-		{
-			var b = IsSpecified && WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_SHOWDEFAULT);
-			DoWinDelay();
-			return b;
 		}
 
 		/// <summary>
@@ -425,7 +343,7 @@ namespace Keysharp.Core.Windows
 			var new_foreground_wnd = IntPtr.Zero;
 
 			//Try a simple approach first.
-			if (!Accessors.WinActivateForce)
+			if (!(bool)Accessors.WinActivateForce)
 			{
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
 
@@ -470,7 +388,7 @@ namespace Keysharp.Core.Windows
 			// The log showed that it never seemed to need more than two tries.  But there's
 			// not much harm in trying a few extra times.  The number of tries needed might
 			// vary depending on how fast the CPU is:
-			var activateforce = Accessors.WinActivateForce ? 1 : 0;
+			var activateforce = (bool)Accessors.WinActivateForce ? 1 : 0;
 
 			for (var i = 0; i < 5; ++i)
 			{
@@ -581,6 +499,8 @@ namespace Keysharp.Core.Windows
 				return IntPtr.Zero;
 		}
 
+		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+
 		internal override uint GetMenuItemId(params string[] items)
 		{
 			if (!IsSpecified)
@@ -650,6 +570,86 @@ namespace Keysharp.Core.Windows
 			}
 
 			return menuid;
+		}
+
+		internal override bool Hide() => IsSpecified&& WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_HIDE);
+
+		internal override bool Kill()
+		{
+			_ = Close();
+
+			if (!Exists)
+				return true;
+
+			var pid = PID.ToInt32();
+			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : IntPtr.Zero;
+
+			if (prc != IntPtr.Zero)
+			{
+				_ = WindowsAPI.TerminateProcess(prc, 0);
+				_ = WindowsAPI.CloseHandle(prc);
+			}
+
+			return !Exists;
+		}
+
+		internal override WindowItemBase RealChildWindowFromPoint(Point location)
+		{
+			WindowItemBase child = null;
+
+			if (IsSpecified)
+				child = new WindowItem(WindowsAPI.RealChildWindowFromPoint(Handle, location));
+
+			return child;
+		}
+
+		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
+
+		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, Point? location = null)
+		{
+			var click = new Point();
+
+			if (location.HasValue)
+			{
+				click = location.Value;
+			}
+			else
+			{
+				// if not specified find middlepoint of this window/control
+				var size = Size;
+				click.X = size.Width / 2;
+				click.Y = size.Height / 2;
+			}
+
+			var lparam = new IntPtr(Conversions.MakeInt((short)click.X, (short)click.Y));
+			_ = WindowsAPI.PostMessage(Handle, (uint)mouseevent, new IntPtr(1), lparam);
+		}
+
+		internal override void SetTransparency(byte level, Color color)
+		{
+			if (!IsSpecified)
+				return;
+
+			if (level == byte.MaxValue)
+				ExStyle &= ~WindowsAPI.WS_EX_LAYERED;
+			else
+			{
+				var flags = WindowsAPI.LWA_ALPHA;
+				var c = (color.B << 16) | (color.G << 8) | color.R;
+
+				if (c != 0)
+					flags |= WindowsAPI.LWA_COLORKEY;
+
+				ExStyle |= WindowsAPI.WS_EX_LAYERED;
+				_ = WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)c, level, (uint)flags);
+			}
+		}
+
+		internal override bool Show()
+		{
+			var b = IsSpecified && WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_SHOWDEFAULT);
+			DoWinDelay();
+			return b;
 		}
 
 		/// <summary>

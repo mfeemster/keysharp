@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using static Keysharp.Core.Core;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
@@ -13,19 +13,19 @@ namespace Keysharp.Core
 
 	public static class Function
 	{
-		public static Keysharp.Core.Core.GenericFunction Func(params object[] obj)//This needs to be consolidated with the code in CallbackCreate(), HotstringLabel() and FunctionReference() //MATT
+		public static GenericFunction Func(params object[] obj)//This needs to be consolidated with the code in CallbackCreate(), HotstringLabel() and FunctionReference() //MATT
 		{
 			var o = obj.L();
 			var funcname = o.S1();
 			var mi = Reflections.FindLocalRoutine(funcname);
-			var del = Delegate.CreateDelegate(typeof(Keysharp.Core.Core.GenericFunction), mi);
-			return del as Keysharp.Core.Core.GenericFunction;
+			var del = Delegate.CreateDelegate(typeof(GenericFunction), mi);
+			return del as GenericFunction;
 		}
 
 		public static FuncObj GetMethod(params object[] obj)
 		{
 			var (val, name, paramcount) = obj.Osi();
-			var mi = Reflections.FindMethod(val.GetType(), name);
+			var mi = Reflections.FindAndCacheMethod(val.GetType(), name);
 			return mi != null ? new FuncObj(mi, val)
 				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()}.");
 		}
@@ -33,7 +33,7 @@ namespace Keysharp.Core
 		public static long HasMethod(params object[] obj)
 		{
 			var (val, name, paramcount) = obj.Osi();
-			var mi = Reflections.FindMethod(val.GetType(), name);
+			var mi = Reflections.FindAndCacheMethod(val.GetType(), name);
 			return mi != null ? 1L : 0L;
 		}
 
@@ -42,7 +42,7 @@ namespace Keysharp.Core
 			var (o, name) = obj.Os();
 			object[] args = null;
 
-			if (Reflections.FindMethod(o.GetType(), name) is MethodInfo mi)
+			if (Reflections.FindAndCacheMethod(o.GetType(), name) is MethodInfo mi)
 			{
 				if (obj.Length > 2)
 					args = obj.Skip(2).ToArray();
@@ -96,7 +96,7 @@ namespace Keysharp.Core
 	public class DelegateHolder
 	{
 		public PlaceholderFunction thisdel;
-		private readonly Keysharp.Core.Core.GenericFunction del;
+		private readonly GenericFunction del;
 		private readonly bool fast;
 		private readonly IFuncObj funcObj;
 		private readonly bool reference;
@@ -207,21 +207,21 @@ namespace Keysharp.Core
 
 		public string Name { get => mi.Name; }
 
-		public FuncObj(string s, object o)
-			: this(Reflections.FindMethod(s), o)
+		public FuncObj(string s, object o = null)
+			: this(o != null ? Reflections.FindAndCacheMethod(o.ParseObject().GetType(), s) : Reflections.FindMethod(s), o)
 		{
 		}
 
-		internal FuncObj(MethodInfo m, object o)
+		internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;
-			inst = o.ParseObject();
+			inst = o != null ? o.ParseObject() : o;
 		}
 
-		internal FuncObj(GenericFunction m, object o)
+		internal FuncObj(GenericFunction m, object o = null)
 		{
 			mi = m.Method;
-			inst = o.ParseObject();
+			inst = o != null ? o.ParseObject() : o;
 		}
 
 		public BoundFunc Bind(params object[] obj)//Need to figure out making this work.//TODO

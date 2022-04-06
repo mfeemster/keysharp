@@ -5,7 +5,7 @@ using Keysharp.Core;
 
 namespace Keysharp.Scripting
 {
-	partial class Script
+	public partial class Script
 	{
 		public static bool IfLegacy(object subject, string op, string test, bool not = false)//Added the not parameter.//MATT
 		{
@@ -249,6 +249,20 @@ namespace Keysharp.Scripting
 		//  return ForceDouble(result) != 0;
 		//else
 		//  return result is string s ? !string.IsNullOrEmpty(s) : result != null;
+
+		public static bool IsNumeric(Type type) =>
+		type == typeof(int)
+		|| type == typeof(uint)
+		|| type == typeof(long)
+		|| type == typeof(ulong)
+		|| type == typeof(float)
+		|| type == typeof(double)
+		|| type == typeof(decimal)
+		|| type == typeof(byte)
+		|| type == typeof(sbyte)
+		;
+
+		public static bool IsNumeric(object value) => value != null&& IsNumeric(value.GetType());
 
 		public static object Operate(Operator op, object left, object right)
 		{
@@ -553,20 +567,6 @@ namespace Keysharp.Scripting
 		}
 
 		public static int OperateZero(object expression) => 0;
-
-		public static bool IsNumeric(Type type) =>
-		type == typeof(int)
-		|| type == typeof(uint)
-		|| type == typeof(long)
-		|| type == typeof(ulong)
-		|| type == typeof(float)
-		|| type == typeof(double)
-		|| type == typeof(decimal)
-		|| type == typeof(byte)
-		|| type == typeof(sbyte)
-		;
-
-		public static bool IsNumeric(object value) => value != null&& IsNumeric(value.GetType());
 
 		public enum Operator
 		{

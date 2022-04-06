@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
@@ -14,11 +13,9 @@ namespace Keysharp.Core
 		public virtual FuncObj GetMethod(params object[] obj)
 		{
 			var name = obj.L().S1();
-
-			if (Reflections.FindMethod(GetType(), name) is MethodInfo mi)
-				return new FuncObj(mi, this);
-
-			throw new MethodError($"Unable to retrieve method {name} from object of type {GetType()}.");
+			return Reflections.FindAndCacheMethod(GetType(), name) is MethodInfo mi
+				   ? new FuncObj(mi, this)
+				   : throw new MethodError($"Unable to retrieve method {name} from object of type {GetType()}.");
 		}
 
 		public virtual bool HasBase(params object[] obj)
@@ -30,14 +27,14 @@ namespace Keysharp.Core
 		public virtual long HasMethod(params object[] obj)
 		{
 			var name = obj.L().S1();
-			return Reflections.FindMethod(GetType(), name) is MethodInfo ? 1L : 0L;
+			return Reflections.FindAndCacheMethod(GetType(), name) is MethodInfo ? 1L : 0L;
 		}
 
 		public virtual long HasProp(params object[] obj)
 		{
 			var name = obj.L().S1();
 
-			if (Reflections.FindProperty(GetType(), name) is PropertyInfo pi)
+			if (Reflections.FindAndCacheProperty(GetType(), name) is PropertyInfo pi)
 				return 1L;
 
 			//Figure out ownprops.//TODO
@@ -49,14 +46,27 @@ namespace Keysharp.Core
 	{
 		public static KeysharpObject Object() => new KeysharpObject();
 
-		public void SetBase(params object[] obj)
+		public virtual object Clone(params object[] obj)
 		{
-			throw new Exception(Any.BaseExc);
+			return null;
+		}
+
+		public void DefineProp(params object[] obj)
+		{
+		}
+
+		public void DeleteProp(params object[] obj)
+		{
 		}
 
 		public long GetCapacity(params object[] obj)
 		{
 			return 42;
+		}
+
+		public object GetOwnPropDesc(params object[] obj)
+		{
+			return null;
 		}
 
 		public object HasOwnProp(params object[] obj)
@@ -74,27 +84,14 @@ namespace Keysharp.Core
 			return true;
 		}
 
+		public void SetBase(params object[] obj)
+		{
+			throw new Exception(Any.BaseExc);
+		}
+
 		public long SetCapacity(params object[] obj)
 		{
 			return 1L;
-		}
-
-		public virtual object Clone(params object[] obj)
-		{
-			return null;
-		}
-
-		public void DefineProp(params object[] obj)
-		{
-		}
-
-		public void DeleteProp(params object[] obj)
-		{
-		}
-
-		public object GetOwnPropDesc(params object[] obj)
-		{
-			return null;
 		}
 	}
 }

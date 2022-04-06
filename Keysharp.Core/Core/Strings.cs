@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -492,7 +493,7 @@ namespace Keysharp.Core
 					if (function == null)
 						return "";
 				}
-				else if (o[2] is Keysharp.Core.Core.GenericFunction gf)
+				else if (o[2] is GenericFunction gf)
 					function = gf.Method;
 			}
 
@@ -726,7 +727,7 @@ namespace Keysharp.Core
 					len = o.Al(1, long.MinValue);// buf != null ? Math.Min((long)buf.Size, Convert.ToInt32(o[1])) : Convert.ToInt32(o[1]);
 
 				if (o.Count > 2)
-					encoding = Keysharp.Core.Core.GetEncoding(o[2].ParseObject());
+					encoding = File.GetEncoding(o[2].ParseObject());
 
 				unsafe
 				{
@@ -827,7 +828,7 @@ namespace Keysharp.Core
 					len = Math.Abs(o.Al(2));
 
 				if (o.Count > 3)
-					encoding = Keysharp.Core.Core.GetEncoding(o[3].ParseObject());
+					encoding = File.GetEncoding(o[3].ParseObject());
 
 				var bytes = encoding.GetBytes(s);
 

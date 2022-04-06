@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 using Keysharp.Scripting;
 
@@ -19,9 +19,14 @@ namespace Keysharp.Core
 
 		public KeysharpForm form;
 
-		internal MsgMonitorList monitorEvents;
-
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
+		internal List<GenericFunction> closedHandlers;
+		internal List<GenericFunction> contextMenuChangedHandlers;
+		internal List<GenericFunction> dropFilesHandlers;
+		internal List<GenericFunction> escapeHandlers;
+		internal MenuBar menuBar;
+		internal MsgMonitorList monitorEvents;
+		internal List<GenericFunction> sizeHandlers;
 
 		//Need a way to retrieve contorls based on name, text class or hwnd. That will be hard because it'll require multiple dictionaries.//MATT
 		//private static Dictionary<string, Control> controls;
@@ -199,24 +204,12 @@ namespace Keysharp.Core
 		};
 
 		private static int windowCount = 0;
-
-		internal List<Keysharp.Core.Core.GenericFunction> closedHandlers;
-
-		internal List<Keysharp.Core.Core.GenericFunction> contextMenuChangedHandlers;
-
 		private bool dpiscaling = true;
-
-		internal List<Keysharp.Core.Core.GenericFunction> dropFilesHandlers;
-
-		internal List<Keysharp.Core.Core.GenericFunction> escapeHandlers;
-
 		private bool lastfound = false;
 
 		private bool owndialogs = false;
 
 		private bool resizable = false;
-
-		internal List<Keysharp.Core.Core.GenericFunction> sizeHandlers;
 
 		public object BackColor
 		{
@@ -250,11 +243,21 @@ namespace Keysharp.Core
 			set => form.Margin = new Padding(form.Margin.Left, (int)value, form.Margin.Right, (int)value);
 		}
 
-		public string Title => form.Text;
+		public MenuBar MenuBar
+		{
+			get
+			{
+				return menuBar;
+			}
+			set
+			{
+				menuBar = value;
+				form.Controls.Add(menuBar.MenuStrip);
+				form.MainMenuStrip = menuBar.MenuStrip;
+			}
+		}
 
 		public string Name => form.Name;
-
-		internal MenuBar menuBar;
 
 		public KeysharpForm Parent
 		{
@@ -274,19 +277,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public MenuBar MenuBar
-		{
-			get
-			{
-				return menuBar;
-			}
-			set
-			{
-				menuBar = value;
-				form.Controls.Add(menuBar.MenuStrip);
-				form.MainMenuStrip = menuBar.MenuStrip;
-			}
-		}
+		public string Title => form.Text;
 
 		public Gui(params object[] obj)
 		{
@@ -1276,35 +1267,35 @@ namespace Keysharp.Core
 			if (e == "close")
 			{
 				if (closedHandlers == null)
-					closedHandlers = new List<Keysharp.Core.Core.GenericFunction>();
+					closedHandlers = new List<GenericFunction>();
 
 				closedHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "contextmenu")
 			{
 				if (contextMenuChangedHandlers == null)
-					contextMenuChangedHandlers = new List<Keysharp.Core.Core.GenericFunction>();
+					contextMenuChangedHandlers = new List<GenericFunction>();
 
 				contextMenuChangedHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "dropfiles")
 			{
 				if (dropFilesHandlers == null)
-					dropFilesHandlers = new List<Keysharp.Core.Core.GenericFunction>();
+					dropFilesHandlers = new List<GenericFunction>();
 
 				dropFilesHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "escape")
 			{
 				if (escapeHandlers == null)
-					escapeHandlers = new List<Keysharp.Core.Core.GenericFunction>();
+					escapeHandlers = new List<GenericFunction>();
 
 				escapeHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "size")
 			{
 				if (sizeHandlers == null)
-					sizeHandlers = new List<Keysharp.Core.Core.GenericFunction>();
+					sizeHandlers = new List<GenericFunction>();
 
 				sizeHandlers.ModifyEventHandlers(del, i);
 			}
@@ -1554,6 +1545,8 @@ namespace Keysharp.Core
 
 		internal static float GetFontPixels(Font font) => (float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
 
+		internal static GuiInfo GuiAssociatedInfo(Control control) => control.FindForm().Tag as GuiInfo;
+
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
@@ -1741,19 +1734,6 @@ namespace Keysharp.Core
 				e.IsInputKey = true;
 		}
 
-		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.KeyCode == Keys.F2)
-			{
-				if (sender is TreeView tv)
-					tv.SelectedNode?.BeginEdit();
-				else if (sender is ListView lv && lv.SelectedItems.Count > 0)
-					lv.SelectedItems[0].BeginEdit();
-			}
-		}
-
-		internal static GuiInfo GuiAssociatedInfo(Control control) => control.FindForm().Tag as GuiInfo;
-
 		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			var control = form.ActiveControl;
@@ -1822,6 +1802,17 @@ namespace Keysharp.Core
 				state = 0;
 
 			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
+		}
+
+		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.F2)
+			{
+				if (sender is TreeView tv)
+					tv.SelectedNode?.BeginEdit();
+				else if (sender is ListView lv && lv.SelectedItems.Count > 0)
+					lv.SelectedItems[0].BeginEdit();
+			}
 		}
 
 		public class GuiOptions

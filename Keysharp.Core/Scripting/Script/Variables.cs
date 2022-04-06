@@ -8,7 +8,7 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Scripting
 {
-	partial class Script
+	public partial class Script
 	{
 		public class Variables
 		{
@@ -97,7 +97,7 @@ namespace Keysharp.Scripting
 						if (hmodule != IntPtr.Zero)
 						{
 							// "Pin" the dll so that the script cannot unload it with FreeLibrary.
-							// This is done to avoid undefined behaviour when DllCall optimizations
+							// This is done to avoid undefined behavior when DllCall optimizations
 							// resolves a proc address in a dll loaded by this directive.
 							_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
 						}
@@ -105,6 +105,8 @@ namespace Keysharp.Scripting
 							throw new Error("Failed to load DLL.", dllname);
 					}
 				}
+
+				Reflections.Initialize();//For some reason, the program will crash if these are delay initialized, so do them now.
 			}
 
 			public object GetVariable(string key)

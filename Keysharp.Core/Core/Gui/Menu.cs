@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using static Keysharp.Core.Core;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
@@ -38,10 +38,8 @@ namespace Keysharp.Core
 			}
 		}
 
-		public long MenuItemCount => GetMenu().Items.Count;
-
 		public long Handle => GetMenu().Handle.ToInt64();
-
+		public long MenuItemCount => GetMenu().Items.Count;
 		internal ContextMenuStrip MenuItem { get; set; } = new ContextMenuStrip();
 
 		public Menu(params object[] obj)
@@ -69,7 +67,7 @@ namespace Keysharp.Core
 		{
 			ToolStripMenuItem item;
 
-			if (Accessors.A_AllowMainWindow)
+			if (Accessors.A_AllowMainWindow is bool b && b)
 			{
 				item = Add("&Open");
 

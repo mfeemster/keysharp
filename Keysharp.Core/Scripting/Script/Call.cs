@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Keysharp.Scripting
 {
-	partial class Script
+	public partial class Script
 	{
 		//public static object FunctionCall(object name, params object[] parameters)
 		//{
@@ -41,12 +39,12 @@ namespace Keysharp.Scripting
 					//  //return mi.Invoke(ob, new object[1] { new object[1] { "" } });
 					//}
 					else
-						return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : new object[] { parameters });
+						return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : parameters);// new object[] { parameters });
 				}
 
 				if (del is Delegate d)
 				{
-					return d.DynamicInvoke(new object[] { parameters });
+					return d.DynamicInvoke(parameters);// new object[] { parameters });
 				}
 			}
 			catch (Exception ex)
@@ -59,6 +57,5 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
-
 	}
 }

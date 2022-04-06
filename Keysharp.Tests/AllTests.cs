@@ -83,10 +83,7 @@ namespace Keysharp.Tests
 		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", false));
 
 		[Test, Category("BuiltInVars")]
-		public void CacheAllMethods() => Reflections.CacheAllMethods();
-
-		[Test, Category("BuiltInVars")]
-		public void CacheAllProperties() => Reflections.CacheAllProperties();
+		public void ReflectionsInit() => Reflections.Initialize();
 
 		[Test, Category("BuiltInVars")]
 		public void Suspend() => Assert.IsTrue(TestScript("suspend", true));

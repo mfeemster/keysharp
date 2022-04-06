@@ -1,28 +1,60 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Windows;
-using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
 	public static class Dialogs
 	{
+		internal static int nFileDialogs;
+		internal static int nFolderDialogs;
+		internal static int nMessageBoxes;
 		internal static Dictionary<int, ProgressDialog> ProgressDialgos { get; set; }
 
 		internal static Dictionary<int, SplashDialog> SplashDialogs { get; set; }
 
-		internal static int nFileDialogs;
+		// TODO: organise Dialogs.cs
+		/// <summary>
+		/// Displays a standard dialog that allows the user to select a folder.
+		/// The list of known supported CLSID GUIDS is here: https://docs.microsoft.com/en-us/previous-versions//bb762584(v=vs.85)
+		/// Note this does not support the following features that are defined in AHK:
+		/// -Restricting which folders the user can browse to.
+		/// -Selected folder isn't actually selected in the tree, it's just shown as text in the path text box.
+		/// -Showing an edit box, which is not needed because the user can type in the path combo box.
+		/// -The New Folder button is always shown.
+		/// -Option 7 to omit BIF_NEWDIALOGSTYLE is not supported.
+		/// </summary>
+		public static string DirSelect(params object[] obj)
+		{
+			var (startingFolder, options, prompt) = obj.L().Sis();
+			var str = "";
+			var select = new FolderBrowserDialog
+			{
+				ShowNewFolderButton = (options & 1) == 1
+			};
+			select.Description = prompt != "" ? prompt : "Select Folder - " + Accessors.A_ScriptName;
+			select.RootFolder = Environment.SpecialFolder.MyComputer;
 
-		internal static int nMessageBoxes;
-		internal static int nFolderDialogs;
+			if (startingFolder.StartsWith("::"))
+			{
+				if (WindowsAPI.SHGetKnownFolderPath(new Guid(startingFolder.Trim(new char[] { ':', '{', '}' }))) is string s)
+					select.SelectedPath = s;
+			}
+			else if (Keysharp.Core.Options.TryParseString(startingFolder, "*", ref str))
+				select.SelectedPath = str;
+			else if (startingFolder.Length != 0)
+				select.SelectedPath = startingFolder;
 
+			nFolderDialogs++;
+			var selected = GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner);
+			nFolderDialogs--;
+			return selected == DialogResult.OK ? select.SelectedPath : "";
+		}
 
 		/// <summary>
 		/// Displays a standard dialog that allows the user to open or save files.
@@ -43,7 +75,7 @@ namespace Keysharp.Core
 		/// <param name="Filter">Indicates which types of files are shown by the dialog, e.g. <c>Audio (*.wav; *.mp2; *.mp3)</c>.</param>
 		public static object FileSelect(params object[] obj)
 		{
-			var(opts, rootdir, title, filter) = obj.L().S4();
+			var (opts, rootdir, title, filter) = obj.L().S4();
 			bool save = false, multi = false, check = false, create = false, overwite = false, shortcuts = false, dir = false;
 			opts = opts.ToUpperInvariant();
 			object files = null;
@@ -157,44 +189,6 @@ namespace Keysharp.Core
 
 			nFileDialogs--;
 			return files;
-		}
-
-		// TODO: organise Dialogs.cs
-		/// <summary>
-		/// Displays a standard dialog that allows the user to select a folder.
-		/// The list of known supported CLSID GUIDS is here: https://docs.microsoft.com/en-us/previous-versions//bb762584(v=vs.85)
-		/// Note this does not support the following features that are defined in AHK:
-		/// -Restricting which folders the user can browse to.
-		/// -Selected folder isn't actually selected in the tree, it's just shown as text in the path text box.
-		/// -Showing an edit box, which is not needed because the user can type in the path combo box.
-		/// -The New Folder button is always shown.
-		/// -Option 7 to omit BIF_NEWDIALOGSTYLE is not supported.
-		/// </summary>
-		public static string DirSelect(params object[] obj)
-		{
-			var (startingFolder, options, prompt) = obj.L().Sis();
-			var str = "";
-			var select = new FolderBrowserDialog
-			{
-				ShowNewFolderButton = (options & 1) == 1
-			};
-			select.Description = prompt != "" ? prompt : "Select Folder - " + Accessors.A_ScriptName;
-			select.RootFolder = Environment.SpecialFolder.MyComputer;
-
-			if (startingFolder.StartsWith("::"))
-			{
-				if (WindowsAPI.SHGetKnownFolderPath(new Guid(startingFolder.Trim(new char[] { ':', '{', '}' }))) is string s)
-					select.SelectedPath = s;
-			}
-			else if (Keysharp.Core.Options.TryParseString(startingFolder, "*", ref str))
-				select.SelectedPath = str;
-			else if (startingFolder.Length != 0)
-				select.SelectedPath = startingFolder;
-
-			nFolderDialogs++;
-			var selected = GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner);
-			nFolderDialogs--;
-			return selected == DialogResult.OK ? select.SelectedPath : "";
 		}
 
 		/// <summary>
@@ -614,9 +608,8 @@ namespace Keysharp.Core
 
 		public class DialogResultReturn
 		{
-			public string Value { get; set; }
 			public string Result { get; set; }
-
+			public string Value { get; set; }
 		}
 
 		public delegate void AsyncCallDlgOptions(ComplexDlgOptions options);

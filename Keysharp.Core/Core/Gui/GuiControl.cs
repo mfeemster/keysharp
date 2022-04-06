@@ -7,13 +7,14 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
-using static Keysharp.Core.Core;
 
 namespace Keysharp.Core
 {
 	public class GuiControl : KeysharpObject
 	{
+		internal MsgMonitorList monitorEvents;
 		internal string typename;
 		private readonly Control _control;
 		private readonly List<GenericFunction> clickHandlers = new List<GenericFunction>();
@@ -22,41 +23,22 @@ namespace Keysharp.Core
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<GenericFunction> changeHandlers;
+
 		private List<GenericFunction> columnClickHandlers;
 		private Dictionary<int, List<GenericFunction>> commandHandlers;
 		private List<GenericFunction> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
 		private bool fireEvents = true;//Need to figure out how to enable/disable events.//MATT//TODO
-		private int mousecount = 0;
 		private List<GenericFunction> focusedItemChangedHandlers;
 		private List<GenericFunction> focusHandlers;
 		private List<GenericFunction> itemCheckHandlers;
 		private List<GenericFunction> itemEditHandlers;
 		private List<GenericFunction> itemExpandHandlers;
 		private List<GenericFunction> lostFocusHandlers;
+		private int mousecount = 0;
 		private Dictionary<int, List<GenericFunction>> notifyHandlers;
 		private List<GenericFunction> selectedItemChangedHandlers;
-		internal MsgMonitorList monitorEvents;
-
 		public bool AltSubmit { get; internal set; } = false;
-
-		public KeysharpForm Parent
-		{
-			get
-			{
-				var parent = _control.Parent;
-
-				do
-				{
-					if (parent is KeysharpForm kf)
-						return kf;
-
-					parent = parent.Parent;
-				} while (parent != null);
-
-				return parent as KeysharpForm;
-			}
-		}
 
 		public string ClassNN
 		{
@@ -88,6 +70,8 @@ namespace Keysharp.Core
 			set => _control.Enabled = Options.OnOff(value) ?? false;
 		}
 
+		public object Focused => _control.Focused;
+
 		public Gui Gui { get; private set; }
 
 		public long Hwnd => _control.Handle.ToInt64();
@@ -96,6 +80,24 @@ namespace Keysharp.Core
 		{
 			get => _control.Name;
 			set => _control.Name = value.ToString();
+		}
+
+		public KeysharpForm Parent
+		{
+			get
+			{
+				var parent = _control.Parent;
+
+				do
+				{
+					if (parent is KeysharpForm kf)
+						return kf;
+
+					parent = parent.Parent;
+				} while (parent != null);
+
+				return parent as KeysharpForm;
+			}
 		}
 
 		public object Text
@@ -256,12 +258,12 @@ namespace Keysharp.Core
 					cmb.SelectedIndex = ival - 1;
 				else if (_control is ListBox lb)
 				{
-					if (value is ArrayList al)
+					if (value is Keysharp.Core.Array ar)
 					{
 						lb.ClearSelected();
 
-						foreach (var index in al.Cast<int>())
-							lb.SetSelected(index - 1, true);
+						foreach (var (arval, _) in ar)
+							lb.SetSelected(arval.ParseInt().GetValueOrDefault() - 1, true);
 					}
 					else
 						lb.SelectedIndex = ival - 1;
@@ -345,8 +347,6 @@ namespace Keysharp.Core
 			get => _control.Visible;
 			set => _control.Visible = Options.OnOff(value) ?? false;
 		}
-
-		public object Focused => _control.Focused;
 
 		internal Control Ctrl => _control;
 
@@ -1615,13 +1615,13 @@ namespace Keysharp.Core
 				}
 				else if (eventObj != null)
 				{
-					if (Reflections.FindMethod(eventObj.GetType(), hs) is MethodInfo mi2)
+					if (Reflections.FindAndCacheMethod(eventObj.GetType(), hs) is MethodInfo mi2)
 						del = (GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), eventObj, mi2);
 				}
 			}
 			else if (h != null)//Function object.
 			{
-				if (Reflections.FindMethod(h.GetType(), "call") is MethodInfo mi)
+				if (Reflections.FindAndCacheMethod(h.GetType(), "call") is MethodInfo mi)
 					del = (GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), h, mi);
 			}
 

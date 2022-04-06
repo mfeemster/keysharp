@@ -16,120 +16,6 @@ namespace Keysharp.Core
 {
 	public static class Disk
 	{
-		public static File FileOpen(params object[] obj)
-		{
-			var (filename, flags, enc) = obj.L().S3();
-			var encoding = Accessors.FileEncoding;
-			var ienc = enc.ParseInt(false);
-
-			if (ienc.HasValue)
-				encoding = Encoding.GetEncoding(ienc.Value);
-			else if (enc != "")
-				encoding = Core.GetEncoding(enc);
-
-			var mode = FileMode.Open;
-			var access = FileAccess.ReadWrite;
-			var share = FileShare.ReadWrite | FileShare.Delete;
-			var shareset = false;
-			var eolconv = 0;
-
-			foreach (var flag in Options.ParseOptions(flags))
-			{
-				if (flag == "r")
-				{
-					mode = FileMode.Open;
-					access = FileAccess.Read;
-				}
-				else if (flag == "w" || flag.ParseInt(false) == 1)
-				{
-					mode = FileMode.Create;
-					access = FileAccess.ReadWrite;
-				}
-				else if (flag == "a" || flag.ParseInt(false) == 2)
-				{
-					mode = FileMode.Append;
-					access = FileAccess.Write;
-				}
-				else if (flag == "rw" || flag.ParseInt(false) == 3)
-				{
-					mode = FileMode.OpenOrCreate;
-					access = FileAccess.ReadWrite;
-				}
-				else if (flag == "h")
-				{
-					filename = "h*" + filename;
-				}
-				else if (flag == "\n" || flag.ParseInt(false) == 4)
-				{
-					eolconv = 4;
-				}
-				else if (flag == "\r" || flag.ParseInt(false) == 8)
-				{
-					eolconv = 8;
-				}
-				else if (flag == "-")
-				{
-					share = FileShare.None;
-					shareset = true;
-				}
-				else if (flag.StartsWith('-'))
-				{
-					if (flag.Contains('r'))
-					{
-						share &= ~FileShare.Read;
-						shareset = true;
-					}
-
-					if (flag.Contains('w'))
-					{
-						share &= ~FileShare.Write;
-						shareset = true;
-					}
-
-					if (flag.Contains('d'))
-					{
-						share &= ~FileShare.Delete;
-						shareset = true;
-					}
-				}
-				else
-				{
-					var i = flag.ParseInt(false);
-					share = FileShare.None;
-
-					if (i == 0)
-					{
-						shareset = true;
-					}
-					else
-					{
-						if ((i & 0x100) == 0x100)
-						{
-							share |= FileShare.Read;
-							shareset = true;
-						}
-
-						if ((i & 0x200) == 0x200)
-						{
-							share |= FileShare.Write;
-							shareset = true;
-						}
-
-						if ((i & 0x400) == 0x400)
-						{
-							share |= FileShare.Delete;
-							shareset = true;
-						}
-					}
-				}
-			}
-
-			if (!shareset)
-				share = FileShare.ReadWrite | FileShare.Delete;
-
-			return new File(filename, mode, access, share, encoding, eolconv);
-		}
-
 		/// <summary>
 		/// Copies a folder along with all its sub-folders and files.
 		/// </summary>
@@ -513,7 +399,7 @@ namespace Keysharp.Core
 				var o = obj;//Do not use .L() because the first argument can be an array.
 				var text = o[0];
 				var filename = o.Length > 1 ? o[1] as string : string.Empty;
-				var enc = Core.GetEncoding(Accessors.A_FileEncoding);
+				var enc = File.GetEncoding(Accessors.A_FileEncoding);
 				var raw = false;
 				var crlf = false;
 				TextWriter tw = null;
@@ -987,6 +873,120 @@ namespace Keysharp.Core
 			FileCopyMove(source, dest, flag, true);
 		}
 
+		public static File FileOpen(params object[] obj)
+		{
+			var (filename, flags, enc) = obj.L().S3();
+			var encoding = Accessors.FileEncoding;
+			var ienc = enc.ParseInt(false);
+
+			if (ienc.HasValue)
+				encoding = Encoding.GetEncoding(ienc.Value);
+			else if (enc != "")
+				encoding = File.GetEncoding(enc);
+
+			var mode = FileMode.Open;
+			var access = FileAccess.ReadWrite;
+			var share = FileShare.ReadWrite | FileShare.Delete;
+			var shareset = false;
+			var eolconv = 0;
+
+			foreach (var flag in Options.ParseOptions(flags))
+			{
+				if (flag == "r")
+				{
+					mode = FileMode.Open;
+					access = FileAccess.Read;
+				}
+				else if (flag == "w" || flag.ParseInt(false) == 1)
+				{
+					mode = FileMode.Create;
+					access = FileAccess.ReadWrite;
+				}
+				else if (flag == "a" || flag.ParseInt(false) == 2)
+				{
+					mode = FileMode.Append;
+					access = FileAccess.Write;
+				}
+				else if (flag == "rw" || flag.ParseInt(false) == 3)
+				{
+					mode = FileMode.OpenOrCreate;
+					access = FileAccess.ReadWrite;
+				}
+				else if (flag == "h")
+				{
+					filename = "h*" + filename;
+				}
+				else if (flag == "\n" || flag.ParseInt(false) == 4)
+				{
+					eolconv = 4;
+				}
+				else if (flag == "\r" || flag.ParseInt(false) == 8)
+				{
+					eolconv = 8;
+				}
+				else if (flag == "-")
+				{
+					share = FileShare.None;
+					shareset = true;
+				}
+				else if (flag.StartsWith('-'))
+				{
+					if (flag.Contains('r'))
+					{
+						share &= ~FileShare.Read;
+						shareset = true;
+					}
+
+					if (flag.Contains('w'))
+					{
+						share &= ~FileShare.Write;
+						shareset = true;
+					}
+
+					if (flag.Contains('d'))
+					{
+						share &= ~FileShare.Delete;
+						shareset = true;
+					}
+				}
+				else
+				{
+					var i = flag.ParseInt(false);
+					share = FileShare.None;
+
+					if (i == 0)
+					{
+						shareset = true;
+					}
+					else
+					{
+						if ((i & 0x100) == 0x100)
+						{
+							share |= FileShare.Read;
+							shareset = true;
+						}
+
+						if ((i & 0x200) == 0x200)
+						{
+							share |= FileShare.Write;
+							shareset = true;
+						}
+
+						if ((i & 0x400) == 0x400)
+						{
+							share |= FileShare.Delete;
+							shareset = true;
+						}
+					}
+				}
+			}
+
+			if (!shareset)
+				share = FileShare.ReadWrite | FileShare.Delete;
+
+			return new File(filename, mode, access, share, encoding, eolconv);
+		}
+
 		/// <summary>
 		/// Read the contents of a file.
 		/// </summary>
@@ -1035,7 +1035,7 @@ namespace Keysharp.Core
 							break;
 
 						default:
-							enc = Core.GetEncoding(lower);
+							enc = File.GetEncoding(lower);
 							break;
 					}
 				}
@@ -1560,23 +1560,23 @@ namespace Keysharp.Core
 		}
 	}
 
+	public class PathOutput
+	{
+		public string OutDir { get; set; }
+		public string OutDrive { get; set; }
+		public string OutExtension { get; set; }
+		public string OutFileName { get; set; }
+		public string OutNameNoExt { get; set; }
+	}
+
 	public class ShortcutOutput
 	{
-		public string OutTarget { get; set; }
-		public string OutDir { get; set; }
 		public string OutArgs { get; set; }
 		public string OutDescription { get; set; }
+		public string OutDir { get; set; }
 		public string OutIcon { get; set; }
 		public string OutIconNum { get; set; }
 		public long OutRunState { get; set; }
-	}
-
-	public class PathOutput
-	{
-		public string OutFileName { get; set; }
-		public string OutDir { get; set; }
-		public string OutExtension { get; set; }
-		public string OutNameNoExt { get; set; }
-		public string OutDrive { get; set; }
+		public string OutTarget { get; set; }
 	}
 }

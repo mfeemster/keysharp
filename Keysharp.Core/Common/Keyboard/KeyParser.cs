@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 using System.Windows.Forms;
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 
 namespace Keysharp.Core.Common.Keyboard
 {

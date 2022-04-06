@@ -6,7 +6,6 @@ using System.Diagnostics;
 
 namespace Keysharp.Core
 {
-	//private enumerator class
 	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
 	//public class ArrayIndexValueIterator : IEnumerator<Tuple<object, object>>
 	{

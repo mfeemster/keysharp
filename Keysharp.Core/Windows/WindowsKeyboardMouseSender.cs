@@ -7,7 +7,6 @@ using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Microsoft.Win32;
 using static Keysharp.Core.Windows.WindowsAPI;
-using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core.Windows
 {
@@ -401,7 +400,7 @@ namespace Keysharp.Core.Windows
 
 		internal override void DoMouseDelay()// Helper function for the mouse functions below.
 		{
-			var mouseDelay = Accessors.SendMode == SendModes.Play ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay;
+			var mouseDelay = (long)(Accessors.SendMode == SendModes.Play ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay);
 
 			if (mouseDelay < 0) // To support user-specified KeyDelay of -1 (fastest send rate).
 				return;
@@ -1727,7 +1726,7 @@ namespace Keysharp.Core.Windows
 					// both hooks so that the Start Menu doesn't appear when the Win key is released, so we're
 					// not responsible for that type of disguising here.
 					SetModifierLRState(modifiersLRSpecified, Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState()
-									   , targetWindow, false, true, Accessors.A_SendLevel != 0 ? KeyIgnoreLevel((uint)Accessors.A_SendLevel) : KeyIgnore); // See keyboard_mouse.h for explanation of KEY_IGNORE.
+									   , targetWindow, false, true, (long)Accessors.A_SendLevel != 0L ? KeyIgnoreLevel((uint)Accessors.A_SendLevel) : KeyIgnore); // See keyboard_mouse.h for explanation of KEY_IGNORE.
 					// Above: Fixed for v1.1.27 to use KEY_IGNORE except when SendLevel is non-zero (since that
 					// would indicate that the script probably wants to trigger a hotkey).  KEY_IGNORE is used
 					// (and was prior to v1.1.06.00) to prevent the temporary modifier state changes here from
@@ -1922,8 +1921,8 @@ namespace Keysharp.Core.Windows
 						// KeyDelay 0+,-1+ --> -1, 0
 						// KeyDelay -1, 0+ --> -1, 0
 						// KeyDelay -1,-1 --> -1, -1
-						Accessors.A_KeyDuration = (Accessors.A_KeyDelay < 0 && Accessors.A_KeyDuration < 0) ? -1 : 0;
-						Accessors.A_KeyDelay = -1; // Above line must be done before this one.
+						Accessors.A_KeyDuration = ((long)Accessors.A_KeyDelay < 0L && (long)Accessors.A_KeyDuration < 0L) ? -1L : 0L;
+						Accessors.A_KeyDelay = -1L; // Above line must be done before this one.
 					}
 				}
 				else // SendInput is available and no other impacting hooks are obviously present on the system, so use SendInput unconditionally.
@@ -2050,7 +2049,7 @@ namespace Keysharp.Core.Windows
 				// Even if TickCount has wrapped due to system being up more than about 49 days,
 				// DWORD subtraction still gives the right answer as long as g_script.mThisHotkeyStartTime
 				// itself isn't more than about 49 days ago:
-				if ((DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < Accessors.A_HotkeyModifierTimeout) // Elapsed time < timeout-value
+				if ((DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < (long)Accessors.A_HotkeyModifierTimeout) // Elapsed time < timeout-value
 					modsDownPhysicallyOrig = (modsCurrent & thisHotkeyModifiersLR); // Bitwise AND is set intersection.
 				else
 					// Since too much time as passed since the user pressed the hotkey, it seems best,
@@ -2627,8 +2626,8 @@ namespace Keysharp.Core.Windows
 					// but do this only if the timeout period didn't expire (or the user specified that it never
 					// times out; i.e. elapsed time < timeout-value; DWORD subtraction gives the right answer even if
 					// tick-count has wrapped around).
-					modsDownPhysically = (Accessors.A_HotkeyModifierTimeout < 0 // It never times out or...
-										  || (DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < Accessors.A_HotkeyModifierTimeout) // It didn't time out.
+					modsDownPhysically = ((long)Accessors.A_HotkeyModifierTimeout < 0 // It never times out or...
+										  || (DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < (long)Accessors.A_HotkeyModifierTimeout) // It didn't time out.
 										 ? modsDownPhysicallyOrig : 0;
 
 				// Put any modifiers in sModifiersLR_remapped back into effect, as if they were physically down.
@@ -3257,7 +3256,7 @@ namespace Keysharp.Core.Windows
 			// -1 has been verified to be insufficient, at least for the very first letter sent if it is
 			// supposed to be capitalized.
 			// g_MainThreadID is the only thread of our process that owns any windows.
-			var pressDuration = (Accessors.SendMode == SendModes.Play) ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration;
+			var pressDuration = (long)(Accessors.SendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration);
 
 			if (pressDuration > -1) // SM_PLAY does use DoKeyDelay() to store a delay item in the event array.
 				// Since modifiers were changed by the above, do a key-delay if the special intra-keystroke
@@ -3384,7 +3383,7 @@ namespace Keysharp.Core.Windows
 				//   ~CapsLock & x::Send abc  ; Produced "ABC"
 				//   ~CapsLock::Send abc  ; Alternated between "abc" and "ABC", even without {Blind}
 				//   ~ScrollLock::SetScrollLockState Off  ; Failed to change state
-				// The behaviour can still be observed by sending the keystrokes manually:
+				// The behavior can still be observed by sending the keystrokes manually:
 				//   ~NumLock::Send {NumLock}  ; No effect
 				//   ~NumLock::Send {NumLock up}{NumLock}  ; OK
 				// OLD COMMENTS:
@@ -3426,7 +3425,7 @@ namespace Keysharp.Core.Windows
 			var msg = new Msg();
 			var now = DateTime.Now;
 
-			if ((now - lastPeekTime).TotalMilliseconds > Accessors.A_PeekFrequency)
+			if ((now - lastPeekTime).TotalMilliseconds > (long)Accessors.A_PeekFrequency)
 			{
 				if (WindowsAPI.PeekMessage(out msg, IntPtr.Zero, 0, 0, WindowsAPI.PM_NOREMOVE))
 					Keysharp.Scripting.Script.MsgSleep(-1);
@@ -3444,7 +3443,7 @@ namespace Keysharp.Core.Windows
 			var msg = new Msg();
 			var now = DateTime.Now;
 
-			if ((now - lastPeekTime).TotalMilliseconds > Accessors.A_PeekFrequency)
+			if ((now - lastPeekTime).TotalMilliseconds > (long)Accessors.A_PeekFrequency)
 			{
 				if (WindowsAPI.PeekMessage(out msg, IntPtr.Zero, 0, 0, WindowsAPI.PM_NOREMOVE))
 					Keysharp.Core.Flow.SleepWithoutInterruption(-1);
@@ -3701,7 +3700,7 @@ namespace Keysharp.Core.Windows
 			else // Keystrokes are to be sent with keybd_event() or the event array rather than PostMessage().
 			{
 				// The following static variables are intentionally NOT thread-safe because their whole purpose
-				// is to watch the combined stream of keystrokes from all our threads.  Due to our threads'
+				// is to watch the combined stream of keystrokes from all our   Due to our threads'
 				// keystrokes getting interleaved with the user's and those of other threads, this kind of
 				// monitoring is never 100% reliable.  All we can do is aim for an astronomically low chance
 				// of failure.

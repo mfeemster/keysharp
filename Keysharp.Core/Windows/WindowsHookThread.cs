@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Input;
@@ -446,64 +445,6 @@ namespace Keysharp.Core.Windows
 				_ = MessageBox.Show("Warning: The keyboard and/or mouse hook could not be activated; some parts of the script will not function.");//AHK has its own MsgBox() function which does things differently. Will need to see if we need to do all of that.
 				Keysharp.Core.Flow.AllowInterruption = true;
 			}
-		}
-
-		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
-		{
-			var problem_activating_hooks = false;
-			Action func = () =>
-			{
-				if (((uint)hooksToBeActive & (uint)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
-				{
-					if (kbdHook == IntPtr.Zero)
-					{
-						// v1.0.39: Reset *before* hook is installed to avoid any chance that events can
-						// flow into the hook prior to the reset:
-						if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
-							ResetHook(false, HookType.Keyboard, true);
-
-						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
-														LowLevelKeybdHandler,
-														GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
-							problem_activating_hooks = true;
-					}
-				}
-				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
-					if (kbdHook != IntPtr.Zero)
-						if (UnhookWindowsHookEx(kbdHook))
-							kbdHook = IntPtr.Zero;
-
-				//It's impossible to debug with the mouse hook automatically enabled.//TODO
-				/*
-				    if (((uint)hooksToBeActive & (uint)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
-				    {
-				    if (mouseHook == IntPtr.Zero)
-				    {
-				        if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
-				            ResetHook(false, HookType.Mouse, true);
-
-				        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
-				                                          LowLevelMouseHandler,
-				                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
-				            problem_activating_hooks = true;
-				    }
-				    }
-				    else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
-				    if (mouseHook != IntPtr.Zero)
-				        if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
-				            mouseHook = IntPtr.Zero;
-				*/
-			};
-
-			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
-			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
-			//before Application.Run().
-			if (Keysharp.Scripting.Script.mainWindow != null)
-				Keysharp.Scripting.Script.mainWindow.Invoke(func);
-			else
-				func();
-
-			return problem_activating_hooks;
 		}
 
 		/// <summary>
@@ -1080,7 +1021,7 @@ namespace Keysharp.Core.Windows
 				{
 					// If this hotkey is a lone key with ~ prefix such as "~a::", the following ensures that
 					// the ~ prefix is respected even if the key is also used as a prefix in a custom combo,
-					// such as "a & b::".  This is consistent with the behaviour of "~a & b::".
+					// such as "a & b::".  This is consistent with the behavior of "~a & b::".
 					if (hk.modifiersConsolidatedLR == 0 && ((hk.noSuppress & HotkeyDefinition.AT_LEAST_ONE_VARIANT_HAS_TILDE) != 0))
 						thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_PREFIX;
 				}
@@ -1865,7 +1806,7 @@ namespace Keysharp.Core.Windows
 					charCount = 0;
 					pendingDeadKeyVK = 0;
 				}
-				else // Assume standard Win32 behaviour as described above.
+				else // Assume standard Win32 behavior as described above.
 					charCount--;// Remove '\b' to simplify the backspacing and collection stages.
 			}
 
@@ -2170,7 +2111,7 @@ namespace Keysharp.Core.Windows
 		// aChar itself may be a word char or a nonspacing mark which combines with
 		// the next character (the first character of a potential hotstring match).
 		{
-			// IsCharAlphaNumeric is used for simplicity and to preserve old behaviour
+			// IsCharAlphaNumeric is used for simplicity and to preserve old behavior
 			// (with the only exception being the one added below), in case it's what
 			// users have come to expect.  Note that checking for C1_ALPHA or C3_ALPHA
 			// and C1_DIGIT is not equivalent: Michael S. Kaplan wrote that the real
@@ -2394,7 +2335,7 @@ namespace Keysharp.Core.Windows
 
 						if (wnd != null)
 						{
-							wnd.BeginInvoke(() =>
+							wnd.CheckedBeginInvoke(() =>
 							{
 								keyHistoryCurr.targetWindow = wnd.Text;
 							});
@@ -2858,8 +2799,8 @@ namespace Keysharp.Core.Windows
 					// suffix action fire on key-down rather than key-up.
 					// UPDATE: Another exception was added so that the no-suppress prefix allows the key to function
 					// as if the custom combination wasn't defined.  For example, ~x & y:: allows x:: to retain its
-					// normal behaviour, firing the subroutine on key-down and blocking the keystroke.  This is more
-					// useful and intuitive/consistent than the old behaviour, which was to fire the suffix hotkey
+					// normal behavior, firing the subroutine on key-down and blocking the keystroke.  This is more
+					// useful and intuitive/consistent than the old behavior, which was to fire the suffix hotkey
 					// on key-up even though the key-down wasn't suppressed (unless either of the first two conditions
 					// below were met).
 					if (modifiersLRnew != 0 || hasNoEnabledSuffixes || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0)
@@ -4090,7 +4031,7 @@ namespace Keysharp.Core.Windows
 					//  - Press LAlt and the menus are activated once, even though LAlt is supposed to be blocked.
 					// Additionally, a Windows 10 check was added because the original issue this workaround was
 					// intended for doesn't appear to occur on Windows 10 (tested on 10.0.15063).  This check was
-					// removed for v1.1.27.00 to ensure consistent behaviour of AltGr hotkeys across OS versions.
+					// removed for v1.1.27.00 to ensure consistent behavior of AltGr hotkeys across OS versions.
 					// (Sending RAlt up on a layout with AltGr causes the system to send LCtrl up.)
 					// Testing on XP, Vista and 8.1 showed that the #LAlt issue below only occurred if the key-up
 					// was allowed to pass through to the active window.  It appeared to be a non-issue on Win 10
@@ -5127,15 +5068,6 @@ namespace Keysharp.Core.Windows
 				//}
 			}
 		}
-		//protected internal override void DeregisterKeyboardHook()
-		//{
-		//_ = WindowsAPI.UnhookWindowsHookEx(kbdHook);
-		//}
-
-		//protected internal override void DeregisterMouseHook()
-		//{
-		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
-		//}
 
 		protected internal override void Start()
 		{
@@ -5356,7 +5288,7 @@ namespace Keysharp.Core.Windows
 									priority = 0;
 
 									if (so.OnEnd is IFuncObj ifo)
-										_ = Keysharp.Core.Core.LaunchInThread(ifo, new object[] { so });
+										_ = Threads.LaunchInThread(ifo, new object[] { so });
 								}
 								else
 									continue;
@@ -5381,7 +5313,7 @@ namespace Keysharp.Core.Windows
 										: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.ScriptObject.OnKeyUp
 										: input_hook.ScriptObject.OnChar) is IFuncObj ifo)
 								{
-									_ = Keysharp.Core.Core.LaunchInThread(ifo, new object[] { input_hook.ScriptObject, lParamVal, lParamVal >> 16 });
+									_ = Threads.LaunchInThread(ifo, new object[] { input_hook.ScriptObject, lParamVal, lParamVal >> 16 });
 									priority = 0;
 								}
 								else
@@ -5504,7 +5436,7 @@ namespace Keysharp.Core.Windows
 
 						//This is not going to work. It's always going to comapre against this queue thread's priority, not the priority of whichever hotkey/string is currently executing.
 						//TODO
-						if (priority < Accessors.A_Priority)
+						if (priority < (long)Accessors.A_Priority)
 							continue;
 
 						//Original tries to do some type of thread init here.//TOOD
@@ -5519,21 +5451,69 @@ namespace Keysharp.Core.Windows
 			//WindowsAPI.PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_START_LOOP, UIntPtr.Zero, IntPtr.Zero);
 		}
 
-		private void SetHotNamesAndTimes(HotstringDefinition hs, HotkeyDefinition hk)
+		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
 		{
-			if (hs != null || hk != null)
+			var problem_activating_hooks = false;
+			Action func = () =>
 			{
-				// Just prior to launching the hotkey, update these values to support built-in
-				// variables such as A_TimeSincePriorHotkey:
-				Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
-				Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
-				// Unlike hotkeys -- which can have a name independent of their label by being created or updated
-				// with the HOTKEY command -- a hot string's unique name is always its label since that includes
-				// the options that distinguish between (for example) :c:ahk:: and ::ahk::
-				Keysharp.Scripting.Script.thisHotkeyName = hs != null ? hs.Name : hk.Name;
-				Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI threads.
-			}
+				if (((uint)hooksToBeActive & (uint)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
+				{
+					if (kbdHook == IntPtr.Zero)
+					{
+						// v1.0.39: Reset *before* hook is installed to avoid any chance that events can
+						// flow into the hook prior to the reset:
+						if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
+							ResetHook(false, HookType.Keyboard, true);
+
+						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
+														LowLevelKeybdHandler,
+														GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+							problem_activating_hooks = true;
+					}
+				}
+				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
+					if (kbdHook != IntPtr.Zero)
+						if (UnhookWindowsHookEx(kbdHook))
+							kbdHook = IntPtr.Zero;
+
+				//It's impossible to debug with the mouse hook automatically enabled.//TODO
+				/*
+				    if (((uint)hooksToBeActive & (uint)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
+				    {
+				    if (mouseHook == IntPtr.Zero)
+				    {
+				        if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
+				            ResetHook(false, HookType.Mouse, true);
+
+				        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
+				                                          LowLevelMouseHandler,
+				                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+				            problem_activating_hooks = true;
+				    }
+				    }
+				    else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
+				    if (mouseHook != IntPtr.Zero)
+				        if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
+				            mouseHook = IntPtr.Zero;
+				*/
+			};
+			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
+			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
+			//before Application.Run().
+
+			if (Keysharp.Scripting.Script.mainWindow != null)
+				Keysharp.Scripting.Script.mainWindow.Invoke(func);
+			//              Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func);
+			else
+				func();
+
+			return problem_activating_hooks;
 		}
+
+		//protected internal override void DeregisterKeyboardHook()
+		//{
+		//_ = WindowsAPI.UnhookWindowsHookEx(kbdHook);
+		//}
 
 		private IntPtr LowLevelKeybdHandler(int code, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)//Might be nice to see if this can just return an int.//TODO
 		{
@@ -5608,6 +5588,26 @@ namespace Keysharp.Core.Windows
 			return LowLevelCommon(kbdHook, code, wParamVal, ref lParam, ref tempstruct, vk, sc, keyUp, lParam.flags);
 		}
 
+		//protected internal override void DeregisterMouseHook()
+		//{
+		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
+		//}
+		private void SetHotNamesAndTimes(HotstringDefinition hs, HotkeyDefinition hk)
+		{
+			if (hs != null || hk != null)
+			{
+				// Just prior to launching the hotkey, update these values to support built-in
+				// variables such as A_TimeSincePriorHotkey:
+				Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
+				Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
+				// Unlike hotkeys -- which can have a name independent of their label by being created or updated
+				// with the HOTKEY command -- a hot string's unique name is always its label since that includes
+				// the options that distinguish between (for example) :c:ahk:: and ::ahk::
+				Keysharp.Scripting.Script.thisHotkeyName = hs != null ? hs.Name : hk.Name;
+				Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
+			}
+		}
+
 		private bool SystemHasAnotherdHook(ref System.Threading.Mutex existingMutex, string name)
 		{
 			if (existingMutex != null)
@@ -5626,6 +5626,10 @@ namespace Keysharp.Core.Windows
 			return last_error == WindowsAPI.ERROR_ALREADY_EXISTS;
 		}
 	}
+
+	internal enum GuiEventKinds
+	{ GUI_EVENTKIND_EVENT = 0, GUI_EVENTKIND_NOTIFY, GUI_EVENTKIND_COMMAND }
+
 	internal enum GuiEventTypes
 	{
 		GUI_EVENT_NONE  // NONE must be zero for any uses of ZeroMemory(), synonymous with false, etc.
@@ -5638,11 +5642,10 @@ namespace Keysharp.Core.Windows
 		, GUI_EVENT_ITEMEDIT
 		, GUI_EVENT_FOCUS, GUI_EVENT_LOSEFOCUS
 		, GUI_EVENT_NAMED_COUNT
+
 		// The rest don't have explicit names in GUI_EVENT_NAMES:
 		, GUI_EVENT_WM_COMMAND = GUI_EVENT_NAMED_COUNT
 	};
-
-	internal enum GuiEventKinds { GUI_EVENTKIND_EVENT = 0, GUI_EVENTKIND_NOTIFY, GUI_EVENTKIND_COMMAND }
 
 	// WM_USER is the lowest number that can be a user-defined message.  Anything above that is also valid.
 	// NOTE: Any msg about WM_USER will be kept buffered (unreplied-to) whenever the script is uninterruptible.

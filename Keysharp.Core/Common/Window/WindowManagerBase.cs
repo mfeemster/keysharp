@@ -29,8 +29,6 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows);
 
-		internal abstract uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow);
-
 		//Documentation says every thread needs to have its own copy of this.//MATT
 		internal abstract WindowItemBase FindWindow(SearchCriteria criteria, bool last = false);
 
@@ -76,6 +74,8 @@ namespace Keysharp.Core.Common.Window
 
 			return (foundWindows, criteria);
 		}
+
+		internal abstract uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow);
 
 		internal abstract WindowItemBase GetForeGroundWindow();
 

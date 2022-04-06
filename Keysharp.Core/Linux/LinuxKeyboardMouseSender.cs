@@ -210,8 +210,8 @@ namespace Keysharp.Core.Linux
 
 		private void HandleXEvent(XEvent ev)
 		{
-			if (ev.type == XEventName.KeyPress || ev.type == XEventName.KeyRelease)
-				_ = KeyReceived(TranslateKey(ev), ev.type == XEventName.KeyPress);
+			//if (ev.type == XEventName.KeyPress || ev.type == XEventName.KeyRelease)
+			//  _ = KeyReceived(TranslateKey(ev), ev.type == XEventName.KeyPress);//Figure this out.//TODO
 		}
 
 		private CachedKey LookupKeycode(char code)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common.Keyboard
@@ -927,7 +928,7 @@ namespace Keysharp.Core.Common.Keyboard
 						if (!hk.keybdHookMandatory && (hook_is_mandatory || suffixHasTilde))
 						{
 							// Require the hook for all variants of this hotkey if any variant requires it.
-							// This seems more intuitive than the old behaviour, which required $ or #UseHook
+							// This seems more intuitive than the old behavior, which required $ or #UseHook
 							// to be used on the *first* variant, even though it affected all variants.
 							updateAllHotkeys = true; // Since it may be switching from reg to k-hook.
 							hk.keybdHookMandatory = true;
@@ -1014,7 +1015,7 @@ namespace Keysharp.Core.Common.Keyboard
 									variant.maxThreads = val;
 
 								if (variant.maxThreads > Keysharp.Scripting.Parser.MaxThreadsTotal) // To avoid array overflow, this limit must by obeyed except where otherwise documented.
-									// Older comment: Keep this limited to prevent stack overflow due to too many pseudo-threads.
+									// Older comment: Keep this limited to prevent stack overflow due to too many pseudo-
 									variant.maxThreads = Keysharp.Scripting.Parser.MaxThreadsTotal;
 								else if (variant.maxThreads < 1)
 									variant.maxThreads = 1;
@@ -2454,7 +2455,7 @@ namespace Keysharp.Core.Common.Keyboard
 			timeUntilNow = timeNow - timePrev;
 
 			if (displayWarning = (throttledKeyCount > Accessors.A_MaxHotkeysPerInterval
-								  && timeUntilNow.TotalMilliseconds < Accessors.A_HotkeyThrottleInterval))
+								  && timeUntilNow.TotalMilliseconds < (long)Accessors.A_HotkeyThrottleInterval))
 			{
 				// The moment any dialog is displayed, hotkey processing is halted since this
 				// app currently has only one thread.
@@ -2475,7 +2476,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			// The display_warning var is needed due to the fact that there's an OR in this condition:
-			if (displayWarning || timeUntilNow.TotalMilliseconds > Accessors.A_HotkeyThrottleInterval)
+			if (displayWarning || timeUntilNow.TotalMilliseconds > (long)Accessors.A_HotkeyThrottleInterval)
 			{
 				// Reset the sliding interval whenever it expires.  Doing it this way makes the
 				// sliding interval more sensitive than alternate methods might be.
@@ -2500,7 +2501,7 @@ namespace Keysharp.Core.Common.Keyboard
 			KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
 			// LAUNCH HOTKEY SUBROUTINE:
 			++variant.existingThreads;  // This is the thread count for this particular hotkey only.
-			var tsk = Keysharp.Core.Core.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --variant.existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+			var tsk = Threads.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --variant.existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			tsk.Wait();
 
 			if (tsk.IsFaulted)//Original checked for result == FAIL, unsure if this accomplishes the same thing.//TODO

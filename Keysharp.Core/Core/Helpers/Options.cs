@@ -2,54 +2,42 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Keysharp.Core.Common.Keyboard;
-using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
 	public static class Options
 	{
-		internal static int[] ParseVersionToInts(string ver)
+		internal static ToggleValueType ConvertOnOff(object mode, ToggleValueType def = ToggleValueType.Invalid)
 		{
-			var vers = new int[] { 0, 0, 0, 0 };
-			var versplits = ver.Split('.', StringSplitOptions.RemoveEmptyEntries);
+			if (mode == null)
+				return ToggleValueType.Neutral;
 
-			if (versplits.Length > 0)
-			{
-				for (var i = 0; i < 4; i++)
-				{
-					if (versplits.Length > i)
-						if (versplits[i].ParseInt(false) is int v)
-							vers[i] = v;
-				}
-			}
+			var str = mode.ParseObject().ToString();
 
-			return vers;
+			if (str?.Length == 0)
+				return ToggleValueType.Neutral;
+
+			if (string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
+
+			if (string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
+
+			return def;
 		}
 
-		internal static void VerifyVersion(string ver, bool plus, int line, string source)
+		internal static ToggleValueType ConvertOnOffToggle(object mode, ToggleValueType def = ToggleValueType.Default)
 		{
-			var ahkver = Accessors.A_AhkVersion;
-			var reqvers = ParseVersionToInts(ver);
-			var thisvers = ParseVersionToInts(ahkver);
+			var toggle = ConvertOnOff(mode);
 
-			for (var i = 0; i < 4; i++)
-			{
-				if (plus)
-				{
-					if (reqvers[i] > thisvers[i])
-						throw new ParseException($"This script requires Keysharp >= v{ver}, but you have v{ahkver}", line, source);
-				}
-				else if (reqvers[i] != thisvers[i])
-					throw new ParseException($"This script requires Keysharp == v{ver}, but you have v{ahkver}", line, source);
+			if (toggle != ToggleValueType.Invalid)
+				return toggle;
 
-				if (thisvers[i] > reqvers[i])
-					break;
-			}
+			var str = mode.ParseObject().ToString();
+			return string.Compare(str, "Toggle", true) == 0 || str == "-1" ? ToggleValueType.Toggle : def;
 		}
+
 		internal static bool IsAnyBlank(params string[] args)
 		{
 			foreach (var str in args)
@@ -170,7 +158,7 @@ namespace Keysharp.Core
 
 		internal static bool? OnOff(object mode)
 		{
-			switch (mode.ToString().ToLowerInvariant())
+			switch (mode.ParseObject().ToString().ToLowerInvariant())
 			{
 				case Core.Keyword_On:
 				case "1":
@@ -185,34 +173,6 @@ namespace Keysharp.Core
 				default:
 					return null;
 			}
-		}
-
-		internal static ToggleValueType ConvertOnOff(object mode, ToggleValueType def = ToggleValueType.Invalid)
-		{
-			if (mode == null)
-				return ToggleValueType.Neutral;
-
-			var str = mode.ToString();
-
-			if (str?.Length == 0)
-				return ToggleValueType.Neutral;
-
-			if (string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
-
-			if (string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
-
-			return def;
-		}
-
-		internal static ToggleValueType ConvertOnOffToggle(object mode, ToggleValueType def = ToggleValueType.Default)
-		{
-			var toggle = ConvertOnOff(mode);
-
-			if (toggle != ToggleValueType.Invalid)
-				return toggle;
-
-			var str = mode.ToString();
-			return string.Compare(str, "Toggle", true) == 0 || str == "-1" ? ToggleValueType.Toggle : def;
 		}
 
 		internal static bool OptionContains(string options, params string[] keys)
@@ -283,29 +243,48 @@ namespace Keysharp.Core
 			return list;
 		}
 
-		private static bool TryParseWrapper<T>(string opt, string prefix, TryParseHandler<T> handler, ref T result, StringComparison comp = StringComparison.OrdinalIgnoreCase,
-											   bool allowempty = false, T def = default)// where T : struct
-		{
-			if (opt.StartsWith(prefix, comp))
-			{
-				var suffix = opt.AsSpan(prefix.Length);
+		internal static string[] ParseOptions(string options) => options.Split(Core.Keyword_Spaces, StringSplitOptions.RemoveEmptyEntries);
 
-				if (allowempty && suffix.CompareTo(ReadOnlySpan<char>.Empty, StringComparison.OrdinalIgnoreCase) == 0)//Need CompareTo() because == doesn't work with spans and "".
+		internal static Dictionary<string, string> ParseOptionsRegex(ref string options, Dictionary<string, Regex> items, bool remove = true)
+		{
+			var results = new Dictionary<string, string>();
+
+			foreach (var item in items)
+			{
+				if (item.Value.IsMatch(options))
 				{
-					result = def;
-					return true;
+					var match = item.Value.Match(options).Groups[1].Captures[0];
+					results.Add(item.Key, match.Value);
+
+					if (remove)
+						options = options.Substring(0, match.Index) + options.Substring(match.Index + match.Length);
 				}
-				else if (handler(suffix, out var res))
+				else
 				{
-					result = res;
-					return true;
+					results.Add(item.Key, "");
 				}
 			}
 
-			return false;
+			return results;
 		}
 
-		internal delegate bool TryParseHandler<T>(ReadOnlySpan<char> value, out T result);
+		internal static int[] ParseVersionToInts(string ver)
+		{
+			var vers = new int[] { 0, 0, 0, 0 };
+			var versplits = ver.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+			if (versplits.Length > 0)
+			{
+				for (var i = 0; i < 4; i++)
+				{
+					if (versplits.Length > i)
+						if (versplits[i].ParseInt(false) is int v)
+							vers[i] = v;
+				}
+			}
+
+			return vers;
+		}
 
 		internal static bool TryParse(string opt, string prefix, ref int result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, int def = default) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> s, out int x) =>
@@ -369,43 +348,6 @@ namespace Keysharp.Core
 			}, ref result, comp, allowempty, def);
 		}
 
-		internal static bool TryParseString(string opt, string prefix, ref string result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowEmpty = false) =>
-		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out string r) => { r = v.ToString(); return true; }, ref result, comp, allowEmpty);
-
-		internal static bool TryParseDateTime(string opt, string prefix, string format, ref DateTime result, StringComparison comp = StringComparison.OrdinalIgnoreCase) =>
-		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out DateTime r) =>
-		{
-			if (!DateTime.TryParseExact(v, format.AsSpan(), CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out r))
-				r = Conversions.ToDateTime(v.ToString());
-
-			return true;
-		}, ref result, comp);
-
-		internal static string[] ParseOptions(string options) => options.Split(Core.Keyword_Spaces, StringSplitOptions.RemoveEmptyEntries);
-
-		internal static Dictionary<string, string> ParseOptionsRegex(ref string options, Dictionary<string, Regex> items, bool remove = true)
-		{
-			var results = new Dictionary<string, string>();
-
-			foreach (var item in items)
-			{
-				if (item.Value.IsMatch(options))
-				{
-					var match = item.Value.Match(options).Groups[1].Captures[0];
-					results.Add(item.Key, match.Value);
-
-					if (remove)
-						options = options.Substring(0, match.Index) + options.Substring(match.Index + match.Length);
-				}
-				else
-				{
-					results.Add(item.Key, "");
-				}
-			}
-
-			return results;
-		}
-
 		/// <summary>
 		/// Parse a string and get Coordinates
 		/// </summary>
@@ -416,5 +358,62 @@ namespace Keysharp.Core
 		{
 			throw new NotImplementedException();
 		}
+
+		internal static bool TryParseDateTime(string opt, string prefix, string format, ref DateTime result, StringComparison comp = StringComparison.OrdinalIgnoreCase) =>
+		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out DateTime r) =>
+		{
+			if (!DateTime.TryParseExact(v, format.AsSpan(), CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out r))
+				r = Conversions.ToDateTime(v.ToString());
+
+			return true;
+		}, ref result, comp);
+
+		internal static bool TryParseString(string opt, string prefix, ref string result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowEmpty = false) =>
+		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out string r) => { r = v.ToString(); return true; }, ref result, comp, allowEmpty);
+
+		internal static void VerifyVersion(string ver, bool plus, int line, string source)
+		{
+			var ahkver = Accessors.A_AhkVersion;
+			var reqvers = ParseVersionToInts(ver);
+			var thisvers = ParseVersionToInts(ahkver);
+
+			for (var i = 0; i < 4; i++)
+			{
+				if (plus)
+				{
+					if (reqvers[i] > thisvers[i])
+						throw new ParseException($"This script requires Keysharp >= v{ver}, but you have v{ahkver}", line, source);
+				}
+				else if (reqvers[i] != thisvers[i])
+					throw new ParseException($"This script requires Keysharp == v{ver}, but you have v{ahkver}", line, source);
+
+				if (thisvers[i] > reqvers[i])
+					break;
+			}
+		}
+
+		private static bool TryParseWrapper<T>(string opt, string prefix, TryParseHandler<T> handler, ref T result, StringComparison comp = StringComparison.OrdinalIgnoreCase,
+											   bool allowempty = false, T def = default)// where T : struct
+		{
+			if (opt.StartsWith(prefix, comp))
+			{
+				var suffix = opt.AsSpan(prefix.Length);
+
+				if (allowempty && suffix.CompareTo(ReadOnlySpan<char>.Empty, StringComparison.OrdinalIgnoreCase) == 0)//Need CompareTo() because == doesn't work with spans and "".
+				{
+					result = def;
+					return true;
+				}
+				else if (handler(suffix, out var res))
+				{
+					result = res;
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		internal delegate bool TryParseHandler<T>(ReadOnlySpan<char> value, out T result);
 	}
 }

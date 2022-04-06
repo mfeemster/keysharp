@@ -32,19 +32,32 @@ namespace System
 		//public static IList L(this object[] obj) => obj.Length > 0 && obj[0] is IList oo ? oo : obj;
 		public static IList L(this object[] obj) => obj.Flatten().Cast<object>().ToList();
 
-		public static IList Pl(this object[] obj) => obj.Select(x => x.ParseObject()).ToList();
-
 		public static object[] Pa(this object[] obj) => obj.Select(x => x.ParseObject()).ToArray();
 
-		public static object ParseObject(this object obj) => obj is Keysharp.Scripting.BoolResult br ? br.o : obj;
+		public static bool? ParseBool(this object obj)
+		{
+			if (obj is bool b)
+				return b;
+
+			if (obj is Keysharp.Scripting.BoolResult br)
+				return br.o.ParseBool();
+
+			return Keysharp.Core.Options.OnOff(obj);
+		}
 
 		public static decimal? ParseDecimal(this object obj, bool doconvert = true, bool requiredot = false)
 		{
 			if (obj is decimal m)
 				return m;
 
+			if (obj is long l)
+				return l;
+
 			if (obj is Keysharp.Scripting.BoolResult br)
 				return br.o.ParseDecimal(doconvert, requiredot);
+
+			if (obj is int i)//int is seldom used in Keysharp, so check last.
+				return i;
 
 			var s = obj.ToString();
 			return requiredot && !s.Contains('.')
@@ -57,8 +70,14 @@ namespace System
 			if (obj is double d)
 				return d;
 
+			if (obj is long l)
+				return l;
+
 			if (obj is Keysharp.Scripting.BoolResult br)
 				return br.o.ParseDouble(doconvert, requiredot);
+
+			if (obj is int i)//int is seldom used in Keysharp, so check last.
+				return i;
 
 			var s = obj.ToString();
 			return requiredot && !s.Contains('.')
@@ -127,6 +146,10 @@ namespace System
 
 			return doconvert ? Convert.ToInt64(obj) : new long? ();
 		}
+
+		public static object ParseObject(this object obj) => obj is Keysharp.Scripting.BoolResult br ? br.o : obj;
+
+		public static IList Pl(this object[] obj) => obj.Select(x => x.ParseObject()).ToList();
 
 		public static string Str(this object obj) => obj != null ? obj.ToString() : "";
 

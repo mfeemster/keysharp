@@ -6,23 +6,22 @@ namespace Keysharp.Core
 {
 	public class GuiInfo
 	{
-		public Stack<Control> Controls { get; set; }
 		public Stack<Control> Containers { get; set; }
-
+		public Stack<Control> Controls { get; set; }
 		public char Delimiter { get; set; }
 
 		public Font Font { get; set; }
-
-		public Control LastControl
-		{
-			get => Controls.TryPeek(out var c) ? c : null;
-			set => Controls.Push(value);
-		}
 
 		public Control LastContainer
 		{
 			get => Containers.TryPeek(out var c) ? c : null;
 			set => Containers.Push(value);
+		}
+
+		public Control LastControl
+		{
+			get => Controls.TryPeek(out var c) ? c : null;
+			set => Controls.Push(value);
 		}
 
 		public Point Section { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace Keysharp.Core
 {
-	partial class Core
+	public partial class Core
 	{
 		internal const string Keyword_A = "a";
 		internal const string Keyword_Abort = "abort";
@@ -443,15 +443,20 @@
 		internal static readonly char[] Keyword_Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
 		internal static readonly char[] trimline = "\t\r\n ".ToCharArray();
 		internal static readonly char[] trimsec = "[]".ToCharArray();
+
 		//
 		internal const char CR = '\r';
+
 		internal const char LF = '\n';
 		internal const char SingleSpace = ' ';
 		internal const char Reserved = '\0';
+		internal static readonly char[] CrLf = "\r\n".ToCharArray();
 		internal static readonly char[] Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
 		internal static readonly char[] SpaceTab = " \t".ToCharArray();
+		internal static readonly char[] SpaceColon = " :".ToCharArray();
 		internal static readonly char[] SpaceTabComma = " \t,".ToCharArray();
 		internal static readonly char[] SpacesQuotes = { CR, LF, SingleSpace, '\t', '\xA0', '"' };
+
 		public static readonly char[] DashSlash = "-/".ToCharArray();
 		public static readonly char[] Comma = ",".ToCharArray();
 		public static readonly char[] BothBraces = "{}".ToCharArray();

@@ -1,57 +1,36 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Keyboard;
+using Keysharp.Scripting;
 using ThreadState = System.Threading.ThreadState;
 using Timer = System.Timers.Timer;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
-using Keysharp.Scripting;
-using System.Reflection;
-using System.Collections.Concurrent;
-using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core
 {
 	public static class Flow
 	{
-		private static EventHandler onExit;
-		internal static Timer mainTimer;
-		internal static ConcurrentDictionary<FuncObj, Timer> timers;
 		internal static ConcurrentDictionary<string, FuncObj> cachedFuncObj = new ConcurrentDictionary<string, FuncObj>();
 
-		internal enum ExitReasons
-		{
-			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown
-			, Close, Menu, Exit, Reload, SingleInstance
-		}
+		// Use some negative value unlikely to ever be passed explicitly:
+		internal static int IntervalUnspecified = int.MinValue + 303;
 
-		internal static void SetMainTimer()
-		{
-			if (mainTimer == null)
-			{
-				mainTimer = new Timer(10);
-				mainTimer.Elapsed += (o, e) => { };
-				mainTimer.Start();
-			}
-		}
-
-		internal static void StopMainTimer()
-		{
-			if (mainTimer != null)
-			{
-				mainTimer.Stop();
-				mainTimer = null;
-			}
-		}
+		internal static Timer mainTimer;
+		internal static int NoSleep = -1;
+		internal static ConcurrentDictionary<FuncObj, Timer> timers;
+		private static EventHandler onExit;
 
 		/// <summary>
 		/// Is the Script currently suspended?
 		/// </summary>
 		public static bool Suspended { get; private set; }
+
 		internal static bool AllowInterruption { get; set; }
 
 		/// <summary>
-		/// Prevents the current thread from being interrupted by other threads.
+		/// Prevents the current thread from being interrupted by other
 		/// </summary>
 		/// <param name="mode">
 		/// <list type="bullet">
@@ -64,6 +43,20 @@ namespace Keysharp.Core
 			var mode = obj.L().S1();
 			var on = Options.OnOff(mode) ?? true;
 			System.Threading.Thread.CurrentThread.Priority = on ? ThreadPriority.Highest : ThreadPriority.Normal;
+		}
+
+		public static long EnabledTimerCount()
+		{
+			var ct = 0L;
+
+			if (timers != null)
+			{
+				foreach (var kv in timers)
+					if (kv.Value.Enabled)
+						ct++;
+			}
+
+			return ct;
 		}
 
 		/// <summary>
@@ -140,15 +133,6 @@ namespace Keysharp.Core
 			// TODO: onmessage
 		}
 
-
-		public static object Persistent(params object[] obj)
-		{
-			var b = obj.L().B1(true);
-			var old = Parser.Persistent;
-			Parser.Persistent = b;
-			return old;
-		}
-
 		/// <summary>
 		/// Pauses the current thread.
 		/// </summary>
@@ -179,8 +163,8 @@ namespace Keysharp.Core
 
 			if (state == true)
 			{
-				if (!Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-					Core.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p;
+				if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
+					Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p;
 
 				thread.Suspend();
 			}
@@ -188,8 +172,8 @@ namespace Keysharp.Core
 			{
 				thread.Resume();
 
-				if (!Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-					Core.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+				if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
+					Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			}
 
 #pragma warning restore 612, 618
@@ -200,26 +184,20 @@ namespace Keysharp.Core
 				thread.Join();
 		}
 
+		public static object Persistent(params object[] obj)
+		{
+			var b = obj.L().B1(true);
+			var old = Parser.Persistent;
+			Parser.Persistent = b;
+			return old;
+		}
+
 		/// <summary>
 		/// Replaces the currently running instance of the program with a new one.
 		/// </summary>
 		public static void Reload()
 		{
 			Application.Restart();//What about the cmd line args?//MATT
-		}
-
-		public static long EnabledTimerCount()
-		{
-			var ct = 0L;
-
-			if (timers != null)
-			{
-				foreach (var kv in timers)
-					if (kv.Value.Enabled)
-						ct++;
-			}
-
-			return ct;
 		}
 
 		public static void SetTimer(params object[] obj)
@@ -319,18 +297,6 @@ namespace Keysharp.Core
 			timer.Start();
 		}
 
-		// Use some negative value unlikely to ever be passed explicitly:
-		internal static int IntervalUnspecified = int.MinValue + 303;
-		internal static int NoSleep = -1;
-
-
-		internal static void SleepWithoutInterruption(params object[] obj)
-		{
-			AllowInterruption = false;
-			Sleep(obj);
-			AllowInterruption = true;
-		}
-
 		/// <summary>
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
@@ -366,8 +332,8 @@ namespace Keysharp.Core
 			var state = Options.OnOff(mode);
 			Suspended = state == null && mode.Equals(Core.Keyword_Toggle, System.StringComparison.OrdinalIgnoreCase) ? !Suspended : (bool)state;
 
-			if (!Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-				Core.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s : Keysharp.Core.Properties.Resources.Keysharp_ico;
+			if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
+				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s : Keysharp.Core.Properties.Resources.Keysharp_ico;
 
 			// UNDONE: permit mode for suspend
 		}
@@ -378,6 +344,38 @@ namespace Keysharp.Core
 		[Obsolete]
 		public static void Thread()
 		{
+		}
+
+		internal static void SetMainTimer()
+		{
+			if (mainTimer == null)
+			{
+				mainTimer = new Timer(10);
+				mainTimer.Elapsed += (o, e) => { };
+				mainTimer.Start();
+			}
+		}
+
+		internal static void SleepWithoutInterruption(params object[] obj)
+		{
+			AllowInterruption = false;
+			Sleep(obj);
+			AllowInterruption = true;
+		}
+
+		internal static void StopMainTimer()
+		{
+			if (mainTimer != null)
+			{
+				mainTimer.Stop();
+				mainTimer = null;
+			}
+		}
+
+		internal enum ExitReasons
+		{
+			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown
+			, Close, Menu, Exit, Reload, SingleInstance
 		}
 
 		/// <summary>

@@ -33,28 +33,9 @@ namespace Keysharp.Scripting
 		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion hotCriterion;
 
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
-		internal static bool hsCaseSensitive;
-		internal static bool hsConformToCase = true;
-		internal static bool hsDetectWhenInsideWord;
-		internal static bool hsDoBackspace = true;
-		internal static bool hsDoReset;
-		internal static bool hsEndCharRequired = true;
-		internal static int hsKeyDelay;
-		internal static bool hsOmitEndChar;
-
-		// Hot-string global settings:
-		internal static int hsPriority;
 
 		internal static bool hsResetUponMouseClick = true;
 		internal static bool hsSameLineAction;
-
-		// default priority is always 0
-		// Fast sends are much nicer for auto-replace and auto-backspace.
-		//internal static Keysharp.Core.Common.Keyboard.SendModes sendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
-		internal static Keysharp.Core.Common.Keyboard.SendModes hsSendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
-
-		// v1.0.43: New default for more reliable hotstrings.
-		internal static Keysharp.Core.Common.Keyboard.SendRawModes hsSendRaw = Keysharp.Core.Common.Keyboard.SendRawModes.NotRaw;
 
 		internal static IntPtr hWndLastUsed = IntPtr.Zero;
 		internal static InputType input;
@@ -90,9 +71,10 @@ namespace Keysharp.Scripting
 		internal static bool validateThenExit;
 
 		private static IntPtr mainWindowHandle;
+		public static bool ResetUponMouseClick => hsResetUponMouseClick;
 		public static Variables Vars { get; private set; }
 		internal static Keysharp.Core.Common.Threading.HookThread HookThread { get; private set; }
-		//Declare this separately so it can be accessed from other threads.
+		//Declare this separately so it can be accessed from other
 
 		internal static IntPtr MainWindowHandle
 		{
@@ -231,7 +213,7 @@ namespace Keysharp.Scripting
 				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
-			mainWindow.FormClosing += (o, e) => { Accessors.A_ExitReason = "OnExit()"; };
+			mainWindow.FormClosing += (o, e) => Accessors.A_ExitReason = "OnExit()";
 			mainWindow.WindowState = FormWindowState.Minimized;
 			//mainWindow.WindowState = FormWindowState.Maximized;
 			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
@@ -1481,7 +1463,7 @@ namespace Keysharp.Scripting
 			                    // with the HOTKEY command -- a hot string's unique name is always its label since that includes
 			                    // the options that distinguish between (for example) :c:ahk:: and ::ahk::
 			                    g_script.mThisHotkeyName = (msg.message == AHK_HOTSTRING) ? hs->mName : hk->mName;
-			                    g_script.mThisHotkeyStartTime = GetTickCount(); // Fixed for v1.0.35.10 to not happen for GUI threads.
+			                    g_script.mThisHotkeyStartTime = GetTickCount(); // Fixed for v1.0.35.10 to not happen for GUI
 			                }
 
 			                // Make every newly launched subroutine start off with the global default values that

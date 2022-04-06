@@ -100,7 +100,10 @@ namespace Keysharp.Scripting
 										}
 									}
 
-									if (allVars.TryGetValue(meth.Name.ToLower(), out var av))
+									var scope = Scope.ToLower();
+
+									if (allVars.TryGetValue(scope, out var av))
+										//if (allVars.TryGetValue(meth.Name.ToLower(), out var av))
 									{
 										var gfv = globalFuncVars.PeekOrNull();
 

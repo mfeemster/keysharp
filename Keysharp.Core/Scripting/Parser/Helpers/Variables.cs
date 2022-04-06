@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 	public partial class Parser
 	{
 		//CodeArrayIndexerExpression InternalVariable => VarRef(string.Concat(Scope, ScopeVar + "\0", InternalID));
-		CodeExpression InternalVariable => VarRef(string.Concat(Scope, ScopeVar + "\0", InternalID), false);
+		private CodeExpression InternalVariable => VarRef(string.Concat(Scope, ScopeVar + "\0", InternalID), false);
 
 		//internal CodeArrayIndexerExpression VarId(string name) => VarId(VarIdExpand(VarNormalizedName(name)));
 		internal CodeExpression VarId(string name, bool create, bool dyn = false) => name == args ? new CodeSnippetExpression(args) : VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);

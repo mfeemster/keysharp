@@ -25,9 +25,6 @@ namespace Keysharp.Core
 		private static bool allowMainWindow = true;
 
 		[ThreadStatic]
-		private static int? priority;
-
-		[ThreadStatic]
 		private static long? controlDelay;
 
 		[ThreadStatic]
@@ -40,10 +37,19 @@ namespace Keysharp.Core
 		private static bool? detectHiddenWindows;
 
 		[ThreadStatic]
+		private static object eventInfo;
+
+		[ThreadStatic]
 		private static Encoding fileEncoding;
 
 		[ThreadStatic]
 		private static string formatNumeric;
+
+		private static long hotkeyModifierTimeout = 50L;
+
+		private static long hotkeyThrottleInterval = 2000L;
+
+		private static bool? iconFrozen;
 
 		private static bool iconHidden;
 
@@ -61,6 +67,10 @@ namespace Keysharp.Core
 		[ThreadStatic]
 		private static long? keyDurationPlay;
 
+		private static long maxHotkeysPerInterval = 2000L;
+
+		private static string menuMaskKey = "";
+
 		[ThreadStatic]
 		private static long? mouseDelay;
 
@@ -76,6 +86,9 @@ namespace Keysharp.Core
 		private static Icon prevTrayIcon;
 
 		[ThreadStatic]
+		private static long? priority;
+
+		[ThreadStatic]
 		private static long? sendLevel;
 
 		[ThreadStatic]
@@ -89,6 +102,8 @@ namespace Keysharp.Core
 
 		[ThreadStatic]
 		private static bool? titleMatchModeSpeed;
+
+		private static bool? winActivateForce;
 
 		[ThreadStatic]
 		private static long? winDelay;
@@ -125,7 +140,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static bool A_AllowMainWindow
+		public static object A_AllowMainWindow
 		{
 			get => allowMainWindow;
 
@@ -262,12 +277,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The current X coordinate of the caret (text insertion point). The coordinates are relative to the active window unless CoordMode is used to make them relative to the entire screen. If there is no active window or the caret position cannot be determined, these variables are blank.
 		/// </summary>
-		public static string A_CaretX => string.Empty;
+		public static string A_CaretX => "";
 
 		/// <summary>
 		/// The current Y coordinate of the caret (text insertion point). The coordinates are relative to the active window unless CoordMode is used to make them relative to the entire screen. If there is no active window or the caret position cannot be determined, these variables are blank.
 		/// </summary>
-		public static string A_CaretY => string.Empty;
+		public static string A_CaretY => "";
 
 		public static object A_Clipboard
 		{
@@ -317,7 +332,7 @@ namespace Keysharp.Core
 						else if (value is string s && s?.Length == 0)
 							Clipboard.Clear();
 						else
-							Clipboard.SetDataObject(value.ToString(), true);
+							Clipboard.SetDataObject(value.ParseObject().ToString(), true);
 					}
 				}
 			}
@@ -333,16 +348,10 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The delay in milliseconds that will occur after each control-modifying command.
 		/// </summary>
-		public static long? A_ControlDelay
+		public static object A_ControlDelay
 		{
 			get => controlDelay ?? (controlDelay = 20).Value;
-			set => controlDelay = value;
-		}
-
-		public static int? A_Priority
-		{
-			get => priority ?? (priority = 0).Value;
-			set => priority = value;
+			set => controlDelay = value.ParseLong();
 		}
 
 		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
@@ -381,10 +390,10 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
 		/// </summary>
-		public static long A_DefaultMouseSpeed
+		public static object A_DefaultMouseSpeed
 		{
 			get => defaultMouseSpeed ?? (defaultMouseSpeed = 2).Value;
-			set => defaultMouseSpeed = value;
+			set => defaultMouseSpeed = value.ParseLong();
 		}
 
 		/// <summary>
@@ -442,7 +451,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The ending character that was pressed by the user to trigger the most recent non-auto-replace hotstring. If no ending character was required (due to the * option), this variable will be blank.
 		/// </summary>
-		public static string A_EndChar
+		public static object A_EndChar
 		{
 			get;
 			internal set;
@@ -454,30 +463,29 @@ namespace Keysharp.Core
 		[Obsolete]
 		public static long A_ErrorLevel//Need to get rid of all usages of this.//TODO
 		{
-			get => 0;
-
-			set { }
-		}
-
-		/// <summary>
-		/// Contains event information from various commands.
-		/// </summary>
-		public static long A_EventInfo
-		{
 			get;
 			set;
 		}
 
 		/// <summary>
+		/// Contains event information from various commands.
+		/// </summary>
+		public static object A_EventInfo
+		{
+			get => eventInfo;
+			set => eventInfo = value;
+		}
+
+		/// <summary>
 		/// The most recent reason the script was asked to terminate. This variable is blank unless the script has an OnExit subroutine and that subroutine is currently running or has been called at least once by an exit attempt. See OnExit for details.
 		/// </summary>
-		public static string A_ExitReason
+		public static object A_ExitReason
 		{
 			get;
 			internal set;
 		} = "";
 
-		public static string A_FileEncoding
+		public static object A_FileEncoding
 		{
 			get
 			{
@@ -497,45 +505,49 @@ namespace Keysharp.Core
 				return val;
 			}
 
-			set => fileEncoding = Keysharp.Core.Core.GetEncoding(value.ToString());
+			set => fileEncoding = File.GetEncoding(value.ParseObject().ToString());
 		}
 
 		/// <summary>
 		/// The current floating point number format.
 		/// </summary>
 		[Obsolete]
-		public static string A_FormatFloat
+		public static object A_FormatFloat
 		{
 			get
 			{
-				if (A_FormatNumeric.IndexOf("e", System.StringComparison.OrdinalIgnoreCase) != -1)
-					return A_FormatNumeric;
-
-				if (A_FormatNumeric.IndexOf("f", System.StringComparison.OrdinalIgnoreCase) != -1)
+				if (A_FormatNumeric is string s)
 				{
-					var format = A_FormatNumeric.Replace("f", string.Empty).Replace("F", string.Empty);
-					return string.Concat(format.Length == 0 ? "0" : int.Parse(format).ToString(), ".",
-										 System.Threading.Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalDigits.ToString());
+					if (s.IndexOf("e", System.StringComparison.OrdinalIgnoreCase) != -1)
+						return s;
+
+					if (s.IndexOf("f", System.StringComparison.OrdinalIgnoreCase) != -1)
+					{
+						var format = s.Replace("f", "").Replace("F", "");
+						return string.Concat(format.Length == 0 ? "0" : int.Parse(format).ToString(), ".",
+											 System.Threading.Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalDigits.ToString());
+					}
 				}
 
-				return string.Empty;
+				return "";
 			}
 			set
 			{
 				var e = false;
+				var str = value.ParseObject().ToString();
 
-				foreach (var exp in new[] { value.IndexOf('e'), value.IndexOf('E') })
+				foreach (var exp in new[] { str.IndexOf('e'), str.IndexOf('E') })
 				{
 					if (exp == -1)
 					{
 						continue;
 					}
 
-					A_FormatNumeric = value.Substring(exp);
-					value = value.Substring(0, exp);
+					A_FormatNumeric = str.Substring(exp);
+					str = str.Substring(0, exp);
 					e = true;
 				}
-				var parts = value.Split(new[] { '.' }, 2);
+				var parts = str.Split(new[] { '.' }, 2);
 
 				if (!e && int.TryParse(parts[0], out var n) && n != 0)
 					A_FormatNumeric = "f" + n;
@@ -554,13 +566,13 @@ namespace Keysharp.Core
 		/// The current integer format, either <c>H</c> or <c>D</c>.
 		/// </summary>
 		[Obsolete]
-		public static string A_FormatInteger
+		public static object A_FormatInteger
 		{
-			get => A_FormatNumeric == "f" ? "D" : A_FormatNumeric == "x" ? "H" : string.Empty;
+			get => (string)A_FormatNumeric == "f" ? "D" : (string)A_FormatNumeric == "x" ? "H" : "";
 
 			set
 			{
-				switch (value.ToLowerInvariant())
+				switch (value.ParseObject().ToString().ToLowerInvariant())
 				{
 					case Core.Keyword_Hex:
 					case Core.Keyword_FormatHex:
@@ -577,7 +589,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The current numeric format.
 		/// </summary>
-		public static string A_FormatNumeric
+		public static object A_FormatNumeric
 		{
 			get
 			{
@@ -591,56 +603,53 @@ namespace Keysharp.Core
 				return formatNumeric = "f";
 			}
 
-			set => formatNumeric = value;
+			set => formatNumeric = value.ParseObject().ToString();
 		}
 
 		/// <summary>
 		/// The GUI window number that launched the current thread. This variable is blank unless a Gui control, menu bar item, or event such as GuiClose/GuiEscape launched the current thread.
 		/// </summary>
+		[Obsolete]
 		public static string A_Gui => null;
 
 		/// <summary>
 		/// The name of the variable associated with the GUI control that launched the current thread. If that control lacks an associated variable, A_GuiControl instead contains the first 63 characters of the control's text/caption (this is most often used to avoid giving each button a variable name). A_GuiControl is blank whenever: 1) A_Gui is blank; 2) a GUI menu bar item or event such as GuiClose/GuiEscape launched the current thread; 3) the control lacks an associated variable and has no caption; or 4) The control that originally launched the current thread no longer exists (perhaps due to Gui Destroy).
 		/// </summary>
+		[Obsolete]
 		public static string A_GuiControl => null;
 
 		/// <summary>
 		/// See <see cref="A_GuiEvent"/>.
 		/// </summary>
+		[Obsolete]
 		public static string A_GuiControlEvent => null;
 
-		/// <summary>
-		/// <para>The type of event that launched the current thread. If the thread was not launched via GUI action, this variable is blank. Otherwise, it contains one of the following strings:</para>
-		/// <para>Normal: The event was triggered by a single left-click or via keystrokes (arrow keys, TAB key, space bar, underlined shortcut key, etc.). This value is also used for menu bar items and the special events such as GuiClose and GuiEscape.</para>
-		/// <para>DoubleClick: The event was triggered by a double-click. Note: The first click of the click-pair will still cause a Normal event to be received first. In other words, the subroutine will be launched twice: once for the first click and again for the second.</para>
-		/// <para>RightClick: Occurs only for GuiContextMenu, ListViews, and TreeViews.</para>
-		/// <para>Context-sensitive values: For details see GuiContextMenu, GuiDropFiles, Slider, MonthCal, ListView, and TreeView.</para>
-		/// </summary>
+		[Obsolete]
 		public static string A_GuiEvent => null;
 
-		/// <summary>
-		/// These contain the GUI window's height when referenced in a GuiSize subroutine. They apply to the window's client area, which is the area excluding title bar, menu bar, and borders.
-		/// </summary>
+		[Obsolete]
 		public static string A_GuiHeight => null;
 
-		/// <summary>
-		/// These contain the GUI window's width when referenced in a GuiSize subroutine. They apply to the window's client area, which is the area excluding title bar, menu bar, and borders.
-		/// </summary>
+		[Obsolete]
 		public static string A_GuiWidth => null;
 
-		/// <summary>
-		/// These contain the X coordinate for GuiContextMenu and GuiDropFiles events. Coordinates are relative to the upper-left corner of the window.
-		/// </summary>
+		[Obsolete]
 		public static string A_GuiX => null;
 
-		/// <summary>
-		/// These contain the Y coordinate for GuiContextMenu and GuiDropFiles events. Coordinates are relative to the upper-left corner of the window.
-		/// </summary>
+		[Obsolete]
 		public static string A_GuiY => null;
 
-		public static long A_HotkeyModifierTimeout { get; set; } = 50;
+		public static object A_HotkeyModifierTimeout
+		{
+			get => hotkeyModifierTimeout;
+			set => hotkeyModifierTimeout = value.ParseLong().Value;
+		}
 
-		public static long A_HotkeyThrottleInterval { get; set; } = 2000;
+		public static object A_HotkeyThrottleInterval
+		{
+			get => hotkeyThrottleInterval;
+			set => hotkeyThrottleInterval = value.ParseLong().Value;
+		}
 
 		/// <summary>
 		/// Current 2-digit hour (00-23) in 24-hour time (for example, 17 is 5pm).
@@ -655,7 +664,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Contains true if the tray icon is currently hidden or false otherwise. The icon can be hidden via #NoTrayIcon or the Menu command.
 		/// </summary>
-		public static bool A_IconHidden
+		public static object A_IconHidden
 		{
 			get => iconHidden;
 
@@ -670,20 +679,20 @@ namespace Keysharp.Core
 				{
 					if (!val.Value && iconHidden)//Was true, switching to false, so show.
 					{
-						if (Core.Tray != null)
+						if (Script.Tray != null)
 						{
-							Core.Tray.Icon = prevTrayIcon;
+							Script.Tray.Icon = prevTrayIcon;
 							prevTrayIcon = null;
-							iconHidden = value;
+							iconHidden = val.Value;
 						}
 					}
 					else if (val.Value && !iconHidden)//Was false, switching to true, so hide.
 					{
-						if (Core.Tray != null)
+						if (Script.Tray != null)
 						{
-							prevTrayIcon = Core.Tray.Icon;
-							Core.Tray.Icon = null;
-							iconHidden = value;
+							prevTrayIcon = Script.Tray.Icon;
+							Script.Tray.Icon = null;
+							iconHidden = val.Value;
 						}
 					}
 				}
@@ -693,19 +702,19 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Blank if A_IconFile is blank. Otherwise, it's the number of the icon in A_IconFile (typically 1).
 		/// </summary>
-		public static long A_IconNumber { get; internal set; } = 1;
+		public static long A_IconNumber { get; internal set; } = 1L;
 
 		/// <summary>
 		/// Blank unless a custom tooltip for the tray icon has been specified via Menu, Tray, Tip -- in which case it's the text of the tip.
 		/// </summary>
-		public static string A_IconTip
+		public static object A_IconTip
 		{
-			get => Core.Tray != null ? Core.Tray.Text : "";
+			get => Script.Tray != null ? Script.Tray.Text : "";
 
 			set
 			{
-				if (Core.Tray != null)
-					Core.Tray.Text = value;
+				if (Script.Tray != null)
+					Script.Tray.Text = value.ParseObject().ToString();
 			}
 		}
 
@@ -795,37 +804,37 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The delay that will occur after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
-		public static long A_KeyDelay
+		public static object A_KeyDelay
 		{
 			get => keyDelay ?? (keyDelay = 10).Value;
-			set => keyDelay = value;
+			set => keyDelay = value.ParseLong();
 		}
 
 		/// <summary>
 		/// The delay that will occur in SendPlay mode after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
-		public static long A_KeyDelayPlay
+		public static object A_KeyDelayPlay
 		{
 			get => keyDelayPlay ?? (keyDelayPlay = -1).Value;
-			set => keyDelayPlay = value;
+			set => keyDelayPlay = value.ParseLong();
 		}
 
 		/// <summary>
 		/// The delay between the press of a key and before its release, used with <see cref="A_KeyDelay"/>.
 		/// </summary>
-		public static long A_KeyDuration
+		public static object A_KeyDuration
 		{
 			get => keyDuration ?? (keyDuration = -1).Value;
-			set => keyDuration = value;
+			set => keyDuration = value.ParseLong();
 		}
 
 		/// <summary>
 		/// The delay in SendPlay mode between the press of a key and before its release, used with <see cref="A_KeyDelayPlay"/>.
 		/// </summary>
-		public static long A_KeyDurationPlay
+		public static object A_KeyDurationPlay
 		{
 			get => keyDurationPlay ?? (keyDurationPlay = -1).Value;
-			set => keyDurationPlay = value;
+			set => keyDurationPlay = value.ParseLong();
 		}
 
 		public static string A_KeysharpPath => A_AhkPath;
@@ -882,7 +891,7 @@ namespace Keysharp.Core
 			{
 				if (A_LoopFileFullPath is string s && (System.IO.File.Exists(s) || Directory.Exists(s)))
 				{
-					var val = string.Empty;
+					var val = "";
 					var attr = System.IO.File.GetAttributes(s);
 
 					if (attr.HasFlag(FileAttributes.ReadOnly))
@@ -915,7 +924,7 @@ namespace Keysharp.Core
 					return val;
 				}
 
-				return string.Empty;
+				return "";
 			}
 		}
 
@@ -938,12 +947,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The file's extension (e.g. TXT, DOC, or EXE). The period (.) is not included.
 		/// </summary>
-		public static object A_LoopFileExt
+		public static string A_LoopFileExt
 		{
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return file != null ? Path.GetExtension(file).TrimStart('.') : null;
+				return file != null ? Path.GetExtension(file).TrimStart('.') : "";
 			}
 		}
 
@@ -959,11 +968,7 @@ namespace Keysharp.Core
 			get
 			{
 				var loop = Loops.GetDirLoop();
-
-				if (loop != null && loop.file is string s)
-					return Loops.GetExactPath(s);//This gives exact case.
-
-				return null;
+				return loop != null && loop.file is string s ? Loops.GetExactPath(s) : "";//This gives exact case.
 			}
 		}
 
@@ -975,12 +980,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The name of the file or folder currently retrieved (without the path).
 		/// </summary>
-		public static object A_LoopFileName
+		public static string A_LoopFileName
 		{
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return file != null ? Path.GetFileName(file) : null;
+				return file != null ? Path.GetFileName(file) : "";
 			}
 		}
 
@@ -997,26 +1002,17 @@ namespace Keysharp.Core
 				{
 					var fullpath = Path.GetFullPath(s);
 					var isrel = !Path.IsPathFullyQualified(loop.path);
-					return isrel ? Path.GetRelativePath(A_WorkingDir, fullpath) : fullpath;
+					return isrel ? Path.GetRelativePath(A_WorkingDir as string, fullpath) : fullpath;
 				}
 
-				return null;
+				return "";
 			}
 		}
 
 		/// <summary>
 		/// The 8.3 short name, or alternate name of the file. If the file doesn't have one (due to the long name being shorter than 8.3 or perhaps because short-name generation is disabled on an NTFS file system), A_LoopFileName will be retrieved instead.
 		/// </summary>
-		public static string A_LoopFileShortName
-		{
-			get
-			{
-				if (A_LoopFileShortPath is string s)
-					return Path.GetFileName(s);
-
-				return null;
-			}
-		}
+		public static string A_LoopFileShortName => A_LoopFileShortPath is string s ? Path.GetFileName(s) : null;
 
 		/// <summary>
 		/// The 8.3 short path and name of the file/folder currently retrieved. For example: C:\MYDOCU~1\ADDRES~1.txt. However, if FilePattern contains a relative path rather than an absolute path, the path here will also be relative.
@@ -1026,18 +1022,14 @@ namespace Keysharp.Core
 			get
 			{
 				var loop = Loops.GetDirLoop();
-
-				if (loop != null && loop.file is string s)
-					return Loops.GetShortPath(s);
-
-				return null;
+				return loop != null && loop.file is string s ? Loops.GetShortPath(s) : "";
 			}
 		}
 
 		/// <summary>
 		/// The size in bytes of the file currently retrieved. Files larger than 4 gigabytes are also supported.
 		/// </summary>
-		public static object A_LoopFileSize
+		public static long A_LoopFileSize
 		{
 			get
 			{
@@ -1049,46 +1041,46 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The size in Kbytes of the file currently retrieved, rounded down to the nearest integer.
 		/// </summary>
-		public static object A_LoopFileSizeKB => (long)A_LoopFileSize / 1024;
+		public static long A_LoopFileSizeKB => A_LoopFileSize / 1024;
 
 		/// <summary>
 		/// The size in Mbytes of the file currently retrieved, rounded down to the nearest integer.
 		/// </summary>
-		public static object A_LoopFileSizeMB => (long)A_LoopFileSize / (1024 * 1024);
+		public static long A_LoopFileSizeMB => A_LoopFileSize / (1024 * 1024);
 
 		/// <summary>
 		/// The time the file was last accessed. Format YYYYMMDDHH24MISS.
 		/// </summary>
-		public static object A_LoopFileTimeAccessed
+		public static string A_LoopFileTimeAccessed
 		{
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetLastAccessTime(file)) : null;
+				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetLastAccessTime(file)) : "";
 			}
 		}
 
 		/// <summary>
 		/// The time the file was created. Format YYYYMMDDHH24MISS.
 		/// </summary>
-		public static object A_LoopFileTimeCreated
+		public static string A_LoopFileTimeCreated
 		{
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetCreationTime(file)) : null;
+				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetCreationTime(file)) : "";
 			}
 		}
 
 		/// <summary>
 		/// The time the file was last modified. Format YYYYMMDDHH24MISS.
 		/// </summary>
-		public static object A_LoopFileTimeModified
+		public static string A_LoopFileTimeModified
 		{
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetLastWriteTime(file)) : null;
+				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetLastWriteTime(file)) : "";
 			}
 		}
 
@@ -1126,12 +1118,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Contains the contents of the current line excluding the carriage return and linefeed (`r`n) that marks the end of the line.
 		/// </summary>
-		public static object A_LoopReadLine
+		public static string A_LoopReadLine
 		{
 			get
 			{
 				if (Loops.loops.Count == 0)
-					return string.Empty;
+					return "";
 
 				foreach (var l in Loops.loops)
 				{
@@ -1142,7 +1134,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				return null;
+				return "";
 			}
 		}
 
@@ -1154,7 +1146,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (Loops.loops.Count == 0)
-					return string.Empty;
+					return "";
 
 				foreach (var l in Loops.loops)//Since loop is a stack, this goes in reverse order, which is what we want.
 				{
@@ -1165,7 +1157,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				return null;
+				return "";
 			}
 		}
 
@@ -1177,18 +1169,18 @@ namespace Keysharp.Core
 			get
 			{
 				if (Loops.loops.Count == 0)
-					return string.Empty;
+					return "";
 
 				foreach (var l in Loops.loops)
 				{
 					switch (l.type)
 					{
 						case LoopType.Registry:
-							return l.regName != "(Default)" ? l.regName : string.Empty;
+							return l.regName != "(Default)" ? l.regName : "";
 					}
 				}
 
-				return null;
+				return "";
 			}
 		}
 
@@ -1200,7 +1192,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (Loops.loops.Count == 0)
-					return string.Empty;
+					return "";
 
 				foreach (var l in Loops.loops)
 				{
@@ -1211,7 +1203,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				return null;
+				return "";
 			}
 		}
 
@@ -1223,7 +1215,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (Loops.loops.Count == 0)
-					return string.Empty;
+					return "";
 
 				foreach (var l in Loops.loops)
 				{
@@ -1234,7 +1226,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				return null;
+				return "";
 			}
 		}
 
@@ -1243,7 +1235,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (Loops.loops.Count == 0)
-					return string.Empty;
+					return "";
 
 				foreach (var l in Loops.loops)
 				{
@@ -1254,22 +1246,26 @@ namespace Keysharp.Core
 					}
 				}
 
-				return null;
+				return "";
 			}
 		}
 
-		public static long A_MaxHotkeysPerInterval { get; set; } = 2000;
+		public static long A_MaxHotkeysPerInterval
+		{
+			get => maxHotkeysPerInterval;
+			set => maxHotkeysPerInterval = value.ParseLong().Value;
+		}
 
 		/// <summary>
 		/// Current 2-digit day of the month (01-31).
 		/// </summary>
 		public static string A_MDay => DateTime.Now.ToString("dd");
 
-		public static string A_MenuMaskKey
+		public static object A_MenuMaskKey
 		{
-			get;
-			set;
-		} = "";
+			get => menuMaskKey;
+			set => menuMaskKey = value.ParseObject().ToString();
+		}
 
 		/// <summary>
 		/// Current 2-digit minute (00-59).
@@ -1299,19 +1295,19 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Sets the delay that will occur after each mouse movement or click.
 		/// </summary>
-		public static long A_MouseDelay
+		public static object A_MouseDelay
 		{
 			get => mouseDelay ?? (mouseDelay = 10).Value;
-			set => mouseDelay = value;
+			set => mouseDelay = value.ParseLong();
 		}
 
 		/// <summary>
 		/// Sets the delay that will occur in SendPlay mode after each mouse movement or click.
 		/// </summary>
-		public static long A_MouseDelayPlay
+		public static object A_MouseDelayPlay
 		{
 			get => mouseDelayPlay ?? (mouseDelayPlay = -1).Value;
-			set => mouseDelayPlay = value;
+			set => mouseDelayPlay = value.ParseLong();
 		}
 
 		/// <summary>
@@ -1324,10 +1320,10 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_MyDocuments => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-		public static bool A_NoTimers
+		public static object A_NoTimers
 		{
 			get => noTimers ?? (noTimers = false).Value;
-			set => noTimers = value;
+			set => noTimers = value.ParseBool();
 		}
 
 		/// <summary>
@@ -1356,10 +1352,10 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_OSVersion => Environment.OSVersion.VersionString;
 
-		public static long A_PeekFrequency
+		public static object A_PeekFrequency
 		{
-			get => peekFrequency ?? (peekFrequency = 5).Value;
-			set => peekFrequency = value;
+			get => peekFrequency ?? (peekFrequency = 5L).Value;
+			set => peekFrequency = value.ParseLong().Value;
 		}
 
 		/// <summary>
@@ -1371,6 +1367,12 @@ namespace Keysharp.Core
 		/// The key name of the previously executed hotkey or hotstring.
 		/// </summary>
 		public static string A_PriorHotkey => Keysharp.Scripting.Script.HookThread.kbdMsSender.PriorHotkey;
+
+		public static object A_Priority
+		{
+			get => priority ?? (priority = 0).Value;
+			set => priority = value.ParseLong();
+		}
 
 		/// <summary>
 		/// The Program Files directory (e.g. <code>C:\Program Files</code>).
@@ -1420,27 +1422,18 @@ namespace Keysharp.Core
 				if (A_IsCompiled)
 					return Path.GetDirectoryName(GetAssembly().Location);
 				else if (Script.scriptName == "*")
-					return A_WorkingDir;
+					return A_WorkingDir as string;
 				else
 					return Path.GetDirectoryName(Script.scriptName);
 			}
 		}
 
-		public static string A_ScriptFullPath
-		{
-			get
-			{
-				if (A_IsCompiled)
-					return GetAssembly().Location;
-				else
-					return Script.scriptName;
-			}
-		}
+		public static string A_ScriptFullPath => A_IsCompiled ? GetAssembly().Location : Script.scriptName;
 
 		/// <summary>
 		/// The unique ID (HWND/handle) of the script's hidden main window.
 		/// </summary>
-		public static long A_ScriptHwnd => Script.mainWindow != null ? Script.mainWindow.Handle.ToInt64() : 0;
+		public static long A_ScriptHwnd => Script.mainWindow != null ? Script.mainWindow.Handle.ToInt64() : 0L;
 
 		public static string A_ScriptName => Path.GetFileName(Script.scriptName);
 
@@ -1450,19 +1443,19 @@ namespace Keysharp.Core
 		public static string A_Sec => DateTime.Now.ToString("ss");
 
 		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
-		public static long A_SendLevel
+		public static object A_SendLevel
 		{
 			get => sendLevel ?? (sendLevel = 0).Value;
-			set => sendLevel = Math.Clamp(value, 0L, 100L);
+			set => sendLevel = Math.Clamp(value.ParseLong().Value, 0L, 100L);
 		}
 
-		public static string A_SendMode
+		public static object A_SendMode
 		{
 			get => SendMode.ToString();
 
 			set
 			{
-				if (Enum.TryParse<SendModes>(value, out var temp))
+				if (Enum.TryParse<SendModes>(value.ParseObject().ToString(), out var temp))
 					sendMode = temp;
 			}
 		}
@@ -1581,7 +1574,7 @@ namespace Keysharp.Core
 			}
 			set
 			{
-				switch (value.ToString().ToLowerInvariant())
+				switch (value.ParseObject().ToString().ToLowerInvariant())
 				{
 					case "1": titleMatchMode = 1; break;
 
@@ -1597,7 +1590,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The current match speed (<code>fast</code> or <code>slow</code>) set by <code>SetTitleMatchMode</code>.
 		/// </summary>
-		public static string A_TitleMatchModeSpeed
+		public static object A_TitleMatchModeSpeed
 		{
 			get
 			{
@@ -1608,7 +1601,7 @@ namespace Keysharp.Core
 			}
 			set
 			{
-				switch (value.ToLowerInvariant())
+				switch (value.ParseObject().ToString().ToLowerInvariant())
 				{
 					case Core.Keyword_Fast: titleMatchModeSpeed = true; break;
 
@@ -1636,10 +1629,10 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The current delay set by <code>SetWinDelay</code>.
 		/// </summary>
-		public static long A_WinDelay
+		public static object A_WinDelay
 		{
 			get => winDelay ?? (winDelay = 100).Value;
-			set => winDelay = value;
+			set => winDelay = value.ParseLong();
 		}
 
 		/// <summary>
@@ -1654,14 +1647,16 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The script's current working directory, which is where files will be accessed by default.
 		/// </summary>
-		public static string A_WorkingDir
+		public static object A_WorkingDir
 		{
 			get => Environment.CurrentDirectory;
 
 			set
 			{
-				if (!string.IsNullOrEmpty(value) && Directory.Exists(value))
-					Environment.CurrentDirectory = value;
+				var str = value.ParseObject().ToString();
+
+				if (Directory.Exists(str))
+					Environment.CurrentDirectory = str;
 			}
 		}
 
@@ -1689,9 +1684,17 @@ namespace Keysharp.Core
 
 		public static long True => 1L;
 
-		public static bool WinActivateForce { get; set; }
+		public static object WinActivateForce
+		{
+			get => winActivateForce ?? (winActivateForce = false).Value;
+			set => winActivateForce = value.ParseBool();
+		}
 
-		internal static bool A_IconFrozen { get; set; } = false;
+		internal static object A_IconFrozen
+		{
+			get => iconFrozen ?? (iconFrozen = false).Value;
+			set => iconFrozen = value.ParseBool();
+		}
 
 		/// <summary>
 		/// Helper to provide the DPI as a percentage.
@@ -1715,11 +1718,7 @@ namespace Keysharp.Core
 		private static string GetIpFromIndex(int index)
 		{
 			var addr = A_IPAddress;
-
-			if ((long)addr.Length > index - 1)
-				return addr[index] as string;
-			else
-				return "";
+			return (long)addr.Length > index - 1 ? addr[index] as string : "";
 		}
 	}
 }

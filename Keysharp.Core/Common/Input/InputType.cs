@@ -380,7 +380,7 @@ namespace Keysharp.Core.Common.Input
 
 					case 'E':
 						// Interpret single-character keys as characters rather than converting them to VK codes.
-						// This tends to work better when using multiple keyboard layouts, but changes behaviour:
+						// This tends to work better when using multiple keyboard layouts, but changes behavior:
 						// for instance, an end char of "." cannot be triggered while holding Alt.
 						EndCharMode = true;
 						break;
@@ -600,12 +600,13 @@ namespace Keysharp.Core.Common.Input
 			// ...because some callers rely on the list not being broken by this call.
 			//TODO
 			//WindowsAPI.PostMessage(Keysharp.Scripting.Script.mainWindow.Handle, (uint)UserMessages.AHK_INPUT_END, new IntPtr(this), IntPtr.Zero);
-			Script.mainWindow.BeginInvoke(() =>
+			Script.mainWindow.CheckedBeginInvoke(() =>
 			{
 				if (InputRelease() is InputType it)
 				{
 					var so = it.ScriptObject;
-					Keysharp.Core.Core.LaunchInThread(so.OnEnd, new object[] { so });
+					//Threads.LaunchInThread(so.OnEnd, new object[] { so });//Why would we invoke this on the main window then launch another thread?
+					so.OnEnd.Call(so);
 					//Original called Release() on so, but unsure what the equivalent of that would be here.
 				}
 			});

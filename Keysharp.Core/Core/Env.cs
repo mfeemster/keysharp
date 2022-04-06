@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 using Keysharp.Scripting;
 
@@ -243,7 +244,7 @@ namespace Keysharp.Core
 					throw new ArgumentNullException();
 
 				//var proc = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);
-				var proc = (Core.ClipFunction)Delegate.CreateDelegate(typeof(Core.ClipFunction), method);
+				var proc = (ClipFunction)Delegate.CreateDelegate(typeof(ClipFunction), method);
 
 				if (onoff == 1)
 					Script.ClipFunctions.Add(proc);

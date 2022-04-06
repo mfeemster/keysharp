@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/*
 	    public class TreeViews

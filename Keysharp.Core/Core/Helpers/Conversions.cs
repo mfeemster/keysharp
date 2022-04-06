@@ -28,17 +28,6 @@ namespace Keysharp.Core
 
 		private const string unk = "UNKNOWN";
 
-		internal static int MakeInt(short lowPart, short highPart)
-		{
-			return (int)(((ushort)lowPart) | (uint)(highPart << 16));
-		}
-
-		internal static int LowByte(int i) => i & 0xFF;
-		internal static int LowWord(int i) => i & 0xFFFF;
-
-		internal static int HighByte(int i) => (int)(i & 0xFF000000) >> 24;
-		internal static int HighWord(int i) => (i >> 16) & 0xFFFF;
-
 		public static DateTime FromYYYYMMDDHH24MISS(string time)
 		{
 			if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
@@ -46,6 +35,13 @@ namespace Keysharp.Core
 
 			return DateTime.MinValue;
 		}
+
+		/// <summary>
+		/// Need to manually provide a wrapper because calendar is not a constant, which is required for default parameters.
+		/// </summary>
+		/// <param name="time"></param>
+		/// <returns></returns>
+		public static DateTime ToDateTime(string time) => ToDateTime(time, System.Globalization.CultureInfo.CurrentCulture.Calendar);
 
 		internal static string FromFileAttribs(FileAttributes attribs)
 		{
@@ -162,6 +158,19 @@ namespace Keysharp.Core
 				default:
 					return unk;
 			}
+		}
+
+		internal static int HighByte(int i) => (int)(i & 0xFF000000) >> 24;
+
+		internal static int HighWord(int i) => (i >> 16) & 0xFFFF;
+
+		internal static int LowByte(int i) => i & 0xFF;
+
+		internal static int LowWord(int i) => i & 0xFFFF;
+
+		internal static int MakeInt(short lowPart, short highPart)
+		{
+			return (int)(((ushort)lowPart) | (uint)(highPart << 16));
 		}
 
 		internal static StringComparison ParseComparisonOption(object option)
@@ -302,13 +311,6 @@ namespace Keysharp.Core
 
 			return bytes;
 		}
-
-		/// <summary>
-		/// Need to manually provide a wrapper because calendar is not a constant, which is required for default parameters.
-		/// </summary>
-		/// <param name="time"></param>
-		/// <returns></returns>
-		public static DateTime ToDateTime(string time) => ToDateTime(time, System.Globalization.CultureInfo.CurrentCulture.Calendar);
 
 		internal static DateTime ToDateTime(string time, Calendar cal)
 		{

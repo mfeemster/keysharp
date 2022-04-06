@@ -1,0 +1,787 @@
+FEATURE	SYNTAX	STATUS	WINDOWS	LINUX	MAC	V1/V2 BEHAVIOR	NOTES
+Basic assign	x = 5	Working	Yes				Assigns integer value
+Basic expression assign	x := 5	Working	Yes				Assigns integer value
+Basic assign unquoted string	x = hello	Working	Yes				"Assigns the string ""hello"""
+Basic expression assign unquoted string	x := hello	Working	Yes				"Assigns a variable named hello, will crash if not declared"
+Basic assign quoted string	"x = ""hello"""	Working	Yes				"Assigns the string """"hello"""""
+Basic expression assign quoted string	"x := ""hello"""	Working	Yes				"Assigns the string ""hello"""
+Basic assign nothing	x =	Working	Yes				Assigns null
+Basic assign empty string	"x = """""	Working	Yes				Assigns a string consisting of two quotes
+Basic expression assign empty string	"x := """""	Working	Yes				Assigns an empty string
+Basic expression assign nothing	x := 	Working	Yes				Assigns null
+Basic assign var to var	x = %y%	Working	Yes				Assigns reference to first var to second var
+Basic expression assign to var	x := y	Working	Yes				Assigns reference to first var to second var
+Basic assign string concat	y = %x% world	Working	Yes				Concats a variable with the literal string using string.Concat(string[])
+Basic expression string concat	"y := x . "" world"""	Working	Yes				"Concats a variable with a literal string using Operate(Concat, y, "" world"")"
+Between numeric	if x between 0 and 2	Working	Yes				Checks if a numeric variable value is between two numbers
+Between numeric var	if x between %y% and %z%	Working	Yes				Checks if a numeric variable value is between two numeric variables
+Between numeric not	if x not between 0 and 2	Working	Yes				Checks if a numeric variable value is not between two numbers
+Between numeric var not	if x not between %y% and %z%	Working	Yes				Checks if a numeric variable value is not between two numeric variables
+Between string	if x between aaa and zzz	Working	Yes				Checks if a string variable value is between two strings
+Between string var	if x between %a% and %z%	Working	Yes				Checks if a string variable value is between two string variables
+Between string not	if x not between aaa and zzz	Working	Yes				Checks if a string variable value is not between two strings
+Between string var not	if x not between %a% and %z%	Working	Yes				Checks if a string variable value is not between two string variables
+Int	x = 1	Working	Yes				Basic integer value stored in a variable
+Compare vars	if (x == y)	Working	Yes				Comparison using expression syntax. Other syntax not supported.
+Case sensitive string inequality	if (x !=== y)						Check if two strings are not equal using a case sensitive comparison
+Dynamic assign var	x := 11; y11 := 22; z := y%x%	Working	Yes				Access a variable by dynamically composing its name
+Compare dynamic vars	x := 11; y11 := 22; z := y%x%; if (z == y%x%)	Working	Yes				Compare a variable by dynamically composing its name
+Increment/Decrement	x = 1; x++; ++x; x--; --x; y++	Working	Yes				Postfix assign is implemented in a very inefficient way: x = (y = y + 1) - 1
+Power	z := x**y	Working	Yes				"Raise x to the power of y, unary operators must use parens to apply to the whole result. This is different from AHK where parens aren't needed."
+Unary minus							
+Logical not							
+Logical and							
+Logical or							
+String equality							
+Greater/less than							
+Greater/less than or equal							
+Dereference operator							
+Divide							
+Floor divide							
+Ternary							
+Combined operators	+= -= *= /= //= |= &= ^= .= >>= <<=	Working	Yes				Combines two operations into one
+Multi statements							
+Array							"Severely lacking, no member functions to insert, etc"
+Associative array							
+							
+							
+							
+Flow							
+If()	if (x == 1)	Working	Yes				Tests an expression for equality.
+Loop()	Loop %x% Loop 10 Loop 10 {	Working	Yes			V2	Repeats the body of the loop a number of times. Functions like a for loop.
+Loop(empty)	Loop Loop {	Working	Yes			V2	Repeats the body of the loop until a break is encountered. Functions like an infinite while loop.
+Loop Parse	"Loop Parse ""hello"", , ""o"""	Working	Yes			DIFF	"Parses the string either one character at a time, or broken into pieces based on the delimiter. Note this accepts strings as delimiters, unlike AHK which did not."
+Loop Reg	"Loop Reg ""HKLM\SUBKEY"", ""KVR"""	Working	Yes			DIFF	"Reads through registry keys and values, optionally recursive. Additionally supports HKEY_PERFORMANCE_DATA, and an accessor A_LoopRegValue to get the values. Supports data types except the following, which will return UNKNOWN: REG_LINK, REG_RESOURCE_LIST, REG_FULL_RESOURCE_DESCRIPTOR, REG_RESOURCE_REQUIREMENTS_LIST, REG_DWORD_BIG_ENDIAN."
+Loop Read	"Loop Read ""filename.txt"""	Working	Yes			V2	"Reads though a file one line at a time. Optionally supports an output file, which can then be used with FileAppend with no filename argument."
+Loop File	"Loop File ""C:\myfolder\*.txt"", ""DFR"""	Working	Yes			V2	"Lists files and folders at a location, matching a specified pattern, optionally recursing."
+							
+Member functions							
+array.InsertAt()	"arr.InsertAt(1, 44, 55, 66?)"	Working				V2	Inserts an element or range of elements at a given index. The functionality matches v2 because v1 had a strange part at the end.
+array.RemoveAt()	"arr.RemoveAt(3, 5)"	Working				V2	"Removes the element at a given index, plus optionally a length. Returns the removed item if no length was specified. Returns the null if a length was specified."
+array.Delete()	arr.Delete(4)	Working				V2	"Sets the element at the specified index to null, returns the element at that index before it was cleared."
+array.Has()	arr.Has(123)	Working				V2	Returns whether an array contains a non-empty value at the given index.
+array.Clone()	arr.Clone()	Working				V1/V2	Returns a shallow copy of an array.
+array.Clear()	arr.Clear()	Working				NEW	Clears all elements in an array. Neither V1 or V2 supported this.
+array.Push()	arr.Push(object[])	Working				V2	Appends values to the end of an array.
+array.Pop()	arr.Pop()	Working				V2	Removes and returns the last element of an array. An exception is thrown if the array was empty.
+array.__Enum()	arr.__Enum()					V2	Enumerates array elements.
+array.Capacity()	arr.Capacity()	Working				DIFF	Returns the capacity of the array. This is the closest thing to the Capacity property getter that can be implemented.
+array.GetCapacity()	arr.GetCapacity()	Working				V1	Returns the capacity of the array.
+array.SetCapacity()	arr.SetCapacity(123)	Working				V1	"Sets the capacity of the array and returns the new capacity. If less than the current capacity, the new capacity is set to the number of elements."
+array.Length	arr.Length		UNS	UNS	UNS	V2	"Unsure about this because it's a property, not a function. Could perhaps always use a derived version of ArrayList."
+array.Length()	arr.Length()	Working	DIFF	DIFF	DIFF	DIFF	"Returns the length of the array, and is also the closest thing to the Length property getter that can be implemented."
+array.Length()	arr.Length(123)	Working	DIFF	DIFF	DIFF	DIFF	Sets the length of the array by adding new empty elements. This is the closest thing to the Length property setter that can be implemented.
+array.MinIndex()	arr.MinIndex()	Working				V1	Returns the smallest integer contained in the array. Returns empty string if no integers are present.
+array.MaxIndex()	arr.MaxIndex()	Working				V1	Returns the largest integer contained in the array. Returns empty string if no integers are present.
+Base	arr.Base	Working	Yes			DIFF	Retrieves the value's base object. Differs in that it only returns the name of the base type as a string.
+ObjGetBase	arr.ObjGetBase()	Working	Yes			DIFF	Retrieves the value's base object. Differs in that it only returns the name of the base type as a string.
+ObjSetBase	arr.ObjSetBase(obj)		UNS	UNS	UNS	UNS	Getting or setting an object's base class is not supported in C#.
+							
+							
+map.Count()	m.Count()	Working				V2	Retrieves the number of key-value pairs present in the map.
+map.Delete()	"m.Delete(""key"")"	Working				V2	"Deletes a key/value pair out of a map if the key exists, else throws an exception. "
+map.Has()	"m.Has(""key"")"	Working				V2	"Returns whether a dictionary contains a value, even an empty one, for the given key."
+map.Set()	"m.Set(k1, v1, k2, v2, k3, v3)"	Working				V2	Sets zero or more items.
+map.CaseSense	m.CaseSense	Working	Yes			V2	Retrieves or sets the map's case sensitivity setting.
+map.Clone()	m.Clone()	Working				V2	Returns a shallow copy of all of the values and keys of the map.
+map.Clear()	m.Clear()	Working				V2	Clears all key/value pairs in a map.
+map.__Enum()	m.__Enum()	Working				V2	Enumerates key-value pairs.
+map.GetCapacity()	m.GetCapacity()	Working				V2	Retrieves the current capacity of the map.
+map.Capacity()	m.Capacity()	Working				V2	Retrieves the current capacity of the map.
+map.SetCapacity()	m.SetCapacity()	Working				V2	Sets the capacity of the map.
+map.MinIndex()	m.MinIndex()	Working				V1	Returns the smallest integer key contained in the map. Returns empty string if no keys were integers.
+map.MaxIndex()	m.MaxIndex()	Working				V1	Returns the largest integer key contained in the map. Returns empty string if no keys were integers.
+							
+							
+							
+Object Methods							
+							
+Clone()							
+DefineProp()							
+DeleteProp()							
+GetOwnPropDesc()							
+HasOwnProp()							
+OwnProps()							
+Call()							
+							
+Object Properties							
+							
+Base							
+							
+Object Related Functions							
+							
+ObjSetBase()							
+ObjGetCapacity()							
+ObjSetCapacity()							
+ObjOwnPropCount()							
+ObjHasOwnProp()							
+ObjOwnProps()							
+							
+Error							
+							
+Error Properties							
+							
+Message							
+What							
+Extra							
+File							
+Line							
+Stack							
+							
+Error Subclasses							
+							
+IndexError							
+KeyError							
+MemberError							
+PropertyError							
+MethodError							
+MemoryError							
+OSError							
+TargetError							
+TimeoutError							
+TypeError							
+ValueError							
+ZeroDivisionError							
+							
+File							
+							
+File Methods							
+							
+Read()							
+Write()							
+ReadLine()							
+WriteLine()							
+ReadNumType()							
+WriteNumType()							
+RawRead()							
+RawWrite()							
+Seek()							
+Close()							
+							
+File Properties							
+							
+Pos							
+Length							
+AtEOF							
+Encoding							
+Handle							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+Built-in Functions							
+Frequently-used Functions							
+							
+							
+GetKeyState()							
+							
+							
+							
+							
+							
+							
+							
+WinActive()							
+WinExist()							
+							
+Environment Functions							
+							
+A_Clipboard							
+ClipboardAll()							
+ClipWait()	ClipWait(0.5)	Working	YES			V1	
+EnvGet()	"x := EnvGet(""varname"")"	Working	YES			V2	"Returns the value of the specified environment variable if it exists, else it returns an empty string."
+EnvSet()	"EnvSet(""varname"", ""varval"")"	Working	YES			V1	Sets the specified environment variable to the specified value. Using a value of null deletes the variable.
+EnvUpdate()	EnvUpate	Working	YES			V1	Broadcasts all environment changes to all programs. Note this uses SendMessageTimeout() with a timeout of 1s per top level window because SendMessage() appears to freeze when running within a unit test.
+OnClipboardChange()	"OnClipboardChange(""funcname"", 1)"	Working	YES			DIFF	Wires up an event to be called when the clipboard contents are change. Note the deprecated label method of this function is not supported.
+SysGet()	SysGet(object)	Working	YES			V2	Gets various system information. Can accept either an integer or an enum.
+SysGetIPAddresses()							
+							
+External Libraries							
+							
+DllCall()							
+NumGet()							
+NumPut()							
+RegisterCallback()							
+StrGet()							
+StrPut()							
+VarSetCapacity()							
+							
+COM Functions							
+							
+ComObjActive()							
+ComObjArray()							
+ComObjConnect()							
+ComObjCreate()							
+ComObject()							
+ComObjEnwrap()							
+ComObjUnwrap()							
+ComObjError()							
+ComObjFlags()							
+ComObjGet()							
+ComObjMissing()							
+ComObjParameter()							
+ComObjQuery()							
+ComObjType()							
+ComObjValue()							
+							
+							
+File and Directory Functions							
+							
+DirCopy()	"DirCopy(""/path1"", ""/path2"")"		YES			V2	Copies a folder along with all its sub-folders and files (similar to xcopy).
+DirCreate()	"DirCreate(""/path1"")"		YES			V2	"Creates a folder, and all of its parent folders if needed."
+DirDelete()	"DirDelete(""/path1"")"		YES			V2	"Deletes a folder, optionally recursive."
+DirExist()	"x := DirExist(""/path1/file1.txt"")"		YES			V2	Checks for the existence of a folder and returns its attributes.
+DirMove()	"DirMove(""/path1"", ""/path2"")"		YES			V2	Moves a folder along with all its sub-folders and files. It can also rename a folder.
+FileAppend()	"FileAppend(""text"", ""file.txt"")"		YES			V2	"Writes text or binary data to the end of a file (first creating the file, if necessary)."
+FileCopy()	"FileCopy(""path/*.txt"", ""path2/"")"		YES			V2	Copies one or more files.
+FileCreateShortcut()	"FileCreateShortcut(""/path/to/file.txt"", ""/path/to/shct.lnk"")"		YES			V2	Creates a shortcut (.lnk) file.
+FileDelete()	"FileDelete(""./dir/*.txt"")"		YES			V2	Deletes one or more files.
+FileEncoding()	"FileEncoding(""utf-8"")"		YES			V2	"Sets the default encoding for FileRead, Loop Read, FileAppend, and FileOpen."
+FileExist()	"FileExist(./path/*.txt"")"		YES			V2	Checks for the existence of a file or folder and returns its attributes.
+FileFullPath()	"FileFullPath(""../../file.txt"")"		YES			NEW	Returns the fully qualified path of the relative path passed in.
+FileGetAttrib()	"FileGetAttrib(""file.txt"")"		YES			V2	"Reports whether a file or folder is read-only, hidden, etc."
+FileGetShortcut()	"x := FileGetShortcut(""./file.lnk"")"		YES			V2	"Retrieves information about a shortcut (.lnk) file, such as its target file."
+FileGetSize()	"FileGetSize(""file.txt"")"		YES			DIFF	"Retrieves the size of a file. Also allows for passing ""t"" to return the size in terms of terrabytes."
+FileGetTime()	"FileGetTime(""file.txt"")"		YES			V2	Retrieves the datetime stamp of a file or folder.
+FileGetVersion()	"FileGetVersion(""file.txt"")"		YES			V2	Retrieves the version of a file.
+FileInstall()	"FileInstall(""file.txt"")"		UNS	UNS	UNS	UNS	"All scripts are converted into compiled executables, so this doesn't apply."
+FileMove()	"DirMove(""/path1/*.txt"", ""/path2/*.txt"")"		YES			V2	Moves or renames one or more files.
+FileOpen()	"FileOpen(""file.txt"", ""w"", ""unicode"")"		YES			V2	Opens a file to read specific content from it and/or to write new content into it.
+FileRead()	"FileRead(""file.txt"")"		YES			V2	Retrieves the contents of a file.
+FileRecycle()	"FileRecycle(""/path/*.txt"")"		YES			V2	"Sends a file or directory to the recycle bin if possible, or permanently deletes it."
+FileRecycleEmpty()	FileRecycleEmpty()		YES			V2	Empties the recycle bin.
+FileSetAttrib()	"FileSetAttrib(""+R"", ""file.txt"")"		YES			V2	Changes the attributes of one or more files or folders. Wildcards are supported.
+FileSetTime()	"FileSetTime(""20200101131415"", ""./DirCopy2/file1.txt"", 'm')"		YES			V2	Changes the datetime stamp of one or more files or folders. Wildcards are supported.
+IniDelete()	"IniDelete(""./file.ini"", ""sectionone"", ""key1"")"		YES			V2	Deletes a value from a standard format .ini file.
+IniRead()	"IniRead(""./file.ini"", ""sectionone"", ""key1"")"		YES			V2	"Reads a value, section or list of section names from a standard format .ini file."
+IniWrite()	"IniWrite(""val1"", ""./file.ini"", ""sectionone"", ""key1"")"		YES			V2	Writes a value or section to a standard format .ini file.
+SetWorkingDir()	"SetWorkingDir(""/path/to/dir"")"		YES			V2	Changes the script's current working directory.
+SplitPath()	"SplitPath(""C:\path\to\file.txt"")"		YES			DIFF	"Separates a file name or URL into its name, directory, extension, and drive. Differs in that instead of writing to ref arguments, it returns a structure whose fields are what the original input parameter names would have been."
+							
+							
+							
+Process Functions							
+							
+ProcessClose()	"ProcessClose(""notepad.exe"")"	Working	YES			V2	Forces the first matching process to close.
+ProcessExist()	"ProcessExist(""notepad.exe"")"	Working	YES			V2	Checks if the specified process exists.
+ProcessSetPriority()	"ProcessSetPriority(""H"", ""notepad.exe"")"	Working	YES			V2	Changes the priority level of the first matching process.
+ProcessWait()	"ProcessWait(""notepad.exe"", 1000)"	Working	YES			V2	Waits for the specified process to exist.
+ProcessWaitClose()	"ProcessWaitClose(""notepad.exe"", 1000)"	Working	YES			V2	Waits for all matching processes to close.
+Run[Wait]()	"x := ProcessRun[Wait](""notepad.exe"", ""./"", ""max"")"	Working	YES			DIFF	"Runs an external program. Unlike Run, RunWait will wait until the program finishes before continuing. Differs from V2 in that it returns the pid."
+RunAs()	"RunAs(""user"", ""pw"", ""@computername"")"	Working	YES			V2	Specifies a set of user credentials to use for all subsequent uses of Run and RunWait.
+Shutdown()	Shutdown(2)	Working	YES			V2	"Shuts down, restarts, or logs off the system."
+							
+							
+							
+Drive Functions							
+							
+DriveEject()	"DriveEject(""C:\"")"	Working	YES			V2	Ejects or retracts the tray of the specified CD/DVD drive.
+DriveGetCapacity()	"x := DriveGetCapacity(""C:\"")"	Working	YES			V2	"Returns the total capacity of the drive which contains the specified path, in megabytes."
+DriveGetFileSystem()	"x := DriveGetFileSystem(""C:\"")"	Working	YES			V2	Returns the type of the specified drive's file system.
+DriveGetLabel()	"x := DriveGetLabel(""C:\"")"	Working	YES			V2	Returns the volume label of the specified drive.
+DriveGetList()	x := DriveGetList()	Working	YES			V2	"Returns a string of letters, one character for each drive letter in the system."
+DriveGetSerial()	"x := DriveGetSerial(""C:\"")"	Working	YES			V2	Returns the volume serial number of the specified drive.
+DirveGetSpaceFree()	"x := DriveGetSpaceFree(""C:\"")"	Working	YES			V2	"Returns the free disk space of the drive which contains the specified path, in megabytes."
+DriveGetStatus()	"x := DriveGetStatus(""C:\"")"	Working	YES			V2	Returns the status of the drive which contains the specified path.
+DriveGetStatusCD()	"x := DriveGetStatusCD(""C:\"")"	Working	YES			V2	Returns the media status of the specified CD/DVD drive.
+DriveLock()	"DriveLock(""C:\"")"	Working	YES			V2	Prevents the eject feature of the specified drive from working.
+DriveSetLabel()	"DriveSetLabel(""abcd"")"	Working	YES			V2	Changes the volume label of the specified drive.
+DriveUnlock()	"DriveUnlock(""C:\"")"	Working	YES			V2	Restores the eject feature of the specified drive.
+DriveGetType()	"x := DriveGetType(""C:\"")"	Working	YES			V2	Returns the type of the drive which contains the specified path.
+							
+							
+							
+Screen Functions							
+							
+ImageSearch()	"x := ImageSearch(0, 0, 1000, 1000, ""file.bmp"")"	Working	YES			DIFF	"Searches a region of the screen for an image. Differs in that instead of writing to ref arguments, it returns a structure whose fields are what the original input parameter names would have been. Also does not support file types of .ani, .emf, .exif or .wmf. Only 32-bit color is supported."
+PixelGetColor()	"x := PixelGetColor(10, 15)"	Working	YES			DIFF	Returns the pixel value at the specified coordinate as a hexadecimal string like 0x010203. Differs because the mode parameter is not supported because it is not needed.
+PixelSearch()	"x := PixelSearch(0, 0, 1, 1, 0x010203)"	Working	YES			DIFF	"Searches a region of the screen for a pixel of the specified color. Differs in that instead of writing to ref arguments, it returns a structure whose fields are what the original input parameter names would have been."
+							
+							
+Monitor Functions							
+							
+MonitorGet()	x := MonitorGet(1)	Working	YES			DIFF	"Checks if the specified monitor exists and optionally retrieves its bounding coordinates. Differs in that instead of writing to ref arguments, it returns a structure whose fields are what the original input parameter names would have been."
+MonitorGetCount()	x := MonitorGetCount()	Working	YES			V2	Returns the total number of monitors.
+MonitorGetName()	x := MonitorGetName(1)	Working	YES			V2	Returns the operating system's name of the specified monitor.
+MonitorGetPrimary()	x := MonitorGetPrimary()	Working	YES			V2	Returns the number of the primary monitor.
+MonitorGetWorkArea()	x := MonitorGetWorkArea()	Working	YES			DIFF	"Checks if the specified monitor exists and optionally retrieves the bounding coordinates of its working area. Differs in that instead of writing to ref arguments, it returns a structure whose fields are what the original input parameter names would have been."
+							
+							
+Sound Functions							
+							
+SoundBeep()	"SoundBeep(800, 800)"	Working	YES			V2	Emits a tone from the PC speaker.
+SoundGetInterface()	SoundGetInterface(guid)						Retrieves a native COM interface of a sound device or component.
+SoundGetMute()	SoundGetMute(1)	Working	YES			DIFF	"Retrieves a mute setting of a sound device. Differs in that there is no support for components, so the function only takes one parameter: the 1-based index, or name for the device."
+SoundGetName()	SoundGetName(1)	Working	YES			DIFF	"Retrieves the name of a sound device. Differs in that there is no support for components, so the function only takes one parameter: the 1-based index, or name for the device."
+SoundGetVolume()	SoundGetVolume(1)	Working	YES			DIFF	"Retrieves a mute setting of a sound device. Differs in that there is no support for components, so the function only takes one parameter: the 1-based index, or name for the device."
+SoundPlay()	"SoundPlay(""mywavfile.wav"")"	Working	YES			V2	"Plays a sound, video, or other supported file type."
+SoundSetMute()	SoundSetMute(1)	Working	YES			DIFF	"Changes a mute setting of a sound device. Differs in that there is no support for components, so the function only takes one parameter: the 1-based index, or name for the device."
+SoundSetVolume()	SoundSetVolume(1)	Working	YES			DIFF	"Changes a volume setting of a sound device. Differs in that there is no support for components, so the function only takes one parameter: the 1-based index, or name for the device."
+							
+							
+IfExist()							
+IfNotExist()							
+LongPaths()							
+Loop (files & folders)							
+Loop (read file contents)							
+SetWorkingDir()							
+SplitPath()							
+							
+							
+							
+							
+							
+Gui Properties							
+							
+BackColor							
+__Item							
+FocusedCtrl							
+Hwnd							
+MarginX							
+MarginY							
+MenuBar							
+Name							
+Title							
+							
+							
+Gui Functions							
+							
+Add()							
+Destroy()							
+Flash()							
+GetClientPos()							
+GetPos()							
+Hide()							
+Maximize()							
+Minimize()							
+Move()							
+__Enum()							
+OnEvent()							
+Opt()							
+Restore()							
+SetFont()							
+Show()							
+Submit()							
+							
+Gui Static Functions							
+							
+Call()							
+							
+							
+							
+GuiControl Properties							
+							
+ClassNN							
+Enabled							
+Focused							
+Gui							
+Hwnd							
+Name							
+Text							
+Type							
+Value							
+Visible							
+							
+							
+GuiControl Functions							
+							
+Add()							
+Choose()							
+Delete()							
+Focus()							
+GetPos()							
+Move()							
+OnEvent()	"guiCtrl.OnEvent(""Click"", ""MyClickHandler"")"	Working	Yes			V2	Registers a function or method to be called when the given event is raised by a GUI window or control.
+OnNotify()	"guiCtrl.OnNotify(0x1234, ""MyNotifyHandler"")"	Working	Yes			V2	Registers a function or method to be called when a control notification is received via the WM_NOTIFY message.
+Opt()							
+Redraw()							
+SetFont()							
+SetFormat()							
+UseTab()							
+							
+							
+							
+Menu/MenuBar Properties							
+							
+ClickCount	A_TrayMenu.ClickCount := 2	Working	Yes			V2	Retrieves or sets the number of clicks required to activate the tray menu's default item.
+Default	"menu.Default = ""File"""						
+Handle	x := menu.Handle						
+MenuItemCount	menu.MenuItemCount	Working	Yes			NEW	This property is provided to relieve the user of having to use DllCall() as the examples show.
+							
+Menu/MenuBar Functions							
+							
+Add()	"menu.Add(""File"", ""ClickHandler"")"					DIFF	"Adds or modifies a menu item. Differs in that the options Pn, Radio, Break and BarBreak are not supported."
+Check()							
+Delete()							
+Disable()							
+Enable()							
+HideItem()	"menu.HideItem(""File"")"	Working	Yes			NEW	
+Insert()							
+Rename()							
+SetColor()							
+SetForeColor()						NEW	
+SetIcon()							
+Show()							
+ShowItem()	"menu.ShowItem(""File"")"	Working	Yes			NEW	Makes a menu item visible.
+ToggleCheck()							
+ToggleEnable()							
+ToggleItemVis()	"menu.ToggleItemVis(""File"")"	Working	Yes			NEW	Toggles the visibility of a menu item.
+Uncheck()							
+AddStandard()							
+							
+Menu/MenuBar Static Functions							
+							
+Call()							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+FileSelect()	"val := FileSelect(""M"", fullpath, ""Filename - Path only - Multiselect"")"		Yes			V2	Displays a standard dialog that allows the user to open or save file(s).
+DirSelect()	"val := DirSelect(""C:\windows\system32"", 1, ""Please select a folder"")"		Yes			V2	"Displays a standard dialog that allows the user to select a folder. Differs in that it does not support folder access locking, selecting a folder in the tree, showing an edit box because the user can just type in the combo box, option 7, or hiding the New Folder button."
+Gui()							
+Gui control types							
+GuiControl()							
+GuiControlGet()							
+Gui ListView control							
+Gui TreeView control							
+IfMsgBox()							
+Image Handles							
+InputBox()							
+LoadPicture()	"val := LoadPicture(""filename.jpg"", ""w100 h100"")"		Yes			V2	"Loads an image, icon or cursor. Differs in that instead of writing to a ref argument, it returns a structure whose fields are Handle and ImageType."
+Menu()							
+MenuGetHandle()							
+MenuGetName()							
+MsgBox()	"val := MsgBox(""text"", ""title"")"		Yes			V2	"Displays the specified text in a small window containing one or more buttons. Differs in that the following option values are not supported: 6, 768, 4096, 8192, 262144, 16384 (meaning, no help button). Also, when the timeout options is used, or an owner window is set, the text will be right justified."
+OnMessage()							
+Progress()							
+SplashImage()							
+SplashTextOn()							
+SplashTextOff()							
+Standard Windows Fonts							
+Styles for window/control							
+ToolTip()	"ToolTip(""some text"", 25, 25)"		Yes			V2	Creates an always-on-top window anywhere on the screen.
+TrayTip()	"TrayTip(""some text"", ""a title"", ""3 dur7"")"		Yes			V2	"Creates a toast message window near the tray icon. Differs in that there is no way to mute the system sound specify a large icon. The duration will be 5 seconds by default, but an additional option dur can be used to specify the duration in seconds, such as dur7. The registry key EnableBalloonTips is not observed for disabling the notification. The option 4 has no effect because the tray icon is always shown at the top of the toast."
+TraySetIcon()	"TraySetIcon(""filename.ico"", 2)"		Yes			V2	Changes the script's tray icon.
+							
+ImageList Functions							
+							
+IL_Create()	val := IL_Create(1)		Yes			V2	"Creates an image list and returns its unique ID. Differs in that it only takes one parameter, LargeIcons, because the first two parameters, InitialCount and GrowCount, have been omitted because C# handles memory internally."
+IL_Add()	"val := IL_Add(123, ""filename.jpg"", 1, 1)"		Yes			V2	"Adds an image to an image list, optionally can resize or split the image."
+IL_Destroy()	val := IL_Destroy(123)		Yes			V2	"Removes an ImageList from the global list of ImageLists. Note, this does not dispose it, it just removes the reference. The garbage collector will handle final disposal when the reference count goes to 0."
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+Window functions							
+							
+WinGetText						V2	
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+Window group functions							
+							
+							
+							
+							
+							
+							
+Control functions							
+							
+ControlAddItem()							
+ControlChooseIndex()							
+ControlChooseString()							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+Miscellaneous Functions							
+							
+							
+							
+DllCall()							
+Exception()							
+FileOpen()							
+Format()							
+Func()							
+GetKeyNameVK()							
+GetKeyNameSC()							
+Hotstring()							
+IL_XXX()							
+InputHook()							
+IsByRef()							
+IsFunc()							
+IsLabel()							
+IsObject()							
+LoadPicture()							
+LV_XXX()							
+							
+							
+NumGet()							
+NumPut()							
+ObjAddRef()							
+ObjRelease()							
+ObjBindMethod()							
+ObjGetBase()							
+ObjRawGet()							
+ObjRawSet()							
+ObjSetBase()							
+ObjXXX()							
+OnError()							
+							
+							
+SB_XXX()							
+							
+							
+							
+							
+							
+							
+TV_XXX()							
+							
+							
+Math Functions							
+							
+Abs()	x := Abs(-1)	Working	DIFF	DIFF	DIFF	V1	"Computes the absolute value. The type returned is always double, regardless of what was passed in."
+Ceil()	x := Ceil(1.5)	Working				V1	"Computes the ceiling value of a number, rounding away from zero for positive numbers, and toward zero for negative numbers."
+EnvAdd()	DEP	DEP	DEP	DEP	DEP	DEP	"Deprecated, use +="
+EnvDiv()	DEP	DEP	DEP	DEP	DEP	DEP	"Deprecated, use /="
+EnvMult()	DEP	DEP	DEP	DEP	DEP	DEP	"Deprecated, use *="
+EnvSub()	DEP	DEP	DEP	DEP	DEP	DEP	"Deprecated, use -="
+DateAdd()							
+DateDiff()							
+Exp()	x := Exp(1.2)	Working	YES			V1	Computes e raised to the nth power.
+Floor()	x := Floor(1.2)	Working	YES			V1	Computes a number rounded down to the nearest integer. Rounds toward zero for positive numbers and away from zero for negative numbers.
+Integer()	x := Integer(1.2)	Working	YES			V1	Computes the integer portion of a number.
+Log()	x := Log(1.2)	Working	YES			V2	Computes the base 10 logarithm of a number. Throws an exception if a negative number is passed in.
+Ln()	x := Ln(1.2)	Working	YES			V2	Computes the base e (natural) logarithm of a number. Throws an exception if a negative number is passed in.
+Max()	"z := Max(x, y)"	Working	YES			V1	"Computes the larger of two numbers. If either is not numeric, the empty string is returned. The largest value of an array is computed if one is passed in."
+Min()	"z := Min(x, y)"	Working	YES			V1	"Computes the smaller of two numbers. If either is not numeric, the empty string is returned. The smaller value of an array is computed if one is passed in."
+Mod()	"z := Mod(x, y)"	Working	YES			V2	Computes the remainder when the first number is divided by the second number. Throws an exception if the second number is 0.
+Remainder()	"z := Remainder(x, y)"	Working	YES			NEW	Computes the IEEE remainder when the first number is divided by the second number. Returns 0 if the second number is 0.
+Random()	"z := Random(x, y)"	Working	YES			V2	Computes a random number in the range of x to y.
+RandomSeed()	RandomSeed(123)	Working (needs loop test)				V2	Resets the seed used for the global random object.
+Round()	"Round(x, y)"	Working (needs loop test)				V2	"Computes a number rounded to either the nearest integer, a specified number of decimal places, or a specified number of digits."
+SetFormat()							
+Sqrt()	x := Sqrt(1.2)	Working	YES			V2	Computes the square root of a number. Throws an exception if the argument is negative.
+Cos()	x := Cos(1.2)	Working	YES			V1	Computes the cosine of a number.
+Cosh()	x := Cosh(1.2)	Working	YES			NEW	Computes the hyperbolic cosine of a number.
+Sin()	x := Sin(1.2)	Working	YES			V1	Computes the hyperbolic sine of a number.
+Sinh()	x := Sinh(1.2)	Working	YES			NEW	Computes the hyperbolic sine of a number.
+Tan()	x := Tan(1.2)	Working	YES			V1	Computes the tangent of a number.
+Tanh()	x := Tanh(1.2)	Working	YES			NEW	Computes the hyperbolic tangent of a number.
+Acos()	x := Acos(0.5)	Working	YES			V2	Computes the arc cosine. Throws an exception if the argument value is not between -1 and 1.
+Asin()	x := Asin(1.2)	Working	YES			V2	Computes the arc sine. Throws an exception if the argument value is not between -1 and 1.
+Atan()	x := Atan(1.2)	Working	YES			V2	Computes the arc tangent.
+Atan2()	"z := Atan2(x, y)"	Working	YES			NEW	Computes the arc tangent by using two numbers.
+							
+							
+							
+Special Character Built-in Variables							
+A_Space		Working	YES			V1	String containing a single space.
+A_Tab		Working	YES			V1	String containing a single tab.
+							
+Script Properties Built-in Variables							
+"1, 2, 3"							
+A_Args							
+A_WorkingDir		Working	YES			V1	The full path of the working folder of the executable compiling and running the script.
+A_ScriptDir		Working	YES			V1	"The full path of the script being compiled and ran, without a trailing backslash. Evaluates to a constant string in the C# code output."
+A_ScriptName		Working	YES			V1	"The name with extension, but without the path, of the script being compiled and ran. Evaluates to a constant string in the C# code output."
+A_ScriptFullPath		Working	YES			V1	The full path of the script being compiled and ran. Evaluates to a constant string in the C# code output.
+A_ScriptHwnd		Working	YES			V1	"The handle to the main window, as an int64, if it exists, else 0."
+A_LineNumber		Working	YES			V1	"The exact line number in the script, including comment lines."
+A_LineFile		Working	YES			V1	"The full path and name of the file to which A_LineNumber belongs, which will be the same as A_ScriptFullPath unless the line belongs to one of a non-compiled script's #Include files."
+A_ThisFunc		Working	YES			V1	"The name of the function. If called outside of a function, empty string is returned."
+A_ThisLabel		Working	YES			V1	"The name of the label. If called outside of a label, empty string is returned."
+A_AhkVersion		Working	YES			V1	The version of the program used to compile the script.
+A_AhkPath		Working	YES			V1	"The full path to the executable compiling the script. For compiled scripts, it's the path to the compiled executable."
+A_IsUnicode		Working	YES			V1	Whether the program uses unicode strings. Always returns true because C# programs are always unicode.
+A_IsCompiled		Working	YES			V1	"True if the program is running as a compiled executable, else false if it's running as a script passed to Keysharp.exe."
+A_ExitReason		Working	YES			V1	"Always null until the main form is closing, in which case the value will be ""OnExit()""."
+							
+Date Time Built-in Variables							
+A_YYYY		Working	YES			V1	The four digit year. Same as A_Year.
+A_MM		Working	YES			V1	The two digit month from 1 - 12. Same as A_Month.
+A_DD		Working	YES			V1	The two digit day of month from 1 - 31. Same as A_Mday.
+A_MMMM		Working	YES			V1	The current month's full text name in the user's current culture language.
+A_MMM		Working	YES			V1	The current month's abbreviated text name in the user's current culture language.
+A_DDDD		Working	YES			V1	The current day of the week's full name in the user's current culture language.
+A_DDD		Working	YES			V1	The current day of the week's abbreviated name in the user's current culture language.
+A_WDay		Working	YES			V1	The current 1 digit day of the week.
+A_YDay		Working	YES			V1	The current 1-366 day of the year.
+A_YWeek		Working	YES			V1	The current year and week number expressed as a string containing a 4 digit year and 2 digit week.
+A_Hour		Working	YES			V1	The current 2 digit hour 00 - 23.
+A_Min		Working	YES			V1	The current 2 digit minute 00- 23.
+A_Sec		Working	YES			V1	The current 2 digit second 00 - 23.
+A_MSec		Working	YES			V1	Current 3 digit millisecond 000 - 999.
+A_Now		Working	YES			V1	The current local time in YYYYMMDDHH24MISS format.
+A_NowUTC		Working	YES			V1	The current Coordinated Universal Time (UTC) in YYYYMMDDHH24MISS format.
+A_TickCount		Working	YES			DIFF	The number of milliseconds since the system started. Note this is not limited to 49.7 days like AHK because it uses a long integer.
+							
+Script Settings							
+							
+A_IsSuspended		Working	YES			V1	"Returns 1 if the script is suspended, else 0."
+A_IsPaused							
+A_IsCritical		Working	YES			V1	"Returns 1 if the script is in critical priority mode, else 0."
+A_BatchLines							
+A_ListLines							
+A_TitleMatchMode		Working	YES			V1	"Sets or returns 1 for matching the start of a title, 2 for matching anywhere in a title, 3 for matching exactly a title, or ""regex"" for matching using a regular expression."
+A_TitleMatchModeSpeed		Working	YES			V1	"Sets or returns ""fast"" for fast window title matching, or ""slow"" for slow window title matching."
+A_DetectHiddenWindows		Working	YES			V1	Toggles whether window searching includes hidden windows.
+A_DetectHiddenText		Working	YES			V1	Toggles whether window text searchign includes hidden text.
+A_AutoTrim	NONE	NONE	NONE	NONE	NONE	NONE	This feature is not implemented.
+A_StringCaseSense		Working	YES			V1	Sets or returns the string case sensitivity mode used in string comparisons and various functions.
+A_FileEncoding		Working	YES			DIFF	"Sets or returns the encoding used for reading and writing files. This differs from AHK in that it only supports ASCII (ascii), UTF-8 (utf-8/utf8-raw) or Unicode (utf-16/utf16-raw or unicode). ASCII will always return us-ascii because that is the name of the encoding in C#."
+A_FormatInteger		DEP	DEP	DEP	DEP	DEP	"This is deprecated, use Format() instead which uses a C# style like string.Format()."
+A_FormatFloat		DEP	DEP	DEP	DEP	DEP	"This is deprecated, use Format() instead which uses a C# style like string.Format()."
+A_SendMode							Unsure at the moment because send modes aren't quite clear.
+A_SendLevel		Working	YES			V1	Controls which artificial keyboard and mouse events are ignored by hotkeys and hotstrings.
+A_StoreCapsLockMode		Working	YES			V1	Toggles whether the state of CapsLock is restored after a Send.
+A_KeyDelay		Working	YES			V1	Sets or returns the delay that will occur after each keystroke sent by Send and ControlSend.
+A_KeyDuration		Working	YES			V1	Sets or returns the delay that will occur between the key down and key up events of each keystroke sent by Send and ControlSend.
+A_KeyDelayPlay		Working	YES			V1	Sets or returns the delay that will occur after each keystroke sent by Send and ControlSend in SendPlay mode.
+A_KeyDurationPlay		Working	YES			V1	Sets or returns the delay that will occur between the key down and key up events of each keystroke sent by Send and ControlSend in SendPlay mode.
+A_WinDelay		Working	YES			V1	"Sets or returns the delay that will occur after each windowing command, such as WinActivate."
+A_ControlDelay		Working	YES			V1	Sets or returns the delay in milliseconds that will occur after each control-modifying command.
+A_MouseDelay		Working	YES			V1	Sets or returns the delay that will occur after each mouse movement or click.
+A_MouseDelayPlay		Working	YES			V1	Sets or returns the delay that will occur after each mouse movement or click in SendPlay mode.
+A_DefaultMouseSpeed		Working	YES			V1	Sets or returns the mouse speed that will be used if unspecified in Click and MouseMove/Click/Drag.
+A_CoordModeToolTip		Working	YES			V2	"Gets the coordinate mode for tool tips to be relative to either the active window, the client area of the active window, or the screen."
+A_CoordModePixel		Working	YES			V2	"Gets the coordinate mode for pixel operations to be relative to either the active window, the client area of the active window, or the screen."
+A_CoordModeMouse		Working	YES			V2	"Gets the coordinate mode for mouse operations to be relative to either the active window, the client area of the active window, or the screen."
+A_CoordModeCaret		Working	YES			V2	"Gets the coordinate mode for caret operations to be relative to either the active window, the client area of the active window, or the screen."
+A_CoordModeMenu		Working	YES			V2	"Gets the coordinate mode for menus to be relative to either the active window, the client area of the active window, or the screen."
+A_RegView		Working	YES			V1	Gets whether the registry is in 32 or 64 bit mode.
+A_IconHidden		Working (needs Menu() test)	YES			V1	"Gets whether the system tray icon is hidden. 1 for hidden, 0 for visible."
+A_IconTip		Working (needs icon test)	YES			V1	Sets or returns the tool tip text of the system tray icon.
+A_IconFile		Working (needs icon test)	YES			V1	"Blank unless a custom tray icon has been specified via Menu, tray, icon, in which case it's the full path and name of the icon's file."
+A_IconNumber		Working (needs icon test)	YES			V1	"If A_IconFile has been specified, gets the number of the icon of the icon file used for the system tray icon. Otherwise blank."
+							
+							
+							
+							
+							
+A_LoopRegValue		Working	YES			NEW	"A new property to get the value of a registry item when using Loop Reg, which is more succinct than typing Value := RegRead()."
+							
+							
+A_LoopFileName		Working	YES			V2	The name of the file or folder currently retrieved (without the path).
+A_LoopFileExt		Working	YES			V2	"The file's extension (e.g. TXT, DOC, or EXE). The period (.) is not included."
+A_LoopFilePath		Working	YES			DIFF	"The path and name of the file/folder currently retrieved. If FilePattern contains a relative path rather than an absolute path, the path here will also be relative. Short file names are not used."
+A_LoopFileFullPath		Working	YES			V2	This is different than A_LoopFilePath in the following ways: 1) It always contains the absolute/complete path of the file even if FilePattern contains a relative path; 2) Any short (8.3) folder names in FilePattern itself are converted to their long names; 3) Characters in FilePattern are converted to uppercase or lowercase to match the case stored in the file system. This is useful for converting file names -- such as those passed into a script as command line parameters -- to their exact path names as shown by Explorer.
+A_LoopFileLongPath		Working	YES			V1	A synonym for A_LoopFileFullPath.
+A_LoopFileShortPath		Working	YES			V2	The 8.3 short path and name of the file/folder currently retrieved.
+A_LoopFileShortName		Working	YES			V2	"The 8.3 short name, or alternate name of the file. If the file doesn't have one, A_LoopFileName will be retrieved instead."
+A_LoopFileDir		Working	YES			V2	"The path of the directory in which A_LoopFileName resides. If FilePattern contains a relative path rather than an absolute path, the path here will also be relative. A root directory will not contain a trailing backslash. For example: C:"
+A_LoopFileTimeModified		Working	YES			V2	The time the file was last modified. Format YYYYMMDDHH24MISS.
+A_LoopFileTimeCreated		Working	YES			V2	The time the file was created. Format YYYYMMDDHH24MISS.
+A_LoopFileTimeAccessed		Working	YES			V2	The time the file was last accessed. Format YYYYMMDDHH24MISS.
+A_LoopFileAttrib		Working	YES			V2	The attributes of the file currently retrieved as a string with one character for each attribute present.
+A_LoopFileSize		Working	YES			V2	The size in bytes of the file currently retrieved. Files larger than 4 gigabytes are also supported.
+A_LoopFileSizeKB		Working	YES			V2	"The size in Kbytes of the file currently retrieved, rounded down to the nearest integer."
+A_LoopFileSizeMB		Working	YES			V2	"The size in Mbytes of the file currently retrieved, rounded down to the nearest integer."
+							
+							
+							
+String Functions							
+							
+Chr	x := Chr(123)	Working	YES			V2	Returns the string (usually a single character) corresponding to the character code indicated by the specified number.
+Format	"x := Format(""{0}"", 123)"	Working	YES			DIFF	"Formats a string using the same syntax used by C# string.Format(), except it uses 1-based indexing. Traditional AHK formatting syntax is not supported."
+FormatTime	"x := FormatTime(""20200704"", ""yyyyMMMdddd"")"	Working	YES			DIFF	"Formats a datetime string according to the parameters. All C# formatting options are supported. Supports all V2 functionality except for the Dn and Tn options. If you want to specify a specific format, do it in the format parameter."
+InStr	"x := InStr(""searchstr"", ""h"")"	Working	YES			V2	"Searches for a string within another string, returning the 1-based index where it was found. Use negative numbers for searching in reverse order."
+LTrim	"x := Ltrim("" abc "")"	Working	YES			V2	Trims characters from the end of a string.
+Ord	"x := Ord(""t"") x:= Ord(""te"", 2)"	Working	YES			DIFF	"Returns the numeric two byte unicode value for the first character in a string. This differs from V2 in that it also takes an optional second parameter which specified the 1-based index in the string to return the numeric value for, rather than only doing it for the first character."
+RegExMatch	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED
+RegExReplace	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED
+RTrim	"x := RTrim("" abc "")"	Working	YES			V2	Trims characters from the beginning of a string.
+Sort	"x := Sort(""d,c,b,a"", ""D,"")"	Working	YES			DIFF	"Arranges a variable's contents in alphabetical, numerical, or random order (optionally removing duplicates). The back slash option also supports specifying a forward slash / so it can be used for paths on non-Windows systems."
+StrCompare	"x := StrCompare(""a"", ""b"")"	Working	YES			V2	"Compares two strings alphabetically. Note this supports local, human readable comparison as well."
+String	x := String(123)	Working	YES			V2	Converts a value to a string.
+StrLower	"x := StrLower(""AB"")"	Working	YES			V2	Converts a string to lowercase.
+StrUpper	"x := StrUpper(""AB"")"	Working	YES			V2	Converts a string to uppercase.
+StrLen	"x := StrLen(""abc"")"	Working	YES			V2	Retrieves the count of how many characters are in a string.
+StrGet	"x := StrGet([100, 1010, 102, 103])"	Working	YES			V2	"Copies a string from a memory address or buffer, optionally converting it from a given code page."
+StrPut	"x := StrPut(""abc"")"	Working	YES			DIFF	"This differs from V2 in that it does not take a target parameter, and instead returns a buffer as a result. Length and encoding parameters are still supported."
+StrReplace	"x := StrReplace(""a,b,c"", "","", ""."")"	Working	YES			DIFF	"This differs from V2 in that the OutputVarCount parameter must be in quotes, and if it's called from within a function, it must be a literal string and not a variable."
+StrSplit	"x := StrSplit(""a,b,c,d"", "","")"	Working	YES			V2	Retrieves one or more characters from the specified position in a string.
+SubStr	"x := SubStr(""abcde"", 3, 3)"	Working	YES			V2	Retrieves one or more characters from the specified position in a string.
+Trim	"x := Trim("" abc "")"	Working	YES			V2	Trims characters from the beginning and end of a string.
+VarSetStrCapacity	"x := VarSetStrCapacity(""var"", 10000)"	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	NOT IMPLEMENTED	Does nothing because the .NET runtime manages all memory.
+							
+							
+Registry Functions							
+							
+RegDelete	"RegDelete(""key"", ""val"")"	Working	YES			V2	Deletes a value from the registry.
+RegDeleteKey	"RegDeleteKey(""key"")"	Working	YES			V2	Deletes a key from the registry.
+RegRead	"RegRead(""key, ""val"")"	Working	YES			DIFF	Reads a value from the registry. Supports REG_QWORD in addition to the other types.
+RegWrite	"RegWrite(""val"", ""REG_SZ"", ""key"", ""valname"")"	Working	YES			DIFF	Writes a value to the registry. Supports REG_QWORD in addition to the other types.
+SetRegView	SetRegView(32)	Working	YES			V2	"Sets the registry view used by registry functions, allowing them in a 64-bit script to access the 32-bit registry view."

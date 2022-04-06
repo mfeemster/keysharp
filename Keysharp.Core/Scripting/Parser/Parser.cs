@@ -251,7 +251,7 @@ namespace Keysharp.Scripting
 			_ = initial.Add(new CodeSnippetExpression("HandleCommandLineParams(args)"));
 
 			if (WinActivateForce)
-				_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Core.WinActivateForce = true"));
+				_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Accessors.WinActivateForce = true"));
 
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));

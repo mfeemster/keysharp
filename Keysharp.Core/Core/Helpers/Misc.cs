@@ -41,6 +41,28 @@ namespace Keysharp.Core
 			return text;
 		}
 
+		public static IEnumerator Obj__Enum(IEnumerable obj) => obj.__Enum();
+
+		public static IEnumerator Obj_NewEnum(IEnumerable obj) => obj.__Enum();
+
+		public static long ObjCount(Keysharp.Core.Array obj) => (long)obj.Length;
+
+		public static object ObjDelete(Keysharp.Core.Array obj, params object[] values) => obj.Delete(values);
+
+		public static object ObjGetCapacity(Keysharp.Core.Array obj) => obj.Capacity;
+
+		public static bool ObjHas(Keysharp.Core.Array obj, params object[] values) => obj.Has(values);
+
+		public static void ObjInsertAt(Keysharp.Core.Array obj, params object[] values) => obj.InsertAt(values);
+
+		public static long ObjLength(Keysharp.Core.Array obj) => (long)obj.Length;
+
+		public static object ObjMaxIndex(Keysharp.Core.Array obj) => obj.MaxIndex();
+
+		public static object ObjMinIndex(Keysharp.Core.Array obj) => obj.MinIndex();
+
+		public static void ObjPush(Keysharp.Core.Array obj, params object[] values) => obj.Push(values);
+
 		public static object ObjRawGet<K, V>(Dictionary<K, V> dictionary, K key)
 		{
 			if (dictionary.TryGetValue(key, out var val))
@@ -53,32 +75,11 @@ namespace Keysharp.Core
 
 		public static void ObjRawSet<K, V>(Dictionary<K, V> dictionary, K key, V val) => dictionary[key] = val;
 
-		public static void ObjInsertAt(Keysharp.Core.Array obj, params object[] values) => obj.InsertAt(values);
-
 		public static object ObjRemoveAt(Keysharp.Core.Array obj, params object[] values) => obj.RemoveAt(values);
 
-		public static object ObjDelete(Keysharp.Core.Array obj, params object[] values) => obj.Delete(values);
-
-		public static bool ObjHas(Keysharp.Core.Array obj, params object[] values) => obj.Has(values);
-
-		public static void ObjPush(Keysharp.Core.Array obj, params object[] values) => obj.Push(values);
+		public static object ObjSetCapacity(Keysharp.Core.Array obj, params object[] values) => obj.Capacity = values.L()[0];
 
 		public static object Pop(Keysharp.Core.Array obj) => obj.Pop();
 
-		public static IEnumerator Obj_NewEnum(IEnumerable obj) => obj.__Enum();
-
-		public static IEnumerator Obj__Enum(IEnumerable obj) => obj.__Enum();
-
-		public static long ObjCount(Keysharp.Core.Array obj) => (long)obj.Length;
-
-		public static long ObjLength(Keysharp.Core.Array obj) => (long)obj.Length;
-
-		public static object ObjGetCapacity(Keysharp.Core.Array obj) => obj.Capacity;
-
-		public static object ObjSetCapacity(Keysharp.Core.Array obj, params object[] values) => obj.Capacity = values.L()[0];//.ParseInt();
-
-		public static object ObjMinIndex(Keysharp.Core.Array obj) => obj.MinIndex();
-
-		public static object ObjMaxIndex(Keysharp.Core.Array obj) => obj.MaxIndex();
 	}
 }

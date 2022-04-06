@@ -55,6 +55,7 @@ using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Disk;
 using static Keysharp.Core.DllHelper;
 using static Keysharp.Core.Env;
+using static Keysharp.Core.File;
 using static Keysharp.Core.Flow;
 using static Keysharp.Core.Function;
 using static Keysharp.Core.GuiHelper;

@@ -1,24 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Keysharp.Core.Common.Keyboard;
 using System.Threading.Channels;
-using static Keysharp.Core.Core;
+using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core.Common.Threading
 {
-	internal class KeysharpMsg
-	{
-		internal object obj;
-		internal IntPtr hwnd = IntPtr.Zero;
-		internal uint message;
-		internal IntPtr wParam = IntPtr.Zero;
-		internal IntPtr lParam = IntPtr.Zero;
-		internal uint time;
-		internal System.Drawing.Point pt;//Apparently we can also use System.Drawing.Point, change if needed.
-		internal GenericFunction func;
-		internal bool completed;
-	}
-
 	internal abstract class HookThread//Fill in base stuff here later, but this serves as the thread which attaches/detaches the keyboard hooks.
 	{
 		internal const int END_KEY_ENABLED = END_KEY_WITH_SHIFT | END_KEY_WITHOUT_SHIFT;
@@ -38,6 +24,11 @@ namespace Keysharp.Core.Common.Threading
 
 		// The maximum number of virtual keys and scan codes that can ever exist.
 		internal const int VK_MAX = 0xFF;
+
+		internal static readonly Channel<object> channel = Channel.CreateUnbounded<object>(new UnboundedChannelOptions
+		{
+			SingleReader = true
+		});
 
 		internal static System.Threading.Mutex keybdMutex, mouseMutex;
 		internal static string KeybdMutexName = "Keysharp Keybd";
@@ -68,6 +59,8 @@ namespace Keysharp.Core.Common.Threading
 		// depending on OS and the "AltTabSettings" registry value.
 		protected internal bool altTabMenuIsVisible;
 
+		protected internal System.Threading.Tasks.Task channelReadThread;
+
 		// Whether to disguise the next up-event for lwin/rwin to suppress Start Menu.
 		// There is only one variable because even if multiple modifiers are pressed
 		// simultaneously and they do not cancel each other out, disguising one will
@@ -94,30 +87,11 @@ namespace Keysharp.Core.Common.Threading
 		protected internal KeyType[] kvk;
 		protected internal uint[] kvkm;
 		protected internal IntPtr mouseHook = IntPtr.Zero;
-		protected internal System.Threading.Tasks.Task channelReadThread;
 
 		// Initialized by ResetHook().
 		protected internal bool undisguisedMenuInEffect;
 
 		protected volatile bool running;
-
-		internal static readonly Channel<object> channel = Channel.CreateUnbounded<object>(new UnboundedChannelOptions
-		{
-			SingleReader = true
-		});
-
-		internal void Stop()
-		{
-			//DeregisterHooks();
-			channel?.Writer?.Complete();
-			channelReadThread?.Wait();
-			//DeregisterKeyboardHook();
-			//DeregisterMouseHook();
-			running = false;
-		}
-		// Only valid while in WaitHookIdle().
-
-		// Initialized by ResetHook().
 
 		internal HookThread()
 		{
@@ -125,13 +99,12 @@ namespace Keysharp.Core.Common.Threading
 				keyHistory.Add(new KeyHistoryItem());
 		}
 
+		internal abstract void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false);
+
 		//~HookThread()
 		//{
 		//  Stop();
 		//}
-
-		internal abstract void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false);
-
 		internal abstract void ChangeHookState(List<HotkeyDefinition> hk, HookType whichHook, HookType whichHookAlways);
 
 		internal abstract int CharToVKAndModifiers(char ch, ref int? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false);
@@ -206,6 +179,16 @@ namespace Keysharp.Core.Common.Threading
 
 			// Since above didn't return, no match was found.  Use the default format for an unknown scan code:
 			return useFallback ? "sc" + sc.ToString("X3") : "";
+		}
+
+		internal void Stop()
+		{
+			//DeregisterHooks();
+			channel?.Writer?.Complete();
+			channelReadThread?.Wait();
+			//DeregisterKeyboardHook();
+			//DeregisterMouseHook();
+			running = false;
 		}
 
 		//This is relied upon to be unsigned; e.g. many places omit a check for ID < 0.
@@ -316,5 +299,18 @@ namespace Keysharp.Core.Common.Threading
 		internal string targetWindow = "";
 
 		internal int vk;
+	}
+
+	internal class KeysharpMsg
+	{
+		internal bool completed;
+		internal GenericFunction func;
+		internal IntPtr hwnd = IntPtr.Zero;
+		internal IntPtr lParam = IntPtr.Zero;
+		internal uint message;
+		internal object obj;
+		internal System.Drawing.Point pt;
+		internal uint time;
+		internal IntPtr wParam = IntPtr.Zero;
 	}
 }

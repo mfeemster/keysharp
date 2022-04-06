@@ -14,59 +14,7 @@ namespace Keysharp.Core
 		internal static Stack<LoopInfo> loops = new Stack<LoopInfo>();//This probably needs to be made threadstatic//TODO
 		private static StringBuilder regsb = new StringBuilder(1024);
 
-		internal static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
-		{
-			//try
-			{
-				if (v)
-				{
-					foreach (var val in ProcessRegValues(info, key))
-						yield return val;
-				}
-
-				var subkeynames = key.GetSubKeyNames();
-
-				if (subkeynames?.Length > 0)
-				{
-					foreach (var keyname in subkeynames.Reverse())
-					{
-						//try
-						{
-							using (var key2 = key.OpenSubKey(keyname, false))
-							{
-								if (k)
-								{
-									info.index++;
-									info.regVal = string.Empty;
-									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
-									info.regKeyName = key2.Name;//The full key path.
-									info.regType = Core.Keyword_Key;
-									var l = QueryInfoKey(key2);
-									var dt = DateTime.FromFileTimeUtc(l);
-									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
-									yield return info.regKeyName;
-								}
-
-								foreach (var val in GetSubKeys(info, key2, k, v))
-									yield return val;
-							}
-						}
-						//catch (Exception e)
-						//{
-						//  //error, do something
-						//}
-					}
-				}
-			}
-			//catch (Exception e)
-			//{
-			//  //error, do something
-			//}
-		}
-
 		public static long Inc() => loops.Count > 0 ? ++loops.Peek().index : 0;
-
-		public static long LoopIndex() => loops.Count > 0 ? loops.Peek().index : 0;
 
 		/// <summary>
 		/// Perform a series of commands repeatedly: either the specified number of times or until break is encountered.
@@ -201,6 +149,8 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
+
+		public static long LoopIndex() => loops.Count > 0 ? loops.Peek().index : 0;
 
 		/// <summary>
 		/// Retrieves substrings (fields) from a string, one at a time.
@@ -451,17 +401,6 @@ namespace Keysharp.Core
 			//Caller must call Pop() after the loop exits.
 		}
 
-		internal static LoopInfo Peek() => loops.PeekOrNull();
-
-		internal static LoopInfo Peek(LoopType looptype)
-		{
-			foreach (var l in loops)
-				if (l.type == looptype)
-					return l;
-
-			return null;
-		}
-
 		public static LoopInfo Pop()
 		{
 			var info = loops.Count > 0 ? loops.Pop() : null;
@@ -542,6 +481,67 @@ namespace Keysharp.Core
 			var buffer = new StringBuilder(1024);
 			_ = WindowsAPI.GetShortPathName(filename, buffer, buffer.Capacity);
 			return buffer.ToString();
+		}
+
+		internal static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
+		{
+			//try
+			{
+				if (v)
+				{
+					foreach (var val in ProcessRegValues(info, key))
+						yield return val;
+				}
+
+				var subkeynames = key.GetSubKeyNames();
+
+				if (subkeynames?.Length > 0)
+				{
+					foreach (var keyname in subkeynames.Reverse())
+					{
+						//try
+						{
+							using (var key2 = key.OpenSubKey(keyname, false))
+							{
+								if (k)
+								{
+									info.index++;
+									info.regVal = string.Empty;
+									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
+									info.regKeyName = key2.Name;//The full key path.
+									info.regType = Core.Keyword_Key;
+									var l = QueryInfoKey(key2);
+									var dt = DateTime.FromFileTimeUtc(l);
+									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
+									yield return info.regKeyName;
+								}
+
+								foreach (var val in GetSubKeys(info, key2, k, v))
+									yield return val;
+							}
+						}
+						//catch (Exception e)
+						//{
+						//  //error, do something
+						//}
+					}
+				}
+			}
+			//catch (Exception e)
+			//{
+			//  //error, do something
+			//}
+		}
+
+		internal static LoopInfo Peek() => loops.PeekOrNull();
+
+		internal static LoopInfo Peek(LoopType looptype)
+		{
+			foreach (var l in loops)
+				if (l.type == looptype)
+					return l;
+
+			return null;
 		}
 
 		internal static IEnumerable ProcessRegValues(LoopInfo info, RegistryKey key)
@@ -651,7 +651,7 @@ namespace Keysharp.Core
 		public object file;
 		public string filename = string.Empty;
 		public long index = -1;
-		public object line;
+		public string line;
 		public string path;
 		public object regDate;
 		public string regKeyName;

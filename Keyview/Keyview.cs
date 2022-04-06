@@ -83,10 +83,10 @@ namespace Keyview
 			Refresh();
 		}
 
-		private void SetSuccess()
+		private void SetSuccess(double seconds)
 		{
 			tslCodeStatus.ForeColor = Color.Green;
-			tslCodeStatus.Text = "Ok";
+			tslCodeStatus.Text = $"Ok ({seconds:F1}s)";
 			Refresh();
 		}
 
@@ -124,9 +124,10 @@ namespace Keyview
 					goto theend;
 				}
 
-				tslCodeStatus.Text = "Compiling C# code...";
+				tslCodeStatus.Text = "Trimming parents from C# code...";
 				Refresh();
 				code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
+				tslCodeStatus.Text = "Compiling C# code...";
 				var (results, ms, compileexc) = ch.Compile(code, "Keyview");
 
 				if (results == null)
@@ -136,7 +137,7 @@ namespace Keyview
 				}
 				else if (results.Success)
 				{
-					SetSuccess();
+					SetSuccess((DateTime.Now - lastCompileTime).TotalSeconds);
 					fullCode = code;
 					var token = "[System.STAThreadAttribute()]";
 					var start = code.IndexOf(token);

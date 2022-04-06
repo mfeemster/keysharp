@@ -119,6 +119,5 @@ namespace Keysharp.Core
 				tssl.BorderStyle = border;
 			}
 		}
-
 	}
 }

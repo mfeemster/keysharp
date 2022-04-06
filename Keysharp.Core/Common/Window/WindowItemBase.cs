@@ -91,6 +91,21 @@ namespace Keysharp.Core.Common.Window
 		internal WindowItemBase(IntPtr handle) => Handle = handle;
 
 		/// <summary>
+		/// Define Standard Equalty Opertaor
+		/// </summary>
+		/// <param name="obj"></param>
+		/// <returns></returns>
+		public override bool Equals(object obj) => obj is WindowItemBase ? (obj as WindowItemBase).Handle == Handle : base.Equals(obj);
+
+		public override int GetHashCode() => base.GetHashCode();
+
+		public override string ToString() => IsSpecified ? Title : "not specified window";
+
+		internal static void DoControlDelay() => DoDelay((long)Accessors.A_ControlDelay);
+
+		internal static void DoWinDelay() => DoDelay((long)Accessors.A_WinDelay);
+
+		/// <summary>
 		/// Left-Clicks on this window/control
 		/// </summary>
 		/// <param name="location"></param>
@@ -199,13 +214,6 @@ namespace Keysharp.Core.Common.Window
 			return true;
 		}
 
-		/// <summary>
-		/// Define Standard Equalty Opertaor
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
-		public override bool Equals(object obj) => obj is WindowItemBase ? (obj as WindowItemBase).Handle == Handle : base.Equals(obj);
-
 		internal WindowItemBase FirstChild(SearchCriteria sc)
 		{
 			WindowItemBase item = null;
@@ -222,7 +230,7 @@ namespace Keysharp.Core.Common.Window
 			return item;
 		}
 
-		public override int GetHashCode() => base.GetHashCode();
+		internal abstract uint GetMenuItemId(params string[] items);
 
 		internal abstract bool Hide();
 
@@ -238,8 +246,6 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract bool Show();
 
-		public override string ToString() => IsSpecified ? Title : "not specified window";
-
 		//Figure out CLS compliance.//TODO
 		internal bool Wait(double seconds) => Wait(seconds, () => Exists);
 
@@ -248,12 +254,6 @@ namespace Keysharp.Core.Common.Window
 		internal bool WaitClose(double seconds) => Wait(seconds, () => !Exists);
 
 		internal bool WaitNotActive(double seconds) => Wait(seconds, () => !Active);
-
-		internal static void DoControlDelay() => DoDelay(Accessors.A_ControlDelay.Value);
-
-		internal static void DoWinDelay() => DoDelay(Accessors.A_WinDelay);
-
-		internal abstract uint GetMenuItemId(params string[] items);
 
 		private static void DoDelay(long delay)
 		{

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 
 namespace Keysharp.Core
@@ -175,7 +176,7 @@ namespace Keysharp.Core
 				var cond = new string[4, 2];
 				cond[win, 0] = label; // title
 				cond[win, 1] = options; // text
-				keyCondition = new FuncObj(new Core.GenericFunction(delegate
+				keyCondition = new FuncObj(new GenericFunction(delegate
 				{
 					return HotkeyPrecondition(cond);
 				}), null);
@@ -257,7 +258,7 @@ namespace Keysharp.Core
 					return;
 				}
 
-				key.Proc = new FuncObj((Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method), null);
+				key.Proc = new FuncObj((GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), method), null);
 				key.Precondition = keyCondition;
 				hotkeys.Add(id, key);
 				_ = kbdMouseSender.Add(key);
@@ -302,15 +303,14 @@ namespace Keysharp.Core
 			}
 			else if (string.Compare(name, "Reset", true) == 0)
 			{
-				HotstringDefinition.hsBuf.Clear();
-				return null;
+				return HotstringDefinition.ClearBuf();
 			}
 			else if (replacement == null && onoff == null && name.Length > 0 && name[0] != ':') //Check if only one param was passed. Equivalent to #Hotstring <name>.
 			{
 				// TODO: Build string of current options and return it?
-				HotstringDefinition.ParseOptions(name, ref Keysharp.Scripting.Script.hsPriority, ref Keysharp.Scripting.Script.hsKeyDelay, ref Keysharp.Scripting.Script.hsSendMode, ref Keysharp.Scripting.Script.hsCaseSensitive
-												 , ref Keysharp.Scripting.Script.hsConformToCase, ref Keysharp.Scripting.Script.hsDoBackspace, ref Keysharp.Scripting.Script.hsOmitEndChar, ref Keysharp.Scripting.Script.hsSendRaw, ref Keysharp.Scripting.Script.hsEndCharRequired
-												 , ref Keysharp.Scripting.Script.hsDetectWhenInsideWord, ref Keysharp.Scripting.Script.hsDoReset, ref xOption, ref Keysharp.Scripting.Parser.SuspendExemptHS);
+				HotstringDefinition.ParseOptions(name, ref HotstringDefinition.hsPriority, ref HotstringDefinition.hsKeyDelay, ref HotstringDefinition.hsSendMode, ref HotstringDefinition.hsCaseSensitive
+												 , ref HotstringDefinition.hsConformToCase, ref HotstringDefinition.hsDoBackspace, ref HotstringDefinition.hsOmitEndChar, ref HotstringDefinition.hsSendRaw, ref HotstringDefinition.hsEndCharRequired
+												 , ref HotstringDefinition.hsDetectWhenInsideWord, ref HotstringDefinition.hsDoReset, ref xOption, ref HotstringDefinition.hsSuspendExempt);
 				return null;
 			}
 
@@ -340,29 +340,24 @@ namespace Keysharp.Core
 				throw new ValueError("Hotstring definition did not contain a hotstring.");
 
 			// Determine options which affect hotstring identity/uniqueness.
-			var caseSensitive = Keysharp.Scripting.Script.hsCaseSensitive;
-			var detectInsideWord = Keysharp.Scripting.Script.hsDetectWhenInsideWord;
+			var caseSensitive = HotstringDefinition.DefaultHotstringCaseSensitive;
+			var detectInsideWord = HotstringDefinition.DefaultHotstringDetectWhenInsideWord;
 			var un = false; var iun = 0; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
 
-			if (!string.IsNullOrEmpty(hotstringOptions))
+			if (hotstringOptions.Length > 0)
 				HotstringDefinition.ParseOptions(hotstringOptions, ref iun, ref iun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref xOption, ref un);
 
-			//Core.HotFunction actionObj = null;
 			IFuncObj ifunc = null;
 
 			if (xOption)
 			{
 				if (!string.IsNullOrEmpty(action))//The string could be a replacement string, a function name, a function object, or an expression to execute.
 				{
-					if (Reflections.FindLocalMethod(action) is MethodInfo mi)
-					{
+					if (Reflections.FindMethod(action) is MethodInfo mi)
 						ifunc = new FuncObj(mi, null);
-					}
+					else
+						throw new ValueError($"Could not find built in or local method {action}() for hotstring.");
 
-					//if (method == null)
-					//throw new ValueError($"Could not find hotstring method {action}().");
-					//proc = (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
-					//actionObj = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);//Will need to ultimately determine if we should use GenericFunction or HotFunction.
 					// Otherwise, it's always replacement text (the 'X' option is ignored at runtime).
 				}
 				else if (replacement is IFuncObj fo)
@@ -372,9 +367,7 @@ namespace Keysharp.Core
 			var toggle = ToggleValueType.Neutral;
 
 			if (onoff != null && (toggle = Keysharp.Core.Options.ConvertOnOffToggle(onoff)) == ToggleValueType.Invalid)
-			{
 				throw new ValueError($"Invalid value of {onoff} for parameter 3.");
-			}
 
 			bool wasAlreadyEnabled;
 			var existing = HotstringDefinition.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, Keysharp.Scripting.Script.hotCriterion);
@@ -389,27 +382,14 @@ namespace Keysharp.Core
 					string newReplacement = null; // Set default: not auto-replace.
 
 					if (ifunc == null && replacement is string rep) // Caller specified a replacement string ('E' option was handled above).
-					{
-						if (!string.IsNullOrEmpty(existing.replacement) && string.Compare(rep, existing.replacement) == 0)
-						{
-							// Caller explicitly passed the same string it already had, which might be common,
-							// such as if a single Hotstring() call site is used to both create and update.
-							newReplacement = existing.replacement; // Avoid reallocating it.
-						}
-						else
-							newReplacement = rep;
-					}
+						newReplacement = rep;
 
 					existing.suspended |= HotstringDefinition.HS_TEMPORARILY_DISABLED;
 					ht.WaitHookIdle();
-
 					// At this point it is certain the hook thread is not in the middle of reading this
-					// hotstring's other properties, such as mReplacement (which we may be about to free).
-					if (newReplacement != existing.replacement)
-						existing.replacement = newReplacement;
-
-					if (ifunc != existing.funcObj)
-						existing.funcObj = ifunc;
+					// hotstring's other properties, such as mReplacement.
+					existing.replacement = newReplacement;
+					existing.funcObj = ifunc;
 				}
 
 				// Update the hotstring's options.  Note that mCaseSensitive and mDetectWhenInsideWord
@@ -439,7 +419,7 @@ namespace Keysharp.Core
 					initialSuspendState |= HotstringDefinition.HS_SUSPENDED;
 
 				if (HotstringDefinition.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == ResultType.Fail)
-					return 0;
+					return null;
 
 				existing = HotstringDefinition.shs[HotstringDefinition.shs.Count - 1];
 				wasAlreadyEnabled = false; // Because it didn't exist.
@@ -770,7 +750,7 @@ namespace Keysharp.Core
 				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Keysharp.Scripting.Script.SLEEP_INTERVAL_HALF)
 				{
 					System.Threading.Thread.Sleep(Keysharp.Scripting.Script.SLEEP_INTERVAL);
-					//MsgSleep() might not even be needed if we use real threads.//TODO
+					//MsgSleep() might not even be needed if we use real //TODO
 					//if (Keysharp.Scripting.Script.MsgSleep(Keysharp.Scripting.Script.INTERVAL_UNSPECIFIED)) // INTERVAL_UNSPECIFIED performs better.
 					//{
 					//}
@@ -969,7 +949,7 @@ namespace Keysharp.Core
 			switch (keyStateType)
 			{
 				case KeyStateTypes.Toggle: // Whether a toggleable key such as CapsLock is currently turned on.
-					return ht.IsKeyToggledOn(vk); // This also works for non-"lock" keys, but in that case the toggle state can be out of sync with other processes/threads.
+					return ht.IsKeyToggledOn(vk); // This also works for non-"lock" keys, but in that case the toggle state can be out of sync with other processes/
 
 				case KeyStateTypes.Physical: // Physical state of key.
 					if (ht.IsMouseVK(vk)) // mouse button

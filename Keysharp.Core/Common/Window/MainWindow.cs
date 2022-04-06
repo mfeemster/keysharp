@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Scripting
@@ -179,6 +180,7 @@ namespace Keysharp.Scripting
 					foreach (var prop in list.Values)
 					{
 						var val = prop.GetValue(null);
+						//var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
 
 						if (val is Keysharp.Core.Array arr)
 						{
@@ -255,6 +257,6 @@ namespace Keysharp.Scripting
 			Vars
 		}
 
-		public event Core.Core.ClipUpdateDel ClipboardUpdate;
+		public event ClipUpdateDel ClipboardUpdate;
 	}
 }

@@ -338,27 +338,27 @@ namespace Keysharp.Tests
 		[Test, Category("FileAndDir")]
 		public void FileEncoding()
 		{
-			Keysharp.Core.Core.FileEncoding("utf-8");
+			Keysharp.Core.File.FileEncoding("utf-8");
 			var fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, Encoding.UTF8.BodyName);
-			Keysharp.Core.Core.FileEncoding("utf-8-raw");
+			Keysharp.Core.File.FileEncoding("utf-8-raw");
 			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-8-raw");
-			Keysharp.Core.Core.FileEncoding("utf-16");
+			Keysharp.Core.File.FileEncoding("utf-16");
 			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16");
 			Assert.AreEqual(fe, Encoding.Unicode.BodyName);
-			Keysharp.Core.Core.FileEncoding("unicode");
+			Keysharp.Core.File.FileEncoding("unicode");
 			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16");
-			Keysharp.Core.Core.FileEncoding("utf-16-raw");
+			Keysharp.Core.File.FileEncoding("utf-16-raw");
 			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "utf-16-raw");
-			Keysharp.Core.Core.FileEncoding("ascii");
+			Keysharp.Core.File.FileEncoding("ascii");
 			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "us-ascii");
 			Assert.AreEqual(fe, Encoding.ASCII.BodyName);
-			Keysharp.Core.Core.FileEncoding("us-ascii");
+			Keysharp.Core.File.FileEncoding("us-ascii");
 			fe = Accessors.A_FileEncoding;
 			Assert.AreEqual(fe, "us-ascii");
 			Assert.IsTrue(TestScript("file-fileencoding", true));

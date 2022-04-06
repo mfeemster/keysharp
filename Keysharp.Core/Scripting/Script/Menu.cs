@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Drawing;
-using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core;
-using Keysharp.Core.Windows;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Scripting
 {
-	partial class Script
+	public partial class Script
 	{
+		internal static NotifyIcon Tray;
 		internal static Menu trayMenu;
 
 		public static void CreateTrayMenu()
@@ -19,11 +19,10 @@ namespace Keysharp.Scripting
 			if (Parser.NoTrayIcon)
 				return;
 
-			var trayIcon = Core.Core.Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
+			var trayIcon = Scripting.Script.Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
 			trayMenu = new Menu
 			{
-				MenuItem = Core.Core.Tray.ContextMenuStrip
-
+				MenuItem = Scripting.Script.Tray.ContextMenuStrip
 			};
 			_ = trayMenu.Add("&Open", (GenericFunction)(obj =>
 			{
@@ -94,10 +93,10 @@ namespace Keysharp.Scripting
 
 			Flow.ApplicationExit += (o, e) =>
 			{
-				if (Core.Core.Tray != null)
+				if (Scripting.Script.Tray != null)
 				{
-					Core.Core.Tray.Visible = false;
-					Core.Core.Tray.Dispose();
+					Scripting.Script.Tray.Visible = false;
+					Scripting.Script.Tray.Dispose();
 				}
 			};
 		}

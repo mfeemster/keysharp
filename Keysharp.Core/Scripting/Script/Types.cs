@@ -2,7 +2,7 @@
 
 namespace Keysharp.Scripting
 {
-	partial class Script
+	public partial class Script
 	{
 		private static object ForceType(Type requested, object value)
 		{

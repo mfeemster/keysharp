@@ -1,12 +1,48 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Keysharp.Core;
 using Keysharp.Core.Windows;
-using System.Linq;
 
 namespace System.Windows.Forms
 {
 	public static class ControlExtensions
 	{
+		public static void CheckedBeginInvoke(this Control control, Action action)
+		{
+			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+				return;
+
+			if (control.InvokeRequired)
+				control.BeginInvoke(action);
+			else
+				action();
+		}
+
+		public static void CheckedInvoke(this Control control, Action action)
+		{
+			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+				return;
+
+			if (control.InvokeRequired)
+				control.Invoke(action);
+			else
+				action();
+		}
+
+		public static TabPage FindTab(this TabControl tc, string text, bool exact)
+		{
+			foreach (TabPage tp in tc.TabPages)
+				if (exact)
+				{
+					if (string.Compare(tp.Text, text, true) == 0)
+						return tp;
+				}
+				else if (tp.Text.StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
+					return tp;
+
+			return null;
+		}
+
 		public static HashSet<T> GetAllControlsRecusrvive<T>(this Control control) where T : class, new ()
 		{
 			var rtn = new HashSet<T>();
@@ -20,6 +56,22 @@ namespace System.Windows.Forms
 			}
 
 			return rtn;
+		}
+
+		/// <summary>
+		/// Gotten from here and fixed: https://www.codeproject.com/tips/264690/how-to-iterate-recursive-through-all-menu-items-in
+		/// </summary>
+		/// <param name="menuStrip"></param>
+		/// <returns></returns>
+		public static List<ToolStripItem> GetItems(this ToolStrip menuStrip)
+		{
+			var myItems = new List<ToolStripItem>();
+
+			foreach (var o in menuStrip.Items)
+				if (o is ToolStripItem i)
+					GetMenuItems(i, myItems);
+
+			return myItems;
 		}
 
 		public static T GetNthControlRecusrvive<T>(this Control control, int index) where T : class, new ()
@@ -48,67 +100,6 @@ namespace System.Windows.Forms
 			}
 
 			return null;
-		}
-
-		//public static Control FindControl(this Control control, IntPtr hwnd)
-		//{
-		//  var rtn = new HashSet<Control>();
-
-		//  foreach (Control item in control.Controls)
-		//  {
-		//      if (item.Controls != null && item.Controls.Count > 0)
-		//      {
-		//          rtn.Add(item.FindControl(hwnd));
-		//      }
-		//      else if (item.Handle == hwnd)
-		//      {
-		//          rtn.Add(item);
-		//      }
-		//  }
-
-		//  return rtn.find;
-		//}
-
-		//focused_control
-		public static void BeginInvoke(this Control control, Action action)
-		{
-			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
-				return;
-
-			if (control.InvokeRequired)
-				control.BeginInvoke(action);
-			else
-				action();
-		}
-
-		public static TabPage FindTab(this TabControl tc, string text, bool exact)
-		{
-			foreach (TabPage tp in tc.TabPages)
-				if (exact)
-				{
-					if (string.Compare(tp.Text, text, true) == 0)
-						return tp;
-				}
-				else if (tp.Text.StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
-					return tp;
-
-			return null;
-		}
-
-		/// <summary>
-		/// Gotten from here and fixed: https://www.codeproject.com/tips/264690/how-to-iterate-recursive-through-all-menu-items-in
-		/// </summary>
-		/// <param name="menuStrip"></param>
-		/// <returns></returns>
-		public static List<ToolStripItem> GetItems(this ToolStrip menuStrip)
-		{
-			var myItems = new List<ToolStripItem>();
-
-			foreach (var o in menuStrip.Items)
-				if (o is ToolStripItem i)
-					GetMenuItems(i, myItems);
-
-			return myItems;
 		}
 
 		public static void Invoke(this Control control, Action action)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core.Common.Keyboard
 {
@@ -17,9 +18,33 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const string MAX_HOTSTRING_LENGTH_STR = "40";      // Hard to imagine a need for more than this, and most are only a few chars long.
 		internal static string defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";//Should this be a platform specific newline instead of \r\n? //Make this a static as the default.//MATT
 		internal static uint enabledCount;      // Keep in sync with the above.
-		internal static List<char> hsBuf = new List<char>(256);
-		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);//Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
+		internal static bool hsCaseSensitive;
+		internal static bool hsConformToCase = true;
+		internal static bool hsDetectWhenInsideWord;
+		internal static bool hsDoBackspace = true;
+		internal static bool hsDoReset;
+		internal static bool hsEndCharRequired = true;
+		internal static int hsKeyDelay;
+		internal static bool hsOmitEndChar;
 
+		// Hot-string global settings:
+		internal static int hsPriority;
+
+		// default priority is always 0
+		// Fast sends are much nicer for auto-replace and auto-backspace.
+		//internal static Keysharp.Core.Common.Keyboard.SendModes sendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
+		internal static SendModes hsSendMode = SendModes.Input;
+
+		// v1.0.43: New default for more reliable hotstrings.
+		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
+
+		internal static bool hsSuspendExempt;
+		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
+
+		//Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
+		internal static Dictionary<string, List<HotstringDefinition>> sksDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);
+
+		//Not used yet, but would much prefer it.//TODO
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
 
@@ -35,51 +60,75 @@ namespace Keysharp.Core.Common.Keyboard
 		internal Keysharp.Core.Common.Keyboard.SendRawModes sendRaw;
 		internal string str, replacement;
 		internal int suspended;
+		protected internal static List<char> hsBuf = new List<char>(256);
+		public static string CurrentInputBuffer => new string(hsBuf.ToArray());
+
+		public static bool DefaultHotstringCaseSensitive => hsCaseSensitive;
+
+		public static bool DefaultHotstringConformToCase => hsConformToCase;
+
+		public static bool DefaultHotstringDetectWhenInsideWord => hsDetectWhenInsideWord;
+
+		public static bool DefaultHotstringDoBackspace => hsDoBackspace;
+
+		public static bool DefaultHotstringDoReset => hsDoReset;
+
+		public static bool DefaultHotstringEndCharRequired => hsEndCharRequired;
+
+		public static string DefaultHotstringEndChars => defEndChars;
+
+		public static int DefaultHotstringKeyDelay => hsKeyDelay;
+
+		public static bool DefaultHotstringOmitEndChar => hsOmitEndChar;
+
+		// This is just to prevent #Hotstring "S" from affecting hotkeys.
+		public static int DefaultHotstringPriority => hsPriority;
+
+		public static SendModes DefaultHotstringSendMode => hsSendMode;
+		public static SendRawModes DefaultHotstringSendRaw => hsSendRaw;
+		public static bool DefaultHotstringSuspendExempt => hsSuspendExempt;
 		public bool Enabled { get; set; }
 
 		public Options EnabledOptions { get; set; }
-
-		public string EndChars { get; set; }
-
 		public string Name { get; set; }
 
-		//public Core.GenericFunction Proc { get; }
-		public Core.HotFunction Proc { get; }//MATT
+		//public GenericFunction Proc { get; }
+		public HotFunction Proc { get; }
 
 		public string Replacement { get; set; } = string.Empty;
 
 		public string Sequence { get; }
 
-		public HotstringDefinition(string sequence, string replacement, Core.HotFunction proc = null)
-		//Core.GenericFunction proc)//MATT
+		public HotstringDefinition(string sequence, string replacement, HotFunction proc = null)
+		//GenericFunction proc)//MATT
 		{
 			Sequence = sequence;
 			Replacement = replacement;
 			Proc = proc ?? DefaultHotFunction;
-			EndChars = defEndChars;
+			//EndChars = defEndChars;
 		}
 
 		internal HotstringDefinition(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring, string _replacement
 									 , bool _hasContinuationSection, int _suspend)
 
 		{
-			funcObj = _funcObj;  // Any NULL value will cause failure further below.
+			funcObj = _funcObj;
 			hotCriterion = Keysharp.Scripting.Script.hotCriterion;
 			suspended = _suspend;
 			maxThreads = Keysharp.Scripting.Parser.MaxThreadsPerHotkey;  // The value of g_MaxThreadsPerHotkey can vary during load-time.
-			priority = Keysharp.Scripting.Script.hsPriority;
-			keyDelay = Keysharp.Scripting.Script.hsKeyDelay;
-			sendMode = Keysharp.Scripting.Script.hsSendMode;  // And all these can vary too.
-			caseSensitive = Keysharp.Scripting.Script.hsCaseSensitive;
-			conformToCase = Keysharp.Scripting.Script.hsConformToCase;
-			doBackspace = Keysharp.Scripting.Script.hsDoBackspace;
-			omitEndChar = Keysharp.Scripting.Script.hsOmitEndChar;
-			sendRaw = _hasContinuationSection ? Keysharp.Core.Common.Keyboard.SendRawModes.RawText : Keysharp.Scripting.Script.hsSendRaw;
-			endCharRequired = Keysharp.Scripting.Script.hsEndCharRequired;
-			detectWhenInsideWord = Keysharp.Scripting.Script.hsDetectWhenInsideWord;
-			doReset = Keysharp.Scripting.Script.hsDoReset;
+			priority = hsPriority;
+			keyDelay = hsKeyDelay;
+			sendMode = hsSendMode;  // And all these can vary too.
+			caseSensitive = hsCaseSensitive;
+			conformToCase = hsConformToCase;
+			doBackspace = hsDoBackspace;
+			omitEndChar = hsOmitEndChar;
+			sendRaw = _hasContinuationSection ? Keysharp.Core.Common.Keyboard.SendRawModes.RawText : hsSendRaw;
+			endCharRequired = hsEndCharRequired;
+			detectWhenInsideWord = hsDetectWhenInsideWord;
+			doReset = hsDoReset;
 			inputLevel = Keysharp.Scripting.Script.inputLevel;
-			suspendExempt = Keysharp.Scripting.Parser.SuspendExempt || Keysharp.Scripting.Parser.SuspendExemptHS;
+			suspendExempt = Keysharp.Scripting.Parser.SuspendExempt || DefaultHotstringSuspendExempt;
 			constructedOK = false;
 			var executeAction = false; // do not assign  mReplacement if execute_action is true.
 			ParseOptions(_options, ref priority, ref keyDelay, ref sendMode, ref caseSensitive, ref conformToCase, ref doBackspace
@@ -129,6 +178,15 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 		}
 
+		public override string ToString() => Name;
+
+		internal static string ClearBuf()
+		{
+			var str = new string(hsBuf.ToArray());
+			hsBuf.Clear();
+			return str;
+		}
+
 		/*
 		    public static Options ParseOptions(string mode)
 		    {
@@ -175,18 +233,11 @@ namespace Keysharp.Core.Common.Keyboard
 		    }
 		*/
 
-		public override string ToString() => Name;
-
 		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, HotkeyCriterion _hotCriterion)
 		{
-			foreach (var hs in shs)
+			foreach (var hs in shs)//Would really prefer to put this in a dictionary.//TODO
 			{
-				// hs.mEndCharRequired is not checked because although it affects the conditions for activating
-				// the hotstring, ::abbrev:: and :*:abbrev:: cannot co-exist (the latter would always take over).
-				if (hs.hotCriterion == _hotCriterion // Same #HotIf criterion.
-						&& hs.caseSensitive == _caseSensitive // ::BTW:: and :C:BTW:: can co-exist.
-						&& hs.detectWhenInsideWord == _detectWhenInsideWord // :?:ion:: and ::ion:: can co-exist.
-						&& (_caseSensitive ? hs.str == _hotstring : string.Compare(hs.str, _hotstring, true) == 0)) // :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
+				if (hs.CompareHotstring(_hotstring, _caseSensitive, _detectWhenInsideWord, _hotCriterion))
 					return hs;
 			}
 
@@ -200,33 +251,38 @@ namespace Keysharp.Core.Common.Keyboard
 			// In this case, colon rather than zero marks the end of the string.  However, the string
 			// might be empty so check for that too.  In addition, this is now called from
 			// IsDirective(), so that's another reason to check for normal string termination.
-			string cp1;
+			var firstColon = _options.IndexOf(':');
 
-			for (var i = 0; i < _options.Length && _options[i] != ':'; i++)
+			foreach (var split in firstColon == -1
+					 ? _options.Split(Core.SpaceColon, StringSplitOptions.TrimEntries)
+					 : _options.Substring(0, firstColon).Split(Core.SpaceColon, StringSplitOptions.TrimEntries))
 			{
-				var next = i < _options.Length - 1 ? _options[i + 1] : (char)0;
+				if (split.Length == 0)
+					continue;
 
-				switch (char.ToUpper(_options[i]))
+				var next = split.Length > 1 ? split.Substring(1) : "";
+
+				switch (char.ToUpper(split[0]))
 				{
 					case '*':
-						_endCharRequired = next == '0';
+						_endCharRequired = next == "0";
 						break;
 
 					case '?':
-						_detectWhenInsideWord = next != '0';
+						_detectWhenInsideWord = next != "0";
 						break;
 
 					case 'B':
-						_doBackspace = next != '0';
+						_doBackspace = next != "0";
 						break;
 
 					case 'C':
-						if (next == '0') // restore both settings to default.
+						if (next == "0") // restore both settings to default.
 						{
 							_conformToCase = true;
 							_caseSensitive = false;
 						}
-						else if (next == '1')
+						else if (next == "1")
 						{
 							_conformToCase = false;
 							_caseSensitive = false;
@@ -240,38 +296,36 @@ namespace Keysharp.Core.Common.Keyboard
 						break;
 
 					case 'O':
-						_omitEndChar = next != '0';
+						_omitEndChar = next != "0";
 						break;
 
 					// For options such as K & P: Use atoi() vs. ATOI() to avoid interpreting something like 0x01C
 					// as hex when in fact the C was meant to be an option letter:
 					case 'K':
 					{
-						if (int.TryParse(next.ToString(), out var val))
+						if (int.TryParse(next, out var val))
 							_keyDelay = val;
 					}
 					break;
 
 					case 'P':
 					{
-						if (int.TryParse(next.ToString(), out var val))
+						if (int.TryParse(next, out var val))
 							_priority = val;
 					}
 					break;
 
 					case 'R':
-						_sendRaw = (next != '0') ? SendRawModes.Raw : SendRawModes.NotRaw;
+						_sendRaw = (next != "0") ? SendRawModes.Raw : SendRawModes.NotRaw;
 						break;
 
 					case 'T':
-						_sendRaw = (next != '0') ? SendRawModes.RawText : SendRawModes.NotRaw;
+						_sendRaw = (next != "0") ? SendRawModes.RawText : SendRawModes.NotRaw;
 						break;
 
 					case 'S':
-						if (next != 0)
-							++i;// Skip over S's sub-letter (if any) to exclude it from  further consideration.
-
-						switch (next)
+					{
+						switch (next.Length > 0 ? next[0] : (char)0)
 						{
 							// There is no means to choose SM_INPUT because it seems too rarely desired (since auto-replace
 							// hotstrings would then become interruptible, allowing the keystrokes of fast typists to get
@@ -282,17 +336,17 @@ namespace Keysharp.Core.Common.Keyboard
 
 							case 'P': _sendMode = SendModes.Play; break;
 
-							default: _suspendExempt = next != '0'; break;
+							default: _suspendExempt = next != "0"; break;
 						}
-
-						break;
+					}
+					break;
 
 					case 'Z':
-						_doReset = next != '0';
+						_doReset = next != "0";
 						break;
 
 					case 'X':
-						_executeAction = next != '0';
+						_executeAction = next != "0";
 						break;
 						// Otherwise: Ignore other characters, such as the digits that comprise the number after the P option.
 				}
@@ -341,6 +395,16 @@ namespace Keysharp.Core.Common.Keyboard
 				if (previous_count == 0 && enabledCount > 0)
 					hsBuf.Clear();
 			}
+		}
+
+		internal bool CompareHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, HotkeyCriterion _hotCriterion)
+		{
+			// hs.mEndCharRequired is not checked because although it affects the conditions for activating
+			// the hotstring, ::abbrev:: and :*:abbrev:: cannot co-exist (the latter would always take over).
+			return hotCriterion == _hotCriterion // Same #HotIf criterion.
+				   && caseSensitive == _caseSensitive // ::BTW:: and :C:BTW:: can co-exist.
+				   && detectWhenInsideWord == _detectWhenInsideWord // :?:ion:: and ::ion:: can co-exist.
+				   && (_caseSensitive ? str == _hotstring : string.Compare(str, _hotstring, true) == 0);// :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
 		}
 
 		internal void DoReplace(uint alParam)
@@ -484,7 +548,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// is still timely/accurate -- it seems best to set to "no modifiers":
 			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
 			++existingThreads;  // This is the thread count for this particular hotstring only.
-			Keysharp.Core.Core.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+			Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			return ResultType.Ok;
 		}
 

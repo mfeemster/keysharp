@@ -1,7 +1,9 @@
 namespace Keysharp.Scripting
 {
-	partial class Script
+	public partial class Script
 	{
+		public static object Parameter(object[] values, object def, int index) => index < values.Length ? values[index] : def;
+
 		public static void Parameters(string[] names, object[] values, object[] defaults)
 		{
 			for (var i = 0; i < names.Length; i++)
@@ -10,7 +12,5 @@ namespace Keysharp.Scripting
 				Vars[names[i]] = init;
 			}
 		}
-
-		public static object Parameter(object[] values, object def, int index) => index < values.Length ? values[index] : def;
 	}
 }

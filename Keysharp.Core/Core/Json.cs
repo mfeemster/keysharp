@@ -1,6 +1,6 @@
 ﻿namespace Keysharp.Core
 {
-	partial class Core
+	public partial class Core
 	{
 	}
 }

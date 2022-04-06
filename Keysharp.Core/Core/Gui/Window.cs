@@ -252,6 +252,14 @@ namespace Keysharp.Core
 
 		public static long SendMessage(params object[] obj) => obj.L().I1O4S3I1(0, 0, 0, 0, 0, "", "", "", 5000).Splat(ControlManager.SendMessage);
 
+		public static void SetProcessDPIAware()
+		{
+			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+			{
+				WindowsAPI.SetProcessDPIAware();
+			}
+		}
+
 		/// <summary>
 		/// Sets the matching behavior of the WinTitle parameter in commands such as WinWait.
 		/// This function's behavior is somewhat bizarre in that it changes which global variable gets set
@@ -764,7 +772,7 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				var hwnd = Script.IndexProperty(obj, "Hwnd");
+				var hwnd = Script.GetPropertyValue(obj, "Hwnd");
 
 				if (hwnd.Item1 is long ll)
 					sc.ID = new IntPtr(ll);
@@ -863,14 +871,6 @@ namespace Keysharp.Core
 
 			WindowItemBase.DoWinDelay();
 			return b ? 1 : 0;
-		}
-
-		public static void SetProcessDPIAware()
-		{
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				WindowsAPI.SetProcessDPIAware();
-			}
 		}
 	}
 }

@@ -38,7 +38,7 @@ namespace Keysharp.Core.Common.Window
 				return criteria;
 			}
 
-			var hwnd = Script.IndexProperty(obj, "Hwnd");
+			var hwnd = Script.GetPropertyValue(obj, "Hwnd");
 
 			if (hwnd.Item1 is long ll)
 			{

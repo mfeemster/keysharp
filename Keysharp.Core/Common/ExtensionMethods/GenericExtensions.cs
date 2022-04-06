@@ -2,7 +2,7 @@
 using System.Collections.Specialized;
 using System.Linq;
 using Keysharp.Core;
-using static Keysharp.Core.Core;
+using Keysharp.Core.Common.Threading;
 
 namespace System.Collections
 {
@@ -64,6 +64,12 @@ namespace System.Collections.Generic
 
 		public static double Ad(this IList obj, int index, double def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseDouble().Value : def;
 
+		public static void AddRange<T>(this HashSet<T> hash, HashSet<T> add) where T : class, new ()
+		{
+			foreach (var item in add)
+				_ = hash.Add(item);
+		}
+
 		public static bool AddUnique<T>(this IList<T> list, T t)
 		{
 			if (!list.Contains(t))
@@ -74,8 +80,6 @@ namespace System.Collections.Generic
 
 			return false;
 		}
-
-		public static void RemoveRange<T>(this List<T> list, int index) => list.RemoveRange(index, list.Count - index);
 
 		public static int Ai(this IList obj, int index, int def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseInt().Value : def;
 
@@ -93,6 +97,13 @@ namespace System.Collections.Generic
 		{
 			var r1 = obj.Ad(0, def1);
 			var r2 = obj.Ad(1, def2);
+			return (r1, r2);
+		}
+
+		public static (double, bool) Db(this IList obj, double def1 = default, bool def2 = default)
+		{
+			var r1 = obj.Ad(0, def1);
+			var r2 = obj.Ab(1, def2);
 			return (r1, r2);
 		}
 
@@ -198,12 +209,6 @@ namespace System.Collections.Generic
 			}
 
 			return dictionary[k] as V;
-		}
-
-		public static void AddRange<T>(this HashSet<T> hash, HashSet<T> add) where T : class, new ()
-		{
-			foreach (var item in add)
-				_ = hash.Add(item);
 		}
 
 		public static int I1(this IList obj, int def1 = 0) => obj.Ai(0, def1);
@@ -359,13 +364,6 @@ namespace System.Collections.Generic
 			return (r1, r2, r3, r4, r5, r6, r7);
 		}
 
-		public static (double, bool) Db(this IList obj, double def1 = default, bool def2 = default)
-		{
-			var r1 = obj.Ad(0, def1);
-			var r2 = obj.Ab(1, def2);
-			return (r1, r2);
-		}
-
 		public static (int, bool) Ib(this IList obj, int def1 = default, bool def2 = default)
 		{
 			var r1 = obj.Ai(0, def1);
@@ -474,6 +472,22 @@ namespace System.Collections.Generic
 			return r1;
 		}
 
+		public static (object, long, string) O1L1S1(this IList obj, object def1 = null, long def2 = default, string def3 = "")
+		{
+			var r1 = obj.Ao(0, def1);
+			var r2 = obj.Al(1, def2);
+			var r3 = obj.As(2, def3);
+			return (r1, r2, r3);
+		}
+
+		public static (object, long, long) O1L2(this IList obj, object def1 = null, long def2 = default, long def3 = default)
+		{
+			var r1 = obj.Ao(0, def1);
+			var r2 = obj.Al(1, def2);
+			var r3 = obj.Al(2, def3);
+			return (r1, r2, r3);
+		}
+
 		public static (object, string, string, string, string, string, string, string, string, string, string) O1S10(this IList obj, object def1 = null, string def2 = "", string def3 = "", string def4 = "", string def5 = "", string def6 = "", string def7 = "", string def8 = "", string def9 = "", string def10 = "", string def11 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -498,21 +512,6 @@ namespace System.Collections.Generic
 			var r4 = obj.As(3, def4);
 			var r5 = obj.As(4, def5);
 			return (r1, r2, r3, r4, r5);
-		}
-
-		public static (object, long) OL(this IList obj, object def1 = null, long def2 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Al(1, def2);
-			return (r1, r2);
-		}
-
-		public static (object, long, long) O1L2(this IList obj, object def1 = null, long def2 = default, long def3 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Al(1, def2);
-			var r3 = obj.Al(2, def3);
-			return (r1, r2, r3);
 		}
 
 		public static (object, string, string, string) O1S3(this IList obj, object def1 = null, string def2 = "", string def3 = "", string def4 = "")
@@ -579,12 +578,11 @@ namespace System.Collections.Generic
 			return (r1, r2);
 		}
 
-		public static (object, long, string) O1L1S1(this IList obj, object def1 = null, long def2 = default, string def3 = "")
+		public static (object, long) OL(this IList obj, object def1 = null, long def2 = default)
 		{
 			var r1 = obj.Ao(0, def1);
 			var r2 = obj.Al(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
+			return (r1, r2);
 		}
 
 		public static (object, string) Os(this IList obj, object def1 = null, string def2 = "")
@@ -622,6 +620,8 @@ namespace System.Collections.Generic
 		public static T PeekOrNull<T>(this Stack<T> stack) where T : class => stack.TryPeek(out var result) ? result : null;
 
 		public static T PopOrNull<T>(this Stack<T> stack) where T : class => stack.TryPop(out var result) ? result : null;
+
+		public static void RemoveRange<T>(this List<T> list, int index) => list.RemoveRange(index, list.Count - index);
 
 		public static string S1(this IList obj, string def = "") => obj.As(0, def);
 

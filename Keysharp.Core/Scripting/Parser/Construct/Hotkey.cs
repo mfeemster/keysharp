@@ -10,8 +10,8 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private string lastHotFunc = "";
 		private Dictionary<string, string> conditionIds;
+		private string lastHotFunc = "";
 
 		private string HotkeyConditionId()
 		{
@@ -226,7 +226,7 @@ namespace Keysharp.Scripting
 				// Allow a current function if it is mLastHotFunc, this allows stacking,
 				// x::          // mLastHotFunc created here
 				// y::action    // parsing "y::" now.
-				//Need to figure out a way to support "stacking".//TOOD
+				//We can nest functions in Keysharp, but they end up just being un-nested in the final gnerated code. So we allow them, but they don't do anything special.
 				/*
 				    if ((g->CurrentFunc && g->CurrentFunc != mLastHotFunc) || mClassObjectCount)
 				    {
@@ -240,18 +240,16 @@ namespace Keysharp.Scripting
 				    return ScriptError(_T("Hotkeys/hotstrings are not allowed inside functions or classes."), buf);
 				    }
 				*/
-				//hotkey_flag = '\0'; // Terminate so that buf is now the hotkey's name.
 				var name = buf.Substring(0, hotkeyFlagIndex);
 				var options = buf.Substring(hotstringOptionsIndex, hotkeyFlagIndex - hotstringOptionsIndex);
 				var hotstring = buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex);
 				hotkeyFlagIndex += HotkeySignal.Length;  // Now hotkey_flag is the hotkey's action, if any.
-				var otbBrace = buf.Substring(hotkeyFlagIndex).TrimStart(Keysharp.Core.Core.SpaceTab);
-				hotkeyUsesOtb = otbBrace.TrimEnd(Keysharp.Core.Core.SpaceTab) == "{";//otbBrace[0] == '{' && /*!*omit_leading_whitespace(otb_brace + 1*/ otbBrace.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab).Length == 0;//Weird way of checking that there is no remaining text.
+				hotkeyUsesOtb = buf.AsSpan(hotkeyFlagIndex).TrimStart(SpaceTab).TrimEnd(SpaceTab) == "{";
 
 				if (hotstringStartIndex == -1)
 				{
 					// Mustn't use ltrim(hotkey_flag) because that would cause buf.length to become incorrect:
-					hotkeyFlagIndex = buf.FindFirstNotOf(Keysharp.Core.Core.SpaceTab, hotkeyFlagIndex);
+					hotkeyFlagIndex = buf.FindFirstNotOf(SpaceTab, hotkeyFlagIndex);
 
 					// Not done because Hotkey::TextInterpret() does not allow trailing whitespace:
 					//rtrim(buf); // Trim the new substring inside of buf (due to temp termination). It has already been ltrimmed.
@@ -479,10 +477,7 @@ namespace Keysharp.Scripting
 				}
 
 				// else don't trim hotstrings since literal spaces in both substrings are significant.
-				Func<string, string> set_last_hotfunc = (string name) =>
-				{
-					return lastHotFunc == "" ? (lastHotFunc = LabelMethodName(name)) : lastHotFunc;
-				};
+				string SetLastHotfunc(string name) => lastHotFunc.Length == 0 ? (lastHotFunc = LabelMethodName(name)) : lastHotFunc;
 
 				if (hotstringStartIndex != -1)
 				{
@@ -492,7 +487,7 @@ namespace Keysharp.Scripting
 						// the hotstring (as a label) does not actually exist as a line.  But it seems
 						// best to report it this way in case the hotstring is inside a #Include file,
 						// so that the correct file name and approximate line number are shown:
-						return null;//TODO ScriptError(_T("This hotstring is missing its abbreviation."), buf); // Display buf vs. hotkey_flag in case the line is simply "::::".
+						throw new ParseException($"This hotstring is missing its abbreviation: {buf}.");
 					}
 
 					// In the case of hotstrings, hotstring_start is the beginning of the hotstring itself,
@@ -510,13 +505,13 @@ namespace Keysharp.Scripting
 						// {
 						// }
 						// would execute the block. But X is supposed to mean "execute this line".
-						return null;// ScriptError(ERR_EXPECTED_ACTION);
+						throw new ParseException("Expected single-line action.");
 
 					if (hotkeyUsesOtb)
 					{
 						// Never use otb if text or raw mode is in effect for this hotstring.
 						// Either explicitly or via #hotstring.
-						var uses_text_or_raw_mode = Keysharp.Scripting.Script.hsSendRaw != SendRawModes.NotRaw;
+						var uses_text_or_raw_mode = HotstringDefinition.DefaultHotstringSendRaw != SendRawModes.NotRaw;
 
 						for (var i = hotstringOptionsIndex; i < hotstringStartIndex; ++i)
 						{
@@ -533,38 +528,35 @@ namespace Keysharp.Scripting
 							hotkeyUsesOtb = false;
 					}
 
+					var replacement = hotkeyFlagIndex >= 0 ? buf.Substring(hotkeyFlagIndex) : "";
+
 					//All of this here needs work.//TODO
-					/*
-					    // The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
-					    if ((hotkeyFlagIndex == -1 || hotkeyUsesOtb) || hotstringExecute)
-					    {
-					    if (set_last_hotfunc() == null)// It is not auto-replace
-					        return null;// ResultType.Fail;
-					    }
+					// The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
+					if (replacement.Length == 0 || hotkeyUsesOtb || hotstringExecute)
+					{
+						if (SetLastHotfunc(name) == "")// It is not auto-replace
+							return null;// ResultType.Fail;
+					}
+					else if (lastHotFunc.Length > 0 && replacement.Length > 0)//Can't have stacked auto replace hotstrings.
+					{
+						// It is autoreplace but an earlier hotkey or hotstring
+						// is "stacked" above, treat it as and error as it doesn't
+						// make sense. Otherwise one could write something like:
+						//
+						//    ::abc::
+						//    ::def::text
+						//    x::action
+						//    which would work as,
+						//    ::def::text
+						//    ::abc::
+						//    x::action
+						// Note that if it is ":X:def::action" instead, we do not end up here and
+						// "::abc::" will also trigger "action".
+						throw new ParseException("Hotkey or hotstring is missing its opening brace.");
+					}
 
-					    else if (mLastHotFunc)//Need a way to keep track of current func.//TODO
-					    {
-					    // It is autoreplace but an earlier hotkey or hotstring
-					    // is "stacked" above, treat it as and error as it doesn't
-					    // make sense. Otherwise one could write something like:
-					    //
-					    //    ::abc::
-					    //    ::def::text
-					    //    x::action
-					    //    which would work as,
-					    //    ::def::text
-					    //    ::abc::
-					    //    x::action
-
-					    // Note that if it is ":X:def::action" instead, we do not end up here and
-					    // "::abc::" will also trigger "action".
-					    mCombinedLineNumber--;  // It must be the previous line.
-					    return ScriptError(ERR_HOTKEY_MISSING_BRACE);
-					    }
-					*/
 					var funcname = "";
 					var nextIndex = index + 1;
-					var replacement = buf.Substring(hotkeyFlagIndex);
 
 					if (hotstringExecute)
 					{
@@ -592,7 +584,7 @@ namespace Keysharp.Scripting
 							if (hotkeyUsesOtb ^ expect)//This is a hotstring that performs a custom action, so treat the body of it as the start of a new function.
 							{
 								StartNewFunction();
-								funcname = set_last_hotfunc(name);
+								funcname = SetLastHotfunc(name);
 								var method = LocalMethod(funcname);
 								var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 								block.Type = expect ? CodeBlock.BlockType.Expect : CodeBlock.BlockType.Within;
@@ -605,18 +597,20 @@ namespace Keysharp.Scripting
 							{
 								if (IsHotstringLabel(nextBuf))
 								{
-									funcname = set_last_hotfunc(name);
+									funcname = SetLastHotfunc(name);
 								}
 								else if (nextBuf != "")//Read all lines until a return statement is found, then treat them all as a function by inserting braces and marking all variable references as global.
 								{
+									var existingLineCount = lines.Count;
 									var np1 = nextIndex + 1;
 									lines.Insert(nextIndex, new CodeLine(nextLine.FileName, np1, "{"));
-									lines.Insert(np1, new CodeLine(nextLine.FileName, ++np1, "global"));
+									//lines.Insert(np1, new CodeLine(nextLine.FileName, ++np1, "global"));
+									var linesAdded = lines.Count - existingLineCount;
 									var i = np1;
 
 									for (; i < lines.Count; i++)
 									{
-										lines[i].LineNumber += 2;
+										lines[i].LineNumber += linesAdded;
 
 										if (lines[i].Code.Trim() == "return")
 											break;
@@ -629,7 +623,7 @@ namespace Keysharp.Scripting
 										lines[i].LineNumber = i + 1;
 
 									StartNewFunction();
-									funcname = set_last_hotfunc(name);
+									funcname = SetLastHotfunc(name);
 									var method = LocalMethod(funcname);
 									var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 									block.Type = CodeBlock.BlockType.Expect;
@@ -643,7 +637,7 @@ namespace Keysharp.Scripting
 					}
 
 					Persistent = true;
-					var hasContinuationSection = false;//Figure out how to detect this.//TODO
+					var hasContinuationSection = replacement.IndexOfAny(CrLf) != -1;//Not a perfect detection, but will be correct most of the time.
 					invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotstring;
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(name));
 					_ = invoke.Parameters.Add(funcname != "" ? new CodeSnippetExpression($"new FuncObj(\"{funcname}\", null)") : new CodePrimitiveExpression(null));
@@ -652,14 +646,6 @@ namespace Keysharp.Scripting
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotstringExecute || hotkeyUsesOtb ? "" : replacement));
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hasContinuationSection));
 					return invoke;
-					//if (HotstringDefinition.AddHotstring(buf, /*mLastHotFunc*/null, buf.Substring(hotstringOptionsIndex),
-					//                           buf.Substring(hotstringStartIndex), hotstringExecute || hotkeyUsesOtb ? "" : replacement, hasContinuationSection) == ResultType.Fail)
-					//return null;// ResultType.Fail;
-					/*
-					    if (!mLastHotFunc)//Figure this out.//TODO
-					    //goto continue_main_loop;//TODO
-					        return null;
-					*/
 				}
 				else // It's a hotkey vs. hotstring.
 				{
@@ -697,7 +683,7 @@ namespace Keysharp.Scripting
 							if (hook_is_mandatory || Keysharp.Scripting.Script.forceKeybdHook)
 							{
 								// Require the hook for all variants of this hotkey if any variant requires it.
-								// This seems more intuitive than the old behaviour, which required $ or #UseHook
+								// This seems more intuitive than the old behavior, which required $ or #UseHook
 								// to be used on the *first* variant, even though it affected all variants.
 								hk.keybdHookMandatory = true;
 							}

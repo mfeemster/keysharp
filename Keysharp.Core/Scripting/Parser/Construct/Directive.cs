@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core;
+using Keysharp.Core.Common.Keyboard;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
@@ -21,23 +22,24 @@ namespace Keysharp.Scripting
 	{
 		public static bool WinActivateForce = WinActivateForceDefault;
 
-		//private bool NoEnv;// = NoEnvDefault;
-		static internal bool NoTrayIcon = NoTrayIconDefault;
-
-		internal static bool Persistent = PersistentDefault;
-
-		internal bool ErrorStdOut = false;
-
-		internal static int MaxThreadsTotal = 10;
+		internal static int HotExprTimeout = 1000;
 
 		internal static bool MaxThreadsBuffer = false;
 
 		internal static int MaxThreadsPerHotkey = 1;
-		internal static int HotExprTimeout = 1000;
-		internal static bool SuspendExempt; // #SuspendExempt, applies to hotkeys and hotstrings.
-		internal static bool SuspendExemptHS; // This is just to prevent #Hotstring "S" from affecting hotkeys.
-		internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
 
+		internal static int MaxThreadsTotal = 10;
+
+		//private bool NoEnv;// = NoEnvDefault;
+		internal static bool NoTrayIcon = NoTrayIconDefault;
+
+		internal static bool Persistent = PersistentDefault;
+
+		internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
+		internal static bool SuspendExempt;
+		internal bool ErrorStdOut = false;
+
+		// #SuspendExempt, applies to hotkeys and hotstrings.
 		//private const bool NoEnvDefault = false;
 		private const bool NoTrayIconDefault = false;
 
@@ -68,7 +70,7 @@ namespace Keysharp.Scripting
 			HotExprTimeout = 1000;
 			MaxThreadsBuffer = false;
 			SuspendExempt = false;
-			SuspendExemptHS = false;
+			HotstringDefinition.hsSuspendExempt = false;
 			preloadedDlls.Clear();
 			//NoEnv = NoEnvDefault;
 			NoTrayIcon = NoTrayIconDefault;

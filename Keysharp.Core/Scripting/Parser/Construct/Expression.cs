@@ -33,10 +33,10 @@ namespace Keysharp.Scripting
 						{
 							var invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
 
-							//Distinguish between Index which is an array or dictionary lookup and MethodIndex which is calling a method.
+							//Distinguish between Index which is an array or dictionary lookup and GetMethodOrProperty which is getting a method or property to be called.
 							if (parts[n] is CodeMethodInvokeExpression indexcmie)
 							{
-								var tempinvoke = (CodeMethodInvokeExpression)InternalMethods.MethodIndex;
+								var tempinvoke = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
 								tempinvoke.Parameters.Clear();
 								tempinvoke.Parameters.AddRange(indexcmie.Parameters);
 								parts[n] = tempinvoke;//Replace Index with MethodIndex.

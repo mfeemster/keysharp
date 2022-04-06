@@ -27,7 +27,7 @@ namespace Keysharp.Core
 				if (tooltipForm == null)
 					return;
 
-				tooltipForm.BeginInvoke(() =>
+				tooltipForm.CheckedBeginInvoke(() =>
 				{
 					var coord = Mouse.Coords.Tooltip;
 
@@ -76,7 +76,7 @@ namespace Keysharp.Core
 			{
 				var bmp = ImageHelper.LoadImage(filename, 0, 0, --iconnumber);
 
-				if (Core.Tray == null)
+				if (Script.Tray == null)
 					Script.CreateTrayMenu();
 
 				if (bmp != null)
@@ -86,7 +86,7 @@ namespace Keysharp.Core
 
 					if (icon != null)
 					{
-						Core.Tray.Icon = icon;
+						Script.Tray.Icon = icon;
 						Accessors.A_IconFile = filename;
 						Accessors.A_IconNumber = iconnumber;
 					}
@@ -98,7 +98,7 @@ namespace Keysharp.Core
 			{
 				Accessors.A_IconFile = "";
 				Accessors.A_IconNumber = 1;
-				Core.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+				Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			}
 		}
 
@@ -109,15 +109,15 @@ namespace Keysharp.Core
 			if (Parser.NoTrayIcon)
 				return;
 
-			if (Accessors.A_IconHidden)
+			if ((bool)Accessors.A_IconHidden)
 				return;
 
-			if (Core.Tray == null)
+			if (Script.Tray == null)
 				Script.CreateTrayMenu();
 
 			if (text?.Length == 0 && title?.Length == 0)
 			{
-				Core.Tray.Visible = false;
+				Script.Tray.Visible = false;
 				return;
 			}
 
@@ -152,8 +152,8 @@ namespace Keysharp.Core
 			else if (options != null)
 				HandleInt(options);
 
-			Core.Tray.Visible = true;
-			Core.Tray.ShowBalloonTip(duration * 1000, title, text, icon);
+			Script.Tray.Visible = true;
+			Script.Tray.ShowBalloonTip(duration * 1000, title, text, icon);
 		}
 	}
 }

@@ -3,10 +3,14 @@ using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
 {
+	/// <summary>
+	/// This was needed to implement this note in the documentation for && and ||:
+	///     In an expression where all operands resolve to True, the last operand that resolved to True is returned. Otherwise, the first operand that resolves to False is returned.
+	///     In an expression where at least one operand resolves to True, the first operand that resolved to True is returned. Otherwise, the last operand that resolves to False is returned.
+	/// </summary>
 	public class BoolResult// : Keysharp.Core.KeysharpObject
 	{
 		internal bool b;
@@ -18,26 +22,27 @@ namespace Keysharp.Scripting
 			o = GetNestedObj(_o);
 		}
 
+		public static implicit operator bool(BoolResult r) => r.b;
+
 		public static BoolResult operator &(BoolResult obj1, BoolResult obj2) => !obj1.b ? obj1 : obj2;
+
 		//public static object operator &(BoolResult obj1, BoolResult obj2) => !obj1.b ? obj1 : obj2;
+
+		public static bool operator false(BoolResult obj) => !obj.b;
+
+		public static bool operator true(BoolResult obj) => obj.b;
+
+		public override string ToString() => o.ToString();
 
 		public static BoolResult operator |(BoolResult obj1, BoolResult obj2) => obj1.b ? obj1 : obj2;
 
 		//public static object operator |(BoolResult obj1, BoolResult obj2) => obj1.b ? obj1 : obj2;
-
-		public static bool operator true(BoolResult obj) => obj.b;
-
-		public static bool operator false(BoolResult obj) => !obj.b;
-
-		public static implicit operator bool(BoolResult r) => r.b;
-
 		private object GetNestedObj(object obj) => obj is BoolResult br ? GetNestedObj(br.o) : obj;//Could potentially be very slow.
 
-		public override string ToString() => o.ToString();
 		//public static explicit operator object(BoolResult r) => r.o;
 	}
 
-	partial class Script
+	public partial class Script
 	{
 		internal static bool ForceBool(object input)
 		{
@@ -254,7 +259,7 @@ namespace Keysharp.Scripting
 				var t = input.GetType();
 				var simple = t == typeof(int) || t == typeof(uint) || t == typeof(long);
 				var integer = simple || (t == typeof(double) && Math.IEEERemainder((double)input, 1) == 0);
-				var format = Keysharp.Core.Accessors.A_FormatNumeric;
+				var format = Keysharp.Core.Accessors.A_FormatNumeric as string;
 				var hex = format.IndexOf('x') != -1;
 				const string hexpre = "0x";
 
@@ -275,8 +280,8 @@ namespace Keysharp.Scripting
 
 				if (hex)
 				{
-					Keysharp.Core.Accessors.A_FormatNumeric = null;
-					var result = d.ToString(Keysharp.Core.Accessors.A_FormatNumeric);
+					Keysharp.Core.Accessors.A_FormatNumeric = "X";
+					var result = d.ToString(Keysharp.Core.Accessors.A_FormatNumeric as string);
 					Keysharp.Core.Accessors.A_FormatNumeric = format;
 					return hexpre + result;
 				}

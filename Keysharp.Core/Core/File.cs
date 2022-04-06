@@ -33,7 +33,7 @@ namespace Keysharp.Core
 		public string Encoding
 		{
 			get => enc.BodyName;
-			set => enc = Core.GetEncoding(value);
+			set => enc = GetEncoding(value);
 		}
 
 		public long Handle => fs != null ? fs.SafeFileHandle.DangerousGetHandle().ToInt64() : 0;
@@ -144,6 +144,57 @@ namespace Keysharp.Core
 
 		~File() => Dispose(false);
 
+		public static void FileEncoding(params object[] obj)
+		{
+			var s = obj.L().S1();
+
+			if (s != "")
+				Accessors.A_FileEncoding = s;
+		}
+
+		public static Encoding GetEncoding(object s)
+		{
+			var val = s.ToString().ToLowerInvariant();
+			Encoding tempenc;
+
+			if (val.StartsWith("cp"))
+				return System.Text.Encoding.GetEncoding(val.Substring(2).ParseInt().Value);
+
+			if (int.TryParse(val, out var cp))
+				return System.Text.Encoding.GetEncoding(cp);
+
+			switch (val)
+			{
+				case "ascii":
+				case "us-ascii":
+					return System.Text.Encoding.ASCII;
+
+				case "utf-8":
+					return System.Text.Encoding.UTF8;
+
+				case "utf-8-raw":
+					return new UTF8Encoding(false);//No byte order mark.
+
+				case "utf-16":
+				case "unicode":
+					return System.Text.Encoding.Unicode;
+
+				case "utf-16-raw":
+					return new UnicodeEncoding(false, false);//Little endian, no byte order mark.
+			}
+
+			try
+			{
+				tempenc = System.Text.Encoding.GetEncoding(val);
+				return tempenc;
+			}
+			catch
+			{
+			}
+
+			return System.Text.Encoding.Unicode;
+		}
+
 		public void Close(params object[] obj)
 		{
 			br?.Close();
@@ -151,12 +202,6 @@ namespace Keysharp.Core
 			tr?.Close();
 			tw?.Close();
 			fs?.Close();
-		}
-
-		void IDisposable.Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
 		}
 
 		public virtual void Dispose(bool disposing)
@@ -462,6 +507,12 @@ namespace Keysharp.Core
 			}
 			else
 				return 0;
+		}
+
+		void IDisposable.Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 
 		private string HandleReadEol(string s)

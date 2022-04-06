@@ -48,6 +48,22 @@ namespace Keysharp.Core
 			};
 		}
 
+		public string GetText()
+		{
+			var str = "";
+
+			if ((mod & Keys.Control) == Keys.Control)
+				str += Core.Keyword_ModifierCtrl;
+
+			if ((mod & Keys.Shift) == Keys.Shift)
+				str += Core.Keyword_ModifierShift;
+
+			if ((mod & Keys.Alt) == Keys.Alt)
+				str += Core.Keyword_ModifierAlt;
+
+			return str + key.ToString();
+		}
+
 		public void SetText(string text)
 		{
 			Keys keys = Keys.None, mods = Keys.None;
@@ -76,22 +92,6 @@ namespace Keysharp.Core
 			mod = mods;
 			Validate();
 			SetText();
-		}
-
-		public string GetText()
-		{
-			var str = "";
-
-			if ((mod & Keys.Control) == Keys.Control)
-				str += Core.Keyword_ModifierCtrl;
-
-			if ((mod & Keys.Shift) == Keys.Shift)
-				str += Core.Keyword_ModifierShift;
-
-			if ((mod & Keys.Alt) == Keys.Alt)
-				str += Core.Keyword_ModifierAlt;
-
-			return str + key.ToString();
 		}
 
 		private void SetText()
