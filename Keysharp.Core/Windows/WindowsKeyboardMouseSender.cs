@@ -88,16 +88,16 @@ namespace Keysharp.Core.Windows
 		//public const uint KEY_BLOCK_THIS = (KEY_IGNORE + 1);
 		private static readonly int[] ctrls = { /*(int)Keys.ShiftKey, */(int)Keys.LShiftKey, (int)Keys.RShiftKey, /*(int)Keys.ControlKey,*/(int)Keys.LControlKey, (int)Keys.RControlKey, (int)Keys.Menu };
 
-		private static readonly byte[] state = new byte[VKMAX];
+		//private static readonly byte[] state = new byte[VKMAX];
 		private static IntPtr hookId = IntPtr.Zero;
 		private static bool thisEventHasBeenLogged, thisEventIsScreenCoord;
 		private StringBuilder buf = new StringBuilder(4);
 		private List<CachedLayoutType> cachedLayouts = new List<CachedLayoutType>(10);
-		private bool dead;
-		private List<uint> deadKeys;
-		private bool ignore;
-		private IntPtr kbd = WindowsAPI.GetKeyboardLayout(0);
-		private WindowsAPI.LowLevelKeyboardProc proc;
+		//private bool dead;
+		//private List<uint> deadKeys;
+		//private bool ignore;
+		//private IntPtr kbd = WindowsAPI.GetKeyboardLayout(0);
+		//private WindowsAPI.LowLevelKeyboardProc proc;
 
 		private DateTime thisEventTime;
 
@@ -549,7 +549,7 @@ namespace Keysharp.Core.Windows
 					modifiersLRLogical &= ~modifiersWronglyDown;
 					modifiersLRLogicalNonIgnored &= ~modifiersWronglyDown;
 					// Also adjust physical state so that the GetKeyState command will retrieve the correct values:
-					AdjustKeyState(state, modifiersLRPhysical);
+					AdjustKeyState(ht.physicalKeyState, modifiersLRPhysical);
 
 					// Also reset pPrefixKey if it is one of the wrongly-down modifiers.
 					if (prefixKey != null && (prefixKey.asModifiersLR & modifiersWronglyDown) != 0)
@@ -884,7 +884,7 @@ namespace Keysharp.Core.Windows
 				WindowsAPI.mouse_event(eventFlags
 									   , x == CoordUnspecified ? 0 : x // v1.0.43.01: Must be zero if no change in position is desired
 									   , y == CoordUnspecified ? 0 : y // (fixes compatibility with certain apps/games).
-									   , data, new UIntPtr(KeyIgnoreLevel((uint)Accessors.A_SendLevel)));
+									   , data, new UIntPtr(KeyIgnoreLevel((uint)(long)Accessors.A_SendLevel)));
 		}
 
 		/// <summary>
@@ -1336,12 +1336,13 @@ namespace Keysharp.Core.Windows
 			if (Accessors.SendMode == SendModes.Input)
 			{
 				var thisEvent = new INPUT();// For performance and convenience.
+				var sendLevel = (uint)(long)Accessors.A_SendLevel;
 				thisEvent.type = WindowsAPI.INPUT_MOUSE;
 				thisEvent.i.m.dx = (x == CoordUnspecified) ? 0 : x; // v1.0.43.01: Must be zero if no change in position is
 				thisEvent.i.m.dy = (y == CoordUnspecified) ? 0 : y; // desired (fixes compatibility with certain apps/games).
 				thisEvent.i.m.dwFlags = eventFlags;
 				thisEvent.i.m.mouseData = data;
-				thisEvent.i.m.dwExtraInfo = KeyIgnoreLevel((uint)Accessors.A_SendLevel); // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
+				thisEvent.i.m.dwExtraInfo = KeyIgnoreLevel(sendLevel); // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
 				thisEvent.i.m.time = 0; // Let the system provide its own timestamp, which might be more accurate for individual events if this will be a very long SendInput.
 				eventSi.Add(thisEvent);
 				hooksToRemoveDuringSendInput |= HookMouse; // Presence of mouse hook defeats uninterruptibility of mouse clicks/moves.
@@ -1690,6 +1691,7 @@ namespace Keysharp.Core.Windows
 			// in pressed down even after it's sent.
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
 			var vkIsMouse = Keysharp.Scripting.Script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
+			var sendLevel = (uint)(long)Accessors.A_SendLevel;
 
 			for (var i = 0; i < repeatCount; ++i)
 			{
@@ -1726,7 +1728,7 @@ namespace Keysharp.Core.Windows
 					// both hooks so that the Start Menu doesn't appear when the Win key is released, so we're
 					// not responsible for that type of disguising here.
 					SetModifierLRState(modifiersLRSpecified, Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState()
-									   , targetWindow, false, true, (long)Accessors.A_SendLevel != 0L ? KeyIgnoreLevel((uint)Accessors.A_SendLevel) : KeyIgnore); // See keyboard_mouse.h for explanation of KEY_IGNORE.
+									   , targetWindow, false, true, sendLevel != 0 ? KeyIgnoreLevel(sendLevel) : KeyIgnore); // See keyboard_mouse.h for explanation of KEY_IGNORE.
 					// Above: Fixed for v1.1.27 to use KEY_IGNORE except when SendLevel is non-zero (since that
 					// would indicate that the script probably wants to trigger a hotkey).  KEY_IGNORE is used
 					// (and was prior to v1.1.06.00) to prevent the temporary modifier state changes here from
@@ -1746,7 +1748,7 @@ namespace Keysharp.Core.Windows
 				{
 					// Sending mouse clicks via ControlSend is not supported, so in that case fall back to the
 					// old method of sending the VK directly (which probably has no effect 99% of the time):
-					SendKeyEvent(eventType, vk, sc, targetWindow, true, KeyIgnoreLevel((uint)Accessors.A_SendLevel));
+					SendKeyEvent(eventType, vk, sc, targetWindow, true, KeyIgnoreLevel(sendLevel));
 				}
 			} // for() [aRepeatCount]
 
@@ -2863,13 +2865,14 @@ namespace Keysharp.Core.Windows
 			// key combinations with Unicode packets either do nothing at all or do the same as
 			// without the modifiers.  All modifiers are known to interfere in some applications.
 			SetModifierLRState(modifiers, Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState(), IntPtr.Zero, false, true, KeyIgnore);
+			var sendLevel = (uint)(long)Accessors.A_SendLevel;
 
 			if (Accessors.SendMode == SendModes.Input)
 			{
 				// Calling SendInput() now would cause characters to appear out of sequence.
 				// Instead, put them into the array and allow them to be sent in sequence.
-				PutKeybdEventIntoArray(0, 0, ch, WindowsAPI.KEYEVENTF_UNICODE, KeyIgnoreLevel((uint)Accessors.A_SendLevel));
-				PutKeybdEventIntoArray(0, 0, ch, WindowsAPI.KEYEVENTF_UNICODE | WindowsAPI.KEYEVENTF_KEYUP, KeyIgnoreLevel((uint)Accessors.A_SendLevel));
+				PutKeybdEventIntoArray(0, 0, ch, WindowsAPI.KEYEVENTF_UNICODE, KeyIgnoreLevel(sendLevel));
+				PutKeybdEventIntoArray(0, 0, ch, WindowsAPI.KEYEVENTF_UNICODE | WindowsAPI.KEYEVENTF_KEYUP, KeyIgnoreLevel(sendLevel));
 				return;
 			}
 
@@ -2886,13 +2889,13 @@ namespace Keysharp.Core.Windows
 			uInput[0].i.k.dwFlags = WindowsAPI.KEYEVENTF_UNICODE;
 			uInput[0].i.k.time = 0;
 			// L25: Set dwExtraInfo to ensure AutoHotkey ignores the event; otherwise it may trigger a SCxxx hotkey (where xxx is u_code).
-			uInput[0].i.k.dwExtraInfo = KeyIgnoreLevel((uint)Accessors.A_SendLevel);
+			uInput[0].i.k.dwExtraInfo = KeyIgnoreLevel(sendLevel);
 			uInput[1].type = WindowsAPI.INPUT_KEYBOARD;
 			uInput[1].i.k.wVk = 0;
 			uInput[1].i.k.wScan = ch;
 			uInput[1].i.k.dwFlags = WindowsAPI.KEYEVENTF_UNICODE | WindowsAPI.KEYEVENTF_KEYUP;
 			uInput[1].i.k.time = 0;
-			uInput[1].i.k.dwExtraInfo = KeyIgnoreLevel((uint)Accessors.A_SendLevel);
+			uInput[1].i.k.dwExtraInfo = KeyIgnoreLevel(sendLevel);
 			_ = WindowsAPI.SendInput(2, uInput, 40);// sizeof(INPUT));
 		}
 
@@ -3452,72 +3455,74 @@ namespace Keysharp.Core.Windows
 				lastPeekTime = now;
 			}
 		}
+		/*
+		    protected internal override void Send(string keys)
+		    {
+		    if (keys.Length == 0)
+		        return;
 
-		protected internal override void Send(string keys)
-		{
-			if (keys.Length == 0)
-				return;
+		    var len = keys.Length * 2;
+		    var inputs = new INPUT[len];
 
-			var len = keys.Length * 2;
-			var inputs = new INPUT[len];
+		    for (var i = 0; i < keys.Length; i++)
+		    {
+		        uint flag = WindowsAPI.KEYEVENTF_UNICODE;
 
-			for (var i = 0; i < keys.Length; i++)
-			{
-				uint flag = WindowsAPI.KEYEVENTF_UNICODE;
+		        if ((keys[i] & 0xff00) == 0xe000)
+		            flag |= WindowsAPI.KEYEVENTF_EXTENDEDKEY;
 
-				if ((keys[i] & 0xff00) == 0xe000)
-					flag |= WindowsAPI.KEYEVENTF_EXTENDEDKEY;
+		        var down = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
+		        down.i.k = new KEYBDINPUT { wScan = keys[i], dwFlags = flag };
+		        var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
+		        up.i.k = new KEYBDINPUT { wScan = keys[i], dwFlags = flag | WindowsAPI.KEYEVENTF_KEYUP };
+		        var x = i * 2;
+		        inputs[x] = down;
+		        inputs[x + 1] = up;
+		    }
 
-				var down = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
-				down.i.k = new KEYBDINPUT { wScan = keys[i], dwFlags = flag };
-				var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
-				up.i.k = new KEYBDINPUT { wScan = keys[i], dwFlags = flag | WindowsAPI.KEYEVENTF_KEYUP };
-				var x = i * 2;
-				inputs[x] = down;
-				inputs[x + 1] = up;
-			}
+		    ignore = true;
+		    _ = WindowsAPI.SendInput((uint)len, inputs, Marshal.SizeOf(typeof(INPUT)));
+		    ignore = false;
+		    }
+		*/
 
-			ignore = true;
-			_ = WindowsAPI.SendInput((uint)len, inputs, Marshal.SizeOf(typeof(INPUT)));
-			ignore = false;
-		}
+		/*
+		    protected internal override void Send(Keys key)
+		    {
+		    //This is supposed to prevent modifer keys currently pressed from applying to the key which is sent, but it doesn't seem to work.//MATT
+		    key &= ~Keys.Modifiers;
 
-		protected internal override void Send(Keys key)
-		{
-			//This is supposed to prevent modifer keys currently pressed from applying to the key which is sent, but it doesn't seem to work.//MATT
-			key &= ~Keys.Modifiers;
+		    if (key == Keys.None)
+		        return;
 
-			if (key == Keys.None)
-				return;
+		    uint flag = WindowsAPI.KEYEVENTF_UNICODE;
+		    var vk = (ushort)key;
 
-			uint flag = WindowsAPI.KEYEVENTF_UNICODE;
-			var vk = (ushort)key;
+		    if ((vk & 0xff00) == 0xe000)
+		        flag |= WindowsAPI.KEYEVENTF_EXTENDEDKEY;
 
-			if ((vk & 0xff00) == 0xe000)
-				flag |= WindowsAPI.KEYEVENTF_EXTENDEDKEY;
-
-			var down = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
-			down.i.k = new KEYBDINPUT
-			{
-				wVk = vk,//Was
-				//wVk = 0,//MATT
-				//wScan = vk,//MATT
-				dwFlags = flag
-			};
-			var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
-			up.i.k = new KEYBDINPUT
-			{
-				wVk = vk,//Was
-				//wVk = 0,//MATT
-				//wScan = vk,//MATT
-				dwFlags = flag | WindowsAPI.KEYEVENTF_KEYUP
-			};
-			var inputs = new[] { down, up };
-			ignore = true;
-			_ = WindowsAPI.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
-			ignore = false;
-		}
-
+		    var down = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
+		    down.i.k = new KEYBDINPUT
+		    {
+		        wVk = vk,//Was
+		        //wVk = 0,//MATT
+		        //wScan = vk,//MATT
+		        dwFlags = flag
+		    };
+		    var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
+		    up.i.k = new KEYBDINPUT
+		    {
+		        wVk = vk,//Was
+		        //wVk = 0,//MATT
+		        //wScan = vk,//MATT
+		        dwFlags = flag | WindowsAPI.KEYEVENTF_KEYUP
+		    };
+		    var inputs = new[] { down, up };
+		    ignore = true;
+		    _ = WindowsAPI.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+		    ignore = false;
+		    }
+		*/
 		/// <summary>
 		/// aSC or vk (but not both), can be zero to cause the default to be used.
 		/// For keys like NumpadEnter -- that have a unique scancode but a non-unique virtual key --
@@ -3793,25 +3798,25 @@ namespace Keysharp.Core.Windows
 				DoKeyDelay(); // Thread-safe because only called by main thread in this mode.  See notes above.
 		}
 
-		protected override void Backspace(int length)
-		{
-			length *= 2;
-			var inputs = new INPUT[length];
-
-			for (var i = 0; i < length; i += 2)
-			{
-				var down = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
-				down.i.k = new KEYBDINPUT { wVk = VK_BACK };
-				var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
-				up.i.k = new KEYBDINPUT { wVk = VK_BACK, dwFlags = WindowsAPI.KEYEVENTF_KEYUP };
-				inputs[i] = down;
-				inputs[i + 1] = up;
-			}
-
-			ignore = true;
-			_ = WindowsAPI.SendInput((uint)length, inputs, Marshal.SizeOf(typeof(INPUT)));
-			ignore = false;
-		}
+		//protected override void Backspace(int length)
+		//{
+		//  length *= 2;
+		//  var inputs = new INPUT[length];
+		//
+		//  for (var i = 0; i < length; i += 2)
+		//  {
+		//      var down = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
+		//      down.i.k = new KEYBDINPUT { wVk = VK_BACK };
+		//      var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
+		//      up.i.k = new KEYBDINPUT { wVk = VK_BACK, dwFlags = WindowsAPI.KEYEVENTF_KEYUP };
+		//      inputs[i] = down;
+		//      inputs[i + 1] = up;
+		//  }
+		//
+		//  ignore = true;
+		//  _ = WindowsAPI.SendInput((uint)length, inputs, Marshal.SizeOf(typeof(INPUT)));
+		//  ignore = false;
+		//}
 
 		//protected override void DeregisterHook()
 		//{
@@ -3819,7 +3824,7 @@ namespace Keysharp.Core.Windows
 		//}
 		protected override void RegisterHook()//This appears to do nothing and can probably be removed.//TODO
 		{
-			ScanDeadKeys();
+			//ScanDeadKeys();
 			//proc = LowLevelKeybdProc;
 			//hookId = WindowsAPI.SetWindowsHookEx(WH_KEYBOARD_LL, proc, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
 		}
@@ -3912,48 +3917,49 @@ namespace Keysharp.Core.Windows
 		            // Return value is ignored, except possibly when aCode < 0 (MSDN is unclear).
 		        }
 		*/
+		/*
+		    private string MapKey(uint vk, uint sc)
+		    {
+		    _ = buf.Clear();//MATT
+		    _ = WindowsAPI.GetKeyboardState(state);
 
-		private string MapKey(uint vk, uint sc)
-		{
-			_ = buf.Clear();//MATT
-			_ = WindowsAPI.GetKeyboardState(state);
+		    foreach (var key in ctrls)
+		    {
+		        const byte d = 0x80;
+		        const byte u = d - 1;
+		        //var s = WindowsAPI.GetKeyState(key) >> 8 != 0;//This appears redundant, since GetKeyboardState() queried all key states above.//MATT
+		        var s = WindowsAPI.GetAsyncKeyState(key) >> 8 != 0;//This appears redundant, since GetKeyboardState() queried all key states above.//MATT
+		        state[key] &= s ? d : u;
 
-			foreach (var key in ctrls)
-			{
-				const byte d = 0x80;
-				const byte u = d - 1;
-				//var s = WindowsAPI.GetKeyState(key) >> 8 != 0;//This appears redundant, since GetKeyboardState() queried all key states above.//MATT
-				var s = WindowsAPI.GetAsyncKeyState(key) >> 8 != 0;//This appears redundant, since GetKeyboardState() queried all key states above.//MATT
-				state[key] &= s ? d : u;
+		        if (s)//MATT
+		        {
+		            if ((Keys)key == Keys.LShiftKey || (Keys)key == Keys.RShiftKey)//For some reason, neither GetKeyboardState() or GetKeyState() properly sets these.
+		                state[(int)Keys.ShiftKey] = 0x80;
+		            else if ((Keys)key == Keys.LControlKey || (Keys)key == Keys.RControlKey)
+		                state[(int)Keys.ControlKey] = 0x80;
+		        }
+		    }
 
-				if (s)//MATT
-				{
-					if ((Keys)key == Keys.LShiftKey || (Keys)key == Keys.RShiftKey)//For some reason, neither GetKeyboardState() or GetKeyState() properly sets these.
-						state[(int)Keys.ShiftKey] = 0x80;
-					else if ((Keys)key == Keys.LControlKey || (Keys)key == Keys.RControlKey)
-						state[(int)Keys.ControlKey] = 0x80;
-				}
-			}
+		    _ = WindowsAPI.ToUnicodeEx(vk, sc, state, buf, buf.Capacity, 0, kbd);
+		    return buf.ToString();
+		    }
+		*/
+		/*
+		    private void ScanDeadKeys()
+		    {
+		    //var kbd = WindowsAPI.GetKeyboardLayout(0);//MATT
+		    _ = buf.Clear();//MATT
+		    deadKeys = new List<uint>();
 
-			_ = WindowsAPI.ToUnicodeEx(vk, sc, state, buf, buf.Capacity, 0, kbd);
-			return buf.ToString();
-		}
+		    for (var i = 0u; i < VKMAX; i++)
+		    {
+		        var result = WindowsAPI.ToUnicodeEx(i, 0, state, buf, buf.Capacity, 0, kbd);
 
-		private void ScanDeadKeys()
-		{
-			//var kbd = WindowsAPI.GetKeyboardLayout(0);//MATT
-			_ = buf.Clear();//MATT
-			deadKeys = new List<uint>();
-
-			for (var i = 0u; i < VKMAX; i++)
-			{
-				var result = WindowsAPI.ToUnicodeEx(i, 0, state, buf, buf.Capacity, 0, kbd);
-
-				if (result == -1)
-					deadKeys.Add(i);
-			}
-		}
-
+		        if (result == -1)
+		            deadKeys.Add(i);
+		    }
+		    }
+		*/
 		internal class CachedLayoutType
 		{
 			internal ResultType has_altgr = ResultType.Fail;

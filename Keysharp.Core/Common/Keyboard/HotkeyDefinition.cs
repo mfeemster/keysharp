@@ -180,7 +180,8 @@ namespace Keysharp.Core.Common.Keyboard
 		*/
 	}
 
-	internal class HotkeyDefinition
+	//internal class HotkeyDefinition
+	public class HotkeyDefinition
 	{
 		internal const int AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
 
@@ -571,9 +572,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (Keysharp.Scripting.Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
 				WindowsAPI.UnhookWindowsHookEx(Keysharp.Scripting.Script.playbackHook);
 
-			for (var i = 0; i < shk.Count; ++i)
-				shk[i] = null; // Unregisters before destroying.
-
+			shk.Clear();//Hotkeys will unregister as they go out of scope.
 			// Do this only at the last possible moment prior to exit() because otherwise
 			// it may free memory that is still in use by objects that depend on it.
 			// This is actually kinda wrong because when exit() is called, the destructors
@@ -1325,7 +1324,8 @@ namespace Keysharp.Core.Common.Keyboard
 		///   cause a HK_KEYBD_HOOK hotkey to become HK_NORMAL, and the converse is also true.
 		/// - Based on the above, decide whether the keyboard and/or mouse hooks need to be (de)activated.
 		/// </summary>
-		internal static void ManifestAllHotkeysHotstringsHooks()
+		//internal static void ManifestAllHotkeysHotstringsHooks()
+		public static void ManifestAllHotkeysHotstringsHooks()
 		{
 			// v1.0.37.05: A prefix key such as "a" in "a & b" should cause any use of "a" as a suffix
 			// (such as ^!a) also to be a hook hotkey.  Otherwise, the ^!a hotkey won't fire because the

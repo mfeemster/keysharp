@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
 using Keysharp.Scripting;
 using ThreadState = System.Threading.ThreadState;
 using Timer = System.Timers.Timer;
@@ -78,13 +77,8 @@ namespace Keysharp.Core
 		public static void ExitApp(params object[] obj)
 		{
 			var exitCode = obj.L().I1();
-			ApplicationExit?.Invoke(null, null);
-			HotkeyDefinition.AllDestruct(exitCode);//Sort of hacky how this does the add/remove threds, but Stop() shuts down the thread. Perhaps refactor later to be more elegant.//TODO
-
-			if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht)
-				ht.Stop();
-
 			Script.mainWindow?.Close();
+			ApplicationExit?.Invoke(null, null);
 			Environment.Exit(exitCode);
 		}
 
@@ -378,9 +372,6 @@ namespace Keysharp.Core
 			, Close, Menu, Exit, Reload, SingleInstance
 		}
 
-		/// <summary>
-		///
-		/// </summary>
 		public static event EventHandler ApplicationExit;
 	}
 }

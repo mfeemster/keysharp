@@ -18,7 +18,6 @@ namespace Keysharp.Core.Windows
 		//internal Keysharp.Core.Windows.KeyboardMouseSender kbmsSender;
 
 		private static uint pendingDeadKeySC;
-
 		private static bool pendingDeadKeyUsedAltGr;
 
 		// Need to track this separately because sometimes default VK-to-SC mapping isn't correct.
@@ -199,6 +198,19 @@ namespace Keysharp.Core.Windows
 		internal WindowsHookThread()
 		{
 			kbdMsSender = new WindowsKeyboardMouseSender();
+		}
+
+		public override void SimulateKeyPress(uint key)
+		{
+			var kbdStruct = new KBDLLHOOKSTRUCT()
+			{
+				vkCode = key,
+				scanCode = (uint)MapVkToSc((int)key),
+				flags = 0,
+				time = (uint)DateTime.Now.Ticks,
+				dwExtraInfo = 0
+			};
+			LowLevelKeybdHandler(0, new IntPtr(256), ref kbdStruct);
 		}
 
 		internal override void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false)
@@ -1345,8 +1357,8 @@ namespace Keysharp.Core.Windows
 			return vk;
 		}
 
-		internal bool CollectHotstring(ref KBDLLHOOKSTRUCT ev, char[] ch, int charCount, IntPtr activeWindow,
-									   KeyHistoryItem keyHistoryCurr, ref uint hotstringWparamToPost, ref uint hotstringLparamToPost)
+		unsafe internal bool CollectHotstring(ref KBDLLHOOKSTRUCT ev, char[] ch, int charCount, IntPtr activeWindow,
+											  KeyHistoryItem keyHistoryCurr, ref uint hotstringWparamToPost, ref uint hotstringLparamToPost)
 		{
 			var suppressHotstringFinalChar = false; // Set default.
 
@@ -1370,8 +1382,14 @@ namespace Keysharp.Core.Windows
 			{
 				int cphs, cpbuf, cpcaseStart, cpcaseEnd;
 				int caseCapableCharacters;
+				var hsBufArr = HotstringDefinition.hsBuf.ToArray();//Use an array which ought to be faster for iterating than a list.
+				var hsBufCountm1 = hsBufArr.Length - 1;
+				var hsBufCountm2 = hsBufArr.Length - 2;
 				bool firstCharWithCaseIsUpper, firstCharWithCaseHasGoneBy;
+				var hasEndChar = HotstringDefinition.defEndChars.Contains(hsBufArr[hsBufArr.Length - 1]);
 				CaseConformModes caseConformMode;
+				//var sw = new Stopwatch();
+				//sw.Start();
 
 				// Searching through the hot strings in the original, physical order is the documented
 				// way in which precedence is determined, i.e. the first match is the only one that will
@@ -1385,29 +1403,29 @@ namespace Keysharp.Core.Windows
 
 					if (hs.endCharRequired)
 					{
-						if (HotstringDefinition.hsBuf.Count <= hs.str.Length) // Ensure the string is long enough for loop below.
+						if (hsBufArr.Length <= hs.str.Length) // Ensure the string is long enough for loop below.
 							continue;
 
-						if (!HotstringDefinition.hsBuf.Any(c => HotstringDefinition.defEndChars.Contains(c))) // It's not an end-char, so no match.
+						if (!hasEndChar)
 							continue;
 
-						cpbuf = HotstringDefinition.hsBuf.Count - 2; // Init once for both loops. -2 to omit end-char.
+						cpbuf = hsBufCountm2;// Init once for both loops. -2 to omit end-char.
 					}
 					else // No ending char required.
 					{
-						if (HotstringDefinition.hsBuf.Count < hs.str.Length) // Ensure the string is long enough for loop below.
+						if (hsBufArr.Length < hs.str.Length) // Ensure the string is long enough for loop below.
 							continue;
 
-						cpbuf = HotstringDefinition.hsBuf.Count - 1;// Init once for both loops.
+						cpbuf = hsBufCountm1;// Init once for both loops.
 					}
 
 					cphs = hs.str.Length - 1; // Init once for both loops.
 
 					// Check if this item is a match:
-					if (hs.caseSensitive)
+					if (hs.caseSensitive)//Using fixed* doesn't seem to make a different in performance.
 					{
 						for (; cphs >= 0; --cpbuf, --cphs)
-							if (HotstringDefinition.hsBuf[cpbuf] != hs.str[cphs])
+							if (hsBufArr[cpbuf] != hs.str[cphs])
 								break;
 					}
 					else // case insensitive
@@ -1415,7 +1433,7 @@ namespace Keysharp.Core.Windows
 						// v1.0.43.03: Using CharLower vs. tolower seems the best default behavior (even though slower)
 						// so that languages in which the higher ANSI characters are common will see "Ä" == "ä", etc.
 						for (; cphs >= 0; --cpbuf, --cphs)
-							if (char.ToLower(HotstringDefinition.hsBuf[cpbuf]) != char.ToLower(hs.str[cphs])) // v1.0.43.04: Fixed crash by properly casting to UCHAR (via macro).
+							if (char.ToLower(hsBufArr[cpbuf]) != char.ToLower(hs.str[cphs])) // v1.0.43.04: Fixed crash by properly casting to UCHAR (via macro).
 								break;
 
 					// Check if one of the loops above found a matching hotstring (relies heavily on
@@ -1423,7 +1441,7 @@ namespace Keysharp.Core.Windows
 					if (cphs >= 0 // One of the loops above stopped early due discovering "no match"...
 							// ... or it did but the "?" option is not present to protect from the fact that
 							// what lies to the left of this hotstring abbreviation is an alphanumeric character:
-							|| !hs.detectWhenInsideWord && cpbuf >= 0 && IsHotstringWordChar(HotstringDefinition.hsBuf[cpbuf])
+							|| !hs.detectWhenInsideWord && cpbuf >= 0 && IsHotstringWordChar(hsBufArr[cpbuf])
 							// ... v1.0.41: Or it's a perfect match but the right window isn't active or doesn't exist.
 							// In that case, continue searching for other matches in case the script contains
 							// hotstrings that would trigger simultaneously were it not for the "only one" rule.
@@ -1441,10 +1459,11 @@ namespace Keysharp.Core.Windows
 					// extra code to determine this at runtime; and even if it were added, it might be
 					// more flexible not to do it; instead, to let the script determine (even by resorting to
 					// #HotIf NOT WinActive()) what precedence hotstrings have with respect to each other.
-
 					//////////////////////////////////////////////////////////////
 					// MATCHING HOTSTRING WAS FOUND (since above didn't continue).
 					//////////////////////////////////////////////////////////////
+					//sw.Stop();
+					//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring {hs.str} at index {u} took {sw.Elapsed.TotalMilliseconds}ms or {((sw.Elapsed.TotalMilliseconds / (u + 1)) * 1000):F4}us per hotstring.");
 
 					// Now that we have a match, see if its InputLevel is allowed. If not,
 					// consider the key ignored (rather than continuing to search for more matches).
@@ -1466,7 +1485,7 @@ namespace Keysharp.Core.Windows
 					{
 						// Find out what case the user typed the string in so that we can have the
 						// replacement produced in similar case:
-						cpcaseEnd = HotstringDefinition.hsBuf.Count;
+						cpcaseEnd = hsBufArr.Length;
 
 						if (hs.endCharRequired)
 							--cpcaseEnd;
@@ -1476,13 +1495,13 @@ namespace Keysharp.Core.Windows
 						for (caseCapableCharacters = 0, firstCharWithCaseIsUpper = firstCharWithCaseHasGoneBy = false
 								, cpcaseStart = cpcaseEnd - hs.str.Length
 								; cpcaseStart < cpcaseEnd; ++cpcaseStart)
-							if (char.IsLower(HotstringDefinition.hsBuf[cpcaseStart]) || char.IsUpper(HotstringDefinition.hsBuf[cpcaseStart])) // A case-capable char.
+							if (char.IsLower(hsBufArr[cpcaseStart]) || char.IsUpper(hsBufArr[cpcaseStart])) // A case-capable char.
 							{
 								if (!firstCharWithCaseHasGoneBy)
 								{
 									firstCharWithCaseHasGoneBy = true;
 
-									if (char.IsUpper(HotstringDefinition.hsBuf[cpcaseStart]))
+									if (char.IsUpper(hsBufArr[cpcaseStart]))
 										firstCharWithCaseIsUpper = true; // Override default.
 								}
 
@@ -1511,7 +1530,7 @@ namespace Keysharp.Core.Windows
 								// caseless characters such as the @ symbol do not disqualify an abbreviation
 								// from being considered "all uppercase":
 								for (cpcaseStart = cpcaseEnd - hs.str.Length; cpcaseStart < cpcaseEnd; ++cpcaseStart)
-									if (char.IsLower(HotstringDefinition.hsBuf[cpcaseStart])) // Use IsCharLower to better support chars from non-English languages.
+									if (char.IsLower(hsBufArr[cpcaseStart])) // Use IsCharLower to better support chars from non-English languages.
 										break; // Any lowercase char disqualifies CASE_CONFORM_ALL_CAPS.
 
 								if (cpcaseStart == cpcaseEnd) // All case-possible characters are uppercase.
@@ -1568,7 +1587,7 @@ namespace Keysharp.Core.Windows
 					hotstringWparamToPost = (uint)u; // Override the default set by caller.
 					hotstringLparamToPost = KeyboardUtils.MakeLong(
 												hs.endCharRequired  // v1.0.48.04: Fixed to omit "&& hs.mDoBackspace" so that A_EndChar is set properly even for option "B0" (no backspacing).
-												? (short)HotstringDefinition.hsBuf[HotstringDefinition.hsBuf.Count - 1]  // Used by A_EndChar and Hotstring::DoReplace().
+												? (short)hsBufArr[hsBufArr.Length - 1]  // Used by A_EndChar and Hotstring::DoReplace().
 												: (short)0
 												, (short)caseConformMode);
 
@@ -1755,7 +1774,7 @@ namespace Keysharp.Core.Windows
 			}
 
 			// Provide the correct logical modifier and CapsLock state for any translation below.
-			WindowsKeyboardMouseSender.AdjustKeyState(keyState, KeyboardMouseSender.thisHotkeyModifiersLR);
+			WindowsKeyboardMouseSender.AdjustKeyState(keyState, kbdMsSender.modifiersLRLogical);
 
 			if (IsKeyToggledOn(VK_CAPITAL))
 				keyState[VK_CAPITAL] |= StateOn;
@@ -1786,6 +1805,14 @@ namespace Keysharp.Core.Windows
 						if (ch[1] == '\r')  // But it's never referred to if byte_count < 2
 							ch[1] = '\n';
 				}
+
+				//if (ch.Length > 0)
+				//{
+				//  if (ch[0] == 'b')
+				//      Console.WriteLine(ch[0]);
+				//  if (ch[0] == 'B')
+				//      Console.WriteLine(ch[0]);
+				//}
 			}
 			else
 			{
@@ -1961,7 +1988,6 @@ namespace Keysharp.Core.Windows
 
 			return true; // Visible.
 		}
-
 		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, int vk, int sc, char[] ch, int charCount, bool isIgnored)
 		{
 			var input = Keysharp.Scripting.Script.input;
@@ -2077,7 +2103,6 @@ namespace Keysharp.Core.Windows
 
 			return true;
 		}
-
 		internal int ConvertMouseButton(string buf, bool allowWheel = true)
 		{
 			if (buf?.Length == 0 || buf.StartsWith("Left", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("L", StringComparison.OrdinalIgnoreCase))
@@ -2105,7 +2130,6 @@ namespace Keysharp.Core.Windows
 
 			return 0;
 		}
-
 		internal override bool IsHotstringWordChar(char ch)
 		// Returns true if aChar would be part of a word if followed by a word char.
 		// aChar itself may be a word char or a nonspacing mark which combines with
@@ -2132,21 +2156,15 @@ namespace Keysharp.Core.Windows
 
 			return false;
 		}
-
 		internal override bool IsKeyDown(int vk) => (WindowsAPI.GetKeyState(vk) & 0x8000) != 0;
-
 		internal override bool IsKeyDownAsync(int vk) => (WindowsAPI.GetAsyncKeyState(vk) & 0x8000) != 0;
-
 		internal override bool IsKeyToggledOn(int vk) => (WindowsAPI.GetKeyState(vk) & 0x01) != 0;
-
 		internal override bool IsMouseVK(int vk)
 		{
 			return vk >= VK_LBUTTON && vk <= VK_XBUTTON2 && vk != VK_CANCEL
 				   || vk >= VK_NEW_MOUSE_FIRST && vk <= VK_NEW_MOUSE_LAST;
 		}
-
 		internal override bool IsWheelVK(int vk) => vk >= VK_WHEEL_LEFT&& vk <= VK_WHEEL_UP;
-
 		/// <summary>
 		/// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
 		/// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
@@ -2193,7 +2211,6 @@ namespace Keysharp.Core.Windows
 			Keysharp.Scripting.Script.timeLastInputPhysical = Keysharp.Scripting.Script.timeLastInputKeyboard = DateTime.Now;
 			return true;
 		}
-
 		/// <summary>
 		/// Convert the given virtual key / scan code to its equivalent bitwise modLR value.
 		/// Callers rely upon the fact that we convert a neutral key such as VK_SHIFT into MOD_LSHIFT,
@@ -2288,7 +2305,6 @@ namespace Keysharp.Core.Windows
 
 			return 0;
 		}
-
 		/// <summary>
 		/// v1.0.38.06: The keyboard and mouse hooks now call this common function to reduce code size and improve
 		/// maintainability.  The code size savings as of v1.0.38.06 is 3.5 KB of uncompressed code, but that
@@ -2633,6 +2649,7 @@ namespace Keysharp.Core.Windows
 			// anyway.
 			//if (!vk && !sc)
 			//    return AllowKeyToGoToSystem;
+
 			if (thisKey.usedAsPrefix == 0 && !thisKey.usedAsSuffix)
 			{
 				// Fix for v1.1.31.02: This is done regardless of used_as to ensure it doesn't get "stuck down"
@@ -4063,7 +4080,6 @@ namespace Keysharp.Core.Windows
 
 			return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
 		}
-
 		internal IntPtr LowLevelMouseHandler(int code, IntPtr param, ref MSDLLHOOKSTRUCT lParam)
 		{
 			// code != HC_ACTION should be evaluated PRIOR to considering the values
@@ -4145,7 +4161,6 @@ namespace Keysharp.Core.Windows
 			KBDLLHOOKSTRUCT tempstruct = default;
 			return LowLevelCommon(mouseHook, code, iwParam, ref tempstruct, ref lParam, vk, sc, keyUp, lParam.flags);
 		}
-
 		internal override int MapScToVk(int sc)
 		{
 			// aSC is actually a combination of the last byte of the keyboard make code combined with
@@ -4203,7 +4218,6 @@ namespace Keysharp.Core.Windows
 
 			return (int)MapVirtualKey((uint)sc, MAPVK_VSC_TO_VK_EX);
 		}
-
 		/// <summary>
 		/// If caller passes true for aReturnSecondary, the "extended" scan code will be returned for
 		/// virtual keys that have two scan codes and two names (if there's only one, callers rely on
@@ -4292,7 +4306,6 @@ namespace Keysharp.Core.Windows
 			// Since above didn't return, if aReturnSecondary==true, return 0 to indicate "no secondary SC for this VK".
 			return returnSecondary ? 0 : sc; // Callers rely on zero being returned for VKs that don't have secondary SCs.
 		}
-
 		internal override void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref int repeatCount, ref bool moveOffset)
 		{
 			// Set defaults for all output parameters for caller.
@@ -4348,7 +4361,6 @@ namespace Keysharp.Core.Windows
 				x = CoordUnspecified;
 			}
 		}
-
 		internal void ResetHook(bool allModifiersUp = false, HookType whichHook = HookType.Keyboard | HookType.Mouse, bool resetKVKandKSC = false)
 		// Caller should ensure that aWhichHook indicates at least one of the hooks (not none).
 		{
@@ -4426,7 +4438,6 @@ namespace Keysharp.Core.Windows
 				}
 			}
 		}
-
 		internal void SetModifierAsPrefix(int vk, int sc, bool alwaysSetAsPrefix = false)
 		// The caller has already ensured that vk and/or sc is a modifier such as VK_CONTROL.
 		{
@@ -4508,7 +4519,6 @@ namespace Keysharp.Core.Windows
 			else if (HotkeyDefinition.FindHotkeyContainingModLR(ksc[sc].asModifiersLR) != null)
 				ksc[sc].usedAsPrefix = KeyType.PREFIX_ACTUAL;
 		}
-
 		internal long SuppressThisKeyFunc(IntPtr hook, ref KBDLLHOOKSTRUCT lParam, int vk, int sc, bool keyUp,
 										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, uint hsWparamToPost = uint.MaxValue, uint hsLparamToPost = 0)
 		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -4605,11 +4615,8 @@ namespace Keysharp.Core.Windows
 
 			return 1;
 		}
-
 		internal override bool SystemHasAnotherKeybdHook() => SystemHasAnotherdHook(ref keybdMutex, KeybdMutexName);
-
 		internal override bool SystemHasAnotherMouseHook() => SystemHasAnotherdHook(ref mouseMutex, MouseMutexName);
-
 		internal override int TextToSC(string text, ref bool? specifiedByNumber)
 		{
 			if (text.Length == 0)
@@ -4641,7 +4648,6 @@ namespace Keysharp.Core.Windows
 
 			return 0; // Indicate "not found".
 		}
-
 		/// <summary>
 		/// Returns vk for key-down, negative vk for key-up, or zero if no translation.
 		/// We also update whatever's in *pModifiers and *pModifiersLR to reflect the type of key-action
@@ -4755,7 +4761,6 @@ namespace Keysharp.Core.Windows
 			// Otherwise, leave aEventType unchanged and return zero to indicate failure:
 			return 0;
 		}
-
 		/// <summary>
 		/// If modifiers_p is non-NULL, place the modifiers that are needed to realize the key in there.
 		/// e.g. M is really +m (shift-m), # is really shift-3.
@@ -4808,7 +4813,6 @@ namespace Keysharp.Core.Windows
 			var sc = TextToSC(text, ref dummy);
 			return sc != 0 ? MapScToVk(sc) : 0;
 		}
-
 		internal override bool TextToVKandSC(string text, ref int vk, ref int sc, ref int? modifiersLR, IntPtr keybdLayout)
 		{
 			if ((vk = TextToVK(text, ref modifiersLR, true, true, keybdLayout)) != 0)
@@ -4842,7 +4846,6 @@ namespace Keysharp.Core.Windows
 
 			return false;
 		}
-
 		/// <summary>
 		/// Caller has ensured that vk has been translated from neutral to left/right if necessary.
 		/// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -4964,7 +4967,6 @@ namespace Keysharp.Core.Windows
 				}
 			} // vk is a modifier key.
 		}
-
 		/// <summary>
 		/// Given a VK code, returns the character that an unmodified keypress would produce
 		/// on the given keyboard layout.  Defaults to the script's own layout if omitted.
@@ -5029,7 +5031,6 @@ namespace Keysharp.Core.Windows
 			// ch[0] is set even for n < 0, but might not be for n == 0.
 			return n != 0 ? ch.ToString()[0] : (char)0;
 		}
-
 		internal override void WaitHookIdle()
 		// Wait until the hook has reached a known idle state (i.e. finished any processing
 		// that it was in the middle of, though it could start something new immediately after).
@@ -5048,7 +5049,6 @@ namespace Keysharp.Core.Windows
 				}
 			}
 		}
-
 		protected internal override void DeregisterHooks()
 		{
 			if (channel != null && channelReadThread != null)
@@ -5068,7 +5068,6 @@ namespace Keysharp.Core.Windows
 				//}
 			}
 		}
-
 		protected internal override void Start()
 		{
 			if (channelReadThread != null && !channelReadThread.IsCompleted)
@@ -5450,7 +5449,6 @@ namespace Keysharp.Core.Windows
 
 			//WindowsAPI.PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_START_LOOP, UIntPtr.Zero, IntPtr.Zero);
 		}
-
 		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
 		{
 			var problem_activating_hooks = false;
@@ -5509,12 +5507,10 @@ namespace Keysharp.Core.Windows
 
 			return problem_activating_hooks;
 		}
-
 		//protected internal override void DeregisterKeyboardHook()
 		//{
 		//_ = WindowsAPI.UnhookWindowsHookEx(kbdHook);
 		//}
-
 		private IntPtr LowLevelKeybdHandler(int code, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)//Might be nice to see if this can just return an int.//TODO
 		{
 			if (code != WindowsAPI.HC_ACTION)  // MSDN docs specify that both LL keybd & mouse hook should return in this case.
@@ -5541,6 +5537,22 @@ namespace Keysharp.Core.Windows
 			var keyUp = (wParamVal == WindowsAPI.WM_KEYUP || wParamVal == WindowsAPI.WM_SYSKEYUP);
 			var vk = (int)lParam.vkCode;
 			var sc = (int)lParam.scanCode;
+
+			//if (vk == 'B')
+			//{
+			//  int xx = 123;
+			//}
+
+			//if (vk == 'b')
+			//{
+			//  int xx = 123;
+			//}
+
+			//if (code != 0 && ((lParam.vkCode & VK_LSHIFT) == VK_LSHIFT || (lParam.vkCode & VK_RSHIFT) == VK_RSHIFT))
+			//if (wParamVal > 0 && lParam.flags > 0 && lParam.vkCode != 0xA0)// (IsKeyDown(VK_LSHIFT) || IsKeyDown(VK_RSHIFT)))
+			//{
+			//  Console.WriteLine("shift");
+			//}
 
 			if (vk != 0 && sc == 0) // Might happen if another app calls keybd_event with a zero scan code.
 				sc = MapVkToSc(vk);
@@ -5587,7 +5599,6 @@ namespace Keysharp.Core.Windows
 			MSDLLHOOKSTRUCT tempstruct = default;
 			return LowLevelCommon(kbdHook, code, wParamVal, ref lParam, ref tempstruct, vk, sc, keyUp, lParam.flags);
 		}
-
 		//protected internal override void DeregisterMouseHook()
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
@@ -5607,7 +5618,6 @@ namespace Keysharp.Core.Windows
 				Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
 			}
 		}
-
 		private bool SystemHasAnotherdHook(ref System.Threading.Mutex existingMutex, string name)
 		{
 			if (existingMutex != null)

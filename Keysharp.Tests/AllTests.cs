@@ -20,6 +20,7 @@ namespace Keysharp.Tests
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			Keysharp.Core.Window.SetProcessDPIAware();
+			Reflections.Initialize();
 		}
 	}
 

@@ -6,6 +6,9 @@ namespace Keysharp.Core.Linux
 {
 	internal class LinuxHookThread : Keysharp.Core.Common.Threading.HookThread
 	{
+		public override void SimulateKeyPress(uint key)
+		{
+		}
 		internal override void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false)
 		{ }
 

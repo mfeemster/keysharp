@@ -129,6 +129,8 @@ namespace Keysharp.Core.Common.Threading
 			return hookscurrentlyactive;
 		}
 
+		public abstract void SimulateKeyPress(uint key);
+
 		internal bool HasKbdHook() => kbdHook != IntPtr.Zero;
 
 		internal bool HasMouseHook() => mouseHook != IntPtr.Zero;

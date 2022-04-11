@@ -307,7 +307,6 @@ namespace Keysharp.Core
 			}
 			else if (replacement == null && onoff == null && name.Length > 0 && name[0] != ':') //Check if only one param was passed. Equivalent to #Hotstring <name>.
 			{
-				// TODO: Build string of current options and return it?
 				HotstringDefinition.ParseOptions(name, ref HotstringDefinition.hsPriority, ref HotstringDefinition.hsKeyDelay, ref HotstringDefinition.hsSendMode, ref HotstringDefinition.hsCaseSensitive
 												 , ref HotstringDefinition.hsConformToCase, ref HotstringDefinition.hsDoBackspace, ref HotstringDefinition.hsOmitEndChar, ref HotstringDefinition.hsSendRaw, ref HotstringDefinition.hsEndCharRequired
 												 , ref HotstringDefinition.hsDetectWhenInsideWord, ref HotstringDefinition.hsDoReset, ref xOption, ref HotstringDefinition.hsSuspendExempt);
@@ -411,7 +410,7 @@ namespace Keysharp.Core
 			else // No matching hotstring yet.
 			{
 				if (ifunc == null && string.IsNullOrEmpty(action))
-					throw new ValueError("Nonexistent hotstring.");
+					throw new TargetError("Nonexistent hotstring.");
 
 				var initialSuspendState = (toggle == ToggleValueType.Off) ? HotstringDefinition.HS_TURNED_OFF : 0;
 

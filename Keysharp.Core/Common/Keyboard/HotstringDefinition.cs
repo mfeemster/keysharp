@@ -168,7 +168,12 @@ namespace Keysharp.Core.Common.Keyboard
 			return ResultType.Ok;
 		}
 
-		// FALSE or a combination of one of the following:
+		public static void ClearHotstrings()
+		{
+			hsBuf.Clear();
+			shs.Clear();
+		}
+
 		public void DefaultHotFunction(object[] o)
 		{
 			if (o.Length > 1 && o[0] is string typed && o[1] is string replace)
@@ -186,52 +191,6 @@ namespace Keysharp.Core.Common.Keyboard
 			hsBuf.Clear();
 			return str;
 		}
-
-		/*
-		    public static Options ParseOptions(string mode)
-		    {
-		    var options = Options.Backspace;
-
-		    if (!string.IsNullOrEmpty(mode))//Allows options to be optional.//MATT
-		    {
-		        mode = mode.ToUpperInvariant();
-
-		        for (var i = 0; i < mode.Length; i++)
-		        {
-		            var sym = mode[i];
-		            var change = Options.None;
-
-		            switch (sym)
-		            {
-		                case Core.Keyword_HotstringAuto: change = Options.AutoTrigger; break;
-
-		                case Core.Keyword_HotstringNested: change = Options.Nested; break;
-
-		                case Core.Keyword_HotstringBackspace: change = Options.Backspace; break;
-
-		                case Core.Keyword_HotstringCase: change = Options.CaseSensitive; break;
-
-		                case Core.Keyword_HotstringOmitEnding: change = Options.OmitEnding; break;
-
-		                case Core.Keyword_HotstringReset: change = Options.Reset; break;
-		            }
-
-		            if (change == Options.None)
-		                continue;
-
-		            var n = i + 1;
-		            var off = n < mode.Length && mode[n] == Core.Keyword_HotstringOff;
-
-		            if (off)
-		                options &= ~change;
-		            else
-		                options |= change;
-		        }
-		    }
-
-		    return options;
-		    }
-		*/
 
 		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, HotkeyCriterion _hotCriterion)
 		{
@@ -548,7 +507,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// is still timely/accurate -- it seems best to set to "no modifiers":
 			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
 			++existingThreads;  // This is the thread count for this particular hotstring only.
-			Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+			_ = Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((_) => --existingThreads);//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			return ResultType.Ok;
 		}
 

@@ -201,7 +201,7 @@ namespace Keysharp.Core
 		public bool IsValid => mi != null;
 		public bool IsVariadic => true;//All functions in keysharp are variadic because they use the params keyword.
 
-		public long MaxParams => 1;//All functions in keysharp are variadic so this property doesn't apply.
+		public long MaxParams => 9999;//All functions in keysharp are variadic so this property doesn't apply.
 
 		public long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 

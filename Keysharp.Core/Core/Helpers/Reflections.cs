@@ -66,7 +66,7 @@ namespace Keysharp.Core
 		{
 			foreach (var item in AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.")))
 				foreach (var type in item.GetTypes())
-					if (type.IsClass && type.IsPublic && (type.Namespace.StartsWith("Keysharp.Core") || type.Namespace.StartsWith("Keysharp.Main")))
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (type.Namespace.StartsWith("Keysharp.Core") || type.Namespace.StartsWith("Keysharp.Main") || type.Namespace.StartsWith("Keysharp.Tests")))//Allow tests so we can use function objects inside of unit tests.
 						_ = FindAndCacheMethod(type, "");
 
 			foreach (var typekv in typeToStringMethods)
@@ -74,7 +74,7 @@ namespace Keysharp.Core
 				{
 					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 
-					if (typekv.Key.FullName.StartsWith("Keysharp.Main", StringComparison.OrdinalIgnoreCase))
+					if (typekv.Key.FullName.StartsWith("Keysharp.Main", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
 					{
 						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, MethodInfo>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
@@ -91,7 +91,7 @@ namespace Keysharp.Core
 		{
 			foreach (var item in AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
 				foreach (var type in item.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace.StartsWith("Keysharp.Core"))
+					if (type.IsClass && type.IsPublic && type.Namespace != null && type.Namespace.StartsWith("Keysharp.Core"))
 						_ = FindAndCacheProperty(type, "");
 
 			foreach (var typekv in typeToStringProperties)
@@ -140,7 +140,7 @@ namespace Keysharp.Core
 					t = t.BaseType;
 				} while (t.Assembly == typeof(Any).Assembly);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
 			}
-			catch (Exception)// e)
+			catch (Exception e)
 			{
 				throw;
 			}

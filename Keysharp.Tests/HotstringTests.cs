@@ -1,88 +1,20 @@
-﻿using System;
-using System.Collections;
-using System.Drawing;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using NUnit.Framework;
-using Keysharp.Core;
-using static Keysharp.Core.Core;
-using static Keysharp.Core.Env;
-using static Keysharp.Core.Loops;
-using Keysharp.Scripting;
+﻿using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
+using Keysharp.Scripting;
+using NUnit.Framework;
 
 namespace Keysharp.Tests
 {
-	class HotstringDefinitionTester : HotstringDefinition
-	{
-		public HotstringDefinitionTester(string sequence, string replacement, HotFunction proc = null)
-			: base(sequence, replacement, proc)
-		{
-		}
-
-		public void AddChars(string s)
-		{
-			foreach (var ch in s)
-				hsBuf.Add(ch);
-		}
-	}
-
-
-
 	public partial class Scripting
 	{
+		private static bool btwtyped = false;
+
 		public static object label_9F201721(params object[] args)
 		{
+			btwtyped = true;
 			return string.Empty;
 		}
-
-		[Test, Category("Hotstring")]
-		public void CreateHotstring()
-		{
-			Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", new FuncObj("label_9F201721", null), ":btw", "btw", "", false);
-		}
-
-
-		[Test, Category("Hotstring")]
-		public void ChangeEndChars()
-		{
-			var newVal = "newendchars";
-			var origVal = HotstringDefinition.DefaultHotstringEndChars;
-			Assert.AreEqual(origVal, "-()[]{}:;'\"/\\,.?!\r\n \t");
-			var oldVal = Keysharp.Core.Keyboard.Hotstring("EndChars", newVal);
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringEndChars);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringEndChars, newVal);
-			Assert.AreEqual(origVal, oldVal);
-		}
-
-		[Test, Category("Hotstring")]
-		public void ResetOnMouseClick()
-		{
-			var newVal = false;
-			var origVal = Script.ResetUponMouseClick;
-			Assert.AreEqual(origVal, true);
-			var oldVal = Keysharp.Core.Keyboard.Hotstring("MouseReset", newVal);
-			Assert.AreNotEqual(origVal, Script.ResetUponMouseClick);
-			Assert.AreEqual(Script.ResetUponMouseClick, newVal);
-			Assert.AreEqual(origVal, oldVal);
-		}
-
-		[Test, Category("Hotstring")]
-		public void ResetInputBuffer()
-		{
-			var tester = new HotstringDefinitionTester("tester", "");
-			tester.AddChars("asdf");
-			var origVal = HotstringDefinition.CurrentInputBuffer;
-			Assert.AreEqual(origVal, "asdf");
-			origVal = Keysharp.Core.Keyboard.Hotstring("Reset") as string;
-			Assert.AreEqual(origVal, "asdf");
-			var newVal = HotstringDefinition.CurrentInputBuffer;
-			Assert.AreNotEqual(origVal, newVal);
-			Assert.AreEqual(newVal, "");
-		}
-
 
 		[Test, Category("Hotstring")]
 		public void ChangeDefaultOptions()
@@ -261,8 +193,20 @@ namespace Keysharp.Tests
 			Assert.AreEqual(origSendMode, SendModes.Play);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("SI");
 			Assert.AreNotEqual(origSendMode, HotstringDefinition.DefaultHotstringSendMode);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendMode, newSendMode);
+			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendMode, SendModes.InputThenPlay);//InputThenPlay gets used when Input is specified. See HotstringDefinition.ParseOptions().
 			Assert.AreEqual(null, oldVal);
+		}
+
+		[Test, Category("Hotstring")]
+		public void ChangeEndChars()
+		{
+			var newVal = "newendchars";
+			var origVal = HotstringDefinition.DefaultHotstringEndChars;
+			Assert.AreEqual(origVal, "-()[]{}:;'\"/\\,.?!\r\n \t");
+			var oldVal = Keysharp.Core.Keyboard.Hotstring("EndChars", newVal);
+			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringEndChars);
+			Assert.AreEqual(HotstringDefinition.DefaultHotstringEndChars, newVal);
+			Assert.AreEqual(origVal, oldVal);
 		}
 
 		[Test, Category("Hotstring")]
@@ -278,6 +222,60 @@ namespace Keysharp.Tests
 			//var newVal = HotstringDefinition.CurrentInputBuffer;
 			//Assert.AreNotEqual(origVal, newVal);
 			//Assert.AreEqual(newVal, "");
+		}
+
+		[Test, Category("Hotstring")]
+		public void CreateHotstring()
+		{
+			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
+			Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", new FuncObj("label_9F201721", null), ":btw", "btw", "", false);
+			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.B);
+			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.T);
+			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.W);
+			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.Enter);
+			System.Threading.Thread.Sleep(2000);
+			Assert.AreEqual(btwtyped, true);
+		}
+
+		[Test, Category("Hotstring")]
+		public void ResetInputBuffer()
+		{
+			var tester = new HotstringDefinitionTester("tester", "");
+			tester.AddChars("asdf");
+			var origVal = HotstringDefinition.CurrentInputBuffer;
+			Assert.AreEqual(origVal, "asdf");
+			origVal = Keysharp.Core.Keyboard.Hotstring("Reset") as string;
+			Assert.AreEqual(origVal, "asdf");
+			var newVal = HotstringDefinition.CurrentInputBuffer;
+			Assert.AreNotEqual(origVal, newVal);
+			Assert.AreEqual(newVal, "");
+		}
+
+		[Test, Category("Hotstring")]
+		public void ResetOnMouseClick()
+		{
+			var newVal = false;
+			var origVal = Script.ResetUponMouseClick;
+			Assert.AreEqual(origVal, true);
+			var oldVal = Keysharp.Core.Keyboard.Hotstring("MouseReset", newVal);
+			Assert.AreNotEqual(origVal, Script.ResetUponMouseClick);
+			Assert.AreEqual(Script.ResetUponMouseClick, newVal);
+			Assert.AreEqual(origVal, oldVal);
+		}
+	}
+
+	internal class HotstringDefinitionTester : HotstringDefinition
+	{
+		public HotstringDefinitionTester(string sequence, string replacement, HotFunction proc = null)
+			: base(sequence, replacement, proc)
+		{
+		}
+
+		public void AddChars(string s)
+		{
+			foreach (var ch in s)
+				hsBuf.Add(ch);
 		}
 	}
 }

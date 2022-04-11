@@ -13,7 +13,7 @@ namespace Keysharp.Tests
 		private const string ext = ".ahk";
 		private string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
 
-		public bool TestScript(string source, bool testfunc, bool exeout = false)
+		internal bool TestScript(string source, bool testfunc, bool exeout = false)
 		{
 			var b1 = false;
 			var b2 = true;
@@ -33,13 +33,13 @@ namespace Keysharp.Tests
 			return b1 && b2;
 		}
 
-		//public bool ValidateScript(string source, string name)
+		//internal bool ValidateScript(string source, string name)
 		//{
 		//  RunScript(string.Concat(path, source, ext), name, false);
 		//  return true;
 		//}
 
-		public bool HasPassed(string output)
+		internal bool HasPassed(string output)
 		{
 			if (string.IsNullOrEmpty(output))
 				return false;
@@ -51,7 +51,7 @@ namespace Keysharp.Tests
 			return output.Length == 0;
 		}
 
-		public string WrapInFunc(string source)
+		internal string WrapInFunc(string source)
 		{
 			var sb = new StringBuilder();
 			sb.AppendLine("func()");
@@ -71,12 +71,12 @@ namespace Keysharp.Tests
 			return sb.ToString();
 		}
 
-		public string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout)
+		internal string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout)
 		{
 			return RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
 		}
 
-		public void TestException(Action func)
+		internal void TestException(Action func)
 		{
 			var excthrown = false;
 
@@ -92,7 +92,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(excthrown);
 		}
 
-		public string RunScript(string source, string name, bool execute, bool exeout)
+		internal string RunScript(string source, string name, bool execute, bool exeout)
 		{
 			Keysharp.Scripting.Script.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();

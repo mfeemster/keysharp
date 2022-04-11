@@ -213,7 +213,16 @@ namespace Keysharp.Scripting
 				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
-			mainWindow.FormClosing += (o, e) => Accessors.A_ExitReason = "OnExit()";
+			//This will get called if the user manually closes the main window,
+			//or if ExitApp() is called from somewhere within the code, which will also close the main window.
+			mainWindow.FormClosing += (o, e) =>
+			{
+				Accessors.A_ExitReason = "OnExit()";
+				HotkeyDefinition.AllDestruct(0);
+
+				if (HookThread is HookThread ht)
+					ht.Stop();
+			};
 			mainWindow.WindowState = FormWindowState.Minimized;
 			//mainWindow.WindowState = FormWindowState.Maximized;
 			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
@@ -226,6 +235,8 @@ namespace Keysharp.Scripting
 		}
 
 		public static void SetName(string s) => scriptName = s;
+
+		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
 
 		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
 		{

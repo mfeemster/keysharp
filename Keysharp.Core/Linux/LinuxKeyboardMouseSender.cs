@@ -4,7 +4,6 @@ using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Linux.X11;
-using Keysharp.Core.Linux.X11.Events;
 
 namespace Keysharp.Core.Linux
 {
@@ -152,36 +151,36 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		protected internal override void Send(string sequence)
-		{
-			foreach (var c in sequence)
-			{
-				var Key = LookupKeycode(c);
+		//protected internal override void Send(string sequence)
+		//{
+		//  foreach (var c in sequence)
+		//  {
+		//      var Key = LookupKeycode(c);
 
-				// If it is an upper case character, hold the shift key...
-				if (char.IsUpper(c) || Key.Shift)
-					Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.LeftShift, true, 0);
+		//      // If it is an upper case character, hold the shift key...
+		//      if (char.IsUpper(c) || Key.Shift)
+		//          Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.LeftShift, true, 0);
 
-				// Make sure the key is up before we press it again.
-				// If X thinks this key is still down, nothing will happen if we press it.
-				// Likewise, if X thinks that the key is up, this will do no harm.
-				Xlib.XTestFakeKeyEvent(XConn.Handle, Key.Sym, false, 0);
-				// Fake a key event. Note that some programs filter this kind of event.
-				Xlib.XTestFakeKeyEvent(XConn.Handle, Key.Sym, true, 0);
-				Xlib.XTestFakeKeyEvent(XConn.Handle, Key.Sym, false, 0);
+		//      // Make sure the key is up before we press it again.
+		//      // If X thinks this key is still down, nothing will happen if we press it.
+		//      // Likewise, if X thinks that the key is up, this will do no harm.
+		//      Xlib.XTestFakeKeyEvent(XConn.Handle, Key.Sym, false, 0);
+		//      // Fake a key event. Note that some programs filter this kind of event.
+		//      Xlib.XTestFakeKeyEvent(XConn.Handle, Key.Sym, true, 0);
+		//      Xlib.XTestFakeKeyEvent(XConn.Handle, Key.Sym, false, 0);
 
-				// ...and release it later on
-				if (char.IsUpper(c) || Key.Shift)
-					Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.LeftShift, false, 0);
-			}
-		}
+		//      // ...and release it later on
+		//      if (char.IsUpper(c) || Key.Shift)
+		//          Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.LeftShift, false, 0);
+		//  }
+		//}
 
-		protected internal override void Send(Keys key)
-		{
-			var vk = (uint)key;
-			Xlib.XTestFakeKeyEvent(XConn.Handle, vk, true, 0);
-			Xlib.XTestFakeKeyEvent(XConn.Handle, vk, false, 0);
-		}
+		//protected internal override void Send(Keys key)
+		//{
+		//  var vk = (uint)key;
+		//  Xlib.XTestFakeKeyEvent(XConn.Handle, vk, true, 0);
+		//  Xlib.XTestFakeKeyEvent(XConn.Handle, vk, false, 0);
+		//}
 
 		//protected override void DeregisterHook()
 		//{
@@ -192,14 +191,14 @@ namespace Keysharp.Core.Linux
 		}
 
 		// Simulate a number of backspaces
-		protected override void Backspace(int length)
-		{
-			for (var i = 0; i < length; i++)
-			{
-				Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.BackSpace, true, 0);
-				Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.BackSpace, false, 0);
-			}
-		}
+		//protected override void Backspace(int length)
+		//{
+		//  for (var i = 0; i < length; i++)
+		//  {
+		//      Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.BackSpace, true, 0);
+		//      Xlib.XTestFakeKeyEvent(XConn.Handle, (uint)XKeys.BackSpace, false, 0);
+		//  }
+		//}
 
 		protected override void RegisterHook()
 		{

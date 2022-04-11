@@ -226,7 +226,7 @@ namespace Keysharp.Core.Common.Keyboard
 			//Using virual keys doesn't work, need real scan codes.
 			//However, we must also be able to recognize things like {ctrl} from the stream.
 			//For now, use this for testing and fix the rest later.//MATT
-			Send(sequence);
+			//Send(sequence);
 			// TODO: modifiers in mixed mode send e.g. ^{a down}
 			//var keys = KeyParser.ParseKeyStream(sequence);
 			//foreach (var key in keys)
@@ -349,13 +349,13 @@ namespace Keysharp.Core.Common.Keyboard
 
 		protected internal abstract void LongOperationUpdateForSendKeys();
 
-		protected internal abstract void Send(string keys);
+		//protected internal abstract void Send(string keys);
 
-		protected internal abstract void Send(Keys key);
+		//protected internal abstract void Send(Keys key);
 
 		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, int aVK, int aSC = 0, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
-		protected abstract void Backspace(int n);
+		//protected abstract void Backspace(int n);
 
 		//[Obsolete]//MATT
 		//protected bool KeyReceived(Keys key, bool down)
