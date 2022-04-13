@@ -79,7 +79,7 @@ namespace Keysharp.Core
 			var exitCode = obj.L().I1();
 			Script.mainWindow?.Close();
 			ApplicationExit?.Invoke(null, null);
-			Environment.Exit(exitCode);
+			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 		}
 
 		/// <summary>

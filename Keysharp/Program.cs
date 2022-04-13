@@ -208,8 +208,9 @@ namespace Keysharp.Main
 					var currentDepsConfigPath = Path.ChangeExtension(typeof(Program).Assembly.Location, "deps.json");
 					File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
 					//File.WriteAllText(Path.ChangeExtension(path, "runtimeconfig.json"), CompilerHelper.GenerateRuntimeConfig());
+					//Should really find a way to look through this folder and find the most recent one.
 					HostWriter.CreateAppHost(
-						appHostSourceFilePath: @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\5.0.11\runtimes\win-x64\native\apphost.exe",
+						appHostSourceFilePath: @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\6.0.3\runtimes\win-x64\native\apphost.exe",
 						appHostDestinationFilePath: $"{path}.exe",
 						appBinaryFilePath: $"{path}.dll");
 				}

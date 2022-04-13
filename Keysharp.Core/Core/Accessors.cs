@@ -511,80 +511,80 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The current floating point number format.
 		/// </summary>
-		[Obsolete]
-		public static object A_FormatFloat
-		{
-			get
-			{
-				if (A_FormatNumeric is string s)
-				{
-					if (s.IndexOf("e", System.StringComparison.OrdinalIgnoreCase) != -1)
-						return s;
+		//[Obsolete]
+		//public static object A_FormatFloat
+		//{
+		//  get
+		//  {
+		//      if (A_FormatNumeric is string s)
+		//      {
+		//          if (s.IndexOf("e", System.StringComparison.OrdinalIgnoreCase) != -1)
+		//              return s;
 
-					if (s.IndexOf("f", System.StringComparison.OrdinalIgnoreCase) != -1)
-					{
-						var format = s.Replace("f", "").Replace("F", "");
-						return string.Concat(format.Length == 0 ? "0" : int.Parse(format).ToString(), ".",
-											 System.Threading.Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalDigits.ToString());
-					}
-				}
+		//          if (s.IndexOf("f", System.StringComparison.OrdinalIgnoreCase) != -1)
+		//          {
+		//              var format = s.Replace("f", "").Replace("F", "");
+		//              return string.Concat(format.Length == 0 ? "0" : int.Parse(format).ToString(), ".",
+		//                                   System.Threading.Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalDigits.ToString());
+		//          }
+		//      }
 
-				return "";
-			}
-			set
-			{
-				var e = false;
-				var str = value.ParseObject().ToString();
+		//      return "";
+		//  }
+		//  set
+		//  {
+		//      var e = false;
+		//      var str = value.ParseObject().ToString();
 
-				foreach (var exp in new[] { str.IndexOf('e'), str.IndexOf('E') })
-				{
-					if (exp == -1)
-					{
-						continue;
-					}
+		//      foreach (var exp in new[] { str.IndexOf('e'), str.IndexOf('E') })
+		//      {
+		//          if (exp == -1)
+		//          {
+		//              continue;
+		//          }
 
-					A_FormatNumeric = str.Substring(exp);
-					str = str.Substring(0, exp);
-					e = true;
-				}
-				var parts = str.Split(new[] { '.' }, 2);
+		//          A_FormatNumeric = str.Substring(exp);
+		//          str = str.Substring(0, exp);
+		//          e = true;
+		//      }
+		//      var parts = str.Split(new[] { '.' }, 2);
 
-				if (!e && int.TryParse(parts[0], out var n) && n != 0)
-					A_FormatNumeric = "f" + n;
+		//      if (!e && int.TryParse(parts[0], out var n) && n != 0)
+		//          A_FormatNumeric = "f" + n;
 
-				if (parts.Length > 1 && int.TryParse(parts[1], out n))
-				{
-					var t = System.Threading.Thread.CurrentThread;
-					var ci = new CultureInfo(t.CurrentCulture.LCID);
-					ci.NumberFormat.NumberDecimalDigits = n;
-					t.CurrentCulture = ci;
-				}
-			}
-		}
+		//      if (parts.Length > 1 && int.TryParse(parts[1], out n))
+		//      {
+		//          var t = System.Threading.Thread.CurrentThread;
+		//          var ci = new CultureInfo(t.CurrentCulture.LCID);
+		//          ci.NumberFormat.NumberDecimalDigits = n;
+		//          t.CurrentCulture = ci;
+		//      }
+		//  }
+		//}
 
 		/// <summary>
 		/// The current integer format, either <c>H</c> or <c>D</c>.
 		/// </summary>
-		[Obsolete]
-		public static object A_FormatInteger
-		{
-			get => (string)A_FormatNumeric == "f" ? "D" : (string)A_FormatNumeric == "x" ? "H" : "";
+		//[Obsolete]
+		//public static object A_FormatInteger
+		//{
+		//  get => (string)A_FormatNumeric == "f" ? "D" : (string)A_FormatNumeric == "x" ? "H" : "";
 
-			set
-			{
-				switch (value.ParseObject().ToString().ToLowerInvariant())
-				{
-					case Core.Keyword_Hex:
-					case Core.Keyword_FormatHex:
-						A_FormatNumeric = "x";
-						break;
+		//  set
+		//  {
+		//      switch (value.ParseObject().ToString().ToLowerInvariant())
+		//      {
+		//          case Core.Keyword_Hex:
+		//          case Core.Keyword_FormatHex:
+		//              A_FormatNumeric = "x";
+		//              break;
 
-					case Core.Keyword_FormatDecimal:
-						A_FormatNumeric = "f";
-						break;
-				}
-			}
-		}
+		//          case Core.Keyword_FormatDecimal:
+		//              A_FormatNumeric = "f";
+		//              break;
+		//      }
+		//  }
+		//}
 
 		/// <summary>
 		/// The current numeric format.
@@ -596,10 +596,7 @@ namespace Keysharp.Core
 				if (formatNumeric != null)
 					return formatNumeric;
 
-				var t = System.Threading.Thread.CurrentThread;
-				var ci = new CultureInfo(t.CurrentCulture.LCID);
-				ci.NumberFormat.NumberDecimalDigits = 6;
-				t.CurrentCulture = ci;
+				SetInitialFloatFormat();
 				return formatNumeric = "f";
 			}
 
@@ -1714,6 +1711,14 @@ namespace Keysharp.Core
 		public static void SetWinDelay(params object[] obj) => Accessors.A_WinDelay = obj.L().L1();
 
 		internal static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+
+		internal static void SetInitialFloatFormat()
+		{
+			var t = System.Threading.Thread.CurrentThread;
+			var ci = new CultureInfo(t.CurrentCulture.LCID);
+			ci.NumberFormat.NumberDecimalDigits = 6;
+			t.CurrentCulture = ci;
+		}
 
 		private static string GetIpFromIndex(int index)
 		{

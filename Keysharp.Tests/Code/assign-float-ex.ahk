@@ -12,7 +12,7 @@ If (x != 1.123)
 else
 	FileAppend, pass, *
 	
-If x = 1.123
+If x == 1.123
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

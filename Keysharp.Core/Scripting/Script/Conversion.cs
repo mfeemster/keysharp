@@ -252,8 +252,8 @@ namespace Keysharp.Scripting
 				return Encoding.Unicode.GetString(arr);
 			else if (input is decimal m)
 				return m.ToString();
-			else if (input is Delegate dlg)
-				return dlg.Method.Name;
+			else if (input is Core.FuncObj fo)
+				return fo.Name;
 			else if (IsNumeric(input))
 			{
 				var t = input.GetType();
@@ -286,7 +286,7 @@ namespace Keysharp.Scripting
 					return hexpre + result;
 				}
 
-				return d.ToString(format).TrimEnd(zerochars);//Remove trailing zeroes for string compare.//MATT
+				return d.ToString(format).TrimEnd(zerochars);//Remove trailing zeroes for string compare.
 			}
 			else if (input.GetType().GetMethod("op_Implicit", new Type[] { input.GetType() }) is MethodInfo mi)
 			{
@@ -297,13 +297,12 @@ namespace Keysharp.Scripting
 				var type = input.GetType();
 				var buffer = new StringBuilder();
 
-				if (typeof(IDictionary).IsAssignableFrom(type))
+				if (input is Keysharp.Core.Map map)
 				{
 					_ = buffer.Append(BlockOpen);
-					var dictionary = (IDictionary)input;
 					var first = true;
 
-					foreach (var key in dictionary.Keys)
+					foreach (var (k, v) in map)
 					{
 						if (first)
 							first = false;
@@ -311,23 +310,22 @@ namespace Keysharp.Scripting
 							_ = buffer.Append(DefaultMulticast);
 
 						_ = buffer.Append(StringBound);
-						_ = buffer.Append(ForceString(key));
+						_ = buffer.Append(ForceString(k));
 						_ = buffer.Append(StringBound);
 						_ = buffer.Append(AssignPre);
 
-						if (dictionary[key] == null)
+						if (v == null)
 						{
 							_ = buffer.Append(NullTxt);
 							continue;
 						}
 
-						var subtype = dictionary[key].GetType();
-						var obj = subtype.IsArray || typeof(IDictionary).IsAssignableFrom(subtype) || dictionary[key] is Delegate;
+						var obj = v is Array || v is Core.Map || v is Core.FuncObj;// Delegate;
 
 						if (!obj)
 							_ = buffer.Append(StringBound);
 
-						_ = buffer.Append(ForceString(dictionary[key]));
+						_ = buffer.Append(ForceString(v));
 
 						if (!obj)
 							_ = buffer.Append(StringBound);
@@ -336,10 +334,9 @@ namespace Keysharp.Scripting
 					_ = buffer.Append(BlockClose);
 					return buffer.ToString();
 				}
-				else if (type.IsArray)
+				else if (input is Array array)
 				{
 					_ = buffer.Append(ArrayOpen);
-					var array = (Array)input;
 					var first = true;
 
 					foreach (var item in array)

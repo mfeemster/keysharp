@@ -44,9 +44,10 @@ namespace Keysharp.Core
 
 			set
 			{
-				if (map.Count > 0)
-					throw new Exception("Attempted to change case sensitivity of a map which was not empty.");
+				if (Count > 0)
+					throw new PropertyError("Attempted to change case sensitivity of a map which was not empty.");
 
+				var oldval = caseSense;
 				var str = value.ToLower();
 				var val = Options.OnOff(str);
 
@@ -55,7 +56,8 @@ namespace Keysharp.Core
 				else if (str == "locale")
 					caseSense = eCaseSense.Locale;
 
-				map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+				if (caseSense != oldval)
+					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 			}
 		}
 
@@ -81,11 +83,24 @@ namespace Keysharp.Core
 
 		public void Clear() => map.Clear();
 
-		public override object Clone(params object[] values) => new Map(map.ToDictionary(entry => entry.Key, entry => entry.Value))
+		public override object Clone(params object[] values)
+
 		{
-			Default = Default,
-			Capacity = Capacity
-		};
+			var newmap = new Map()
+			{
+				Default = Default,
+				Capacity = Capacity,
+				CaseSense = CaseSense
+							//Need to copy ownprops here too.//TODO
+			};
+
+			foreach (var kv in map)
+				newmap[kv.Key] = kv.Value;
+
+			return newmap;
+		}
+
+
 
 
 		public bool Contains(object item) => map.ContainsKey(item.ParseObject());
@@ -98,31 +113,19 @@ namespace Keysharp.Core
 
 		public object Delete(params object[] values)
 		{
-			var k = values[0].ParseObject();//.L()[0];
-			var rem = false;
-			object ret = null;
-
-			if (k is string s && caseSense != eCaseSense.On)
-			{
-				s = s.ToLower();
-				ret = map[s];
-				rem = map.Remove(s);
-			}
-			else
-			{
-				ret = map[k];
-				rem = map.Remove(k);
-			}
-
-			if (!rem)
-				throw new Exception($"KeyError: Key {k} was not present in the dictionary. {new StackFrame(0).GetMethod().Name}");
-
-			return ret;
+			var k = values[0].ParseObject();
+			var key = k is string s && caseSense != eCaseSense.On ? s.ToLower() : k;
+			return map.Remove(key, out var val)
+				   ? val
+				   : throw new KeyError($"Key {key} was not present in the map.");
 		}
+
+
 
 		public object Get(params object[] values)
 		{
-			var (key, def) = values/*.L()*/.O2();
+			var (key, def) = values.O2();
+			key = key.ParseObject();
 
 			if (TryGetValue(key, out var val))
 				return val;
@@ -133,10 +136,10 @@ namespace Keysharp.Core
 			if (Default != null)
 				return Default;
 
-			throw new KeyError($"{key} was not found in the map.");
+			throw new KeyError($"Key {key} was not present in the map.");
 		}
 
-		public bool Has(params object[] values) => map.ContainsKey(values/*.L()*/[0]);
+		public bool Has(params object[] values) => TryGetValue(values[0], out _);
 
 		public object MaxIndex(params object[] values)
 		{
@@ -184,7 +187,7 @@ namespace Keysharp.Core
 			if (arr != null)
 			{
 				for (var i = 0; i < count; i += 2)
-					Insert(ic[i + 1].ParseObject(), ic[i + 2].ParseObject());
+					Insert(ic[i + 1].ParseObject(), ic[i + 2].ParseObject());//Add 1 because the Array indexer internally subtracts 1.
 			}
 			else
 			{
@@ -199,10 +202,13 @@ namespace Keysharp.Core
 
 		private void Insert(object key, object value)
 		{
-			if (key.ParseObject() is string s && caseSense != eCaseSense.On)
-				map[s.ToLower()] = value.ParseObject();
+			var ko = key.ParseObject();
+			var vo = value.ParseObject();
+
+			if (ko is string s && caseSense != eCaseSense.On)
+				map[s.ToLower()] = vo;
 			else
-				map[key.ParseObject()] = value.ParseObject();
+				map[ko] = vo;
 		}
 
 		private bool TryGetValue(object key, out object value)
@@ -213,16 +219,13 @@ namespace Keysharp.Core
 			{
 				if (caseSense == eCaseSense.Off)
 				{
-					foreach (var kv in map)
+					if (map.TryGetValue(s.ToLower(), out var val))
 					{
-						if (string.Compare(s, kv.Key.ToString(), true) == 0)
-						{
-							value = kv.Value;
-							return true;
-						}
+						value = val;
+						return true;
 					}
 				}
-				else if (caseSense == eCaseSense.Locale)
+				else if (caseSense == eCaseSense.Locale)//By far the slowest.
 				{
 					foreach (var kv in map)
 					{
@@ -241,7 +244,7 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public object this[object key]
+		public virtual object this[object key]
 		{
 			get
 			{
@@ -250,7 +253,10 @@ namespace Keysharp.Core
 				if (TryGetValue(key, out var val))
 					return val;
 
-				return null;
+				if (Default != null)
+					return Default;
+
+				throw new KeyError($"Key {key} was not present in the map.");
 			}
 
 			set => Insert(key, value);

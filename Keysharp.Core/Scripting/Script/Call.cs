@@ -39,7 +39,9 @@ namespace Keysharp.Scripting
 					//  //return mi.Invoke(ob, new object[1] { new object[1] { "" } });
 					//}
 					else
-						return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : parameters);// new object[] { parameters });
+						//return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : parameters.Length == 1 ? new object[] { parameters } : parameters);
+						//return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : parameters);// new object[] { parameters });
+						return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : new object[] { parameters });//Even though parameters itself is an object[], we still must put it in an object[] array.
 				}
 
 				if (del is Delegate d)

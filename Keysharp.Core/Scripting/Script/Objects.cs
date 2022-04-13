@@ -32,7 +32,7 @@ namespace Keysharp.Scripting
 
 			for (var i = 0; i < keys.Length; i++)
 			{
-				var name = keys[i] is string str ? str.ToLowerInvariant() : keys[i];
+				var name = keys[i];
 				var entry = i < values.Length ? values[i] : null;
 
 				if (entry == null)
@@ -41,13 +41,7 @@ namespace Keysharp.Scripting
 						_ = table.Delete(name);
 				}
 				else
-				{
-					table[name] = entry;//This is better than the code below.//MATT
-					//if (table.ContainsKey(name))
-					//  table[name] = entry;
-					//else
-					//  table.Add(name, entry);
-				}
+					table[name] = entry;
 			}
 
 			return table;
@@ -175,7 +169,6 @@ namespace Keysharp.Scripting
 
 			item = item.ParseObject();
 
-			//if (item is IDictionary table)
 			if (item is Map table)
 			{
 				if (table.map.TryGetValue(key, out var val))
@@ -471,11 +464,10 @@ namespace Keysharp.Scripting
 					if (!(pi is string))
 						return null;
 
-					if (item is IDictionary dkt)
+					if (item is Map map1)
 					{
 						var name = (string)pi;
-						dkt.Add(name, new Dictionary<string, object>());
-						item = dkt[name];
+						map1[name] = item = new Map();
 					}
 					else
 						return null;
@@ -487,33 +479,30 @@ namespace Keysharp.Scripting
 			if (item == null)
 				return null;
 
-			//var type = item.GetType();
-			//var isDictionary = typeof(IDictionary).IsAssignableFrom(type);
-
-			if (item is IDictionary dictionary)
+			if (key is string ks)
+			{
+				SetPropertyValue(item, ks, value);
+				return value;
+			}
+			else if (item is Map map2)
 			{
 				if (IsNumeric(key))
 					return null;
 
-				if (!(key is string))
+				if (!(key is string s))
 					return null;
 
-				var name = ((string)key).ToLowerInvariant();//This may not always be what we want to do.//MATT
+				var name = s;//.ToLowerInvariant();//This may not always be what we want to do.//MATT
 
-				if (dictionary.Contains(name))
+				if (map2.Contains(name))
 				{
 					if (value == null)
-						dictionary.Remove(name);
+						map2.Delete(name);
 					else
-						dictionary[name] = value;
+						map2[name] = value;
 				}
 				else
-					dictionary.Add(name, value);
-			}
-			else if (key is string ks)
-			{
-				SetPropertyValue(item, ks, value);
-				return value;
+					map2[name] = value;
 			}
 			else if (item is Core.Array al)
 			{
@@ -541,8 +530,12 @@ namespace Keysharp.Scripting
 				{
 					pi.SetValue(item, value);
 				}
-				catch (Exception)
+				catch (Exception e)
 				{
+					if (e.InnerException is KeysharpException ke)
+						throw ke;
+					else
+						throw;
 				}
 			}
 		}

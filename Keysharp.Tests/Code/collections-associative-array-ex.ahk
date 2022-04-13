@@ -119,6 +119,25 @@ if (val == 3)
 else
 	FileAppend, fail, *
 
+m.Clear()
+arr := ["one", 1, "two", 2, "three", 3]
+m.Set(arr)
+val := m.Count
+
+if (val == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+v1 := m["one"]
+v2 := m["two"]
+v3 := m["three"]
+
+if (v1 == 1 && v2 == 2 && v3 == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 m := Map()
 val := m.Count
 
@@ -209,6 +228,52 @@ else
 	FileAppend, fail, *
 	
 if (!m.Has(m2))
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m := Map()
+m.CaseSense := "off"
+m.Set("one", 1, "two", 2, "three", 3)
+
+val := m.Has("ONE")
+
+if (val == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m := Map()
+m.CaseSense := "on"
+m.Set("one", 1, "two", 2, "three", 3)
+
+val := m.Has("ONE")
+
+if (val == false)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+b := false
+
+try
+{
+	m.CaseSense := "off"
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m.Capacity := 1000
+val := m.Capacity
+
+if (val >= 1000) ; Capacity will internall be made to be at least as big as we specified.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

@@ -74,13 +74,11 @@ namespace Keysharp.Core
 			loops.Push(info);
 			var type = array.GetType();
 
-			if (typeof(IDictionary).IsAssignableFrom(type))
+			if (array is Map map)
 			{
-				var dictionary = (IDictionary)array;
-
-				foreach (var key in dictionary.Keys)
+				foreach (var (k, v) in map)
 				{
-					info.result = new[] { key, dictionary[key] };
+					info.result = new[] { k, v };
 					info.index++;
 					yield return info.result;
 				}

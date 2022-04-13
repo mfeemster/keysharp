@@ -6,6 +6,9 @@ using NUnit.Framework;
 
 namespace Keysharp.Tests
 {
+	/// <summary>
+	/// All hotstring tests must be run sequentially, hence the usage of lock (syncroot).
+	/// </summary>
 	public partial class Scripting
 	{
 		private static bool btwtyped = false;
@@ -16,6 +19,7 @@ namespace Keysharp.Tests
 			return string.Empty;
 		}
 
+		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void ChangeDefaultOptions()
 		{
@@ -197,6 +201,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(null, oldVal);
 		}
 
+		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void ChangeEndChars()
 		{
@@ -209,6 +214,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(origVal, oldVal);
 		}
 
+		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void ChangeHotstringReplacement()
 		{
@@ -224,10 +230,12 @@ namespace Keysharp.Tests
 			//Assert.AreEqual(newVal, "");
 		}
 
+		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void CreateHotstring()
 		{
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
+			Keysharp.Core.Keyboard.Hotstring("Reset");
 			Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", new FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.B);
@@ -238,9 +246,11 @@ namespace Keysharp.Tests
 			Assert.AreEqual(btwtyped, true);
 		}
 
+		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void ResetInputBuffer()
 		{
+			Keysharp.Core.Keyboard.Hotstring("Reset");
 			var tester = new HotstringDefinitionTester("tester", "");
 			tester.AddChars("asdf");
 			var origVal = HotstringDefinition.CurrentInputBuffer;
@@ -252,6 +262,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(newVal, "");
 		}
 
+		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void ResetOnMouseClick()
 		{

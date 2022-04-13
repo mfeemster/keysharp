@@ -26,6 +26,7 @@ namespace Keysharp.Scripting
 			const string Alnum = "alnum";
 			const string Space = "space";
 			const string Time = "time";
+			const string Map = "map";
 			const string Object = "object";
 			const string Array = "array";
 			var variable = ForceString(subject);
@@ -75,8 +76,9 @@ namespace Keysharp.Scripting
 
 						switch (test)
 						{
+							case Map:
 							case Object:
-								ret = typeof(IDictionary).IsAssignableFrom(type);
+								ret = subject is Map;
 								goto done;
 
 							case Array:

@@ -52,7 +52,7 @@ namespace Keysharp.Core
 		/// </list>
 		/// </param>
 		/// <remarks><see cref="Accessors.A_ErrorLevel"/> is set to <c>1</c> if there was a problem, <c>0</c> otherwise.</remarks>
-		public static void Mail(object recipients, string subject, string message, IDictionary options = null)
+		public static void Mail(object recipients, string subject, string message, Map options = null)
 		{
 			Accessors.A_ErrorLevel = 1;
 			var msg = new MailMessage { Subject = subject, Body = message };
@@ -75,7 +75,7 @@ namespace Keysharp.Core
 			if (options == null)
 				goto send;
 
-			foreach (var key in options.Keys)
+			foreach (var (key, val) in options)
 			{
 				var item = key as string;
 
@@ -84,17 +84,16 @@ namespace Keysharp.Core
 
 				string[] value;
 
-				if (options[key] is string s)
+				if (val is string s)
 					value = new[] { s };
-				else if (options[key] is string[] sa)
-					value = sa;
-				else if (options[key] is object[] ob)
+				//else if (val is string[] sa)//Probably would never be a raw array of strings.
+				//  value = sa;
+				else if (val is Array arr)
 				{
-					var block = ob;
-					value = new string[block.Length];
+					value = new string[arr.Count];
 
-					for (var i = 0; i < block.Length; i++)
-						value[i] = block[i] as string;
+					for (var i = 0; i < arr.Count; i++)
+						value[i] = arr[i].ToString();
 				}
 				else
 					continue;
