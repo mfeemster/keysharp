@@ -58,9 +58,9 @@ namespace Keysharp.Scripting
 			value = value.Length == 0 ? null : StripCommentSingle(value.Trim(Spaces));
 			CodeExpression left;
 			var nameLow = name.ToLowerInvariant();
-			left = libProperties.ContainsKey(nameLow)
-				   ? new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(bcl), libProperties[nameLow].Name)//bcl won't work here, need type from property.//MATT
-				   : (CodeExpression)VarId(name, true);
+			left = libProperties.TryGetValue(nameLow, out var pi)
+				   ? new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(bcl), pi.Name)//bcl won't work here, need type from property.//MATT
+				   : VarId(name, true);
 			var result = value == null ? new CodePrimitiveExpression(null) : IsExpressionParameter(value) ? ParseSingleExpression(value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(value);
 			return new CodeAssignStatement(left, result);
 			//Used to be a binary operator, wrapped in a code expression, but this added erroneous parens. Better to directly use a CodeAssignStatement.//MATT

@@ -403,10 +403,7 @@ namespace Keysharp.Core
 			if (key.Length == 0)
 				return;
 
-			if (parent.ContainsKey(key))
-				parent[key] = value;
-			else parent.Add(key, value);
-
+			parent[key] = value;
 			key = string.Empty;
 			value = null;
 		}

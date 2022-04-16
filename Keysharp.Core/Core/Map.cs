@@ -61,10 +61,8 @@ namespace Keysharp.Core
 			}
 		}
 
-		public object Default { get; set; }
-
 		public int Count => map.Count;
-
+		public object Default { get; set; }
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
 
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
@@ -73,9 +71,9 @@ namespace Keysharp.Core
 		{
 		}
 
-		private Map(Dictionary<object, object> dkt) => map = dkt;
-
 		public Map(params object[] values) => Set(values);
+
+		private Map(Dictionary<object, object> dkt) => map = dkt;
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
@@ -100,10 +98,7 @@ namespace Keysharp.Core
 			return newmap;
 		}
 
-
-
-
-		public bool Contains(object item) => map.ContainsKey(item.ParseObject());
+		public bool Contains(object item) => map.ContainsKey(item);
 
 		public void CopyTo(System.Array array, int index)
 		{
@@ -113,19 +108,16 @@ namespace Keysharp.Core
 
 		public object Delete(params object[] values)
 		{
-			var k = values[0].ParseObject();
+			var k = values[0];
 			var key = k is string s && caseSense != eCaseSense.On ? s.ToLower() : k;
 			return map.Remove(key, out var val)
 				   ? val
 				   : throw new KeyError($"Key {key} was not present in the map.");
 		}
 
-
-
 		public object Get(params object[] values)
 		{
 			var (key, def) = values.O2();
-			key = key.ParseObject();
 
 			if (TryGetValue(key, out var val))
 				return val;
@@ -138,6 +130,8 @@ namespace Keysharp.Core
 
 			throw new KeyError($"Key {key} was not present in the map.");
 		}
+
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map);
 
 		public bool Has(params object[] values) => TryGetValue(values[0], out _);
 
@@ -176,7 +170,7 @@ namespace Keysharp.Core
 			IList ic;
 			Array arr = null;
 
-			if (values.Length == 1 && values[0].ParseObject() is Array temp)
+			if (values.Length == 1 && values[0] is Array temp)
 				ic = arr = temp;
 			else
 				ic = values;
@@ -187,35 +181,28 @@ namespace Keysharp.Core
 			if (arr != null)
 			{
 				for (var i = 0; i < count; i += 2)
-					Insert(ic[i + 1].ParseObject(), ic[i + 2].ParseObject());//Add 1 because the Array indexer internally subtracts 1.
+					Insert(ic[i + 1], ic[i + 2]);//Add 1 because the Array indexer internally subtracts 1.
 			}
 			else
 			{
 				for (var i = 0; i < count; i += 2)
-					Insert(ic[i].ParseObject(), ic[i + 1].ParseObject());
+					Insert(ic[i], ic[i + 1]);
 			}
 		}
-
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map);
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
 		private void Insert(object key, object value)
 		{
-			var ko = key.ParseObject();
-			var vo = value.ParseObject();
-
-			if (ko is string s && caseSense != eCaseSense.On)
-				map[s.ToLower()] = vo;
+			if (caseSense != eCaseSense.On && key is string s)
+				map[s.ToLower()] = value;
 			else
-				map[ko] = vo;
+				map[key] = value;
 		}
 
 		private bool TryGetValue(object key, out object value)
 		{
-			key = key.ParseObject();
-
-			if (key is string s && caseSense != eCaseSense.On)
+			if (caseSense != eCaseSense.On && key is string s)
 			{
 				if (caseSense == eCaseSense.Off)
 				{
@@ -244,12 +231,10 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public virtual object this[object key]
+		public object this[object key]//Unsure how this will work with __item and allowing overriding, mark as virtual for now.//TODO
 		{
 			get
 			{
-				key = key.ParseObject();
-
 				if (TryGetValue(key, out var val))
 					return val;
 

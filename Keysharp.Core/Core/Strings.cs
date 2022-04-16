@@ -230,7 +230,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="value">The data to encode.</param>
 		/// <returns>A hexadecimal string representation of the given binary data.</returns>
-		public static string HexEncode(object value) => Crypt.ToString(Crypt.ToByteArray(value));
+		public static string HexEncode(object value) => BytesToHexString(Crypt.ToByteArray(value));
 
 		/// <summary>
 		/// Returns the position of the first or last occurrence of the specified substring within a string.
@@ -480,7 +480,7 @@ namespace Keysharp.Core
 			var (input, options) = o.S2();
 			var splits = options.Split(" ");
 			var opts = Options.KeyValues(string.Join(",", splits), true, new[] { 'f' });
-			MethodInfo function = null;
+			IFuncObj function = null;
 			var split = '\n';
 			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
 
@@ -488,13 +488,13 @@ namespace Keysharp.Core
 			{
 				if (o[2] is string strfunc)
 				{
-					function = Reflections.FindLocalRoutine(strfunc);
+					function = new FuncObj(strfunc);
 
-					if (function == null)
+					if (function.Name == null)
 						return "";
 				}
-				else if (o[2] is GenericFunction gf)
-					function = gf.Method;
+				else if (o[2] is IFuncObj fo)
+					function = fo;
 			}
 
 			if (!string.IsNullOrEmpty(dopt))
@@ -584,7 +584,7 @@ namespace Keysharp.Core
 					argobjs[1] = y.Item1;
 					argobjs[2] = y.Item2 - x.Item2;
 
-					try { value = function.Invoke(null, args); }
+					try { value = function.Call(args); }
 					catch (Exception) { }
 
 					if (value is int i)
@@ -727,7 +727,7 @@ namespace Keysharp.Core
 					len = o.Al(1, long.MinValue);// buf != null ? Math.Min((long)buf.Size, Convert.ToInt32(o[1])) : Convert.ToInt32(o[1]);
 
 				if (o.Count > 2)
-					encoding = File.GetEncoding(o[2].ParseObject());
+					encoding = File.GetEncoding(o[2]);
 
 				unsafe
 				{
@@ -813,11 +813,11 @@ namespace Keysharp.Core
 
 				if (o.Count > 1)
 				{
-					buf = o[1].ParseObject() as Buffer;
+					buf = o[1] as Buffer;
 
 					if (buf != null)
 						ptr = buf.Ptr;
-					else if (o[1].ParseObject() is long l)
+					else if (o[1] is long l)
 						ptr = new IntPtr(l);
 				}
 
@@ -828,7 +828,7 @@ namespace Keysharp.Core
 					len = Math.Abs(o.Al(2));
 
 				if (o.Count > 3)
-					encoding = File.GetEncoding(o[3].ParseObject());
+					encoding = File.GetEncoding(o[3]);
 
 				var bytes = encoding.GetBytes(s);
 
@@ -923,7 +923,7 @@ namespace Keysharp.Core
 		/// <param name="trim">An optional list of characters (case sensitive) to exclude from the beginning and end of each array element.</param>
 		public static Array StrSplit(params object[] obj)
 		{
-			var o = obj.Pa();//.L();//Can't use L() here because some of the arguments can be arrays and we don't want to flatten everything.
+			var o = obj;//.Pa();//.L();//Can't use L() here because some of the arguments can be arrays and we don't want to flatten everything.
 			var count = -1;
 			string delimiters = string.Empty, trim = string.Empty;
 
@@ -1227,6 +1227,28 @@ namespace Keysharp.Core
 		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
 
 		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
+
+		/// <summary>
+		/// This appears to be the fastest known way to do this.
+		/// Gotten from: https://www.meziantou.net/comparing-implementations-with-benchmarkdotnet.htm
+		/// </summary>
+		/// <param name="bytes"></param>
+		/// <returns></returns>
+		internal static string BytesToHexString(byte[] bytes)
+		{
+			int b;
+			var c = new char[bytes.Length * 2];
+
+			for (var i = 0; i < bytes.Length; i++)
+			{
+				b = bytes[i] >> 4;
+				c[i * 2] = (char)(55 + b + (((b - 10) >> 31) & -7));
+				b = bytes[i] & 0xF;
+				c[i * 2 + 1] = (char)(55 + b + (((b - 10) >> 31) & -7));
+			}
+
+			return new string(c);
+		}
 
 		/// <summary>
 		/// Reverse vesion of NthIndexOf().

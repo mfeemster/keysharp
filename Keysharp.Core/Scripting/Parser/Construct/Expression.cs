@@ -21,7 +21,7 @@ namespace Keysharp.Scripting
 					if (part[0] == ParenOpen)
 					{
 						var n = i + 1;
-						var paren = Dissect(parts, n, Set(parts, i));
+						var paren = ExtractRange(parts, n, Set(parts, i));
 						parts.RemoveAt(n);
 						n -= 2;
 						var call = n > -1 && parts[n] is CodeExpression && !(parts[n] is CodePrimitiveExpression);
@@ -83,14 +83,14 @@ namespace Keysharp.Scripting
 					else if (IsIdentifier(part, true) && !IsKeyword(part))
 					{
 						var low = part.ToLowerInvariant();
-						parts[i] = libProperties.ContainsKey(low)
-								   ? new CodeVariableReferenceExpression(libProperties[low].Name)//using static declarations obviate the need for specifying the static class type.
+						parts[i] = libProperties.TryGetValue(low, out var pi)
+								   ? new CodeVariableReferenceExpression(pi.Name)//using static declarations obviate the need for specifying the static class type.
 								   : VarIdOrConstant(part, i == 0 && create, false);
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{
 						var n = i + 1;
-						var paren = Dissect(parts, n, Set(parts, i));
+						var paren = ExtractRange(parts, n, Set(parts, i));
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.Dictionary;
 						ParseObject(paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
 						//_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(string), keys));
@@ -100,44 +100,105 @@ namespace Keysharp.Scripting
 						parts.RemoveAt(n);
 						i--;
 					}
-					else if (part.Length == 1 && part[0] == ArrayOpen)
+					else if (part.Length > 0 && part == "[" || part == "[*")
 					{
 						var n = i + 1;
-						var paren = Dissect(parts, n, Set(parts, i));
-						parts.RemoveAt(n);
 
-						if (i > 0 && parts[i - 1] is CodeExpression)
+						if (part == "[*")//Special case for accessing a property. This is similar to the array construction one below, but different enough to warrant its own section.
 						{
-							var invoke = (CodeMethodInvokeExpression)InternalMethods.Index;
-							n = i - 1;
-							_ = invoke.Parameters.Add((CodeExpression)parts[n]);
-							var index = ParseMultiExpression(paren.ToArray(), create);
+							var closing = parts.FindIndex(n, ob => ob.ToString() == "*]");
 
-							if (index.Length > 1)
-								throw new ParseException("Cannot have multipart expression in index.");
-							else if (index.Length == 0)
+							if (closing != -1)
 							{
-								//Unsure what ExtendArray is supposed to be doing. Instead, interpret empty brackets to mean passing null.//MATT
-								_ = invoke.Parameters.Add(new CodeSnippetExpression("null"));
-								//var extend = (CodeMethodInvokeExpression)InternalMethods.ExtendArray;
-								//var sub = new List<object>(1);
-								//sub.Add(parts[n]);
-								//_ = extend.Parameters.Add(ParseExpression(sub));
-								//invoke = extend;
+								var proptokens = ExtractRange(parts, n, closing);
+								parts.RemoveAt(n);
+
+								if (i > 0 && parts[i - 1] is CodeExpression)
+								{
+									CodeMethodInvokeExpression invoke;
+
+									if (n + 1 < parts.Count && parts[n].ToString() == ":=")//Detect if this was a property assignment by searching for a := then a token after it, which is the value to assign.
+									{
+										var valtokens = ExtractRange(parts, n + 1, parts.Count);
+										var val = ParseMultiExpression(valtokens.ToArray(), create);
+										invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
+										n = i - 1;
+										_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+										var index = ParseMultiExpression(proptokens.ToArray(), create);
+
+										if (index.Length > 1)
+											throw new ParseException("Cannot have multipart expression in a property name.");
+										else if (index.Length == 0)
+											throw new ParseException("Cannot access an empty property.");
+										else
+											_ = invoke.Parameters.Add(index[0]);
+
+										_ = invoke.Parameters.Add(val[0]);
+										parts.RemoveAt(n);//Remove first element (done again below).
+									}
+									else
+									{
+										invoke = (CodeMethodInvokeExpression)InternalMethods.GetPropertyValue;
+										n = i - 1;
+										_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+										var index = ParseMultiExpression(proptokens.ToArray(), create);
+
+										if (index.Length > 1)
+											throw new ParseException("Cannot have multipart expression in a property name.");
+										else if (index.Length == 0)
+											throw new ParseException("Cannot access an empty property.");
+										else
+											_ = invoke.Parameters.Add(index[0]);
+									}
+
+									parts[i] = invoke;
+									parts.RemoveAt(n);
+									i--;
+								}
 							}
 							else
-								_ = invoke.Parameters.Add(index[0]);
-
-							parts[i] = invoke;
-							parts.RemoveAt(n);
-							i--;
+								throw new ParseException("[* did not have a closing *].");//This should never happen because it's autogenerated by this parser, so a user would never normally enter it.
 						}
 						else
 						{
-							//var array = new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray()));
-							//MATT
-							var array = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray(), create)));
-							parts[i] = array;
+							var paren = ExtractRange(parts, n, Set(parts, i));
+							parts.RemoveAt(n);
+
+							if (i > 0 && parts[i - 1] is CodeExpression)
+							{
+								var invoke = (CodeMethodInvokeExpression)InternalMethods.Index;
+								n = i - 1;
+								_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+								var index = ParseMultiExpression(paren.ToArray(), create);
+
+								if (index.Length > 1)
+									throw new ParseException("Cannot have multipart expression in index.");
+								else if (index.Length == 0)
+								{
+									//Unsure what ExtendArray is supposed to be doing. Instead, interpret empty brackets to mean passing null.//MATT
+									_ = invoke.Parameters.Add(new CodeSnippetExpression("null"));
+									//var extend = (CodeMethodInvokeExpression)InternalMethods.ExtendArray;
+									//var sub = new List<object>(1);
+									//sub.Add(parts[n]);
+									//_ = extend.Parameters.Add(ParseExpression(sub));
+									//invoke = extend;
+								}
+								else if (index[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(index[0], "ParseObject"));
+								else
+									_ = invoke.Parameters.Add(index[0]);
+
+								parts[i] = invoke;
+								parts.RemoveAt(n);
+								i--;
+							}
+							else
+							{
+								//var array = new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray()));
+								//MATT
+								var array = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray(), create)));
+								parts[i] = array;
+							}
 						}
 					}
 					else if (part.Length > 1 && part[part.Length - 1] == ParenOpen)
@@ -150,13 +211,13 @@ namespace Keysharp.Scripting
 							if (IsDynamicReference(name))
 								dynamic = true;
 							else
-								throw new ParseException("Invalid function name");
+								throw new ParseException("Invalid function name.");
 						}
 						else
 							CheckPersistent(name);
 
 						var n = i + 1;
-						var paren = Dissect(parts, n, Set(parts, i));
+						var paren = ExtractRange(parts, n, Set(parts, i));
 						parts.RemoveAt(n);
 						CodeMethodInvokeExpression invoke = null;
 						//var special = false;
@@ -184,7 +245,10 @@ namespace Keysharp.Scripting
 
 						if (paren.Count != 0)
 						{
-							invoke.Parameters.AddRange(passed);
+							if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+								_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(passed[0], "ParseObject"));
+							else
+								invoke.Parameters.AddRange(passed);
 						}
 
 						//If the function being called has the same name as a variable, then we assume it's a function object.
@@ -251,6 +315,21 @@ namespace Keysharp.Scripting
 							}
 
 							parts.Add(ParenClose.ToString());
+
+							//Need to take special action if it was +=, -= etc... on a property.
+							if (parts[0] is CodeMethodInvokeExpression cmie && cmie.Method.MethodName == "GetPropertyValue" && parts[1] is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign)
+							{
+								var propobj = cmie.Parameters[0];
+								var propname = cmie.Parameters[1];
+								var invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
+								_ = invoke.Parameters.Add(propobj);
+								_ = invoke.Parameters.Add(propname);
+								var extract = ExtractRange(parts, 2, parts.Count);
+								var val = ParseMultiExpression(extract.ToArray(), create);
+								_ = invoke.Parameters.Add(val[0]);
+								parts[0] = invoke;
+								parts.RemoveAt(1);
+							}
 						}
 					}
 					else if (part.Length == 1 && part[0] == Multicast)
@@ -739,7 +818,15 @@ namespace Keysharp.Scripting
 								}
 
 								boolean.Right = iftest;
-								parts[x] = boolean;
+
+								if (x > 0 && parts[x - 1] is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign)//z := x && y
+									parts[x] = new CodeMethodInvokeExpression(boolean, "ParseObject");
+								else if (x + 1 < parts.Count && parts[0] is CodeVariableReferenceExpression &&
+										 parts[x + 1] is Script.Operator sop &&
+										 (sop == Script.Operator.BooleanAnd || sop == Script.Operator.BooleanOr))//z := (x && y)
+									parts[x] = new CodeMethodInvokeExpression(boolean, "ParseObject");
+								else
+									parts[x] = boolean;
 							}
 							else
 							{

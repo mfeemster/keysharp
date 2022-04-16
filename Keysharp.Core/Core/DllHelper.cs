@@ -63,7 +63,7 @@ namespace Keysharp.Core
 		public static object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//MATT
-			function = function.ParseObject();
+			function = function;
 			var types = new Type[parameters.Length / 2];
 			var args = new object[types.Length];
 			var returnType = typeof(int);
@@ -345,18 +345,18 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="name">The name of the function.</param>
 		/// <returns>A delegate (function pointer).</returns>
-		public static Delegate FunctionReference(string name)
-		{
-			var method = Reflections.FindLocalMethod(name);
-			var info = Expression.GetDelegateType(
-						   //var info = Expression.GetFuncType(
-						   (from parameter in method.GetParameters() select parameter.ParameterType)
-						   .Concat(new[] { method.ReturnType })
-						   .ToArray());
-			return method?.CreateDelegate(info);
-			//return method == null ? null : (Core.GenericFunction)Delegate.CreateDelegate(method.ReflectedType, method);
-			//return method == null ? null : (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
-		}
+		//public static Delegate FunctionReference(string name)
+		//{
+		//  var method = Reflections.FindLocalMethod(name);
+		//  var info = Expression.GetDelegateType(
+		//                 //var info = Expression.GetFuncType(
+		//                 (from parameter in method.GetParameters() select parameter.ParameterType)
+		//                 .Concat(new[] { method.ReturnType })
+		//                 .ToArray());
+		//  return method?.CreateDelegate(info);
+		//  //return method == null ? null : (Core.GenericFunction)Delegate.CreateDelegate(method.ReflectedType, method);
+		//  //return method == null ? null : (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
+		//}
 
 		/// <summary>
 		/// Returns a binary number stored at the specified address in memory.
@@ -473,18 +473,18 @@ namespace Keysharp.Core
 			{
 				lastPairIndex = l.Count - 4;
 				offset = l.Ai(l.Count - 1);
-				buf = l[l.Count - 2].ParseObject() as Buffer;
+				buf = l[l.Count - 2] as Buffer;
 			}
 			else
 			{
 				lastPairIndex = l.Count - 3;
-				buf = l[l.Count - 1].ParseObject() as Buffer;
+				buf = l[l.Count - 1] as Buffer;
 			}
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
-				var type = l[i].ParseObject() as string;
-				var number = l[i + 1].ParseObject();
+				var type = l[i] as string;
+				var number = l[i + 1];
 				var inc = 0;
 				byte[] bytes;
 

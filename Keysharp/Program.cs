@@ -13,6 +13,8 @@ using System.Windows.Forms;
 using Keysharp.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.NET.HostModel.AppHost;
+using Microsoft.Win32;
+using System.Linq;
 
 namespace Keysharp.Main
 {
@@ -22,6 +24,15 @@ namespace Keysharp.Main
 		internal static Version Version
 		{
 			get { return Assembly.GetExecutingAssembly().GetName().Version; }
+		}
+
+		internal static string GetLatestDotNetVersion()
+		{
+			var key = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
+			key = key.OpenSubKey(@"SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
+			var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
+			versions.Sort();
+			return versions.Last().ToString();
 		}
 
 		[STAThread]
@@ -208,9 +219,9 @@ namespace Keysharp.Main
 					var currentDepsConfigPath = Path.ChangeExtension(typeof(Program).Assembly.Location, "deps.json");
 					File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
 					//File.WriteAllText(Path.ChangeExtension(path, "runtimeconfig.json"), CompilerHelper.GenerateRuntimeConfig());
-					//Should really find a way to look through this folder and find the most recent one.
+					var ver = GetLatestDotNetVersion();//Windows only.
 					HostWriter.CreateAppHost(
-						appHostSourceFilePath: @"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\6.0.3\runtimes\win-x64\native\apphost.exe",
+						appHostSourceFilePath: @$"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\{ver}\runtimes\win-x64\native\apphost.exe",
 						appHostDestinationFilePath: $"{path}.exe",
 						appBinaryFilePath: $"{path}.dll");
 				}

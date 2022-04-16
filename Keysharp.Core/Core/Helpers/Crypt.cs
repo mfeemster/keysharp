@@ -55,13 +55,11 @@ namespace Keysharp.Core
 		{
 			var raw = ToByteArray(value);
 			var result = alg.ComputeHash(raw);
-			return ToString(result);
+			return Strings.BytesToHexString(result);
 		}
 
 		internal static byte[] ToByteArray(object value)
 		{
-			value = value.ParseObject();
-
 			if (value is string s)
 				return Encoding.Unicode.GetBytes(s);
 
@@ -81,16 +79,6 @@ namespace Keysharp.Core
 
 #pragma warning restore SYSLIB0001
 			return writer.ToArray();
-		}
-
-		internal static string ToString(byte[] array)
-		{
-			var buf = new StringBuilder(array.Length * 2);
-
-			foreach (var b in array)
-				_ = buf.Append(b.ToString("x").PadLeft(2, '0'));
-
-			return buf.ToString();
 		}
 	}
 }

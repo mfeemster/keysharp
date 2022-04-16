@@ -99,8 +99,6 @@ namespace Keysharp.Scripting
 
 			if (key is string ks)
 			{
-				item = item.ParseObject();
-
 				//mi = item.GetType().GetMethods().FirstOrDefault((_mi) => _mi.Name == ks);//Needed because the method might be overloaded.
 				if (Reflections.FindAndCacheMethod(item.GetType(), ks) is MethodInfo mi)
 					return (item, mi);
@@ -119,9 +117,15 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
-		public static (object, bool) GetPropertyValue(object item, string name)
+		public static object GetPropertyValue(object item, object name)
 		{
-			var type = item.ParseObject().GetType();
+			var ret = InternalGetPropertyValue(item, name.ToString());
+			return ret.Item2 ? ret.Item1 : "";
+		}
+
+		internal static (object, bool) InternalGetPropertyValue(object item, string name)
+		{
+			var type = item.GetType();
 			//PropertyInfo match = null;
 			//foreach (var property in type.GetProperties())
 			//{
@@ -167,39 +171,35 @@ namespace Keysharp.Scripting
 			if (item == null)// || key == null)//null is a valid key value.//MATT
 				return null;
 
-			item = item.ParseObject();
-
-			if (item is Map table)
+			if (item is Map table)//This design is terrible and will not work when a key has the same name as a property. Needs to be totally reworked.//MATT
 			{
-				if (table.map.TryGetValue(key, out var val))
-					return val;
-
-				if (key is string lookup)//Comparison above was case sensitive. It failed, so now try the slower method of comparing each key, without case.
-				{
-					foreach (var k in table.map.Keys)//Direct use of map member. Normally don't want to do this, but ok since this is internal.
-						if (k is string check)
-							if (lookup.Equals(check, System.StringComparison.OrdinalIgnoreCase))
-								return table[check];
-				}
-
-				if (key is string ks)//Wasn't a key, perhaps it was a property.
-					return GetPropertyValue(item, ks).Item1;
+				return table[key];
+				//Case sensitivity is handled internally, and this function no longer handles getting property values.
+				//if (table.map.TryGetValue(key, out var val))
+				//  return val;
+				//if (key is string lookup)//Comparison above was case sensitive. It failed, so now try the slower method of comparing each key, without case.
+				//{
+				//  foreach (var k in table.map.Keys)//Direct use of map member. Normally don't want to do this, but ok since this is internal.
+				//      if (k is string check)
+				//          if (lookup.Equals(check, System.StringComparison.OrdinalIgnoreCase))
+				//              return table[check];
+				//}
+				//if (key is string ks)//Wasn't a key, perhaps it was a property.
+				//  return InternalGetPropertyValue(item, ks).Item1;
 			}
 			else//This appears to work, but will prevent any properties or extension methods from working on dictionary types.//MATT
 			{
-				if (key is string ks)
-				{
-					var ret = GetPropertyValue(item, ks);
-
-					if (ret.Item2)
-						return ret.Item1;
-				}
-
+				//if (key is string ks)
+				//{
+				//  var ret = InternalGetPropertyValue(item, ks);
+				//  if (ret.Item2)
+				//      return ret.Item1;
+				//}
 				//if (IsNumeric(key))
-				{
-					//return IndexAt(item, (int)ForceLong(key));
-					return IndexAt(item, key);
-				}
+				//{
+				//return IndexAt(item, (int)ForceLong(key));
+				return IndexAt(item, key);
+				//}
 				//else
 				//{
 				//  if (key is string ks)
@@ -214,7 +214,7 @@ namespace Keysharp.Scripting
 				//}
 			}
 
-			return null;
+			//return null;
 		}
 
 		public static IndexError IndexError(params object[] obj) => new (obj);
@@ -256,7 +256,7 @@ namespace Keysharp.Scripting
 			if (l.Length < 1)
 				return 0;
 
-			var o = l[0].ParseObject();
+			var o = l[0];
 
 			if (o is double || o is float || o is decimal)
 				return 1;
@@ -279,7 +279,7 @@ namespace Keysharp.Scripting
 			if (l.Length < 1)
 				return 0;
 
-			var o = l[0].ParseObject();
+			var o = l[0];
 
 			if (o is long || o is int || o is uint || o is ulong)
 				return 1;
@@ -319,14 +319,14 @@ namespace Keysharp.Scripting
 		public static long IsObject(params object[] obj)
 		{
 			var o = obj;//.L();
-			return o.Length > 0 && o[0].ParseObject() is KeysharpObject ? 1 : 0;
+			return o.Length > 0 && o[0] is KeysharpObject ? 1 : 0;
 		}
 
 		public static long IsSet(params object[] obj)
 		{
 			if (obj.Length > 0)
 			{
-				var o = obj[0].ParseObject();
+				var o = obj[0];
 
 				if (o != UnsetArg.Default && o != null)
 					return 1;
@@ -451,80 +451,42 @@ namespace Keysharp.Scripting
 
 		public static object SetObject(object key, object item, object[] parents, object value)
 		{
-			key = key.ParseObject();
-			item = item.ParseObject();
-
-			for (var i = parents.Length - 1; i > -1; i--)
+			if (parents.Length > 0)
 			{
-				var pi = parents[i].ParseObject();
-				var child = Index(item, pi);
-
-				if (child == null)
+				for (var i = parents.Length - 1; i > -1; i--)//No idea what this is actually doing, it's probably left over legacy code.//TODO
 				{
-					if (!(pi is string))
-						return null;
+					var pi = parents[i];
+					var child = Index(item, pi);
 
-					if (item is Map map1)
+					if (child == null)
 					{
-						var name = (string)pi;
-						map1[name] = item = new Map();
+						if (item is Map map1)
+							map1[pi] = item = new Map();
+						else
+							return null;
 					}
 					else
-						return null;
+						item = child;
 				}
-				else
-					item = child;
 			}
-
-			if (item == null)
-				return null;
-
-			if (key is string ks)
+			else if (item is Map map2)//This function has been redesigned to handle assigning a map key/value pair, or assigning a value to an array index. It is NOT for setting properties.
 			{
-				SetPropertyValue(item, ks, value);
-				return value;
-			}
-			else if (item is Map map2)
-			{
-				if (IsNumeric(key))
-					return null;
-
-				if (!(key is string s))
-					return null;
-
-				var name = s;//.ToLowerInvariant();//This may not always be what we want to do.//MATT
-
-				if (map2.Contains(name))
-				{
-					if (value == null)
-						map2.Delete(name);
-					else
-						map2[name] = value;
-				}
-				else
-					map2[name] = value;
+				map2[key] = value;
 			}
 			else if (item is Core.Array al)
 			{
 				var index = (int)ForceLong(key);
 				al[index] = value;
 			}
-			else if (item is System.Array array)
-			{
-				var index = (int)ForceLong(key);
-
-				if (index < 0 || index > array.Length - 1)
-					return null;
-
-				array.SetValue(value, index);
-			}
+			else if (item == null)
+				return null;
 
 			return value;
 		}
 
-		public static void SetPropertyValue(object item, string name, object value)
+		public static void SetPropertyValue(object item, object name, object value)
 		{
-			if (Reflections.FindAndCacheProperty(item.ParseObject().GetType(), name) is PropertyInfo pi)
+			if (Reflections.FindAndCacheProperty(item.GetType(), name.ToString()) is PropertyInfo pi)
 			{
 				try
 				{
@@ -550,7 +512,7 @@ namespace Keysharp.Scripting
 
 		public static TimeoutError TimeoutError(params object[] obj) => new (obj);
 
-		public static string Type(object t) => t.ParseObject().GetType().Name;
+		public static string Type(object t) => t.GetType().Name;
 
 		public static TypeError TypeError(params object[] obj) => new (obj);
 
@@ -596,7 +558,6 @@ namespace Keysharp.Scripting
 				return null;
 
 			var position = ForceInt(index);
-			//item = item.ParseObject();
 
 			//The most common is going to be a string, array or buffer.
 			if (item is string s)

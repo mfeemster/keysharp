@@ -332,7 +332,7 @@ namespace Keysharp.Core
 						else if (value is string s && s?.Length == 0)
 							Clipboard.Clear();
 						else
-							Clipboard.SetDataObject(value.ParseObject().ToString(), true);
+							Clipboard.SetDataObject(value.ToString(), true);
 					}
 				}
 			}
@@ -505,7 +505,7 @@ namespace Keysharp.Core
 				return val;
 			}
 
-			set => fileEncoding = File.GetEncoding(value.ParseObject().ToString());
+			set => fileEncoding = File.GetEncoding(value.ToString());
 		}
 
 		/// <summary>
@@ -534,7 +534,7 @@ namespace Keysharp.Core
 		//  set
 		//  {
 		//      var e = false;
-		//      var str = value.ParseObject().ToString();
+		//      var str = value.ToString();
 
 		//      foreach (var exp in new[] { str.IndexOf('e'), str.IndexOf('E') })
 		//      {
@@ -572,7 +572,7 @@ namespace Keysharp.Core
 
 		//  set
 		//  {
-		//      switch (value.ParseObject().ToString().ToLowerInvariant())
+		//      switch (value.ToString().ToLowerInvariant())
 		//      {
 		//          case Core.Keyword_Hex:
 		//          case Core.Keyword_FormatHex:
@@ -600,7 +600,7 @@ namespace Keysharp.Core
 				return formatNumeric = "f";
 			}
 
-			set => formatNumeric = value.ParseObject().ToString();
+			set => formatNumeric = value.ToString();
 		}
 
 		/// <summary>
@@ -711,7 +711,7 @@ namespace Keysharp.Core
 			set
 			{
 				if (Script.Tray != null)
-					Script.Tray.Text = value.ParseObject().ToString();
+					Script.Tray.Text = value.ToString();
 			}
 		}
 
@@ -1261,7 +1261,7 @@ namespace Keysharp.Core
 		public static object A_MenuMaskKey
 		{
 			get => menuMaskKey;
-			set => menuMaskKey = value.ParseObject().ToString();
+			set => menuMaskKey = value.ToString();
 		}
 
 		/// <summary>
@@ -1452,7 +1452,7 @@ namespace Keysharp.Core
 
 			set
 			{
-				if (Enum.TryParse<SendModes>(value.ParseObject().ToString(), out var temp))
+				if (Enum.TryParse<SendModes>(value.ToString(), out var temp))
 					sendMode = temp;
 			}
 		}
@@ -1571,7 +1571,7 @@ namespace Keysharp.Core
 			}
 			set
 			{
-				switch (value.ParseObject().ToString().ToLowerInvariant())
+				switch (value.ToString().ToLowerInvariant())
 				{
 					case "1": titleMatchMode = 1; break;
 
@@ -1598,7 +1598,7 @@ namespace Keysharp.Core
 			}
 			set
 			{
-				switch (value.ParseObject().ToString().ToLowerInvariant())
+				switch (value.ToString().ToLowerInvariant())
 				{
 					case Core.Keyword_Fast: titleMatchModeSpeed = true; break;
 
@@ -1650,7 +1650,7 @@ namespace Keysharp.Core
 
 			set
 			{
-				var str = value.ParseObject().ToString();
+				var str = value.ToString();
 
 				if (Directory.Exists(str))
 					Environment.CurrentDirectory = str;

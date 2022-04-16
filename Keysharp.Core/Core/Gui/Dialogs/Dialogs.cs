@@ -469,7 +469,7 @@ namespace Keysharp.Core
 			};
 			progressOptions.ParseGuiID(ProgressParam1);
 			progressOptions.ParseComplexOptions(ProgressParam1);
-			ProgressAssync(progressOptions);
+			ProgressAsync(progressOptions);
 		}
 
 		/// <summary>
@@ -508,7 +508,7 @@ namespace Keysharp.Core
 			};
 			splashOptions.ParseGuiID(ImageFile);
 			splashOptions.ParseComplexOptions(Options);
-			SplashImageAssync(splashOptions);
+			SplashImageAsync(splashOptions);
 		}
 
 		private static void InitDialogs()
@@ -520,7 +520,7 @@ namespace Keysharp.Core
 				SplashDialogs = new Dictionary<int, SplashDialog>();
 		}
 
-		private static void ProgressAssync(ComplexDlgOptions Options)
+		private static void ProgressAsync(ComplexDlgOptions Options)
 		{
 			ProgressDialog thisProgress = null;
 
@@ -530,7 +530,7 @@ namespace Keysharp.Core
 
 				if (thisProgress.InvokeRequired)
 				{
-					_ = thisProgress.Invoke(new AsyncCallDlgOptions(ProgressAssync), Options);
+					_ = thisProgress.Invoke(new AsyncCallDlgOptions(ProgressAsync), Options);
 				}
 			}
 
@@ -557,7 +557,7 @@ namespace Keysharp.Core
 				thisProgress.Show();
 		}
 
-		private static void SplashImageAssync(ComplexDlgOptions Options)
+		private static void SplashImageAsync(ComplexDlgOptions Options)
 		{
 			SplashDialog thisSplash = null;
 			System.Drawing.Image thisImage = null;
@@ -568,7 +568,7 @@ namespace Keysharp.Core
 
 				if (thisSplash.InvokeRequired)
 				{
-					_ = thisSplash.Invoke(new AsyncCallDlgOptions(SplashImageAssync), Options);
+					_ = thisSplash.Invoke(new AsyncCallDlgOptions(SplashImageAsync), Options);
 				}
 			}
 

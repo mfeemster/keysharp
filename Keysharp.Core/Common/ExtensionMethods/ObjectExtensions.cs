@@ -32,8 +32,6 @@ namespace System
 		//public static IList L(this object[] obj) => obj.Length > 0 && obj[0] is IList oo ? oo : obj;
 		public static IList L(this object[] obj) => obj.Flatten().Cast<object>().ToList();
 
-		public static object[] Pa(this object[] obj) => obj.Select(x => x.ParseObject()).ToArray();
-
 		public static bool? ParseBool(this object obj)
 		{
 			if (obj is bool b)
@@ -149,7 +147,7 @@ namespace System
 
 		public static object ParseObject(this object obj) => obj is Keysharp.Scripting.BoolResult br ? br.o : obj;
 
-		public static IList Pl(this object[] obj) => obj.Select(x => x.ParseObject()).ToList();
+		public static IList Pl(this object[] obj) => obj.Select(x => x).ToList();
 
 		public static string Str(this object obj) => obj != null ? obj.ToString() : "";
 

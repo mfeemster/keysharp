@@ -246,7 +246,7 @@ namespace Keysharp.Core
 
 			if (o.Count > 1)
 			{
-				if (o[1].ParseObject() is string s)
+				if (o[1] is string s)
 					play = s.ToLowerInvariant();
 			}
 
@@ -255,7 +255,7 @@ namespace Keysharp.Core
 
 			if (o.Count > 0)
 			{
-				var po = o[0].ParseObject();
+				var po = o[0];
 
 				if (po != null)
 					del = po.ParseLong(true).Value;

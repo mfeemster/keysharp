@@ -30,7 +30,7 @@ namespace Keysharp.Core
 					return null;
 
 				var key = DefaultGuiId;
-				return guis.ContainsKey(key) ? guis[key] : null;
+				return guis.TryGetValue(key, out var form) ? form : null;
 			}
 		}
 

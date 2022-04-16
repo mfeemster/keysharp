@@ -85,7 +85,7 @@ namespace System.Collections.Generic
 
 		public static long Al(this IList obj, int index, long def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseLong().Value : def;
 
-		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index].ParseObject() : def;
+		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index] : def;
 
 		public static string As(this IList obj, int index, string def = "") => obj.Count > index && obj[index] != null ? obj[index].ToString() : def;
 

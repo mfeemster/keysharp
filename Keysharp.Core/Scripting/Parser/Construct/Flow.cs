@@ -800,10 +800,11 @@ namespace Keysharp.Scripting
 				this.blockOpen = false;
 				var result = ParseSingleExpression(code, false);
 				blockOpen = blockOpen || this.blockOpen;
+				var trimparens = code.Trim(BothParens);
 
-				if (code.Equals("true", System.StringComparison.OrdinalIgnoreCase) || code.Equals("1"))//Skip an if test call if we know it's a bool.
+				if (trimparens.Equals("true", System.StringComparison.OrdinalIgnoreCase) || trimparens.Equals("1"))//Skip an if test call if we know it's a bool.
 					return new CodePrimitiveExpression(true);
-				else if (code.Equals("false", System.StringComparison.OrdinalIgnoreCase) || code.Equals("0"))
+				else if (trimparens.Equals("false", System.StringComparison.OrdinalIgnoreCase) || trimparens.Equals("0"))
 					return new CodePrimitiveExpression(false);
 				else
 				{

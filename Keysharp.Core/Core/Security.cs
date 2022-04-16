@@ -12,7 +12,7 @@ namespace Keysharp.Core
 		/// <returns>A checksum of <paramref name="value"/> as an integer.</returns>
 		public static long CRC32(object value)
 		{
-			var raw = Crypt.ToByteArray(value.ParseObject());
+			var raw = Crypt.ToByteArray(value);
 			var alg = new Common.CRC32();
 			_ = alg.ComputeHash(raw);
 			return alg.Value;
@@ -28,7 +28,7 @@ namespace Keysharp.Core
 		/// <remarks>A key length of 64 bits is supported.</remarks>
 		public static byte[] DES(object value, object key, bool decrypt = false)
 		{
-			return Crypt.Encrypt(value.ParseObject(), key.ParseObject(), decrypt, new DESCryptoServiceProvider());
+			return Crypt.Encrypt(value, key, decrypt, new DESCryptoServiceProvider());
 		}
 
 		/// <summary>
@@ -38,7 +38,7 @@ namespace Keysharp.Core
 		/// <returns>A 32-character hexadecimal number.</returns>
 		public static string MD5(object value)
 		{
-			return Crypt.Hash(value.ParseObject(), new MD5CryptoServiceProvider());
+			return Crypt.Hash(value, new MD5CryptoServiceProvider());
 		}
 
 		/// <summary>
@@ -51,7 +51,7 @@ namespace Keysharp.Core
 		/// <remarks>Key lengths from 40 bits to 128 bits in increments of 8 bits are supported.</remarks>
 		public static byte[] RC2(object value, object key, bool decrypt = false)
 		{
-			return Crypt.Encrypt(value.ParseObject(), key.ParseObject(), decrypt, new RC2CryptoServiceProvider());
+			return Crypt.Encrypt(value, key, decrypt, new RC2CryptoServiceProvider());
 		}
 
 		/// <summary>
@@ -64,7 +64,7 @@ namespace Keysharp.Core
 		/// <remarks>Key lengths of 128, 192, or 256 bits are supported.</remarks>
 		public static byte[] Rijndael(object value, object key, bool decrypt = false)
 		{
-			return Crypt.Encrypt(value.ParseObject(), key.ParseObject(), decrypt, new RijndaelManaged());
+			return Crypt.Encrypt(value, key, decrypt, new RijndaelManaged());
 		}
 
 		/// <summary>
@@ -118,7 +118,7 @@ namespace Keysharp.Core
 		/// <returns>A 40-character hexadecimal number.</returns>
 		public static string SHA1(object value)
 		{
-			return Crypt.Hash(value.ParseObject(), new SHA1CryptoServiceProvider());
+			return Crypt.Hash(value, new SHA1CryptoServiceProvider());
 		}
 
 		/// <summary>
@@ -128,7 +128,7 @@ namespace Keysharp.Core
 		/// <returns>A 64-character hexadecimal number.</returns>
 		public static string SHA256(object value)
 		{
-			return Crypt.Hash(value.ParseObject(), new SHA256Managed());
+			return Crypt.Hash(value, new SHA256Managed());
 		}
 
 		/// <summary>
@@ -138,7 +138,7 @@ namespace Keysharp.Core
 		/// <returns>A 96-character hexadecimal number.</returns>
 		public static string SHA384(object value)
 		{
-			return Crypt.Hash(value.ParseObject(), new SHA384Managed());
+			return Crypt.Hash(value, new SHA384Managed());
 		}
 
 		/// <summary>
@@ -148,7 +148,7 @@ namespace Keysharp.Core
 		/// <returns>A 128-character hexadecimal number.</returns>
 		public static string SHA512(object value)
 		{
-			return Crypt.Hash(value.ParseObject(), new SHA512Managed());
+			return Crypt.Hash(value, new SHA512Managed());
 		}
 
 		/// <summary>
@@ -164,7 +164,7 @@ namespace Keysharp.Core
 		/// </remarks>
 		public static byte[] TripleDES(object value, object key, bool decrypt = false)
 		{
-			return Crypt.Encrypt(value.ParseObject(), key.ParseObject(), decrypt, new TripleDESCryptoServiceProvider());
+			return Crypt.Encrypt(value, key, decrypt, new TripleDESCryptoServiceProvider());
 		}
 	}
 }

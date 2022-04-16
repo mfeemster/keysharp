@@ -216,8 +216,8 @@ namespace Keysharp.Core.Linux
 		private CachedKey LookupKeycode(char code)
 		{
 			// If we have a cache value, return that
-			if (Cache.ContainsKey(code))
-				return Cache[code];
+			if (Cache.TryGetValue(code, out var cached))
+				return cached;
 
 			// First look up the KeySym (XK_* in X11/keysymdef.h)
 			var KeySym = Xlib.XStringToKeysym(code.ToString());
@@ -260,7 +260,7 @@ namespace Keysharp.Core.Linux
 
 		private Keys TranslateKey(XEvent Event)
 		{
-			return Mapping.ContainsKey(Event.KeyEvent.keycode) ? Mapping[Event.KeyEvent.keycode] : StringToWFKey(Event);
+			return Mapping.TryGetValue(Event.KeyEvent.keycode, out var key) ? key : StringToWFKey(Event);
 		}
 
 		private struct CachedKey

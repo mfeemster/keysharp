@@ -23,9 +23,9 @@ namespace Keysharp.Core
 
 		static Reflections()
 		{
-			CacheAllMethods();
-			CacheAllProperties();
 			/*
+			    CacheAllMethods();
+			    CacheAllProperties();
 			    //When we first started Keysharp, all methods were going to be extension methods, but we've since changed the design, so this isn't really needed anymore.
 			    var types = new List<Type>(7000);//At the time of initial development, this will have 6,713 items in it.
 
@@ -59,12 +59,28 @@ namespace Keysharp.Core
 			*/
 		}
 
+		/// <summary>
+		/// This must be manually called before any program is run.
+		/// Normally we'd put this kind of init in the static constructor, however it must be able to be manually called
+		/// when running unit tests. Once upon init, then again within the unit test's auto generated program so it can find
+		/// any locally declared methods inside.
+		/// </summary>
 		public static void Initialize()
-		{ }//Dummy function that forces the static constructor to be called.
+		{
+			CacheAllMethods();
+			CacheAllProperties();
+		}
 
 		internal static void CacheAllMethods()
 		{
-			foreach (var item in AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.")))
+			IEnumerable<Assembly> assemblies;
+
+			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
+				assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			else
+				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp."));
+
+			foreach (var item in assemblies)
 				foreach (var type in item.GetTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null && (type.Namespace.StartsWith("Keysharp.Core") || type.Namespace.StartsWith("Keysharp.Main") || type.Namespace.StartsWith("Keysharp.Tests")))//Allow tests so we can use function objects inside of unit tests.
 						_ = FindAndCacheMethod(type, "");

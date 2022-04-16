@@ -268,13 +268,15 @@ namespace Keysharp.Scripting
 
 		public static object Operate(Operator op, object left, object right)
 		{
-			left = left.ParseObject();
-			right = right.ParseObject();
-
 			switch (op)
 			{
 				case Operator.Add:
+				{
+					if (left is long l && right is long r)
+						return l + r;
+
 					return ForceDouble(left) + ForceDouble(right);
+				}
 
 				case Operator.BitShiftLeft:
 				{
@@ -486,17 +488,32 @@ namespace Keysharp.Scripting
 				}
 
 				case Operator.Modulus:
+				{
+					if (left is long l && right is long r)
+						return l % r;
+
 					return ForceDouble(left) % ForceDouble(right);
+				}
 
 				case Operator.Power:
 					return Math.Pow(ForceDouble(left), ForceDouble(right));
 
 				case Operator.Minus:
 				case Operator.Subtract:
+				{
+					if (left is long l && right is long r)
+						return l - r;
+
 					return ForceDouble(left) - ForceDouble(right);
+				}
 
 				case Operator.Multiply:
+				{
+					if (left is long l && right is long r)
+						return l * r;
+
 					return ForceDouble(left) * ForceDouble(right);
+				}
 
 				case Operator.Divide:
 				{
@@ -520,8 +537,6 @@ namespace Keysharp.Scripting
 
 		public static object OperateUnary(Operator op, object right)
 		{
-			right = right.ParseObject();
-
 			switch (op)
 			{
 				case Operator.Minus:

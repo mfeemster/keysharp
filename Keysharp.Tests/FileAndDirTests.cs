@@ -741,6 +741,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("file-fileread", true));
 		}
 
+		[NonParallelizable]
 		[Test, Category("FileAndDir")]
 		public void FileRecycle()
 		{
@@ -769,6 +770,7 @@ namespace Keysharp.Tests
 			}
 		}
 
+		[NonParallelizable]
 		[Test, Category("FileAndDir")]
 		public void FileRecycleEmpty()
 		{

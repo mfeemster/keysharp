@@ -25,8 +25,8 @@ namespace Keysharp.Tests
 			Assert.AreEqual("Asdf", clip);
 		}
 
-		[Apartment(ApartmentState.STA)]
 		[Test, Category("Env")]
+		[Apartment(ApartmentState.STA)]
 		public void ClipWait()
 		{
 			Clipboard.Clear();

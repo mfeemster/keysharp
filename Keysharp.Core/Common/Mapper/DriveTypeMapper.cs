@@ -12,9 +12,9 @@ namespace Keysharp.Core.Common.Mapper
 			return base.LookUpCLRType(keyword);
 		}
 
-		internal override string LookUpIAType(DriveType clrType)
+		internal override string LookUpKeysharpType(DriveType clrType)
 		{
-			var str = base.LookUpIAType(clrType);
+			var str = base.LookUpKeysharpType(clrType);
 
 			if (string.IsNullOrEmpty(str))
 				str = Core.Keyword_UNKNOWN;

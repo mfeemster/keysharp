@@ -40,5 +40,4 @@ if (x == 1)
 else
 	FileAppend, fail, *
 
-; For some reason, ExitApp() causes the unit test to think it failed. So you need to manually close the main window for this test for it to be considered a success.
-; ExitApp(0) ; Needed because it sees timer as a persistent function, so it opens the standard GUI.
+MsgBox("Please close the window from the system tray for the misc-timer unit test to complete.")

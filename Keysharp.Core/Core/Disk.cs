@@ -344,7 +344,7 @@ namespace Keysharp.Core
 		{
 			Accessors.A_ErrorLevel = 0;
 			var drv = new DriveInfo(obj.L().S1());
-			return Common.Mapper.MappingService.Instance.DriveType.LookUpIAType(drv.DriveType);
+			return Common.Mapper.MappingService.Instance.DriveType.LookUpKeysharpType(drv.DriveType);
 		}
 
 		/// <summary>

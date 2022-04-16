@@ -4,7 +4,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private List<object> Dissect(List<object> parts, int start, int end)
+		private List<object> ExtractRange(List<object> parts, int start, int end)
 		{
 			var extracted = new List<object>(end - start);
 

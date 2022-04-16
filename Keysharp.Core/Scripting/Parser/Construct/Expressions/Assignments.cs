@@ -38,7 +38,7 @@ namespace Keysharp.Scripting
 			if ((parts[i] as CodeBinaryOperatorType? ) != CodeBinaryOperatorType.Assign)
 				return;
 
-			if (i > 0 && IsJsonObject(parts[x]))
+			if (i > 0 && IsJsonObject(parts[x]))//Unsure why anything using Index() is considered JSON, but this appears to work.
 			{
 				MergeObjectAssignmentAt(parts, i);
 				return;
@@ -79,7 +79,7 @@ namespace Keysharp.Scripting
 			parts.RemoveAt(i);
 		}
 
-		private void MergeObjectAssignmentAt(List<object> parts, int i)
+		private void MergeObjectAssignmentAt(List<object> parts, int i)//Unsure how this function works, but it's converting a bunch of statements to a call to SetObject().
 		{
 			int x = i - 1, y = i + 1;
 			var invoke = (CodeMethodInvokeExpression)parts[x];
@@ -103,7 +103,7 @@ namespace Keysharp.Scripting
 			_ = set.Parameters.Add(step[0]);
 			step.RemoveAt(0);
 			_ = set.Parameters.Add(target);
-			_ = set.Parameters.Add(new CodeArrayCreateExpression(typeof(object), step.ToArray()));
+			_ = set.Parameters.Add(new CodeSnippetExpression("System.Array.Empty<object>()"));
 
 			if (y < parts.Count)
 			{

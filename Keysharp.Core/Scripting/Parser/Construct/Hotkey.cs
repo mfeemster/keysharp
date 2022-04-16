@@ -29,8 +29,8 @@ namespace Keysharp.Scripting
 							   IfWinNotActive_WinTitle, sep, IfWinNotActive_WinText, sep,
 							   IfWinNotExist_WinTitle, sep, IfWinNotExist_WinText);
 
-			if (conditionIds.ContainsKey(criteria))
-				return conditionIds[criteria];
+			if (conditionIds.TryGetValue(criteria, out var s))
+				return s;
 
 			var id = InternalID;
 			conditionIds.Add(criteria, id);

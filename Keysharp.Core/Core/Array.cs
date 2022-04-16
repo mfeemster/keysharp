@@ -234,8 +234,8 @@ namespace Keysharp.Core
 
 		public void Push(params object[] values)
 		{
-			var o = values.Pa();//.L();//Flattened here anyway.
-			AddRange(o);
+			//var o = values.Pa();//.L();//Flattened here anyway.
+			AddRange(values);
 			//foreach (var val in o)
 			//{
 			//  //if (val is ICollection ie)//Unsure if completely flattening like this is what we really want.

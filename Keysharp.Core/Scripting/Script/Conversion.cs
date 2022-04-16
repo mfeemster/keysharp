@@ -26,8 +26,6 @@ namespace Keysharp.Scripting
 
 		public static BoolResult operator &(BoolResult obj1, BoolResult obj2) => !obj1.b ? obj1 : obj2;
 
-		//public static object operator &(BoolResult obj1, BoolResult obj2) => !obj1.b ? obj1 : obj2;
-
 		public static bool operator false(BoolResult obj) => !obj.b;
 
 		public static bool operator true(BoolResult obj) => obj.b;
@@ -36,10 +34,7 @@ namespace Keysharp.Scripting
 
 		public static BoolResult operator |(BoolResult obj1, BoolResult obj2) => obj1.b ? obj1 : obj2;
 
-		//public static object operator |(BoolResult obj1, BoolResult obj2) => obj1.b ? obj1 : obj2;
 		private object GetNestedObj(object obj) => obj is BoolResult br ? GetNestedObj(br.o) : obj;//Could potentially be very slow.
-
-		//public static explicit operator object(BoolResult r) => r.o;
 	}
 
 	public partial class Script

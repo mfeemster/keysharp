@@ -2,16 +2,16 @@ x := 0
 y := 0
 z := 0
 
-func(a, b, c)
+func_bound(a, b, c)
 {
 	global x := a
 	global y := b
 	global z := c
 }
 
-fo := FuncObj("func")
+fo := FuncObj("func_bound")
 
-If (fo.Name == "func")
+If (fo.Name == "func_bound")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

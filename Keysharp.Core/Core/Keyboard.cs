@@ -235,17 +235,17 @@ namespace Keysharp.Core
 			if (keyCondition != null)
 				id += "_" + keyCondition.GetHashCode().ToString("X");
 
-			if (hotkeys.ContainsKey(id))
+			if (hotkeys.TryGetValue(id, out var hk))
 			{
-				hotkeys[id].Enabled = enabled == null ? !hotkeys[id].Enabled : enabled == true;
+				hk.Enabled = enabled == null ? !hk.Enabled : enabled == true;
 
 				switch (label.ToLowerInvariant())
 				{
-					case Core.Keyword_On: hotkeys[id].Enabled = true; break;
+					case Core.Keyword_On: hk.Enabled = true; break;
 
-					case Core.Keyword_Off: hotkeys[id].Enabled = true; break;
+					case Core.Keyword_Off: hk.Enabled = true; break;
 
-					case Core.Keyword_Toggle: hotkeys[id].Enabled = !hotkeys[id].Enabled; break;
+					case Core.Keyword_Toggle: hk.Enabled = !hk.Enabled; break;
 				}
 			}
 			else

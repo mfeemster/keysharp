@@ -151,7 +151,7 @@ else
 
 DetectHiddenWindows, 0 ; Reset it back for the function version of this test.
 
-if (!A_DetectHiddenText) 
+if (!A_DetectHiddenWindows) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -328,16 +328,6 @@ if (A_KeyDelayPlay == -1)
 else
 	FileAppend, fail, *
 
-if (A_KeyPressDuration == -1) 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
-if (A_KeyPressDurationPlay == -1) 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
 SetKeyDelay, 10
 
 if (A_KeyDelay == 10) 
@@ -352,19 +342,9 @@ if (A_KeyDelay == 20)
 else
 	FileAppend, fail, *
 
-if (A_KeyPressDuration == 30) 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
 SetKeyDelay, , 40
 
 if (A_KeyDelay == 20) 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-if (A_KeyPressDuration == 40) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -376,17 +356,7 @@ if (A_KeyDelay == 20)
 else
 	FileAppend, fail, *
 
-if (A_KeyPressDuration == 40) 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
 if (A_KeyDelayPlay == 50) 
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-if (A_KeyPressDurationPlay == 60) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -528,13 +498,33 @@ if (A_CoordModeMenu == "Screen")
 else
 	FileAppend, fail, *
 
-CoordMode, Menu, Dummy
+b := false
+
+try
+{
+	CoordMode, Menu, Dummy
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (A_CoordModeMenu == "Screen")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+CoordMode, Menu, Window
 
 if (A_CoordModeMenu == "Window")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
 	
 CoordMode, ToolTip, Client ; Reset it back for the function version of this test.
 CoordMode, Pixel, Client

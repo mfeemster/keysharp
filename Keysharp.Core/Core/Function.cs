@@ -8,18 +8,20 @@ namespace Keysharp.Core
 {
 	public interface IFuncObj
 	{
+		public string Name { get; }
+
 		public object Call(params object[] obj);
 	}
 
 	public static class Function
 	{
-		public static GenericFunction Func(params object[] obj)//This needs to be consolidated with the code in CallbackCreate(), HotstringLabel() and FunctionReference() //MATT
+		public static FuncObj Func(params object[] obj)//This needs to be consolidated with the code in CallbackCreate(), HotstringLabel() and FunctionReference() //MATT
 		{
 			var o = obj.L();
-			var funcname = o.S1();
-			var mi = Reflections.FindLocalRoutine(funcname);
-			var del = Delegate.CreateDelegate(typeof(GenericFunction), mi);
-			return del as GenericFunction;
+			var name = o.S1();
+			var fo = new FuncObj(name);
+			return fo.Name != "" ? fo
+				   : throw new MethodError($"Unable to retrieve method {name}.");
 		}
 
 		public static FuncObj GetMethod(params object[] obj)
@@ -63,7 +65,7 @@ namespace Keysharp.Core
 		public BoundFunc(MethodInfo m, object[] ba, object o = null)
 			: base(m, o)
 		{
-			boundargs = ba.Select(x => x.ParseObject()).ToArray();
+			boundargs = ba;
 		}
 
 		public override object Call(params object[] args)
@@ -79,7 +81,7 @@ namespace Keysharp.Core
 				}
 				else if (argsused < args.Length)
 				{
-					argslist.Add(args[argsused].ParseObject());
+					argslist.Add(args[argsused]);
 					argsused++;
 				}
 				else
@@ -87,7 +89,7 @@ namespace Keysharp.Core
 			}
 
 			for (; argsused < args.Length; argsused++)
-				argslist.Add(args[argsused].ParseObject());
+				argslist.Add(args[argsused]);
 
 			return mi.GetParameters().Length == 0 ? mi.Invoke(inst, null) : mi.Invoke(inst, new object[] { argslist.ToArray() });
 		}
@@ -96,17 +98,15 @@ namespace Keysharp.Core
 	public class DelegateHolder
 	{
 		public PlaceholderFunction thisdel;
-		private readonly GenericFunction del;
+		//private readonly GenericFunction del;
 		private readonly bool fast;
 		private readonly IFuncObj funcObj;
 		private readonly bool reference;
 
 		public DelegateHolder(object obj, bool f, bool r)
 		{
-			obj = obj.ParseObject();
-
 			if (obj is string s)
-				del = Function.Func(s);
+				funcObj = Function.Func(s);
 			else if (obj is IFuncObj fo)
 				funcObj = fo;
 			else
@@ -131,26 +131,27 @@ namespace Keysharp.Core
 				: null;
 
 			//Need to figure out how fast/slow works with threads here.//TODO
-			if (del != null)
-			{
-				if (reference)
-				{
-					unsafe
-					{
-						fixed (IntPtr* pin = &arr[0])
-						{
-							var ptr = new IntPtr((long)pin);
-							val = del.Invoke(ptr);
-						}
-					}
-				}
-				else
-					val = del.Invoke(p1, p2, p3, p4, p5, p6, p7, p8,
-									 p9, p10, p11, p12, p13, p14, p15, p16,
-									 p17, p18, p19, p20, p21, p22, p23, p24,
-									 p25, p26, p27, p28, p29, p30, p31);
-			}
-			else if (funcObj != null)
+			/*  if (del != null)
+			    {
+			    if (reference)
+			    {
+			        unsafe
+			        {
+			            fixed (IntPtr* pin = &arr[0])
+			            {
+			                var ptr = new IntPtr((long)pin);
+			                val = del.Invoke(ptr);
+			            }
+			        }
+			    }
+			    else
+			        val = del.Invoke(p1, p2, p3, p4, p5, p6, p7, p8,
+			                         p9, p10, p11, p12, p13, p14, p15, p16,
+			                         p17, p18, p19, p20, p21, p22, p23, p24,
+			                         p25, p26, p27, p28, p29, p30, p31);
+			    }
+
+			    else*/ if (funcObj != null)
 			{
 				if (reference)
 				{
@@ -205,23 +206,23 @@ namespace Keysharp.Core
 
 		public long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 
-		public string Name { get => mi.Name; }
+		public string Name { get => mi != null ? mi.Name : ""; }
 
 		public FuncObj(string s, object o = null)
-			: this(o != null ? Reflections.FindAndCacheMethod(o.ParseObject().GetType(), s) : Reflections.FindMethod(s), o)
+			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s) : Reflections.FindMethod(s), o)
 		{
 		}
 
 		internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;
-			inst = o != null ? o.ParseObject() : o;
+			inst = o;
 		}
 
 		internal FuncObj(GenericFunction m, object o = null)
 		{
 			mi = m.Method;
-			inst = o != null ? o.ParseObject() : o;
+			inst = o;
 		}
 
 		public BoundFunc Bind(params object[] obj)//Need to figure out making this work.//TODO

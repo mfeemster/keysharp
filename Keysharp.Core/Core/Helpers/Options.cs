@@ -15,7 +15,7 @@ namespace Keysharp.Core
 			if (mode == null)
 				return ToggleValueType.Neutral;
 
-			var str = mode.ParseObject().ToString();
+			var str = mode.ToString();
 
 			if (str?.Length == 0)
 				return ToggleValueType.Neutral;
@@ -34,7 +34,7 @@ namespace Keysharp.Core
 			if (toggle != ToggleValueType.Invalid)
 				return toggle;
 
-			var str = mode.ParseObject().ToString();
+			var str = mode.ToString();
 			return string.Compare(str, "Toggle", true) == 0 || str == "-1" ? ToggleValueType.Toggle : def;
 		}
 
@@ -84,12 +84,7 @@ namespace Keysharp.Core
 						exp = false;
 						val = buf.ToString();
 						buf.Length = 0;
-
-						if (table.ContainsKey(key))
-							table[key] = val;
-						else
-							table.Add(key, val);
-
+						table[key] = val;
 						continue;
 					}
 
@@ -107,12 +102,7 @@ namespace Keysharp.Core
 						}
 
 					val = buf.Length > 1 ? buf.Remove(0, 1).ToString() : string.Empty;
-
-					if (table.ContainsKey(key))
-						table[key] = val;
-					else
-						table.Add(key, val);
-
+					table[key] = val;
 					buf.Length = 0;
 				}
 				else
@@ -158,7 +148,7 @@ namespace Keysharp.Core
 
 		internal static bool? OnOff(object mode)
 		{
-			switch (mode.ParseObject().ToString().ToLowerInvariant())
+			switch (mode.ToString().ToLowerInvariant())
 			{
 				case Core.Keyword_On:
 				case "1":

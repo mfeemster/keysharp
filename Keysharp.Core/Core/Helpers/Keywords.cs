@@ -461,6 +461,8 @@
 		public static readonly char[] Comma = ",".ToCharArray();
 		public static readonly char[] BothBraces = "{}".ToCharArray();
 
+		public static readonly char[] BothParens = "()".ToCharArray();
+
 		internal const string RawData = "raw";
 
 		internal const string LibEnv = "AHKLIBPATH";

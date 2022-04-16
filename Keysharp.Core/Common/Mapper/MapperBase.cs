@@ -25,7 +25,7 @@ namespace Keysharp.Core.Common.Mapper
 			return res;
 		}
 
-		internal virtual string LookUpIAType(T clrType)
+		internal virtual string LookUpKeysharpType(T clrType)
 		{
 			if (clrMappingTable.ContainsKey(clrType))
 				return clrMappingTable[clrType];

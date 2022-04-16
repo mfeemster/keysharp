@@ -179,7 +179,6 @@ namespace Keysharp.Scripting
 			_ = exit0.Parameters.Add(new CodePrimitiveExpression(0));
 			var exit1 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit1.Parameters.Add(new CodePrimitiveExpression(1));
-			//_ = main.Statements.Add(new CodeExpressionStatement(exit));
 			//Wrap the entire body of Main() in a try/catch block.
 			//First try to catch our own special exceptions, and if the exception type was not that, then just look for regular system exceptions.
 			var tcf = new CodeTryCatchFinallyStatement();

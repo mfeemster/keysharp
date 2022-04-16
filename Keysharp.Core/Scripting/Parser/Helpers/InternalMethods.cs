@@ -32,6 +32,8 @@ namespace Keysharp.Scripting
 			internal static MethodReference IfLegacy => new MethodReference(typeof(Script), "IfLegacy");
 			internal static MethodReference Inc => new MethodReference(typeof(Loops), "Inc");
 			internal static MethodReference Index => new MethodReference(typeof(Script), "Index");
+			internal static MethodReference GetPropertyValue => new MethodReference(typeof(Script), "GetPropertyValue");
+			internal static MethodReference SetPropertyValue => new MethodReference(typeof(Script), "SetPropertyValue");
 			internal static MethodReference Invoke => new MethodReference(typeof(Script), "Invoke");
 			internal static MethodReference LabelCall => new MethodReference(typeof(Script), "LabelCall");
 			internal static MethodReference Loop => new MethodReference(typeof(Core.Loops), "Loop");

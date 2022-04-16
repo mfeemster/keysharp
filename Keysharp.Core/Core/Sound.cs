@@ -31,7 +31,7 @@ namespace Keysharp.Core
 				var defdev = deviceEnum.GetDefaultAudioEndpoint(DataFlow.Render, Role.Communications);
 				return defdev;
 			}
-			else if (o[offset].ParseObject() is string s)
+			else if (o[offset] is string s)
 			{
 				foreach (var device in devices)
 					if (device.FriendlyName.Contains(s))

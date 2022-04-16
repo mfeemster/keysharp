@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30204.135
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp", "Keysharp\Keysharp.csproj", "{767E0FF6-23EC-4D77-B594-1EAC19382537}"
 EndProject
@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.OutputTest", "Keys
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.Tests", "Keysharp.Tests\Keysharp.Tests.csproj", "{0BCDB068-1AE2-4CBF-B963-B9D905CB3813}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keyview", "Keyview\Keyview.csproj", "{B5C755D9-BDA8-4DF9-A449-675B34F1D329}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keyview", "Keyview\Keyview.csproj", "{B5C755D9-BDA8-4DF9-A449-675B34F1D329}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keysharp.Benchmark", "Keysharp.Benchmark\Keysharp.Benchmark.csproj", "{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{B5C755D9-BDA8-4DF9-A449-675B34F1D329}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5C755D9-BDA8-4DF9-A449-675B34F1D329}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5C755D9-BDA8-4DF9-A449-675B34F1D329}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
