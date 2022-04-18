@@ -70,7 +70,7 @@ namespace Keysharp.Scripting
 			if (line.Length < 1 || line[0] != ParenOpen)
 				throw new ArgumentException();
 
-			var join = Environment.NewLine;
+			var join = newlineToUse;
 			bool ltrim = false, rtrim = false, stripComments = false, percentResolve = true, literalEscape = false;
 
 			if (line.Length > 2)

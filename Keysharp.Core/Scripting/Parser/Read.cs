@@ -15,6 +15,7 @@ namespace Keysharp.Scripting
 		private string includePath = "./";
 		private char[] libBrackets = new char[] { '<', '>' };
 		private readonly string multiLineComments = new string( new[] { MultiComB, MultiComA });
+		public readonly static string newlineToUse = "\n";// Environment.NewLine;
 
 		private List<CodeLine> Read(TextReader source, string name)
 		{
@@ -364,7 +365,7 @@ namespace Keysharp.Scripting
 					var buf = new StringBuilder(256);
 					//_ = buf.Append(options[0]);// code);
 					_ = buf.Append(code);
-					_ = buf.Append(Environment.NewLine);
+					_ = buf.Append(newlineToUse);
 
 					while ((code = source.ReadLine()) != null)
 					{
@@ -379,7 +380,7 @@ namespace Keysharp.Scripting
 						else
 						{
 							_ = buf.Append(code);
-							_ = buf.Append(Environment.NewLine);
+							_ = buf.Append(newlineToUse);
 						}
 					}
 
@@ -452,8 +453,8 @@ namespace Keysharp.Scripting
 						throw new ParseException(ExUnexpected, line);
 
 					var i = list.Count - 1;
-					var buf = new StringBuilder(list[i].Code, list[i].Code.Length + /*Environment.NewLine.Length*/1 + code.Length);//Was originally using newline, but probably want space instead.
-					_ = buf.Append(/*Environment.NewLine*/SingleSpace);
+					var buf = new StringBuilder(list[i].Code, list[i].Code.Length + /*newlineToUse.Length*/1 + code.Length);//Was originally using newline, but probably want space instead.
+					_ = buf.Append(/*newlineToUse*/SingleSpace);
 					_ = buf.Append(code);
 					list[i].Code = buf.ToString();
 				}
@@ -485,7 +486,7 @@ namespace Keysharp.Scripting
 						_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 						var buf = new StringBuilder(256);
 						_ = buf.Append(code);
-						_ = buf.Append(Environment.NewLine);
+						_ = buf.Append(newlineToUse);
 						var wasinquote = false;
 
 						while ((code = source.ReadLine()) != null)
@@ -503,7 +504,7 @@ namespace Keysharp.Scripting
 							else
 							{
 								_ = buf.Append(code);
-								_ = buf.Append(Environment.NewLine);
+								_ = buf.Append(newlineToUse);
 								_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 							}
 						}

@@ -467,8 +467,9 @@ namespace Keysharp.Core.Windows
 		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, int vk, int sc,
 							  bool keyUp, Keysharp.Core.Common.Threading.KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost)
 		{
-			var hsWparamToPost = uint.MaxValue; // Set default.
-			var hsLparamToPost = 0u;
+			HotstringDefinition hsOut = null;
+			var caseConformMode = CaseConformModes.None;
+			var endChar = (char)0;
 
 			// Prevent toggleable keys from being toggled (if the user wanted that) by suppressing it.
 			// Seems best to suppress key-up events as well as key-down, since a key-up by itself,
@@ -532,8 +533,8 @@ namespace Keysharp.Core.Windows
 				}
 
 				if ((HotstringDefinition.enabledCount > 0 && !isIgnored) || Keysharp.Scripting.Script.input != null)
-					if (!CollectInput(ref kbd, vk, sc, keyUp, isIgnored, keyHistoryCurr, ref hsWparamToPost, ref hsLparamToPost)) // Key should be invisible (suppressed).
-						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIDToPost, hsWparamToPost, hsLparamToPost);
+					if (!CollectInput(ref kbd, vk, sc, keyUp, isIgnored, keyHistoryCurr, ref hsOut, ref caseConformMode, ref endChar)) // Key should be invisible (suppressed).
+						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIDToPost, hsOut, caseConformMode, endChar);
 
 				// Do this here since the above "return SuppressThisKey" will have already done it in that case.
 				UpdateKeybdState(ref kbd, vk, sc, keyUp, false);
@@ -731,15 +732,18 @@ namespace Keysharp.Core.Windows
 				}
 			}
 
-			if (hsWparamToPost != uint.MaxValue)
+			if (hsOut != null)
 			{
 				_ = channel.Writer.TryWrite(new KeysharpMsg()
 				{
 					message = (uint)UserMessages.AHK_HOTSTRING,
-					wParam = new IntPtr(hsWparamToPost),
-					lParam = new IntPtr(hsLparamToPost)
+					obj = new HotstringMsg()
+					{
+						hs = hsOut,
+						caseMode = caseConformMode,
+						endChar = endChar
+					}
 				});
-				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOTSTRING, new IntPtr(hsWparamToPost), new IntPtr(hsLparamToPost));
 			}
 
 			return resultToReturn.ToInt64();
@@ -1358,7 +1362,7 @@ namespace Keysharp.Core.Windows
 		}
 
 		unsafe internal bool CollectHotstring(ref KBDLLHOOKSTRUCT ev, char[] ch, int charCount, IntPtr activeWindow,
-											  KeyHistoryItem keyHistoryCurr, ref uint hotstringWparamToPost, ref uint hotstringLparamToPost)
+											  KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut, ref CaseConformModes caseConformMode, ref char endChar)
 		{
 			var suppressHotstringFinalChar = false; // Set default.
 
@@ -1387,7 +1391,6 @@ namespace Keysharp.Core.Windows
 				var hsBufCountm2 = hsBufArr.Length - 2;
 				bool firstCharWithCaseIsUpper, firstCharWithCaseHasGoneBy;
 				var hasEndChar = HotstringDefinition.defEndChars.Contains(hsBufArr[hsBufArr.Length - 1]);
-				CaseConformModes caseConformMode;
 				//var sw = new Stopwatch();
 				//sw.Start();
 
@@ -1584,12 +1587,8 @@ namespace Keysharp.Core.Windows
 					//    user typed it rather than appearing at the end of the replacement.
 					// 2) Two ending characters would appear in pre-1.0.43 versions: one where the user typed
 					//    it and one at the end, which is clearly incorrect.
-					hotstringWparamToPost = (uint)u; // Override the default set by caller.
-					hotstringLparamToPost = KeyboardUtils.MakeLong(
-												hs.endCharRequired  // v1.0.48.04: Fixed to omit "&& hs.mDoBackspace" so that A_EndChar is set properly even for option "B0" (no backspacing).
-												? (short)hsBufArr[hsBufArr.Length - 1]  // Used by A_EndChar and Hotstring::DoReplace().
-												: (short)0
-												, (short)caseConformMode);
+					hsOut = hs;
+					endChar = hs.endCharRequired ? hsBufArr[hsBufArr.Length - 1] : (char)0;
 
 					// Clean up.
 					// The keystrokes to be sent by the other thread upon receiving the message prepared above
@@ -1647,7 +1646,7 @@ namespace Keysharp.Core.Windows
 		}
 
 		internal bool CollectInput(ref KBDLLHOOKSTRUCT ev, int vk, int sc, bool keyUp, bool isIgnored
-								   , KeyHistoryItem keyHistoryCurr, ref uint hotstringWparamToPost, ref uint hotstringLparamToPost)
+								   , KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut, ref CaseConformModes caseConformMode, ref char endChar)
 		// Caller is responsible for having initialized aHotstringWparamToPost to HOTSTRING_INDEX_INVALID.
 		// Returns true if the caller should treat the key as visible (non-suppressed).
 		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -1957,7 +1956,8 @@ namespace Keysharp.Core.Windows
 				}
 
 				if (charCount > 0
-						&& !CollectHotstring(ref ev, ch, charCount, activeWindow, keyHistoryCurr, ref hotstringWparamToPost, ref hotstringLparamToPost))
+						&& !CollectHotstring(ref ev, ch, charCount, activeWindow, keyHistoryCurr,
+											 ref hsOut, ref caseConformMode, ref endChar))
 					return false; // Suppress.
 			}
 
@@ -4519,8 +4519,10 @@ namespace Keysharp.Core.Windows
 			else if (HotkeyDefinition.FindHotkeyContainingModLR(ksc[sc].asModifiersLR) != null)
 				ksc[sc].usedAsPrefix = KeyType.PREFIX_ACTUAL;
 		}
+
 		internal long SuppressThisKeyFunc(IntPtr hook, ref KBDLLHOOKSTRUCT lParam, int vk, int sc, bool keyUp,
-										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, uint hsWparamToPost = uint.MaxValue, uint hsLparamToPost = 0)
+										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost,
+										  HotstringDefinition hs = null, CaseConformModes caseConformMode = CaseConformModes.None, char endChar = (char)0)
 		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
 		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		// neutral one.
@@ -4602,15 +4604,18 @@ namespace Keysharp.Core.Windows
 				}
 			}
 
-			if (hsWparamToPost != uint.MaxValue)
+			if (hs != null)
 			{
 				_ = channel.Writer.TryWrite(new KeysharpMsg()
 				{
 					message = (uint)UserMessages.AHK_HOTSTRING,
-					wParam = new IntPtr(hsWparamToPost),
-					lParam = new IntPtr(hsLparamToPost)
+					obj = new HotstringMsg()
+					{
+						hs = hs,
+						caseMode = caseConformMode,
+						endChar = endChar
+					}
 				});
-				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOTSTRING, hsWparamToPost, hsLparamToPost);
 			}
 
 			return 1;
@@ -5089,12 +5094,11 @@ namespace Keysharp.Core.Windows
 				var reader = channel.Reader;
 				IntPtr fore_window, focused_control, criterion_found_hwnd = IntPtr.Zero;
 				//while (running) // Infinite loop for pumping messages in this thread. This thread will exit via any use of "return" below.
-				HotstringDefinition hs = null;
 				HotkeyDefinition hk = null;
 				hookThreadID = WindowsAPI.GetCurrentThreadId();
 				//WindowsAPI.GetMessage(out var _, IntPtr.Zero, 0, 0);
 
-				await foreach (var item in reader.ReadAllAsync())
+				await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manure of obscure meaning into bits and bytes of wparam and lparam.
 				{
 					var priority = 0;
 
@@ -5197,48 +5201,52 @@ namespace Keysharp.Core.Windows
 
 							//These were taken from MsgSleep().
 							case (uint)UserMessages.AHK_HOTSTRING:
-								if (wParamVal >= HotstringDefinition.shs.Count) // Invalid hotstring ID (perhaps spoofed by external app)
-									continue; // Do nothing.
-
-								hs = HotstringDefinition.shs[(int)wParamVal];  // For performance and convenience.
-
-								if (hs.hotCriterion != null)
+								if (msg.obj is HotstringMsg hmsg)
 								{
-									// For details, see comments in the hotkey section of this switch().
-									if ((criterion_found_hwnd = HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name)) == IntPtr.Zero)
-										// Hotstring is no longer eligible to fire even though it was when the hook sent us
-										// the message.  Abort the firing even though the hook may have already started
-										// executing the hotstring by suppressing the final end-character or other actions.
-										// It seems preferable to abort midway through the execution than to continue sending
-										// keystrokes to the wrong window, or when the hotstring has become suspended.
-										continue;
+									var hs = hmsg.hs;
 
-									// For details, see comments in the hotkey section of this switch().
-									if (!(hs.hotCriterion.type == HotCriterionEnum.IfActive || hs.hotCriterion.type == HotCriterionEnum.IfExist))
-										criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
+									if (hs.hotCriterion != null)
+									{
+										// For details, see comments in the hotkey section of this switch().
+										if ((criterion_found_hwnd = HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name)) == IntPtr.Zero)
+											// Hotstring is no longer eligible to fire even though it was when the hook sent us
+											// the message.  Abort the firing even though the hook may have already started
+											// executing the hotstring by suppressing the final end-character or other actions.
+											// It seems preferable to abort midway through the execution than to continue sending
+											// keystrokes to the wrong window, or when the hotstring has become suspended.
+											continue;
+
+										// For details, see comments in the hotkey section of this switch().
+										if (!(hs.hotCriterion.type == HotCriterionEnum.IfActive || hs.hotCriterion.type == HotCriterionEnum.IfExist))
+											criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
+									}
+									else // No criterion, so it's a global hotstring.  It can always fire, but it has no "last found window".
+										criterion_found_hwnd = IntPtr.Zero;
+
+									// Do a simple replacement for the hotstring if that's all that's called for.
+									// Don't create a new quasi-thread or any of that other complexity done further
+									// below.  But also do the backspacing (if specified) for a non-autoreplace hotstring,
+									// even if it can't launch due to MaxThreads, MaxThreadsPerHotkey, or some other reason:
+									Keysharp.Scripting.Script.mainWindow.Invoke(() =>//Any key sending must be on the main thread else keys will come in out of order.
+									{
+										hs.DoReplace(hmsg.caseMode, hmsg.endChar);// Does only the backspacing if it's not an auto-replace hotstring.
+									});
+
+									if (string.IsNullOrEmpty(hs.replacement))
+									{
+										// Otherwise, continue on and let a new thread be created to handle this hotstring.
+										// Since this isn't an auto-replace hotstring, set this value to support
+										// the built-in variable A_EndChar:
+										Accessors.A_EndChar = hs.endCharRequired ? hmsg.endChar.ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
+										priority = hs.priority;
+										SetHotNamesAndTimes(hs.Name);
+										Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
+										Accessors.A_SendLevel = hs.inputLevel;
+										Keysharp.Scripting.Script.hotCriterion = hs.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotstring by default.
+										_ = hs.PerformInNewThreadMadeByCaller();
+									}
 								}
-								else // No criterion, so it's a global hotstring.  It can always fire, but it has no "last found window".
-									criterion_found_hwnd = IntPtr.Zero;
 
-								// Do a simple replacement for the hotstring if that's all that's called for.
-								// Don't create a new quasi-thread or any of that other complexity done further
-								// below.  But also do the backspacing (if specified) for a non-autoreplace hotstring,
-								// even if it can't launch due to MaxThreads, MaxThreadsPerHotkey, or some other reason:
-								hs.DoReplace((uint)lParamVal);  // Does only the backspacing if it's not an auto-replace hotstring.
-
-								if (!string.IsNullOrEmpty(hs.replacement))
-									continue;
-
-								// Otherwise, continue on and let a new thread be created to handle this hotstring.
-								// Since this isn't an auto-replace hotstring, set this value to support
-								// the built-in variable A_EndChar:
-								Accessors.A_EndChar = hs.endCharRequired ? ((char)(lParamVal & 0xFFFF)).ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
-								priority = hs.priority;
-								SetHotNamesAndTimes(hs, hk);
-								Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
-								Accessors.A_SendLevel = hs.inputLevel;
-								Keysharp.Scripting.Script.hotCriterion = hs.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotstring by default.
-								_ = hs.PerformInNewThreadMadeByCaller();
 								break;
 
 							//These were taken from MainWindowProc().
@@ -5420,7 +5428,7 @@ namespace Keysharp.Core.Windows
 									criterion_found_hwnd = Keysharp.Scripting.Script.hotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
 
 								priority = variant.priority;
-								SetHotNamesAndTimes(hs, hk);
+								SetHotNamesAndTimes(hk.Name);
 
 								if (IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
 									Accessors.A_EventInfo = lParamVal; // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
@@ -5444,7 +5452,7 @@ namespace Keysharp.Core.Windows
 				}
 			});
 
-			while (hookThreadID == 0)
+			while (hookThreadID == 0)//Give it some time to startup before proceeding.
 				System.Threading.Thread.Sleep(10);
 
 			//WindowsAPI.PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_START_LOOP, UIntPtr.Zero, IntPtr.Zero);
@@ -5603,20 +5611,17 @@ namespace Keysharp.Core.Windows
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
 		//}
-		private void SetHotNamesAndTimes(HotstringDefinition hs, HotkeyDefinition hk)
+		private void SetHotNamesAndTimes(string name)
 		{
-			if (hs != null || hk != null)
-			{
-				// Just prior to launching the hotkey, update these values to support built-in
-				// variables such as A_TimeSincePriorHotkey:
-				Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
-				Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
-				// Unlike hotkeys -- which can have a name independent of their label by being created or updated
-				// with the HOTKEY command -- a hot string's unique name is always its label since that includes
-				// the options that distinguish between (for example) :c:ahk:: and ::ahk::
-				Keysharp.Scripting.Script.thisHotkeyName = hs != null ? hs.Name : hk.Name;
-				Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
-			}
+			// Just prior to launching the hotkey, update these values to support built-in
+			// variables such as A_TimeSincePriorHotkey:
+			Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
+			Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
+			// Unlike hotkeys -- which can have a name independent of their label by being created or updated
+			// with the HOTKEY command -- a hot string's unique name is always its label since that includes
+			// the options that distinguish between (for example) :c:ahk:: and ::ahk::
+			Keysharp.Scripting.Script.thisHotkeyName = name;
+			Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
 		}
 		private bool SystemHasAnotherdHook(ref System.Threading.Mutex existingMutex, string name)
 		{

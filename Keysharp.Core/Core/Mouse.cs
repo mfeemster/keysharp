@@ -430,7 +430,7 @@ namespace Keysharp.Core
 
 			if (Accessors.SendMode != Common.Keyboard.SendModes.Event)
 			{
-				var final_key_delay = -1; // Set default.
+				var final_key_delay = -1L; // Set default.
 
 				if (!kbdMsSender.abortArraySend)
 					kbdMsSender.SendEventArray(ref final_key_delay, 0); // Last parameter is ignored because keybd hook isn't removed for a pure-mouse SendInput.

@@ -213,7 +213,7 @@ namespace Keysharp.Core.Windows
 			return hmod;
 		}
 
-		internal override void CleanupEventArray(int finalKeyDelay)
+		internal override void CleanupEventArray(long finalKeyDelay)
 		{
 			if (Accessors.SendMode == SendModes.Input)
 			{
@@ -378,10 +378,10 @@ namespace Keysharp.Core.Windows
 		/// Doesn't need to be thread safe because it should only ever be called from main thread.
 		/// </summary>
 		/// <param name="delay"></param>
-		internal void DoKeyDelay(int delay = int.MinValue)
+		internal void DoKeyDelay(long delay = long.MinValue)
 		{
-			if (delay == int.MinValue)
-				delay = (int)((Accessors.SendMode == SendModes.Play) ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay);
+			if (delay == long.MinValue)
+				delay = (long)((Accessors.SendMode == SendModes.Play) ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay);
 
 			if (delay < 0) // To support user-specified KeyDelay of -1 (fastest send rate).
 				return;
@@ -1335,7 +1335,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (Accessors.SendMode == SendModes.Input)
 			{
-				var thisEvent = new INPUT();// For performance and convenience.
+				var thisEvent = new INPUT();
 				var sendLevel = (uint)(long)Accessors.A_SendLevel;
 				thisEvent.type = WindowsAPI.INPUT_MOUSE;
 				thisEvent.i.m.dx = (x == CoordUnspecified) ? 0 : x; // v1.0.43.01: Must be zero if no change in position is
@@ -1489,7 +1489,7 @@ namespace Keysharp.Core.Windows
 		/// <param name=""></param>
 		/// <param name=""></param>
 		/// <param name="modsDuringSend"></param>
-		internal override void SendEventArray(ref int finalKeyDelay, int modsDuringSend)
+		internal override void SendEventArray(ref long finalKeyDelay, int modsDuringSend)
 		{
 			if (eventSi.Count == 0)
 				return;
@@ -1740,7 +1740,7 @@ namespace Keysharp.Core.Windows
 				// will be readjusted (above) if the user presses/releases modifier keys during the mouse clicks.
 				if (vkIsMouse && targetWindow == IntPtr.Zero)
 				{
-					MouseClick(vk, x, y, 1, (int)Accessors.A_DefaultMouseSpeed, eventType, moveOffset);
+					MouseClick(vk, x, y, 1, (int)Accessors.A_DefaultMouseSpeed.ParseLong().Value, eventType, moveOffset);
 				}
 				// Above: Since it's rare to send more than one click, it seems best to simplify and reduce code size
 				// by not doing more than one click at a time event when mode is SendInput/Play.
@@ -2254,7 +2254,7 @@ namespace Keysharp.Core.Windows
 
 								//Mixing parsing with the sending actions seems like a pretty terrible design, so should separate later.//TODO
 								if (repeatCount < 1) // Allow {Click 100, 100, 0} to do a mouse-move vs. click (but modifiers like ^{Click..} aren't supported in this case.
-									MouseMove(ref clickX, ref clickY, ref placeholder, (int)Accessors.A_DefaultMouseSpeed, moveOffset);
+									MouseMove(ref clickX, ref clickY, ref placeholder, (int)Accessors.A_DefaultMouseSpeed.ParseLong().Value, moveOffset);
 								else // Use SendKey because it supports modifiers (e.g. ^{Click}) SendKey requires repeat_count>=1.
 									SendKey(vk, 0, modsForNextKey.Value, persistentModifiersForThisSendKeys
 											, repeatCount, eventType, 0, targetWindow, clickX, clickY, moveOffset);
@@ -2565,7 +2565,7 @@ namespace Keysharp.Core.Windows
 
 			if (Accessors.SendMode != SendModes.Event)
 			{
-				var finalKeyDelay = -1;  // Set default.
+				var finalKeyDelay = -1L;  // Set default.
 
 				if (!abortArraySend && eventSi.Count > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
 				{

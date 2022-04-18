@@ -315,4 +315,11 @@ namespace Keysharp.Core.Common.Threading
 		internal uint time;
 		internal IntPtr wParam = IntPtr.Zero;
 	}
+
+	internal class HotstringMsg
+	{
+		internal HotstringDefinition hs;
+		internal CaseConformModes caseMode;
+		internal char endChar;
+	}
 }

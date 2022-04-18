@@ -299,7 +299,7 @@ namespace Keysharp.Core.Common.Keyboard
 			return hotstring;
 		}
 
-		internal abstract void CleanupEventArray(int aFinalKeyDelay);
+		internal abstract void CleanupEventArray(long aFinalKeyDelay);
 
 		internal abstract int ConvertModifiers(int aModifiers);
 
@@ -329,7 +329,7 @@ namespace Keysharp.Core.Common.Keyboard
 			_ = hotstrings.Remove(hotstring);
 		}
 
-		internal abstract void SendEventArray(ref int aFinalKeyDelay, int aModsDuringSend);
+		internal abstract void SendEventArray(ref long aFinalKeyDelay, int aModsDuringSend);
 
 		internal abstract void SendKey(int aVK, int aSC, int aModifiersLR, int aModifiersLRPersistent
 									   , int aRepeatCount, KeyEventTypes aEventType, int aKeyAsModifiersLR, IntPtr aTargetWindow

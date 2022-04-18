@@ -366,7 +366,7 @@ namespace Keysharp.Core.Common.Keyboard
 				   && (_caseSensitive ? str == _hotstring : string.Compare(str, _hotstring, true) == 0);// :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
 		}
 
-		internal void DoReplace(uint alParam)
+		internal void DoReplace(CaseConformModes caseMode, char endChar)
 		{
 			var sb = new StringBuilder();//This might be able to be done more efficiently, but use sb unless performance issues show up.
 			var startOfReplacement = 0;
@@ -396,15 +396,14 @@ namespace Keysharp.Core.Common.Keyboard
 			if (!string.IsNullOrEmpty(replacement))
 			{
 				sb.Append(replacement);
-				var case_conform_mode = (CaseConformModes)Conversions.HighWord((int)alParam);
 
-				if (case_conform_mode == CaseConformModes.AllCaps)
+				if (caseMode == CaseConformModes.AllCaps)
 				{
 					sendBuf = sb.ToString().ToUpper();
 					sb.Clear();
 					sb.Append(sendBuf);
 				}
-				else if (case_conform_mode == CaseConformModes.FirstCap)
+				else if (caseMode == CaseConformModes.FirstCap)
 				{
 					var b = false;
 					sendBuf = sb.ToString();
@@ -431,9 +430,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// 1) It defeats the uninterruptibility of the hotstring's replacement by allowing the user's
 					//    buffered keystrokes to take effect in between the two calls to SendKeys.
 					// 2) Performance: Avoids having to install the playback hook twice, etc.
-					char endChar;
-
-					if (endCharRequired && ((endChar = (char)(alParam & 0xFFFF)) != 0)) // Must now check mEndCharRequired because LOWORD has been overloaded with context-sensitive meanings.
+					if (endCharRequired && endChar != 0) // Must now check mEndCharRequired because LOWORD has been overloaded with context-sensitive meanings.
 					{
 						// v1.0.43.02: Don't send "{Raw}" if already in raw mode!
 						// v1.1.27: Avoid adding {Raw} if it gets switched on within the replacement text.

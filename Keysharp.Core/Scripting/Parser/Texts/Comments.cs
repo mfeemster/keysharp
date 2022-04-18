@@ -19,10 +19,10 @@ namespace Keysharp.Scripting
 			while ((line = reader.ReadLine()) != null)
 			{
 				_ = buf.Append(StripCommentSingle(line));
-				_ = buf.Append(Environment.NewLine);
+				_ = buf.Append(newlineToUse);
 			}
 
-			var length = Environment.NewLine.Length;
+			var length = newlineToUse.Length;
 			_ = buf.Remove(buf.Length - length, length);
 			return buf.ToString();
 		}

@@ -98,7 +98,7 @@ namespace Keysharp.Core.Linux
 			Cache.Add(' ', new CachedKey(XKeys.SpaceBar, false));
 		}
 
-		internal override void CleanupEventArray(int finalKeyDelay)
+		internal override void CleanupEventArray(long finalKeyDelay)
 		{ }
 
 		internal override int ConvertModifiers(int modifiers) => 0;
@@ -127,7 +127,7 @@ namespace Keysharp.Core.Linux
 		internal override void MouseMove(ref int x, ref int y, ref uint eventFlags, int speed, bool moveOffset)
 		{ }
 
-		internal override void SendEventArray(ref int finalKeyDelay, int modsDuringSend)
+		internal override void SendEventArray(ref long finalKeyDelay, int modsDuringSend)
 		{ }
 
 		internal override void SendKey(int vk, int sc, int modifiersLR, int modifiersLRPersistent
