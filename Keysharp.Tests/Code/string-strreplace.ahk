@@ -31,26 +31,26 @@ if (y = "a.b.c.d.e.f")
 else
 	FileAppend, fail, *
 
-y := StrReplace(x, ",", ".", null, "varct")
+y := StrReplace(x, ",", ".", null)
 
 if (y = "a.b.c.d.e.f")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-if (varct = 5)
+if (y.Count = 5)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-y := StrReplace(x, ",", ".", null, "varct", 3)
+y := StrReplace(x, ",", ".", null, 3)
 
 if (y = "a.b.c.d,e,f")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-if (varct = 3)
+if (y.Count = 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -69,14 +69,14 @@ if (y = "A,b,c,d,e,f")
 else
 	FileAppend, fail, *
 
-y := StrReplace(x, "a", "A", "On", "varct", 9)
+y := StrReplace(x, "a", "A", "On", 9)
 		
 if (y = "A,b,c,d,e,f")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-if (varct = 1)
+if (y.Count = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

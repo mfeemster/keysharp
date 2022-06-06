@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -29,6 +27,12 @@ namespace Keysharp.Core
 		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2, ret });
 		//}
 
+		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
+		{
+			var options = obj1.As();
+			//obj2/paramcount is unused.
+			return new DelegateHolder(obj0, options.Contains("f", StringComparison.OrdinalIgnoreCase), options.Contains("&"));
+		}
 
 		/// <summary>
 		/// Calls an unmanaged function in a DLL.
@@ -63,7 +67,6 @@ namespace Keysharp.Core
 		public static object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//MATT
-			function = function;
 			var types = new Type[parameters.Length / 2];
 			var args = new object[types.Length];
 			var returnType = typeof(int);
@@ -335,28 +338,10 @@ namespace Keysharp.Core
 			{
 				var val = Keysharp.Core.Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
 				return val == IntPtr.Zero
-					   ?                   throw new PropertyError($"Passed in object of type {function.GetType()} did not contain a property named Ptr")
+					   ? throw new PropertyError($"Passed in object of type {function.GetType()} did not contain a property named Ptr")
 					   : val;
 			}
 		}
-
-		/// <summary>
-		/// Find a function in the local scope.
-		/// </summary>
-		/// <param name="name">The name of the function.</param>
-		/// <returns>A delegate (function pointer).</returns>
-		//public static Delegate FunctionReference(string name)
-		//{
-		//  var method = Reflections.FindLocalMethod(name);
-		//  var info = Expression.GetDelegateType(
-		//                 //var info = Expression.GetFuncType(
-		//                 (from parameter in method.GetParameters() select parameter.ParameterType)
-		//                 .Concat(new[] { method.ReturnType })
-		//                 .ToArray());
-		//  return method?.CreateDelegate(info);
-		//  //return method == null ? null : (Core.GenericFunction)Delegate.CreateDelegate(method.ReflectedType, method);
-		//  //return method == null ? null : (Core.GenericFunction)Delegate.CreateDelegate(typeof(Core.GenericFunction), method);
-		//}
 
 		/// <summary>
 		/// Returns a binary number stored at the specified address in memory.
@@ -366,9 +351,11 @@ namespace Keysharp.Core
 		/// <param name="type">Any type outlined in <see cref="DllCall"/>.</param>
 		/// <returns>The value stored at the address.</returns>
 		//public static object NumGet(object address, long offset = 0, string type = "UInt")
-		public static object NumGet(params object[] obj)
+		public static object NumGet(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var (address, offset, type) = obj.L().O1L1S1("", 0, "UInt");
+			var address = obj0;
+			var offset = obj1.Al();
+			var type = obj2.As("UInt");
 			IntPtr addr;
 			var off = (int)offset;
 			var buf = address as Buffer;
@@ -431,7 +418,6 @@ namespace Keysharp.Core
 						var ptr = (double*)(addr + off).ToPointer();
 						var val = *ptr;
 						return val;
-
 					}
 
 				case "float":
@@ -442,7 +428,6 @@ namespace Keysharp.Core
 					{
 						var ptr = (float*)(addr + off).ToPointer();
 						return double.Parse((*ptr).ToString());//Need to convert to string to make it exact, else there can be lots of rounding/trailing digits.
-
 					}
 
 				case "int64":
@@ -564,43 +549,5 @@ namespace Keysharp.Core
 		/// <param name="function">The name of the function.</param>
 		/// <param name="args">Unused legacy parameters.</param>
 		/// <returns>An integer address to the function callable by unmanaged code.</returns>
-
-		public static DelegateHolder CallbackCreate(params object[] obj)
-		{
-			var (function, options, paramcount) = obj.L().Osi();
-			return new DelegateHolder(function, options.Contains("f", StringComparison.OrdinalIgnoreCase), options.Contains("&"));
-		}
-
-		/// <summary>
-		/// No need for this function, the garbage collector handles memory. Keep it here for backward compatibility.
-		/// </summary>
-		/// <param name="obj">Unused</param>
-		public static void CallbackFree(params object[] obj)
-		{
-		}
-
-		/// <summary>
-		/// Enlarges a variable's holding capacity. Usually only necessary for <see cref="DllCall"/>.
-		/// </summary>
-		/// <param name="variable">The variable to change.</param>
-		/// <param name="capacity">Specify zero to return the current capacity.
-		/// Otherwise <paramref name="variable"/> will be recreated as a byte array with this total length.</param>
-		/// <param name="pad">Specify a value between 0 and 255 to initalise each index with this number.</param>
-		/// <returns>The total capacity of <paramref name="variable"/>.</returns>
-		//public static int VarSetCapacity(ref object variable, int capacity = 0, int pad = -1)
-		//{
-		//  if (capacity == 0)
-		//      return Marshal.SizeOf(variable);
-		//
-		//  var bytes = new byte[capacity];
-		//  var fill = (byte)pad;
-		//
-		//  if (pad > -1 && pad < 256)
-		//      for (var i = 0; i < bytes.Length; i++)
-		//          bytes[i] = fill;
-		//
-		//  variable = bytes;
-		//  return bytes.Length;
-		//}
 	}
 }

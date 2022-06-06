@@ -7,32 +7,32 @@ namespace Keysharp.Core
 	public class Any
 	{
 		public static string BaseExc = "Base property cannot be implemented in C#.";
+		internal Dictionary<object, object> props = new Dictionary<object, object>();
 
 		public object Base => GetType().BaseType;//Documentation says this can be set, but C# doesn't support changing a base at runtime.
 
-		public virtual FuncObj GetMethod(params object[] obj)
+		public virtual FuncObj GetMethod(object obj0, object obj1 = null)
 		{
-			var name = obj.L().S1();
+			var name = obj0.As();
+			//var paramcount = obj1.Al();
 			return Reflections.FindAndCacheMethod(GetType(), name) is MethodInfo mi
 				   ? new FuncObj(mi, this)
 				   : throw new MethodError($"Unable to retrieve method {name} from object of type {GetType()}.");
 		}
 
-		public virtual bool HasBase(params object[] obj)
-		{
-			var o = obj.O1();//Do not flatten, always use the argument directly.
-			return o.GetType().IsAssignableFrom(GetType());
-		}
+		//public bool DefineProp(object obj0, object obj1)
+		//{
+		//  var name obj0.As();
 
-		public virtual long HasMethod(params object[] obj)
-		{
-			var name = obj.L().S1();
-			return Reflections.FindAndCacheMethod(GetType(), name) is MethodInfo ? 1L : 0L;
-		}
+		//}
 
-		public virtual long HasProp(params object[] obj)
+		public bool HasBase(object obj) => obj.GetType().IsAssignableFrom(GetType());
+
+		public long HasMethod(object obj) => Reflections.FindAndCacheMethod(GetType(), obj.As()) is MethodInfo ? 1L : 0L;
+
+		public long HasProp(object obj)
 		{
-			var name = obj.L().S1();
+			var name = obj.As();
 
 			if (Reflections.FindAndCacheProperty(GetType(), name) is PropertyInfo pi)
 				return 1L;
@@ -46,10 +46,7 @@ namespace Keysharp.Core
 	{
 		public static KeysharpObject Object() => new KeysharpObject();
 
-		public virtual object Clone(params object[] obj)
-		{
-			return null;
-		}
+		public virtual object Clone(params object[] obj) => null;
 
 		public void DefineProp(params object[] obj)
 		{
@@ -59,39 +56,19 @@ namespace Keysharp.Core
 		{
 		}
 
-		public long GetCapacity(params object[] obj)
-		{
-			return 42;
-		}
+		public long GetCapacity(params object[] obj) => throw new Keysharp.Core.Error("GetCapacity() is not supported for dictionaries in C#");
 
-		public object GetOwnPropDesc(params object[] obj)
-		{
-			return null;
-		}
+		public object GetOwnPropDesc(params object[] obj) => null;
 
-		public object HasOwnProp(params object[] obj)
-		{
-			return 1L;
-		}
+		public object HasOwnProp(params object[] obj) => 1L;
 
-		public long OwnPropCount(params object[] obj)
-		{
-			return 1L;
-		}
+		public long OwnPropCount(params object[] obj) => 1L;
 
 		public object OwnProps(params object[] obj)//Need yield enum here.
-		{
-			return true;
-		}
+		=> true;
 
-		public void SetBase(params object[] obj)
-		{
-			throw new Exception(Any.BaseExc);
-		}
+		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
-		public long SetCapacity(params object[] obj)
-		{
-			return 1L;
-		}
+		public long SetCapacity(params object[] obj) => 1L;
 	}
 }

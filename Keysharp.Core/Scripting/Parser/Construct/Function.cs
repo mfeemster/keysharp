@@ -112,30 +112,17 @@ namespace Keysharp.Scripting
 			block.Type = blockType;
 			_ = CloseTopSingleBlock();
 			blocks.Push(block);
-			var fix = ParseFunctionParameters(param);
 
-			if (fix.Item1 != null)//This creates the code that puts parameters into the global map.//MATT
+			if (ParseFunctionParameters(param) is List<CodeParameterDeclarationExpression> funcparams)
 			{
-				//method.Parameters.Clear();//MATT
-				//method.Parameters.AddRange(fix);
-				//_ = method.Statements.Add(fix.Item1);
-				//method.Statements.AddRange(fix.Item1);
-				method.UserData.Add(initParams, fix.Item1);//Save it for later, will be added to the statements when the function is done being parsed.
-				currentFuncParams.Peek().AddRange(fix.Item2);
+				foreach (var funcparam in funcparams)
+				{
+					_ = method.Parameters.Add(funcparam);
+					currentFuncParams.Peek().Add(funcparam.Name);
+				}
 			}
 
-			//method.Parameters.Add(new CodeParameterDeclarationExpression("System.Object", "x"));
 			methods.Add(method.Name, method);
-			//This appears to be trying to create some type of delegate, but is not what we want to do.//MATT
-			//var type = typeof(Core.Core.GenericFunction);
-			//var typeref = new CodeTypeReference();
-			//typeref.UserData.Add(RawData, type);
-			//var del = new CodeDelegateCreateExpression(typeref, new CodeTypeReferenceExpression(className), method.Name);
-			//var obj = VarAssign(VarRef(mainScope + ScopeVar + method.Name), del);
-			//_ = prepend.Add(new CodeExpressionStatement(obj));
-			//allGlobalVars = false;
-			//globalFuncVars.Clear();
-			//localFuncVars.Clear();
 			return method.Name;
 		}
 
@@ -172,78 +159,79 @@ namespace Keysharp.Scripting
 			currentFuncParams.Push(new List<string>());
 		}
 
-		private (CodeStatementCollection, List<string>) ParseFunctionParameters(string code)
-		//private CodeParameterDeclarationExpression[] ParseFunctionParameters(string code)//What we want is an array of parameters.//MATT
+		private List<CodeParameterDeclarationExpression> ParseFunctionParameters(string code)
 		{
-			//var paramdecs = new List<CodeParameterDeclarationExpression>();
-			//List<CodePrimitiveExpression> names = new List<CodePrimitiveExpression>(), defaults = new List<CodePrimitiveExpression>();
-			var names = new List<CodePrimitiveExpression>();
-			var defaults = new List<CodeExpression>();
 			var i = 0;
+			var names = new List<CodeParameterDeclarationExpression>();
 
 			while (i < code.Length)
 			{
 				int x;
-				//CodeParameterDeclarationExpression cpde;
 
-				// preceeding space
-				while (IsSpace(code[i])) i++;
+				while (i < code.Length && IsSpace(code[i])) i++;// preceeding space
 
-				// name
-				x = i;
+				x = i;// name
 
-				while (i < code.Length && IsIdentifier(code[i])) i++;
+				while (i < code.Length && (/*code[i] == '&' || */code[i] == '*' || IsIdentifier(code[i]))) i++;
 
 				if (x == i)
+				{
 					throw new ParseException(ExUnexpected);
+				}
 				else
 				{
 					var part = code.Substring(x, i - x);
-					//bool byref;// = false;
+					//var byref = false;
+					var variadic = false;
 
-					if (part.Equals(FunctionParamRef, System.StringComparison.OrdinalIgnoreCase))
+					//if (part.StartsWith('&'))
+					//{
+					//  byref = true;
+					//  part = part.Substring(1);
+					//}
+
+					if (part.EndsWith('*'))
 					{
-						//byref = true; // TODO: handle byref variables
-						do { i++; } while (i < code.Length && IsSpace(code[i]));
-
-						x = i;
-
-						while (i < code.Length && IsIdentifier(code[i])) i++;
-
-						if (x == i)
-							throw new ParseException("Unspecified parameter name");
-
-						part = code.Substring(x, i - x);
+						variadic = true;
+						part = part.TrimEnd('*');
 					}
 
-					//cpde = new CodeParameterDeclarationExpression("System.Object", VarNormalizedName(part));//Want this, and not the code below.//MATT
-					//cpde.Direction = byref ? FieldDirection.Ref : FieldDirection.In;
-					//paramdecs.Add(cpde);
-					//names.Add(new CodePrimitiveExpression((byref ? mainScope : Scope) + ScopeVar + VarNormalizedName(part)));
-					names.Add(new CodePrimitiveExpression(VarNormalizedName(Scope + ScopeVar + VarNormalizedName(part))));//Function params are always scoped.
-				}
+					var cpde = new CodeParameterDeclarationExpression(typeof(object), part);
 
-				//if (i < code.Length && code[i] == '*')//Support variadic function parameters.//MATT
-				//_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("params"));
+					//if (byref)
+					//  cpde.Direction = FieldDirection.Ref;
+
+					if (variadic)
+					{
+						cpde.Type = new CodeTypeReference(typeof(object[]));
+						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+					}
+
+					names.Add(cpde);
+				}
 
 				while (i < code.Length && IsSpace(code[i])) i++;
 
 				if (i == code.Length)
 					break;
 
+				var currParam = names.Last();
+
 				// defaults
 				if (code[i] == AssignPre)
 				{
 					i++;
 
-					while (IsSpace(code[i]) || code[i] == Equal) i++;
+					while (i < code.Length && (IsSpace(code[i]) || code[i] == Equal)) i++;
 
 					if (i == code.Length)
+					{
 						throw new ParseException(ExUnexpected);
+					}
 					else if (code[i] == Multicast)
 					{
-						//_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-						defaults.Add(new CodePrimitiveExpression(null));
+						_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+						_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
 					}
 					else
 					{
@@ -262,59 +250,46 @@ namespace Keysharp.Scripting
 
 						if (x == i)
 						{
-							//_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-							defaults.Add(new CodePrimitiveExpression(null));
+							_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+							_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
 						}
 						else
 						{
 							var sub = code.Substring(x, i - x).Trim(Spaces);
-							//_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-							//_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(sub))));//MATT
 
 							if (sub.ToLower() == "unset")
-								defaults.Add(new CodeSnippetExpression("UnsetArg.Default"));
+							{
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+								//currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodeSnippetExpression("UnsetArg.Default"))));
+							}
 							else if (sub.Length == 0)
-								defaults.Add(new CodePrimitiveExpression(null));
+							{
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+							}
 							else if (wasstr)
-								defaults.Add(new CodePrimitiveExpression(ValidateParameterLiteral(sub)));
+							{
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(ValidateParameterLiteral(sub)))));
+							}
 							else if (PrimitiveToExpression(ValidateParameterLiteral(sub)) is CodeExpression expr)
-								defaults.Add(expr);
+							{
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(expr)));
+							}
 						}
 					}
 				}
-				else
-					defaults.Add(new CodePrimitiveExpression(null));
 
 				// next
-				if (i < code.Length && code[i] != Multicast && code[i] != '*')//Add support for variadic parameters specified by asterisk.//MATT
+				if (i < code.Length && code[i] != Multicast/* && code[i] != '*'*/)//Add support for variadic parameters specified by asterisk.//MATT
 					throw new ParseException(ExUnexpected);
 				else
 					i++;
 			}
 
-			if (names.Count == 0)
-				return (null, null);
-
-			var statements = new CodeStatementCollection();
-
-			for (var index = 0; index < names.Count; index++)
-			{
-				var cmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Parameter,
-						new CodeArgumentReferenceExpression(args),
-						index < defaults.Count ? defaults[index] : new CodePrimitiveExpression(null),
-						new CodePrimitiveExpression(index));
-				_ = statements.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(object)), names[index].Value as string, cmie));
-			}
-
-			return (statements, names.Select(x => (x.Value as string)/*?.ToLower()*/).ToList());
-			//var cms = new CodeExpressionStatement();
-			//var fix = new CodeMethodInvokeExpression();
-			//fix.Method = (CodeMethodReferenceExpression)InternalMethods.Parameters;
-			//_ = fix.Parameters.Add(new CodeArrayCreateExpression(typeof(string), names.ToArray()));
-			//_ = fix.Parameters.Add(new CodeArgumentReferenceExpression(args));
-			//_ = fix.Parameters.Add(new CodeArrayCreateExpression(typeof(object), defaults.ToArray()));
-			//return (new CodeExpressionStatement(fix), names.Select(x => (x.Value as string)/*?.ToLower()*/).ToList());
-			//return paramdecs.ToArray();//MATT
+			return names.Count == 0 ? null : names;
 		}
 
 		private string ValidateParameterLiteral(string code)

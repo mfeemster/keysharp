@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Reflection;
 using Keysharp.Core;
@@ -13,11 +12,10 @@ namespace Keysharp.Scripting
 	{
 		public class Variables
 		{
+			internal static DateTime startTime = DateTime.Now;
+			private static Dictionary<string, FieldInfo> globalVars = new Dictionary<string, FieldInfo>();
 			private Stack<string> collect = new Stack<string>();
 			private Dictionary<string, object> table = new Dictionary<string, object>();
-			private static Dictionary<string, FieldInfo> globalVars = new Dictionary<string, FieldInfo>();
-			internal static DateTime startTime = DateTime.Now;
-
 			public bool AutoMark { get; set; }
 
 			public static void InitGlobalVars()
@@ -192,7 +190,7 @@ namespace Keysharp.Scripting
 					//return val.GetValue(null);//Passing null, so all global vars must be marked static.
 				}
 				else
-					SetReservedVariable(key, value);
+					_ = SetReservedVariable(key, value);
 
 				return value;
 			}
@@ -251,8 +249,8 @@ namespace Keysharp.Scripting
 
 			public object this[object key]
 			{
-				get { return key is string s ? GetVariable(s) : ""; }
-				set { _ = SetVariable(key is string s ? s : "", value); }
+				get => key is string s ? GetVariable(s) : "";
+				set => _ = SetVariable(key is string s ? s : "", value);
 			}
 		}
 	}

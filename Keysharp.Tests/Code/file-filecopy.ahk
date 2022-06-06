@@ -140,7 +140,14 @@ if (DirExist("./FileCopy"))
 	DirDelete("./FileCopy", true)
 
 DirCreate("./FileCopy")
-FileCopy(dir . "/*.txt", "./NonExistentDir/*")
+
+try
+{
+    FileCopy(dir . "/*.txt", "./NonExistentDir/*")
+}
+catch
+{
+}
 
 if (!FileExist("./FileCopy/NonExistentDir/file1.txt"))
  	FileAppend, pass, *

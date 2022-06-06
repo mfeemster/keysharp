@@ -19,31 +19,19 @@ namespace Keysharp.Core.Linux
 
 		internal override bool Active
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal override bool AlwaysOnTop
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal override bool Bottom
 		{
-			set { throw new NotImplementedException(); }
+			set => throw new NotImplementedException();
 		}
 
 		internal override List<WindowItemBase> ChildWindows => throw new NotImplementedException();
@@ -63,28 +51,16 @@ namespace Keysharp.Core.Linux
 
 		internal override bool Enabled
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal override bool Exists => throw new NotImplementedException();
 
 		internal override long ExStyle
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal override bool IsHung => throw new NotImplementedException();
@@ -96,10 +72,8 @@ namespace Keysharp.Core.Linux
 				var attr = _xwindow.Attributes;
 				return new Rectangle(attr.x, attr.y, attr.width, attr.height);
 			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+
+			set => throw new NotImplementedException();
 		}
 
 		internal override WindowItemBase ParentWindow => throw new NotImplementedException();
@@ -115,22 +89,14 @@ namespace Keysharp.Core.Linux
 				var attr = _xwindow.Attributes;
 				return new Size(attr.width, attr.height);
 			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+
+			set => throw new NotImplementedException();
 		}
 
 		internal override long Style
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal override string[] Text => throw new NotImplementedException();
@@ -175,14 +141,8 @@ namespace Keysharp.Core.Linux
 
 		internal override FormWindowState WindowState
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal WindowItem(XWindow uxwindow)
@@ -192,49 +152,22 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		internal override bool Close()
-		{
-			throw new NotImplementedException();
-		}
+		internal override bool Close() => throw new NotImplementedException();
 
-		internal override uint GetMenuItemId(params string[] items)
-		{
-			throw new NotImplementedException();
-		}
+		internal override uint GetMenuItemId(params string[] items) => throw new NotImplementedException();
 
-		internal override bool Hide()
-		{
-			throw new NotImplementedException();
-		}
+		internal override bool Hide() => throw new NotImplementedException();
 
-		internal override bool Kill()
-		{
-			throw new NotImplementedException();
-		}
+		internal override bool Kill() => throw new NotImplementedException();
 
-		internal override WindowItemBase RealChildWindowFromPoint(System.Drawing.Point location)
-		{
-			throw new NotImplementedException();
-		}
+		internal override WindowItemBase RealChildWindowFromPoint(System.Drawing.Point location) => throw new NotImplementedException();
 
-		internal override bool Redraw()
-		{
-			throw new NotImplementedException();
-		}
+		internal override bool Redraw() => throw new NotImplementedException();
 
-		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, System.Drawing.Point? location = null)
-		{
-			throw new NotImplementedException();
-		}
+		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, System.Drawing.Point? location = null) => throw new NotImplementedException();
 
-		internal override void SetTransparency(byte level, System.Drawing.Color color)
-		{
-			throw new NotImplementedException();
-		}
+		internal override void SetTransparency(byte level, System.Drawing.Color color) => throw new NotImplementedException();
 
-		internal override bool Show()
-		{
-			throw new NotImplementedException();
-		}
+		internal override bool Show() => throw new NotImplementedException();
 	}
 }

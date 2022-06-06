@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core;
-using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Scripting
 {
@@ -19,12 +18,13 @@ namespace Keysharp.Scripting
 			if (Parser.NoTrayIcon)
 				return;
 
-			var trayIcon = Scripting.Script.Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
+			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
 			trayMenu = new Menu
 			{
-				MenuItem = Scripting.Script.Tray.ContextMenuStrip
+				MenuItem = Tray.ContextMenuStrip
 			};
-			_ = trayMenu.Add("&Open", (GenericFunction)(obj =>
+			var emptyfunc = new Func<object>(() => "");
+			var openfunc = new Func<object>(() =>
 			{
 				if (mainWindow != null)
 				{
@@ -34,42 +34,33 @@ namespace Keysharp.Scripting
 				}
 
 				return "";
-			}));
-			//Need to properly fill in all of these event handlers when the proper functionality is implemented.
-			_ = trayMenu.Add("&Help", (GenericFunction)(obj =>
+			});
+			var reloadfunc = new Func<object>(() =>
 			{
+				Keysharp.Core.Flow.Reload();
 				return "";
-			}));
-			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-			_ = trayMenu.Add("&Window Spy", (GenericFunction)(obj =>
-			{
-				return "";
-			}));
-			_ = trayMenu.Add("&Reload This Script", (GenericFunction)(obj =>
-			{
-				Application.Restart();
-				return "";
-			}));
-			_ = trayMenu.Add("&Edit This Script", (GenericFunction)(obj =>
+			});
+			var editfunc = new Func<object>(() =>
 			{
 				Edit();
 				return "";
-			}));
+			});
+			var exitfunc = new Func<object>(() =>
+			{
+				_ = Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Menu);
+				return "";
+			});
+			_ = trayMenu.Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
+			//Need to properly fill in all of these event handlers when the proper functionality is implemented.
+			_ = trayMenu.Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-			_ = trayMenu.Add("&Suspend Hotkeys", (GenericFunction)(obj =>
-			{
-				return "";
-			}));
-			_ = trayMenu.Add("&Pause Script", (GenericFunction)(obj =>
-			{
-				return "";
-			}));
-			_ = trayMenu.Add("&Exit", (GenericFunction)(obj =>
-			{
-				Accessors.A_ExitReason = "OnExit()";
-				Keysharp.Core.Flow.ExitApp();
-				return "";
-			}));
+			_ = trayMenu.Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			_ = trayMenu.Add("&Reload This Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
+			_ = trayMenu.Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
+			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
+			_ = trayMenu.Add("&Suspend Hotkeys", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			_ = trayMenu.Add("&Pause Script", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			_ = trayMenu.Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 			trayMenu.Default = "&Open";
 			trayIcon.Tag = trayMenu;
 			trayIcon.MouseClick += TrayIcon_MouseClick;
@@ -90,15 +81,6 @@ namespace Keysharp.Scripting
 				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p;
 				SuspendedIcon = Keysharp.Core.Properties.Resources.Keysharp_s;
 			}
-
-			Flow.ApplicationExit += (o, e) =>
-			{
-				if (Scripting.Script.Tray != null)
-				{
-					Scripting.Script.Tray.Visible = false;
-					Scripting.Script.Tray.Dispose();
-				}
-			};
 		}
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)

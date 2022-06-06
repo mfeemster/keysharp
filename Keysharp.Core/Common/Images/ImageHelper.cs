@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Windows;
 
@@ -15,18 +13,6 @@ namespace Keysharp.Core.Common
 		{
 			var ext = System.IO.Path.GetExtension(filename).ToLower();
 			return ext == ".exe" || ext == ".dll" || ext == ".icl" || ext == ".cpl" || ext == ".scr" || ext == ".ico";
-		}
-
-		internal static List<Bitmap> SplitBitmap(Bitmap bmp, int w, int h)
-		{
-			var list = new List<Bitmap>();
-
-			for (var i = 0; i < bmp.Height; i += h)
-				for (var j = 0; j < bmp.Width; j += w)
-					if (i + h < bmp.Height && j + w < bmp.Width)
-						list.Add(bmp.Clone(new Rectangle(j, i, w, h), bmp.PixelFormat));
-
-			return list;
 		}
 
 		internal static Bitmap LoadImage(string filename, int w, int h, int iconindex)
@@ -122,13 +108,24 @@ namespace Keysharp.Core.Common
 					}
 				}
 			}
-			catch (FormatException)
+			catch (Exception ex)
 			{
-				Accessors.A_ErrorLevel = 2;
-				return null;
+				throw new TypeError(ex.Message);
 			}
 
 			return bmp;
+		}
+
+		internal static List<Bitmap> SplitBitmap(Bitmap bmp, int w, int h)
+		{
+			var list = new List<Bitmap>();
+
+			for (var i = 0; i < bmp.Height; i += h)
+				for (var j = 0; j < bmp.Width; j += w)
+					if (i + h < bmp.Height && j + w < bmp.Width)
+						list.Add(bmp.Clone(new Rectangle(j, i, w, h), bmp.PixelFormat));
+
+			return list;
 		}
 	}
 }

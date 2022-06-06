@@ -37,10 +37,10 @@ namespace Keysharp.Tests
 		public void CompareCaseEx() => Assert.IsTrue(TestScript("string-compare-case-ex", true));
 
 		[Test, Category("String")]
-		public void Escape() => Assert.IsTrue(TestScript("string-escape", true));
+		public void ConcatEx() => Assert.IsTrue(TestScript("string-concat-ex", true));
 
 		[Test, Category("String")]
-		public void ConcatEx() => Assert.IsTrue(TestScript("string-concat-ex", true));
+		public void Escape() => Assert.IsTrue(TestScript("string-escape", true));
 
 		[Test, Category("String")]
 		public void Format()
@@ -237,7 +237,7 @@ namespace Keysharp.Tests
 		{
 			var chr = Strings.Ord("t");
 			Assert.AreEqual(116, chr);
-			chr = Strings.Ord("te", 2);
+			chr = Strings.Ord("et");
 			Assert.AreEqual(101, chr);
 			Assert.IsTrue(TestScript("string-ord", true));
 		}
@@ -362,6 +362,27 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
+		public void StartsEndsWith()
+		{
+			var s = "This is a test STRING";
+			Assert.IsTrue(s.EndsWith(" STRING", StringComparison.CurrentCulture));
+			Assert.IsFalse(s.EndsWith(" string", StringComparison.CurrentCulture));
+			Assert.IsTrue(s.EndsWith(" string", StringComparison.CurrentCultureIgnoreCase));
+			Assert.IsTrue(EndsWith(s, " STRING", true) == 1L);
+			Assert.IsFalse(EndsWith(s, " string", true) == 1L);
+			Assert.IsTrue(EndsWith(s, " string", false) == 1L);
+			//
+			Assert.IsTrue(s.StartsWith("This ", StringComparison.CurrentCulture));
+			Assert.IsFalse(s.StartsWith("this ", StringComparison.CurrentCulture));
+			Assert.IsTrue(s.StartsWith("tHiS ", StringComparison.CurrentCultureIgnoreCase));
+			Assert.IsTrue(StartsWith(s, "This ", true) == 1L);
+			Assert.IsFalse(StartsWith(s, "this ", true) == 1L);
+			Assert.IsTrue(StartsWith(s, "tHiS ", false) == 1L);
+			//
+			Assert.IsTrue(TestScript("string-startsendswith", true));
+		}
+
+		[Test, Category("String")]
 		public void StrCompare()
 		{
 			var x = "a";
@@ -444,13 +465,13 @@ namespace Keysharp.Tests
 			y = Strings.StrLower(x);
 			Assert.AreEqual(y, "");
 			x = "ALL CAPS";
-			y = Strings.StrLower(x, "T");
+			y = Strings.StrTitle(x);
 			Assert.AreEqual(y, "ALL CAPS");
 			x = "all caps";
-			y = Strings.StrLower(x, "T");
+			y = Strings.StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			x = "All Caps";
-			y = Strings.StrLower(x, "T");
+			y = Strings.StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			Assert.IsTrue(TestScript("string-strlower", true));
 		}
@@ -483,23 +504,26 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d,e,f";//Can't test the ref var which holds the count here because those must be global. However it is tested in the script.
 			var y = Strings.StrReplace(x, ",");
-			Assert.AreEqual("abcdef", y);
+			Assert.AreEqual("abcdef", y.ToString());
 			y = Strings.StrReplace(x, ",", "");
-			Assert.AreEqual("abcdef", y);
+			Assert.AreEqual("abcdef", y.ToString());
 			y = Strings.StrReplace(x, ",", ".");
-			Assert.AreEqual("a.b.c.d.e.f", y);
+			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
 			y = Strings.StrReplace(x, ",", ".", "On");
-			Assert.AreEqual("a.b.c.d.e.f", y);
+			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
 			y = Strings.StrReplace(x, ",", ".");
-			Assert.AreEqual("a.b.c.d.e.f", y);
-			y = Strings.StrReplace(x, ",", ".", null, null, 3);
-			Assert.AreEqual("a.b.c.d,e,f", y);
+			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
+			Assert.AreEqual(5L, y.Count);
+			y = Strings.StrReplace(x, ",", ".", null, 3);
+			Assert.AreEqual("a.b.c.d,e,f", y.ToString());
+			Assert.AreEqual(3L, y.Count);
 			y = Strings.StrReplace(x, "");
-			Assert.AreEqual("", y);
+			Assert.AreEqual("", y.ToString());
 			y = Strings.StrReplace(x, "a", "A", "On");
-			Assert.AreEqual("A,b,c,d,e,f", y);
-			y = Strings.StrReplace(x, "a", "A", "On", null, 9);
-			Assert.AreEqual("A,b,c,d,e,f", y);
+			Assert.AreEqual("A,b,c,d,e,f", y.ToString());
+			y = Strings.StrReplace(x, "a", "A", "On", 9);
+			Assert.AreEqual("A,b,c,d,e,f", y.ToString());
+			Assert.AreEqual(1L, y.Count);
 			Assert.IsTrue(TestScript("string-strreplace", false));//Don't test func version because the ref var must be global.
 		}
 
@@ -564,13 +588,13 @@ namespace Keysharp.Tests
 			y = Strings.StrUpper(x);
 			Assert.AreEqual(y, "");
 			x = "ALL CAPS";
-			y = Strings.StrUpper(x, "T");
+			y = Strings.StrTitle(x);
 			Assert.AreEqual(y, "ALL CAPS");
 			x = "all caps";
-			y = Strings.StrUpper(x, "T");
+			y = Strings.StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			x = "All Caps";
-			y = Strings.StrUpper(x, "T");
+			y = Strings.StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			Assert.IsTrue(TestScript("string-strupper", true));
 		}
@@ -656,6 +680,16 @@ namespace Keysharp.Tests
 			y = Strings.Trim(x);
 			Assert.AreEqual("test", y);
 			Assert.IsTrue(TestScript("string-trim", true));
+		}
+
+		[Test, Category("String")]
+		public void VerCompare()
+		{
+			Assert.AreEqual(Strings.VerCompare("1.20.0", "1.3"), 1L);
+			Assert.AreEqual(Strings.StrCompare("1.20.0", "1.3"), -1L);
+			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0-a136"), 1L);
+			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0"), -1);
+			Assert.AreEqual(Strings.VerCompare("10.2-beta.3", "10.2.0"), -1);
 		}
 	}
 }

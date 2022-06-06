@@ -33,7 +33,7 @@ else
 	FileAppend, fail, *
 	
 x := "ALL CAPS"
-y := StrLower(x, "T")
+y := StrTitle(x)
 
 if (y = "ALL CAPS")
 	FileAppend, pass, *
@@ -41,7 +41,7 @@ else
 	FileAppend, fail, *
 	
 x := "all caps"
-y := StrLower(x, "T")
+y := StrTitle(x)
 
 if (y = "All Caps")
 	FileAppend, pass, *
@@ -49,7 +49,7 @@ else
 	FileAppend, fail, *
 	
 x := "All Caps"
-y := StrLower(x, "T")
+y := StrTitle(x)
 
 if (y = "All Caps")
 	FileAppend, pass, *

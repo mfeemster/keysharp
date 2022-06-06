@@ -62,8 +62,6 @@ f.Close()
 if (FileExist(path) != "")
 	FileDelete(path)
 
-; BUFFER SHOULD GO HERE, DO LATER
-
 f := FileOpen(path, "rw") ; Read/write buffers and arrays.
 buf := Buffer(4, 9)
 count := f.RawWrite(buf)

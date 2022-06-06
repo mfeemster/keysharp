@@ -1,33 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
-using System.Linq;
-using System.Diagnostics;
-using System.Globalization;
 
 namespace Keysharp.Core
 {
 	public static class Images
 	{
-		public class ImageHandleAndType
+		public static Map LoadPicture(object obj0, object obj1 = null)
 		{
-			public long Handle { get; set; }
-			public long ImageType { get; set; }
-		}
-
-		public static ImageHandleAndType LoadPicture(params object[] obj)
-		{
-			var (filename, options) = obj.L().S2();
-			var ret = new ImageHandleAndType()
-			{
-				Handle = -1,
-				ImageType = -1
-			};
+			var filename = obj0.As();
+			var options = obj1.As();
+			long handle = -1;
+			long imageType = -1;
 			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
@@ -45,24 +30,28 @@ namespace Keysharp.Core
 			if (ext == ".cur")
 			{
 				var cur = new Cursor(filename);
-				ret.Handle = cur.Handle.ToInt64();
-				ret.Handle = 2;
+				handle = cur.Handle.ToInt64();
+				imageType = 2;
 			}
 			else if (ImageHelper.LoadImage(filename, width, height, icon) is Bitmap bmp)
 			{
 				if (ImageHelper.IsIcon(filename))
 				{
-					ret.Handle = bmp.GetHicon().ToInt64();
-					ret.ImageType = 1;
+					handle = bmp.GetHicon().ToInt64();
+					imageType = 1;
 				}
 				else
 				{
-					ret.Handle = bmp.GetHbitmap().ToInt64();
-					ret.Handle = 0;
+					handle = bmp.GetHbitmap().ToInt64();
+					imageType = 0;
 				}
 			}
 
-			return ret;
+			return new Keysharp.Core.Map(new Dictionary<object, object>()
+			{
+				{ "Handle", handle },
+				{ "ImageType", imageType }
+			});
 		}
 	}
 }

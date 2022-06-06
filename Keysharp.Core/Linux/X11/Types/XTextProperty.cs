@@ -11,10 +11,7 @@ namespace Keysharp.Core.Linux.X11.Types
 		internal int format;
 		internal IntPtr nitems;
 
-		internal string GetText()
-		{
-			return Marshal.PtrToStringAnsi(value);
-		}
+		internal string GetText() => Marshal.PtrToStringAnsi(value);
 
 		internal bool SetText(string value)
 		{

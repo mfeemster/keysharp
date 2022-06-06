@@ -20,8 +20,11 @@ namespace Keyview
 		private string fullCode = "";
 		private DateTime lastCompileTime = DateTime.Now;
 		private DateTime lastKeyTime = DateTime.Now;
+
 		//private bool status = false;
 		private string trimmedCode = "";
+
+		private string trimstr = "{}\t";
 
 		public Keyview()
 		{
@@ -31,7 +34,7 @@ namespace Keyview
 			chkFullCode.CheckStateChanged += chkFullCode_CheckStateChanged;
 			var host = new ToolStripControlHost(chkFullCode);
 			host.Alignment = ToolStripItemAlignment.Right;
-			toolStrip1.Items.Add(host);
+			_ = toolStrip1.Items.Add(host);
 			txtIn.AllowDrop = true;
 			txtIn.DragEnter += TxtIn_DragEnter;
 			txtIn.DragDrop += TxtIn_DragDrop;
@@ -91,8 +94,6 @@ namespace Keyview
 		}
 
 		private void splitContainer_DoubleClick(object sender, EventArgs e) => splitContainer.SplitterDistance = Width / 2;
-
-		string trimstr = "{}\t";
 
 		private void Timer_Tick(object sender, EventArgs e)
 		{
@@ -180,7 +181,7 @@ namespace Keyview
 				}
 				catch (Exception ex)
 				{
-					Dialogs.MsgBox($"Unable to load file: {ex.Message}");
+					_ = Dialogs.MsgBox($"Unable to load file: {ex.Message}");
 				}
 			}
 		}

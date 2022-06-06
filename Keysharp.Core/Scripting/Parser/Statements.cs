@@ -71,7 +71,7 @@ namespace Keysharp.Scripting
 								_ = parentBlock.Statements.Add(new CodeGotoStatement(css.FinalLabelStatement.Label));
 							else if (parentBlock.Kind == CodeBlock.BlockKind.Catch)
 							{
-								excCatchVars.PopOrNull();
+								_ = excCatchVars.PopOrNull();
 							}
 							else if (parentBlock.Kind == CodeBlock.BlockKind.Function)
 							{
@@ -87,7 +87,7 @@ namespace Keysharp.Scripting
 									{
 										foreach (var kv in dkt)
 										{
-											var scopedvar = /*Scope + ScopeVar + */kv.Key;
+											var scopedvar = kv.Key;
 											var cmf = new CodeMemberField(typeof(object), scopedvar)
 											{
 												Attributes = MemberAttributes.Public | MemberAttributes.Static
@@ -103,7 +103,6 @@ namespace Keysharp.Scripting
 									var scope = Scope.ToLower();
 
 									if (allVars.TryGetValue(scope, out var av))
-										//if (allVars.TryGetValue(meth.Name.ToLower(), out var av))
 									{
 										var gfv = globalFuncVars.PeekOrNull();
 
@@ -111,7 +110,7 @@ namespace Keysharp.Scripting
 										{
 											if (gfv == null || !gfv.Contains(v))
 											{
-												var dec = new CodeVariableDeclarationStatement(typeof(object), v/*.Replace(ScopeVar[0], '_')*/, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
+												var dec = new CodeVariableDeclarationStatement(typeof(object), v, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
 												meth.Statements.Insert(vari++, dec);
 											}
 										}
@@ -216,7 +215,7 @@ namespace Keysharp.Scripting
 							var n = i + 1;
 
 							if (IsFunction(code, n < lines.Count ? lines[n].Code : string.Empty))
-								ParseFunction(lines[i]);
+								_ = ParseFunction(lines[i]);
 							else
 							{
 								var statements = ParseMultiExpression(code, true);

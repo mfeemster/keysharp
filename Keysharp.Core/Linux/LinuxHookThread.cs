@@ -9,6 +9,7 @@ namespace Keysharp.Core.Linux
 		public override void SimulateKeyPress(uint key)
 		{
 		}
+
 		internal override void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false)
 		{ }
 
@@ -16,6 +17,8 @@ namespace Keysharp.Core.Linux
 		{ }
 
 		internal override int CharToVKAndModifiers(char ch, ref int? modifiersLr, IntPtr keybdLayout, bool enableAZFallback = false) => 0;
+
+		internal override int ConvertMouseButton(string buf, bool allowWheel = true) => 0;
 
 		internal override bool IsKeyDown(int vk) => false;
 

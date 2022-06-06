@@ -14,47 +14,48 @@ namespace Keysharp.Core.Linux
 	internal class XConnectionSingleton : IDisposable
 	{
 		// These are the events we subscribe to, in order to allow hotkey/hotstring support
-		private static readonly EventMasks SelectMask = EventMasks.KeyPress |
+		private static readonly EventMasks selectMask = EventMasks.KeyPress |
 				EventMasks.FocusChange | EventMasks.SubstructureNofity |
 				EventMasks.KeyRelease | EventMasks.Exposure;
 
-		private static XConnectionSingleton Instance;
-		private Thread Listener;
+		private static XConnectionSingleton instance;
+		private Thread listener;
+
+		private XErrorHandler oldHandler;
+
+		private bool run = true;
+
+		private bool success = true;
 
 		// HACK: X sometimes throws a BadWindow Error because windows are quickly deleted
 		// We set a placeholder errorhandler for some time and restore it later
-		private bool mSurpressErrors = false;
+		private bool suppressErrors = false;
 
-		private XErrorHandler OldHandler;
-
-		private bool run = true;
-		private bool Success = true;
-
-		private List<int> Windows;
+		private List<int> windows;
 
 		internal IntPtr Handle { get; private set; }
 
-		internal bool SurpressErrors
+		internal bool SuppressErrors
 		{
 			set
 			{
-				if (value && !mSurpressErrors)
-					OldHandler = Xlib.XSetErrorHandler(delegate { Success = false; return 0; });
-				else if (!value && mSurpressErrors)
-					_ = Xlib.XSetErrorHandler(OldHandler);
+				if (value && !suppressErrors)
+					oldHandler = Xlib.XSetErrorHandler(delegate { success = false; return 0; });
+				else if (!value && suppressErrors)
+					_ = Xlib.XSetErrorHandler(oldHandler);
 
-				mSurpressErrors = value;
+				suppressErrors = value;
 			}
 
-			get { return mSurpressErrors; }
+			get => suppressErrors;
 		}
 
 		private XConnectionSingleton()
 		{
-			Windows = new List<int>();
+			windows = new List<int>();
 			// Kick off a thread listening to X events
-			Listener = new Thread(Listen);
-			Listener.Start();
+			listener = new Thread(Listen);
+			listener.Start();
 		}
 
 		public void Dispose()
@@ -66,10 +67,10 @@ namespace Keysharp.Core.Linux
 
 		internal static XConnectionSingleton GetInstance()
 		{
-			if (Instance == null)
-				Instance = new XConnectionSingleton();
+			if (instance == null)
+				instance = new XConnectionSingleton();
 
-			return Instance;
+			return instance;
 		}
 
 		private void FishEvent()
@@ -81,18 +82,18 @@ namespace Keysharp.Core.Linux
 			if (Event.type == XEventName.CreateNotify)
 			{
 				var Window = Event.CreateWindowEvent.window;
-				Success = true;
-				Windows.Add(Window);
-				SurpressErrors = true;
+				success = true;
+				windows.Add(Window);
+				SuppressErrors = true;
 
-				if (Success)
+				if (success)
 					RecurseTree(Handle, Window);
 
-				SurpressErrors = false;
+				SuppressErrors = false;
 			}
 			else if (Event.type == XEventName.DestroyNotify)
 			{
-				_ = Windows.Remove(Event.DestroyWindowEvent.window);
+				_ = windows.Remove(Event.DestroyWindowEvent.window);
 			}
 		}
 
@@ -100,9 +101,9 @@ namespace Keysharp.Core.Linux
 		{
 			Handle = Xlib.XOpenDisplay(IntPtr.Zero);
 			// Select all the windows already present
-			SurpressErrors = true;
+			SuppressErrors = true;
 			RecurseTree(Handle, Xlib.XDefaultRootWindow(Handle));
-			SurpressErrors = false;
+			SuppressErrors = false;
 
 			while (run)
 			{
@@ -122,8 +123,8 @@ namespace Keysharp.Core.Linux
 		{
 			int[] Children;
 
-			if (!Windows.Contains(RootWindow))
-				Windows.Add(RootWindow);
+			if (!windows.Contains(RootWindow))
+				windows.Add(RootWindow);
 
 			// Request all children of the given window, along with the parent
 			_ = Xlib.XQueryTree(Display, RootWindow, out var RootWindowRet, out var ParentWindow, out var ChildrenPtr, out var NChildren);
@@ -133,14 +134,14 @@ namespace Keysharp.Core.Linux
 				// Fill the array with zeroes to prevent NullReferenceException from glue layer
 				Children = new int[NChildren];
 				Marshal.Copy(ChildrenPtr, Children, 0, NChildren);
-				_ = Xlib.XSelectInput(Display, RootWindow, SelectMask);
+				_ = Xlib.XSelectInput(Display, RootWindow, selectMask);
 
 				// Subwindows shouldn't be forgotten, especially since everything is a subwindow of RootWindow
 				for (var i = 0; i < NChildren; i++)
 				{
 					if (Children[i] != 0)
 					{
-						_ = Xlib.XSelectInput(Display, Children[i], SelectMask);
+						_ = Xlib.XSelectInput(Display, Children[i], selectMask);
 						RecurseTree(Display, Children[i]);
 					}
 				}

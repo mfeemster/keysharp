@@ -117,49 +117,42 @@ namespace Keysharp.Core
 
 		internal static MethodInfo FindAndCacheMethod(Type t, string name)
 		{
-			try
+			do
 			{
-				do
+				if (typeToStringMethods.TryGetValue(t, out var dkt))
 				{
-					if (typeToStringMethods.TryGetValue(t, out var dkt))
-					{
-					}
-					else
-					{
-						var meths = (MethodInfo[])t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+				}
+				else
+				{
+					var meths = (MethodInfo[])t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-						if (meths.Length > 0)
-						{
-							foreach (var meth in meths)
-								typeToStringMethods.GetOrAdd(meth.DeclaringType, () => new Dictionary<string, MethodInfo>(meths.Length, StringComparer.OrdinalIgnoreCase)).Add(meth.Name, meth);
-						}
-						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
-						{
-							typeToStringMethods[t] = dkt = new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase);
-							t = t.BaseType;
-							continue;
-						}
-					}
-
-					if (dkt == null && !typeToStringMethods.TryGetValue(t, out dkt))
+					if (meths.Length > 0)
 					{
+						foreach (var meth in meths)
+							typeToStringMethods.GetOrAdd(meth.DeclaringType, () => new Dictionary<string, MethodInfo>(meths.Length, StringComparer.OrdinalIgnoreCase)).Add(meth.Name, meth);
+					}
+					else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+					{
+						typeToStringMethods[t] = dkt = new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase);
 						t = t.BaseType;
 						continue;
 					}
+				}
 
-					if (dkt.TryGetValue(name, out var mi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
-						return mi;
-
-					//foreach (var kv in dkt)//Case insensitive match.//This is probably not needed anymore because we use StringComparer.OrdinalIgnoreCase.//TODO
-					//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-					//      return kv.Value;
+				if (dkt == null && !typeToStringMethods.TryGetValue(t, out dkt))
+				{
 					t = t.BaseType;
-				} while (t.Assembly == typeof(Any).Assembly);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
-			}
-			catch (Exception e)
-			{
-				throw;
-			}
+					continue;
+				}
+
+				if (dkt.TryGetValue(name, out var mi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
+					return mi;
+
+				//foreach (var kv in dkt)//Case insensitive match.//This is probably not needed anymore because we use StringComparer.OrdinalIgnoreCase.//TODO
+				//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
+				//      return kv.Value;
+				t = t.BaseType;
+			} while (t.Assembly == typeof(Any).Assembly);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
 
 			return null;
 		}
@@ -382,22 +375,6 @@ namespace Keysharp.Core
 		*/
 
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
-
-		internal static object SafeInvoke(string name, params object[] args)
-		{
-			var method = FindLocalRoutine(name);
-
-			if (method == null)
-				return null;
-
-			try
-			{
-				return method.Invoke(null, new object[] { args });
-			}
-			catch { }
-
-			return null;
-		}
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using Keysharp.Scripting;
 
@@ -28,8 +27,10 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
-			SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);//This differs from the documentation in that double click is not supported.
-			//This is because when these styles are enabled, every normal click fires twice. This isn't worth implementing since it's behavior that will almost never be desired.
+			//Any setting of this field causes click events to behave unpredictably, so don't use it, and therefor don't support double clicks.
+			//This differs from the documentation which says that double click is supported.
+			//This isn't worth implementing since it's behavior that will almost never be desired.
+			//SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
 		}
 
 		protected override void WndProc(ref Message m)
@@ -269,9 +270,9 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static object OnLinkLabelClicked(params object[] obj)
+		internal static object OnLinkLabelClicked(object obj0, object obj1)
 		{
-			if (obj[0] is LinkLabel ll && obj[1] is LinkLabelLinkClickedEventArgs e)
+			if (obj0 is LinkLabel ll && obj1 is LinkLabelLinkClickedEventArgs e)
 			{
 				var url = e.Link.LinkData is Tuple<string, string> tss ? tss.Item2.ToString() : ll.Text.Substring(e.Link.Start, e.Link.Length);
 
@@ -611,7 +612,7 @@ namespace Keysharp.Core
 
 	public class KeysharpToolStripStatusLabel : ToolStripStatusLabel
 	{
-		internal readonly List<GenericFunction> doubleClickHandlers = new List<GenericFunction>();
+		internal readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
 
 		//No WndProc method to override because TSSL is not a Control.
 

@@ -6,11 +6,6 @@ if (DirExist("./DirDelete"))
 dir := "./DirDelete/SubDir1/SubDir2/SubDir3"
 DirCreate(dir)
 
-if (A_ErrorLevel == 0)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
 if (DirExist("./DirDelete"))
 	FileAppend, pass, *
 else
@@ -31,26 +26,52 @@ if (DirExist("./DirDelete/SubDir1/SubDir2/SubDir3"))
 else
 	FileAppend, fail, *
 
-DirDelete("./DirDelete")
+try
+{
+	DirDelete("./DirDelete")
+}
+catch
+{
+}
 
-if (A_ErrorLevel == 1)
+if (DirExist("./DirDelete"))
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-if (DirExist("./DirDelete"))
+if (DirExist("./DirDelete/SubDir1"))
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (DirExist("./DirDelete/SubDir1/SubDir2"))
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (DirExist("./DirDelete/SubDir1/SubDir2/SubDir3"))
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 DirDelete("./DirDelete", true)
 
-if (A_ErrorLevel == 0)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
 if (DirExist("./DirDelete"))
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+if (DirExist("./DirDelete/SubDir1"))
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+if (DirExist("./DirDelete/SubDir1/SubDir2"))
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+	
+if (DirExist("./DirDelete/SubDir1/SubDir2/SubDir3"))
 	FileAppend, fail, *
 else
 	FileAppend, pass, *

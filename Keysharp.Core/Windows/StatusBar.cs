@@ -8,11 +8,11 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class StatusBar
 	{
+		private const int timeout = 2000;
 		private string[] captions;
 		private IntPtr handle;
 		private int panelCount;
 		private int pid;
-		private const int timeout = 2000;
 
 		internal string Caption
 		{
@@ -192,9 +192,6 @@ namespace Keysharp.Core.Windows
 			return 0;
 		}
 
-		private void SetCaption(int index, string caption)
-		{
-			throw new NotImplementedException("Sorry... You'll have to figure out SB_SETTEXT.");
-		}
+		private void SetCaption(int index, string caption) => throw new NotImplementedException("Sorry... You'll have to figure out SB_SETTEXT.");
 	}
 }

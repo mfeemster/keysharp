@@ -33,7 +33,6 @@ namespace Keysharp.Scripting
 					if (sb.Length > 0)
 						_ = sb.Insert(0, ScopeVar);
 
-					//_ = sb.Append(block.Method.ToLower() ?? mainScope);
 					_ = sb.Insert(0, block.Method.ToLower() ?? mainScope);
 				}
 

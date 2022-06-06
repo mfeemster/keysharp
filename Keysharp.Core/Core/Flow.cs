@@ -19,7 +19,7 @@ namespace Keysharp.Core
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
 		internal static ConcurrentDictionary<FuncObj, Timer> timers;
-		private static EventHandler onExit;
+		private static bool hasExited;
 
 		/// <summary>
 		/// Is the Script currently suspended?
@@ -37,10 +37,9 @@ namespace Keysharp.Core
 		/// <item><term>Off</term>: <description>resets the current thread priority to normal.</description></item>
 		/// </list>
 		/// </param>
-		public static void Critical(params object[] obj)
+		public static void Critical(object obj)
 		{
-			var mode = obj.L().S1();
-			var on = Options.OnOff(mode) ?? true;
+			var on = Options.OnOff(obj.As()) ?? true;
 			System.Threading.Thread.CurrentThread.Priority = on ? ThreadPriority.Highest : ThreadPriority.Normal;
 		}
 
@@ -62,10 +61,9 @@ namespace Keysharp.Core
 		/// Exits the current thread or the entire program if non-persistent.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void Exit(params object[] obj)
+		public static void Exit(object obj = null)
 		{
-			var exitCode = obj.L().I1();
-			ApplicationExit?.Invoke(null, null);
+			var exitCode = (int)obj.Al();
 			Environment.ExitCode = exitCode;
 			Application.ExitThread();
 		}
@@ -74,47 +72,13 @@ namespace Keysharp.Core
 		/// Terminates the program unconditionally.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void ExitApp(params object[] obj)
-		{
-			var exitCode = obj.L().I1();
-			Script.mainWindow?.Close();
-			ApplicationExit?.Invoke(null, null);
-			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
-		}
+		public static bool ExitApp(object obj = null) => ExitAppInternal(ExitReasons.Exit, obj);
 
 		/// <summary>
 		/// Specifies a label to run automatically when the program exits.
 		/// </summary>
 		/// <param name="label">The name of a label. Leave blank to remove an existing label, if any.</param>
-		public static void OnExit(string label)
-		{
-			Accessors.A_ErrorLevel = 0;
-
-			if (onExit != null)
-			{
-				AppDomain.CurrentDomain.ProcessExit -= onExit;
-				onExit = null;
-			}
-
-			if (string.IsNullOrEmpty(label))
-				return;
-
-			var method = Reflections.FindLocalRoutine(label);
-
-			if (method == null)
-			{
-				Accessors.A_ErrorLevel = 1;
-				return;
-			}
-
-			var handler = new EventHandler(delegate
-			{
-				try { _ = method.Invoke(null, Keysharp.Core.Core.EmptyVariadicArgs); }
-				catch (Exception) { }
-			});
-			AppDomain.CurrentDomain.ProcessExit += handler;
-			onExit = handler;
-		}
+		public static void OnExit(object obj0, object obj1 = null) => Script.OnExitHandlers.ModifyEventHandlers(obj0 is IFuncObj fo ? fo : new FuncObj(obj0.As()), obj1.Al(1L));
 
 		/// <summary>
 		/// Specifies a function to call automatically when the program receives the specified message.
@@ -143,9 +107,9 @@ namespace Keysharp.Core
 		/// <item><term>1</term>: <description>marks the thread beneath the current thread as paused so that when it resumes, it will finish the command it was running (if any) and then enter a paused state. If there is no thread beneath the current thread, the program itself is paused, which prevents timers from running.</description></item>
 		/// </list>
 		/// </param>
-		public static void Pause(params object[] obj)
+		public static void Pause(object obj)
 		{
-			var (mode, parentThread) = obj.L().Sb();
+			var mode = obj.As();
 			var thread = System.Threading.Thread.CurrentThread;
 			var state = Options.OnOff(mode);
 
@@ -171,16 +135,11 @@ namespace Keysharp.Core
 			}
 
 #pragma warning restore 612, 618
-
-			// UNDONE: correct handling of pause on underlying thread
-
-			if (parentThread)
-				thread.Join();
 		}
 
-		public static object Persistent(params object[] obj)
+		public static object Persistent(object obj)
 		{
-			var b = obj.L().B1(true);
+			var b = obj.Ab(true);
 			var old = Parser.Persistent;
 			Parser.Persistent = b;
 			return old;
@@ -191,12 +150,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static void Reload()
 		{
-			Application.Restart();//What about the cmd line args?//MATT
+			if (!ExitAppInternal(ExitReasons.Reload))
+				Application.Restart();//What about the cmd line args?//MATT
 		}
 
-		public static void SetTimer(params object[] obj)
+		public static void SetTimer(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (function, period, priority) = obj.L().O1L2(null, long.MaxValue);
+			var function = obj0;
+			var period = obj1.Al(long.MaxValue);
+			var priority = obj2.Al();
 			FuncObj func = null;
 			var once = period < 0;
 
@@ -295,9 +257,13 @@ namespace Keysharp.Core
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
 		/// <param name="Delay">The amount of time to pause in milliseconds.</param>
-		public static void Sleep(params object[] obj)
+		public static void Sleep(object obj)
 		{
-			var delay = obj.L().L1();
+			var delay = obj.Al();
+
+			if (delay == -1)
+				Application.DoEvents();
+
 			//_ = System.Threading.Thread.CurrentThread.Join(delay);
 			//var stop = Environment.TickCount + delay;
 			//
@@ -320,16 +286,13 @@ namespace Keysharp.Core
 		/// <item><term>Permit</term>: <description>marks the current subroutine as being exempt from suspension.</description></item>
 		/// </list>
 		/// </param>
-		public static void Suspend(params object[] obj)
+		public static void Suspend(object obj)
 		{
-			var mode = obj.L().S1();
-			var state = Options.OnOff(mode);
-			Suspended = state == null && mode.Equals(Core.Keyword_Toggle, System.StringComparison.OrdinalIgnoreCase) ? !Suspended : (bool)state;
+			var state = Options.ConvertOnOffToggle(obj.As());
+			Suspended = state == Common.Keyboard.ToggleValueType.Toggle ? !Suspended : (state == Common.Keyboard.ToggleValueType.On);
 
 			if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s : Keysharp.Core.Properties.Resources.Keysharp_ico;
-
-			// UNDONE: permit mode for suspend
 		}
 
 		/// <summary>
@@ -338,6 +301,45 @@ namespace Keysharp.Core
 		[Obsolete]
 		public static void Thread()
 		{
+		}
+
+		internal static bool ExitAppInternal(ExitReasons obj0, object obj1 = null)
+		{
+			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
+				return false;
+
+			var exitReason = (int)obj0.Al();
+			var exitCode = (int)obj1.Al();
+			Accessors.A_ExitReason = exitReason;
+			var result = Script.OnExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
+
+			if (result.IsCallbackResultNonEmpty())//If any exit handlers returned a non empty value, abort the exit.
+				return true;
+			else
+				Keysharp.Scripting.Script.OnExitHandlers.Clear();
+
+			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			Keysharp.Core.Common.Keyboard.HotkeyDefinition.AllDestruct(0);
+
+			if (Script.HookThread is Common.Threading.HookThread ht)
+				ht.Stop();
+
+			if (Script.mainWindow != null && !Script.mainWindow.IsClosing)
+			{
+				Script.mainWindow.Close();
+				Script.mainWindow = null;
+			}
+
+			if (Script.Tray != null)
+			{
+				Script.Tray.Visible = false;
+				Script.Tray.Dispose();
+				Script.Tray = null;
+			}
+
+			Environment.ExitCode = exitCode;
+			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
+			return false;
 		}
 
 		internal static void SetMainTimer()
@@ -350,7 +352,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static void SleepWithoutInterruption(params object[] obj)
+		internal static void SleepWithoutInterruption(object obj = null)
 		{
 			AllowInterruption = false;
 			Sleep(obj);
@@ -368,10 +370,7 @@ namespace Keysharp.Core
 
 		internal enum ExitReasons
 		{
-			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown
-			, Close, Menu, Exit, Reload, SingleInstance
+			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, SingleInstance
 		}
-
-		public static event EventHandler ApplicationExit;
 	}
 }

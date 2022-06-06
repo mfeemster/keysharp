@@ -284,10 +284,8 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndPointVolume.GetMasterVolumeLevel(out var result));
 				return result;
 			}
-			set
-			{
-				Marshal.ThrowExceptionForHR(audioEndPointVolume.SetMasterVolumeLevel(value, ref notificationGuid));
-			}
+
+			set => Marshal.ThrowExceptionForHR(audioEndPointVolume.SetMasterVolumeLevel(value, ref notificationGuid));
 		}
 
 		/// <summary>
@@ -300,10 +298,8 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndPointVolume.GetMasterVolumeLevelScalar(out var result));
 				return result;
 			}
-			set
-			{
-				Marshal.ThrowExceptionForHR(audioEndPointVolume.SetMasterVolumeLevelScalar(value, ref notificationGuid));
-			}
+
+			set => Marshal.ThrowExceptionForHR(audioEndPointVolume.SetMasterVolumeLevelScalar(value, ref notificationGuid));
 		}
 
 		/// <summary>
@@ -316,10 +312,8 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndPointVolume.GetMute(out var result));
 				return result;
 			}
-			set
-			{
-				Marshal.ThrowExceptionForHR(audioEndPointVolume.SetMute(value, ref notificationGuid));
-			}
+
+			set => Marshal.ThrowExceptionForHR(audioEndPointVolume.SetMute(value, ref notificationGuid));
 		}
 
 		/// <summary>
@@ -376,30 +370,21 @@ namespace Keysharp.Core.Windows
 				callBack = null;
 			}
 
-			Marshal.ReleaseComObject(audioEndPointVolume);
+			_ = Marshal.ReleaseComObject(audioEndPointVolume);
 			GC.SuppressFinalize(this);
 		}
 
 		/// <summary>
 		/// Volume Step Down
 		/// </summary>
-		internal void VolumeStepDown()
-		{
-			Marshal.ThrowExceptionForHR(audioEndPointVolume.VolumeStepDown(ref notificationGuid));
-		}
+		internal void VolumeStepDown() => Marshal.ThrowExceptionForHR(audioEndPointVolume.VolumeStepDown(ref notificationGuid));
 
 		/// <summary>
 		/// Volume Step Up
 		/// </summary>
-		internal void VolumeStepUp()
-		{
-			Marshal.ThrowExceptionForHR(audioEndPointVolume.VolumeStepUp(ref notificationGuid));
-		}
+		internal void VolumeStepUp() => Marshal.ThrowExceptionForHR(audioEndPointVolume.VolumeStepUp(ref notificationGuid));
 
-		internal void FireNotification(AudioVolumeNotificationData notificationData)
-		{
-			OnVolumeNotification?.Invoke(notificationData);
-		}
+		internal void FireNotification(AudioVolumeNotificationData notificationData) => OnVolumeNotification?.Invoke(notificationData);
 
 		/// <summary>
 		/// On Volume Notification
@@ -435,10 +420,8 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndpointVolume.GetChannelVolumeLevel(channel, out var result));
 				return result;
 			}
-			set
-			{
-				Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevel(channel, value, ref notificationGuid));
-			}
+
+			set => Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevel(channel, value, ref notificationGuid));
 		}
 
 		/// <summary>
@@ -451,10 +434,8 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndpointVolume.GetChannelVolumeLevelScalar(channel, out var result));
 				return result;
 			}
-			set
-			{
-				Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevelScalar(channel, value, ref notificationGuid));
-			}
+
+			set => Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevelScalar(channel, value, ref notificationGuid));
 		}
 
 		internal AudioEndpointVolumeChannel(IAudioEndpointVolume parent, int channel)
@@ -732,10 +713,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// To string
 		/// </summary>
-		public override string ToString()
-		{
-			return FriendlyName;
-		}
+		public override string ToString() => FriendlyName;
 
 		private void GetAudioEndpointVolume()
 		{
@@ -940,10 +918,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
 		/// <summary>
 		/// Get device by index
@@ -954,7 +929,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				mmDeviceCollection.Item(index, out var result);
+				_ = mmDeviceCollection.Item(index, out var result);
 				return new MMDevice(result);
 			}
 		}
@@ -1035,7 +1010,7 @@ namespace Keysharp.Core.Windows
 
 			if (hresult == 0x0)
 			{
-				Marshal.ReleaseComObject(device);
+				_ = Marshal.ReleaseComObject(device);
 				return true;
 			}
 
@@ -1053,20 +1028,14 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="client">Object implementing IMMNotificationClient type casted as IMMNotificationClient interface</param>
 		/// <returns></returns>
-		internal int RegisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client)
-		{
-			return realEnumerator.RegisterEndpointNotificationCallback(client);
-		}
+		internal int RegisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client) => realEnumerator.RegisterEndpointNotificationCallback(client);
 
 		/// <summary>
 		/// Unregisters a call back for Device Events
 		/// </summary>
 		/// <param name="client">Object implementing IMMNotificationClient type casted as IMMNotificationClient interface </param>
 		/// <returns></returns>
-		internal int UnregisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client)
-		{
-			return realEnumerator.UnregisterEndpointNotificationCallback(client);
-		}
+		internal int UnregisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client) => realEnumerator.UnregisterEndpointNotificationCallback(client);
 
 		/// <summary>
 		/// Called to dispose/finalize contained objects.
@@ -1079,7 +1048,7 @@ namespace Keysharp.Core.Windows
 				if (realEnumerator != null)
 				{
 					// although GC would do this for us, we want it done now
-					Marshal.ReleaseComObject(realEnumerator);
+					_ = Marshal.ReleaseComObject(realEnumerator);
 					realEnumerator = null;
 				}
 			}
@@ -1114,10 +1083,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Saves a property change.
 		/// </summary>
-		internal void Commit()
-		{
-			Marshal.ThrowExceptionForHR(storeInterface.Commit());
-		}
+		internal void Commit() => Marshal.ThrowExceptionForHR(storeInterface.Commit());
 
 		/// <summary>
 		/// Contains property guid
@@ -1167,10 +1133,7 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="key">Key of property to set.</param>
 		/// <param name="value">Value to write.</param>
-		internal void SetValue(PropertyKey key, PropVariant value)
-		{
-			Marshal.ThrowExceptionForHR(storeInterface.SetValue(ref key, ref value));
-		}
+		internal void SetValue(PropertyKey key, PropVariant value) => Marshal.ThrowExceptionForHR(storeInterface.SetValue(ref key, ref value));
 
 		/// <summary>
 		/// Gets property by index
@@ -1632,10 +1595,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Creates a new PropVariant containing a long value
 		/// </summary>
-		internal static PropVariant FromLong(long value)
-		{
-			return new PropVariant() { vt = (short)VarEnum.VT_I8, hVal = value };
-		}
+		internal static PropVariant FromLong(long value) => new PropVariant() { vt = (short)VarEnum.VT_I8, hVal = value };
 
 		/// <summary>
 		/// Helper method to gets blob data
@@ -1745,18 +1705,12 @@ namespace Keysharp.Core.Windows
 		/// allows freeing up memory, might turn this into a Dispose method?
 		/// </summary>
 		[Obsolete("Call with pointer instead")]
-		internal void Clear()
-		{
-			PropVariantNative.PropVariantClear(ref this);
-		}
+		internal void Clear() => PropVariantNative.PropVariantClear(ref this);
 
 		/// <summary>
 		/// Clears with a known pointer
 		/// </summary>
-		internal static void Clear(IntPtr ptr)
-		{
-			PropVariantNative.PropVariantClear(ptr);
-		}
+		internal static void Clear(IntPtr ptr) => PropVariantNative.PropVariantClear(ptr);
 	}
 
 	/// <summary>

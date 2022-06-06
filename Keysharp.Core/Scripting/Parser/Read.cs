@@ -11,11 +11,166 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
+		public static readonly string newlineToUse = "\n";
 		private readonly List<string> includes = new List<string>();
+		private readonly string multiLineComments = new string(new[] { MultiComB, MultiComA });
 		private string includePath = "./";
 		private char[] libBrackets = new char[] { '<', '>' };
-		private readonly string multiLineComments = new string( new[] { MultiComB, MultiComA });
-		public readonly static string newlineToUse = "\n";// Environment.NewLine;
+		// Environment.NewLine;
+
+		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
+		{
+			var escape = false;
+
+			for (var i = 0; i < code.Length; i++)
+			{
+				var ch = code[i];
+
+				if (IsSpace(ch))
+					continue;
+
+				if (ch == '\'')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || code[i - 1] != '`')
+							inquote = verbatim = true;
+					}
+					else if (verbatim)
+					{
+						if (i == 0 || code[i - 1] != '`')
+							inquote = verbatim = false;
+					}
+
+					//continue;
+				}
+				else if (ch == '\"' && !verbatim)
+				{
+					if (!inquote)
+					{
+						if (i == 0 || code[i - 1] != '`')
+							inquote = true;
+					}
+					else
+					{
+						if (i == 0 || code[i - 1] != '`' || !escape)//Checking escape accounts for ``.
+							inquote = false;
+					}
+
+					//continue;
+				}
+
+				if (ch == Escape)
+					escape = !escape;
+				else
+					escape = false;
+
+				if (!inquote)
+				{
+					switch (ch)
+					{
+						case ParenOpen:
+							parenlevels++;
+							break;
+
+						case ParenClose:
+							parenlevels--;
+							break;
+
+						case BlockOpen:
+							bracelevels++;
+							break;
+
+						case BlockClose:
+							bracelevels--;
+							break;
+
+						case ArrayOpen:
+							bracketlevels++;
+							break;
+
+						case ArrayClose:
+							bracketlevels--;
+							break;
+					}
+				}
+			}
+
+			return parenlevels != 0 || bracelevels != 0 || bracketlevels != 0;
+		}
+
+		private string ParseContinuations(TextReader source, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
+		{
+			string code;
+			var sb = new StringBuilder(256);
+
+			while ((code = source.ReadLine()) != null)
+			{
+				code = StripComment(code).Trim(Spaces);
+
+				if (code.Length > 0)
+				{
+					if (code[0] == ParenOpen)//There can be multiline strings within continuation sections.
+					{
+						_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+						var buf = new StringBuilder(256);
+						_ = buf.Append(code);
+						_ = buf.Append(newlineToUse);
+						var wasinquote = false;
+
+						while ((code = source.ReadLine()) != null)
+						{
+							var codeTrim = code.TrimStart(Spaces);
+
+							if (codeTrim.Length > 0 && codeTrim[0] == ParenClose)
+							{
+								wasinquote = inquote;
+								code = string.Concat(codeTrim.SkipWhile(x => x == ParenClose));
+								_ = buf.Append(ParenClose);
+								_ = LineLevels(codeTrim, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+								break;
+							}
+							else
+							{
+								_ = buf.Append(code);
+								_ = buf.Append(newlineToUse);
+								_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+							}
+						}
+
+						var str = buf.ToString();
+						var result = (inquote || wasinquote) ? MultilineString(str) : str;
+						_ = sb.Append(result);
+
+						if (code != null)//Nested continuation statements can sometimes return null.
+							_ = sb.Append(code);
+						else
+							break;
+					}
+					else
+						_ = sb.Append(code);
+
+					var cont = IsContinuationLine(code, true);
+
+					if (cont)//Without inserting a space, the parser will get confused if operators are attached to other symbols.
+						_ = sb.Append(' ');
+
+					if (!LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels) && !cont)
+						break;
+				}
+			}
+
+			if (parenlevels != 0)
+				throw new ParseException(ExUnbalancedParens);
+
+			if (bracelevels != 0)
+				throw new ParseException(ExUnbalancedBraces);
+
+			if (bracketlevels != 0)
+				throw new ParseException(ExUnbalancedBrackets);
+
+			return sb.ToString();
+		}
 
 		private List<CodeLine> Read(TextReader source, string name)
 		{
@@ -38,8 +193,8 @@ namespace Keysharp.Scripting
 				{ "%A_ProgramFiles%", Accessors.A_ProgramFiles },
 				{ "%A_Programs%", Accessors.A_Programs },
 				{ "%A_ProgramsCommon%", Accessors.A_ProgramsCommon },
-				{ "%A_ScriptDir%", Path.GetDirectoryName(Name) },//Note that Name, with a capital N, is the initial script file, not any of the included files.
-				{ "%A_ScriptFullPath%", Name },
+				{ "%A_ScriptDir%", Path.GetDirectoryName(this.name) },//Note that Name, with a capital N, is the initial script file, not any of the included files.
+				{ "%A_ScriptFullPath%", this.name },
 				{ "%A_ScriptName%", Accessors.A_ScriptName },
 				{ "%A_Space%", Accessors.A_Space },
 				{ "%A_StartMenu%", Accessors.A_StartMenu },
@@ -165,7 +320,7 @@ namespace Keysharp.Scripting
 							{
 								var dirs = new string[]
 								{
-									$"{Path.GetDirectoryName(Name)}\\Lib\\{p1}",//Local library
+									$"{Path.GetDirectoryName(this.name)}\\Lib\\{p1}",//Local library
 									$"{Accessors.A_MyDocuments}\\AutoHotkey\\Lib\\{p1}",//User library
 									$"{Path.GetDirectoryName(Accessors.A_KeysharpPath)}\\Lib\\{p1}"//Standard library
 								};
@@ -468,160 +623,6 @@ namespace Keysharp.Scripting
 			}
 
 			return list;
-		}
-
-		private string ParseContinuations(TextReader source, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
-		{
-			string code;
-			var sb = new StringBuilder(256);
-
-			while ((code = source.ReadLine()) != null)
-			{
-				code = StripComment(code).Trim(Spaces);
-
-				if (code.Length > 0)
-				{
-					if (code[0] == ParenOpen)//There can be multiline strings within continuation sections.
-					{
-						_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-						var buf = new StringBuilder(256);
-						_ = buf.Append(code);
-						_ = buf.Append(newlineToUse);
-						var wasinquote = false;
-
-						while ((code = source.ReadLine()) != null)
-						{
-							var codeTrim = code.TrimStart(Spaces);
-
-							if (codeTrim.Length > 0 && codeTrim[0] == ParenClose)
-							{
-								wasinquote = inquote;
-								code = string.Concat(codeTrim.SkipWhile(x => x == ParenClose));
-								_ = buf.Append(ParenClose);
-								_ = LineLevels(codeTrim, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-								break;
-							}
-							else
-							{
-								_ = buf.Append(code);
-								_ = buf.Append(newlineToUse);
-								_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-							}
-						}
-
-						var str = buf.ToString();
-						var result = (inquote || wasinquote) ? MultilineString(str) : str;
-						_ = sb.Append(result);
-
-						if (code != null)//Nested continuation statements can sometimes return null.
-							_ = sb.Append(code);
-						else
-							break;
-					}
-					else
-						_ = sb.Append(code);
-
-					var cont = IsContinuationLine(code, true);
-
-					if (cont)//Without inserting a space, the parser will get confused if operators are attached to other symbols.
-						_ = sb.Append(' ');
-
-					if (!LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels) && !cont)
-						break;
-				}
-			}
-
-			if (parenlevels != 0)
-				throw new ParseException(ExUnbalancedParens);
-
-			if (bracelevels != 0)
-				throw new ParseException(ExUnbalancedBraces);
-
-			if (bracketlevels != 0)
-				throw new ParseException(ExUnbalancedBrackets);
-
-			return sb.ToString();
-		}
-
-		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
-		{
-			var escape = false;
-
-			for (var i = 0; i < code.Length; i++)
-			{
-				var ch = code[i];
-
-				if (IsSpace(ch))
-					continue;
-
-				if (ch == '\'')
-				{
-					if (!inquote)
-					{
-						if (i == 0 || code[i - 1] != '`')
-							inquote = verbatim = true;
-					}
-					else if (verbatim)
-					{
-						if (i == 0 || code[i - 1] != '`')
-							inquote = verbatim = false;
-					}
-
-					//continue;
-				}
-				else if (ch == '\"' && !verbatim)
-				{
-					if (!inquote)
-					{
-						if (i == 0 || code[i - 1] != '`')
-							inquote = true;
-					}
-					else
-					{
-						if (i == 0 || code[i - 1] != '`' || !escape)//Checking escape accounts for ``.
-							inquote = false;
-					}
-
-					//continue;
-				}
-
-				if (ch == Escape)
-					escape = !escape;
-				else
-					escape = false;
-
-				if (!inquote)
-				{
-					switch (ch)
-					{
-						case ParenOpen:
-							parenlevels++;
-							break;
-
-						case ParenClose:
-							parenlevels--;
-							break;
-
-						case BlockOpen:
-							bracelevels++;
-							break;
-
-						case BlockClose:
-							bracelevels--;
-							break;
-
-						case ArrayOpen:
-							bracketlevels++;
-							break;
-
-						case ArrayClose:
-							bracketlevels--;
-							break;
-					}
-				}
-			}
-
-			return parenlevels != 0 || bracelevels != 0 || bracketlevels != 0;
 		}
 	}
 }

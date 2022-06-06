@@ -64,7 +64,7 @@ namespace Keysharp.Core
 			return str + key.ToString();
 		}
 
-		public void SetText(string text)
+		internal void SetText(string text)
 		{
 			Keys keys = Keys.None, mods = Keys.None;
 

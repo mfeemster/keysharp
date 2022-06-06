@@ -32,14 +32,13 @@ namespace Keysharp.Core
 			{
 				alg.Key = k;
 			}
-			catch (CryptographicException)
+			catch (Exception ex)
 			{
-				Accessors.A_ErrorLevel = 2;
-				return new byte[] { };
+				throw new ValueError(ex.Message);
 			}
 
 			var iv = new byte[alg.IV.Length];
-			var hash = new SHA1Managed().ComputeHash(keyBytes, 0, iv.Length);
+			var hash = System.Security.Cryptography.SHA1.Create().ComputeHash(keyBytes, 0, iv.Length);
 
 			for (var i = 0; i < Math.Min(iv.Length, hash.Length); i++)
 				iv[i] = hash[i];

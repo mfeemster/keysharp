@@ -108,7 +108,7 @@ namespace Keysharp.Scripting
 					{
 						var blockOpen = parts.Length > 1 && parts[1].Trim().EndsWith(BlockOpen);
 						parent.RemoveAt(parent.Count - 1);
-						var ifelse = new CodeConditionStatement { Condition = new CodeSnippetExpression("Pop().index == -1L") };
+						var ifelse = new CodeConditionStatement { Condition = new CodeSnippetExpression("Pop().index == 0L") };
 						var block = new CodeBlock(line, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
 						block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 						_ = CloseTopSingleBlock();
@@ -405,9 +405,9 @@ namespace Keysharp.Scripting
 						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
 						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = {coldeclid} is IEnumerator<({enums})> {testid} ? {testid} : ((IEnumerable<({enums})>){coldeclid}).GetEnumerator()"));
-						parent.Add(new CodeSnippetExpression("{"));
-						parent.Add(coldecl);
-						parent.Add(iterdecl);
+						_ = parent.Add(new CodeSnippetExpression("{"));
+						_ = parent.Add(coldecl);
+						_ = parent.Add(iterdecl);
 						var condition = new CodeMethodInvokeExpression();
 						condition.Method.TargetObject = new CodeVariableReferenceExpression(id);
 						condition.Method.MethodName = "MoveNext";
@@ -541,7 +541,7 @@ namespace Keysharp.Scripting
 									parencount--;
 
 								if (parencount == 0 && (ti == 0 || (temptoks[ti - 1] as string)[0] == ','))
-									lflist.Add(Scope + ScopeVar + tok);//Must add as scoped for it to work.
+									lflist.Add(tok);
 							}
 						}
 
@@ -576,13 +576,13 @@ namespace Keysharp.Scripting
 									{
 										if (cboe.Left is CodeVariableReferenceExpression cvre)
 										{
-											cvre.VariableName = cvre.VariableName.Trim('%').Substring(Scope.Length + 1).ToLower();//ParseMultiExpression() knows we are in a function, so it will attach the scope. But this is a global variable reference, so remove it plus the _.
+											cvre.VariableName = cvre.VariableName.Trim('%').ToLower();//ParseMultiExpression() knows we are in a function, so it will attach the scope. But this is a global variable reference, so remove it plus the _.
 											gflist.Add(cvre.VariableName);
 											funcglobalvarinitstatements.Add(new CodeExpressionStatement(cboe));
 										}
 									}
 									else if (ces.Expression is CodeVariableReferenceExpression cvre)
-										gflist.Add(cvre.VariableName.Trim('%').Substring(Scope.Length + 1).ToLower());
+										gflist.Add(cvre.VariableName.Trim('%').ToLower());
 								}
 							}
 
@@ -685,8 +685,6 @@ namespace Keysharp.Scripting
 					{
 						var excname = "";
 						var exctypename = "Keysharp.Core.Error";
-						var scope = Scope;
-						var tempscope = scope?.Length == 0 ? "" : scope + ScopeVar;
 
 						if (parts.Length > 1)
 						{
@@ -696,7 +694,7 @@ namespace Keysharp.Scripting
 								exctypename = "Keysharp.Core." + rest[0];
 
 							if (rest.Length >= 2 && rest[rest.Length - 2] == "as")
-								excname = tempscope + rest[rest.Length - 1];
+								excname = rest[rest.Length - 1];
 						}
 
 						CodeCatchClause ctch;
@@ -708,19 +706,19 @@ namespace Keysharp.Scripting
 							ctch = tcf.CatchClauses[0];
 
 							if (excname?.Length == 0)
-								excname = tempscope + ctch.LocalName;
+								excname = ctch.LocalName;
 						}
 						else//User defined explicit catch.
 						{
 							if (excname?.Length == 0)
-								excname = tempscope + $"ex{excount++}";
+								excname = $"ex{excount++}";
 
 							ctch = new CodeCatchClause(excname, new CodeTypeReference(exctypename));
 							tcf.CatchClauses.Insert(0, ctch);
 						}
 
 						var catchVars = new HashSet<string>();
-						catchVars.Add(excname);
+						_ = catchVars.Add(excname);
 						excCatchVars.Push(catchVars);
 						var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 						var block = new CodeBlock(line, Scope, ctch.Statements, CodeBlock.BlockKind.Catch, blocks.PeekOrNull()) { Type = type };

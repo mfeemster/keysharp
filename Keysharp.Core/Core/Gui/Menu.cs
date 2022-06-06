@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
@@ -13,7 +12,7 @@ namespace Keysharp.Core
 	{
 		internal ToolStripItem defaultItem;
 		private static int menuCount = 0;
-		private Dictionary<ToolStripItem, List<GenericFunction>> clickHandlers = new Dictionary<ToolStripItem, List<GenericFunction>>();
+		private Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
 
 		public long ClickCount { get; set; } = 2;
 
@@ -42,7 +41,7 @@ namespace Keysharp.Core
 		public long MenuItemCount => GetMenu().Items.Count;
 		internal ContextMenuStrip MenuItem { get; set; } = new ContextMenuStrip();
 
-		public Menu(params object[] obj)
+		public Menu()
 		{
 			GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
 			var newCount = Interlocked.Increment(ref menuCount);
@@ -51,19 +50,18 @@ namespace Keysharp.Core
 
 		public static Menu New() => new Menu();
 
-		public ToolStripMenuItem Add(params object[] obj)
+		public ToolStripMenuItem Add(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			if (obj.Length == 0)
+			if (obj0 == null && obj1 == null && obj2 == null)
 			{
 				_ = GetMenu().Items.Add(new ToolStripSeparator());
 				return null;
 			}
 
-			var (name, funcorsub, options) = obj.L().Sos();
-			return AddOrInsert("", name, funcorsub, options);
+			return AddOrInsert("", obj0.As(), obj1, obj2.As());
 		}
 
-		public void AddStandard(params object[] obj)
+		public void AddStandard()//Need to make this actually od something//TODO
 		{
 			ToolStripMenuItem item;
 
@@ -86,11 +84,11 @@ namespace Keysharp.Core
 			item = Add("E&xit");
 		}
 
-		public void Check(params object[] obj) => Check(obj.L().S1(), eCheckToggle.Check);
+		public void Check(object obj) => Check(obj.As(), eCheckToggle.Check);
 
-		public void Delete(params object[] obj)
+		public void Delete(object obj)
 		{
-			var s = obj.L().S1();
+			var s = obj.As();
 
 			if (s?.Length == 0)
 			{
@@ -114,27 +112,20 @@ namespace Keysharp.Core
 			}
 		}
 
-		public void Disable(params object[] obj) => Enable(obj.L().S1(), eCheckToggle.Uncheck);
+		public void Disable(object obj) => Enable(obj.As(), eCheckToggle.Uncheck);
 
-		public void Enable(params object[] obj) => Enable(obj.L().S1(), eCheckToggle.Check);
+		public void Enable(object obj) => Enable(obj.As(), eCheckToggle.Check);
 
-		public void HideItem(params object[] obj) => MakeVisible(obj.L().S1(), eCheckToggle.Uncheck);
+		public void HideItem(object obj) => MakeVisible(obj.As(), eCheckToggle.Uncheck);
 
-		public ToolStripMenuItem Insert(params object[] obj)
+		public ToolStripMenuItem Insert(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null) => AddOrInsert(obj0.As(), obj1.As(), obj2, obj3.As());
+
+		public string MenuItemId(object obj) => GetMenuItem(obj.As()) is ToolStripMenuItem tsmi ? tsmi.Name : "";
+
+		public void Rename(object obj0, object obj1 = null)
 		{
-			var (insertbefore, name, funcorsub, options) = obj.L().S2os();
-			return AddOrInsert(insertbefore, name, funcorsub, options);
-		}
-
-		public string MenuItemId(params object[] obj)
-		{
-			var s = obj.L().S1();
-			return GetMenuItem(s) is ToolStripMenuItem tsmi ? tsmi.Name : "";
-		}
-
-		public void Rename(params object[] obj)
-		{
-			var (name, newname) = obj.L().S2("", "-");
+			var name = obj0.As();
+			var newname = obj1.As("-");
 			var item = GetMenuItem(name);
 
 			if (item is ToolStripSeparator tss)
@@ -150,21 +141,16 @@ namespace Keysharp.Core
 				tsi.Name = tsi.Text = newname;
 		}
 
-		public void SetColor(params object[] obj)
-		{
-			var (name, submenus) = obj.L().Sb("", true);
-			HandleColor(GetMenu(), name, submenus, true);
-		}
+		public void SetColor(object obj0 = null, object obj1 = null) => HandleColor(GetMenu(), obj0.As(), obj1.Ab(true), true);
 
-		public void SetForeColor(params object[] obj)
-		{
-			var (name, submenus) = obj.L().Sb("", true);
-			HandleColor(GetMenu(), name, submenus, false);
-		}
+		public void SetForeColor(object obj0 = null, object obj1 = null) => HandleColor(GetMenu(), obj0.As(), obj1.Ab(true), false);
 
-		public void SetIcon(params object[] obj)
+		public void SetIcon(object obj0, object obj1, object obj2 = null, object obj3 = null)
 		{
-			var (name, filename, iconnumber, width) = obj.L().S2i2("", "", 1, 0);
+			var name = obj0.As();
+			var filename = obj1.As();
+			var iconnumber = (int)obj2.Al(1);
+			var width = (int)obj3.Al();
 
 			if (GetMenuItem(name) is ToolStripItem tsmi)
 			{
@@ -176,9 +162,10 @@ namespace Keysharp.Core
 			}
 		}
 
-		public void Show(params object[] obj)
+		public void Show(object obj0 = null, object obj1 = null)
 		{
-			var (x, y) = obj.L().I2(Cursor.Position.X, Cursor.Position.Y);
+			var x = (int)obj0.Al(Cursor.Position.X);
+			var y = (int)obj1.Al(Cursor.Position.Y);
 			var pt = new Point(x, y);
 
 			if (Mouse.Coords.Menu == CoordModeType.Screen)
@@ -188,15 +175,15 @@ namespace Keysharp.Core
 			MenuItem.Show(pt);
 		}
 
-		public void ShowItem(params object[] obj) => MakeVisible(obj.L().S1(), eCheckToggle.Check);
+		public void ShowItem(object obj) => MakeVisible(obj.As(), eCheckToggle.Check);
 
-		public void ToggleCheck(params object[] obj) => Check(obj.L().S1(), eCheckToggle.Toggle);
+		public void ToggleCheck(object obj) => Check(obj.As(), eCheckToggle.Toggle);
 
-		public void ToggleEnable(params object[] obj) => Enable(obj.L().S1(), eCheckToggle.Toggle);
+		public void ToggleEnable(object obj) => Enable(obj.As(), eCheckToggle.Toggle);
 
-		public void ToggleItemVis(params object[] obj) => MakeVisible(obj.L().S1(), eCheckToggle.Toggle);
+		public void ToggleItemVis(object obj) => MakeVisible(obj.As(), eCheckToggle.Toggle);
 
-		public void UnCheck(params object[] obj) => Check(obj.L().S1(), eCheckToggle.Uncheck);
+		public void UnCheck(object obj) => Check(obj.As(), eCheckToggle.Uncheck);
 
 		internal void Tsmi_Click(object sender, EventArgs e)
 		{
@@ -304,15 +291,10 @@ namespace Keysharp.Core
 					while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.
 						_ = item.DropDownItems.Add(mnu.MenuItem.Items[0]);
 				}
-				else if (funcorsub is GenericFunction gf)
+				else if (funcorsub is IFuncObj fo)
 				{
 					var handler = clickHandlers.GetOrAdd(item);
-					handler.ModifyEventHandlers(gf, 1);
-				}
-				else if (GuiControl.GetDel(funcorsub, null) is GenericFunction del)//Pass null for the eventObj argument because this isn't associated with any particular form.
-				{
-					var handler = clickHandlers.GetOrAdd(item);
-					handler.ModifyEventHandlers(del, 1);
+					handler.ModifyEventHandlers(fo, 1);
 				}
 
 				foreach (var opt in Options.ParseOptions(options))
@@ -393,37 +375,34 @@ namespace Keysharp.Core
 			MenuStrip.ImageScalingSize = new System.Drawing.Size(28, 28);
 		}
 
-		public new void Add(params object[] obj)
+		public new void Add(object obj0, object obj1 = null)
 		{
-			var items = obj.L();
+			var s = obj0.As();
 
-			if (items.Count > 0 && items[0] is string s)
+			if (obj1 is Menu mnu)
 			{
-				if (items.Count > 1 && items[1] is Menu mnu)
-				{
-					var temp = GetMenuItem(s);
-					ToolStripMenuItem newItem = null;
+				var temp = GetMenuItem(s);
+				ToolStripMenuItem newItem = null;
 
-					if (temp is ToolStripMenuItem tsmi)
-					{
-						tsmi.DropDownItems.Clear();
-						newItem = tsmi;
-					}
-					else if (MenuStrip.Items.Add(s) is ToolStripMenuItem tsmi2)
-					{
-						tsmi2.Name = tsmi2.Text;
-						newItem = tsmi2;
-					}
-
-					if (newItem != null)
-						while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.
-							_ = newItem.DropDownItems.Add(mnu.MenuItem.Items[0]);
-				}
-				else
+				if (temp is ToolStripMenuItem tsmi)
 				{
-					var newItem = MenuStrip.Items.Add(s);
-					newItem.Name = newItem.Text;
+					tsmi.DropDownItems.Clear();
+					newItem = tsmi;
 				}
+				else if (MenuStrip.Items.Add(s) is ToolStripMenuItem tsmi2)
+				{
+					tsmi2.Name = tsmi2.Text;
+					newItem = tsmi2;
+				}
+
+				if (newItem != null)
+					while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.
+						_ = newItem.DropDownItems.Add(mnu.MenuItem.Items[0]);
+			}
+			else
+			{
+				var newItem = MenuStrip.Items.Add(s);
+				newItem.Name = newItem.Text;
 			}
 		}
 

@@ -235,8 +235,8 @@ namespace Keysharp.Tests
 		public void CreateHotstring()
 		{
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
-			Keysharp.Core.Keyboard.Hotstring("Reset");
-			Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", new FuncObj("label_9F201721", null), ":btw", "btw", "", false);
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			_ = Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", new FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.B);
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.T);
@@ -250,7 +250,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring")]
 		public void ResetInputBuffer()
 		{
-			Keysharp.Core.Keyboard.Hotstring("Reset");
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
 			var tester = new HotstringDefinitionTester("tester", "");
 			tester.AddChars("asdf");
 			var origVal = HotstringDefinition.CurrentInputBuffer;
@@ -278,8 +278,8 @@ namespace Keysharp.Tests
 
 	internal class HotstringDefinitionTester : HotstringDefinition
 	{
-		public HotstringDefinitionTester(string sequence, string replacement, HotFunction proc = null)
-			: base(sequence, replacement, proc)
+		public HotstringDefinitionTester(string sequence, string replacement)
+			: base(sequence, replacement)
 		{
 		}
 

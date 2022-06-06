@@ -5,7 +5,7 @@ namespace Keysharp.Core.Common.Mapper
 {
 	internal class MapperBase<T> where T : struct, IConvertible
 	{
-		static protected Dictionary<T, string> clrMappingTable = new Dictionary<T, string>();
+		protected static Dictionary<T, string> clrMappingTable = new Dictionary<T, string>();
 
 		internal MapperBase() => SetUpMappingTable();
 
@@ -25,17 +25,10 @@ namespace Keysharp.Core.Common.Mapper
 			return res;
 		}
 
-		internal virtual string LookUpKeysharpType(T clrType)
-		{
-			if (clrMappingTable.ContainsKey(clrType))
-				return clrMappingTable[clrType];
-			else
-				return "";
-		}
+		internal virtual string LookUpKeysharpType(T clrType) => clrMappingTable.TryGetValue(clrType, out var val) ? val : "";
 
 		internal virtual void SetUpMappingTable()
 		{
-			//
 		}
 	}
 }

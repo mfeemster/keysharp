@@ -7,18 +7,45 @@ using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
+	public class Error : KeysharpException
+	{
+		public Error(params object[] obj)
+			: base(obj)
+		{
+		}
+	}
+
+	public class IndexError : Error
+	{
+		public IndexError(params object[] obj)
+			: base(obj)
+		{
+		}
+	}
+
+	public class KeyError : IndexError
+	{
+		public KeyError(params object[] obj)
+			: base(obj)
+		{
+		}
+	}
+
 	public class KeysharpException : Exception
 	{
 		protected string message = "";
 
+		public string ExcType { get; set; }
 		public string Extra { get; set; }
 		public string File { get; set; }
 		public long Line { get; set; }
+
 		//public new string Message => message;
 		public override string Message => message;//Must be done this way, else the reflection dictionary sees it as a dupe from the base.
+
 		public string Stack { get; set; }
 		public string What { get; set; }
-		public string ExcType { get; set; }//Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
+		//Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
 
 		public KeysharpException(params object[] obj)
 		{
@@ -51,56 +78,13 @@ namespace Keysharp.Core
 		public override string ToString()
 		{
 			var sb = new StringBuilder(512);
-			sb.AppendLine($"Message: {Message}");
-			sb.AppendLine($"What: {What}");
-			sb.AppendLine($"Extra: {Extra}");
-			sb.AppendLine($"File: {File}");
-			sb.AppendLine($"Line: {Line}");
-			sb.AppendLine($"Stack: {Stack}");
+			_ = sb.AppendLine($"Message: {Message}");
+			_ = sb.AppendLine($"What: {What}");
+			_ = sb.AppendLine($"Extra: {Extra}");
+			_ = sb.AppendLine($"File: {File}");
+			_ = sb.AppendLine($"Line: {Line}");
+			_ = sb.AppendLine($"Stack: {Stack}");
 			return sb.ToString();
-		}
-	}
-
-	public class Error : KeysharpException
-	{
-		public Error(params object[] obj)
-			: base(obj)
-		{
-		}
-	}
-
-	public class ParseException : Error
-	{
-		public ParseException(string message)
-			: this(message, default(int)) { }
-
-		public ParseException(string message, CodeLine line)
-			: this(message, line.LineNumber, line.FileName) { }
-
-		public ParseException(string message, int line)
-			: this(message, line, "") { }
-
-		public ParseException(string message, int line, string file)
-			: base(message)
-		{
-			Line = line;
-			File = file;
-		}
-	}
-
-	public class IndexError : Error
-	{
-		public IndexError(params object[] obj)
-			: base(obj)
-		{
-		}
-	}
-
-	public class KeyError : IndexError
-	{
-		public KeyError(params object[] obj)
-			: base(obj)
-		{
 		}
 	}
 
@@ -135,12 +119,34 @@ namespace Keysharp.Core
 		public OSError(params object[] obj)
 			: base(obj)
 		{
-			Number = obj.L().I1(int.MinValue);
+			var e = obj.Length > 0 ? obj[0] as Exception : null;
+			Win32Exception w32ex = null;
 
-			if (Number == int.MinValue)
-				Number = Accessors.A_LastError;
+			if ((w32ex = e as Win32Exception) == null)
+				if (e != null)
+					w32ex = e.InnerException as Win32Exception;
 
+			Number = w32ex != null ? w32ex.ErrorCode : Accessors.A_LastError;
 			message = new Win32Exception((int)Number).Message;
+		}
+	}
+
+	public class ParseException : Error
+	{
+		public ParseException(string message)
+			: this(message, default(int)) { }
+
+		public ParseException(string message, CodeLine line)
+			: this(message, line.LineNumber, line.FileName) { }
+
+		public ParseException(string message, int line)
+			: this(message, line, "") { }
+
+		public ParseException(string message, int line, string file)
+			: base(message)
+		{
+			Line = line;
+			File = file;
 		}
 	}
 

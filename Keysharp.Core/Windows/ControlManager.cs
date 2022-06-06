@@ -61,9 +61,9 @@ namespace Keysharp.Core.Windows
 					throw new Error("Failed");
 
 				WindowItemBase.DoControlDelay();
-				return res + 1;
+				return res + 1L;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override void ControlChooseIndex(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -168,7 +168,7 @@ namespace Keysharp.Core.Windows
 				WindowItemBase.DoControlDelay();
 				return item_index.ToInt64() + 1;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override void ControlClick(object ctrlorpos, object title, string text, string whichButton, int clickCount, string options, string excludeTitle, string excludeText)
@@ -415,7 +415,7 @@ namespace Keysharp.Core.Windows
 				WindowItemBase.DoControlDelay();
 				return index.ToInt64() + 1;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override void ControlFocus(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -438,7 +438,7 @@ namespace Keysharp.Core.Windows
 				//Using SendMessage() with BM_GETCHECK does *not* work on Winforms checkboxes. So we must use this custom automation function gotten from Stack Overflow.
 				return WindowsAPI.IsChecked(item.Handle) ? 1 : 0;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override string ControlGetChoice(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -513,11 +513,11 @@ namespace Keysharp.Core.Windows
 				//Otherwise, a HWND will be returned if any window in the same thread has focus,
 				//including the target window itself (typically when it has no controls).
 				if (!WindowsAPI.IsChild(item.Handle, info.hwndFocus))
-					return 0;//As documented, if "none of the target window's controls has focus, the return value is 0".
+					return 0L;//As documented, if "none of the target window's controls has focus, the return value is 0".
 
 				return info.hwndFocus.ToInt64();
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override long ControlGetHwnd(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -545,9 +545,9 @@ namespace Keysharp.Core.Windows
 				if (WindowsAPI.SendMessageTimeout(item.Handle, msg, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var index) == 0)
 					throw new Error($"Could not get selected item index for combo box, list box or tab control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				return index.ToInt64() + 1;
+				return index.ToInt64() + 1L;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -668,8 +668,6 @@ namespace Keysharp.Core.Windows
 
 		internal override void ControlSend(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.NotRaw);
 
-		internal override void ControlSendText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.RawText);
-
 		internal void ControlSendHelper(string str, object ctrl, object title, string text, string excludeTitle, string excludeText, SendRawModes mode)
 		{
 			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem wi)
@@ -682,6 +680,8 @@ namespace Keysharp.Core.Windows
 				kbdMouseSender.SendKeys(str, mode, SendModes.Event, wi.Handle);
 			}
 		}
+
+		internal override void ControlSendText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.RawText);
 
 		internal override void ControlSetChecked(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
@@ -825,7 +825,7 @@ namespace Keysharp.Core.Windows
 			if (Window.SearchControl(Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true), ctrl) is WindowItem item)
 			{
 				_ = WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETSEL, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result);
-				var val = result.ToInt32() & 0xFFFF;
+				var val = result.ToInt64() & 0xFFFF;
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_LINEFROMCHAR, (uint)val, 0u, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000u, out var result2) == 0)
 					throw new Error($"Could not get line form character position for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
@@ -838,9 +838,9 @@ namespace Keysharp.Core.Windows
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_LINEINDEX, (uint)result2.ToInt32(), 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var line_start) == 0)
 					throw new Error($"Could not get line line index from character position for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				return val - line_start.ToInt32() + 1;
+				return val - line_start.ToInt64() + 1L;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override long EditGetCurrentLine(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -850,9 +850,9 @@ namespace Keysharp.Core.Windows
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_LINEFROMCHAR, -1, null, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 					throw new Error($"Could not get current line index for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				return result.ToInt64() + 1;
+				return result.ToInt64() + 1L;
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -886,7 +886,7 @@ namespace Keysharp.Core.Windows
 
 				return result.ToInt64();
 			}
-			return 0;
+			return 0L;
 		}
 
 		internal override string EditGetSelectedText(object ctrl, object title, string text, string excludeTitle, string excludeText)

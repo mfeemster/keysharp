@@ -5,8 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
+using static Keysharp.Core.Misc;
 
 namespace Keysharp.Scripting
 {
@@ -15,14 +15,15 @@ namespace Keysharp.Scripting
 		public static Font OurDefaultFont = new System.Drawing.Font("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool success;
-		//Unsure if this is what we want because Control already has a DefaultFont member, also will need a different one for linux.//MATT
+
+		public bool IsClosing { get; private set; }
 
 		public MainWindow()
 		{
 			InitializeComponent();
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
-			success = WindowsAPI.AddClipboardFormatListener(Handle);
+			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 			tpVars.HandleCreated += TpVars_HandleCreated;
 		}
 
@@ -53,17 +54,23 @@ namespace Keysharp.Scripting
 			if (m.Msg == WindowsAPI.WM_CLIPBOARDUPDATE)
 			{
 				if (success)
-				{
 					ClipboardUpdate?.Invoke(null);
-				}
+			}
+			else if (m.Msg == WindowsAPI.WM_ENDSESSION)
+			{
+				_ = Keysharp.Core.Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Keysharp.Core.Flow.ExitReasons.LogOff : Keysharp.Core.Flow.ExitReasons.Shutdown);
 			}
 
+			//else if (m.Msg == WindowsAPI.WM_DESTROY && m.HWnd == Handle)//AHK looked for WM_DESTROY, but we seem to get many of them, so it probably won't work here. It's ok because it's a corner case anyway.
+			//{
+			//  Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Destroy);
+			//}
 			base.WndProc(ref m);
 		}
 
 		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.Edit();
 
-		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.ExitApp();
+		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Exit);
 
 		private TabPage GetTab(MainFocusedTab tab)
 		{
@@ -109,8 +116,23 @@ namespace Keysharp.Scripting
 		{
 		}
 
+		/// <summary>
+		/// This will get called if the user manually closes the main window,
+		/// or if ExitApp() is called from somewhere within the code, which will also close the main window.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			IsClosing = true;
+
+			if (Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Close))
+			{
+				IsClosing = false;
+				e.Cancel = true;
+				return;
+			}
+
 			if (success)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 		}
@@ -257,6 +279,6 @@ namespace Keysharp.Scripting
 			Vars
 		}
 
-		public event ClipUpdateDel ClipboardUpdate;
+		public event VariadicAction ClipboardUpdate;
 	}
 }

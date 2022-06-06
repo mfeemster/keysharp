@@ -109,9 +109,6 @@ namespace Keysharp.Core.Linux.X11
 		[FieldOffset(0)]
 		internal XEventPad Pad;
 
-		public override string ToString()
-		{
-			return type.ToString();
-		}
+		public override string ToString() => type.ToString();
 	}
 }

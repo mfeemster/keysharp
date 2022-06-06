@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Mail;
@@ -10,6 +9,35 @@ namespace Keysharp.Core
 {
 	public static class Network
 	{
+		/// <summary>
+		/// Downloads a resource from the internet.
+		/// AHK difference: does not allow specifying flags other than 0.
+		/// </summary>
+		/// <param name="address">The URI (or URL) of the resource.</param>
+		/// <param name="filename">The file path to receive the downloaded data. An existing file will be overwritten.
+		/// Leave blank to return the data as a string.
+		/// </param>
+		/// <returns>The downloaded data if <paramref name="filename"/> is blank, otherwise an empty string.</returns>
+		public static string Download(object obj0, object obj1)
+		{
+			var address = obj0.As();
+			var filename = obj1.As();
+			var flags = Options.ParseFlags(ref address);
+
+			using (var http = new WebClient())//Obsolete, unsure if Mono supports the new HttpClient though.
+			{
+				if (flags.Contains("0"))
+					http.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
+
+				if (string.IsNullOrEmpty(filename))
+					return http.DownloadString(address);
+
+				http.DownloadFile(address, filename);
+			}
+
+			return string.Empty;
+		}
+
 		/// <summary>
 		/// Resolves a host name or IP address.
 		/// </summary>
@@ -51,10 +79,8 @@ namespace Keysharp.Core
 		/// <item><term>(Header)</term>: <description>any additional header and corresponding value.</description></item>
 		/// </list>
 		/// </param>
-		/// <remarks><see cref="Accessors.A_ErrorLevel"/> is set to <c>1</c> if there was a problem, <c>0</c> otherwise.</remarks>
 		public static void Mail(object recipients, string subject, string message, Map options = null)
 		{
-			Accessors.A_ErrorLevel = 1;
 			var msg = new MailMessage { Subject = subject, Body = message };
 			msg.From = new MailAddress(string.Concat(Environment.UserName, "@", Environment.UserDomainName));
 
@@ -155,46 +181,13 @@ namespace Keysharp.Core
 			try
 			{
 				client.Send(msg);
-				Accessors.A_ErrorLevel = 0;
 			}
-			catch (SmtpException)
+			catch (Exception ex)
 			{
-				if (Core.Debug)
-					throw;
+				throw new Error(ex.Message);
 			}
 		}
 
-		/// <summary>
-		/// Downloads a resource from the internet.
-		/// AHK difference: does not allow specifying flags other than 0.
-		/// </summary>
-		/// <param name="address">The URI (or URL) of the resource.</param>
-		/// <param name="filename">The file path to receive the downloaded data. An existing file will be overwritten.
-		/// Leave blank to return the data as a string.
-		/// </param>
-		/// <returns>The downloaded data if <paramref name="filename"/> is blank, otherwise an empty string.</returns>
-		public static string Download(params object[] obj)
-		{
-			var (address, filename) = obj.L().S2();
-			var flags = Options.ParseFlags(ref address);
-
-			using (var http = new WebClient())
-			{
-				if (flags.Contains("0"))
-					http.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
-
-				if (string.IsNullOrEmpty(filename))
-					return http.DownloadString(address);
-
-				http.DownloadFile(address, filename);
-			}
-
-			return string.Empty;
-		}
-
-		public static Array SysGetIPAddresses(params object[] obj)
-		{
-			return Accessors.A_IPAddress;
-		}
+		public static Array SysGetIPAddresses() => Accessors.A_IPAddress;
 	}
 }

@@ -2,7 +2,6 @@
 using System.Collections.Specialized;
 using System.Linq;
 using Keysharp.Core;
-using Keysharp.Core.Common.Threading;
 
 namespace System.Collections
 {
@@ -39,6 +38,38 @@ namespace System.Collections
 				}
 			}
 		}
+
+		//public static IEnumerable<object> Flatten(this Memory<object> enumerable)
+		//{
+		//  if (enumerable is IEnumerable<(object, object)> io)//Iterators for array and map will be this.
+		//  {
+		//      foreach (var el in io)
+		//      {
+		//          var element = el.Item2;
+
+		//          if (element is IEnumerable candidate && !(element is string))
+		//          {
+		//              foreach (var nested in Flatten(candidate))
+		//                  yield return nested;
+		//          }
+		//          else
+		//              yield return element;
+		//      }
+		//  }
+		//  else
+		//  {
+		//      foreach (var element in enumerable)
+		//      {
+		//          if (element is IEnumerable candidate && !(element is string))
+		//          {
+		//              foreach (var nested in Flatten(candidate))
+		//                  yield return nested;
+		//          }
+		//          else
+		//              yield return element;
+		//      }
+		//  }
+		//}
 	}
 }
 
@@ -62,7 +93,11 @@ namespace System.Collections.Generic
 
 		public static bool Ab(this IList obj, int index, bool def = default) => obj.Count > index && obj[index] != null ? Options.OnOff(obj[index]) ?? def : def;
 
+		public static bool Ab(this object obj, bool def = default) => obj != null ? obj.ParseBool() ?? def : def;
+
 		public static double Ad(this IList obj, int index, double def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseDouble().Value : def;
+
+		public static double Ad(this object obj, double def = default) => obj != null ? obj.ParseDouble().Value : def;
 
 		public static void AddRange<T>(this HashSet<T> hash, HashSet<T> add) where T : class, new ()
 		{
@@ -81,11 +116,17 @@ namespace System.Collections.Generic
 			return false;
 		}
 
+		public static int Ai(this object obj, int def = default) => obj != null ? obj.ParseInt().Value : def;
+
 		public static int Ai(this IList obj, int index, int def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseInt().Value : def;
+
+		public static long Al(this object obj, long def = default) => obj != null ? obj.ParseLong().Value : def;
 
 		public static long Al(this IList obj, int index, long def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseLong().Value : def;
 
 		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index] : def;
+
+		public static string As(this object obj, string def = "") => obj != null ? obj.ToString() : def;
 
 		public static string As(this IList obj, int index, string def = "") => obj.Count > index && obj[index] != null ? obj[index].ToString() : def;
 
@@ -371,13 +412,13 @@ namespace System.Collections.Generic
 			return (r1, r2);
 		}
 
-		public static object InvokeEventHandlers(this IEnumerable<GenericFunction> handlers, params object[] obj)
+		public static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
 			object result = null;
 
 			foreach (var handler in handlers)
 			{
-				result = handler.Invoke(obj);
+				result = handler.Call(obj);
 
 				if (result == null)
 					continue;
@@ -456,14 +497,14 @@ namespace System.Collections.Generic
 			return (r1, r2, r3);
 		}
 
-		public static void ModifyEventHandlers(this List<GenericFunction> handlers, GenericFunction del, int i)
+		public static void ModifyEventHandlers(this List<IFuncObj> handlers, IFuncObj fo, long i)
 		{
 			if (i > 0)
-				handlers.Add(del);
+				handlers.Add(fo);
 			else if (i < 0)
-				handlers.Insert(0, del);
+				handlers.Insert(0, fo);
 			else
-				_ = handlers.Remove(del);
+				_ = handlers.RemoveAll(d => d.Name == fo.Name);
 		}
 
 		public static object O1(this IList obj, object def1 = null)
@@ -901,20 +942,6 @@ namespace System.Collections.Generic
 
 			return arr;
 		}
-
-		//public static void Clear(this IDictionary obj, params object[] values) => obj.Clear();
-		//
-		//public static bool Has(this IDictionary dictionary, params object[] values) => dictionary.Contains(values[0]);
-		//
-		//public static long Count(this IDictionary dictionary, params object[] values) => dictionary.Count;
-		//
-		//public static object Delete(this IDictionary dictionary, params object[] values)
-
-		/// <summary>
-		/// V2 version name of Enum().
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
 	}
 
 	/*

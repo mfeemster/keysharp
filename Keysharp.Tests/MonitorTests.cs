@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Keysharp.Scripting;
 using NUnit.Framework;
 
@@ -10,11 +11,11 @@ namespace Keysharp.Tests
 		public void MonitorGet()
 		{
 			var monget = Keysharp.Core.Monitor.MonitorGet();
-			Assert.IsTrue(monget.Left >= 0);
-			Assert.IsTrue(monget.Right >= 0);
-			Assert.IsTrue(monget.Top >= 0);
-			Assert.IsTrue(monget.Bottom >= 0);
-			Assert.IsTrue(monget.N > 0);
+			Assert.IsTrue(monget["Left"].Ai() >= 0);
+			Assert.IsTrue(monget["Right"].Ai() >= 0);
+			Assert.IsTrue(monget["Top"].Ai() >= 0);
+			Assert.IsTrue(monget["Bottom"].Ai() >= 0);
+			Assert.IsTrue(monget["N"].Ai() > 0);
 			Assert.IsTrue(TestScript("monitor-monitorget", true));
 		}
 
@@ -51,11 +52,11 @@ namespace Keysharp.Tests
 		public void MonitorGetWorkArea()
 		{
 			var monget = Keysharp.Core.Monitor.MonitorGetWorkArea();
-			Assert.IsTrue(monget.Left >= 0);
-			Assert.IsTrue(monget.Right >= 0);
-			Assert.IsTrue(monget.Top >= 0);
-			Assert.IsTrue(monget.Bottom >= 0);
-			Assert.IsTrue(monget.N > 0);
+			Assert.IsTrue(monget["Left"].Ai() >= 0);
+			Assert.IsTrue(monget["Right"].Ai() >= 0);
+			Assert.IsTrue(monget["Top"].Ai() >= 0);
+			Assert.IsTrue(monget["Bottom"].Ai() >= 0);
+			Assert.IsTrue(monget["N"].Ai() > 0);
 			Assert.IsTrue(TestScript("monitor-monitorgetworkarea", true));
 		}
 	}

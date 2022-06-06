@@ -108,10 +108,7 @@ namespace Keysharp.Core.Linux
 		internal override void DoMouseDelay()
 		{ }
 
-		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
-		{
-			return IntPtr.Zero;
-		}
+		internal override IntPtr GetFocusedKeybdLayout(IntPtr window) => IntPtr.Zero;
 
 		internal override int GetModifierLRState(bool explicitlyGet = false) => 0;
 
@@ -119,6 +116,9 @@ namespace Keysharp.Core.Linux
 		{ }
 
 		internal override void MouseClick(int vk, int x, int y, int repeatCount, int speed, KeyEventTypes eventType, bool moveOffset)
+		{ }
+
+		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, int speed, bool relative)
 		{ }
 
 		internal override void MouseEvent(uint eventFlags, uint data, int x = CoordUnspecified, int y = CoordUnspecified)
@@ -143,6 +143,8 @@ namespace Keysharp.Core.Linux
 		internal override void SendKeys(string keys, SendRawModes sendRaw, SendModes sendModeOrig, IntPtr targetWindow)
 		{
 		}
+
+		internal override ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue) => ToggleValueType.Invalid;
 
 		protected internal override void LongOperationUpdate()
 		{ }
@@ -258,10 +260,7 @@ namespace Keysharp.Core.Linux
 			else return Keys.None;
 		}
 
-		private Keys TranslateKey(XEvent Event)
-		{
-			return Mapping.TryGetValue(Event.KeyEvent.keycode, out var key) ? key : StringToWFKey(Event);
-		}
+		private Keys TranslateKey(XEvent Event) => Mapping.TryGetValue(Event.KeyEvent.keycode, out var key) ? key : StringToWFKey(Event);
 
 		private struct CachedKey
 		{

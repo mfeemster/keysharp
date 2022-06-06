@@ -2,11 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 
 namespace Keysharp.Core
@@ -31,19 +28,19 @@ namespace Keysharp.Core
 		/// <item>Off: input is re-enabled.</item>
 		/// </list>
 		/// </param>
-		public static void BlockInput(params object[] obj)//This is completely wrong, need to make compat with V2//TODO
+		public static void BlockInput(object obj)
 		{
-			var mode = obj.L().S1();
+			var mode = obj.As();
 			var toggle = ConvertBlockInput(mode);
 
 			switch (toggle)
 			{
 				case ToggleValueType.On:
-					ScriptBlockInput(true);
+					_ = ScriptBlockInput(true);
 					break;
 
 				case ToggleValueType.Off:
-					ScriptBlockInput(false);
+					_ = ScriptBlockInput(false);
 					break;
 
 				case ToggleValueType.Send:
@@ -65,20 +62,32 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static object CaretGetPos(params object[] obj)//Need to eventually figure out ref vars and making this cross platforom.//TODO
+		public static Keysharp.Core.Map CaretGetPos()
 		{
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
 			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 
 			if (targetWindow == IntPtr.Zero) // No window is in the foreground, report blank coordinate.
-				return "";
+			{
+				return new Keysharp.Core.Map(new Dictionary<object, object>()
+				{
+					{ "X", "" },
+					{ "Y", "" }
+				});
+			}
 
 			var h = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var _);
 			var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
 			var result = WindowsAPI.GetGUIThreadInfo(h, out info) && info.hwndCaret != IntPtr.Zero;
 
 			if (!result)
-				return "";
+			{
+				return new Keysharp.Core.Map(new Dictionary<object, object>()
+				{
+					{ "X", "" },
+					{ "Y", "" }
+				});
+			}
 
 			var pt = new Point
 			{
@@ -90,12 +99,16 @@ namespace Keysharp.Core
 			WindowsAPI.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
-			return new Rectangle(pt.X, pt.Y, 0, 0);
+			return new Keysharp.Core.Map(new Dictionary<object, object>()
+			{
+				{ "X",  pt.X },
+				{ "Y", pt.Y }
+			});
 		}
 
-		public static string GetKeyName(params object[] obj) => GetKeyNamePrivate(obj.L().S1(), 0) as string;
+		public static string GetKeyName(object obj) => GetKeyNamePrivate(obj.As(), 0) as string;
 
-		public static long GetKeySC(params object[] obj) => (long)GetKeyNamePrivate(obj.L().S1(), 1);
+		public static long GetKeySC(object obj) => (long)GetKeyNamePrivate(obj.As(), 1);
 
 		/// <summary>
 		/// Unlike the GetKeyState command -- which returns D for down and U for up -- this function returns (1) if the key is down and (0) if it is up.
@@ -103,9 +116,10 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="KeyName">Use autohotkey definition or virtual key starting from "VK"</param>
 		/// <param name="Mode"></param>
-		public static object GetKeyState(params object[] obj)
+		public static object GetKeyState(object obj0, object obj1)
 		{
-			var (keyname, mode) = obj.L().S2();
+			var keyname = obj0.As();
+			var mode = obj1.As();
 			var ht = Keysharp.Scripting.Script.HookThread;
 			Keysharp.Core.Common.Joystick.JoyControls joy;
 			int? joystickid = 0;
@@ -135,7 +149,7 @@ namespace Keysharp.Core
 			return ScriptGetKeyState(vk, keystatetype); // 1 for down and 0 for up.
 		}
 
-		public static long GetKeyVK(params object[] obj) => (long)GetKeyNamePrivate(obj.L().S1(), 2);
+		public static long GetKeyVK(object obj) => (long)GetKeyNamePrivate(obj.As(), 2);
 
 		/// <summary>
 		/// Creates or modifies a hotkey.
@@ -147,127 +161,126 @@ namespace Keysharp.Core
 		/// </param>
 		/// <param name="options">
 		/// <list type="bullet">
-		/// <item><term>UseAccessors.A_ErrorLevel</term>: <description>skips the warning dialog and sets <see cref="Accessors.A_ErrorLevel"/> if there was a problem.</description></item>
 		/// <item><term>On</term>: <description>the hotkey becomes enabled.</description></item>
 		/// <item><term>Off</term>: <description>the hotkey becomes disabled.</description></item>
 		/// <item><term>Toggle</term>: <description>the hotkey is set to the opposite state (enabled or disabled).</description></item>
 		/// </list>
 		/// </param>
-		public static void Hotkey(params object[] obj)
+
+		/*  public static void Hotkey(params object[] obj)//Unused, will need to replace with AHK port code.//TODO
+		    {
+		    var (keyname, label, options) = obj.L().S3();
+		    var win = -1;
+		    var ht = Keysharp.Scripting.Script.HookThread;
+		    var kbdMouseSender = ht.kbdMsSender;
+
+		    switch (keyname.ToLowerInvariant())
+		    {
+		        case Core.Keyword_IfWinActive: win = 0; break;
+
+		        case Core.Keyword_IfWinExist: win = 1; break;
+
+		        case Core.Keyword_IfWinNotActive: win = 2; break;
+
+		        case Core.Keyword_IfWinNotExit: win = 3; break;
+		    }
+
+		    if (win != -1)
+		    {
+		        var cond = new string[4, 2];
+		        cond[win, 0] = label; // title
+		        cond[win, 1] = options; // text
+		        keyCondition = new FuncObj(new GenericFunction(delegate
+		        {
+		            return HotkeyPrecondition(cond);
+		        }), null);
+		        return;
+		    }
+
+		    bool? enabled = true;
+
+		    foreach (var option in Options.ParseOptions(options))
+		    {
+		        switch (option.ToLowerInvariant())
+		        {
+		            case Core.Keyword_On: enabled = true; break;
+
+		            case Core.Keyword_Off: enabled = false; break;
+
+		            case Core.Keyword_Toggle: enabled = null; break;
+
+		            case Core.Keyword_UseErrorLevel: break;
+
+		            default:
+		                switch (option[0])
+		                {
+		                    case 'B':
+		                    case 'b':
+		                    case 'P':
+		                    case 'p':
+		                    case 'T':
+		                    case 't':
+		                        break;
+
+		                    default:
+		                        break;
+		                }
+
+		                break;
+		        }
+		    }
+
+		    HotkeyDefinition key;
+
+		    try
+		    {
+		        key = HotkeyDefinition.Parse(keyname);
+		    }
+		    catch (ArgumentException)
+		    {
+		        return;
+		    }
+
+		    var id = keyname;
+		    key.Name = id;
+
+		    if (keyCondition != null)
+		        id += "_" + keyCondition.GetHashCode().ToString("X");
+
+		    if (hotkeys.TryGetValue(id, out var hk))
+		    {
+		        hk.Enabled = enabled == null ? !hk.Enabled : enabled == true;
+
+		        switch (label.ToLowerInvariant())
+		        {
+		            case Core.Keyword_On: hk.Enabled = true; break;
+
+		            case Core.Keyword_Off: hk.Enabled = true; break;
+
+		            case Core.Keyword_Toggle: hk.Enabled = !hk.Enabled; break;
+		        }
+		    }
+		    else
+		    {
+		        var method = Reflections.FindLocalMethod(label);
+
+		        if (method == null)
+		        {
+		            return;
+		        }
+
+		        key.Proc = new FuncObj((GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), method), null);
+		        key.Precondition = keyCondition;
+		        hotkeys.Add(id, key);
+		        _ = kbdMouseSender.Add(key);
+		    }
+		    }
+		*/
+
+		public static object Hotstring(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var (keyname, label, options) = obj.L().S3();
-			var win = -1;
-			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMouseSender = ht.kbdMsSender;
-
-			switch (keyname.ToLowerInvariant())
-			{
-				case Core.Keyword_IfWinActive: win = 0; break;
-
-				case Core.Keyword_IfWinExist: win = 1; break;
-
-				case Core.Keyword_IfWinNotActive: win = 2; break;
-
-				case Core.Keyword_IfWinNotExit: win = 3; break;
-			}
-
-			if (win != -1)
-			{
-				var cond = new string[4, 2];
-				cond[win, 0] = label; // title
-				cond[win, 1] = options; // text
-				keyCondition = new FuncObj(new GenericFunction(delegate
-				{
-					return HotkeyPrecondition(cond);
-				}), null);
-				return;
-			}
-
-			bool? enabled = true;
-
-			foreach (var option in Options.ParseOptions(options))
-			{
-				switch (option.ToLowerInvariant())
-				{
-					case Core.Keyword_On: enabled = true; break;
-
-					case Core.Keyword_Off: enabled = false; break;
-
-					case Core.Keyword_Toggle: enabled = null; break;
-
-					case Core.Keyword_UseErrorLevel: break;
-
-					default:
-						switch (option[0])
-						{
-							case 'B':
-							case 'b':
-							case 'P':
-							case 'p':
-							case 'T':
-							case 't':
-								break;
-
-							default:
-								Accessors.A_ErrorLevel = 10;
-								break;
-						}
-
-						break;
-				}
-			}
-
-			HotkeyDefinition key;
-
-			try
-			{
-				key = HotkeyDefinition.Parse(keyname);
-			}
-			catch (ArgumentException)
-			{
-				Accessors.A_ErrorLevel = 2;
-				return;
-			}
-
-			var id = keyname;
-			key.Name = id;
-
-			if (keyCondition != null)
-				id += "_" + keyCondition.GetHashCode().ToString("X");
-
-			if (hotkeys.TryGetValue(id, out var hk))
-			{
-				hk.Enabled = enabled == null ? !hk.Enabled : enabled == true;
-
-				switch (label.ToLowerInvariant())
-				{
-					case Core.Keyword_On: hk.Enabled = true; break;
-
-					case Core.Keyword_Off: hk.Enabled = true; break;
-
-					case Core.Keyword_Toggle: hk.Enabled = !hk.Enabled; break;
-				}
-			}
-			else
-			{
-				var method = Reflections.FindLocalMethod(label);
-
-				if (method == null)
-				{
-					Accessors.A_ErrorLevel = 1;
-					return;
-				}
-
-				key.Proc = new FuncObj((GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), method), null);
-				key.Precondition = keyCondition;
-				hotkeys.Add(id, key);
-				_ = kbdMouseSender.Add(key);
-			}
-		}
-
-		public static object Hotstring(params object[] obj)
-		{
-			var (name, replacement, onoff) = obj.L().S1O2("", null, null);
+			var name = obj0.As();
+			var replacement = obj1;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var xOption = false;
@@ -305,7 +318,7 @@ namespace Keysharp.Core
 			{
 				return HotstringDefinition.ClearBuf();
 			}
-			else if (replacement == null && onoff == null && name.Length > 0 && name[0] != ':') //Check if only one param was passed. Equivalent to #Hotstring <name>.
+			else if (replacement == null && obj2 == null && name.Length > 0 && name[0] != ':') //Check if only one param was passed. Equivalent to #Hotstring <name>.
 			{
 				HotstringDefinition.ParseOptions(name, ref HotstringDefinition.hsPriority, ref HotstringDefinition.hsKeyDelay, ref HotstringDefinition.hsSendMode, ref HotstringDefinition.hsCaseSensitive
 												 , ref HotstringDefinition.hsConformToCase, ref HotstringDefinition.hsDoBackspace, ref HotstringDefinition.hsOmitEndChar, ref HotstringDefinition.hsSendRaw, ref HotstringDefinition.hsEndCharRequired
@@ -350,12 +363,16 @@ namespace Keysharp.Core
 
 			if (xOption)
 			{
-				if (!string.IsNullOrEmpty(action))//The string could be a replacement string, a function name, a function object, or an expression to execute.
+				if (!string.IsNullOrEmpty(action))//The string could be a replacement string, a function name, a function object, or an expression to execute. These probably all don't work.//TODO
 				{
-					if (Reflections.FindMethod(action) is MethodInfo mi)
-						ifunc = new FuncObj(mi, null);
-					else
+					try
+					{
+						ifunc = new FuncObj(action);
+					}
+					catch
+					{
 						throw new ValueError($"Could not find built in or local method {action}() for hotstring.");
+					}
 
 					// Otherwise, it's always replacement text (the 'X' option is ignored at runtime).
 				}
@@ -365,8 +382,8 @@ namespace Keysharp.Core
 
 			var toggle = ToggleValueType.Neutral;
 
-			if (onoff != null && (toggle = Keysharp.Core.Options.ConvertOnOffToggle(onoff)) == ToggleValueType.Invalid)
-				throw new ValueError($"Invalid value of {onoff} for parameter 3.");
+			if (obj2 != null && (toggle = Keysharp.Core.Options.ConvertOnOffToggle(obj2)) == ToggleValueType.Invalid)
+				throw new ValueError($"Invalid value of {obj2} for parameter 3.");
 
 			bool wasAlreadyEnabled;
 			var existing = HotstringDefinition.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, Keysharp.Scripting.Script.hotCriterion);
@@ -451,6 +468,8 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		public static void KeyHistory() => throw new NotImplementedException("KeyHistory() is not implemented yet");//TODO
+
 		/*
 		    public static void HotstringFunc(params object[] obj)//Matt, probably don't need this.//TODO
 		    {
@@ -471,7 +490,6 @@ namespace Keysharp.Core
 		    catch (Exception e)
 		    {
 		        Console.WriteLine(e.Message);
-		        Accessors.A_ErrorLevel = 1;
 		        throw new ArgumentException();
 		    }
 
@@ -510,7 +528,6 @@ namespace Keysharp.Core
 		    catch (Exception e)
 		    {
 		        Console.WriteLine(e.Message);//Probably shouldn't even be a try/catch. Let the parent handle it.//TODO
-		        Accessors.A_ErrorLevel = 1;
 		        throw new ArgumentException();
 		    }
 
@@ -522,131 +539,6 @@ namespace Keysharp.Core
 		    //_ = keyboardHook.Add(key);
 		    }
 		*/
-
-		/// <summary>
-		/// Waits for the user to type a string (not supported on Windows 9x: it does nothing).
-		/// </summary>
-		/// <param name="result">
-		/// <para>The name of the variable in which to store the text entered by the user (by default, artificial input is also captured).</para>
-		/// <para>If this and the other parameters are omitted, any Input in progress in another thread is terminated and its Accessors.A_ErrorLevel is set to the word NewInput. By contrast, the Accessors.A_ErrorLevel of the current command will be set to 0 if it terminated a prior Input, or 1 if there was no prior Input to terminate.</para>
-		/// <para>OutputVar does not store keystrokes per se. Instead, it stores characters produced by keystrokes according to the active window's keyboard layout/language. Consequently, keystrokes that do not produce characters (such as PageUp and Escape) are not stored (though they can be recognized via the EndKeys parameter below).</para>
-		/// <para>Whitespace characters such as TAB (`t) are stored literally. ENTER is stored as linefeed (`n).</para>
-		/// </param>
-		/// <param name="options">
-		/// <para>A string of zero or more of the following letters (in any order, with optional spaces in between):</para>
-		/// <para>B: Backspace is ignored. Normally, pressing backspace during an Input will remove the most recently pressed character from the end of the string. Note: If the input text is visible (such as in an editor) and the arrow keys or other means are used to navigate within it, backspace will still remove the last character rather than the one behind the caret (insertion point).</para>
-		/// <para>C: Case sensitive. Normally, MatchList is not case sensitive (in versions prior to 1.0.43.03, only the letters A-Z are recognized as having varying case, not letters like ü/Ü).</para>
-		/// <para>I: Ignore input generated by any AutoHotkey script, such as the SendEvent command. However, the SendInput and SendPlay methods are always ignored, regardless of this setting.</para>
-		/// <para>L: Length limit (e.g. L5). The maximum allowed length of the input. When the text reaches this length, the Input will be terminated and Accessors.A_ErrorLevel will be set to the word Max unless the text matches one of the MatchList phrases, in which case Accessors.A_ErrorLevel is set to the word Match. If unspecified, the length limit is 16383, which is also the absolute maximum.</para>
-		/// <para>M: Modified keystrokes such as Control-A through Control-Z are recognized and transcribed if they correspond to real ASCII characters. Consider this example, which recognizes Control-C:</para>
-		/// <code>Transform, CtrlC, Chr, 3 ; Store the character for Ctrl-C in the CtrlC var.
-		/// Input, OutputVar, L1 M
-		/// if OutputVar = %CtrlC%
-		/// MsgBox, You pressed Control-C.</code>
-		/// <para>ExitAppNote: The characters Ctrl-A through Ctrl-Z correspond to Chr(1) through Chr(26). Also, the M option might cause some keyboard shortcuts such as Ctrl-LeftArrow to misbehave while an Input is in progress.</para>
-		/// <para>T: Timeout (e.g. T3). The number of seconds to wait before terminating the Input and setting Accessors.A_ErrorLevel to the word Timeout. If the Input times out, OutputVar will be set to whatever text the user had time to enter. This value can be a floating point number such as 2.5.</para>
-		/// <para>V: Visible. Normally, the user's input is blocked (hidden from the system). Use this option to have the user's keystrokes sent to the active window.</para>
-		/// <para>*: Wildcard (find anywhere). Normally, what the user types must exactly match one of the MatchList phrases for a match to occur. Use this option to find a match more often by searching the entire length of the input text.</para>
-		/// </param>
-		/// <param name="endKeys">
-		/// <para>A list of zero or more keys, any one of which terminates the Input when pressed (the EndKey itself is not written to OutputVar). When an Input is terminated this way, Accessors.A_ErrorLevel is set to the word EndKey followed by a colon and the name of the EndKey. Examples: <code>EndKey:.
-		/// EndKey:Escape</code></para>
-		/// <para>The EndKey list uses a format similar to the Send command. For example, specifying {Enter}.{Esc} would cause either ENTER, period (.), or ESCAPE to terminate the Input. To use the braces themselves as end keys, specify {{} and/or {}}.</para>
-		/// <para>To use Control, Alt, or Shift as end-keys, specify the left and/or right version of the key, not the neutral version. For example, specify {LControl}{RControl} rather than {Control}.</para>
-		/// <para>Although modified keys such as Control-C (^c) are not supported, certain keys that require the shift key to be held down -- namely punctuation marks such as ?!:@&amp;{} -- are supported in v1.0.14+.</para>
-		/// <para>An explicit virtual key code such as {vkFF} may also be specified. This is useful in the rare case where a key has no name and produces no visible character when pressed. Its virtual key code can be determined by following the steps at the bottom fo the key list page.</para>
-		/// </param>
-		/// <param name="matchList">
-		/// <para>A comma-separated list of key phrases, any of which will cause the Input to be terminated (in which case Accessors.A_ErrorLevel will be set to the word Match). The entirety of what the user types must exactly match one of the phrases for a match to occur (unless the * option is present). In addition, any spaces or tabs around the delimiting commas are significant, meaning that they are part of the match string. For example, if MatchList is "ABC , XYZ ", the user must type a space after ABC or before XYZ to cause a match.</para>
-		/// <para>Two consecutive commas results in a single literal comma. For example, the following would produce a single literal comma at the end of string: "string1,,,string2". Similarly, the following list contains only a single item with a literal comma inside it: "single,,item".</para>
-		/// <para>Because the items in MatchList are not treated as individual parameters, the list can be contained entirely within a variable. In fact, all or part of it must be contained in a variable if its length exceeds 16383 since that is the maximum length of any script line. For example, MatchList might consist of %List1%,%List2%,%List3% -- where each of the variables contains a large sub-list of match phrases.</para>
-		/// </param>
-		public static void Input(out string result, string options, string endKeys, string matchList)
-		{
-			result = null;
-			var optsItems = new Dictionary<string, Regex>();
-			var inputHandler = InputCommand.Instance;
-
-			if (inputHandler.IsBusy)  // is there another Thread using this command already?
-			{
-				inputHandler.AbortCatching(); // force to stop it
-			}
-
-			inputHandler.Reset();
-			optsItems.Add(Core.Keyword_LimitS, new Regex(Core.Keyword_LimitS + @"(\d*)"));
-			optsItems.Add(Core.Keyword_TimeOutS, new Regex(Core.Keyword_TimeOutS + @"([\d|\.]*)"));
-			optsItems.Add(Core.Keyword_BackSpaceS, new Regex("(" + Core.Keyword_BackSpaceS + ")"));
-			optsItems.Add(Core.Keyword_IgnoreS, new Regex("(" + Core.Keyword_IgnoreS + ")"));
-			optsItems.Add(Core.Keyword_ModifiedS, new Regex("(" + Core.Keyword_ModifiedS + ")"));
-			optsItems.Add(Core.Keyword_VisibleS, new Regex("(" + Core.Keyword_VisibleS + ")"));
-			optsItems.Add(Core.Keyword_FindAnyWhereS, new Regex("(\\" + Core.Keyword_FindAnyWhereS + ")"));
-			var dicOptions = Options.ParseOptionsRegex(ref options, optsItems, true);
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_LimitS]))
-			{
-				try
-				{
-					var limit = int.Parse(dicOptions[Core.Keyword_LimitS]);
-					inputHandler.KeyLimit = limit;
-				}
-				catch
-				{
-					inputHandler.KeyLimit = 0;
-				}
-			}
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_TimeOutS]))
-			{
-				try
-				{
-					var timeout = float.Parse(dicOptions[Core.Keyword_TimeOutS]);
-					inputHandler.TimeOutVal = (int)(timeout * 1000);
-				}
-				catch
-				{
-					inputHandler.TimeOutVal = null;
-				}
-			}
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_BackSpaceS]))
-			{
-				inputHandler.IgnoreBackSpace = true;
-			}
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_ModifiedS]))
-			{
-				inputHandler.RecognizeModifiedKeystrockes = true;
-			}
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_IgnoreS]))
-			{
-				inputHandler.IgnoreIAGeneratedInput = true;
-			}
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_VisibleS]))
-			{
-				inputHandler.Visible = true;
-			}
-
-			if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_FindAnyWhereS]))
-			{
-				inputHandler.FindAnyWhere = true;
-			}
-
-			// Parse EndKeys
-			var endkeys = KeyParser.ParseKeyStream(endKeys);
-
-			foreach (var key in endkeys)
-				inputHandler.Endkeys.Add(key);
-
-			// Parse MatchList
-			foreach (var matchStr in matchList.Split(','))
-				inputHandler.EndMatches.Add(matchStr);
-
-			var abortReason = inputHandler.StartCatching();
-			result = abortReason.CatchedText;
-			Accessors.A_ErrorLevel = (int)abortReason.Reason;
-		}
 
 		/// <summary>
 		/// Waits for a key or mouse/joystick button to be released or pressed down.
@@ -665,9 +557,10 @@ namespace Keysharp.Core
 		/// </list>
 		/// <para>The timeout value can be a floating point number such as 2.5, but it should not be a hexadecimal value such as 0x03.</para>
 		/// </param>
-		public static bool KeyWait(params object[] obj)
+		public static bool KeyWait(object obj0, object obj1)
 		{
-			var (keyname, options) = obj.L().S2();
+			var keyname = obj0.As();
+			var options = obj1.As();
 			bool waitIndefinitely;
 			int sleepDuration;
 			DateTime startTime;
@@ -787,40 +680,39 @@ namespace Keysharp.Core
 			    keyWaitCommand.Wait(key);*/
 		}
 
-		public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero);
+		public static void Send(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero);
 
-		public static void SendEvent(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+		public static void SendEvent(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
 
 		/// <summary>
 		/// Sends simulated keystrokes and mouse clicks to the active window.
 		/// </summary>
 		/// <param name="Keys">The sequence of keys to send.</param>
-		public static void SendInput(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+		public static void SendInput(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+
+		public static void SendLevel(object obj) => Accessors.A_SendLevel = obj;
 
 		//public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendMixed(obj.L().S1());
-		public static void SendMode(params object[] obj) => Accessors.A_SendMode = obj.L().S1();
+		public static void SendMode(object obj) => Accessors.A_SendMode = obj;
 
-		public static void SendPlay(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+		public static void SendPlay(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
 
-		public static void SendText(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.S1(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero);
+		public static void SendText(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero);
 
-		public static void SetKeyDelay(params object[] obj)
+		public static void SetCapsLockState(object obj) => SetToggleState(WindowsAPI.VK_CAPITAL, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+
+		public static void SetKeyDelay(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var o = obj.L();
-			var play = string.Empty;
-
-			if (o.Count > 2 && o[2] is string s)//Need to convert this to our usual object parsing.//MATT
-				play = s.ToLowerInvariant();
-
+			var play = obj2.As().ToLowerInvariant();
 			var isPlay = play == "play";
 			var del = isPlay ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay;
 			var dur = isPlay ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration;
 
-			if (o.Count > 0 && o[0] != null)
-				del = Convert.ToInt64(o[0]);
+			if (obj0 != null)
+				del = obj0.Al();
 
-			if (o.Count > 1 && o[1] != null)
-				dur = Convert.ToInt64(o[1]);
+			if (obj1 != null)
+				dur = obj1.Al();
 
 			if (isPlay)
 			{
@@ -834,37 +726,11 @@ namespace Keysharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Sets the state of the NumLock, ScrollLock or CapsLock keys.
-		/// </summary>
-		/// <param name="Key">
-		/// <list type="bullet">
-		/// <item>NumLock</item>
-		/// <item>ScrollLock</item>
-		/// <item>CapsLock</item>
-		/// </list>
-		/// </param>
-		/// <param name="Mode">
-		/// <list type="bullet">
-		/// <item><term>On</term></item>
-		/// <item><term>Off</term></item>
-		/// <item><term>AlwaysOn</term>: <description>forces the key to stay on permanently.</description></item>
-		/// <item><term>AlwaysOn</term>: <description>forces the key to stay off permanently.</description></item>
-		/// <item><term>(blank)</term>: turn off the <c>AlwaysOn</c> or <c>Off</c> states if present.</item>
-		/// </list>
-		/// </param>
-		public static void SetLockState(params object[] obj)
-		{
-			var (key, mode) = obj.L().S2();
-		}
+		public static void SetNumLockState(object obj) => SetToggleState(WindowsAPI.VK_NUMLOCK, ref toggleStates.forceNumLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
-		public static void SetStoreCapsLockMode(params object[] obj)
-		{
-			var s = obj.L().S1();
+		public static void SetScrollLockState(object obj) => SetToggleState(WindowsAPI.VK_SCROLL, ref toggleStates.forceScrollLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
-			if (s != "")
-				Accessors.A_StoreCapsLockMode = s;
-		}
+		public static void SetStoreCapsLockMode(object obj) => Accessors.A_StoreCapsLockMode = obj;
 
 		internal static ToggleValueType ConvertBlockInput(string buf)
 		{
@@ -925,7 +791,7 @@ namespace Keysharp.Core
 			// Always turn input ON/OFF even if g_BlockInput says its already in the right state.  This is because
 			// BlockInput can be externally and undetectably disabled, e.g. if the user presses Ctrl-Alt-Del:
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)//Need to figure out how to make this cross platform.//TODO
-				WindowsAPI.BlockInput(enable);
+				_ = WindowsAPI.BlockInput(enable);
 
 			blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
@@ -966,7 +832,7 @@ namespace Keysharp.Core
 							// But first, correct the hook modifier state if it needs it.  See comments
 							// in GetModifierLRState() for why this is needed:
 							if (ht.KeyToModifiersLR(vk, 0, ref dummy) != 0)    // It's a modifier.
-								kbdMouseSender.GetModifierLRState(true); // Correct hook's physical state if needed.
+								_ = kbdMouseSender.GetModifierLRState(true); // Correct hook's physical state if needed.
 
 							return (ht.physicalKeyState[vk] & KeyboardMouseSender.StateDown) != 0;
 						}
@@ -993,7 +859,7 @@ namespace Keysharp.Core
 			var vk = 0;
 			var sc = 0;
 			int? modLR = null;
-			ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, WindowsAPI.GetKeyboardLayout(0));//Need to make cross platform.
+			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, WindowsAPI.GetKeyboardLayout(0));//Need to make cross platform.
 
 			switch (callid)
 			{
@@ -1029,6 +895,44 @@ namespace Keysharp.Core
 					return false;
 
 			return true;
+		}
+
+		private static void SetToggleState(int vk, ref ToggleValueType forceLock, string toggleText)
+		{
+			var toggle = Keysharp.Core.Options.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);
+			var ht = Keysharp.Scripting.Script.HookThread;
+			var kbdMouseSender = ht.kbdMsSender;
+
+			switch (toggle)
+			{
+				case ToggleValueType.On:
+				case ToggleValueType.Off:
+					// Turning it on or off overrides any prior AlwaysOn or AlwaysOff setting.
+					// Probably need to change the setting BEFORE attempting to toggle the
+					// key state, otherwise the hook may prevent the state from being changed
+					// if it was set to be AlwaysOn or AlwaysOff:
+					forceLock = ToggleValueType.Neutral;
+					_ = kbdMouseSender.ToggleKeyState(vk, toggle);
+					break;
+
+				case ToggleValueType.AlwaysOn:
+				case ToggleValueType.AlwaysOff:
+					forceLock = (toggle == ToggleValueType.AlwaysOn) ? ToggleValueType.On : ToggleValueType.Off; // Must do this first.
+					_ = kbdMouseSender.ToggleKeyState(vk, forceLock);
+					// The hook is currently needed to support keeping these keys AlwaysOn or AlwaysOff, though
+					// there may be better ways to do it (such as registering them as a hotkey, but
+					// that may introduce quite a bit of complexity):
+					HotkeyDefinition.InstallKeybdHook();
+					break;
+
+				case ToggleValueType.Neutral:
+					// Note: No attempt is made to detect whether the keybd hook should be deinstalled
+					// because it's no longer needed due to this change.  That would require some
+					// careful thought about the impact on the status variables in the Hotkey class, etc.,
+					// so it can be left for a future enhancement:
+					forceLock = ToggleValueType.Neutral;
+					break;
+			}
 		}
 	}
 

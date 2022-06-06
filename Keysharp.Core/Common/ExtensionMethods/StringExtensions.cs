@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Linq;
+using System.Text;
 
 namespace System//Extension methods should be in the same namespace of the objec they extend to make their use easy.
 {
@@ -17,55 +17,30 @@ namespace System//Extension methods should be in the same namespace of the objec
 
 	public static class StringExtensions
 	{
-		public static List<string> SplitWithDelimiter(this string aMatchList, char[] delims, bool append)
+		public static int FindFirstNotOf(this string source, string chars, int offset = 0)
 		{
-			var match = new List<string>();
+			if (source.Length == 0) return -1;
 
-			if (!string.IsNullOrEmpty(aMatchList))
-			{
-				var sb = new StringBuilder(16);
+			if (chars.Length == 0) return -1;
 
-				for (var i = 0; i < aMatchList.Length; i++)
-				{
-					if (!delims.Contains(aMatchList[i])) // Not a delim, so just copy it over.
-					{
-						sb.Append(aMatchList[i]);
-						continue;
-					}
+			for (var i = offset; i < source.Length; i++)
+				if (chars.IndexOf(source[i]) == -1)
+					return i;
 
-					//Otherwise: it's a delim, which becomes the terminator of the previous key phrase unless
-					//it's a double delim, in which case it's considered to be part of the previous phrase
-					//rather than the next.
-					if (i < aMatchList.Length - 1 && aMatchList[i + 1] == aMatchList[i]) // double delim
-					{
-						if (append)
-						{
-							sb.Append(aMatchList[i]);
-						}
-						else
-						{
-							match.Add(sb.ToString());
-							match.Add(aMatchList[i].ToString());
-							sb.Clear();
-						}
+			return -1;
+		}
 
-						i++;  // Omit the second delim of the pair, i.e. each pair becomes a single literal delim.
-						continue;
-					}
+		public static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
+		{
+			if (source.Length == 0) return -1;
 
-					//Otherwise, this is a delimiting delim.
-					if (sb.Length > 0)
-					{
-						match.Add(sb.ToString());
-						sb.Clear();
-					}
-				}
+			if (chars.Length == 0) return -1;
 
-				if (sb.Length > 0)
-					match.Add(sb.ToString());
-			}
+			for (var i = offset; i < source.Length; i++)
+				if (!chars.Contains(source[i]))
+					return i;
 
-			return match;
+			return -1;
 		}
 
 		public static string OmitTrailingWhitespace(this string input, int marker)
@@ -117,6 +92,57 @@ namespace System//Extension methods should be in the same namespace of the objec
 					yield return line;
 				}
 			}
+		}
+
+		public static List<string> SplitWithDelimiter(this string aMatchList, char[] delims, bool append)
+		{
+			var match = new List<string>();
+
+			if (!string.IsNullOrEmpty(aMatchList))
+			{
+				var sb = new StringBuilder(16);
+
+				for (var i = 0; i < aMatchList.Length; i++)
+				{
+					if (!delims.Contains(aMatchList[i])) // Not a delim, so just copy it over.
+					{
+						_ = sb.Append(aMatchList[i]);
+						continue;
+					}
+
+					//Otherwise: it's a delim, which becomes the terminator of the previous key phrase unless
+					//it's a double delim, in which case it's considered to be part of the previous phrase
+					//rather than the next.
+					if (i < aMatchList.Length - 1 && aMatchList[i + 1] == aMatchList[i]) // double delim
+					{
+						if (append)
+						{
+							_ = sb.Append(aMatchList[i]);
+						}
+						else
+						{
+							match.Add(sb.ToString());
+							match.Add(aMatchList[i].ToString());
+							_ = sb.Clear();
+						}
+
+						i++;  // Omit the second delim of the pair, i.e. each pair becomes a single literal delim.
+						continue;
+					}
+
+					//Otherwise, this is a delimiting delim.
+					if (sb.Length > 0)
+					{
+						match.Add(sb.ToString());
+						_ = sb.Clear();
+					}
+				}
+
+				if (sb.Length > 0)
+					match.Add(sb.ToString());
+			}
+
+			return match;
 		}
 
 		public static ReadOnlySpan<char> TrimEndAlpha(this string s)
@@ -175,32 +201,6 @@ namespace System//Extension methods should be in the same namespace of the objec
 			} while (--n > 0 && pos != -1);
 
 			return pos;
-		}
-
-		public static int FindFirstNotOf(this string source, string chars, int offset = 0)
-		{
-			if (source.Length == 0) return -1;
-
-			if (chars.Length == 0) return -1;
-
-			for (var i = offset; i < source.Length; i++)
-				if (chars.IndexOf(source[i]) == -1)
-					return i;
-
-			return -1;
-		}
-
-		public static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
-		{
-			if (source.Length == 0) return -1;
-
-			if (chars.Length == 0) return -1;
-
-			for (var i = offset; i < source.Length; i++)
-				if (!chars.Contains(source[i]))
-					return i;
-
-			return -1;
 		}
 
 		/// <summary>

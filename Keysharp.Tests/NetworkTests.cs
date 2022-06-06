@@ -15,11 +15,11 @@ namespace Keysharp.Tests
 			var filename = @"./asciiart.txt";
 
 			if (System.IO.File.Exists(filename))
-				Disk.FileDelete(filename);
+				Keysharp.Core.File.FileDelete(filename);
 
-			Download("http://textfiles.com/art/asciiart.txt", filename);
+			_ = Download("http://textfiles.com/art/asciiart.txt", filename);
 			Assert.IsTrue(System.IO.File.Exists(filename));
-			Assert.AreEqual(16048L, Disk.FileGetSize(filename));
+			Assert.AreEqual(16048L, Keysharp.Core.File.FileGetSize(filename));
 			Assert.IsTrue(TestScript("network-download", false));
 		}
 	}

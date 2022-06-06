@@ -180,7 +180,7 @@ namespace Keysharp.Core.Common.Keyboard
 			pressed = new Dictionary<Keys, bool>();
 
 			foreach (int i in Enum.GetValues(typeof(Keys)))
-				pressed.TryAdd((Keys)i, false);
+				_ = pressed.TryAdd((Keys)i, false);
 
 			RegisterHook();
 		}
@@ -315,19 +315,15 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract void MouseClick(int aVK, int aX, int aY, int aRepeatCount, int aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
 
+		internal abstract void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, int speed, bool relative);
+
 		internal abstract void MouseEvent(uint aEventFlags, uint aData, int aX = CoordUnspecified, int aY = CoordUnspecified);
 
 		internal abstract void MouseMove(ref int aX, ref int aY, ref uint aEventFlags, int aSpeed, bool aMoveOffset);
 
-		internal void Remove(HotkeyDefinition hotkey)
-		{
-			_ = hotkeys.Remove(hotkey);
-		}
+		internal void Remove(HotkeyDefinition hotkey) => _ = hotkeys.Remove(hotkey);
 
-		internal void Remove(HotstringDefinition hotstring)
-		{
-			_ = hotstrings.Remove(hotstring);
-		}
+		internal void Remove(HotstringDefinition hotstring) => _ = hotstrings.Remove(hotstring);
 
 		internal abstract void SendEventArray(ref long aFinalKeyDelay, int aModsDuringSend);
 
@@ -338,6 +334,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
 		internal abstract void SendKeys(string aKeys, SendRawModes aSendRaw, SendModes aSendModeOrig, IntPtr aTargetWindow);
+
+		internal abstract ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue);
 
 		/*  AHK defined these, but char in C# is 2 bytes, so using byte instead.
 		    typedef USHORT sc_type; // Scan code.

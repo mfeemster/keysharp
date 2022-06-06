@@ -11,7 +11,7 @@ namespace Keysharp.Tests
 		{
 			var scriptpath = string.Concat(path, "directive-asminfo", ".ahk");
 			var exepath = "./directive-asminfo.exe";
-			RunScript(scriptpath, "directive-asminfo", false, true);
+			_ = RunScript(scriptpath, "directive-asminfo", false, true);
 			Assert.IsTrue(System.IO.File.Exists(exepath));
 			var asm = Assembly.LoadFrom(exepath);
 			var title = asm.GetCustomAttribute<AssemblyTitleAttribute>();
@@ -50,9 +50,6 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Directives")]
-		public void IncludeAsmInfo()
-		{
-			Assert.IsTrue(TestScript("directive-include-asminfo", false));
-		}
+		public void IncludeAsmInfo() => Assert.IsTrue(TestScript("directive-include-asminfo", false));
 	}
 }

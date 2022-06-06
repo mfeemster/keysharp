@@ -99,6 +99,8 @@ namespace Keysharp.Core.Common.Threading
 				keyHistory.Add(new KeyHistoryItem());
 		}
 
+		public abstract void SimulateKeyPress(uint key);
+
 		internal abstract void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false);
 
 		//~HookThread()
@@ -116,6 +118,8 @@ namespace Keysharp.Core.Common.Threading
 			Keysharp.Scripting.Script.historyHwndPrev = IntPtr.Zero;
 		}
 
+		internal abstract int ConvertMouseButton(string buf, bool allowWheel = true);
+
 		internal HookType GetActiveHooks()
 		{
 			var hookscurrentlyactive = HookType.None;
@@ -128,8 +132,6 @@ namespace Keysharp.Core.Common.Threading
 
 			return hookscurrentlyactive;
 		}
-
-		public abstract void SimulateKeyPress(uint key);
 
 		internal bool HasKbdHook() => kbdHook != IntPtr.Zero;
 
@@ -185,12 +187,15 @@ namespace Keysharp.Core.Common.Threading
 
 		internal void Stop()
 		{
-			//DeregisterHooks();
-			channel?.Writer?.Complete();
-			channelReadThread?.Wait();
-			//DeregisterKeyboardHook();
-			//DeregisterMouseHook();
-			running = false;
+			if (running)
+			{
+				//DeregisterHooks();
+				channel?.Writer?.Complete();
+				channelReadThread?.Wait();
+				//DeregisterKeyboardHook();
+				//DeregisterMouseHook();
+				running = false;
+			}
 		}
 
 		//This is relied upon to be unsigned; e.g. many places omit a check for ID < 0.
@@ -279,6 +284,13 @@ namespace Keysharp.Core.Common.Threading
 		protected internal abstract void Start();
 	}
 
+	internal class HotstringMsg
+	{
+		internal CaseConformModes caseMode;
+		internal char endChar;
+		internal HotstringDefinition hs;
+	}
+
 	internal class KeyHistoryItem
 	{
 		internal double elapsedTime;
@@ -306,7 +318,6 @@ namespace Keysharp.Core.Common.Threading
 	internal class KeysharpMsg
 	{
 		internal bool completed;
-		internal GenericFunction func;
 		internal IntPtr hwnd = IntPtr.Zero;
 		internal IntPtr lParam = IntPtr.Zero;
 		internal uint message;
@@ -314,12 +325,5 @@ namespace Keysharp.Core.Common.Threading
 		internal System.Drawing.Point pt;
 		internal uint time;
 		internal IntPtr wParam = IntPtr.Zero;
-	}
-
-	internal class HotstringMsg
-	{
-		internal HotstringDefinition hs;
-		internal CaseConformModes caseMode;
-		internal char endChar;
 	}
 }

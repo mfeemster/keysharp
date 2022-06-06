@@ -72,10 +72,7 @@ namespace Keysharp.Core.Common
 
 		public uint Value => (uint)((HashValue[0] << 24) | (HashValue[1] << 16) | (HashValue[2] << 8) | HashValue[3]);
 
-		public override void Initialize()
-		{
-			value = 0;
-		}
+		public override void Initialize() => value = 0;
 
 		protected override void HashCore(byte[] buffer, int start, int length)
 		{

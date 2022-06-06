@@ -95,7 +95,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool _SeeThroughMode_
 		{
-			get { return zSeeThroughMode; }
+			get => zSeeThroughMode;
+
 			set
 			{
 				zSeeThroughMode = value;
@@ -106,7 +107,8 @@ namespace Rtf
 		[System.ComponentModel.Browsable(false)]
 		public override bool AutoSize
 		{
-			get { return base.AutoSize; }
+			get => base.AutoSize;
+
 			set
 			{
 				base.AutoSize = value;
@@ -119,7 +121,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool AutoSizing
 		{
-			get { return zAutoSizing; }
+			get => zAutoSizing;
+
 			set
 			{
 				zAutoSizing = value;
@@ -131,7 +134,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public Color BackgroundGradient_AlphaColor
 		{
-			get { return zGradient_StartColor; }
+			get => zGradient_StartColor;
+
 			set
 			{
 				zGradient_StartColor = value;
@@ -142,7 +146,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public Color BackgroundGradient_BetaColor
 		{
-			get { return zGradient_EndColor; }
+			get => zGradient_EndColor;
+
 			set
 			{
 				zGradient_EndColor = value;
@@ -153,7 +158,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public System.Drawing.Drawing2D.LinearGradientMode BackgroundGradient_Direction
 		{
-			get { return zGradient_Direction; }
+			get => zGradient_Direction;
+
 			set
 			{
 				zGradient_Direction = value;
@@ -164,7 +170,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public Color BorderLines_Color
 		{
-			get { return zBorderLines_Color; }
+			get => zBorderLines_Color;
+
 			set
 			{
 				zBorderLines_Color = value;
@@ -175,7 +182,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public System.Drawing.Drawing2D.DashStyle BorderLines_Style
 		{
-			get { return zBorderLines_Style; }
+			get => zBorderLines_Style;
+
 			set
 			{
 				if (value == System.Drawing.Drawing2D.DashStyle.Custom)
@@ -189,7 +197,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public float BorderLines_Thickness
 		{
-			get { return zBorderLines_Thickness; }
+			get => zBorderLines_Thickness;
+
 			set
 			{
 				zBorderLines_Thickness = Math.Max(1, Math.Min(255, value));
@@ -201,7 +210,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public LineNumberDockSide DockSide
 		{
-			get { return zDockSide; }
+			get => zDockSide;
+
 			set
 			{
 				zDockSide = value;
@@ -213,7 +223,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public Color GridLines_Color
 		{
-			get { return zGridLines_Color; }
+			get => zGridLines_Color;
+
 			set
 			{
 				zGridLines_Color = value;
@@ -224,7 +235,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public System.Drawing.Drawing2D.DashStyle GridLines_Style
 		{
-			get { return zGridLines_Style; }
+			get => zGridLines_Style;
+
 			set
 			{
 				if (value == System.Drawing.Drawing2D.DashStyle.Custom)
@@ -238,7 +250,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public float GridLines_Thickness
 		{
-			get { return zGridLines_Thickness; }
+			get => zGridLines_Thickness;
+
 			set
 			{
 				zGridLines_Thickness = Math.Max(1, Math.Min(255, value));
@@ -250,7 +263,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public System.Drawing.ContentAlignment LineNrs_Alignment
 		{
-			get { return zLineNumbers_Alignment; }
+			get => zLineNumbers_Alignment;
+
 			set
 			{
 				zLineNumbers_Alignment = value;
@@ -262,7 +276,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool LineNrs_AntiAlias
 		{
-			get { return zLineNumbers_AntiAlias; }
+			get => zLineNumbers_AntiAlias;
+
 			set
 			{
 				zLineNumbers_AntiAlias = value;
@@ -275,7 +290,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool LineNrs_AsHexadecimal
 		{
-			get { return zLineNumbers_ShowAsHexadecimal; }
+			get => zLineNumbers_ShowAsHexadecimal;
+
 			set
 			{
 				zLineNumbers_ShowAsHexadecimal = value;
@@ -288,7 +304,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool LineNrs_ClippedByItemRectangle
 		{
-			get { return zLineNumbers_ClipByItemRectangle; }
+			get => zLineNumbers_ClipByItemRectangle;
+
 			set
 			{
 				zLineNumbers_ClipByItemRectangle = value;
@@ -300,7 +317,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool LineNrs_LeadingZeroes
 		{
-			get { return zLineNumbers_ShowLeadingZeroes; }
+			get => zLineNumbers_ShowLeadingZeroes;
+
 			set
 			{
 				zLineNumbers_ShowLeadingZeroes = value;
@@ -313,7 +331,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public Size LineNrs_Offset
 		{
-			get { return zLineNumbers_Offset; }
+			get => zLineNumbers_Offset;
+
 			set
 			{
 				zLineNumbers_Offset = value;
@@ -324,7 +343,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public Color MarginLines_Color
 		{
-			get { return zMarginLines_Color; }
+			get => zMarginLines_Color;
+
 			set
 			{
 				zMarginLines_Color = value;
@@ -335,7 +355,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public LineNumberDockSide MarginLines_Side
 		{
-			get { return zMarginLines_Side; }
+			get => zMarginLines_Side;
+
 			set
 			{
 				zMarginLines_Side = value;
@@ -346,7 +367,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public System.Drawing.Drawing2D.DashStyle MarginLines_Style
 		{
-			get { return zMarginLines_Style; }
+			get => zMarginLines_Style;
+
 			set
 			{
 				if (value == System.Drawing.Drawing2D.DashStyle.Custom)
@@ -360,7 +382,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Appearance")]
 		public float MarginLines_Thickness
 		{
-			get { return zMarginLines_Thickness; }
+			get => zMarginLines_Thickness;
+
 			set
 			{
 				zMarginLines_Thickness = Math.Max(1, Math.Min(255, value));
@@ -372,7 +395,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Add LineNumbers to")]
 		public RichTextBox ParentRichTextBox
 		{
-			get { return zParent; }
+			get => zParent;
+
 			set
 			{
 				zParent = value;
@@ -393,7 +417,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool Show_BackgroundGradient
 		{
-			get { return zGradient_Show; }
+			get => zGradient_Show;
+
 			set
 			{
 				zGradient_Show = value;
@@ -405,7 +430,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool Show_BorderLines
 		{
-			get { return zBorderLines_Show; }
+			get => zBorderLines_Show;
+
 			set
 			{
 				zBorderLines_Show = value;
@@ -417,7 +443,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool Show_GridLines
 		{
-			get { return zGridLines_Show; }
+			get => zGridLines_Show;
+
 			set
 			{
 				zGridLines_Show = value;
@@ -428,7 +455,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool Show_LineNrs
 		{
-			get { return zLineNumbers_Show; }
+			get => zLineNumbers_Show;
+
 			set
 			{
 				zLineNumbers_Show = value;
@@ -440,7 +468,8 @@ namespace Rtf
 		[System.ComponentModel.Category("Additional Behavior")]
 		public bool Show_MarginLines
 		{
-			get { return zMarginLines_Show; }
+			get => zMarginLines_Show;
+
 			set
 			{
 				zMarginLines_Show = value;
@@ -453,7 +482,8 @@ namespace Rtf
 		[System.ComponentModel.Browsable(false)]
 		public override string Text
 		{
-			get { return base.Text; }
+			get => base.Text;
+
 			set
 			{
 				base.Text = "";
@@ -464,7 +494,8 @@ namespace Rtf
 		[System.ComponentModel.Browsable(true)]
 		public override System.Drawing.Font Font
 		{
-			get { return base.Font; }
+			get => base.Font;
+
 			set
 			{
 				base.Font = value;
@@ -475,7 +506,8 @@ namespace Rtf
 
 		private RichTextBox zParent
 		{
-			get { return withEventsField_zParent; }
+			get => withEventsField_zParent;
+
 			set
 			{
 				if (withEventsField_zParent != null)
@@ -512,7 +544,8 @@ namespace Rtf
 
 		private Timer zTimer
 		{
-			get { return withEventsField_zTimer; }
+			get => withEventsField_zTimer;
+
 			set
 			{
 				if (withEventsField_zTimer != null)

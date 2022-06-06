@@ -11,16 +11,14 @@ namespace Keysharp.Core
 
 		public Image Image
 		{
-			get { return pic.Image; }
-			set
-			{
-				pic.Image = value;
-			}
+			get => pic.Image;
+			set => pic.Image = value;
 		}
 
 		public string MainText
 		{
-			get { return main.Text; }
+			get => main.Text;
+
 			set
 			{
 				main.Text = value;
@@ -30,7 +28,8 @@ namespace Keysharp.Core
 
 		public string SubText
 		{
-			get { return sub.Text; }
+			get => sub.Text;
+
 			set
 			{
 				sub.Text = value;
@@ -40,8 +39,8 @@ namespace Keysharp.Core
 
 		public string Title
 		{
-			get { return Text; }
-			set { Text = value; }
+			get => Text;
+			set => Text = value;
 		}
 
 		public SplashDialog() => InitializeComponent();

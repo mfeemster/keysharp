@@ -48,6 +48,30 @@ namespace Keysharp.Core
 		private const string True = "true";
 
 		/// <summary>
+		/// Converts a JSON encoded string into an associative array.
+		/// </summary>
+		/// <param name="source">The string to decode.</param>
+		/// <returns>An associative array.</returns>
+		public static Dictionary<string, object> JsonDecode(string source)
+		{
+			try
+			{
+				return Decode(source);
+			}
+			catch (Exception ex)
+			{
+				throw new ValueError(ex.Message);
+			}
+		}
+
+		/// <summary>
+		/// Returns a string containing the JSON representation of <paramref name="data"/>.
+		/// </summary>
+		/// <param name="data">The associative array to encode.</param>
+		/// <returns>A JSON encoded string.</returns>
+		public static string JsonEncode(Dictionary<string, object> data) => Encode(data);
+
+		/// <summary>
 		/// Convert a JSON string to a dictionary of string key and object value pairs.
 		/// </summary>
 		/// <param name="Source">The JSON string to evaluate.</param>
@@ -66,32 +90,6 @@ namespace Keysharp.Core
 		/// <param name="Elements">The table of key and values. Objects other than a string, boolean or numeric type have their <code>ToString()</code> method called for a compatible value.</param>
 		/// <returns>A JSON representation.</returns>
 		internal static string Encode(Dictionary<string, object> Elements) => EncodeObject(Elements);
-
-		/// <summary>
-		/// Converts a JSON encoded string into an associative array.
-		/// </summary>
-		/// <param name="source">The string to decode.</param>
-		/// <returns>An associative array.</returns>
-		public static Dictionary<string, object> JsonDecode(string source)
-		{
-			try
-			{
-				Accessors.A_ErrorLevel = 0;
-				return Decode(source);
-			}
-			catch (Exception)
-			{
-				Accessors.A_ErrorLevel = 1;
-				return null;
-			}
-		}
-
-		/// <summary>
-		/// Returns a string containing the JSON representation of <paramref name="data"/>.
-		/// </summary>
-		/// <param name="data">The associative array to encode.</param>
-		/// <returns>A JSON encoded string.</returns>
-		public static string JsonEncode(Dictionary<string, object> data) => Encode(data);
 
 		private static void DecodeObject(ref Dictionary<string, object> parent, string node)
 		{

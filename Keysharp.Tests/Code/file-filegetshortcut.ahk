@@ -20,7 +20,7 @@ else
 
 shortcut := FileGetShortcut("./testshortcut.lnk")
 
-if (FileFullPath("./FileGetShortcut/file1.txt") == shortcut.OutTarget)
+if (StrLower(FileFullPath("./FileGetShortcut/file1.txt")) == StrLower(shortcut.OutTarget))
  	FileAppend, pass, *
 else
   	FileAppend, fail, *

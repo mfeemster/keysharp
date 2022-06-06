@@ -4,13 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Keysharp.Core;
-using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		internal static List<GenericFunction> errorHandlers;
+		internal static List<IFuncObj> errorHandlers;
 
 		public static Core.Array Array(params object[] obj)
 		{
@@ -22,7 +21,7 @@ namespace Keysharp.Scripting
 			return arr;
 		}
 
-		public static Keysharp.Core.Buffer Buffer(params object[] obj) => new (obj);
+		public static Keysharp.Core.Buffer Buffer(object obj0, object obj1 = null) => new (obj0, obj1);
 
 		public static Map Dictionary(object[] keys, object[] values)//MATT
 		{
@@ -57,7 +56,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (var handler in errorHandlers)
 				{
-					result = handler.Invoke(err, err.ExcType);
+					result = handler.Call(err, err.ExcType);
 
 					if (err.ExcType == Keyword_Return)
 					{
@@ -67,7 +66,7 @@ namespace Keysharp.Scripting
 					else if (err.ExcType == Keyword_Exit)
 						Flow.Exit(0);
 					else if (err.ExcType == Keyword_ExitApp)
-						Flow.ExitApp(0);
+						_ = Flow.ExitAppInternal(Flow.ExitReasons.Error);
 
 					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1)
 						return false;
@@ -77,41 +76,21 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		public static object ExtendArray(ref object item, object value)//Unused, but if it does get used, needs to be an Array.//MATT
-		{
-			if (item == null || !item.GetType().IsArray)
-				return null;
-
-			var array = (object[])item;
-			var i = array.Length;
-			System.Array.Resize(ref array, i + 1);
-			array[i] = value;
-			item = array;
-			return value;
-		}
-
-		public static FuncObj FuncObj(params object[] obj) => obj.L().S1O1().Splat((s, o) => new FuncObj(s, o));
+		public static FuncObj FuncObj(object obj0, object obj1 = null) => new FuncObj(obj0.As(), obj1);
 
 		public static object GetMethodOrProperty(object item, object key)//This has to be public because the script will emit it in Main().
 		{
-			if (item == null || key == null)
-				return null;
-
 			if (key is string ks)
 			{
-				//mi = item.GetType().GetMethods().FirstOrDefault((_mi) => _mi.Name == ks);//Needed because the method might be overloaded.
-				if (Reflections.FindAndCacheMethod(item.GetType(), ks) is MethodInfo mi)
+				if (item == null)
+				{
+					if (Reflections.FindMethod(ks) is MethodInfo mi1)
+						return (item, mi1);
+				}
+				else if (Reflections.FindAndCacheMethod(item.GetType(), ks) is MethodInfo mi)
 					return (item, mi);
-
-				if (Reflections.FindAndCacheProperty(item.GetType(), ks) is PropertyInfo pi)
+				else if (Reflections.FindAndCacheProperty(item.GetType(), ks) is PropertyInfo pi)
 					return (item, pi);
-
-				//if (GetPropertyValue(item, ks).Item1 is object o)//This is weird in that it gets either a method or a property value. Shouldn't it return the property itself?//TODO
-				//return o;
-				//Not using extension methods anymore
-				//mi = Reflections.FindExtensionMethod(item.GetType(), ks);//Put this last because it's rare.
-				//if (mi != null)
-				//  return (item, mi);
 			}
 
 			return null;
@@ -123,99 +102,11 @@ namespace Keysharp.Scripting
 			return ret.Item2 ? ret.Item1 : "";
 		}
 
-		internal static (object, bool) InternalGetPropertyValue(object item, string name)
-		{
-			var type = item.GetType();
-			//PropertyInfo match = null;
-			//foreach (var property in type.GetProperties())
-			//{
-			//  if (property.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-			//  {
-			//      match = property;
-			//      break;
-			//  }
-			//}
-			//if (!match.CanRead)
-			//  return null;
-			var match = Reflections.FindAndCacheProperty(type, name);//Cleaned this up.//MATT
-
-			if (match != null)
-			{
-				try
-				{
-					var ret = (match.GetValue(item, null), true);
-
-					if (ret.Item1 is int i)
-						ret.Item1 = (long)i;//Try to keep everything as long.
-
-					return ret;
-				}
-				catch (Exception)
-				{
-				}
-			}
-
-			return (null, false);
-		}
-
 		public static Gui Gui(params object[] obj) => new (obj);
 
-		public static long HasBase(params object[] obj)
-		{
-			var (o1, o2) = obj.O2();//Do not flatten, always use the argument directly.
-			return o2.GetType().IsAssignableFrom(o1.GetType()) ? 1L : 0L;
-		}
+		public static long HasBase(object obj0, object obj1) => obj1.GetType().IsAssignableFrom(obj0.GetType()) ? 1L : 0L;
 
-		public static object Index(object item, object key)//Completely reworked to handle non string keys, and for optimization.//MATT
-		{
-			if (item == null)// || key == null)//null is a valid key value.//MATT
-				return null;
-
-			if (item is Map table)//This design is terrible and will not work when a key has the same name as a property. Needs to be totally reworked.//MATT
-			{
-				return table[key];
-				//Case sensitivity is handled internally, and this function no longer handles getting property values.
-				//if (table.map.TryGetValue(key, out var val))
-				//  return val;
-				//if (key is string lookup)//Comparison above was case sensitive. It failed, so now try the slower method of comparing each key, without case.
-				//{
-				//  foreach (var k in table.map.Keys)//Direct use of map member. Normally don't want to do this, but ok since this is internal.
-				//      if (k is string check)
-				//          if (lookup.Equals(check, System.StringComparison.OrdinalIgnoreCase))
-				//              return table[check];
-				//}
-				//if (key is string ks)//Wasn't a key, perhaps it was a property.
-				//  return InternalGetPropertyValue(item, ks).Item1;
-			}
-			else//This appears to work, but will prevent any properties or extension methods from working on dictionary types.//MATT
-			{
-				//if (key is string ks)
-				//{
-				//  var ret = InternalGetPropertyValue(item, ks);
-				//  if (ret.Item2)
-				//      return ret.Item1;
-				//}
-				//if (IsNumeric(key))
-				//{
-				//return IndexAt(item, (int)ForceLong(key));
-				return IndexAt(item, key);
-				//}
-				//else
-				//{
-				//  if (key is string ks)
-				//  {
-				//      var mi = Reflections.GetExtensionMethod(item.GetType(), ks);
-				//
-				//      if (mi != null)
-				//          return (item, mi);
-				//  }
-				//
-				//  return GetPropertyValue(item, (string)key);
-				//}
-			}
-
-			//return null;
-		}
+		public static object Index(object item, object key) => item == null ? null : IndexAt(item, key);
 
 		public static IndexError IndexError(params object[] obj) => new (obj);
 
@@ -224,9 +115,9 @@ namespace Keysharp.Scripting
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static long IsAlnum(params object[] obj)
+		public static long IsAlnum(object obj)
 		{
-			var s = obj.S1();
+			var s = obj.As();
 			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) || char.IsNumber(ch)) ? 1 : 0;
 		}
 
@@ -235,28 +126,23 @@ namespace Keysharp.Scripting
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static long IsAlpha(params object[] obj)
+		public static long IsAlpha(object obj)
 		{
-			var s = obj.S1();
+			var s = obj.As();
 			return s?.Length == 0 || s.All(char.IsLetter) ? 1 : 0;
 		}
 
-		public static long IsDate(params object[] obj) => IsTime(obj);
+		public static long IsDate(object obj) => IsTime(obj);
 
-		public static long IsDigit(params object[] obj)
+		public static long IsDigit(object obj)
 		{
-			var s = obj.S1();
+			var s = obj.As();
 			return s?.Length == 0 || s.All(char.IsDigit) ? 1 : 0;
 		}
 
-		public static long IsFloat(params object[] obj)
+		public static long IsFloat(object obj)
 		{
-			var l = obj;//.L();//Don't flatten, treat as-is.
-
-			if (l.Length < 1)
-				return 0;
-
-			var o = l[0];
+			var o = obj;
 
 			if (o is double || o is float || o is decimal)
 				return 1;
@@ -272,83 +158,51 @@ namespace Keysharp.Scripting
 		/// <returns><c>true</c> if the specified function exists in the current scope, <c>false</c> otherwise.</returns>
 		public static long IsFunc(object name) => Reflections.FindMethod(name.ToString()) is MethodInfo ? 1L : 0L;
 
-		public static long IsInteger(params object[] obj)
+		public static long IsInteger(object obj)
 		{
-			var l = obj;//.L();//Don't flatten, treat as-is.
-
-			if (l.Length < 1)
-				return 0;
-
-			var o = l[0];
+			var o = obj;
 
 			if (o is long || o is int || o is uint || o is ulong)
-				return 1;
+				return 1L;
 
 			if (o is double || o is float || o is decimal)
-				return 0;
+				return 0L;
 
 			var val = o.ParseLong(false);
-			return val.HasValue ? 1 : 0;
+			return val.HasValue ? 1L : 0L;
 		}
 
-		/// <summary>
-		/// Checks if a label is defined.
-		/// </summary>
-		/// <param name="name">The name of a label.</param>
-		/// <returns><c>true</c> if the specified label exists in the current scope, <c>false</c> otherwise.</returns>
-		public static long IsLabel(object name)
-		{
-			//var method = Reflections.LabelMethodName(name);
-			//return Reflections.FindLocalMethod(method) != null ? 1 : 0;
-			throw new Error("C# does not allow querying labels at runtime.");
-		}
+		public static long IsLabel(object name) => throw new Error("C# does not allow querying labels at runtime.");
 
 		/// <summary>
 		/// Differs in that locale is always considered.
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static long IsLower(params object[] obj)
+		public static long IsLower(object obj)
 		{
-			var s = obj.L().S1();
+			var s = obj.As();
 			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) && char.IsLower(ch)) ? 1 : 0;
 		}
 
-		public static long IsNumber(params object[] obj) => IsInteger(obj) | IsFloat(obj);
+		public static long IsNumber(object obj) => IsInteger(obj) | IsFloat(obj);
 
-		public static long IsObject(params object[] obj)
+		public static long IsObject(object obj) => obj is KeysharpObject ? 1 : 0;
+
+		public static long IsSet(object obj) => obj != UnsetArg.Default&& obj != null ? 1 : 0;
+
+		public static long IsSpace(object obj)
 		{
-			var o = obj;//.L();
-			return o.Length > 0 && o[0] is KeysharpObject ? 1 : 0;
-		}
-
-		public static long IsSet(params object[] obj)
-		{
-			if (obj.Length > 0)
-			{
-				var o = obj[0];
-
-				if (o != UnsetArg.Default && o != null)
-					return 1;
-			}
-
-			return 0;
-		}
-
-		public static long IsSpace(params object[] obj)
-		{
-			var s = obj.S1();
-
-			foreach (var ch in s)
+			foreach (var ch in obj.As())
 				if (!Keyword_Spaces.Any(ch2 => ch2 == ch))
-					return 0;
+					return 0L;
 
-			return 1;
+			return 1L;
 		}
 
-		public static long IsTime(params object[] obj)
+		public static long IsTime(object obj)
 		{
-			var s = obj.S1();
+			var s = obj.As();
 			DateTime dt;
 
 			try
@@ -356,16 +210,16 @@ namespace Keysharp.Scripting
 				dt = Conversions.ToDateTime(s);
 
 				if (dt == DateTime.MinValue)
-					return 0;
+					return 0L;
 			}
 			catch
 			{
-				return 0;
+				return 0L;
 			}
 
 			int[] t = { DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0 };
-			var tempdt = new DateTime(t[1], t[2], t[3], t[4], t[5], t[6], System.Globalization.CultureInfo.CurrentCulture.Calendar);//Will be this if parsing totally failed.
-			return dt != tempdt ? 1 : 0;
+			var tempdt = new DateTime(t[1], t[2], t[3], t[4], t[5], t[6], System.Globalization.CultureInfo.CurrentCulture.Calendar);//Will be wrong this if parsing totally failed.
+			return dt != tempdt ? 1L : 0L;
 		}
 
 		/// <summary>
@@ -373,15 +227,15 @@ namespace Keysharp.Scripting
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static long IsUpper(params object[] obj)
+		public static long IsUpper(object obj)
 		{
-			var s = obj.S1();
+			var s = obj.As();
 			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) && char.IsUpper(ch)) ? 1 : 0;
 		}
 
-		public static long IsXDigit(params object[] obj)
+		public static long IsXDigit(object obj)
 		{
-			var s = obj.S1();
+			var s = obj.As();
 			var sp = s.AsSpan();
 
 			if (sp.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase))
@@ -389,9 +243,9 @@ namespace Keysharp.Scripting
 
 			foreach (var ch in sp)
 				if (!((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')))
-					return 0;
+					return 0L;
 
-			return 1;
+			return 1L;
 		}
 
 		public static KeyError KeyError(params object[] obj) => new (obj);
@@ -406,17 +260,15 @@ namespace Keysharp.Scripting
 
 		public static MenuBar MenuBar() => new ();
 
-		public static object MenuFromHandle(params object[] obj)
+		public static object MenuFromHandle(object obj)
 		{
-			var handle = new IntPtr(obj[0].ParseLong().Value);
+			var handle = new IntPtr(obj.Al());
 			var menu = System.Windows.Forms.MenuStrip.FromHandle(handle);
 
 			if (menu != null)
 				return menu;
 
-			menu = System.Windows.Forms.ContextMenuStrip.FromHandle(handle);
-
-			if (menu != null)
+			if ((menu = System.Windows.Forms.ContextMenuStrip.FromHandle(handle)) != null)
 				return menu;
 
 			return "";
@@ -424,23 +276,16 @@ namespace Keysharp.Scripting
 
 		public static MethodError MethodError(params object[] obj) => new (obj);
 
-		public static Map Object(params object[] obj)
-		{
-			if (obj.Length == 0)
-				return new Map();
+		public static object ObjSetCapacity(object obj0, object obj1) => throw new Keysharp.Core.Error("ObjSetCapacity() not implemented.");
 
-			var dkt = new Map();
-			dkt.Set(obj);
-			return dkt;
-		}
-
-		public static void OnError(params object[] obj)
+		public static void OnError(object obj0, object obj1 = null)
 		{
-			var (e, i) = obj.L().Oi("", 1);
-			var del = GuiControl.GetDel(e, null);
+			var e = obj0;
+			var i = obj1.Al(1L);
+			var del = GuiControl.GetFuncObj(e, null);
 
 			if (errorHandlers == null)
-				errorHandlers = new List<GenericFunction>();
+				errorHandlers = new List<IFuncObj>();
 
 			errorHandlers.ModifyEventHandlers(del, i);
 		}
@@ -502,11 +347,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		public static Keysharp.Core.StringBuffer StringBuffer(params object[] obj)
-		{
-			var (str, cap) = obj.L().Si("", 256);
-			return new StringBuffer(str, cap);
-		}
+		public static Keysharp.Core.StringBuffer StringBuffer(object obj0, object obj1 = null) => new StringBuffer(obj0.As(), obj1.Ai(256));
 
 		public static TargetError TargetError(params object[] obj) => new (obj);
 
@@ -520,46 +361,58 @@ namespace Keysharp.Scripting
 
 		public static ZeroDivisionError ZeroDivisionError(params object[] obj) => new (obj);
 
-		public object ObjGetCapacity(params object[] obj)
-		{
-			return 42;
-		}
+		public object ObjGetCapacity(params object[] obj) => throw new Keysharp.Core.Error("ObjGetCapacity() is not supported for dictionaries in C#");
 
-		public long ObjHasOwnProp(params object[] obj)
-		{
-			return 1L;
-		}
+		public long ObjHasOwnProp(params object[] obj) => 1L;
 
-		public long ObjOwnPropCount(params object[] obj)
-		{
-			return 1L;
-		}
+		public long ObjOwnPropCount(params object[] obj) => 1L;
 
-		public object ObjOwnProps(params object[] obj)
-		{
-			return true;
-		}
+		public object ObjOwnProps(params object[] obj) => true;
 
-		public void ObjSetBase(params object[] obj)
-		{
-			throw new Exception(Any.BaseExc);
-		}
+		public void ObjSetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
-		public object ObjSetCapacity(params object[] obj)
+		public object ObjSetCapacity(params object[] obj) => true;
+
+		internal static (object, bool) InternalGetPropertyValue(object item, string name)
 		{
-			return true;
+			var type = item.GetType();
+			//PropertyInfo match = null;
+			//foreach (var property in type.GetProperties())
+			//{
+			//  if (property.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
+			//  {
+			//      match = property;
+			//      break;
+			//  }
+			//}
+			//if (!match.CanRead)
+			//  return null;
+			var match = Reflections.FindAndCacheProperty(type, name);//Cleaned this up.//MATT
+
+			if (match != null)
+			{
+				try
+				{
+					var ret = (match.GetValue(item, null), true);
+
+					if (ret.Item1 is int i)
+						ret.Item1 = (long)i;//Try to keep everything as long.
+
+					return ret;
+				}
+				catch (Exception)
+				{
+				}
+			}
+
+			return (null, false);
 		}
 
 		private static object IndexAt(object item, object index)
 		{
-			//Subtract one because arrays are 1-indexed.
-			//Negative numbers are reverse indexed.
-			if (/*position < 0 || */item == null)
-				return null;
-
 			var position = ForceInt(index);
 
-			//The most common is going to be a string, array or buffer.
+			//The most common is going to be a string, array, map or buffer.
 			if (item is string s)
 			{
 				var actualindex = position < 0 ? s.Length + position : position - 1;
@@ -569,6 +422,10 @@ namespace Keysharp.Scripting
 			{
 				return al[position];
 			}
+			else if (item is Map table)
+			{
+				return table[index];
+			}
 			else if (item is Core.Buffer buf)
 			{
 				return buf[position];
@@ -576,7 +433,7 @@ namespace Keysharp.Scripting
 
 			foreach (var mi in item.GetType().GetMethods().Where(m => m.Name == "get_Item"))
 			{
-				if (index is int i && mi.GetParameters()[0].ParameterType == typeof(int))
+				if (index is int i && mi.GetParameters()[0].ParameterType == typeof(int))//Subtract one because arrays are 1-indexed, negative numbers are reverse indexed.
 					return mi.Invoke(item, new object[] { i - 1 });
 				else if (index is long l && mi.GetParameters()[0].ParameterType == typeof(long))
 					return mi.Invoke(item, new object[] { l - 1 });
@@ -619,6 +476,16 @@ namespace Keysharp.Scripting
 			}
 
 			return null;
+		}
+
+		private static Map Object(params object[] obj)
+		{
+			if (obj.Length == 0)
+				return new Map();
+
+			var dkt = new Map();
+			dkt.Set(obj);
+			return dkt;
 		}
 	}
 }

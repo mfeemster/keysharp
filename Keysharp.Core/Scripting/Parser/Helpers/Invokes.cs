@@ -47,10 +47,6 @@ namespace Keysharp.Scripting
 		{
 			var method = new CodeMemberMethod { Name = name, ReturnType = new CodeTypeReference(typeof(object)) };
 			method.Attributes = MemberAttributes.Static | MemberAttributes.Public;
-			//var param = new CodeParameterDeclarationExpression(typeof(object[]), args);
-			var param = new CodeParameterDeclarationExpression("params object[]", args);//Not sure if all functions should be variadic. Seems convenient.//MATT
-			param.UserData.Add(RawData, typeof(object[]));
-			_ = method.Parameters.Add(param);
 			return method;
 		}
 

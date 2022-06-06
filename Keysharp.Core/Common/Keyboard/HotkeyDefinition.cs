@@ -8,178 +8,6 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common.Keyboard
 {
-	internal class HkSortedType
-	{
-		internal bool allowExtraModifiers;
-		internal uint idWithFlags;
-		internal int modifiers;
-		internal int modifiersLR;
-		internal int sc;
-		internal int vk;
-
-		/// <summary>
-		/// The only items whose order are important are those with the same suffix.  For a given suffix,
-		/// we want the most general modifiers (e.g. CTRL) to appear closer to the top of the list than
-		/// those with more specific modifiers (e.g. CTRL-ALT).  To make qsort() perform properly, it seems
-		/// best to sort by vk/sc then by generality.
-		/// </summary>
-		internal static int SortMostGeneralBeforeLeast(HkSortedType b1, HkSortedType b2)
-
-		{
-			if (b1.vk != b2.vk)
-				return b1.vk - b2.vk;
-
-			if (b1.sc != b2.sc)
-				return b1.sc - b2.sc;
-
-			// If the above didn't return, we now know that a1 and a2 have the same vk's or sc's.  So
-			// we use a tie-breaker to cause the most general keys to appear closer to the top of the
-			// list than less general ones.  This should result in a given suffix being grouped together
-			// after the sort.  Within each suffix group, the most general modifiers should appear first.
-
-			// This part is basically saying that keys that don't allow extra modifiers can always be processed
-			// after all other keys:
-			if (b1.allowExtraModifiers && !b2.allowExtraModifiers)
-				return -1;  // Indicate that a1 is smaller, so that it will go to the top.
-
-			if (!b1.allowExtraModifiers && b2.allowExtraModifiers)
-				return 1;
-
-			// However the order of suffixes that don't allow extra modifiers, among themselves, may be important.
-			// Thus we don't return a zero if both have AllowExtraModifiers = 0.
-			// Example: User defines ^a, but also defines >^a.  What should probably happen is that >^a forces ^a
-			// to fire only when <^a occurs.
-			// v1.1.33.03: Compare number of modifiers.  This supersedes some previous checks for when
-			// a1's modifiers are a subset of a2's or vice versa (since the subset would always have
-			// fewer bits).  This new method helps prioritize combinations which overlap but have a
-			// different number of modifiers, such as "*<^a" vs. "*<^>^a".
-			var nmodLR_a1 = System.Numerics.BitOperations.PopCount((uint)b1.modifiersLR);
-			var nmodLR_a2 = System.Numerics.BitOperations.PopCount((uint)b2.modifiersLR);
-			var nmod_a1 = System.Numerics.BitOperations.PopCount((uint)b1.modifiers) + nmodLR_a1;
-			var nmod_a2 = System.Numerics.BitOperations.PopCount((uint)b2.modifiers) + nmodLR_a2;
-
-			if (nmod_a1 != nmod_a2)
-				return nmod_a1 - nmod_a2;
-
-			if (nmodLR_a1 != nmodLR_a2)
-				return nmodLR_a1 - nmodLR_a2;
-
-			// v1.1.33.03: Sort by modifier value so that key-up hotkeys end up immediately after their
-			// counterparts, otherwise we get odd results like Alt+Shift+A firing "*!a" and "*+a up"
-			// instead of "*!a" and "*!a up" or "*+a" and "*+a up".
-			if (b1.modifiers != b2.modifiers)
-				return b1.modifiers - b2.modifiers; // !^+#
-
-			if (b1.modifiersLR != b2.modifiersLR)
-				return b1.modifiersLR - b2.modifiersLR; // <^>^<!>!<+>+<#>#
-
-			// v1.0.38.03: The following check is added to handle a script containing hotkeys
-			// such as the following (in this order):
-			// *MButton::
-			// *Mbutton Up::
-			// MButton::
-			// MButton Up::
-			// What would happen before is that the qsort() would sometimes cause "MButton Up" from the
-			// list above to be processed prior to "MButton", which would set hotkey_up[*MButton's ID]
-			// to be MButton Up's ID.  Then when "MButton" was processed, it would set its_table_entry
-			// to MButton's ID, but hotkey_up[MButton's ID] would be wrongly left INVALID when it should
-			// have received a copy of the asterisk hotkey ID's counterpart key-up ID.  However, even
-			// giving it a copy would not be quite correct because then *MButton's ID would wrongly
-			// be left associated with MButton's Up's ID rather than *MButton Up's.  By solving the
-			// problem here in the sort rather than copying the ID, both bugs are resolved.
-			// v1.1.33.03: The scenario above would now also be prevented by checks in ChangeHookState
-			// which avoid pairing a key-up hotkey with a more permissive key-down hotkey, but keeping
-			// this might help ensure key-up hotkeys are matched optimally when there is overlap.
-			//if ((b1.id_with_flags & HOTKEY_KEY_UP) != (b2.id_with_flags & HOTKEY_KEY_UP))
-			//  return (b1.id_with_flags & HOTKEY_KEY_UP) ? 1 : -1; // Put key-up hotkeys higher in the list than their down counterparts (see comment above).
-			// v1.1.33.03: Getting to this point should mean that a1 and a2 have the same modifiers,
-			// vk and sc, but they might have different up/down status and key name (Esc/Escape/vk1B).
-			// Ensure predictability by putting them in an order based on id_with_flags.
-			return (int)b1.idWithFlags - (int)b2.idWithFlags;
-		}
-	}
-
-	internal class HotkeyCriterion
-	{
-		//internal Keysharp.Core.Core.GenericFunction Callback;
-		internal FuncObj callback;
-
-		//Unsure if this should be a function or a function object.//TODO
-		internal HotkeyCriterion nextCriterion, nextExpr;
-
-		internal string originalExpr;
-		internal HotCriterionEnum type;
-		internal string winTitle, winText;
-
-		// For finding expr in #HotIf expr
-		// Evaluate an #HotIf expression or callback function.
-		// This is called by MainWindowProc when it receives an AHK_HOT_IF_EVAL message.
-		/*
-		    internal ResultType Eval(string aHotkeyName)//Appears to be for evaluating new hotkeys at runtime, fill in later.//TODO
-		    {
-		    // Initialize a new quasi-thread to evaluate the expression. This may not be necessary for simple
-		    // expressions, but expressions which call user-defined functions may otherwise interfere with
-		    // whatever quasi-thread is running when the hook thread requests that this expression be evaluated.
-
-		    // Based on parts of MsgMonitor(). See there for comments.
-
-		    if (g_nThreads >= g_MaxThreadsTotal)
-		    return CONDITION_FALSE;
-
-		    bool prev_defer_messages = g_DeferMessagesForUnderlyingPump;
-		    // Force the use of PeekMessage() within MsgSleep() since GetMessage() is known to stall while
-		    // the system is waiting for our keyboard hook to return (last confirmed on Windows 10.0.18356).
-		    // This might relate to WM_TIMER being lower priority than the input hardware processing
-		    // performed by GetMessage().  MsgSleep() relies on WM_TIMER acting as a timeout for GetMessage().
-		    g_DeferMessagesForUnderlyingPump = true;
-
-		    // See MsgSleep() for comments about the following section.
-		    // Critical seems to improve reliability, either because the thread completes faster (i.e. before the timeout) or because we check for messages less often.
-		    InitNewThread(0, false, true, true);
-		    ResultType result;
-
-		    // Let HotIf default to the criterion currently being evaluated, in case Hotkey() is called.
-		    g.HotCriterion = this;
-
-		    // Update A_ThisHotkey, useful if #HotIf calls a function to do its dirty work.
-		    LPTSTR prior_hotkey_name[] = { g_script.mThisHotkeyName, g_script.mPriorHotkeyName };
-		    DWORD prior_hotkey_time[] = { g_script.mThisHotkeyStartTime, g_script.mPriorHotkeyStartTime };
-		    g_script.mPriorHotkeyName = g_script.mThisHotkeyName;           // For consistency
-		    g_script.mPriorHotkeyStartTime = g_script.mThisHotkeyStartTime; //
-		    g_script.mThisHotkeyName = aHotkeyName;
-		    g_script.mThisHotkeyStartTime = // Updated for consistency.
-		    g_script.mLastPeekTime = GetTickCount();
-
-		    // CALL THE CALLBACK
-		    ExprTokenType param = aHotkeyName;
-		    __int64 retval;
-		    result = IObjectPtr(Callback).ExecuteInNewThread(_T("#HotIf"), &param, 1, &retval);
-		    if (result != FAIL)
-		    result = retval ? CONDITION_TRUE : CONDITION_FALSE;
-
-		    // The following allows the expression to set the Last Found Window for the
-		    // hotkey function.
-		    // There may be some rare cases where the wrong hotkey gets this HWND (perhaps
-		    // if there are multiple hotkey messages in the queue), but there doesn't seem
-		    // to be any easy way around that.
-		    g_HotExprLFW = g.hWndLastUsed; // Even if above failed, for simplicity.
-
-		    // A_ThisHotkey must be restored else A_PriorHotkey will get an incorrect value later.
-		    g_script.mThisHotkeyName = prior_hotkey_name[0];
-		    g_script.mThisHotkeyStartTime = prior_hotkey_time[0];
-		    g_script.mPriorHotkeyName = prior_hotkey_name[1];
-		    g_script.mPriorHotkeyStartTime = prior_hotkey_time[1];
-
-		    ResumeUnderlyingThread();
-
-		    g_DeferMessagesForUnderlyingPump = prev_defer_messages;
-
-		    return result;
-		    return ResultType.ConditionTrue;
-		    }
-		*/
-	}
-
 	//internal class HotkeyDefinition
 	public class HotkeyDefinition
 	{
@@ -472,7 +300,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 			// If mKeybdHookMandatory==true, ManifestAllHotkeysHotstringsHooks() will set mType to HK_KEYBD_HOOK for us.
 			Name = _name;
-			AddVariant(callback, suffixHasTilde);
+			_ = AddVariant(callback, suffixHasTilde);
 			// Above has ensured that both mFirstVariant and mLastVariant are non-NULL, so callers can rely on that.
 			// Always assign the ID last, right before a successful return, so that the caller is notified
 			// that the constructor succeeded:
@@ -486,15 +314,313 @@ namespace Keysharp.Core.Common.Keyboard
 		~HotkeyDefinition()
 		{
 			if (isRegistered)
-				Unregister();
+				_ = Unregister();
 		}
 
 		// This var doesn't belong in struct since it's used only here.
 
-		public override string ToString()
+		/// <summary>
+		/// This function examines all hotkeys and hotstrings to determine:
+		/// - Which hotkeys to register/unregister, or activate/deactivate in the hook.
+		/// - Which hotkeys to be changed from HK_NORMAL to HK_KEYBD_HOOK (or vice versa).
+		/// - In pursuit of the above, also assess the interdependencies between hotkeys: the presence or
+		///   absence of a given hotkey can sometimes impact whether other hotkeys need to be converted from
+		///   HK_NORMAL to HK_KEYBD_HOOK.  For example, a newly added/enabled global hotkey variant can
+		///   cause a HK_KEYBD_HOOK hotkey to become HK_NORMAL, and the converse is also true.
+		/// - Based on the above, decide whether the keyboard and/or mouse hooks need to be (de)activated.
+		/// </summary>
+		//internal static void ManifestAllHotkeysHotstringsHooks()
+		public static void ManifestAllHotkeysHotstringsHooks()
 		{
-			return Name;
+			// v1.0.37.05: A prefix key such as "a" in "a & b" should cause any use of "a" as a suffix
+			// (such as ^!a) also to be a hook hotkey.  Otherwise, the ^!a hotkey won't fire because the
+			// hook prevents the OS's hotkey monitor from seeing that the hotkey was pressed.  NOTE:
+			// This is done only for virtual keys because prefix keys that are done by scan code (mModifierSC)
+			// should already be hook hotkeys when used as suffix keys (there may be a few unusual exceptions,
+			// but they seem too rare to justify the extra code size).
+			// Update for v1.0.40: This first pass through the hotkeys now also checks things for hotkeys
+			// that can affect other hotkeys. If this weren't done in the first pass, it might be possible
+			// for a hotkey to make some other hotkey into a hook hotkey, but then the hook might not be
+			// installed if that hotkey had already been processed earlier in the second pass.  Similarly,
+			// a hotkey processed earlier in the second pass might have been registered when in fact it
+			// should have become a hook hotkey due to something learned only later in the second pass.
+			// Doing these types of things in the first pass resolves such situations.
+			// Update for v1.1.27: Doing the above in the first pass doesn't work correctly, as mType is
+			// reset to default during the first pass (even if a previous iteration might has set it to
+			// HK_KEYBD_HOOK, such as when it is eclipsed by a wildcard hotkey).  One workaround would
+			// be to set mKeybdHookMandatory = true, but that would prevent the hotkey from reverting to
+			// HK_NORMAL when it no longer needs the hook.  Instead, there are now three passes.
+			var vkIsPrefix = new bool[WindowsHookThread.VK_ARRAY_COUNT];
+			var hkIsInactive = new bool[shk.Count];// No init needed.  Currently limited to around 16k (HOTKEY_ID_MAX).
+			HotkeyVariant vp;
+			int i, j;
+			var ht = Keysharp.Scripting.Script.HookThread;
+			var kbdMouseSender = ht.kbdMsSender;
+
+			// FIRST PASS THROUGH THE HOTKEYS:
+			for (i = 0; i < shk.Count; ++i)
+			{
+				var hot = shk[i];  // For performance and convenience.
+
+				if (hkIsInactive[i] = (Accessors.A_IsSuspended && !hot.IsExemptFromSuspend())
+									  || hot.IsCompletelyDisabled()) // Listed last for short-circuit performance.
+				{
+					// In the cases above, nothing later below can change the fact that this hotkey should
+					// now be in an unregistered state.
+					if (hot.isRegistered)
+					{
+						_ = hot.Unregister();
+
+						// In case the hotkey's thread is already running, it seems best to cancel any repeat-run
+						// that has already been scheduled.  Older comment: CT_SUSPEND, at least, relies on us to do this.
+						for (vp = hot.firstVariant; vp != null; vp = vp.nextVariant)
+							vp.runAgainAfterFinished = false; // Applies to all hotkey types, not just registered ones.
+					}
+
+					continue;
+				}
+
+				// Otherwise, this hotkey will be in effect, so check its attributes.
+
+				if (hot.keybdHookMandatory)
+				{
+					// v1.0.44: The following is relied upon by some things like the Hotkey constructor and the tilde prefix
+					// (the latter can set mKeybdHookMandatory for a hotkey sometime after the first variant is added [such
+					// as for a subsequent variant]).  This practice also improves maintainability.
+					if (HK_TYPE_CAN_BECOME_KEYBD_HOOK(hot.type)) // To ensure it hasn't since become a joystick/mouse/mouse-and-keyboard hotkey.
+						hot.type = HotkeyTypeEnum.KeyboardHook;
+				}
+				else // Hook isn't mandatory, so set any non-mouse/joystick/both hotkey to normal for possibly overriding later below.
+				{
+					// v1.0.42: The following is done to support situations in which a hotkey can be a hook hotkey sometimes,
+					// but after a (de)suspend or after a change to other hotkeys via the Hotkey command, might no longer
+					// require the hook.  Examples include:
+					// 1) A hotkey can't be registered because some other app is using it, but later
+					//    that condition changes.
+					// 2) Suspend or the Hotkey command changes wildcard hotkeys so that non-wildcard
+					//    hotkeys that have the same suffix are no longer eclipsed, and thus don't need
+					//    the hook.  The same type of thing can happen if a key-up hotkey is disabled,
+					//    which would allow it's key-down hotkey to become non-hook.  Similarly, if a
+					//    all of a prefix key's hotkeys become disabled, and that prefix is also a suffix,
+					//    those suffixes no longer need to be hook hotkeys.
+					// 3) There may be other ways, especially in the future involving #HotIf WinActive/Exist
+					//    keys whose criteria change.
+					if (hot.type == HotkeyTypeEnum.KeyboardHook)
+						hot.type = HotkeyTypeEnum.Normal; // To possibly be overridden back to HK_KEYBD_HOOK later below; but if not, it will be registered later below.
+				}
+
+				if (hot.modifierVK != 0)
+					vkIsPrefix[hot.modifierVK] = true;
+			} // End of first pass loop.
+
+			// SECOND PASS THROUGH THE HOTKEYS:
+			// Check for hotkeys that can affect other hotkeys, such as wildcard or key-up hotkeys.
+			// This is separate to the other passes for reasons described at the top of the function.
+			for (i = 0; i < shk.Count; ++i)
+			{
+				if (hkIsInactive[i])
+					continue;
+
+				var hot = shk[i];  // For performance and convenience.
+
+				if (hot.keyUp && hot.vk != 0) // No need to do the below for mSC hotkeys since their down hotkeys would already be handled by the hook.
+				{
+					// For each key-up hotkey, search for any its counterpart that's a down-hotkey (if any).
+					// Such a hotkey should also be handled by the hook because if registered, such as
+					// "#5" (reg) and "#5 up" (hook), the hook would suppress the down event because it
+					// is unaware that down-hotkey exists (it's suppressed to prevent the key from being
+					// stuck in a logically down state).
+					for (j = 0; j < shk.Count; ++j)
+					{
+						// No need to check the following because they are already hook hotkeys:
+						// mModifierVK/SC
+						// mAllowExtraModifiers
+						// mNoSuppress
+						// In addition, there is no need to check shk[j].mKeyUp because that can't be
+						// true if it's mType is HK_NORMAL:
+						// Also, g_IsSuspended and IsCompletelyDisabled() aren't checked
+						// because it's harmless to operate on disabled hotkeys in this way.
+						if (shk[j].vk == hot.vk && HK_TYPE_CAN_BECOME_KEYBD_HOOK(shk[j].type) // Ordered for short-circuit performance.
+								&& shk[j].modifiersConsolidatedLR == hot.modifiersConsolidatedLR)
+						{
+							shk[j].type = HotkeyTypeEnum.KeyboardHook;
+							// And if it's currently registered, it will be unregistered later below.
+						}
+					}
+				}
+
+				// v1.0.40: If this is a wildcard hotkey, any hotkeys it eclipses (i.e. includes as subsets)
+				// should be made into hook hotkeys also, because otherwise they would be overridden by hook.
+				// The following criteria are checked:
+				// 1) Exclude those that have a ModifierSC/VK because in those cases, mAllowExtraModifiers is
+				//    ignored.
+				// 2) Exclude those that lack an mVK because those with mSC can't eclipse registered hotkeys
+				//   (since any would-be eclipsed mSC hotkey is already a hook hotkey due to is SC nature).
+				// 3) It must not have any mModifiersLR because such hotkeys can't completely eclipse
+				//    registered hotkeys since they always have neutral vs. left/right-specific modifiers.
+				//    For example, if *<^a is a hotkey, ^a can still be a registered hotkey because it could
+				//    still be activated by pressing RControl+a.
+				// 4) For maintainability, it doesn't check mNoSuppress because the hook is needed anyway,
+				//    so might as well handle eclipsed hotkeys with it too.
+				if (hot.allowExtraModifiers && hot.vk != 0 && hot.modifiersLR == 0 && !(hot.modifierSC != 0 || hot.modifierVK != 0))
+				{
+					for (j = 0; j < shk.Count; ++j)
+					{
+						// If it's not of type HK_NORMAL, there's no need to change its type regardless
+						// of the values of its other members.  Also, if the wildcard hotkey (hot) has
+						// any neutral modifiers, this hotkey must have at least those neutral modifiers
+						// too or else it's not eclipsed (and thus registering it is okay).  In other words,
+						// the wildcard hotkey's neutral modifiers must be a perfect subset of this hotkey's
+						// modifiers for this one to be eclipsed by it. Note: Neither mModifiersLR nor
+						// mModifiersConsolidated is checked for simplicity and also because it seems to add
+						// flexibility.  For example, *<^>^a would require both left AND right ctrl to be down,
+						// not EITHER. In other words, mModifiersLR can never in effect contain a neutral modifier.
+						if (shk[j].vk == hot.vk && HK_TYPE_CAN_BECOME_KEYBD_HOOK(shk[j].type) // Ordered for short-circuit performance.
+								&& (hot.modifiers & shk[j].modifiers) == hot.modifiers)
+						{
+							// Note: No need to check mModifiersLR because it would already be a hook hotkey in that case;
+							// that is, the check of shk[j].mType precludes it.  It also precludes the possibility
+							// of shk[j] being a key-up hotkey, wildcard hotkey, etc.
+							shk[j].type = HotkeyTypeEnum.KeyboardHook;
+							// And if it's currently registered, it will be unregistered later below.
+						}
+					}
+				}
+			} // End of second pass loop.
+
+			// THIRD PASS THROUGH THE HOTKEYS:
+			// v1.0.42: Reset sWhichHookNeeded because it's now possible that the hook was on before but no longer
+			// needed due to changing of a hotkey from hook to registered (for various reasons described above):
+			whichHookNeeded = 0;
+
+			for (i = 0; i < shk.Count; ++i)
+			{
+				if (hkIsInactive[i])
+					continue; // v1.0.40: Treat disabled hotkeys as though they're not even present.
+
+				var hot = shk[i];  // For performance and convenience.
+
+				// HK_MOUSE_HOOK hotkeys, and most HK_KEYBD_HOOK hotkeys, are handled by the hotkey constructor.
+				// What we do here upgrade any NORMAL/registered hotkey to HK_KEYBD_HOOK if there are other
+				// hotkeys that interact or overlap with it in such a way that the hook is preferred.
+				// This evaluation is done here because only now that hotkeys are about to be activated do
+				// we know which ones are disabled or suspended, and thus don't need to be taken into account.
+				if (HK_TYPE_CAN_BECOME_KEYBD_HOOK(hot.type))
+				{
+					if (vkIsPrefix[hot.vk])
+						// If it's a suffix that is also used as a prefix, use hook (this allows ^!a to work without $ when "a & b" is a hotkey).
+						// v1.0.42: This was fixed so that mVK_WasSpecifiedByNumber dosn't affect it.  That is, a suffix that's
+						// also used as a prefix should become a hook hotkey even if the suffix is specified as "vkNNN::".
+						hot.type = HotkeyTypeEnum.KeyboardHook;
+					// And if it's currently registered, it will be unregistered later below.
+					else
+					{
+						// v1.0.42: Any #HotIf keyboard hotkey must use the hook if it lacks an enabled,
+						// non-suspended, global variant.  Under those conditions, the hotkey is either:
+						// 1) Single-variant hotkey that has criteria (non-global).
+						// 2) Multi-variant hotkey but all variants have criteria (non-global).
+						// 3) A hotkey with a non-suppressed (~) variant (always, for code simplicity): already handled by AddVariant().
+						// In both cases above, the hook must handle the hotkey because there can be
+						// situations in which the hook should let the hotkey's keystroke pass through
+						// to the active window (i.e. the hook is needed to dynamically disable the hotkey).
+						// mHookAction isn't checked here since those hotkeys shouldn't reach this stage (since they're always hook hotkeys).
+						for (hot.type = HotkeyTypeEnum.KeyboardHook, vp = hot.firstVariant; vp != null; vp = vp.nextVariant)
+						{
+							if (vp.hotCriterion == null && vp.enabled // It's a global variant (no criteria) and it's enabled...
+									&& (!Accessors.A_IsSuspended || vp.suspendExempt))
+								// ... and this variant isn't suspended (we already know IsCompletelyDisabled()==false from an earlier check).
+							{
+								hot.type = HotkeyTypeEnum.Normal; // Reset back to how it was before this loop started.  Hook not needed.
+								break;
+							}
+						}
+
+						// If the above promoted it from NORMAL to HOOK but the hotkey is currently registered,
+						// it will be unregistered later below.
+					}
+				}
+
+				// Check if this mouse hotkey also requires the keyboard hook (e.g. #LButton).
+				// Some mouse hotkeys, such as those with normal modifiers, don't require it
+				// since the mouse hook has logic to handle that situation.  But those that
+				// are composite hotkeys such as "RButton & Space" or "Space & RButton" need
+				// the keyboard hook:
+				if (hot.type == HotkeyTypeEnum.MouseHook && (
+							hot.modifierSC != 0 || hot.sc != 0 // i.e. since it's an SC, the modifying key isn't a mouse button.
+							|| hot.hookAction != 0 // v1.0.25.05: At least some alt-tab actions require the keyboard hook. For example, a script consisting only of "MButton::AltTabAndMenu" would not work properly otherwise.
+							// v1.0.25.05: The line below was added to prevent the Start Menu from appearing, which
+							// requires the keyboard hook. ALT hotkeys don't need it because the mouse hook sends
+							// a CTRL keystroke to disguise them, a trick that is unfortunately not reliable for
+							// when it happens while the while key is down (though it does disguise a Win-up).
+							|| ((hot.modifiersConsolidatedLR & (KeyboardMouseSender.MOD_LWIN | KeyboardMouseSender.MOD_RWIN)) != 0 && (hot.modifiersConsolidatedLR & (KeyboardMouseSender.MOD_LALT | KeyboardMouseSender.MOD_RALT)) == 0)
+							// For v1.0.30, above has been expanded to include Win+Shift and Win+Control modifiers.
+							|| (hot.vk != 0 && !ht.IsMouseVK(hot.vk)) // e.g. "RButton & Space"
+							|| (hot.modifierVK != 0 && !ht.IsMouseVK(hot.modifierVK)))) // e.g. "Space & RButton"
+					hot.type = HotkeyTypeEnum.BothHook;  // Needed by ChangeHookState().
+
+				// For the above, the following types of mouse hotkeys do not need the keyboard hook:
+				// 1) mAllowExtraModifiers: Already handled since the mouse hook fetches the modifier state
+				//    manually when the keyboard hook isn't installed.
+				// 2) mModifiersConsolidatedLR (i.e. the mouse button is modified by a normal modifier
+				//    such as CTRL): Same reason as #1.
+				// 3) As a subset of #2, mouse hotkeys that use WIN as a modifier will not have the
+				//    Start Menu suppressed unless the keyboard hook is installed.  It's debatable,
+				//    but that seems a small price to pay (esp. given how rare it is just to have
+				//    the mouse hook with no keyboard hook) to avoid the overhead of the keyboard hook.
+				// If the hotkey is normal, try to register it.  If the register fails, use the hook to try
+				// to override any other script or program that might have it registered (as documented):
+				if (hot.type == HotkeyTypeEnum.Normal)
+				{
+					if (hot.Register() == ResultType.Fail) // Can't register it, usually due to some other application or the OS using it.
+						hot.type = HotkeyTypeEnum.KeyboardHook;
+				}
+				else // mType isn't NORMAL (possibly due to something above changing it), so ensure it isn't registered.
+				{
+					if (hot.isRegistered) // Improves typical performance since this hotkey could be mouse, joystick, etc.
+						// Although the hook effectively overrides registered hotkeys, they should be unregistered anyway
+						// to prevent the Send command from triggering the hotkey, and perhaps other side-effects.
+						_ = hot.Unregister();
+				}
+
+				switch (hot.type)
+				{
+					case HotkeyTypeEnum.KeyboardHook: whichHookNeeded |= HookType.Keyboard; break;
+
+					case HotkeyTypeEnum.MouseHook: whichHookNeeded |= HookType.Mouse; break;
+
+					case HotkeyTypeEnum.BothHook: whichHookNeeded |= HookType.Keyboard | HookType.Mouse; break;
+				}
+			} // for()
+
+			// Check if anything else requires the hook.
+			// But do this part outside of the above block because these values may have changed since
+			// this function was first called.  By design, the Num/Scroll/CapsLock AlwaysOn/Off setting
+			// stays in effect even when Suspend in ON.
+			var ts = Keysharp.Core.Keyboard.toggleStates;
+
+			if (HotstringDefinition.enabledCount != 0
+					|| Keysharp.Scripting.Script.input != null // v1.0.91: Hook is needed for collecting input.
+					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
+				whichHookNeeded |= HookType.Keyboard;
+
+			if (Keysharp.Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringDefinition.enabledCount != 0))
+				whichHookNeeded |= HookType.Mouse;
+
+			// Install or deinstall either or both hooks, if necessary, based on these param values.
+			ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
+
+			// Fix for v1.0.34: If the auto-execute section uses the Hotkey command but returns before doing
+			// something that calls MsgSleep, the main timer won't have been turned on.  For example:
+			// Hotkey, Joy1, MySubroutine
+			// ;Sleep 1  ; This was a workaround before this fix.
+			// return
+			// By putting the following check here rather than in AutoHotkey.cpp, that problem is resolved.
+			// In addition...
+			if (joyHotkeyCount != 0)  // Joystick hotkeys require the timer to be always on.
+				Keysharp.Core.Flow.SetMainTimer();
 		}
+
+		public override string ToString() => Name;
 
 		/// <summary>
 		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
@@ -570,7 +696,7 @@ namespace Keysharp.Core.Common.Keyboard
 			ht.AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
 
 			if (Keysharp.Scripting.Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
-				WindowsAPI.UnhookWindowsHookEx(Keysharp.Scripting.Script.playbackHook);
+				_ = WindowsAPI.UnhookWindowsHookEx(Keysharp.Scripting.Script.playbackHook);
 
 			shk.Clear();//Hotkeys will unregister as they go out of scope.
 			// Do this only at the last possible moment prior to exit() because otherwise
@@ -1069,7 +1195,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static HotkeyDefinition FindHotkeyByTrueNature(string _name, ref bool _suffixHasTilde, ref bool _hookIsMandatory)
 		{
 			HotkeyProperties propCandidate = new HotkeyProperties(), propExisting = new HotkeyProperties();
-			TextToModifiers(_name, null, propCandidate);
+			_ = TextToModifiers(_name, null, propCandidate);
 			_suffixHasTilde = propCandidate.suffixHasTilde; // Set for caller.
 			_hookIsMandatory = propCandidate.hookIsMandatory; // Set for caller.
 			// Both suffix_has_tilde and a hypothetical prefix_has_tilde are ignored during dupe-checking below.
@@ -1077,7 +1203,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 			for (var i = 0; i < shk.Count; ++i)
 			{
-				TextToModifiers(shk[i].Name, null, propExisting);
+				_ = TextToModifiers(shk[i].Name, null, propExisting);
 
 				if (propExisting.modifiers == propCandidate.modifiers
 						&& propExisting.modifiersLR == propCandidate.modifiersLR
@@ -1304,315 +1430,14 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static string ListHotkeys(string buf)
 		{
 			var sb = new StringBuilder(4096);
-			sb.Append(buf);
-			sb.Append("Type\tOff?\tLevel\tRunning\tName\r\n-------------------------------------------------------------------\r\n");// Save vertical space by limiting newlines here:
+			_ = sb.Append(buf);
+			_ = sb.Append("Type\tOff?\tLevel\tRunning\tName\r\n-------------------------------------------------------------------\r\n");// Save vertical space by limiting newlines here:
 
 			// Start at the oldest and continue up through the newest:
 			for (var i = 0; i < shk.Count; ++i)
-				sb.Append(shk[i].ToText(buf, true));
+				_ = sb.Append(shk[i].ToText(buf, true));
 
 			return sb.ToString();
-		}
-
-		/// <summary>
-		/// This function examines all hotkeys and hotstrings to determine:
-		/// - Which hotkeys to register/unregister, or activate/deactivate in the hook.
-		/// - Which hotkeys to be changed from HK_NORMAL to HK_KEYBD_HOOK (or vice versa).
-		/// - In pursuit of the above, also assess the interdependencies between hotkeys: the presence or
-		///   absence of a given hotkey can sometimes impact whether other hotkeys need to be converted from
-		///   HK_NORMAL to HK_KEYBD_HOOK.  For example, a newly added/enabled global hotkey variant can
-		///   cause a HK_KEYBD_HOOK hotkey to become HK_NORMAL, and the converse is also true.
-		/// - Based on the above, decide whether the keyboard and/or mouse hooks need to be (de)activated.
-		/// </summary>
-		//internal static void ManifestAllHotkeysHotstringsHooks()
-		public static void ManifestAllHotkeysHotstringsHooks()
-		{
-			// v1.0.37.05: A prefix key such as "a" in "a & b" should cause any use of "a" as a suffix
-			// (such as ^!a) also to be a hook hotkey.  Otherwise, the ^!a hotkey won't fire because the
-			// hook prevents the OS's hotkey monitor from seeing that the hotkey was pressed.  NOTE:
-			// This is done only for virtual keys because prefix keys that are done by scan code (mModifierSC)
-			// should already be hook hotkeys when used as suffix keys (there may be a few unusual exceptions,
-			// but they seem too rare to justify the extra code size).
-			// Update for v1.0.40: This first pass through the hotkeys now also checks things for hotkeys
-			// that can affect other hotkeys. If this weren't done in the first pass, it might be possible
-			// for a hotkey to make some other hotkey into a hook hotkey, but then the hook might not be
-			// installed if that hotkey had already been processed earlier in the second pass.  Similarly,
-			// a hotkey processed earlier in the second pass might have been registered when in fact it
-			// should have become a hook hotkey due to something learned only later in the second pass.
-			// Doing these types of things in the first pass resolves such situations.
-			// Update for v1.1.27: Doing the above in the first pass doesn't work correctly, as mType is
-			// reset to default during the first pass (even if a previous iteration might has set it to
-			// HK_KEYBD_HOOK, such as when it is eclipsed by a wildcard hotkey).  One workaround would
-			// be to set mKeybdHookMandatory = true, but that would prevent the hotkey from reverting to
-			// HK_NORMAL when it no longer needs the hook.  Instead, there are now three passes.
-			var vkIsPrefix = new bool[WindowsHookThread.VK_ARRAY_COUNT];
-			var hkIsInactive = new bool[shk.Count];// No init needed.  Currently limited to around 16k (HOTKEY_ID_MAX).
-			HotkeyVariant vp;
-			int i, j;
-			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMouseSender = ht.kbdMsSender;
-
-			// FIRST PASS THROUGH THE HOTKEYS:
-			for (i = 0; i < shk.Count; ++i)
-			{
-				var hot = shk[i];  // For performance and convenience.
-
-				if (hkIsInactive[i] = (Accessors.A_IsSuspended && !hot.IsExemptFromSuspend())
-									  || hot.IsCompletelyDisabled()) // Listed last for short-circuit performance.
-				{
-					// In the cases above, nothing later below can change the fact that this hotkey should
-					// now be in an unregistered state.
-					if (hot.isRegistered)
-					{
-						hot.Unregister();
-
-						// In case the hotkey's thread is already running, it seems best to cancel any repeat-run
-						// that has already been scheduled.  Older comment: CT_SUSPEND, at least, relies on us to do this.
-						for (vp = hot.firstVariant; vp != null; vp = vp.nextVariant)
-							vp.runAgainAfterFinished = false; // Applies to all hotkey types, not just registered ones.
-					}
-
-					continue;
-				}
-
-				// Otherwise, this hotkey will be in effect, so check its attributes.
-
-				if (hot.keybdHookMandatory)
-				{
-					// v1.0.44: The following is relied upon by some things like the Hotkey constructor and the tilde prefix
-					// (the latter can set mKeybdHookMandatory for a hotkey sometime after the first variant is added [such
-					// as for a subsequent variant]).  This practice also improves maintainability.
-					if (HK_TYPE_CAN_BECOME_KEYBD_HOOK(hot.type)) // To ensure it hasn't since become a joystick/mouse/mouse-and-keyboard hotkey.
-						hot.type = HotkeyTypeEnum.KeyboardHook;
-				}
-				else // Hook isn't mandatory, so set any non-mouse/joystick/both hotkey to normal for possibly overriding later below.
-				{
-					// v1.0.42: The following is done to support situations in which a hotkey can be a hook hotkey sometimes,
-					// but after a (de)suspend or after a change to other hotkeys via the Hotkey command, might no longer
-					// require the hook.  Examples include:
-					// 1) A hotkey can't be registered because some other app is using it, but later
-					//    that condition changes.
-					// 2) Suspend or the Hotkey command changes wildcard hotkeys so that non-wildcard
-					//    hotkeys that have the same suffix are no longer eclipsed, and thus don't need
-					//    the hook.  The same type of thing can happen if a key-up hotkey is disabled,
-					//    which would allow it's key-down hotkey to become non-hook.  Similarly, if a
-					//    all of a prefix key's hotkeys become disabled, and that prefix is also a suffix,
-					//    those suffixes no longer need to be hook hotkeys.
-					// 3) There may be other ways, especially in the future involving #HotIf WinActive/Exist
-					//    keys whose criteria change.
-					if (hot.type == HotkeyTypeEnum.KeyboardHook)
-						hot.type = HotkeyTypeEnum.Normal; // To possibly be overridden back to HK_KEYBD_HOOK later below; but if not, it will be registered later below.
-				}
-
-				if (hot.modifierVK != 0)
-					vkIsPrefix[hot.modifierVK] = true;
-			} // End of first pass loop.
-
-			// SECOND PASS THROUGH THE HOTKEYS:
-			// Check for hotkeys that can affect other hotkeys, such as wildcard or key-up hotkeys.
-			// This is separate to the other passes for reasons described at the top of the function.
-			for (i = 0; i < shk.Count; ++i)
-			{
-				if (hkIsInactive[i])
-					continue;
-
-				var hot = shk[i];  // For performance and convenience.
-
-				if (hot.keyUp && hot.vk != 0) // No need to do the below for mSC hotkeys since their down hotkeys would already be handled by the hook.
-				{
-					// For each key-up hotkey, search for any its counterpart that's a down-hotkey (if any).
-					// Such a hotkey should also be handled by the hook because if registered, such as
-					// "#5" (reg) and "#5 up" (hook), the hook would suppress the down event because it
-					// is unaware that down-hotkey exists (it's suppressed to prevent the key from being
-					// stuck in a logically down state).
-					for (j = 0; j < shk.Count; ++j)
-					{
-						// No need to check the following because they are already hook hotkeys:
-						// mModifierVK/SC
-						// mAllowExtraModifiers
-						// mNoSuppress
-						// In addition, there is no need to check shk[j].mKeyUp because that can't be
-						// true if it's mType is HK_NORMAL:
-						// Also, g_IsSuspended and IsCompletelyDisabled() aren't checked
-						// because it's harmless to operate on disabled hotkeys in this way.
-						if (shk[j].vk == hot.vk && HK_TYPE_CAN_BECOME_KEYBD_HOOK(shk[j].type) // Ordered for short-circuit performance.
-								&& shk[j].modifiersConsolidatedLR == hot.modifiersConsolidatedLR)
-						{
-							shk[j].type = HotkeyTypeEnum.KeyboardHook;
-							// And if it's currently registered, it will be unregistered later below.
-						}
-					}
-				}
-
-				// v1.0.40: If this is a wildcard hotkey, any hotkeys it eclipses (i.e. includes as subsets)
-				// should be made into hook hotkeys also, because otherwise they would be overridden by hook.
-				// The following criteria are checked:
-				// 1) Exclude those that have a ModifierSC/VK because in those cases, mAllowExtraModifiers is
-				//    ignored.
-				// 2) Exclude those that lack an mVK because those with mSC can't eclipse registered hotkeys
-				//   (since any would-be eclipsed mSC hotkey is already a hook hotkey due to is SC nature).
-				// 3) It must not have any mModifiersLR because such hotkeys can't completely eclipse
-				//    registered hotkeys since they always have neutral vs. left/right-specific modifiers.
-				//    For example, if *<^a is a hotkey, ^a can still be a registered hotkey because it could
-				//    still be activated by pressing RControl+a.
-				// 4) For maintainability, it doesn't check mNoSuppress because the hook is needed anyway,
-				//    so might as well handle eclipsed hotkeys with it too.
-				if (hot.allowExtraModifiers && hot.vk != 0 && hot.modifiersLR == 0 && !(hot.modifierSC != 0 || hot.modifierVK != 0))
-				{
-					for (j = 0; j < shk.Count; ++j)
-					{
-						// If it's not of type HK_NORMAL, there's no need to change its type regardless
-						// of the values of its other members.  Also, if the wildcard hotkey (hot) has
-						// any neutral modifiers, this hotkey must have at least those neutral modifiers
-						// too or else it's not eclipsed (and thus registering it is okay).  In other words,
-						// the wildcard hotkey's neutral modifiers must be a perfect subset of this hotkey's
-						// modifiers for this one to be eclipsed by it. Note: Neither mModifiersLR nor
-						// mModifiersConsolidated is checked for simplicity and also because it seems to add
-						// flexibility.  For example, *<^>^a would require both left AND right ctrl to be down,
-						// not EITHER. In other words, mModifiersLR can never in effect contain a neutral modifier.
-						if (shk[j].vk == hot.vk && HK_TYPE_CAN_BECOME_KEYBD_HOOK(shk[j].type) // Ordered for short-circuit performance.
-								&& (hot.modifiers & shk[j].modifiers) == hot.modifiers)
-						{
-							// Note: No need to check mModifiersLR because it would already be a hook hotkey in that case;
-							// that is, the check of shk[j].mType precludes it.  It also precludes the possibility
-							// of shk[j] being a key-up hotkey, wildcard hotkey, etc.
-							shk[j].type = HotkeyTypeEnum.KeyboardHook;
-							// And if it's currently registered, it will be unregistered later below.
-						}
-					}
-				}
-			} // End of second pass loop.
-
-			// THIRD PASS THROUGH THE HOTKEYS:
-			// v1.0.42: Reset sWhichHookNeeded because it's now possible that the hook was on before but no longer
-			// needed due to changing of a hotkey from hook to registered (for various reasons described above):
-			whichHookNeeded = 0;
-
-			for (i = 0; i < shk.Count; ++i)
-			{
-				if (hkIsInactive[i])
-					continue; // v1.0.40: Treat disabled hotkeys as though they're not even present.
-
-				var hot = shk[i];  // For performance and convenience.
-
-				// HK_MOUSE_HOOK hotkeys, and most HK_KEYBD_HOOK hotkeys, are handled by the hotkey constructor.
-				// What we do here upgrade any NORMAL/registered hotkey to HK_KEYBD_HOOK if there are other
-				// hotkeys that interact or overlap with it in such a way that the hook is preferred.
-				// This evaluation is done here because only now that hotkeys are about to be activated do
-				// we know which ones are disabled or suspended, and thus don't need to be taken into account.
-				if (HK_TYPE_CAN_BECOME_KEYBD_HOOK(hot.type))
-				{
-					if (vkIsPrefix[hot.vk])
-						// If it's a suffix that is also used as a prefix, use hook (this allows ^!a to work without $ when "a & b" is a hotkey).
-						// v1.0.42: This was fixed so that mVK_WasSpecifiedByNumber dosn't affect it.  That is, a suffix that's
-						// also used as a prefix should become a hook hotkey even if the suffix is specified as "vkNNN::".
-						hot.type = HotkeyTypeEnum.KeyboardHook;
-					// And if it's currently registered, it will be unregistered later below.
-					else
-					{
-						// v1.0.42: Any #HotIf keyboard hotkey must use the hook if it lacks an enabled,
-						// non-suspended, global variant.  Under those conditions, the hotkey is either:
-						// 1) Single-variant hotkey that has criteria (non-global).
-						// 2) Multi-variant hotkey but all variants have criteria (non-global).
-						// 3) A hotkey with a non-suppressed (~) variant (always, for code simplicity): already handled by AddVariant().
-						// In both cases above, the hook must handle the hotkey because there can be
-						// situations in which the hook should let the hotkey's keystroke pass through
-						// to the active window (i.e. the hook is needed to dynamically disable the hotkey).
-						// mHookAction isn't checked here since those hotkeys shouldn't reach this stage (since they're always hook hotkeys).
-						for (hot.type = HotkeyTypeEnum.KeyboardHook, vp = hot.firstVariant; vp != null; vp = vp.nextVariant)
-						{
-							if (vp.hotCriterion == null && vp.enabled // It's a global variant (no criteria) and it's enabled...
-									&& (!Accessors.A_IsSuspended || vp.suspendExempt))
-								// ... and this variant isn't suspended (we already know IsCompletelyDisabled()==false from an earlier check).
-							{
-								hot.type = HotkeyTypeEnum.Normal; // Reset back to how it was before this loop started.  Hook not needed.
-								break;
-							}
-						}
-
-						// If the above promoted it from NORMAL to HOOK but the hotkey is currently registered,
-						// it will be unregistered later below.
-					}
-				}
-
-				// Check if this mouse hotkey also requires the keyboard hook (e.g. #LButton).
-				// Some mouse hotkeys, such as those with normal modifiers, don't require it
-				// since the mouse hook has logic to handle that situation.  But those that
-				// are composite hotkeys such as "RButton & Space" or "Space & RButton" need
-				// the keyboard hook:
-				if (hot.type == HotkeyTypeEnum.MouseHook && (
-							hot.modifierSC != 0 || hot.sc != 0 // i.e. since it's an SC, the modifying key isn't a mouse button.
-							|| hot.hookAction != 0 // v1.0.25.05: At least some alt-tab actions require the keyboard hook. For example, a script consisting only of "MButton::AltTabAndMenu" would not work properly otherwise.
-							// v1.0.25.05: The line below was added to prevent the Start Menu from appearing, which
-							// requires the keyboard hook. ALT hotkeys don't need it because the mouse hook sends
-							// a CTRL keystroke to disguise them, a trick that is unfortunately not reliable for
-							// when it happens while the while key is down (though it does disguise a Win-up).
-							|| ((hot.modifiersConsolidatedLR & (KeyboardMouseSender.MOD_LWIN | KeyboardMouseSender.MOD_RWIN)) != 0 && (hot.modifiersConsolidatedLR & (KeyboardMouseSender.MOD_LALT | KeyboardMouseSender.MOD_RALT)) == 0)
-							// For v1.0.30, above has been expanded to include Win+Shift and Win+Control modifiers.
-							|| (hot.vk != 0 && !ht.IsMouseVK(hot.vk)) // e.g. "RButton & Space"
-							|| (hot.modifierVK != 0 && !ht.IsMouseVK(hot.modifierVK)))) // e.g. "Space & RButton"
-					hot.type = HotkeyTypeEnum.BothHook;  // Needed by ChangeHookState().
-
-				// For the above, the following types of mouse hotkeys do not need the keyboard hook:
-				// 1) mAllowExtraModifiers: Already handled since the mouse hook fetches the modifier state
-				//    manually when the keyboard hook isn't installed.
-				// 2) mModifiersConsolidatedLR (i.e. the mouse button is modified by a normal modifier
-				//    such as CTRL): Same reason as #1.
-				// 3) As a subset of #2, mouse hotkeys that use WIN as a modifier will not have the
-				//    Start Menu suppressed unless the keyboard hook is installed.  It's debatable,
-				//    but that seems a small price to pay (esp. given how rare it is just to have
-				//    the mouse hook with no keyboard hook) to avoid the overhead of the keyboard hook.
-				// If the hotkey is normal, try to register it.  If the register fails, use the hook to try
-				// to override any other script or program that might have it registered (as documented):
-				if (hot.type == HotkeyTypeEnum.Normal)
-				{
-					if (hot.Register() == ResultType.Fail) // Can't register it, usually due to some other application or the OS using it.
-						hot.type = HotkeyTypeEnum.KeyboardHook;
-				}
-				else // mType isn't NORMAL (possibly due to something above changing it), so ensure it isn't registered.
-				{
-					if (hot.isRegistered) // Improves typical performance since this hotkey could be mouse, joystick, etc.
-						// Although the hook effectively overrides registered hotkeys, they should be unregistered anyway
-						// to prevent the Send command from triggering the hotkey, and perhaps other side-effects.
-						hot.Unregister();
-				}
-
-				switch (hot.type)
-				{
-					case HotkeyTypeEnum.KeyboardHook: whichHookNeeded |= HookType.Keyboard; break;
-
-					case HotkeyTypeEnum.MouseHook: whichHookNeeded |= HookType.Mouse; break;
-
-					case HotkeyTypeEnum.BothHook: whichHookNeeded |= HookType.Keyboard | HookType.Mouse; break;
-				}
-			} // for()
-
-			// Check if anything else requires the hook.
-			// But do this part outside of the above block because these values may have changed since
-			// this function was first called.  By design, the Num/Scroll/CapsLock AlwaysOn/Off setting
-			// stays in effect even when Suspend in ON.
-			var ts = Keysharp.Core.Keyboard.toggleStates;
-
-			if (HotstringDefinition.enabledCount != 0
-					|| Keysharp.Scripting.Script.input != null // v1.0.91: Hook is needed for collecting input.
-					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
-				whichHookNeeded |= HookType.Keyboard;
-
-			if (Keysharp.Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringDefinition.enabledCount != 0))
-				whichHookNeeded |= HookType.Mouse;
-
-			// Install or deinstall either or both hooks, if necessary, based on these param values.
-			ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
-
-			// Fix for v1.0.34: If the auto-execute section uses the Hotkey command but returns before doing
-			// something that calls MsgSleep, the main timer won't have been turned on.  For example:
-			// Hotkey, Joy1, MySubroutine
-			// ;Sleep 1  ; This was a workaround before this fix.
-			// return
-			// By putting the following check here rather than in AutoHotkey.cpp, that problem is resolved.
-			// In addition...
-			if (joyHotkeyCount != 0)  // Joystick hotkeys require the timer to be always on.
-				Keysharp.Core.Flow.SetMainTimer();
 		}
 
 		/// <summary>
@@ -2262,7 +2087,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// those that aren't kept queued due to the message filter) prior to returning to its caller.
 					// But for maintainability, it seems best to change this to g_hWnd vs. NULL to make joystick
 					// hotkeys behave more like standard hotkeys.
-					WindowsAPI.PostMessage(Keysharp.Scripting.Script.mainWindow.Handle, WindowsAPI.WM_HOTKEY, (IntPtr)i, IntPtr.Zero);
+					_ = WindowsAPI.PostMessage(Keysharp.Scripting.Script.mainWindow.Handle, WindowsAPI.WM_HOTKEY, (IntPtr)i, IntPtr.Zero);
 				}
 
 				//else continue the loop in case the user has newly pressed more than one joystick button.
@@ -2469,7 +2294,7 @@ namespace Keysharp.Core.Common.Keyboard
 				Keysharp.Core.Flow.AllowInterruption = false;
 
 				if (Keysharp.Core.Dialogs.MsgBox(error_text, "", "YesNo") == DialogResult.No.ToString())
-					Keysharp.Core.Flow.ExitApp(Keysharp.Core.Flow.ExitReasons.Close);// Might not actually Exit if there's an OnExit function.
+					_ = Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Close);// Might not actually Exit if there's an OnExit function.
 
 				Keysharp.Core.Flow.AllowInterruption = true;
 				dialogIsDisplayed = false;
@@ -2524,7 +2349,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// trying to put them into a shared function (which would be difficult due to their nature),
 					// it's much more maintainable to post a message, and in most cases, it shouldn't measurably
 					// affect response time (this feature is rarely used anyway).
-					WindowsAPI.PostMessage(Keysharp.Scripting.Script.mainWindow.Handle, WindowsAPI.WM_HOTKEY, id, 0);//Again need to figure out how to do this in a cross platform manner.//TODO
+					_ = WindowsAPI.PostMessage(Keysharp.Scripting.Script.mainWindow.Handle, WindowsAPI.WM_HOTKEY, id, 0);//Again need to figure out how to do this in a cross platform manner.//TODO
 				}
 
 				//else it was posted too long ago, so don't do it.  This is because most users wouldn't
@@ -2533,17 +2358,15 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 		}
 
-		internal bool PerformIsAllowed(HotkeyVariant variant)
-		{
-			// For now, attempts to launch another simultaneous instance of this subroutine
-			// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
-			// In the future, it might be better to have this user-configurable, i.e. to devise
-			// some way for the hotkeys to be kept queued up so that they take effect only when
-			// the number of currently active threads drops below the max.  But doing such
-			// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
-			// would be slowed down to prevent the subroutines from running concurrently:
-			return variant.existingThreads < variant.maxThreads;
-		}
+		internal bool PerformIsAllowed(HotkeyVariant variant) =>
+		// For now, attempts to launch another simultaneous instance of this subroutine
+		// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
+		// In the future, it might be better to have this user-configurable, i.e. to devise
+		// some way for the hotkeys to be kept queued up so that they take effect only when
+		// the number of currently active threads drops below the max.  But doing such
+		// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
+		// would be slowed down to prevent the subroutines from running concurrently:
+		variant.existingThreads < variant.maxThreads;
 
 		internal ResultType Register()
 		{
@@ -2715,6 +2538,177 @@ namespace Keysharp.Core.Common.Keyboard
 		[Flags]
 		internal enum Options
 		{ None = 0, IgnoreModifiers = 1, PassThrough = 2, Up = 4 }
+	}
+
+	internal class HkSortedType
+	{
+		internal bool allowExtraModifiers;
+		internal uint idWithFlags;
+		internal int modifiers;
+		internal int modifiersLR;
+		internal int sc;
+		internal int vk;
+
+		/// <summary>
+		/// The only items whose order are important are those with the same suffix.  For a given suffix,
+		/// we want the most general modifiers (e.g. CTRL) to appear closer to the top of the list than
+		/// those with more specific modifiers (e.g. CTRL-ALT).  To make qsort() perform properly, it seems
+		/// best to sort by vk/sc then by generality.
+		/// </summary>
+		internal static int SortMostGeneralBeforeLeast(HkSortedType b1, HkSortedType b2)
+
+		{
+			if (b1.vk != b2.vk)
+				return b1.vk - b2.vk;
+
+			if (b1.sc != b2.sc)
+				return b1.sc - b2.sc;
+
+			// If the above didn't return, we now know that a1 and a2 have the same vk's or sc's.  So
+			// we use a tie-breaker to cause the most general keys to appear closer to the top of the
+			// list than less general ones.  This should result in a given suffix being grouped together
+			// after the sort.  Within each suffix group, the most general modifiers should appear first.
+
+			// This part is basically saying that keys that don't allow extra modifiers can always be processed
+			// after all other keys:
+			if (b1.allowExtraModifiers && !b2.allowExtraModifiers)
+				return -1;  // Indicate that a1 is smaller, so that it will go to the top.
+
+			if (!b1.allowExtraModifiers && b2.allowExtraModifiers)
+				return 1;
+
+			// However the order of suffixes that don't allow extra modifiers, among themselves, may be important.
+			// Thus we don't return a zero if both have AllowExtraModifiers = 0.
+			// Example: User defines ^a, but also defines >^a.  What should probably happen is that >^a forces ^a
+			// to fire only when <^a occurs.
+			// v1.1.33.03: Compare number of modifiers.  This supersedes some previous checks for when
+			// a1's modifiers are a subset of a2's or vice versa (since the subset would always have
+			// fewer bits).  This new method helps prioritize combinations which overlap but have a
+			// different number of modifiers, such as "*<^a" vs. "*<^>^a".
+			var nmodLR_a1 = System.Numerics.BitOperations.PopCount((uint)b1.modifiersLR);
+			var nmodLR_a2 = System.Numerics.BitOperations.PopCount((uint)b2.modifiersLR);
+			var nmod_a1 = System.Numerics.BitOperations.PopCount((uint)b1.modifiers) + nmodLR_a1;
+			var nmod_a2 = System.Numerics.BitOperations.PopCount((uint)b2.modifiers) + nmodLR_a2;
+
+			if (nmod_a1 != nmod_a2)
+				return nmod_a1 - nmod_a2;
+
+			if (nmodLR_a1 != nmodLR_a2)
+				return nmodLR_a1 - nmodLR_a2;
+
+			// v1.1.33.03: Sort by modifier value so that key-up hotkeys end up immediately after their
+			// counterparts, otherwise we get odd results like Alt+Shift+A firing "*!a" and "*+a up"
+			// instead of "*!a" and "*!a up" or "*+a" and "*+a up".
+			if (b1.modifiers != b2.modifiers)
+				return b1.modifiers - b2.modifiers; // !^+#
+
+			if (b1.modifiersLR != b2.modifiersLR)
+				return b1.modifiersLR - b2.modifiersLR; // <^>^<!>!<+>+<#>#
+
+			// v1.0.38.03: The following check is added to handle a script containing hotkeys
+			// such as the following (in this order):
+			// *MButton::
+			// *Mbutton Up::
+			// MButton::
+			// MButton Up::
+			// What would happen before is that the qsort() would sometimes cause "MButton Up" from the
+			// list above to be processed prior to "MButton", which would set hotkey_up[*MButton's ID]
+			// to be MButton Up's ID.  Then when "MButton" was processed, it would set its_table_entry
+			// to MButton's ID, but hotkey_up[MButton's ID] would be wrongly left INVALID when it should
+			// have received a copy of the asterisk hotkey ID's counterpart key-up ID.  However, even
+			// giving it a copy would not be quite correct because then *MButton's ID would wrongly
+			// be left associated with MButton's Up's ID rather than *MButton Up's.  By solving the
+			// problem here in the sort rather than copying the ID, both bugs are resolved.
+			// v1.1.33.03: The scenario above would now also be prevented by checks in ChangeHookState
+			// which avoid pairing a key-up hotkey with a more permissive key-down hotkey, but keeping
+			// this might help ensure key-up hotkeys are matched optimally when there is overlap.
+			//if ((b1.id_with_flags & HOTKEY_KEY_UP) != (b2.id_with_flags & HOTKEY_KEY_UP))
+			//  return (b1.id_with_flags & HOTKEY_KEY_UP) ? 1 : -1; // Put key-up hotkeys higher in the list than their down counterparts (see comment above).
+			// v1.1.33.03: Getting to this point should mean that a1 and a2 have the same modifiers,
+			// vk and sc, but they might have different up/down status and key name (Esc/Escape/vk1B).
+			// Ensure predictability by putting them in an order based on id_with_flags.
+			return (int)b1.idWithFlags - (int)b2.idWithFlags;
+		}
+	}
+
+	internal class HotkeyCriterion
+	{
+		internal FuncObj callback;
+
+		//Unsure if this should be a function or a function object.//TODO
+		internal HotkeyCriterion nextCriterion, nextExpr;
+
+		internal string originalExpr;
+		internal HotCriterionEnum type;
+		internal string winTitle, winText;
+
+		// For finding expr in #HotIf expr
+		// Evaluate an #HotIf expression or callback function.
+		// This is called by MainWindowProc when it receives an AHK_HOT_IF_EVAL message.
+		/*
+		    internal ResultType Eval(string aHotkeyName)//Appears to be for evaluating new hotkeys at runtime, fill in later.//TODO
+		    {
+		    // Initialize a new quasi-thread to evaluate the expression. This may not be necessary for simple
+		    // expressions, but expressions which call user-defined functions may otherwise interfere with
+		    // whatever quasi-thread is running when the hook thread requests that this expression be evaluated.
+
+		    // Based on parts of MsgMonitor(). See there for comments.
+
+		    if (g_nThreads >= g_MaxThreadsTotal)
+		    return CONDITION_FALSE;
+
+		    bool prev_defer_messages = g_DeferMessagesForUnderlyingPump;
+		    // Force the use of PeekMessage() within MsgSleep() since GetMessage() is known to stall while
+		    // the system is waiting for our keyboard hook to return (last confirmed on Windows 10.0.18356).
+		    // This might relate to WM_TIMER being lower priority than the input hardware processing
+		    // performed by GetMessage().  MsgSleep() relies on WM_TIMER acting as a timeout for GetMessage().
+		    g_DeferMessagesForUnderlyingPump = true;
+
+		    // See MsgSleep() for comments about the following section.
+		    // Critical seems to improve reliability, either because the thread completes faster (i.e. before the timeout) or because we check for messages less often.
+		    InitNewThread(0, false, true, true);
+		    ResultType result;
+
+		    // Let HotIf default to the criterion currently being evaluated, in case Hotkey() is called.
+		    g.HotCriterion = this;
+
+		    // Update A_ThisHotkey, useful if #HotIf calls a function to do its dirty work.
+		    LPTSTR prior_hotkey_name[] = { g_script.mThisHotkeyName, g_script.mPriorHotkeyName };
+		    DWORD prior_hotkey_time[] = { g_script.mThisHotkeyStartTime, g_script.mPriorHotkeyStartTime };
+		    g_script.mPriorHotkeyName = g_script.mThisHotkeyName;           // For consistency
+		    g_script.mPriorHotkeyStartTime = g_script.mThisHotkeyStartTime; //
+		    g_script.mThisHotkeyName = aHotkeyName;
+		    g_script.mThisHotkeyStartTime = // Updated for consistency.
+		    g_script.mLastPeekTime = GetTickCount();
+
+		    // CALL THE CALLBACK
+		    ExprTokenType param = aHotkeyName;
+		    __int64 retval;
+		    result = IObjectPtr(Callback).ExecuteInNewThread(_T("#HotIf"), &param, 1, &retval);
+		    if (result != FAIL)
+		    result = retval ? CONDITION_TRUE : CONDITION_FALSE;
+
+		    // The following allows the expression to set the Last Found Window for the
+		    // hotkey function.
+		    // There may be some rare cases where the wrong hotkey gets this HWND (perhaps
+		    // if there are multiple hotkey messages in the queue), but there doesn't seem
+		    // to be any easy way around that.
+		    g_HotExprLFW = g.hWndLastUsed; // Even if above failed, for simplicity.
+
+		    // A_ThisHotkey must be restored else A_PriorHotkey will get an incorrect value later.
+		    g_script.mThisHotkeyName = prior_hotkey_name[0];
+		    g_script.mThisHotkeyStartTime = prior_hotkey_time[0];
+		    g_script.mPriorHotkeyName = prior_hotkey_name[1];
+		    g_script.mPriorHotkeyStartTime = prior_hotkey_time[1];
+
+		    ResumeUnderlyingThread();
+
+		    g_DeferMessagesForUnderlyingPump = prev_defer_messages;
+
+		    return result;
+		    return ResultType.ConditionTrue;
+		    }
+		*/
 	}
 
 	internal class HotkeyProperties // Struct used by TextToModifiers() and its callers.

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -17,9 +16,12 @@ namespace Keysharp.Core
 				imageLists = new ConcurrentDictionary<long, ImageList>();
 		}
 
-		public static long IL_Add(params object[] obj)
+		public static long IL_Add(object obj0, object obj1, object obj2 = null, object obj3 = null)
 		{
-			var (id, filename, icon, resizeNonIcon) = obj.L().Isi2(0, "", 1);
+			var id = obj0.Al();
+			var filename = obj1.As();
+			var icon = (int)obj2.Al(1);
+			var resizeNonIcon = obj3.Ab();
 			var il = imageLists.GetOrAdd(id);
 			var icontouse = icon;
 
@@ -32,7 +34,7 @@ namespace Keysharp.Core
 				{
 					var color = Color.FromArgb(icon);
 
-					if (resizeNonIcon == 0)
+					if (!resizeNonIcon)
 					{
 						var splitbmps = ImageHelper.SplitBitmap(bmp, il.ImageSize.Width, il.ImageSize.Height);
 
@@ -55,12 +57,12 @@ namespace Keysharp.Core
 		/// Creates a new ImageList.
 		/// </summary>
 		/// <returns>The unique ID of the ImageList.</returns>
-		public static long IL_Create(params object[] obj)
+		public static long IL_Create(object obj = null)
 		{
-			var largeIcons = obj.L().I1();
+			var largeIcons = obj.Ab();
 			var il = new ImageList
 			{
-				ImageSize = largeIcons == 0 ? SystemInformation.SmallIconSize : SystemInformation.IconSize
+				ImageSize = !largeIcons ? SystemInformation.SmallIconSize : SystemInformation.IconSize
 			};//initialCount and growCount are unused. Memory is handled internally.
 			var ptr = il.Handle.ToInt64();
 			return imageLists.TryAdd(ptr, il) ? ptr : 0;
@@ -71,11 +73,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="id">The ImageList ID.</param>
 		/// <returns><c>1</c> if the specified ImageList was deleted, <c>0</c> otherwise.</returns>
-		public static long IL_Destroy(params object[] obj)
-		{
-			var id = obj.L().L1();
-			return imageLists.TryRemove(id, out _) ? 1 : 0;
-		}
+		public static long IL_Destroy(object obj) => imageLists.TryRemove(obj.Al(), out _) ? 1L : 0L;
 
 		/// <summary>
 		/// Gets an ImageList based on the ID that was returned when it was created.
@@ -91,7 +89,7 @@ namespace Keysharp.Core
 					if (kv.Value == il)
 						return kv.Key;
 
-			return 0;
+			return 0L;
 		}
 	}
 }

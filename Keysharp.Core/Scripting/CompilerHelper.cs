@@ -3,7 +3,6 @@ using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
@@ -11,7 +10,6 @@ using Microsoft.CodeAnalysis.Emit;
 using System.Text.Json;
 using System.Runtime.InteropServices;
 using System.Collections.Immutable;
-using Microsoft.Extensions.DependencyModel;
 
 #if WINDOWS
 
@@ -52,7 +50,8 @@ using static Keysharp.Core.Core;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Dialogs;
-using static Keysharp.Core.Disk;
+using static Keysharp.Core.Dir;
+using static Keysharp.Core.Drive;
 using static Keysharp.Core.DllHelper;
 using static Keysharp.Core.Env;
 using static Keysharp.Core.File;
@@ -84,7 +83,6 @@ using static Keysharp.Core.Window;
 using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Script;
 using static Keysharp.Scripting.Script.Operator;
-
 ";
 
 		public CompilerHelper()
@@ -196,6 +194,7 @@ using static Keysharp.Scripting.Script.Operator;
 					"System.Reflection",
 					"System.Runtime",
 					"System.Windows.Forms",
+					"System.Runtime.InteropServices",
 					"Keysharp.Core"
 				};
 				//var references = new List<MetadataReference>();

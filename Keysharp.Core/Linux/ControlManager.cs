@@ -105,10 +105,7 @@ namespace Keysharp.Core.Linux
 
 		internal override long EditGetCurrentLine(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 
-		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			return "";
-		}
+		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
 
 		internal override long EditGetLineCount(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 
@@ -128,9 +125,6 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout)
-		{
-			return 1;
-		}
+		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout) => 1;
 	}
 }

@@ -1,10 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Most functions here do not take variadic parameters so they can run as fast as possible.
+	/// Also, an attempt to cast the object argument to a double is first made because it's the
+	/// most common and fastest case. If it's not a double, ParseDouble() is used.
+	/// </summary>
 	public static class Maths
 	{
 		[ThreadStatic]
@@ -21,27 +25,24 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static void RandomSeed(params object[] obj) => randomGenerator = new Random(obj.L().I1());
+		public static double Abs(object obj) => Math.Abs(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the absolute value of a number.
 		/// </summary>
 		/// <param name="n">Any number.</param>
 		/// <returns>The magnitude of <paramref name="n"/>.</returns>
-
-		public static double Abs(params object[] obj) => Math.Abs(obj.L().D1());
-
 		/// <summary>
 		/// Returns the angle whose cosine is the specified number.
 		/// </summary>
 		/// <param name="n">A number representing a cosine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that 0 ≤ θ ≤ π.</returns>
-		public static double ACos(params object[] obj)
+		public static double ACos(object obj)
 		{
-			var n = obj.L().D1();
+			var n = obj is double d ? d : obj.Ad();
 
 			if (n < -1 || n > 1)
-				throw new Exception($"ACos() argument of {n} was not between -1 and 1 {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"ACos() argument of {n} was not between -1 and 1 {new StackFrame(0).GetMethod().Name}");
 
 			return Math.Acos(n);
 		}
@@ -51,162 +52,83 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="n">A number representing a sine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
-		public static double ASin(params object[] obj)
+		public static double ASin(object obj)
 		{
-			var n = obj.L().D1();
+			var n = obj is double d ? d : obj.Ad();
 
 			if (n < -1 || n > 1)
-				throw new Exception($"ASin() argument of {n} was not between -1 and 1 {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"ASin() argument of {n} was not between -1 and 1 {new StackFrame(0).GetMethod().Name}");
 
 			return Math.Asin(n);
 		}
+
+		public static double ATan(object obj) => Math.Atan(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the angle whose tangent is the specified number.
 		/// </summary>
 		/// <param name="n">A number representing a tangent.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
-
-		public static double ATan(params object[] obj) => Math.Atan(obj.L().D1());
-
 		/// <summary>
 		/// Returns the angle whose tangent is the y/x number.
 		/// </summary>
 		/// <param name="n">A number representing a tangent.</param>
 		/// <returns>An angle, θ, measured in radians, such that -(y/x)/2 ≤ θ ≤ (y/x)/2.</returns>
-		public static double ATan2(params object[] obj)
-		{
-			var (y, x) = obj.L().D2();
-			return Math.Atan2(y, x);
-		}
+		public static double ATan2(object obj0, object obj1) => Math.Atan2(obj0 is double d0 ? d0 : obj0.Ad(), obj1 is double d1 ? d1 : obj1.Ad());
 
 		/// <summary>
 		/// Returns the smallest integer greater than or equal to the specified double number.
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The smallest integer greater than or equal to <paramref name="n"/>.</returns>
-		public static double Ceil(params object[] obj) => Math.Ceiling(obj.L().D1());
-
-
-		/// <summary>
-		/// Returns the integer portion of the specified double number.
-		/// </summary>
-		/// <param name="n">A number.</param>
-		/// <returns>The integer portion of <paramref name="n"/>.</returns>
-		public static long Integer(params object[] obj) => (long)obj.L().D1();
+		public static double Ceil(object obj) => Math.Ceiling(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the cosine of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The cosine of <paramref name="n"/>.</returns>
-		public static double Cos(params object[] obj) => Math.Cos(obj.L().D1());
-
-		public static double CosNoFlatten(params object[] obj) => Math.Cos(obj.D1());
-
-		public static double CosSingleObj(object obj) => Math.Cos(obj.ParseDouble().Value);
-
-		public static double CosDirectPass(double d) => Math.Cos(d);
-
-		public static double CosDirectPassObject(object d) => Math.Cos((double)d);
+		public static double Cos(object obj) => Math.Cos(obj is double d ? d : obj.ParseDouble().Value);
 
 		/// <summary>
 		/// Returns the hyperbolic cosine of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
-		public static double Cosh(params object[] obj) => Math.Cosh(obj.L().D1());
-
-		/// <summary>
-		/// Add a value to a variable using numeric or date-time arithmetic.
-		/// </summary>
-		/// <param name="var">A variable.</param>
-		/// <param name="value">A number.</param>
-		/// <param name="units">
-		/// To use date arithmetic specify one of the following words:
-		/// <c>seconds</c> (<c>s</c>), <c>minutes</c> (<c>m</c>), <c>hours</c> (<c>h</c>), <c>days</c> (<c>d</c>), <c>months</c> or <c>years</c> (<c>y</c>).
-		/// If this parameter is blank the functions performs a numeric addition.
-		/// </param>
-		public static void EnvAdd(ref double var, double value, string units = null)
-		{
-			if (string.IsNullOrEmpty(units))
-			{
-				var += value;
-				return;
-			}
-
-			var time = Conversions.ToDateTime(((int)var).ToString());
-
-			switch (units.ToLowerInvariant())
-			{
-				case Core.Keyword_Seconds:
-				case "s":
-					time = time.AddSeconds(value);
-					break;
-
-				case Core.Keyword_Minutes:
-				case "m":
-					time = time.AddMinutes(value);
-					break;
-
-				case Core.Keyword_Hours:
-				case "h":
-					time = time.AddHours(value);
-					break;
-
-				case Core.Keyword_Days:
-				case "d":
-					time = time.AddDays(value);
-					break;
-
-				case Core.Keyword_Months:
-				case "mn":
-					time = time.AddMonths((int)value);
-					break;
-
-				case Core.Keyword_Years:
-				case "y":
-					time = time.AddYears((int)value);
-					break;
-			}
-
-			var = Conversions.FromTime(time);
-		}
-
-		/// <summary>
-		/// See <see cref="EnvAdd"/>.
-		/// </summary>
-		/// <param name="variable">A variable.</param>
-		/// <param name="value">A value.</param>
-		/// <param name="units">A numeric unit.</param>
-		[Obsolete]
-		public static void EnvSub(ref double variable, double value, string units = null) => EnvAdd(ref variable, -value, units);
+		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns <c>e</c> raised to the specified power.
 		/// </summary>
 		/// <param name="n">A number specifying a power.</param>
 		/// <returns>The number <c>e</c> raised to the power <paramref name="n"/>.</returns>
-		public static double Exp(params object[] obj) => Math.Exp(obj.L().D1());
+		public static double Exp(object obj) => Math.Exp(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the largest integer less than or equal to the specified double number.
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The largest integer less than or equal to <paramref name="n"/>.</returns>
-		public static double Floor(params object[] obj) => Math.Floor(obj.L().D1());
+		public static double Floor(object obj) => Math.Floor(obj is double d ? d : obj.Ad());
+
+		/// <summary>
+		/// Returns the integer portion of the specified double number.
+		/// </summary>
+		/// <param name="n">A number.</param>
+		/// <returns>The integer portion of <paramref name="n"/>.</returns>
+		public static long Integer(object obj) => (long)(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the natural (base e) logarithm of a specified number.
 		/// </summary>
 		/// <param name="n">A number whose logarithm is to be found.</param>
 		/// <returns>The natural logarithm of <paramref name="n"/> if it's positive, else an exception is thrown.</returns>
-		public static double Ln(params object[] obj)
+		public static double Ln(object obj)
 		{
-			var n = obj.L().D1();
+			var n = obj is double d ? d : obj.Ad();
 
 			if (n < 0)
-				throw new Exception($"Ln() argument {n} was negative {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Ln() argument {n} was negative {new StackFrame(0).GetMethod().Name}");
 
 			return Math.Log(n);
 		}
@@ -217,19 +139,20 @@ namespace Keysharp.Core
 		/// <param name="n">A number whose logarithm is to be found.</param>
 		/// <param name="b">The base of the logarithm. If unspecified this is <c>10</c>.</param>
 		/// <returns>The logarithm of <paramref name="n"/> to base <paramref name="b"/> if n is positive, else an exception is thrown.</returns>
-		public static double Log(params object[] obj)
+		public static double Log(object obj0, object obj1 = null)
 		{
-			var (n, b) = obj.L().D2(double.MinValue, double.MinValue);
+			var n = obj0.Ad(double.MinValue);
+			var b = obj1.Ad(double.MinValue);
 
 			if (n < 0)
-				throw new Exception($"Log() argument {n} was negative {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Log() argument {n} was negative {new StackFrame(0).GetMethod().Name}");
 
 			if (b != double.MinValue)
 				return b == 10 ? Math.Log10(n) : Math.Log(n, b);
 			else if (n != double.MinValue)
 				return Math.Log10(n);
 
-			return 0;
+			return 0.0;
 		}
 
 		/// <summary>
@@ -240,7 +163,7 @@ namespace Keysharp.Core
 		/// <returns>The larger of the two numbers, or the empty string if either number is not numeric.</returns>
 		public static object Max(params object[] obj)
 		{
-			var o = obj.L();
+			var o = obj.L();//Flatten here to find the max of anything contained in any sub item.
 
 			if (o.Count > 1)
 			{
@@ -274,7 +197,7 @@ namespace Keysharp.Core
 		/// <returns>The lesser of the two numbers, or the empty string if either number is not numeric.</returns>
 		public static object Min(params object[] obj)
 		{
-			var o = obj.L();
+			var o = obj.L();//Flatten here to find the max of anything contained in any sub item.
 
 			if (o.Count > 1)
 			{
@@ -307,14 +230,29 @@ namespace Keysharp.Core
 		/// <param name="dividend">The dividend.</param>
 		/// <param name="divisor">The divisor.</param>
 		/// <returns>The remainder after dividing <paramref name="dividend"/> by <paramref name="divisor"/>.</returns>
-		public static double Mod(params object[] obj)
+		public static object Mod(object obj0, object obj1)
 		{
-			var (dividend, divisor) = obj.L().D2();
+			if (obj0 is double || obj1 is double)
+			{
+				var dividend = obj0.Ad();
+				var divisor = obj1.Ad();
 
-			if (divisor == 0)
-				throw new Exception($"Mod() divisor argument of {divisor} was 0 {new StackFrame(0).GetMethod().Name}");
+				if (divisor == 0)
+					throw new ZeroDivisionError($"Mod() divisor argument of {divisor} was 0 {new StackFrame(0).GetMethod().Name}");
 
-			return dividend % divisor;
+				//return Math.IEEERemainder(dividend, divisor);
+				return dividend % divisor;
+			}
+			else
+			{
+				var dividend = obj0.Al();
+				var divisor = obj1.Al();
+
+				if (divisor == 0)
+					throw new Error($"Mod() divisor argument of {divisor} was 0 {new StackFrame(0).GetMethod().Name}");
+
+				return dividend % divisor;
+			}
 		}
 
 		/// <summary>
@@ -322,53 +260,60 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="result">The name of the variable in which to store the result.</param>
 		/// <param name="min">The inclusive lower bound of the random number returned. Default: 0.</param>
-		/// <param name="max">The exclusive upper bound of the random number returned. Default int.MaxValue.</param>
+		/// <param name="max">The exclusive upper bound of the random number returned. Default 1.</param>
 		/// <returns>A random number in the range of <c><paramref name="min"/> - (<paramref name="max/> Q)</c>,
 		/// <remarks>If <paramref name="min"/> and <paramref name="max"/> are both integers <paramref name="result"/> will also be an integer.
 		/// Otherwise <paramref name="result"/> can be a floating point number.</remarks>
-		public static double Random(params object[] obj)
+		public static object Random(object obj0 = null, object obj1 = null)
 		{
-			var (min, max) = obj.L().D2(0.0, (double)int.MaxValue);
 			var r = RandomGenerator;
-			var x = Math.IEEERemainder(min, 1);
-			var y = Math.IEEERemainder(max, 1);
-			var z = (double)r.Next((int)min, (int)max);
 
-			if (x != 0 || y != 0)
-				z += (r.NextDouble() % Math.Abs(y - x)) + x;
+			if (obj0 is null && obj1 is null)
+				return r.NextDouble();
 
-			return z;
+			if (obj0 is long l0)
+			{
+				if (obj1 is long l1)
+				{
+					var min = Math.Min(l0, l1);
+					var max = Math.Max(l0, l1);
+					return r.NextInt64(min, max + 1L);//Integer ranges include the max number.
+				}
+				else if (obj1 is null)
+				{
+					var min = Math.Min(0L, l0);
+					var max = Math.Max(0L, l0);
+					return r.NextInt64(min, max + 1L);//If one param is omitted, it defaults to 0.
+				}
+			}
+			else if (obj1 is long l11)
+			{
+				var min = Math.Min(0L, l11);
+				var max = Math.Max(0L, l11);
+				return r.NextInt64(min, max + 1L);//If one param is omitted, it defaults to 0.
+			}
+
+			var mind = obj0.Ad();
+			var maxd = obj1.Ad();
+			var lower = Math.Min(mind, maxd);
+			var upper = Math.Max(mind, maxd);
+			return r.NextDouble(lower, upper);
 		}
 
-		/// <summary>
-		/// Returns the remainder resulting from the division of a specified number by another specified number.
-		/// </summary>
-		/// <param name="x">A dividend.</param>
-		/// <param name="y">A divisor.</param>
-		/// <returns>A number equal to <c><paramref name="x"/> - (<paramref name="y"/> Q)</c>,
-		/// where <c>Q</c> is the quotient of <c><paramref name="x"/> / <paramref name="y"/></c> rounded to
-		/// the nearest integer (if <c><paramref name="x"/> / y</c> falls halfway between two integers, the even integer is returned).
-		///
-		/// If <c><paramref name="x"/> - (<paramref name="y"/> Q)</c> is zero, the value <c>0</c> is returned.
-		///
-		/// If <c><paramref name="y"/> = 0</c>, <c>0</c> is returned.</returns>
-		public static double Remainder(params object[] obj)
-		{
-			var (x, y) = obj.L().D2();
-			return y == 0 ? 0 : Math.IEEERemainder(x, y);
-		}
+		public static void RandomSeed(object obj) => randomGenerator = new Random((int)obj.Al());
 
 		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.
 		/// </summary>
-		/// <param name="n">A double number to be rounded.</param>
-		/// <param name="doubles">The number of double places in the return value.</param>
-		/// <returns>The number nearest to <paramref name="n"/> that contains a number of fractional digits equal to <paramref name="doubles"/>.</returns>
-		public static double Round(params object[] obj)
+		/// <param name="number">A double number to be rounded.</param>
+		/// <param name="n">The number of double places in the return value.</param>
+		/// <returns>The number nearest to <paramref name="number"/> that contains a number of fractional digits equal to <paramref name="n"/>.</returns>
+		public static double Round(object obj0, object obj1 = null)
 		{
-			var (n, doubles) = obj.L().Di();
-			var mult = doubles != 0 ? Math.Pow(10, doubles) : 1;//Code taken from AHK.
-			return (n >= 0.0 ? Math.Floor(n * mult + 0.5) : Math.Ceiling((n * mult) - 0.5)) / mult;
+			var number = obj0.Ad();
+			var n = obj1.Al();
+			var mult = n != 0 ? Math.Pow(10, n) : 1;//Code taken from AHK.
+			return (number >= 0.0 ? Math.Floor(number * mult + 0.5) : Math.Ceiling((number * mult) - 0.5)) / mult;
 		}
 
 		/// <summary>
@@ -376,26 +321,26 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The sine of <paramref name="n"/>.</returns>
-		public static double Sin(params object[] obj) => Math.Sin(obj.L().D1());
+		public static double Sin(object obj) => Math.Sin(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the hyperbolic sine of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
-		public static double Sinh(params object[] obj) => Math.Sinh(obj.L().D1());
+		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the square root of a specified number.
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The positive square root of <paramref name="n"/> if positive, else an exception is thrown.</returns>
-		public static double Sqrt(params object[] obj)
+		public static double Sqrt(object obj)
 		{
-			var n = obj.L().D1();
+			var n = obj is double d ? d : obj.Ad();
 
 			if (n < 0)
-				throw new Exception($"Sqrt() argument of {n} was negative {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Sqrt() argument of {n} was negative {new StackFrame(0).GetMethod().Name}");
 
 			return Math.Sqrt(n);
 		}
@@ -405,20 +350,20 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The tangent of <paramref name="n"/>.</returns>
-		public static double Tan(params object[] obj) => Math.Tan(obj.L().D1());
+		public static double Tan(object obj) => Math.Tan(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the hyperbolic tangent of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic tangent of <paramref name="n"/>.</returns>
-		public static double Tanh(params object[] obj) => Math.Tanh(obj.L().D1());
+		public static double Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Calculates the integral part of a specified number.
 		/// </summary>
 		/// <param name="n">A number to truncate.</param>
 		/// <returns>The integral part of <paramref name="n"/>; that is, the number that remains after any fractional digits have been discarded.</returns>
-		public static double Truncate(params object[] obj) => Math.Truncate(obj.L().D1());
+		public static double Truncate(object obj) => Math.Truncate(obj is double d ? d : obj.Ad());
 	}
 }

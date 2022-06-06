@@ -1,50 +1,33 @@
 ﻿using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Keysharp.Core;
 
 namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		//public static object FunctionCall(object name, params object[] parameters)
-		//{
-		//  var namestr = name.ToString();
-		//  var stack = new StackTrace(false).GetFrames();
-		//  MethodInfo method = null;
-
-		//  for (var i = 0; i < 3; i++)
-		//  {
-		//      var type = stack[i].GetMethod().DeclaringType;
-		//      method = FindMethod(namestr, type.GetMethods(), parameters);
-
-		//      if (method != null)
-		//          break;
-		//  }
-
-		//  return method == null || !method.IsStatic ? null : method.Invoke(null, parameters.Length == 0 ? new object[] { parameters } : parameters);//Don't pass parameters to methods which don't have them.//MATT
-		//}
-
 		public static object Invoke(object del, params object[] parameters)
 		{
 			try
 			{
-				if (del is ITuple mitup && mitup.Length > 1 && mitup[0] is object ob && mitup[1] is MethodInfo mi)
+				if (del is ITuple mitup && mitup.Length > 1 && mitup[1] is MethodInfo mi)
 				{
-					if (mi.IsDefined(typeof(ExtensionAttribute), false))
-						//return mi.Invoke(null, new object[] { ob }.Concat(parameters));
-						return mi.Invoke(null, new object[] { ob, parameters });
-					//else if (mi.GetParameters().Length == 0)
-					//{
-					//  return mi.Invoke(ob, null);
-					//  //return mi.Invoke(ob, new object[1] { new object[1] { "" } });
-					//}
+					var ob = mitup[0];
+					var funcParams = mi.GetParameters();
+					var isVariadic = funcParams.Length == 1 && funcParams[0].ParameterType == typeof(object[]);
+
+					if (ob is IFuncObj fo && mi.Name == "Call")
+						return fo.Call(parameters);
+					//else if (mi.IsDefined(typeof(ExtensionAttribute), false))//Not supporting user callable extension methods anymore.
+					//  return mi.Invoke(null, new object[] { ob }.Concat(new object[] { isVariadic ? parameters : parameters[0] }));
 					else
-						//return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : parameters.Length == 1 ? new object[] { parameters } : parameters);
-						//return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : parameters);// new object[] { parameters });
-						return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : new object[] { parameters });//Even though parameters itself is an object[], we still must put it in an object[] array.
+						return mi.ArgumentAdjustedInvoke(ob, parameters);
+
+					//return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : new object[] { isVariadic ? parameters : parameters[0] });//Even though parameters itself is an object[], we still must put it in an object[] array for variadic functions.
 				}
 
-				if (del is Delegate d)
+				if (del is Delegate d)//Unlikely ever used, we don't use raw delegates anymore and instead use FuncObj.
 				{
 					return d.DynamicInvoke(parameters);// new object[] { parameters });
 				}

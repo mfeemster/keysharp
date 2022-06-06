@@ -10,10 +10,8 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		//CodeArrayIndexerExpression InternalVariable => VarRef(string.Concat(Scope, ScopeVar + "\0", InternalID));
 		private CodeExpression InternalVariable => VarRef(string.Concat(Scope, ScopeVar + "\0", InternalID), false);
 
-		//internal CodeArrayIndexerExpression VarId(string name) => VarId(VarIdExpand(VarNormalizedName(name)));
 		internal CodeExpression VarId(string name, bool create, bool dyn = false) => name == args ? new CodeSnippetExpression(args) : VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
 
 		private bool IsVarAssignment(object expr) => expr is CodeBinaryOperatorExpression cboe&& cboe.Operator == CodeBinaryOperatorType.Assign;
@@ -22,36 +20,28 @@ namespace Keysharp.Scripting
 
 		private CodeBinaryOperatorExpression VarAssign(CodeArrayIndexerExpression name, CodeExpression value) => new CodeBinaryOperatorExpression(name, CodeBinaryOperatorType.Assign, value);
 
-		//private CodeArrayIndexerExpression VarId(CodeExpression name)
 		private CodeExpression VarId(CodeExpression name, bool create, bool dyn = false)
 		{
-			//var scope = (allGlobalVars ? "" : Scope) + ScopeVar;
 			if (name is CodePrimitiveExpression raw)
 			{
-				if (raw.Value is string s)
+				if (raw.Value is string toplevelvar)
 				{
-					//var dyn = s.StartsWith(Resolve) && s.EndsWith(Resolve);
 					var tempscope = Scope;//Cache because the property does a lot of work.
-					//if (tempscope == "")
-					//  _ = globalVars.Add(s);
-					var toplevelvar = /*ScopeVar + */s;
-					var scopedvar = tempscope + ScopeVar + toplevelvar;
+					var staticscopedvar = tempscope + ScopeVar + toplevelvar;
 					_ = allGlobalVars.TryPeek(out var allglobal);
 					_ = allStaticVars.TryPeek(out var allstat);
 					_ = localFuncVars.TryPeek(out var l);
 					_ = staticFuncVars.TryPeek(out var stat);
 					_ = currentFuncParams.TryPeek(out var f);
-					allglobal |= globalFuncVars.TryPeek(out var gg) && gg.Contains(s);
-					var explicitLocal = l != null && l.Contains(/*s*/scopedvar);
-					var explicitstatic = stat != null && stat.TryGetValue(/*s*/scopedvar, out _);//Static is special in that it needs to use the scoped var.
+					allglobal |= globalFuncVars.TryPeek(out var gg) && gg.Contains(toplevelvar);
+					var explicitLocal = l != null && l.Contains(toplevelvar);
+					var explicitstatic = stat != null && stat.TryGetValue(staticscopedvar, out _);//Static is special in that it needs to use the scoped var.
 					var isstatic = allstat || explicitstatic;
 					var islocal = tempscope != "" && !isstatic && (!allglobal || explicitLocal);
-					scopedvar = (isstatic || islocal ? tempscope + ScopeVar : "") + toplevelvar;
-					var isparam = f != null && f.Contains(scopedvar);//Function parameters are always scoped.
-					create &= !excCatchVars.TryPeek(out var exc) || (!exc.Contains(s) && !exc.Contains(scopedvar));//Need either no exceptions, or exception var didn't match, to create. Use s because scope was already prepended when the catch was parsed.
+					var isparam = f != null && f.Contains(toplevelvar);
+					create &= !excCatchVars.TryPeek(out var exc) || (!exc.Contains(toplevelvar) && !exc.Contains(toplevelvar));//Need either no exceptions, or exception var didn't match, to create. Use toplevelvar because scope was already prepended when the catch was parsed.
 
 					//The logic in this function has grown unweildy and needs to be reworked and condensed.
-					//Further, it doesn't even work right: read only global vars are still considered function locals, when they should be global.
 					if (explicitLocal)
 						isstatic = false;//Local always overrides static.
 
@@ -63,27 +53,21 @@ namespace Keysharp.Scripting
 					{
 						if (create)
 						{
-							if (/*create && */!isparam && isstatic && stat != null)
+							if (!isparam && isstatic && stat != null)
 							{
-								_ = stat.GetOrAdd(/*s*/scopedvar);
+								_ = stat.GetOrAdd(staticscopedvar);
 							}
-							else if (/*create && */!isparam && !isstatic/* && islocal*/)
+							else if (!isparam && !isstatic/* && islocal*/)
 							{
-								_ = allVars.GetOrAdd(tempscope).Add(scopedvar);
+								_ = allVars.GetOrAdd(tempscope).Add(toplevelvar);
 							}
 							else if (!isparam && allglobal)
 								_ = allVars.GetOrAdd("").Add(toplevelvar);
 						}
 
-						//if (g || (globalFuncVars.TryPeek(out var p) && p.Contains(s)))
-						//{
-						//  //_ = allVars.GetOrAdd(tempscope).Add(/*ScopeVar + */s);
-						//  //return VarRef(/*ScopeVar + */s);
-						//}
-						return isparam ? VarRef(scopedvar, false) : VarRef((allglobal && !explicitLocal && !isstatic) ? toplevelvar : scopedvar, false);
+						return isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);
 					}
 					else
-						//return VarRef(StringConcat(new CodePrimitiveExpression(scope), name));
 						return VarRef(toplevelvar, true);//Dyn vars only work with global static vars, not local function vars.
 				}
 			}
@@ -215,27 +199,18 @@ namespace Keysharp.Scripting
 
 		private string VarNormalizedName(string name) => name.ToLowerInvariant();
 
-		//private CodeArrayIndexerExpression VarRef(params CodeExpression[] name)//Is this really what we want? Would be way more efficient to make global vars just be members of Program.//MATT
-		//private CodeExpression VarRef(CodeExpression name)//Is this really what we want? Would be way more efficient to make global vars just be members of Program.//MATT
-		private CodeExpression VarRef(string name, bool dyn)//Is this really what we want? Would be way more efficient to make global vars just be members of Program.//MATT
+		private CodeExpression VarRef(string name, bool dyn)
 		{
-			//var vars = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), VarProperty);
-			//if (name is CodePrimitiveExpression cpe && cpe.Value is string s)
 			if (!dyn)
 			{
-				//return new CodeSnippetExpression(s.Replace(ScopeVar[0], '_'));
 				return new CodeVariableReferenceExpression(name/*.Replace(ScopeVar[0], '_')*/);
 			}
 			else
 			{
-				//old way where everything was a map.//MATT
 				var vars = new CodePropertyReferenceExpression(null, VarProperty);//Cut down on the extreme namespace and type qualification verbosity.
 				return new CodeArrayIndexerExpression(vars, new CodePrimitiveExpression(name));
 			}
 		}
-
-		//private CodeArrayIndexerExpression VarRef(string name) => VarRef(new CodePrimitiveExpression(name));
-		//private CodeExpression VarRef(string name, bool dyn) => VarRef(new name), dyn);
 
 		private CodeExpression VarRefOrPrimitive(object var)
 		{

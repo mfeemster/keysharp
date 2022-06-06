@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 using Keysharp.Scripting;
 
@@ -18,13 +17,14 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static ClipboardAll ClipboardAll(params object[] obj)
+		public static ClipboardAll ClipboardAll(object obj0 = null, object obj1 = null)
 		{
-			var (data, size) = obj.L().Oi(null, int.MinValue);
+			var data = obj0;
+			var size = obj1.Al(long.MinValue);
 
 			if (data is ClipboardAll a)
 			{
-				RestoreClipboardAll(a, size != int.MinValue ? size : a.Count);
+				RestoreClipboardAll(a, size != long.MinValue ? size : (long)a.Size);
 				return a;
 			}
 
@@ -100,10 +100,11 @@ namespace Keysharp.Core
 			return new ClipboardAll(System.Array.Empty<byte>());
 		}
 
-		public static void ClipWait(params object[] obj)
+		public static bool ClipWait(object obj0 = null, object obj1 = null)
 		{
 			//Will need to see if this works in a cross platform way.//MATT
-			var (timeout, type) = obj.L().Db(double.MinValue);
+			var timeout = obj0.Ad(double.MinValue);
+			var type = obj1.Ab();
 			var checktime = timeout != double.MinValue;
 			var frequency = 100;
 			var time = checktime ? (long)(Math.Abs(timeout) * 1000) : long.MaxValue;
@@ -111,15 +112,12 @@ namespace Keysharp.Core
 			for (var i = 0L; !checktime || i < time; i += frequency)
 			{
 				if (!type ? Clipboard.ContainsText() || Clipboard.ContainsFileDropList() : !IsClipboardEmpty())
-				{
-					Accessors.A_ErrorLevel = 0;
-					return;
-				}
+					return true;
 
 				System.Threading.Thread.Sleep(frequency);
 			}
 
-			Accessors.A_ErrorLevel = 1;
+			return false;
 		}
 
 		/// <summary>
@@ -127,29 +125,27 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="name">The name of the environment variable to retrieve.</param>
 		/// <returns>The value of the specified environment variable if it exists, else empty string.</returns>
-		public static string EnvGet(params object[] obj) => Environment.GetEnvironmentVariable(obj.L()[0] as string) ?? string.Empty;
+		public static string EnvGet(object obj) => Environment.GetEnvironmentVariable(obj.As()) ?? string.Empty;
 
 		/// <summary>
 		/// Writes a value to a variable contained in the environment.
 		/// </summary>
 		/// <param name="name">Name of the environment variable to use, e.g. <c>PATH</c>.</param>
 		/// <param name="value">Value to set the environment variable to.</param>
-		public static void EnvSet(params object[] obj) => Environment.SetEnvironmentVariable(obj.L()[0] as string, obj[1] as string);
+		public static void EnvSet(object obj0, object obj1 = null) => Environment.SetEnvironmentVariable(obj0.As(), obj1 as string);
 
 		/// <summary>
 		/// Notifies the operating system and all running applications that environment variables have changed.
 		/// </summary>
 		public static void EnvUpdate()
 		{
-			Accessors.A_ErrorLevel = 0;
-
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 			{
 				//SendMessage() freezes when running in a unit test. PostMessage seems to work.//MATT
 				//try { _ = WindowsAPI.SendMessage(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, IntPtr.Zero, IntPtr.Zero); }
 				//try { _ = WindowsAPI.PostMessage(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, IntPtr.Zero, IntPtr.Zero); }
 				try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
-				catch (Exception) { Accessors.A_ErrorLevel = 1; }
+				catch (Exception ex) { throw new OSError(ex); }
 			}
 
 			//Linux probably has some built in cmd exe which does this.//MATT
@@ -227,38 +223,12 @@ namespace Keysharp.Core
 			return !containsSomething;
 		}
 
-		public static void OnClipboardChange(params object[] obj)
+		public static void OnClipboardChange(object obj0, object obj1 = null)
 		{
-			try
-			{
-				var o = obj.L();
-				var label = o[0] as string;
-				var onoff = 1;
-
-				if (o.Count > 1)
-					onoff = Convert.ToInt32(o[1]);
-
-				var method = Reflections.FindLocalMethod(label);
-
-				if (method == null)
-					throw new ArgumentNullException();
-
-				//var proc = (Core.HotFunction)Delegate.CreateDelegate(typeof(Core.HotFunction), method);
-				var proc = (ClipFunction)Delegate.CreateDelegate(typeof(ClipFunction), method);
-
-				if (onoff == 1)
-					Script.ClipFunctions.Add(proc);
-				else if (onoff == -1)
-					Script.ClipFunctions.Insert(0, proc);
-				else if (onoff == 0)
-					_ = Script.ClipFunctions.RemoveAll(p => p == proc);
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e.Message);
-				Accessors.A_ErrorLevel = 1;
-				throw new ArgumentException();
-			}
+			if (obj0 is IFuncObj fo)
+				Script.ClipFunctions.ModifyEventHandlers(fo, obj1.Al(1));
+			else
+				throw new TypeError("Object passed to OnClipboardChange() was not a function object.");
 		}
 
 		/// <summary>
@@ -267,28 +237,23 @@ namespace Keysharp.Core
 		/// <param name="output">The variable to store the result.</param>
 		/// <param name="command"></param>
 		/// <param name="param"></param>
-		public static object SysGet(params object[] obj)
+		public static object SysGet(object obj)
 		{
-			var o = obj.L()[0];
-
-			if (o is Keysharp.Core.Windows.SystemMetric en)
+			if (obj is Keysharp.Core.Windows.SystemMetric en)
 				return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics(en);
 
-			if (Script.IsNumeric(o))
-			{
-				var i = Convert.ToInt32(o);
-				return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics((SystemMetric)i);
-			}
-
-			return "";
+			return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics((SystemMetric)(int)obj.Al());
 		}
 
 		internal static int ClipFormatStringToInt(string fmt) => DataFormats.GetFormat(fmt) is DataFormats.Format d ? d.Id : 0;
 
 		/// <summary>
-		/// Gets the data on the clipboard in the format specified by the selected item of the specified listbox.
+		/// Gets the data on the clipboard in the specified format.
 		/// Gotten from: http://pinvoke.net/default.aspx/user32/GetClipboardData.html
 		/// </summary>
+		/// <param name="format"></param>
+		/// <param name="nulldata"></param>
+		/// <returns></returns>
 		internal static byte[] GetClipboardData(int format, ref bool nulldata)
 		{
 			if (format != 0)
@@ -296,12 +261,13 @@ namespace Keysharp.Core
 				if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))
 				{
 					byte[] buf;
+					var gLock = IntPtr.Zero;
 
 					try
 					{
-						var clipdata = WindowsAPI.GetClipboardData(format, ref nulldata);//Get pointer to clipboard data in the selected format
+						var clipdata = WindowsAPI.GetClipboardData(format, ref nulldata);//Get pointer to clipboard data in the selected format.
 						var length = (int)WindowsAPI.GlobalSize(clipdata);
-						var gLock = WindowsAPI.GlobalLock(clipdata);
+						gLock = WindowsAPI.GlobalLock(clipdata);
 						buf = new byte[length];
 
 						if (length != 0)
@@ -309,6 +275,7 @@ namespace Keysharp.Core
 					}
 					finally
 					{
+						_ = WindowsAPI.GlobalUnlock(gLock);
 						_ = WindowsAPI.CloseClipboard();
 					}
 
@@ -319,45 +286,45 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		internal static DataFormats.Format IntToClipFormat(int i) => DataFormats.GetFormat(i);
+		//internal static DataFormats.Format IntToClipFormat(int i) => DataFormats.GetFormat(i);
 
-		internal static void RestoreClipboardAll(ClipboardAll arr, int length)
+		internal static void RestoreClipboardAll(ClipboardAll clip, long length)
 		{
-			var bytes = (byte[])arr.array.ToArray(typeof(byte));
-
-			if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
+			unsafe
 			{
-				length = Math.Min(Math.Max(0, length), bytes.Length);
-
-				for (var index = 0; index < length;)
+				if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
 				{
-					var cliptype = BitConverter.ToUInt32(bytes, index);
+					var ptr = clip.Ptr;
+					length = Math.Min(Math.Max(0U, length), (long)clip.Size);
 
-					if (cliptype == 0)
-						break;
-
-					index += 4;
-					var size = BitConverter.ToInt32(bytes, index);
-					index += 4;
-
-					if (index + size < length)
+					for (var index = 0; index < length;)
 					{
-						var hglobal = Marshal.AllocHGlobal(size);
-						Marshal.Copy(bytes, index, hglobal, size);
-						_ = WindowsAPI.SetClipboardData(cliptype, hglobal);
-						Marshal.FreeHGlobal(hglobal);
-						index += size;
-					}
-				}
+						var cliptype = (uint)Marshal.ReadInt32(ptr, index);
 
-				_ = WindowsAPI.CloseClipboard();
+						if (cliptype == 0)
+							break;
+
+						index += 4;
+						var size = Marshal.ReadInt32(ptr, index);
+						index += 4;
+
+						if (index + size < length)
+						{
+							var hglobal = Marshal.AllocHGlobal(size);
+							System.Buffer.MemoryCopy((ptr + index).ToPointer(), hglobal.ToPointer(), size, size);
+							_ = WindowsAPI.SetClipboardData(cliptype, hglobal);
+							//Do not free hglobal here.
+							index += size;
+						}
+					}
+
+					_ = WindowsAPI.CloseClipboard();
+				}
 			}
 		}
-
-		private static void MainWindow_ClipboardUpdate(object sender, EventArgs e) => throw new NotImplementedException();
 	}
 
-	public class ClipboardAll : Array
+	public class ClipboardAll : Buffer
 	{
 		public ClipboardAll(byte[] obj)
 			: base(obj)

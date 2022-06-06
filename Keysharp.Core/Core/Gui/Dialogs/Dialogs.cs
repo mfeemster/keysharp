@@ -29,13 +29,15 @@ namespace Keysharp.Core
 		/// -The New Folder button is always shown.
 		/// -Option 7 to omit BIF_NEWDIALOGSTYLE is not supported.
 		/// </summary>
-		public static string DirSelect(params object[] obj)
+		public static string DirSelect(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (startingFolder, options, prompt) = obj.L().Sis();
+			var startingFolder = obj0.As();
+			var options = obj1.Al();
+			var prompt = obj2.As();
 			var str = "";
 			var select = new FolderBrowserDialog
 			{
-				ShowNewFolderButton = (options & 1) == 1
+				ShowNewFolderButton = (options & 1) == 1//The 3 and 5 options seem to not apply to this class in C#.
 			};
 			select.Description = prompt != "" ? prompt : "Select Folder - " + Accessors.A_ScriptName;
 			select.RootFolder = Environment.SpecialFolder.MyComputer;
@@ -73,9 +75,12 @@ namespace Keysharp.Core
 		/// <param name="RootDir">The file path to initially select.</param>
 		/// <param name="Prompt">Text displayed in the window to instruct the user what to do.</param>
 		/// <param name="Filter">Indicates which types of files are shown by the dialog, e.g. <c>Audio (*.wav; *.mp2; *.mp3)</c>.</param>
-		public static object FileSelect(params object[] obj)
+		public static object FileSelect(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (opts, rootdir, title, filter) = obj.L().S4();
+			var opts = obj0.As();
+			var rootdir = obj1.As();
+			var title = obj2.As();
+			var filter = obj3.As();
 			bool save = false, multi = false, check = false, create = false, overwite = false, shortcuts = false, dir = false;
 			opts = opts.ToUpperInvariant();
 			object files = null;
@@ -126,7 +131,6 @@ namespace Keysharp.Core
 				}
 			}
 
-			Accessors.A_ErrorLevel = 0;
 			nFileDialogs++;
 
 			if (save)
@@ -205,9 +209,12 @@ namespace Keysharp.Core
 		/// <param name="Font">Not yet implemented (leave blank). In the future it might accept something like verdana:8</param>
 		/// <param name="Timeout">Timeout in seconds (can contain a decimal point).  If this value exceeds 2147483 (24.8 days), it will be set to 2147483. After the timeout has elapsed, the InputBox window will be automatically closed and ErrorLevel will be set to 2. OutputVar will still be set to what the user entered.</param>
 		/// <param name="Default">A string that will appear in the InputBox's edit field when the dialog first appears. The user can change it by backspacing or other means.</param>
-		public static DialogResultReturn InputBox(params object[] obj)
+		public static DialogResultReturn InputBox(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (prompt, title, options, def) = obj.L().S4();
+			var prompt = obj0.As();
+			var title = obj1.As();
+			var options = obj2.As();
+			var def = obj3.As();
 			var input = new InputDialog
 			{
 				Default = def,
@@ -241,13 +248,13 @@ namespace Keysharp.Core
 				if (h != int.MinValue)
 					input.Height = h;
 
-				input.Left = x != int.MinValue ? x : (int)(((workarea.Right - workarea.Left) / 2) - (input.Width / 2));
-				input.Top = y != int.MinValue ? y : (int)(((workarea.Bottom - workarea.Top) / 2) - (input.Height / 2));
+				input.Left = x != int.MinValue ? x : (((workarea["Right"].Ai() - workarea["Left"].Ai()) / 2) - (input.Width / 2));
+				input.Top = y != int.MinValue ? y : (((workarea["Bottom"].Ai() - workarea["Top"].Ai()) / 2) - (input.Height / 2));
 			};
 			nFileDialogs++;
 
 			if (GuiHelper.DialogOwner != null)
-				input.ShowDialog(GuiHelper.DialogOwner);
+				_ = input.ShowDialog(GuiHelper.DialogOwner);
 			else
 				input.Show();
 
@@ -298,9 +305,11 @@ namespace Keysharp.Core
 		/// <para>(optional) Timeout in seconds (can contain a decimal point but cannot be an expression).  If this value exceeds 2147483 (24.8 days), it will be set to 2147483.  After the timeout has elapsed the message box will be automatically closed and the IfMsgBox command will see the value TIMEOUT.</para>
 		/// <para>Known limitation: If the MsgBox contains only an OK button, IfMsgBox will think that the OK button was pressed if the MsgBox times out while its own thread is interrupted by another.</para>
 		/// </param>
-		public static string MsgBox(params object[] obj)
+		public static string MsgBox(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (text, title, options) = obj.L().S3();
+			var text = obj0.As();
+			var title = obj1.As();
+			var options = obj2.As();
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
@@ -590,10 +599,9 @@ namespace Keysharp.Core
 				{
 					thisImage = System.Drawing.Bitmap.FromFile(Options.Param1);
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					Accessors.A_ErrorLevel = 1;
-					return;
+					throw new Error(ex.Message);
 				}
 
 				if (thisImage != null)

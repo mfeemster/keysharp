@@ -101,12 +101,8 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		public Keysharp.Core.Common.Keyboard.KeyboardMouseSender KbdMsSender
 		{
-			set
-			{
-				kbdMsSender = value ?? throw new ArgumentException("Attempted to assign a null Keyboard Mouse Sender.");
-			}
-
-			internal get { return kbdMsSender; }
+			set => kbdMsSender = value ?? throw new ArgumentException("Attempted to assign a null Keyboard Mouse Sender.");
+			internal get => kbdMsSender;
 		}
 
 		/// <summary>

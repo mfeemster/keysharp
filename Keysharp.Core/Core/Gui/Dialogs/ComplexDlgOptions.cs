@@ -104,51 +104,51 @@ namespace Keysharp.Core
 			optsItems.Add(Core.Keyword_ZY, new Regex(Core.Keyword_ZY + @"(\d*)"));
 			//ToDo
 			//ToDo
-			var DicOptions = Options.ParseOptionsRegex(ref options, optsItems, true);
-			AlwaysOnTop = (DicOptions[Core.Keyword_NotAlwaysOnTop]?.Length == 0);
-			Borderless = (DicOptions[Core.Keyword_Borderless] != "");
-			ShowInTaskBar = DicOptions[Core.Keyword_ShowInTaskbar] != "";
+			var dktOptions = Options.ParseOptionsRegex(ref options, optsItems, true);
+			AlwaysOnTop = (dktOptions[Core.Keyword_NotAlwaysOnTop]?.Length == 0);
+			Borderless = (dktOptions[Core.Keyword_Borderless] != "");
+			ShowInTaskBar = dktOptions[Core.Keyword_ShowInTaskbar] != "";
 
 			try
 			{
-				if (DicOptions[Core.Keyword_X] != "")
-					WindowGeometry.X = int.Parse(DicOptions[Core.Keyword_X]);
+				if (dktOptions[Core.Keyword_X] != "")
+					WindowGeometry.X = int.Parse(dktOptions[Core.Keyword_X]);
 
-				if (DicOptions[Core.Keyword_Y] != "")
-					WindowGeometry.Y = int.Parse(DicOptions[Core.Keyword_Y]);
+				if (dktOptions[Core.Keyword_Y] != "")
+					WindowGeometry.Y = int.Parse(dktOptions[Core.Keyword_Y]);
 
-				if (DicOptions[Core.Keyword_W] != "")
-					WindowGeometry.Width = int.Parse(DicOptions[Core.Keyword_W]);
+				if (dktOptions[Core.Keyword_W] != "")
+					WindowGeometry.Width = int.Parse(dktOptions[Core.Keyword_W]);
 
-				if (DicOptions[Core.Keyword_H] != "")
-					WindowGeometry.Height = int.Parse(DicOptions[Core.Keyword_H]);
+				if (dktOptions[Core.Keyword_H] != "")
+					WindowGeometry.Height = int.Parse(dktOptions[Core.Keyword_H]);
 			}
 			catch (FormatException)
 			{
 				WindowGeometry = new Rectangle(0, 0, 0, 0);
 			}
 
-			Hide = DicOptions[Core.Keyword_Hide] != "";
+			Hide = dktOptions[Core.Keyword_Hide] != "";
 
-			if (DicOptions[Core.Keyword_Centered] != "")
+			if (dktOptions[Core.Keyword_Centered] != "")
 			{
-				CenterMainText = DicOptions[Core.Keyword_Centered].Substring(0, 1) == "1";
-				CenterSubText = DicOptions[Core.Keyword_Centered].Substring(1, 1) == "1";
+				CenterMainText = dktOptions[Core.Keyword_Centered].Substring(0, 1) == "1";
+				CenterSubText = dktOptions[Core.Keyword_Centered].Substring(1, 1) == "1";
 			}
 
 			try
 			{
-				if (DicOptions[Core.Keyword_ZX] != "")
-					ObjectGeometry.X = int.Parse(DicOptions[Core.Keyword_ZX]);
+				if (dktOptions[Core.Keyword_ZX] != "")
+					ObjectGeometry.X = int.Parse(dktOptions[Core.Keyword_ZX]);
 
-				if (DicOptions[Core.Keyword_ZY] != "")
-					ObjectGeometry.Y = int.Parse(DicOptions[Core.Keyword_ZY]);
+				if (dktOptions[Core.Keyword_ZY] != "")
+					ObjectGeometry.Y = int.Parse(dktOptions[Core.Keyword_ZY]);
 
-				if (DicOptions[Core.Keyword_ZW] != "")
-					ObjectGeometry.Width = int.Parse(DicOptions[Core.Keyword_ZW]);
+				if (dktOptions[Core.Keyword_ZW] != "")
+					ObjectGeometry.Width = int.Parse(dktOptions[Core.Keyword_ZW]);
 
-				if (DicOptions[Core.Keyword_ZH] != "")
-					ObjectGeometry.Height = int.Parse(DicOptions[Core.Keyword_ZH]);
+				if (dktOptions[Core.Keyword_ZH] != "")
+					ObjectGeometry.Height = int.Parse(dktOptions[Core.Keyword_ZH]);
 			}
 			catch (FormatException)
 			{
@@ -158,13 +158,13 @@ namespace Keysharp.Core
 
 		public void ParseGuiID(string Param1)
 		{
-			var RegEx_IsGUIID = new Regex("([0-9]{1,}):");
-			var RegEx_GUIID = new Regex("([0-9]*):(.*)");
+			var regExIsGUIID = new Regex("([0-9]{1,}):");
+			var regExGUIID = new Regex("([0-9]*):(.*)");
 
-			if (RegEx_IsGUIID.IsMatch(Param1))
+			if (regExIsGUIID.IsMatch(Param1))
 			{
-				GUIID = int.Parse(RegEx_GUIID.Match(Param1).Groups[1].Captures[0].ToString());
-				this.Param1 = RegEx_GUIID.Match(Param1).Groups[2].Captures[0].ToString();
+				GUIID = int.Parse(regExGUIID.Match(Param1).Groups[1].Captures[0].ToString());
+				this.Param1 = regExGUIID.Match(Param1).Groups[2].Captures[0].ToString();
 			}
 			else
 			{

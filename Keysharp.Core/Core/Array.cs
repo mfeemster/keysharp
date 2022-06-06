@@ -1,62 +1,10 @@
 ﻿using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Keysharp.Core
 {
-	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
-	//public class ArrayIndexValueIterator : IEnumerator<Tuple<object, object>>
-	{
-		private int position = -1;
-		private ArrayList arr;
-
-		public ArrayIndexValueIterator(ArrayList a)
-		{
-			arr = a;
-		}
-
-		//private IEnumerator<Tuple<object, object>> GetEnumerator()
-		private IEnumerator<(object, object)> GetEnumerator()
-		{
-			return this;
-			//return (IEnumerator<(object, object)>)this;
-		}
-
-		public bool MoveNext()
-		{
-			position++;
-			return position < arr.Count;
-		}
-
-		public void Reset()
-		{
-			position = -1;
-		}
-
-		public void Dispose() => Reset();
-
-		//public Tuple<object, object> Current
-		public (object, object) Current
-		{
-			get
-			{
-				try
-				{
-					return ((long)position + 1, arr[position]);
-					//return new Tuple<object, object>((long)position + 1, arr[position]);
-				}
-				catch (IndexOutOfRangeException)
-				{
-					throw new InvalidOperationException();
-				}
-			}
-		}
-
-		object IEnumerator.Current => Current;
-	}
-
 	public class Array : KeysharpObject, IEnumerable<(object, object)>, ICollection, IList
 	{
 		internal ArrayList array;
@@ -71,6 +19,12 @@ namespace Keysharp.Core
 				array.Capacity = val < array.Capacity ? array.Count : val;
 			}
 		}
+
+		public int Count => array.Count;
+
+		public bool IsFixedSize => ((IList)array).IsFixedSize;
+
+		public bool IsReadOnly => ((IList)array).IsReadOnly;
 
 		public object Length
 		{
@@ -92,17 +46,9 @@ namespace Keysharp.Core
 			}
 		}
 
-		public bool IsFixedSize => ((IList)array).IsFixedSize;
-
-		public bool IsReadOnly => ((IList)array).IsReadOnly;
-
 		bool ICollection.IsSynchronized => ((ICollection)array).IsSynchronized;
 
 		object ICollection.SyncRoot => ((ICollection)array).SyncRoot;
-
-		public int Count => array.Count;
-
-		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
 
 		public Array() => array = new ArrayList();
 
@@ -110,11 +56,7 @@ namespace Keysharp.Core
 
 		public Array(int capacity) => array = new ArrayList(capacity);
 
-		public static Array Call(params object[] obj) => new Array(obj);
-
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
-
-		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
 		//public static ArrayList New(params object[] values) => __New(values);
 		//
@@ -128,16 +70,14 @@ namespace Keysharp.Core
 
 		public override object Clone(params object[] values) => new Array(array.ToArray());
 
-		//public long Count(params object[] values) => array.Count;
-
 		public bool Contains(object value) => ((IList)array).Contains(value);
 
+		//public long Count(params object[] values) => array.Count;
 		public void CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
 
-		public object Delete(params object[] values)
+		public object Delete(object obj)
 		{
-			var o = values;//.L();
-			var index = o.I1() - 1;
+			var index = (int)obj.Al() - 1;
 
 			if (index < array.Count)
 			{
@@ -149,19 +89,12 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public bool Has(params object[] values)
+		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
+
+		public bool Has(object obj)
 		{
-			var o = values;//.L();
-
-			if (o.Length > 0)
-			{
-				var index = o.I1() - 1;
-
-				if (index < array.Count)
-					return array[index] != null;
-			}
-
-			return false;
+			var index = (int)obj.Al() - 1;
+			return index < array.Count ? array[index] != null : false;
 		}
 
 		public int IndexOf(object value) => ((IList)array).IndexOf(value);
@@ -170,7 +103,7 @@ namespace Keysharp.Core
 
 		public void InsertAt(params object[] values)
 		{
-			var o = values;//.L();
+			var o = values;
 
 			if (o.Length > 1)
 			{
@@ -191,7 +124,8 @@ namespace Keysharp.Core
 			}
 		}
 
-		public object MaxIndex(params object[] values)
+		//Should never be called by user code.
+		public object MaxIndex()
 		{
 			var val = long.MinValue;
 
@@ -206,7 +140,7 @@ namespace Keysharp.Core
 			return val != long.MinValue ? val : (object)string.Empty;
 		}
 
-		public object MinIndex(params object[] values)
+		public object MinIndex()
 		{
 			var val = long.MaxValue;
 
@@ -221,10 +155,10 @@ namespace Keysharp.Core
 			return val != long.MaxValue ? val : (object)string.Empty;
 		}
 
-		public object Pop(params object[] values)
+		public object Pop()
 		{
 			if (array.Count < 1)
-				throw new Exception($"Array was empty in {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Array was empty in {new StackFrame(0).GetMethod().Name}");
 
 			var index = array.Count - 1;
 			var val = array[index];
@@ -232,32 +166,21 @@ namespace Keysharp.Core
 			return val;
 		}
 
-		public void Push(params object[] values)
-		{
-			//var o = values.Pa();//.L();//Flattened here anyway.
-			AddRange(values);
-			//foreach (var val in o)
-			//{
-			//  //if (val is ICollection ie)//Unsure if completely flattening like this is what we really want.
-			//  //  array.AddRange(ie);
-			//  //else
-			//  _ = array.Add(val);
-			//}
-		}
+		public void Push(params object[] values) => AddRange(values);
 
 		public void Remove(object value) => ((IList)array).Remove(value);
 
-		public object RemoveAt(params object[] values)
+		public object RemoveAt(params object[] values)//This must be variadic to properly resolve ahead of the interface method RemoveAt().
 		{
-			var o = values;//.L();
+			var o = values;
 
 			if (array.Count > 0 && o.Length > 0)
 			{
-				var index = o.I1() - 1;
+				var index = (int)o.L1() - 1;
 
 				if (o.Length > 1)
 				{
-					var len = o.Ai(1);
+					var len = (int)o.Al(1);
 
 					if (index + len <= array.Count)
 						array.RemoveRange(index, len);
@@ -275,13 +198,15 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		//public static Array Call(params object[] obj) => new Array(obj);
+		IEnumerator IEnumerable.GetEnumerator() => __Enum();
+
 		//public IEnumerable<byte> ToByteArray()
 		//{
 		//  return array.ToByteArray();
 		//}
 
 		void IList.RemoveAt(int index) => RemoveAt(new object[] { index });//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
-
 
 		//public object this[int index]
 		//{
@@ -297,7 +222,7 @@ namespace Keysharp.Core
 		//          return array[array.Count + index];
 		//      }
 		//      else
-		//          throw new Exception($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+		//          throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
 		//  }
 		//  set
 		//  {
@@ -311,7 +236,7 @@ namespace Keysharp.Core
 		//          array[array.Count + index] = value;
 		//      }
 		//      else
-		//          throw new Exception($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+		//          throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
 		//  }
 		//}
 
@@ -330,7 +255,7 @@ namespace Keysharp.Core
 				else if (index < 0)
 					return array[array.Count + index];
 				else
-					throw new Exception($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+					throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
 			}
 			set
 			{
@@ -339,8 +264,52 @@ namespace Keysharp.Core
 				else if (index < 0)
 					array[array.Count + index] = value;
 				else
-					throw new Exception($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+					throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
 			}
 		}
+	}
+
+	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
+	//public class ArrayIndexValueIterator : IEnumerator<Tuple<object, object>>
+	{
+		private ArrayList arr;
+		private int position = -1;
+
+		//public Tuple<object, object> Current
+		public (object, object) Current
+		{
+			get
+			{
+				try
+				{
+					return ((long)position + 1, arr[position]);
+					//return new Tuple<object, object>((long)position + 1, arr[position]);
+				}
+				catch (IndexOutOfRangeException)
+				{
+					throw new InvalidOperationException();
+				}
+			}
+		}
+
+		object IEnumerator.Current => Current;
+
+		public ArrayIndexValueIterator(ArrayList a)
+		{
+			arr = a;
+		}
+
+		public void Dispose() => Reset();
+
+		public bool MoveNext()
+		{
+			position++;
+			return position < arr.Count;
+		}
+
+		public void Reset() => position = -1;
+
+		//private IEnumerator<Tuple<object, object>> GetEnumerator()
+		private IEnumerator<(object, object)> GetEnumerator() => this;//return (IEnumerator<(object, object)>)this;
 	}
 }

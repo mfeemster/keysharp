@@ -105,7 +105,12 @@ namespace Keysharp.Scripting
 					for (var n = 1; n < parts.Length; n++)
 					{
 						list.Add("[*");//Special signifier [**] that this is a property lookup and not a map[var] lookup. Without distinguishing the two, a map could never have a key that had the same name as a property, such as "Default".
-						list.Add($"\"{parts[n]}\"");
+
+						if (parts[n].Contains("%"))//If it was a dynamic variable, don't enclose in quotes.
+							list.Add($"{parts[n]}");
+						else
+							list.Add($"\"{parts[n]}\"");
+
 						list.Add("*]");
 						//list.Add(ArrayOpen.ToString());
 						//var str = StringBound.ToString();

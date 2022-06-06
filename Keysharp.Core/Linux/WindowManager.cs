@@ -20,14 +20,8 @@ namespace Keysharp.Core.Linux
 
 		internal override WindowItemBase LastFound
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-			set
-			{
-				throw new NotImplementedException();
-			}
+			get => throw new NotImplementedException();
+			set => throw new NotImplementedException();
 		}
 
 		internal WindowManager()
@@ -37,46 +31,22 @@ namespace Keysharp.Core.Linux
 			//Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
 		}
 
-		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow)
-		{
-			throw new NotImplementedException();
-		}
-
-		internal override WindowItemBase CreateWindow(IntPtr id)
-		{
-			throw new NotImplementedException();
-		}
+		internal override WindowItemBase CreateWindow(IntPtr id) => throw new NotImplementedException();
 
 		internal override IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows) => windows;
 
-		internal override WindowItemBase FindWindow(SearchCriteria criteria, bool last = false)
-		{
-			throw new NotImplementedException();
-		}
+		internal override WindowItemBase FindWindow(SearchCriteria criteria, bool last = false) => throw new NotImplementedException();
 
-		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool all = false)
-		{
-			return null;
-		}
+		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool all = false) => null;
 
-		internal override WindowItemBase GetForeGroundWindow()
-		{
-			throw new NotImplementedException();
-		}
+		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow) => throw new NotImplementedException();
 
-		internal override void MinimizeAll()
-		{
-			throw new NotImplementedException();
-		}
+		internal override WindowItemBase GetForeGroundWindow() => throw new NotImplementedException();
 
-		internal override void MinimizeAllUndo()
-		{
-			throw new NotImplementedException();
-		}
+		internal override void MinimizeAll() => throw new NotImplementedException();
 
-		internal override WindowItemBase WindowFromPoint(Point location)
-		{
-			throw new NotImplementedException();
-		}
+		internal override void MinimizeAllUndo() => throw new NotImplementedException();
+
+		internal override WindowItemBase WindowFromPoint(Point location) => throw new NotImplementedException();
 	}
 }

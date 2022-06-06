@@ -25,7 +25,7 @@ namespace System.IO
 				switch (ch)
 				{
 					case '\r':
-						if (reader.PeekChar() == '\n') reader.ReadChar();
+						if (reader.PeekChar() == '\n') _ = reader.ReadChar();
 
 						foundEndOfLine = true;
 						break;
@@ -35,7 +35,7 @@ namespace System.IO
 						break;
 
 					default:
-						result.Append(ch);
+						_ = result.Append(ch);
 						break;
 				}
 			}

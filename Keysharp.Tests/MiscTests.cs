@@ -16,17 +16,14 @@ namespace Keysharp.Tests
 		{
 			var a = Keysharp.Scripting.Script.Array(10, 20, 30);
 			var fo = a.GetMethod("Clear");
-			fo.Call();
+			_ = fo.Call();
 			Assert.AreEqual(0L, a.Length);
 			Assert.IsTrue((new KeysharpObject()).HasBase(new Any()));
 			Assert.IsTrue(TestScript("misc-object", true));
 		}
 
 		[Test, Category("Misc")]
-		public void MiscTimer()
-		{
-			Assert.IsTrue(TestScript("misc-timer", false));
-		}
+		public void MiscTimer() => Assert.IsTrue(TestScript("misc-timer", false));
 
 		[Test, Category("Misc")]
 		public void MiscIs()

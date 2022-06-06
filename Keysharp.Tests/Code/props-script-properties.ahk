@@ -8,14 +8,13 @@ if (x != "")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 x := A_ScriptName
 
 if (x == "props-script-properties.ahk")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
 x := A_ScriptFullPath
 
 if (x != "")
@@ -36,6 +35,7 @@ if (x = 0) ; No window in this test, so HWND will be 0.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
 
 x := A_LineNumber ; This line must start at 40 for the test to pass, so nothing above it can ever be moved.
 

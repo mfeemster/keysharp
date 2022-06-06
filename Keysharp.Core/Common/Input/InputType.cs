@@ -606,7 +606,7 @@ namespace Keysharp.Core.Common.Input
 				{
 					var so = it.ScriptObject;
 					//Threads.LaunchInThread(so.OnEnd, new object[] { so });//Why would we invoke this on the main window then launch another thread?
-					so.OnEnd.Call(so);
+					_ = so.OnEnd.Call(so);
 					//Original called Release() on so, but unsure what the equivalent of that would be here.
 				}
 			});

@@ -7,38 +7,14 @@ namespace Keysharp.Core
 	public static class Registrys
 	{
 		/// <summary>
-		/// Deletes a key from the registry.
-		/// </summary>
-		/// <param name="KeyName">They full path of the key to delete</param>
-		public static void RegDeleteKey(params object[] obj)
-		{
-			var keyname = obj.L().S1();
-
-			try
-			{
-				if (keyname?.Length == 0)
-					if (Accessors.A_LoopRegKey is string k)
-						keyname = k;
-
-				var (reg, comp, key) = Conversions.ToRegRootKey(keyname);
-				reg.DeleteSubKeyTree(key, true);
-				Accessors.A_ErrorLevel = 0;
-			}
-			catch (Exception e)
-			{
-				Keysharp.Scripting.Script.OutputDebug(e.Message);
-				Accessors.A_ErrorLevel = 1;
-			}
-		}
-
-		/// <summary>
 		/// Deletes a value from the registry.
 		/// </summary>
 		/// <param name="KeyName">The full name of the registry key</param>
 		/// <param name="ValueName">The name of the value to delete. If blank or omitted, the key's default value will be deleted.</param>
-		public static void RegDelete(params object[] obj)
+		public static void RegDelete(object obj0 = null, object obj1 = null)
 		{
-			var (keyname, valname) = obj.L().S2();
+			var keyname = obj0.As();
+			var valname = obj1.As();
 
 			try
 			{
@@ -64,12 +40,33 @@ namespace Keysharp.Core
 					val = string.Empty;
 
 				Conversions.ToRegKey(keyname, true).Item1.DeleteValue(val, true);
-				Accessors.A_ErrorLevel = 0;
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				Keysharp.Scripting.Script.OutputDebug(e.Message);
-				Accessors.A_ErrorLevel = 1;
+				throw new OSError(ex);
+			}
+		}
+
+		/// <summary>
+		/// Deletes a key from the registry.
+		/// </summary>
+		/// <param name="KeyName">They full path of the key to delete</param>
+		public static void RegDeleteKey(object obj0 = null)
+		{
+			var keyname = obj0.As();
+
+			try
+			{
+				if (keyname?.Length == 0)
+					if (Accessors.A_LoopRegKey is string k)
+						keyname = k;
+
+				var (reg, comp, key) = Conversions.ToRegRootKey(keyname);
+				reg.DeleteSubKeyTree(key, true);
+			}
+			catch (Exception ex)
+			{
+				throw new OSError(ex);
 			}
 		}
 
@@ -79,17 +76,19 @@ namespace Keysharp.Core
 		/// <param name="KeyName">The name of the key</param>
 		/// <param name="ValueName">The name of the value to retrieve. If omitted, Subkey's default value will be retrieved, which is the value displayed as "(Default)" by RegEdit. If there is no default value (that is, if RegEdit displays "value not set"), OutputVar is made blank and Accessors.A_ErrorLevel is set to 1.</param>
 		/// <returns>The value retrieved. If the value cannot be retrieved, the variable is made blank and Accessors.A_ErrorLevel is set to 1.</returns>
-		public static object RegRead(params object[] obj)
+		public static object RegRead(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (keyname, valname) = obj.L().S2();
+			var keyname = obj0.As();
+			var valname = obj1.As();
+			var def = obj2.As();
 
 			try
 			{
-				if (keyname?.Length == 0)
+				if (keyname.Length == 0)
 					if (Accessors.A_LoopRegKey is string k)
 						keyname = k;
 
-				if (valname?.Length == 0)
+				if (valname.Length == 0)
 				{
 					if (Accessors.A_LoopRegType is string t)
 					{
@@ -116,17 +115,20 @@ namespace Keysharp.Core
 					reg = new Array(sa);
 				else if (reg is byte[] ba)
 					reg = new Array(ba);
+				else if (reg is null)
+				{
+					if (!string.IsNullOrEmpty(def))
+						return def;
 
-				Accessors.A_ErrorLevel = 0;
+					throw new OSError("", $"Registry key {keyname} and value {valname} was not found and no default was specified.");
+				}
+
 				return reg;
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				Keysharp.Scripting.Script.OutputDebug(e.Message);
-				Accessors.A_ErrorLevel = 1;
+				throw new OSError(ex);
 			}
-
-			return "";
 		}
 
 		/// <summary>
@@ -136,9 +138,12 @@ namespace Keysharp.Core
 		/// <param name="ValueType">Must be either REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD, or REG_BINARY.</param>
 		/// <param name="KeyName">Full path of the registry key, including the remote computer if needed.</param>
 		/// <param name="ValueName">The name of the value that will be written to. If blank or omitted, Subkey's default value will be used, which is the value displayed as "(Default)" by RegEdit.</param>
-		public static void RegWrite(params object[] obj)
+		public static void RegWrite(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (val, valtype, keyname, valname) = obj.L().Os3();
+			var val = obj0;
+			var valtype = obj1.As();
+			var keyname = obj2.As();
+			var valname = obj3.As();
 
 			try
 			{
@@ -189,19 +194,17 @@ namespace Keysharp.Core
 					}
 
 					reg.SetValue(valname, val, regtype);
-					Accessors.A_ErrorLevel = 0;
 				}
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				Keysharp.Scripting.Script.OutputDebug(e.Message);
-				Accessors.A_ErrorLevel = 1;
+				throw new OSError(ex);
 			}
 		}
 
-		public static void SetRegView(params object[] obj)
+		public static void SetRegView(object obj)
 		{
-			var val = obj.L().L1(64L);
+			var val = obj.Al(64L);
 
 			if (val == 32L || val == 64L)
 				Accessors.A_RegView = val;

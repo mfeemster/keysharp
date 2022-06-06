@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace Keysharp.Core
 {
@@ -73,7 +71,7 @@ namespace Keysharp.Core
 
 		public Map(params object[] values) => Set(values);
 
-		private Map(Dictionary<object, object> dkt) => map = dkt;
+		internal Map(Dictionary<object, object> dkt) => map = dkt;
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
@@ -106,18 +104,18 @@ namespace Keysharp.Core
 			//array[index] = kv;
 		}
 
-		public object Delete(params object[] values)
+		public object Delete(object obj)
 		{
-			var k = values[0];
-			var key = k is string s && caseSense != eCaseSense.On ? s.ToLower() : k;
+			var key = obj is string s && caseSense != eCaseSense.On ? s.ToLower() : obj;
 			return map.Remove(key, out var val)
 				   ? val
 				   : throw new KeyError($"Key {key} was not present in the map.");
 		}
 
-		public object Get(params object[] values)
+		public object Get(object obj0, object obj1 = null)
 		{
-			var (key, def) = values.O2();
+			var key = obj0;
+			var def = obj1;
 
 			if (TryGetValue(key, out var val))
 				return val;
@@ -133,9 +131,9 @@ namespace Keysharp.Core
 
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map);
 
-		public bool Has(params object[] values) => TryGetValue(values[0], out _);
+		public bool Has(object obj) => TryGetValue(obj, out _);
 
-		public object MaxIndex(params object[] values)
+		public object MaxIndex()
 		{
 			var val = long.MinValue;
 
@@ -150,7 +148,7 @@ namespace Keysharp.Core
 			return val != long.MinValue ? val : (object)string.Empty;
 		}
 
-		public object MinIndex(params object[] values)
+		public object MinIndex()
 		{
 			var val = long.MaxValue;
 

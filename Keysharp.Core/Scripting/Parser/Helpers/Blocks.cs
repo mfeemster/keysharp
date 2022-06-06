@@ -120,10 +120,7 @@ namespace Keysharp.Scripting
 				CloseBlock(singleLoops);
 		}
 
-		private CodeBlock CloseTopLabelBlock()
-		{
-			return blocks.Count != 0 && blocks.Peek().Kind == CodeBlock.BlockKind.Label ? blocks.Pop() : null;
-		}
+		private CodeBlock CloseTopLabelBlock() => blocks.Count != 0 && blocks.Peek().Kind == CodeBlock.BlockKind.Label ? blocks.Pop() : null;
 
 		private bool CloseTopSingleBlock()
 		{

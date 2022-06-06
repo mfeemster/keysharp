@@ -3,11 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
@@ -17,27 +15,27 @@ namespace Keysharp.Core
 		internal MsgMonitorList monitorEvents;
 		internal string typename;
 		private readonly Control _control;
-		private readonly List<GenericFunction> clickHandlers = new List<GenericFunction>();
-		private readonly List<GenericFunction> doubleClickHandlers = new List<GenericFunction>();
+		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();//These all need to be converted to FuncObj.
+		private readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
 
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
-		private List<GenericFunction> changeHandlers;
+		private List<IFuncObj> changeHandlers;
 
-		private List<GenericFunction> columnClickHandlers;
-		private Dictionary<int, List<GenericFunction>> commandHandlers;
-		private List<GenericFunction> contextMenuChangedHandlers;
+		private List<IFuncObj> columnClickHandlers;
+		private Dictionary<int, List<IFuncObj>> commandHandlers;
+		private List<IFuncObj> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
 		private bool fireEvents = true;//Need to figure out how to enable/disable events.//MATT//TODO
-		private List<GenericFunction> focusedItemChangedHandlers;
-		private List<GenericFunction> focusHandlers;
-		private List<GenericFunction> itemCheckHandlers;
-		private List<GenericFunction> itemEditHandlers;
-		private List<GenericFunction> itemExpandHandlers;
-		private List<GenericFunction> lostFocusHandlers;
+		private List<IFuncObj> focusedItemChangedHandlers;
+		private List<IFuncObj> focusHandlers;
+		private List<IFuncObj> itemCheckHandlers;
+		private List<IFuncObj> itemEditHandlers;
+		private List<IFuncObj> itemExpandHandlers;
+		private List<IFuncObj> lostFocusHandlers;
 		private int mousecount = 0;
-		private Dictionary<int, List<GenericFunction>> notifyHandlers;
-		private List<GenericFunction> selectedItemChangedHandlers;
+		private Dictionary<int, List<IFuncObj>> notifyHandlers;
+		private List<IFuncObj> selectedItemChangedHandlers;
 		public bool AltSubmit { get; internal set; } = false;
 
 		public string ClassNN
@@ -177,7 +175,7 @@ namespace Keysharp.Core
 				if (_control is Label lbl)
 					return lbl.Text;
 				else if (_control is TextBox txt)
-					return Misc.NormalizeEol(txt.Text);
+					return Strings.NormalizeEol(txt.Text);
 				else if (_control is HotkeyBox hk)
 					return hk.GetText();
 				else if (_control is NumericUpDown nud)
@@ -238,7 +236,7 @@ namespace Keysharp.Core
 				if (_control is Label lbl)
 					lbl.Text = val;
 				else if (_control is TextBox txt)
-					txt.Text = Misc.NormalizeEol(val);
+					txt.Text = Strings.NormalizeEol(val);
 				else if (_control is HotkeyBox hk)
 					hk.SetText(val);
 				else if (_control is NumericUpDown nud)
@@ -483,50 +481,45 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public void Choose(params object[] obj)
+		public void Choose(object obj)
 		{
-			var o = obj.L();
+			var s = obj as string;
+			var i = (int)obj.Al() - 1;
+			fireEvents = false;
 
-			if (o.Count > 0)
+			if (_control is TabControl tc)
 			{
-				var s = o[0] as string;
-				var i = o[0].ParseInt().Value - 1;
-				fireEvents = false;
-
-				if (_control is TabControl tc)
+				if (!string.IsNullOrEmpty(s))
 				{
-					if (!string.IsNullOrEmpty(s))
-					{
-						if (tc.FindTab(s, false) is TabPage tp)
-							tc.SelectTab(tp);
-					}
-					else if (i >= 0)
-						tc.SelectTab(i);
+					if (tc.FindTab(s, false) is TabPage tp)
+						tc.SelectTab(tp);
 				}
-				else if (_control is ListBox lb)
-				{
-					if (!string.IsNullOrEmpty(s))
-						lb.SelectItem(s);
-					else if (i >= 0)
-						lb.SetSelected(i, true);
-					else
-						lb.ClearSelected();
-				}
-				else if (_control is ComboBox cb)
-				{
-					if (!string.IsNullOrEmpty(s))
-						cb.SelectItem(s);
-					else if (i >= 0)
-						cb.SelectedIndex = i;
-					else if (cb.DropDownStyle != ComboBoxStyle.DropDownList)
-					{
-						cb.SelectedIndex = -1;
-						cb.ResetText();
-					}
-				}
-
-				fireEvents = true;
+				else if (i >= 0)
+					tc.SelectTab(i);
 			}
+			else if (_control is ListBox lb)
+			{
+				if (!string.IsNullOrEmpty(s))
+					lb.SelectItem(s);
+				else if (i >= 0)
+					lb.SetSelected(i, true);
+				else
+					lb.ClearSelected();
+			}
+			else if (_control is ComboBox cb)
+			{
+				if (!string.IsNullOrEmpty(s))
+					cb.SelectItem(s);
+				else if (i >= 0)
+					cb.SelectedIndex = i;
+				else if (cb.DropDownStyle != ComboBoxStyle.DropDownList)
+				{
+					cb.SelectedIndex = -1;
+					cb.ResetText();
+				}
+			}
+
+			fireEvents = true;
 		}
 
 		/// <summary>
@@ -535,98 +528,109 @@ namespace Keysharp.Core
 		/// of an existing tab to the tab at the index that was deleted.
 		/// </summary>
 		/// <param name="obj"></param>
-		public long Delete(params object[] obj)
+		public long Delete(object obj)
 		{
-			var o = obj.L();
-			var index = o.I1() - 1;
+			var index = (int)obj.Al() - 1;
 
-			if (_control is ListBox lb)
+			switch (_control)
 			{
-				if (index >= 0)
-					lb.Items.RemoveAt(index);
-				else
-					lb.Items.Clear();
-			}
-			else if (_control is ComboBox cb)
-			{
-				if (index >= 0)
-					cb.Items.RemoveAt(index);
-				else
-					cb.Items.Clear();
-			}
-			else if (_control is TabControl tc)
-			{
-				if (index < 0)
-					tc.TabPages.Clear();
-				else if (index < tc.TabPages.Count)
+				case ListBox lb:
+					if (index >= 0)
+						lb.Items.RemoveAt(index);
+					else
+						lb.Items.Clear();
+
+					break;
+
+				case ComboBox cb:
+					if (index >= 0)
+						cb.Items.RemoveAt(index);
+					else
+						cb.Items.Clear();
+
+					break;
+
+				case TabControl tc:
 				{
-					var ctrls = tc.TabPages[index].Controls;
-					tc.TabPages.RemoveAt(index);
-
-					if (index < tc.TabPages.Count)//Extremely bizarre behavior, but the documentation says that if you delete a tab, then its controls are moved to the next tab, replacing whatever was on that tab.
+					if (index < 0)
+						tc.TabPages.Clear();
+					else if (index < tc.TabPages.Count)
 					{
-						tc.TabPages[index].Controls.Clear();
-						tc.TabPages[index].Controls.AddRange(ctrls.Cast<Control>().ToArray());
+						var ctrls = tc.TabPages[index].Controls;
+						tc.TabPages.RemoveAt(index);
+
+						if (index < tc.TabPages.Count)//Extremely bizarre behavior, but the documentation says that if you delete a tab, then its controls are moved to the next tab, replacing whatever was on that tab.
+						{
+							tc.TabPages[index].Controls.Clear();
+							tc.TabPages[index].Controls.AddRange(ctrls.Cast<Control>().ToArray());
+						}
 					}
-				}
-			}
-			else if (_control is TreeView tv)
-			{
-				var id = o.L1(long.MinValue);
 
-				if (id == long.MinValue)
-				{
-					tv.Nodes.Clear();
-					return 1;
+					break;
 				}
-				else if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
+
+				case TreeView tv:
 				{
-					node.Remove();
-					return 1;
+					var id = obj.Al(long.MinValue);
+
+					if (id == long.MinValue)
+					{
+						tv.Nodes.Clear();
+						return 1L;
+					}
+					else if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
+					{
+						node.Remove();
+						return 1L;
+					}
+
+					break;
 				}
-			}
-			else if (_control is ListView lv)
-			{
-				if (index < 0)
-				{
-					lv.Items.Clear();
-					return 1;
-				}
-				else if (index < lv.Items.Count)
-				{
-					lv.Items.RemoveAt(index);
-					return 1;
-				}
+
+				case ListView lv:
+					if (index < 0)
+					{
+						lv.Items.Clear();
+						return 1L;
+					}
+					else if (index < lv.Items.Count)
+					{
+						lv.Items.RemoveAt(index);
+						return 1L;
+					}
+
+					break;
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public long DeleteCol(params object[] obj)
+		public long DeleteCol(object obj)
 		{
 			if (_control is ListView lv)
 			{
-				var index = obj.L().I1() - 1;
+				var index = (int)obj.Al() - 1;
 
 				if (index >= 0 && index < lv.Columns.Count)
 				{
 					lv.Columns.RemoveAt(index);
-					return 1;
+					return 1L;
 				}
 			}
 
-			return 0;
+			return 0L;
 		}
 
 		public void Focus() => _control.Focus();
 
-		public long Get(params object[] obj)
+		public long Get(object obj0, object obj1)
 		{
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
-				var (id, attr) = obj.L().Ls();
+				var id = obj0.Al();
+				var attr = obj1.As();
 
-				if (GuiHelper.TV_FindNode(tree, id) is TreeNode node)
+				if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
 					if (Options.OptionContains(attr, Core.Keyword_Expand, Core.Keyword_Expanded, Core.Keyword_Expand[0].ToString()) && node.IsExpanded)
 						return node.Handle.ToInt64();
@@ -637,28 +641,26 @@ namespace Keysharp.Core
 				}
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public long GetChild(params object[] obj)
+		public long GetChild(object obj)
 		{
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
-				var id = obj.L().L1();
-				var node = GuiHelper.TV_FindNode(tree, id);
-				return node == null ? 0 : node.Nodes.Count == 0 ? 0 : node.FirstNode.Handle.ToInt64();
+				var id = obj.Al();
+				var node = GuiHelper.TV_FindNode(tv, id);
+				return node == null ? 0 : node.Nodes.Count == 0 ? 0L : node.FirstNode.Handle.ToInt64();
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public long GetCount(params object[] obj)
+		public long GetCount(object obj)
 		{
-			if (_control is TreeView tree)
-				return tree.Nodes.Count;
-			else if (_control is ListView lv)
+			if (_control is ListView lv)
 			{
-				var mode = obj.L().S1();
+				var mode = obj.As();
 
 				if (mode?.Length == 0)
 					return lv.Items.Count;
@@ -667,25 +669,28 @@ namespace Keysharp.Core
 				else if (mode.StartsWith("c", System.StringComparison.OrdinalIgnoreCase))
 					return lv.Columns.Count;
 			}
+			else if (_control is TreeView tv)
+				return tv.Nodes.Count;
 
-			return 0;
+			return 0L;
 		}
 
-		public long GetNext(params object[] obj)
+		public long GetNext(object obj0 = null, object obj1 = null)
 		{
-			var (id, mode) = obj.L().Ls();
+			var id = obj0.Al();
+			var mode = obj1.As();
 
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
 				none:
 
 				if (string.IsNullOrEmpty(mode))
 				{
 					if (id == 0)
-						return tree.Nodes.Count == 0 ? 0 : tree.Nodes[0].Handle.ToInt64();
+						return tv.Nodes.Count == 0 ? 0L : tv.Nodes[0].Handle.ToInt64();
 
-					var node = GuiHelper.TV_FindNode(tree, id);
-					return node == null || node.NextNode == null ? 0 : node.NextNode.Handle.ToInt64();
+					var node = GuiHelper.TV_FindNode(tv, id);
+					return node == null || node.NextNode == null ? 0L : node.NextNode.Handle.ToInt64();
 				}
 
 				var check = Options.OptionContains(mode, Core.Keyword_Check, Core.Keyword_Checked, Core.Keyword_Checked[0].ToString());
@@ -697,12 +702,12 @@ namespace Keysharp.Core
 					goto none;
 				}
 
-				for (var i = id == 0 ? 1 : GuiHelper.TV_FindNode(tree, id).Index + 1; i < tree.Nodes.Count; i++)//Add one because it's supposed to look for the "next" node.
+				for (var i = id == 0 ? 1 : GuiHelper.TV_FindNode(tv, id).Index + 1; i < tv.Nodes.Count; i++)//Add one because it's supposed to look for the "next" node.
 				{
-					if (check && !tree.Nodes[i].Checked)
+					if (check && !tv.Nodes[i].Checked)
 						continue;
 
-					return tree.Nodes[i].Handle.ToInt64();
+					return tv.Nodes[i].Handle.ToInt64();
 				}
 			}
 			else if (_control is ListView lv)
@@ -731,67 +736,62 @@ namespace Keysharp.Core
 				}
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public object GetNode(params object[] obj)
+		public object GetNode(object obj)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj.L().L1();
+				var id = obj.Al();
 				return GuiHelper.TV_FindNode(tv, id);
 			}
 
 			return null;
 		}
 
-		public long GetParent(params object[] obj)
+		public long GetParent(object obj)
 		{
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
-				var id = obj.L().L1();
-				var node = GuiHelper.TV_FindNode(tree, id);
-				return node == null || node.Parent == null || !(node.Parent is TreeNode) ? 0 : node.Parent.Handle.ToInt64();
+				var id = obj.Al();
+				var node = GuiHelper.TV_FindNode(tv, id);
+				return node == null || node.Parent == null || !(node.Parent is TreeNode) ? 0L : node.Parent.Handle.ToInt64();
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public Dictionary<string, object> GetPos() => GetPos(_control, dpiscaling);
+		public Map GetPos() => GetPos(_control, dpiscaling);
 
-		public long GetPrev(params object[] obj)
+		public long GetPrev(object obj)
 		{
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
-				var id = obj.L().L1();
-				var node = GuiHelper.TV_FindNode(tree, id);
-				return node == null || node.PrevNode == null ? 0 : node.PrevNode.Handle.ToInt64();
+				var id = obj.Al();
+				var node = GuiHelper.TV_FindNode(tv, id);
+				return node == null || node.PrevNode == null ? 0L : node.PrevNode.Handle.ToInt64();
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public long GetSelection()
-		{
-			if (_control is TreeView tree && tree.SelectedNode != null)
-				return tree.SelectedNode.Handle.ToInt64();
+		public long GetSelection() => _control is TreeView tv&& tv.SelectedNode != null ? tv.SelectedNode.Handle.ToInt64() : 0L;
 
-			return 0;
-		}
-
-		public string GetText(params object[] obj)
+		public string GetText(object obj0, object obj1 = null)
 		{
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
-				var id = obj.L().L1();
-				var node = GuiHelper.TV_FindNode(tree, id);
+				var id = obj0.Al();
+				var node = GuiHelper.TV_FindNode(tv, id);
 
 				if (node != null)
 					return node.Text;
 			}
 			else if (_control is ListView lv)
 			{
-				var (row, col) = obj.L().I2(0, 1);
+				var row = (int)obj0.Al();
+				var col = (int)obj1.Al(1);
 				row--;
 				col = Math.Max(col - 1, 0);
 
@@ -816,11 +816,13 @@ namespace Keysharp.Core
 			}
 		}
 
-		public long InsertCol(params object[] obj)
+		public long InsertCol(object obj0, object obj1 = null, object obj2 = null)
 		{
 			if (_control is ListView lv)
 			{
-				var (index, options, title) = obj.L().Is2();
+				var index = (int)obj0.Al();
+				var options = obj1.As();
+				var title = obj2.As();
 				index--;
 				var header = new ColumnHeader
 				{
@@ -860,21 +862,21 @@ namespace Keysharp.Core
 					_ = lv.Columns.Add(header);
 
 				GuiHelper.ParseAndApplyListViewColumnOptions(header, options);
-				return index + 1;
+				return index + 1L;
 			}
 
-			return -1;
+			return -1L;
 		}
 
 		public long Modify(params object[] obj)
 		{
 			var o = obj.L();
 
-			if (_control is TreeView tree)
+			if (_control is TreeView tv)
 			{
 				var (id, options, name) = o.Ls2();
 
-				if (GuiHelper.TV_FindNode(tree, id) is TreeNode node)
+				if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
 					if (options?.Length == 0 && name?.Length == 0)
 					{
@@ -884,7 +886,7 @@ namespace Keysharp.Core
 					else if (name != "")
 						node.Text = name;
 
-					return GuiHelper.TV_NodeOptions(node, node.Parent != null ? node.Parent.Handle.ToInt64() : 0, options, true);
+					return GuiHelper.TV_NodeOptions(node, node.Parent != null ? node.Parent.Handle.ToInt64() : 0L, options, true);
 				}
 			}
 			else if (_control is ListView lv)
@@ -910,7 +912,7 @@ namespace Keysharp.Core
 							GuiHelper.ApplyListViewOptions(lv, item, lvo);
 						}
 
-						return 1;
+						return 1L;
 					}
 				}
 				catch (Exception)// ex)
@@ -918,28 +920,28 @@ namespace Keysharp.Core
 				}
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public long ModifyCol(params object[] obj)
+		public long ModifyCol(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var o = obj.L();
-
 			if (_control is ListView lv)
 			{
-				var (colnumber, opts, coltitle) = o.Is2();
+				var colnumber = (int)obj0.Al();
+				var opts = obj1.As();
+				var coltitle = obj2.As();
 
 				if (opts?.Length == 0 && coltitle?.Length == 0)
 				{
 					if (colnumber == 0)
 					{
 						lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-						return 1;
+						return 1L;
 					}
 					else if (colnumber > 0)
 					{
 						lv.AutoResizeColumn(colnumber - 1, ColumnHeaderAutoResizeStyle.ColumnContent);
-						return 1;
+						return 1L;
 					}
 				}
 
@@ -953,55 +955,55 @@ namespace Keysharp.Core
 						col.Text = coltitle;
 
 					GuiHelper.ParseAndApplyListViewColumnOptions(col, opts);
-					return 1;
+					return 1L;
 				}
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public void Move(params object[] obj)
+		public void Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (x, y, width, height) = obj.L().I4(int.MinValue, int.MinValue, int.MinValue, int.MinValue);
+			var x = obj0.Al(long.MinValue);
+			var y = obj1.Al(long.MinValue);
+			var width = obj2.Al(long.MinValue);
+			var height = obj3.Al(long.MinValue);
 			var scale = dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 
-			if (y != int.MinValue)
+			if (y != long.MinValue)
 				_control.Top = (int)Math.Round(y * scale);
 
-			if (x != int.MinValue)
+			if (x != long.MinValue)
 				_control.Left = (int)Math.Round(x * scale);
 
-			if (width != int.MinValue)
+			if (width != long.MinValue)
 				_control.Width = (int)Math.Round(width * scale);
 
-			if (height != int.MinValue)
+			if (height != long.MinValue)
 				_control.Height = (int)Math.Round(height * scale);
 		}
 
-		public void OnCommand(params object[] obj)
-		{
-			var (code, callback, addremove) = obj.L().Ioi(0, "", 1);
-			HandleOnCommandNotify(code, callback, addremove, ref commandHandlers);
-		}
+		public void OnCommand(object obj0, object obj1, object obj2 = null) => HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref commandHandlers);
 
-		public void OnEvent(params object[] obj)
+		public void OnEvent(object obj0, object obj1, object obj2 = null)
 		{
-			var (e, h, i) = obj.L().Soi("", "", 1);
-			e = e.ToLower();
+			var e = obj0.As().ToLower();
+			var h = obj1;
+			var i = obj2.Al(1);
 
 			if (e == "focus")
 				e = "enter";
 			else if (e == "losefocus")
 				e = "leave";
 
-			var del = GetDel(h, Gui.form.eventObj);
+			var del = GetFuncObj(h, Gui.form.eventObj);
 
 			if (del != null)
 			{
 				if (e == "change")
 				{
 					if (changeHandlers == null)
-						changeHandlers = new List<GenericFunction>();
+						changeHandlers = new List<IFuncObj>();
 
 					changeHandlers.ModifyEventHandlers(del, i);
 				}
@@ -1029,14 +1031,14 @@ namespace Keysharp.Core
 				else if (e == "focus")
 				{
 					if (focusHandlers == null)
-						focusHandlers = new List<GenericFunction>();
+						focusHandlers = new List<IFuncObj>();
 
 					focusHandlers.ModifyEventHandlers(del, i);
 				}
 				else if (e == "losefocus")
 				{
 					if (lostFocusHandlers == null)
-						lostFocusHandlers = new List<GenericFunction>();
+						lostFocusHandlers = new List<IFuncObj>();
 
 					lostFocusHandlers.ModifyEventHandlers(del, i);
 				}
@@ -1045,7 +1047,7 @@ namespace Keysharp.Core
 					if (_control is ListView lv)
 					{
 						if (columnClickHandlers == null)
-							columnClickHandlers = new List<GenericFunction>();
+							columnClickHandlers = new List<IFuncObj>();
 
 						columnClickHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1055,7 +1057,7 @@ namespace Keysharp.Core
 					if (_control is TreeView || _control is ListView)
 					{
 						if (itemCheckHandlers == null)
-							itemCheckHandlers = new List<GenericFunction>();
+							itemCheckHandlers = new List<IFuncObj>();
 
 						itemCheckHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1065,7 +1067,7 @@ namespace Keysharp.Core
 					if (_control is TreeView || _control is ListView)
 					{
 						if (itemEditHandlers == null)
-							itemEditHandlers = new List<GenericFunction>();
+							itemEditHandlers = new List<IFuncObj>();
 
 						itemEditHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1075,7 +1077,7 @@ namespace Keysharp.Core
 					if (_control is TreeView)
 					{
 						if (itemExpandHandlers == null)
-							itemExpandHandlers = new List<GenericFunction>();
+							itemExpandHandlers = new List<IFuncObj>();
 
 						itemExpandHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1085,7 +1087,7 @@ namespace Keysharp.Core
 					if (_control is ListView)
 					{
 						if (focusedItemChangedHandlers == null)
-							focusedItemChangedHandlers = new List<GenericFunction>();
+							focusedItemChangedHandlers = new List<IFuncObj>();
 
 						focusedItemChangedHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1095,7 +1097,7 @@ namespace Keysharp.Core
 					if (_control is TreeView || _control is ListView)
 					{
 						if (selectedItemChangedHandlers == null)
-							selectedItemChangedHandlers = new List<GenericFunction>();
+							selectedItemChangedHandlers = new List<IFuncObj>();
 
 						selectedItemChangedHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1103,7 +1105,7 @@ namespace Keysharp.Core
 				else if (e == "contextmenu")
 				{
 					if (contextMenuChangedHandlers == null)
-						contextMenuChangedHandlers = new List<GenericFunction>();
+						contextMenuChangedHandlers = new List<IFuncObj>();
 
 					if (!(_control is TextBox) && !(_control is MonthCalendar))
 						contextMenuChangedHandlers.ModifyEventHandlers(del, i);
@@ -1111,15 +1113,11 @@ namespace Keysharp.Core
 			}
 		}
 
-		public void OnNotify(params object[] obj)
-		{
-			var (code, callback, addremove) = obj.L().Ioi(0, "", 1);
-			HandleOnCommandNotify(code, callback, addremove, ref notifyHandlers);
-		}
+		public void OnNotify(object obj0, object obj1, object obj2 = null) => HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref notifyHandlers);
 
-		public void Opt(params object[] obj)
+		public void Opt(object obj)
 		{
-			var optionsstr = obj.L().S1();
+			var optionsstr = obj.As();
 			var opts = Gui.ParseOpt(typename, _control.Text, optionsstr);
 
 			if (opts.redraw.HasValue)
@@ -1386,15 +1384,17 @@ namespace Keysharp.Core
 
 		public void Redraw() => _control.Refresh();
 
-		public void SetFont(params object[] obj) => _control.SetFont(obj);
+		public void SetFont(object obj0 = null, object obj1 = null) => _control.SetFont(obj0, obj1);
 
-		public void SetFormat(params object[] obj) => (_control as DateTimePicker)?.SetFormat(obj.L().S1());
+		public void SetFormat(object obj) => (_control as DateTimePicker)?.SetFormat(obj);
 
-		public IntPtr SetIcon(params object[] obj)
+		public IntPtr SetIcon(object obj0, object obj1 = null, object obj2 = null)
 		{
 			if (_control is StatusStrip ss)
 			{
-				var (filename, iconnumber, part) = obj.L().Si2("", 1, 1);//Figure out how to use handles for icons.//MATT
+				var filename = obj0.As();
+				var iconnumber = (int)obj1.Al(1L);
+				var part = (int)obj2.Al(1L);
 				part--;
 
 				if (iconnumber > 0)
@@ -1410,17 +1410,18 @@ namespace Keysharp.Core
 			return IntPtr.Zero;
 		}
 
-		public long SetImageList(params object[] obj)
+		public long SetImageList(object obj0, object obj1 = null)
 		{
-			var (id, type) = obj.L().I2();//Type is for something called "state icons", which the documentation says are not supported yet, so we ignore for now.
+			var id = obj0.Al();
+			var type = obj1.Al();//Type is for something called "state icons", which the documentation says are not supported yet, so we ignore for now.
 			var oldil = 0L;
 
 			if (ImageLists.IL_Get(id) is ImageList il)
 			{
-				if (_control is TreeView tree)
+				if (_control is TreeView tv)
 				{
-					oldil = ImageLists.IL_GetId(tree.ImageList);
-					tree.ImageList = il;
+					oldil = ImageLists.IL_GetId(tv.ImageList);
+					tv.ImageList = il;
 				}
 				else if (_control is ListView lv)
 				{
@@ -1513,11 +1514,12 @@ namespace Keysharp.Core
 			}
 		}
 
-		public void SetTabIcon(params object[] obj)//New function since the original required SendMessage() to do this.
+		public void SetTabIcon(object obj0, object obj1)//New function since the original required SendMessage() to do this.
 		{
 			if (_control is TabControl tc)
 			{
-				var (tabindex, imageindex) = obj.L().I2();
+				var tabindex = (int)obj0.Al();
+				var imageindex = (int)obj1.Al();
 
 				if (tabindex < tc.TabCount && tc.ImageList != null && imageindex < tc.ImageList.Images.Count)
 					tc.TabPages[tabindex].ImageIndex = imageindex;
@@ -1526,11 +1528,13 @@ namespace Keysharp.Core
 			}
 		}
 
-		public bool SetText(params object[] obj)
+		public bool SetText(object obj0, object obj1 = null, object obj2 = null)
 		{
 			if (_control is StatusStrip ss)
 			{
-				var (text, part, style) = obj.L().Si2("", 1);
+				var text = obj0.As();
+				var part = (int)obj1.Al(1L);
+				var style = obj2.Al();
 				part--;
 
 				if (part < ss.Items.Count)
@@ -1566,13 +1570,12 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public void UseTab(params object[] obj)
+		public void UseTab(object obj0 = null, object obj1 = null)
 		{
-			Gui.CurrentTab = null;
-
 			if (_control is KeysharpTabControl tc)
 			{
-				var (val, exact) = obj.L().Ob();
+				var val = obj0;
+				var exact = obj1.Ab();
 
 				if (val is string s)
 				{
@@ -1581,63 +1584,52 @@ namespace Keysharp.Core
 				}
 				else if (val != null)
 				{
-					var i = val.ParseInt().Value;
+					var i = (int)val.Al();
 					i--;
 
 					if (i >= 0 && i < tc.TabPages.Count)
 						Gui.CurrentTab = tc.TabPages[i];
 				}
+				else
+					Gui.CurrentTab = null;
 			}
 		}
 
-		internal static Dictionary<string, object> GetClientPos(Control control, bool scaling)
+		internal static Map GetClientPos(Control control, bool scaling)
 		{
 			var scale = scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-			var dkt = new Dictionary<string, object>
+			var dkt = new Map(new Dictionary<string, object>
 			{
 				{ "X", control.ClientRectangle.X * scale },
 				{ "Y", control.ClientRectangle.Y * scale },
 				{ "Width", control.ClientRectangle.Width * scale },
 				{ "Height", control.ClientRectangle.Height * scale }
-			};
+			});
 			return dkt;
 		}
 
-		internal static GenericFunction GetDel(object h, object eventObj)
+		internal static IFuncObj GetFuncObj(object h, object eventObj)
 		{
-			GenericFunction del = null;
+			IFuncObj del = null;
 
-			if (h is string hs)
-			{
-				if (Reflections.FindLocalMethod(hs) is MethodInfo mi)
-				{
-					del = (GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), mi);
-				}
-				else if (eventObj != null)
-				{
-					if (Reflections.FindAndCacheMethod(eventObj.GetType(), hs) is MethodInfo mi2)
-						del = (GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), eventObj, mi2);
-				}
-			}
-			else if (h != null)//Function object.
-			{
-				if (Reflections.FindAndCacheMethod(h.GetType(), "call") is MethodInfo mi)
-					del = (GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), h, mi);
-			}
+			if (h is string s)
+				del = new FuncObj(s, eventObj);//If eventObj is not null, then s is assumed to be a method on that object, else s is assumed to be a global function.
+			else if (h is IFuncObj fo)
+				del = fo;
 
 			return del;
 		}
 
-		internal static Dictionary<string, object> GetPos(Control control, bool scaling)
+		internal static Map GetPos(Control control, bool scaling)
 		{
 			var scale = scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-			var dkt = new Dictionary<string, object>
+			var dkt = new Map(new Dictionary<string, object>
 			{
 				{ "X", control.Location.X * scale },
 				{ "Y", control.Location.Y * scale },
 				{ "Width", control.Size.Width * scale },
 				{ "Height", control.Size.Height * scale }
-			};
+			});
 			return dkt;
 		}
 
@@ -1698,10 +1690,9 @@ namespace Keysharp.Core
 			}
 			else if (_control is KeysharpButton)
 			{
-				mousecount ^= 1;//Button click events get fired twice, because we have double click and standard click enabled, so filter the second click here.
-
-				if (mousecount > 0)
-					_ = clickHandlers.InvokeEventHandlers(this, null);
+				//mousecount ^= 1;//Button click events get fired twice, because we have double click and standard click enabled, so filter the second click here.
+				//if (mousecount > 0)
+				_ = clickHandlers.InvokeEventHandlers(this, null);
 			}
 			else
 				_ = clickHandlers.InvokeEventHandlers(this, null);
@@ -1771,16 +1762,16 @@ namespace Keysharp.Core
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void HandleOnCommandNotify(int code, object callback, int addremove, ref Dictionary<int, List<GenericFunction>> handlers)
+		private void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
-			var del = GetDel(callback, Gui.form.eventObj);
+			var del = GetFuncObj(callback, Gui.form.eventObj);
 
 			if (del != null)
 			{
 				if (handlers == null)
-					handlers = new Dictionary<int, List<GenericFunction>>();
+					handlers = new Dictionary<int, List<IFuncObj>>();
 
-				var h = handlers.GetOrAdd(code);
+				var h = handlers.GetOrAdd((int)code);
 				h.ModifyEventHandlers(del, addremove);
 			}
 		}

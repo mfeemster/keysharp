@@ -9,6 +9,10 @@ using static Keysharp.Core.Core;
 
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Although the Windows API does provide functions for manipulating INI files, they are not cross platform.
+	/// So the code here provides cross platform INI manipulation functions in pure C#.
+	/// </summary>
 	public static class Ini
 	{
 		/// <summary>
@@ -17,9 +21,11 @@ namespace Keysharp.Core
 		/// <param name="file">The name of the file.</param>
 		/// <param name="section">The section name.</param>
 		/// <param name="key">The key name. If omitted, the entire <paramref name="section"/> will be deleted.</param>
-		public static void IniDelete(params object[] obj)
+		public static void IniDelete(object obj0, object obj1, object obj2 = null)
 		{
-			var (file, section, key) = obj.L().S3();
+			var file = obj0.As();
+			var section = obj1.As();
+			var key = obj2.As();
 
 			if (!System.IO.File.Exists(file))
 				return;
@@ -50,7 +56,7 @@ namespace Keysharp.Core
 				{
 					writer.WriteLine(kv.Key);
 
-					foreach (DictionaryEntry kv2 in ((OrderedDictionary)kv.Value))
+					foreach (DictionaryEntry kv2 in (OrderedDictionary)kv.Value)
 						if (((string)kv2.Key)[0] != '#')
 							writer.WriteLine($"{kv2.Key}={kv2.Value}");
 						else
@@ -65,14 +71,12 @@ namespace Keysharp.Core
 				if (System.IO.File.Exists(file))
 					System.IO.File.Delete(file);
 
-				Disk.FileAppend("", file, "unicode");
+				File.FileAppend("", file, "unicode");
 				System.IO.File.WriteAllText(file, text);
-				Accessors.A_ErrorLevel = 0;
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				Console.WriteLine(e.Message);
-				Accessors.A_ErrorLevel = 1;
+				throw new Error(ex.Message);
 			}
 		}
 
@@ -85,55 +89,54 @@ namespace Keysharp.Core
 		/// <param name="key">The key name.</param>
 		/// <param name="error">The value to store in <paramref name="result"/> if the specified <paramref name="key"/> is not found.
 		/// By default this is "ERROR".</param>
-		public static string IniRead(params object[] obj)
+		public static string IniRead(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (file, section, key, error) = obj.L().S4("", "", "", "ERROR");
+			var file = obj0.As();
+			var section = obj1.As();
+			var key = obj2.As();
+			var def = obj3.As();
 			var result = "";
 
 			if (!System.IO.File.Exists(file))
 				return "";
 
 			if (section != "")
-				section = string.Format(Core.Keyword_IniSectionOpen + "{0}]", section.ToLower());
+				section = $"[{section.ToLower()}]";
 
-			try
+			var haskey = !string.IsNullOrEmpty(key);
+			var hassec = !string.IsNullOrEmpty(section);
+			var sb = new StringBuilder(1024);
+			var inidkt = IniLoad(file);
+
+			if (!haskey && !hassec)
 			{
-				var haskey = !string.IsNullOrEmpty(key);
-				var hassec = !string.IsNullOrEmpty(section);
-				var sb = new StringBuilder(1024);
-				var inidkt = IniLoad(file);
+				foreach (DictionaryEntry kv in inidkt)
+					_ = sb.AppendLine(((string)kv.Key).Trim(trimsec));
+			}
+			else if (haskey && hassec)
+			{
+				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
 
-				if (!haskey && !hassec)
+				if (secdkt.Contains(key))
 				{
-					foreach (DictionaryEntry kv in inidkt)
-					{
-						_ = sb.AppendLine(((string)kv.Key).Trim(trimsec));
-					}
-				}
-				else if (haskey && hassec)
-				{
-					var secdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
-					var val = secdkt.GetOrAdd<string, string, string>(key, "");
+					var val = secdkt.GetOrAdd<string, string, string>(key, def);
 					_ = sb.Append(val);
 				}
-				else if (hassec)
-				{
-					var secdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
-
-					foreach (DictionaryEntry kv in secdkt)
-						if (((string)kv.Key)[0] != '#')
-							_ = sb.AppendLine($"{kv.Key}={kv.Value}");
-				}
-
-				result = sb.ToString();
-				Accessors.A_ErrorLevel = 0;
+				else if (def.Length > 0)
+					_ = sb.Append(def);
+				else
+					throw new OSError($"Failed to find key {key} in section {section} in INI file {file}.");
 			}
-			catch (Exception e)
+			else if (hassec)
 			{
-				Console.WriteLine(e.Message);
-				Accessors.A_ErrorLevel = 1;
+				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
+
+				foreach (DictionaryEntry kv in secdkt)
+					if (((string)kv.Key)[0] != '#')
+						_ = sb.AppendLine($"{kv.Key}={kv.Value}");
 			}
 
+			result = sb.ToString();
 			return result;
 		}
 
@@ -145,11 +148,14 @@ namespace Keysharp.Core
 		/// <param name="section">The section name.</param>
 		/// <param name="key">The key name.</param>
 		/// <remarks><see cref="Accessors.A_ErrorLevel"/> is set to <c>1</c> if there was a problem or <c>0</c> otherwise.</remarks>
-		public static void IniWrite(params object[] obj)
+		public static void IniWrite(object obj0, object obj1, object obj2, object obj3 = null)
 		{
-			var (value, file, section, key) = obj.L().S4();
+			var value = obj0.As();
+			var file = obj1.As();
+			var section = obj2.As();
+			var key = obj3.As();
 			var within = string.IsNullOrEmpty(section);
-			section = string.Format(Core.Keyword_IniSectionOpen + "{0}]", section ?? string.Empty);
+			section = string.Format("[{0}]", section ?? string.Empty);
 			var haskey = !string.IsNullOrEmpty(key);
 			var writer = new StringWriter();
 
@@ -211,20 +217,18 @@ namespace Keysharp.Core
 				if (System.IO.File.Exists(file))
 					System.IO.File.Delete(file);
 
-				Disk.FileAppend("", file, "unicode");
+				File.FileAppend("", file, "unicode");
 				System.IO.File.WriteAllText(file, text);
-				Accessors.A_ErrorLevel = 0;
 			}
-			catch (IOException ioe)
+			catch (Exception ex)
 			{
-				Console.WriteLine(ioe.Message);
-				Accessors.A_ErrorLevel = 1;
+				throw new OSError(ex);
 			}
 		}
 
-		private static OrderedDictionary IniLoad(params object[] obj)
+		private static OrderedDictionary IniLoad(object obj)
 		{
-			var filename = obj.L().S1();
+			var filename = obj.As();
 			OrderedDictionary kvdkt = null;
 			var inidkt = new OrderedDictionary();
 

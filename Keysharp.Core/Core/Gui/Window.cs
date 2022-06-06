@@ -111,7 +111,7 @@ namespace Keysharp.Core
 			if (windowGroups.TryGetValue(name, out var group))
 			{
 				if (group.sc.Count == 0)
-					return 0;
+					return 0L;
 
 				var windows = SearchWindows($"ahk_group {name}");
 
@@ -119,7 +119,7 @@ namespace Keysharp.Core
 					group.activated.Clear();
 
 				if (windows.Count == 1 && windows[0].Handle.ToInt64() == WindowManager.ActiveWindow.Handle.ToInt64())
-					return 0;
+					return 0L;
 
 				if (!mode.Equals(Core.Keyword_R, System.StringComparison.OrdinalIgnoreCase) && !windows.Any(w => w.Active))
 					windows.Reverse();
@@ -138,7 +138,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			return 0;
+			return 0L;
 		}
 
 		public static void GroupAdd(params object[] obj)
@@ -248,15 +248,13 @@ namespace Keysharp.Core
 
 		public static void PostMessage(params object[] obj) => obj.L().I3O2S3().Splat(ControlManager.PostMessage);
 
-		public static void SendLevel(params object[] obj) => Accessors.A_SendLevel = obj.L().L1();
-
 		public static long SendMessage(params object[] obj) => obj.L().I1O4S3I1(0, 0, 0, 0, 0, "", "", "", 5000).Splat(ControlManager.SendMessage);
 
 		public static void SetProcessDPIAware()
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 			{
-				WindowsAPI.SetProcessDPIAware();
+				_ = WindowsAPI.SetProcessDPIAware();
 			}
 		}
 

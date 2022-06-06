@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 using Keysharp.Scripting;
 
@@ -20,13 +19,13 @@ namespace Keysharp.Core
 		public KeysharpForm form;
 
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
-		internal List<GenericFunction> closedHandlers;
-		internal List<GenericFunction> contextMenuChangedHandlers;
-		internal List<GenericFunction> dropFilesHandlers;
-		internal List<GenericFunction> escapeHandlers;
+		internal List<IFuncObj> closedHandlers;
+		internal List<IFuncObj> contextMenuChangedHandlers;
+		internal List<IFuncObj> dropFilesHandlers;
+		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
 		internal MsgMonitorList monitorEvents;
-		internal List<GenericFunction> sizeHandlers;
+		internal List<IFuncObj> sizeHandlers;
 
 		//Need a way to retrieve contorls based on name, text class or hwnd. That will be hard because it'll require multiple dictionaries.//MATT
 		//private static Dictionary<string, Control> controls;
@@ -204,7 +203,9 @@ namespace Keysharp.Core
 		};
 
 		private static int windowCount = 0;
+
 		private bool dpiscaling = true;
+
 		private bool lastfound = false;
 
 		private bool owndialogs = false;
@@ -223,12 +224,11 @@ namespace Keysharp.Core
 						form.BackColor = c;
 				}
 				else
-					form.BackColor = Color.FromArgb((int)(new object[] { value }.L1() | 0xFF000000));
+					form.BackColor = Color.FromArgb((int)(value.Al() | 0xFF000000));
 			}
 		}
 
 		public Control FocusedCtrl => form.ActiveControl;
-
 		public IntPtr Hwnd => form.Handle;
 
 		public long MarginX
@@ -245,10 +245,8 @@ namespace Keysharp.Core
 
 		public MenuBar MenuBar
 		{
-			get
-			{
-				return menuBar;
-			}
+			get => menuBar;
+
 			set
 			{
 				menuBar = value;
@@ -279,9 +277,11 @@ namespace Keysharp.Core
 
 		public string Title => form.Text;
 
-		public Gui(params object[] obj)
+		public Gui(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (options, caption, eventObj) = obj.L().S2o();//Need to support an EventObj as the third param.//MATT
+			var options = obj0.As();
+			var caption = obj1.As();
+			var eventObj = obj2;
 			form = new KeysharpForm();
 			//form.AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
 			//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -311,13 +311,15 @@ namespace Keysharp.Core
 			Keysharp.Core.Common.Window.WindowManagerProvider.Instance.LastFound = new WindowItem(form.Handle);
 		}
 
-		public static Gui __New(params object[] obj) => New(obj);
+		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
 
-		public static Gui New(params object[] obj) => new Gui(obj);
+		public static Gui New(object obj0 = null, object obj1 = null, object obj2 = null) => new Gui(obj0, obj1, obj2);
 
-		public GuiControl Add(params object[] obj)
+		public GuiControl Add(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var (typeo, options, o) = obj.S2o();//The third argument needs to account for being an array in the case of combo/list boxes.
+			var typeo = obj0.As();
+			var options = obj1.As();
+			var o = obj2;//The third argument needs to account for being an array in the case of combo/list boxes.
 			var type = typeo.ToLowerInvariant();
 			GuiControl holder = null;
 			var text = o as string;
@@ -1177,70 +1179,67 @@ namespace Keysharp.Core
 			return holder;
 		}
 
-		public GuiControl AddActiveX(params object[] obj) => Add(new object[] { Core.Keyword_ActiveX }.Concat(obj));
+		public GuiControl AddActiveX(object obj) => Add(Keysharp.Core.Core.Keyword_ActiveX, obj);
 
-		public GuiControl AddButton(params object[] obj) => Add(new object[] { Core.Keyword_Button }.Concat(obj));
+		public GuiControl AddButton(object obj) => Add(Keysharp.Core.Core.Keyword_Button, obj);
 
-		public GuiControl AddCheckbox(params object[] obj) => Add(new object[] { Core.Keyword_CheckBox }.Concat(obj));
+		public GuiControl AddCheckbox(object obj) => Add(Keysharp.Core.Core.Keyword_CheckBox, obj);
 
-		public GuiControl AddComboBox(params object[] obj) => Add(new object[] { Core.Keyword_ComboBox }.Concat(obj));
+		public GuiControl AddComboBox(object obj) => Add(Keysharp.Core.Core.Keyword_ComboBox, obj);
 
-		public GuiControl AddCustom(params object[] obj) => Add(new object[] { Core.Keyword_Custom }.Concat(obj));
+		public GuiControl AddCustom(object obj) => Add(Keysharp.Core.Core.Keyword_Custom, obj);
 
-		public GuiControl AddDateTime(params object[] obj) => Add(new object[] { Core.Keyword_DateTime }.Concat(obj));
+		public GuiControl AddDateTime(object obj) => Add(Keysharp.Core.Core.Keyword_DateTime, obj);
 
-		public GuiControl AddDropDownList(params object[] obj) => Add(new object[] { Core.Keyword_DropDownList }.Concat(obj));
+		public GuiControl AddDropDownList(object obj) => Add(Keysharp.Core.Core.Keyword_DropDownList, obj);
 
-		public GuiControl AddEdit(params object[] obj) => Add(new object[] { Core.Keyword_Edit }.Concat(obj));
+		public GuiControl AddEdit(object obj) => Add(Keysharp.Core.Core.Keyword_Edit, obj);
 
-		public GuiControl AddGroupBox(params object[] obj) => Add(new object[] { Core.Keyword_GroupBox }.Concat(obj));
+		public GuiControl AddGroupBox(object obj) => Add(Keysharp.Core.Core.Keyword_GroupBox, obj);
 
-		public GuiControl AddHotKey(params object[] obj) => Add(new object[] { Core.Keyword_Hotkey }.Concat(obj));
+		public GuiControl AddHotKey(object obj) => Add(Keysharp.Core.Core.Keyword_Hotkey, obj);
 
-		public GuiControl AddLink(params object[] obj) => Add(new object[] { Core.Keyword_Link }.Concat(obj));
+		public GuiControl AddLink(object obj) => Add(Keysharp.Core.Core.Keyword_Link, obj);
 
-		public GuiControl AddListBox(params object[] obj) => Add(new object[] { Core.Keyword_ListBox }.Concat(obj));
+		public GuiControl AddListBox(object obj) => Add(Keysharp.Core.Core.Keyword_ListBox, obj);
 
-		public GuiControl AddListView(params object[] obj) => Add(new object[] { Core.Keyword_ListView }.Concat(obj));
+		public GuiControl AddListView(object obj) => Add(Keysharp.Core.Core.Keyword_ListView, obj);
 
-		public GuiControl AddMonthCal(params object[] obj) => Add(new object[] { Core.Keyword_MonthCal }.Concat(obj));
+		public GuiControl AddMonthCal(object obj) => Add(Keysharp.Core.Core.Keyword_MonthCal, obj);
 
-		public GuiControl AddPicture(params object[] obj) => Add(new object[] { Core.Keyword_Picture }.Concat(obj));
+		public GuiControl AddPicture(object obj) => Add(Keysharp.Core.Core.Keyword_Picture, obj);
 
-		public GuiControl AddProgress(params object[] obj) => Add(new object[] { Core.Keyword_Progress }.Concat(obj));
+		public GuiControl AddProgress(object obj) => Add(Keysharp.Core.Core.Keyword_Progress, obj);
 
-		public GuiControl AddRadio(params object[] obj) => Add(new object[] { Core.Keyword_Radio }.Concat(obj));
+		public GuiControl AddRadio(object obj) => Add(Keysharp.Core.Core.Keyword_Radio, obj);
 
-		public GuiControl AddSlider(params object[] obj) => Add(new object[] { Core.Keyword_Slider }.Concat(obj));
+		public GuiControl AddSlider(object obj) => Add(Keysharp.Core.Core.Keyword_Slider, obj);
 
-		public GuiControl AddStatusBar(params object[] obj) => Add(new object[] { Core.Keyword_StatusBar }.Concat(obj));
+		public GuiControl AddStatusBar(object obj) => Add(Keysharp.Core.Core.Keyword_StatusBar, obj);
 
-		public GuiControl AddTab(params object[] obj) => Add(new object[] { Core.Keyword_Tab }.Concat(obj));
+		public GuiControl AddTab(object obj) => Add(Keysharp.Core.Core.Keyword_Tab, obj);
 
-		public GuiControl AddText(params object[] obj) => Add(new object[] { Core.Keyword_Text }.Concat(obj));
+		public GuiControl AddText(object obj) => Add(Keysharp.Core.Core.Keyword_Text, obj);
 
-		public GuiControl AddTreeView(params object[] obj) => Add(new object[] { Core.Keyword_TreeView }.Concat(obj));
+		public GuiControl AddTreeView(object obj) => Add(Keysharp.Core.Core.Keyword_TreeView, obj);
 
-		public GuiControl AddUpDown(params object[] obj) => Add(new object[] { Core.Keyword_UpDown }.Concat(obj));
+		public GuiControl AddUpDown(object obj) => Add(Keysharp.Core.Core.Keyword_UpDown, obj);
 
-		public GuiControl AddWebBrowser(params object[] obj) => Add(new object[] { Core.Keyword_WebBrowser }.Concat(obj));
+		public GuiControl AddWebBrowser(object obj) => Add(Keysharp.Core.Core.Keyword_WebBrowser, obj);
 
-		public void Destroy()
+		public void Destroy() => form.Close();
+
+		public void Flash(object obj)
 		{
-			form.Close();
-		}
-
-		public void Flash(params object[] obj)
-		{
-			var b = obj.L().B1(true);
+			var b = obj.Ab(true);
 
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 				_ = WindowsAPI.FlashWindow(form.Handle, b);
 		}
 
-		public Dictionary<string, object> GetClientPos() => GuiControl.GetClientPos(form, dpiscaling);
+		public Map GetClientPos() => GuiControl.GetClientPos(form, dpiscaling);
 
-		public Dictionary<string, object> GetPos() => GuiControl.GetPos(form, dpiscaling);
+		public Map GetPos() => GuiControl.GetPos(form, dpiscaling);
 
 		public void Hide() => form.Hide();
 
@@ -1248,9 +1247,12 @@ namespace Keysharp.Core
 
 		public void Minimize() => form.WindowState = FormWindowState.Minimized;
 
-		public void Move(params object[] obj)
+		public void Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (x, y, width, height) = obj.L().I4();
+			var x = (int)obj0.Al();
+			var y = (int)obj1.Al();
+			var width = (int)obj2.Al();
+			var height = (int)obj3.Al();
 			var scale = dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 			form.Top = (int)Math.Round(y * scale);
 			form.Left = (int)Math.Round(x * scale);
@@ -1258,51 +1260,55 @@ namespace Keysharp.Core
 			form.Height = (int)Math.Round(height * scale);
 		}
 
-		public void OnEvent(params object[] obj)
+		public void OnEvent(object obj0, object obj1, object obj2 = null)
 		{
-			var (e, h, i) = obj.L().Soi("", null, 1);
+			var e = obj0.As();
+			var h = obj1;
+			var i = obj2.Al(1);
 			e = e.ToLower();
-			var del = GuiControl.GetDel(h, form.eventObj);
+			var del = GuiControl.GetFuncObj(h, form.eventObj);
 
 			if (e == "close")
 			{
 				if (closedHandlers == null)
-					closedHandlers = new List<GenericFunction>();
+					closedHandlers = new List<IFuncObj>();
 
 				closedHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "contextmenu")
 			{
 				if (contextMenuChangedHandlers == null)
-					contextMenuChangedHandlers = new List<GenericFunction>();
+					contextMenuChangedHandlers = new List<IFuncObj>();
 
 				contextMenuChangedHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "dropfiles")
 			{
 				if (dropFilesHandlers == null)
-					dropFilesHandlers = new List<GenericFunction>();
+					dropFilesHandlers = new List<IFuncObj>();
 
 				dropFilesHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "escape")
 			{
 				if (escapeHandlers == null)
-					escapeHandlers = new List<GenericFunction>();
+					escapeHandlers = new List<IFuncObj>();
 
 				escapeHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "size")
 			{
 				if (sizeHandlers == null)
-					sizeHandlers = new List<GenericFunction>();
+					sizeHandlers = new List<IFuncObj>();
 
 				sizeHandlers.ModifyEventHandlers(del, i);
 			}
 		}
 
-		public void Opt(string opt)
+		public void Opt(object obj)
 		{
+			var opt = obj.As();
+
 			foreach (var split in Options.ParseOptions(opt))
 			{
 				var str = split.Substring(1);
@@ -1359,11 +1365,11 @@ namespace Keysharp.Core
 
 		public void Restore() => form.WindowState = FormWindowState.Normal;
 
-		public void SetFont(params object[] obj) => form.SetFont(obj);
+		public void SetFont(object obj0 = null, object obj1 = null) => form.SetFont(obj0, obj1);
 
-		public void Show(params object[] obj)
+		public void Show(object obj = null)
 		{
-			var s = obj.L().S1();
+			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
 			int?[] pos = { null, null, null, null };
 
@@ -1478,9 +1484,9 @@ namespace Keysharp.Core
 				form.WindowState = FormWindowState.Normal;
 		}
 
-		public Dictionary<object, object> Submit(params object[] obj)
+		public Map Submit(object obj = null)
 		{
-			var hide = obj.L().B1(true);
+			var hide = obj.Ab(true);
 			var panels = new HashSet<Panel>();
 			var ctrls = form.Controls.Flatten();
 			var dkt = new Dictionary<object, object>();
@@ -1540,7 +1546,7 @@ namespace Keysharp.Core
 			if (hide)
 				Hide();
 
-			return dkt;
+			return new Map(dkt);
 		}
 
 		internal static float GetFontPixels(Font font) => (float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
@@ -1769,7 +1775,7 @@ namespace Keysharp.Core
 				return;
 			}
 
-			allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
+			_ = allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
 			form = null;
 
 			if (Core.Debug)//Only for making testing easier, never meant to run in production.
@@ -1795,11 +1801,11 @@ namespace Keysharp.Core
 			long state;
 
 			if (form.WindowState == FormWindowState.Maximized)
-				state = 1;
+				state = 1L;
 			else if (form.WindowState == FormWindowState.Minimized)
-				state = -1;
+				state = -1L;
 			else
-				state = 0;
+				state = 0L;
 
 			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
 		}
@@ -1815,7 +1821,21 @@ namespace Keysharp.Core
 			}
 		}
 
-		public class GuiOptions
+		public object this[object controlname]
+		{
+			get
+			{
+				if (controlname is string s)
+				{
+					if (form.Controls.Find(s, true) is Control[] ctrls && ctrls.Length > 0)
+						return ctrls[0];
+				}
+
+				throw new Error($"No controls matched the name {controlname}.");
+			}
+		}
+
+		internal class GuiOptions
 		{
 			public int addexstyle = 0;
 			public int addlvstyle = 0x20;

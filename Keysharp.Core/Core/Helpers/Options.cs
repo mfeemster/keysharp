@@ -10,6 +10,28 @@ namespace Keysharp.Core
 {
 	public static class Options
 	{
+		public static bool? OnOff(object mode)
+		{
+			if (mode == null)
+				return false;
+
+			switch (mode.ToString().ToLowerInvariant())
+			{
+				case Core.Keyword_On:
+				case "1":
+				case "true":
+					return true;
+
+				case Core.Keyword_Off:
+				case "0":
+				case "false":
+					return false;
+
+				default:
+					return null;
+			}
+		}
+
 		internal static ToggleValueType ConvertOnOff(object mode, ToggleValueType def = ToggleValueType.Invalid)
 		{
 			if (mode == null)
@@ -23,6 +45,22 @@ namespace Keysharp.Core
 			if (string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
 
 			if (string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
+
+			return def;
+		}
+
+		internal static ToggleValueType ConvertOnOffAlways(string buf, ToggleValueType def = ToggleValueType.Invalid)
+		{
+			var toggle = ConvertOnOff(buf);
+
+			if (toggle != ToggleValueType.Invalid)
+				return toggle;
+
+			if (string.Compare(buf, "AlwaysOn", true) == 0)
+				return ToggleValueType.AlwaysOn;
+
+			if (string.Compare(buf, "AlwaysOff", true) == 0)
+				return ToggleValueType.AlwaysOff;
 
 			return def;
 		}
@@ -144,25 +182,6 @@ namespace Keysharp.Core
 			}
 
 			return merged;
-		}
-
-		internal static bool? OnOff(object mode)
-		{
-			switch (mode.ToString().ToLowerInvariant())
-			{
-				case Core.Keyword_On:
-				case "1":
-				case "true":
-					return true;
-
-				case Core.Keyword_Off:
-				case "0":
-				case "false":
-					return false;
-
-				default:
-					return null;
-			}
 		}
 
 		internal static bool OptionContains(string options, params string[] keys)
@@ -344,10 +363,7 @@ namespace Keysharp.Core
 		/// <param name="input">String in Format X123 Y123</param>
 		/// <param name="p">out Point Struct if possible</param>
 		/// <returns>true if parsing succesful</returns>
-		internal static bool TryParseCoordinate(string input, out Point p)
-		{
-			throw new NotImplementedException();
-		}
+		internal static bool TryParseCoordinate(string input, out Point p) => throw new NotImplementedException();
 
 		internal static bool TryParseDateTime(string opt, string prefix, string format, ref DateTime result, StringComparison comp = StringComparison.OrdinalIgnoreCase) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out DateTime r) =>

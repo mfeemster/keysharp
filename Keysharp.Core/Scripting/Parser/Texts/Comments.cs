@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 using static Keysharp.Core.Core;
 
@@ -53,15 +52,14 @@ namespace Keysharp.Scripting
 #endif
 		}
 
-		private bool IsCommentLine(string code)
-		{
+		private bool IsCommentLine(string code) =>
 #if LEGACY
-			return code.Length >= Comment.Length && code.Substring(0, Comment.Length) == Comment;
+		code.Length >= Comment.Length&& code.Substring(0, Comment.Length) == Comment;
 #endif
 #if !LEGACY
-			return code.Length > 0 && code[0] == Comment;
+		return code.Length > 0 && code[0] == Comment;
 #endif
-		}
+
 
 		private bool IsEmptyStatement(string code)
 		{

@@ -25,7 +25,7 @@ namespace Keysharp.Tests
 			_ = GetScreenClip(1000, 1000, 100, 100, "./imagesearch.bmp");
 			var found = Keysharp.Core.Screen.ImageSearch(0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");
 
-			if (found.OutputVarX is long lx && lx == 1000 && found.OutputVarY is long ly && ly == 1000)
+			if (found["X"] is long lx && lx == 1000 && found["Y"] is long ly && ly == 1000)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
@@ -79,8 +79,8 @@ namespace Keysharp.Tests
 					if (ii != last && ii != white && ii != black)
 					{
 						var loc = Keysharp.Core.Screen.PixelSearch(j, i, j + 1, i + 1, pix);
-						var outx = (long)loc.OutputVarX;
-						var outy = (long)loc.OutputVarY;
+						var outx = (long)loc["X"];
+						var outy = (long)loc["Y"];
 
 						if (outx == j && outy == i)
 							goto pass;

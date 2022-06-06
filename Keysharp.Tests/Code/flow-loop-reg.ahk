@@ -1,6 +1,13 @@
 ; #Include %A_ScriptDir%/header.ahk
-		
-RegDeleteKey("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest")
+
+try
+{
+	RegDeleteKey("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest")
+}
+catch
+{
+}
+
 RegWrite("ksdefval", "REG_SZ", "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "")
 val := RegRead("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "")
 			
@@ -55,7 +62,7 @@ i := 0
 
 Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 {
-	val := RegRead()
+	val := RegRead(,,"testdefault")
 
 	if (i == 0)
 	{
@@ -103,7 +110,7 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 	}
 	else if (i == 2)
 	{
-		if (val = null)
+		if (val = "testdefault")
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *
@@ -191,7 +198,7 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 	}
 	else if (i == 6)
 	{
-		if (val = null)
+		if (val = "testdefault")
 			FileAppend, pass, *
 		else
 			FileAppend, fail, *

@@ -27,7 +27,7 @@ namespace Keysharp.Scripting
 		private CodeMemberMethod main = new CodeMemberMethod();
 
 		private Dictionary<string, CodeMemberMethod> methods = new Dictionary<string, CodeMemberMethod>();
-		private string Name = string.Empty;
+		private string name = string.Empty;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
 
 		//private List<CodeStatement> prepend = new List<CodeStatement>();
@@ -224,12 +224,12 @@ namespace Keysharp.Scripting
 
 		public CodeCompileUnit Parse(TextReader codeStream) => Parse(codeStream, string.Empty);
 
-		public CodeCompileUnit Parse(TextReader codeStream, string name)
+		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
 			sbld = new StringBuilder();
-			Name = name;
+			name = nm;
 			Init();//Init here every time because this may be reused within a single program run, such as in Keyview.
-			var lines = Read(codeStream, name);
+			var lines = Read(codeStream, nm);
 			Statements(lines);
 
 			//if (Persistent)
@@ -254,11 +254,11 @@ namespace Keysharp.Scripting
 
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
-			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(Name == "*" ? "Off" : SingleInstance)}"));
+			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));
 			_ = initial.Add(new CodeExpressionStatement(inst));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.SetName(name)"));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.Variables.InitGlobalVars()"));
-			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodeSnippetExpression($"@\"{Name}\""));
+			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodeSnippetExpression($"@\"{name}\""));
 			_ = initial.Add(namevar);
 
 			foreach (CodeStatement stmt in initial)

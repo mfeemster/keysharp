@@ -7,19 +7,12 @@ namespace Keysharp.Core.Common.Mapper
 	/// </summary>
 	internal class DriveTypeMapper : MapperBase<DriveType>
 	{
-		internal override DriveType? LookUpCLRType(string keyword)
-		{
-			return base.LookUpCLRType(keyword);
-		}
+		internal override DriveType? LookUpCLRType(string keyword) => base.LookUpCLRType(keyword);
 
 		internal override string LookUpKeysharpType(DriveType clrType)
 		{
 			var str = base.LookUpKeysharpType(clrType);
-
-			if (string.IsNullOrEmpty(str))
-				str = Core.Keyword_UNKNOWN;
-
-			return str;
+			return string.IsNullOrEmpty(str) ? Core.Keyword_UNKNOWN : str;
 		}
 
 		internal override void SetUpMappingTable()

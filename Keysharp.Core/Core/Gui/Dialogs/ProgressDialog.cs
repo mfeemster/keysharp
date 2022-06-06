@@ -13,25 +13,26 @@ namespace Keysharp.Core
 
 		public string MainText
 		{
-			get { return mainText.Text; }
-			set { mainText.Text = value; }
+			get => mainText.Text;
+			set => mainText.Text = value;
 		}
 
 		public int ProgressMaximum
 		{
-			get { return progressBar.Maximum; }
-			set { progressBar.Maximum = value; }
+			get => progressBar.Maximum;
+			set => progressBar.Maximum = value;
 		}
 
 		public int ProgressMinimum
 		{
-			get { return progressBar.Minimum; }
-			set { progressBar.Minimum = value; }
+			get => progressBar.Minimum;
+			set => progressBar.Minimum = value;
 		}
 
 		public int ProgressValue
 		{
-			get { return progressBar.Value; }
+			get => progressBar.Value;
+
 			set
 			{
 				try
@@ -47,14 +48,14 @@ namespace Keysharp.Core
 
 		public string SubText
 		{
-			get { return subText.Text; }
-			set { subText.Text = value; }
+			get => subText.Text;
+			set => subText.Text = value;
 		}
 
 		public string Title
 		{
-			get { return Text; }
-			set { Text = value; }
+			get => Text;
+			set => Text = value;
 		}
 
 		public ProgressDialog()

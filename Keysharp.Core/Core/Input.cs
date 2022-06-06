@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Keysharp.Core.Common;
+﻿using System.Collections.Generic;
 using Keysharp.Core.Common.Input;
-using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
 	public static class Input
 	{
-		public static InputObject InputHook(params object[] obj)
+		public static InputObject InputHook(object obj0 = null, object obj1 = null, object obj2 = null)//Need to make this work.//TODO
 		{
-			var (options, endKeys, matchList) = obj.L().S3();
+			var options = obj0.As();
+			var endKeys = obj1.As();
+			var matchList = obj2.As();
 			var io = new InputObject(options, endKeys, matchList);
 			//it.Setup(options, endKeys, matchList);
 			//var io = new InputObject();

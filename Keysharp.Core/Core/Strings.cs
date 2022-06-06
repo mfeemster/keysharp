@@ -4,13 +4,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
-using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
@@ -37,7 +34,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="n">A Unicode value.</param>
 		/// <returns>A Unicode character whose value is <paramref name="n"/>.</returns>
-		public static string Chr(params object[] obj) => ((char)obj.L().I1()).ToString();
+		public static string Chr(object obj) => ((char)obj.Al()).ToString();
 
 		/// <summary>
 		/// Formats a string using the same syntax used by string.Format(), except it uses 1-based indexing.
@@ -45,15 +42,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static string Format(params object[] obj)
-		{
-			var o = obj.L();
-
-			if (o.Count > 1)
-				return string.Format(o.S1(), (o as IList<object>).ToArray());//Just pass the whole array again as the format, because the first position is ignored because we use 1-based indexing.
-
-			return string.Empty;
-		}
+		public static string Format(object obj0, params object[] obj) => string.Format(obj0.As(), new object[] { null }.Concat(obj));
 
 		/// <summary>
 		/// Transforms a YYYYMMDDHH24MISS timestamp into the specified date/time format.
@@ -67,9 +56,10 @@ namespace Keysharp.Core
 		/// along with any literal spaces and punctuation in between.</para>
 		/// </param>
 		/// <returns>The formatted date/time string</returns>
-		public static string FormatTime(params object[] obj)
+		public static string FormatTime(object obj0 = null, object obj1 = null)
 		{
-			var (stamp, format) = obj.L().S2();
+			var stamp = obj0.As();
+			var format = obj1.As();
 			DateTime time;
 			var output = string.Empty;
 			var splits = stamp.Split(' ');
@@ -126,7 +116,7 @@ namespace Keysharp.Core
 				{
 					time = Conversions.ToDateTime(stamp, ci.Calendar);
 				}
-				catch (ArgumentOutOfRangeException)
+				catch
 				{
 					output = null;
 					return output;
@@ -199,7 +189,7 @@ namespace Keysharp.Core
 			{
 				output = time.ToString(format, ci);
 			}
-			catch (FormatException)
+			catch
 			{
 				output = null;
 			}
@@ -207,6 +197,7 @@ namespace Keysharp.Core
 			return output;
 		}
 
+		//Just pass the whole array again as the format, because the first position is ignored because we use 1-based indexing. //Need to add an element in the front because the format string is 1 indexed.
 		/// <summary>
 		/// Decodes a hexadecimal string to binary data.
 		/// </summary>
@@ -242,9 +233,13 @@ namespace Keysharp.Core
 		/// <param name="occurrence">The one-based nth occurrence to find.</param>
 		/// <returns>The one-based index of the position of <paramref name="needle"/> in <paramref name="input"/>.
 		/// A value of zero indicates no match.</returns>
-		public static long InStr(params object[] obj)
+		public static long InStr(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null)
 		{
-			var (input, needle, comp, index, occurrence) = obj.L().S3i2("", "", "", 1, 1);
+			var input = obj0.As();
+			var needle = obj1.As();
+			var comp = obj2.As();
+			var index = (int)obj3.Al(1);
+			var occurrence = (int)obj4.Al(1);
 
 			if (input != "")
 			{
@@ -259,28 +254,54 @@ namespace Keysharp.Core
 					   offset + input.NthIndexOf(needle, index - 1, occurrence, cs);
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public static string LTrim(params object[] obj)
+		public static string Join(params object[] obj)
 		{
-			var (s1, s2) = obj.L().S2("", " \t");
-			return s1.TrimStart(s2.ToCharArray());
+			if (obj.Length > 1)
+			{
+				var s1 = obj[0].Str();
+				var vals = obj.Skip(1);
+				return string.Join(s1, vals);
+			}
+
+			return "";
+		}
+
+		public static string LTrim(object obj0, object obj1 = null) => obj0.As().TrimStart(obj1.As(" \t").ToCharArray());
+
+		public static string NormalizeEol(object obj0, object obj1 = null)
+		{
+			const string CR = "\r", LF = "\n", CRLF = "\r\n";
+			var text = obj0.As();
+			var eol = obj1.As(Environment.NewLine);
+
+			switch (eol)
+			{
+				case CR:
+					return text.Replace(CRLF, CR).Replace(LF, CR);
+
+				case LF:
+					return text.Replace(CRLF, LF).Replace(CR, LF);
+
+				case CRLF:
+					return text.Replace(CR, string.Empty).Replace(LF, CRLF);
+			}
+
+			return text;
 		}
 
 		/// <summary>
-		/// Returns the Unicode value (an integer between 1 and 65535) for the specified character in a string.
+		/// Returns the ordinal value (numeric character code) of the first character in the specified string.
 		/// </summary>
 		/// <param name="str">A string.</param>
-		/// <param name="n">The 1-based character position in the string.
-		/// If this is blank it is assumed to be <c>1</c>.</param>
 		/// <returns>The Unicode value.
-		/// If <paramref name="str"/> is empty or <paramref name="n"/> is specified out of bounds, <c>0</c> is returned.</returns>
-		public static long Ord(params object[] obj)
+		/// If <paramref name="str"/> is empty, <c>0</c> is returned.</returns>
+		public static long Ord(object obj)
 		{
-			var (s1, i1) = obj.L().Si();
-			var n = Math.Max(0, i1 - 1);
-			return string.IsNullOrEmpty(s1) || n > s1.Length ? 0L : (long)s1[n];
+			var str = obj.As();
+			return string.IsNullOrEmpty(str) ? 0L : (long)str[0];
 		}
 
 		/// <summary>
@@ -291,12 +312,14 @@ namespace Keysharp.Core
 		/// <param name="index">The one-based starting character position.
 		/// If this is less than one it is considered an offset from the end of the string.</param>
 		/// <returns>The RegExResults object which contains the matches, if any.</returns>
-		public static RegExResults RegExMatch(params object[] obj)
+		public static RegExResults RegExMatch(object obj0, object obj1, object obj2 = null)
 		{
-			var (input, needle, index) = obj.L().S2i("", "", 1);
-			RegexWithTag exp = null;
+			var input = obj0.As();
+			var needle = obj1.As();
+			var index = (int)obj2.Al(1);
 			var reverse = index < 1;
 			var str = needle + reverse;
+			RegexWithTag exp = null;
 
 			lock (regdkt)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
 			{
@@ -331,8 +354,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				var m = exp.Match(input, index);
-				return new RegExResults(m);
+				return new RegExResults(exp.Match(input, index));
 			}
 			catch (Exception ex)
 			{
@@ -352,15 +374,19 @@ namespace Keysharp.Core
 		/// <param name="index">The one-based starting character position.
 		/// If this is less than one it is considered an offset from the end of the string.</param>
 		/// <returns>The result object which contains a string and the number of replacements</returns>
-		public static RegExReplaceResults RegExReplace(params object[] obj)
+		public static ReplaceResults RegExReplace(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null)
 		{
-			var (input, needle, replace, limit, index) = obj.L().S3i2("", "", "", -1, 1);
+			var input = obj0.As();
+			var needle = obj1.As();
+			var replace = obj2.As();
+			var limit = (int)obj3.Al(-1);
+			var index = (int)obj4.Al(1);
 			var n = 0;
 			var reverse = index < 1;
 			var str = needle + reverse;
 			RegexWithTag exp = null;
 
-			lock (regdkt)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
+			lock (regdkt)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
 			{
 				if (!regdkt.TryGetValue(str, out exp))
 				{
@@ -403,7 +429,7 @@ namespace Keysharp.Core
 			try
 			{
 				var result = exp.Replace(input, match, limit, index);
-				return new RegExReplaceResults(result, n);
+				return new ReplaceResults(result, n);
 			}
 			catch (Exception ex)
 			{
@@ -411,11 +437,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static string RTrim(params object[] obj)
-		{
-			var (s1, s2) = obj.L().S2("", " \t");
-			return s1.TrimEnd(s2.ToCharArray());
-		}
+		public static string RTrim(object obj0, object obj1 = null) => obj0.As().TrimEnd(obj1.As(" \t").ToCharArray());
 
 		/// <summary>
 		/// Arranges a variable's contents in alphabetical, numerical, or random order optionally removing duplicates.
@@ -474,28 +496,25 @@ namespace Keysharp.Core
 		/// </item>
 		/// </list>
 		/// </remarks>
-		public static string Sort(params object[] obj)
+		public static string Sort(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var o = obj.L();
-			var (input, options) = o.S2();
+			var input = obj0.As();
+			var options = obj1.As();
 			var splits = options.Split(" ");
 			var opts = Options.KeyValues(string.Join(",", splits), true, new[] { 'f' });
 			IFuncObj function = null;
 			var split = '\n';
 			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
 
-			if (o.Count > 2)
+			if (obj2 is string strfunc)
 			{
-				if (o[2] is string strfunc)
-				{
-					function = new FuncObj(strfunc);
+				function = new FuncObj(strfunc);
 
-					if (function.Name == null)
-						return "";
-				}
-				else if (o[2] is IFuncObj fo)
-					function = fo;
+				if (function.Name == null)
+					return "";
 			}
+			else if (obj2 is IFuncObj fo)
+				function = fo;
 
 			if (!string.IsNullOrEmpty(dopt))
 			{
@@ -575,14 +594,13 @@ namespace Keysharp.Core
 				foreach (var val in list)
 					indexedlist[index] = (val, index++);
 
-				var argobjs = new object[3];//Cache to avoid allocations inside of the sort function.
-				var args = new object[] { argobjs };
+				var args = new object[3];//Cache to avoid allocations inside of the sort function.
 				System.Array.Sort(indexedlist, delegate (ValueTuple<string, long> x, ValueTuple<string, long> y)
 				{
 					object value = null;
-					argobjs[0] = x.Item1;
-					argobjs[1] = y.Item1;
-					argobjs[2] = y.Item2 - x.Item2;
+					args[0] = x.Item1;
+					args[1] = y.Item1;
+					args[2] = y.Item2 - x.Item2;
 
 					try { value = function.Call(args); }
 					catch (Exception) { }
@@ -680,9 +698,11 @@ namespace Keysharp.Core
 			return string.Join(split.ToString(), list);
 		}
 
-		public static long StrCompare(params object[] obj)
+		public static long StrCompare(object obj0, object obj1, object obj2 = null)
 		{
-			var (s1, s2, s3) = obj.L().S3();
+			var s1 = obj0.As();
+			var s2 = obj1.As();
+			var s3 = obj2.As();
 
 			if (s1 != "" || s2 != "")
 			{
@@ -699,89 +719,76 @@ namespace Keysharp.Core
 				return string.Compare(s1, s2, cs);
 			}
 
-			return 0;
+			return 0L;
 		}
 
-		public static string StrGet(params object[] obj)
+		public static string StrGet(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var o = obj.L();
+			var len = obj1.Al(long.MinValue);// buf != null ? Math.Min((long)buf.Size, Convert.ToInt32(o[1])) : Convert.ToInt32(o[1]);
+			var encoding = obj2 is string s ? File.GetEncoding(s) : Encoding.Unicode;
+			var ptr = IntPtr.Zero;
+			var buf = obj0 as Buffer;
 
-			if (o.Count > 0)
+			if (buf != null)
+				ptr = buf.Ptr;
+			else if (obj0 is long l)
+				ptr = new IntPtr(l);
+
+			if (ptr == IntPtr.Zero)
+				throw new ValueError($"No valid address or buffer was supplied.");
+			else if (ptr.ToInt64() < 65536)//65536 is the first valid address.
+				throw new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.");
+
+			unsafe
 			{
-				var len = long.MinValue;
-				var encoding = Encoding.Unicode;
-				var ptr = IntPtr.Zero;
-				var buf = o[0] as Buffer;
+				var finalLen = 0;
+				var raw = (byte*)ptr.ToPointer();
+				byte[] bytes = null;
 
-				if (buf != null)
-					ptr = buf.Ptr;
-				else if (o[0] is long l)
-					ptr = new IntPtr(l);
-
-				if (ptr == IntPtr.Zero)
-					throw new ValueError($"No valid address or buffer was supplied.");
-				else if (ptr.ToInt64() < 65536)//65536 is the first valid address.
-					throw new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.");
-
-				if (o.Count > 1)
-					len = o.Al(1, long.MinValue);// buf != null ? Math.Min((long)buf.Size, Convert.ToInt32(o[1])) : Convert.ToInt32(o[1]);
-
-				if (o.Count > 2)
-					encoding = File.GetEncoding(o[2]);
-
-				unsafe
+				if (len == long.MinValue)//No length specified, only copy up to the first 0.
 				{
-					var finalLen = 0;
-					var raw = (byte*)ptr.ToPointer();
-					byte[] bytes = null;
-
-					if (len == long.MinValue)//No length specified, only copy up to the first 0.
-					{
-						while (raw[finalLen] != 0)
-							finalLen++;
-					}
-					else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size if buf.
-					{
-						var abs = Math.Abs(len);
-
-						if (encoding != Encoding.ASCII)//Sort of crude, UTF-8 can require up to 4 bytes per char.
-							abs *= 2;
-
-						finalLen = (int)(buf != null ? Math.Min((long)buf.Size, abs) : abs);
-					}
-					else//Positive length was passed, copy as long as length is not reached and value is not 0.
-					{
-						if (encoding != Encoding.ASCII)
-							len *= 2;
-
-						if (buf != null)
-							len = (int)Math.Min((long)buf.Size, len);
-
-						while (raw[finalLen] != 0 && finalLen < len)
-							finalLen++;
-					}
-
-					bytes = new byte[finalLen];
-
-					for (var i = 0; i < finalLen; i++)
-						bytes[i] = raw[i];
-
-					return encoding.GetString(bytes);
+					while (raw[finalLen] != 0)
+						finalLen++;
 				}
-				//return len > 0 ? Marshal.PtrToStringAuto(ptr, (int)len) : Marshal.PtrToStringAuto(ptr);
-			}
+				else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size if buf.
+				{
+					var abs = Math.Abs(len);
 
-			return string.Empty;
+					if (encoding != Encoding.ASCII)//Sort of crude, UTF-8 can require up to 4 bytes per char.
+						abs *= 2;
+
+					finalLen = (int)(buf != null ? Math.Min((long)buf.Size, abs) : abs);
+				}
+				else//Positive length was passed, copy as long as length is not reached and value is not 0.
+				{
+					if (encoding != Encoding.ASCII)
+						len *= 2;
+
+					if (buf != null)
+						len = (int)Math.Min((long)buf.Size, len);
+
+					while (raw[finalLen] != 0 && finalLen < len)
+						finalLen++;
+				}
+
+				bytes = new byte[finalLen];
+
+				for (var i = 0; i < finalLen; i++)
+					bytes[i] = raw[i];
+
+				return encoding.GetString(bytes);
+			}
+			//return len > 0 ? Marshal.PtrToStringAuto(ptr, (int)len) : Marshal.PtrToStringAuto(ptr);
 		}
 
-		public static string String(params object[] obj) => obj.L().S1();
+		public static string String(object obj) => obj.As();
 
 		/// <summary>
 		/// Returns the length of a string.
 		/// </summary>
 		/// <param name="input">The input string.</param>
 		/// <returns>The total length of the string, including any invisbile characters such as null.</returns>
-		public static long StrLen(params object[] obj) => obj.L().S1().Length;
+		public static long StrLen(object obj) => obj.As().Length;
 
 		/// <summary>
 		/// Converts a string to lowercase.
@@ -789,17 +796,11 @@ namespace Keysharp.Core
 		/// <param name="input">The string to convert to lower</param>
 		/// <param name="title"><c>true</c> to use title casing, <c>false</c> otherwise.</param>
 		/// <returns>The converted string.</returns>
-		public static string StrLower(params object[] obj)
-		{
-			var (s, t) = obj.L().S2();
-			return t == "T"
-				   ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s)
-				   : s.ToLowerInvariant();
-		}
+		public static string StrLower(object obj) => obj.As().ToLowerInvariant();
 
-		public static long StrPtr(params object[] obj) => throw new Error("Cannot take the address of a string in C#.");
+		public static long StrPtr(object obj) => throw new Error("Cannot take the address of a string in C#.");
 
-		public static long StrPut(params object[] obj)
+		public static long StrPut(params object[] obj)//Leave this as variadic because the parameter scheme is complex.
 		{
 			var o = obj.L();
 
@@ -866,50 +867,39 @@ namespace Keysharp.Core
 		/// <param name="outvarcount">The variable name to store the number of replacements in, if not empty.</param>
 		/// <param name="limit">The maximum number of replacements to make.</param>
 		/// <returns>The modified string.</returns>
-		public static string StrReplace(params object[] obj)
+		public static ReplaceResults StrReplace(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null)
 		{
-			var (input, search, replace, comp, outvarcount, limit) = obj.L().S5i("", "", "", "Off", "", -1);
+			var input = obj0.As();
+			var search = obj1.As();
+			var replace = obj2.As();
+			var comp = obj3.As("Off");
+			var limit = obj4.Al(-1);
 
 			if (Options.IsAnyBlank(input, search))
-				return "";
+				return new ReplaceResults("", 0L);
 
 			var compare = Keysharp.Core.Conversions.ParseComparisonOption(comp);
+			var ct = 0L;
+			var buf = new StringBuilder(input.Length);
+			int z = 0, n = 0, l = search.Length;
 
-			if (limit < 0 && outvarcount?.Length == 0)
+			while (z < input.Length &&
+					(z = input.IndexOf(search, z, compare)) != -1 &&
+					(limit < 0 || ct < limit))
 			{
-				return input.Replace(search, replace);
+				if (n < z)
+					_ = buf.Append(input, n, z - n);
+
+				_ = buf.Append(replace);
+				z += l;
+				n = z;
+				ct++;
 			}
-			else
-			{
-				var ct = 0L;
-				var buf = new StringBuilder(input.Length);
-				int z = 0, n = 0, l = search.Length;
 
-				while (z < input.Length &&
-						(z = input.IndexOf(search, z, compare)) != -1 &&
-						(limit < 0 || ct < limit))
-				{
-					if (n < z)
-						_ = buf.Append(input, n, z - n);
+			if (n < input.Length)
+				_ = buf.Append(input, n, input.Length - n);
 
-					_ = buf.Append(replace);
-					z += l;
-					n = z;
-					ct++;
-				}
-
-				if (n < input.Length)
-					_ = buf.Append(input, n, input.Length - n);
-
-				if (outvarcount != "")
-				{
-					//if (!outvarcount.Contains('.'))//If no ., then for some reason the scope wasn't properly processed.
-					//  outvarcount = "." + outvarcount;
-					Script.Vars[outvarcount] = ct;
-				}
-
-				return buf.ToString();
-			}
+			return new ReplaceResults(buf.ToString(), ct);
 		}
 
 		/// <summary>
@@ -921,34 +911,25 @@ namespace Keysharp.Core
 		/// where the boundaries between substrings occur in <paramref name="input"/>.
 		/// If this is blank each character of <paramref name="input"/> will be treated as a substring.</param>
 		/// <param name="trim">An optional list of characters (case sensitive) to exclude from the beginning and end of each array element.</param>
-		public static Array StrSplit(params object[] obj)
+		public static Array StrSplit(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var o = obj;//.Pa();//.L();//Can't use L() here because some of the arguments can be arrays and we don't want to flatten everything.
-			var count = -1;
 			string delimiters = string.Empty, trim = string.Empty;
 
-			if (o.Length > 0 && o[0] is string input)
+			if (obj0 is string input)
 			{
-				if (o.Length > 1)
-				{
-					if (o[1] is string d)
-						delimiters = d;
-					else if (o[1] is IList il)
-						foreach (var id in il.Flatten())
-							delimiters += id.ToString();
-				}
+				var count = (int)obj3.Al(-1L);
 
-				if (o.Length > 2)
-				{
-					if (o[2] is string t)
-						trim = t;
-					else if (o[2] is IList il)
-						foreach (var id in il.Flatten())
-							trim += id.ToString();
-				}
+				if (obj1 is string d)
+					delimiters = d;
+				else if (obj1 is IList il)
+					foreach (var id in il.Flatten())
+						delimiters += id.ToString();
 
-				if (o.Length > 3)
-					count = Convert.ToInt32(o[3]);
+				if (obj2 is string t)
+					trim = t;
+				else if (obj2 is IList il)
+					foreach (var id in il.Flatten())
+						trim += id.ToString();
 
 				if (delimiters.Length == 0)
 				{
@@ -1001,19 +982,15 @@ namespace Keysharp.Core
 			return new Array();
 		}
 
+		public static string StrTitle(object obj) => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(obj.As());
+
 		/// <summary>
 		/// Converts a string to uppercase.
 		/// </summary>
 		/// <param name="input">The string to convert to upper</param>
 		/// <param name="title"><c>true</c> to use title casing, <c>false</c> otherwise.</param>
 		/// <returns>The converted string.</returns>
-		public static string StrUpper(params object[] obj)
-		{
-			var (s, t) = obj.L().S2();
-			return t == "T"
-				   ? CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s)
-				   : s.ToUpperInvariant();
-		}
+		public static string StrUpper(object obj) => obj.As().ToUpperInvariant();
 
 		/// <summary>
 		/// Retrieves one or more characters from the specified position in a string.
@@ -1025,10 +1002,11 @@ namespace Keysharp.Core
 		/// Leave this parameter blank to return the entire leading part of the string.
 		/// Specify a negative value to omit that many characters from the end of the string.</param>
 		/// <returns>The new substring.</returns>
-		public static string SubStr(params object[] obj)
+		public static string SubStr(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var o = obj.L();
-			var (input, index, length) = o.Sl2("", 1L, long.MaxValue);
+			var input = obj0.As();
+			var index = (int)obj1.Al(1L);
+			var length = obj2.Al(long.MaxValue);
 
 			if (string.IsNullOrEmpty(input) || length == 0 || index == 0 || index > input.Length)
 				return string.Empty;
@@ -1202,31 +1180,22 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static string Trim(params object[] obj)
+		public static string Trim(object obj0, object obj1 = null) => obj0.As().Trim(obj1.As(" \t").ToCharArray());
+
+		public static long VarSetStrCapacity(params object[] obj) => throw new Keysharp.Core.Error("VarSetStrCapacity() not supported or necessary.");
+
+		public static long VerCompare(object obj0, object obj1)
 		{
-			var (s1, s2) = obj.L().S2("", " \t");
-			return s1.Trim(s2.ToCharArray());
+			var v1 = obj0.As();
+			var v2 = obj1.As();
+			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+			var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+			return semver1.CompareSortOrderTo(semver2);
 		}
 
-		public static long VarSetStrCapacity(params object[] obj) => 0;
+		public static long EndsWith(object obj0, object obj1, object obj2 = null) => obj0.As().EndsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
 
-		internal static bool Cisalnum(char c) => (c & 0x80) == 0 && char.IsLetterOrDigit(c);
-
-		internal static bool Cisalpha(char c) => (c & 0x80) == 0 && char.IsLetter(c);
-
-		internal static bool Cisdigit(char c) => (c & 0x80) == 0 && char.IsDigit(c);
-
-		internal static bool Cislower(char c) => (c & 0x80) == 0 && char.IsLower(c);
-
-		internal static bool Cisprint(char c) => (c & 0x80) == 0 && !char.IsControl(c) || char.IsWhiteSpace(c);
-
-		internal static bool Cisspace(char c) => (c & 0x80) == 0 && char.IsWhiteSpace(c);
-
-		internal static bool Cisupper(char c) => (c & 0x80) == 0 && char.IsUpper(c);
-
-		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
-
-		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
+		public static long StartsWith(object obj0, object obj1, object obj2 = null) => obj0.As().StartsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
 
 		/// <summary>
 		/// This appears to be the fastest known way to do this.
@@ -1250,6 +1219,24 @@ namespace Keysharp.Core
 			return new string(c);
 		}
 
+		internal static bool Cisalnum(char c) => (c & 0x80) == 0 && char.IsLetterOrDigit(c);
+
+		internal static bool Cisalpha(char c) => (c & 0x80) == 0 && char.IsLetter(c);
+
+		internal static bool Cisdigit(char c) => (c & 0x80) == 0 && char.IsDigit(c);
+
+		internal static bool Cislower(char c) => (c & 0x80) == 0 && char.IsLower(c);
+
+		internal static bool Cisprint(char c) => (c & 0x80) == 0 && !char.IsControl(c) || char.IsWhiteSpace(c);
+
+		internal static bool Cisspace(char c) => (c & 0x80) == 0 && char.IsWhiteSpace(c);
+
+		internal static bool Cisupper(char c) => (c & 0x80) == 0 && char.IsUpper(c);
+
+		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
+
+		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
+
 		/// <summary>
 		/// Reverse vesion of NthIndexOf().
 		/// </summary>
@@ -1271,31 +1258,15 @@ namespace Keysharp.Core
 			return pos;
 		}
 
-		internal static int StrCmp(params object[] obj)
-		{
-			var (left, right, caseSensitive) = obj.L().S2b();
-			return string.Compare(left, right, caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
-		}
+		/// <summary>
+		/// An internal optimized version of StrCompare().
+		/// </summary>
+		internal static int StrCmp(string left, string right, bool caseSensitive) => string.Compare(left, right, caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
 
 		internal class RegexEntry : KeyedCollection<string, RegexWithTag>
 		{
 			protected override string GetKeyForItem(RegexWithTag item) => item.tag;
 		}
-	}
-
-	public class RegExReplaceResults : KeysharpObject
-	{
-		private string str;
-
-		public int Count { get; }
-
-		public RegExReplaceResults(string s, int c)
-		{
-			str = s;
-			Count = c;
-		}
-
-		public static implicit operator string(RegExReplaceResults r) => r.str;
 	}
 
 	public class RegExResults : KeysharpObject, IEnumerable
@@ -1312,27 +1283,27 @@ namespace Keysharp.Core
 
 		public IEnumerator GetEnumerator() => match.Groups.GetEnumerator();
 
-		public long Len(params object[] obj)
+		public long Len(object obj)
 		{
 			var g = GetGroup(obj);
 			return g != null ? g.Length : 0;
 		}
 
-		public string Name(params object[] obj)
+		public string Name(object obj)
 		{
 			var g = GetGroup(obj);
 			return g != null ? g.Name : "";
 		}
 
-		public long Pos(params object[] obj)
+		public long Pos(object obj = null)
 		{
 			var g = GetGroup(obj);
 			return g != null ? g.Index + 1 : 0;
 		}
 
-		private Group GetGroup(params object[] obj)
+		private Group GetGroup(object obj)
 		{
-			var o = obj.L().O1();
+			var o = obj;
 
 			if (o == null)
 				return match;
@@ -1359,6 +1330,23 @@ namespace Keysharp.Core
 				return g != null ? g.Value : "";
 			}
 		}
+	}
+
+	public class ReplaceResults : KeysharpObject
+	{
+		private string str;
+
+		public long Count { get; }
+
+		public ReplaceResults(string s, long c)
+		{
+			str = s;
+			Count = c;
+		}
+
+		public static implicit operator string(ReplaceResults r) => r.str;
+
+		public override string ToString() => str;
 	}
 
 	/// <summary>

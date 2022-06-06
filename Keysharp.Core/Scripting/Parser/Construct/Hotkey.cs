@@ -713,7 +713,7 @@ namespace Keysharp.Scripting
 							// Note that this hotkey's label is still valid even though the hotkey wasn't created.
 
 							if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-								Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
+								_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
 						}
 					}
 				}

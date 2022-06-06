@@ -7,7 +7,7 @@ if (x = 116)
 else
 	FileAppend, fail, *
 
-x := Ord("te", 2)
+x := Ord("et")
 			
 if (x = 101)
 	FileAppend, pass, *

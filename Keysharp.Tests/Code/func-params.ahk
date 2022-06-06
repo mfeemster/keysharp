@@ -78,7 +78,7 @@ else
 x := 1
 y := 2
 z := 3
-func2()
+func2(,)
 
 If (x == null)
 	FileAppend, pass, *
@@ -225,7 +225,7 @@ func3(a, b, c := unset)
 	}
 }
 
-func3()
+func3(,)
 
 If (x == false)
 	FileAppend, pass, *
@@ -234,7 +234,7 @@ else
 
 x := false
 
-func3(1)
+func3(1,)
 
 If (x == false)
 	FileAppend, pass, *

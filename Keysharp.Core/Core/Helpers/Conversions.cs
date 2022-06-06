@@ -168,10 +168,7 @@ namespace Keysharp.Core
 
 		internal static int LowWord(int i) => i & 0xFFFF;
 
-		internal static int MakeInt(short lowPart, short highPart)
-		{
-			return (int)(((ushort)lowPart) | (uint)(highPart << 16));
-		}
+		internal static int MakeInt(short lowPart, short highPart) => (int)(((ushort)lowPart) | (uint)(highPart << 16));
 
 		internal static StringComparison ParseComparisonOption(object option)
 		{
@@ -260,22 +257,22 @@ namespace Keysharp.Core
 				if (string.IsNullOrEmpty(splits[0]) && !string.IsNullOrEmpty(splits[1]))
 				{
 					dtlow = DateTime.MinValue;
-					DateTime.TryParseExact(splits[1], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dthigh);
+					_ = DateTime.TryParseExact(splits[1], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dthigh);
 				}
 				else if (!string.IsNullOrEmpty(splits[0]) && string.IsNullOrEmpty(splits[1]))
 				{
-					DateTime.TryParseExact(splits[0], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dtlow);
+					_ = DateTime.TryParseExact(splits[0], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dtlow);
 					dthigh = DateTime.MaxValue;
 				}
 				else if (!string.IsNullOrEmpty(splits[0]) && !string.IsNullOrEmpty(splits[1]))
 				{
-					DateTime.TryParseExact(splits[0], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dtlow);
-					DateTime.TryParseExact(splits[1], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dthigh);
+					_ = DateTime.TryParseExact(splits[0], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dtlow);
+					_ = DateTime.TryParseExact(splits[1], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dthigh);
 				}
 			}
 			else if (splits.Length == 1 && !string.IsNullOrEmpty(splits[0]))
 			{
-				DateTime.TryParseExact(splits[0], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dtlow);
+				_ = DateTime.TryParseExact(splits[0], "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dtlow);
 				dthigh = DateTime.MaxValue;
 			}
 		}

@@ -22,7 +22,7 @@ namespace Keysharp.Core.Common
 		{
 			try
 			{
-				return (drive.DriveType == DriveType.CDRom);
+				return drive.DriveType == DriveType.CDRom;
 			}
 			catch
 			{

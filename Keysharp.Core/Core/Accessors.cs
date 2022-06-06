@@ -151,9 +151,9 @@ namespace Keysharp.Core
 				if (val.HasValue)
 				{
 					if (!val.Value)
-						Keysharp.Scripting.Script.trayMenu.HideItem("&Open");
+						Script.trayMenu.HideItem("&Open");
 					else
-						Keysharp.Scripting.Script.trayMenu.ShowItem("&Open");
+						Script.trayMenu.ShowItem("&Open");
 
 					allowMainWindow = val.Value;
 				}
@@ -269,12 +269,6 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// (synonymous with A_NumBatchLines) The current value as set by SetBatchLines. Examples: 200 or 10ms (depending on format).
-		/// </summary>
-		[Obsolete]
-		public static string A_BatchLines => null;
-
-		/// <summary>
 		/// The current X coordinate of the caret (text insertion point). The coordinates are relative to the active window unless CoordMode is used to make them relative to the entire screen. If there is no active window or the caret position cannot be determined, these variables are blank.
 		/// </summary>
 		public static string A_CaretX => "";
@@ -288,7 +282,7 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))
+				if (WindowsAPI.OpenClipboard(ClipboardTimeout))//Will need a cross platform version of this.//TODO
 				{
 					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
@@ -323,12 +317,12 @@ namespace Keysharp.Core
 			{
 				if (value != null)
 				{
-					if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))
+					if (WindowsAPI.OpenClipboard(ClipboardTimeout))
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
 						if (value is ClipboardAll arr)
-							Env.RestoreClipboardAll(arr, arr.Count);
+							Env.RestoreClipboardAll(arr, (long)arr.Size);
 						else if (value is string s && s?.Length == 0)
 							Clipboard.Clear();
 						else
@@ -351,7 +345,7 @@ namespace Keysharp.Core
 		public static object A_ControlDelay
 		{
 			get => controlDelay ?? (controlDelay = 20).Value;
-			set => controlDelay = value.ParseLong();
+			set => controlDelay = value.Al();
 		}
 
 		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
@@ -393,7 +387,7 @@ namespace Keysharp.Core
 		public static object A_DefaultMouseSpeed
 		{
 			get => defaultMouseSpeed ?? (defaultMouseSpeed = 2).Value;
-			set => defaultMouseSpeed = value.ParseLong();
+			set => defaultMouseSpeed = value.Al();
 		}
 
 		/// <summary>
@@ -458,16 +452,6 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Indicates the success or failure of a command.
-		/// </summary>
-		[Obsolete]
-		public static long A_ErrorLevel//Need to get rid of all usages of this.//TODO
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
 		/// Contains event information from various commands.
 		/// </summary>
 		public static object A_EventInfo
@@ -475,15 +459,6 @@ namespace Keysharp.Core
 			get => eventInfo;
 			set => eventInfo = value;
 		}
-
-		/// <summary>
-		/// The most recent reason the script was asked to terminate. This variable is blank unless the script has an OnExit subroutine and that subroutine is currently running or has been called at least once by an exit attempt. See OnExit for details.
-		/// </summary>
-		public static object A_ExitReason
-		{
-			get;
-			internal set;
-		} = "";
 
 		public static object A_FileEncoding
 		{
@@ -509,84 +484,6 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// The current floating point number format.
-		/// </summary>
-		//[Obsolete]
-		//public static object A_FormatFloat
-		//{
-		//  get
-		//  {
-		//      if (A_FormatNumeric is string s)
-		//      {
-		//          if (s.IndexOf("e", System.StringComparison.OrdinalIgnoreCase) != -1)
-		//              return s;
-
-		//          if (s.IndexOf("f", System.StringComparison.OrdinalIgnoreCase) != -1)
-		//          {
-		//              var format = s.Replace("f", "").Replace("F", "");
-		//              return string.Concat(format.Length == 0 ? "0" : int.Parse(format).ToString(), ".",
-		//                                   System.Threading.Thread.CurrentThread.CurrentCulture.NumberFormat.NumberDecimalDigits.ToString());
-		//          }
-		//      }
-
-		//      return "";
-		//  }
-		//  set
-		//  {
-		//      var e = false;
-		//      var str = value.ToString();
-
-		//      foreach (var exp in new[] { str.IndexOf('e'), str.IndexOf('E') })
-		//      {
-		//          if (exp == -1)
-		//          {
-		//              continue;
-		//          }
-
-		//          A_FormatNumeric = str.Substring(exp);
-		//          str = str.Substring(0, exp);
-		//          e = true;
-		//      }
-		//      var parts = str.Split(new[] { '.' }, 2);
-
-		//      if (!e && int.TryParse(parts[0], out var n) && n != 0)
-		//          A_FormatNumeric = "f" + n;
-
-		//      if (parts.Length > 1 && int.TryParse(parts[1], out n))
-		//      {
-		//          var t = System.Threading.Thread.CurrentThread;
-		//          var ci = new CultureInfo(t.CurrentCulture.LCID);
-		//          ci.NumberFormat.NumberDecimalDigits = n;
-		//          t.CurrentCulture = ci;
-		//      }
-		//  }
-		//}
-
-		/// <summary>
-		/// The current integer format, either <c>H</c> or <c>D</c>.
-		/// </summary>
-		//[Obsolete]
-		//public static object A_FormatInteger
-		//{
-		//  get => (string)A_FormatNumeric == "f" ? "D" : (string)A_FormatNumeric == "x" ? "H" : "";
-
-		//  set
-		//  {
-		//      switch (value.ToString().ToLowerInvariant())
-		//      {
-		//          case Core.Keyword_Hex:
-		//          case Core.Keyword_FormatHex:
-		//              A_FormatNumeric = "x";
-		//              break;
-
-		//          case Core.Keyword_FormatDecimal:
-		//              A_FormatNumeric = "f";
-		//              break;
-		//      }
-		//  }
-		//}
-
-		/// <summary>
 		/// The current numeric format.
 		/// </summary>
 		public static object A_FormatNumeric
@@ -603,49 +500,16 @@ namespace Keysharp.Core
 			set => formatNumeric = value.ToString();
 		}
 
-		/// <summary>
-		/// The GUI window number that launched the current thread. This variable is blank unless a Gui control, menu bar item, or event such as GuiClose/GuiEscape launched the current thread.
-		/// </summary>
-		[Obsolete]
-		public static string A_Gui => null;
-
-		/// <summary>
-		/// The name of the variable associated with the GUI control that launched the current thread. If that control lacks an associated variable, A_GuiControl instead contains the first 63 characters of the control's text/caption (this is most often used to avoid giving each button a variable name). A_GuiControl is blank whenever: 1) A_Gui is blank; 2) a GUI menu bar item or event such as GuiClose/GuiEscape launched the current thread; 3) the control lacks an associated variable and has no caption; or 4) The control that originally launched the current thread no longer exists (perhaps due to Gui Destroy).
-		/// </summary>
-		[Obsolete]
-		public static string A_GuiControl => null;
-
-		/// <summary>
-		/// See <see cref="A_GuiEvent"/>.
-		/// </summary>
-		[Obsolete]
-		public static string A_GuiControlEvent => null;
-
-		[Obsolete]
-		public static string A_GuiEvent => null;
-
-		[Obsolete]
-		public static string A_GuiHeight => null;
-
-		[Obsolete]
-		public static string A_GuiWidth => null;
-
-		[Obsolete]
-		public static string A_GuiX => null;
-
-		[Obsolete]
-		public static string A_GuiY => null;
-
 		public static object A_HotkeyModifierTimeout
 		{
 			get => hotkeyModifierTimeout;
-			set => hotkeyModifierTimeout = value.ParseLong().Value;
+			set => hotkeyModifierTimeout = value.Al();
 		}
 
 		public static object A_HotkeyThrottleInterval
 		{
 			get => hotkeyThrottleInterval;
-			set => hotkeyThrottleInterval = value.ParseLong().Value;
+			set => hotkeyThrottleInterval = value.Al();
 		}
 
 		/// <summary>
@@ -718,7 +582,18 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The number of the current loop iteration.
 		/// </summary>
-		public static long A_Index => Loops.loops.Count > 0 ? Loops.loops.Peek().index + 1 : default;
+		public static object A_Index
+		{
+			get =>
+			//return Loops.loops.Count > 0 ? Loops.loops.Peek().index + 1 : default;
+			Loops.loops.Count > 0 ? Loops.loops.Peek().index : default;
+
+			set
+			{
+				if (Loops.loops.Count > 0)
+					Loops.loops.Peek().index = value.Al();
+			}
+		}
 
 		public static string A_InitialWorkingDir => initialWorkingDir;
 
@@ -739,30 +614,6 @@ namespace Keysharp.Core
 				return ips;
 			}
 		}
-
-		/// <summary>
-		/// The IP address of the first network adapter in the computer.
-		/// </summary>
-		[Obsolete]
-		public static string A_IPAddress1 => GetIpFromIndex(1);
-
-		/// <summary>
-		/// The IP address of the second network adapter in the computer.
-		/// </summary>
-		[Obsolete]
-		public static string A_IPAddress2 => GetIpFromIndex(2);
-
-		/// <summary>
-		/// The IP address of the third network adapter in the computer.
-		/// </summary>
-		[Obsolete]
-		public static string A_IPAddress3 => GetIpFromIndex(3);
-
-		/// <summary>
-		/// The IP address of the fourth network adapter in the computer.
-		/// </summary>
-		[Obsolete]
-		public static string A_IPAddress4 => GetIpFromIndex(4);
 
 		public static bool A_Is64bitOS => true;
 
@@ -786,7 +637,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// <c>1</c> if the current thread is marked as critical, <c>0</c> otherwise.
 		/// </summary>
-		public static bool A_IsCritical => System.Threading.Thread.CurrentThread.Priority == ThreadPriority.Highest;
+		public static bool A_IsCritical => Thread.CurrentThread.Priority == ThreadPriority.Highest;
 
 		/// <summary>
 		/// <code>true</code> if the script is suspended, <code>false</code> otherwise;
@@ -804,7 +655,7 @@ namespace Keysharp.Core
 		public static object A_KeyDelay
 		{
 			get => keyDelay ?? (keyDelay = 10).Value;
-			set => keyDelay = value.ParseLong();
+			set => keyDelay = value.Al();
 		}
 
 		/// <summary>
@@ -813,7 +664,7 @@ namespace Keysharp.Core
 		public static object A_KeyDelayPlay
 		{
 			get => keyDelayPlay ?? (keyDelayPlay = -1).Value;
-			set => keyDelayPlay = value.ParseLong();
+			set => keyDelayPlay = value.Al();
 		}
 
 		/// <summary>
@@ -822,7 +673,7 @@ namespace Keysharp.Core
 		public static object A_KeyDuration
 		{
 			get => keyDuration ?? (keyDuration = -1).Value;
-			set => keyDuration = value.ParseLong();
+			set => keyDuration = value.Al();
 		}
 
 		/// <summary>
@@ -831,7 +682,7 @@ namespace Keysharp.Core
 		public static object A_KeyDurationPlay
 		{
 			get => keyDurationPlay ?? (keyDurationPlay = -1).Value;
-			set => keyDurationPlay = value.ParseLong();
+			set => keyDurationPlay = value.Al();
 		}
 
 		public static string A_KeysharpPath => A_AhkPath;
@@ -839,7 +690,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The system's default language code.
 		/// </summary>
-		public static long A_Language => System.Threading.Thread.CurrentThread.CurrentCulture.LCID;
+		public static long A_Language => Thread.CurrentThread.CurrentCulture.LCID;
 
 		/// <summary>
 		/// The result from Windows <code>GetLastError()</code> function.
@@ -1250,7 +1101,7 @@ namespace Keysharp.Core
 		public static long A_MaxHotkeysPerInterval
 		{
 			get => maxHotkeysPerInterval;
-			set => maxHotkeysPerInterval = value.ParseLong().Value;
+			set => maxHotkeysPerInterval = value.Al();
 		}
 
 		/// <summary>
@@ -1295,7 +1146,7 @@ namespace Keysharp.Core
 		public static object A_MouseDelay
 		{
 			get => mouseDelay ?? (mouseDelay = 10).Value;
-			set => mouseDelay = value.ParseLong();
+			set => mouseDelay = value.Al();
 		}
 
 		/// <summary>
@@ -1304,7 +1155,7 @@ namespace Keysharp.Core
 		public static object A_MouseDelayPlay
 		{
 			get => mouseDelayPlay ?? (mouseDelayPlay = -1).Value;
-			set => mouseDelayPlay = value.ParseLong();
+			set => mouseDelayPlay = value.Al();
 		}
 
 		/// <summary>
@@ -1334,12 +1185,6 @@ namespace Keysharp.Core
 		public static string A_NowUTC => Conversions.ToYYYYMMDDHH24MISS(DateTime.Now.ToUniversalTime());
 
 		/// <summary>
-		/// See <see cref="A_BatchLines"/>.
-		/// </summary>
-		[Obsolete]
-		public static string A_NumBatchLines => A_BatchLines;
-
-		/// <summary>
 		/// The type of Operating System being run, e.g. <code>WIN32_WINDOWS</code> for Windows 95/98/ME or <code>WIN32_NT</code> for Windows NT4/2000/XP/2003/Vista.
 		/// </summary>
 		public static string A_OSType => Conversions.ToOSType(Environment.OSVersion.Platform);
@@ -1352,7 +1197,7 @@ namespace Keysharp.Core
 		public static object A_PeekFrequency
 		{
 			get => peekFrequency ?? (peekFrequency = 5L).Value;
-			set => peekFrequency = value.ParseLong().Value;
+			set => peekFrequency = value.Al();
 		}
 
 		/// <summary>
@@ -1363,12 +1208,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The key name of the previously executed hotkey or hotstring.
 		/// </summary>
-		public static string A_PriorHotkey => Keysharp.Scripting.Script.HookThread.kbdMsSender.PriorHotkey;
+		public static string A_PriorHotkey => Script.HookThread.kbdMsSender.PriorHotkey;
 
 		public static object A_Priority
 		{
 			get => priority ?? (priority = 0).Value;
-			set => priority = value.ParseLong();
+			set => priority = value.Al();
 		}
 
 		/// <summary>
@@ -1443,7 +1288,7 @@ namespace Keysharp.Core
 		public static object A_SendLevel
 		{
 			get => sendLevel ?? (sendLevel = 0).Value;
-			set => sendLevel = Math.Clamp(value.ParseLong().Value, 0L, 100L);
+			set => sendLevel = Math.Clamp(value.Al(), 0L, 100L);
 		}
 
 		public static object A_SendMode
@@ -1452,7 +1297,7 @@ namespace Keysharp.Core
 
 			set
 			{
-				if (Enum.TryParse<SendModes>(value.ToString(), out var temp))
+				if (Enum.TryParse<SendModes>(value.As(), out var temp))
 					sendMode = temp;
 			}
 		}
@@ -1515,7 +1360,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The key name of the most recently executed hotkey or hotstring.
 		/// </summary>
-		public static string A_ThisHotkey => Keysharp.Scripting.Script.HookThread.kbdMsSender.CurrentHotkey;
+		public static string A_ThisHotkey => Script.HookThread.kbdMsSender.CurrentHotkey;
 
 		/// <summary>
 		/// The name of the menu from which A_ThisMenuItem was selected.
@@ -1550,12 +1395,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.
 		/// </summary>
-		public static int A_TimeSincePriorHotkey => Keysharp.Scripting.Script.HookThread.kbdMsSender.PriorHotkey == null ? -1 : Environment.TickCount - Keysharp.Scripting.Script.HookThread.kbdMsSender.PriorHotkeyTime;
+		public static int A_TimeSincePriorHotkey => Script.HookThread.kbdMsSender.PriorHotkey == null ? -1 : Environment.TickCount - Script.HookThread.kbdMsSender.PriorHotkeyTime;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_ThisHotkey"/> was pressed. It will be -1 whenever <see cref="A_ThisHotkey"/> is blank.
 		/// </summary>
-		public static int A_TimeSinceThisHotkey => Keysharp.Scripting.Script.HookThread.kbdMsSender.CurrentHotkey == null ? -1 : Environment.TickCount - Keysharp.Scripting.Script.HookThread.kbdMsSender.CurrentHotkeyTime;
+		public static int A_TimeSinceThisHotkey => Script.HookThread.kbdMsSender.CurrentHotkey == null ? -1 : Environment.TickCount - Script.HookThread.kbdMsSender.CurrentHotkeyTime;
 
 		/// <summary>
 		/// The current mode set by <code>SetTitleMatchMode</code>: <code>1</code>, <code>2</code>, <code>3</code>, or <code>RegEx</code>.
@@ -1611,7 +1456,7 @@ namespace Keysharp.Core
 
 		public static long A_TotalScreenWidth => SystemInformation.VirtualScreen.Width;
 
-		public static Menu A_TrayMenu => Keysharp.Scripting.Script.trayMenu;
+		public static Menu A_TrayMenu => Script.trayMenu;
 
 		/// <summary>
 		/// The logon name of the current user.
@@ -1629,7 +1474,7 @@ namespace Keysharp.Core
 		public static object A_WinDelay
 		{
 			get => winDelay ?? (winDelay = 100).Value;
-			set => winDelay = value.ParseLong();
+			set => winDelay = value.Al();
 		}
 
 		/// <summary>
@@ -1687,6 +1532,15 @@ namespace Keysharp.Core
 			set => winActivateForce = value.ParseBool();
 		}
 
+		/// <summary>
+		/// The most recent reason the script was asked to terminate. This variable is blank unless the script has an OnExit subroutine and that subroutine is currently running or has been called at least once by an exit attempt. See OnExit for details.
+		/// </summary>
+		internal static object A_ExitReason
+		{
+			get;
+			set;
+		} = "";
+
 		internal static object A_IconFrozen
 		{
 			get => iconFrozen ?? (iconFrozen = false).Value;
@@ -1706,15 +1560,15 @@ namespace Keysharp.Core
 			set => sendMode = value;
 		}
 
-		public static void SetControlDelay(params object[] obj) => Accessors.A_ControlDelay = obj.L().L1();
+		public static void SetControlDelay(object obj) => A_ControlDelay = obj;
 
-		public static void SetWinDelay(params object[] obj) => Accessors.A_WinDelay = obj.L().L1();
+		public static void SetWinDelay(object obj) => A_WinDelay = obj;
 
 		internal static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 
 		internal static void SetInitialFloatFormat()
 		{
-			var t = System.Threading.Thread.CurrentThread;
+			var t = Thread.CurrentThread;
 			var ci = new CultureInfo(t.CurrentCulture.LCID);
 			ci.NumberFormat.NumberDecimalDigits = 6;
 			t.CurrentCulture = ci;

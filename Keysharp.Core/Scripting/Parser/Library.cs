@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
 {
@@ -69,9 +68,6 @@ namespace Keysharp.Scripting
 
 			foreach (var property in props)
 				libProperties.Add(property.Name.ToLowerInvariant(), property);
-
-			libProperties.Add(ErrorLevelStr.ToLowerInvariant(), typeof(Keysharp.Core.Core).GetProperty(nameof(Keysharp.Core.Accessors.A_ErrorLevel)));//MATT
-			//libProperties.Add(ErrorLevel.ToLowerInvariant(), ErrorLevel);
 		}
 	}
 }

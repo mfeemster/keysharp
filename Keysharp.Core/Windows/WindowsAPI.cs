@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Accessibility;
-using Keysharp.Core.Common.Keyboard;
 using Microsoft.Win32.SafeHandles;
 
 namespace Keysharp.Core.Windows
@@ -932,6 +931,9 @@ namespace Keysharp.Core.Windows
 		internal const int WM_NCPAINT                      = 0x0085;
 		internal const int WM_NCACTIVATE                   = 0x0086;
 		internal const int WM_GETDLGCODE                   = 0x0087;
+		internal const int WM_ENDSESSION                   = 0x0016;
+		internal const int WM_DESTROY                      = 0x0002;
+		internal const uint ENDSESSION_LOGOFF          = 0x80000000;
 
 		internal const int HTERROR             = -2;
 		internal const int HTTRANSPARENT       = -1;
@@ -1474,17 +1476,17 @@ namespace Keysharp.Core.Windows
 		}
 
 
-		internal static IntPtr GetClipboardData(int uFormat, ref bool aNullIsOkay)
+		internal static IntPtr GetClipboardData(int format, ref bool nullIsOkay)
 		{
-			aNullIsOkay = false;
+			nullIsOkay = false;
 			var formatName = "";
 
-			if (uFormat < 0xC000 || uFormat > 0xFFFF) // It's a registered format (you're supposed to verify in-range before calling GetClipboardFormatName()).  Also helps performance.
+			if (format < 0xC000 || format > 0xFFFF) // It's a registered format (you're supposed to verify in-range before calling GetClipboardFormatName()).  Also helps performance.
 			{
 			}
 			else
 			{
-				var fmt = DataFormats.GetFormat(uFormat);
+				var fmt = DataFormats.GetFormat(format);
 
 				if (fmt != null)
 					formatName = fmt.Name;
@@ -1499,12 +1501,12 @@ namespace Keysharp.Core.Windows
 				if (formatName.StartsWith("MSDEVColumnSelect", StringComparison.OrdinalIgnoreCase)
 						|| formatName.StartsWith("MSDEVLineSelect", StringComparison.OrdinalIgnoreCase))
 				{
-					aNullIsOkay = true;
+					nullIsOkay = true;
 					return IntPtr.Zero;
 				}
 			}
 
-			return GetClipboardData((uint)uFormat);
+			return GetClipboardData((uint)format);
 		}
 
 
@@ -1513,6 +1515,9 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(kernel32)]
 		internal static extern IntPtr GlobalLock(IntPtr hMem);
+
+		[DllImport(kernel32)]
+		internal static extern bool GlobalUnlock(IntPtr hMem);
 
 		[DllImport(user32)]
 		internal static extern IntPtr GetClipboardData(uint uFormat);
@@ -1640,13 +1645,13 @@ namespace Keysharp.Core.Windows
 		internal static (bool, uint) AttachThreadInput(IntPtr targetWindow, bool setActive)
 		{
 			var threadsAreAttached = false;
-			var targetThread = GetWindowThreadProcessId(targetWindow, out var _);
+			var targetThread = GetWindowThreadProcessId(targetWindow, out _);
 
 			if (targetThread != 0 && targetThread != (uint)Processes.CurrentThreadID && !IsHungAppWindow(targetWindow))
 				threadsAreAttached = AttachThreadInput((uint)Processes.CurrentThreadID, targetThread, true);
 
 			if (setActive)
-				SetActiveWindow(targetWindow);
+				_ = SetActiveWindow(targetWindow);
 
 			return (threadsAreAttached, targetThread);
 		}

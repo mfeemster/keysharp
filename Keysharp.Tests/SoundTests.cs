@@ -27,7 +27,5 @@ namespace Keysharp.Tests
 			Keysharp.Core.Sound.SoundBeep(1000, 500);
 			Assert.IsTrue(TestScript("sound-soundbeep", true));
 		}
-
-
 	}
 }

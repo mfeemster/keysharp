@@ -31,7 +31,7 @@ namespace Keysharp.Tests
 				Assert.AreEqual(i, Accessors.A_Index);
 			}
 
-			Pop();//Caller is always required to do this.
+			_ = Pop();//Caller is always required to do this.
 			Assert.AreEqual(x, n);
 			Assert.AreEqual(0L, Accessors.A_Index);
 			x = 0;
@@ -44,7 +44,7 @@ namespace Keysharp.Tests
 					break;
 			}
 
-			Pop();//Caller is always required to do this.
+			_ = Pop();//Caller is always required to do this.
 			Assert.AreEqual(x, 6L);
 			Assert.AreEqual(0L, Accessors.A_Index);
 			Assert.IsTrue(TestScript("flow-loop", true));
@@ -63,46 +63,38 @@ namespace Keysharp.Tests
 				Assert.AreEqual(i, Accessors.A_Index);
 			}
 
-			Pop();//Caller is always required to do this.
+			_ = Pop();//Caller is always required to do this.
 			Assert.AreEqual(x, n);
 			Assert.AreEqual(0L, Accessors.A_Index);
 			Assert.IsTrue(TestScript("flow-while", true));
 		}
 
 		[Test, Category("Flow")]
-		public void FlowForIn()
-		{
-			Assert.IsTrue(TestScript("flow-for-in", true));//Collections tests already test foreach in C#, so just test the script here.
-		}
+		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", true));//Collections tests already test foreach in C#, so just test the script here.
 
 		[Test, Category("Flow")]
-		public void FlowLoopParse()
-		{
-			Assert.IsTrue(TestScript("flow-loop-parse", true));
-		}
+		public void FlowLoopParse() => Assert.IsTrue(TestScript("flow-loop-parse", true));
 
 		[Test, Category("Flow")]
-		public void FlowUntil()
-		{
-			Assert.IsTrue(TestScript("flow-until", true));
-		}
+		public void FlowUntil() => Assert.IsTrue(TestScript("flow-until", true));
 
 		[Test, Category("Flow")]
-		public void FlowLoopRead()
-		{
-			Assert.IsTrue(TestScript("flow-loop-read", true));
-		}
+		public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
 
 		[Test, Category("Flow")]
-		public void FlowSwitch()
-		{
-			Assert.IsTrue(TestScript("flow-switch", true));
-		}
+		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", true));
 
 		[Test, Category("Flow")]
 		public void FlowLoopReg()
 		{
-			Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");
+			try
+			{
+				Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");
+			}
+			catch
+			{
+			}
+
 			//
 			Registrys.RegWrite("ksdefval", "REG_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
 			var val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
@@ -133,7 +125,7 @@ namespace Keysharp.Tests
 			//
 			foreach (var reg in Loops.LoopRegistry(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr"))
 			{
-				val = Registrys.RegRead();
+				val = Registrys.RegRead(null, null, "testdefault");
 
 				if (i == 0)
 				{
@@ -151,7 +143,7 @@ namespace Keysharp.Tests
 				}
 				else if (i == 2)
 				{
-					Assert.AreEqual(null, val);
+					Assert.AreEqual("testdefault", val.ToString());
 					Assert.AreEqual("KEY", Accessors.A_LoopRegType);
 					Assert.AreEqual("ks_sub2", Accessors.A_LoopRegName);
 					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);
@@ -179,7 +171,7 @@ namespace Keysharp.Tests
 				}
 				else if (i == 6)
 				{
-					Assert.AreEqual(null, val);
+					Assert.AreEqual("testdefault", val);
 					Assert.AreEqual("KEY", Accessors.A_LoopRegType);
 					Assert.AreEqual("ks_sub1_sub1", Accessors.A_LoopRegName);
 					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
@@ -215,9 +207,6 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Flow")]
-		public void FlowTryCatch()
-		{
-			Assert.IsTrue(TestScript("flow-trycatch", true));
-		}
+		public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", true));
 	}
 }

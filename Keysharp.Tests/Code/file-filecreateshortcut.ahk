@@ -11,7 +11,7 @@ dir := path . "DirCopy"
 DirCopy(dir, "./FileCreateShortcut/")
 	
 if (FileExist("./fileappend.txt"))
-	FileDelete("./fileappend.txt", true)
+	FileDelete("./fileappend.txt")
 	
 FileCreateShortcut("./FileCreateShortcut/file1.txt", "./testshortcut.lnk", "", "", "TestDescription", "../../../Keysharp.ico", "")
 

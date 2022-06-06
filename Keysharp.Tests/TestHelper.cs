@@ -54,8 +54,8 @@ namespace Keysharp.Tests
 		internal string WrapInFunc(string source)
 		{
 			var sb = new StringBuilder();
-			sb.AppendLine("func()");
-			sb.AppendLine("{");
+			_ = sb.AppendLine("func()");
+			_ = sb.AppendLine("{");
 
 			using (var sr = new StringReader(source))
 			{
@@ -66,15 +66,12 @@ namespace Keysharp.Tests
 						_ = sb.AppendLine("\t" + line);
 			}
 
-			sb.AppendLine("}");
-			sb.AppendLine("func()");
+			_ = sb.AppendLine("}");
+			_ = sb.AppendLine("func()");
 			return sb.ToString();
 		}
 
-		internal string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout)
-		{
-			return RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
-		}
+		internal string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
 
 		internal void TestException(Action func)
 		{

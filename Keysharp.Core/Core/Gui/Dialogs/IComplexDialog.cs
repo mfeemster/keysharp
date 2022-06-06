@@ -17,9 +17,9 @@ namespace Keysharp.Core
 
 		void Dispose();
 
-		object Invoke(Delegate Method, params object[] obj);
+		object Invoke(Delegate method, params object[] obj);
 
-		object Invoke(Delegate Method);
+		object Invoke(Delegate method);
 
 		//DialogResult ShowDialog();
 		void Show();

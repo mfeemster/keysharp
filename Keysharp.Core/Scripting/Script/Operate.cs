@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Runtime.InteropServices;
 using Keysharp.Core;
 
@@ -240,10 +239,7 @@ namespace Keysharp.Scripting
 			return !not ? ret : !ret;
 		}
 
-		public static BoolResult IfTest(object result)
-		{
-			return new BoolResult(ForceBool(result), result);
-		}
+		public static BoolResult IfTest(object result) => new BoolResult(ForceBool(result), result);
 
 		//if (result is bool b)
 		//  return b;

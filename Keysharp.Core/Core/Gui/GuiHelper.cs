@@ -66,15 +66,12 @@ namespace Keysharp.Core
 			return Icon.ExtractAssociatedIcon(source);
 		}
 
-		public static GuiControl GuiCtrlFromHwnd(params object[] obj)
-		{
-			var hwnd = obj.L().L1();
-			return Control.FromHandle(new IntPtr(hwnd)) is Control c&& c.Tag is GuiControl gui ? gui : null;
-		}
+		public static GuiControl GuiCtrlFromHwnd(object obj) => Control.FromHandle(new IntPtr(obj.Al())) is Control c&& c.Tag is GuiControl gui ? gui : null;
 
-		public static Gui GuiFromHwnd(params object[] obj)
+		public static Gui GuiFromHwnd(object obj0, object obj1 = null)
 		{
-			var (hwnd, recurse) = obj.L().Lb();
+			var hwnd = obj0.Al();
+			var recurse = obj1.Ab();
 
 			if (Gui.allGuiHwnds.TryGetValue(hwnd, out var gui))
 				return gui;
@@ -94,58 +91,6 @@ namespace Keysharp.Core
 			}
 
 			return null;
-		}
-
-		public static (string, List<Tuple<int, int, Tuple<string, string>>>) ParseLinkLabelText(string txt)
-		{
-			var sb = new StringBuilder(txt.Length);
-			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries);
-			var links = new List<Tuple<int, int, Tuple<string, string>>>();
-			var quotes = new char[] { '\'', '\"' };
-
-			foreach (var split in splits)
-			{
-				var strim = split.Trim();
-
-				if (strim.StartsWith("href=") || strim.StartsWith("id="))
-				{
-					var id = "";
-					var url = "";
-					var pos = strim.NthIndexOf("id=", 0, 1, StringComparison.OrdinalIgnoreCase);
-
-					if (pos >= 0)
-					{
-						var idstartindex = strim.NthIndexOfAny(quotes, pos, 1);
-						var idstopindex = strim.NthIndexOfAny(quotes, pos, 2);
-
-						if (idstartindex >= 0 && idstopindex >= 0)
-						{
-							idstartindex++;
-							id = strim.Substring(idstartindex, idstopindex - idstartindex);
-						}
-					}
-
-					var index1 = strim.IndexOf('>') + 1;
-					var linktext = strim.Substring(index1);
-					pos = strim.NthIndexOf("href=", 0, 1, StringComparison.OrdinalIgnoreCase);
-					index1 = strim.NthIndexOfAny(quotes, pos, 1);
-					var index2 = strim.NthIndexOfAny(quotes, pos, 2);
-
-					if (index1 >= 0 && index2 >= 0)
-					{
-						index1++;
-						url = strim.Substring(index1, index2 - index1);
-					}
-
-					links.Add(new Tuple<int, int, Tuple<string, string>>(sb.Length, linktext.Length, new Tuple<string, string>(id, url)));
-					_ = sb.Append(linktext);
-				}
-				else
-					_ = sb.Append(split);
-			}
-
-			var newtxt = sb.ToString();
-			return (newtxt, links);
 		}
 
 		/// <summary>
@@ -415,6 +360,58 @@ namespace Keysharp.Core
 
 			if (lvco.uni.HasValue)
 				lv.uni = lvco.uni.Value;
+		}
+
+		internal static (string, List<Tuple<int, int, Tuple<string, string>>>) ParseLinkLabelText(string txt)
+		{
+			var sb = new StringBuilder(txt.Length);
+			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries);
+			var links = new List<Tuple<int, int, Tuple<string, string>>>();
+			var quotes = new char[] { '\'', '\"' };
+
+			foreach (var split in splits)
+			{
+				var strim = split.Trim();
+
+				if (strim.StartsWith("href=") || strim.StartsWith("id="))
+				{
+					var id = "";
+					var url = "";
+					var pos = strim.NthIndexOf("id=", 0, 1, StringComparison.OrdinalIgnoreCase);
+
+					if (pos >= 0)
+					{
+						var idstartindex = strim.NthIndexOfAny(quotes, pos, 1);
+						var idstopindex = strim.NthIndexOfAny(quotes, pos, 2);
+
+						if (idstartindex >= 0 && idstopindex >= 0)
+						{
+							idstartindex++;
+							id = strim.Substring(idstartindex, idstopindex - idstartindex);
+						}
+					}
+
+					var index1 = strim.IndexOf('>') + 1;
+					var linktext = strim.Substring(index1);
+					pos = strim.NthIndexOf("href=", 0, 1, StringComparison.OrdinalIgnoreCase);
+					index1 = strim.NthIndexOfAny(quotes, pos, 1);
+					var index2 = strim.NthIndexOfAny(quotes, pos, 2);
+
+					if (index1 >= 0 && index2 >= 0)
+					{
+						index1++;
+						url = strim.Substring(index1, index2 - index1);
+					}
+
+					links.Add(new Tuple<int, int, Tuple<string, string>>(sb.Length, linktext.Length, new Tuple<string, string>(id, url)));
+					_ = sb.Append(linktext);
+				}
+				else
+					_ = sb.Append(split);
+			}
+
+			var newtxt = sb.ToString();
+			return (newtxt, links);
 		}
 
 		internal static ListViewColumnOptions ParseListViewColumnOptions(string options)

@@ -1,10 +1,10 @@
 ; #Include %A_ScriptDir%/header.ahk
 
 if (FileExist("./fileappend.txt"))
-	FileDelete("./fileappend.txt", true)
+	FileDelete("./fileappend.txt")
 		
 if (FileExist("./fileappend2.txt"))
-	FileDelete("./fileappend2.txt", true)
+	FileDelete("./fileappend2.txt")
 
 FileAppend("test file text", "./fileappend.txt")
 
@@ -46,7 +46,7 @@ else
 	FileAppend, fail, *
 
 if (FileExist("./fileappend.txt"))
-	FileDelete("./fileappend.txt", true)
+	FileDelete("./fileappend.txt")
 		
 if (FileExist("./fileappend2.txt"))
-	FileDelete("./fileappend2.txt", true)
+	FileDelete("./fileappend2.txt")

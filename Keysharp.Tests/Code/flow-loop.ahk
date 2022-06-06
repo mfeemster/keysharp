@@ -21,7 +21,7 @@ If A_Index = 0
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 x = 0
 
 Loop %y% {

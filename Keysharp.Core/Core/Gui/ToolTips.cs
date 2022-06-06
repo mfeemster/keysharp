@@ -12,9 +12,12 @@ namespace Keysharp.Core
 	{
 		private static ToolTip[] persistentTooltips = new System.Windows.Forms.ToolTip[20];
 
-		public static void ToolTip(params object[] obj)
+		public static void ToolTip(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var (text, x, y, id) = obj.L().Si3("", int.MinValue, int.MinValue, 1);
+			var text = obj0.As();
+			var x = (int)obj1.Al(int.MinValue);
+			var y = (int)obj2.Al(int.MinValue);
+			var id = (int)obj3.Al(int.MinValue);
 			id--;
 
 			if (text != "")
@@ -62,15 +65,16 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static void TraySetIcon(params object[] obj)
+		public static void TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (filename, iconnumber, freeze) = obj.L().Sis("", 1);
+			var filename = obj0.As();
+			var iconnumber = (int)obj1.Al(1);
 
 			if (Parser.NoTrayIcon)
 				return;
 
-			if (freeze != "")
-				Accessors.A_IconFrozen = Options.OnOff(freeze) ?? false;
+			if (obj2 != null)
+				Accessors.A_IconFrozen = obj2.Ab();
 
 			if (filename != "*")
 			{
@@ -102,9 +106,11 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static void TrayTip(params object[] obj)
+		public static void TrayTip(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var (text, title, options) = obj.L().S2o();
+			var text = obj0.As();
+			var title = obj1.As();
+			var options = obj2;
 
 			if (Parser.NoTrayIcon)
 				return;

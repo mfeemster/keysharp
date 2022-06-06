@@ -36,8 +36,8 @@ Loop 100
 if (found == true)
 {
 	loc := PixelSearch(x, y, x + 1, y + 1, pix)
-	outx := loc.OutputVarX
-	outy := loc.OutputVarY
+	outx := loc["X"]
+	outy := loc["Y"]
 	
 	if (outx == x && outy == y)
 		FileAppend, pass, *

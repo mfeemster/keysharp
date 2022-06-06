@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
-using static Keysharp.Scripting.Script;
+using Keysharp.Core.Windows;
+using static Keysharp.Core.Windows.WindowsAPI;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 
 namespace Keysharp.Core
 {
@@ -13,7 +13,7 @@ namespace Keysharp.Core
 		[ThreadStatic]
 		private static CoordModes coords = new CoordModes();
 
-		internal static CoordModes Coords => coords ?? (coords = new CoordModes());//All thread statis members need to be initialized like this.//TOOD
+		internal static CoordModes Coords => coords ?? (coords = new CoordModes());//All thread static members need to be initialized like this.//TOOD
 
 		/// <summary>
 		/// Clicks a mouse button at the specified coordinates. It can also hold down a mouse button, turn the mouse wheel, or move the mouse.
@@ -28,9 +28,9 @@ namespace Keysharp.Core
 		/// <item><term><c>Relative</c></term>: <description>treat the coordinates as relative offsets from the current mouse position.</description></item>
 		/// </list>
 		/// </param>
-		public static void Click(params object[] obj)
+		public static void Click(object obj)
 		{
-			var options = obj.L().S1();
+			var options = obj.As();
 			int x = 0, y = 0, vk = 0;
 			var event_type = Keysharp.Core.Common.Keyboard.KeyEventTypes.KeyDown;
 			var repeat_count = 0;
@@ -39,110 +39,6 @@ namespace Keysharp.Core
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
 			PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
 							   , vk, x, y, 0, 0, repeat_count, event_type, (int)Accessors.A_DefaultMouseSpeed, move_offset);
-			/*
-			    var ParamLine = string.Empty;
-			    var MousePos = new Point(0, 0);
-			    var ClickCount = 1;
-			    const string delimiter = ",";
-			    var RE_Coord = new Regex(@"(\d*?)\s*,\s*(\d*)[\s,\,]*", RegexOptions.IgnoreCase);
-			    var RE_Num = new Regex(@"\d+", RegexOptions.IgnoreCase);
-			    CaptureCollection Out;
-			    Match Match;
-
-			    //rebuild Argument string, as we have to parse this in a special way
-			    foreach (var option in options)
-			    {
-			    if (option is string os)
-			        ParamLine += os + delimiter;
-			    else if (option is double od)
-			        ParamLine += ((int)od) + delimiter;
-			    }
-
-			    ParamLine = ParamLine.ToLower().Substring(0, ParamLine.Length - 1);
-
-			    //search coordinates, move mouse, remove them
-			    if (RE_Coord.IsMatch(ParamLine))
-			    {
-			    Match = RE_Coord.Match(ParamLine);
-			    MousePos.X = Convert.ToInt32(Match.Groups[1].Value);
-			    MousePos.Y = Convert.ToInt32(Match.Groups[2].Value);
-			    ParamLine = RE_Coord.Replace(ParamLine, string.Empty); //remove coord
-
-			    if (Coords.Mouse == CoordModeType.Window)
-			    {
-			        var foreGroundWindow = WindowManagerProvider.Instance.ActiveWindow;
-
-			        if (foreGroundWindow != null)
-			        {
-			            var location = foreGroundWindow.Location;
-			            MousePos.X += location.X;
-			            MousePos.Y += location.Y;
-			        }
-			    }
-
-			    Cursor.Position = MousePos;
-			    }
-
-			    //click count
-			    if (RE_Num.IsMatch(ParamLine))
-			    {
-			    Out = RE_Num.Match(ParamLine).Captures;
-			    ClickCount = Convert.ToInt32(Out[0].Value);
-
-			    if (ClickCount <= 0)
-			        return;
-			    }
-
-			    if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			    {
-			    var aInput = new INPUT[2];
-
-			    //right or left mouse
-			    if (ParamLine.Contains(Core.Keyword_Right))
-			    {
-			        aInput[0].i.m.dwFlags = (uint)MOUSEEVENTF.RIGHTDOWN;
-			        aInput[1].i.m.dwFlags = (uint)MOUSEEVENTF.RIGHTUP;
-			    }
-			    else
-			    {
-			        aInput[0].i.m.dwFlags = (uint)MOUSEEVENTF.LEFTDOWN;
-			        aInput[1].i.m.dwFlags = (uint)MOUSEEVENTF.LEFTUP;
-			    }
-
-			    //down event
-			    aInput[0].type = WindowsAPI.INPUT_MOUSE;
-			    aInput[0].i.m.dwExtraInfo = 0;
-			    aInput[0].i.m.mouseData = 0;
-			    aInput[0].i.m.time = 0;
-			    aInput[0].i.m.dx = MousePos.X;
-			    aInput[0].i.m.dy = MousePos.Y;
-			    //up event
-			    aInput[1].type = WindowsAPI.INPUT_MOUSE;
-			    aInput[1].i.m.dwExtraInfo = 0;
-			    aInput[1].i.m.mouseData = 0;
-			    aInput[1].i.m.time = 0;
-			    aInput[1].i.m.dx = MousePos.X;
-			    aInput[1].i.m.dy = MousePos.Y;
-
-			    if (ParamLine.Contains(Core.Keyword_Up))
-			    {
-			        //just send the up event:
-			        aInput[0] = aInput[1];
-
-			        for (var i = 1; ClickCount >= i; i++)
-			            _ = WindowsAPI.SendInput(1, aInput, Marshal.SizeOf(typeof(INPUT)));
-			    }
-			    else if (ParamLine.Contains(Core.Keyword_Down))
-			    {
-			        //just send the down event:
-			        for (var i = 1; ClickCount >= i; i++)
-			            _ = WindowsAPI.SendInput(1, aInput, Marshal.SizeOf(typeof(INPUT)));
-			    }
-			    else //send both events:
-			        for (var i = 1; ClickCount >= i; i++)
-			            _ = WindowsAPI.SendInput((uint)aInput.Length, aInput, Marshal.SizeOf(typeof(INPUT)));
-			    }
-			*/
 		}
 
 		/// <summary>
@@ -165,9 +61,10 @@ namespace Keysharp.Core
 		/// <item><term>Relative</term>: <description>Same as Window.</description></item>
 		/// </list>
 		/// </param>
-		public static void CoordMode(params object[] obj)
+		public static void CoordMode(object obj0, object obj1)
 		{
-			var (target, mode) = obj.L().S2("", Core.Keyword_Screen);
+			var target = obj0.As();
+			var mode = obj1.As(Core.Keyword_Screen);
 			CoordModeType rel;
 
 			if (Options.IsOption(mode, Core.Keyword_Relative))
@@ -195,6 +92,32 @@ namespace Keysharp.Core
 			}
 		}
 
+		public static void MouseClick(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null, object obj4 = null, object obj5 = null, object obj6 = null)
+		{
+			var whichButton = obj0.As();
+			var x = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
+			var y = (int)obj2.Al(KeyboardMouseSender.CoordUnspecified);
+			var repeatCount = (int)obj3.Al(1);
+			var speed = (int)obj4.Al((long)Accessors.A_DefaultMouseSpeed);
+			var downOrUp = obj5.As();
+			var relative = obj6.As();
+			PerformMouse(Actions.ACT_MOUSECLICK, whichButton, x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
+						 speed, relative, repeatCount, downOrUp);
+		}
+
+		public static void MouseClickDrag(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null, object obj6 = null)
+		{
+			var whichButton = obj0.As();
+			var x1 = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);//If no starting coords are specified, mark it as "use the current mouse position".
+			var y1 = (int)obj2.Al(KeyboardMouseSender.CoordUnspecified);
+			var x2 = (int)obj3.Al(KeyboardMouseSender.CoordUnspecified);
+			var y2 = (int)obj4.Al(KeyboardMouseSender.CoordUnspecified);
+			var speed = (int)obj5.Al((long)Accessors.A_DefaultMouseSpeed);
+			var relative = obj6.As();
+			PerformMouse(Actions.ACT_MOUSECLICKDRAG, whichButton, x1, y1, x2, y2,
+						 speed, relative, 1, "");
+		}
+
 		/// <summary>
 		/// Retrieves the current position of the mouse cursor, and optionally which window and control it is hovering over.
 		/// </summary>
@@ -207,19 +130,18 @@ namespace Keysharp.Core
 		/// <item><term>2</term>: retrieve the <paramref name="control"/> ID rather than its class name.</item>
 		/// </list>
 		/// </param>
-		public static void MouseGetPos(out int x, out int y, out long win, out string control, int mode = 0)
+		public static Keysharp.Core.Map MouseGetPos(object obj = null)
 		{
-			win = 0;
-			control = null;
+			var mode = obj.Al();
 			var cid = (mode & 2) == 2;
 			var pos = Cursor.Position;
 			var found = Window.WindowManager.WindowFromPoint(pos);
-			win = found.Handle.ToInt32();
+			var win = found.Handle.ToInt32();
 			var foundLocation = found.Location;
 			var child = found.RealChildWindowFromPoint(new Point(pos.X - foundLocation.X, pos.Y - foundLocation.Y));
-			control = cid ? child.Handle.ToInt64().ToString() : child.ClassNN;
-			x = pos.X;
-			y = pos.Y;
+			var control = cid ? child.Handle.ToInt64().ToString() : child.ClassNN;
+			var x = pos.X;
+			var y = pos.Y;
 
 			if (Coords.Mouse == CoordModeType.Window)
 			{
@@ -227,39 +149,37 @@ namespace Keysharp.Core
 				x -= location.X;
 				y -= location.Y;
 			}
-		}
 
-		public static void SetDefaultMouseSpeed(params object[] obj)
-		{
-			var o = obj.L();
-
-			if (o.Count > 0)
+			return new Keysharp.Core.Map(new Dictionary<object, object>()
 			{
-				Accessors.A_DefaultMouseSpeed = o[0].ParseLong(true).Value;
-			}
+				{ "X", x },
+				{ "Y", y },
+				{ "Win", win },
+				{ "Control", control }
+			});
 		}
 
-		public static void SetMouseDelay(params object[] obj)
+		public static void MouseMove(object obj0, object obj1, object obj2 = null, object obj3 = null)
 		{
-			var o = obj.L();
+			var x = (int)obj0.Al(KeyboardMouseSender.CoordUnspecified);
+			var y = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);
+			var speed = (int)obj2.Al((long)Accessors.A_DefaultMouseSpeed);
+			var relative = obj3.As();
+			PerformMouse(Actions.ACT_MOUSEMOVE, "", x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
+						 speed, relative, 1, "");
+		}
+
+		public static void SetDefaultMouseSpeed(object obj) => Accessors.A_DefaultMouseSpeed = obj;
+
+		public static void SetMouseDelay(object obj0, object obj1 = null)
+		{
 			var play = string.Empty;
-
-			if (o.Count > 1)
-			{
-				if (o[1] is string s)
-					play = s.ToLowerInvariant();
-			}
-
+			play = obj1.As().ToLowerInvariant();
 			var isplay = play == "play";
 			var del = isplay ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay;
 
-			if (o.Count > 0)
-			{
-				var po = o[0];
-
-				if (po != null)
-					del = po.ParseLong(true).Value;
-			}
+			if (obj0 != null)
+				del = obj0.Al();
 
 			if (isplay)
 				Accessors.A_MouseDelayPlay = del;
@@ -289,97 +209,73 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, int speed, bool moveOffset)
+		internal static Point RevertPoint(Point p, CoordModeType modeType)
 		{
-			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMsSender = ht.kbdMsSender;
-
-			// Check if one of the coordinates is missing, which can happen in cases where this was called from
-			// a source that didn't already validate it. Can't call Line::ValidateMouseCoords() because that accepts strings.
-			if ((x1 == KeyboardMouseSender.CoordUnspecified && y1 != KeyboardMouseSender.CoordUnspecified) || (x1 != KeyboardMouseSender.CoordUnspecified && y1 == KeyboardMouseSender.CoordUnspecified)
-					|| (x2 == KeyboardMouseSender.CoordUnspecified && y2 != KeyboardMouseSender.CoordUnspecified) || (x2 != KeyboardMouseSender.CoordUnspecified && y2 == KeyboardMouseSender.CoordUnspecified))
-				return;
-
-			// I asked Jon, "Have you discovered that insta-drags almost always fail?" and he said
-			// "Yeah, it was weird, absolute lack of drag... Don't know if it was my config or what."
-			// However, testing reveals "insta-drags" work ok, at least on my system, so leaving them enabled.
-			// User can easily increase the speed if there's any problem:
-			//if (aSpeed < 2)
-			//  aSpeed = 2;
-			// v2.0: Always translate logical buttons into physical ones.  Which physical button it becomes depends
-			// on whether the mouse buttons are swapped via the Control Panel.  Note that journal playback doesn't
-			// need the swap because every aspect of it is "logical".
-			if ((vk == WindowsAPI.VK_LBUTTON || vk == WindowsAPI.VK_RBUTTON) && Accessors.SendMode != SendModes.Play && WindowsAPI.GetSystemMetrics(SystemMetric.SM_SWAPBUTTON) != 0)
-				vk = (vk == WindowsAPI.VK_LBUTTON) ? WindowsAPI.VK_RBUTTON : WindowsAPI.VK_LBUTTON;//Need to figure out making this cross platform.//TODO
-
-			// MSDN: If [event_flags] is not MOUSEEVENTF_WHEEL, [MOUSEEVENTF_HWHEEL,] MOUSEEVENTF_XDOWN,
-			// or MOUSEEVENTF_XUP, then [event_data] should be zero.
-			var eventdata = 0u; // Set defaults for some.
-			var eventup = 0u;
-			var eventdown = 0u;
-			var eventflags = 0u;
-
-			switch (vk)
+			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
+			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//MATT
 			{
-				case WindowsAPI.VK_LBUTTON:
-					eventdown = (uint)MOUSEEVENTF.LEFTDOWN;
-					eventup = (uint)MOUSEEVENTF.LEFTUP;
-					break;
-
-				case WindowsAPI.VK_RBUTTON:
-					eventdown = (uint)MOUSEEVENTF.RIGHTDOWN;
-					eventup = (uint)MOUSEEVENTF.RIGHTUP;
-					break;
-
-				case WindowsAPI.VK_MBUTTON:
-					eventdown = (uint)MOUSEEVENTF.MIDDLEDOWN;
-					eventup = (uint)MOUSEEVENTF.MIDDLEUP;
-					break;
-
-				case WindowsAPI.VK_XBUTTON1:
-				case WindowsAPI.VK_XBUTTON2:
-					eventdown = (uint)MOUSEEVENTF.XDOWN;
-					eventup = (uint)MOUSEEVENTF.XUP;
-					eventdata = (vk == WindowsAPI.VK_XBUTTON1) ? (uint)WindowsAPI.XBUTTON1 : (uint)WindowsAPI.XBUTTON2;
-					break;
+				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//MATT
+				return new Point(p.X - rect.Left, p.Y - rect.Top);
 			}
 
-			// If the drag isn't starting at the mouse's current position, move the mouse to the specified position:
-			if (x1 != KeyboardMouseSender.CoordUnspecified && y1 != KeyboardMouseSender.CoordUnspecified)
-			{
-				// The movement must be a separate event from the click, otherwise it's completely unreliable with
-				// SendInput() and probably keybd_event() too.  SendPlay is unknown, but it seems best for
-				// compatibility and peace-of-mind to do it for that too.  For example, some apps may be designed
-				// to expect mouse movement prior to a click at a *new* position, which is not unreasonable given
-				// that this would be the case 99.999% of the time if the user were moving the mouse physically.
-				kbdMsSender.MouseMove(ref x1, ref y1, ref eventflags, speed, moveOffset); // It calls DoMouseDelay() and also converts aX1 and aY1 to MOUSEEVENTF_ABSOLUTE coordinates.
-				// v1.0.43: event_flags was added to improve reliability.  Explanation: Since the mouse was just moved to an
-				// explicitly specified set of coordinates, use those coordinates with subsequent clicks.  This has been
-				// shown to significantly improve reliability in cases where the user is moving the mouse during the
-				// MouseClick/Drag commands.
-			}
-
-			kbdMsSender.MouseEvent(eventflags | eventdown, eventdata, x1, y1); // It ignores aX and aY when MOUSEEVENTF_MOVE is absent.
-			kbdMsSender.DoMouseDelay(); // Inserts delay for all modes except SendInput, for which it does nothing.
-			// Now that the mouse button has been pushed down, move the mouse to perform the drag:
-			kbdMsSender.MouseMove(ref x2, ref y2, ref eventflags, speed, moveOffset); // It calls DoMouseDelay() and also converts aX2 and aY2 to MOUSEEVENTF_ABSOLUTE coordinates.
-			kbdMsSender.DoMouseDelay(); // Duplicate, see below.
-			// Above is a *duplicate* delay because MouseMove() already did one. But it seems best to keep it because:
-			// 1) MouseClickDrag can be a CPU intensive operation for the target window depending on what it does
-			//    during the drag (selecting objects, etc.)  Thus, and extra delay might help a lot of things.
-			// 2) It would probably break some existing scripts to remove the delay, due to timing issues.
-			// 3) Dragging is pretty rarely used, so the added performance of removing the delay wouldn't be
-			//    a big benefit.
-			kbdMsSender.MouseEvent(eventflags | eventup, eventdata, x2, y2); // It ignores aX and aY when MOUSEEVENTF_MOVE is absent.
-			kbdMsSender.DoMouseDelay();
-			// Above line: It seems best to always do this delay too in case the script line that
-			// caused us to be called here is followed immediately by another script line which
-			// is either another mouse click or something that relies upon this mouse drag
-			// having been completed:
+			return p;
 		}
 
-		internal static void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
-												int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, int speed, bool moveOffset)
+		private static void PerformMouse(Actions actionType, string button, int x1, int y1, int x2, int y2
+										 , int speed, string relative, int repeatCount, string downUp)
+		{
+			int vk;
+			var ht = Keysharp.Scripting.Script.HookThread;
+
+			if (actionType == Actions.ACT_MOUSEMOVE)
+			{
+				vk = 0;
+			}
+			else
+			{
+				if ((vk = ht.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
+					vk = VK_LBUTTON;
+			}
+
+			// v1.0.43: Seems harmless (due to rarity) to treat invalid button names as "Left" (keeping in
+			// mind that due to loadtime validation, invalid buttons are possible only when the button name is
+			// contained in a variable, e.g. MouseClick %ButtonName%.
+			var eventType = KeyEventTypes.KeyDownAndUp;  // Set defaults.
+
+			if (actionType == Actions.ACT_MOUSECLICK)
+			{
+				if (downUp.Length > 0)
+				{
+					switch (char.ToUpper(downUp[0]))
+					{
+						case 'U':
+							eventType = KeyEventTypes.KeyUp;
+							break;
+
+						case 'D':
+							eventType = KeyEventTypes.KeyDown;
+							break;
+
+						default:
+							break;
+					}
+				}
+			}
+
+			PerformMouseCommon(actionType
+							   , vk
+							   , x1
+							   , y1
+							   , x2//These two are blank except for dragging.
+							   , y2
+							   , repeatCount
+							   , eventType
+							   , speed
+							   , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');
+		}
+
+		private static void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
+											   int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, int speed, bool relative)
 		{
 			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
 			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
@@ -410,21 +306,21 @@ namespace Keysharp.Core
 										  && Accessors.SendMode == Common.Keyboard.SendModes.Event;
 
 			if (do_selective_blockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
-				Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
+				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 
 			switch (actionType)
 			{
 				case Actions.ACT_MOUSEMOVE:
 					var unused = 0u;
-					kbdMsSender.MouseMove(ref x1, ref y1, ref unused, speed, moveOffset); // Does nothing if coords are invalid.
+					kbdMsSender.MouseMove(ref x1, ref y1, ref unused, speed, relative); // Does nothing if coords are invalid.
 					break;
 
 				case Actions.ACT_MOUSECLICK:
-					kbdMsSender.MouseClick(vk, x1, y1, repeatCount, speed, eventType, moveOffset); // Does nothing if coords are invalid.
+					kbdMsSender.MouseClick(vk, x1, y1, repeatCount, speed, eventType, relative); // Does nothing if coords are invalid.
 					break;
 
 				case Actions.ACT_MOUSECLICKDRAG:
-					MouseClickDrag(vk, x1, y1, x2, y2, speed, moveOffset); // Does nothing if coords are invalid.
+					kbdMsSender.MouseClickDrag(vk, x1, y1, x2, y2, speed, relative); // Does nothing if coords are invalid.
 					break;
 			}
 
@@ -439,47 +335,7 @@ namespace Keysharp.Core
 			}
 
 			if (do_selective_blockinput && !blockinput_prev)  // Turn it back off only if it was off before we started.
-				Keysharp.Core.Keyboard.ScriptBlockInput(false);
-		}
-
-		/// <summary>
-		/// Clicks and holds the specified mouse button, moves the mouse to the destination coordinates, then releases the button.
-		/// </summary>
-		/// <param name="button">Either <c>Left</c> (default), <c>Middle</c>, <c>Right</c>, <c>X1</c> or <c>X2</c>.</param>
-		/// <param name="x1">The starting x-coordinate.</param>
-		/// <param name="y1">The starting y-coordinate.</param>
-		/// <param name="x2">The final x-coordinate.</param>
-		/// <param name="y2">The final y-coordinate.</param>
-		/// <param name="speed">The speed to move the mouse from 0 (fastest) to 100 (slowest).
-		/// The default speed is determined by <see cref="A_DefaultMouseSpeed"/>.</param>
-		/// <param name="relative"><c>true</c> to treat the first set of coordinates as relative offsets from the current mouse position
-		/// and the second set as offsets from the first, <c>false</c> otherwise.</param>
-		//public static void MouseClickDrag(string button, int x1, int y1, int x2, int y2, int? speed = null, bool relative = false)//Might need to go in, or use, kbdmssender.//TODO
-		//{
-		//  var oldSpeed = Accessors.A_DefaultMouseSpeed;
-		//
-		//  if (speed != null)
-		//      Accessors.A_DefaultMouseSpeed = (int)speed;
-		//
-		//  var opts = new[] { x1.ToString(), y1.ToString(), relative ? Core.Keyword_Relative : string.Empty };
-		//  Click(opts);
-		//  opts[0] = x2.ToString();
-		//  opts[1] = y2.ToString();
-		//  Click(opts);
-		//
-		//  if (speed != null)
-		//      Accessors.A_DefaultMouseSpeed = oldSpeed;
-		//}
-		internal static Point RevertPoint(Point p, CoordModeType modeType)
-		{
-			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
-			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//MATT
-			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//MATT
-				return new Point(p.X - rect.Left, p.Y - rect.Top);
-			}
-
-			return p;
+				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
 		}
 	}
 

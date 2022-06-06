@@ -88,23 +88,17 @@ namespace Keysharp.Core.Common.Keyboard
 		public static SendRawModes DefaultHotstringSendRaw => hsSendRaw;
 		public static bool DefaultHotstringSuspendExempt => hsSuspendExempt;
 		public bool Enabled { get; set; }
-
 		public Options EnabledOptions { get; set; }
 		public string Name { get; set; }
-
-		//public GenericFunction Proc { get; }
-		public HotFunction Proc { get; }
 
 		public string Replacement { get; set; } = string.Empty;
 
 		public string Sequence { get; }
 
-		public HotstringDefinition(string sequence, string replacement, HotFunction proc = null)
-		//GenericFunction proc)//MATT
+		public HotstringDefinition(string sequence, string replacement)
 		{
 			Sequence = sequence;
 			Replacement = replacement;
-			Proc = proc ?? DefaultHotFunction;
 			//EndChars = defEndChars;
 		}
 
@@ -388,36 +382,36 @@ namespace Keysharp.Core.Common.Keyboard
 
 				for (var i = 0; i < backspaceCount; ++i)
 				{
-					sb.Append('\b');  // Use raw backspaces, not {BS n}, in case the send will be raw.
+					_ = sb.Append('\b');  // Use raw backspaces, not {BS n}, in case the send will be raw.
 					startOfReplacement++;
 				}
 			}
 
 			if (!string.IsNullOrEmpty(replacement))
 			{
-				sb.Append(replacement);
+				_ = sb.Append(replacement);
 
 				if (caseMode == CaseConformModes.AllCaps)
 				{
 					sendBuf = sb.ToString().ToUpper();
-					sb.Clear();
-					sb.Append(sendBuf);
+					_ = sb.Clear();
+					_ = sb.Append(sendBuf);
 				}
 				else if (caseMode == CaseConformModes.FirstCap)
 				{
 					var b = false;
 					sendBuf = sb.ToString();
-					sb.Clear();
+					_ = sb.Clear();
 
 					for (var i = 0; i < sendBuf.Length; i++)
 					{
 						if (i < startOfReplacement)
-							sb.Append(sendBuf[i]);
+							_ = sb.Append(sendBuf[i]);
 						else if (b)
-							sb.Append(sendBuf[i]);
+							_ = sb.Append(sendBuf[i]);
 						else if (!b)
 						{
-							sb.Append(char.ToUpper(sendBuf[i]));
+							_ = sb.Append(char.ToUpper(sendBuf[i]));
 							b = true;
 						}
 					}
@@ -435,9 +429,9 @@ namespace Keysharp.Core.Common.Keyboard
 						// v1.0.43.02: Don't send "{Raw}" if already in raw mode!
 						// v1.1.27: Avoid adding {Raw} if it gets switched on within the replacement text.
 						if (sendRaw != 0 || replacement.Contains("{Raw}", StringComparison.OrdinalIgnoreCase) || replacement.Contains("{Text}", StringComparison.OrdinalIgnoreCase))
-							sb.Append(endChar);
+							_ = sb.Append(endChar);
 						else
-							sb.Append(string.Format("{0}{1}", "{Raw}", endChar));
+							_ = sb.Append(string.Format("{0}{1}", "{Raw}", endChar));
 					}
 				}
 			}

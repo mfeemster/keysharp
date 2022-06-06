@@ -180,7 +180,7 @@ fa()
 	return "l"
 }
 
-fb(x)
+fb(x := "")
 {
 ;	return x
 	return "!" . x

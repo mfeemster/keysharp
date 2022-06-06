@@ -21,42 +21,29 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="n">How many times (iterations) to perform the loop.</param>
 		/// <returns></returns>
-		public static IEnumerable Loop(params object[] obj)
+		public static IEnumerable Loop(object obj)
 		{
-			var o = obj.L();
-
-			if (o.Count > 0)
+			if (!(obj is string ss) || ss != string.Empty)
 			{
-				var o0 = o[0];
+				var n = obj.Al();
+				var info = Push();
 
-				if (!(o0 is string ss) || ss != string.Empty)
+				if (n != -1)
 				{
-					var n = Convert.ToInt64(o0);
-					var info = Push();
-
-					if (n != -1)
-					{
-						for (var i = 0L; i < n;)
-						{
-							info.index = i;
-							yield return ++i;
-						}
-					}
-					else
-					{
-						for (var i = 0L; true;)
-						{
-							info.index = i;
-							yield return ++i;
-						}
-					}
-
-					//_ = Pop();
-					//The caller *MUST* call Pop(). This design is used because this
-					//function may exit prematurely if the caller does a goto or break out
-					//of the loop. In which case, all code below the yield return statement
-					//would not get executed. So the burden is shifted to the caller to pop.//MATT
+					for (; info.index < n;)//Check info.index because the caller can change A_Index inside of the loop.
+						yield return ++info.index;
 				}
+				else
+				{
+					while (true)
+						yield return ++info.index;
+				}
+
+				//_ = Pop();
+				//The caller *MUST* call Pop(). This design is used because this
+				//function may exit prematurely if the caller does a goto or break out
+				//of the loop. In which case, all code below the yield return statement
+				//would not get executed. So the burden is shifted to the caller to pop.//MATT
 			}
 		}
 
@@ -109,20 +96,14 @@ namespace Keysharp.Core
 		/// <item><code>R</code> Recurse into subdirectories (subfolders). All subfolders will be recursed into, not just those whose names match FilePattern. If R is omitted, files and folders in subfolders are not included.</item>
 		/// </list>
 		/// </param>
-		/// <param name="recurse"><code>1</code> to recurse into subfolders, <code>0</code> otherwise.</param>
-		/// <returns></returns>
-		public static IEnumerable LoopFile(params object[] obj)
+		public static IEnumerable LoopFile(object obj0, object obj1 = null)
 		{
 			bool d = false, f = true, r = false;
-			var o = obj.L();
 			var info = Push(LoopType.Directory);
-			var mode = string.Empty;
-			var path = o[0] as string;
+			var path = obj0.As();
+			var mode = obj1.As();
 			//Dialogs.MsgBox(Path.GetFullPath(path));
 			//Dialogs.MsgBox(Accessors.A_WorkingDir);
-
-			if (o.Count > 1 && o[1] is string s)
-				mode = s;
 
 			if (!string.IsNullOrEmpty(mode))
 			{
@@ -163,21 +144,11 @@ namespace Keysharp.Core
 		/// </param>
 		/// <param name="omit">An optional list of characters (case sensitive) to exclude from the beginning and end of each substring.</param>
 		/// <returns></returns>
-		public static IEnumerable LoopParse(params object[] obj)
+		public static IEnumerable LoopParse(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var o = obj.L();
-			var input = o[0] as string;
-			string delimiters = string.Empty, omit = string.Empty;
-
-			if (o.Count > 1)
-			{
-				if (o[1] is string s1)
-					delimiters = s1;
-
-				if (o.Count > 2 && o[2] is string s2)
-					omit = s2;
-			}
-
+			var input = obj0.As();
+			var delimiters = obj1.As();
+			var omit = obj2.As();
 			var info = Push(LoopType.Parse);
 
 			if (delimiters.ToLowerInvariant() == Core.Keyword_CSV)
@@ -272,14 +243,14 @@ namespace Keysharp.Core
 		/// <param name="input">The name of the text file whose contents will be read by the loop</param>
 		/// <param name="output">The optional name of the file to be kept open for the duration of the loop. If "*", then write to standard output.</param>
 		/// <returns>Yield return each line in the input file</returns>
-		public static IEnumerable LoopRead(params object[] obj)
+		public static IEnumerable LoopRead(object obj0, object obj1 = null)
 		{
-			var o = obj.L();
-			var input = o[0] as string;
+			var input = obj0.As();
+			var output = obj1.As();
 			var info = Push(LoopType.File);
 			//Dialogs.MsgBox(Path.GetFullPath(input));
 
-			if (o.Count > 1 && o[1] is string output)
+			if (output.Length > 0)
 				info.filename = output;
 
 			if (!System.IO.File.Exists(input))
@@ -321,10 +292,11 @@ namespace Keysharp.Core
 		/// </param>
 		/// <param name="recurse"><code>1</code> to recurse into subkeys, <code>0</code> otherwise.</param>
 		/// <returns></returns>
-		public static IEnumerable LoopRegistry(params object[] obj)
+		public static IEnumerable LoopRegistry(object obj0, object obj1 = null)
 		{
 			bool k = false, v = true, r = false;
-			var (keyname, mode) = obj.L().S2();
+			var keyname = obj0.As();
+			var mode = obj1.As();
 
 			if (!string.IsNullOrEmpty(mode))
 			{
@@ -481,56 +453,6 @@ namespace Keysharp.Core
 			return buffer.ToString();
 		}
 
-		internal static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
-		{
-			//try
-			{
-				if (v)
-				{
-					foreach (var val in ProcessRegValues(info, key))
-						yield return val;
-				}
-
-				var subkeynames = key.GetSubKeyNames();
-
-				if (subkeynames?.Length > 0)
-				{
-					foreach (var keyname in subkeynames.Reverse())
-					{
-						//try
-						{
-							using (var key2 = key.OpenSubKey(keyname, false))
-							{
-								if (k)
-								{
-									info.index++;
-									info.regVal = string.Empty;
-									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
-									info.regKeyName = key2.Name;//The full key path.
-									info.regType = Core.Keyword_Key;
-									var l = QueryInfoKey(key2);
-									var dt = DateTime.FromFileTimeUtc(l);
-									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
-									yield return info.regKeyName;
-								}
-
-								foreach (var val in GetSubKeys(info, key2, k, v))
-									yield return val;
-							}
-						}
-						//catch (Exception e)
-						//{
-						//  //error, do something
-						//}
-					}
-				}
-			}
-			//catch (Exception e)
-			//{
-			//  //error, do something
-			//}
-		}
-
 		internal static LoopInfo Peek() => loops.PeekOrNull();
 
 		internal static LoopInfo Peek(LoopType looptype)
@@ -540,29 +462,6 @@ namespace Keysharp.Core
 					return l;
 
 			return null;
-		}
-
-		internal static IEnumerable ProcessRegValues(LoopInfo info, RegistryKey key)
-		{
-			var valuenames = key.GetValueNames();
-
-			if (valuenames?.Length > 0)
-			{
-				info.regDate = string.Empty;
-
-				foreach (var valueName in valuenames.Reverse())
-				{
-					info.index++;
-					info.regVal = key.GetValue(valueName, string.Empty, RegistryValueOptions.None);
-
-					if (info.regVal is byte[] ro)
-						info.regVal = BitConverter.ToString(ro).Replace("-", string.Empty);
-
-					info.regName = valueName;
-					info.regType = Conversions.GetRegistryTypeName(key.GetValueKind(valueName));
-					yield return valueName;
-				}
-			}
 		}
 
 		private static IEnumerable<string> GetFiles(string path, string pattern, bool d, bool f, bool r)
@@ -631,15 +530,88 @@ namespace Keysharp.Core
 			}
 		}
 
+		private static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
+		{
+			//try
+			{
+				if (v)
+				{
+					foreach (var val in ProcessRegValues(info, key))
+						yield return val;
+				}
+
+				var subkeynames = key.GetSubKeyNames();
+
+				if (subkeynames?.Length > 0)
+				{
+					foreach (var keyname in subkeynames.Reverse())
+					{
+						//try
+						{
+							using (var key2 = key.OpenSubKey(keyname, false))
+							{
+								if (k)
+								{
+									info.index++;
+									info.regVal = string.Empty;
+									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
+									info.regKeyName = key2.Name;//The full key path.
+									info.regType = Core.Keyword_Key;
+									var l = QueryInfoKey(key2);
+									var dt = DateTime.FromFileTimeUtc(l);
+									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
+									yield return info.regKeyName;
+								}
+
+								foreach (var val in GetSubKeys(info, key2, k, v))
+									yield return val;
+							}
+						}
+						//catch (Exception e)
+						//{
+						//  //error, do something
+						//}
+					}
+				}
+			}
+			//catch (Exception e)
+			//{
+			//  //error, do something
+			//}
+		}
+
+		private static IEnumerable ProcessRegValues(LoopInfo info, RegistryKey key)
+		{
+			var valuenames = key.GetValueNames();
+
+			if (valuenames?.Length > 0)
+			{
+				info.regDate = string.Empty;
+
+				foreach (var valueName in valuenames.Reverse())
+				{
+					info.index++;
+					info.regVal = key.GetValue(valueName, string.Empty, RegistryValueOptions.None);
+
+					if (info.regVal is byte[] ro)
+						info.regVal = BitConverter.ToString(ro).Replace("-", string.Empty);
+
+					info.regName = valueName;
+					info.regType = Conversions.GetRegistryTypeName(key.GetValueKind(valueName));
+					yield return valueName;
+				}
+			}
+		}
+
 		private static long QueryInfoKey(RegistryKey regkey)
 		{
 			var classSize = (uint)(regsb.Capacity + 1);
-			WindowsAPI.RegQueryInfoKey(
-				regkey.Handle,
-				regsb,
-				ref classSize,
-				IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
-				out var l);
+			_ = WindowsAPI.RegQueryInfoKey(
+					regkey.Handle,
+					regsb,
+					ref classSize,
+					IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
+					out var l);
 			return l;
 		}
 	}
@@ -648,7 +620,7 @@ namespace Keysharp.Core
 	{
 		public object file;
 		public string filename = string.Empty;
-		public long index = -1;
+		public long index;
 		public string line;
 		public string path;
 		public object regDate;

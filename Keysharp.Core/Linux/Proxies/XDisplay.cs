@@ -49,10 +49,7 @@ namespace Keysharp.Core.Linux.Proxies
 		/// Returns all Windows of this XDisplay
 		/// </summary>
 		/// <returns></returns>
-		internal IEnumerable<XWindow> XQueryTree()
-		{
-			return XQueryTree(Root);
-		}
+		internal IEnumerable<XWindow> XQueryTree() => XQueryTree(Root);
 
 		/// <summary>
 		/// Return all child xWindows from given xWindow

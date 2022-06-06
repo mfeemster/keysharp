@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -170,23 +169,6 @@ namespace Keysharp.Scripting
 
 			return 0;
 		}
-
-		//internal static uint ForceUint(object input)
-		//{
-		//  if (input is uint i)
-		//      return i;
-		//  else if (input is string s)
-		//  {
-		//      if (uint.TryParse(s, out var result))
-		//          return result;
-		//  }
-		//  else if (input is bool b)//MATT
-		//      return b ? 1u : 0u;
-		//  else
-		//      return Convert.ToUInt32(input);
-
-		//  return 0;
-		//}
 
 		internal static long ForceLong(object input)
 		{

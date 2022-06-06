@@ -25,9 +25,9 @@ namespace Keysharp.Core.Windows
 					if (WindowManagerProvider.Instance.ActiveWindow != this)
 					{
 						if (WindowsAPI.IsIconic(Handle))
-							WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
+							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
 						else
-							SetForegroundWindowEx(this);
+							_ = SetForegroundWindowEx(this);
 
 						DoWinDelay();
 					}
@@ -178,7 +178,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				WindowsAPI.GetWindowThreadProcessId(Handle, out var n);
+				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var n);
 				return n;
 			}
 		}

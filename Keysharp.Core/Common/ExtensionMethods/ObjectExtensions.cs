@@ -25,12 +25,22 @@ namespace System
 			return x;
 		}
 
+		public static bool IsAlmostEqual(this double d, double comparison) => d.IsAlmostEqual(comparison, 0.00001);
+
+		public static bool IsAlmostEqual(this double d, double comparison, double tolerance) => (d - comparison).IsAlmostZero(tolerance);
+
+		public static bool IsAlmostZero(this double d, double tolerance) => d > -tolerance&& d < tolerance;
+
 		public static bool IsFalse(this bool? b) => b.HasValue&& !b.Value;
 
 		public static bool IsTrue(this bool? b) => b.HasValue&& b.Value;
 
 		//public static IList L(this object[] obj) => obj.Length > 0 && obj[0] is IList oo ? oo : obj;
 		public static IList L(this object[] obj) => obj.Flatten().Cast<object>().ToList();
+
+		public static IList L(this IEnumerable obj) => obj.Flatten().Cast<object>().ToList();
+
+		//public static IList L(this ReadOnlyMemory<object> obj) => System.Runtime.InteropServices.MemoryMarshal.ToEnumerable(obj).Flatten().Cast<object>().ToList();
 
 		public static bool? ParseBool(this object obj)
 		{

@@ -1,5 +1,4 @@
 using System;
-using System.Security.Cryptography;
 
 namespace Keysharp.Core
 {
@@ -26,20 +25,14 @@ namespace Keysharp.Core
 		/// <param name="decrypt"><code>true</code> to decrypt the given <paramref name="value"/>, otherwise encrypt.</param>
 		/// <returns>The corresponding encrypted or decrypted data.</returns>
 		/// <remarks>A key length of 64 bits is supported.</remarks>
-		public static byte[] DES(object value, object key, bool decrypt = false)
-		{
-			return Crypt.Encrypt(value, key, decrypt, new DESCryptoServiceProvider());
-		}
+		public static byte[] DES(object value, object key, bool decrypt = false) => Crypt.Encrypt(value, key, decrypt, System.Security.Cryptography.DES.Create());
 
 		/// <summary>
 		/// Calculates the MD5 hash of an object.
 		/// </summary>
 		/// <param name="value">The object to hash.</param>
 		/// <returns>A 32-character hexadecimal number.</returns>
-		public static string MD5(object value)
-		{
-			return Crypt.Hash(value, new MD5CryptoServiceProvider());
-		}
+		public static string MD5(object value) => Crypt.Hash(value, System.Security.Cryptography.MD5.Create());
 
 		/// <summary>
 		/// Encrypt or decrypt data with the RC2 algorithm.
@@ -49,33 +42,7 @@ namespace Keysharp.Core
 		/// <param name="decrypt"><code>true</code> to decrypt the given <paramref name="value"/>, otherwise encrypt.</param>
 		/// <returns>The corresponding encrypted or decrypted data.</returns>
 		/// <remarks>Key lengths from 40 bits to 128 bits in increments of 8 bits are supported.</remarks>
-		public static byte[] RC2(object value, object key, bool decrypt = false)
-		{
-			return Crypt.Encrypt(value, key, decrypt, new RC2CryptoServiceProvider());
-		}
-
-		/// <summary>
-		/// Encrypt or decrypt data with the Rijndael algorithm.
-		/// </summary>
-		/// <param name="value">The data to encrypt or decrypt.</param>
-		/// <param name="key">The secret key.</param>
-		/// <param name="decrypt"><code>true</code> to decrypt the given <paramref name="value"/>, otherwise encrypt.</param>
-		/// <returns>The corresponding encrypted or decrypted data.</returns>
-		/// <remarks>Key lengths of 128, 192, or 256 bits are supported.</remarks>
-		public static byte[] Rijndael(object value, object key, bool decrypt = false)
-		{
-			return Crypt.Encrypt(value, key, decrypt, new RijndaelManaged());
-		}
-
-		/// <summary>
-		/// Calculates the RIPEMD160 hash of an object.
-		/// </summary>
-		/// <param name="value">The object to hash.</param>
-		/// <returns>A 40-character hexadecimal number.</returns>
-		//public static string RIPEMD160(object value)
-		//{
-		//  return Crypt.Hash(value, new System.Security.Cryptography.RIPEMD160Managed());//Deprecated, no longer supported.//MATT
-		//}
+		public static byte[] RC2(object value, object key, bool decrypt = false) => Crypt.Encrypt(value, key, decrypt, System.Security.Cryptography.RC2.Create());
 
 		/// <summary>
 		/// Generates a secure (cryptographic) random number.
@@ -93,7 +60,7 @@ namespace Keysharp.Core
 			if (diff == 0 && !(min == 0 && max == 0))
 				return min;
 
-			var csp = new RNGCryptoServiceProvider();
+			var csp = System.Security.Cryptography.RandomNumberGenerator.Create();
 			var rnd = new byte[4 * 3 + 1];
 			csp.GetBytes(rnd);
 			var s = new int[3];
@@ -116,40 +83,28 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="value">The object to hash.</param>
 		/// <returns>A 40-character hexadecimal number.</returns>
-		public static string SHA1(object value)
-		{
-			return Crypt.Hash(value, new SHA1CryptoServiceProvider());
-		}
+		public static string SHA1(object value) => Crypt.Hash(value, System.Security.Cryptography.SHA1.Create());
 
 		/// <summary>
 		/// Calculates the SHA256 hash of an object.
 		/// </summary>
 		/// <param name="value">The object to hash.</param>
 		/// <returns>A 64-character hexadecimal number.</returns>
-		public static string SHA256(object value)
-		{
-			return Crypt.Hash(value, new SHA256Managed());
-		}
+		public static string SHA256(object value) => Crypt.Hash(value, System.Security.Cryptography.SHA256.Create());
 
 		/// <summary>
 		/// Calculates the SHA384 hash of an object.
 		/// </summary>
 		/// <param name="value">The object to hash.</param>
 		/// <returns>A 96-character hexadecimal number.</returns>
-		public static string SHA384(object value)
-		{
-			return Crypt.Hash(value, new SHA384Managed());
-		}
+		public static string SHA384(object value) => Crypt.Hash(value, System.Security.Cryptography.SHA384.Create());
 
 		/// <summary>
 		/// Calculates the SHA512 hash of an object.
 		/// </summary>
 		/// <param name="value">The object to hash.</param>
 		/// <returns>A 128-character hexadecimal number.</returns>
-		public static string SHA512(object value)
-		{
-			return Crypt.Hash(value, new SHA512Managed());
-		}
+		public static string SHA512(object value) => Crypt.Hash(value, System.Security.Cryptography.SHA512.Create());
 
 		/// <summary>
 		/// Encrypt or decrypt data with the Triple Data Encryption Standard (TripleDES) algorithm.
@@ -162,9 +117,6 @@ namespace Keysharp.Core
 		/// <para>Three successive iterations of the <see cref="DES"/> algorithm are used, with either two or three 56-bit keys.</para>
 		/// <para>Key lengths from 128 bits to 192 bits in increments of 64 bits are supported.</para>
 		/// </remarks>
-		public static byte[] TripleDES(object value, object key, bool decrypt = false)
-		{
-			return Crypt.Encrypt(value, key, decrypt, new TripleDESCryptoServiceProvider());
-		}
+		public static byte[] TripleDES(object value, object key, bool decrypt = false) => Crypt.Encrypt(value, key, decrypt, System.Security.Cryptography.TripleDES.Create());
 	}
 }

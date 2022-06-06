@@ -16,10 +16,8 @@ namespace Keysharp.Core.Common.Input
 
 		public object Timeout
 		{
-			get
-			{
-				return input.Timeout / 1000.0;
-			}
+			get => input.Timeout / 1000.0;
+
 			set
 			{
 				input.Timeout = (int)(value.ParseDouble() * 1000);
@@ -50,8 +48,8 @@ namespace Keysharp.Core.Common.Input
 			for (var i = 0; i < 8; ++i)
 				if ((input.EndingMods & (1 << i)) != 0)
 				{
-					sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
-					sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
+					_ = sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
+					_ = sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
 				}
 
 			return sb.ToString();
@@ -67,9 +65,10 @@ namespace Keysharp.Core.Common.Input
 
 		public string Input() => input.buffer;
 
-		public void KeyOpt(params object[] obj)
+		public void KeyOpt(object obj0, object obj1)
 		{
-			var (keys, options) = obj.L().S2();
+			var keys = obj0.As();
+			var options = obj1.As();
 			var adding = true;
 			int flag, addFlags = 0, removeFlags = 0;
 
@@ -159,13 +158,13 @@ namespace Keysharp.Core.Common.Input
 				input.Stop();
 		}
 
-		public void Wait(params object[] obj)
+		public void Wait(object obj)
 		{
-			var ms = obj.L().L1(uint.MaxValue) * 1000;
+			var ms = obj.Al(uint.MaxValue) * 1000;
 			var tickStart = DateTime.Now;
 
 			while (input.InProgress() && (DateTime.Now - tickStart).TotalMilliseconds < ms)
-				Keysharp.Scripting.Script.MsgSleep();
+				_ = Keysharp.Scripting.Script.MsgSleep();
 		}
 	}
 }

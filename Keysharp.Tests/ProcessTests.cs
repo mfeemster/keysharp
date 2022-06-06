@@ -17,19 +17,19 @@ namespace Keysharp.Tests
 		public void ProcessRunWaitClose()
 		{
 			var pid = Run("notepad.exe", "", "max");
-			ProcessWait(pid);
-			ProcessSetPriority("H", pid);
+			_ = ProcessWait(pid);
+			_ = ProcessSetPriority("H", pid);
 
 			if (ProcessExist(pid) != 0)
 			{
 				System.Threading.Thread.Sleep(2000);
-				ProcessClose(pid);
-				ProcessWaitClose(pid);
+				_ = ProcessClose(pid);
+				_ = ProcessWaitClose(pid);
 			}
 
 			pid = ProcessExist("notepad.exe");
 			Assert.AreEqual(0L, pid);
-			RunWait("notepad.exe", "", "max");
+			_ = RunWait("notepad.exe", "", "max");
 			Assert.AreEqual(0L, ProcessExist("notepad.exe"));
 			Assert.IsTrue(TestScript("process-run-wait-close", false));
 			//Can't really test RunAs() or Shutdown(), but they have been manually tested individually.
