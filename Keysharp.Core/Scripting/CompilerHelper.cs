@@ -48,6 +48,7 @@ namespace Keysharp.Scripting
 			@"using static Keysharp.Core.Accessors;
 using static Keysharp.Core.Core;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
+using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;

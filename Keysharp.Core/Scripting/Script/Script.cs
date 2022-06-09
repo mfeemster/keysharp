@@ -214,10 +214,16 @@ namespace Keysharp.Scripting
 			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
 			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			Parser.Persistent = true;
-			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop)
-			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
+			mainWindow.Load += MainWindow_Load;
 			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
 			Application.Run(mainWindow);
+		}
+
+		private static void MainWindow_Load(object sender, EventArgs e)
+		{
+			//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until Load() is called.
+			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop)
+			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
 		}
 
 		public static void SetName(string s) => scriptName = s;

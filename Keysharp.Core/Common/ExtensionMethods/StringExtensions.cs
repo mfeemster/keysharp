@@ -32,15 +32,15 @@ namespace System//Extension methods should be in the same namespace of the objec
 
 		public static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
 		{
-			if (source.Length == 0) return -1;
+			if (source.Length == 0) return 0;// -1;
 
-			if (chars.Length == 0) return -1;
+			if (chars.Length == 0) return 0;// -1;
 
 			for (var i = offset; i < source.Length; i++)
 				if (!chars.Contains(source[i]))
 					return i;
 
-			return -1;
+			return source.Length;// -1;
 		}
 
 		public static string OmitTrailingWhitespace(this string input, int marker)

@@ -113,7 +113,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 
-			if (TextInterpret(_name, this) == ResultType.Fail) // The called function already displayed the error.
+			if (TextInterpret(_name, this) == ResultType.Fail) // The called function will display the error.
 				return;
 
 			if (type != HotkeyTypeEnum.Joystick) // Perform modifier adjustment and other activities that don't apply to joysticks.
@@ -628,7 +628,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Returns the address of the new hotkey on success, or NULL otherwise.
 		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
 		/// </summary>
-		internal static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
+		public static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
 		{
 			var hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
 
@@ -637,6 +637,20 @@ namespace Keysharp.Core.Common.Keyboard
 				shk.Add(hk);
 				Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
 				return hk;
+			}
+			else//This was originally in the parsing code, but fits better here.
+			{
+				var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
+
+				if (valid != ResultType.ConditionTrue)
+					return null;// ResultType.Fail; // It already displayed the error.
+
+				// This hotkey uses a single-character key name, which could be valid on some other
+				// keyboard layout.  Allow the script to start, but warn the user about the problem.
+				// Note that this hotkey's label is still valid even though the hotkey wasn't created.
+
+				if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+					_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
 			}
 
 			return null;

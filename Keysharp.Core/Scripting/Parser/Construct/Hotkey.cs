@@ -242,7 +242,7 @@ namespace Keysharp.Scripting
 				*/
 				var name = buf.Substring(0, hotkeyFlagIndex);
 				var options = buf.Substring(hotstringOptionsIndex, hotkeyFlagIndex - hotstringOptionsIndex);
-				var hotstring = buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex);
+				var hotstring = hotstringStartIndex >= 0 ? buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex) : "";
 				hotkeyFlagIndex += HotkeySignal.Length;  // Now hotkey_flag is the hotkey's action, if any.
 				hotkeyUsesOtb = buf.AsSpan(hotkeyFlagIndex).TrimStart(SpaceTab).TrimEnd(SpaceTab) == "{";
 
@@ -255,7 +255,10 @@ namespace Keysharp.Scripting
 					//rtrim(buf); // Trim the new substring inside of buf (due to temp termination). It has already been ltrimmed.
 
 					// To use '{' as remap_dest, escape it!.
-					if (buf[hotkeyFlagIndex] == Escape && buf[hotkeyFlagIndex + 1] == '{')
+					if (hotkeyFlagIndex >= 0 &&
+							hotkeyFlagIndex < buf.Length &&
+							buf[hotkeyFlagIndex] == Escape &&
+							buf[hotkeyFlagIndex + 1] == '{')
 						hotkeyFlagIndex++;
 
 					cp = hotkeyFlagIndex; // Set default, conditionally overridden below (v1.0.44.07).
@@ -266,7 +269,7 @@ namespace Keysharp.Scripting
 
 					// v1.0.40: Check if this is a remap rather than hotkey:
 					if (!hotkeyUsesOtb
-							&& hotkeyFlagIndex >= 0 && hotkeyFlagIndex < buf.Length // This hotkey's action is on the same line as its trigger definition.
+							&& hotkeyFlagIndex >= 0 && hotkeyFlagIndex < buf.Length - 1 // This hotkey's action is on the same line as its trigger definition.
 							&& ((remap_dest_vk = buf[hotkeyFlagIndex + 1]) != 0 ? ht.TextToVK(
 									temp = HotkeyDefinition.TextToModifiers(buf.Substring(hotkeyFlagIndex), null),
 									ref modifiersLR, false, true, WindowsAPI.GetKeyboardLayout(0)) : 0xFF) != 0) // And the action appears to be a remap destination rather than a command.
@@ -653,6 +656,89 @@ namespace Keysharp.Scripting
 					var suffixHasTilde = false;
 					var hookIsMandatory = false;
 					HotkeyDefinition hk = null;
+					//Copied from hotstring, unsure if it fully applies.//TODO
+					var funcname = "";
+					var nextIndex = index + 1;
+
+					/*  if (hotstringExecute)
+					    {
+					    funcname = LabelMethodName(name);
+					    var method = LocalMethod(funcname);
+					    var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+					    method.Statements.AddRange(expr);
+					    methods.Add(method.Name, method);
+					    lastHotFunc = "";
+					    }
+
+					    else */
+					if (nextIndex < lines.Count)//Merge this with detecting otb, and see how X fits into this above.//TODO
+					{
+						var nextLine = lines[nextIndex];
+						var nextBuf = nextLine.Code;
+
+						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
+						{
+							funcname = ParseFunctionName(nextBuf);
+							lastHotFunc = "";
+						}
+						else
+						{
+							var expect = nextBuf.StartsWith(BlockOpen);
+
+							if (hotkeyUsesOtb ^ expect)//This is a hotstring that performs a custom action, so treat the body of it as the start of a new function.
+							{
+								StartNewFunction();
+								funcname = SetLastHotfunc(name);
+								var method = LocalMethod(funcname);
+								var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
+								block.Type = expect ? CodeBlock.BlockType.Expect : CodeBlock.BlockType.Within;
+								_ = CloseTopSingleBlock();
+								blocks.Push(block);
+								methods.Add(method.Name, method);
+								lastHotFunc = "";
+							}
+							else// if (replacement == "")//Check for stacked
+							{
+								if (IsHotstringLabel(nextBuf))
+								{
+									funcname = SetLastHotfunc(name);
+								}
+								else if (nextBuf != "")//Read all lines until a return statement is found, then treat them all as a function by inserting braces and marking all variable references as global.
+								{
+									var existingLineCount = lines.Count;
+									var np1 = nextIndex + 1;
+									lines.Insert(nextIndex, new CodeLine(nextLine.FileName, np1, "{"));
+									//lines.Insert(np1, new CodeLine(nextLine.FileName, ++np1, "global"));
+									var linesAdded = lines.Count - existingLineCount;
+									var i = np1;
+
+									for (; i < lines.Count; i++)
+									{
+										lines[i].LineNumber += linesAdded;
+
+										if (lines[i].Code.Trim() == "return")
+											break;
+									}
+
+									i++;
+									lines.Insert(i, new CodeLine(nextLine.FileName, i, "}"));
+
+									for (; i < lines.Count; i++)
+										lines[i].LineNumber = i + 1;
+
+									StartNewFunction();
+									funcname = SetLastHotfunc(name);
+									var method = LocalMethod(funcname);
+									var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
+									block.Type = CodeBlock.BlockType.Expect;
+									_ = CloseTopSingleBlock();
+									blocks.Push(block);
+									methods.Add(method.Name, method);
+									lastHotFunc = "";
+								}
+							}
+						}
+					}
 
 					if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(buf, ref suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
 					{
@@ -691,30 +777,34 @@ namespace Keysharp.Scripting
 					}
 					else // No parent hotkey yet, so create it.
 					{
-						if (hook_action != (uint)HotkeyTypeEnum.Normal && lastHotFunc != null)
+						if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotFunc))
 							// A hotkey is stacked above, eg,
 							// x::
 							// y & z::altTab
 							// Not supported.
 							return null; // ScriptError(ERR_HOTKEY_MISSING_BRACE);
 
-						//if (hook_action == (uint)HotkeyTypeEnum.Normal//TODO
-						//      && set_last_hotfunc() == null)
-						//  return null;// ResultType.Fail;
-						hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
+						if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotfunc(name)))
+							return null;
 
-						if (hk == null)
-						{
-							if (hotkeyValidity != ResultType.ConditionTrue)
-								return null;// ResultType.Fail; // It already displayed the error.
-
-							// This hotkey uses a single-character key name, which could be valid on some other
-							// keyboard layout.  Allow the script to start, but warn the user about the problem.
-							// Note that this hotkey's label is still valid even though the hotkey wasn't created.
-
-							if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-								_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
-						}
+						Persistent = true;
+						invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
+						_ = invoke.Parameters.Add(lastHotFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotFunc}\", null)") : new CodePrimitiveExpression(null));
+						_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
+						_ = invoke.Parameters.Add(new CodePrimitiveExpression(name));
+						_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffix_has_tilde));
+						return invoke;
+						//hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
+						//if (hk == null)
+						//{
+						//  if (hotkeyValidity != ResultType.ConditionTrue)
+						//      return null;// ResultType.Fail; // It already displayed the error.
+						//  // This hotkey uses a single-character key name, which could be valid on some other
+						//  // keyboard layout.  Allow the script to start, but warn the user about the problem.
+						//  // Note that this hotkey's label is still valid even though the hotkey wasn't created.
+						//  if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+						//      _ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
+						//}
 					}
 				}
 

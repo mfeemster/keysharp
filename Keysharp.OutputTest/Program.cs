@@ -1,6 +1,7 @@
 ﻿using static Keysharp.Core.Accessors;
 using static Keysharp.Core.Core;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
+using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;
@@ -80,107 +81,9 @@ namespace Keysharp.Main
 				HandleCommandLineParams(args);
 				SetProcessDPIAware();
 				CreateTrayMenu();
-
-				if (IfTest(DirExist("./FileGetShortcut")))
-				{
-					DirDelete("./FileGetShortcut", true);
-				}
-
-				if (IfTest(FileExist("./testshortcut.lnk")))
-				{
-					FileDelete("./testshortcut.lnk");
-				}
-
-				path = "../../../Keysharp.Tests/Code/";
-				dir = Operate(Concat, path, "DirCopy");
-				DirCopy(dir, "./FileGetShortcut/");
-				fullpath = FileDirName("./FileGetShortcut/file1.txt");
-				FileCreateShortcut("./FileGetShortcut/file1.txt", "./testshortcut.lnk", fullpath, "", "TestDescription", "../../../Keysharp.ico", "");
-
-				if (IfTest(FileExist("./testshortcut.lnk")))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				shortcut = FileGetShortcut("./testshortcut.lnk");
-
-				if (IfTest(Operate(IdentityEquality, FileFullPath("./FileGetShortcut/file1.txt"), GetPropertyValue(shortcut, "OutTarget"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(Operate(IdentityEquality, fullpath, GetPropertyValue(shortcut, "OutDir"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(Operate(IdentityEquality, "TestDescription", GetPropertyValue(shortcut, "OutDescription"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(Operate(IdentityEquality, "", Index(shortcut, "OutArgs"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(Operate(IdentityEquality, FileFullPath("../../../Keysharp.ico"), GetPropertyValue(shortcut, "OutIcon"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(Operate(IdentityEquality, "0", GetPropertyValue(shortcut, "OutIconNum"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(Operate(IdentityEquality, "1", GetPropertyValue(shortcut, "OutRunState"))))
-				{
-					FileAppend("pass", "*");
-				}
-				else
-				{
-					FileAppend("fail", "*");
-				}
-
-				if (IfTest(DirExist("./FileGetShortcut")))
-				{
-					DirDelete("./FileGetShortcut", true);
-				}
-
-				if (IfTest(FileExist("./testshortcut.lnk")))
-				{
-					FileDelete("./testshortcut.lnk");
-				}
-
+				AddHotkey(new FuncObj("label_EC60E0AA", null), 0u, "#n", false);
+				//AddHotstring("::btw", null, ":btw", "btw", "by the way", false);
+				RunMainWindow(name);
 				ExitApp(0);
 				return 0;
 			}
@@ -202,12 +105,10 @@ namespace Keysharp.Main
 			}
 		}
 
-		public static object dir;
-
-		public static object fullpath;
-
-		public static object path;
-
-		public static object shortcut;
+		public static object label_EC60E0AA()
+		{
+			Run("notepad");
+			return string.Empty;
+		}
 	}
 }
