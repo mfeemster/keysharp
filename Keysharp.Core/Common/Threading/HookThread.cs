@@ -31,18 +31,31 @@ namespace Keysharp.Core.Common.Threading
 		});
 
 		internal static System.Threading.Mutex keybdMutex, mouseMutex;
+
 		internal static string KeybdMutexName = "Keysharp Keybd";
+
 		internal static Dictionary<string, int> keyToSc;
+
 		internal static Dictionary<string, int> keyToVk;
+
 		internal static int KSCM_SIZE = (KeyboardMouseSender.MODLR_MAX + 1) * SC_ARRAY_COUNT;
+
 		internal static int KVKM_SIZE = (KeyboardMouseSender.MODLR_MAX + 1) * VK_ARRAY_COUNT;
+
 		internal static string MouseMutexName = "Keysharp Mouse";
+
 		internal static string[] vksc = new string[] { "vk", "sc" };
+
 		internal static Dictionary<int, string> vkToKey = new Dictionary<int, string>();
+
 		internal bool blockWinKeys;
+
 		internal IntPtr hsHwnd = IntPtr.Zero;
+
 		internal bool hsResetUponMouseClick = true;
+
 		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender;
+
 		internal byte[] physicalKeyState = new byte[VK_ARRAY_COUNT];
 
 		// The prefix key that's currently down (i.e. in effect).
@@ -73,19 +86,28 @@ namespace Keysharp.Core.Common.Threading
 		protected internal bool disguiseNextMenu;
 
 		protected internal bool hookSynced;
+
 		protected internal uint hookThreadID;
+
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
 
 		// Hot-string vars (initialized when ResetHook() is first called):
 		protected internal char[] hsBuf = new char[HotstringDefinition.HS_BUF_SIZE];
 
 		protected internal IntPtr kbdHook = IntPtr.Zero;
+
 		protected internal List<KeyHistoryItem> keyHistory = new List<KeyHistoryItem>(40);
+
 		protected internal int keyHistoryNext;
+
 		protected internal KeyType[] ksc;
+
 		protected internal uint[] kscm;
+
 		protected internal KeyType[] kvk;
+
 		protected internal uint[] kvkm;
+
 		protected internal IntPtr mouseHook = IntPtr.Zero;
 
 		// Initialized by ResetHook().
@@ -183,6 +205,19 @@ namespace Keysharp.Core.Common.Threading
 
 			// Since above didn't return, no match was found.  Use the default format for an unknown scan code:
 			return useFallback ? "sc" + sc.ToString("X3") : "";
+		}
+
+		internal void SetHotNamesAndTimes(string name)
+		{
+			// Just prior to launching the hotkey, update these values to support built-in
+			// variables such as A_TimeSincePriorHotkey:
+			Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
+			Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
+			// Unlike hotkeys -- which can have a name independent of their label by being created or updated
+			// with the HOTKEY command -- a hot string's unique name is always its label since that includes
+			// the options that distinguish between (for example) :c:ahk:: and ::ahk::
+			Keysharp.Scripting.Script.thisHotkeyName = name;
+			Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
 		}
 
 		internal void Stop()

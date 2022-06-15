@@ -4482,7 +4482,7 @@ namespace Keysharp.Core.Windows
 						{
 							for (var i = 0; i < HotkeyDefinition.shk.Count; ++i)
 							{
-								var h = HotkeyDefinition.shk[i];  // For performance and convenience.
+								var h = HotkeyDefinition.shk[i];
 
 								if (h.vk == vk && h.keyUp && h.modifiersConsolidatedLR == 0 && h.modifierVK == 0 && h.modifierSC == 0 && !h.IsCompletelyDisabled())
 									return; // Since caller didn't specify aAlwaysSetAsPrefix==true, don't make this key a prefix.
@@ -5543,19 +5543,6 @@ namespace Keysharp.Core.Windows
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
 		//}
-		private void SetHotNamesAndTimes(string name)
-		{
-			// Just prior to launching the hotkey, update these values to support built-in
-			// variables such as A_TimeSincePriorHotkey:
-			Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
-			Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
-			// Unlike hotkeys -- which can have a name independent of their label by being created or updated
-			// with the HOTKEY command -- a hot string's unique name is always its label since that includes
-			// the options that distinguish between (for example) :c:ahk:: and ::ahk::
-			Keysharp.Scripting.Script.thisHotkeyName = name;
-			Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
-		}
-
 		private bool SystemHasAnotherdHook(ref System.Threading.Mutex existingMutex, string name)
 		{
 			if (existingMutex != null)

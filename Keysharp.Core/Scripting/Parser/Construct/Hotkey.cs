@@ -690,6 +690,8 @@ namespace Keysharp.Scripting
 								StartNewFunction();
 								funcname = SetLastHotfunc(name);
 								var method = LocalMethod(funcname);
+								currentFuncParams.Peek().Add("thishotkey");
+								method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
 								var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 								block.Type = expect ? CodeBlock.BlockType.Expect : CodeBlock.BlockType.Within;
 								_ = CloseTopSingleBlock();
@@ -729,6 +731,8 @@ namespace Keysharp.Scripting
 									StartNewFunction();
 									funcname = SetLastHotfunc(name);
 									var method = LocalMethod(funcname);
+									currentFuncParams.Peek().Add("thishotkey");
+									method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
 									var block = new CodeBlock(nextLine, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 									block.Type = CodeBlock.BlockType.Expect;
 									_ = CloseTopSingleBlock();

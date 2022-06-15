@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
 using static Keysharp.Core.Misc;
@@ -72,6 +73,8 @@ namespace Keysharp.Scripting
 
 					if (hkId < HotkeyDefinition.shk.Count)//Ensure hotkey ID is valid.
 					{
+						var ht = Keysharp.Scripting.Script.HookThread;
+						var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 						var hk = HotkeyDefinition.shk[hkId];
 						// Check if criterion allows firing.
 						// For maintainability, this is done here rather than a little further down
@@ -120,64 +123,63 @@ namespace Keysharp.Scripting
 						//
 						HotkeyVariant variant = null; // Set default.
 						var variant_id = 0;
-						/*
 
-						    // For #HotIf hotkey variants, we don't want to evaluate the expression a second time. If the hook
-						    // thread determined that a specific variant should fire, it is passed via the high word of wParam:
-						    if ((variant_id = Conversions.HighWord((int)wParamVal)) != 0)
-						    {
-						    // The following relies on the fact that variants can't be removed or re-ordered;
-						    // variant_id should always be the variant's one-based index in the linked list:
-						    --variant_id; // i.e. index 1 should be mFirstVariant, not mFirstVariant->mNextVariant.
+						// For #HotIf hotkey variants, we don't want to evaluate the expression a second time. If the hook
+						// thread determined that a specific variant should fire, it is passed via the high word of wParam:
+						if ((variant_id = Conversions.HighWord(wParamVal)) != 0)
+						{
+							// The following relies on the fact that variants can't be removed or re-ordered;
+							// variant_id should always be the variant's one-based index in the linked list:
+							--variant_id; // i.e. index 1 should be mFirstVariant, not mFirstVariant->mNextVariant.
 
-						    for (variant = hk.firstVariant; variant_id != 0; variant = variant.nextVariant, --variant_id)
-						    {
-						    }
-						    }
+							for (variant = hk.firstVariant; variant_id != 0; variant = variant.nextVariant, --variant_id)
+							{
+							}
+						}
 
-						    char? dummy = null;
+						char? dummy = null;
+						var criterion_found_hwnd = IntPtr.Zero;
 
-						    if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd
-						                                    , msg.message == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord((int)lParamVal)) : 0, ref dummy)) != null))
-						    continue; // No criterion is eligible, so ignore this hotkey event (see other comments).
+						if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd
+															, m.Msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
+							break; // No criterion is eligible, so ignore this hotkey event (see other comments).
 
-						    // If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
-						    // but not now.  Seems best to abort (see other comments).
-						    // Due to the key-repeat feature and the fact that most scripts use a value of 1
-						    // for their #MaxThreadsPerHotkey, this check will often help average performance
-						    // by avoiding a lot of unnecessary overhead that would otherwise occur:
-						    if (!hk.PerformIsAllowed(variant))
-						    {
-						    // The key is buffered in this case to boost the responsiveness of hotkeys
-						    // that are being held down by the user to activate the keyboard's key-repeat
-						    // feature.  This way, there will always be one extra event waiting in the queue,
-						    // which will be fired almost the instant the previous iteration of the subroutine
-						    // finishes (this above description applies only when MaxThreadsPerHotkey is 1,
-						    // which it usually is).
-						    variant.RunAgainAfterFinished(); // Wheel notch count (g->EventInfo below) should be okay because subsequent launches reuse the same thread attributes to do the repeats.
-						    continue;
-						    }
+						// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
+						// but not now.  Seems best to abort (see other comments).
+						// Due to the key-repeat feature and the fact that most scripts use a value of 1
+						// for their #MaxThreadsPerHotkey, this check will often help average performance
+						// by avoiding a lot of unnecessary overhead that would otherwise occur:
+						if (!hk.PerformIsAllowed(variant))
+						{
+							// The key is buffered in this case to boost the responsiveness of hotkeys
+							// that are being held down by the user to activate the keyboard's key-repeat
+							// feature.  This way, there will always be one extra event waiting in the queue,
+							// which will be fired almost the instant the previous iteration of the subroutine
+							// finishes (this above description applies only when MaxThreadsPerHotkey is 1,
+							// which it usually is).
+							variant.RunAgainAfterFinished(); // Wheel notch count (g->EventInfo below) should be okay because subsequent launches reuse the same thread attributes to do the repeats.
+							break;
+						}
 
-						    // Now that above has ensured variant is non-NULL:
-						    var hc = variant.hotCriterion;
+						// Now that above has ensured variant is non-NULL:
+						var hc = variant.hotCriterion;
 
-						    if (hc == null || hc.type == HotCriterionEnum.IfNotActive || hc.type == HotCriterionEnum.IfNotExist)
-						    criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
-						    else if (HotkeyDefinition.HOT_IF_REQUIRES_EVAL(hc.type))
-						    criterion_found_hwnd = Keysharp.Scripting.Script.hotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
+						if (hc == null || hc.type == HotCriterionEnum.IfNotActive || hc.type == HotCriterionEnum.IfNotExist)
+							criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
+						else if (HotkeyDefinition.HOT_IF_REQUIRES_EVAL(hc.type))
+							criterion_found_hwnd = Keysharp.Scripting.Script.hotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
 
-						    priority = variant.priority;
-						    SetHotNamesAndTimes(hk.Name);
+						var priority = variant.priority;
+						ht.SetHotNamesAndTimes(hk.Name);
 
-						    if (IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
-						    Accessors.A_EventInfo = lParamVal; // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
+						if (ht.IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
+							Accessors.A_EventInfo = lParamVal; // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
 
-						    // Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
-						    Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
-						    Accessors.A_SendLevel = variant.inputLevel;
-						    Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
-						    hk.PerformInNewThreadMadeByCaller(variant);
-						*/
+						// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
+						Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
+						Accessors.A_SendLevel = variant.inputLevel;
+						Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
+						hk.PerformInNewThreadMadeByCaller(variant);
 						break;
 					}
 

@@ -81,8 +81,7 @@ namespace Keysharp.Main
 				HandleCommandLineParams(args);
 				SetProcessDPIAware();
 				CreateTrayMenu();
-				AddHotkey(new FuncObj("label_EC60E0AA", null), 0u, "#n", false);
-				//AddHotstring("::btw", null, ":btw", "btw", "by the way", false);
+				AddHotkey(new FuncObj("label_9997A347", null), 0u, "#n", false);
 				RunMainWindow(name);
 				ExitApp(0);
 				return 0;
@@ -105,9 +104,10 @@ namespace Keysharp.Main
 			}
 		}
 
-		public static object label_EC60E0AA()
+		public static object label_9997A347(object thishotkey)
 		{
-			Run("notepad");
+			MsgBox(thishotkey);
+			//Run("notepad");
 			return string.Empty;
 		}
 	}

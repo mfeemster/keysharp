@@ -63,7 +63,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal int noSuppress;
 
-		internal bool parentEnabled;
+		internal bool parentEnabled = true;
 
 		internal int sc;
 
@@ -2298,7 +2298,7 @@ namespace Keysharp.Core.Common.Keyboard
 			{
 				// The moment any dialog is displayed, hotkey processing is halted since this
 				// app currently has only one thread.
-				var error_text = $"{throttledKeyCount} hotkeys have been received in the last {timeUntilNow.TotalMilliseconds}ms.\n\nDo you want to continue?\n(see A_MaxHotkeysPerInterval in the help file)";  // In case its stuck in a loop.
+				var error_text = $"{throttledKeyCount} hotkeys have been received in the last {timeUntilNow.TotalMilliseconds}ms.\n\nDo you want to continue?\n(see A_MaxHotkeysPerInterval in the help file)";  // In case it's stuck in a loop.
 				// Turn off any RunAgain flags that may be on, which in essence is the same as de-buffering
 				// any pending hotkey keystrokes that haven't yet been fired:
 				ResetRunAgainAfterFinished();
