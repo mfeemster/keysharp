@@ -1208,7 +1208,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The key name of the previously executed hotkey or hotstring.
 		/// </summary>
-		public static string A_PriorHotkey => Script.HookThread.kbdMsSender.PriorHotkey;
+		public static string A_PriorHotkey => Keysharp.Scripting.Script.priorHotkeyName;
 
 		public static object A_Priority
 		{
@@ -1360,7 +1360,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The key name of the most recently executed hotkey or hotstring.
 		/// </summary>
-		public static string A_ThisHotkey => Script.HookThread.kbdMsSender.CurrentHotkey;
+		public static string A_ThisHotkey => Keysharp.Scripting.Script.thisHotkeyName;
 
 		/// <summary>
 		/// The name of the menu from which A_ThisMenuItem was selected.
@@ -1395,12 +1395,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.
 		/// </summary>
-		public static int A_TimeSincePriorHotkey => Script.HookThread.kbdMsSender.PriorHotkey == null ? -1 : Environment.TickCount - Script.HookThread.kbdMsSender.PriorHotkeyTime;
+		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(Keysharp.Scripting.Script.priorHotkeyName) ? -1L : (long)(DateTime.Now - Keysharp.Scripting.Script.priorHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_ThisHotkey"/> was pressed. It will be -1 whenever <see cref="A_ThisHotkey"/> is blank.
 		/// </summary>
-		public static int A_TimeSinceThisHotkey => Script.HookThread.kbdMsSender.CurrentHotkey == null ? -1 : Environment.TickCount - Script.HookThread.kbdMsSender.CurrentHotkeyTime;
+		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Keysharp.Scripting.Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Keysharp.Scripting.Script.thisHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// The current mode set by <code>SetTitleMatchMode</code>: <code>1</code>, <code>2</code>, <code>3</code>, or <code>RegEx</code>.

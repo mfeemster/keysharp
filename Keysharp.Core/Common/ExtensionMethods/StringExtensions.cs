@@ -70,6 +70,18 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return new string(buffer, 0, idx);
 		}
 
+		public static string RemoveAll(this string str, char[] chars)
+		{
+			var buffer = new char[str.Length];
+			var idx = 0;
+
+			foreach (var c in str)
+				if (!chars.Contains(c))
+					buffer[idx++] = c;
+
+			return new string(buffer, 0, idx);
+		}
+
 		/// <summary>
 		/// Provide an easy way to iterate through the lines of a string without using as much memory as string.Split().
 		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper

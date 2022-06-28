@@ -8,7 +8,6 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common.Keyboard
 {
-	//internal class HotkeyDefinition
 	public class HotkeyDefinition
 	{
 		internal const int AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
@@ -320,6 +319,40 @@ namespace Keysharp.Core.Common.Keyboard
 		// This var doesn't belong in struct since it's used only here.
 
 		/// <summary>
+		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
+		/// aName must not be NULL.
+		/// Returns the address of the new hotkey on success, or NULL otherwise.
+		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
+		/// </summary>
+		public static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
+		{
+			var hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
+
+			if (hk.constructedOK)
+			{
+				shk.Add(hk);
+				Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
+				return hk;
+			}
+			else//This was originally in the parsing code, but fits better here.
+			{
+				var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
+
+				if (valid != ResultType.ConditionTrue)
+					return null;// ResultType.Fail; // It already displayed the error.
+
+				// This hotkey uses a single-character key name, which could be valid on some other
+				// keyboard layout.  Allow the script to start, but warn the user about the problem.
+				// Note that this hotkey's label is still valid even though the hotkey wasn't created.
+
+				if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+					_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
+			}
+
+			return null;
+		}
+
+		/// <summary>
 		/// This function examines all hotkeys and hotstrings to determine:
 		/// - Which hotkeys to register/unregister, or activate/deactivate in the hook.
 		/// - Which hotkeys to be changed from HK_NORMAL to HK_KEYBD_HOOK (or vice versa).
@@ -621,40 +654,6 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 		public override string ToString() => Name;
-
-		/// <summary>
-		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
-		/// aName must not be NULL.
-		/// Returns the address of the new hotkey on success, or NULL otherwise.
-		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
-		/// </summary>
-		public static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
-		{
-			var hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
-
-			if (hk.constructedOK)
-			{
-				shk.Add(hk);
-				Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
-				return hk;
-			}
-			else//This was originally in the parsing code, but fits better here.
-			{
-				var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
-
-				if (valid != ResultType.ConditionTrue)
-					return null;// ResultType.Fail; // It already displayed the error.
-
-				// This hotkey uses a single-character key name, which could be valid on some other
-				// keyboard layout.  Allow the script to start, but warn the user about the problem.
-				// Note that this hotkey's label is still valid even though the hotkey wasn't created.
-
-				if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-					_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
-			}
-
-			return null;
-		}
 
 		internal static HotkeyCriterion AddHotkeyCriterion(HotCriterionEnum type, string winTitle, string winText)
 		{

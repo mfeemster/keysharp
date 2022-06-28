@@ -12,12 +12,6 @@ namespace Keysharp.Core.Common.Threading
 
 			if (func is IFuncObj ifo)
 			{
-				//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-				//      //Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() =>
-				//{
-				//  ifo.Call(o);
-				//  Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads);
-				//});
 				var tsk = Task.Factory.StartNew(() => ifo.Call(o));
 				return tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
 			}
@@ -25,9 +19,8 @@ namespace Keysharp.Core.Common.Threading
 			{
 				var tsk = Task.Factory.StartNew(() => vf(o));
 				return tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
-				//return tsk;
 			}
-			
+
 			return Task.FromResult<int>(1);
 		}
 	}

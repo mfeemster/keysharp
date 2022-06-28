@@ -104,7 +104,6 @@ namespace Keysharp.Core.Common.Keyboard
 		// close to UINT_MAX might be a little better since it's might be less likely to be used as a pointer
 		// value by any apps that send keybd events whose ExtraInfo is really a pointer value.
 		internal const uint KeyIgnore = 0xFFC3D44F;
-
 		internal const uint KeyIgnoreAllExceptModifier = KeyIgnore - 2;
 		internal const uint KeyIgnoreMax = KeyIgnore;
 		internal const uint KeyPhysIgnore = KeyIgnore - 1;
@@ -143,10 +142,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int modifiersLRLogicalNonIgnored;
 		internal int modifiersLRNumpadMask;
 		internal int modifiersLRPhysical;
-
-		//internal SendModes sendMode = SendModes.Input;
 		private const int retention = 1024;
-
 		private readonly StringBuilder caser = new StringBuilder(32);
 		private readonly List<HotstringDefinition> expand = new List<HotstringDefinition>();
 		private readonly StringBuilder history;
@@ -154,23 +150,7 @@ namespace Keysharp.Core.Common.Keyboard
 		private readonly List<HotstringDefinition> hotstrings;
 		private readonly Dictionary<Keys, bool> pressed;
 
-		public bool Block { get; set; }
-
-		public string CurrentHotkey { get; set; }
-
-		public int CurrentHotkeyTime { get; set; }
-
-		public string CurrentHotstring { get; set; }
-
-		public int CurrentHotstringTime { get; set; }
-
-		public string PriorHotkey { get; set; }
-
-		public int PriorHotkeyTime { get; set; }
-
-		public string PriorHotstring { get; set; }
-
-		public int PriorHotstringTime { get; set; }
+		//public bool Block { get; set; }
 
 		public KeyboardMouseSender()
 		{
@@ -337,12 +317,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue);
 
-		/*  AHK defined these, but char in C# is 2 bytes, so using byte instead.
-		    typedef USHORT sc_type; // Scan code.
-		    typedef UCHAR vk_type;  // Virtual key.
-		    typedef UINT mod_type;  // Standard Windows modifier type for storing MOD_CONTROL, MOD_WIN, MOD_ALT, MOD_SHIFT.
-		*/
-
 		protected internal abstract void LongOperationUpdate();
 
 		protected internal abstract void LongOperationUpdateForSendKeys();
@@ -350,6 +324,122 @@ namespace Keysharp.Core.Common.Keyboard
 		//protected internal abstract void Send(string keys);
 
 		//protected internal abstract void Send(Keys key);
+
+		internal void ProcessHotkey(int wParamVal, int lParamVal, uint msg)
+		{
+			wParamVal &= HotkeyDefinition.HOTKEY_ID_MASK;
+			var hkId = wParamVal;
+
+			if (hkId < HotkeyDefinition.shk.Count)//Ensure hotkey ID is valid.
+			{
+				var ht = Keysharp.Scripting.Script.HookThread;
+				var hk = HotkeyDefinition.shk[hkId];
+				// Check if criterion allows firing.
+				// For maintainability, this is done here rather than a little further down
+				// past the g_MaxThreadsTotal and thread-priority checks.  Those checks hardly
+				// ever abort a hotkey launch anyway.
+				//
+				// If message is WM_HOTKEY, it's either:
+				// 1) A joystick hotkey from TriggerJoyHotkeys(), in which case the lParam is ignored.
+				// 2) A hotkey message sent by the OS, in which case lParam contains currently-unused info set by the OS.
+				//
+				// An incoming WM_HOTKEY can be subject to #HotIf Win. at this stage under the following conditions:
+				// 1) Joystick hotkey, because it relies on us to do the check so that the check is done only
+				//    once rather than twice.
+				// 2) #HotIf Win. keybd hotkeys that were made non-hook because they have a non-suspended, global variant.
+				//
+				// If message is AHK_HOOK_HOTKEY:
+				// Rather than having the hook pass the qualified variant to us, it seems preferable
+				// to search through all the criteria again and rediscover it.  This is because conditions
+				// may have changed since the message was posted, and although the hotkey might still be
+				// eligible for firing, a different variant might now be called for (e.g. due to a change
+				// in the active window).  Since most criteria hotkeys have at most only a few criteria,
+				// and since most such criteria are #HotIf WinActive rather than Exist, the performance will
+				// typically not be reduced much at all.  Furthermore, trading performance for greater
+				// reliability seems worth it in this case.
+				//
+				// The inefficiency of calling HotCriterionAllowsFiring() twice for each hotkey --
+				// once in the hook and again here -- seems justified for the following reasons:
+				// - It only happens twice if the hotkey a hook hotkey (multi-variant keyboard hotkeys
+				//   that have a global variant are usually non-hook, even on NT/2k/XP).
+				// - The hook avoids doing its first check of WinActive/Exist if it sees that the hotkey
+				//   has a non-suspended, global variant.  That way, hotkeys that are hook-hotkeys for
+				//   reasons other than #HotIf Win. (such as mouse, overriding OS hotkeys, or hotkeys
+				//   that are too fancy for RegisterHotkey) will not have to do the check twice.
+				// - It provides the ability to set the last-found-window for #HotIf WinActive/Exist
+				//   (though it's not needed for the "Not" counterparts).  This HWND could be passed
+				//   via the message, but that would require malloc-there and free-here, and might
+				//   result in memory leaks if its ever possible for messages to get discarded by the OS.
+				// - It allows hotkeys that were eligible for firing at the time the message was
+				//   posted but that have since become ineligible to be aborted.  This seems like a
+				//   good precaution for most users/situations because such hotkey subroutines will
+				//   often assume (for scripting simplicity) that the specified window is active or
+				//   exists when the subroutine executes its first line.
+				// - Most criterion hotkeys use #HotIf WinActive(), which is a very fast call.  Also, although
+				//   WinText and/or "SetTitleMatchMode 'Slow'" slow down window searches, those are rarely
+				//   used too.
+				//
+				HotkeyVariant variant = null; // Set default.
+				var variant_id = 0;
+
+				// For #HotIf hotkey variants, we don't want to evaluate the expression a second time. If the hook
+				// thread determined that a specific variant should fire, it is passed via the high word of wParam:
+				if ((variant_id = Conversions.HighWord(wParamVal)) != 0)
+				{
+					// The following relies on the fact that variants can't be removed or re-ordered;
+					// variant_id should always be the variant's one-based index in the linked list:
+					--variant_id; // i.e. index 1 should be mFirstVariant, not mFirstVariant->mNextVariant.
+
+					for (variant = hk.firstVariant; variant_id != 0; variant = variant.nextVariant, --variant_id)
+					{
+					}
+				}
+
+				char? dummy = null;
+				var criterion_found_hwnd = IntPtr.Zero;
+
+				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd
+													, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
+					return; // No criterion is eligible, so ignore this hotkey event (see other comments).
+
+				// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
+				// but not now.  Seems best to abort (see other comments).
+				// Due to the key-repeat feature and the fact that most scripts use a value of 1
+				// for their #MaxThreadsPerHotkey, this check will often help average performance
+				// by avoiding a lot of unnecessary overhead that would otherwise occur:
+				if (!hk.PerformIsAllowed(variant))
+				{
+					// The key is buffered in this case to boost the responsiveness of hotkeys
+					// that are being held down by the user to activate the keyboard's key-repeat
+					// feature.  This way, there will always be one extra event waiting in the queue,
+					// which will be fired almost the instant the previous iteration of the subroutine
+					// finishes (this above description applies only when MaxThreadsPerHotkey is 1,
+					// which it usually is).
+					variant.RunAgainAfterFinished(); // Wheel notch count (g->EventInfo below) should be okay because subsequent launches reuse the same thread attributes to do the repeats.
+					return;
+				}
+
+				// Now that above has ensured variant is non-NULL:
+				var hc = variant.hotCriterion;
+
+				if (hc == null || hc.type == HotCriterionEnum.IfNotActive || hc.type == HotCriterionEnum.IfNotExist)
+					criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
+				else if (HotkeyDefinition.HOT_IF_REQUIRES_EVAL(hc.type))
+					criterion_found_hwnd = Keysharp.Scripting.Script.hotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
+
+				var priority = variant.priority;
+				Keysharp.Scripting.Script.SetHotNamesAndTimes(hk.Name);
+
+				if (ht.IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
+					Accessors.A_EventInfo = lParamVal; // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
+
+				// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
+				Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
+				Accessors.A_SendLevel = variant.inputLevel;
+				Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
+				hk.PerformInNewThreadMadeByCaller(variant);
+			}
+		}
 
 		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, int aVK, int aSC = 0, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 

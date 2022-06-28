@@ -14,18 +14,11 @@ namespace Keysharp.Core.Windows
 {
 	internal class WindowsHookThread : Keysharp.Core.Common.Threading.HookThread
 	{
-		//internal Keysharp.Core.Windows.KeyboardMouseSender kbmsSender;
-
 		private static uint pendingDeadKeySC;
 		private static bool pendingDeadKeyUsedAltGr;
-
-		// Need to track this separately because sometimes default VK-to-SC mapping isn't correct.
-		private static bool pendingDeadKeyUsedShift;
-
+		private static bool pendingDeadKeyUsedShift;// Need to track this separately because sometimes default VK-to-SC mapping isn't correct.
 		private static uint pendingDeadKeyVK;
-
 		private static bool uwpAppFocused;
-
 		private static IntPtr uwpHwndChecked = IntPtr.Zero;
 
 		static WindowsHookThread()
@@ -5277,7 +5270,7 @@ namespace Keysharp.Core.Windows
 										// the built-in variable A_EndChar:
 										Accessors.A_EndChar = hs.endCharRequired ? hmsg.endChar.ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
 										priority = hs.priority;
-										SetHotNamesAndTimes(hs.Name);
+										Keysharp.Scripting.Script.SetHotNamesAndTimes(hs.Name);
 										Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
 										Accessors.A_SendLevel = hs.inputLevel;
 										Keysharp.Scripting.Script.hotCriterion = hs.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotstring by default.
@@ -5287,9 +5280,9 @@ namespace Keysharp.Core.Windows
 
 								break;
 
-							//These were taken from MainWindowProc().
-							case WM_HOTKEY: // As a result of this app having previously called RegisterHotkey().
-							case (uint)UserMessages.AHK_HOOK_HOTKEY:  // Sent from this app's keyboard or mouse hook.
+							case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handles directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
+								Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, (uint)UserMessages.AHK_HOOK_HOTKEY);
+								break;
 
 							//case (uint)UserMessages.AHK_HOTSTRING: // Added for v1.0.36.02 so that hotstrings work even while an InputBox or other non-standard msg pump is running.
 							//case (uint)UserMessages.AHK_CLIPBOARD_CHANGE: //Probably not needed because we handle OnClipboardChange() differently.//TODO// Added for v1.0.44 so that clipboard notifications aren't lost while the script is displaying a MsgBox or other dialog.

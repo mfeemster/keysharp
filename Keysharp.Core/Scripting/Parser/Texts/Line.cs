@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Core;
+﻿using System;
+using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
 {
@@ -52,10 +53,17 @@ namespace Keysharp.Scripting
 				goto case Not;
 
 				case TernaryB:
+				{
 					if (!next && code.Length > 1 && code[1] == Equal)
 						return true;
 
+					var trimmed = code.RemoveAll(Spaces);
+
+					if (trimmed.Length > 1 && trimmed[1] == ':')//This is for detecting hotstrings with a space between the first two colons.
+						return false;
+
 					return !(code.Length > 1 && !IsSpace(code[nextindex]));
+				}
 
 				default:
 					if (code[index] == Multicast)

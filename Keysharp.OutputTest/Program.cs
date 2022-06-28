@@ -81,7 +81,8 @@ namespace Keysharp.Main
 				HandleCommandLineParams(args);
 				SetProcessDPIAware();
 				CreateTrayMenu();
-				AddHotkey(new FuncObj("label_9997A347", null), 0u, "#n", false);
+				AddHotkey(new FuncObj("label_17D62C8B", null), 0u, "<!a", false);
+				AddHotkey(new FuncObj("label_A1A60A88", null), 0u, ">!a", false);
 				RunMainWindow(name);
 				ExitApp(0);
 				return 0;
@@ -104,10 +105,15 @@ namespace Keysharp.Main
 			}
 		}
 
-		public static object label_9997A347(object thishotkey)
+		public static object label_17D62C8B(object thishotkey)
 		{
-			MsgBox(thishotkey);
-			//Run("notepad");
+			MsgBox("left alt a");
+			return string.Empty;
+		}
+
+		public static object label_A1A60A88(object thishotkey)
+		{
+			MsgBox("right alt a");
 			return string.Empty;
 		}
 	}
