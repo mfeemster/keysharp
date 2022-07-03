@@ -393,7 +393,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// FIRST PASS THROUGH THE HOTKEYS:
 			for (i = 0; i < shk.Count; ++i)
 			{
-				var hot = shk[i];  // For performance and convenience.
+				var hot = shk[i];
 
 				if (hkIsInactive[i] = (Accessors.A_IsSuspended && !hot.IsExemptFromSuspend())
 									  || hot.IsCompletelyDisabled()) // Listed last for short-circuit performance.
@@ -454,7 +454,7 @@ namespace Keysharp.Core.Common.Keyboard
 				if (hkIsInactive[i])
 					continue;
 
-				var hot = shk[i];  // For performance and convenience.
+				var hot = shk[i];
 
 				if (hot.keyUp && hot.vk != 0) // No need to do the below for mSC hotkeys since their down hotkeys would already be handled by the hook.
 				{
@@ -531,7 +531,7 @@ namespace Keysharp.Core.Common.Keyboard
 				if (hkIsInactive[i])
 					continue; // v1.0.40: Treat disabled hotkeys as though they're not even present.
 
-				var hot = shk[i];  // For performance and convenience.
+				var hot = shk[i];
 
 				// HK_MOUSE_HOOK hotkeys, and most HK_KEYBD_HOOK hotkeys, are handled by the hotkey constructor.
 				// What we do here upgrade any NORMAL/registered hotkey to HK_KEYBD_HOOK if there are other
@@ -858,7 +858,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 				for (var candidateId = hk.nextHotkey; candidateId != HOTKEY_ID_INVALID;)
 				{
-					var hk2 = shk[(int)candidateId]; // For performance and convenience.
+					var hk2 = shk[(int)candidateId];
 					candidateId = hk2.nextHotkey;
 
 					// Non-wildcard hotkeys are eligible for the workaround in cases like ^+a vs <^+a vs ^<+a, where
@@ -1296,7 +1296,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 			for (var candidateId = firstID; candidateId != HOTKEY_ID_INVALID;)
 			{
-				var hk2 = shk[(int)candidateId];  // For performance and convenience.
+				var hk2 = shk[(int)candidateId];
 				candidateId = hk2.nextHotkey;
 
 				if ((hk2.allowExtraModifiers || ((~hk2.modifiersConsolidatedLR & modsLR) == 0))
@@ -1320,12 +1320,17 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static bool HOT_IF_REQUIRES_EVAL(HotCriterionEnum type) => type == HotCriterionEnum.IfCallback;
 
+		/// <summary>
+		/// This is a global function because it's used by both hotkeys and hotstrings.
+		/// In addition to being called by the hook thread, this can now be called by the main thread.
+		/// That happens when a WM_HOTKEY message arrives (for non-hook hotkeys, i.e. RegisterHotkey).
+		/// Returns a non-NULL HWND if firing is allowed.  However, if it's a global criterion or
+		/// a "not-criterion" such as #HotIf Not WinActive(), (HWND)1 is returned rather than a genuine HWND.
+		/// </summary>
+		/// <param name="criterion"></param>
+		/// <param name="hotkeyName"></param>
+		/// <returns></returns>
 		internal static IntPtr HotCriterionAllowsFiring(HotkeyCriterion criterion, string hotkeyName)
-		// This is a global function because it's used by both hotkeys and hotstrings.
-		// In addition to being called by the hook thread, this can now be called by the main thread.
-		// That happens when a WM_HOTKEY message arrives (for non-hook hotkeys, i.e. RegisterHotkey).
-		// Returns a non-NULL HWND if firing is allowed.  However, if it's a global criterion or
-		// a "not-criterion" such as #HotIf Not WinActive(), (HWND)1 is returned rather than a genuine HWND.
 		{
 			var foundHwnd = IntPtr.Zero;
 
@@ -1350,7 +1355,7 @@ namespace Keysharp.Core.Common.Keyboard
 					var handle = GCHandle.Alloc(criterion);
 					var wparam = (IntPtr)handle;
 					var val = (WindowsAPI.SendMessageTimeout(Keysharp.Scripting.Script.mainWindow.Handle,
-							   (uint)UserMessages.AHK_HOT_IF_EVAL,
+							   (uint)UserMessages.AHK_HOT_IF_EVAL,//We are currently not processing this and will need to do so.//TODO
 							   wparam,
 							   hotkeyName,
 							   SendMessageTimeoutFlags.SMTO_BLOCK | SendMessageTimeoutFlags.SMTO_ABORTIFHUNG,
@@ -1363,7 +1368,7 @@ namespace Keysharp.Core.Common.Keyboard
 			return (criterion.type == HotCriterionEnum.IfActive || criterion.type == HotCriterionEnum.IfExist) ? foundHwnd : IntPtr.Zero;
 		}
 
-		internal static int HotkeyRequiresModLR(uint hotkeyID, int modLR) => hotkeyID >= shk.Count ? 0 : shk[(int)hotkeyID].modifiersConsolidatedLR& modLR;
+		internal static int HotkeyRequiresModLR(uint hotkeyID, int modLR) => hotkeyID < shk.Count ? shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0;
 
 		internal static ResultType IfExpr(string expr, object exprObj)
 		// HotIf ; Set null criterion.
@@ -1726,16 +1731,15 @@ namespace Keysharp.Core.Common.Keyboard
 
 			if (!isModifier)
 			{
-				// Previous steps should make it unnecessary to call omit_leading_whitespace(aText).
-				var index = text.IndexOfAny(Keysharp.Core.Core.SpaceTab);
+				var spaceindex = text.IndexOfAny(Keysharp.Core.Core.SpaceTab);
 
-				if (index != -1)
+				if (spaceindex != -1)
 				{
-					var trimmed = text.Substring(index).TrimStart(Keysharp.Core.Core.SpaceTab);
+					var trimmed = text.Substring(spaceindex).TrimStart(Keysharp.Core.Core.SpaceTab);
 
-					if (trimmed.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
+					if (trimmed.EndsWith("Up", StringComparison.OrdinalIgnoreCase))
 					{
-						text = trimmed.Substring(2);//The word "up" is removed from further consideration by us and callers.
+						text = spaceindex == 0 ? text : text.Substring(0, spaceindex);//The word "up" is removed from further consideration by us and callers.
 
 						// This is a key-up hotkey, such as "Ctrl Up::".
 						if (thisHotkey != null)
@@ -2077,7 +2081,7 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			for (var i = 0; i < shk.Count; ++i)
 			{
-				var hk = shk[i]; // For performance and convenience.
+				var hk = shk[i];
 
 				// Fix for v1.0.34: If hotkey isn't enabled, or hotkeys are suspended and this one isn't
 				// exempt, don't fire it.  These checks are necessary only for joystick hotkeys because

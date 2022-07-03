@@ -1415,6 +1415,8 @@ namespace Keysharp.Core.Windows
 										  JOY_RETURNPOV | JOY_RETURNBUTTONS);
 
 
+		public const long MB_SETFOREGROUND = 0x00010000L;
+
 		public const uint MSG_OFFSET_MOUSE_MOVE = 0x80000000;
 		public const uint GET_MODULE_HANDLE_EX_FLAG_PIN = 1;
 
@@ -1844,16 +1846,16 @@ namespace Keysharp.Core.Windows
 		/// <param name="aWhichMode"></param>
 		internal static void CoordToScreen(ref int aX, ref int aY, CoordMode modeType)
 		{
-			var coord_mode = Mouse.Coords.GetCoordMode(modeType);
+			var coordMode = Mouse.Coords.GetCoordMode(modeType);
 
-			if (coord_mode == CoordModeType.Screen)
+			if (coordMode == CoordModeType.Screen)
 				return;
 
 			var active_window = GetForegroundWindow();
 
 			if (active_window != IntPtr.Zero && !IsIconic(active_window))
 			{
-				if (coord_mode == CoordModeType.Window)
+				if (coordMode == CoordModeType.Window)
 				{
 					if (GetWindowRect(active_window, out var rect))
 					{

@@ -20,7 +20,7 @@ namespace Keysharp.Core
 {
 	public static class Accessors
 	{
-		internal static long ClipboardTimeout = 1000;
+		internal static long ClipboardTimeout = 1000L;
 
 		private static bool allowMainWindow = true;
 
@@ -654,7 +654,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_KeyDelay
 		{
-			get => keyDelay ?? (keyDelay = 10).Value;
+			get => keyDelay ?? (keyDelay = 10L).Value;
 			set => keyDelay = value.Al();
 		}
 
@@ -663,7 +663,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_KeyDelayPlay
 		{
-			get => keyDelayPlay ?? (keyDelayPlay = -1).Value;
+			get => keyDelayPlay ?? (keyDelayPlay = -1L).Value;
 			set => keyDelayPlay = value.Al();
 		}
 
@@ -672,7 +672,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_KeyDuration
 		{
-			get => keyDuration ?? (keyDuration = -1).Value;
+			get => keyDuration ?? (keyDuration = -1L).Value;
 			set => keyDuration = value.Al();
 		}
 
@@ -681,7 +681,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_KeyDurationPlay
 		{
-			get => keyDurationPlay ?? (keyDurationPlay = -1).Value;
+			get => keyDurationPlay ?? (keyDurationPlay = -1L).Value;
 			set => keyDurationPlay = value.Al();
 		}
 
@@ -889,12 +889,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The size in Kbytes of the file currently retrieved, rounded down to the nearest integer.
 		/// </summary>
-		public static long A_LoopFileSizeKB => A_LoopFileSize / 1024;
+		public static long A_LoopFileSizeKB => A_LoopFileSize / 1024L;
 
 		/// <summary>
 		/// The size in Mbytes of the file currently retrieved, rounded down to the nearest integer.
 		/// </summary>
-		public static long A_LoopFileSizeMB => A_LoopFileSize / (1024 * 1024);
+		public static long A_LoopFileSizeMB => A_LoopFileSize / (1024L * 1024L);
 
 		/// <summary>
 		/// The time the file was last accessed. Format YYYYMMDDHH24MISS.
@@ -1145,7 +1145,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_MouseDelay
 		{
-			get => mouseDelay ?? (mouseDelay = 10).Value;
+			get => mouseDelay ?? (mouseDelay = 10L).Value;
 			set => mouseDelay = value.Al();
 		}
 
@@ -1154,7 +1154,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_MouseDelayPlay
 		{
-			get => mouseDelayPlay ?? (mouseDelayPlay = -1).Value;
+			get => mouseDelayPlay ?? (mouseDelayPlay = -1L).Value;
 			set => mouseDelayPlay = value.Al();
 		}
 
@@ -1410,21 +1410,21 @@ namespace Keysharp.Core
 			get
 			{
 				if (titleMatchMode == null)
-					titleMatchMode = 2;
+					titleMatchMode = 2L;
 
-				return titleMatchMode.Value == 4 ? Core.Keyword_RegEx : titleMatchMode.Value;
+				return titleMatchMode.Value == 4L ? Core.Keyword_RegEx : titleMatchMode.Value;
 			}
 			set
 			{
 				switch (value.ToString().ToLowerInvariant())
 				{
-					case "1": titleMatchMode = 1; break;
+					case "1": titleMatchMode = 1L; break;
 
-					case "2": titleMatchMode = 2; break;
+					case "2": titleMatchMode = 2L; break;
 
-					case "3": titleMatchMode = 3; break;
+					case "3": titleMatchMode = 3L; break;
 
-					case Core.Keyword_RegEx: titleMatchMode = 4; break;
+					case Core.Keyword_RegEx: titleMatchMode = 4L; break;
 				}
 			}
 		}
@@ -1473,7 +1473,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_WinDelay
 		{
-			get => winDelay ?? (winDelay = 100).Value;
+			get => winDelay ?? (winDelay = 100L).Value;
 			set => winDelay = value.Al();
 		}
 
@@ -1515,7 +1515,16 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Current year and week number (e.g. <code>200453</code>) according to ISO 8601.
 		/// </summary>
-		public static string A_YWeek => DateTime.Now.ToString("yyyy") + Math.Floor((double)(DateTime.Now.DayOfYear / 12));
+		public static string A_YWeek
+		{
+			get
+			{
+				var now = DateTime.Now;
+				var cal = new GregorianCalendar(GregorianCalendarTypes.Localized);
+				var week = cal.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+				return $"{now:yyyy}{week:D2}";
+			}
+		}
 
 		/// <summary>
 		/// See <see cref="A_Year"/>.

@@ -12,6 +12,8 @@ namespace Keysharp.Core.Common.Threading
 
 			if (func is IFuncObj ifo)
 			{
+				//ifo.Call(o);
+				//return Task.FromResult<int>(1);
 				var tsk = Task.Factory.StartNew(() => ifo.Call(o));
 				return tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
 			}

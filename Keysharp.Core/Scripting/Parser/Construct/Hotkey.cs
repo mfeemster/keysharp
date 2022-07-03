@@ -485,6 +485,11 @@ namespace Keysharp.Scripting
 
 				// else don't trim hotstrings since literal spaces in both substrings are significant.
 				string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
+				void ClearParserHotstringState()
+				{
+					lastHotstringFunc = "";//Don't clear replacement.
+					stackedHotstrings.Clear();
+				}
 				void ClearParserHotState()
 				{
 					replacement = "";
@@ -580,7 +585,7 @@ namespace Keysharp.Scripting
 						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 						method.Statements.AddRange(expr);
 						methods.Add(method.Name, method);
-						lastHotstringFunc = "";
+						ClearParserHotstringState();
 					}
 					else if (nextIndex < lines.Count)//Merge this with detecting otb, and see how X fits into this above.//TODO
 					{
@@ -590,12 +595,11 @@ namespace Keysharp.Scripting
 						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
 						{
 							funcname = ParseFunctionName(nextBuf);
-							lastHotstringFunc = "";
 
 							foreach (var stacked in stackedHotstrings)//Go back through all stacked hotstrings that were parsed, and reset their function object to the one that was just parsed.
 								stacked.Parameters[1] = new CodeSnippetExpression($"new FuncObj(\"{funcname}\", null)");
 
-							stackedHotstrings.Clear();
+							ClearParserHotstringState();
 						}
 						else
 						{
@@ -611,21 +615,19 @@ namespace Keysharp.Scripting
 								_ = CloseTopSingleBlock();
 								blocks.Push(block);
 								methods.Add(method.Name, method);
-								lastHotstringFunc = "";
-								stackedHotstrings.Clear();
+								ClearParserHotstringState();
 							}
 							else if (replacement.Length == 0)//Check for stacked
 							{
 								if (IsHotstringLabel(nextBuf))
 								{
-									funcname = SetLastHotstringFunc(hotName);
+									funcname = SetLastHotstringFunc(hotName);//Stacked, so set the current line as the name of the function that will be used for all stacked. If a named function is eventually seen, that name will be used for all stacked.
 								}
 								else if (nextBuf != "")//Read all lines until a return statement is found, then treat them all as a function by inserting braces and marking all variable references as global.
 								{
 									var existingLineCount = lines.Count;
 									var np1 = nextIndex + 1;
 									lines.Insert(nextIndex, new CodeLine(nextLine.FileName, np1, "{"));
-									//lines.Insert(np1, new CodeLine(nextLine.FileName, ++np1, "global"));
 									var linesAdded = lines.Count - existingLineCount;
 									var i = np1;
 
@@ -651,8 +653,7 @@ namespace Keysharp.Scripting
 									_ = CloseTopSingleBlock();
 									blocks.Push(block);
 									methods.Add(method.Name, method);
-									//lastHotstringFunc = "";
-									stackedHotstrings.Clear();
+									ClearParserHotstringState();
 								}
 							}
 						}
@@ -688,26 +689,11 @@ namespace Keysharp.Scripting
 
 					if (replacement.Length > 0)//For hotkeys, there is no 'X' for treating the replacement as an execute. Instead, if any replacement exists on the same line, it's an execute.
 					{
-						var i = index + 4;
-						var insertedIndex = index + 1;
-						var insertedLineNumber = codeLine.LineNumber + 1;
-						var startline = new CodeLine(codeLine.FileName, insertedLineNumber, "{");
-						lines.Insert(insertedIndex, startline);
-						lines.Insert(insertedIndex + 1, new CodeLine(codeLine.FileName, insertedLineNumber + 1, replacement));
-						lines.Insert(insertedIndex + 2, new CodeLine(codeLine.FileName, insertedLineNumber + 2, "}"));
-
-						for (; i < lines.Count; i++)
-							lines[i].LineNumber = codeLine.LineNumber + 4;
-
-						StartNewFunction();
 						funcname = SetLastHotkeyFunc(hotName);
 						var method = LocalMethod(funcname);
-						currentFuncParams.Peek().Add("thishotkey");
-						_ = method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
-						var block = new CodeBlock(startline, funcname, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
-						block.Type = CodeBlock.BlockType.Expect;
-						_ = CloseTopSingleBlock();
-						blocks.Push(block);
+						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+						method.Statements.AddRange(expr);
+						method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
 						methods.Add(method.Name, method);
 
 						if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
@@ -762,9 +748,9 @@ namespace Keysharp.Scripting
 									return cmie;
 								}
 							}
-							else// if (replacement == "")//Check for stacked
+							else
 							{
-								if (IsHotkeyLabel(nextBuf))
+								if (IsHotkeyLabel(nextBuf))//Check for stacked.
 								{
 									funcname = SetLastHotkeyFunc(hotName);//If this is the first of a stack, set the function name to the hash of the first stacked item's name, else keep that name for subsequent stacked hotkeys.
 
@@ -815,84 +801,6 @@ namespace Keysharp.Scripting
 							}
 						}
 					}
-
-					/*
-					    if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(buf, ref suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
-					    {
-					    if (hook_action != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
-					    {
-					        // Hotkey::Dynamic() contains logic and comments similar to this, so maintain them together.
-					        // An attempt to add an alt-tab variant to an existing hotkey.  This might have
-					        // merit if the intention is to make it alt-tab now but to later disable that alt-tab
-					        // aspect via the Hotkey cmd to let the context-sensitive variants shine through
-					        // (take effect).
-					        hk.hookAction = hook_action;
-					    }
-					    else
-					    {
-					        // Detect duplicate hotkey variants to help spot bugs in scripts.
-					        if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-					        {
-					            //mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
-					            return null;// ScriptError(_T("Duplicate hotkey."), buf);
-					        }
-
-					        //if (set_last_hotfunc() == null)//TODO
-					        //return null;// ResultType.Fail;
-
-					        if (hk.AddVariant(new FuncObj(lastHotkeyFunc, null), suffix_has_tilde) == null)
-					            return null;// ScriptError(ERR_OUTOFMEM, buf);
-
-					        if (hook_is_mandatory || Keysharp.Scripting.Script.forceKeybdHook)
-					        {
-					            // Require the hook for all variants of this hotkey if any variant requires it.
-					            // This seems more intuitive than the old behavior, which required $ or #UseHook
-					            // to be used on the *first* variant, even though it affected all variants.
-					            hk.keybdHookMandatory = true;
-					        }
-					    }
-
-					    //Not sure if stackedHotkeys should be used here too?//TODO
-					    lastHotstringFunc = "";//After adding a hotkey, we must clear any hotstring state.
-					    Parser.Persistent = true;
-					    }
-					    else // No parent hotkey yet, so create it.
-					    {
-					    if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
-					        // A hotkey is stacked above, eg,
-					        // x::
-					        // y & z::altTab
-					        // Not supported.
-					        return null; // ScriptError(ERR_HOTKEY_MISSING_BRACE);
-
-					    if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(name)))
-					        return null;
-
-					    Persistent = true;
-					    var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
-					    _ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotkeyFunc}\", null)") : new CodePrimitiveExpression(null));
-					    _ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
-					    _ = invoke.Parameters.Add(new CodePrimitiveExpression(name));
-					    _ = invoke.Parameters.Add(new CodePrimitiveExpression(suffix_has_tilde));
-
-					    if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)
-					        stackedHotkeys.Add(invoke);
-
-					    lastHotstringFunc = "";//After adding a hotkey, we must clear any hotstring state.
-					    return invoke;
-					    //hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
-					    //if (hk == null)
-					    //{
-					    //  if (hotkeyValidity != ResultType.ConditionTrue)
-					    //      return null;// ResultType.Fail; // It already displayed the error.
-					    //  // This hotkey uses a single-character key name, which could be valid on some other
-					    //  // keyboard layout.  Allow the script to start, but warn the user about the problem.
-					    //  // Note that this hotkey's label is still valid even though the hotkey wasn't created.
-					    //  if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-					    //      _ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
-					    //}
-					    }
-					*/
 				}
 			}
 

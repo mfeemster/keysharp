@@ -2202,9 +2202,9 @@ namespace Keysharp.Core.Windows
 			// because otherwise lowercase letters would come through as uppercase and vice versa.
 			// Remember that apps like MS Word have an auto-correct feature that might make it
 			// wrongly seem that the turning off of Capslock below needs a Sleep(0) to take effect.
-			ToggleValueType priorCapslockState = (bool)Accessors.A_StoreCapsLockMode && !inBlindMode && sendRaw != SendRawModes.RawText
-												 ? ToggleKeyState(VK_CAPITAL, ToggleValueType.Off)
-												 : ToggleValueType.Invalid; // In blind mode, don't do store capslock (helps remapping and also adds flexibility).
+			var priorCapslockState = (bool)Accessors.A_StoreCapsLockMode && !inBlindMode && sendRaw != SendRawModes.RawText
+									 ? ToggleKeyState(VK_CAPITAL, ToggleValueType.Off)
+									 : ToggleValueType.Invalid; // In blind mode, don't do store capslock (helps remapping and also adds flexibility).
 			// sSendMode must be set only after setting Capslock state above, because the hook method
 			// is incapable of changing the on/off state of toggleable keys like Capslock.
 			// However, it can change Capslock state as seen in the window to which playback events are being
@@ -2235,14 +2235,14 @@ namespace Keysharp.Core.Windows
 			var thisEventModifierDown = 0;
 			var keyTextLength = 0;
 			var keyNameLength = 0;
-			int endPos, spacePos;
-			char oldChar;
+			int endPos;//, spacePos;
+			//char oldChar;
 			var keyDownType = KeyDownTypes.Temp;
 			var eventType = KeyEventTypes.KeyDown;
 			int repeatCount = 0, clickX = 0, clickY = 0;
 			var moveOffset = false;
 			uint placeholder = 0;
-			var msg = new Msg();//May not be needed.//TOOD
+			//var msg = new Msg();//May not be needed.//TOOD
 			var keyIndex = 0;
 
 			//for (; *aKeys; ++aKeys, prevEventModifierDown = this_event_modifier_down)
@@ -2292,11 +2292,8 @@ namespace Keysharp.Core.Windows
 							if ((endPos = sub.IndexOf('}', keyIndex + 1)) == -1) // Ignore it and due to rarity, don't reset mods_for_next_key.
 								continue; // This check is relied upon by some things below that assume a '}' is present prior to the terminator.
 
-							keyIndex = sub.FindFirstNotOf(Keysharp.Core.Core.SpaceTab, 1);
+							keyIndex = sub.FindFirstNotOf(Keysharp.Core.Core.SpaceTab, keyIndex + 1);
 
-							//sub = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab); // v1.0.43: Skip leading whitespace inside the braces to be more flexible.
-
-							//if (   (key_text_length = (uint)(sub.Length - end_pos)) == 0   )
 							if ((keyTextLength = (endPos - keyIndex)) == 0)
 							{
 								var lenok = sub.Length > endPos + 1;
@@ -2307,26 +2304,31 @@ namespace Keysharp.Core.Windows
 									++endPos;
 									keyTextLength = 1;
 								}
-								else if (lenok && Strings.IsSpaceOrTab(sub[endPos + 1])) // v1.0.48: Support "{} down}", "{} downtemp}" and "{} up}".
+								else
 								{
-									var nextWord = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);
+									var bracesplits = sub.Split(Keysharp.Core.Core.SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 
-									if (nextWord.StartsWith("Down", StringComparison.OrdinalIgnoreCase) // "Down" or "DownTemp" (or likely enough).
-											|| nextWord.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
+									if (bracesplits.Length > 1) // v1.0.48: Support "{} down}", "{} downtemp}" and "{} up}".
 									{
-										if ((endPos = sub.IndexOf('}')) == -1)//See comments at similar section above.
-											continue;
+										var nextWord = bracesplits[1];
 
-										keyTextLength = endPos - keyIndex; // This result must be non-zero due to the checks above.
+										if (nextWord.StartsWith("Down", StringComparison.OrdinalIgnoreCase) // "Down" or "DownTemp" (or likely enough).
+												|| nextWord.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
+										{
+											if ((endPos = sub.IndexOf('}', keyIndex + 2)) == -1)//See comments at similar section above.
+												continue;
+
+											keyTextLength = endPos - keyIndex; // This result must be non-zero due to the checks above.
+										}
+										else
+											goto bracecaseend;  // The loop's ++aKeys will now skip over the '}', ignoring it.
 									}
-									else
+									else // Empty braces {} were encountered (or all whitespace, but literal whitespace isn't sent).
 										goto bracecaseend;  // The loop's ++aKeys will now skip over the '}', ignoring it.
 								}
-								else // Empty braces {} were encountered (or all whitespace, but literal whitespace isn't sent).
-									goto bracecaseend;  // The loop's ++aKeys will now skip over the '}', ignoring it.
 							}
 
-							var subspan = sub.AsSpan(keyIndex);
+							var subspan = sub.AsSpan(keyIndex, keyTextLength);
 
 							if (subspan.StartsWith("Click", StringComparison.OrdinalIgnoreCase))
 							{
@@ -2366,7 +2368,7 @@ namespace Keysharp.Core.Windows
 							eventType = KeyEventTypes.KeyDownAndUp;         // Set defaults.
 							repeatCount = 1;                  //
 							keyNameLength = keyTextLength;//TODO
-							var splits = subspanstr.Split(Keysharp.Core.Core.SpaceTab, 1, StringSplitOptions.RemoveEmptyEntries);
+							var splits = subspanstr.Split(Keysharp.Core.Core.SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 
 							if (splits.Length > 0)
 							{
@@ -2375,6 +2377,7 @@ namespace Keysharp.Core.Windows
 								if (splits.Length > 1)
 								{
 									var nextWord = splits[1];
+									subspanstr = splits[0];
 
 									if (nextWord.StartsWith("Down", StringComparison.OrdinalIgnoreCase))
 									{
@@ -2410,6 +2413,8 @@ namespace Keysharp.Core.Windows
 
 							if (repeatCount < 1)
 								goto bracecaseend; // Gets rid of one level of indentation. Well worth it.
+
+							subspanstr = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);//Consider the entire strin, minus the first {, below.
 
 							if (vk != 0 || sc != 0)
 							{
@@ -3655,7 +3660,7 @@ namespace Keysharp.Core.Windows
 			// Since calls from the hook thread could come in even while the SendInput array is being constructed,
 			// don't let those events get interspersed with the script's explicit use of SendInput.
 			var ht = Keysharp.Scripting.Script.HookThread;
-			var callerIsKeybdHook = WindowsAPI.GetCurrentThreadId() == ht.HookThreadID();
+			var callerIsKeybdHook = WindowsAPI.GetCurrentThreadId() == Keysharp.Core.Processes.MainThreadID;//Hook runs on the main window thread.
 			var putEventIntoArray = Accessors.SendMode != SendModes.Event && !callerIsKeybdHook;
 
 			if (Accessors.SendMode == SendModes.Input || callerIsKeybdHook) // First check is necessary but second is just for maintainability.
@@ -3849,7 +3854,7 @@ namespace Keysharp.Core.Windows
 				// the normal g->KeyDelay will be in effect.  In other words, it seems undesirable in
 				// most cases to do both delays for only "one half" of a keystroke:
 				if (doKeyDelay && eventType == KeyEventTypes.KeyDownAndUp) // Hook should never specify a delay, so no need to check if caller is hook.
-					DoKeyDelay((int)(Accessors.SendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration)); // DoKeyDelay() is not thread safe but since the hook thread should never pass true for aKeyDelay, it shouldn't be an issue.
+					DoKeyDelay((long)(Accessors.SendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration)); // DoKeyDelay() is not thread safe but since the hook thread should never pass true for aKeyDelay, it shouldn't be an issue.
 
 				if (eventType != KeyEventTypes.KeyDown)  // i.e. always do it for KEYDOWNANDUP
 				{

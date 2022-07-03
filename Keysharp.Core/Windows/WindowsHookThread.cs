@@ -23,7 +23,7 @@ namespace Keysharp.Core.Windows
 
 		static WindowsHookThread()
 		{
-			keyToSc = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+			keyToSc = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
 			{
 				{"NumpadEnter", SC_NUMPADENTER},
 				{"Delete", SC_DELETE},
@@ -105,7 +105,7 @@ namespace Keysharp.Core.Windows
 				{"LShift", VK_LSHIFT},
 				{"RShift", VK_RSHIFT},
 				{"LAlt", VK_LMENU},
-				{ "RAlt", VK_RMENU},
+				{"RAlt", VK_RMENU},
 				// These two are always left/right centric and I think their vk's are always supported by the various
 				// Windows API calls, unlike VK_RSHIFT, etc. (which are seldom supported):
 				{"LWin", VK_LWIN},
@@ -245,7 +245,7 @@ namespace Keysharp.Core.Windows
 				{
 					Start();
 
-					if (hookThreadID != 0)
+					if (channelThreadID != 0)
 					{
 						//Critical seems extreme.//TODO
 						//SetThreadPriority(new IntPtr(hookThreadID), THREAD_PRIORITY_TIME_CRITICAL); // See below for explanation.
@@ -379,7 +379,7 @@ namespace Keysharp.Core.Windows
 							if (channelReadThread != null || channelReadThread.IsCompleted) // The hook thread is now gone.
 							{
 								channelReadThread = null;
-								hookThreadID = 0;
+								channelThreadID = 0;
 								FreeHookMem();//There should be no hooks now (even if there is, they can't be functional because their thread is nonexistent).
 								//break;
 							}
@@ -865,13 +865,12 @@ namespace Keysharp.Core.Windows
 			for (var i = 0; i < hotkeyUp.Count; i++)
 				hotkeyUp[i] = HotkeyDefinition.HOTKEY_ID_INVALID;
 
-			var hkSorted = new HkSortedType[HotkeyDefinition.shk.Count];
-			var hkSortedCount = 0;
 			KeyType thisKey;
+			var hkSorted = new List<HkSortedType>(HotkeyDefinition.shk.Count);
 
 			for (var i = 0; i < hks.Count; ++i)
 			{
-				var hk = hks[i]; // For performance and convenience.
+				var hk = hks[i];
 
 				// If it's not a hook hotkey (e.g. it was already registered with RegisterHotkey() or it's a joystick
 				// hotkey) don't process it here.  Similarly, if g_IsSuspended is true, we won't include it unless it's
@@ -1048,16 +1047,14 @@ namespace Keysharp.Core.Windows
 				hkst.modifiers = hk.modifiers;
 				hkst.modifiersLR = hk.modifiersLR;
 				hkst.allowExtraModifiers = hk.allowExtraModifiers;
-				hkSorted[hkSortedCount] = hkst;
-				++hkSortedCount;
+				hkSorted.Add(hkst);
 			}
 
-			if (hkSortedCount != 0)
+			if (hkSorted.Count != 0)
 			{
 				// It's necessary to get them into this order to avoid problems that would be caused by
 				// AllowExtraModifiers:
-				//qsort((void*)hk_sorted, hk_sorted_count, sizeof(hk_sorted_type), sort_most_general_before_least);
-				System.Array.Sort(hkSorted, HkSortedType.SortMostGeneralBeforeLeast);
+				hkSorted.Sort(HkSortedType.SortMostGeneralBeforeLeast);
 				// For each hotkey without a ModifierVK/SC (which override normal modifiers), expand its modifiers and
 				// modifiersLR into its column in the kvkm or kscm arrays.
 				int modifiers, modifiersMerged;
@@ -1066,9 +1063,9 @@ namespace Keysharp.Core.Windows
 				bool prevHkIsKeyUp, thisHkIsKeyUp;
 				int prevHkId, thisHkId;
 
-				for (var i = 0; i < hkSortedCount; ++i)
+				for (var i = 0; i < hkSorted.Count; ++i)
 				{
-					var thisHk = hkSorted[i]; // For performance and convenience.
+					var thisHk = hkSorted[i];
 					thisHkIsKeyUp = (thisHk.idWithFlags & HotkeyDefinition.HOTKEY_KEY_UP) != 0;
 					thisHkId = (int)thisHk.idWithFlags & HotkeyDefinition.HOTKEY_ID_MASK;
 
@@ -1352,7 +1349,7 @@ namespace Keysharp.Core.Windows
 				// v1.0.36.06: Done unconditionally because presence of AltGr should not preclude the presence of Shift.
 				// v1.0.40: If caller-supplied modifiers already contains MOD_RSHIFT, no need to add LSHIFT (avoids
 				// unnecessary keystrokes).
-				if ((keyscanModifiers & 0x01) != 0 && (modifiersLR & (MOD_LSHIFT | MOD_RSHIFT)) == 0)
+				if ((keyscanModifiers & 0x01) != 0 && ((modifiersLR & (MOD_LSHIFT | MOD_RSHIFT)) == 0))
 					modifiersLR |= MOD_LSHIFT;
 			}
 
@@ -1397,7 +1394,7 @@ namespace Keysharp.Core.Windows
 				// be triggered.
 				for (var u = 0; u < HotstringDefinition.shs.Count; ++u)
 				{
-					var hs = HotstringDefinition.shs[u];   // For performance and convenience.
+					var hs = HotstringDefinition.shs[u];
 
 					if (hs.suspended != 0)
 						continue;
@@ -5109,7 +5106,7 @@ namespace Keysharp.Core.Windows
 				channelReadThread = null;
 			}
 
-			hookThreadID = 0;
+			channelThreadID = 0;
 			//This is a consolidation of the main windows proc, message sleep and the thread which they keyboard hook is created on.
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
 			channelReadThread = System.Threading.Tasks.Task.Factory.StartNew(async () =>
@@ -5121,12 +5118,13 @@ namespace Keysharp.Core.Windows
 				IntPtr fore_window, focused_control, criterion_found_hwnd = IntPtr.Zero;
 				//while (running) // Infinite loop for pumping messages in this thread. This thread will exit via any use of "return" below.
 				HotkeyDefinition hk = null;
-				hookThreadID = WindowsAPI.GetCurrentThreadId();
+				channelThreadID = WindowsAPI.GetCurrentThreadId();
 				//WindowsAPI.GetMessage(out var _, IntPtr.Zero, 0, 0);
 
 				await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manure of obscure meaning into bits and bytes of wparam and lparam.
 				{
 					var priority = 0;
+					channelThreadID = WindowsAPI.GetCurrentThreadId();
 
 					if (item is KeysharpMsg msg)
 					{
@@ -5374,7 +5372,7 @@ namespace Keysharp.Core.Windows
 				}
 			});
 
-			while (hookThreadID == 0)//Give it some time to startup before proceeding.
+			while (channelThreadID == 0)//Give it some time to startup before proceeding.
 				System.Threading.Thread.Sleep(10);
 
 			//WindowsAPI.PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_START_LOOP, UIntPtr.Zero, IntPtr.Zero);

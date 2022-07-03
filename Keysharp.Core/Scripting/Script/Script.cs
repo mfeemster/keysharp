@@ -1260,7 +1260,7 @@ namespace Keysharp.Scripting
 		                                if (wparam >= Hotstring::sHotstringCount) // Invalid hotstring ID (perhaps spoofed by external app)
 		                                    continue; // Do nothing.
 
-		                                hs = Hotstring::shs[wparam];  // For performance and convenience.
+		                                hs = Hotstring::shs[wparam];
 
 		                                if (hs->mHotCriterion)
 		                                {

@@ -87,7 +87,7 @@ namespace Keysharp.Core.Common.Threading
 
 		protected internal bool hookSynced;
 
-		protected internal uint hookThreadID;
+		protected internal uint channelThreadID;
 
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
 
@@ -300,8 +300,7 @@ namespace Keysharp.Core.Common.Threading
 			ksc = System.Array.Empty<KeyType>();
 		}
 
-		//Need to figure out how to put the keyboard hook into a thread, then assign the thread id to this, like AHK does. Also need to determine if it should be instance or static.//TODO
-		protected internal uint HookThreadID() => hookThreadID;
+		protected internal uint ChannelThreadId() => channelThreadID;
 
 		protected internal abstract void Start();
 	}

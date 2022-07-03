@@ -313,9 +313,9 @@ namespace Keysharp.Core
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
-			var mbopts = MessageBoxOptions.DefaultDesktopOnly;
+			var mbopts = (MessageBoxOptions)WindowsAPI.MB_SETFOREGROUND;//For some reason this constant is not available in C#, but it works and is required to make the message box take the focus.
 			//var help = false;
-			IWin32Window owner = GuiHelper.DialogOwner;
+			Control owner = GuiHelper.DialogOwner;// ?? Form.ActiveForm;
 			var timeout = 0.0;
 
 			if (title?.Length == 0)
@@ -338,9 +338,9 @@ namespace Keysharp.Core
 				{
 					switch (itemp & 0xf0000)
 					{
-						case 524288: mbopts = MessageBoxOptions.RightAlign; continue;
+						case 524288: mbopts |= MessageBoxOptions.RightAlign; continue;
 
-						case 1048576: mbopts = MessageBoxOptions.RtlReading; continue;
+						case 1048576: mbopts |= MessageBoxOptions.RtlReading; continue;
 					}
 
 					//switch (itemp & 0xf000)
@@ -433,16 +433,21 @@ namespace Keysharp.Core
 					w.Close();
 					timeoutclosed = true;
 				}, TaskScheduler.FromCurrentSynchronizationContext());
-				var ret = MessageBox.Show(w, text, title, buttons, icon, defaultbutton, MessageBoxOptions.RightAlign);//For some reason, it won't allow you to pass anything other than RightAlign when an owner is passed in.
+				var ret = MessageBox.Show(w, text, title, buttons, icon, defaultbutton, mbopts);
 				nMessageBoxes--;
 				return timeoutclosed ? "Timeout" : ret.ToString();
 			}
 			else
 			{
 				nMessageBoxes++;
-				var ret = (owner != null
-						   ? MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, MessageBoxOptions.RightAlign)//For some reason, it won't allow you to pass anything other than RightAlign when an owner is passed in.
-						   : MessageBox.Show(text, title, buttons, icon, defaultbutton, mbopts)).ToString();
+				var ret = "";
+
+				if (owner != null)
+					_ = owner.Invoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
+				//_ = owner.BeginInvoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
+				else
+					ret = MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString();
+
 				nMessageBoxes--;
 				return ret;
 			}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
 using Keysharp.Core.Windows;
@@ -10,59 +11,169 @@ namespace Keysharp.Core
 {
 	public static class ToolTips
 	{
-		private static ToolTip[] persistentTooltips = new System.Windows.Forms.ToolTip[20];
+		private static ToolTip[] persistentTooltips = new ToolTip[20];
 
-		public static void ToolTip(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <summary>
+		/// Derivation to help with proper positioning to prevent the tooltip from going off screen.
+		/// Gotten from: https://stackoverflow.com/questions/65526197/tooltip-text-going-off-screen-winforms
+		/// </summary>
+		/*
+		    private class KeysharpTooltip : ToolTip
+		    {
+		    private static readonly TextFormatFlags flags = TextFormatFlags.VerticalCenter
+		            | TextFormatFlags.Left
+		            | TextFormatFlags.LeftAndRightPadding
+		            | TextFormatFlags.NoClipping
+		            | TextFormatFlags.WordBreak;
+
+		    public KeysharpTooltip()
+		    {
+		        Popup += KeysharpTooltip_Popup;
+		        Draw += KeysharpTooltip_Draw;
+		    }
+
+		    private void KeysharpTooltip_Popup(object sender, PopupEventArgs e)
+		    {
+		        var t = sender as ToolTip;
+		        var h = (IntPtr)t.GetType().GetProperty("Handle", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(t);
+		        var toolTipText = t.GetToolTip(e.AssociatedControl);
+		        var screen = System.Windows.Forms.Screen.FromControl(e.AssociatedControl).WorkingArea;
+		        //if (e.
+		        //WindowsAPI.MoveWindow(h, 2, 2, e.Bounds.Width - 2, e.Bounds.Height, false);
+		        //using (var g = e.AssociatedControl.CreateGraphics())
+		        //  using (var font = new Font("MS Sans Serif", 16))
+		        //  {
+		        //      var sz = TextRenderer.MeasureText(g, toolTipText, font, screen.Size, flags);
+		        //      e.ToolTipSize = new Size(screen.Width - 2, sz.Height + 10);
+		        //  }
+		    }
+
+		    private void KeysharpTooltip_Draw(object sender, DrawToolTipEventArgs e)
+		    {
+		        var t = sender as ToolTip;
+		        var h = (IntPtr)t.GetType().GetProperty("Handle", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(t);
+		        var screen = System.Windows.Forms.Screen.FromControl(e.AssociatedControl).WorkingArea;
+		        var movetox = e.Bounds.Left;
+		        var movetoy = e.Bounds.Top;
+		        var needsmove = false;
+
+		        if (e.Bounds.Left + e.Bounds.Width > screen.Width)
+		        {
+		            needsmove = true;
+		            movetox = screen.Width - e.Bounds.Width - 1;
+		        }
+
+		        if (e.Bounds.Top + e.Bounds.Height > screen.Height)
+		        {
+		            needsmove = true;
+		            movetoy = screen.Height - e.Bounds.Height - 1;
+		        }
+
+		        //e.DrawBackground();
+		        //e.DrawBorder();
+		        var newrect = new Rectangle(movetox, movetoy, e.Bounds.Width, e.Bounds.Height);
+		        //using (var font = new Font("MS Sans Serif", 16))
+		        //  TextRenderer.DrawText(e.Graphics, e.ToolTipText, font, newrect, Color.Black, flags);
+		        var right = movetox + e.Bounds.Width;
+		        var bottom = movetoy + e.Bounds.Height;
+		        var mouse = System.Windows.Forms.Cursor.Position;
+
+		        if (mouse.X >= movetox && mouse.X <= right &&
+		                mouse.Y >= movetoy && mouse.Y <= bottom)
+		        {
+		            needsmove = true;
+		            movetox = mouse.X - e.Bounds.Width - 3;
+		            movetoy = mouse.Y - e.Bounds.Height - 3;
+		        }
+
+		        if (needsmove)
+		        {
+		            _ = WindowsAPI.MoveWindow(h, movetox, movetoy, e.Bounds.Width, e.Bounds.Height, false);//Will need a cross platform way to do this.//TODO
+		        }
+		    }
+		    }
+		*/
+		public static object ToolTip(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
 			var text = obj0.As();
 			var x = (int)obj1.Al(int.MinValue);
 			var y = (int)obj2.Al(int.MinValue);
-			var id = (int)obj3.Al(int.MinValue);
+			var id = (int)obj3.Al(1);
 			id--;
 
 			if (text != "")
 			{
 				var tooltipForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
+				var one_or_both_coords_specified = x != int.MinValue || y != int.MinValue;
+				var one_or_both_coords_unspecified = x == int.MinValue || y == int.MinValue;
 
 				if (tooltipForm == null)
 					tooltipForm = Script.mainWindow;
 
 				if (tooltipForm == null)
-					return;
+					return "";
 
 				tooltipForm.CheckedBeginInvoke(() =>
 				{
-					var coord = Mouse.Coords.Tooltip;
+					var (ptx, pty) = (0, 0);
 
-					if (x == int.MinValue || y == int.MinValue)
+					if (one_or_both_coords_unspecified)
 					{
-						var mouse = System.Windows.Forms.Cursor.Position;
-						x = mouse.X;
-						y = mouse.Y;
-						coord = CoordModeType.Screen;
+						var temppt = tooltipForm.PointToClient(System.Windows.Forms.Cursor.Position);//This is in terms of screen coordinates.
+						ptx = temppt.X + (tooltipForm.Width - tooltipForm.ClientRectangle.Width);
+						pty = temppt.Y + (tooltipForm.Height - tooltipForm.ClientRectangle.Height);
 					}
 
-					if (coord == CoordModeType.Screen)//Consolidate this into a function since it'll be used in several places.//MATT
+					var tempx = 0;
+					var tempy = 0;
+
+					if (one_or_both_coords_specified)
 					{
-						var borderWidth = (tooltipForm.Width - tooltipForm.ClientSize.Width) / 2;
-						var p = tooltipForm.PointToClient(new Point(x, y));
-						x = p.X + borderWidth;
-						y = p.Y + (tooltipForm.Height - tooltipForm.ClientSize.Height - borderWidth);
+						var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
+
+						if (Mouse.Coords.Tooltip == CoordModeType.Screen)
+						{
+							//These calculations won't put 0,0 exactly in the top right of the screen, but it's close enough, about 5 pixels.
+							var temppt = tooltipForm.PointToClient(new Point(tempx + (tooltipForm.Width - tooltipForm.ClientRectangle.Width),
+																   tempy + (tooltipForm.Height - tooltipForm.ClientRectangle.Height)));
+							tempx = temppt.X - (tooltipForm.Margin.Left + tooltipForm.Margin.Right + SystemInformation.BorderSize.Width);
+							tempy = temppt.Y - (tooltipForm.Margin.Top + tooltipForm.Margin.Bottom + SystemInformation.BorderSize.Height);
+						}
 					}
+
+					if (x != int.MinValue)
+						ptx = x + tempx;
+
+					if (y != int.MinValue)
+						pty = y + tempy;
 
 					if (persistentTooltips[id] == null)
 						persistentTooltips[id] = new ToolTip { Active = true, AutomaticDelay = 0, InitialDelay = 0, ReshowDelay = 0, ShowAlways = true };
 
-					persistentTooltips[id].Active = true;
+					var tt = persistentTooltips[id];
 
-					persistentTooltips[id].Show(text, tooltipForm, new Point(x, y));
+					tt.Active = true;
+
+					tt.Show(text, tooltipForm, new Point(ptx, pty));
+
+					//AHK did a large amount of work to make sure the tooltip didn't go off screen
+					//and also to ensure it was not behind the mouse cursor. This seems like overkill
+					//for two reasons.
+					//1: That code is likely legacy. The Winforms ToolTip class already moves the tooltip
+					//to be entirely on the screen if any portion of it would have been off the screen.
+					//2: If the user needs to move the mouse out of the way, they can just do it.
 				});
 			}
 			else
 			{
-				if (persistentTooltips[id] != null)
+				if (id < persistentTooltips.Length && persistentTooltips[id] != null)
+				{
 					persistentTooltips[id].Active = false;
+					persistentTooltips[id] = null;
+				}
 			}
+
+			return "";
 		}
 
 		public static void TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
