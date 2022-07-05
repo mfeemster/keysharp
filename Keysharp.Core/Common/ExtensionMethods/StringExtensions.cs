@@ -43,6 +43,15 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return source.Length;// -1;
 		}
 
+		public static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0)
+		{
+			for (var i = offset; i < source.Length; i++)
+				if (func(source[i]))
+					return i;
+
+			return -1;
+		}
+
 		public static string OmitTrailingWhitespace(this string input, int marker)
 		{
 			for (; marker >= 0 && marker < input.Length && (input[marker] == ' ' || input[marker] == '\t'); --marker)

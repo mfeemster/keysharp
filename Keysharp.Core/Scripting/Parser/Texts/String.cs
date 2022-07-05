@@ -41,12 +41,19 @@ namespace Keysharp.Scripting
 
 						case '0': _ = buffer.Append('\0'); break;
 
-						case '"': _ = buffer.Append('"'); break;
+						//case '"': _ = buffer.Append('"'); break;
+						//
+						//case '\'': _ = buffer.Append('\''); break;
+						//
+						//case ';': _ = buffer.Append(';'); break;
+						//
+						//case ':': _ = buffer.Append(':'); break;
+						//
+						//case '{': _ = buffer.Append('{'); break;
 
 						default:
-							if (sym == Resolve)
-								_ = buffer.Append(Escape);
-
+							//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
+							//_ = buffer.Append(Escape);
 							_ = buffer.Append(sym);
 							break;
 					}

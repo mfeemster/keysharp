@@ -40,7 +40,12 @@ namespace Keysharp.Core
 		public static void Critical(object obj)
 		{
 			var on = Options.OnOff(obj.As()) ?? true;
-			System.Threading.Thread.CurrentThread.Priority = on ? ThreadPriority.Highest : ThreadPriority.Normal;
+			var p = on ? ThreadPriority.Highest : ThreadPriority.Normal;
+
+			if (!Keysharp.Scripting.Script.isReadyToExecute)
+				Accessors.threadPriorityDef = p;
+
+			System.Threading.Thread.CurrentThread.Priority = p;
 		}
 
 		public static long EnabledTimerCount()

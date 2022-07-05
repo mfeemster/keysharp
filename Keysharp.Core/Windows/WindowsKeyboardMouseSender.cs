@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
@@ -1494,7 +1496,7 @@ namespace Keysharp.Core.Windows
 
 		/// <summary>
 		/// Caller must be aware that keystrokes are sent directly (i.e. never to a target window via ControlSend mode).
-		/// aAscii is a string to support explicit leading zeros because sending 216, for example, is not the same as
+		/// ascii is a string to support explicit leading zeros because sending 216, for example, is not the same as
 		/// sending 0216.  The caller is also responsible for restoring any desired modifier keys to the down position
 		/// (this function needs to release some of them if they're down).
 		/// </summary>
@@ -1912,12 +1914,11 @@ namespace Keysharp.Core.Windows
 		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, uint extraInfo = KeyIgnoreAllExceptModifier) => SendKeyEvent(eventType, menuMaskKeyVK, menuMaskKeySC, IntPtr.Zero, false, extraInfo);
 
 		/// <summary>
-		/// The aKeys string must be modifiable (not constant), since for performance reasons,
-		/// it's allowed to be temporarily altered by this function.  mThisHotkeyModifiersLR, if non-zero,
+		/// thisHotkeyModifiersLR, if non-zero,
 		/// should be the set of modifiers used to trigger the hotkey that called the subroutine
 		/// containing the Send that got us here.  If any of those modifiers are still down,
-		/// they will be released prior to sending the batch of keys specified in <aKeys>.
-		/// v1.0.43: aSendModeOrig was added.
+		/// they will be released prior to sending the batch of keys specified in <keys>.
+		/// v1.0.43: sendModeOrig was added.
 		/// </summary>
 		/// <param name="keys"></param>
 		/// <param name="sendRaw"></param>
@@ -2400,7 +2401,7 @@ namespace Keysharp.Core.Windows
 									}
 									else if (nextWord.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
 										eventType = KeyEventTypes.KeyDownAndUp;
-									else
+									else if (!subspanstr.StartsWith("ASC"))
 										repeatCount = nextWord.ParseInt(false).Value;
 								}
 
@@ -2532,56 +2533,63 @@ namespace Keysharp.Core.Windows
 							else if (keyTextLength > 2 && subspanstr.StartsWith("U+", StringComparison.OrdinalIgnoreCase))
 							{
 								// L24: Send a unicode value as shown by Character Map.
-								var uCode = (uint)subspanstr.Substring(2).ParseLong();//_tcstol(aKeys + 2, NULL, 16);
-								char wc1, wc2;
+								var hexstop = subspanstr.FirstIndexOf(ch => !ch.IsHex(), 2);
+								var hexsub = subspanstr.AsSpan(2, hexstop == -1 ? subspanstr.Length - 2 : hexstop - 2);
 
-								if (uCode >= 0x10000)
+								if (long.TryParse(hexsub, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var uCode))
 								{
-									// Supplementary characters are encoded as UTF-16 and split into two messages.
-									uCode -= 0x10000;
-									wc1 = (char)(0xd800 + ((uCode >> 10) & 0x3ff));
-									wc2 = (char)(0xdc00 + (uCode & 0x3ff));
-								}
-								else
-								{
-									wc1 = (char)uCode;
-									wc2 = (char)0;
-								}
+									char wc1, wc2;
 
-								if (targetWindow != IntPtr.Zero)
-								{
-									// Although MSDN says WM_CHAR uses UTF-16, PostMessageA appears to truncate it to 8-bit.
-									// This probably means it does automatic translation between ANSI and UTF-16.  Since we
-									// specifically want to send a Unicode character value, use PostMessageW:
-									_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, wc1, 0);
-
-									if (wc2 != 0)
-										_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, wc2, 0);
-								}
-								else
-								{
-									// Use SendInput in unicode mode if available, otherwise fall back to SendASC.
-									// To know why the following requires Accessors.SendMode != SM_PLAY, see SendUnicodeChar.
-									if (Accessors.SendMode != SendModes.Play)
+									if (uCode >= 0x10000)
 									{
-										SendUnicodeChar(wc1, modsForNextKey.Value | persistentModifiersForThisSendKeys);
+										// Supplementary characters are encoded as UTF-16 and split into two messages.
+										uCode -= 0x10000;
+										wc1 = (char)(0xd800 + ((uCode >> 10) & 0x3ff));
+										wc2 = (char)(0xdc00 + (uCode & 0x3ff));
+									}
+									else
+									{
+										wc1 = (char)uCode;
+										wc2 = (char)0;
+									}
+
+									if (targetWindow != IntPtr.Zero)
+									{
+										// Although MSDN says WM_CHAR uses UTF-16, PostMessageA appears to truncate it to 8-bit.
+										// This probably means it does automatic translation between ANSI and UTF-16.  Since we
+										// specifically want to send a Unicode character value, use PostMessageW:
+										_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, wc1, 0);
 
 										if (wc2 != 0)
-											SendUnicodeChar(wc2, modsForNextKey.Value | persistentModifiersForThisSendKeys);
+											_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, wc2, 0);
 									}
-									else // Note that this method generally won't work with Unicode characters except
+									else
 									{
-										// with specific controls which support it, such as RichEdit (tested on WordPad).
-										var asc = new byte[8];
-										asc[0] = (byte)'0';
-										var str = ((int)uCode).ToString();
-										var bytes = System.Text.ASCIIEncoding.ASCII.GetBytes(str);
-										System.Array.Copy(bytes, 0, asc, 1, Math.Min(asc.Length - 1, bytes.Length));
-										SendASC(asc);
-									}
-								}
+										// Use SendInput in unicode mode if available, otherwise fall back to SendASC.
+										// To know why the following requires Accessors.SendMode != SM_PLAY, see SendUnicodeChar.
+										if (Accessors.SendMode != SendModes.Play)
+										{
+											SendUnicodeChar(wc1, modsForNextKey.Value | persistentModifiersForThisSendKeys);
 
-								DoKeyDelay();
+											if (wc2 != 0)
+												SendUnicodeChar(wc2, modsForNextKey.Value | persistentModifiersForThisSendKeys);
+										}
+										else // Note that this method generally won't work with Unicode characters except
+										{
+											// with specific controls which support it, such as RichEdit (tested on WordPad).
+											var asc = new byte[8];
+											asc[0] = (byte)'0';
+											var str = ((int)uCode).ToString();
+											var bytes = System.Text.ASCIIEncoding.ASCII.GetBytes(str);
+											System.Array.Copy(bytes, 0, asc, 1, Math.Min(asc.Length - 1, bytes.Length));
+											SendASC(asc);
+										}
+									}
+
+									DoKeyDelay();
+								}
+								else
+									throw new Error($"Could not parse {hexsub} as a hexadecimal number when trying to send a unicode character.");
 							}
 
 							//else do nothing since it isn't recognized as any of the above "else if" cases (see below).

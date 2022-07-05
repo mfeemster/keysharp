@@ -14,12 +14,20 @@ namespace Keysharp.Core.Common.Threading
 			{
 				//ifo.Call(o);
 				//return Task.FromResult<int>(1);
-				var tsk = Task.Factory.StartNew(() => ifo.Call(o));
+				var tsk = Task.Factory.StartNew(() =>
+				{
+					System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
+					_ = ifo.Call(o);
+				});
 				return tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
 			}
 			else if (func is VariadicFunction vf)
 			{
-				var tsk = Task.Factory.StartNew(() => vf(o));
+				var tsk = Task.Factory.StartNew(() =>
+				{
+					System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
+					_ = vf(o);
+				});
 				return tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
 			}
 

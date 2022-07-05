@@ -29,18 +29,24 @@ namespace Keysharp.Core
 
 		[ThreadStatic]
 		private static long? defaultMouseSpeed;
+		private static long defaultMouseSpeedDef = 2;
 
 		[ThreadStatic]
 		private static bool? detectHiddenText;
 
+		private static bool detectHiddenTextDef = true;
+
 		[ThreadStatic]
 		private static bool? detectHiddenWindows;
+
+		private static bool detectHiddenWindowsDef = false;
 
 		[ThreadStatic]
 		private static object eventInfo;
 
 		[ThreadStatic]
 		private static Encoding fileEncoding;
+		private static Encoding fileEncodingDef = Encoding.Default;
 
 		[ThreadStatic]
 		private static string formatNumeric;
@@ -55,11 +61,15 @@ namespace Keysharp.Core
 
 		private static string initialWorkingDir = Environment.CurrentDirectory;
 
+		internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
+
 		[ThreadStatic]
 		private static long? keyDelay;
+		private static long keyDelayDef = 10L;
 
 		[ThreadStatic]
 		private static long? keyDelayPlay;
+		private static long keyDelayPlayDef = -1L;
 
 		[ThreadStatic]
 		private static long? keyDuration;
@@ -73,9 +83,11 @@ namespace Keysharp.Core
 
 		[ThreadStatic]
 		private static long? mouseDelay;
+		private static long mouseDelayDef = 10L;
 
 		[ThreadStatic]
 		private static long? mouseDelayPlay;
+		private static long mouseDelayPlayDef = -1L;
 
 		[ThreadStatic]
 		private static bool? noTimers;
@@ -90,23 +102,33 @@ namespace Keysharp.Core
 
 		[ThreadStatic]
 		private static long? sendLevel;
+		private static long sendLevelDef;
+
+		[ThreadStatic]
+		private static long? regView;
+		private static long regViewDef = 64;
 
 		[ThreadStatic]
 		private static SendModes? sendMode;
+		private static SendModes sendModeDef = SendModes.Input;
 
 		[ThreadStatic]
 		private static bool? storeCapsLockMode;
+		private static bool storeCapsLockModeDef = true;
 
 		[ThreadStatic]
 		private static long? titleMatchMode;
+		private static long titleMatchModeDef = 2L;
 
 		[ThreadStatic]
 		private static bool? titleMatchModeSpeed;
+		private static bool titleMatchModeSpeedDef = true;
 
 		private static bool? winActivateForce;
 
 		[ThreadStatic]
 		private static long? winDelay;
+		private static long winDelayDef = 100L;
 
 		/// <summary>
 		/// The version of the assembly that was used to compile the script that is currently running.
@@ -386,8 +408,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_DefaultMouseSpeed
 		{
-			get => defaultMouseSpeed ?? (defaultMouseSpeed = 2).Value;
-			set => defaultMouseSpeed = value.Al();
+			get => defaultMouseSpeed ?? (defaultMouseSpeed = defaultMouseSpeedDef).Value;
+
+			set
+			{
+				defaultMouseSpeed = value.Al();
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					defaultMouseSpeedDef = defaultMouseSpeed.Value;
+			}
 		}
 
 		/// <summary>
@@ -405,14 +434,19 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_DetectHiddenText
 		{
-			get => detectHiddenText ?? (detectHiddenText = true).Value;
+			get => detectHiddenText ?? (detectHiddenText = detectHiddenTextDef).Value;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
+				{
 					detectHiddenText = val.Value ? true : false;
+
+					if (!Keysharp.Scripting.Script.isReadyToExecute)
+						detectHiddenTextDef = detectHiddenText.Value;
+				}
 			}
 		}
 
@@ -421,14 +455,19 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_DetectHiddenWindows
 		{
-			get => detectHiddenWindows ?? (detectHiddenWindows = false).Value;
+			get => detectHiddenWindows ?? (detectHiddenWindows = detectHiddenWindowsDef).Value;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
+				{
 					detectHiddenWindows = val.Value ? true : false;
+
+					if (!Keysharp.Scripting.Script.isReadyToExecute)
+						detectHiddenWindowsDef = detectHiddenWindows.Value;
+				}
 			}
 		}
 
@@ -479,8 +518,13 @@ namespace Keysharp.Core
 
 				return val;
 			}
+			set
+			{
+				fileEncoding = File.GetEncoding(value.ToString());
 
-			set => fileEncoding = File.GetEncoding(value.ToString());
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					fileEncodingDef = fileEncoding;
+			}
 		}
 
 		/// <summary>
@@ -654,8 +698,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_KeyDelay
 		{
-			get => keyDelay ?? (keyDelay = 10L).Value;
-			set => keyDelay = value.Al();
+			get => keyDelay ?? (keyDelay = keyDelayDef).Value;
+
+			set
+			{
+				keyDelay = value.Al();
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					keyDelayDef = keyDelay.Value;
+			}
 		}
 
 		/// <summary>
@@ -663,8 +714,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_KeyDelayPlay
 		{
-			get => keyDelayPlay ?? (keyDelayPlay = -1L).Value;
-			set => keyDelayPlay = value.Al();
+			get => keyDelayPlay ?? (keyDelayPlay = keyDelayPlayDef).Value;
+
+			set
+			{
+				keyDelayPlay = value.Al();
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					keyDelayPlayDef = keyDelayPlay.Value;
+			}
 		}
 
 		/// <summary>
@@ -1145,8 +1203,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_MouseDelay
 		{
-			get => mouseDelay ?? (mouseDelay = 10L).Value;
-			set => mouseDelay = value.Al();
+			get => mouseDelay ?? (mouseDelay = mouseDelayDef).Value;
+
+			set
+			{
+				mouseDelay = value.Al();
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					mouseDelayDef = mouseDelay.Value;
+			}
 		}
 
 		/// <summary>
@@ -1154,8 +1219,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_MouseDelayPlay
 		{
-			get => mouseDelayPlay ?? (mouseDelayPlay = -1L).Value;
-			set => mouseDelayPlay = value.Al();
+			get => mouseDelayPlay ?? (mouseDelayPlay = mouseDelayPlayDef).Value;
+
+			set
+			{
+				mouseDelayPlay = value.Al();
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					mouseDelayPlayDef = mouseDelayPlay.Value;
+			}
 		}
 
 		/// <summary>
@@ -1233,7 +1305,18 @@ namespace Keysharp.Core
 
 		public static long A_PtrSize => 8L;
 
-		public static long A_RegView { get; internal set; } = 64L;
+		public static object A_RegView
+		{
+			get => regView ?? (regView = regViewDef).Value;
+
+			set
+			{
+				regView = value.Al() == 64L ? 64L : 32L;
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					regViewDef = regView.Value;
+			}
+		}
 
 		/// <summary>
 		/// Number of pixels per logical inch along the screen width. In a system with multiple display monitors,
@@ -1287,8 +1370,15 @@ namespace Keysharp.Core
 		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
 		public static object A_SendLevel
 		{
-			get => sendLevel ?? (sendLevel = 0).Value;
-			set => sendLevel = Math.Clamp(value.Al(), 0L, 100L);
+			get => sendLevel ?? (sendLevel = sendLevelDef).Value;
+
+			set
+			{
+				sendLevel = Math.Clamp(value.Al(), 0L, 100L);
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					sendLevelDef = sendLevel.Value;
+			}
 		}
 
 		public static object A_SendMode
@@ -1298,7 +1388,12 @@ namespace Keysharp.Core
 			set
 			{
 				if (Enum.TryParse<SendModes>(value.As(), out var temp))
+				{
 					sendMode = temp;
+
+					if (!Keysharp.Scripting.Script.isReadyToExecute)
+						sendModeDef = sendMode.Value;
+				}
 			}
 		}
 
@@ -1329,14 +1424,19 @@ namespace Keysharp.Core
 
 		public static object A_StoreCapsLockMode
 		{
-			get => storeCapsLockMode ?? (storeCapsLockMode = true).Value;
+			get => storeCapsLockMode ?? (storeCapsLockMode = storeCapsLockModeDef).Value;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
+				{
 					storeCapsLockMode = val.Value;
+
+					if (!Keysharp.Scripting.Script.isReadyToExecute)
+						storeCapsLockModeDef = storeCapsLockMode.Value;
+				}
 			}
 		}
 
@@ -1410,7 +1510,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (titleMatchMode == null)
-					titleMatchMode = 2L;
+					titleMatchMode = titleMatchModeDef;
 
 				return titleMatchMode.Value == 4L ? Core.Keyword_RegEx : titleMatchMode.Value;
 			}
@@ -1426,6 +1526,9 @@ namespace Keysharp.Core
 
 					case Core.Keyword_RegEx: titleMatchMode = 4L; break;
 				}
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					titleMatchModeDef = titleMatchMode.Value;
 			}
 		}
 
@@ -1437,7 +1540,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (titleMatchModeSpeed == null)
-					titleMatchModeSpeed = true;
+					titleMatchModeSpeed = titleMatchModeSpeedDef;
 
 				return titleMatchModeSpeed.Value ? Core.Keyword_Fast : Core.Keyword_Slow;
 			}
@@ -1449,6 +1552,9 @@ namespace Keysharp.Core
 
 					case Core.Keyword_Slow: titleMatchModeSpeed = false; break;
 				}
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					titleMatchModeSpeedDef = titleMatchModeSpeed.Value;
 			}
 		}
 
@@ -1473,8 +1579,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_WinDelay
 		{
-			get => winDelay ?? (winDelay = 100L).Value;
-			set => winDelay = value.Al();
+			get => winDelay ?? (winDelay = winDelayDef).Value;
+
+			set
+			{
+				winDelay = value.Al();
+
+				if (!Keysharp.Scripting.Script.isReadyToExecute)
+					winDelayDef = winDelay.Value;
+			}
 		}
 
 		/// <summary>
@@ -1561,11 +1674,11 @@ namespace Keysharp.Core
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
 
-		internal static Encoding FileEncoding => fileEncoding ?? (fileEncoding = Encoding.Default);
+		internal static Encoding FileEncoding => fileEncoding ?? (fileEncoding = fileEncodingDef);
 
 		internal static SendModes SendMode
 		{
-			get => sendMode ?? (sendMode = SendModes.Input).Value;
+			get => sendMode ?? (sendMode = sendModeDef).Value;
 			set => sendMode = value;
 		}
 
