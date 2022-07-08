@@ -38,7 +38,7 @@ namespace Keysharp.Scripting
 					//if (type.FullName != "Program")
 					//continue;
 
-					if (type.FullName.StartsWith("Keysharp.Main", StringComparison.OrdinalIgnoreCase))
+					if (type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
 					{
 						var fields = type.GetFields(BindingFlags.Static |
 													BindingFlags.NonPublic |

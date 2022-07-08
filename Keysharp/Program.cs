@@ -21,6 +21,7 @@ namespace Keysharp.Main
 	public static class Program
 	{
 		private static CompilerHelper ch = new CompilerHelper();
+
 		internal static Version Version
 		{
 			get { return Assembly.GetExecutingAssembly().GetName().Version; }
@@ -28,11 +29,13 @@ namespace Keysharp.Main
 
 		internal static string GetLatestDotNetVersion()
 		{
-			var key = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
-			key = key.OpenSubKey(@"SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
-			var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
-			versions.Sort();
-			return versions.Last().ToString();
+			//var key = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
+			//key = key.OpenSubKey(@"SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
+			//var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
+			//versions.Sort();
+			//return versions.Last().ToString();
+			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").OrderByDescending(x => x).FirstOrDefault();
+			return new DirectoryInfo(dir).Name;//Registry based version was returning 6.0.6 for some reason even though it didn't exist in this folder. So just query the folder directly instead.
 		}
 
 		[STAThread]
@@ -210,13 +213,14 @@ namespace Keysharp.Main
 
 				if (exeout)
 				{
+					var loc = typeof(Program).Assembly.Location;
 					//File.WriteAllBytes(path + ".exe", arr);
 					File.WriteAllBytes(path + ".dll", arr);
 					var outputRuntimeConfigPath = Path.ChangeExtension(path, "runtimeconfig.json");
-					var currentRuntimeConfigPath = Path.ChangeExtension(typeof(Program).Assembly.Location, "runtimeconfig.json");
+					var currentRuntimeConfigPath = Path.ChangeExtension(loc, "runtimeconfig.json");
 					File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
 					var outputDepsConfigPath = Path.ChangeExtension(path, "deps.json");
-					var currentDepsConfigPath = Path.ChangeExtension(typeof(Program).Assembly.Location, "deps.json");
+					var currentDepsConfigPath = Path.ChangeExtension(loc, "deps.json");
 					File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
 					//File.WriteAllText(Path.ChangeExtension(path, "runtimeconfig.json"), CompilerHelper.GenerateRuntimeConfig());
 					var ver = GetLatestDotNetVersion();//Windows only.
@@ -247,9 +251,9 @@ namespace Keysharp.Main
 					throw new Exception("Compilation failed.");
 
 				//Environment.SetEnvironmentVariable("SCRIPT", script);
-				var program = CompilerHelper.compiledasm.GetType("Keysharp.Main.Program");
+				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.Program");
 				var main = program.GetMethod("Main");
-				var temp = Array.Empty<string>();
+				//var temp = Array.Empty<string>();
 				//_ = main.Invoke(null, new object[] { temp });
 				_ = main.Invoke(null, new object[] { args });
 			}

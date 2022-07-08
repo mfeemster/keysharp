@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Windows.Forms;
 
 namespace Keysharp.Core
 {
@@ -73,16 +74,24 @@ namespace Keysharp.Core
 
 		internal static void CacheAllMethods()
 		{
-			IEnumerable<Assembly> assemblies;
+			List<Assembly> assemblies;
 
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
-				assemblies = AppDomain.CurrentDomain.GetAssemblies();
-			else
-				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp."));
+				assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,"))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
+				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.")).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect.
+			else//Running as a standalone executable.
+				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.") ||
+							 (assy.EntryPoint != null &&
+							  assy.EntryPoint.DeclaringType != null &&
+							  assy.EntryPoint.DeclaringType.Namespace == "Keysharp.CompiledMain"
+							 )).ToList();
 
-			foreach (var item in assemblies)
-				foreach (var type in item.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null && (type.Namespace.StartsWith("Keysharp.Core") || type.Namespace.StartsWith("Keysharp.Main") || type.Namespace.StartsWith("Keysharp.Tests")))//Allow tests so we can use function objects inside of unit tests.
+			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
+
+			foreach (var asm in assemblies)
+				foreach (var type in asm.GetTypes())
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (type.Namespace.StartsWith("Keysharp.Core") || type.Namespace.StartsWith("Keysharp.CompiledMain") || type.Namespace.StartsWith("Keysharp.Tests")))//Allow tests so we can use function objects inside of unit tests.
 						_ = FindAndCacheMethod(type, "");
 
 			foreach (var typekv in typeToStringMethods)
@@ -90,7 +99,7 @@ namespace Keysharp.Core
 				{
 					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 
-					if (typekv.Key.FullName.StartsWith("Keysharp.Main", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
+					if (typekv.Key.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
 					{
 						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, MethodInfo>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);

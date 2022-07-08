@@ -122,7 +122,7 @@ namespace Keysharp.Scripting
 			var unit = new CodeCompileUnit();
 			//var space = new CodeNamespace(bcl.Namespace + ".Instance");
 			//_ = unit.Namespaces.Add(space);
-			var ns = new CodeNamespace("Keysharp.Main");
+			var ns = new CodeNamespace("Keysharp.CompiledMain");
 			ns.Imports.Add(new CodeNamespaceImport("System"));
 			ns.Imports.Add(new CodeNamespaceImport("System"));
 			ns.Imports.Add(new CodeNamespaceImport("System.Collections"));

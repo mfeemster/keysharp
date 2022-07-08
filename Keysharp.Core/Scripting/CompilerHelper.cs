@@ -115,12 +115,9 @@ using static Keysharp.Scripting.Script.Operator;
 				return Encoding.UTF8.GetString(stream.ToArray());
 			}
 		}
-
 #if !WINDOWS
 		CodeDomProvider provider = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider();
-		public (CompilerResults, Exception) Compile(string code, string outputname)
 #else
-
 		private CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
 		{
 			{
@@ -133,7 +130,7 @@ using static Keysharp.Scripting.Script.Operator;
 													 )
 			}
 		});
-
+#endif
 		private CodeGeneratorOptions cgo = new CodeGeneratorOptions
 		{
 			IndentString = "\t",
@@ -150,6 +147,9 @@ using static Keysharp.Scripting.Script.Operator;
 			}
 		}
 
+#if !WINDOWS
+		public (CompilerResults, Exception) Compile(string code, string outputname)
+#else
 		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname)
 #endif
 		{
@@ -162,25 +162,27 @@ using static Keysharp.Scripting.Script.Operator;
 					IncludeDebugInformation = false,
 					GenerateInMemory = true,
 					OutputAssembly = outputname,
-					MainClass = "Keysharp.Main.Program"
+					MainClass = "Keysharp.CompiledMain.Program",
+					ReferencedAssemblies =
+					{
+						"System.dll",
+						"System.Collections.dll",
+						"System.Data.dll",
+						"System.IO.dll",
+						"System.Linq.dll",
+						"System.Reflection.dll",
+						"System.Runtime.dll",
+						"System.Private.CoreLib.dll",
+						"System.Drawing.Common.dll",
+						"System.Windows.Forms.dll",
+						"Keysharp.Core.dll"
+					}
 				};
-				_ = parameters.ReferencedAssemblies.Add("System.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Collections.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Data.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.IO.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Linq.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Reflection.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Runtime.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Private.CoreLib.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Drawing.Common.dll");
-				_ = parameters.ReferencedAssemblies.Add("System.Windows.Forms.dll");
-				_ = parameters.ReferencedAssemblies.Add("Keysharp.Core.dll");
 				var results = provider.CompileAssemblyFromSource(parameters, code);
 				return (results, null);
 #else
 				var tree = SyntaxFactory.ParseSyntaxTree(code,
 						   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
-				var currentDomain = AppDomain.CurrentDomain;
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(System.Windows.Forms.Form).GetTypeInfo().Assembly.Location);
 				var usings = new List<string>()//These aren't what show up in the output .cs file.
@@ -198,41 +200,6 @@ using static Keysharp.Scripting.Script.Operator;
 					"System.Runtime.InteropServices",
 					"Keysharp.Core"
 				};
-				//var references = new List<MetadataReference>();
-				//List<string> GetAssemblyFiles(Assembly assembly)
-				//{
-				//  var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-				//  return assembly.GetReferencedAssemblies()
-				//         .Select(name => loadedAssemblies.SingleOrDefault(a => a.FullName == name.FullName)?.Location)
-				//         .Where(l => l != null).ToList();
-				//}
-				//var assemblyFiles = GetAssemblyFiles(typeof(CompilerHelper).Assembly);
-				//foreach (var dll in assemblyFiles)
-				//  references.Add(MetadataReference.CreateFromFile(dll));
-				//foreach (var dll in Directory.GetFiles(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\5.0.0\ref\net5.0", "*.dll"))
-				//foreach (var dll in Directory.GetFiles(@"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.11", "*.dll"))
-				//{
-				//  var filename = System.IO.Path.GetFileName(dll);
-				//
-				//  if (!filename.Contains("VisualBasic") && !filename.StartsWith("System.Private") && (filename == "mscorlib.dll" || filename.StartsWith("System") || filename.StartsWith("Microsoft")))
-				//      references.Add(MetadataReference.CreateFromFile(dll));
-				//}
-				//
-				////foreach (var dll in Directory.GetFiles(@"C:\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\5.0.0\ref\net5.0\", " *.dll"))
-				//foreach (var dll in Directory.GetFiles(@"C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\5.0.11", " *.dll"))
-				//{
-				//  var filename = System.IO.Path.GetFileName(dll);
-				//
-				//  if (!filename.Contains("VisualBasic") && !filename.Contains("PresentationFramework") && !filename.Contains("ReachFramework")
-				//          && (filename.StartsWith("System") || filename.StartsWith("Microsoft")))
-				//      references.Add(MetadataReference.CreateFromFile(dll));
-				//}
-				//references.Add(MetadataReference.CreateFromFile("Keysharp.Core.dll"));
-				//references.Add(MetadataReference.CreateFromFile("Keysharp.Core.dll"));
-				//var temp = typeof(object).Assembly.Location;
-				//references.Add(MetadataReference.CreateFromFile(temp));
-				//coreDir = @"C:\Program Files\dotnet\shared\Microsoft.NETCore.App\5.0.11";
-				//desktopDir = @"C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\5.0.11";
 				var references = new List<MetadataReference>
 				{
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "mscorlib.dll")),
@@ -249,24 +216,10 @@ using static Keysharp.Scripting.Script.Operator;
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
 					MetadataReference.CreateFromFile("Keysharp.Core.dll"),
 				};
-				//references =
-				//  DependencyContext.Default.CompileLibraries
-				//  .SelectMany(cl => cl.ResolveReferencePaths())
-				//  .Select(asm => MetadataReference.CreateFromFile(asm))
-				//  .ToList();
-				//foreach (var lib in DependencyContext.Default.CompileLibraries)
-				//{
-				//  var refpaths = lib.ResolveReferencePaths();
-				//  foreach (var refpath in refpaths)
-				//  {
-				//      references.Add(MetadataReference.CreateFromFile(refpath));
-				//  }
-				//}
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
 								  .WithOptions(
 									  new CSharpCompilationOptions(OutputKind.WindowsApplication)
-									  //new CSharpCompilationOptions(OutputKind.ConsoleApplication)
 									  .WithUsings(usings)
 									  .WithOptimizationLevel(OptimizationLevel.Release)
 									  .WithPlatform(Platform.AnyCpu))
@@ -274,8 +227,6 @@ using static Keysharp.Scripting.Script.Operator;
 								  .AddSyntaxTrees(tree)
 								  ;
 				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
-				//msi.CopyTo(new FileStream("./testico.ico", FileMode.Create));
-				//msi.Seek(0, SeekOrigin.Begin);
 				var res = compilation.CreateDefaultWin32Resources(true, true, null, msi);//The first argument must be true to embed version/assembly information.
 				var compilationResult = compilation.Emit(ms, win32Resources: res);
 				return (compilationResult, ms, null);
@@ -410,7 +361,7 @@ using static Keysharp.Scripting.Script.Operator;
 			{
 				_ = sbe.Insert(0, "The following errors occurred:");
 				_ = sbe.AppendLine();
-				return $"{desc} failed:\n\n{sbe.ToString()}\n\n\n{sbw.ToString()}{(message != "" ? "\n\n" + message : "")}";
+				return $"{desc} failed:\n\n{sbe}\n\n\n{sbw}{(message != "" ? "\n\n" + message : "")}";
 			}
 
 			return "";
