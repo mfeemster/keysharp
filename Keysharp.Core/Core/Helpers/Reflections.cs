@@ -79,7 +79,7 @@ namespace Keysharp.Core
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
 				assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
 			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,"))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
-				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.")).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect.
+				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.")).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
 			else//Running as a standalone executable.
 				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.") ||
 							 (assy.EntryPoint != null &&

@@ -49,7 +49,7 @@ using static Keysharp.Scripting.Script.Operator;
 [assembly: System.CLSCompliantAttribute(true)]
 [assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.1")]
 
-namespace Keysharp.Main
+namespace Keysharp.CompiledMain
 {
 	using System;
 	using System.Collections;
@@ -68,7 +68,6 @@ namespace Keysharp.Main
 
 	public sealed class Program
 	{
-
 		[System.STAThreadAttribute()]
 		public static int Main(string[] args)
 		{
@@ -81,8 +80,11 @@ namespace Keysharp.Main
 				HandleCommandLineParams(args);
 				SetProcessDPIAware();
 				CreateTrayMenu();
-				AddHotkey(new FuncObj("label_17D62C8B", null), 0u, "<!a", false);
-				AddHotkey(new FuncObj("label_A1A60A88", null), 0u, ">!a", false);
+				DoStuff();
+				mygui = Gui("+Resize");
+				mybtn = Invoke(GetMethodOrProperty(mygui, "Add"), "Button", "default", "&Test Keysharp Button");
+				Invoke(GetMethodOrProperty(mybtn, "OnEvent"), "Click", "DoStuff");
+				Invoke(GetMethodOrProperty(mygui, "Show"));
 				RunMainWindow(name);
 				ExitApp(0);
 				return 0;
@@ -105,15 +107,13 @@ namespace Keysharp.Main
 			}
 		}
 
-		public static object label_17D62C8B(object thishotkey)
-		{
-			MsgBox("left alt a");
-			return string.Empty;
-		}
+		public static object mybtn;
 
-		public static object label_A1A60A88(object thishotkey)
+		public static object mygui;
+
+		public static object DoStuff()
 		{
-			MsgBox("right alt a");
+			MsgBox("Hi.");
 			return string.Empty;
 		}
 	}
