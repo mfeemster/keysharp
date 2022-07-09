@@ -227,7 +227,9 @@ namespace Keysharp.Main
 					HostWriter.CreateAppHost(
 						appHostSourceFilePath: @$"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\{ver}\runtimes\win-x64\native\apphost.exe",
 						appHostDestinationFilePath: $"{path}.exe",
-						appBinaryFilePath: $"{path}.dll");
+						appBinaryFilePath: $"{path}.dll",
+						windowsGraphicalUserInterface: true,
+						assemblyToCopyResorcesFrom: $"{path}.dll");
 				}
 
 				CompilerHelper.compiledasm = Assembly.Load(arr);
@@ -250,7 +252,6 @@ namespace Keysharp.Main
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
-				//Environment.SetEnvironmentVariable("SCRIPT", script);
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.Program");
 				var main = program.GetMethod("Main");
 				//var temp = Array.Empty<string>();

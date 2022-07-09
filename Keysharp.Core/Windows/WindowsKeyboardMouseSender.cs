@@ -50,7 +50,6 @@ namespace Keysharp.Core.Windows
 
 		internal List<PlaybackEvent> eventPb = new List<PlaybackEvent>(MaxInitialEventsPB);
 
-		// Number of items in the above arrays and the current array capacity.
 		internal List<INPUT> eventSi = new List<INPUT>(MaxInitialEventsSI);
 
 		// sizeof(INPUT) == 28 as of 2006. Since Send is called so often, and since most Sends are short, reducing the load on the stack is also a deciding factor for these.
@@ -218,12 +217,12 @@ namespace Keysharp.Core.Windows
 
 		internal override void CleanupEventArray(long finalKeyDelay)
 		{
-			if (Accessors.SendMode == SendModes.Input)
+			if (sendMode == SendModes.Input)
 			{
 				if (maxEvents > MaxInitialEventsSI)
 					eventSi.Clear();
 			}
-			else if (Accessors.SendMode == SendModes.Play)
+			else if (sendMode == SendModes.Play)
 			{
 				if (maxEvents > MaxInitialEventsPB)
 					eventPb.Clear();
@@ -231,7 +230,7 @@ namespace Keysharp.Core.Windows
 
 			// The following must be done only after functions called above are done using it.  But it must also be done
 			// prior to our caller toggling capslock back on , to avoid the capslock keystroke from going into the array.
-			Accessors.SendMode = SendModes.Event;
+			sendMode = SendModes.Event;
 			DoKeyDelay(finalKeyDelay); // Do this only after resetting sSendMode above.  Should be okay for mouse events too.
 		}
 
@@ -297,7 +296,7 @@ namespace Keysharp.Core.Windows
 			if (prevEventType == KeyEventTypes.KeyDown && prevEventModifierDown != vk && !inBlindMode
 					// SendPlay mode can't display Start Menu, so no need for disguise keystrokes (such keystrokes might cause
 					// unwanted effects in certain games):
-					&& ((vk == VK_LWIN || vk == VK_RWIN) && (prevVK == VK_LWIN || prevVK == VK_RWIN) && Accessors.SendMode != SendModes.Play
+					&& ((vk == VK_LWIN || vk == VK_RWIN) && (prevVK == VK_LWIN || prevVK == VK_RWIN) && sendMode != SendModes.Play
 						|| (vk == VK_LMENU || (vk == VK_RMENU && targetLayoutHasAltGr != ResultType.ConditionTrue)) && (prevVK == VK_LMENU || prevVK == VK_RMENU)))
 				SendKeyEventMenuMask(KeyEventTypes.KeyDownAndUp); // Disguise it to suppress Start Menu or prevent activation of active window's menu bar.
 		}
@@ -384,14 +383,14 @@ namespace Keysharp.Core.Windows
 		internal void DoKeyDelay(long delay = long.MinValue)
 		{
 			if (delay == long.MinValue)
-				delay = (long)((Accessors.SendMode == SendModes.Play) ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay);
+				delay = (long)((sendMode == SendModes.Play) ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay);
 
 			if (delay < 0) // To support user-specified KeyDelay of -1 (fastest send rate).
 				return;
 
-			if (Accessors.SendMode != SendModes.Event)
+			if (sendMode != SendModes.Event)
 			{
-				if (Accessors.SendMode == SendModes.Play && delay > 0) // Zero itself isn't supported by playback hook, so no point in inserting such delays into the array.
+				if (sendMode == SendModes.Play && delay > 0) // Zero itself isn't supported by playback hook, so no point in inserting such delays into the array.
 					PutKeybdEventIntoArray(0, 0, 0, 0, (uint)delay); // Passing zero for vk and sc signals it that aExtraInfo contains the delay.
 
 				//else for other types of arrays, never insert a delay or do one now.
@@ -403,14 +402,14 @@ namespace Keysharp.Core.Windows
 
 		internal override void DoMouseDelay()// Helper function for the mouse functions below.
 		{
-			var mouseDelay = (long)(Accessors.SendMode == SendModes.Play ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay);
+			var mouseDelay = (long)(sendMode == SendModes.Play ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay);
 
 			if (mouseDelay < 0) // To support user-specified KeyDelay of -1 (fastest send rate).
 				return;
 
-			if (Accessors.SendMode != SendModes.Event)
+			if (sendMode != SendModes.Event)
 			{
-				if (Accessors.SendMode == SendModes.Play && mouseDelay > 0) // Zero itself isn't supported by playback hook, so no point in inserting such delays into the array.
+				if (sendMode == SendModes.Play && mouseDelay > 0) // Zero itself isn't supported by playback hook, so no point in inserting such delays into the array.
 					PutKeybdEventIntoArray(0, 0, 0, 0, (uint)mouseDelay); // Passing zero for vk and sc signals to it that aExtraInfo contains the delay.
 
 				//else for other types of arrays, never insert a delay or do one now (caller should have already
@@ -701,7 +700,7 @@ namespace Keysharp.Core.Windows
 			// should be zero.
 			// v2.0: Always translate logical buttons into physical ones.  Which physical button it becomes depends
 			// on whether the mouse buttons are swapped via the Control Panel.
-			if ((vk == VK_LBUTTON || vk == VK_RBUTTON) && Accessors.SendMode != SendModes.Play && WindowsAPI.GetSystemMetrics(SystemMetric.SM_SWAPBUTTON) != 0)
+			if ((vk == VK_LBUTTON || vk == VK_RBUTTON) && sendMode != SendModes.Play && WindowsAPI.GetSystemMetrics(SystemMetric.SM_SWAPBUTTON) != 0)
 				vk = (vk == VK_LBUTTON) ? VK_RBUTTON : VK_LBUTTON;
 
 			switch (vk)
@@ -722,7 +721,7 @@ namespace Keysharp.Core.Windows
 					// for the other modes: because dragging the title bar of one of this thread's windows with a
 					// remap such as F1::LButton doesn't work if that remap uses SendPlay internally (the window
 					// gets stuck to the mouse cursor).
-					if ((Accessors.SendMode == SendModes.Event || eventSi.Count == 0) // See above.
+					if ((sendMode == SendModes.Event || eventSi.Count == 0) // See above.
 							&& (eventType == KeyEventTypes.KeyDown || (eventType == KeyEventTypes.KeyUp && (workaroundVK != 0)))) // i.e. this is a down-only event or up-only event.
 					{
 						// v1.0.40.01: The following section corrects misbehavior caused by a thread sending
@@ -888,7 +887,7 @@ namespace Keysharp.Core.Windows
 			// v2.0: Always translate logical buttons into physical ones.  Which physical button it becomes depends
 			// on whether the mouse buttons are swapped via the Control Panel.  Note that journal playback doesn't
 			// need the swap because every aspect of it is "logical".
-			if ((vk == WindowsAPI.VK_LBUTTON || vk == WindowsAPI.VK_RBUTTON) && Accessors.SendMode != SendModes.Play && WindowsAPI.GetSystemMetrics(SystemMetric.SM_SWAPBUTTON) != 0)
+			if ((vk == WindowsAPI.VK_LBUTTON || vk == WindowsAPI.VK_RBUTTON) && sendMode != SendModes.Play && WindowsAPI.GetSystemMetrics(SystemMetric.SM_SWAPBUTTON) != 0)
 				vk = (vk == WindowsAPI.VK_LBUTTON) ? WindowsAPI.VK_RBUTTON : WindowsAPI.VK_LBUTTON;//Need to figure out making this cross platform.//TODO
 
 			// MSDN: If [event_flags] is not MOUSEEVENTF_WHEEL, [MOUSEEVENTF_HWHEEL,] MOUSEEVENTF_XDOWN,
@@ -967,7 +966,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="y"></param>
 		internal override void MouseEvent(uint eventFlags, uint data, int x = CoordUnspecified, int y = CoordUnspecified)
 		{
-			if (Accessors.SendMode != SendModes.Event)
+			if (sendMode != SendModes.Event)
 				PutMouseEventIntoArray(eventFlags, data, x, y);
 			else
 				WindowsAPI.mouse_event(eventFlags
@@ -995,7 +994,7 @@ namespace Keysharp.Core.Windows
 			if (x == CoordUnspecified || y == CoordUnspecified)
 				return;
 
-			if (Accessors.SendMode == SendModes.Play) // Journal playback mode.
+			if (sendMode == SendModes.Play) // Journal playback mode.
 			{
 				// Mouse speed (aSpeed) is ignored for SendInput/Play mode: the mouse always moves instantaneously
 				// (though in the case of playback-mode, MouseDelay still applies between each movement and click).
@@ -1036,7 +1035,7 @@ namespace Keysharp.Core.Windows
 
 			if (moveOffset)  // We're moving the mouse cursor relative to its current position.
 			{
-				if (Accessors.SendMode == SendModes.Input)
+				if (sendMode == SendModes.Input)
 				{
 					// Since GetCursorPos() can't be called to find out a future cursor position, use the position
 					// tracked for SendInput (facilitates MouseClickDrag's R-option as well as Send{Click}'s).
@@ -1060,7 +1059,7 @@ namespace Keysharp.Core.Windows
 				WindowsAPI.CoordToScreen(ref x, ref y, CoordMode.Mouse);
 			}
 
-			if (Accessors.SendMode == SendModes.Input) // Track predicted cursor position for use by subsequent events put into the array.
+			if (sendMode == SendModes.Input) // Track predicted cursor position for use by subsequent events put into the array.
 			{
 				sendInputCursorPos.X = x; // Always stores normal coords (non-MOUSEEVENTF_ABSOLUTE).
 				sendInputCursorPos.Y = y; //
@@ -1079,7 +1078,7 @@ namespace Keysharp.Core.Windows
 			else if (speed > MaxMouseSpeed)
 				speed = MaxMouseSpeed;
 
-			if (speed == 0 || Accessors.SendMode == SendModes.Input) // Instantaneous move to destination coordinates with no incremental positions in between.
+			if (speed == 0 || sendMode == SendModes.Input) // Instantaneous move to destination coordinates with no incremental positions in between.
 			{
 				// See the comments in the playback-mode section at the top of this function for why SM_INPUT ignores aSpeed.
 				MouseEvent((int)MOUSEEVENTF.MOVE | (int)MOUSEEVENTF.ABSOLUTE, 0, x, y);
@@ -1342,7 +1341,7 @@ namespace Keysharp.Core.Windows
 			//   01d 11 Ctrl keyup  (left scan code)
 			//   138 12 Alt  syskeyup (right vs. left scan code)
 			// Check for VK_MENU not VK_RMENU because caller should have translated it to neutral:
-			if (vk == VK_MENU && sc == SC_RALT && targetLayoutHasAltGr == ResultType.ConditionTrue && Accessors.SendMode == SendModes.Play)
+			if (vk == VK_MENU && sc == SC_RALT && targetLayoutHasAltGr == ResultType.ConditionTrue && sendMode == SendModes.Play)
 				// Must pass VK_CONTROL rather than VK_LCONTROL because playback hook requires neutral modifiers.
 				PutKeybdEventIntoArray(MOD_LCONTROL, VK_CONTROL, SC_LCONTROL, eventFlags, extraInfo); // Recursive call to self.
 
@@ -1354,7 +1353,7 @@ namespace Keysharp.Core.Windows
 			else
 				eventModifiersLR |= keyAsModifiersLR;
 
-			if (Accessors.SendMode == SendModes.Input)
+			if (sendMode == SendModes.Input)
 			{
 				var thisEvent = new INPUT();
 				thisEvent.type = WindowsAPI.INPUT_KEYBOARD;
@@ -1422,7 +1421,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="y"></param>
 		internal void PutMouseEventIntoArray(uint eventFlags, uint data, int x, int y)
 		{
-			if (Accessors.SendMode == SendModes.Input)
+			if (sendMode == SendModes.Input)
 			{
 				var thisEvent = new INPUT();
 				var sendLevel = (uint)(long)Accessors.A_SendLevel;
@@ -1524,7 +1523,7 @@ namespace Keysharp.Core.Windows
 			// hook uses to determine which hotkey should be triggered for a suffix key that
 			// has more than one set of triggering modifiers (for when the user is holding down
 			// that suffix to auto-repeat it -- see keyboard_mouse.h for details).
-			var modifiersLRNow = Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState();
+			var modifiersLRNow = sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState();
 			SetModifierLRState((modifiersLRNow | MOD_LALT) & ~(MOD_RALT | MOD_LCONTROL | MOD_RCONTROL | MOD_LSHIFT | MOD_RSHIFT)
 							   , modifiersLRNow, IntPtr.Zero, false // Pass false because there's no need to disguise the down-event of LALT.
 							   , true, KeyIgnore); // Pass true so that any release of RALT is disguised (Win is never released here).
@@ -1580,11 +1579,10 @@ namespace Keysharp.Core.Windows
 		/// <param name="modsDuringSend"></param>
 		internal override void SendEventArray(ref long finalKeyDelay, int modsDuringSend)
 		{
-			if (eventSi.Count == 0)
-				return;
-
-			if (Accessors.SendMode == SendModes.Input)
+			if (sendMode == SendModes.Input)
 			{
+				//if (eventSi.Count == 0)
+				//return;
 				// Remove hook(s) temporarily because the presence of low-level (LL) keybd hook completely disables
 				// the uninterruptibility of SendInput's keystrokes (but the mouse hook doesn't affect them).
 				// The converse is also true.  This was tested via:
@@ -1677,8 +1675,17 @@ namespace Keysharp.Core.Windows
 			                return;
 
 			*/
+			Action func = () =>
+			{
+				Keysharp.Scripting.Script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
+			};
 
-			if ((Keysharp.Scripting.Script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+			if (Keysharp.Scripting.Script.mainWindow != null)
+				Keysharp.Scripting.Script.mainWindow.Invoke(func);
+			else
+				func();
+
+			if (Keysharp.Scripting.Script.playbackHook == IntPtr.Zero)
 				return;
 
 			// During playback, have the keybd hook (if it's installed) block presses of the Windows key.
@@ -1687,7 +1694,6 @@ namespace Keysharp.Core.Windows
 			// It should be okay to set this after the playback hook is installed because playback shouldn't
 			// actually begin until we have our thread do its first MsgSleep later below.
 			Keysharp.Scripting.Script.HookThread.blockWinKeys = true;
-			//endif
 
 			// Otherwise, hook is installed, so:
 			// Wait for the hook to remove itself because the script should not be allowed to continue
@@ -1784,7 +1790,7 @@ namespace Keysharp.Core.Windows
 
 			for (var i = 0; i < repeatCount; ++i)
 			{
-				if (Accessors.SendMode == SendModes.Event)
+				if (sendMode == SendModes.Event)
 					LongOperationUpdateForSendKeys();  // This does not measurably affect the performance of SendPlay/Event.
 
 				// These modifiers above stay in effect for each of these keypresses.
@@ -1816,7 +1822,7 @@ namespace Keysharp.Core.Windows
 					// a possibly unwanted disguising.  Also note that hotkeys such as #LButton automatically use
 					// both hooks so that the Start Menu doesn't appear when the Win key is released, so we're
 					// not responsible for that type of disguising here.
-					SetModifierLRState(modifiersLRSpecified, Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState()
+					SetModifierLRState(modifiersLRSpecified, sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState()
 									   , targetWindow, false, true, sendLevel != 0 ? KeyIgnoreLevel(sendLevel) : KeyIgnore); // See keyboard_mouse.h for explanation of KEY_IGNORE.
 					// Above: Fixed for v1.1.27 to use KEY_IGNORE except when SendLevel is non-zero (since that
 					// would indicate that the script probably wants to trigger a hotkey).  KEY_IGNORE is used
@@ -1891,7 +1897,7 @@ namespace Keysharp.Core.Windows
 				// Win/Alt don't have to be disguised but our caller would have trouble tracking that info or making that
 				// determination.  This avoids extra keystrokes, while still procrastinating the release of Ctrl/Shift so
 				// that those can be left down if the caller's next keystroke happens to need them.
-				var stateNow = Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState();
+				var stateNow = sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState();
 				var winAltToBeReplaced = (stateNow & ~modifiersLRPersistent) // The modifiers to be released...
 										 & (MOD_LWIN | MOD_RWIN | MOD_LALT | MOD_RALT); // ... but restrict them to only Win/Alt.
 
@@ -2206,22 +2212,22 @@ namespace Keysharp.Core.Windows
 			var priorCapslockState = (bool)Accessors.A_StoreCapsLockMode && !inBlindMode && sendRaw != SendRawModes.RawText
 									 ? ToggleKeyState(VK_CAPITAL, ToggleValueType.Off)
 									 : ToggleValueType.Invalid; // In blind mode, don't do store capslock (helps remapping and also adds flexibility).
-			// sSendMode must be set only after setting Capslock state above, because the hook method
+			// sendMode must be set only after setting Capslock state above, because the hook method
 			// is incapable of changing the on/off state of toggleable keys like Capslock.
 			// However, it can change Capslock state as seen in the window to which playback events are being
 			// sent; but the behavior seems inconsistent and might vary depending on OS type, so it seems best
 			// not to rely on it.
-			Accessors.SendMode = sendModeOrig;
+			sendMode = sendModeOrig;
 
-			if (Accessors.SendMode != SendModes.Event) // Build an array.  We're also responsible for setting Accessors.SendMode to SM_EVENT prior to returning.
+			if (sendMode != SendModes.Event) // Build an array.  We're also responsible for setting sendMode to SM_EVENT prior to returning.
 			{
-				maxEvents = Accessors.SendMode == SendModes.Input ? MaxInitialEventsSI : MaxInitialEventsPB;
+				maxEvents = sendMode == SendModes.Input ? MaxInitialEventsSI : MaxInitialEventsPB;
 				InitEventArray(maxEvents, modsCurrent);
 			}
 
 			var blockinputPrev = Keyboard.blockInput;
 			var doSelectiveBlockInput = (Keyboard.blockInputMode == ToggleValueType.Send || Keyboard.blockInputMode == ToggleValueType.SendAndMouse)
-										&& Accessors.SendMode == SendModes.Event && targetWindow == IntPtr.Zero;
+										&& sendMode == SendModes.Event && targetWindow == IntPtr.Zero;
 
 			if (doSelectiveBlockInput)
 				_ = Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
@@ -2251,7 +2257,7 @@ namespace Keysharp.Core.Windows
 			{
 				thisEventModifierDown = 0; // Set default for this iteration, overridden selectively below.
 
-				if (Accessors.SendMode == SendModes.Event)
+				if (sendMode == SendModes.Event)
 					LongOperationUpdateForSendKeys(); // This does not measurably affect the performance of SendPlay/Event.
 
 				if (sendRaw == SendRawModes.NotRaw && sendKeyChars.IndexOf(sub[keyIndex]) != -1)//  _tcschr(("^+!#{}"), *aKeys))
@@ -2508,7 +2514,7 @@ namespace Keysharp.Core.Windows
 								// in the wrong state (e.g. Send +{F1}{ControlDown}).  Since modifiers can sometimes affect
 								// each other, make sure they're in the state intended by the user before beginning:
 								SetModifierLRState(persistentModifiersForThisSendKeys
-												   , Accessors.SendMode == SendModes.Event ? eventModifiersLR : GetModifierLRState()
+												   , sendMode == SendModes.Event ? eventModifiersLR : GetModifierLRState()
 												   , targetWindow, false, false); // It also does DoKeyDelay(g->PressDuration).
 
 								for (var ii = 0; ii < repeatCount; ++ii)
@@ -2518,7 +2524,7 @@ namespace Keysharp.Core.Windows
 									// user can have more control):
 									SendKeyEvent(eventType, vk, 0, targetWindow, true);
 
-									if (Accessors.SendMode == SendModes.Event)
+									if (sendMode == SendModes.Event)
 										LongOperationUpdateForSendKeys();
 								}
 							}
@@ -2566,8 +2572,8 @@ namespace Keysharp.Core.Windows
 									else
 									{
 										// Use SendInput in unicode mode if available, otherwise fall back to SendASC.
-										// To know why the following requires Accessors.SendMode != SM_PLAY, see SendUnicodeChar.
-										if (Accessors.SendMode != SendModes.Play)
+										// To know why the following requires sendMode != SM_PLAY, see SendUnicodeChar.
+										if (sendMode != SendModes.Play)
 										{
 											SendUnicodeChar(wc1, modsForNextKey.Value | persistentModifiersForThisSendKeys);
 
@@ -2660,11 +2666,11 @@ namespace Keysharp.Core.Windows
 
 			int modsToSet;
 
-			if (Accessors.SendMode != SendModes.Event)
+			if (sendMode != SendModes.Event)
 			{
 				var finalKeyDelay = -1L;  // Set default.
 
-				if (!abortArraySend && eventSi.Count > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
+				if (!abortArraySend && eventPb.Count > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
 				{
 					// Add more events to the array (prior to sending) to support the following:
 					// Restore the modifiers to match those the user is physically holding down, but do it as *part*
@@ -2905,7 +2911,7 @@ namespace Keysharp.Core.Windows
 			//
 			// Production of ANSI characters above 127 has been tested on both Windows XP and 98se (but not the
 			// Win98 command prompt).
-			var useSendasc = Accessors.SendMode == SendModes.Play; // See SendUnicodeChar for why it isn't called for SM_PLAY.
+			var useSendasc = sendMode == SendModes.Play; // See SendUnicodeChar for why it isn't called for SM_PLAY.
 			var ascString = new byte[16];
 			var wc = '0';
 
@@ -2935,7 +2941,7 @@ namespace Keysharp.Core.Windows
 
 			for (var i = 0; i < repeatCount; ++i)
 			{
-				if (Accessors.SendMode == SendModes.Event)
+				if (sendMode == SendModes.Event)
 					LongOperationUpdateForSendKeys();
 
 				if (useSendasc)
@@ -2961,10 +2967,10 @@ namespace Keysharp.Core.Windows
 			// Set modifier keystate as specified by caller.  Generally this will be 0, since
 			// key combinations with Unicode packets either do nothing at all or do the same as
 			// without the modifiers.  All modifiers are known to interfere in some applications.
-			SetModifierLRState(modifiers, Accessors.SendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState(), IntPtr.Zero, false, true, KeyIgnore);
+			SetModifierLRState(modifiers, sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState(), IntPtr.Zero, false, true, KeyIgnore);
 			var sendLevel = (uint)(long)Accessors.A_SendLevel;
 
-			if (Accessors.SendMode == SendModes.Input)
+			if (sendMode == SendModes.Input)
 			{
 				// Calling SendInput() now would cause characters to appear out of sequence.
 				// Instead, put them into the array and allow them to be sent in sequence.
@@ -2973,7 +2979,7 @@ namespace Keysharp.Core.Windows
 				return;
 			}
 
-			//else caller has ensured Accessors.SendMode is SM_EVENT. In that mode, events are sent one at a time,
+			//else caller has ensured sendMode is SM_EVENT. In that mode, events are sent one at a time,
 			// so it is safe to immediately call SendInput(). SM_PLAY is not supported; for simplicity,
 			// SendASC() is called instead of this function. Although this means Unicode chars probably
 			// won't work, it seems better than sending chars out of order. One possible alternative could
@@ -3091,7 +3097,7 @@ namespace Keysharp.Core.Windows
 			// WIN: The WIN key is successfully disguised under a greater number of conditions than ALT.
 			// Since SendPlay can't display Start Menu, there's no need to send the disguise-keystrokes (such
 			// keystrokes might cause unwanted effects in certain games):
-			var disguiseWinDown = disguiseDownWinAlt && Accessors.SendMode != SendModes.Play
+			var disguiseWinDown = disguiseDownWinAlt && sendMode != SendModes.Play
 								  && ctrlNotDown && ctrlWillNotBeDown
 								  && (modifiersLRunion & (MOD_LSHIFT | MOD_RSHIFT)) == 0 // And neither SHIFT key is down, nor will it be.
 								  && (modifiersLRunion & (MOD_LALT | MOD_RALT)) == 0;    // And neither ALT key is down, nor will it be.
@@ -3126,7 +3132,7 @@ namespace Keysharp.Core.Windows
 					// WIN also in case ALT is down, which might cause the use of SHIFT as the disguise key
 					// to trigger the language switch.
 					if (ctrlNorShiftNorAltDown && disguiseUpWinAlt // Nor will they be pushed down later below, otherwise defer_win_release would have been true and we couldn't get to this point.
-							&& Accessors.SendMode != SendModes.Play) // SendPlay can't display Start Menu, so disguise not needed (also, disguise might mess up some games).
+							&& sendMode != SendModes.Play) // SendPlay can't display Start Menu, so disguise not needed (also, disguise might mess up some games).
 						SendKeyEventMenuMask(KeyEventTypes.KeyDownAndUp, extraInfo); // Disguise key release to suppress Start Menu.
 
 					// The above event is safe because if we're here, it means VK_CONTROL will not be
@@ -3152,7 +3158,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (!deferWinRelease)
 				{
-					if (ctrlNorShiftNorAltDown && disguiseUpWinAlt && Accessors.SendMode != SendModes.Play)
+					if (ctrlNorShiftNorAltDown && disguiseUpWinAlt && sendMode != SendModes.Play)
 						SendKeyEventMenuMask(KeyEventTypes.KeyDownAndUp, extraInfo); // Disguise key release to suppress Start Menu.
 
 					SendKeyEvent(KeyEventTypes.KeyUp, VK_RWIN, 0, IntPtr.Zero, false, extraInfo);
@@ -3356,7 +3362,7 @@ namespace Keysharp.Core.Windows
 			// -1 has been verified to be insufficient, at least for the very first letter sent if it is
 			// supposed to be capitalized.
 			// g_MainThreadID is the only thread of our process that owns any windows.
-			var pressDuration = (long)(Accessors.SendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration);
+			var pressDuration = (long)(sendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration);
 
 			if (pressDuration > -1) // SM_PLAY does use DoKeyDelay() to store a delay item in the event array.
 				// Since modifiers were changed by the above, do a key-delay if the special intra-keystroke
@@ -3669,9 +3675,9 @@ namespace Keysharp.Core.Windows
 			// don't let those events get interspersed with the script's explicit use of SendInput.
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var callerIsKeybdHook = WindowsAPI.GetCurrentThreadId() == Keysharp.Core.Processes.MainThreadID;//Hook runs on the main window thread.
-			var putEventIntoArray = Accessors.SendMode != SendModes.Event && !callerIsKeybdHook;
+			var putEventIntoArray = sendMode != SendModes.Event && !callerIsKeybdHook;
 
-			if (Accessors.SendMode == SendModes.Input || callerIsKeybdHook) // First check is necessary but second is just for maintainability.
+			if (sendMode == SendModes.Input || callerIsKeybdHook) // First check is necessary but second is just for maintainability.
 				doKeyDelay = false;
 
 			// Even if the sc_to_vk() mapping results in a zero-value vk, don't return.
@@ -3693,7 +3699,7 @@ namespace Keysharp.Core.Windows
 
 			// v1.0.43: Apparently, the journal playback hook requires neutral modifier keystrokes
 			// rather than left/right ones.  Otherwise, the Shift key can't capitalize letters, etc.
-			if (Accessors.SendMode == SendModes.Play)
+			if (sendMode == SendModes.Play)
 			{
 				switch ((ushort)vk)
 				{
@@ -3795,7 +3801,7 @@ namespace Keysharp.Core.Windows
 				// the normal g->KeyDelay will be in effect.  In other words, it seems undesirable in
 				// most cases to do both delays for only "one half" of a keystroke:
 				if (doKeyDelay && eventType == KeyEventTypes.KeyDownAndUp)
-					DoKeyDelay((int)Accessors.A_KeyDuration); // Since aTargetWindow!=NULL, Accessors.SendMode!=SM_PLAY, so no need for to ever use the SendPlay press-duration.
+					DoKeyDelay((int)Accessors.A_KeyDuration); // Since aTargetWindow!=NULL, sendMode!=SM_PLAY, so no need for to ever use the SendPlay press-duration.
 
 				if (eventType != KeyEventTypes.KeyDown)
 					_ = WindowsAPI.PostMessage(targetWindow, WM_KEYUP, (uint)vk, (uint)(lParam | 0xC0000001));
@@ -3830,8 +3836,8 @@ namespace Keysharp.Core.Windows
 				bool? b = null;
 				var keyAsModifiersLR = putEventIntoArray ? ht.KeyToModifiersLR(vk, sc, ref b) : 0;
 				var doKeyHistory = !callerIsKeybdHook // If caller is hook, don't log because it does.
-								   && Accessors.SendMode != SendModes.Play// In playback mode, the journal hook logs so that timestamps are accurate.
-								   && (!ht.HasKbdHook() || Accessors.SendMode == SendModes.Input); // In the remaining cases, log only when the hook isn't installed or won't be at the time of the event.
+								   && sendMode != SendModes.Play// In playback mode, the journal hook logs so that timestamps are accurate.
+								   && (!ht.HasKbdHook() || sendMode == SendModes.Input); // In the remaining cases, log only when the hook isn't installed or won't be at the time of the event.
 
 				if (eventType != KeyEventTypes.KeyUp)  // i.e. always do it for KEYDOWNANDUP
 				{
@@ -3862,7 +3868,7 @@ namespace Keysharp.Core.Windows
 				// the normal g->KeyDelay will be in effect.  In other words, it seems undesirable in
 				// most cases to do both delays for only "one half" of a keystroke:
 				if (doKeyDelay && eventType == KeyEventTypes.KeyDownAndUp) // Hook should never specify a delay, so no need to check if caller is hook.
-					DoKeyDelay((long)(Accessors.SendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration)); // DoKeyDelay() is not thread safe but since the hook thread should never pass true for aKeyDelay, it shouldn't be an issue.
+					DoKeyDelay((long)(sendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration)); // DoKeyDelay() is not thread safe but since the hook thread should never pass true for aKeyDelay, it shouldn't be an issue.
 
 				if (eventType != KeyEventTypes.KeyDown)  // i.e. always do it for KEYDOWNANDUP
 				{

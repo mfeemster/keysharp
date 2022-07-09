@@ -37,8 +37,8 @@ namespace Keysharp.Core
 			var move_offset = false;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
-			PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
-							   , vk, x, y, 0, 0, repeat_count, event_type, (int)Accessors.A_DefaultMouseSpeed, move_offset);
+			ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
+											  , vk, x, y, 0, 0, repeat_count, event_type, (int)Accessors.A_DefaultMouseSpeed, move_offset);
 		}
 
 		/// <summary>
@@ -262,80 +262,16 @@ namespace Keysharp.Core
 				}
 			}
 
-			PerformMouseCommon(actionType
-							   , vk
-							   , x1
-							   , y1
-							   , x2//These two are blank except for dragging.
-							   , y2
-							   , repeatCount
-							   , eventType
-							   , speed
-							   , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');
-		}
-
-		private static void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
-											   int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, int speed, bool relative)
-		{
-			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
-			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
-			// include room for the maximum number of mouse delays too.
-			// Drag consists of at most:
-			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
-			const int MAX_PERFORM_MOUSE_EVENTS = 10;
-			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMsSender = ht.kbdMsSender;
-			//Original differentiates between a thread specific value for sendmode and a global static one. Here, we just use the thread specific one.
-
-			if (Accessors.SendMode == Common.Keyboard.SendModes.Input || Accessors.SendMode == Common.Keyboard.SendModes.InputThenPlay)
-			{
-				if (ht.SystemHasAnotherMouseHook()) // See similar section in SendKeys() for details.
-					Accessors.SendMode = (Accessors.SendMode == Common.Keyboard.SendModes.Input) ? Common.Keyboard.SendModes.Event : Common.Keyboard.SendModes.Play;
-				else
-					Accessors.SendMode = Common.Keyboard.SendModes.Input; // Resolve early so that other sections don't have to consider SM_INPUT_FALLBACK_TO_PLAY a valid value.
-			}
-
-			if (Accessors.SendMode != Common.Keyboard.SendModes.Event) // We're also responsible for setting sSendMode to SM_EVENT prior to returning.
-				kbdMsSender.InitEventArray(MAX_PERFORM_MOUSE_EVENTS, 0);
-
-			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
-			// Turn it back off only if it wasn't ON before we started.
-			var blockinput_prev = Keysharp.Core.Keyboard.blockInput;
-			var do_selective_blockinput = (Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.Mouse
-										   || Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.SendAndMouse)
-										  && Accessors.SendMode == Common.Keyboard.SendModes.Event;
-
-			if (do_selective_blockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
-				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
-
-			switch (actionType)
-			{
-				case Actions.ACT_MOUSEMOVE:
-					var unused = 0u;
-					kbdMsSender.MouseMove(ref x1, ref y1, ref unused, speed, relative); // Does nothing if coords are invalid.
-					break;
-
-				case Actions.ACT_MOUSECLICK:
-					kbdMsSender.MouseClick(vk, x1, y1, repeatCount, speed, eventType, relative); // Does nothing if coords are invalid.
-					break;
-
-				case Actions.ACT_MOUSECLICKDRAG:
-					kbdMsSender.MouseClickDrag(vk, x1, y1, x2, y2, speed, relative); // Does nothing if coords are invalid.
-					break;
-			}
-
-			if (Accessors.SendMode != Common.Keyboard.SendModes.Event)
-			{
-				var final_key_delay = -1L; // Set default.
-
-				if (!kbdMsSender.abortArraySend)
-					kbdMsSender.SendEventArray(ref final_key_delay, 0); // Last parameter is ignored because keybd hook isn't removed for a pure-mouse SendInput.
-
-				kbdMsSender.CleanupEventArray(final_key_delay);
-			}
-
-			if (do_selective_blockinput && !blockinput_prev)  // Turn it back off only if it was off before we started.
-				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
+			ht.kbdMsSender.PerformMouseCommon(actionType
+											  , vk
+											  , x1
+											  , y1
+											  , x2//These two are blank except for dragging.
+											  , y2
+											  , repeatCount
+											  , eventType
+											  , speed
+											  , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');
 		}
 	}
 
