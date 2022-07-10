@@ -258,7 +258,7 @@ namespace Keysharp.Scripting
 						}
 
 						if (paren.Count != 0)
-							passed = ParseMultiExpression(paren.ToArray(), create);
+							passed = ParseMultiExpression(paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
 
 						if (dynamic)
 						{

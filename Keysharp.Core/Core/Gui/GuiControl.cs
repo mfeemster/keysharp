@@ -427,11 +427,9 @@ namespace Keysharp.Core
 
 		public object Add(params object[] obj)
 		{
-			var items = obj.L();
-
 			if (_control is KeysharpTreeView tv)
 			{
-				var (name, parent, options) = items.Sls();
+				var (name, parent, options) = obj.Sls();
 				var first = false;
 				var n = int.MinValue;
 				TreeNode node;
@@ -467,16 +465,16 @@ namespace Keysharp.Core
 			}
 			else if (_control is ListView lv)
 			{
-				var lvo = items.Count > 0 && items[0] is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
-				var strs = items.Cast<object>().Skip(1).Flatten().Cast<object>().Select(x => x.Str()).ToList();
+				var lvo = obj.Length > 0 && obj[0] is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
+				var strs = obj.Cast<object>().Skip(1).Flatten().Cast<object>().Select(x => x.Str()).ToList();
 				GuiHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 			}
 			else if (_control is ListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
-				lb.Items.AddRange(items.Cast<object>().Flatten().Cast<object>().Select(x => x.Str()).ToArray());
+				lb.Items.AddRange(obj.Cast<object>().Flatten().Cast<object>().Select(x => x.Str()).ToArray());
 			else if (_control is ComboBox cb)
-				cb.Items.AddRange(items.Cast<object>().Flatten().Cast<object>().Select(x => x.Str()).ToArray());
+				cb.Items.AddRange(obj.Cast<object>().Flatten().Cast<object>().Select(x => x.Str()).ToArray());
 			else if (_control is TabControl tc)
-				tc.TabPages.AddRange(items.Cast<object>().Flatten().Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+				tc.TabPages.AddRange(obj.Cast<object>().Flatten().Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
 
 			return null;
 		}

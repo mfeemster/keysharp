@@ -1179,53 +1179,53 @@ namespace Keysharp.Core
 			return holder;
 		}
 
-		public GuiControl AddActiveX(object obj) => Add(Keysharp.Core.Core.Keyword_ActiveX, obj);
+		public GuiControl AddActiveX(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ActiveX, obj0, obj1);
 
-		public GuiControl AddButton(object obj) => Add(Keysharp.Core.Core.Keyword_Button, obj);
+		public GuiControl AddButton(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Button, obj0, obj1);
 
-		public GuiControl AddCheckbox(object obj) => Add(Keysharp.Core.Core.Keyword_CheckBox, obj);
+		public GuiControl AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_CheckBox, obj0, obj1);
 
-		public GuiControl AddComboBox(object obj) => Add(Keysharp.Core.Core.Keyword_ComboBox, obj);
+		public GuiControl AddComboBox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ComboBox, obj0, obj1);
 
-		public GuiControl AddCustom(object obj) => Add(Keysharp.Core.Core.Keyword_Custom, obj);
+		public GuiControl AddCustom(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Custom, obj0, obj1);
 
-		public GuiControl AddDateTime(object obj) => Add(Keysharp.Core.Core.Keyword_DateTime, obj);
+		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_DateTime, obj0, obj1);
 
-		public GuiControl AddDropDownList(object obj) => Add(Keysharp.Core.Core.Keyword_DropDownList, obj);
+		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_DropDownList, obj0, obj1);
 
-		public GuiControl AddEdit(object obj) => Add(Keysharp.Core.Core.Keyword_Edit, obj);
+		public GuiControl AddEdit(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Edit, obj0, obj1);
 
-		public GuiControl AddGroupBox(object obj) => Add(Keysharp.Core.Core.Keyword_GroupBox, obj);
+		public GuiControl AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_GroupBox, obj0, obj1);
 
-		public GuiControl AddHotKey(object obj) => Add(Keysharp.Core.Core.Keyword_Hotkey, obj);
+		public GuiControl AddHotKey(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Hotkey, obj0, obj1);
 
-		public GuiControl AddLink(object obj) => Add(Keysharp.Core.Core.Keyword_Link, obj);
+		public GuiControl AddLink(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Link, obj0, obj1);
 
-		public GuiControl AddListBox(object obj) => Add(Keysharp.Core.Core.Keyword_ListBox, obj);
+		public GuiControl AddListBox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ListBox, obj0, obj1);
 
-		public GuiControl AddListView(object obj) => Add(Keysharp.Core.Core.Keyword_ListView, obj);
+		public GuiControl AddListView(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ListView, obj0, obj1);
 
-		public GuiControl AddMonthCal(object obj) => Add(Keysharp.Core.Core.Keyword_MonthCal, obj);
+		public GuiControl AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_MonthCal, obj0, obj1);
 
-		public GuiControl AddPicture(object obj) => Add(Keysharp.Core.Core.Keyword_Picture, obj);
+		public GuiControl AddPicture(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Picture, obj0, obj1);
 
-		public GuiControl AddProgress(object obj) => Add(Keysharp.Core.Core.Keyword_Progress, obj);
+		public GuiControl AddProgress(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Progress, obj0, obj1);
 
-		public GuiControl AddRadio(object obj) => Add(Keysharp.Core.Core.Keyword_Radio, obj);
+		public GuiControl AddRadio(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Radio, obj0, obj1);
 
-		public GuiControl AddSlider(object obj) => Add(Keysharp.Core.Core.Keyword_Slider, obj);
+		public GuiControl AddSlider(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Slider, obj0, obj1);
 
-		public GuiControl AddStatusBar(object obj) => Add(Keysharp.Core.Core.Keyword_StatusBar, obj);
+		public GuiControl AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_StatusBar, obj0, obj1);
 
-		public GuiControl AddTab(object obj) => Add(Keysharp.Core.Core.Keyword_Tab, obj);
+		public GuiControl AddTab(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Tab, obj0, obj1);
 
-		public GuiControl AddText(object obj) => Add(Keysharp.Core.Core.Keyword_Text, obj);
+		public GuiControl AddText(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Text, obj0, obj1);
 
-		public GuiControl AddTreeView(object obj) => Add(Keysharp.Core.Core.Keyword_TreeView, obj);
+		public GuiControl AddTreeView(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_TreeView, obj0, obj1);
 
-		public GuiControl AddUpDown(object obj) => Add(Keysharp.Core.Core.Keyword_UpDown, obj);
+		public GuiControl AddUpDown(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_UpDown, obj0, obj1);
 
-		public GuiControl AddWebBrowser(object obj) => Add(Keysharp.Core.Core.Keyword_WebBrowser, obj);
+		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_WebBrowser, obj0, obj1);
 
 		public void Destroy() => form.Close();
 

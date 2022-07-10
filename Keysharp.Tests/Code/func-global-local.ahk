@@ -180,3 +180,23 @@ If (z == 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+funcretval(xx)
+{
+	return xx
+}
+
+func5()
+{
+	global y := funcretval(x) ; Since x is a function argument it should not create it and instead use the global.
+}
+
+x := 123
+y := 0
+
+func5()
+
+If (y == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
