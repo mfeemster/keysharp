@@ -249,7 +249,7 @@ namespace Keysharp.Core
 
 		internal static void LV_RowOptions(ref ListViewItem row, string options)
 		{
-			var opts = options.Split(new[] { ' ', '\t' });
+			var opts = options.Split(new[] { ' ', '\t' }, StringSplitOptions.TrimEntries);
 
 			for (var i = 0; i < opts.Length; i++)
 			{
@@ -262,9 +262,9 @@ namespace Keysharp.Core
 				if (!enable || state == '+')
 					opts[i] = opts[i].Substring(1);
 
-				var mode = opts[i].Trim().ToLowerInvariant();
+				var mode = opts[i].ToLowerInvariant();
 
-				switch (opts[i].Trim().ToLowerInvariant())
+				switch (mode)
 				{
 					case Core.Keyword_Check: row.Checked = enable; break;
 
@@ -365,42 +365,40 @@ namespace Keysharp.Core
 		internal static (string, List<Tuple<int, int, Tuple<string, string>>>) ParseLinkLabelText(string txt)
 		{
 			var sb = new StringBuilder(txt.Length);
-			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries);
+			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 			var links = new List<Tuple<int, int, Tuple<string, string>>>();
 			var quotes = new char[] { '\'', '\"' };
 
 			foreach (var split in splits)
 			{
-				var strim = split.Trim();
-
-				if (strim.StartsWith("href=") || strim.StartsWith("id="))
+				if (split.StartsWith("href=") || split.StartsWith("id="))
 				{
 					var id = "";
 					var url = "";
-					var pos = strim.NthIndexOf("id=", 0, 1, StringComparison.OrdinalIgnoreCase);
+					var pos = split.NthIndexOf("id=", 0, 1, StringComparison.OrdinalIgnoreCase);
 
 					if (pos >= 0)
 					{
-						var idstartindex = strim.NthIndexOfAny(quotes, pos, 1);
-						var idstopindex = strim.NthIndexOfAny(quotes, pos, 2);
+						var idstartindex = split.NthIndexOfAny(quotes, pos, 1);
+						var idstopindex = split.NthIndexOfAny(quotes, pos, 2);
 
 						if (idstartindex >= 0 && idstopindex >= 0)
 						{
 							idstartindex++;
-							id = strim.Substring(idstartindex, idstopindex - idstartindex);
+							id = split.Substring(idstartindex, idstopindex - idstartindex);
 						}
 					}
 
-					var index1 = strim.IndexOf('>') + 1;
-					var linktext = strim.Substring(index1);
-					pos = strim.NthIndexOf("href=", 0, 1, StringComparison.OrdinalIgnoreCase);
-					index1 = strim.NthIndexOfAny(quotes, pos, 1);
-					var index2 = strim.NthIndexOfAny(quotes, pos, 2);
+					var index1 = split.IndexOf('>') + 1;
+					var linktext = split.Substring(index1);
+					pos = split.NthIndexOf("href=", 0, 1, StringComparison.OrdinalIgnoreCase);
+					index1 = split.NthIndexOfAny(quotes, pos, 1);
+					var index2 = split.NthIndexOfAny(quotes, pos, 2);
 
 					if (index1 >= 0 && index2 >= 0)
 					{
 						index1++;
-						url = strim.Substring(index1, index2 - index1);
+						url = split.Substring(index1, index2 - index1);
 					}
 
 					links.Add(new Tuple<int, int, Tuple<string, string>>(sb.Length, linktext.Length, new Tuple<string, string>(id, url)));

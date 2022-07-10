@@ -229,14 +229,14 @@ namespace Keysharp.Core
 
 			try
 			{
-				var splits = target.Split("\" ");
-				target = splits.Length > 0 ? splits[0] : target;
+				var splits = target.Split("\" ", StringSplitOptions.TrimEntries);
+				target = splits.Length > 0 ? splits[0] : target.Trim();
 				prc = new Process
 				{
 					StartInfo = new ProcessStartInfo
 					{
 						UseShellExecute = true,
-						FileName = target.Trim(),
+						FileName = target,
 						WorkingDirectory = string.IsNullOrEmpty(workingDir) ? null : workingDir.Trim(),
 						UserName = string.IsNullOrEmpty(runUser) ? null : runUser,
 						Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain,

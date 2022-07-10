@@ -885,6 +885,27 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("FileAndDir")]
+		public void FixFilters()
+		{
+			var str = Dialogs.FixFilters("");
+			Assert.AreEqual("All Files (*.*)|*.*", str);
+			str = Dialogs.FixFilters("Text (*.txt)");
+			Assert.AreEqual("Text (*.txt)|*.txt", str);
+			str = Dialogs.FixFilters("Text (*.txt)|*.txt");
+			Assert.AreEqual("Text (*.txt)|*.txt", str);
+			str = Dialogs.FixFilters("Images(*.png,*.jpg)");
+			Assert.AreEqual("Images(*.png,*.jpg)|*.png;*.jpg", str);
+			str = Dialogs.FixFilters("Images(*.png,*.jpg)|*.png;*.jpg");
+			Assert.AreEqual("Images(*.png,*.jpg)|*.png;*.jpg", str);
+			str = Dialogs.FixFilters("Text (*.txt)|Images(*.png,*.jpg)");
+			Assert.AreEqual("Text (*.txt)|*.txt|Images(*.png,*.jpg)|*.png;*.jpg", str);
+			str = Dialogs.FixFilters("Text (*.txt)|*.txt|Images(*.png,*.jpg)");
+			Assert.AreEqual("Text (*.txt)|*.txt|Images(*.png,*.jpg)|*.png;*.jpg", str);
+			str = Dialogs.FixFilters("Text (*.txt)|*.txt|Images(*.png,*.jpg)|*.png;*.jpg");
+			Assert.AreEqual("Text (*.txt)|*.txt|Images(*.png,*.jpg)|*.png;*.jpg", str);
+		}
+
+		[Test, Category("FileAndDir")]
 		public void IniReadWriteDelete()
 		{
 			if (System.IO.File.Exists("./testini2.ini"))

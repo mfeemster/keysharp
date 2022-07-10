@@ -80,7 +80,7 @@ namespace Keysharp.Core
 			var opts = obj0.As();
 			var rootdir = obj1.As();
 			var title = obj2.As();
-			var filter = obj3.As();
+			var filter = FixFilters(obj3.As());
 			bool save = false, multi = false, check = false, create = false, overwite = false, shortcuts = false, dir = false;
 			opts = opts.ToUpperInvariant();
 			object files = null;
@@ -132,6 +132,9 @@ namespace Keysharp.Core
 			}
 
 			nFileDialogs++;
+
+			if (!filter.Contains("All Files (*.*)|*.*"))
+				filter += "|All Files (*.*)|*.*";
 
 			if (save)
 			{
@@ -193,6 +196,34 @@ namespace Keysharp.Core
 
 			nFileDialogs--;
 			return files;
+		}
+
+		public static string FixFilters(string filter)
+		{
+			if (filter.Length > 0)
+			{
+				var splits = filter.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+				var origcount = splits.Count;
+
+				for (var i = 0; i < splits.Count; i++)
+				{
+					if (i == splits.Count - 1 || splits[i].EndsWith(')') && !splits[i + 1].StartsWith("*"))
+					{
+						var paren1 = splits[i].IndexOf('(');
+						var paren2 = splits[i].LastIndexOf(')');
+
+						if (paren1 != -1 && paren2 != -1)
+						{
+							splits.Insert(i + 1, splits[i].Substring(paren1 + 1, paren2 - paren1 - 1).Replace(',', ';'));
+							i++;
+						}
+					}
+				}
+
+				return splits.Count == origcount ? filter : string.Join('|', splits);
+			}
+			else
+				return "All Files (*.*)|*.*";
 		}
 
 		/// <summary>
@@ -379,8 +410,8 @@ namespace Keysharp.Core
 						case 4: buttons = MessageBoxButtons.YesNo; continue;
 
 						case 5: buttons = MessageBoxButtons.RetryCancel; continue;
-							//This is not supported yet, but might be some day: https://github.com/dotnet/winforms/issues/4712
-							//case 6: Cancel Try Again Continue ; break;
+
+						case 6: buttons = MessageBoxButtons.CancelTryContinue; continue;
 					}
 
 					//System modal dialogs are no longer supported in Windows.
@@ -401,8 +432,7 @@ namespace Keysharp.Core
 
 						case "RetryCancel": buttons = MessageBoxButtons.RetryCancel; break;
 
-						//This is not supported yet, but might be some day: https://github.com/dotnet/winforms/issues/4712
-						//case "CancelTryAgainContinue": buttons = MessageBoxButtons.RetryCancel; break;
+						case "CancelTryAgainContinue": buttons = MessageBoxButtons.CancelTryContinue; break;
 
 						case "Iconx": icon = MessageBoxIcon.Hand; break;
 
@@ -415,7 +445,8 @@ namespace Keysharp.Core
 						case "Default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
 
 						case "Default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
-							//case "Default4": defaultbutton = MessageBoxDefaultButton.Button1; break;
+
+						case "Default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
 					}
 				}
 			}

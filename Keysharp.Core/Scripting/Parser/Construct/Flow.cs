@@ -184,7 +184,7 @@ namespace Keysharp.Scripting
 							}
 							else
 							{
-								casearr = casearg.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+								casearr = casearg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
 
 								if (!string.IsNullOrEmpty(css.SwitchVar))
 									for (var i = 0; i < casearr.Length; i++)
@@ -376,7 +376,7 @@ namespace Keysharp.Scripting
 
 						if (blockOpen)
 							parts[parts.Length - 1] = trimmed.Trim(new char[] { BlockOpen, ' ' });
-						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).Select(x => x.Trim()).ToList();
+						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
 
 						if (varsplits.Count == 1)//If only one present, use second because it's the value, instead of the index/key.
 							varsplits.Insert(0, "");
