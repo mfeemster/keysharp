@@ -42,7 +42,7 @@ namespace Keysharp.Core
 				}
 				else if (complexDlg is ProgressDialog)
 				{
-					_ = Dialogs.ProgressDialgos.Remove(GUIID);
+					_ = Dialogs.ProgressDialogs.Remove(GUIID);
 				}
 
 				return;

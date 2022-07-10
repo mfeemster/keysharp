@@ -250,7 +250,7 @@ namespace Keysharp.Scripting
 
 					if (parts.Length > 1 && parts.Last() != string.Empty)//If the last char was a {, then it was trimmed and replaced with a "".
 					{
-						var sub = parts[1].Split(Spaces, 2);
+						var sub = parts[1].Split(SpaceTabComma, 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 						var regex = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))");//Gotten from https://stackoverflow.com/questions/3147836/c-sharp-regex-split-commas-outside-quotes
 						var sub2 = sub.Length > 1 ? regex.Split(sub[1])/*.Select(x => x.Trim(SpacesQuotes)).ToArray()*/ : new string[] { };
 						//sub2[0] = sub2[0].Trim(new char[] { '"' });
@@ -516,7 +516,7 @@ namespace Keysharp.Scripting
 						if (parts.Length > 1)
 							throw new ParseException("Cannot have return parameter for entry point method", line);
 
-						return new CodeStatement[] { new CodeMethodReturnStatement() };
+						return new CodeStatement[] { new CodeMethodReturnStatement(new CodePrimitiveExpression(1)) };
 					}
 					else
 					{

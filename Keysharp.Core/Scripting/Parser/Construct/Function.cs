@@ -88,7 +88,7 @@ namespace Keysharp.Scripting
 			if (!stop)
 				throw new ParseException("Expected closing parenthesis");
 
-			var param = buf.ToString();
+			var param = buf.ToString().ToLower();//All variables, including function parameters, are lowercase.
 			buf.Length = 0;
 			i++;
 

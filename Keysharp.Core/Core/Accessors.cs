@@ -1593,7 +1593,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The Windows directory. For example: <code>C:\Windows</code>.
 		/// </summary>
-		public static string A_WinDir => Environment.GetFolderPath(Environment.SpecialFolder.System);
+		public static string A_WinDir => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 
 		public static long A_WorkAreaHeight => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height;
 

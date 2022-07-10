@@ -198,8 +198,8 @@ namespace Keysharp.Scripting
 			_ = ctch.Statements.Add(new CodeExpressionStatement(exit1));
 			_ = ctch.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
 			_ = tcf.CatchClauses.Add(ctch);
-			var tempstatments = main.Statements;
-			tcf.TryStatements.AddRange(tempstatments);
+			var tempstatements = main.Statements;
+			tcf.TryStatements.AddRange(tempstatements);
 			_ = tcf.TryStatements.Add(new CodeExpressionStatement(exit0));
 			_ = tcf.TryStatements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));//Add a successful return statement at the end of the try block.
 			main.Statements.Clear();

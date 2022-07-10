@@ -14,7 +14,7 @@ namespace Keysharp.Core
 		internal static int nFileDialogs;
 		internal static int nFolderDialogs;
 		internal static int nMessageBoxes;
-		internal static Dictionary<int, ProgressDialog> ProgressDialgos { get; set; }
+		internal static Dictionary<int, ProgressDialog> ProgressDialogs { get; set; }
 
 		internal static Dictionary<int, SplashDialog> SplashDialogs { get; set; }
 
@@ -422,17 +422,35 @@ namespace Keysharp.Core
 					{
 						case "OK": buttons = MessageBoxButtons.OK; break;
 
-						case "OKCancel": buttons = MessageBoxButtons.OKCancel; break;
+						case "OKCancel":
+						case "O/C":
+						case "OC":
+							buttons = MessageBoxButtons.OKCancel; break;
 
-						case "AbortRetryIgnore": buttons = MessageBoxButtons.AbortRetryIgnore; break;
+						case "AbortRetryIgnore":
+						case "A/R/I":
+						case "ARI":
+							buttons = MessageBoxButtons.AbortRetryIgnore; break;
 
-						case "YesNoCancel": buttons = MessageBoxButtons.YesNoCancel; break;
+						case "YesNoCancel":
+						case "Y/N/C":
+						case "YNC":
+							buttons = MessageBoxButtons.YesNoCancel; break;
 
-						case "YesNo": buttons = MessageBoxButtons.YesNo; break;
+						case "YesNo":
+						case "Y/N":
+						case "YN":
+							buttons = MessageBoxButtons.YesNo; break;
 
-						case "RetryCancel": buttons = MessageBoxButtons.RetryCancel; break;
+						case "RetryCancel":
+						case "R/C":
+						case "RC":
+							buttons = MessageBoxButtons.RetryCancel; break;
 
-						case "CancelTryAgainContinue": buttons = MessageBoxButtons.CancelTryContinue; break;
+						case "CancelTryAgainContinue":
+						case "C/T/C":
+						case "CTC":
+							buttons = MessageBoxButtons.CancelTryContinue; break;
 
 						case "Iconx": icon = MessageBoxIcon.Hand; break;
 
@@ -558,8 +576,8 @@ namespace Keysharp.Core
 
 		private static void InitDialogs()
 		{
-			if (ProgressDialgos == null)
-				ProgressDialgos = new Dictionary<int, ProgressDialog>();
+			if (ProgressDialogs == null)
+				ProgressDialogs = new Dictionary<int, ProgressDialog>();
 
 			if (SplashDialogs == null)
 				SplashDialogs = new Dictionary<int, SplashDialog>();
@@ -569,9 +587,9 @@ namespace Keysharp.Core
 		{
 			ProgressDialog thisProgress = null;
 
-			if (ProgressDialgos.ContainsKey(Options.GUIID))
+			if (ProgressDialogs.ContainsKey(Options.GUIID))
 			{
-				thisProgress = ProgressDialgos[Options.GUIID];
+				thisProgress = ProgressDialogs[Options.GUIID];
 
 				if (thisProgress.InvokeRequired)
 				{
@@ -586,7 +604,7 @@ namespace Keysharp.Core
 			else
 			{
 				thisProgress = new ProgressDialog();
-				ProgressDialgos.Add(Options.GUIID, thisProgress);
+				ProgressDialogs.Add(Options.GUIID, thisProgress);
 			}
 
 			Options.AppendTo(thisProgress);
