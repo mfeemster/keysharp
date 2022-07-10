@@ -267,7 +267,7 @@ namespace Keysharp.Core
 			var delay = obj.Al();
 
 			if (delay == -1)
-				Application.DoEvents();
+				Application.DoEvents();//Be careful with this, it has caused spurious crashes in my years of programming experience.
 
 			//_ = System.Threading.Thread.CurrentThread.Join(delay);
 			//var stop = Environment.TickCount + delay;

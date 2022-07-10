@@ -19,7 +19,7 @@ namespace Keysharp.Scripting
 		private readonly bool success;
 
 		public bool IsClosing { get; private set; }
-		public uint ThreadId { get; private set; }
+		//public uint ThreadId { get; private set; }
 
 		public MainWindow()
 		{
@@ -28,7 +28,7 @@ namespace Keysharp.Scripting
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 			tpVars.HandleCreated += TpVars_HandleCreated;
-			ThreadId = WindowsAPI.GetCurrentThreadId();
+			//          ThreadId = WindowsAPI.GetCurrentThreadId();
 		}
 
 		public void AddText(string s, MainFocusedTab tab)

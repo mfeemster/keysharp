@@ -127,6 +127,8 @@ namespace Keysharp.Core.Linux
 		internal override void MouseMove(ref int x, ref int y, ref uint eventFlags, int speed, bool moveOffset)
 		{ }
 
+		internal override int PbEventCount() => 0;
+
 		internal override void SendEventArray(ref long finalKeyDelay, int modsDuringSend)
 		{ }
 
@@ -143,6 +145,8 @@ namespace Keysharp.Core.Linux
 		internal override void SendKeys(string keys, SendRawModes sendRaw, SendModes sendModeOrig, IntPtr targetWindow)
 		{
 		}
+
+		internal override int SiEventCount() => 0;
 
 		internal override ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue) => ToggleValueType.Invalid;
 

@@ -104,6 +104,7 @@ namespace Keysharp.Core.Common.Keyboard
 		// close to UINT_MAX might be a little better since it's might be less likely to be used as a pointer
 		// value by any apps that send keybd events whose ExtraInfo is really a pointer value.
 		internal const uint KeyIgnore = 0xFFC3D44F;
+
 		internal const uint KeyIgnoreAllExceptModifier = KeyIgnore - 2;
 		internal const uint KeyIgnoreMax = KeyIgnore;
 		internal const uint KeyPhysIgnore = KeyIgnore - 1;
@@ -302,29 +303,72 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract void MouseMove(ref int aX, ref int aY, ref uint aEventFlags, int aSpeed, bool aMoveOffset);
 
-		internal void Remove(HotkeyDefinition hotkey) => _ = hotkeys.Remove(hotkey);
+		internal abstract int PbEventCount();
 
-		internal void Remove(HotstringDefinition hotstring) => _ = hotstrings.Remove(hotstring);
+		internal int TotalEventCount() => PbEventCount() + SiEventCount();
 
-		internal abstract void SendEventArray(ref long aFinalKeyDelay, int aModsDuringSend);
+		internal void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
+										 int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, int speed, bool relative)
+		{
+			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
+			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
+			// include room for the maximum number of mouse delays too.
+			// Drag consists of at most:
+			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
+			const int MAX_PERFORM_MOUSE_EVENTS = 10;
+			var ht = Keysharp.Scripting.Script.HookThread;
+			//Original differentiates between a thread specific value for sendmode and a global static one. Here, we just use the thread specific one.
 
-		internal abstract void SendKey(int aVK, int aSC, int aModifiersLR, int aModifiersLRPersistent
-									   , int aRepeatCount, KeyEventTypes aEventType, int aKeyAsModifiersLR, IntPtr aTargetWindow
-									   , int aX = CoordUnspecified, int aY = CoordUnspecified, bool aMoveOffset = false);
+			if (sendMode == Common.Keyboard.SendModes.Input || sendMode == Common.Keyboard.SendModes.InputThenPlay)
+			{
+				if (ht.SystemHasAnotherMouseHook()) // See similar section in SendKeys() for details.
+					sendMode = (sendMode == Common.Keyboard.SendModes.Input) ? Common.Keyboard.SendModes.Event : Common.Keyboard.SendModes.Play;
+				else
+					sendMode = Common.Keyboard.SendModes.Input; // Resolve early so that other sections don't have to consider SM_INPUT_FALLBACK_TO_PLAY a valid value.
+			}
 
-		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);
+			if (sendMode != Common.Keyboard.SendModes.Event) // We're also responsible for setting sSendMode to SM_EVENT prior to returning.
+				InitEventArray(MAX_PERFORM_MOUSE_EVENTS, 0);
 
-		internal abstract void SendKeys(string aKeys, SendRawModes aSendRaw, SendModes aSendModeOrig, IntPtr aTargetWindow);
+			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
+			// Turn it back off only if it wasn't ON before we started.
+			var blockinput_prev = Keysharp.Core.Keyboard.blockInput;
+			var do_selective_blockinput = (Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.Mouse
+										   || Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.SendAndMouse)
+										  && sendMode == Common.Keyboard.SendModes.Event;
 
-		internal abstract ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue);
+			if (do_selective_blockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
+				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 
-		protected internal abstract void LongOperationUpdate();
+			switch (actionType)
+			{
+				case Actions.ACT_MOUSEMOVE:
+					var unused = 0u;
+					MouseMove(ref x1, ref y1, ref unused, speed, relative); // Does nothing if coords are invalid.
+					break;
 
-		protected internal abstract void LongOperationUpdateForSendKeys();
+				case Actions.ACT_MOUSECLICK:
+					MouseClick(vk, x1, y1, repeatCount, speed, eventType, relative); // Does nothing if coords are invalid.
+					break;
 
-		//protected internal abstract void Send(string keys);
+				case Actions.ACT_MOUSECLICKDRAG:
+					MouseClickDrag(vk, x1, y1, x2, y2, speed, relative); // Does nothing if coords are invalid.
+					break;
+			}
 
-		//protected internal abstract void Send(Keys key);
+			if (sendMode != Common.Keyboard.SendModes.Event)
+			{
+				var final_key_delay = -1L; // Set default.
+
+				if (!abortArraySend && TotalEventCount() > 0)
+					SendEventArray(ref final_key_delay, 0); // Last parameter is ignored because keybd hook isn't removed for a pure-mouse SendInput.
+
+				CleanupEventArray(final_key_delay);
+			}
+
+			if (do_selective_blockinput && !blockinput_prev)  // Turn it back off only if it was off before we started.
+				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
+		}
 
 		internal void ProcessHotkey(int wParamVal, int lParamVal, uint msg)
 		{
@@ -442,352 +486,34 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 		}
 
-		internal void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
-										 int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, int speed, bool relative)
-		{
-			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
-			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
-			// include room for the maximum number of mouse delays too.
-			// Drag consists of at most:
-			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
-			const int MAX_PERFORM_MOUSE_EVENTS = 10;
-			var ht = Keysharp.Scripting.Script.HookThread;
-			//Original differentiates between a thread specific value for sendmode and a global static one. Here, we just use the thread specific one.
+		internal void Remove(HotkeyDefinition hotkey) => _ = hotkeys.Remove(hotkey);
 
-			if (sendMode == Common.Keyboard.SendModes.Input || sendMode == Common.Keyboard.SendModes.InputThenPlay)
-			{
-				if (ht.SystemHasAnotherMouseHook()) // See similar section in SendKeys() for details.
-					sendMode = (sendMode == Common.Keyboard.SendModes.Input) ? Common.Keyboard.SendModes.Event : Common.Keyboard.SendModes.Play;
-				else
-					sendMode = Common.Keyboard.SendModes.Input; // Resolve early so that other sections don't have to consider SM_INPUT_FALLBACK_TO_PLAY a valid value.
-			}
+		internal void Remove(HotstringDefinition hotstring) => _ = hotstrings.Remove(hotstring);
 
-			if (sendMode != Common.Keyboard.SendModes.Event) // We're also responsible for setting sSendMode to SM_EVENT prior to returning.
-				InitEventArray(MAX_PERFORM_MOUSE_EVENTS, 0);
+		internal abstract void SendEventArray(ref long aFinalKeyDelay, int aModsDuringSend);
 
-			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
-			// Turn it back off only if it wasn't ON before we started.
-			var blockinput_prev = Keysharp.Core.Keyboard.blockInput;
-			var do_selective_blockinput = (Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.Mouse
-										   || Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.SendAndMouse)
-										  && sendMode == Common.Keyboard.SendModes.Event;
+		internal abstract void SendKey(int aVK, int aSC, int aModifiersLR, int aModifiersLRPersistent
+									   , int aRepeatCount, KeyEventTypes aEventType, int aKeyAsModifiersLR, IntPtr aTargetWindow
+									   , int aX = CoordUnspecified, int aY = CoordUnspecified, bool aMoveOffset = false);
 
-			if (do_selective_blockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
-				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
+		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
-			switch (actionType)
-			{
-				case Actions.ACT_MOUSEMOVE:
-					var unused = 0u;
-					MouseMove(ref x1, ref y1, ref unused, speed, relative); // Does nothing if coords are invalid.
-					break;
+		internal abstract void SendKeys(string aKeys, SendRawModes aSendRaw, SendModes aSendModeOrig, IntPtr aTargetWindow);
 
-				case Actions.ACT_MOUSECLICK:
-					MouseClick(vk, x1, y1, repeatCount, speed, eventType, relative); // Does nothing if coords are invalid.
-					break;
+		internal abstract int SiEventCount();
 
-				case Actions.ACT_MOUSECLICKDRAG:
-					MouseClickDrag(vk, x1, y1, x2, y2, speed, relative); // Does nothing if coords are invalid.
-					break;
-			}
+		internal abstract ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue);
 
-			if (sendMode != Common.Keyboard.SendModes.Event)
-			{
-				var final_key_delay = -1L; // Set default.
+		protected internal abstract void LongOperationUpdate();
 
-				if (!abortArraySend)
-					SendEventArray(ref final_key_delay, 0); // Last parameter is ignored because keybd hook isn't removed for a pure-mouse SendInput.
+		protected internal abstract void LongOperationUpdateForSendKeys();
 
-				CleanupEventArray(final_key_delay);
-			}
+		//protected internal abstract void Send(string keys);
 
-			if (do_selective_blockinput && !blockinput_prev)  // Turn it back off only if it was off before we started.
-				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
-		}
-
+		//protected internal abstract void Send(Keys key);
 		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, int aVK, int aSC = 0, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
-		//protected abstract void Backspace(int n);
-
-		//[Obsolete]//MATT
-		//protected bool KeyReceived(Keys key, bool down)
-		//{
-		//  return KeyReceived(key, Letter(key).ToString(), down);
-		//}
-
-		//This function was from the IronAHK attempt to implement this hotkeys/strings. I am unsure if we're going to go with this style, or the direct port of the AHK code.
-		//I lean more toward the latter because while being incredible verbose, we would have the comfort of knowing it was an exact duplication of the original functionality.//TODO
-		/*
-		    protected bool KeyReceived(Keys key, string typed, bool down)
-		    {
-		    if (Block)
-		        return true;
-
-		    var block = false;
-		    var args = new KeyEventArgs(key, typed, down);
-		    KeyEvent?.Invoke(this, args);
-
-		    if (args.Block)
-		    {
-		        block = true;
-		    }
-
-		    if (args.Handled)
-		    {
-		        return block;
-		    }
-
-		    if (!Flow.Suspended)
-		    {
-		        pressed[key] = down;
-		        var exec = new List<HotkeyDefinition>();
-
-		        foreach (var hotkey in hotkeys)
-		        {
-		            var match = KeyMatch(hotkey.Keys & ~Keys.Modifiers, key) ||
-		                        hotkey.Typed.Length != 0 && hotkey.Typed.Equals(typed, StringComparison.CurrentCultureIgnoreCase);
-		            var up = hotkey.EnabledOptions.HasFlag(HotkeyDefinition.Options.Up);
-
-		            if (hotkey.Enabled && match && HasModifiers(hotkey) && up != down)
-		            {
-		                exec.Add(hotkey);
-
-		                if (!hotkey.EnabledOptions.HasFlag(HotkeyDefinition.Options.PassThrough))
-		                    block = true;
-		            }
-		        }
-
-		        if (exec.Any())//Most of the time, a hotkey will not be matched, so skip creating the thread to be more efficient.
-		        {
-		            new Thread(delegate ()
-		            {
-		                foreach (var hotkey in exec)
-		                {
-		                    PriorHotkeyTime = CurrentHotkeyTime;
-		                    CurrentHotkeyTime = Environment.TickCount;
-		                    PriorHotkey = CurrentHotkey;
-		                    CurrentHotkey = hotkey.ToString();
-
-		                    if (hotkey.Condition())
-		                        _ = hotkey.Proc.Call(new object[] { });
-		                }
-		            }).Start();
-		        }
-		    }
-
-		    if (!down)
-		        return block;
-
-		    if (hotstrings.Count > 0)
-		    {
-		        if (key == Keys.Back && history.Length > 0)
-		        {
-		            _ = history.Remove(history.Length - 1, 1);
-		            return block;
-		        }
-
-		        switch (key)
-		        {
-		            case Keys.Left:
-		            case Keys.Right:
-		            case Keys.Down:
-		            case Keys.Up:
-		            case Keys.Next:
-		            case Keys.Prior:
-		            case Keys.Home:
-		            case Keys.End:
-		                history.Length = 0;
-		                break;
-
-		            //Original would break when these were pressed, but would not check on subsequent keys whether these were still pressed.
-		            //This caused the bug of ignoring the hotstring when a user selected all with Ctrl+A then started typing.
-		            //case Keys.Alt:
-		            //case Keys.LMenu:
-		            //case Keys.RMenu:
-		            //case Keys.LControlKey:
-		            //case Keys.RControlKey:
-		            //case Keys.LShiftKey:
-		            //case Keys.RShiftKey:
-		            //  break;
-
-		            default:
-		                if (!pressed[Keys.Alt]
-		                        && !pressed[Keys.LMenu]
-		                        && !pressed[Keys.RMenu]
-		                        && !pressed[Keys.Menu]
-		                        && !pressed[Keys.LControlKey]
-		                        && !pressed[Keys.RControlKey]
-		                        && !pressed[Keys.Control]
-		                        && !pressed[Keys.LWin]
-		                        && !pressed[Keys.RWin]
-		                        //&& !pressed[Keys.LShiftKey]
-		                        //&& !pressed[Keys.RShiftKey]
-		                   )
-		                {
-		                    var d = retention - history.Length;//Should take shift into acct here and insert CAPS letter, but not the shift.//MATT
-
-		                    if (d < 0)
-		                        _ = history.Remove(history.Length + d, -d);
-
-		                    _ = history.Append(typed);
-		                }
-
-		                //else
-		                //{
-		                //  Console.WriteLine($"Modifier was pressed while also pressing {key} so not adding to history");
-		                //}
-		                break;
-		        }
-		    }
-
-		    if (Flow.Suspended)
-		        return block;
-
-		    //var expand = new List<HotstringDefinition>();//Make a class variable instead.//MATT
-		    expand.Clear();//Reuse for efficiency.
-		    var dt = DateTime.Now;
-		    var endstr = string.Empty;
-
-		    foreach (var hotstring in hotstrings)//Seems very inneficient, maybe use a dkt?//MATT
-		    {
-		        if (hotstring.Enabled && HasConditions(hotstring, out endstr))
-		        {
-		            expand.Add(hotstring);
-		            //if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.Reset))//Do it below.//MATT
-		            //history.Length = 0;
-		            break;//Why would we ever want more than one hotstring?//MATT
-		        }
-		    }
-
-		    var dt2 = DateTime.Now;
-		    //Console.WriteLine($"Finding a hotstring took {(dt2 - dt).TotalMilliseconds} ms");
-		    var trigger = history.Length > 0 ? history[history.Length - 1].ToString() : null;
-
-		    foreach (var hotstring in expand)
-		    {
-		        block = true;
-		        //Putting this in a thread seems to be a hacky way of solving a particular problem.
-		        //If a hotstring is a function style hotstring, and that function shows a message box, and the trigger is a space,
-		        //the message box will be shown, but that space will be sent to it, and the space acts like a click on the ok button
-		        //and dismisses the message box right after it is shown.
-		        //As an alternative, we're trying to just launch all GUI components in their own thread using Task.Factory.StartNew().
-		        //new Thread(delegate ()//Need to know why this was in a thread. When would it ever make sense to do that? Should check the original.//MATT
-		        {
-		            PriorHotstringTime = CurrentHotstringTime;
-		            CurrentHotstringTime = Environment.TickCount;
-		            PriorHotstring = CurrentHotstring;
-		            CurrentHotstring = hotstring.ToString();
-		            var length = hotstring.Sequence.Length;
-		            var auto = hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.AutoTrigger);
-		            var notautoandtrigger = !auto&& trigger != null;
-		            //Console.WriteLine($"bef processing hotstring: \"{history}\"");
-
-		            //This code doesn't even have access to the output string, but it sorely needs it. Fix it.//MATT
-		            if (auto)
-		                length--;
-
-		            if (length > 0)//Roughly try to mimic the code from CollectHotstring() in AHK. Need to be testing the replacement str, not the sequence str.//MATT
-		            {
-		                if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.Backspace))
-		                {
-		                    Backspace(length);
-
-		                    // UNDONE: hook on Windows captures triggering key and blocks it, but X11 allows it through and needs an extra backspace
-		                    if (!auto&& Environment.OSVersion.Platform != PlatformID.Win32NT)
-		                        Backspace(1);
-		                }
-
-		                _ = history.Clear();
-
-		                if (notautoandtrigger)
-		                {
-		                    _ = history.Append(trigger);
-		                }
-
-		                //var n = length + 1;
-		                //_ = history.Remove(history.Length - n, n);
-		            }
-		            else if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.Backspace))
-		            {
-		            }
-
-		            if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.Reset))
-		            {
-		                _ = history.Clear();
-		            }
-
-		            //Need a way to put the space back into the history here for most options.//TODO
-		            //hotstring.Proc();//MATT new object[] { });
-		            //hotstring.Proc(new object[] { endstr, ApplyCase(endstr, hotstring.Replacement) });//Casing works, but we'll need another mode to support it, such as C2,3,4 etc...//MATT
-		            hotstring.Proc(new object[] { endstr, hotstring.Replacement });//MATT new object[] { });
-
-		            //Need to support the 'Z' replace option here, which just clears the history.
-
-		            if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.OmitEnding))
-		            {
-		                if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.Backspace) &&
-		                        !hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.AutoTrigger))
-		                {
-		                    //_ = history.Remove(history.Length - 1, 1);//AHK doesn't seem to care about this.//MATT
-		                    //Backspace(1);
-		                }
-		            }
-		            else if (notautoandtrigger && hotstring.Replacement != string.Empty)
-		                SendMixed(trigger);
-
-		            //Console.WriteLine($"aft processing hotstring: \"{history}\"");
-		        }//).Start();
-		    }
-
-		    return block;
-		    }
-		*/
-
 		protected abstract void RegisterHook();
-
-		/*  private bool HasConditions(HotstringDefinition hotstring, out string endstr)
-		    {
-		    var histcopy = history.ToString();//Why do we want a copy for *every* hotstring in *every* keypress? Seems terribly inefficient.//MATT
-		    endstr = string.Empty;
-
-		    if (histcopy.Length == 0)
-		        return false;
-
-		    var compare = hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.CaseSensitive) ?
-		                  StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase;
-		    var x = histcopy.Length - hotstring.Sequence.Length - 1;
-
-		    if (hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.AutoTrigger))
-		    {
-		        if (!histcopy.EndsWith(hotstring.Sequence, compare))
-		            return false;
-
-		        endstr = histcopy.Substring(x + 1, hotstring.Sequence.Length);
-		    }
-		    else
-		    {
-		        if (histcopy.Length < hotstring.Sequence.Length + 1)
-		            return false;
-
-		        if (hotstring.EndChars.IndexOf(histcopy[histcopy.Length - 1]) == -1)
-		            return false;
-
-		        endstr = histcopy.Substring(x--, hotstring.Sequence.Length);//Might be able to use EndsWith to avoid a copy.//MATT
-
-		        if (!endstr.Equals(hotstring.Sequence, compare))
-		            return false;
-		    }
-
-		    if (!hotstring.EnabledOptions.HasFlag(HotstringDefinition.Options.Nested))
-		        if (x > -1)
-		        {
-		            //Console.WriteLine($"{endstr} -{histcopy[x]}-");
-		            if (char.IsLetterOrDigit(histcopy[x]))
-		                return false;
-		        }
-
-		    return true;
-		    }*/
 
 		private bool HasModifiers(HotkeyDefinition hotkey)
 		{

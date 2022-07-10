@@ -102,7 +102,7 @@ namespace Keysharp.Scripting
 			return ret.Item2 ? ret.Item1 : "";
 		}
 
-		public static Gui Gui(params object[] obj) => new (obj);
+		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new (obj0, obj1, obj2);
 
 		public static long HasBase(object obj0, object obj1) => obj1.GetType().IsAssignableFrom(obj0.GetType()) ? 1L : 0L;
 

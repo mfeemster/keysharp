@@ -215,6 +215,10 @@ namespace Keysharp.Core.Windows
 			return hmod;
 		}
 
+		internal override int PbEventCount() => eventPb.Count;
+
+		internal override int SiEventCount() => eventSi.Count;
+
 		internal override void CleanupEventArray(long finalKeyDelay)
 		{
 			if (sendMode == SendModes.Input)
@@ -721,7 +725,7 @@ namespace Keysharp.Core.Windows
 					// for the other modes: because dragging the title bar of one of this thread's windows with a
 					// remap such as F1::LButton doesn't work if that remap uses SendPlay internally (the window
 					// gets stuck to the mouse cursor).
-					if ((sendMode == SendModes.Event || eventSi.Count == 0) // See above.
+					if ((sendMode == SendModes.Event || TotalEventCount() == 0) // See above.
 							&& (eventType == KeyEventTypes.KeyDown || (eventType == KeyEventTypes.KeyUp && (workaroundVK != 0)))) // i.e. this is a down-only event or up-only event.
 					{
 						// v1.0.40.01: The following section corrects misbehavior caused by a thread sending
@@ -1602,7 +1606,6 @@ namespace Keysharp.Core.Windows
 				if ((activeHooks = ht.GetActiveHooks()) != HookType.None)
 					Keysharp.Scripting.Script.HookThread.AddRemoveHooks((HookType)((int)activeHooks & ~hooksToRemoveDuringSendInput), true);
 
-				//          _ = WindowsAPI.SendInput((uint)len, inputs, Marshal.SizeOf(typeof(INPUT)));
 				_ = SendInput((uint)eventSi.Count, eventSi.ToArray(), Marshal.SizeOf(typeof(INPUT))); // Must call dynamically-resolved version for Win95/NT compatibility.
 
 				// The return value is ignored because it never seems to be anything other than sEventCount, even if
@@ -2627,13 +2630,18 @@ namespace Keysharp.Core.Windows
 
 						switch (sub[keyIndex])
 						{
-							case '\n': vk = VK_RETURN; break;
+							case '\n':
+								vk = VK_RETURN; break;
 
-							case '\b': vk = VK_BACK; break;
+							case '\b':
+								vk = VK_BACK; break;
 
-							case '\t': vk = VK_TAB; break;
+							case '\t':
+								vk = VK_TAB; break;
 
-							default: vk = 0; break; // Send all other characters via SendKeySpecial()/WM_CHAR.
+							default:
+								vk = 0;
+								break; // Send all other characters via SendKeySpecial()/WM_CHAR.
 						}
 					}
 					else
@@ -2670,7 +2678,7 @@ namespace Keysharp.Core.Windows
 			{
 				var finalKeyDelay = -1L;  // Set default.
 
-				if (!abortArraySend && eventPb.Count > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
+				if (!abortArraySend && TotalEventCount() > 0) // Check for zero events for performance, but more importantly because playback hook will not operate correctly with zero.
 				{
 					// Add more events to the array (prior to sending) to support the following:
 					// Restore the modifiers to match those the user is physically holding down, but do it as *part*
@@ -3674,7 +3682,11 @@ namespace Keysharp.Core.Windows
 			// Since calls from the hook thread could come in even while the SendInput array is being constructed,
 			// don't let those events get interspersed with the script's explicit use of SendInput.
 			var ht = Keysharp.Scripting.Script.HookThread;
-			var callerIsKeybdHook = WindowsAPI.GetCurrentThreadId() == Keysharp.Core.Processes.MainThreadID;//Hook runs on the main window thread.
+			//Note that the threading model in Keysharp is different than AHK, so this doesn't apply.
+			//In AHK, the low level keyboard proc runs in its own thread, however in Keysharp it turns on the main window thread.
+			//Further, after hours of extreme scrutiny in AHK, there seems to be no code in HookThreadProc() where a keyboard event could be sent here.
+			//So just hard code callerIsKeybdHook to false.
+			var callerIsKeybdHook = false;// WindowsAPI.GetCurrentThreadId() == Keysharp.Core.Processes.MainThreadID;//Hook runs on the main window thread.
 			var putEventIntoArray = sendMode != SendModes.Event && !callerIsKeybdHook;
 
 			if (sendMode == SendModes.Input || callerIsKeybdHook) // First check is necessary but second is just for maintainability.

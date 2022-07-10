@@ -5278,7 +5278,7 @@ namespace Keysharp.Core.Windows
 
 								break;
 
-							case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handles directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
+							case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, (uint)UserMessages.AHK_HOOK_HOTKEY);
 								break;
 
@@ -5392,6 +5392,10 @@ namespace Keysharp.Core.Windows
 						if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
 							ResetHook(false, HookType.Keyboard, true);
 
+						//Note that in AHK, LowLevelKeybdHandler() is called for every keystroke and runs in its own thread.
+						//No matter what we do in C#, it can and must only run on the main window thread.
+						//This could potentially be a problem with all of the intricate code that takes special action depending
+						//on the thread that a particular function is being called from.
 						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
 														LowLevelKeybdHandler,
 														GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
