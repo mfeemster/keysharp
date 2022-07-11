@@ -933,12 +933,12 @@ namespace Keysharp.Core
 				{
 					if (colnumber == 0)
 					{
-						lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+						lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 						return 1L;
 					}
 					else if (colnumber > 0)
 					{
-						lv.AutoResizeColumn(colnumber - 1, ColumnHeaderAutoResizeStyle.ColumnContent);
+						lv.AutoResizeColumn(colnumber - 1, ColumnHeaderAutoResizeStyle.HeaderSize);
 						return 1L;
 					}
 				}

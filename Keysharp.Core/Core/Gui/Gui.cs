@@ -516,7 +516,7 @@ namespace Keysharp.Core
 						}
 					}
 
-					ddl.Items.AddRange(al.Flatten().Cast<object>().Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					ddl.Items.AddRange(al.Flatten().Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.choose.Any())
 						ddl.SelectedIndex = opts.choose[0];
@@ -542,7 +542,7 @@ namespace Keysharp.Core
 						SelectionMode = opts.multiline.IsTrue() ? SelectionMode.MultiExtended : SelectionMode.One,
 						Sorted = opts.sort.IsTrue()//Unsure how to make incremental search work.
 					};
-					lb.Items.AddRange(al.Flatten().Cast<object>().Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					lb.Items.AddRange(al.Flatten().Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.vscroll.HasValue)
 						lb.ScrollAlwaysVisible = opts.vscroll.Value;
@@ -581,7 +581,7 @@ namespace Keysharp.Core
 				{
 					//There is no way to preallocate memory with the "Count" option, so that is ignored.//MATT
 					var lv = new KeysharpListView();
-					lv.Columns.AddRange(al.Cast<object>().Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
+					lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 					lv.GridLines = opts.grid.IsTrue();
 					lv.LabelEdit = opts.rdonly.IsFalse();
@@ -821,7 +821,7 @@ namespace Keysharp.Core
 				case Core.Keyword_Tab3:
 				{
 					var tc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().//MATT
-					tc.TabPages.AddRange(al.Flatten().Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+					tc.TabPages.AddRange(al.Flatten().Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 
 					if (opts.leftj.IsTrue())
 						tc.Alignment = System.Windows.Forms.TabAlignment.Left;
