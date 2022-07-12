@@ -85,8 +85,8 @@ namespace Keysharp.Scripting
 					{
 						var low = part.ToLowerInvariant();
 						parts[i] = libProperties.TryGetValue(low, out var pi)
-								   ? new CodeVariableReferenceExpression(pi.Name)//using static declarations obviate the need for specifying the static class type.
-								   : VarIdOrConstant(part, i == 0 && create, false);
+								   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
+								   : VarIdOrConstant(part, i == 0 && create && (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("[")), false);//Check for function or property calls on an object, which still count as read operations.
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{

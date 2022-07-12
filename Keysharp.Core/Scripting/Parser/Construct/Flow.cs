@@ -527,34 +527,39 @@ namespace Keysharp.Scripting
 				case FunctionLocal:
 					if (localFuncVars.PeekOrNull() is List<string> lflist)
 					{
-						var parencount = 0;
-						var temptoks = SplitTokens(parts[1]);//Find the variable names because they needed to be added to the local vars before ParseMultiExpression() is called so they get properly added.
-						var funclocalvarinitstatements = new List<CodeStatement>(temptoks.Count);
-
-						for (var ti = 0; ti < temptoks.Count; ti++)
+						if (parts.Length > 1)
 						{
-							if (temptoks[ti] is string tok)
+							var parencount = 0;
+							var temptoks = SplitTokens(parts[1]);//Find the variable names because they needed to be added to the local vars before ParseMultiExpression() is called so they get properly added.
+							var funclocalvarinitstatements = new List<CodeStatement>(temptoks.Count);
+
+							for (var ti = 0; ti < temptoks.Count; ti++)
 							{
-								if (tok[0] == '(' || tok.EndsWith('('))//Make sure the comma is not because it's using a function with multiple arguments to init. ) will be at the end of function call tokens.
-									parencount++;
-								else if (tok[0] == ')')
-									parencount--;
+								if (temptoks[ti] is string tok)
+								{
+									if (tok[0] == '(' || tok.EndsWith('('))//Make sure the comma is not because it's using a function with multiple arguments to init. ) will be at the end of function call tokens.
+										parencount++;
+									else if (tok[0] == ')')
+										parencount--;
 
-								if (parencount == 0 && (ti == 0 || (temptoks[ti - 1] as string)[0] == ','))
-									lflist.Add(tok);
+									if (parencount == 0 && (ti == 0 || (temptoks[ti - 1] as string)[0] == ','))
+										lflist.Add(tok);
+								}
 							}
+
+							//Now that we know the variable names, reparse, but pass true to create them.
+							//Unlike global, we do want to create any variable we encounter here as local ones.
+							foreach (var expr in ParseMultiExpression(parts[1], true))
+								if (expr is CodeExpressionStatement ces &&
+										ces.Expression is CodeBinaryOperatorExpression cboe &&
+										cboe.Left is CodeVariableReferenceExpression cvre)
+									funclocalvarinitstatements.Add(new CodeExpressionStatement(cboe));
+
+							if (funclocalvarinitstatements.Count > 0)
+								return funclocalvarinitstatements.ToArray();
 						}
-
-						//Now that we know the variable names, reparse, but pass true to create them.
-						//Unlike global, we do want to create any variable we encounter here as local ones.
-						foreach (var expr in ParseMultiExpression(parts[1], true))
-							if (expr is CodeExpressionStatement ces &&
-									ces.Expression is CodeBinaryOperatorExpression cboe &&
-									cboe.Left is CodeVariableReferenceExpression cvre)
-								funclocalvarinitstatements.Add(new CodeExpressionStatement(cboe));
-
-						if (funclocalvarinitstatements.Count > 0)
-							return funclocalvarinitstatements.ToArray();
+						else
+							throw new ParseException("local keyword must be followed be one or more variable names.", line);
 					}
 
 					break;

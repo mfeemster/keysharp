@@ -200,3 +200,73 @@ If (y == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+clrs := Map()
+clrs["Red"] := "ff0000"
+clrs["Green"] := "00ff00"
+clrs["Blue"] := "0000ff"
+
+func6()
+{
+	x := clrs["Red"]
+
+	if (x == "ff0000")
+		FileAppend, pass, *
+	else
+		FileAppend, fail, *
+}
+
+func6()
+
+func7()
+{
+	x := clrs.Count
+
+	if (x == 3)
+		FileAppend, pass, *
+	else
+		FileAppend, fail, *
+}
+
+func7()
+
+func8()
+{
+	clrs["Red"] := 123
+}
+
+func8()
+
+if (clrs["Red"] == 123)
+	FileAppend, pass, *
+else
+  	FileAppend, fail, *
+
+func9()
+{
+	clrs := Map()
+}
+
+func9()
+
+if (clrs.Count == 3)
+	FileAppend, pass, *
+else
+  	FileAppend, fail, *
+
+func10()
+{
+	clrs.Clear()
+
+	if (clrs.Count == 0)
+		FileAppend, pass, *
+	else
+		FileAppend, fail, *
+}
+
+func10()
+
+if (clrs.Count == 0)
+	FileAppend, pass, *
+else
+  	FileAppend, fail, *
