@@ -214,7 +214,7 @@ namespace Keysharp.Core
 
 		public object BackColor
 		{
-			get => form.BackColor.ToArgb().ToString("X").Substring(0, 6);
+			get => form.BackColor.ToArgb().ToString("X").Substring(2, 6);
 
 			set
 			{
