@@ -47,8 +47,6 @@ namespace Keysharp.Main
 			}
 
 			Keysharp.Core.Window.SetProcessDPIAware();
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
 			var asm = Assembly.GetExecutingAssembly();
 			Environment.CurrentDirectory = Path.GetFullPath(Path.GetDirectoryName(asm.Location));
 			var nsname = typeof(Program).Namespace;

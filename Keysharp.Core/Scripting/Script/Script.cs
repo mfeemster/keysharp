@@ -125,7 +125,8 @@ namespace Keysharp.Scripting
 			if (Vars == null)
 				Vars = new Variables();
 
-			Application.EnableVisualStyles();
+			//Application.EnableVisualStyles();
+			//Application.SetCompatibleTextRenderingDefault(false);
 			_ = InitHook();
 		}
 

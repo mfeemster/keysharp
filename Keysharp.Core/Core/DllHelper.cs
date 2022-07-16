@@ -121,6 +121,7 @@ namespace Keysharp.Core
 
 				switch (name)
 				{
+					case "wstr":
 					case "str": type = typeof(string); break;
 
 					case "int64": type = typeof(long); break;

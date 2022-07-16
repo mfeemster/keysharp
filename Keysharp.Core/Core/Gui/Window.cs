@@ -252,10 +252,13 @@ namespace Keysharp.Core
 
 		public static void SetProcessDPIAware()
 		{
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				_ = WindowsAPI.SetProcessDPIAware();
-			}
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
+			//if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+			//{
+			//  _ = WindowsAPI.SetProcessDPIAware();
+			//}
 		}
 
 		/// <summary>

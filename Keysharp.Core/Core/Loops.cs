@@ -105,6 +105,9 @@ namespace Keysharp.Core
 			//Dialogs.MsgBox(Path.GetFullPath(path));
 			//Dialogs.MsgBox(Accessors.A_WorkingDir);
 
+			if (!path.StartsWith("\\\\") && !char.IsLetter(path[0]))//Convert something like "*.txt" to "./*.txt".
+				path = "./" + path;
+
 			if (!string.IsNullOrEmpty(mode))
 			{
 				d = mode.Contains('d', StringComparison.OrdinalIgnoreCase);

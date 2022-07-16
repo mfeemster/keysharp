@@ -27,6 +27,7 @@ namespace Keysharp.Core
 		private List<IFuncObj> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
 		private bool fireEvents = true;//Need to figure out how to enable/disable events.//MATT//TODO
+		private long parenthandle;
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
 		private List<IFuncObj> itemCheckHandlers;
@@ -288,7 +289,7 @@ namespace Keysharp.Core
 				else if (_control is TrackBar tb)
 					tb.Value = ival;
 				else if (_control is ProgressBar pb)
-					pb.Value = ival;
+					pb.Value = Math.Clamp(ival, pb.Minimum, pb.Maximum);
 				else if (_control is TabControl tc)
 					tc.SelectedIndex = ival - 1;
 				else if (_control is StatusStrip ss)
@@ -434,6 +435,7 @@ namespace Keysharp.Core
 				var n = int.MinValue;
 				TreeNode node;
 				TreeNodeCollection nodes = null;
+				parenthandle = tv.Handle.ToInt64();//By forcing a read of the parent handle, it causes the controls and their handles to properly be created.
 
 				if (parent == 0)
 				{

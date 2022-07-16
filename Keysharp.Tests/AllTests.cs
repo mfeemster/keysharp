@@ -17,8 +17,6 @@ namespace Keysharp.Tests
 			//Environment.CurrentDirectory = dir;
 			// or
 			//Directory.SetCurrentDirectory(dir);
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
 			Keysharp.Core.Window.SetProcessDPIAware();
 			Reflections.Initialize();
 		}

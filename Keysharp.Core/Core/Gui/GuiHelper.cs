@@ -519,7 +519,22 @@ namespace Keysharp.Core
 					else if (string.Compare(opt, "Select ", true) == 0) { node.TreeView.SelectedNode = node; }
 					else if (string.Compare(opt, "Vis", true) == 0) { node.EnsureVisible(); }
 					else if (string.Compare(opt, "VisFirst", true) == 0) { node.EnsureVisible(); node.TreeView.TopNode = node; }
-					else if (Options.TryParse(opt, "Icon", ref icon)) { if (icon < node.TreeView.ImageList.Images.Count) node.ImageIndex = icon; }
+					else if (Options.TryParse(opt, "Icon", ref icon))
+					{
+						if (node.TreeView.ImageList != null)
+						{
+							if (icon < node.TreeView.ImageList.Images.Count)
+							{
+								node.ImageIndex = icon - 1;
+								node.SelectedImageIndex = node.ImageIndex;
+							}
+							else
+							{
+								node.ImageIndex = -1;
+								node.SelectedImageIndex = node.ImageIndex;
+							}
+						}
+					}
 					else if (string.Compare(opt, "Sort", true) == 0)
 					{
 						if (node.NextNode == null)

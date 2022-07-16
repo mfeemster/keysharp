@@ -172,8 +172,13 @@ namespace Keysharp.Core
 				{
 					if (o is bool b)
 					{
+						f.resizable = b;
 						f.form.FormBorderStyle = b ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
 						f.form.MaximizeBox = b;
+						f.form.SizeGripStyle = b ? SizeGripStyle.Show : SizeGripStyle.Hide;
+
+						if (b)
+							f.form.AutoSize = false;
 					}
 				}
 			},
@@ -283,11 +288,11 @@ namespace Keysharp.Core
 			var caption = obj1.As();
 			var eventObj = obj2;
 			form = new KeysharpForm();
-			//form.AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
+			//form.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			form.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
-			form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-			form.ClientSize = new System.Drawing.Size(1042, 792);
+			//form.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
+			//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			//form.ClientSize = new System.Drawing.Size(1042, 792);
 			form.eventObj = eventObj;
 			form.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			var newCount = Interlocked.Increment(ref windowCount);
@@ -298,8 +303,9 @@ namespace Keysharp.Core
 			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
 			var y = (int)Math.Round(form.Font.Size * 0.75f);
 			form.Margin = new Padding(x, y, x, y);
+			//form.Padding = new Padding(x, y, x, y);
 			form.Tag = new GuiInfo { Delimiter = '|' };
-			form.SuspendLayout();//Not sure if we need this.
+			//form.SuspendLayout();//Not sure if we need this.
 			Opt(options);
 			//var formHandle = form.Handle;//Force the creation.
 			form.FormClosing += Form_FormClosing;
@@ -324,6 +330,7 @@ namespace Keysharp.Core
 			GuiControl holder = null;
 			var text = o as string;
 			var al = o as Array;
+			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 
 			if (!(form.Tag is GuiInfo info))
 				return null;
@@ -425,6 +432,11 @@ namespace Keysharp.Core
 					if (opts.nudhigh.HasValue)
 						nud.Maximum = opts.nudhigh.Value;
 
+					if (obj2 != null)
+						nud.Value = (decimal)obj2.Ad();
+					else
+						nud.Value = Math.Min(nud.Minimum, 0m);
+
 					ctrl = nud;
 				}
 				break;
@@ -483,6 +495,7 @@ namespace Keysharp.Core
 				{
 					var rad = new KeysharpRadioButton(opts.addstyle, opts.remstyle)
 					{
+						AutoSize = true,
 						Text = text
 					};
 					ctrl = rad;
@@ -516,7 +529,7 @@ namespace Keysharp.Core
 						}
 					}
 
-					ddl.Items.AddRange(al.Flatten().Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.choose.Any())
 						ddl.SelectedIndex = opts.choose[0];
@@ -542,7 +555,7 @@ namespace Keysharp.Core
 						SelectionMode = opts.multiline.IsTrue() ? SelectionMode.MultiExtended : SelectionMode.One,
 						Sorted = opts.sort.IsTrue()//Unsure how to make incremental search work.
 					};
-					lb.Items.AddRange(al.Flatten().Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					lb.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.vscroll.HasValue)
 						lb.ScrollAlwaysVisible = opts.vscroll.Value;
@@ -656,7 +669,7 @@ namespace Keysharp.Core
 					if (opts.limit != int.MinValue)
 						hk.Limit = (HotkeyBox.Limits)opts.limit;
 
-					if (text != "")
+					if (!string.IsNullOrEmpty(text))
 						hk.SetText(text);
 
 					ctrl = hk;
@@ -756,6 +769,11 @@ namespace Keysharp.Core
 						slider.Minimum = opts.nudlow.Value;
 						slider.Maximum = opts.nudhigh.Value;
 					}
+					else//Set the same defaults as AHK.
+					{
+						slider.Minimum = 0;
+						slider.Maximum = 100;
+					}
 
 					if (o != null)
 						slider.Value = (int)Script.ForceLong(o);
@@ -769,6 +787,8 @@ namespace Keysharp.Core
 
 					if (opts.tickinterval != int.MinValue)
 						slider.TickFrequency = opts.tickinterval;
+					else
+						slider.TickFrequency = slider.Maximum - slider.Minimum;
 
 					if (opts.line != int.MinValue)
 						slider.SmallChange = opts.line;
@@ -821,7 +841,7 @@ namespace Keysharp.Core
 				case Core.Keyword_Tab3:
 				{
 					var tc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().//MATT
-					tc.TabPages.AddRange(al.Flatten().Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
+					tc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 
 					if (opts.leftj.IsTrue())
 						tc.Alignment = System.Windows.Forms.TabAlignment.Left;
@@ -849,10 +869,11 @@ namespace Keysharp.Core
 				{
 					var ss = new KeysharpStatusStrip();
 					info.StatusBar = ss;
-					ss.ImageScalingSize = new System.Drawing.Size(28, 28);
-					ss.Dock = DockStyle.Bottom;
+					ss.ImageScalingSize = new System.Drawing.Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
+					ss.Dock = DockStyle.None;//Using the traditional bottom docking prevents autosize from properly computing the form's dimensions. So leave it undocked.
+					ss.SizingGrip = false;
 
-					if (text != "")
+					if (!string.IsNullOrEmpty(text))
 					{
 						var tsl = new KeysharpToolStripStatusLabel(text)
 						{
@@ -902,10 +923,13 @@ namespace Keysharp.Core
 			if (opts.thinborder.HasValue)
 				Reflections.SafeSetProperty(ctrl, "BorderStyle", opts.thinborder.Value ? BorderStyle.FixedSingle : BorderStyle.None);
 
-			if (!(ctrl is DateTimePicker) && !(ctrl is HotkeyBox) && !(ctrl is LinkLabel))
+			if (text != null && !(ctrl is DateTimePicker) && !(ctrl is HotkeyBox) && !(ctrl is LinkLabel))
 				ctrl.Text = text;
 
-			ctrl.Margin = form.Margin;// form.Padding;//Padding or margin? Unsure.
+			if (!(ctrl is KeysharpStatusStrip))//Don't want status strip to have a margin, so it can be placed at the bottom of the form when autosize is true, and have it look exactly like it would if it were docked when autosize is false.
+				ctrl.Margin = form.Margin;// form.Padding;//Padding or margin? Unsure.
+
+			//ctrl.Padding = form.Padding;
 
 			if (opts.visible.HasValue)
 				ctrl.Visible = opts.visible.Value;
@@ -939,13 +963,16 @@ namespace Keysharp.Core
 			if (opts.altsubmit.HasValue)
 				holder.AltSubmit = opts.altsubmit.Value;
 
+			//
+			//It's very possible that the code to add the control to the form should come here.
+			//
 			var fontpixels = GetFontPixels(ctrl.Font);
 			float w = ctrl.PreferredSize.Width;
 
 			if (opts.wp != int.MinValue)
-				w = info.LastControl != null ? (float)Accessors.A_ScaledScreenDPI * (info.LastControl.Width + opts.wp) : 0.0f;
+				w = info.LastControl != null ? (float)dpiscale * (info.LastControl.Width + opts.wp) : 0.0f;
 			else if (opts.width != int.MinValue)
-				w = (float)Accessors.A_ScaledScreenDPI * opts.width;
+				w = (float)dpiscale * opts.width;
 			else if (ctrl is KeysharpProgressBar kpb && ((kpb.AddStyle & 0x04) == 0x04))
 				w = fontpixels * 2;
 			else if (ctrl is ComboBox || ctrl is HotkeyBox || ctrl is ListBox || ctrl is NumericUpDown || ctrl is ProgressBar || ctrl is TextBox)
@@ -963,13 +990,13 @@ namespace Keysharp.Core
 
 			if (opts.hp != int.MinValue)
 			{
-				ctrl.Height = info.LastControl != null ? (int)Math.Round(Accessors.A_ScaledScreenDPI * (info.LastControl.Height + opts.hp)) : 0;
+				ctrl.Height = info.LastControl != null ? (int)Math.Round(dpiscale * (info.LastControl.Height + opts.hp)) : 0;
 			}
 			else
 			{
 				if (opts.height != int.MinValue)
 				{
-					ctrl.Height = (int)Math.Round(Accessors.A_ScaledScreenDPI * opts.height);
+					ctrl.Height = (int)Math.Round(dpiscale * opts.height);
 				}
 				else
 				{
@@ -998,7 +1025,7 @@ namespace Keysharp.Core
 					}
 					else if (ctrl is ListBox lb)
 					{
-						lb.Height = (int)(Accessors.A_ScaledScreenDPI * ((lb.ItemHeight * r) + (lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom));
+						lb.Height = (int)(dpiscale * ((lb.ItemHeight * r) + (lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom));
 					}
 					else if (ctrl is TreeView tv)
 					{
@@ -1022,7 +1049,7 @@ namespace Keysharp.Core
 						{
 							if (ctrl is TrackBar trk && opts.thick == int.MinValue)//Separate check for TrackBar because the documentation specifies it in pixels. Skip this if thickness has been specified.
 							{
-								ctrl.Height = trk.Orientation == Orientation.Horizontal ? (int)Math.Round(Accessors.A_ScaledScreenDPI * 30) : (int)Math.Round(5 * fontpixels);
+								ctrl.Height = trk.Orientation == Orientation.Horizontal ? (int)Math.Round(dpiscale * 30) : (int)Math.Round(5 * fontpixels);
 								goto heightdone;
 							}
 						}
@@ -1043,7 +1070,7 @@ namespace Keysharp.Core
 			}
 
 			heightdone:
-			//ctrl.Height = (int)Math.Round(ctrl.Height * Accessors.A_ScaledScreenDPI);
+			//ctrl.Height = (int)Math.Round(ctrl.Height * dpiscale);
 			var last = info.LastControl;
 			Point loc;
 			(Control right, Control bottom) rb = info.RightBottomMost();
@@ -1115,13 +1142,13 @@ namespace Keysharp.Core
 				if (form.MainMenuStrip != null)
 					top += form.MainMenuStrip.Height;
 
-				top = (int)Math.Round(top * Accessors.A_ScaledScreenDPI);
+				top = (int)Math.Round(top * dpiscale);
 				ctrl.Location = new Point(form.Margin.Left, top);
 			}
 
-			//ctrl.Location = new Point((int)Math.Round(ctrl.Location.X * Accessors.A_ScaledScreenDPI), (int)Math.Round(ctrl.Location.Y * Accessors.A_ScaledScreenDPI));
+			//ctrl.Location = new Point((int)Math.Round(ctrl.Location.X * dpiscale), (int)Math.Round(ctrl.Location.Y * dpiscale));
 
-			if (CurrentTab != null)
+			if (CurrentTab != null && CurrentTab.Parent != ctrl)//There is a good chance that this code must come before all of the sizing code for the sizing to properly work.
 			{
 				CurrentTab.Controls.Add(ctrl);
 			}
@@ -1136,7 +1163,7 @@ namespace Keysharp.Core
 					var screenpt = form.PointToScreen(ctrl.Location);
 					var clientpt = panel.PointToClient(screenpt);
 					ctrl.Location = new Point(Math.Max(form.Margin.Left, clientpt.X), Math.Max(form.Margin.Top, clientpt.Y));
-					panel.Size = new System.Drawing.Size(ctrl.Width + 10, ctrl.Height + 10);
+					panel.Size = new System.Drawing.Size(ctrl.Width + (int)Math.Round(10 * dpiscale), ctrl.Height + (int)Math.Round(10 * dpiscale));
 					panel.AutoSize = true;
 					panel.Controls.Add(ctrl);
 					info.LastContainer = panel;
@@ -1253,7 +1280,7 @@ namespace Keysharp.Core
 			var y = (int)obj1.Al();
 			var width = (int)obj2.Al();
 			var height = (int)obj3.Al();
-			var scale = dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 			form.Top = (int)Math.Round(y * scale);
 			form.Left = (int)Math.Round(x * scale);
 			form.Width = (int)Math.Round(width * scale);
@@ -1372,6 +1399,7 @@ namespace Keysharp.Core
 			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
 			int?[] pos = { null, null, null, null };
+			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 
 			foreach (var opt in Options.ParseOptions(s))
 			{
@@ -1430,15 +1458,70 @@ namespace Keysharp.Core
 				}
 			}
 
-			if (auto || (pos[0] == null && pos[1] == null))//Need to figure out how to auto size to fit all controls.
+			var status = form.Controls.OfType<KeysharpStatusStrip>().ToArray();
+			(int, int) FixStatusStrip(KeysharpStatusStrip ss)
 			{
-				var status = form.Controls.OfType<StatusStrip>().ToArray();
-				var d = status.Length == 0 ? 0 : status[0].Height;
-				form.AutoSize = true;
-				form.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+				var maxx = 0;
+				var maxy = 0;
 
-				if (d > 0)
-					form.ClientSize = new Size(form.ClientSize.Width, form.ClientSize.Height + d);
+				foreach (Control ctrl in form.Controls)
+				{
+					if (ss != null && ctrl != ss)
+					{
+						if (ctrl.Top > ss.Top)
+							ctrl.Top -= (ss.Height + form.Margin.Top + form.Margin.Bottom);
+					}
+
+					var yval = ctrl.Bottom;// + (ctrl.Height - ctrl.ClientSize.Height);//Include border.
+
+					if (yval > maxy)
+						maxy = yval;
+
+					//var xval = ctrl.Right + (int)(dpiscale * (ctrl.Width - ctrl.ClientSize.Width));
+					var xval = ctrl.Right + (ctrl.Width - ctrl.ClientSize.Width);
+
+					if (xval > maxx)
+						maxx = xval;
+				}
+
+				return (maxx, maxy);
+			}
+
+			if (auto || (!form.beenShown && pos[0] == null && pos[1] == null))//The caluclations in this block are not exact, but are as close as we can possibly get in a generic way.
+			{
+				if (!resizable)//Only set it to autosize if they haven't explicitly set it to not be autosize (+Resize).
+				{
+					if (status.Length > 0)
+					{
+						var ss = status[0];
+						var (maxx, maxy) = FixStatusStrip(ss);
+						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
+						form.Height = maxy + ss.Height + (int)(2 * dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic numbers, as close as we can get.
+						ss.Left = 0;
+						ss.Top = form.Height - ss.Height;
+					}
+
+					form.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+					form.AutoSize = true;
+				}
+				else
+				{
+					if (status.Length > 0)
+					{
+						var ss = status[0];
+						var (maxx, maxy) = FixStatusStrip(ss);
+						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
+						form.Height = maxy + ss.Height + (int)(4 * dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic number, but it appears to work fairly closely.
+						ss.Dock = DockStyle.Bottom;
+						ss.SizingGrip = true;
+					}
+					else
+					{
+						var (maxx, maxy) = FixStatusStrip(null);
+						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
+						form.Height = maxy + (int)(4 * dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic number, but it appears to work fairly closely.
+					}
+				}
 			}
 			else
 			{
@@ -1450,7 +1533,18 @@ namespace Keysharp.Core
 				if (pos[1] != null)
 					size.Height = (int)pos[1];
 
-				form.ClientSize = size;
+				showOptionsDkt["Resize"](this, true);
+
+				if (status.Length > 0)
+				{
+					var ss = status[0];
+					_ = FixStatusStrip(ss);
+					ss.Dock = DockStyle.Bottom;
+					ss.SizingGrip = true;
+				}
+
+				//form.ClientSize = size;
+				form.Size = size;
 			}
 
 			var location = form.beenShown ? form.Location : new Point();
@@ -1474,7 +1568,7 @@ namespace Keysharp.Core
 			else
 				form.Show();
 
-			form.ResumeLayout(true);
+			//form.ResumeLayout(true);
 
 			if (min)
 				form.WindowState = FormWindowState.Minimized;
@@ -1548,17 +1642,14 @@ namespace Keysharp.Core
 
 			return new Map(dkt);
 		}
-
 		internal static float GetFontPixels(Font font) => (float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
-
 		internal static GuiInfo GuiAssociatedInfo(Control control) => control.FindForm().Tag as GuiInfo;
-
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
 			var opts = Options.ParseOptions(optionsstr);
 
-			if (type == "monthcal" && text != "")
+			if (type == "monthcal" && !string.IsNullOrEmpty(text))
 			{
 				Conversions.ParseRange(text, out options.dtselstart, out options.dtselend);
 
@@ -1727,19 +1818,16 @@ namespace Keysharp.Core
 
 			return options;
 		}
-
 		internal static void SuppressCtrlAKeyDown(object o, KeyEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.SuppressKeyPress = true;
 		}
-
 		internal static void SuppressCtrlAPreviewKeyDown(object o, PreviewKeyDownEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.IsInputKey = true;
 		}
-
 		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			var control = form.ActiveControl;
@@ -1753,7 +1841,6 @@ namespace Keysharp.Core
 			else
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
 		}
-
 		internal void Form_DragDrop(object sender, DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -1763,7 +1850,6 @@ namespace Keysharp.Core
 				_ = dropFilesHandlers?.InvokeEventHandlers(this, form.ActiveControl, new Array(files), coords.X, coords.Y);
 			}
 		}
-
 		internal void Form_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			var result = closedHandlers?.InvokeEventHandlers(this);
@@ -1781,7 +1867,6 @@ namespace Keysharp.Core
 			if (Core.Debug)//Only for making testing easier, never meant to run in production.
 				Script.mainWindow?.Close();
 		}
-
 		internal void Form_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
@@ -1789,13 +1874,11 @@ namespace Keysharp.Core
 			else if (e.KeyCode == Keys.Escape)
 				_ = escapeHandlers?.InvokeEventHandlers(this);
 		}
-
 		internal void Form_MouseDown(object sender, MouseEventArgs e)
 		{
 			if (e.Button == MouseButtons.Right)
 				CallContextMenuChangeHandlers(false, e.X, e.Y);
 		}
-
 		internal void Form_Resize(object sender, EventArgs e)
 		{
 			long state;
@@ -1809,7 +1892,6 @@ namespace Keysharp.Core
 
 			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
 		}
-
 		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.F2)
@@ -1820,21 +1902,19 @@ namespace Keysharp.Core
 					lv.SelectedItems[0].BeginEdit();
 			}
 		}
-
 		public object this[object controlname]
 		{
 			get
 			{
 				if (controlname is string s)
 				{
-					if (form.Controls.Find(s, true) is Control[] ctrls && ctrls.Length > 0)
-						return ctrls[0];
+					if (form.Controls.Find(s, true) is Control[] ctrls && ctrls.Length > 0 && ctrls[0].Tag is GuiControl guictrl)
+						return guictrl;
 				}
 
 				throw new Error($"No controls matched the name {controlname}.");
 			}
 		}
-
 		internal class GuiOptions
 		{
 			public int addexstyle = 0;
