@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System;
+
+namespace Keysharp.Core
 {
 	public partial class Core
 	{
@@ -487,6 +489,8 @@
 		internal const char Directive = '#';
 		internal static readonly char[] Parens = { ParenOpen, ParenClose };
 		internal static readonly char[] BlockOpenAndSpace = { BlockOpen, SingleSpace };
+		internal static readonly char[] BlockOpenSpaceAndParens = BlockOpenAndSpace.Concat(Parens);
+		internal static readonly char[] BlockOpenParenOpen = { BlockOpen, ParenOpen };
 
 #if !LEGACY
 		internal const char LastVar = '$';

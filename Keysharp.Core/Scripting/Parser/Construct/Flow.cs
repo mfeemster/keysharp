@@ -28,7 +28,7 @@ namespace Keysharp.Scripting
 			delimiters[0] = Multicast;
 			delimiters[1] = HotkeyBound;
 			Spaces.CopyTo(delimiters, offset);
-			int[] d = { code.IndexOfAny(delimiters), code.IndexOfAny(new[] { BlockOpen, ParenOpen }) };
+			int[] d = { code.IndexOfAny(delimiters), code.IndexOfAny(BlockOpenParenOpen) };
 
 			if (d[0] == -1 && d[1] == -1)
 				parts[0] = code;
@@ -371,11 +371,15 @@ namespace Keysharp.Scripting
 						var testid = InternalID;
 						var id = InternalID;
 						var blockOpen = trimmed.EndsWith(BlockOpen);
-						var expr = ParseSingleExpression(temp.Last(), false);
-						var col = Ch.CodeToString(expr);
 
 						if (blockOpen)
-							parts[parts.Length - 1] = trimmed.Trim(new char[] { BlockOpen, ' ' });
+						{
+							temp[1] = temp[1].Trim(BlockOpenSpaceAndParens);
+							parts[parts.Length - 1] = trimmed.Trim(BlockOpenSpaceAndParens);
+						}
+
+						var expr = ParseSingleExpression(temp.Last(), false);
+						var col = Ch.CodeToString(expr);
 						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
 
 						if (varsplits.Count == 1)//If only one present, use second because it's the value, instead of the index/key.

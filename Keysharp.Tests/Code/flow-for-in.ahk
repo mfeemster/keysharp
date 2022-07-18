@@ -39,6 +39,24 @@ else
 	FileAppend, fail, *
 
 x := 0
+y := 0
+
+for (i,v in arr) {
+	x += i
+	y += v
+}
+
+if (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (y == 60)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 0
 
 for (,v in arr)
 	x += v
@@ -77,6 +95,28 @@ for (i1,v1 in arr)
 	{
 		for (i3,v3 in arr)
 		{
+			x += i3
+			y += v3
+		}
+	}
+}
+
+if (x == 54)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (y == 540)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 0
+y := 0
+
+for (i1,v1 in arr) {
+	for (i2,v2 in arr) {
+		for (i3,v3 in arr) {
 			x += i3
 			y += v3
 		}

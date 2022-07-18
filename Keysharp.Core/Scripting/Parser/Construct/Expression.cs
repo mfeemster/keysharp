@@ -12,6 +12,7 @@ namespace Keysharp.Scripting
 		private CodeExpression ParseExpression(List<object> parts, bool create)
 		{
 			RemoveExcessParentheses(parts);
+			var rescanned = false;
 			start:
 			var rescan = false;
 
@@ -86,7 +87,8 @@ namespace Keysharp.Scripting
 						var low = part.ToLowerInvariant();
 						parts[i] = libProperties.TryGetValue(low, out var pi)
 								   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
-								   : VarIdOrConstant(part, i == 0 && create && (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("[")), false);//Check for function or property calls on an object, which still count as read operations.
+								   //Check for function or property calls on an object, which only count as read operations.
+								   : VarIdOrConstant(part, i == 0 && create && (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("["))), false);
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{
@@ -590,8 +592,11 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			if (rescan)
+			if (rescan && !rescanned)
+			{
+				rescanned = true;//Prevent infinite loop.
 				goto start;
+			}
 
 			for (var i = 1; i < parts.Count; i++)
 			{
