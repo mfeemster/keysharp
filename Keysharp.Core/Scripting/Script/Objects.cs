@@ -26,8 +26,6 @@ namespace Keysharp.Scripting
 		public static Map Dictionary(object[] keys, object[] values)//MATT
 		{
 			var table = new Map();
-			//var table = new Dictionary<object, object>();
-			//values = (object[])values[0];//This caused a crash //MATT
 
 			for (var i = 0; i < keys.Length; i++)
 			{

@@ -17,7 +17,7 @@ namespace Keysharp.Tests
 			//Environment.CurrentDirectory = dir;
 			// or
 			//Directory.SetCurrentDirectory(dir);
-			Keysharp.Core.Window.SetProcessDPIAware();
+			//Keysharp.Core.Window.SetProcessDPIAware();
 			Reflections.Initialize();
 		}
 	}
