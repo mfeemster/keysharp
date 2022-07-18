@@ -735,9 +735,7 @@ namespace Keysharp.Core
 					cal.ShowWeekNumbers = opts.opt4;
 					cal.ShowTodayCircle = !opts.opt8;
 					cal.ShowToday = !opts.opt16;
-
-					if (opts.rangesel.HasValue)
-						cal.MaxSelectionCount = opts.rangesel.Value;
+					cal.MaxSelectionCount = opts.datemultisel ? 31 : 1;
 
 					if (opts.dtselstart > DateTime.MinValue && opts.dtselend < DateTime.MaxValue)
 						cal.SelectionRange = new SelectionRange(opts.dtselstart, opts.dtselend);
@@ -1129,12 +1127,12 @@ namespace Keysharp.Core
 			else if (last != null && last.Dock == DockStyle.None && loc.X == int.MinValue && loc.Y == int.MinValue)
 			{
 				var templast = opts.group && last.Parent is Panel panel ? panel : last;
-				ctrl.Location = new Point(templast.Location.X, templast.Location.Y + templast.Height + form.Margin.Bottom + ctrl.Margin.Top);
+				ctrl.Location = new Point(templast.Location.X, (int)(/*dpiscale*/1 * (templast.Location.Y + templast.Height + form.Margin.Bottom + ctrl.Margin.Top)));//Strangely, only the y coordinate needs to be DPI scaled.
 			}
 			else if (rb.right != null && rb.right.Dock == DockStyle.None && loc.X == int.MinValue)
-				ctrl.Location = new Point(rb.right.Location.X + rb.right.Width + form.Margin.Right + ctrl.Margin.Left, loc.Y);
+				ctrl.Location = new Point(rb.right.Location.X + rb.right.Width + form.Margin.Right + ctrl.Margin.Left, (int)(dpiscale * loc.Y));
 			else if (rb.bottom != null && rb.bottom.Dock == DockStyle.None && loc.Y == int.MinValue)
-				ctrl.Location = new Point(loc.X, rb.bottom.Location.Y + rb.bottom.Height + rb.bottom.Margin.Bottom + ctrl.Margin.Top);
+				ctrl.Location = new Point(loc.X, (int)(dpiscale * rb.bottom.Location.Y + rb.bottom.Height + rb.bottom.Margin.Bottom + ctrl.Margin.Top));
 			else//Final fallback when nothing else has worked.
 			{
 				var top = form.Margin.Top;
@@ -1658,6 +1656,10 @@ namespace Keysharp.Core
 
 				if (options.dtselend == DateTime.MaxValue)
 					options.dtselend = options.dtselstart;
+
+				if (options.dtselstart != DateTime.MinValue && options.dtselend != DateTime.MaxValue &&
+						(options.dtselend - options.dtselstart).TotalDays > 1)
+					options.datemultisel = true;
 			}
 
 			foreach (var opt in opts)
@@ -1668,18 +1670,18 @@ namespace Keysharp.Core
 
 				if (type == "datetime")
 				{
-					if (Options.TryParseDateTime(opt, "Choose", "yyyyMMdd", ref options.dtChoose)) { }
-					else if (string.Compare(opt, "ChooseNone", true) == 0) { options.choosenone = true; }
-					else if (opt == "1") { options.dtopt1 = true; }
-					else if (opt == "2") { options.dtopt2 = true; }
+					if (Options.TryParseDateTime(opt, "Choose", "yyyyMMdd", ref options.dtChoose)) { continue; }
+					else if (string.Compare(opt, "ChooseNone", true) == 0) { options.choosenone = true; continue; }
+					else if (opt == "1") { options.dtopt1 = true; continue; }
+					else if (opt == "2") { options.dtopt2 = true; continue; }
 				}
 				else if (type == "monthcal")
 				{
-					if (Options.TryParse(opt, "Multi", ref temp)) { options.rangesel = temp; }
+					if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.datemultisel = true; continue; }
 				}
 				else
 				{
-					if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.multiline = tempbool; }
+					if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.multiline = tempbool; continue; }
 				}
 
 				if (Options.TryParse(opt, "r", ref options.rows)) { }
@@ -1703,7 +1705,6 @@ namespace Keysharp.Core
 					if (type == "datetime" || type == "monthcal")
 					{
 						Conversions.ParseRange(options.nudrange, out options.dtlow, out options.dthigh);
-						options.rangesel = (int)(options.dthigh - options.dtlow).TotalDays;
 					}
 					else if (type == "updown" || type == "slider" || type == "progress")
 					{
@@ -2012,7 +2013,7 @@ namespace Keysharp.Core
 			public int page = int.MinValue;
 			public bool pwd = false;
 			public string pwdch = "";
-			public int? rangesel;
+			public bool datemultisel;
 			public bool? rdonly;
 			public bool? redraw;
 			public int remexstyle = 0;
