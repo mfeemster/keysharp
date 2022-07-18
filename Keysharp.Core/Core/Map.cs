@@ -165,26 +165,32 @@ namespace Keysharp.Core
 
 		public void Set(params object[] values)
 		{
-			IList ic;
-			Array arr = null;
-
-			if (values.Length == 1 && values[0] is Array temp)
-				ic = arr = temp;
-			else
-				ic = values;
-
-			var count = (ic.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
-			_ = map.EnsureCapacity(count);
-
-			if (arr != null)
+			if (values.Length == 1)
 			{
-				for (var i = 0; i < count; i += 2)
-					Insert(ic[i + 1], ic[i + 2]);//Add 1 because the Array indexer internally subtracts 1.
+				if (values[0] is Array temp)
+				{
+					var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
+					_ = map.EnsureCapacity(count);
+
+					for (var i = 0; i < count; i += 2)
+						Insert(temp[i + 1], temp[i + 2]);//Add 1 because the Array indexer internally subtracts 1.
+				}
+				else if (values[0] is Dictionary<string, object> tempm)
+				{
+					_ = map.EnsureCapacity(tempm.Count);
+
+					foreach (var kv in tempm)
+						Insert(kv.Key, kv.Value);
+				}
+				else
+					throw new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.");
 			}
 			else
 			{
+				var count = (values.Length / 2) * 2;
+
 				for (var i = 0; i < count; i += 2)
-					Insert(ic[i], ic[i + 1]);
+					Insert(values[i], values[i + 1]);
 			}
 		}
 

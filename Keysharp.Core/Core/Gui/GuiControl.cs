@@ -968,7 +968,7 @@ namespace Keysharp.Core
 			var y = obj1.Al(long.MinValue);
 			var width = obj2.Al(long.MinValue);
 			var height = obj3.Al(long.MinValue);
-			var scale = dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 
 			if (y != long.MinValue)
 				_control.Top = (int)Math.Round(y * scale);
@@ -1597,14 +1597,12 @@ namespace Keysharp.Core
 
 		internal static Map GetClientPos(Control control, bool scaling)
 		{
-			var scale = scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-			var dkt = new Map(new Dictionary<string, object>
-			{
-				{ "X", control.ClientRectangle.X * scale },
-				{ "Y", control.ClientRectangle.Y * scale },
-				{ "Width", control.ClientRectangle.Width * scale },
-				{ "Height", control.ClientRectangle.Height * scale }
-			});
+			var scale = !scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var dkt = new Map();
+			dkt["X"] = control.ClientRectangle.X * scale;
+			dkt["Y"] = control.ClientRectangle.Y * scale;
+			dkt["Width"] = control.ClientRectangle.Width * scale;
+			dkt["Height"] = control.ClientRectangle.Height * scale;
 			return dkt;
 		}
 
@@ -1622,14 +1620,12 @@ namespace Keysharp.Core
 
 		internal static Map GetPos(Control control, bool scaling)
 		{
-			var scale = scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-			var dkt = new Map(new Dictionary<string, object>
-			{
-				{ "X", control.Location.X * scale },
-				{ "Y", control.Location.Y * scale },
-				{ "Width", control.Size.Width * scale },
-				{ "Height", control.Size.Height * scale }
-			});
+			var scale = !scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var dkt = new Map();
+			dkt["X"] = control.Location.X * scale;
+			dkt["Y"] = control.Location.Y * scale;
+			dkt["Width"] = control.Size.Width * scale;
+			dkt["Height"] = control.Size.Height * scale;
 			return dkt;
 		}
 

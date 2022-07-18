@@ -11,6 +11,8 @@ namespace Keysharp.Core
 {
 	public static class Window
 	{
+		private static bool dpimodeset;
+
 		internal static ControlManagerBase ControlManager => ControlManagerProvider.Instance;
 
 		/// <summary>
@@ -253,7 +255,13 @@ namespace Keysharp.Core
 		public static void SetProcessDPIAware()
 		{
 			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
+
+			if (!dpimodeset)
+			{
+				dpimodeset = true;
+				Application.SetCompatibleTextRenderingDefault(false);
+			}
+
 			System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
 			//if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 			//{
