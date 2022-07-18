@@ -215,7 +215,19 @@ namespace Keysharp.Core
 				else if (_control is DateTimePicker dtp)
 					return Conversions.ToYYYYMMDDHH24MISS(dtp.Value);
 				else if (_control is MonthCalendar mc)
-					return mc.MaxSelectionCount == 1 ? $"{mc.SelectionStart:yyyyMMdd}" : $"{mc.SelectionStart:yyyyMMdd}-{mc.SelectionEnd:yyyyMMdd}";
+				{
+					if (mc.MaxSelectionCount == 1)
+					{
+						return $"{mc.SelectionStart:yyyyMMdd}";
+					}
+					else
+					{
+						if (mc.SelectionStart.Date == mc.SelectionEnd.Date)
+							return $"{mc.SelectionStart:yyyyMMdd}";
+						else
+							return $"{mc.SelectionStart:yyyyMMdd}-{mc.SelectionEnd:yyyyMMdd}";
+					}
+				}
 				else if (_control is TrackBar tb)
 					return tb.Value;
 				else if (_control is ProgressBar pb)
