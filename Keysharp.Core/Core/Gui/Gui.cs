@@ -300,9 +300,6 @@ namespace Keysharp.Core
 			form.KeyPreview = true;
 			form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			form.Text = caption != "" ? caption : Accessors.A_ScriptName;
-			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
-			var y = (int)Math.Round(form.Font.Size * 0.75f);
-			form.Margin = new Padding(x, y, x, y);
 			//form.Padding = new Padding(x, y, x, y);
 			form.Tag = new GuiInfo { Delimiter = '|' };
 			//form.SuspendLayout();//Not sure if we need this.
@@ -314,7 +311,17 @@ namespace Keysharp.Core
 			form.MouseDown += Form_MouseDown;
 			form.DragDrop += Form_DragDrop;
 			allGuiHwnds[form.Handle.ToInt64()] = this;
+			form.Load += Form_Load;
+			form.Show();//We must first show so that all handles are created and geometries calculated. We quickly hide in Form_Load().
 			Keysharp.Core.Common.Window.WindowManagerProvider.Instance.LastFound = new WindowItem(form.Handle);
+		}
+
+		private void Form_Load(object sender, EventArgs e)
+		{
+			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
+			var y = (int)Math.Round(form.Font.Size * 0.75f);
+			form.Margin = new Padding(x, y, x, y);
+			form.Visible = false;
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
@@ -344,7 +351,7 @@ namespace Keysharp.Core
 				{
 					var lbl = new KeysharpLabel
 					{
-						Font = form.Font,
+						Font = form.Font
 					};
 					ctrl = lbl;
 				}
@@ -1050,6 +1057,12 @@ namespace Keysharp.Core
 								ctrl.Height = trk.Orientation == Orientation.Horizontal ? (int)Math.Round(dpiscale * 30) : (int)Math.Round(5 * fontpixels);
 								goto heightdone;
 							}
+							else if (ctrl is KeysharpLabel lbl)
+							{
+								lbl.MaximumSize = new Size(lbl.Width, 0);
+								lbl.AutoSize = true;
+								goto heightdone;
+							}
 						}
 
 						if (r > 1)
@@ -1068,7 +1081,6 @@ namespace Keysharp.Core
 			}
 
 			heightdone:
-			//ctrl.Height = (int)Math.Round(ctrl.Height * dpiscale);
 			var last = info.LastControl;
 			Point loc;
 			(Control right, Control bottom) rb = info.RightBottomMost();
@@ -1127,12 +1139,12 @@ namespace Keysharp.Core
 			else if (last != null && last.Dock == DockStyle.None && loc.X == int.MinValue && loc.Y == int.MinValue)
 			{
 				var templast = opts.group && last.Parent is Panel panel ? panel : last;
-				ctrl.Location = new Point(templast.Location.X, (int)(/*dpiscale*/1 * (templast.Location.Y + templast.Height + form.Margin.Bottom + ctrl.Margin.Top)));//Strangely, only the y coordinate needs to be DPI scaled.
+				ctrl.Location = new Point(templast.Location.X, templast.Location.Y + templast.Height + form.Margin.Bottom);
 			}
 			else if (rb.right != null && rb.right.Dock == DockStyle.None && loc.X == int.MinValue)
-				ctrl.Location = new Point(rb.right.Location.X + rb.right.Width + form.Margin.Right + ctrl.Margin.Left, (int)(dpiscale * loc.Y));
+				ctrl.Location = new Point(rb.right.Location.X + rb.right.Width + form.Margin.Right, loc.Y);
 			else if (rb.bottom != null && rb.bottom.Dock == DockStyle.None && loc.Y == int.MinValue)
-				ctrl.Location = new Point(loc.X, (int)(dpiscale * rb.bottom.Location.Y + rb.bottom.Height + rb.bottom.Margin.Bottom + ctrl.Margin.Top));
+				ctrl.Location = new Point(loc.X, rb.bottom.Location.Y + rb.bottom.Height + rb.bottom.Margin.Bottom);
 			else//Final fallback when nothing else has worked.
 			{
 				var top = form.Margin.Top;
@@ -1140,7 +1152,7 @@ namespace Keysharp.Core
 				if (form.MainMenuStrip != null)
 					top += form.MainMenuStrip.Height;
 
-				top = (int)Math.Round(top * dpiscale);
+				top = top;
 				ctrl.Location = new Point(form.Margin.Left, top);
 			}
 
@@ -1201,6 +1213,7 @@ namespace Keysharp.Core
 				info.Section = ctrl.Location;
 
 			info.LastControl = ctrl;
+			form.Update();//Required to make absolutely sure the state of the control is immediately displayed before any other changes might happen after this call.
 			return holder;
 		}
 
@@ -1493,8 +1506,8 @@ namespace Keysharp.Core
 					{
 						var ss = status[0];
 						var (maxx, maxy) = FixStatusStrip(ss);
-						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
-						form.Height = maxy + ss.Height + (int)(2 * dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic numbers, as close as we can get.
+						form.Width = maxx;// + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
+						form.Height = maxy;// + ss.Height + (int)(/*2 * dpiscale * */(form.Margin.Top + form.Margin.Bottom));//Magic numbers, as close as we can get.
 						ss.Left = 0;
 						ss.Top = form.Height - ss.Height;
 					}
@@ -1509,7 +1522,7 @@ namespace Keysharp.Core
 						var ss = status[0];
 						var (maxx, maxy) = FixStatusStrip(ss);
 						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
-						form.Height = maxy + ss.Height + (int)(4 * dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic number, but it appears to work fairly closely.
+						form.Height = maxy + ss.Height + (int)(dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic number, but it appears to work fairly closely. This is probably because that's how tall the size grip is.
 						ss.Dock = DockStyle.Bottom;
 						ss.SizingGrip = true;
 					}
@@ -1517,7 +1530,7 @@ namespace Keysharp.Core
 					{
 						var (maxx, maxy) = FixStatusStrip(null);
 						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
-						form.Height = maxy + (int)(4 * dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic number, but it appears to work fairly closely.
+						form.Height = maxy + (int)(4 * dpiscale * (form.Margin.Top + form.Margin.Bottom));
 					}
 				}
 			}
@@ -1541,7 +1554,6 @@ namespace Keysharp.Core
 					ss.SizingGrip = true;
 				}
 
-				//form.ClientSize = size;
 				form.Size = size;
 			}
 

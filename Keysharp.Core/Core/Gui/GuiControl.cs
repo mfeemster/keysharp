@@ -27,7 +27,6 @@ namespace Keysharp.Core
 		private List<IFuncObj> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
 		private bool fireEvents = true;//Need to figure out how to enable/disable events.//MATT//TODO
-		private long parenthandle;
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
 		private List<IFuncObj> itemCheckHandlers;
@@ -447,9 +446,8 @@ namespace Keysharp.Core
 				var n = int.MinValue;
 				TreeNode node;
 				TreeNodeCollection nodes = null;
-				parenthandle = tv.Handle.ToInt64();//By forcing a read of the parent handle, it causes the controls and their handles to properly be created.
 
-				if (parent == 0)
+				if (parent == 0)//The only reason nesting works is because we briefly show then hide the form in Gui() so that all handles can be created.
 				{
 					nodes = tv.Nodes;
 				}

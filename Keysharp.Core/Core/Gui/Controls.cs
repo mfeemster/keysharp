@@ -178,7 +178,10 @@ namespace Keysharp.Core
 			DoubleBuffered = true;
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
-			Shown += (o, e) => { beenShown = true; };
+			Shown += (o, e) =>
+			{
+				beenShown = true;//Will not trigger on initial temporary show/hide in constructor, and instead will only happen after Gui.Show() completes.
+			};
 		}
 	}
 
