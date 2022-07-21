@@ -268,6 +268,8 @@ namespace Keysharp.Core
 
 			if (delay == -1)
 				Application.DoEvents();//Be careful with this, it has caused spurious crashes in my years of programming experience.
+			else
+				System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(delay));
 
 			//_ = System.Threading.Thread.CurrentThread.Join(delay);
 			//var stop = Environment.TickCount + delay;
@@ -277,7 +279,6 @@ namespace Keysharp.Core
 			//  Application.DoEvents();
 			//  System.Threading.Thread.Sleep(10);
 			//}
-			System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(delay));
 		}
 
 		/// <summary>
