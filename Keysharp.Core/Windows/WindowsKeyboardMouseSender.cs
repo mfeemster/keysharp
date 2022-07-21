@@ -1838,7 +1838,7 @@ namespace Keysharp.Core.Windows
 				// will be readjusted (above) if the user presses/releases modifier keys during the mouse clicks.
 				if (vkIsMouse && targetWindow == IntPtr.Zero)
 				{
-					MouseClick(vk, x, y, 1, (int)Accessors.A_DefaultMouseSpeed.ParseLong().Value, eventType, moveOffset);
+					MouseClick(vk, x, y, 1, (int)Accessors.A_DefaultMouseSpeed, eventType, moveOffset);
 				}
 				// Above: Since it's rare to send more than one click, it seems best to simplify and reduce code size
 				// by not doing more than one click at a time event when mode is SendInput/Play.
@@ -2350,7 +2350,7 @@ namespace Keysharp.Core.Windows
 
 								//Mixing parsing with the sending actions seems like a pretty terrible design, so should separate later.//TODO
 								if (repeatCount < 1) // Allow {Click 100, 100, 0} to do a mouse-move vs. click (but modifiers like ^{Click..} aren't supported in this case.
-									MouseMove(ref clickX, ref clickY, ref placeholder, (int)Accessors.A_DefaultMouseSpeed.ParseLong().Value, moveOffset);
+									MouseMove(ref clickX, ref clickY, ref placeholder, (int)Accessors.A_DefaultMouseSpeed, moveOffset);
 								else // Use SendKey because it supports modifiers (e.g. ^{Click}) SendKey requires repeat_count>=1.
 									SendKey(vk, 0, modsForNextKey.Value, persistentModifiersForThisSendKeys
 											, repeatCount, eventType, 0, targetWindow, clickX, clickY, moveOffset);
@@ -3813,7 +3813,7 @@ namespace Keysharp.Core.Windows
 				// the normal g->KeyDelay will be in effect.  In other words, it seems undesirable in
 				// most cases to do both delays for only "one half" of a keystroke:
 				if (doKeyDelay && eventType == KeyEventTypes.KeyDownAndUp)
-					DoKeyDelay((int)Accessors.A_KeyDuration); // Since aTargetWindow!=NULL, sendMode!=SM_PLAY, so no need for to ever use the SendPlay press-duration.
+					DoKeyDelay((long)Accessors.A_KeyDuration); // Since aTargetWindow!=NULL, sendMode!=SM_PLAY, so no need for to ever use the SendPlay press-duration.
 
 				if (eventType != KeyEventTypes.KeyDown)
 					_ = WindowsAPI.PostMessage(targetWindow, WM_KEYUP, (uint)vk, (uint)(lParam | 0xC0000001));
