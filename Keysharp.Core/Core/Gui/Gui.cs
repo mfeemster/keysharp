@@ -1234,9 +1234,22 @@ namespace Keysharp.Core
 
 				if (LastContainer.Parent is TabControl partc)
 				{
-					rb = LastContainer.RightBottomMost();
-					partc.Width = partc.TabWidth() + rb.right.Right + LastContainer.Margin.Right + partc.Margin.Right;
-					partc.Height = partc.TabHeight() + rb.bottom.Bottom + LastContainer.Margin.Bottom + partc.Margin.Bottom;
+					var tempw = 0;
+					var temph = 0;
+
+					foreach (TabPage partp in partc.TabPages)
+					{
+						rb = partp.RightBottomMost();
+
+						if (rb.right != null)
+							tempw = Math.Max(tempw, partc.TabWidth() + rb.right.Right + LastContainer.Margin.Right + partc.Margin.Right);
+
+						if (rb.bottom != null)
+							temph = Math.Max(temph, partc.TabHeight() + rb.bottom.Bottom + LastContainer.Margin.Bottom + partc.Margin.Bottom);
+					}
+
+					partc.Width = tempw;
+					partc.Height = temph;
 				}
 			}
 
