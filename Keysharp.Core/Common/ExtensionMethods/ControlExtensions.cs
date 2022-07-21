@@ -125,6 +125,59 @@ namespace System.Windows.Forms
 			control.Refresh();
 		}
 
+		internal static int TabHeight(this Control control)
+		{
+			if (control is TabControl tc && tc.TabPages.Count > 0)
+			{
+				if (tc.Alignment == System.Windows.Forms.TabAlignment.Top || tc.Alignment == System.Windows.Forms.TabAlignment.Bottom)
+					return tc.GetTabRect(0).Height;//GetTabRect() works, tc.ItemSize.Height does not.
+			}
+
+			return 0;
+		}
+
+		internal static int TabWidth(this Control control)
+		{
+			if (control is TabControl tc && tc.TabPages.Count > 0)
+			{
+				if (tc.Alignment == System.Windows.Forms.TabAlignment.Left || tc.Alignment == System.Windows.Forms.TabAlignment.Right)
+					return tc.GetTabRect(0).Width;
+			}
+
+			return 0;
+		}
+
+		internal static (Control, Control) RightBottomMost(this Control control)
+		{
+			var maxx = 0;
+			var maxy = 0;
+			(Control right, Control bottom) p = (null, null);
+
+			foreach (Control ctrl in control.Controls)
+			{
+				if (!(ctrl is KeysharpStatusStrip))//Don't count a status strip in the bounds since its placement is handled manually.
+				{
+					var temp = ctrl.Right;
+
+					if (temp > maxx)
+					{
+						maxx = temp;
+						p.right = ctrl;
+					}
+
+					temp = ctrl.Bottom;
+
+					if (temp > maxy)
+					{
+						maxy = temp;
+						p.bottom = ctrl;
+					}
+				}
+			}
+
+			return p;
+		}
+
 		internal static void SelectItem(this ListBox lb, string text, bool clear = false)
 		{
 			if (lb.SelectionMode == SelectionMode.One)

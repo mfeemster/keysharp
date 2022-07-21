@@ -1590,7 +1590,10 @@ namespace Keysharp.Core
 				if (val is string s)
 				{
 					if (tc.FindTab(s, exact) is TabPage tp)
+					{
 						Gui.CurrentTab = tp;
+						Gui.LastContainer = tp;
+					}
 				}
 				else if (val != null)
 				{
@@ -1598,10 +1601,16 @@ namespace Keysharp.Core
 					i--;
 
 					if (i >= 0 && i < tc.TabPages.Count)
-						Gui.CurrentTab = tc.TabPages[i];
+					{
+						var tp = tc.TabPages[i];
+						Gui.CurrentTab = tp;
+						Gui.LastContainer = tp;
+					}
 				}
 				else
-					Gui.CurrentTab = null;
+				{
+					Gui.LastContainer = tc.Parent;
+				}
 			}
 		}
 

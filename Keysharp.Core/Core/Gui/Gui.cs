@@ -282,26 +282,55 @@ namespace Keysharp.Core
 
 		public string Title => form.Text;
 
+		internal Control LastContainer { get; set; }
+
+		internal Control LastControl
+		{
+			get
+			{
+				if (LastContainer != null)
+				{
+					for (var i = LastContainer.Controls.Count - 1; i >= 0; i--)
+					{
+						var ctrl = LastContainer.Controls[i];
+
+						if (ctrl != null && !(ctrl is KeysharpStatusStrip))//Don't count a status strip as a last control since its placement is handled manually.
+							return ctrl;
+					}
+				}
+
+				return null;
+			}
+		}
+
+		internal Font Font { get; set; }
+
+		internal Point Section { get; set; }
+
+		internal StatusStrip StatusBar { get; set; }
+
 		public Gui(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var options = obj0.As();
 			var caption = obj1.As();
 			var eventObj = obj2;
-			form = new KeysharpForm();
-			//form.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-			//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			//form.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
-			//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-			//form.ClientSize = new System.Drawing.Size(1042, 792);
-			form.eventObj = eventObj;
-			form.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			var newCount = Interlocked.Increment(ref windowCount);
-			form.Name = $"Keysharp window {newCount}";
-			form.KeyPreview = true;
-			form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			form.Text = caption != "" ? caption : Accessors.A_ScriptName;
-			//form.Padding = new Padding(x, y, x, y);
-			form.Tag = new GuiInfo { Delimiter = '|' };
+			form = new KeysharpForm
+			{
+				//form.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+				//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+				//form.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
+				//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+				//form.ClientSize = new System.Drawing.Size(1042, 792);
+				eventObj = eventObj,
+				Icon = Keysharp.Core.Properties.Resources.Keysharp_ico,
+				Name = $"Keysharp window {newCount}",
+				KeyPreview = true,
+				StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
+				Text = caption != "" ? caption : Accessors.A_ScriptName,
+				Tag = this
+			};
+			LastContainer = form;
 			//form.SuspendLayout();//Not sure if we need this.
 			Opt(options);
 			//var formHandle = form.Handle;//Force the creation.
@@ -338,10 +367,6 @@ namespace Keysharp.Core
 			var text = o as string;
 			var al = o as Array;
 			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-
-			if (!(form.Tag is GuiInfo info))
-				return null;
-
 			var opts = ParseOpt(type, text, options);
 			Control ctrl = null;
 
@@ -845,35 +870,35 @@ namespace Keysharp.Core
 				case Core.Keyword_Tab2:
 				case Core.Keyword_Tab3:
 				{
-					var tc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().//MATT
-					tc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
+					var kstc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().//MATT
+					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 
 					if (opts.leftj.IsTrue())
-						tc.Alignment = System.Windows.Forms.TabAlignment.Left;
+						kstc.Alignment = System.Windows.Forms.TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
-						tc.Alignment = System.Windows.Forms.TabAlignment.Right;
+						kstc.Alignment = System.Windows.Forms.TabAlignment.Right;
 					else if (opts.bottom)
-						tc.Alignment = System.Windows.Forms.TabAlignment.Bottom;
+						kstc.Alignment = System.Windows.Forms.TabAlignment.Bottom;
 					else if (opts.top)
-						tc.Alignment = System.Windows.Forms.TabAlignment.Top;
+						kstc.Alignment = System.Windows.Forms.TabAlignment.Top;
 
 					if (opts.buttons.HasValue)
-						tc.Appearance = TabAppearance.FlatButtons;
+						kstc.Appearance = TabAppearance.FlatButtons;
 
 					if (opts.choose.Any())
-						tc.SelectedIndex = opts.choose[0];
+						kstc.SelectedIndex = opts.choose[0];
 
 					if (opts.wordwrap.HasValue)
-						tc.Multiline = opts.wordwrap.IsTrue();
+						kstc.Multiline = opts.wordwrap.IsTrue();
 
-					ctrl = tc;
+					ctrl = kstc;
 				}
 				break;
 
 				case Core.Keyword_StatusBar:
 				{
 					var ss = new KeysharpStatusStrip();
-					info.StatusBar = ss;
+					StatusBar = ss;
 					ss.ImageScalingSize = new System.Drawing.Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
 					ss.Dock = DockStyle.None;//Using the traditional bottom docking prevents autosize from properly computing the form's dimensions. So leave it undocked.
 					ss.SizingGrip = false;
@@ -932,7 +957,7 @@ namespace Keysharp.Core
 				ctrl.Text = text;
 
 			if (!(ctrl is KeysharpStatusStrip))//Don't want status strip to have a margin, so it can be placed at the bottom of the form when autosize is true, and have it look exactly like it would if it were docked when autosize is false.
-				ctrl.Margin = form.Margin;// form.Padding;//Padding or margin? Unsure.
+				ctrl.Margin = form.Margin;
 
 			//ctrl.Padding = form.Padding;
 
@@ -960,10 +985,11 @@ namespace Keysharp.Core
 				Reflections.SafeSetProperty(ctrl, "TextAlign", ContentAlignment.MiddleRight);
 
 			holder = new GuiControl(this, ctrl, typeo);
+			var prevParent = LastContainer;
 
 			if (ctrl is KeysharpTabControl ktc)
 				if (ktc.TabPages.Count >= 0)
-					holder.UseTab(1);//Will set this object's CurrentTab value.
+					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
 
 			if (opts.altsubmit.HasValue)
 				holder.AltSubmit = opts.altsubmit.Value;
@@ -973,9 +999,10 @@ namespace Keysharp.Core
 			//
 			var fontpixels = GetFontPixels(ctrl.Font);
 			float w = ctrl.PreferredSize.Width;
+			var lastControl = LastControl;
 
 			if (opts.wp != int.MinValue)
-				w = info.LastControl != null ? (float)dpiscale * (info.LastControl.Width + opts.wp) : 0.0f;
+				w = lastControl != null ? (float)dpiscale * (lastControl.Width + opts.wp) : 0.0f;
 			else if (opts.width != int.MinValue)
 				w = (float)dpiscale * opts.width;
 			else if (ctrl is KeysharpProgressBar kpb && ((kpb.AddStyle & 0x04) == 0x04))
@@ -995,7 +1022,7 @@ namespace Keysharp.Core
 
 			if (opts.hp != int.MinValue)
 			{
-				ctrl.Height = info.LastControl != null ? (int)Math.Round(dpiscale * (info.LastControl.Height + opts.hp)) : 0;
+				ctrl.Height = lastControl != null ? (int)Math.Round(dpiscale * (lastControl.Height + opts.hp)) : 0;
 			}
 			else
 			{
@@ -1044,9 +1071,9 @@ namespace Keysharp.Core
 					{
 						lv.Height = defheight + ((lv.Margin.Top + lv.Margin.Bottom) * (2 + ((int)(r + 1 + 0.5) - 2)));//ListView doesn't have an ItemHeight property, so attempt to compute here in the same way GroupBox is done above.
 					}
-					else if (ctrl is TabControl tc)
+					else if (ctrl is TabControl tc2)
 					{
-						tc.Height = defheight + ((tc.Margin.Top + tc.Margin.Bottom) * (2 + ((int)(r + 1 + 0.5) - 1)));//Same here, but -1.
+						tc2.Height = defheight + ((tc2.Margin.Top + tc2.Margin.Bottom) * (2 + ((int)(r + 1 + 0.5) - 1)));//Same here, but -1.
 					}
 					else
 					{
@@ -1081,11 +1108,10 @@ namespace Keysharp.Core
 			}
 
 			heightdone:
-			var last = info.LastControl;
 			Point loc;
-			(Control right, Control bottom) rb = info.RightBottomMost();
+			(Control right, Control bottom) rb = LastContainer.RightBottomMost();
 
-			if (last != null)
+			if (lastControl != null)
 			{
 				var xoffset = rb.right.Location.X;
 				var yoffset = rb.bottom.Location.Y;
@@ -1099,7 +1125,7 @@ namespace Keysharp.Core
 				else if (opts.xm != int.MinValue)
 					xoffset = form.Padding.Left;
 				else if (opts.xs != int.MinValue)
-					xoffset = info.Section.X + opts.xs;
+					xoffset = Section.X + opts.xs;
 				else
 					xoffset = int.MinValue;
 
@@ -1112,7 +1138,7 @@ namespace Keysharp.Core
 				else if (opts.ym != int.MinValue)
 					yoffset = form.Padding.Top;
 				else if (opts.ys != int.MinValue)
-					yoffset = info.Section.Y + opts.ys;
+					yoffset = Section.Y + opts.ys;
 				else
 					yoffset = int.MinValue;
 
@@ -1128,63 +1154,91 @@ namespace Keysharp.Core
 			if (opts.y != int.MinValue)
 				loc.Y = opts.y;
 
-			//if (last != null && last.Parent != null && !(last.Parent is Form))
-			//{
-			//  last = last.Parent;
-			//}
+			if (lastControl is KeysharpRadioButton && !(ctrl is KeysharpRadioButton))//Pop container if we've ended a radio group.
+			{
+				LastContainer = LastContainer.Parent;
+				lastControl = LastControl;
+			}
 
 			//Note we check DockStyle here because if the previous control was docked to a side, then we can't really use its location as a reference to base this control's location off of.
-			if (loc.X != int.MinValue && loc.Y != int.MinValue)//If both x and y were specified, that takes precedence over everything else.
-				ctrl.Location = loc;
-			else if (last != null && last.Dock == DockStyle.None && loc.X == int.MinValue && loc.Y == int.MinValue)
+			if (ctrl is KeysharpStatusStrip ksss)
 			{
-				var templast = opts.group && last.Parent is Panel panel ? panel : last;
-				ctrl.Location = new Point(templast.Location.X, templast.Location.Y + templast.Height + form.Margin.Bottom);
+				rb = form.RightBottomMost();
+
+				if (rb.bottom != null)
+					ksss.Top = rb.bottom.Bottom + form.Margin.Bottom + rb.bottom.Margin.Top;
 			}
-			else if (rb.right != null && rb.right.Dock == DockStyle.None && loc.X == int.MinValue)
+			else if (loc.X != int.MinValue && loc.Y != int.MinValue)//If both x and y were specified, that takes precedence over everything else.
+				ctrl.Location = loc;
+			else if (lastControl != null && lastControl.Dock == DockStyle.None && loc.X == int.MinValue && loc.Y == int.MinValue)
+			{
+				var templast = opts.group && lastControl.Parent is Panel panel ? panel : lastControl;
+				ctrl.Location = new Point(templast.Location.X, templast.Location.Y + templast.Height + form.Margin.Bottom);
+
+				if (LastContainer.Parent is TabControl partc)//If we are adding a control to a tab page in a tab control, ensure the tab control is large enough to display all of the contents of the tab page.
+				{
+					//partc.Size = new Size(Math.Max(partc.Width, partc.TabWidth() + ctrl.Right + (4 * partc.Margin.Right)), Math.Max(partc.Height, partc.TabHeight() + ctrl.Bottom + (2 * partc.Margin.Bottom)));
+				}
+			}
+			else if (rb.right != null && rb.right.Dock == DockStyle.None && loc.X == int.MinValue)//Depends on loc.Y not being MinValue, but that's not reliable based on the logic changes above.
 				ctrl.Location = new Point(rb.right.Location.X + rb.right.Width + form.Margin.Right, loc.Y);
-			else if (rb.bottom != null && rb.bottom.Dock == DockStyle.None && loc.Y == int.MinValue)
+			else if (rb.bottom != null && rb.bottom.Dock == DockStyle.None && loc.Y == int.MinValue)//Same but for loc.X.
 				ctrl.Location = new Point(loc.X, rb.bottom.Location.Y + rb.bottom.Height + rb.bottom.Margin.Bottom);
 			else//Final fallback when nothing else has worked.
 			{
-				var top = form.Margin.Top;
+				var top = prevParent.Margin.Top;// + ctrl.Margin.Top;
 
-				if (form.MainMenuStrip != null)
-					top += form.MainMenuStrip.Height;
+				if (prevParent is Form f && f.MainMenuStrip != null)
+					top += f.MainMenuStrip.Height;
 
-				top = top;
-				ctrl.Location = new Point(form.Margin.Left, top);
+				ctrl.Top = top;
+				ctrl.Location = new Point(prevParent.Margin.Left, top);
 			}
 
-			//ctrl.Location = new Point((int)Math.Round(ctrl.Location.X * dpiscale), (int)Math.Round(ctrl.Location.Y * dpiscale));
-
-			if (CurrentTab != null && CurrentTab.Parent != ctrl)//There is a good chance that this code must come before all of the sizing code for the sizing to properly work.
+			if (ctrl is TabControl tc && CurrentTab is TabPage currtp)
 			{
-				CurrentTab.Controls.Add(ctrl);
+				prevParent.Controls.Add(ctrl);
+
+				if (prevParent != form)
+					ctrl.Size = new Size(Math.Min(prevParent.Width - (2 * prevParent.Margin.Right), ctrl.Right), Math.Min(prevParent.Height - (2 * prevParent.Margin.Top), ctrl.Bottom));
+
+				LastContainer = currtp;
 			}
 			else if (ctrl is KeysharpRadioButton krb)
 			{
-				if (last == null || !(last is KeysharpRadioButton) || opts.group)
+				if (lastControl == null || !(lastControl is KeysharpRadioButton) || opts.group)
 				{
 					var panel = new Panel();
-					//panel.BorderStyle = BorderStyle.FixedSingle;
-					panel.Location = new Point(Math.Max(form.Margin.Left, ctrl.Left), Math.Max(form.Margin.Top, ctrl.Top));
-					form.Controls.Add(panel);
-					var screenpt = form.PointToScreen(ctrl.Location);
-					var clientpt = panel.PointToClient(screenpt);
-					ctrl.Location = new Point(Math.Max(form.Margin.Left, clientpt.X), Math.Max(form.Margin.Top, clientpt.Y));
-					panel.Size = new System.Drawing.Size(ctrl.Width + (int)Math.Round(10 * dpiscale), ctrl.Height + (int)Math.Round(10 * dpiscale));
+					var parent = LastContainer;
+					//panel.BorderStyle = BorderStyle.FixedSingle;//For debugging so we can see where the panel is.
+					panel.Location = new Point(Math.Max(parent.Margin.Left, ctrl.Left), Math.Max(parent.Margin.Top, ctrl.Top));
+					parent.Controls.Add(panel);
+					ctrl.Location = new Point(panel.Margin.Left, panel.Margin.Top);
+					panel.Size = new System.Drawing.Size(ctrl.Width + panel.Margin.Left + panel.Margin.Right, ctrl.Height + panel.Margin.Top + panel.Margin.Bottom);
 					panel.AutoSize = true;
 					panel.Controls.Add(ctrl);
-					info.LastContainer = panel;
+					LastContainer = panel;
 				}
-				else if (info.LastContainer is Panel pnl)
+				else if (LastContainer is Panel pnl)
 					pnl.Controls.Add(ctrl);
 
 				krb.Checked = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 			}
+			else if (ctrl is KeysharpStatusStrip ksss2)
+			{
+				form.Controls.Add(ksss2);//For status bars, don't add to whatever container we were on, instead always add to the form.
+			}
 			else
-				form.Controls.Add(ctrl);
+			{
+				LastContainer.Controls.Add(ctrl);
+
+				if (LastContainer.Parent is TabControl partc)
+				{
+					rb = LastContainer.RightBottomMost();
+					partc.Width = partc.TabWidth() + rb.right.Right + LastContainer.Margin.Right + partc.Margin.Right;
+					partc.Height = partc.TabHeight() + rb.bottom.Bottom + LastContainer.Margin.Bottom + partc.Margin.Bottom;
+				}
+			}
 
 			if (ctrl is KeysharpPictureBox pbox && System.IO.File.Exists(text))
 			{
@@ -1210,9 +1264,8 @@ namespace Keysharp.Core
 			}
 
 			if (opts.section)
-				info.Section = ctrl.Location;
+				Section = ctrl.Location;
 
-			info.LastControl = ctrl;
 			form.Update();//Required to make absolutely sure the state of the control is immediately displayed before any other changes might happen after this call.
 			return holder;
 		}
@@ -1477,22 +1530,27 @@ namespace Keysharp.Core
 
 				foreach (Control ctrl in form.Controls)
 				{
-					if (ss != null && ctrl != ss)
+					if (ctrl != ss)
 					{
-						if (ctrl.Top > ss.Top)
-							ctrl.Top -= (ss.Height + form.Margin.Top + form.Margin.Bottom);
+						if (ss != null)
+						{
+							//if (ctrl.Top > ss.Top)
+							//{
+							//  ctrl.Top -= (ss.Height);// + form.Margin.Top + form.Margin.Bottom);
+							//  ctrl.Top = Math.Max(ctrl.Top, form.Margin.Top);
+							//}
+						}
+
+						var yval = ctrl.Bottom;
+
+						if (yval > maxy)
+							maxy = yval;
+
+						var xval = ctrl.Right;
+
+						if (xval > maxx)
+							maxx = xval;
 					}
-
-					var yval = ctrl.Bottom;// + (ctrl.Height - ctrl.ClientSize.Height);//Include border.
-
-					if (yval > maxy)
-						maxy = yval;
-
-					//var xval = ctrl.Right + (int)(dpiscale * (ctrl.Width - ctrl.ClientSize.Width));
-					var xval = ctrl.Right + (ctrl.Width - ctrl.ClientSize.Width);
-
-					if (xval > maxx)
-						maxx = xval;
 				}
 
 				return (maxx, maxy);
@@ -1506,8 +1564,8 @@ namespace Keysharp.Core
 					{
 						var ss = status[0];
 						var (maxx, maxy) = FixStatusStrip(ss);
-						form.Width = maxx;// + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
-						form.Height = maxy;// + ss.Height + (int)(/*2 * dpiscale * */(form.Margin.Top + form.Margin.Bottom));//Magic numbers, as close as we can get.
+						form.ClientSize = new Size(maxx + (int)(dpiscale * form.Margin.Left),
+												   maxy - (int)(dpiscale * form.Margin.Bottom));//Seems odd, but needed when form is in autosize mode.
 						ss.Left = 0;
 						ss.Top = form.Height - ss.Height;
 					}
@@ -1521,16 +1579,16 @@ namespace Keysharp.Core
 					{
 						var ss = status[0];
 						var (maxx, maxy) = FixStatusStrip(ss);
-						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
-						form.Height = maxy + ss.Height + (int)(dpiscale * (form.Margin.Top + form.Margin.Bottom));//Magic number, but it appears to work fairly closely. This is probably because that's how tall the size grip is.
+						form.ClientSize = new Size(maxx + (int)(dpiscale * form.Margin.Left),
+												   maxy + ss.Height + (int)(dpiscale * form.Margin.Bottom));//Need to manually include the heigh of the status strip when the it's docked.
 						ss.Dock = DockStyle.Bottom;
 						ss.SizingGrip = true;
 					}
 					else
 					{
 						var (maxx, maxy) = FixStatusStrip(null);
-						form.Width = maxx + (int)(dpiscale * (form.Margin.Left + form.Margin.Right));
-						form.Height = maxy + (int)(4 * dpiscale * (form.Margin.Top + form.Margin.Bottom));
+						form.ClientSize = new Size(maxx + (int)(dpiscale * form.Margin.Left),
+												   maxy + (int)(dpiscale * form.Margin.Bottom));
 					}
 				}
 			}
@@ -1653,7 +1711,7 @@ namespace Keysharp.Core
 			return new Map(dkt);
 		}
 		internal static float GetFontPixels(Font font) => (float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
-		internal static GuiInfo GuiAssociatedInfo(Control control) => control.FindForm().Tag as GuiInfo;
+
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
