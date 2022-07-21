@@ -273,12 +273,9 @@ namespace Keysharp.Core
 
 			input.Load += (oo, ee) =>
 			{
-				if (w != int.MinValue)
-					input.Width = w;
-
-				if (h != int.MinValue)
-					input.Height = h;
-
+				var width = w != int.MinValue ? w : input.ClientSize.Width;
+				var height = h != int.MinValue ? h : input.ClientSize.Height;
+				input.ClientSize = new Size(width, height);
 				input.Left = x != int.MinValue ? x : (((workarea["Right"].Ai() - workarea["Left"].Ai()) / 2) - (input.Width / 2));
 				input.Top = y != int.MinValue ? y : (((workarea["Bottom"].Ai() - workarea["Top"].Ai()) / 2) - (input.Height / 2));
 			};

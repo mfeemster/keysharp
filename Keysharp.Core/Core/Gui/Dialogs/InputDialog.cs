@@ -65,9 +65,13 @@ namespace Keysharp.Core
 
 		public InputDialog()
 		{
-			InitializeComponent();
+			prompt = new Label();
+			btnOK = new Button();
+			btnCancel = new Button();
+			txtMessage = new TextBox();
 			Load += InputDialog_Load;
 			Shown += InputDialog_Shown;
+			Resize += InputDialog_Resize;
 			txtMessage.KeyDown += TxtMessage_KeyDown;
 		}
 
@@ -85,80 +89,82 @@ namespace Keysharp.Core
 
 		private void InitializeComponent()
 		{
-			prompt = new Label();
-			btnOK = new Button();
-			btnCancel = new Button();
-			txtMessage = new TextBox();
 			SuspendLayout();
+			Controls.Add(prompt);//Must be added to sizes are properly computed.
+			Controls.Add(txtMessage);
+			Controls.Add(btnOK);
+			Controls.Add(btnCancel);
 			//
 			// label1
 			//
-			prompt.AutoSize = true;
-			prompt.Location = new Point(9, 5);
+			prompt.Location = new Point(Margin.Left, Margin.Top);
 			prompt.Name = "Prompt";
-			prompt.Size = new Size(240, 48);
-			prompt.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+			prompt.MaximumSize = new Size(150, int.MaxValue);
+			prompt.AutoSize = true;
+			prompt.Anchor = AnchorStyles.Left | AnchorStyles.Top;
+			//
+			// txtMessage
+			//
+			txtMessage.Location = new Point(Margin.Left, prompt.Bottom + Margin.Bottom);
+			txtMessage.Name = "Message";
+			txtMessage.TabIndex = 0;
+			txtMessage.Anchor = AnchorStyles.Left | AnchorStyles.Top;
 			//
 			// btnOK
 			//
 			btnOK.DialogResult = DialogResult.OK;
-			btnOK.Location = new Point(10, 120);
+			btnOK.Location = new Point(Margin.Left, txtMessage.Bottom + Margin.Bottom);
 			btnOK.Name = "OK";
-			btnOK.Size = new Size(130, 44);
 			btnOK.TabIndex = 1;
 			btnOK.Text = "OK";
 			btnOK.Click += btnOK_Click;
+			btnOK.AutoSize = true;
 			btnOK.UseVisualStyleBackColor = true;
 			btnOK.Anchor = AnchorStyles.Left | AnchorStyles.Top;
 			//
 			// btnCancel
 			//
 			btnCancel.DialogResult = DialogResult.Cancel;
-			btnCancel.Location = new Point(160, 120);
+			btnCancel.Location = new Point(btnOK.Right + Margin.Right, btnOK.Top);
 			btnCancel.Name = "Cancel";
-			btnCancel.Size = new Size(130, 44);
 			btnCancel.TabIndex = 2;
 			btnCancel.Text = "Cancel";
 			btnCancel.Click += btnCancel_Click;
+			btnCancel.AutoSize = true;
 			btnCancel.UseVisualStyleBackColor = true;
-			btnCancel.Anchor = AnchorStyles.Right | AnchorStyles.Top;
-			//
-			// txtMessage
-			//
-			txtMessage.Location = new Point(10, 72);
-			txtMessage.Name = "Message";
-			txtMessage.Size = new Size(280, 24);
-			txtMessage.TabIndex = 0;
-			txtMessage.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+			btnCancel.Anchor = AnchorStyles.Left | AnchorStyles.Top;
 			//
 			// InputDialog
 			//
-			//AutoScaleDimensions = new System.Drawing.SizeF(12F, 30F);
-			AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
-			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-			ClientSize = new Size(300, 300);
-			MinimumSize = new Size(310, 200);
-			//Can't set controlbox to false, else icon will not show.
-			Controls.Add(btnCancel);
-			Controls.Add(btnOK);
-			Controls.Add(prompt);
-			Controls.Add(txtMessage);
 			ShowIcon = true;
 			MaximizeBox = false;
 			MinimizeBox = false;
+			//Can't set controlbox to false, else icon will not show.
+			FormBorderStyle = FormBorderStyle.FixedDialog;//Disallow resizing.
+			SizeGripStyle = SizeGripStyle.Hide;
 			Name = "KeysharpInputBox";
-			Text = "Keysharp Input Box";
 			ResumeLayout(false);
 			PerformLayout();
 		}
 
 		private void InputDialog_Load(object sender, EventArgs e)
 		{
+			var x = (int)Math.Round(Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
+			var y = (int)Math.Round(Font.Size * 0.75f);
+			Margin = new Padding(x, y, x, y);
+			InitializeComponent();
 			txtMessage.Text = Default;
-			txtMessage.Top = prompt.Top + prompt.ClientSize.Height + txtMessage.Margin.Top;
-			btnOK.Top = txtMessage.Top + (int)(txtMessage.Height * Accessors.A_ScaledScreenDPI);
-			btnCancel.Top = btnOK.Top;
-			Height = btnOK.Top + (int)(((txtMessage.Margin.Top * 8) + btnOK.Height) * Accessors.A_ScaledScreenDPI);
+			txtMessage.Width = btnCancel.Right - Margin.Left;
+			ClientSize = new Size(btnCancel.Right + Margin.Right, btnOK.Bottom + Margin.Bottom);
+		}
+
+		private void InputDialog_Resize(object sender, EventArgs e)
+		{
+			prompt.MaximumSize = new Size(ClientSize.Width - (Margin.Left + Margin.Right), int.MaxValue);
+			txtMessage.Location = new Point(Margin.Left, prompt.Bottom + Margin.Bottom);
+			txtMessage.Width = ClientSize.Width - (Margin.Left + Margin.Right);
+			btnOK.Location = new Point(Margin.Left, txtMessage.Bottom + Margin.Bottom);
+			btnCancel.Location = new Point(btnOK.Right + Margin.Right, btnOK.Top);
 		}
 
 		private void InputDialog_Shown(object sender, EventArgs e)
@@ -186,7 +192,11 @@ namespace Keysharp.Core
 		private void TxtMessage_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Enter)
+			{
+				e.Handled = true;
+				e.SuppressKeyPress = true;
 				btnOK.PerformClick();
+			}
 			else if (e.KeyCode == Keys.Escape)
 				btnCancel.PerformClick();
 		}
