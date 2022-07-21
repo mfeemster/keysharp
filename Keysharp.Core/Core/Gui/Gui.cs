@@ -384,7 +384,7 @@ namespace Keysharp.Core
 
 				case Core.Keyword_Edit:
 				{
-					var ml = opts.multiline.IsTrue() || opts.rows > 1;
+					var ml = opts.multiline.IsTrue() || opts.rows > 1 || opts.height != int.MinValue;
 
 					if (opts.number)
 						opts.addstyle |= WindowsAPI.ES_NUMBER;

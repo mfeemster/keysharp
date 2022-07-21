@@ -604,6 +604,8 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
+			Click += KeysharpTabControl_Click;
+			Enter += KeysharpTabControl_Enter;
 		}
 
 		protected override void WndProc(ref Message m)
@@ -611,6 +613,10 @@ namespace Keysharp.Core
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
+		private void KeysharpTabControl_Click(object sender, EventArgs e) => _ = SelectedTab.Focus();
+
+		private void KeysharpTabControl_Enter(object sender, EventArgs e) => _ = SelectedTab.Focus();
 	}
 
 	public class KeysharpToolStripStatusLabel : ToolStripStatusLabel
