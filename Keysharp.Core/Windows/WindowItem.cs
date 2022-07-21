@@ -161,12 +161,11 @@ namespace Keysharp.Core.Windows
 				if (!IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect))
 					return;
 
-				rect.Left = value.X;
-				rect.Top = value.Y;
-				var parent = WindowsAPI.GetNonChildParent(Handle);
+				if (value.X != int.MinValue)
+					rect.Left = value.X;
 
-				if (parent == IntPtr.Zero || WindowsAPI.MapWindowPoints(IntPtr.Zero, parent, ref rect, 2) == 0)
-					return;
+				if (value.Y != int.MinValue)
+					rect.Top = value.Y;
 
 				_ = WindowsAPI.MoveWindow(Handle, rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, true);
 			}
