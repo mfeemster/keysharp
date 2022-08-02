@@ -598,6 +598,8 @@ namespace Keysharp.Core
 				isnum = true;
 				name = name.Substring(2);
 			}
+			else if (name.AllHex())
+				isnum = true;
 
 			if (isnum)
 			{

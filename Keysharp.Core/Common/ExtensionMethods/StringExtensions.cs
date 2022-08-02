@@ -17,6 +17,15 @@ namespace System//Extension methods should be in the same namespace of the objec
 
 	public static class StringExtensions
 	{
+		public static bool AllHex(this string source)
+		{
+			foreach (var ch in source)
+				if (!ch.IsHex())
+					return false;
+
+			return true;
+		}
+
 		public static int FindFirstNotOf(this string source, string chars, int offset = 0)
 		{
 			if (source.Length == 0) return -1;

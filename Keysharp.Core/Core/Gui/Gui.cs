@@ -330,8 +330,9 @@ namespace Keysharp.Core
 				Text = caption != "" ? caption : Accessors.A_ScriptName,
 				Tag = this
 			};
+			//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
+			//be done in designer-generated code. It appears to cause layout problems.
 			LastContainer = form;
-			//form.SuspendLayout();//Not sure if we need this.
 			Opt(options);
 			//var formHandle = form.Handle;//Force the creation.
 			form.FormClosing += Form_FormClosing;
@@ -341,15 +342,15 @@ namespace Keysharp.Core
 			form.DragDrop += Form_DragDrop;
 			allGuiHwnds[form.Handle.ToInt64()] = this;
 			form.Load += Form_Load;
-			form.Show();//We must first show so that all handles are created and geometries calculated. We quickly hide in Form_Load().
+			//form.Show();//We must first show so that all handles are created and geometries calculated. We quickly hide in Form_Load().
 			Keysharp.Core.Common.Window.WindowManagerProvider.Instance.LastFound = new WindowItem(form.Handle);
+			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
+			var y = (int)Math.Round(form.Font.Size * 0.75f);
+			form.Margin = new Padding(x, y, x, y);
 		}
 
 		private void Form_Load(object sender, EventArgs e)
 		{
-			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
-			var y = (int)Math.Round(form.Font.Size * 0.75f);
-			form.Margin = new Padding(x, y, x, y);
 			form.Visible = false;
 		}
 
@@ -988,8 +989,19 @@ namespace Keysharp.Core
 			var prevParent = LastContainer;
 
 			if (ctrl is KeysharpTabControl ktc)
+			{
 				if (ktc.TabPages.Count >= 0)
 					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
+
+				if (opts.bgcolor.HasValue)
+				{
+					ktc.bgcolor = opts.bgcolor;
+					ktc.DrawMode = TabDrawMode.OwnerDrawFixed;
+
+					foreach (TabPage tp in ktc.TabPages)
+						tp.BackColor = opts.bgcolor.Value;
+				}
+			}
 
 			if (opts.altsubmit.HasValue)
 				holder.AltSubmit = opts.altsubmit.Value;
@@ -1119,7 +1131,7 @@ namespace Keysharp.Core
 				if (opts.xplusm)
 					xoffset += form.Margin.Right + ctrl.Margin.Left;
 				else if (opts.xplus != int.MinValue)
-					xoffset += rb.right.Size.Width + opts.xplus;
+					xoffset += rb.right.Width + opts.xplus;
 				else if (opts.xp != int.MinValue)
 					xoffset += opts.xp;
 				else if (opts.xm != int.MinValue)
@@ -1132,7 +1144,7 @@ namespace Keysharp.Core
 				if (opts.yplusm)
 					yoffset += form.Margin.Bottom + ctrl.Margin.Top;
 				else if (opts.yplus != int.MinValue)
-					yoffset += rb.right.Size.Height + opts.yplus;
+					yoffset += rb.bottom.Height + opts.yplus;
 				else if (opts.yp != int.MinValue)
 					yoffset += opts.yp;
 				else if (opts.ym != int.MinValue)
@@ -1279,7 +1291,6 @@ namespace Keysharp.Core
 			if (opts.section)
 				Section = ctrl.Location;
 
-			form.Update();//Required to make absolutely sure the state of the control is immediately displayed before any other changes might happen after this call.
 			return holder;
 		}
 
@@ -1649,14 +1660,14 @@ namespace Keysharp.Core
 			else
 				form.Show();
 
-			//form.ResumeLayout(true);
-
 			if (min)
 				form.WindowState = FormWindowState.Minimized;
 			else if (max)
 				form.WindowState = FormWindowState.Maximized;
 			else if (restore)
 				form.WindowState = FormWindowState.Normal;
+
+			form.Update();//Required for the very first state of the form to always be displayed.
 		}
 
 		public Map Submit(object obj = null)
@@ -2001,151 +2012,151 @@ namespace Keysharp.Core
 		}
 		internal class GuiOptions
 		{
-			public int addexstyle = 0;
-			public int addlvstyle = 0x20;
-			public int addstyle = 0;
-			public bool? altsubmit;
-			public Color? bgcolor;
-			public bool bgtrans = false;
-			public bool bottom = false;
+			internal int addexstyle = 0;
+			internal int addlvstyle = 0x20;
+			internal int addstyle = 0;
+			internal bool? altsubmit;
+			internal Color? bgcolor;
+			internal bool bgtrans = false;
+			internal bool bottom = false;
 
 			//Button.
-			public bool? btndef;
+			internal bool? btndef;
 
 			//Tab.
-			public bool? buttons;
+			internal bool? buttons;
 
-			public Color c = Control.DefaultForeColor;
-			public bool? center;
+			internal Color c = Control.DefaultForeColor;
+			internal bool? center;
 
 			//Checkbox.
-			public bool check3 = false;
+			internal bool check3 = false;
 
-			public bool checkedgray = false;
-			public List<int> choose = new List<int>();
-			public bool choosenone = false;
-			public bool? clickheader;
+			internal bool checkedgray = false;
+			internal List<int> choose = new List<int>();
+			internal bool choosenone = false;
+			internal bool? clickheader;
 
 			//ComboBox.
-			public bool? cmbsimple;
+			internal bool? cmbsimple;
 
 			//DateTime.
-			public string customdate = "";
+			internal string customdate = "";
 
 			//DropDownList
-			public int ddlchoose = int.MinValue;
+			internal int ddlchoose = int.MinValue;
 
-			public DateTime dtChoose = DateTime.Now;
-			public DateTime dthigh = DateTime.MaxValue;
-			public DateTime dtlow = DateTime.MinValue;
-			public bool dtopt1 = false;
-			public bool dtopt2 = false;
-			public DateTime dtselend = DateTime.MaxValue;
-			public DateTime dtselstart = DateTime.MinValue;
-			public bool? enabled;
+			internal DateTime dtChoose = DateTime.Now;
+			internal DateTime dthigh = DateTime.MaxValue;
+			internal DateTime dtlow = DateTime.MinValue;
+			internal bool dtopt1 = false;
+			internal bool dtopt2 = false;
+			internal DateTime dtselend = DateTime.MaxValue;
+			internal DateTime dtselstart = DateTime.MinValue;
+			internal bool? enabled;
 
 			//ListView.
-			public bool? grid;
+			internal bool? grid;
 
 			//GroupBox.
-			public bool group = false;
+			internal bool group = false;
 
-			public bool? header;
-			public int height = int.MinValue;
-			public bool? hex;
-			public int hp = int.MinValue;
-			public bool hscroll = true;
-			public int hscrollamt = int.MinValue;
+			internal bool? header;
+			internal int height = int.MinValue;
+			internal bool? hex;
+			internal int hp = int.MinValue;
+			internal bool hscroll = true;
+			internal int hscrollamt = int.MinValue;
 
 			//TreeView.
-			public long ilid = long.MinValue;
+			internal long ilid = long.MinValue;
 
 			//Slider.
-			public bool? invert;
+			internal bool? invert;
 
-			public int? ischecked;
-			public bool? leftj;
+			internal int? ischecked;
+			internal bool? leftj;
 
 			//Control specific.
 			//Edit.
-			public int limit = int.MinValue;
+			internal int limit = int.MinValue;
 
-			public int line = int.MinValue;
-			public bool? lines;
-			public bool? lowercase;
-			public View? lvview;
-			public bool? multiline;
-			public string name = null;
-			public bool? noticks;
-			public int? nudhigh;
+			internal int line = int.MinValue;
+			internal bool? lines;
+			internal bool? lowercase;
+			internal View? lvview;
+			internal bool? multiline;
+			internal string name = null;
+			internal bool? noticks;
+			internal int? nudhigh;
 
 			//NumericUpDown.
-			public bool nudhorz = false;
+			internal bool nudhorz = false;
 
-			public int? nudinc;
-			public bool nudleft = false;
-			public int? nudlow;
-			public string nudrange = "";
-			public bool number = false;
-			public bool opt16 = false;
+			internal int? nudinc;
+			internal bool nudleft = false;
+			internal int? nudlow;
+			internal string nudrange = "";
+			internal bool number = false;
+			internal bool opt16 = false;
 
 			//MonthCal.
-			public bool opt4 = false;
+			internal bool opt4 = false;
 
-			public bool opt8 = false;
-			public int page = int.MinValue;
-			public bool pwd = false;
-			public string pwdch = "";
-			public bool datemultisel;
-			public bool? rdonly;
-			public bool? redraw;
-			public int remexstyle = 0;
-			public int remlvstyle;
-			public int remstyle = 0;
-			public bool? rightj;
-			public float rows = float.MinValue;
-			public bool section = false;
+			internal bool opt8 = false;
+			internal int page = int.MinValue;
+			internal bool pwd = false;
+			internal string pwdch = "";
+			internal bool datemultisel;
+			internal bool? rdonly;
+			internal bool? redraw;
+			internal int remexstyle = 0;
+			internal int remlvstyle;
+			internal int remstyle = 0;
+			internal bool? rightj;
+			internal float rows = float.MinValue;
+			internal bool section = false;
 
 			//Progress.
-			public bool? smooth;
+			internal bool? smooth;
 
-			public bool? sort;
-			public bool? sortdesc;
-			public bool? sortheader;
-			public int t = int.MinValue;
-			public bool? tabstop;
-			public List<int> tabstops = new List<int>();
-			public int thick = int.MinValue;
-			public bool? thinborder;
-			public int tickinterval = int.MinValue;
-			public bool tooltip = false;
-			public int tooltipside = 0;
-			public bool top = false;
-			public bool? uppercase;
-			public bool vertical = false;
-			public bool? visible;
-			public bool? vscroll;
-			public bool? wantctrla;
-			public bool? wantf2;
-			public bool? wantreturn;
-			public bool? wanttab;
-			public int width = int.MinValue;
-			public bool? wordwrap;
-			public int wp = int.MinValue;
-			public int x = int.MinValue;
-			public int xm = int.MinValue;
-			public bool xmargin = false;
-			public int xp = int.MinValue;
-			public int xplus = int.MinValue;
-			public bool xplusm = false;
-			public int xs = int.MinValue;
-			public int y = int.MinValue;
-			public int ym = int.MinValue;
-			public bool ymargin = false;
-			public int yp = int.MinValue;
-			public int yplus = int.MinValue;
-			public bool yplusm = false;
-			public int ys = int.MinValue;
+			internal bool? sort;
+			internal bool? sortdesc;
+			internal bool? sortheader;
+			internal int t = int.MinValue;
+			internal bool? tabstop;
+			internal List<int> tabstops = new List<int>();
+			internal int thick = int.MinValue;
+			internal bool? thinborder;
+			internal int tickinterval = int.MinValue;
+			internal bool tooltip = false;
+			internal int tooltipside = 0;
+			internal bool top = false;
+			internal bool? uppercase;
+			internal bool vertical = false;
+			internal bool? visible;
+			internal bool? vscroll;
+			internal bool? wantctrla;
+			internal bool? wantf2;
+			internal bool? wantreturn;
+			internal bool? wanttab;
+			internal int width = int.MinValue;
+			internal bool? wordwrap;
+			internal int wp = int.MinValue;
+			internal int x = int.MinValue;
+			internal int xm = int.MinValue;
+			internal bool xmargin = false;
+			internal int xp = int.MinValue;
+			internal int xplus = int.MinValue;
+			internal bool xplusm = false;
+			internal int xs = int.MinValue;
+			internal int y = int.MinValue;
+			internal int ym = int.MinValue;
+			internal bool ymargin = false;
+			internal int yp = int.MinValue;
+			internal int yplus = int.MinValue;
+			internal bool yplusm = false;
+			internal int ys = int.MinValue;
 		}
 	}
 }

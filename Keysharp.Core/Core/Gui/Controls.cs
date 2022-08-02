@@ -587,6 +587,7 @@ namespace Keysharp.Core
 
 	public class KeysharpTabControl : TabControl
 	{
+		internal Color? bgcolor;
 		private readonly int addstyle, removestyle;
 
 		protected override CreateParams CreateParams
@@ -606,6 +607,31 @@ namespace Keysharp.Core
 			removestyle = _remove;
 			Click += KeysharpTabControl_Click;
 			Enter += KeysharpTabControl_Enter;
+			ControlAdded += KeysharpTabControl_ControlAdded;
+			//SetStyle(ControlStyles.UserPaint, true);
+			//SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+			//SetStyle(ControlStyles.DoubleBuffer, true);
+			//SetStyle(ControlStyles.ResizeRedraw, true);
+			//SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+		}
+
+		protected override void OnDrawItem(DrawItemEventArgs e)
+		{
+			if (bgcolor.HasValue)
+			{
+				e.Graphics.FillRectangle(new SolidBrush(bgcolor.Value), ClientRectangle);
+
+				for (var i = 0; i < TabPages.Count; i++)
+				{
+					var page = TabPages[i];
+					var paddedTabBounds = GetTabRect(i);
+					var yOffset = (e.Index == i) ? -2 : 1;
+					paddedTabBounds.Offset(1, yOffset);
+					TextRenderer.DrawText(e.Graphics, page.Text, page.Font, paddedTabBounds, page.ForeColor);
+				}
+			}
+			else
+				base.OnDrawItem(e);
 		}
 
 		protected override void WndProc(ref Message m)
@@ -614,7 +640,17 @@ namespace Keysharp.Core
 				base.WndProc(ref m);
 		}
 
+		/// <summary>
+		/// Focusing gets rid of the unsightly dotted selection box on the tab.
+		/// It may still show for a half second when donig custom drawing with bgcolor.
+		/// </summary>
 		private void KeysharpTabControl_Click(object sender, EventArgs e) => _ = SelectedTab.Focus();
+
+		private void KeysharpTabControl_ControlAdded(object sender, ControlEventArgs e)
+		{
+			if (bgcolor.HasValue && e.Control is TabPage tp)
+				tp.BackColor = bgcolor.Value;
+		}
 
 		private void KeysharpTabControl_Enter(object sender, EventArgs e) => _ = SelectedTab.Focus();
 	}
