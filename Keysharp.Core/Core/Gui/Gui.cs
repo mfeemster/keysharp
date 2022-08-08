@@ -351,7 +351,7 @@ namespace Keysharp.Core
 
 		private void Form_Load(object sender, EventArgs e)
 		{
-			form.Visible = false;
+			//form.Visible = false;
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
