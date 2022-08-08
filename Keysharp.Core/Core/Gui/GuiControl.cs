@@ -1228,6 +1228,38 @@ namespace Keysharp.Core
 				else
 					txt.CharacterCasing = CharacterCasing.Normal;
 			}
+			else if (_control is KeysharpRichEdit rtxt)
+			{
+				rtxt.AcceptsTab = opts.wanttab ?? false;
+
+				if (opts.wantctrla.IsFalse())
+				{
+					rtxt.PreviewKeyDown += Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown += Gui.SuppressCtrlAKeyDown;
+				}
+				else if (opts.wantctrla.IsTrue())
+				{
+					rtxt.PreviewKeyDown -= Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown -= Gui.SuppressCtrlAKeyDown;
+				}
+
+				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
+					rtxt.ScrollBars = RichTextBoxScrollBars.Both;
+				else if (opts.vscroll.IsTrue() || rtxt.Multiline)
+					rtxt.ScrollBars = RichTextBoxScrollBars.Vertical;
+				else if (opts.hscrollamt != int.MinValue)
+					rtxt.ScrollBars = RichTextBoxScrollBars.Horizontal;
+
+				if (opts.limit != int.MinValue)
+					rtxt.MaxLength = opts.limit;
+
+				if (opts.lowercase.IsTrue())
+					rtxt.CharacterCasing = CharacterCasing.Lower;
+				else if (opts.uppercase.IsTrue())
+					rtxt.CharacterCasing = CharacterCasing.Upper;
+				else
+					rtxt.CharacterCasing = CharacterCasing.Normal;
+			}
 			else if (_control is KeysharpTrackBar tb)
 			{
 				if (opts.center.IsTrue())

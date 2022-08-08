@@ -319,6 +319,7 @@ namespace Keysharp.Core
 		internal const string Keyword_RegEx = "regex";
 		internal const string Keyword_Region = "region";
 		internal const string Keyword_Relative = "relative";
+		internal const string Keyword_Rich_Edit = "richedit";
 		internal const string Keyword_Client = "client";
 		internal const string Keyword_Window = "window";
 		internal const string Keyword_REMOVABLE = "Removable";

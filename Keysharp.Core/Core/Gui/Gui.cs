@@ -439,6 +439,53 @@ namespace Keysharp.Core
 				}
 				break;
 
+				case Core.Keyword_Rich_Edit:
+				{
+					var ml = !opts.multiline.IsFalse();
+
+					if (opts.number)
+						opts.addstyle |= WindowsAPI.ES_NUMBER;
+
+					if (opts.limit == int.MinValue && !ml)
+						opts.remstyle |= WindowsAPI.WS_HSCROLL | WindowsAPI.ES_AUTOHSCROLL;
+
+					var txt = new KeysharpRichEdit(opts.addstyle, opts.remstyle)
+					{
+						AcceptsTab = opts.wanttab ?? false,
+						Multiline = ml,
+						ReadOnly = opts.rdonly ?? false
+					};
+
+					if (opts.limit != int.MinValue)
+						txt.MaxLength = opts.limit;
+
+					if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
+						txt.ScrollBars = RichTextBoxScrollBars.Both;
+					else if (opts.vscroll.IsTrue() || txt.Multiline)
+						txt.ScrollBars = RichTextBoxScrollBars.Vertical;
+					else if (opts.hscrollamt != int.MinValue)
+						txt.ScrollBars = RichTextBoxScrollBars.Horizontal;
+
+					if (opts.lowercase.IsTrue())
+						txt.CharacterCasing = CharacterCasing.Lower;
+					else if (opts.uppercase.IsTrue())
+						txt.CharacterCasing = CharacterCasing.Upper;
+					else
+						txt.CharacterCasing = CharacterCasing.Normal;
+
+					if (opts.wantctrla.IsFalse())
+					{
+						txt.PreviewKeyDown += SuppressCtrlAPreviewKeyDown;
+						txt.KeyDown += SuppressCtrlAKeyDown;
+					}
+
+					if (txt.Multiline && opts.tabstops.Any())
+						_ = WindowsAPI.SendMessage(txt.Handle, WindowsAPI.EM_SETTABSTOPS, opts.tabstops.Count, opts.tabstops.ToArray());
+
+					ctrl = txt;
+				}
+				break;
+
 				case Core.Keyword_UpDown:
 				{
 					//MATT

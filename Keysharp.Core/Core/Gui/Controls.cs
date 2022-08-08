@@ -163,6 +163,62 @@ namespace Keysharp.Core
 		}
 	}
 
+	public class KeysharpRichEdit : RichTextBox
+	{
+		private readonly int addstyle, removestyle;
+		private CharacterCasing casing = CharacterCasing.Normal;
+
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				var cp = base.CreateParams;
+				cp.Style |= addstyle;
+				cp.Style &= ~removestyle;
+				return cp;
+			}
+		}
+
+		internal CharacterCasing CharacterCasing
+		{
+			get => casing;
+			set => casing = value;
+		}
+
+		public KeysharpRichEdit(int _add = 0, int _remove = 0)
+		{
+			addstyle = _add;
+			removestyle = _remove;
+			KeyPress += KeysharpRichEdit_KeyPress;
+		}
+
+		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			switch (casing)
+			{
+				case CharacterCasing.Normal:
+					break;
+
+				case CharacterCasing.Upper:
+					e.KeyChar = char.ToUpper(e.KeyChar);
+					break;
+
+				case CharacterCasing.Lower:
+					e.KeyChar = char.ToLower(e.KeyChar);
+					break;
+
+				default:
+					break;
+			}
+		}
+
+		protected override void WndProc(ref Message m)
+		{
+			if (!GuiHelper.CallMessageHandler(this, ref m))
+				base.WndProc(ref m);
+		}
+	}
+
 	public class KeysharpForm : Form
 	{
 		internal bool beenShown = false;
