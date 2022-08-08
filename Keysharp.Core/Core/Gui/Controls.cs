@@ -640,6 +640,15 @@ namespace Keysharp.Core
 				base.WndProc(ref m);
 		}
 
+		internal void SetColor(Color color)
+		{
+			bgcolor = color;
+			DrawMode = TabDrawMode.OwnerDrawFixed;
+
+			foreach (TabPage tp in TabPages)
+				tp.BackColor = color;
+		}
+
 		/// <summary>
 		/// Focusing gets rid of the unsightly dotted selection box on the tab.
 		/// It may still show for a half second when donig custom drawing with bgcolor.

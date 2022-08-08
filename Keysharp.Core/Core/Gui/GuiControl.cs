@@ -1148,12 +1148,12 @@ namespace Keysharp.Core
 				_control.ForeColor = opts.c;
 			}
 
-			if (_control is Button)
+			if (_control is KeysharpButton)
 			{
 				if (opts.btndef.HasValue)
 					Gui.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
 			}
-			else if (_control is ListBox lb)
+			else if (_control is KeysharpListBox lb)
 			{
 				if (opts.vscroll.HasValue)
 					lb.ScrollAlwaysVisible = opts.vscroll.Value;
@@ -1167,7 +1167,7 @@ namespace Keysharp.Core
 				if (opts.sort.HasValue)
 					lb.Sorted = opts.sort.Value;
 			}
-			else if (_control is ComboBox cb)
+			else if (_control is KeysharpComboBox cb)
 			{
 				if (opts.sort.IsTrue())
 				{
@@ -1195,7 +1195,7 @@ namespace Keysharp.Core
 					cb.DropDownStyle = opts.cmbsimple.IsTrue() ? ComboBoxStyle.Simple : ComboBoxStyle.DropDown;
 				}
 			}
-			else if (_control is TextBox txt)
+			else if (_control is KeysharpEdit txt)
 			{
 				txt.AcceptsTab = opts.wanttab ?? false;
 				txt.AcceptsReturn = opts.wantreturn ?? false;
@@ -1255,7 +1255,7 @@ namespace Keysharp.Core
 				if (opts.tooltip)
 					_ = WindowsAPI.SendMessage(tb.Handle, WindowsAPI.TBM_SETTIPSIDE, (uint)opts.tooltipside, 0);
 			}
-			else if (_control is TreeView tv)
+			else if (_control is KeysharpTreeView tv)
 			{
 				if (opts.buttons.HasValue)
 					tv.ShowPlusMinus = opts.buttons.Value;
@@ -1272,7 +1272,7 @@ namespace Keysharp.Core
 					else
 						tv.KeyDown -= Gui.Tv_Lv_KeyDown;
 			}
-			else if (_control is ListView lv)
+			else if (_control is KeysharpListView lv)
 			{
 				if (opts.ischecked.HasValue)
 					lv.CheckBoxes = opts.ischecked.Value > 0;
@@ -1319,12 +1319,12 @@ namespace Keysharp.Core
 				else if (opts.sortheader.HasValue)
 					lv.HeaderStyle = opts.sortheader.IsFalse() ? ColumnHeaderStyle.Nonclickable : ColumnHeaderStyle.Clickable;
 			}
-			else if (_control is ProgressBar pb)
+			else if (_control is KeysharpProgressBar pb)
 			{
 				if (opts.smooth.HasValue)
 					pb.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 			}
-			else if (_control is TabControl tc)
+			else if (_control is KeysharpTabControl tc)
 			{
 				if (opts.buttons.HasValue)
 					tc.Appearance = opts.buttons.Value ? TabAppearance.FlatButtons : TabAppearance.Normal;
@@ -1340,8 +1340,13 @@ namespace Keysharp.Core
 					tc.Alignment = System.Windows.Forms.TabAlignment.Bottom;
 				else if (opts.top)
 					tc.Alignment = System.Windows.Forms.TabAlignment.Top;
+
+				if (opts.bgtrans)
+					tc.SetColor(Color.Transparent);
+				else if (opts.bgcolor.HasValue)
+					tc.SetColor(opts.bgcolor.Value);
 			}
-			else if (_control is NumericUpDown nud)
+			else if (_control is KeysharpNumericUpDown nud)
 			{
 				if (opts.leftj.HasValue)
 					nud.UpDownAlign = opts.leftj.Value ? LeftRightAlignment.Left : LeftRightAlignment.Right;

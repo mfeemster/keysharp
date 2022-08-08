@@ -993,14 +993,10 @@ namespace Keysharp.Core
 				if (ktc.TabPages.Count >= 0)
 					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
 
-				if (opts.bgcolor.HasValue)
-				{
-					ktc.bgcolor = opts.bgcolor;
-					ktc.DrawMode = TabDrawMode.OwnerDrawFixed;
-
-					foreach (TabPage tp in ktc.TabPages)
-						tp.BackColor = opts.bgcolor.Value;
-				}
+				if (opts.bgtrans)
+					ktc.SetColor(Color.Transparent);
+				else if (opts.bgcolor.HasValue)
+					ktc.SetColor(opts.bgcolor.Value);
 			}
 
 			if (opts.altsubmit.HasValue)
