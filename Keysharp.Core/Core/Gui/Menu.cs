@@ -293,7 +293,7 @@ namespace Keysharp.Core
 				}
 				else if (funcorsub is IFuncObj fo)
 					clickHandlers.GetOrAdd(item).ModifyEventHandlers(fo, 1);
-				else if (funcorsub is string s)
+				else if (funcorsub is string s && s.Length > 0)
 					clickHandlers.GetOrAdd(item).ModifyEventHandlers(new FuncObj(s), 1);
 
 				foreach (var opt in Options.ParseOptions(options))
