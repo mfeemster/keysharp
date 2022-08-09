@@ -292,10 +292,9 @@ namespace Keysharp.Core
 						_ = item.DropDownItems.Add(mnu.MenuItem.Items[0]);
 				}
 				else if (funcorsub is IFuncObj fo)
-				{
-					var handler = clickHandlers.GetOrAdd(item);
-					handler.ModifyEventHandlers(fo, 1);
-				}
+					clickHandlers.GetOrAdd(item).ModifyEventHandlers(fo, 1);
+				else if (funcorsub is string s)
+					clickHandlers.GetOrAdd(item).ModifyEventHandlers(new FuncObj(s), 1);
 
 				foreach (var opt in Options.ParseOptions(options))
 				{

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Windows.Forms;
 using Keysharp.Core;
 
 namespace Keysharp.Scripting
@@ -333,7 +334,10 @@ namespace Keysharp.Scripting
 			{
 				try
 				{
-					pi.SetValue(item, value);
+					if (item.IsKeysharpGui() && Keysharp.Scripting.Script.mainWindow != null)//If it's a gui control, then just invoke on the main window since all gui items will be on the same thread.
+						Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => pi.SetValue(item, value));
+					else
+						pi.SetValue(item, value);
 				}
 				catch (Exception e)
 				{

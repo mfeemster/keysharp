@@ -190,7 +190,12 @@ namespace Keysharp.Scripting
 					//  part = part.Substring(1);
 					//}
 
-					if (part.EndsWith('*'))
+					if (part == "*")
+					{
+						variadic = true;
+						part = "obj";//Parameter is variadic, but unused.
+					}
+					else if (part.EndsWith('*'))
 					{
 						variadic = true;
 						part = part.TrimEnd('*');
@@ -282,8 +287,7 @@ namespace Keysharp.Scripting
 					}
 				}
 
-				// next
-				if (i < code.Length && code[i] != Multicast/* && code[i] != '*'*/)//Add support for variadic parameters specified by asterisk.//MATT
+				if (i < code.Length && code[i] != Multicast)
 					throw new ParseException(ExUnexpected);
 				else
 					i++;

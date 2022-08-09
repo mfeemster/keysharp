@@ -33,6 +33,8 @@ namespace System
 
 		public static bool IsFalse(this bool? b) => b.HasValue&& !b.Value;
 
+		public static bool IsKeysharpGui(this object obj) => obj is Keysharp.Core.Gui || obj is Keysharp.Core.GuiControl || obj is Keysharp.Core.Menu;
+
 		public static bool IsTrue(this bool? b) => b.HasValue&& b.Value;
 
 		//public static IList L(this object[] obj) => obj.Length > 0 && obj[0] is IList oo ? oo : obj;

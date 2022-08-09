@@ -1,4 +1,8 @@
-﻿namespace System.Reflection
+﻿using System.Collections.Generic;
+using System.Windows.Forms;
+using Keysharp.Core;
+
+namespace System.Reflection
 {
 	public static class ReflectionExtensions
 	{
@@ -8,24 +12,50 @@
 			var isVariadic = parameters.Length == 1 && parameters[0].ParameterType == typeof(object[]);
 
 			if (parameters.Length == 0)
-				return mi.Invoke(inst, null);
+				return mi.ControlCheckedInvoke(inst, null);
 
 			if (isVariadic)
-				return mi.Invoke(inst, new object[] { obj });
+				return mi.ControlCheckedInvoke(inst, new object[] { obj });
 
 			if (parameters.Length == obj.Length)
-				return mi.Invoke(inst, obj);
+				return mi.ControlCheckedInvoke(inst, obj);
 
 			var i = 0;//The slowest case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
 			var newobj = new object[parameters.Length];
 
 			for (; i < obj.Length && i < newobj.Length; i++)
-				newobj[i] = obj[i];
+			{
+				if (i == newobj.Length - 1 && parameters[i].ParameterType == typeof(object[]))//Check if the last param is variadic, and if so, put all remaining params there.
+				{
+					var newi = i;
+					var arr = new object[obj.Length - i];
+
+					for (; i < obj.Length; i++)
+						arr[i - newi] = obj[i];
+
+					newobj[newi] = arr;
+					break;
+				}
+				else
+					newobj[i] = obj[i];
+			}
 
 			for (; i < newobj.Length; i++)
 				newobj[i] = null;
 
-			return mi.Invoke(inst, newobj);
+			return mi.ControlCheckedInvoke(inst, newobj);
+		}
+
+		public static object ControlCheckedInvoke(this MethodInfo mi, object inst, params object[] parameters)
+		{
+			object ret = null;
+
+			if ((inst is Gui || inst is GuiControl || inst is Menu) && Keysharp.Scripting.Script.mainWindow != null)//If it's a gui control, then just invoke on the main window since all gui items will be on the same thread.
+				Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => ret = mi.Invoke(inst, parameters));
+			else
+				ret = mi.Invoke(inst, parameters);
+
+			return ret;
 		}
 	}
 }
