@@ -37,6 +37,9 @@ namespace Keysharp.Tests
 		public void CompareCaseEx() => Assert.IsTrue(TestScript("string-compare-case-ex", true));
 
 		[Test, Category("String")]
+		public void Continuation() => Assert.IsTrue(TestScript("string-continuation", false));//False because WrapInFunc() adds tabs to the lines.
+
+		[Test, Category("String")]
 		public void ConcatEx() => Assert.IsTrue(TestScript("string-concat-ex", true));
 
 		[Test, Category("String")]

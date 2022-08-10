@@ -15,8 +15,8 @@ namespace Keysharp.Scripting
 				var last = parts.Count - 1;
 
 				if (!(--last > 1 &&
-						parts[0] is string && ((string)parts[0]).Length == 1 && ((string)parts[0])[0] == ParenOpen &&
-						parts[last] is string && ((string)parts[last]).Length == 1 && ((string)parts[last])[0] == ParenClose))
+						parts[0] is string s0 && s0.Length == 1 && s0[0] == ParenOpen &&
+						parts[last] is string sl && sl.Length == 1 && sl[0] == ParenClose))
 					return;
 
 				for (var i = 0; i < last; i++)

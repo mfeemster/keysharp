@@ -82,7 +82,7 @@ namespace Keysharp.Scripting
 
 			if (line.Length > 2)
 			{
-				if (line.Contains("%"))
+				if (line.Contains('%'))
 				{
 					percentResolve = false;
 					line = line.Replace("%", string.Empty);
@@ -170,7 +170,7 @@ namespace Keysharp.Scripting
 				if (literalEscape)
 					line = line.Replace(escape, escapeEscaped);
 
-				line = line.Replace("\"", "\"\"");
+				line = line.Replace("\"", $"{Escape}\"");
 				line = line.Replace(cast, castEscaped);
 				_ = str.Append(line);
 				_ = str.Append(join);

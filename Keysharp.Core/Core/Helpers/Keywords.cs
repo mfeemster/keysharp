@@ -497,15 +497,15 @@ namespace Keysharp.Core
 		internal const char LastVar = '$';
 #endif
 
-		internal const char DefaultEscpe = '`';
+		internal const char DefaultEscape = '`';
 		internal const char DefaultComment = ';';
 		internal const char DefaultResolve = '%';
 		internal const char DefaultMulticast = ',';
 
 #if !LEGACY
-		internal static char Escape = DefaultEscpe;//All this had was "const", so just made it the same.//MATT
+		internal static char Escape = DefaultEscape;//All this had was "const", so just made it the same.//MATT
 #else
-		internal static char Escape = DefaultEscpe;
+		internal static char Escape = DefaultEscape;
 #endif
 
 #if !LEGACY
