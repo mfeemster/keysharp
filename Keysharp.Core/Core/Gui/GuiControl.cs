@@ -127,43 +127,46 @@ namespace Keysharp.Core
 
 				if (_control is TabControl tc && tc.SelectedTab is TabPage tp)
 					return tp.Text;
+				else if (_control is GroupBox gb)
+					return gb.Text;
 				else
 					return _control.Text;
 			}
 			set
 			{
-				if (value is string s)
-				{
-					if (_control is ListBox lb)
-					{
-						if (lb.SelectionMode == SelectionMode.One)
-						{
-							lb.SelectedItem = s;
-						}
-						else
-						{
-							for (var i = 0; i < lb.Items.Count; i++)
-							{
-								if (lb.Items[i] is string item && item == s)
-									lb.SetSelected(i, true);
-							}
-						}
-					}
-					else if (_control is ComboBox cb)
-					{
-						if (s?.Length == 0)
-							cb.SelectedItem = -1;
+				var s = value.As();
 
-						if (cb.DropDownStyle == ComboBoxStyle.DropDownList)
-							cb.SelectedItem = s;
-						else
-							cb.Text = s;
+				if (_control is ListBox lb)
+				{
+					if (lb.SelectionMode == SelectionMode.One)
+					{
+						lb.SelectedItem = s;
 					}
-					else if (_control is TabControl tc)
-						tc.SelectTab(s);
 					else
-						_control.Text = s;
+					{
+						for (var i = 0; i < lb.Items.Count; i++)
+						{
+							if (lb.Items[i] is string item && item == s)
+								lb.SetSelected(i, true);
+						}
+					}
 				}
+				else if (_control is ComboBox cb)
+				{
+					if (s?.Length == 0)
+						cb.SelectedItem = -1;
+
+					if (cb.DropDownStyle == ComboBoxStyle.DropDownList)
+						cb.SelectedItem = s;
+					else
+						cb.Text = s;
+				}
+				else if (_control is TabControl tc)
+					tc.SelectTab(s);
+				else if (_control is GroupBox gb)
+					gb.Text = s;
+				else
+					_control.Text = s;
 			}
 		}
 

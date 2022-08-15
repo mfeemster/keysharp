@@ -15,7 +15,6 @@ namespace Keysharp.Core
 	public class Gui : KeysharpObject
 	{
 		public TabPage CurrentTab;
-
 		public KeysharpForm form;
 
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
@@ -282,6 +281,7 @@ namespace Keysharp.Core
 
 		public string Title => form.Text;
 
+		internal Font Font { get; set; }
 		internal Control LastContainer { get; set; }
 
 		internal Control LastControl
@@ -302,8 +302,6 @@ namespace Keysharp.Core
 				return null;
 			}
 		}
-
-		internal Font Font { get; set; }
 
 		internal Point Section { get; set; }
 
@@ -347,11 +345,6 @@ namespace Keysharp.Core
 			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
 			var y = (int)Math.Round(form.Font.Size * 0.75f);
 			form.Margin = new Padding(x, y, x, y);
-		}
-
-		private void Form_Load(object sender, EventArgs e)
-		{
-			//form.Visible = false;
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
@@ -1246,8 +1239,14 @@ namespace Keysharp.Core
 				if (prevParent is Form f && f.MainMenuStrip != null)
 					top += f.MainMenuStrip.Height;
 
-				ctrl.Top = top;
-				ctrl.Location = new Point(prevParent.Margin.Left, top);
+				if (loc.Y == int.MinValue && LastContainer is GroupBox gblast)
+				{
+					//Top needs to be manually adjusted when the container is a GroupBox, we're adding the first control, and they haven't explicitly specified a Y coordinate.
+					if (gblast.Controls.Count == 0)
+						top += gblast.Margin.Top + gblast.Padding.Bottom;
+				}
+
+				ctrl.Location = new Point(opts.x != int.MinValue ? opts.x : prevParent.Margin.Left, opts.y != int.MinValue ? opts.y : top);
 			}
 
 			if (ctrl is TabControl tc && CurrentTab is TabPage currtp)
@@ -1278,6 +1277,11 @@ namespace Keysharp.Core
 					pnl.Controls.Add(ctrl);
 
 				krb.Checked = opts.ischecked.HasValue && opts.ischecked.Value > 0;
+			}
+			else if (ctrl is GroupBox gb)
+			{
+				LastContainer.Controls.Add(ctrl);
+				LastContainer = gb;
 			}
 			else if (ctrl is KeysharpStatusStrip ksss2)
 			{
@@ -1777,7 +1781,16 @@ namespace Keysharp.Core
 
 			return new Map(dkt);
 		}
-		internal static float GetFontPixels(Font font) => (float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
+
+		public void UseGroup(object obj0 = null)
+		{
+			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
+				LastContainer = gb;
+			else
+				LastContainer = form;
+		}
+
+		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);//(float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
 
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
@@ -1956,16 +1969,19 @@ namespace Keysharp.Core
 
 			return options;
 		}
+
 		internal static void SuppressCtrlAKeyDown(object o, KeyEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.SuppressKeyPress = true;
 		}
+
 		internal static void SuppressCtrlAPreviewKeyDown(object o, PreviewKeyDownEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.IsInputKey = true;
 		}
+
 		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			var control = form.ActiveControl;
@@ -1979,6 +1995,7 @@ namespace Keysharp.Core
 			else
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
 		}
+
 		internal void Form_DragDrop(object sender, DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -1988,6 +2005,7 @@ namespace Keysharp.Core
 				_ = dropFilesHandlers?.InvokeEventHandlers(this, form.ActiveControl, new Array(files), coords.X, coords.Y);
 			}
 		}
+
 		internal void Form_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			var result = closedHandlers?.InvokeEventHandlers(this);
@@ -2005,6 +2023,7 @@ namespace Keysharp.Core
 			if (Core.Debug)//Only for making testing easier, never meant to run in production.
 				Script.mainWindow?.Close();
 		}
+
 		internal void Form_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
@@ -2012,11 +2031,13 @@ namespace Keysharp.Core
 			else if (e.KeyCode == Keys.Escape)
 				_ = escapeHandlers?.InvokeEventHandlers(this);
 		}
+
 		internal void Form_MouseDown(object sender, MouseEventArgs e)
 		{
 			if (e.Button == MouseButtons.Right)
 				CallContextMenuChangeHandlers(false, e.X, e.Y);
 		}
+
 		internal void Form_Resize(object sender, EventArgs e)
 		{
 			long state;
@@ -2030,6 +2051,7 @@ namespace Keysharp.Core
 
 			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
 		}
+
 		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.F2)
@@ -2040,6 +2062,12 @@ namespace Keysharp.Core
 					lv.SelectedItems[0].BeginEdit();
 			}
 		}
+
+		private void Form_Load(object sender, EventArgs e)
+		{
+			//form.Visible = false;
+		}
+
 		public object this[object controlname]
 		{
 			get
@@ -2053,6 +2081,7 @@ namespace Keysharp.Core
 				throw new Error($"No controls matched the name {controlname}.");
 			}
 		}
+
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;
@@ -2085,6 +2114,8 @@ namespace Keysharp.Core
 
 			//DateTime.
 			internal string customdate = "";
+
+			internal bool datemultisel;
 
 			//DropDownList
 			internal int ddlchoose = int.MinValue;
@@ -2150,7 +2181,6 @@ namespace Keysharp.Core
 			internal int page = int.MinValue;
 			internal bool pwd = false;
 			internal string pwdch = "";
-			internal bool datemultisel;
 			internal bool? rdonly;
 			internal bool? redraw;
 			internal int remexstyle = 0;
