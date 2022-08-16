@@ -16,7 +16,7 @@ namespace Keysharp.Core
 			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
-			var icon = int.MinValue;
+			var icon = 0;
 
 			foreach (var opt in opts)
 			{
