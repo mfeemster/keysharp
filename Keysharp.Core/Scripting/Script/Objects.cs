@@ -67,7 +67,7 @@ namespace Keysharp.Scripting
 					else if (err.ExcType == Keyword_ExitApp)
 						_ = Flow.ExitAppInternal(Flow.ExitReasons.Error);
 
-					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1)
+					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1L)
 						return false;
 				}
 			}

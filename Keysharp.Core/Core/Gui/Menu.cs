@@ -374,37 +374,6 @@ namespace Keysharp.Core
 			MenuStrip.ImageScalingSize = new System.Drawing.Size(28, 28);
 		}
 
-		public new void Add(object obj0, object obj1 = null)
-		{
-			var s = obj0.As();
-
-			if (obj1 is Menu mnu)
-			{
-				var temp = GetMenuItem(s);
-				ToolStripMenuItem newItem = null;
-
-				if (temp is ToolStripMenuItem tsmi)
-				{
-					tsmi.DropDownItems.Clear();
-					newItem = tsmi;
-				}
-				else if (MenuStrip.Items.Add(s) is ToolStripMenuItem tsmi2)
-				{
-					tsmi2.Name = tsmi2.Text;
-					newItem = tsmi2;
-				}
-
-				if (newItem != null)
-					while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.
-						_ = newItem.DropDownItems.Add(mnu.MenuItem.Items[0]);
-			}
-			else
-			{
-				var newItem = MenuStrip.Items.Add(s);
-				newItem.Name = newItem.Text;
-			}
-		}
-
 		protected override long GetIndex(ToolStripItem tsi) => MenuStrip.Items.IndexOf(tsi);
 
 		protected override ToolStrip GetMenu() => MenuStrip;

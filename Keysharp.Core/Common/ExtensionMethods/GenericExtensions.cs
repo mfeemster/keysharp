@@ -446,7 +446,7 @@ namespace System.Collections.Generic
 			return (r1, r2, r3);
 		}
 
-		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& (result.ParseLong(false) != 0 || (result is string s&& s != ""));
+		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& ((result.ParseLong(false) is long l&& l != 0) || result.ParseBool().IsTrue() || (result is string s&& s != ""));
 
 		public static (int, string, int, int) Isi2(this IList obj, int def1 = default, string def2 = "", int def3 = default, int def4 = default)
 		{

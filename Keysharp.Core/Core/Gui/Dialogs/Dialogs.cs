@@ -415,53 +415,53 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					switch (opt)
+					switch (opt.ToLower())
 					{
-						case "OK": buttons = MessageBoxButtons.OK; break;
+						case "ok": buttons = MessageBoxButtons.OK; break;
 
-						case "OKCancel":
-						case "O/C":
-						case "OC":
+						case "okcancel":
+						case "o/c":
+						case "oc":
 							buttons = MessageBoxButtons.OKCancel; break;
 
-						case "AbortRetryIgnore":
-						case "A/R/I":
-						case "ARI":
+						case "abortretryignore":
+						case "a/r/i":
+						case "ari":
 							buttons = MessageBoxButtons.AbortRetryIgnore; break;
 
-						case "YesNoCancel":
-						case "Y/N/C":
-						case "YNC":
+						case "yesnocancel":
+						case "y/n/c":
+						case "ync":
 							buttons = MessageBoxButtons.YesNoCancel; break;
 
-						case "YesNo":
-						case "Y/N":
-						case "YN":
+						case "yesno":
+						case "y/n":
+						case "yn":
 							buttons = MessageBoxButtons.YesNo; break;
 
-						case "RetryCancel":
-						case "R/C":
-						case "RC":
+						case "retrycancel":
+						case "r/c":
+						case "rc":
 							buttons = MessageBoxButtons.RetryCancel; break;
 
-						case "CancelTryAgainContinue":
-						case "C/T/C":
-						case "CTC":
+						case "canceltryagaincontinue":
+						case "c/t/c":
+						case "ctc":
 							buttons = MessageBoxButtons.CancelTryContinue; break;
 
-						case "Iconx": icon = MessageBoxIcon.Hand; break;
+						case "iconx": icon = MessageBoxIcon.Hand; break;
 
-						case "Icon?": icon = MessageBoxIcon.Question; break;
+						case "icon?": icon = MessageBoxIcon.Question; break;
 
-						case "Icon!": icon = MessageBoxIcon.Exclamation; break;
+						case "icon!": icon = MessageBoxIcon.Exclamation; break;
 
-						case "Iconi": icon = MessageBoxIcon.Asterisk; break;
+						case "iconi": icon = MessageBoxIcon.Asterisk; break;
 
-						case "Default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
+						case "default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
 
-						case "Default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
+						case "default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
 
-						case "Default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
+						case "default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
 					}
 				}
 			}
