@@ -45,7 +45,7 @@ namespace Keysharp.Core.Linux
 
 		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Array();
 
-		internal override Rectangle ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Rectangle();
+		internal override Keysharp.Core.Map ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Keysharp.Core.Map();
 
 		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 

@@ -1656,16 +1656,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static Map GetClientPos(Control control, bool scaling)
-		{
-			var scale = !scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-			var dkt = new Map();
-			dkt["X"] = control.ClientRectangle.X * scale;
-			dkt["Y"] = control.ClientRectangle.Y * scale;
-			dkt["Width"] = control.ClientRectangle.Width * scale;
-			dkt["Height"] = control.ClientRectangle.Height * scale;
-			return dkt;
-		}
+		internal static Map GetClientPos(Control control, bool scaling) => control.ClientRectangle.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI);
 
 		internal static IFuncObj GetFuncObj(object h, object eventObj)
 		{
@@ -1679,16 +1670,7 @@ namespace Keysharp.Core
 			return del;
 		}
 
-		internal static Map GetPos(Control control, bool scaling)
-		{
-			var scale = !scaling ? 1.0 : Accessors.A_ScaledScreenDPI;
-			var dkt = new Map();
-			dkt["X"] = control.Location.X * scale;
-			dkt["Y"] = control.Location.Y * scale;
-			dkt["Width"] = control.Size.Width * scale;
-			dkt["Height"] = control.Size.Height * scale;
-			return dkt;
-		}
+		internal static Map GetPos(Control control, bool scaling) => control.Bounds.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI);
 
 		internal object InvokeMessageHandlers(ref Message m)
 		{

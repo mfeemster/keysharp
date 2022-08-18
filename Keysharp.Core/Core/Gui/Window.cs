@@ -57,7 +57,7 @@ namespace Keysharp.Core
 
 		public static Array ControlGetItems(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetItems);
 
-		public static Rectangle ControlGetPos(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetPos);
+		public static Keysharp.Core.Map ControlGetPos(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetPos);
 
 		public static long ControlGetStyle(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetStyle);
 
@@ -424,7 +424,7 @@ namespace Keysharp.Core
 
 		public static string WinGetClass(params object[] obj) => SearchWindow(obj, true).ClassName;
 
-		public static Rectangle WinGetClientPos(params object[] obj) => SearchWindow(obj, true).ClientLocation;
+		public static Keysharp.Core.Map WinGetClientPos(params object[] obj) => SearchWindow(obj, true).ClientLocation.ToPos();
 
 		public static object WinGetControls(params object[] obj)
 		{
@@ -514,7 +514,7 @@ namespace Keysharp.Core
 
 		public static object WinGetPID(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true).PID.ToInt64());
 
-		public static Rectangle WinGetPos(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true).Location);
+		public static Keysharp.Core.Map WinGetPos(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true).Location.ToPos());
 
 		public static string WinGetProcessName(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true).ProcessName);
 
@@ -533,6 +533,14 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return color != -1 ? $"0x{color.ToString("X").Substring(0, 6)}" : "";
 		}
+
+		//public static string WinSetTransColor(params object[] obj)
+		//{
+		//  var win = SearchWindow(obj, true);
+		//  var color = win.TransparentColor;
+		//  WindowItemBase.DoWinDelay();
+		//  return color != -1 ? $"0x{color.ToString("X").Substring(0, 6)}" : "";
+		//}
 
 		public static object WinGetTransparent(params object[] obj)
 		{

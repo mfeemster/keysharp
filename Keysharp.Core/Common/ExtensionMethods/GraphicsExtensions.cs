@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 
@@ -109,5 +110,21 @@ namespace System.Drawing
 
 			return bmp2;
 		}
+
+		public static Keysharp.Core.Map ToPos(this Rectangle rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		{
+			{ "X", rect.Left * scale },
+			{ "Y", rect.Top * scale },
+			{ "Width", rect.Width * scale },
+			{ "Height", rect.Height * scale },
+		});
+
+		public static Keysharp.Core.Map ToPos(this Keysharp.Core.Windows.RECT rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		{
+			{ "X", rect.Left * scale },
+			{ "Y", rect.Top * scale },
+			{ "Width", (rect.Right - rect.Left)* scale },
+			{ "Height", (rect.Bottom - rect.Top)* scale },
+		});
 	}
 }

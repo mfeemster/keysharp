@@ -36,7 +36,7 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract Rectangle ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal abstract Keysharp.Core.Map ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
 		internal abstract long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText);
 

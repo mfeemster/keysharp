@@ -584,7 +584,7 @@ namespace Keysharp.Core.Windows
 			return new Array();
 		}
 
-		internal override Rectangle ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override Keysharp.Core.Map ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			var window = Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
 
@@ -596,7 +596,7 @@ namespace Keysharp.Core.Windows
 				if (WindowsAPI.MapWindowPoints(IntPtr.Zero, window.Handle, ref rect, 2) == 0)
 					throw new Error($"Could not map rect from screen to window in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+				return rect.ToPos();
 			}
 			else
 				throw new Error($"Could not find control ${ctrl} to retrieve handle for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
