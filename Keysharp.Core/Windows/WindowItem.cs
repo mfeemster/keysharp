@@ -72,7 +72,7 @@ namespace Keysharp.Core.Windows
 				{
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
-						if ((bool)Accessors.A_DetectHiddenWindows || Windows.WindowsAPI.IsWindowVisible(hwnd))
+						if ((bool)Accessors.A_DetectHiddenText || Windows.WindowsAPI.IsWindowVisible(hwnd))
 							childs.Add(new WindowItem(hwnd));
 
 						return true;
@@ -222,12 +222,8 @@ namespace Keysharp.Core.Windows
 				var items = new List<string>();
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
-					if ((bool)Accessors.A_DetectHiddenText || Windows.WindowsAPI.IsWindowVisible(hwnd))
-					{
-						var text = (string)Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
-						items.Add(text);
-					}
-
+					var text = (string)Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
+					items.Add(text);
 					return true;
 				}, 0);
 				return items.ToArray();
