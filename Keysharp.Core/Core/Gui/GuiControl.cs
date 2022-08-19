@@ -1005,12 +1005,6 @@ namespace Keysharp.Core
 			var e = obj0.As().ToLower();
 			var h = obj1;
 			var i = obj2.Al(1);
-
-			if (e == "focus")
-				e = "enter";
-			else if (e == "losefocus")
-				e = "leave";
-
 			var del = GetFuncObj(h, Gui.form.eventObj);
 
 			if (del != null)

@@ -266,19 +266,22 @@ namespace Keysharp.Core
 		{
 			var delay = obj.Al();
 
+			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (delay == -1)
-				Application.DoEvents();//Be careful with this, it has caused spurious crashes in my years of programming experience.
+			{
+				Application.DoEvents();
+			}
 			else
-				System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(delay));
+			{
+				//System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(delay));
+				var stop = DateTime.Now.AddMilliseconds(delay);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
-			//_ = System.Threading.Thread.CurrentThread.Join(delay);
-			//var stop = Environment.TickCount + delay;
-			//
-			//while (Environment.TickCount < stop)
-			//{
-			//  Application.DoEvents();
-			//  System.Threading.Thread.Sleep(10);
-			//}
+				while (DateTime.Now < stop)
+				{
+					Application.DoEvents();
+					System.Threading.Thread.Sleep(10);
+				}
+			}
 		}
 
 		/// <summary>
@@ -300,7 +303,6 @@ namespace Keysharp.Core
 			if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s : Keysharp.Core.Properties.Resources.Keysharp_ico;
 		}
-
 		/// <summary>
 		/// This method is obsolete, use <see cref="Critical"/>.
 		/// </summary>
@@ -308,7 +310,6 @@ namespace Keysharp.Core
 		public static void Thread()
 		{
 		}
-
 		internal static bool ExitAppInternal(ExitReasons obj0, object obj1 = null)
 		{
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
@@ -347,7 +348,6 @@ namespace Keysharp.Core
 			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 			return false;
 		}
-
 		internal static void SetMainTimer()
 		{
 			if (mainTimer == null)
@@ -357,14 +357,12 @@ namespace Keysharp.Core
 				mainTimer.Start();
 			}
 		}
-
 		internal static void SleepWithoutInterruption(object obj = null)
 		{
 			AllowInterruption = false;
 			Sleep(obj);
 			AllowInterruption = true;
 		}
-
 		internal static void StopMainTimer()
 		{
 			if (mainTimer != null)
@@ -373,7 +371,6 @@ namespace Keysharp.Core
 				mainTimer = null;
 			}
 		}
-
 		internal enum ExitReasons
 		{
 			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, SingleInstance
