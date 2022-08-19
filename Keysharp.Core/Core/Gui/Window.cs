@@ -616,6 +616,8 @@ namespace Keysharp.Core
 
 		public static void WinSetEnabled(params object[] obj) => WinSetToggleX((win, b) => win.Enabled = b, win => win.Enabled, obj);
 
+		public static void WinSetExStyle(params object[] obj) => WinSetStyleHelper(obj.L().Cast<object>().ToArray(), true);
+
 		public static void WinSetRegion(params object[] obj)//This function is entirely windows specific.
 		{
 			var (options, title, text, excludeTitle, excludeText) = obj.S1O1S3();
@@ -698,6 +700,8 @@ namespace Keysharp.Core
 
 			WindowItemBase.DoWinDelay();
 		}
+
+		public static void WinSetStyle(params object[] obj) => WinSetStyleHelper(obj.L().Cast<object>().ToArray(), false);
 
 		public static void WinSetTitle(params object[] obj)
 		{
@@ -854,6 +858,57 @@ namespace Keysharp.Core
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
 			var (windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText, true);
 			return windows;
+		}
+
+		private static void WinSetStyleHelper(object[] o, bool ex)
+		{
+			if (SearchWindow(o.Skip(1).ToArray(), true) is WindowItem item)
+			{
+				var val = o[0];
+
+				if (ex)
+				{
+					if (val is int i)
+						item.ExStyle = i;
+					else if (val is uint ui)
+						item.ExStyle = ui;
+					else if (val is long l)
+						item.ExStyle = l;
+					else if (val is double d)
+						item.ExStyle = (long)d;
+					else if (val is string s)
+					{
+						long temp = 0;
+
+						if (Options.TryParse(s, "+", ref temp)) { item.ExStyle |= temp; }
+						else if (Options.TryParse(s, "-", ref temp)) { item.ExStyle &= ~temp; }
+						else if (Options.TryParse(s, "^", ref temp)) { item.ExStyle ^= temp; }
+						else item.ExStyle = val.ParseLong(true).Value;
+					}
+				}
+				else
+				{
+					if (val is int i)
+						item.Style = i;
+					else if (val is uint ui)
+						item.Style = ui;
+					else if (val is long l)
+						item.Style = l;
+					else if (val is double d)
+						item.Style = (long)d;
+					else if (val is string s)
+					{
+						long temp = 0;
+
+						if (Options.TryParse(s, "+", ref temp)) { item.Style |= temp; }
+						else if (Options.TryParse(s, "-", ref temp)) { item.Style &= ~temp; }
+						else if (Options.TryParse(s, "^", ref temp)) { item.Style ^= temp; }
+						else item.Style = val.ParseLong(true).Value;
+					}
+				}
+
+				WindowItemBase.DoWinDelay();
+			}
 		}
 
 		private static void WinSetToggleX(Action<WindowItemBase, bool> set, Func<WindowItemBase, bool> get, params object[] obj)
