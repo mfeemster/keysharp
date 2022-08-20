@@ -149,14 +149,11 @@ namespace Keysharp.Core
 		{
 			var name = obj0.As();
 			var filename = obj1.As();
-			var iconnumber = (int)obj2.Al(1);
+			var iconnumber = ImageHelper.PrepareIconNumber(obj2);
 			var width = (int)obj3.Al();
 
 			if (GetMenuItem(name) is ToolStripItem tsmi)
 			{
-				if (iconnumber > 0)
-					iconnumber--;
-
 				if (ImageHelper.LoadImage(filename, width, 0, iconnumber) is Bitmap bmp)
 					tsmi.Image = bmp;
 			}

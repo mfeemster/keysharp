@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -20,19 +21,15 @@ namespace Keysharp.Core
 		{
 			var id = obj0.Al();
 			var filename = obj1.As();
-			var icon = (int)obj2.Al(1);
+			var iconnumber = ImageHelper.PrepareIconNumber(obj2);
 			var resizeNonIcon = obj3.Ab();
 			var il = imageLists.GetOrAdd(id);
-			var icontouse = icon;
 
-			if (icon > 0)
-				--icontouse;
-
-			if (ImageHelper.LoadImage(filename, 0, 0, icontouse) is Bitmap bmp)
+			if (ImageHelper.LoadImage(filename, 0, 0, iconnumber) is Bitmap bmp)
 			{
 				if (!ImageHelper.IsIcon(filename))
 				{
-					var color = Color.FromArgb(icon);
+					var color = Color.FromArgb(obj2.Ai());
 
 					if (!resizeNonIcon)
 					{

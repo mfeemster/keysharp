@@ -27,7 +27,6 @@ namespace Keysharp.Core
 		private List<IFuncObj> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
 		private bool fireEvents = true;//Need to figure out how to enable/disable events.//MATT//TODO
-		private long parenthandle;
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
 		private List<IFuncObj> itemCheckHandlers;
@@ -36,6 +35,7 @@ namespace Keysharp.Core
 		private List<IFuncObj> lostFocusHandlers;
 		private int mousecount = 0;
 		private Dictionary<int, List<IFuncObj>> notifyHandlers;
+		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
 		public bool AltSubmit { get; internal set; } = false;
 
@@ -314,7 +314,8 @@ namespace Keysharp.Core
 					var splits = val.Split('*', StringSplitOptions.RemoveEmptyEntries);
 					var width = int.MinValue;
 					var height = int.MinValue;
-					var icon = int.MinValue;
+					var icon = "";
+					object iconnumber = 0;
 					var filename = splits.Last();
 
 					for (var i = 0; i < splits.Length - 1; i++)
@@ -323,12 +324,12 @@ namespace Keysharp.Core
 
 						if (Options.TryParse(opt, "w", ref width)) { }
 						else if (Options.TryParse(opt, "h", ref height)) { }
-						else if (Options.TryParse(opt, "icon", ref icon)) { if (icon > 0) --icon; }
+						else if (Options.TryParseString(opt, "icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
 					}
 
 					if (pic.SizeMode == PictureBoxSizeMode.Zoom)
 					{
-						if (ImageHelper.LoadImage(filename, width, height, icon) is Bitmap bmp)
+						if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
 						{
 							var ratio = bmp.Height != 0 ? (double)bmp.Width / bmp.Height : 1;
 
@@ -1439,12 +1440,9 @@ namespace Keysharp.Core
 			if (_control is StatusStrip ss)
 			{
 				var filename = obj0.As();
-				var iconnumber = (int)obj1.Al(1L);
+				var iconnumber = ImageHelper.PrepareIconNumber(obj1);
 				var part = (int)obj2.Al(1L);
 				part--;
-
-				if (iconnumber > 0)
-					iconnumber--;
 
 				if (part < ss.Items.Count && ImageHelper.LoadImage(filename, 0, 0, iconnumber) is Bitmap bmp)
 				{

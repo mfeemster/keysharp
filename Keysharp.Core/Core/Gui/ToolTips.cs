@@ -179,7 +179,7 @@ namespace Keysharp.Core
 		public static void TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var filename = obj0.As();
-			var iconnumber = (int)obj1.Al(1);
+			var iconnumber = ImageHelper.PrepareIconNumber(obj1);
 
 			if (Parser.NoTrayIcon)
 				return;
@@ -189,7 +189,7 @@ namespace Keysharp.Core
 
 			if (filename != "*")
 			{
-				var bmp = ImageHelper.LoadImage(filename, 0, 0, --iconnumber);
+				var bmp = ImageHelper.LoadImage(filename, 0, 0, iconnumber);
 
 				if (Script.Tray == null)
 					Script.CreateTrayMenu();
@@ -203,7 +203,7 @@ namespace Keysharp.Core
 					{
 						Script.Tray.Icon = icon;
 						Accessors.A_IconFile = filename;
-						Accessors.A_IconNumber = iconnumber;
+						Accessors.A_IconNumber = obj1;
 					}
 
 					_ = WindowsAPI.DestroyIcon(ptr);

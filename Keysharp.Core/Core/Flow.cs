@@ -127,7 +127,7 @@ namespace Keysharp.Core
 			if (state == true)
 			{
 				if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-					Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p;
+					Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
 
 				thread.Suspend();
 			}
@@ -301,7 +301,7 @@ namespace Keysharp.Core
 			Suspended = state == Common.Keyboard.ToggleValueType.Toggle ? !Suspended : (state == Common.Keyboard.ToggleValueType.On);
 
 			if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s : Keysharp.Core.Properties.Resources.Keysharp_ico;
+				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s_ico : Keysharp.Core.Properties.Resources.Keysharp_ico;
 		}
 		/// <summary>
 		/// This method is obsolete, use <see cref="Critical"/>.

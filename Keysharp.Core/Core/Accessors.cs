@@ -605,9 +605,9 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Blank if A_IconFile is blank. Otherwise, it's the number of the icon in A_IconFile (typically 1).
+		/// Blank if A_IconFile is blank. Otherwise, it's the number of the icon in A_IconFile (typically 1) or a string name of an icon in a resource in a .NET DLL.
 		/// </summary>
-		public static long A_IconNumber { get; internal set; } = 1L;
+		public static object A_IconNumber { get; internal set; } = 1L;
 
 		/// <summary>
 		/// Blank unless a custom tooltip for the tray icon has been specified via Menu, Tray, Tip -- in which case it's the text of the tip.
@@ -744,6 +744,8 @@ namespace Keysharp.Core
 		}
 
 		public static string A_KeysharpPath => A_AhkPath;
+
+		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Keysharp.Core.Accessors)).Location;
 
 		/// <summary>
 		/// The system's default language code.

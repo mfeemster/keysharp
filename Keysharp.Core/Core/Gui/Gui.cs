@@ -1316,7 +1316,7 @@ namespace Keysharp.Core
 			{
 				if (pbox.SizeMode == PictureBoxSizeMode.Zoom)
 				{
-					if (ImageHelper.LoadImage(text, opts.width, opts.height, 0) is Bitmap bmp)
+					if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber) is Bitmap bmp)
 					{
 						var ratio = bmp.Height != 0 ? (double)bmp.Width / bmp.Height : 1;
 
@@ -1817,6 +1817,7 @@ namespace Keysharp.Core
 				var tempbool = false;
 				var temp = 0;
 				var tempcolor = Color.Empty;
+				var tempstr = "";
 
 				if (type == "datetime")
 				{
@@ -1954,6 +1955,9 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "IconSmall", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.SmallIcon; }
 				else if (Options.TryParse(opt, "List", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.List; }
 				else if (Options.TryParse(opt, "Report", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.Details; }
+				//PictureBox.
+				else if (Options.TryParseString(opt, "Icon", ref tempstr)) { options.iconnumber = ImageHelper.PrepareIconNumber(tempstr); }
+				//Other.
 				else if (opt == "4") { options.opt4 = true; }
 				else if (opt == "8") { options.opt8 = true; }
 				else if (opt == "16") { options.opt16 = true; }
@@ -2141,6 +2145,9 @@ namespace Keysharp.Core
 			internal int hp = int.MinValue;
 			internal bool hscroll = true;
 			internal int hscrollamt = int.MinValue;
+
+			//PictureBox.
+			internal object iconnumber = 0;
 
 			//TreeView.
 			internal long ilid = long.MinValue;

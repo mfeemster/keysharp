@@ -4,11 +4,25 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Text;
 using System.Windows.Forms;
 
 namespace Keysharp.Core
 {
+	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext
+	{
+		private readonly AssemblyDependencyResolver resolver;
+
+		public UnloadableAssemblyLoadContext(string mainAssemblyToLoadPath) : base(isCollectible: true) => resolver = new AssemblyDependencyResolver(mainAssemblyToLoadPath);
+
+		protected override Assembly Load(AssemblyName name)
+		{
+			var assemblyPath = resolver.ResolveAssemblyToPath(name);
+			return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
+		}
+	}
+
 	public static class Reflections
 	{
 		private static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
@@ -21,9 +35,22 @@ namespace Keysharp.Core
 		private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 5);
 		private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> typeToStringProperties = new Dictionary<Type, Dictionary<string, PropertyInfo>>(sttcap / 5);
 		//private static Dictionary<Guid, Dictionary<string, MethodInfo>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodInfo>>(sttcap / 20);
+		internal static readonly Dictionary<string, Assembly> loadedAssemblies;
+
+		private static Dictionary<string, Assembly> GetLoadedAssemblies()
+		{
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			var dkt = new Dictionary<string, Assembly>(assemblies.Length);
+
+			foreach (var assembly in assemblies)
+				dkt[assembly.Location] = assembly;
+
+			return dkt;
+		}
 
 		static Reflections()
 		{
+			loadedAssemblies = GetLoadedAssemblies();
 			/*
 			    CacheAllMethods();
 			    CacheAllProperties();
@@ -75,17 +102,18 @@ namespace Keysharp.Core
 		internal static void CacheAllMethods()
 		{
 			List<Assembly> assemblies;
+			var loadedAssembliesList = loadedAssemblies.Values;
 
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
-				assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+				assemblies = loadedAssembliesList.ToList();
 			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,"))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
-				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.")).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
+				assemblies = loadedAssembliesList.Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.")).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
 			else//Running as a standalone executable.
-				assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.") ||
-							 (assy.EntryPoint != null &&
-							  assy.EntryPoint.DeclaringType != null &&
-							  assy.EntryPoint.DeclaringType.Namespace == "Keysharp.CompiledMain"
-							 )).ToList();
+				assemblies = loadedAssembliesList.Where(assy => assy.FullName.StartsWith("Keysharp.") ||
+														(assy.EntryPoint != null &&
+																assy.EntryPoint.DeclaringType != null &&
+																assy.EntryPoint.DeclaringType.Namespace == "Keysharp.CompiledMain"
+														)).ToList();
 
 			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
 
@@ -114,7 +142,7 @@ namespace Keysharp.Core
 
 		internal static void CacheAllProperties()
 		{
-			foreach (var item in AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
+			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
 				foreach (var type in item.GetTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null && type.Namespace.StartsWith("Keysharp.Core"))
 						_ = FindAndCacheProperty(type, "");

@@ -83,7 +83,7 @@ namespace Keysharp.Core
 			var options = obj5.As();
 			var optsItems = new Dictionary<string, Regex>
 			{
-				{ Core.Keyword_Icon, new Regex(@"\*Icon([0-9]*)") },
+				{ Core.Keyword_Icon, new Regex(@"\*Icon([0-9a-zA-Z]*)") },
 				{ Core.Keyword_Trans, new Regex(@"\*Trans([0-9a-zA-Z]*)") },
 				{ Core.Keyword_Variation, new Regex(@"\*([0-9]*)") },
 				{ "w", new Regex(@"\*w([-0-9]*)") },
@@ -93,13 +93,13 @@ namespace Keysharp.Core
 			Point start;
 			Size bound;
 			Bitmap bmp;
-			var iconindex = 1;
+			object iconnumber = 0;
 			int w = 0, h = 0;
 			long trans = -1;
 			byte variation = 0;
 
 			if (opts.TryGetValue(Core.Keyword_Icon, out var iconopt) && iconopt != "")
-				_ = int.TryParse(iconopt, out iconindex);
+				iconnumber = ImageHelper.PrepareIconNumber(iconopt);
 
 			if (opts.TryGetValue(Core.Keyword_Variation, out var varopt) && varopt != "")
 				_ = byte.TryParse(varopt, out variation);
@@ -132,10 +132,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				if (iconindex > 0)
-					--iconindex;
-
-				bmp = ImageHelper.LoadImage(filename, w, h, iconindex);
+				bmp = ImageHelper.LoadImage(filename, w, h, iconnumber);
 
 				if (bmp == null)
 					throw new FormatException($"Loading icon or bitmap from {filename} failed.");

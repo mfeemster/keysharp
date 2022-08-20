@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core.Windows;
 
@@ -15,7 +16,56 @@ namespace Keysharp.Core.Common
 			return ext == ".exe" || ext == ".dll" || ext == ".icl" || ext == ".cpl" || ext == ".scr" || ext == ".ico";
 		}
 
-		internal static Bitmap LoadImage(string filename, int w, int h, int iconindex)
+		internal static Icon LoadIconFromAssembly(string path, string iconName)
+		{
+			Icon icon = null;
+
+			if (Reflections.loadedAssemblies.TryGetValue(path, out var assembly))
+			{
+				icon = LoadIconHelper(assembly, iconName);
+			}
+			else//Hasn't been loaded, so temporarily load it.
+			{
+				try
+				{
+					var ac = new UnloadableAssemblyLoadContext(path);
+					assembly = ac.LoadFromAssemblyPath(path);
+					icon = LoadIconHelper(assembly, iconName);
+					ac.Unload();
+				}
+				catch
+				{
+				}
+			}
+
+			return icon;
+		}
+
+		internal static Icon LoadIconHelper(Assembly assembly, string iconName)
+		{
+			Icon icon = null;
+			var resourceNames = assembly.GetManifestResourceNames();
+			var trim = ".resources";
+
+			foreach (var resourceName in resourceNames)
+			{
+				var trimmedName = resourceName.EndsWith(".resources", StringComparison.CurrentCulture) ? resourceName.Substring(0, resourceName.Length - trim.Length) : resourceName;
+				var resource = new global::System.Resources.ResourceManager(trimmedName, assembly);
+
+				try
+				{
+					icon = (Icon)resource.GetObject(iconName);
+
+					if (icon != null)
+						break;
+				}
+				catch { }
+			}
+
+			return icon;
+		}
+
+		internal static Bitmap LoadImage(string filename, int w, int h, object iconindex)
 		{
 			Bitmap bmp = null;
 
@@ -46,17 +96,26 @@ namespace Keysharp.Core.Common
 
 					if (ext == ".exe" || ext == ".dll" || ext == ".icl" || ext == ".cpl" || ext == ".scr")
 					{
-						var ico = GuiHelper.GetIcon(filename, iconindex);
-						bmp = ico?.ToBitmap();
+						Icon ico = null;
 
-						if (w > 0 || h > 0)
+						if (iconindex is string iconstr)
+							ico = LoadIconFromAssembly(filename, iconstr);
+						else if (iconindex is int iconint)
+							ico = GuiHelper.GetIcon(filename, iconint);
+
+						if (ico != null)
 						{
-							if (bmp.Width != w || bmp.Height != h)
-								bmp = bmp.Resize(w, h);
-						}
-						else if (bmp.Size != SystemInformation.IconSize)
-						{
-							bmp = bmp.Resize(SystemInformation.IconSize.Width, SystemInformation.IconSize.Height);
+							bmp = ico.ToBitmap();
+
+							if (w > 0 || h > 0)
+							{
+								if (bmp.Width != w || bmp.Height != h)
+									bmp = bmp.Resize(w, h);
+							}
+							else if (bmp.Size != SystemInformation.IconSize)
+							{
+								bmp = bmp.Resize(SystemInformation.IconSize.Width, SystemInformation.IconSize.Height);
+							}
 						}
 					}
 					else if (ext == ".ico")
@@ -69,10 +128,10 @@ namespace Keysharp.Core.Common
 							var tempico = icos.FirstOrDefault(tempico => tempico.Width == w && tempico.Height == h);
 							bmp = tempico?.ToBitmap();
 						}
-						else
+						else if (iconindex.Ai() is int iconint)
 						{
-							if (iconindex < icos.Count)
-								bmp = icos[iconindex].ToBitmap();
+							if (iconint < icos.Count)
+								bmp = icos[iconint].ToBitmap();
 						}
 
 						if (w > 0 || h > 0)
@@ -114,6 +173,16 @@ namespace Keysharp.Core.Common
 			}
 
 			return bmp;
+		}
+
+		internal static object PrepareIconNumber(object iconnumber)
+		{
+			if (iconnumber == null)
+				return 0;
+			else if (iconnumber.ParseLong(false) is long l && l > 0)//Note this allows us to pass the icon number as a string, however that also prevents us from loading an icon from a .NET DLL that happens to be named that same number. This is an extremely unlikely scenario.
+				return (int)l - 1;
+			else
+				return iconnumber;
 		}
 
 		internal static List<Bitmap> SplitBitmap(Bitmap bmp, int w, int h)

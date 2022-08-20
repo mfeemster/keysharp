@@ -16,13 +16,14 @@ namespace Keysharp.Core
 			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
-			var icon = 0;
+			var icon = "";
+			object iconnumber = 0;
 
 			foreach (var opt in opts)
 			{
 				if (Options.TryParse(opt, "w", ref width)) { }
 				else if (Options.TryParse(opt, "h", ref height)) { }
-				else if (Options.TryParse(opt, "icon", ref icon)) { if (icon > 0) --icon; }
+				else if (Options.TryParseString(opt, "icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
 			}
 
 			var ext = System.IO.Path.GetExtension(filename).ToLower();
@@ -33,7 +34,7 @@ namespace Keysharp.Core
 				handle = cur.Handle.ToInt64();
 				imageType = 2;
 			}
-			else if (ImageHelper.LoadImage(filename, width, height, icon) is Bitmap bmp)
+			else if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
 			{
 				if (ImageHelper.IsIcon(filename))
 				{

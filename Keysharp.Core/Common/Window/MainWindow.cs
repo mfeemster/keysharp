@@ -193,7 +193,7 @@ namespace Keysharp.Scripting
 			var oldCharIndex = txtVars.GetCharIndexFromPosition(new Point(0, 0));//Magic number, it scrolls backward on each update with smaller numbers.
 			var oldLineIndex = txtVars.GetLineFromCharIndex(oldCharIndex);//Magic number, it scrolls backward on each update with smaller numbers.
 
-			foreach (var item in AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
+			foreach (var item in Reflections.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
 			{
 				foreach (var type in item.GetTypes().Where(t => t.IsPublic && t.IsClass && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")))
 				{

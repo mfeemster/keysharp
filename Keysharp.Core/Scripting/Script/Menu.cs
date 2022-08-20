@@ -76,10 +76,10 @@ namespace Keysharp.Scripting
 				trayIcon.Visible = true;
 			}
 
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)//Not sure whether resources work on non-windows implementations of C#.
+			if (Environment.OSVersion.Platform == PlatformID.Win32NT)//Not sure whether resources work on non-windows implementations of C#.//TODO
 			{
-				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p;
-				SuspendedIcon = Keysharp.Core.Properties.Resources.Keysharp_s;
+				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
+				SuspendedIcon = Keysharp.Core.Properties.Resources.Keysharp_s_ico;
 			}
 		}
 

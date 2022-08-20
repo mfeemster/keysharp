@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Keysharp.Core;
 
 namespace Keysharp.Scripting
 {
@@ -24,7 +25,7 @@ namespace Keysharp.Scripting
 
 			var ignore = new List<string>();
 			//Needed a more detailed search since we've refactored into different classes, so linq is better here.//MATT
-			var types = AppDomain.CurrentDomain.GetAssemblies().Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
+			var types = Reflections.loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
 						.Where(t => t.Namespace == "Keysharp.Core" && t.IsClass && t.IsPublic/* && t.IsAbstract && t.IsSealed*/);
 			var methods = types
