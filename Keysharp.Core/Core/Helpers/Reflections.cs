@@ -35,7 +35,7 @@ namespace Keysharp.Core
 		private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 5);
 		private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> typeToStringProperties = new Dictionary<Type, Dictionary<string, PropertyInfo>>(sttcap / 5);
 		//private static Dictionary<Guid, Dictionary<string, MethodInfo>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodInfo>>(sttcap / 20);
-		internal static readonly Dictionary<string, Assembly> loadedAssemblies;
+		internal static Dictionary<string, Assembly> loadedAssemblies;
 
 		private static Dictionary<string, Assembly> GetLoadedAssemblies()
 		{
@@ -48,53 +48,19 @@ namespace Keysharp.Core
 			return dkt;
 		}
 
-		static Reflections()
-		{
-			loadedAssemblies = GetLoadedAssemblies();
-			/*
-			    CacheAllMethods();
-			    CacheAllProperties();
-			    //When we first started Keysharp, all methods were going to be extension methods, but we've since changed the design, so this isn't really needed anymore.
-			    var types = new List<Type>(7000);//At the time of initial development, this will have 6,713 items in it.
-
-			    foreach (var item in AppDomain.CurrentDomain.GetAssemblies())//Need this loop with try/catch because it throws an exception on System.ServiceModel.dll anyway.
-			    {
-			    try
-			    {
-			        types.AddRange(item.GetTypes());
-			    }
-			    catch// (Exception e)
-			    {
-			        //Keysharp.Core.Dialogs.MsgBox(e.Message);
-			    }
-			    }
-
-			    foreach (var t in new Type[]//Our usual property and method searching does not go outside the boundaries of the assemblies in this solution. So manually add some of the properties
-			    {
-			    typeof(object),
-			    typeof(object[]),
-			    typeof(ArrayList),
-			    typeof(IDictionary),
-			    typeof(Dictionary<object, object>),
-			    })
-			    {
-			    var meths = t.GetExtensionMethods(types);
-			    var sel = meths.Select((meth) => new KeyValuePair<string, MethodInfo>(meth.Name, meth)).ToList();
-			    ExtensionMethods.Add(t.GUID, new Dictionary<string, MethodInfo>(sel, StringComparer.OrdinalIgnoreCase));
-			    typeToStringProperties.Add(t, new Dictionary<string, PropertyInfo>(
-			                                   t.GetProperties().Select((prop) => new KeyValuePair<string, PropertyInfo>(prop.Name, prop)), StringComparer.OrdinalIgnoreCase));
-			    }
-			*/
-		}
+		static Reflections() => Initialize();
 
 		/// <summary>
 		/// This must be manually called before any program is run.
 		/// Normally we'd put this kind of init in the static constructor, however it must be able to be manually called
 		/// when running unit tests. Once upon init, then again within the unit test's auto generated program so it can find
 		/// any locally declared methods inside.
+		/// Also note that when running a script from Keysharp.exe, this will get called once when the parser starts in Keysharp, then again
+		/// when the script actually runs. On the second time, there will be an extra assembly loaded, which is the compiled script itself. More system assemblies will also be loaded.
 		/// </summary>
 		public static void Initialize()
 		{
+			loadedAssemblies = GetLoadedAssemblies();
 			CacheAllMethods();
 			CacheAllProperties();
 		}
@@ -103,6 +69,10 @@ namespace Keysharp.Core
 		{
 			List<Assembly> assemblies;
 			var loadedAssembliesList = loadedAssemblies.Values;
+			stringToTypeLocalMethods.Clear();
+			typeToStringLocalMethods.Clear();
+			stringToTypeBuiltInMethods.Clear();
+			typeToStringBuiltInMethods.Clear();
 
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
 				assemblies = loadedAssembliesList.ToList();
@@ -142,6 +112,9 @@ namespace Keysharp.Core
 
 		internal static void CacheAllProperties()
 		{
+			typeToStringProperties.Clear();
+			stringToTypeProperties.Clear();
+
 			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
 				foreach (var type in item.GetTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null && type.Namespace.StartsWith("Keysharp.Core"))
