@@ -331,7 +331,7 @@ namespace Keysharp.Core
 			if (Script.HookThread is Common.Threading.HookThread ht)
 				ht.Stop();
 
-			if (Script.mainWindow != null && !Script.mainWindow.IsClosing)
+			if (!Script.IsMainWindowClosing)
 			{
 				Script.mainWindow.Close();
 				Script.mainWindow = null;

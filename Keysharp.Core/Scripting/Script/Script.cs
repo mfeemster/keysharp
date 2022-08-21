@@ -311,6 +311,8 @@ namespace Keysharp.Scripting
 			return ResultType.Ok;
 		}
 
+		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
+
 		/// <summary>
 		/// Keep in mind that both of the MsgMonitor() functions appear to be doing a lot of processing having to do with AHK's
 		/// green threads design. Much of it doesn't apply here and is commented out. It's likely to be entirely removed once real
