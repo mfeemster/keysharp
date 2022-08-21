@@ -386,14 +386,14 @@ namespace Keysharp.Core
 			{
 				lv.ColumnClick += Lv_ColumnClick;
 				lv.ItemChecked += Lv_ItemChecked;
-				lv.BeforeLabelEdit += Lv_BeforeLabelEdit;
+				lv.AfterLabelEdit += Lv_AfterLabelEdit;
 				lv.SelectedIndexChanged += Lv_SelectedIndexChanged;
 				lv.ItemSelectionChanged += Lv_ItemSelectionChanged;
 			}
 			else if (_control is TreeView tv)
 			{
 				tv.AfterCheck += Tv_AfterCheck;
-				tv.BeforeLabelEdit += Tv_BeforeLabelEdit;
+				tv.AfterLabelEdit += Tv_AfterLabelEdit;
 				tv.AfterExpand += Tv_AfterExpand;
 				tv.AfterSelect += Tv_AfterSelect;
 				tv.NodeMouseClick += Tv_NodeMouseClick;
@@ -1819,15 +1819,15 @@ namespace Keysharp.Core
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Lv_BeforeLabelEdit(object sender, LabelEditEventArgs e)
+		private void Lv_AfterLabelEdit(object sender, LabelEditEventArgs e)
 		{
-			if (_control is ListView lv)
+			if (_control is ListView)
 				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Item + 1L));//The documentation says to pass "item". Not really sure if that means index, or something else.
 		}
 
 		private void Lv_ColumnClick(object sender, ColumnClickEventArgs e)
 		{
-			if (_control is ListView lv)
+			if (_control is ListView)
 				_ = (columnClickHandlers?.InvokeEventHandlers(this, e.Column + 1L));
 		}
 
@@ -1839,7 +1839,7 @@ namespace Keysharp.Core
 
 		private void Lv_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
 		{
-			if (_control is ListView lv)
+			if (_control is ListView)
 				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Item.Index + 1L, e.Item.Selected ? 1L : 0L));
 		}
 
@@ -1869,13 +1869,13 @@ namespace Keysharp.Core
 
 		private void Tb_MouseCaptureChanged(object sender, EventArgs e)
 		{
-			if (_control is TrackBar tb && !AltSubmit)
+			if (_control is TrackBar && !AltSubmit)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Need to figure out how to pass the method by which the slider was changed.//MATT
 		}
 
 		private void Tb_ValueChanged(object sender, EventArgs e)
 		{
-			if (_control is TrackBar tb && AltSubmit)
+			if (_control is TrackBar && AltSubmit)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Need to figure out how to pass the method by which the slider was changed.//MATT
 		}
 
@@ -1899,11 +1899,11 @@ namespace Keysharp.Core
 
 		private void Tv_AfterSelect(object sender, TreeViewEventArgs e)
 		{
-			if (_control is TreeView tv)
+			if (_control is TreeView)
 				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle));
 		}
 
-		private void Tv_BeforeLabelEdit(object sender, NodeLabelEditEventArgs e)
+		private void Tv_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
 		{
 			if (_control is TreeView)
 				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Node.Handle));

@@ -491,8 +491,8 @@ namespace Keysharp.Core
 
 				foreach (var opt in Options.ParseOptions(options))
 				{
-					if (string.Compare(opt, "-Bold", true) == 0) { node.NodeFont = new Font(node.TreeView.Font, FontStyle.Regular); }
-					else if (Options.TryParse(opt, "Bold", ref bold)) { node.NodeFont = new Font(node.TreeView.Font, bold ? FontStyle.Bold : FontStyle.Regular); }
+					if (string.Compare(opt, "-Bold", true) == 0) { node.NodeFont = new Font(tv.Font, FontStyle.Regular); }
+					else if (Options.TryParse(opt, "Bold", ref bold)) { node.NodeFont = new Font(tv.Font, bold ? FontStyle.Bold : FontStyle.Regular); }
 					else if (string.Compare(opt, "-Check", true) == 0) { node.Checked = false; }
 					else if (Options.TryParse(opt, "Check", ref ischecked, StringComparison.OrdinalIgnoreCase, true)) { node.Checked = ischecked != 0; }
 					else if (string.Compare(opt, "-Expand", true) == 0) { node.Collapse(); tv.RemoveMarkForExpansion(node); }
@@ -516,14 +516,14 @@ namespace Keysharp.Core
 							tv.RemoveMarkForExpansion(node);
 						}
 					}
-					else if (string.Compare(opt, "Select ", true) == 0) { node.TreeView.SelectedNode = node; }
+					else if (string.Compare(opt, "Select ", true) == 0) { tv.SelectedNode = node; }
 					else if (string.Compare(opt, "Vis", true) == 0) { node.EnsureVisible(); }
-					else if (string.Compare(opt, "VisFirst", true) == 0) { node.EnsureVisible(); node.TreeView.TopNode = node; }
+					else if (string.Compare(opt, "VisFirst", true) == 0) { node.EnsureVisible(); tv.TopNode = node; }
 					else if (Options.TryParse(opt, "Icon", ref icon))
 					{
-						if (node.TreeView.ImageList != null)
+						if (tv.ImageList != null)
 						{
-							if (icon < node.TreeView.ImageList.Images.Count)
+							if (icon < tv.ImageList.Images.Count)
 							{
 								node.ImageIndex = icon - 1;
 								node.SelectedImageIndex = node.ImageIndex;
@@ -540,7 +540,7 @@ namespace Keysharp.Core
 						if (node.NextNode == null)
 							ret = 0;
 						else
-							_ = WindowsAPI.SendMessage(node.TreeView.Handle, WindowsAPI.TVM_SORTCHILDREN, IntPtr.Zero, node.Handle);
+							_ = tv.BeginInvoke(new MethodInvoker(tv.Sort));//BeginInvoke() is needed to avoid an infinte loop: https://stackoverflow.com/questions/808696/c-sharp-windows-form-treeview-sort-after-labeledit
 					}
 				}
 			}
