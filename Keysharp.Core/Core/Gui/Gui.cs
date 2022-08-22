@@ -1968,6 +1968,7 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "LV", ref temp)) { options.addlvstyle |= temp; }
 				else if (Options.TryParse(opt, "-LV", ref temp)) { options.remlvstyle &= ~temp; }
 				else if (Options.TryParse(opt, "-", ref temp)) { options.remstyle = temp; }
+				else if (Options.TryParse(opt, "+", ref temp)) { options.addstyle = temp; }
 				else if (Options.TryParse(opt, "", ref temp)) { options.addstyle = temp; }
 			}
 
