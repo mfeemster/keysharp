@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Window;
@@ -66,20 +67,36 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				var childs = new List<WindowItemBase>();
+				var childs = new HashSet<IntPtr>();
 
 				if (IsSpecified)
 				{
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
 						if ((bool)Accessors.A_DetectHiddenText || Windows.WindowsAPI.IsWindowVisible(hwnd))
-							childs.Add(new WindowItem(hwnd));
+							childs.Add(hwnd);
 
 						return true;
 					}, 0);
 				}
 
-				return childs;
+				//The EnumChildWindows() call above will not include any controls if the window has not been shown yet.
+				//So we must also use this method to ensure we get everything.
+				if (Control.FromHandle(Handle) is Form form)
+				{
+					form.Invoke(() =>
+					{
+						foreach (Control ctrl in form.Controls)
+							_ = childs.Add(ctrl.Handle);//HashSet takes care of avoiding dupes.
+					});
+				}
+
+				var childlist = new List<WindowItemBase>(childs.Count);
+
+				foreach (var handle in childs)
+					childlist.Add(new WindowItem(handle));
+
+				return childlist;
 			}
 		}
 

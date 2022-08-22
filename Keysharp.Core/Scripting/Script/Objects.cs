@@ -334,8 +334,8 @@ namespace Keysharp.Scripting
 			{
 				try
 				{
-					if (item.IsKeysharpGui() && Keysharp.Scripting.Script.mainWindow != null)//If it's a gui control, then just invoke on the main window since all gui items will be on the same thread.
-						Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => pi.SetValue(item, value));
+					if (item.GetControl() is Control ctrl)
+						ctrl.CheckedInvoke(() => pi.SetValue(item, value));//If it's a gui control, then invoke on the gui thread.
 					else
 						pi.SetValue(item, value);
 				}
@@ -395,7 +395,12 @@ namespace Keysharp.Scripting
 			{
 				try
 				{
-					var ret = (match.GetValue(item, null), true);
+					(object, bool) ret = (null, false);
+
+					if (item.GetControl() is Control ctrl)
+						ctrl.CheckedInvoke(() => ret = (match.GetValue(item, null), true));//If it's a gui control, then invoke on the gui thread.
+					else
+						ret = (match.GetValue(item, null), true);
 
 					if (ret.Item1 is int i)
 						ret.Item1 = (long)i;//Try to keep everything as long.

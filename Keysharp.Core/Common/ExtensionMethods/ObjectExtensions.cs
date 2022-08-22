@@ -25,6 +25,18 @@ namespace System
 			return x;
 		}
 
+		public static System.Windows.Forms.Control GetControl(this object obj)
+		{
+			if (obj is Keysharp.Core.Gui gui)
+				return gui.form;
+			else if (obj is Keysharp.Core.GuiControl ctrl)
+				return ctrl.Control;
+			else if (obj is Keysharp.Core.Menu menu)
+				return menu.GetMenu();
+
+			return null;
+		}
+
 		public static bool IsAlmostEqual(this double d, double comparison) => d.IsAlmostEqual(comparison, 0.00001);
 
 		public static bool IsAlmostEqual(this double d, double comparison, double tolerance) => (d - comparison).IsAlmostZero(tolerance);

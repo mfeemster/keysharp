@@ -37,6 +37,7 @@ namespace Keysharp.Core
 		private Dictionary<int, List<IFuncObj>> notifyHandlers;
 		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
+		private IntPtr dummyHandle;
 		public bool AltSubmit { get; internal set; } = false;
 
 		public string ClassNN
@@ -440,6 +441,7 @@ namespace Keysharp.Core
 			_control.LostFocus += _control_LostFocus;
 			_control.KeyDown += _control_KeyDown;
 			_control.MouseDown += _control_MouseDown;
+			dummyHandle = _control.Handle;//Force creation of the handle.
 		}
 
 		public object Add(params object[] obj)

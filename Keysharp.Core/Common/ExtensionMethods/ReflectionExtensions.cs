@@ -50,8 +50,8 @@ namespace System.Reflection
 		{
 			object ret = null;
 
-			if ((inst is Gui || inst is GuiControl || inst is Menu) && Keysharp.Scripting.Script.mainWindow != null)//If it's a gui control, then just invoke on the main window since all gui items will be on the same thread.
-				Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => ret = mi.Invoke(inst, parameters));
+			if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
+				ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, parameters));
 			else
 				ret = mi.Invoke(inst, parameters);
 

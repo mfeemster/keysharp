@@ -819,7 +819,7 @@ namespace Keysharp.Core
 			}
 			else if (obj is string s)
 			{
-				isClass = char.IsDigit(s[ ^ 1]);
+				isClass = s.Length > 0 && char.IsDigit(s[ ^ 1]);
 
 				if (isClass)
 					sc.ClassName = s;

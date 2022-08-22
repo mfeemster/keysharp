@@ -218,7 +218,7 @@ namespace Keysharp.Core
 
 		protected virtual long GetIndex(ToolStripItem tsi) => tsi.GetCurrentParent() is ToolStripDropDownMenu tsddm ? tsddm.Items.IndexOf(tsi) : GetMenu().Items.IndexOf(tsi);
 
-		protected virtual ToolStrip GetMenu() => MenuItem;
+		protected internal virtual ToolStrip GetMenu() => MenuItem;
 
 		protected virtual ToolStripItem GetMenuItem(string s)
 		{
@@ -373,6 +373,6 @@ namespace Keysharp.Core
 
 		protected override long GetIndex(ToolStripItem tsi) => MenuStrip.Items.IndexOf(tsi);
 
-		protected override ToolStrip GetMenu() => MenuStrip;
+		protected internal override ToolStrip GetMenu() => MenuStrip;
 	}
 }

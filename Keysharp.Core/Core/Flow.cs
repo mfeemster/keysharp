@@ -18,7 +18,8 @@ namespace Keysharp.Core
 
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
-		internal static ConcurrentDictionary<FuncObj, Timer> timers;
+		//internal static ConcurrentDictionary<FuncObj, Timer> timers;
+		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers;
 		private static bool hasExited;
 
 		/// <summary>
@@ -168,7 +169,9 @@ namespace Keysharp.Core
 			var once = period < 0;
 
 			if (timers == null)
-				timers = new ConcurrentDictionary<FuncObj, Timer>();
+				timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
+
+			//timers = new ConcurrentDictionary<FuncObj, Timer>();
 
 			if (once)
 				period = -period;
@@ -206,7 +209,7 @@ namespace Keysharp.Core
 						timer.Start();
 					}
 					else
-						timer.Interval = period;
+						timer.Interval = (int)period;
 
 					return;
 				}
@@ -216,8 +219,8 @@ namespace Keysharp.Core
 				if (period == long.MaxValue)
 					period = 250;
 
-				_ = timers.TryAdd(func, timer = new Timer());
-				timer.Interval = period;
+				_ = timers.TryAdd(func, timer = new System.Windows.Forms.Timer());
+				timer.Interval = (int)period;
 			}
 			else//They tried to stop a timer that didn't exist
 				return;
@@ -227,7 +230,8 @@ namespace Keysharp.Core
 			if (priority > -1 && priority < 5)
 				level = (ThreadPriority)priority;
 
-			timer.Elapsed += (ss, ee) =>
+			timer.Tick += (ss, ee) =>
+						  //timer.Elapsed += (ss, ee) =>
 			{
 				timer.Enabled = false;
 
@@ -238,7 +242,8 @@ namespace Keysharp.Core
 				//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented.//TODO
 				try
 				{
-					_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(ee.SignalTime));
+					//_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(ee.SignalTime));
+					_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
 
 					if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
 						existing.Enabled = true;

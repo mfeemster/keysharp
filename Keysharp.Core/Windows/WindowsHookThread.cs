@@ -20,6 +20,8 @@ namespace Keysharp.Core.Windows
 		private static uint pendingDeadKeyVK;
 		private static bool uwpAppFocused;
 		private static IntPtr uwpHwndChecked = IntPtr.Zero;
+		private LowLevelKeyboardProc kbdHandlerDel;
+		private LowLevelMouseProc mouseHandlerDel;
 
 		static WindowsHookThread()
 		{
@@ -190,6 +192,8 @@ namespace Keysharp.Core.Windows
 		internal WindowsHookThread()
 		{
 			kbdMsSender = new WindowsKeyboardMouseSender();
+			kbdHandlerDel = new LowLevelKeyboardProc(LowLevelKeybdHandler);
+			mouseHandlerDel = new LowLevelMouseProc(LowLevelMouseHandler);
 		}
 
 		public override void SimulateKeyPress(uint key)
@@ -5174,7 +5178,7 @@ namespace Keysharp.Core.Windows
 								            ResetHook(false, HookType.Mouse, true);
 
 								        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
-								                                          LowLevelMouseHandler,
+								                                          mouseHandlerDel,
 								                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
 								            problem_activating_hooks = true;
 								    }
@@ -5397,7 +5401,7 @@ namespace Keysharp.Core.Windows
 						//This could potentially be a problem with all of the intricate code that takes special action depending
 						//on the thread that a particular function is being called from.
 						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
-														LowLevelKeybdHandler,
+														kbdHandlerDel,//This must be a class member or else it will go out of scope and cause the program to crash unpredictably.
 														GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
 							problem_activating_hooks = true;
 					}
@@ -5417,7 +5421,7 @@ namespace Keysharp.Core.Windows
 				            ResetHook(false, HookType.Mouse, true);
 
 				        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
-				                                          LowLevelMouseHandler,
+				                                          mouseHandlerDel,
 				                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
 				            problem_activating_hooks = true;
 				    }
