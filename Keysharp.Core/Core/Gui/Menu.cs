@@ -13,6 +13,7 @@ namespace Keysharp.Core
 		internal ToolStripItem defaultItem;
 		private static int menuCount = 0;
 		private Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
+		protected long dummyHandle;
 
 		public long ClickCount { get; set; } = 2;
 
@@ -46,6 +47,7 @@ namespace Keysharp.Core
 			GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
 			var newCount = Interlocked.Increment(ref menuCount);
 			GetMenu().Name = $"Menu_{newCount}";
+			dummyHandle = Handle;
 		}
 
 		public static Menu New() => new Menu();
