@@ -86,7 +86,7 @@ namespace Keysharp.Core.Windows
 				{
 					form.Invoke(() =>
 					{
-						foreach (Control ctrl in form.Controls)
+						foreach (var ctrl in form.GetAllControlsRecusrvive<Control>())
 							_ = childs.Add(ctrl.Handle);//HashSet takes care of avoiding dupes.
 					});
 				}

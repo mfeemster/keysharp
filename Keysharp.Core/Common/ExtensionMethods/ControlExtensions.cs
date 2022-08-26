@@ -57,8 +57,8 @@ namespace System.Windows.Forms
 			{
 				if (item is T ctrl)
 					_ = rtn.Add(ctrl);
-				else
-					rtn.AddRange(GetAllControlsRecusrvive<T>(item));
+
+				rtn.AddRange(GetAllControlsRecusrvive<T>(item));
 			}
 
 			return rtn;
