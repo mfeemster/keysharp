@@ -250,7 +250,7 @@ namespace Keysharp.Core
 
 		public static void PostMessage(params object[] obj) => obj.I3O2S3().Splat(ControlManager.PostMessage);
 
-		public static long SendMessage(params object[] obj) => obj.I1O4S3I1(0, 0, 0, 0, 0, "", "", "", 5000).Splat(ControlManager.SendMessage);
+		public static long SendMessage(params object[] obj) => obj.I1O4S3I1(0, 0, 0, null, "", "", "", "", 5000).Splat(ControlManager.SendMessage);
 
 		public static void SetProcessDPIAware()
 		{

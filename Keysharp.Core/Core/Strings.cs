@@ -798,7 +798,7 @@ namespace Keysharp.Core
 		/// <returns>The converted string.</returns>
 		public static string StrLower(object obj) => obj.As().ToLowerInvariant();
 
-		public static long StrPtr(object obj) => throw new Error("Cannot take the address of a string in C#.");
+		public static long StrPtr(object obj) => throw new Error("Cannot take the address of a string in C#, so just use the string as is.");
 
 		public static long StrPut(params object[] obj)//Leave this as variadic because the parameter scheme is complex.
 		{
