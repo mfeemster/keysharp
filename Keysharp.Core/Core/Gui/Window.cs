@@ -495,7 +495,7 @@ namespace Keysharp.Core
 		public static long WinGetIDLast(params object[] obj)
 		{
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
-			var (windows, criteria) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText, true);
+			var (windows, criteria) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText);
 
 			if (windows != null && windows.Count > 0)
 			{
@@ -549,7 +549,9 @@ namespace Keysharp.Core
 		{
 			if (SearchWindow(obj, true) is WindowItem win)
 			{
-				var color = win.TransparentColor.Al();
+				var color = (int)win.TransparentColor.Al();
+				var tempbgr = Color.FromArgb(color);
+				color = Color.FromArgb(tempbgr.A, tempbgr.B, tempbgr.G, tempbgr.R).ToArgb();
 				WindowItemBase.DoWinDelay();
 				return color != -1 ? $"0x{color.ToString("X").Substring(0, 6)}" : "";
 			}
@@ -907,7 +909,7 @@ namespace Keysharp.Core
 		internal static List<WindowItemBase> SearchWindows(params object[] obj)
 		{
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
-			var (windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText, true);
+			var (windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText);
 			return windows;
 		}
 
@@ -990,7 +992,7 @@ namespace Keysharp.Core
 			{
 				do
 				{
-					(windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText, true);
+					(windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText);
 
 					foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
 					{
