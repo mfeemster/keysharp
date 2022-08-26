@@ -61,7 +61,7 @@ namespace Keysharp.Core
 		/// <item><term>Relative</term>: <description>Same as Window.</description></item>
 		/// </list>
 		/// </param>
-		public static void CoordMode(object obj0, object obj1)
+		public static void CoordMode(object obj0, object obj1 = null)
 		{
 			var target = obj0.As();
 			var mode = obj1.As(Core.Keyword_Screen);
