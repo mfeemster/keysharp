@@ -549,7 +549,7 @@ namespace Keysharp.Core
 		{
 			if (SearchWindow(obj, true) is WindowItem win)
 			{
-				var color = win.TransparentColor;
+				var color = win.TransparentColor.Al();
 				WindowItemBase.DoWinDelay();
 				return color != -1 ? $"0x{color.ToString("X").Substring(0, 6)}" : "";
 			}
@@ -557,25 +557,36 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		//public static string WinSetTransColor(params object[] obj)
-		//{
-		//  var win = SearchWindow(obj, true);
-		//  var color = win.TransparentColor;
-		//  WindowItemBase.DoWinDelay();
-		//  return color != -1 ? $"0x{color.ToString("X").Substring(0, 6)}" : "";
-		//}
+		public static void WinSetTransColor(params object[] obj)
+		{
+			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
+			{
+				win.TransparentColor = obj[0];
+				WindowItemBase.DoWinDelay();
+			}
+		}
 
 		public static object WinGetTransparent(params object[] obj)
 		{
 			if (SearchWindow(obj, true) is WindowItem win)
 			{
-				var color = win.Transparency;
+				var color = win.Transparency.Al();
 				WindowItemBase.DoWinDelay();
 				return color != -1 ? (object)color : "";
 			}
 
 			return "";
 		}
+
+		public static void WinSetTransparent(params object[] obj)
+		{
+			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
+			{
+				win.Transparency = obj[0];
+				WindowItemBase.DoWinDelay();
+			}
+		}
+
 
 		public static void WinHide(params object[] obj) => DoDelayedAction(() => SearchWindows(obj, true).ForEach(win => win.Hide()));
 

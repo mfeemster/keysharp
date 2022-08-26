@@ -258,19 +258,37 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override long Transparency
+		internal override object Transparency
 		{
 			get
 			{
 				if (WindowsAPI.GetLayeredWindowAttributes(Handle, out var key, out var alpha, out var flags))
 					if ((flags & WindowsAPI.LWA_ALPHA) == WindowsAPI.LWA_ALPHA)
-						return alpha;
+						return (long)alpha;
 
-				return -1;
+				return -1L;
+			}
+			set
+			{
+				var exstyle = WindowsAPI.GetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE).ToInt64();
+
+				if (value is string s)
+				{
+					if (s.ToLower() == "off")
+						WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | ~WindowsAPI.WS_EX_LAYERED));
+				}
+				else
+				{
+					var color = Math.Clamp((int)value.Al(), 0, 255);
+
+					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero ||
+							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)color, WindowsAPI.LWA_ALPHA))
+						throw new OSError("", $"Could not assign transparency with alpha value of {color}.");
+				}
 			}
 		}
 
-		internal override long TransparentColor
+		internal override object TransparentColor
 		{
 			get
 			{
@@ -279,6 +297,42 @@ namespace Keysharp.Core.Windows
 						return key;
 
 				return -1;
+			}
+			set
+			{
+				var splits = value.As().Split(Keysharp.Core.Core.SpaceTab, StringSplitOptions.RemoveEmptyEntries);
+				var colorstr = splits[0];
+				var exstyle = WindowsAPI.GetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE);
+
+				if (colorstr.ToLower() == "off")
+				{
+					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle.ToInt64() & ~WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero)
+						throw new OSError("", $"Could not turn transparency off.");
+				}
+				else
+				{
+					var val = 0L;
+					var flags = WindowsAPI.LWA_COLORKEY;
+
+					if (Keysharp.Core.Conversions.TryParseColor(colorstr, out var color))
+					{
+						if (splits.Length > 1)
+						{
+							val = splits[1].Al();
+							flags |= WindowsAPI.LWA_ALPHA;
+						}
+
+						if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle.ToInt64() | WindowsAPI.WS_EX_LAYERED)) != IntPtr.Zero)//At one point this only worked with xor ^ and not or |, but it seems to be working with | now.
+						{
+							color = Color.FromArgb(color.A, color.B, color.G, color.R);//Flip RGB to BGR.
+
+							if (!WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)color.ToArgb() & 0x00FFFFFF, (byte)val, (uint)flags))//Make top byte of color zero.
+								throw new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.");
+						}
+						else
+							throw new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.");
+					}
+				}
 			}
 		}
 

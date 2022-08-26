@@ -117,17 +117,25 @@ namespace Keysharp.Core.Linux
 			}
 		}
 
-		internal override long Transparency
+		internal override object Transparency
 		{
 			get
 			{
 				throw new NotImplementedException();
 			}
+			set
+			{
+				throw new NotImplementedException();
+			}
 		}
 
-		internal override long TransparentColor
+		internal override object TransparentColor
 		{
 			get
+			{
+				throw new NotImplementedException();
+			}
+			set
 			{
 				throw new NotImplementedException();
 			}

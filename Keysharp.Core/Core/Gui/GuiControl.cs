@@ -248,7 +248,8 @@ namespace Keysharp.Core
 			set
 			{
 				var val = value != null ? value.ToString() : "";
-				var ival = value.ParseInt().Value;
+				var temp = value.ParseInt(false);
+				var ival = temp ?? 0;
 
 				if (_control is Label lbl)
 					lbl.Text = val;

@@ -29,14 +29,17 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows);
 
-		//Documentation says every thread needs to have its own copy of this.//MATT
 		internal abstract WindowItemBase FindWindow(SearchCriteria criteria, bool last = false);
 
 		internal WindowItemBase FindWindow(object title, string text, string excludeTitle, string excludeText, bool last = false)
 		{
 			WindowItemBase foundWindow = null;
 
-			if ((title == null || (title is string s && string.IsNullOrEmpty(s))) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
+			if (title is Gui gui)
+			{
+				return (LastFound = CreateWindow(gui.Hwnd));
+			}
+			else if ((title == null || (title is string s && string.IsNullOrEmpty(s))) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
 			{
 				foundWindow = LastFound;
 			}

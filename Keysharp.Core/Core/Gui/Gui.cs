@@ -194,12 +194,16 @@ namespace Keysharp.Core
 				"ToolWindow", (f, o) => {
 					if (o is bool b && b)
 					{
-						f.form.FormBorderStyle = f.resizable ? FormBorderStyle.SizableToolWindow : FormBorderStyle.FixedToolWindow;
+						if (f.form.FormBorderStyle != FormBorderStyle.None)//Only change border if they haven't requested that there be no border.
+							f.form.FormBorderStyle = f.resizable ? FormBorderStyle.SizableToolWindow : FormBorderStyle.FixedToolWindow;
+
 						f.form.ShowInTaskbar = false;
 					}
 					else
 					{
-						f.form.FormBorderStyle = f.resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
+						if (f.form.FormBorderStyle != FormBorderStyle.None)
+							f.form.FormBorderStyle = f.resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
+
 						f.form.ShowInTaskbar = true;
 					}
 				}

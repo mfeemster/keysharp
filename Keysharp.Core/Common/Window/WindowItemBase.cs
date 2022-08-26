@@ -83,8 +83,8 @@ namespace Keysharp.Core.Common.Window
 		internal abstract long Style { get; set; }
 		internal abstract string[] Text { get; }
 		internal abstract string Title { get; set; }
-		internal abstract long Transparency { get; }
-		internal abstract long TransparentColor { get; }
+		internal abstract object Transparency { get; set; }
+		internal abstract object TransparentColor { get; set; }
 		internal abstract bool Visible { get; set; }
 		internal abstract FormWindowState WindowState { get; set; }
 
