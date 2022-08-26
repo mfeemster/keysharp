@@ -112,11 +112,11 @@ namespace Keysharp.Core.Windows
 			return found;
 		}
 
-		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool all = false)
+		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria)
 		{
 			var found = new List<WindowItemBase>();
 
-			if (!all && !string.IsNullOrEmpty(criteria.ClassName) && !criteria.HasExcludes && !criteria.HasID && string.IsNullOrEmpty(criteria.Text))//Unsure why this doesn't just use the code in the else block.//MATT
+			if (!string.IsNullOrEmpty(criteria.ClassName) && !criteria.HasExcludes && !criteria.HasID && string.IsNullOrEmpty(criteria.Text))//Unsure why this doesn't just use the code in the else block.//MATT
 			{
 				found.Add(new WindowItem(WindowsAPI.FindWindow(criteria.ClassName, criteria.Title)));
 			}
@@ -128,7 +128,7 @@ namespace Keysharp.Core.Windows
 					{
 						found.Add(window);
 
-						if (!all && string.IsNullOrEmpty(criteria.Group))//If it was a group match, add it and keep going.
+						if (string.IsNullOrEmpty(criteria.Group))//If it was a group match, add it and keep going.
 							break;
 					}
 				}

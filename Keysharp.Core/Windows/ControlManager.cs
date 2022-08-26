@@ -1241,12 +1241,14 @@ namespace Keysharp.Core.Windows
 		{
 			var thehandle = title.ParseLong(false);
 
-			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win && Window.SearchControl(win, ctrl) is WindowItem item)
+			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
 			{
+				var item = ctrl != null ? Window.SearchControl(win, ctrl) : win;
+
 				if (thehandle != WindowsAPI.HWND_BROADCAST)
 					thehandle = item.Handle.ToInt64();
 
-				if (!WindowsAPI.PostMessage(new IntPtr(thehandle.Value), (uint)msg, new IntPtr(lparam), new IntPtr(wparam)))
+				if (!WindowsAPI.PostMessage(new IntPtr(thehandle.Value), (uint)msg, new IntPtr(wparam), new IntPtr(lparam)))
 					throw new Error($"Could not post message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoControlDelay();
@@ -1256,14 +1258,14 @@ namespace Keysharp.Core.Windows
 		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout)
 		{
 			var thehandle = title.ParseLong(false);
-			var window = Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, false);
+			var window = Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
 			var wbuf = Reflections.SafeGetProperty<Keysharp.Core.Buffer>(wparam, "Ptr");
 			var lbuf = Reflections.SafeGetProperty<Keysharp.Core.Buffer>(lparam, "Ptr");
 			var wptr = wbuf != null ? wbuf.Ptr : new IntPtr(wparam.ParseLong().Value);
 			var lptr = lbuf != null ? lbuf.Ptr : new IntPtr(lparam.ParseLong().Value);
 			var ret = 0L;
 
-			if (window != null && Window.SearchControl(window, ctrl, false) is WindowItem item)
+			if (window != null && ctrl != null && Window.SearchControl(window, ctrl) is WindowItem item)
 			{
 				if (thehandle != WindowsAPI.HWND_BROADCAST)
 					thehandle = item.Handle.ToInt64();

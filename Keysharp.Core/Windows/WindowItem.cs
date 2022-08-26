@@ -17,13 +17,13 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Active
 		{
-			get => IsSpecified&& WindowManagerProvider.Instance.ActiveWindow == this;
+			get => IsSpecified&& WindowManagerProvider.Instance.ActiveWindow.Handle == Handle;
 
 			set
 			{
 				if (IsSpecified)
 				{
-					if (WindowManagerProvider.Instance.ActiveWindow != this)
+					if (WindowManagerProvider.Instance.ActiveWindow.Handle != Handle)
 					{
 						if (WindowsAPI.IsIconic(Handle))
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);

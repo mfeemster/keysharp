@@ -609,9 +609,9 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 		}
 
-		public static void WinMaximize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj, true).ForEach(win => win.WindowState = FormWindowState.Maximized));
+		public static void WinMaximize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Maximized));
 
-		public static void WinMinimize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj, true).ForEach(win => win.WindowState = FormWindowState.Minimized));
+		public static void WinMinimize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Minimized));
 
 		public static void WinMinimizeAll(params object[] obj) => DoDelayedAction(() => WindowManager.MinimizeAll());
 
@@ -651,7 +651,7 @@ namespace Keysharp.Core
 
 		public static void WinRedraw(params object[] obj) => DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) _ = win.Redraw(); });
 
-		public static void WinRestore(params object[] obj) => DoDelayedAction(() => SearchWindows(obj, true).ForEach(win => win.WindowState = FormWindowState.Normal));
+		public static void WinRestore(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Normal));
 
 		public static void WinSetAlwaysOnTop(params object[] obj) => WinSetToggleX((win, b) => win.AlwaysOnTop = b, win => win.AlwaysOnTop, obj);
 
@@ -786,15 +786,18 @@ namespace Keysharp.Core
 				System.Threading.Thread.Sleep(50);
 			} while (win == null);
 
+			if (win != null)
+				WindowManager.LastFound = win;
+
 			WindowItemBase.DoWinDelay();
 			return win != null ? win.Handle.ToInt64() : 0;
 		}
 
-		public static long WinWaitActive(params object[] obj) => WinWaitX((win, seconds) => win.WaitActive(seconds), obj);
+		public static long WinWaitActive(params object[] obj) => WinWaitX((win, seconds) => win.WaitActive(seconds), false, obj);
 
-		public static long WinWaitClose(params object[] obj) => WinWaitX((win, seconds) => win.WaitClose(seconds), obj);
+		public static long WinWaitClose(params object[] obj) => WinWaitX((win, seconds) => win.WaitClose(seconds), true, obj);
 
-		public static long WinWaitNotActive(params object[] obj) => WinWaitX((win, seconds) => win.WaitNotActive(seconds), obj);
+		public static long WinWaitNotActive(params object[] obj) => WinWaitX((win, seconds) => win.WaitNotActive(seconds), false, obj);
 
 		internal static void DoDelayedAction(Action act)
 		{
@@ -976,23 +979,39 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static long WinWaitX(Func<WindowItemBase, double, bool> func, params object[] obj)
+		private static long WinWaitX(Func<WindowItemBase, double, bool> func, bool all, params object[] obj)
 		{
 			var b = true;
 			SearchCriteria crit;
 			List<WindowItemBase> windows;
 			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
 
-			do
+			if (all)//Used for WinWaitClose()
 			{
-				(windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText, true);
+				do
+				{
+					(windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText, true);
 
-				foreach (var win in windows)
+					foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
+					{
+						WindowManager.LastFound = win;
+						b &= func(win, seconds);//The only way WinWaitClose() can return 0 is if any call to func() times out.
+					}
+				} while (windows.Count > 0);
+			}
+			else
+			{
+				if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+				{
+					WindowManager.LastFound = win;
 					b &= func(win, seconds);
-			} while (windows.Count > 0);
+				}
+				else
+					b = false;
+			}
 
 			WindowItemBase.DoWinDelay();
-			return b ? 1 : 0;
+			return b ? 1 : 0;//This return is totally wrong. For example with WinClose(), if no window is found, it returns 1, and only returns 0 if windows are found and the function times out.
 		}
 	}
 }

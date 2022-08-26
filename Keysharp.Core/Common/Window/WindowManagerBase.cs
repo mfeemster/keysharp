@@ -55,25 +55,26 @@ namespace Keysharp.Core.Common.Window
 			return foundWindow;
 		}
 
-		internal abstract List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool all = false);
+		internal abstract List<WindowItemBase> FindWindowGroup(SearchCriteria criteria);
 
 		internal (List<WindowItemBase>, SearchCriteria) FindWindowGroup(object title, string text, string excludeTitle, string excludeText, bool all = false)
 		{
 			var foundWindows = new List<WindowItemBase>();
 			SearchCriteria criteria = null;
 
-			if (!all && (title == null || (title is string s && string.IsNullOrEmpty(s))) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
+			if ((title == null || (title is string s && string.IsNullOrEmpty(s))) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
 			{
-				foundWindows.Add(LastFound);
+				if (LastFound != null)
+					foundWindows.Add(LastFound);
 			}
 			else
 			{
 				criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
 				foundWindows = FindWindowGroup(criteria, all);
-			}
 
-			if (foundWindows != null && foundWindows.Count > 0 && foundWindows[0].IsSpecified)
-				LastFound = foundWindows[0];
+				if (foundWindows != null && foundWindows.Count > 0 && foundWindows[0].IsSpecified)
+					LastFound = foundWindows[0];
+			}
 
 			return (foundWindows, criteria);
 		}
