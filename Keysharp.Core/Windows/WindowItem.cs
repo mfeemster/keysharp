@@ -74,7 +74,7 @@ namespace Keysharp.Core.Windows
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
 						if ((bool)Accessors.A_DetectHiddenText || Windows.WindowsAPI.IsWindowVisible(hwnd))
-							childs.Add(hwnd);
+							_ = childs.Add(hwnd);
 
 						return true;
 					}, 0);
@@ -296,7 +296,7 @@ namespace Keysharp.Core.Windows
 					if ((flags & WindowsAPI.LWA_COLORKEY) == WindowsAPI.LWA_COLORKEY)
 						return key;
 
-				return -1;
+				return int.MinValue;
 			}
 			set
 			{

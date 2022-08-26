@@ -18,7 +18,7 @@ namespace Keysharp.Tests
 			// or
 			//Directory.SetCurrentDirectory(dir);
 			//Keysharp.Core.Window.SetProcessDPIAware();
-			Reflections.Initialize();
+			//Reflections.Initialize();
 		}
 	}
 

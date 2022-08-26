@@ -43,7 +43,17 @@ namespace Keysharp.Core
 			var dkt = new Dictionary<string, Assembly>(assemblies.Length);
 
 			foreach (var assembly in assemblies)
-				dkt[assembly.Location] = assembly;
+			{
+				try
+				{
+					if (!assembly.IsDynamic)
+						dkt[assembly.Location] = assembly;
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+				}
+			}
 
 			return dkt;
 		}

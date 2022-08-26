@@ -31,7 +31,7 @@ namespace Keysharp.Core
 				return;
 
 			if (section != "")
-				section = string.Format(Core.Keyword_IniSectionOpen + "{0}]", section.ToLower());
+				section = string.Format(Core.Keyword_IniSectionOpen + "{0}]", section);
 
 			try
 			{
@@ -101,7 +101,7 @@ namespace Keysharp.Core
 				return "";
 
 			if (section != "")
-				section = $"[{section.ToLower()}]";
+				section = $"[{section}]";
 
 			var haskey = !string.IsNullOrEmpty(key);
 			var hassec = !string.IsNullOrEmpty(section);
@@ -115,7 +115,7 @@ namespace Keysharp.Core
 			}
 			else if (haskey && hassec)
 			{
-				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
+				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(section, StringComparer.CurrentCultureIgnoreCase);
 
 				if (secdkt.Contains(key))
 				{
@@ -129,7 +129,7 @@ namespace Keysharp.Core
 			}
 			else if (hassec)
 			{
-				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
+				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(section, StringComparer.CurrentCultureIgnoreCase);
 
 				foreach (DictionaryEntry kv in secdkt)
 					if (((string)kv.Key)[0] != '#')
@@ -176,7 +176,7 @@ namespace Keysharp.Core
 
 					if (section != "")
 					{
-						var kvdkt = inidkt.GetOrAdd<string, OrderedDictionary>(section);
+						var kvdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(section, StringComparer.CurrentCultureIgnoreCase);
 
 						if (haskey)
 						{
@@ -230,7 +230,7 @@ namespace Keysharp.Core
 		{
 			var filename = obj.As();
 			OrderedDictionary kvdkt = null;
-			var inidkt = new OrderedDictionary();
+			var inidkt = new OrderedDictionary(StringComparer.CurrentCultureIgnoreCase);
 
 			foreach (var ln in System.IO.File.ReadAllLines(filename).Select(l => l.Trim(trimline)).Where(x => x != ""))
 			{
@@ -239,14 +239,14 @@ namespace Keysharp.Core
 				if (ln[0] == '#')
 				{
 					if (kvdkt == null)
-						_ = inidkt.GetOrAdd<string, OrderedDictionary>(ln);
+						_ = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(ln, StringComparer.CurrentCultureIgnoreCase);
 					else
 						kvdkt[ln] = "";
 				}
 				else
 				{
 					if (split.Length == 1)
-						kvdkt = inidkt.GetOrAdd<string, OrderedDictionary>(split[0]);
+						kvdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(split[0], StringComparer.CurrentCultureIgnoreCase);
 					else if (split.Length == 2 && kvdkt != null)
 						kvdkt[split[0]] = split[1];
 				}

@@ -916,6 +916,8 @@ namespace Keysharp.Tests
 			Assert.IsTrue(System.IO.File.Exists("./testini2.ini"));
 			var val = Ini.IniRead("./testini2.ini", "sectionone", "keyval");
 			Assert.AreEqual("theval", val);
+			val = Ini.IniRead("./testini2.ini", "SectionOne", "keyval");//Ensure the file is processed as case insensitive.
+			Assert.AreEqual("theval", val);
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
 			Assert.AreEqual("groupkey1=groupval1\r\ngroupkey2=groupval2\r\ngroupkey3=groupval3\r\n", val);
 			val = Ini.IniRead("./testini2.ini");

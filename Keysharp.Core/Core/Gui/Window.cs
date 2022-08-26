@@ -553,7 +553,7 @@ namespace Keysharp.Core
 				var tempbgr = Color.FromArgb(color);
 				color = Color.FromArgb(tempbgr.A, tempbgr.B, tempbgr.G, tempbgr.R).ToArgb();
 				WindowItemBase.DoWinDelay();
-				return color != -1 ? $"0x{color.ToString("X").Substring(0, 6)}" : "";
+				return color != int.MinValue ? $"0x{color:X6}" : "";
 			}
 
 			return "";
