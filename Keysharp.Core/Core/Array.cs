@@ -59,7 +59,7 @@ namespace Keysharp.Core
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
 		//public static ArrayList New(params object[] values) => __New(values);
-		//
+
 		public void __New(params object[] values) => Push(values);
 
 		public int Add(object value) => ((IList)array).Add(value);
@@ -88,6 +88,8 @@ namespace Keysharp.Core
 
 			return null;
 		}
+
+		public object Get(long index) => this[Scripting.Script.ForceInt(index)];
 
 		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
 
@@ -124,7 +126,6 @@ namespace Keysharp.Core
 			}
 		}
 
-		//Should never be called by user code.
 		public object MaxIndex()
 		{
 			var val = long.MinValue;
@@ -198,53 +199,9 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		//public static Array Call(params object[] obj) => new Array(obj);
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
-		//public IEnumerable<byte> ToByteArray()
-		//{
-		//  return array.ToByteArray();
-		//}
-
 		void IList.RemoveAt(int index) => RemoveAt(new object[] { index });//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
-
-		//public object this[int index]
-		//{
-		//  get
-		//  {
-		//      if (index > 0)
-		//      {
-		//          var val = index - 1;
-		//          return array[val];
-		//      }
-		//      else if (index < 0)
-		//      {
-		//          return array[array.Count + index];
-		//      }
-		//      else
-		//          throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
-		//  }
-		//  set
-		//  {
-		//      if (index > 0)
-		//      {
-		//          var val = index - 1;
-		//          array[index] = val;
-		//      }
-		//      else if (index < 0)
-		//      {
-		//          array[array.Count + index] = value;
-		//      }
-		//      else
-		//          throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
-		//  }
-		//}
-
-		//public object this[long index]
-		//{
-		//  get => this[(int)index];
-		//  set => this[(int)index] = value;
-		//}
 
 		public object this[int index]
 		{
@@ -270,12 +227,10 @@ namespace Keysharp.Core
 	}
 
 	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
-	//public class ArrayIndexValueIterator : IEnumerator<Tuple<object, object>>
 	{
 		private ArrayList arr;
 		private int position = -1;
 
-		//public Tuple<object, object> Current
 		public (object, object) Current
 		{
 			get
@@ -283,7 +238,6 @@ namespace Keysharp.Core
 				try
 				{
 					return ((long)position + 1, arr[position]);
-					//return new Tuple<object, object>((long)position + 1, arr[position]);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -309,7 +263,6 @@ namespace Keysharp.Core
 
 		public void Reset() => position = -1;
 
-		//private IEnumerator<Tuple<object, object>> GetEnumerator()
-		private IEnumerator<(object, object)> GetEnumerator() => this;//return (IEnumerator<(object, object)>)this;
+		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 }
