@@ -469,14 +469,13 @@ namespace Keysharp.Core
 			if (timeout != 0)
 			{
 				var timeoutclosed = false;
-				var w = new Form() { Size = new Size(0, 0), Location = new Point(-10, -10) };//Gotten from https://stackoverflow.com/a/26418199
+				var w = new Form() { Size = new Size(0, 0) };//Gotten from https://stackoverflow.com/a/26418199
 				nMessageBoxes++;
-				w.Show();
-				w.BringToFront();
+				//No need to show the form, it will work while hidden.
 				_ = Task.Delay(TimeSpan.FromSeconds(timeout))
 					.ContinueWith(t =>
 				{
-					w.Close();
+					w.Invoke(() => w.Close());
 					timeoutclosed = true;
 				}, TaskScheduler.FromCurrentSynchronizationContext());
 				var ret = MessageBox.Show(w, text, title, buttons, icon, defaultbutton, mbopts);
