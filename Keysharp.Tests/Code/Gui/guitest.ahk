@@ -609,7 +609,7 @@ CZ_Text1.SetFont("s10 CBlue")
 CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
 CZ_Text2.SetFont("CTeal")
 
-CZ_ListBox := MyGui.Add("ListBox", "x10 h500 w160", ["Red","Green","Blue","Black","White", "Maroon"
+CZ_ListBox := MyGui.Add("ListBox", "x10 h600 w160", ["Red","Green","Blue","Black","White", "Maroon"
     , "Purple", "Color de gos com fuig", "Weiß", "Amarillo", "красный"
     , "朱红"])
 
@@ -631,6 +631,24 @@ CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 yp+240", "ControlGetEnabled")
 CZ_LbBtn7.OnEvent("Click", "GetEnabled")
 CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 yp+280", "Disabled!")
 CZ_LbBtn8.Enabled := False
+
+CZ_LbBtn9 := MyGui.Add("Button", "w120 x180 yp+320", "ControlGetHwnd")
+CZ_LbBtn9.OnEvent("Click", "GetHwnd")
+
+CZ_LbBtn10 := MyGui.Add("Button", "w120 x180 yp+360", "ControlGetText")
+CZ_LbBtn10.OnEvent("Click", "GetText")
+
+CZ_LbBtn11 := MyGui.Add("Button", "w120 x180 yp+400", "ControlHide")
+CZ_LbBtn11.OnEvent("Click", "HideButton")
+
+CZ_LbBtn12 := MyGui.Add("Button", "w120 x180 yp+440", "ControlShow")
+CZ_LbBtn12.OnEvent("Click", "ShowButton")
+
+CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 yp+480", "Visible?")
+CZ_LbBtn13.OnEvent("Click", "IsItHidden")
+
+
+
 
 
 ; ┌────────────────────────┐
@@ -693,6 +711,35 @@ GetEnabled() {
     Result2 := ControlGetEnabled(CZ_LbBtn6, MyGui)
     MsgBox(Result2, "ClassNN Button State (1: enabled 0: disabled)")
 }
+
+GetHwnd() {
+    Result := ControlGetHwnd(CZ_ListBox, MyGui)
+    MsgBox(Result, "Hwnd of ListBox")
+}
+
+GetText() {
+    Result := ControlGetText(CZ_LbBtn8, MyGui)
+    MsgBox(Result, "Text of Target Button")
+}
+
+HideButton() {
+    ControlHide(CZ_LbBtn8, MyGui)
+}
+
+ShowButton() {
+    ControlShow(CZ_LbBtn8, MyGui)
+}
+
+IsItHidden() {
+    Result := ControlGetVisible(Cz_LbBtn8, MyGui)
+    If (Result != 0) {
+        Result := "Visible"
+    } Else {
+        Result := "Hidden"
+    }
+    MsgBox(Result, "Visible or Not?")
+}
+
 
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
