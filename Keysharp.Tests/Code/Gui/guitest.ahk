@@ -609,15 +609,29 @@ CZ_Text1.SetFont("s10 CBlue")
 CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
 CZ_Text2.SetFont("CTeal")
 
-CZ_ListBox := MyGui.Add("ListBox", "x10 h200 w160", ["Red","Green","Blue","Black","White", "Maroon"
+CZ_ListBox := MyGui.Add("ListBox", "x10 h500 w160", ["Red","Green","Blue","Black","White", "Maroon"
     , "Purple", "Color de gos com fuig", "Weiß", "Amarillo", "красный"
     , "朱红"])
 
-CZ_LbBtn1 := MyGui.Add("Button", "x180 yp", "Add fuchsia")
+CZ_LbBtn1 := MyGui.Add("Button", "x180 w120 yp", "Add fuchsia")
 CZ_LbBtn1.OnEvent("Click", "AddFuchsia")
-CZ_LbBtn2 := MyGui.Add("Button", "x180 yp+40", "Delete Fuchsia")
+CZ_LbBtn2 := MyGui.Add("Button", "x180 w120 yp+40", "Delete Fuchsia")
 CZ_LbBtn2.OnEvent("Click", "DeleteFuchsia")
 CZ_LbBtn2.OnEvent("Focus", "FuchsiaDeleteTrayTip")
+CZ_LbBtn3 := MyGui.Add("Button", "x180 w120 yp+80", "Purple (Index)")
+CZ_LbBtn3.OnEvent("Click", "ChooseIndex")
+CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 yp+120", "красный (String)")
+CZ_LbBtn4.OnEvent("Click", "ChooseString")
+CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 yp+160", "ControlGetChoice")
+CZ_LbBtn5.OnEvent("Click", "GetChoice")
+CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 yp+200", "ControlGetClassNN")
+CZ_LbBtn6.OnEvent("Click", "GetClassNN")
+
+CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 yp+240", "ControlGetEnabled")
+CZ_LbBtn7.OnEvent("Click", "GetEnabled")
+CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 yp+280", "Disabled!")
+CZ_LbBtn8.Enabled := False
+
 
 ; ┌────────────────────────┐
 ; │  ControlZoo Functions  │
@@ -634,7 +648,7 @@ DeleteFuchsia() {
     }
     Catch as e  ; Handles the first error thrown by the block above.
     {
-        MsgBox("An error was thrown!`nSpecifically: " e.Message)
+        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
         Return
     }
     
@@ -646,8 +660,39 @@ FuchsiaDeleteTrayTip() {
     TrayTip("Also tests ControlFindItem")
 }
 
+ChooseIndex() {
+    ControlChooseIndex(7, CZ_ListBox)
+}
 
+ChooseString() {
+    ControlChooseString("красный", CZ_ListBox)
+}
 
+GetChoice() {
+    Try
+    {
+    Choice := ControlGetChoice(CZ_ListBox, MyGui)
+    MsgBox(Choice, "Choice")
+    }
+        Catch as e  ; Handles the first error thrown by the block above.
+    {
+        ;MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+        MsgBox("You must select an item first.", "ERROR!")
+        Return
+    }
+}
+
+GetClassNN() {
+    ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
+    MsgBox(ClassNN, "ClassNN")
+}
+
+GetEnabled() {
+    Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
+    MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
+    Result2 := ControlGetEnabled(CZ_LbBtn6, MyGui)
+    MsgBox(Result2, "ClassNN Button State (1: enabled 0: disabled)")
+}
 
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
