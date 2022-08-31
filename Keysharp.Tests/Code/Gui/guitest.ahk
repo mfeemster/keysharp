@@ -609,43 +609,64 @@ CZ_Text1.SetFont("s10 CBlue")
 CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
 CZ_Text2.SetFont("CTeal")
 
-CZ_ListBox := MyGui.Add("ListBox", "x10 h600 w160", ["Red","Green","Blue","Black","White", "Maroon"
+CZ_Text2a := MyGui.Add("Text", "x10 y+5", "ListBox control testing")
+CZ_Text2a.SetFont("s8 CBlue")
+
+CZ_ListBox := MyGui.Add("ListBox", "x10 h300 w160", ["Red","Green","Blue","Black","White", "Maroon"
     , "Purple", "Color de gos com fuig", "Weiß", "Amarillo", "красный"
     , "朱红"])
 
-CZ_LbBtn1 := MyGui.Add("Button", "x180 w120 yp", "Add fuchsia")
+CZ_Text3 := MyGui.Add("Text", "x10 y+5", "Edit control testing")
+CZ_Text3.SetFont("s8 CBlue")
+
+CZ_Edit1 := MyGui.Add("Edit", "x10 y+5 w160 h100", "Edit controls tests")
+
+; ┌─────────────────────────────────────────────┐
+; │  ControlZoo - end of Group One, Column One  │
+; └─────────────────────────────────────────────┘
+
+
+CZ_LbBtn1 := MyGui.Add("Button", "x180 w120 h25 y95", "Add fuchsia")
 CZ_LbBtn1.OnEvent("Click", "AddFuchsia")
-CZ_LbBtn2 := MyGui.Add("Button", "x180 w120 yp+40", "Delete Fuchsia")
+CZ_LbBtn2 := MyGui.Add("Button", "x180 w120 h25 y120", "Delete Fuchsia")
 CZ_LbBtn2.OnEvent("Click", "DeleteFuchsia")
 CZ_LbBtn2.OnEvent("Focus", "FuchsiaDeleteTrayTip")
-CZ_LbBtn3 := MyGui.Add("Button", "x180 w120 yp+80", "Purple (Index)")
+CZ_LbBtn3 := MyGui.Add("Button", "x180 w120 h25 y145", "Purple (Index)")
 CZ_LbBtn3.OnEvent("Click", "ChooseIndex")
-CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 yp+120", "красный (String)")
+CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 h25 y170", "красный (String)")
 CZ_LbBtn4.OnEvent("Click", "ChooseString")
-CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 yp+160", "ControlGetChoice")
+CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 h25 y195", "ControlGetChoice")
 CZ_LbBtn5.OnEvent("Click", "GetChoice")
-CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 yp+200", "ControlGetClassNN")
+CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 h25 y220", "ControlGetClassNN")
 CZ_LbBtn6.OnEvent("Click", "GetClassNN")
 
-CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 yp+240", "ControlGetEnabled")
+CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 h25 y245", "ControlGetEnabled")
 CZ_LbBtn7.OnEvent("Click", "GetEnabled")
-CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 yp+280", "Disabled!")
+CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 h25 y270", "Disabled!")
 CZ_LbBtn8.Enabled := False
 
-CZ_LbBtn9 := MyGui.Add("Button", "w120 x180 yp+320", "ControlGetHwnd")
+CZ_LbBtn9 := MyGui.Add("Button", "w120 x180 h25 y295", "ControlGetHwnd")
 CZ_LbBtn9.OnEvent("Click", "GetHwnd")
 
-CZ_LbBtn10 := MyGui.Add("Button", "w120 x180 yp+360", "ControlGetText")
+CZ_LbBtn10 := MyGui.Add("Button", "w120 x180 h25 y320", "ControlGetText")
 CZ_LbBtn10.OnEvent("Click", "GetText")
 
-CZ_LbBtn11 := MyGui.Add("Button", "w120 x180 yp+400", "ControlHide")
+CZ_LbBtn11 := MyGui.Add("Button", "w120 x180 h25 y345", "ControlHide")
 CZ_LbBtn11.OnEvent("Click", "HideButton")
 
-CZ_LbBtn12 := MyGui.Add("Button", "w120 x180 yp+440", "ControlShow")
+CZ_LbBtn12 := MyGui.Add("Button", "w120 x180 h25 y370", "ControlShow")
 CZ_LbBtn12.OnEvent("Click", "ShowButton")
 
-CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 yp+480", "Visible?")
+CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 h25 y395", "Visible?")
 CZ_LbBtn13.OnEvent("Click", "IsItHidden")
+
+CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y420", "Edit column #")
+CZ_LbBtn14.OnEvent("Click", "GetCol")
+
+MyGui.UseGroup()
+Tab.UseTab("ControlZoo")
+gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w325 h875", "ControlZoo - Group Two")
+
 
 
 
@@ -740,6 +761,10 @@ IsItHidden() {
     MsgBox(Result, "Visible or Not?")
 }
 
+GetCol() {
+    CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
+    MsgBox(CurrentCol, "Current Colum No.")
+}
 
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
