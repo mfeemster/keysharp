@@ -626,7 +626,7 @@ CZ_Edit1 := MyGui.Add("Edit", "x10 y+5 w160 h100", "Edit controls tests")
 ; └─────────────────────────────────────────────┘
 
 
-CZ_LbBtn1 := MyGui.Add("Button", "x180 w120 h25 y95", "Add fuchsia")
+CZ_LbBtn1 := MyGui.Add("Button", "x180 w120 h25 y95", "Add Fuchsia")
 CZ_LbBtn1.OnEvent("Click", "AddFuchsia")
 CZ_LbBtn2 := MyGui.Add("Button", "x180 w120 h25 y120", "Delete Fuchsia")
 CZ_LbBtn2.OnEvent("Click", "DeleteFuchsia")
@@ -660,14 +660,24 @@ CZ_LbBtn12.OnEvent("Click", "ShowButton")
 CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 h25 y395", "Visible?")
 CZ_LbBtn13.OnEvent("Click", "IsItHidden")
 
-CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y420", "Edit column #")
+CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y420", "Edit Column #")
 CZ_LbBtn14.OnEvent("Click", "GetCol")
+
+CZ_LbBtn15 := MyGui.Add("Button", "w120 x180 h25 y445", "Edit Line #")
+CZ_LbBtn15.OnEvent("Click", "GetLine")
+
+CZ_LbBtn16 := MyGui.Add("Button", "w120 x180 h25 y470", "Edit Line Text")
+CZ_LbBtn16.OnEvent("Click", "GetLineText")
+
+CZ_LbBtn17 := MyGui.Add("Button", "w120 x180 h25 y495", "Selected text")
+CZ_LbBtn17.OnEvent("Click", "GetSelectedText")
+
+CZ_LbBtn18 := MyGui.Add("Button", "w120 x180 h25 y520", "Edit Paste")
+CZ_LbBtn18.OnEvent("Click", "EditPaster")
 
 MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
 gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w325 h875", "ControlZoo - Group Two")
-
-
 
 
 
@@ -764,6 +774,31 @@ IsItHidden() {
 GetCol() {
     CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
     MsgBox(CurrentCol, "Current Colum No.")
+    CurrentCol := ""
+}
+
+GetLine() {
+    CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
+    MsgBox(CurrentLine, "Current Line No.")
+    CurrentLine := ""
+}
+
+GetLineText() {
+    CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
+    CurrentLineText := EditGetLine(CurrentLine, CZ_Edit1, MyGui)
+    MsgBox(CurrentLineText, "Current Line Text")
+    CurrentLineText := "" ; Reset variable
+}
+
+GetSelectedText() {
+    SelectedText := EditGetSelectedText(CZ_Edit1, MyGui)
+    MsgBox(SelectedText, "Selected text in Edit")
+    SelectedText := "" ; Reset variable
+}
+
+EditPaster() {
+    EditPasted := "How now brown cow"
+    EditPaste(EditPasted, CZ_Edit1, MyGui)
 }
 
 ; ┌───────────────────────────┐
