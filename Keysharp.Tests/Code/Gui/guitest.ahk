@@ -104,13 +104,15 @@ Loop Files, A_MyDocuments "\*.*"
 InputBtn := MyGui.Add("Button", "s8 x10 y+10", "Input Test")
 InputBtn.OnEvent("Click", "InputTest")
 
+; GetContentBtn := MyGui.Add("Button", "x100 yp", "Get LV Content")
+
 ;LV.ModifyCol()  ; Auto-size each column to fit its contents.
 LV.ModifyCol(2, "Integer")  ; For sorting purposes, indicate that column 2 is an integer.
 ; ┌─────────────────────┐
 ; │  Add a radio group  │
 ; └─────────────────────┘
 
-RadioText := MyGui.Add("Text", "w200", "Radio group tests")
+RadioText := MyGui.Add("Text", "w200 x10", "Radio group tests")
 RadioText.SetFont("cBlue s10")
 RadioOne := MyGui.Add("Radio", "vMyRadioGroup", "Change header font (alternate).")
 RadioOne.OnEvent("Click", "ChangeFont")
@@ -675,11 +677,45 @@ CZ_LbBtn17.OnEvent("Click", "GetSelectedText")
 CZ_LbBtn18 := MyGui.Add("Button", "w120 x180 h25 y520", "Edit Paste")
 CZ_LbBtn18.OnEvent("Click", "EditPaster")
 
+; ┌──────────────────────────┐
+; │  ListView Content Tests  │
+; └──────────────────────────┘
+
+CZ_SeparatorText1 := MyGui.Add("Text", "x10 y540 w320", "ListView Content Tests")
+CZ_SeparatorText1.SetFont("s8 CBlue")
+
+LV2 := MyGui.Add("ListView", "r5 w300 x10 y+5", ["Name","Size (KB)"])
+
+Loop Files, A_MyDocuments "\*.*"
+  LV2.Add(, A_LoopFileName, A_LoopFileSizeKB)
+
+LV2_Btn1 := MyGui.Add("Button", "x10 y+5 w72 h25" ,"Selected")
+LV2_Btn1.OnEvent("Click", "LV_Selected")
+
+LV2_Btn2 := MyGui.Add("Button", "x85 yp w72 h25" ,"Focused")
+LV2_Btn2.OnEvent("Click", "LV_Focused")
+
+LV2_Btn3 := MyGui.Add("Button", "x160 yp wp hp +Disabled", "Column 1")
+LV2_Btn3.OnEvent("Click", "LV_Col1")
+
+LV2_Btn4 := MyGui.Add("Button", "x240 yp wp hp", "Count")
+LV2_Btn4.OnEvent("Click", "LV_Count")
+
+LV2_Btn5 := MyGui.Add("Button", "x10 yp+25 w100 h25", "Count Selected")
+LV2_Btn5.OnEvent("Click", "LV_CountSelected")
+
+LV2_Btn6 := MyGui.Add("Button", "x113 yp w100 h25", "Row Focused")
+LV2_Btn6.OnEvent("Click", "LV_CountFocused")
+
+LV2_Btn7 := MyGui.Add("Button", "x216 yp w100 h25", "Count Columns")
+LV2_Btn7.OnEvent("Click", "LV_CountCol")
+
 MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
 gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w325 h875", "ControlZoo - Group Two")
 
-
+Reserved4 := MyGui.Add("Text", "x10 y20 w325", "Reserved for Future Testing")
+Reserved4.SetFont("s14 CBlue")
 
 
 ; ┌────────────────────────┐
@@ -799,6 +835,48 @@ GetSelectedText() {
 EditPaster() {
     EditPasted := "How now brown cow"
     EditPaste(EditPasted, CZ_Edit1, MyGui)
+}
+
+LV_Selected() {
+    List := ListViewGetContent("Selected", LV2, MyGui)
+    MsgBox(List, "LV Selected")
+    List := ""
+}
+
+LV_Focused() {
+    List := ListViewGetContent("Focused", LV2, MyGui)
+    MsgBox(List, "LV Focused")
+    List := ""
+}
+
+LV_Col1() {
+    List := ListViewGetContent("Col1", LV2, MyGui)
+    MsgBox(List, "LV Column 1")
+    List := ""
+}
+
+LV_Count() {
+    List := ListViewGetContent("Count", LV2, MyGui)
+    MsgBox(List, "LV Row Count")
+    List := ""
+}
+
+LV_CountSelected() {
+    List := ListViewGetContent("Count Selected", LV2, MyGui)
+    MsgBox(List, "LV Count Selected")
+    List := ""
+}
+
+LV_CountFocused() {
+    List := ListViewGetContent("Count Focused", LV2, MyGui)
+    MsgBox(List, "LV Count Focused")
+    List := ""
+}
+
+LV_CountCol() {
+    List := ListViewGetContent("Count Col", LV2, MyGui)
+    MsgBox(List, "LV Column Count")
+    List := ""
 }
 
 ; ┌───────────────────────────┐
