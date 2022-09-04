@@ -521,6 +521,22 @@ STest() {
     }
 }
 
+MyLinkText := MyGui.Add("Text", "x10 y+5", "Link test")
+MyLinkText.SetFont("cBlue s8")
+MyLink := MyGui.Add("Link", "x10 y+5", 'Click this <a href="https://www.autohotkey.com"> link to AHK page</a>')
+
+MyHkInfoText := MyGui.Add("Text", "x10 y+5 w200", "Define Hotkey test`nFocus Edit and click hotkey(s)")
+MyHkInfoText.SetFont("cBlue s8")
+MyHotkey := MyGui.Add("Hotkey", "x10 y+5")
+MyHotkey.OnEvent("Change", "UpdateHK")
+MyHkText := MyGui.Add("Text", "x10 y+5 w200" , MyHotkey.Value)
+MyHkText2 := MyGui.Add("Text", "x10 y+5 w200 cRed", "NOTE: Combos w/Win not working.")
+
+UpdateHK() {
+    ControlSetText( MyHotkey.Value, MyHkText)
+}
+
+
 MyGui.Add("Text", "x+5 y+5", "_____________________________")
 
 ; ┌────────────────────────┐
@@ -714,8 +730,23 @@ MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
 gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w325 h875", "ControlZoo - Group Two")
 
-Reserved4 := MyGui.Add("Text", "x10 y20 w325", "Reserved for Future Testing")
-Reserved4.SetFont("s14 CBlue")
+;Reserved4 := MyGui.Add("Text", "x10 y20 w325", "Reserved for Future Testing")
+;Reserved4.SetFont("s12 CBlue")
+gb2_CZ_Text1 := MyGui.Add("Text", "x10 y20 w325", "ComboBox Control Tests")
+gb2_CZ_Text1.SetFont("s8 cBlue")
+
+gb2_CZ_CB := MyGui.Add("ComboBox", "x10 y+10 r5 Limit", ["Orange","Purple","Fuchsia","Lime","Aqua"])
+gb2_CZ_Btn1 := MyGui.Add("Button", "x10 y+5 w80 h25", "Add White")
+gb2_CZ_Btn1.OnEvent("Click", "AddWhite2")
+gb2_CZ_Btn2 := MyGui.Add("Button", "x90 yp w80 h25", "Delete White")
+gb2_CZ_Btn2.OnEvent("Click", "DeleteWhite2")
+gb2_CZ_Btn3 := MyGui.Add("Button", "x170 yp w80 h25", "-> Purple")
+gb2_CZ_Btn3.OnEvent("Click", "ChooseString_CB")
+
+gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w80 h25", "Click CB")
+gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
+
+
 
 
 ; ┌────────────────────────┐
@@ -724,6 +755,10 @@ Reserved4.SetFont("s14 CBlue")
 
 AddFuchsia() {
     ControlAddItem("Fuchsia", CZ_ListBox)
+}
+
+AddWhite2() {
+    ControlAddItem("White", gb2_CZ_CB)
 }
 
 DeleteFuchsia() {
@@ -741,6 +776,21 @@ DeleteFuchsia() {
     ControlDeleteItem(FuchsiaIndex, CZ_ListBox)
 }
 
+DeleteWhite2() {
+    Try 
+    {
+        WhiteIndex := ControlFindItem("White", gb2_CZ_CB)
+    }
+    Catch as e  ; Handles the first error thrown by the block above.
+    {
+        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+        Return
+    }
+    
+    ;MsgBox(FuchsiaIndex)
+    ControlDeleteItem(WhiteIndex, gb2_CZ_CB)
+}
+
 FuchsiaDeleteTrayTip() {
     TrayTip("Also tests ControlFindItem")
 }
@@ -751,6 +801,10 @@ ChooseIndex() {
 
 ChooseString() {
     ControlChooseString("красный", CZ_ListBox)
+}
+
+ChooseString_CB() {
+    ControlChooseString("Purple", gb2_CZ_CB)
 }
 
 GetChoice() {
@@ -877,6 +931,10 @@ LV_CountCol() {
     List := ListViewGetContent("Count Col", LV2, MyGui)
     MsgBox(List, "LV Column Count")
     List := ""
+}
+
+Click_CB() {
+    ControlClick("WindowsForms10.ComboBox.app.0.3b95145_r3_ad11", MyGui)
 }
 
 ; ┌───────────────────────────┐
