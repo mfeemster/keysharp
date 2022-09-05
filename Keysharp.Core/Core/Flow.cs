@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Scripting;
@@ -21,6 +22,7 @@ namespace Keysharp.Core
 		//internal static ConcurrentDictionary<FuncObj, Timer> timers;
 		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers;
 		private static bool hasExited;
+		private static System.Windows.Forms.Timer currentTimer;
 
 		/// <summary>
 		/// Is the Script currently suspended?
@@ -171,8 +173,6 @@ namespace Keysharp.Core
 			if (timers == null)
 				timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
 
-			//timers = new ConcurrentDictionary<FuncObj, Timer>();
-
 			if (once)
 				period = -period;
 
@@ -184,19 +184,37 @@ namespace Keysharp.Core
 					cachedFuncObj[s] = func = Keysharp.Scripting.Script.FuncObj(s);
 			}
 
-			if (func == null)
+			if (function != null && func == null)
 			{
 				func = function is FuncObj fo ?
-					   fo :
-					   throw new TypeError($"Parameter {function} of type {function.GetType()} was not a string or a function object.");
+					   fo : throw new TypeError($"Parameter {function} of type {function.GetType()} was not a string or a function object.");
 			}
 
 			//func can now only ever be accessed by the caller from within the timer event, as the first argument.
-			if (timers.TryGetValue(func, out var timer))
+			System.Windows.Forms.Timer timer = null;
+
+			if (func != null && timers.TryGetValue(func, out timer))
+			{
+			}
+			else if (function == null)
+				timer = currentTimer;//Not thread safe;
+
+			if (timer != null)
 			{
 				if (period == 0)
 				{
-					_ = timers.TryRemove(func, out _);
+					if (func != null)
+						_ = timers.TryRemove(func, out _);
+					else
+					{
+						var temptimer = timers.Where((kv) => kv.Value == timer).FirstOrDefault();
+
+						if (temptimer.Key != null)
+						{
+							_ = timers.TryRemove(temptimer.Key, out var _);
+						}
+					}
+
 					timer.Stop();
 					timer.Dispose();
 					return;
@@ -233,31 +251,39 @@ namespace Keysharp.Core
 			timer.Tick += (ss, ee) =>
 						  //timer.Elapsed += (ss, ee) =>
 			{
-				timer.Enabled = false;
-
-				var remove = false;
-
-				System.Threading.Thread.CurrentThread.Priority = level;
-
-				//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented.//TODO
-				try
+				if (ss is System.Windows.Forms.Timer t)
 				{
-					//_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(ee.SignalTime));
-					_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
+					t.Enabled = false;
 
-					if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
-						existing.Enabled = true;
-				}
-				catch (Exception)
-				{
-					remove = true;
-				}
+					var remove = false;
 
-				if (once || remove)
-				{
-					_ = timers.TryRemove(func, out _);
-					timer.Stop();
-					timer.Dispose();
+					System.Threading.Thread.CurrentThread.Priority = level;
+
+					//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented.//TODO
+					try
+					{
+						//_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(ee.SignalTime));
+						currentTimer = t;//Not thread safe;
+						_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
+
+						if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
+							existing.Enabled = true;
+					}
+					catch (Exception ex)
+					{
+						remove = true;
+					}
+					finally
+					{
+						currentTimer = null;
+					}
+
+					if (once || remove)
+					{
+						_ = timers.TryRemove(func, out _);
+						t.Stop();
+						t.Dispose();
+					}
 				}
 			};
 			timer.Start();

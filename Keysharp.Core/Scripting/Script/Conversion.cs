@@ -48,7 +48,7 @@ namespace Keysharp.Scripting
 				return ForceDouble(input) != 0;
 			else if (input is string s)
 				return !string.IsNullOrEmpty(s);
-			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(bool))
@@ -82,14 +82,13 @@ namespace Keysharp.Scripting
 			}
 			else if (input is bool b)
 				return b ? 1m : 0m;
-			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(decimal))
 						return (decimal)mi.Invoke(input, new object[] { input });
 			}
-
-			if (input is IConvertible)
+			else if (input is IConvertible)
 				return Convert.ToDecimal(input);
 
 			return 0m;
@@ -133,14 +132,13 @@ namespace Keysharp.Scripting
 				return (double)ui;
 			else if (input is ulong ul)
 				return (double)ul;
-			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(double))
 						return (double)mi.Invoke(input, new object[] { input });
 			}
-
-			if (input is IConvertible)
+			else if (input is IConvertible)
 				return Convert.ToDouble(input);
 
 			return 0.0;
@@ -181,14 +179,13 @@ namespace Keysharp.Scripting
 				return b ? 1 : 0;
 			else if (input is null)
 				return 0;
-			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(int))
 						return (int)mi.Invoke(input, new object[] { input });
 			}
-
-			if (input is IConvertible)
+			else if (input is IConvertible)
 				return Convert.ToInt32(input);
 
 			return 0;
@@ -229,14 +226,13 @@ namespace Keysharp.Scripting
 				return b ? 1 : 0;
 			else if (input is null)
 				return 0;
-			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(long))
 						return (long)mi.Invoke(input, new object[] { input });
 			}
-
-			if (input is IConvertible)
+			else if (input is IConvertible)
 				return Convert.ToInt64(input);
 
 			return 0;
@@ -292,7 +288,7 @@ namespace Keysharp.Scripting
 
 				return d.ToString(format).TrimEnd(zerochars);//Remove trailing zeroes for string compare.
 			}
-			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(string))
