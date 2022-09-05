@@ -35,6 +35,17 @@ namespace System.Windows.Forms
 				action();
 		}
 
+		internal static T CheckedInvoke<T>(this Control control, Func<T> action)
+		{
+			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+				return default;
+
+			if (control.InvokeRequired)
+				return control.Invoke(action);
+			else
+				return action();
+		}
+
 		internal static TabPage FindTab(this TabControl tc, string text, bool exact)
 		{
 			foreach (TabPage tp in tc.TabPages)

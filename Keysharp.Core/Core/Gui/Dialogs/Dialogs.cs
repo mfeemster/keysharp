@@ -53,7 +53,7 @@ namespace Keysharp.Core
 				select.SelectedPath = startingFolder;
 
 			nFolderDialogs++;
-			var selected = GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner);
+			var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner));
 			nFolderDialogs--;
 			return selected == DialogResult.OK ? select.SelectedPath : "";
 		}
@@ -152,7 +152,7 @@ namespace Keysharp.Core
 					InitialDirectory = Path.GetDirectoryName(rootdir),
 					FileName = Path.GetFileName(rootdir)
 				};
-				var selected = GuiHelper.DialogOwner == null ? saveas.ShowDialog() : saveas.ShowDialog(GuiHelper.DialogOwner);
+				var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? saveas.ShowDialog() : saveas.ShowDialog(GuiHelper.DialogOwner));
 				files = selected == DialogResult.OK ? saveas.FileName : "";
 			}
 			else
@@ -169,7 +169,7 @@ namespace Keysharp.Core
 						Description = title,
 						ShowNewFolderButton = true
 					};
-					var selected = GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner);
+					var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner));
 					files = selected == DialogResult.OK ? select.SelectedPath : "";
 				}
 				else
@@ -187,7 +187,7 @@ namespace Keysharp.Core
 						InitialDirectory = Path.GetDirectoryName(rootdir),
 						FileName = Path.GetFileName(rootdir)
 					};
-					var selected = GuiHelper.DialogOwner == null ? open.ShowDialog() : open.ShowDialog(GuiHelper.DialogOwner);
+					var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? open.ShowDialog() : open.ShowDialog(GuiHelper.DialogOwner));
 					files = selected == DialogResult.OK
 							? multi ? new Array(open.FileNames.Cast<object>().ToArray()) : (object)open.FileName
 							: multi ? new Array() : (object)"";
@@ -280,11 +280,13 @@ namespace Keysharp.Core
 				input.Top = y != int.MinValue ? y : (((workarea["Bottom"].Ai() - workarea["Top"].Ai()) / 2) - (input.Height / 2));
 			};
 			nFileDialogs++;
-
-			if (GuiHelper.DialogOwner != null)
-				_ = input.ShowDialog(GuiHelper.DialogOwner);
-			else
-				input.Show();
+			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() =>
+			{
+				if (GuiHelper.DialogOwner != null)
+					_ = input.ShowDialog(GuiHelper.DialogOwner);
+				else
+					input.Show();
+			});
 
 			while (input.Visible)
 				Application.DoEvents();
@@ -491,7 +493,7 @@ namespace Keysharp.Core
 					_ = owner.Invoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
 				//_ = owner.BeginInvoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
 				else
-					ret = MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString();
+					ret = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString());
 
 				nMessageBoxes--;
 				return ret;
