@@ -31,7 +31,7 @@ namespace Keysharp.Core
 
 		public static long ControlChooseString(params object[] obj) => obj.S1O2S3().Splat(ControlManager.ControlChooseString);
 
-		public static void ControlClick(params object[] obj) => obj.O2S2I1S3().Splat(ControlManager.ControlClick);
+		public static void ControlClick(params object[] obj) => obj.O2S2I1S3(null, null, "", "", 1).Splat(ControlManager.ControlClick);
 
 		public static void ControlDeleteItem(params object[] obj) => obj.I1O2S3().Splat(ControlManager.ControlDeleteItem);
 

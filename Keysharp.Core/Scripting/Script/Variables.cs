@@ -13,7 +13,7 @@ namespace Keysharp.Scripting
 		public class Variables
 		{
 			internal static DateTime startTime = DateTime.Now;
-			private static Dictionary<string, FieldInfo> globalVars = new Dictionary<string, FieldInfo>();
+			private static Dictionary<string, FieldInfo> globalVars = new Dictionary<string, FieldInfo>(StringComparer.OrdinalIgnoreCase);
 			private Stack<string> collect = new Stack<string>();
 			private Dictionary<string, object> table = new Dictionary<string, object>();
 			public bool AutoMark { get; set; }
