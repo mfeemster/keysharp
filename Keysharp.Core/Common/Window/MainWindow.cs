@@ -26,6 +26,7 @@ namespace Keysharp.Scripting
 			InitializeComponent();
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
+			SetStyle(ControlStyles.EnableNotifyMessage, true);
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			//          ThreadId = WindowsAPI.GetCurrentThreadId();
@@ -53,7 +54,7 @@ namespace Keysharp.Scripting
 			});
 		}
 
-		protected override void WndProc(ref Message m)
+		protected override async void OnNotifyMessage(Message m)
 		{
 			switch (m.Msg)
 			{
@@ -68,10 +69,31 @@ namespace Keysharp.Scripting
 					break;
 
 				case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
-					Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), WindowsAPI.WM_HOTKEY);
+					_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), WindowsAPI.WM_HOTKEY);
 					break;
 			}
 
+			//else if (m.Msg == WindowsAPI.WM_DESTROY && m.HWnd == Handle)//AHK looked for WM_DESTROY, but we seem to get many of them, so it probably won't work here. It's ok because it's a corner case anyway.
+			//{
+			//  Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Destroy);
+			//}
+		}
+
+		protected override void WndProc(ref Message m)
+		{
+			//switch (m.Msg)
+			//{
+			//  case WindowsAPI.WM_CLIPBOARDUPDATE:
+			//      if (success)
+			//          ClipboardUpdate?.Invoke(null);
+			//      break;
+			//  case WindowsAPI.WM_ENDSESSION:
+			//      _ = Core.Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Core.Flow.ExitReasons.LogOff : Core.Flow.ExitReasons.Shutdown);
+			//      break;
+			//  case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
+			//      //_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), WindowsAPI.WM_HOTKEY);
+			//      break;
+			//}
 			//else if (m.Msg == WindowsAPI.WM_DESTROY && m.HWnd == Handle)//AHK looked for WM_DESTROY, but we seem to get many of them, so it probably won't work here. It's ok because it's a corner case anyway.
 			//{
 			//  Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Destroy);

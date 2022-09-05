@@ -669,6 +669,61 @@ namespace Keysharp.Core.Windows
 			return child;
 		}
 
+
+		internal override void ChildFindPoint(PointAndHwnd pah)
+		{
+			var rect = new RECT();
+			_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
+			{
+				if (!WindowsAPI.IsWindowVisible(hwnd) // Omit hidden controls, like Window Spy does.
+						|| (pah.ignoreDisabled && !WindowsAPI.IsWindowEnabled(hwnd))) // For ControlClick, also omit disabled controls, since testing shows that the OS doesn't post mouse messages to them.
+					return true;
+
+				if (!WindowsAPI.GetWindowRect(hwnd, out rect))
+					return true;
+
+				// The given point must be inside aWnd's bounds.  Then, if there is no hwnd found yet or if aWnd
+				// is entirely contained within the previously found hwnd, update to a "better" found window like
+				// Window Spy.  This overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint().
+				// The pixel at (left, top) lies inside the control, whereas MSDN says "the pixel at (right, bottom)
+				// lies immediately outside the rectangle" -- so use < instead of <= below:
+				if (pah.pt.x >= rect.Left && pah.pt.x < rect.Right && pah.pt.y >= rect.Top && pah.pt.y < rect.Bottom)
+				{
+					// If the window's center is closer to the given point, break the tie and have it take
+					// precedence.  This solves the problem where a particular control from a set of overlapping
+					// controls is chosen arbitrarily (based on Z-order) rather than based on something the
+					// user would find more intuitive (the control whose center is closest to the mouse):
+					var centerx = rect.Left + ((double)(rect.Right - rect.Left) / 2);
+					var centery = rect.Top + ((double)(rect.Bottom - rect.Top) / 2);
+					var distance = Math.Sqrt(Math.Pow(pah.pt.x - centerx, 2.0) + Math.Pow(pah.pt.y - centery, 2.0));
+					var updateIt = pah.hwndFound == IntPtr.Zero;
+
+					if (!updateIt)
+					{
+						// If the new window's rect is entirely contained within the old found-window's rect, update
+						// even if the distance is greater.  Conversely, if the new window's rect entirely encloses
+						// the old window's rect, do not update even if the distance is less:
+						if (rect.Left >= pah.rectFound.Left && rect.Right <= pah.rectFound.Right
+								&& rect.Top >= pah.rectFound.Top && rect.Bottom <= pah.rectFound.Bottom)
+							updateIt = true; // New is entirely enclosed by old: update to the New.
+						else if (distance < pah.distanceFound &&
+								 (pah.rectFound.Left < rect.Left || pah.rectFound.Right > rect.Right
+								  || pah.rectFound.Top < rect.Top || pah.rectFound.Bottom > rect.Bottom))
+							updateIt = true; // New doesn't entirely enclose old and new's center is closer to the point.
+					}
+
+					if (updateIt)
+					{
+						pah.hwndFound = hwnd;
+						pah.rectFound = rect; // And at least one caller uses this returned rect.
+						pah.distanceFound = distance;
+					}
+				}
+
+				return true;
+			}, 0);
+		}
+
 		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
 
 		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, Point? location = null)

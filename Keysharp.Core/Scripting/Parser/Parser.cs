@@ -194,7 +194,21 @@ namespace Keysharp.Scripting
 			_ = tcf.CatchClauses.Add(ctch2);
 			//
 			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
-			_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));
+			ctch.Statements.Add(new CodeSnippetExpression(@"var ex = mainex.InnerException ?? mainex;
+
+				if (ex is Keysharp.Core.Error kserr)
+				{
+					if (ErrorOccurred(kserr))
+					{
+						MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr);
+					}
+				}
+				else
+				{
+					MsgBox(""Uncaught exception:\r\n"" + ""Message: "" + ex.Message + ""\r\nStack: "" + ex.StackTrace);
+				}
+"));
+			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));
 			_ = ctch.Statements.Add(new CodeExpressionStatement(exit1));
 			_ = ctch.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
 			_ = tcf.CatchClauses.Add(ctch);

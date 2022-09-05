@@ -48,8 +48,13 @@ namespace Keysharp.Scripting
 				return ForceDouble(input) != 0;
 			else if (input is string s)
 				return !string.IsNullOrEmpty(s);
-			else if (input.GetType().GetMethod("op_Implicit", new Type[] { input.GetType() }) is MethodInfo mi)
-				return (bool)mi.Invoke(input, new object[] { input });
+			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			{
+				foreach (var mi in mis)
+					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(bool))
+						return (bool)mi.Invoke(input, new object[] { input });
+			}
+
 			return true;//Any non-null, non-empty string is considered true.
 		}
 
@@ -75,11 +80,16 @@ namespace Keysharp.Scripting
 					}
 				}
 			}
-			//else if (input is BoolResult br)
-			//return ForceDecimal(br.o);
-			else if (input is bool b)//MATT
+			else if (input is bool b)
 				return b ? 1m : 0m;
-			else
+			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			{
+				foreach (var mi in mis)
+					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(decimal))
+						return (decimal)mi.Invoke(input, new object[] { input });
+			}
+
+			if (input is IConvertible)
 				return Convert.ToDecimal(input);
 
 			return 0m;
@@ -123,8 +133,17 @@ namespace Keysharp.Scripting
 				return (double)ui;
 			else if (input is ulong ul)
 				return (double)ul;
+			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			{
+				foreach (var mi in mis)
+					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(double))
+						return (double)mi.Invoke(input, new object[] { input });
+			}
 
-			throw new Keysharp.Core.TypeError($"Error converting type {input.GetType()} to double.");
+			if (input is IConvertible)
+				return Convert.ToDouble(input);
+
+			return 0.0;
 		}
 
 		internal static int ForceInt(object input)
@@ -158,13 +177,18 @@ namespace Keysharp.Scripting
 					}
 				}
 			}
-			//else if (input is BoolResult br)
-			//return ForceInt(br.o);
-			else if (input is bool b)//MATT
+			else if (input is bool b)
 				return b ? 1 : 0;
 			else if (input is null)
 				return 0;
-			else
+			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			{
+				foreach (var mi in mis)
+					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(int))
+						return (int)mi.Invoke(input, new object[] { input });
+			}
+
+			if (input is IConvertible)
 				return Convert.ToInt32(input);
 
 			return 0;
@@ -201,14 +225,19 @@ namespace Keysharp.Scripting
 					}
 				}
 			}
-			else if (input is bool b)//MATT
+			else if (input is bool b)
 				return b ? 1 : 0;
 			else if (input is null)
 				return 0;
-			//else if (input is BoolResult br)
-			//return ForceLong(br.o);
-			else if (input is IConvertible ic)
-				return Convert.ToInt64(ic);
+			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
+			{
+				foreach (var mi in mis)
+					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(long))
+						return (long)mi.Invoke(input, new object[] { input });
+			}
+
+			if (input is IConvertible)
+				return Convert.ToInt64(input);
 
 			return 0;
 		}
@@ -221,8 +250,6 @@ namespace Keysharp.Scripting
 				return s;
 			else if (input is char c)
 				return c.ToString();
-			//else if (input is BoolResult br)
-			//return ForceString(br.o);
 			else if (input is bool b)
 				return b ? "1" : "0";
 			else if (input is byte[] arr)
@@ -265,73 +292,73 @@ namespace Keysharp.Scripting
 
 				return d.ToString(format).TrimEnd(zerochars);//Remove trailing zeroes for string compare.
 			}
-			else if (input.GetType().GetMethod("op_Implicit", new Type[] { input.GetType() }) is MethodInfo mi)
+			else if (input.GetType().GetMethods(BindingFlags.Static) is MethodInfo[] mis)
 			{
-				return (string)mi.Invoke(input, new object[] { input });
+				foreach (var mi in mis)
+					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(string))
+						return (string)mi.Invoke(input, new object[] { input });
+			}
+
+			var type = input.GetType();
+			var buffer = new StringBuilder();
+
+			if (input is Keysharp.Core.Map map)
+			{
+				_ = buffer.Append(BlockOpen);
+				var first = true;
+
+				foreach (var (k, v) in map)
+				{
+					if (first)
+						first = false;
+					else
+						_ = buffer.Append(DefaultMulticast);
+
+					_ = buffer.Append(StringBound);
+					_ = buffer.Append(ForceString(k));
+					_ = buffer.Append(StringBound);
+					_ = buffer.Append(AssignPre);
+
+					if (v == null)
+					{
+						_ = buffer.Append(NullTxt);
+						continue;
+					}
+
+					var obj = v is Array || v is Core.Map || v is Core.FuncObj;// Delegate;
+
+					if (!obj)
+						_ = buffer.Append(StringBound);
+
+					_ = buffer.Append(ForceString(v));
+
+					if (!obj)
+						_ = buffer.Append(StringBound);
+				}
+
+				_ = buffer.Append(BlockClose);
+				return buffer.ToString();
+			}
+			else if (input is Array array)
+			{
+				_ = buffer.Append(ArrayOpen);
+				var first = true;
+
+				foreach (var item in array)
+				{
+					if (first)
+						first = false;
+					else
+						_ = buffer.Append(DefaultMulticast);
+
+					_ = buffer.Append(ForceString(item));
+				}
+
+				_ = buffer.Append(ArrayClose);
+				return buffer.ToString();
 			}
 			else
-			{
-				var type = input.GetType();
-				var buffer = new StringBuilder();
-
-				if (input is Keysharp.Core.Map map)
-				{
-					_ = buffer.Append(BlockOpen);
-					var first = true;
-
-					foreach (var (k, v) in map)
-					{
-						if (first)
-							first = false;
-						else
-							_ = buffer.Append(DefaultMulticast);
-
-						_ = buffer.Append(StringBound);
-						_ = buffer.Append(ForceString(k));
-						_ = buffer.Append(StringBound);
-						_ = buffer.Append(AssignPre);
-
-						if (v == null)
-						{
-							_ = buffer.Append(NullTxt);
-							continue;
-						}
-
-						var obj = v is Array || v is Core.Map || v is Core.FuncObj;// Delegate;
-
-						if (!obj)
-							_ = buffer.Append(StringBound);
-
-						_ = buffer.Append(ForceString(v));
-
-						if (!obj)
-							_ = buffer.Append(StringBound);
-					}
-
-					_ = buffer.Append(BlockClose);
-					return buffer.ToString();
-				}
-				else if (input is Array array)
-				{
-					_ = buffer.Append(ArrayOpen);
-					var first = true;
-
-					foreach (var item in array)
-					{
-						if (first)
-							first = false;
-						else
-							_ = buffer.Append(DefaultMulticast);
-
-						_ = buffer.Append(ForceString(item));
-					}
-
-					_ = buffer.Append(ArrayClose);
-					return buffer.ToString();
-				}
-				else
-					return input.ToString();
-			}
+				return input.ToString();
 		}
 	}
 }

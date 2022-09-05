@@ -5283,7 +5283,7 @@ namespace Keysharp.Core.Windows
 								break;
 
 							case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
-								Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, (uint)UserMessages.AHK_HOOK_HOTKEY);
+								_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, (uint)UserMessages.AHK_HOOK_HOTKEY);
 								break;
 
 							//case (uint)UserMessages.AHK_HOTSTRING: // Added for v1.0.36.02 so that hotstrings work even while an InputBox or other non-standard msg pump is running.
@@ -5328,7 +5328,7 @@ namespace Keysharp.Core.Windows
 									priority = 0;
 
 									if (so.OnEnd is IFuncObj ifo)
-										_ = Threads.LaunchInThread(ifo, new object[] { so });
+										_ = await Threads.LaunchInThread(ifo, new object[] { so });
 								}
 								else
 									continue;

@@ -171,6 +171,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
+
 		internal override void ControlClick(object ctrlorpos, object title, string text, string whichButton, int clickCount, string options, string excludeTitle, string excludeText)
 		{
 			if (!(Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win))
@@ -228,61 +229,13 @@ namespace Keysharp.Core.Windows
 			{
 				if (x != int.MinValue && y != int.MinValue)
 				{
-					var hwndFound = IntPtr.Zero;
-					var rectFound = new RECT();
-					var distanceFound = 0.0;
-					_ = WindowsAPI.EnumChildWindows(win.Handle, (IntPtr hwnd, int lParam) =>
+					var pah = new PointAndHwnd(new POINT
 					{
-						if (!WindowsAPI.IsWindowVisible(hwnd) // Omit hidden controls, like Window Spy does.
-								|| (!WindowsAPI.IsWindowEnabled(hwnd))) // For ControlClick, also omit disabled controls, since testing shows that the OS doesn't post mouse messages to them.
-							return true;
-
-						var rect = new RECT();
-
-						if (!WindowsAPI.GetWindowRect(hwnd, out rect))
-							return true;
-
-						// The given point must be inside aWnd's bounds.  Then, if there is no hwnd found yet or if aWnd
-						// is entirely contained within the previously found hwnd, update to a "better" found window like
-						// Window Spy.  This overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint().
-						// The pixel at (left, top) lies inside the control, whereas MSDN says "the pixel at (right, bottom)
-						// lies immediately outside the rectangle" -- so use < instead of <= below:
-						if (x >= rect.Left && x < rect.Right && y >= rect.Top && y < rect.Bottom)
-						{
-							// If the window's center is closer to the given point, break the tie and have it take
-							// precedence.  This solves the problem where a particular control from a set of overlapping
-							// controls is chosen arbitrarily (based on Z-order) rather than based on something the
-							// user would find more intuitive (the control whose center is closest to the mouse):
-							var centerx = rect.Left + ((double)(rect.Right - rect.Left) / 2);
-							var centery = rect.Top + ((double)(rect.Bottom - rect.Top) / 2);
-							var distance = Math.Sqrt(Math.Pow(x - centerx, 2.0) + Math.Pow(y - centery, 2.0));
-							var update_it = hwndFound == IntPtr.Zero;
-
-							if (!update_it)
-							{
-								// If the new window's rect is entirely contained within the old found-window's rect, update
-								// even if the distance is greater.  Conversely, if the new window's rect entirely encloses
-								// the old window's rect, do not update even if the distance is less:
-								if (rect.Left >= rectFound.Left && rect.Right <= rectFound.Right
-										&& rect.Top >= rectFound.Top && rect.Bottom <= rectFound.Bottom)
-									update_it = true; // New is entirely enclosed by old: update to the New.
-								else if (distance < distanceFound &&
-										 (rectFound.Left < rect.Left || rectFound.Right > rect.Right
-										  || rectFound.Top < rect.Top || rectFound.Bottom > rect.Bottom))
-									update_it = true; // New doesn't entirely enclose old and new's center is closer to the point.
-							}
-
-							if (update_it)
-							{
-								hwndFound = hwnd;
-								rectFound = rect; // And at least one caller uses this returned rect.
-								distanceFound = distance;
-							}
-						}
-
-						return true;
-					}, 0);
-					item = hwndFound != IntPtr.Zero ? new WindowItem(hwndFound) : win;
+						x = x,
+						y = y
+					});
+					win.ChildFindPoint(pah);
+					item = pah.hwndFound != IntPtr.Zero ? new WindowItem(pah.hwndFound) : win;
 					var rect = new Point(x, y);
 					_ = WindowsAPI.ScreenToClient(item.Handle, ref rect);
 					x = rect.X;

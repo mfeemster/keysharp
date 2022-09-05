@@ -6,6 +6,16 @@ using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing w
 
 namespace Keysharp.Core.Common.Window
 {
+	internal class PointAndHwnd
+	{
+		internal PointAndHwnd(POINT p) => pt = p;
+		internal POINT pt;
+		internal RECT rectFound = new RECT();
+		internal IntPtr hwndFound = IntPtr.Zero;
+		internal double distanceFound;
+		internal bool ignoreDisabled;
+	}
+
 	/// <summary>
 	/// Abstraction of a single Platform independend Window
 	/// </summary>
@@ -37,6 +47,7 @@ namespace Keysharp.Core.Common.Window
 		internal bool IsSpecified => Handle != IntPtr.Zero;
 		internal abstract Rectangle Location { get; set; }
 		internal abstract WindowItemBase ParentWindow { get; }
+		internal abstract void ChildFindPoint(PointAndHwnd pah);
 
 		internal virtual string Path
 		{
@@ -79,6 +90,8 @@ namespace Keysharp.Core.Common.Window
 			}
 		}
 
+		public override string ToString() => $"{Handle.ToInt64()}";
+
 		internal abstract Size Size { get; set; }
 		internal abstract long Style { get; set; }
 		internal abstract string[] Text { get; }
@@ -99,7 +112,7 @@ namespace Keysharp.Core.Common.Window
 
 		public override int GetHashCode() => base.GetHashCode();
 
-		public override string ToString() => IsSpecified ? Title : "not specified window";
+		//public override string ToString() => IsSpecified ? Title : "not specified window";
 
 		internal static void DoControlDelay() => DoDelay((long)Accessors.A_ControlDelay);
 

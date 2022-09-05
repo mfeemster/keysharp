@@ -524,9 +524,18 @@ namespace Keysharp.Core
 					var pic = new KeysharpPictureBox(text);
 
 					if (opts.width < 0 && opts.height < 0)
+					{
 						pic.SizeMode = PictureBoxSizeMode.AutoSize;
+					}
 					else if (opts.width < 0 || opts.height < 0)
+					{
+						if (opts.width < 0)
+							pic.ScaleWidth = true;
+						else if (opts.height < 0)
+							pic.ScaleHeight = true;
+
 						pic.SizeMode = PictureBoxSizeMode.Zoom;
+					}
 					else
 						pic.SizeMode = PictureBoxSizeMode.StretchImage;
 
@@ -1056,7 +1065,10 @@ namespace Keysharp.Core
 			if (opts.wp != int.MinValue)
 				w = lastControl != null ? (float)dpiscale * (lastControl.Width + opts.wp) : 0.0f;
 			else if (opts.width != int.MinValue)
-				w = (float)dpiscale * opts.width;
+			{
+				if (opts.width != -1)
+					w = (float)dpiscale * opts.width;
+			}
 			else if (ctrl is KeysharpProgressBar kpb && ((kpb.AddStyle & 0x04) == 0x04))
 				w = fontpixels * 2;
 			else if (ctrl is ComboBox || ctrl is HotkeyBox || ctrl is ListBox || ctrl is NumericUpDown || ctrl is ProgressBar || ctrl is TextBox)
@@ -1080,7 +1092,8 @@ namespace Keysharp.Core
 			{
 				if (opts.height != int.MinValue)
 				{
-					ctrl.Height = (int)Math.Round(dpiscale * opts.height);
+					if (opts.height != -1)
+						ctrl.Height = (int)Math.Round(dpiscale * opts.height);
 				}
 				else
 				{
@@ -1318,9 +1331,9 @@ namespace Keysharp.Core
 
 			if (ctrl is KeysharpPictureBox pbox && System.IO.File.Exists(text))
 			{
-				if (pbox.SizeMode == PictureBoxSizeMode.Zoom)
+				if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber) is Bitmap bmp)
 				{
-					if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber) is Bitmap bmp)
+					if (pbox.SizeMode == PictureBoxSizeMode.Zoom)
 					{
 						var ratio = bmp.Height != 0 ? (double)bmp.Width / bmp.Height : 1;
 
@@ -1331,12 +1344,10 @@ namespace Keysharp.Core
 							pbox.Width = (int)(pbox.Height * ratio);
 						else
 							pbox.Height = (int)(pbox.Width / ratio);
-
-						pbox.Image = bmp;
 					}
+
+					pbox.Image = bmp;
 				}
-				else
-					pbox.Load(text);
 			}
 
 			if (opts.section)

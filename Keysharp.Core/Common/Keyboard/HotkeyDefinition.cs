@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
@@ -2272,12 +2273,12 @@ namespace Keysharp.Core.Common.Keyboard
 			return false;
 		}
 
-		internal void PerformInNewThreadMadeByCaller(HotkeyVariant variant)
+		internal async Task<object> PerformInNewThreadMadeByCallerAsync(HotkeyVariant variant)
 		// Caller is responsible for having called PerformIsAllowed() before calling us.
 		// Caller must have already created a new thread for us, and must close the thread when we return.
 		{
 			if (dialogIsDisplayed) // Another recursion layer is already displaying the warning dialog below.
-				return; // Don't allow new hotkeys to fire during that time.
+				return ""; // Don't allow new hotkeys to fire during that time.
 
 			TimeSpan timeUntilNow;
 			bool displayWarning;
@@ -2332,7 +2333,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// other command that would have unpredictable results due to the displaying
 			// of the dialog itself.
 			if (displayWarning)
-				return;
+				return "";
 
 			// This is stored as an attribute of the script (semi-globally) rather than passed
 			// as a parameter to ExecUntil (and from their on to any calls to SendKeys() that it
@@ -2343,8 +2344,10 @@ namespace Keysharp.Core.Common.Keyboard
 			KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
 			// LAUNCH HOTKEY SUBROUTINE:
 			++variant.existingThreads;  // This is the thread count for this particular hotkey only.
-			var tsk = Threads.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((t) => { --variant.existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
-			tsk.Wait();
+			var tsk = Threads.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//.ContinueWith((t) => { --variant.existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+			_ = await tsk;
+			--variant.existingThreads;
+			//tsk.Wait();
 
 			if (tsk.IsFaulted)//Original checked for result == FAIL, unsure if this accomplishes the same thing.//TODO
 			{
@@ -2373,6 +2376,8 @@ namespace Keysharp.Core.Common.Keyboard
 				// want a buffered hotkey to stay pending for a long time after it was pressed, because
 				// that might lead to unexpected behavior.
 			}
+
+			return tsk;//.Result;
 		}
 
 		internal bool PerformIsAllowed(HotkeyVariant variant) =>

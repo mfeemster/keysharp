@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core.Common.Keyboard
@@ -488,7 +489,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// has been done.  Caller must have already created a new thread for us, and must close the thread when
 		/// we return.
 		/// </summary>
-		internal ResultType PerformInNewThreadMadeByCaller()
+		internal async Task<ResultType> PerformInNewThreadMadeByCaller()
 		{
 			if (existingThreads >= maxThreads)
 				return ResultType.Fail;
@@ -498,7 +499,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// is still timely/accurate -- it seems best to set to "no modifiers":
 			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
 			++existingThreads;  // This is the thread count for this particular hotstring only.
-			_ = Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((_) => --existingThreads);//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+			_ = await Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((_) => --existingThreads);//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			return ResultType.Ok;
 		}
 

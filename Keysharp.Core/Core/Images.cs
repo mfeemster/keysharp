@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
@@ -11,13 +12,14 @@ namespace Keysharp.Core
 		{
 			var filename = obj0.As();
 			var options = obj1.As();
-			long handle = -1;
+			var handle = IntPtr.Zero;
 			long imageType = -1;
 			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";
 			object iconnumber = 0;
+			var disposeHandle = false;
 
 			foreach (var opt in opts)
 			{
@@ -31,26 +33,29 @@ namespace Keysharp.Core
 			if (ext == ".cur")
 			{
 				var cur = new Cursor(filename);
-				handle = cur.Handle.ToInt64();
+				handle = cur.Handle;
 				imageType = 2;
 			}
 			else if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
 			{
+				//Calling GetHbitmap() and GetHicon() creates a persistent handle that keeps the bitmap in memory, and must be destroyed later.
 				if (ImageHelper.IsIcon(filename))
 				{
-					handle = bmp.GetHicon().ToInt64();
+					handle = bmp.GetHicon();
+					disposeHandle = true;
 					imageType = 1;
 				}
 				else
 				{
-					handle = bmp.GetHbitmap().ToInt64();
+					handle = bmp.GetHbitmap();
+					disposeHandle = true;
 					imageType = 0;
 				}
 			}
 
 			return new Keysharp.Core.Map(new Dictionary<object, object>()
 			{
-				{ "Handle", handle },
+				{ "Handle", new GdiHandleHolder(handle, disposeHandle) },
 				{ "ImageType", imageType }
 			});
 		}

@@ -182,8 +182,8 @@ namespace Keysharp.Scripting
 				{
 					var part = code.Substring(x, i - x);
 					//var byref = false;
+					var opt = false;
 					var variadic = false;
-
 					//if (part.StartsWith('&'))
 					//{
 					//  byref = true;
@@ -200,13 +200,22 @@ namespace Keysharp.Scripting
 						variadic = true;
 						part = part.TrimEnd('*');
 					}
+					else if (part.EndsWith('?'))
+					{
+						opt = true;
+						part = part.Trim('?');
+					}
 
 					var cpde = new CodeParameterDeclarationExpression(typeof(object), part);
 
+					if (opt)
+					{
+						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
+						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+					}
 					//if (byref)
 					//  cpde.Direction = FieldDirection.Ref;
-
-					if (variadic)
+					else if (variadic)
 					{
 						cpde.Type = new CodeTypeReference(typeof(object[]));
 						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));

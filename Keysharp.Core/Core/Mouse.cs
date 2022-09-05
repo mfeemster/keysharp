@@ -133,15 +133,22 @@ namespace Keysharp.Core
 		public static Keysharp.Core.Map MouseGetPos(object obj = null)
 		{
 			var mode = obj.Al();
-			var cid = (mode & 2) == 2;
 			var pos = Cursor.Position;
 			var found = Window.WindowManager.WindowFromPoint(pos);
-			var win = found.Handle.ToInt32();
-			var foundLocation = found.Location;
-			var child = found.RealChildWindowFromPoint(new Point(pos.X - foundLocation.X, pos.Y - foundLocation.Y));
-			var control = cid ? child.Handle.ToInt64().ToString() : child.ClassNN;
-			var x = pos.X;
-			var y = pos.Y;
+			var win = found.Handle.ToInt64();
+			var x = (long)pos.X;
+			var y = (long)pos.Y;
+
+			if ((mode & 0x01) == 0)
+			{
+				var pah = new Keysharp.Core.Common.Window.PointAndHwnd(new POINT() { x = pos.X, y = pos.Y });//Find topmost control containing point.
+				found.ChildFindPoint(pah);
+
+				if (pah.hwndFound != IntPtr.Zero)
+					found = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.CreateWindow(pah.hwndFound);
+			}
+
+			var control = (mode & 2) == 2 ? found.Handle.ToInt64().ToString() : found.ClassNN;
 
 			if (Coords.Mouse == CoordModeType.Window)
 			{

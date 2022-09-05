@@ -288,6 +288,7 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
+			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 		}
 
 		protected override void WndProc(ref Message m)
@@ -473,6 +474,34 @@ namespace Keysharp.Core
 	{
 		private readonly int addstyle, removestyle;
 		public string Filename { get; private set; }
+		private bool scaleWidth;
+		private bool scaleHeight;
+
+		public bool ScaleWidth
+		{
+			get => scaleWidth;
+
+			set
+			{
+				scaleWidth = value;
+
+				if (scaleWidth)
+					scaleHeight = false;
+			}
+		}
+
+		public bool ScaleHeight
+		{
+			get => scaleHeight;
+
+			set
+			{
+				scaleHeight = value;
+
+				if (scaleHeight)
+					scaleWidth = false;
+			}
+		}
 
 		protected override CreateParams CreateParams
 		{
@@ -490,6 +519,7 @@ namespace Keysharp.Core
 			Filename = filename;
 			addstyle = _add;
 			removestyle = _remove;
+			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 		}
 
 		protected override void WndProc(ref Message m)

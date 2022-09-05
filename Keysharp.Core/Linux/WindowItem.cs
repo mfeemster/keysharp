@@ -170,6 +170,8 @@ namespace Keysharp.Core.Linux
 
 		internal override WindowItemBase RealChildWindowFromPoint(System.Drawing.Point location) => throw new NotImplementedException();
 
+		internal override void ChildFindPoint(PointAndHwnd pah) => throw new NotImplementedException();
+
 		internal override bool Redraw() => throw new NotImplementedException();
 
 		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, System.Drawing.Point? location = null) => throw new NotImplementedException();

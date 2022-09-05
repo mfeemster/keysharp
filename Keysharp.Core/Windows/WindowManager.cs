@@ -153,6 +153,17 @@ namespace Keysharp.Core.Windows
 			WindowItemBase.DoWinDelay();
 		}
 
-		internal override WindowItemBase WindowFromPoint(Point location) => new WindowItem(WindowsAPI.WindowFromPoint(location));
+		internal override WindowItemBase WindowFromPoint(Point location)
+		{
+			var ctrl = WindowsAPI.WindowFromPoint(location);
+
+			if (ctrl != IntPtr.Zero)
+			{
+				var parent = WindowsAPI.GetNonChildParent(ctrl);//Find the first ancestor that isn't a child.
+				return new WindowItem(parent);
+			}
+
+			return new WindowItem(ctrl);//Just return empty if no window was found.
+		}
 	}
 }

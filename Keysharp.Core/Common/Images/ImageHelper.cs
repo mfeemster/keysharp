@@ -8,6 +8,27 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common
 {
+	internal class GdiHandleHolder : KeysharpObject
+	{
+		IntPtr handle;
+		bool disposeHandle = true;
+
+		internal GdiHandleHolder(IntPtr h, bool d)
+		{
+			handle = h;
+			disposeHandle = d;
+		}
+
+		public static implicit operator long(GdiHandleHolder holder) => holder.handle.ToInt64();
+		public static implicit operator string(GdiHandleHolder holder) => holder.handle.ToInt64().ToString();
+
+		~GdiHandleHolder()
+		{
+			if (disposeHandle && handle != IntPtr.Zero)
+				_ = WindowsAPI.DeleteObject(handle);//Windows specific, figure out how to do this, or if it's even needed on other platforms.//TODO
+		}
+	}
+
 	internal static class ImageHelper
 	{
 		internal static bool IsIcon(string filename)
@@ -74,20 +95,36 @@ namespace Keysharp.Core.Common
 				if (filename.StartsWith("HICON:", StringComparison.OrdinalIgnoreCase))
 				{
 					var hstr = filename.Substring(6);
+					var dontClear = hstr.StartsWith('*');
 
-					if (int.TryParse(hstr, out var handle))
+					if (dontClear)
+						hstr = hstr.Trim('*');
+
+					if (long.TryParse(hstr, out var handle))
 					{
 						var tempico = Icon.FromHandle(new IntPtr(handle));
 						bmp = tempico.ToBitmap();
-						_ = WindowsAPI.DestroyIcon(tempico.Handle);
+
+						if (!dontClear)
+							_ = WindowsAPI.DestroyIcon(tempico.Handle);
 					}
 				}
 				else if (filename.StartsWith("HBITMAP:", StringComparison.OrdinalIgnoreCase))
 				{
 					var hstr = filename.Substring(8);
+					var dontClear = hstr.StartsWith('*');
 
-					if (int.TryParse(hstr, out var handle))
-						bmp = System.Drawing.Image.FromHbitmap(new IntPtr(handle));
+					if (dontClear)
+						hstr = hstr.Trim('*');
+
+					if (long.TryParse(hstr, out var handle))
+					{
+						var ptr = new IntPtr(handle);
+						bmp = System.Drawing.Image.FromHbitmap(ptr);
+
+						if (!dontClear)
+							WindowsAPI.DeleteObject(ptr);
+					}
 				}
 
 				if (bmp == null)//Wasn't a handle, and instead was a filename.

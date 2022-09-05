@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Windows;
 
@@ -370,7 +371,7 @@ namespace Keysharp.Core.Common.Keyboard
 				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
 		}
 
-		internal void ProcessHotkey(int wParamVal, int lParamVal, uint msg)
+		internal async Task<object> ProcessHotkey(int wParamVal, int lParamVal, uint msg)
 		{
 			wParamVal &= HotkeyDefinition.HOTKEY_ID_MASK;
 			var hkId = wParamVal;
@@ -445,7 +446,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd
 													, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
-					return; // No criterion is eligible, so ignore this hotkey event (see other comments).
+					return ""; // No criterion is eligible, so ignore this hotkey event (see other comments).
 
 				// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
 				// but not now.  Seems best to abort (see other comments).
@@ -461,7 +462,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// finishes (this above description applies only when MaxThreadsPerHotkey is 1,
 					// which it usually is).
 					variant.RunAgainAfterFinished(); // Wheel notch count (g->EventInfo below) should be okay because subsequent launches reuse the same thread attributes to do the repeats.
-					return;
+					return "";
 				}
 
 				// Now that above has ensured variant is non-NULL:
@@ -482,8 +483,10 @@ namespace Keysharp.Core.Common.Keyboard
 				Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
 				Accessors.A_SendLevel = variant.inputLevel;
 				Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
-				hk.PerformInNewThreadMadeByCaller(variant);
+				return await hk.PerformInNewThreadMadeByCallerAsync(variant);
 			}
+
+			return "";
 		}
 
 		internal void Remove(HotkeyDefinition hotkey) => _ = hotkeys.Remove(hotkey);
