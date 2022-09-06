@@ -826,15 +826,19 @@ namespace Keysharp.Core.Windows
 			{
 				n--;
 				var buffer = new StringBuilder(32767);
+				buffer.Append((char)buffer.Capacity);
 
-				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINECOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var linecount) == 0)
-					throw new Error($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-				if (n + 1 > linecount.ToInt32())
-					throw new Error($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-				if (WindowsAPI.SendMessage(item.Handle, WindowsAPI.EM_GETLINE, n, buffer) == 0)//For some reason SendMessageTimeout() doesn't work here.
+				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINE, (uint)n, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var _) == 0)
 					throw new Error($"Could not get line for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+				if (buffer.Length == 0)
+				{
+					if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINECOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var linecount) == 0)
+						throw new Error($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+					if (n + 1 > linecount.ToInt32())
+						throw new Error($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				}
 
 				return buffer.ToString();
 			}
