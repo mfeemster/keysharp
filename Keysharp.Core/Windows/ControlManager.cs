@@ -44,12 +44,13 @@ namespace Keysharp.Core.Windows
 			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win && Window.SearchControl(win, ctrl) is WindowItem item)
 			{
 				var res = 0L;
+				var ctrl2 = Control.FromHandle(item.Handle);
 
-				if (Control.FromHandle(item.Handle) is ComboBox cb)
+				if (ctrl2 is ComboBox cb)
 				{
 					res = cb.Items.Add(str);
 				}
-				else if (Control.FromHandle(item.Handle) is ListBox lb)
+				else if (ctrl2 is ListBox lb)
 				{
 					res = lb.Items.Add(str);
 				}
@@ -345,19 +346,31 @@ namespace Keysharp.Core.Windows
 			{
 				uint msg;// = 0, x_msg = 0, y_msg = 0;
 				n--;
+				var ctrl2 = Control.FromHandle(item.Handle);
 
-				if (item.ClassName.Contains("Combo"))
-					msg = WindowsAPI.CB_DELETESTRING;
-				else if (item.ClassName.Contains("List"))
-					msg = WindowsAPI.LB_DELETESTRING;
+				if (ctrl2 is ComboBox cb)
+				{
+					cb.Items.RemoveAt(n);
+				}
+				else if (ctrl2 is ListBox lb)
+				{
+					lb.Items.RemoveAt(n);
+				}
 				else
-					throw new TargetError($"Class name ${item.ClassName} did not contain Combo or List");
+				{
+					if (item.ClassName.Contains("Combo"))
+						msg = WindowsAPI.CB_DELETESTRING;
+					else if (item.ClassName.Contains("List"))
+						msg = WindowsAPI.LB_DELETESTRING;
+					else
+						throw new TargetError($"Class name ${item.ClassName} did not contain Combo or List");
 
-				if (WindowsAPI.SendMessageTimeout(item.Handle, msg, (uint)n, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-					throw new TargetError($"Could not delete combo or list box index ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+					if (WindowsAPI.SendMessageTimeout(item.Handle, msg, (uint)n, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
+						throw new TargetError($"Could not delete combo or list box index ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				if (result.ToInt64() == WindowsAPI.CB_ERR) // CB_ERR == LB_ERR
-					throw new TargetError($"Erroneous item index when deleting combo or list box selection index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+					if (result.ToInt64() == WindowsAPI.CB_ERR) // CB_ERR == LB_ERR
+						throw new TargetError($"Erroneous item index when deleting combo or list box selection index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				}
 
 				WindowItemBase.DoControlDelay();
 			}
@@ -667,11 +680,11 @@ namespace Keysharp.Core.Windows
 				if (Window.SearchControl(win, ctrl) is WindowItem item)
 				{
 					var onoff = Options.OnOff(val);
-					var temp = Control.FromHandle(item.Handle);
+					var ctrl2 = Control.FromHandle(item.Handle);
 
-					if (temp is CheckBox ctrl2)
-						ctrl2.Checked = onoff != null || !ctrl2.Checked;
-					else if (temp is RadioButton rb)
+					if (ctrl2 is CheckBox cb)
+						cb.Checked = onoff != null || !cb.Checked;
+					else if (ctrl2 is RadioButton rb)
 						rb.Checked = onoff != null || !rb.Checked;
 					else
 					{
