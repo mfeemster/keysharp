@@ -424,9 +424,9 @@ MyDDL.OnEvent("Change", "DDLClicked")
 ; │  Combo Box  │
 ; └─────────────┘
 ThirdText4 := MyGui.Add("Text", "x10 cBlue s10", "ComboBox")
-MyCB := MyGui.Add("ComboBox", "x10 y+10 r5 Limit", ["Orange","Purple","Fuchsia","Lime","Aqua"])
+MyCB := MyGui.Add("ComboBox", "x10 y+10 r10", ["Orange","Purple","Fuchsia","Lime","Aqua"])
 CB_Button := MyGui.Add("Button", "s8 x10 y+10", "Show CB Selection")
-CB_AddBtn := MyGui.Add("Button", "s8 x140 yp", "Add 'Yellow' to CB")
+CB_AddBtn := MyGui.Add("Button", "s8 x140 yp +Disabled", "Add 'Yellow' to CB")
 CB_Button.OnEvent("Click", "CB_ButtonClicked")
 CB_AddBtn.OnEvent("Click", "AddYellow")
 
