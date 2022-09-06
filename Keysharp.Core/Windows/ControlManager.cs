@@ -43,22 +43,35 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win && Window.SearchControl(win, ctrl) is WindowItem item)
 			{
-				int msg;
+				var res = 0L;
 
-				if (item.ClassName.Contains("Combo"))
-					msg = WindowsAPI.CB_ADDSTRING;
-				else if (item.ClassName.Contains("List"))
-					msg = WindowsAPI.LB_ADDSTRING;
+				if (Control.FromHandle(item.Handle) is ComboBox cb)
+				{
+					res = cb.Items.Add(str);
+				}
+				else if (Control.FromHandle(item.Handle) is ListBox lb)
+				{
+					res = lb.Items.Add(str);
+				}
 				else
-					throw new TargetError($"Class name ${item.ClassName} did not contain Combo or List");
+				{
+					int msg;
 
-				if (WindowsAPI.SendMessageTimeout(item.Handle, (uint)msg, 0, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-					throw new TargetError($"Could not add ${str} to combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+					if (item.ClassName.Contains("Combo"))
+						msg = WindowsAPI.CB_ADDSTRING;
+					else if (item.ClassName.Contains("List"))
+						msg = WindowsAPI.LB_ADDSTRING;
+					else
+						throw new TargetError($"Class name ${item.ClassName} did not contain Combo or List");
 
-				var res = result.ToInt64();
+					if (WindowsAPI.SendMessageTimeout(item.Handle, (uint)msg, 0, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
+						throw new TargetError($"Could not add ${str} to combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				if (res == WindowsAPI.CB_ERR || res == WindowsAPI.CB_ERRSPACE)
-					throw new Error("Failed");
+					res = result.ToInt64();
+
+					if (res == WindowsAPI.CB_ERR || res == WindowsAPI.CB_ERRSPACE)
+						throw new Error("Failed");
+				}
 
 				WindowItemBase.DoControlDelay();
 				return res + 1L;
