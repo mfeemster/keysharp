@@ -491,9 +491,10 @@ namespace Keysharp.Core
 
 				if (owner != null)
 					_ = owner.Invoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
-				//_ = owner.BeginInvoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
-				else
+				else if (Keysharp.Scripting.Script.mainWindow != null)
 					ret = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString());
+				else
+					ret = MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString();
 
 				nMessageBoxes--;
 				return ret;
