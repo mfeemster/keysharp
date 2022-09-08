@@ -962,7 +962,7 @@ namespace Keysharp.Core.Windows
 						else
 							items.AddRange(lv.Items.Cast<ListViewItem>());
 
-						if (col > 0)
+						if (col >= 0)
 						{
 							if (col >= lv.Columns.Count)
 								throw new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
