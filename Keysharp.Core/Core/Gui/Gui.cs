@@ -283,7 +283,11 @@ namespace Keysharp.Core
 			}
 		}
 
-		public string Title => form.Text;
+		public object Title
+		{
+			get => form.Text;
+			set => form.Text = value.As();
+		}
 
 		internal Font Font { get; set; }
 		internal Control LastContainer { get; set; }
