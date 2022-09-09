@@ -335,7 +335,7 @@ namespace Keysharp.Scripting
 				try
 				{
 					if (item.GetControl() is Control ctrl)
-						ctrl.CheckedInvoke(() => pi.SetValue(item, value));//If it's a gui control, then invoke on the gui thread.
+						ctrl.CheckedInvoke(() => pi.SetValue(item, value), false);//If it's a gui control, then invoke on the gui thread.
 					else
 						pi.SetValue(item, value);
 				}
@@ -398,7 +398,7 @@ namespace Keysharp.Scripting
 					(object, bool) ret = (null, false);
 
 					if (item.GetControl() is Control ctrl)
-						ctrl.CheckedInvoke(() => ret = (match.GetValue(item, null), true));//If it's a gui control, then invoke on the gui thread.
+						ctrl.CheckedInvoke(() => ret = (match.GetValue(item, null), true), false);//If it's a gui control, then invoke on the gui thread.
 					else
 						ret = (match.GetValue(item, null), true);
 

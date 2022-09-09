@@ -349,7 +349,6 @@ namespace Keysharp.Core
 
 							if (height < 0 && pic.ScaleHeight)
 								pic.Height = (int)(pic.Width / ratio);
-
 						}
 
 						var oldimage = pic.Image;
@@ -678,7 +677,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public long GetCount(object obj)
+		public long GetCount(object obj = null)
 		{
 			if (_control is ListView lv)
 			{
