@@ -24,9 +24,17 @@ namespace System.Windows.Forms
 				action();
 		}
 
-		internal static void CheckedInvoke(this Control control, Action action)
+		internal static void CheckedInvoke(this Control control, Action action, bool runIfNull)
 		{
-			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+			if (control == null)
+			{
+				if (runIfNull)
+					action();
+
+				return;
+			}
+
+			if (control.IsDisposed || control.Disposing || !control.IsHandleCreated)
 				return;
 
 			if (control.InvokeRequired)
@@ -35,8 +43,11 @@ namespace System.Windows.Forms
 				action();
 		}
 
-		internal static T CheckedInvoke<T>(this Control control, Func<T> action)
+		internal static T CheckedInvoke<T>(this Control control, Func<T> action, bool runIfNull)
 		{
+			if (control == null)
+				return runIfNull ? action() : default;
+
 			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
 				return default;
 

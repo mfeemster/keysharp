@@ -286,7 +286,7 @@ namespace Keysharp.Core
 					}
 				}
 			};
-			timer.Start();
+			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => timer.Start(), true);
 		}
 
 		/// <summary>
