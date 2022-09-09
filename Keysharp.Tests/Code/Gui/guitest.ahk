@@ -347,7 +347,7 @@ RestoreTitle() {
 ; ┌───────────────────────┐
 ; │  PostMessage Section  │
 ; └───────────────────────┘
-/*
+
 PostInfo := MyGui.Add("Text", "x10 y+10", "Run Notepad - Use PostMessage to show 'About'")
 PostInfo.SetFont("cBlue s8")
 PostBtn1 := MyGui.Add("Button", "x10 y+10", "Show Notepad 'About'")
@@ -361,7 +361,7 @@ AboutNotepad() {
     Sleep(2000)
     WinKill("ahk_exe Notepad.exe")
 }
-*/
+
 
 MyGui.UseGroup()
 Tab.UseTab("Second")
@@ -401,7 +401,18 @@ MyLbBtn2 := MyGui.Add("Button", "x+10 yp", "Add White")
 MyLbBtn2.OnEvent("Click", "AddWhite")
 
 DeleteWhite() {
-    ControlDeleteItem(5, MyListBox)
+
+    Try 
+    {
+        WhiteIndex := ControlFindItem("White", MyListBox)
+    }
+    Catch as e  ; Handles the first error thrown by the block above.
+    {
+        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+        Return
+    }
+    
+    ControlDeleteItem(WhiteIndex, MyListBox)
 }
 
 AddWhite() {
@@ -425,14 +436,32 @@ MyDDL.OnEvent("Change", "DDLClicked")
 ; └─────────────┘
 ThirdText4 := MyGui.Add("Text", "x10 cBlue s10", "ComboBox")
 MyCB := MyGui.Add("ComboBox", "x10 y+10 r10", ["Orange","Purple","Fuchsia","Lime","Aqua"])
-CB_Button := MyGui.Add("Button", "s8 x10 y+10", "Show CB Selection")
-CB_AddBtn := MyGui.Add("Button", "s8 x140 yp +Disabled", "Add 'Yellow' to CB")
+CB_Button := MyGui.Add("Button", "h25 w80 x10 y+10", "CB Selection")
+CB_AddBtn := MyGui.Add("Button", "h25 w80 x90 yp", "Add Yellow")
 CB_Button.OnEvent("Click", "CB_ButtonClicked")
 CB_AddBtn.OnEvent("Click", "AddYellow")
+CB_DeleteBtn := MyGui.Add("Button", "h25 w80 x170 yp ", "Del Yellow")
+CB_DeleteBtn.OnEvent("Click", "DeleteYellow")
 
 AddYellow() {
     ControlAddItem("Yellow", MyCB)
 }
+
+DeleteYellow() {
+
+    Try 
+    {
+        YellowIndex := ControlFindItem("Yellow", MyCB)
+    }
+    Catch as e  ; Handles the first error thrown by the block above.
+    {
+        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+        Return
+    }
+    
+    ControlDeleteItem(YellowIndex, MyCb)
+}
+
 
 
 ; ┌──────────┐
@@ -711,7 +740,7 @@ LV2_Btn1.OnEvent("Click", "LV_Selected")
 LV2_Btn2 := MyGui.Add("Button", "x85 yp w72 h25" ,"Focused")
 LV2_Btn2.OnEvent("Click", "LV_Focused")
 
-LV2_Btn3 := MyGui.Add("Button", "x160 yp wp hp +Disabled", "Column 1")
+LV2_Btn3 := MyGui.Add("Button", "x160 yp wp hp", "Column 1")
 LV2_Btn3.OnEvent("Click", "LV_Col1")
 
 LV2_Btn4 := MyGui.Add("Button", "x240 yp wp hp", "Count")
