@@ -775,7 +775,13 @@ gb2_CZ_Btn3.OnEvent("Click", "ChooseString_CB")
 gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w80 h25", "Click CB")
 gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
 
+gb2_CZ_Text2 := MyGui.Add("Text", "x10 y+10 w325", "Move the mouse to a color. Press Enter")
+gb2_CZ_Text2.SetFont("s8 cBlue")
 
+MyColorLabel := MyGui.Add("Text", "x10 y+10 w200", "Color below, may be hard to see.")
+MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
+MyColorButton := MyGui.Add("Button", "h25 w160 x10 y+10 +Default", "Don't click, press 'Enter'")
+MyColorButton.OnEvent("Click", "GetPix")
 
 
 ; ┌────────────────────────┐
@@ -816,7 +822,6 @@ DeleteWhite2() {
         Return
     }
     
-    ;MsgBox(FuchsiaIndex)
     ControlDeleteItem(WhiteIndex, gb2_CZ_CB)
 }
 
@@ -844,7 +849,6 @@ GetChoice() {
     }
         Catch as e  ; Handles the first error thrown by the block above.
     {
-        ;MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
         MsgBox("You must select an item first.", "ERROR!")
         Return
     }
@@ -964,6 +968,14 @@ LV_CountCol() {
 
 Click_CB() {
     ControlClick("WindowsForms10.ComboBox.app.0.3b95145_r3_ad11", MyGui)
+}
+
+GetPix() {
+    pos := MouseGetPos()
+    MyColorText.Text := PixelGetColor(pos["X"], pos["Y"])
+    ColorString := "Bold s12 c" MyColorText.Text
+    ColorString := StrReplace(ColorString, "0x", "")
+    MyColorText.SetFont(ColorString)
 }
 
 ; ┌───────────────────────────┐
