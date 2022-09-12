@@ -44,14 +44,11 @@ namespace Keysharp.Core
 
 		public Menu(ContextMenuStrip strip = null)
 		{
-			if (strip != null)
-			{
-				MenuItem = strip;
-				GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
-				var newCount = Interlocked.Increment(ref menuCount);
-				GetMenu().Name = $"Menu_{newCount}";
-				dummyHandle = Handle;
-			}
+			MenuItem = strip ?? new ContextMenuStrip();
+			GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
+			var newCount = Interlocked.Increment(ref menuCount);
+			GetMenu().Name = $"Menu_{newCount}";
+			dummyHandle = Handle;
 		}
 
 		public static Menu New() => new Menu();
