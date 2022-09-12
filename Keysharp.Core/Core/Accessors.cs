@@ -1313,7 +1313,7 @@ namespace Keysharp.Core
 
 			set
 			{
-				regView = value.Al() == 64L ? 64L : 32L;
+				regView = value is string s && s.ToLower() == "default" ? 64L : value.Al() == 32L ? 32L : 64L;
 
 				if (!Keysharp.Scripting.Script.isReadyToExecute)
 					regViewDef = regView.Value;

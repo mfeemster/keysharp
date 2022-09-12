@@ -7,11 +7,6 @@ path := "../../../Keysharp.Tests/Code/"
 dir := "./DirExist/SubDir1/SubDir2/SubDir3"
 DirCreate(dir)
 
-if (A_ErrorLevel == 0)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-	
 if (DirExist("./DirExist"))
 	FileAppend, pass, *
 else

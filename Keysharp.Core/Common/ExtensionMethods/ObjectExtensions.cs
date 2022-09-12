@@ -175,6 +175,8 @@ namespace System
 
 		public static string Str(this object obj) => obj != null ? obj.ToString() : "";
 
-		internal static bool IsNotNullOrEmpty(this object ob) => ob != null&& !(ob is string s&& s?.Length == 0);
+		public static bool IsNullOrEmpty(this object obj) => obj == null ? true : obj is string s ? s?.Length == 0 : false;
+
+		public static bool IsNotNullOrEmpty(this object ob) => ob != null&& !(ob is string s&& s?.Length == 0);
 	}
 }

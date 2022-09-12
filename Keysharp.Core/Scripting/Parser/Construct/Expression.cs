@@ -54,6 +54,7 @@ namespace Keysharp.Scripting
 
 							parts[i] = invoke;
 							parts.RemoveAt(n);
+							i--;//Do this to ensure we don't miss a token, particularly in the case of chained method calls such as: MyGui.Add("Button",, "Click Me").OnEvent("Click", "MenuHandler").
 						}
 						else
 						{
@@ -109,6 +110,7 @@ namespace Keysharp.Scripting
 
 						if (part == "[*")//Special case for accessing a property. This is similar to the array construction one below, but different enough to warrant its own section.
 						{
+							//var closing = parts.FirstIndexOf(ob => ob.ToString() == "*]", n);
 							var closing = parts.FindIndex(n, ob => ob.ToString() == "*]");
 
 							if (closing != -1)

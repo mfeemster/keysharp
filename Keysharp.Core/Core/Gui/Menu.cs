@@ -40,14 +40,18 @@ namespace Keysharp.Core
 
 		public long Handle => GetMenu().Handle.ToInt64();
 		public long MenuItemCount => GetMenu().Items.Count;
-		internal ContextMenuStrip MenuItem { get; set; } = new ContextMenuStrip();
+		internal ContextMenuStrip MenuItem { get; set; }
 
-		public Menu()
+		public Menu(ContextMenuStrip strip = null)
 		{
-			GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
-			var newCount = Interlocked.Increment(ref menuCount);
-			GetMenu().Name = $"Menu_{newCount}";
-			dummyHandle = Handle;
+			if (strip != null)
+			{
+				MenuItem = strip;
+				GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
+				var newCount = Interlocked.Increment(ref menuCount);
+				GetMenu().Name = $"Menu_{newCount}";
+				dummyHandle = Handle;
+			}
 		}
 
 		public static Menu New() => new Menu();
@@ -367,10 +371,10 @@ namespace Keysharp.Core
 	{
 		internal MenuStrip MenuStrip { get; } = new MenuStrip();
 
-		public MenuBar()
+		public MenuBar(ContextMenuStrip strip = null)
+			: base(strip)
 		{
 			MenuStrip.Dock = DockStyle.Top;
-			MenuStrip.ImageScalingSize = new System.Drawing.Size(28, 28);
 		}
 
 		protected override long GetIndex(ToolStripItem tsi) => MenuStrip.Items.IndexOf(tsi);

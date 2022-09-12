@@ -15,7 +15,7 @@ namespace System.Windows.Forms
 	{
 		internal static void CheckedBeginInvoke(this Control control, Action action)
 		{
-			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+			if (control == null || !control.IsHandleCreated || control.IsDisposed || control.Disposing)
 				return;
 
 			if (control.InvokeRequired)
@@ -34,7 +34,7 @@ namespace System.Windows.Forms
 				return;
 			}
 
-			if (control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
 				return;
 
 			if (control.InvokeRequired)
@@ -48,7 +48,7 @@ namespace System.Windows.Forms
 			if (control == null)
 				return runIfNull ? action() : default;
 
-			if (control == null || control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
 				return default;
 
 			if (control.InvokeRequired)

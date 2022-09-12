@@ -544,6 +544,13 @@ if (A_RegView == 32)
 else
 	FileAppend, fail, *
 
+A_RegView := "default"
+
+if (A_RegView == 64)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 SetRegView, 64
 
 if (A_RegView == 64)

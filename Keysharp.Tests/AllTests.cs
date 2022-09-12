@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Windows;
@@ -52,6 +53,8 @@ namespace Keysharp.Tests
 			var wday = Accessors.A_WDay;
 			var yday = Accessors.A_YDay;
 			var yweek = Accessors.A_YWeek;
+			var cal = new GregorianCalendar(GregorianCalendarTypes.Localized);
+			var week = cal.GetWeekOfYear(now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
 			Assert.AreEqual(now.Year, yyyy);
 			Assert.AreEqual(now.ToString("MM"), mm);
 			Assert.AreEqual(now.ToString("dd"), dd);
@@ -61,7 +64,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(now.ToString("ddd"), ddd);
 			Assert.AreEqual((long)now.DayOfWeek + 1L, wday);
 			Assert.AreEqual(now.DayOfYear, yday);
-			Assert.AreEqual(now.ToString("yyyy") + Math.Floor((double)(now.DayOfYear / 12)), yweek);
+			Assert.AreEqual($"{now:yyyy}{week:D2}", yweek);
 			Assert.AreEqual(now.ToString("HH"), hh);
 			Assert.AreEqual(now.ToString("mm"), min);
 			Assert.AreEqual(now.ToString("ss"), ss);

@@ -19,10 +19,7 @@ namespace Keysharp.Scripting
 				return;
 
 			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
-			trayMenu = new Menu
-			{
-				MenuItem = Tray.ContextMenuStrip
-			};
+			trayMenu = new Menu(Tray.ContextMenuStrip);
 			var emptyfunc = new Func<object>(() => "");
 			var openfunc = new Func<object>(() =>
 			{

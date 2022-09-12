@@ -75,5 +75,5 @@ if (attr == "A")
 else
   	FileAppend, fail, *
 
-if (Directory.Exists("./FileSetAttrib"))
-	Directory.Delete("./FileSetAttrib", true)
+if (DirExist("./FileSetAttrib"))
+	DirDelete("./FileSetAttrib", true)

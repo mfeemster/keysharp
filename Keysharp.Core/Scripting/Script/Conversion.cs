@@ -44,7 +44,7 @@ namespace Keysharp.Scripting
 				return false;
 			else if (input is bool b)//MATT
 				return b;
-			else if (input is long || input is double || input is decimal || input is float || input is int)
+			else if (input is long || input is double || input is decimal || input is float || input is int || input is byte || input is char)
 				return ForceDouble(input) != 0;
 			else if (input is string s)
 				return !string.IsNullOrEmpty(s);
@@ -82,6 +82,10 @@ namespace Keysharp.Scripting
 			}
 			else if (input is bool b)
 				return b ? 1m : 0m;
+			else if (input is byte by)
+				return (decimal)by;
+			else if (input is char c)
+				return (decimal)c;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -122,6 +126,10 @@ namespace Keysharp.Scripting
 			//return ForceDouble(br.o);
 			else if (input is bool b)//MATT
 				return b ? 1.0 : 0.0;
+			else if (input is byte by)
+				return (double)by;
+			else if (input is char c)
+				return (double)c;
 			else if (input is null)
 				return 0.0;
 			else if (input is int i)//These should never happen.
@@ -177,6 +185,10 @@ namespace Keysharp.Scripting
 			}
 			else if (input is bool b)
 				return b ? 1 : 0;
+			else if (input is byte by)
+				return (int)by;
+			else if (input is char c)
+				return (int)c;
 			else if (input is null)
 				return 0;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
@@ -224,6 +236,10 @@ namespace Keysharp.Scripting
 			}
 			else if (input is bool b)
 				return b ? 1 : 0;
+			else if (input is byte by)
+				return (long)by;
+			else if (input is char c)
+				return (long)c;
 			else if (input is null)
 				return 0;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
@@ -257,7 +273,7 @@ namespace Keysharp.Scripting
 			else if (IsNumeric(input))
 			{
 				var t = input.GetType();
-				var simple = t == typeof(int) || t == typeof(uint) || t == typeof(long);
+				var simple = t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(byte) || t == typeof(char);
 				var integer = simple || (t == typeof(double) && Math.IEEERemainder((double)input, 1) == 0);
 				var format = Keysharp.Core.Accessors.A_FormatNumeric as string;
 				var hex = format.IndexOf('x') != -1;
@@ -295,11 +311,9 @@ namespace Keysharp.Scripting
 						return (string)mi.Invoke(input, new object[] { input });
 			}
 
-			var type = input.GetType();
-			var buffer = new StringBuilder();
-
 			if (input is Keysharp.Core.Map map)
 			{
+				var buffer = new StringBuilder();
 				_ = buffer.Append(BlockOpen);
 				var first = true;
 
@@ -337,6 +351,7 @@ namespace Keysharp.Scripting
 			}
 			else if (input is Array array)
 			{
+				var buffer = new StringBuilder();
 				_ = buffer.Append(ArrayOpen);
 				var first = true;
 

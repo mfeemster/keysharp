@@ -5,11 +5,6 @@ if (DirExist("./DirCreate"))
 
 dir := "./DirCreate/SubDir1/SubDir2/SubDir3"
 DirCreate(dir)
-
-if (A_ErrorLevel == 0)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
 	
 if (DirExist("./DirCreate"))
 	FileAppend, pass, *
