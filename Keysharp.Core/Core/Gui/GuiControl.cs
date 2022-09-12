@@ -1137,7 +1137,7 @@ namespace Keysharp.Core
 
 			if (opts.redraw.HasValue)
 			{
-				if (opts.redraw == true)
+				if (opts.redraw == false)
 					_control.SuspendDrawing();
 				else
 					_control.ResumeDrawing();
@@ -1781,7 +1781,7 @@ namespace Keysharp.Core
 			else if (_control is ListView lv)
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, x, y));
 			else if (_control is TreeView tv)
-				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, tv.SelectedNode.Handle, wasRightClick, x, y));
+				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, tv.SelectedNode.Handle.ToInt64(), wasRightClick, x, y));
 			else
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, _control.Handle.ToInt64().ToString(), wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
 		}
@@ -1893,31 +1893,31 @@ namespace Keysharp.Core
 		private void Tv_AfterCheck(object sender, TreeViewEventArgs e)
 		{
 			if (_control is TreeView)
-				_ = (itemCheckHandlers?.InvokeEventHandlers(this, e.Node.Handle, e.Node.Checked ? 1L : 0L));
+				_ = (itemCheckHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.Checked ? 1L : 0L));
 		}
 
 		private void Tv_AfterExpand(object sender, TreeViewEventArgs e)
 		{
 			if (_control is TreeView)
-				_ = (itemExpandHandlers?.InvokeEventHandlers(this, e.Node.Handle, e.Node.IsExpanded ? 1L : 0L));
+				_ = (itemExpandHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.IsExpanded ? 1L : 0L));
 		}
 
 		private void Tv_AfterSelect(object sender, TreeViewEventArgs e)
 		{
 			if (_control is TreeView)
-				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle));
+				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
 		private void Tv_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
 		{
 			if (_control is TreeView)
-				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Node.Handle));
+				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
 		private void Tv_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
 		{
 			if (_control is TreeView tv && e.Node == tv.SelectedNode)
-				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle));
+				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
 		private void Txt_TextChanged(object sender, EventArgs e)
