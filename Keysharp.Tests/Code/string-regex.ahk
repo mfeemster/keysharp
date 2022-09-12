@@ -143,7 +143,7 @@ else
 
 match := RegExMatch("Michiganroad 72", "(.*) (?<nr>\d+)")
 
-if (match.Count == 2)
+if (match.OutputVarCount == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -248,7 +248,7 @@ else
 
 match := "Michiganroad 72" ~= "(.*) (?<nr>\d+)"
 
-if (match.Count == 2)
+if (match.OutputVarCount == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

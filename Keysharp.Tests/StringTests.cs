@@ -285,7 +285,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(match[0], "txt");
 			Assert.AreEqual(match.Pos(), 16);
 			match = Strings.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)");
-			Assert.AreEqual(match.Count, 2);
+			Assert.AreEqual(match.OutputVarCount, 2);
 			Assert.AreEqual(match[1], "Michiganroad");
 			Assert.AreEqual(match.Name(2), "nr");
 			Assert.AreEqual(match[2], "72");
@@ -516,17 +516,17 @@ namespace Keysharp.Tests
 			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
 			y = Strings.StrReplace(x, ",", ".");
 			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
-			Assert.AreEqual(5L, y.Count);
+			Assert.AreEqual(5L, y.OutputVarCount);
 			y = Strings.StrReplace(x, ",", ".", null, 3);
 			Assert.AreEqual("a.b.c.d,e,f", y.ToString());
-			Assert.AreEqual(3L, y.Count);
+			Assert.AreEqual(3L, y.OutputVarCount);
 			y = Strings.StrReplace(x, "");
 			Assert.AreEqual("", y.ToString());
 			y = Strings.StrReplace(x, "a", "A", "On");
 			Assert.AreEqual("A,b,c,d,e,f", y.ToString());
 			y = Strings.StrReplace(x, "a", "A", "On", 9);
 			Assert.AreEqual("A,b,c,d,e,f", y.ToString());
-			Assert.AreEqual(1L, y.Count);
+			Assert.AreEqual(1L, y.OutputVarCount);
 			Assert.IsTrue(TestScript("string-strreplace", false));//Don't test func version because the ref var must be global.
 		}
 

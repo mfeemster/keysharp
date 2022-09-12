@@ -1273,7 +1273,7 @@ namespace Keysharp.Core
 	{
 		private Match match;
 
-		public long Count => match.Groups.Count - 1;
+		public long OutputVarCount => match.Groups.Count - 1;
 		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public bool Success => match.Success;
 
@@ -1336,12 +1336,12 @@ namespace Keysharp.Core
 	{
 		private string str;
 
-		public long Count { get; }
+		public long OutputVarCount { get; }
 
 		public ReplaceResults(string s, long c)
 		{
 			str = s;
-			Count = c;
+			OutputVarCount = c;
 		}
 
 		public static implicit operator string(ReplaceResults r) => r.str;

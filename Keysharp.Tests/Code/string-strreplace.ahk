@@ -38,7 +38,7 @@ if (y = "a.b.c.d.e.f")
 else
 	FileAppend, fail, *
 
-if (y.Count = 5)
+if (y.OutputVarCount = 5)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -50,7 +50,7 @@ if (y = "a.b.c.d,e,f")
 else
 	FileAppend, fail, *
 
-if (y.Count = 3)
+if (y.OutputVarCount = 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -76,7 +76,7 @@ if (y = "A,b,c,d,e,f")
 else
 	FileAppend, fail, *
 	
-if (y.Count = 1)
+if (y.OutputVarCount = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
