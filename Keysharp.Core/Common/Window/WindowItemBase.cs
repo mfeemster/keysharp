@@ -293,7 +293,7 @@ namespace Keysharp.Core.Common.Window
 				case Core.Keyword_RegEx:
 				{
 					var output = Strings.RegExMatch(a, b, 1);
-					return output.Count > 0 && !string.IsNullOrEmpty(output[0]);
+					return output.OutputVarCount > 0 && !string.IsNullOrEmpty(output[0]);
 					//return new Regex(b).IsMatch(a);
 				}
 			}
@@ -310,6 +310,7 @@ namespace Keysharp.Core.Common.Window
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					return false;
 
+				//              System.Threading.Thread.Sleep(Delay * 50);
 				System.Threading.Thread.Sleep(Delay);
 			}
 
