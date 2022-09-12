@@ -488,16 +488,16 @@ namespace Keysharp.Core
 			}
 			else if (_control is ListView lv)
 			{
-				var lvo = obj.Length > 0 && obj[0] is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
-				var strs = obj.Cast<object>().Skip(1).Flatten().Cast<object>().Select(x => x.Str()).ToList();
+				var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
+				var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
 				GuiHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 			}
 			else if (_control is ListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
-				lb.Items.AddRange(obj.Cast<object>().Flatten().Cast<object>().Select(x => x.Str()).ToArray());
+				lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
 			else if (_control is ComboBox cb)
-				cb.Items.AddRange(obj.Cast<object>().Flatten().Cast<object>().Select(x => x.Str()).ToArray());
+				cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
 			else if (_control is TabControl tc)
-				tc.TabPages.AddRange(obj.Cast<object>().Flatten().Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+				tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
 
 			return null;
 		}
@@ -832,7 +832,7 @@ namespace Keysharp.Core
 				var o = obj.L();
 				var (rownumber, opts, cols) = o.Is2();
 				var lvo = opts is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
-				var strs = o.Count > 2 ? o.Cast<object>().Skip(2).Flatten().Cast<object>().Select(x => x.Str()).ToList() : new List<string>();
+				var strs = o.Count > 2 ? o.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
 				GuiHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
 			}
 		}
@@ -919,7 +919,7 @@ namespace Keysharp.Core
 					if (rownumber < lv.Items.Count)
 					{
 						var lvo = opts is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
-						var strs = o.Count > 2 ? o.Cast<object>().Skip(2).Flatten().Cast<object>().Select(x => x.Str()).ToList() : new List<string>();
+						var strs = o.Count > 2 ? o.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
 						var start = Math.Max(0, rownumber - 1);
 						var end = rownumber == 0 ? lv.Items.Count : Math.Min(rownumber, lv.Items.Count);
 
@@ -1138,9 +1138,16 @@ namespace Keysharp.Core
 			if (opts.redraw.HasValue)
 			{
 				if (opts.redraw == false)
+				{
 					_control.SuspendDrawing();
+				}
 				else
+				{
+					if (_control is KeysharpListView klv)
+						klv.SetListViewColumnSizes();
+
 					_control.ResumeDrawing();
+				}
 			}
 
 			if (opts.c != _control.ForeColor && opts.c != Control.DefaultForeColor)

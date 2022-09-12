@@ -158,6 +158,9 @@ namespace Keysharp.Core
 
 			_ = insert >= 0 ? lv.Items.Insert(Math.Min(insert, lv.Items.Count), item) : lv.Items.Add(item);
 			ApplyListViewOptions(lv, item, lvo);
+
+			if (lv.Items.Count == 1)//Resize on the first item, don't do it for subsequent items because it takes too long. It will be done again when setting opts to +Redraw.
+				lv.SetListViewColumnSizes();
 		}
 
 		internal static void ApplyListViewOptions(ListView lv, ListViewItem item, ListViewOptions lvo)
@@ -171,8 +174,6 @@ namespace Keysharp.Core
 
 			if (lvo.icon >= 0 && lv.SmallImageList != null && lvo.icon < lv.SmallImageList.Images.Count)
 				item.ImageIndex = lvo.icon;
-
-			lv.SetListViewColumnSizes();
 		}
 
 		internal static bool CallMessageHandler(Control control, ref Message m)
@@ -592,7 +593,7 @@ namespace Keysharp.Core
 		//  }
 		//}
 
-		private static void SetListViewColumnSizes(this ListView lv, int width = -2)
+		internal static void SetListViewColumnSizes(this ListView lv, int width = -2)
 		{
 			foreach (ColumnHeader col in lv.Columns)
 				col.Width = width;
