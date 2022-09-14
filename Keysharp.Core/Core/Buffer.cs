@@ -119,8 +119,8 @@ namespace Keysharp.Core
 
 		public StringBuffer(string str = "", int capacity = 256) => sb = new StringBuilder(str, capacity);
 
-		public static implicit operator string(StringBuffer s) => s.ToString();
+		public static implicit operator string(StringBuffer s) => s.sb.ToString();
 
-		public override string ToString() => sb.ToString();
+		public override string ToString() => (string)this;
 	}
 }

@@ -423,7 +423,7 @@ namespace Keysharp.Core
 			string match(Match hit)
 			{
 				n++;
-				return replace;
+				return hit.Result(replace);
 			}
 
 			try
@@ -1279,7 +1279,8 @@ namespace Keysharp.Core
 
 		public RegExResults(Match m) => match = m;
 
-		public static implicit operator bool(RegExResults r) => r.Success;
+		public static implicit operator long(RegExResults r) => r.Pos();
+		public override string ToString() => Pos().ToString();
 
 		public IEnumerator GetEnumerator() => match.Groups.GetEnumerator();
 

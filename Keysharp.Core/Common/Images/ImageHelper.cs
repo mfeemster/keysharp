@@ -20,7 +20,7 @@ namespace Keysharp.Core.Common
 		}
 
 		public static implicit operator long(GdiHandleHolder holder) => holder.handle.ToInt64();
-		public static implicit operator string(GdiHandleHolder holder) => holder.handle.ToInt64().ToString();
+		public override string ToString() => handle.ToInt64().ToString();
 
 		~GdiHandleHolder()
 		{

@@ -295,5 +295,7 @@ namespace Keysharp.Core
 		}
 
 		public static implicit operator long(RunResults r) => r.ExitCode;
+
+		public override string ToString() => ExitCode.ToString();
 	}
 }

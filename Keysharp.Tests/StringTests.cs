@@ -289,7 +289,22 @@ namespace Keysharp.Tests
 			Assert.AreEqual(match[1], "Michiganroad");
 			Assert.AreEqual(match.Name(2), "nr");
 			Assert.AreEqual(match[2], "72");
-			Assert.IsTrue(TestScript("string-regex", true));
+			Assert.IsTrue(TestScript("string-regexmatch", true));
+		}
+
+		[Test, Category("String")]
+		public void RegExReplace()
+		{
+			var match = Strings.RegExReplace("abc123123", "123$", "xyz");
+			Assert.AreEqual(match.ToString(), "abc123xyz");
+			match = Strings.RegExReplace("abc123", "i)^ABC");
+			Assert.AreEqual(match.ToString(), "123");
+			match = Strings.RegExReplace("abcXYZ123", "abc(.*)123", "aaa$1zzz");
+			Assert.AreEqual(match.ToString(), "aaaXYZzzz");
+			match = Strings.RegExReplace("abc123abc456", "abc\\d+", "");
+			Assert.AreEqual(match.ToString(), "");
+			Assert.AreEqual(match.OutputVarCount, 2L);
+			Assert.IsTrue(TestScript("string-regexreplace", true));
 		}
 
 		[Test, Category("String")]
