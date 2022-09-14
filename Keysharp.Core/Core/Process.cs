@@ -225,10 +225,17 @@ namespace Keysharp.Core
 		{
 			var pid = 0;
 			var error = false;
+			var isadmin = false;
 			Process prc = null;
 
 			try
 			{
+				if (target.StartsWith("*runas ", StringComparison.OrdinalIgnoreCase))
+				{
+					isadmin = true;
+					target = target.ReplaceFirst("*runas ", "", StringComparison.OrdinalIgnoreCase);
+				}
+
 				var splits = target.Split("\" ", StringSplitOptions.TrimEntries);
 				target = splits.Length > 0 ? splits[0] : target.Trim();
 				prc = new Process
@@ -265,13 +272,21 @@ namespace Keysharp.Core
 					prc.StartInfo.UseShellExecute = false;
 				}
 
-				_ = prc.Start();
-				pid = prc.Id;
-
-				if (wait)
+				if (isadmin)
 				{
-					prc.WaitForExit();
-					return (pid, (long)prc.ExitCode);
+					prc.StartInfo.UseShellExecute = true;
+					prc.StartInfo.Verb = "runas";
+				}
+
+				if (prc.Start())
+				{
+					pid = prc.Id;
+
+					if (wait)
+					{
+						prc.WaitForExit();
+						return (pid, (long)prc.ExitCode);
+					}
 				}
 			}
 			catch (Exception ex)

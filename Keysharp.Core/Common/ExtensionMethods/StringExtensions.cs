@@ -240,9 +240,9 @@ namespace System//Extension methods should be in the same namespace of the objec
 		/// <param name="search"></param>
 		/// <param name="replace"></param>
 		/// <returns></returns>
-		internal static string ReplaceFirst(this string text, string search, string replace)
+		internal static string ReplaceFirst(this string text, string search, string replace, StringComparison comparison = StringComparison.Ordinal)
 		{
-			var pos = text.IndexOf(search);
+			var pos = text.IndexOf(search, comparison);
 			return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
 		}
 	}
