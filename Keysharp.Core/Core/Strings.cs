@@ -724,7 +724,7 @@ namespace Keysharp.Core
 
 		public static string StrGet(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var len = obj1.Al(long.MinValue);// buf != null ? Math.Min((long)buf.Size, Convert.ToInt32(o[1])) : Convert.ToInt32(o[1]);
+			var len = obj1.Al(long.MinValue);
 			var encoding = obj2 is string s ? File.GetEncoding(s) : Encoding.Unicode;
 			var ptr = IntPtr.Zero;
 			var buf = obj0 as Buffer;
@@ -733,6 +733,8 @@ namespace Keysharp.Core
 				ptr = buf.Ptr;
 			else if (obj0 is long l)
 				ptr = new IntPtr(l);
+			else if (obj0 is IntPtr p)
+				ptr = p;
 
 			if (ptr == IntPtr.Zero)
 				throw new ValueError($"No valid address or buffer was supplied.");
@@ -741,44 +743,31 @@ namespace Keysharp.Core
 
 			unsafe
 			{
-				var finalLen = 0;
-				var raw = (byte*)ptr.ToPointer();
-				byte[] bytes = null;
-
 				if (len == long.MinValue)//No length specified, only copy up to the first 0.
 				{
-					while (raw[finalLen] != 0)
-						finalLen++;
+					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAuto(ptr);
 				}
-				else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size if buf.
+				else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
 				{
+					var raw = (byte*)ptr.ToPointer();
 					var abs = Math.Abs(len);
 
 					if (encoding != Encoding.ASCII)//Sort of crude, UTF-8 can require up to 4 bytes per char.
 						abs *= 2;
 
-					finalLen = (int)(buf != null ? Math.Min((long)buf.Size, abs) : abs);
+					var finalLen = (int)(buf != null ? Math.Min((long)buf.Size, abs) : abs);
+					var bytes = new byte[finalLen];
+
+					for (var i = 0; i < finalLen; i++)
+						bytes[i] = raw[i];
+
+					return encoding.GetString(bytes);
 				}
 				else//Positive length was passed, copy as long as length is not reached and value is not 0.
 				{
-					if (encoding != Encoding.ASCII)
-						len *= 2;
-
-					if (buf != null)
-						len = (int)Math.Min((long)buf.Size, len);
-
-					while (raw[finalLen] != 0 && finalLen < len)
-						finalLen++;
+					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr, (int)len) : Marshal.PtrToStringAuto(ptr, (int)len);
 				}
-
-				bytes = new byte[finalLen];
-
-				for (var i = 0; i < finalLen; i++)
-					bytes[i] = raw[i];
-
-				return encoding.GetString(bytes);
 			}
-			//return len > 0 ? Marshal.PtrToStringAuto(ptr, (int)len) : Marshal.PtrToStringAuto(ptr);
 		}
 
 		public static string String(object obj) => obj.As();
