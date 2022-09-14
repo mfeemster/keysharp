@@ -1280,6 +1280,7 @@ namespace Keysharp.Core
 		public RegExResults(Match m) => match = m;
 
 		public static implicit operator long(RegExResults r) => r.Pos();
+
 		public override string ToString() => Pos().ToString();
 
 		public IEnumerator GetEnumerator() => match.Groups.GetEnumerator();
@@ -1287,19 +1288,19 @@ namespace Keysharp.Core
 		public long Len(object obj)
 		{
 			var g = GetGroup(obj);
-			return g != null ? g.Length : 0;
+			return g != null && g.Success ? g.Length : 0;
 		}
 
 		public string Name(object obj)
 		{
 			var g = GetGroup(obj);
-			return g != null ? g.Name : "";
+			return g != null && g.Success ? g.Name : "";
 		}
 
 		public long Pos(object obj = null)
 		{
 			var g = GetGroup(obj);
-			return g != null ? g.Index + 1 : 0;
+			return g != null && g.Success ? g.Index + 1 : 0;
 		}
 
 		private Group GetGroup(object obj)
@@ -1328,7 +1329,7 @@ namespace Keysharp.Core
 			get
 			{
 				var g = GetGroup(obj);
-				return g != null ? g.Value : "";
+				return g != null && g.Success ? g.Value : "";
 			}
 		}
 	}

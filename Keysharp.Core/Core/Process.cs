@@ -238,6 +238,13 @@ namespace Keysharp.Core
 
 				var splits = target.Split("\" ", StringSplitOptions.TrimEntries);
 				target = splits.Length > 0 ? splits[0] : target.Trim();
+
+				if (target.EndsWith('"') && !target.StartsWith('"'))
+					target = '"' + target;
+
+				if (target.StartsWith('"') && !target.EndsWith('"'))
+					target = target + '"';
+
 				prc = new Process
 				{
 					StartInfo = new ProcessStartInfo
@@ -253,6 +260,8 @@ namespace Keysharp.Core
 
 				if (!string.IsNullOrEmpty(arg))
 					prc.StartInfo.Arguments = arg.Trim();
+				else if (splits.Length > 1)
+					prc.StartInfo.Arguments = splits[1];
 
 				if (!string.IsNullOrEmpty(showMode))
 				{

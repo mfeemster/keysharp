@@ -354,6 +354,8 @@ namespace Keysharp.Core
 			}
 		}
 
+		public static string A_CommandLine => Environment.CommandLine;
+
 		/// <summary>
 		/// The name of the computer as seen on the network.
 		/// </summary>

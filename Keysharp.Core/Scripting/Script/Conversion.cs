@@ -53,6 +53,8 @@ namespace Keysharp.Scripting
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(bool))
 						return (bool)mi.Invoke(input, new object[] { input });
+					else if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(long))
+						return ((long)mi.Invoke(input, new object[] { input }) != 0);
 			}
 
 			return true;//Any non-null, non-empty string is considered true.
