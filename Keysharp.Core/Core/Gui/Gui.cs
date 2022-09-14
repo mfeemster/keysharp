@@ -1333,7 +1333,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			if (ctrl is KeysharpPictureBox pbox && System.IO.File.Exists(text))
+			if (ctrl is KeysharpPictureBox pbox)
 			{
 				if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber) is Bitmap bmp)
 				{
