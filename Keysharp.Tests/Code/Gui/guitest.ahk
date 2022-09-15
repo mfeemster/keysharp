@@ -1,3 +1,6 @@
+If (FileExist(A_Desktop "\MyScreenClip.png"))
+    FileDelete(A_Desktop "\MyScreenClip.png")
+
 GuiBGColor := "BackgroundFF9A9A"
 ;BGColor2 := "0xFFFFAA"
 
@@ -758,6 +761,7 @@ LV2_Btn7.OnEvent("Click", "LV_CountCol")
 MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
 gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w325 h875", "ControlZoo - Group Two")
+MyGui.UseGroup(gb2_CZ)
 
 ;Reserved4 := MyGui.Add("Text", "x10 y20 w325", "Reserved for Future Testing")
 ;Reserved4.SetFont("s12 CBlue")
@@ -783,6 +787,13 @@ MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
 MyColorButton := MyGui.Add("Button", "h25 w160 x10 y+10 +Default", "Don't click, press 'Enter'")
 MyColorButton.OnEvent("Click", "GetPix")
 
+MyScLabel := MyGui.Add("Text", "x10 y+10 w300", "Get screenclip at 100, 100, 200, 200`nSave to 'MyScreenClip.png' on Desktop`nand display below`nN.B.: Reload to grab another clip.").SetFont("s8 cBlue")
+MyScBtn := MyGui.Add("Button", "w200 h25 x10 y+10", "Press to get screenclip").OnEvent("Click", "LoadSC")
+ReloaderBtn := MyGui.Add("Button", "w200 h25 x10 y+5", "Reload").OnEvent("Click", "Reload")
+
+;ReloadMe() {
+;    Reload()
+;}
 
 ; ┌────────────────────────┐
 ; │  ControlZoo Functions  │
@@ -977,6 +988,20 @@ GetPix() {
     ColorString := StrReplace(ColorString, "0x", "")
     MyColorText.SetFont(ColorString)
 }
+
+LoadSC() {
+    If !(FileExist(A_Desktop "\MyScreenClip.png")) {
+        GetScreenClip(100, 100, 200, 200, A_Desktop "\MyScreenClip.png")
+        Sleep(100)
+    }
+    MyPic := LoadPicture(A_Desktop "\MyScreenClip.png")
+    MyLoadedPic := MyGui.Add("Picture", "x10 y365 w200 h200", "HBITMAP:" MyPic["Handle"])
+    Sleep(2000)
+
+    DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
+
+}
+
 
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
