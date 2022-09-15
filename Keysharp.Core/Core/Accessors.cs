@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -354,7 +355,36 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static string A_CommandLine => Environment.CommandLine;
+		public static string A_CommandLine
+		{
+			get
+			{
+				var exe = Application.ExecutablePath;
+
+				if (!exe.StartsWith('"'))
+					exe = '"' + exe;
+
+				if (!exe.EndsWith('"'))
+					exe += '"';
+
+				var args = new List<string>();
+
+				foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
+				{
+					var quotedArg = arg;
+
+					if (!quotedArg.StartsWith('"'))
+						quotedArg = '"' + quotedArg;
+
+					if (!quotedArg.EndsWith('"'))
+						quotedArg += '"';
+
+					args.Add(quotedArg);
+				}
+
+				return args.Count > 0 ? exe + " " + string.Join(' ', args) : exe;
+			}
+		}
 
 		/// <summary>
 		/// The name of the computer as seen on the network.
@@ -1357,7 +1387,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static string A_ScriptFullPath => A_IsCompiled ? GetAssembly().Location : Script.scriptName;
+		public static string A_ScriptFullPath => A_IsCompiled ? A_AhkPath : Script.scriptName;
 
 		/// <summary>
 		/// The unique ID (HWND/handle) of the script's hidden main window.

@@ -224,9 +224,7 @@ namespace Keysharp.Core
 		private static (long, long) RunInternal(string target, string workingDir, string showMode, string arg, bool wait = false)
 		{
 			var pid = 0;
-			var error = false;
 			var isadmin = false;
-			Process prc = null;
 
 			try
 			{
@@ -236,16 +234,22 @@ namespace Keysharp.Core
 					target = target.ReplaceFirst("*runas ", "", StringComparison.OrdinalIgnoreCase);
 				}
 
-				var splits = target.Split("\" ", StringSplitOptions.TrimEntries);
-				target = splits.Length > 0 ? splits[0] : target.Trim();
+				var parsedArgs = "";
 
-				if (target.EndsWith('"') && !target.StartsWith('"'))
-					target = '"' + target;
+				if (target.StartsWith('"'))
+				{
+					var nextQuote = target.IndexOf('"', 1);
+					parsedArgs = target.Substring(nextQuote + 1).Trim();
+					target = target.Substring(0, nextQuote + 1).Trim();
+				}
+				else
+				{
+					var nextSpace = target.IndexOf(' ', 1);
+					parsedArgs = target.Substring(nextSpace + 1).Trim();
+					target = target.Substring(0, nextSpace).Trim();
+				}
 
-				if (target.StartsWith('"') && !target.EndsWith('"'))
-					target = target + '"';
-
-				prc = new Process
+				var prc = new Process
 				{
 					StartInfo = new ProcessStartInfo
 					{
@@ -260,8 +264,8 @@ namespace Keysharp.Core
 
 				if (!string.IsNullOrEmpty(arg))
 					prc.StartInfo.Arguments = arg.Trim();
-				else if (splits.Length > 1)
-					prc.StartInfo.Arguments = splits[1];
+				else if (parsedArgs.Length > 0)
+					prc.StartInfo.Arguments = parsedArgs;
 
 				if (!string.IsNullOrEmpty(showMode))
 				{
@@ -272,8 +276,6 @@ namespace Keysharp.Core
 						case Core.Keyword_Min: prc.StartInfo.WindowStyle = ProcessWindowStyle.Minimized; break;
 
 						case Core.Keyword_Hide: prc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden; break;
-
-						case Core.Keyword_UseErrorLevel: error = true; break;
 					}
 				}
 				else if (prc.StartInfo.UserName != null || prc.StartInfo.Domain != null)
