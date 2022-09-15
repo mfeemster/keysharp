@@ -361,11 +361,14 @@ namespace Keysharp.Core
 			{
 				var exe = Application.ExecutablePath;
 
-				if (!exe.StartsWith('"'))
-					exe = '"' + exe;
+				if (exe.Contains(' '))
+				{
+					if (!exe.StartsWith('"'))
+						exe = '"' + exe;
 
-				if (!exe.EndsWith('"'))
-					exe += '"';
+					if (!exe.EndsWith('"'))
+						exe += '"';
+				}
 
 				var args = new List<string>();
 
@@ -373,11 +376,14 @@ namespace Keysharp.Core
 				{
 					var quotedArg = arg;
 
-					if (!quotedArg.StartsWith('"'))
-						quotedArg = '"' + quotedArg;
+					if (quotedArg.Contains(' '))
+					{
+						if (!quotedArg.StartsWith('"'))
+							quotedArg = '"' + quotedArg;
 
-					if (!quotedArg.EndsWith('"'))
-						quotedArg += '"';
+						if (!quotedArg.EndsWith('"'))
+							quotedArg += '"';
+					}
 
 					args.Add(quotedArg);
 				}
