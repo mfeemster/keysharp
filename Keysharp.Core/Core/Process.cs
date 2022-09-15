@@ -245,8 +245,12 @@ namespace Keysharp.Core
 				else
 				{
 					var nextSpace = target.IndexOf(' ', 1);
-					parsedArgs = target.Substring(nextSpace + 1).Trim();
-					target = target.Substring(0, nextSpace).Trim();
+
+					if (nextSpace > 0)
+					{
+						parsedArgs = target.Substring(nextSpace + 1).Trim();
+						target = target.Substring(0, nextSpace).Trim();
+					}
 				}
 
 				var prc = new Process

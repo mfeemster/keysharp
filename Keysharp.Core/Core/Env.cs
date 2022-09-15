@@ -189,24 +189,21 @@ namespace Keysharp.Core
 
 		public static void HandleCommandLineParams(string[] args)
 		{
-			var arr = new Array();
-
-			for (var i = 0; i < args.Length; i++)
-			{
-				if (args[i].StartsWith('-')
-#if WINDOWS
-						|| args[i].StartsWith('/')
-#endif
-				   )
-				{
-					arr.Add(args[i]);
-
-					if (args[i].StartsWith("/include", StringComparison.OrdinalIgnoreCase) && i < args.Length - 1)
-						arr.Add(args[++i]);
-				}
-			}
-
-			Keysharp.Core.Accessors.A_Args = arr;
+			//          var arr = new Array();
+			//          for (var i = 0; i < args.Length; i++)
+			//          {
+			//              if (args[i].StartsWith('-')
+			//#if WINDOWS
+			//                      || args[i].StartsWith('/')
+			//#endif
+			//                 )
+			//              {
+			//                  arr.Add(args[i]);
+			//                  if (args[i].StartsWith("/include", StringComparison.OrdinalIgnoreCase) && i < args.Length - 1)
+			//                      arr.Add(args[++i]);
+			//              }
+			//          }
+			Keysharp.Core.Accessors.A_Args.AddRange(args);
 		}
 
 		/// <summary>
