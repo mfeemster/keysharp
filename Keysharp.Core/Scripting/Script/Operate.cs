@@ -437,6 +437,22 @@ namespace Keysharp.Scripting
 
 						return true;
 					}
+					else if (left is Core.Buffer buf1 && right is Core.Buffer buf2)
+					{
+						var len1 = (long)buf1.Size;
+						var len2 = (long)buf2.Size;
+
+						if (len1 != len2)
+							return false;
+
+						for (var i = 1; i <= len1; i++)
+						{
+							if (buf1[i] != buf2[i])
+								return false;
+						}
+
+						return true;
+					}
 					else
 						return left == null ? right == null : left.Equals(right);//Will go here if both are double or decimal.
 				}

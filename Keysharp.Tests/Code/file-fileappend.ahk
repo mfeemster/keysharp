@@ -31,14 +31,14 @@ else
 
 data2 := FileRead("./fileappend2.txt", "raw")
 
-if (data = data2)
+if (Buffer(data) = data2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
 FileAppend("abcd", "./fileappend2.txt", "utf-16-raw")
 data2 := FileRead("./fileappend2.txt", "raw")
-data := [ 1, 2, 3, 4, 97, 0, 98, 0, 99, 0, 100, 0 ]
+data := Buffer([ 1, 2, 3, 4, 97, 0, 98, 0, 99, 0, 100, 0 ])
 
 if (data = data2)
 	FileAppend, pass, *

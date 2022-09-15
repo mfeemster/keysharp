@@ -82,6 +82,7 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("BuiltInVars")]
+		[NonParallelizable]
 		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", false));
 
 		[Test, Category("BuiltInVars")]

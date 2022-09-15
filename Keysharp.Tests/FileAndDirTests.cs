@@ -746,9 +746,9 @@ namespace Keysharp.Tests
 			Assert.AreEqual("this", text);
 			text = Keysharp.Core.File.FileRead(dir, "m4 utf-8");
 			Assert.AreEqual("this", text);
-			var buf = Keysharp.Core.File.FileRead(dir, "m4 raw");
-			var buf2 = new Keysharp.Core.Array(new object[] { (int)'t', (int)'h', (int)'i', (int)'s' });
-			Assert.AreEqual(buf2, buf);
+			var buf1 = Keysharp.Core.File.FileRead(dir, "m4 raw");
+			var buf2 = new Keysharp.Core.Buffer(new byte[] { (byte)'t', (byte)'h', (byte)'i', (byte)'s' });
+			Assert.IsTrue((bool)Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, buf1, buf2));
 			Assert.IsTrue(TestScript("file-fileread", true));
 		}
 

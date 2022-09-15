@@ -246,7 +246,7 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void RegExMatch()
+		public void t()
 		{
 			var match = Strings.RegExMatch("abc123abc456", "abc\\d+", 1);
 			Assert.AreEqual(match[0], "abc123");
@@ -285,7 +285,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(match[0], "txt");
 			Assert.AreEqual(match.Pos(), 16);
 			match = Strings.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)");
-			Assert.AreEqual(match.OutputVarCount, 2);
+			Assert.AreEqual(match.Count, 2);
 			Assert.AreEqual(match[1], "Michiganroad");
 			Assert.AreEqual(match.Name(2), "nr");
 			Assert.AreEqual(match[2], "72");

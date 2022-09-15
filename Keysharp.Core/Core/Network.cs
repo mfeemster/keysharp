@@ -119,7 +119,7 @@ namespace Keysharp.Core
 					value = new string[arr.Count];
 
 					for (var i = 0; i < arr.Count; i++)
-						value[i] = arr[i].ToString();
+						value[i] = arr.array[i].ToString();//Access the underlying ArrayList directly for performance.
 				}
 				else
 					continue;

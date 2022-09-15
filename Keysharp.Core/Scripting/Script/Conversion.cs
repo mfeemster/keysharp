@@ -351,7 +351,7 @@ namespace Keysharp.Scripting
 				_ = buffer.Append(BlockClose);
 				return buffer.ToString();
 			}
-			else if (input is Array array)
+			else if (input is Keysharp.Core.Array array)
 			{
 				var buffer = new StringBuilder();
 				_ = buffer.Append(ArrayOpen);

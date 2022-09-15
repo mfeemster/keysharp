@@ -829,7 +829,7 @@ namespace Keysharp.Core
 				try
 				{
 					var temparr = max == -1 ? System.IO.File.ReadAllBytes(filename) : new BinaryReader(System.IO.File.OpenRead(filename)).ReadBytes(max);
-					output = new Array(temparr);
+					output = new Buffer(temparr);
 				}
 				catch (Exception ex)
 				{
@@ -1123,7 +1123,7 @@ namespace Keysharp.Core
 					var len = Math.Min(val.Length, arr.Count);
 
 					for (var i = 0; i < len; i++)
-						arr[i + 1] = val[i];//Array always expects a 1-based index.
+						arr.array[i] = val[i];//Access the underlying ArrayList directly for performance.
 				}
 				else if (buf is Buffer buffer)
 				{

@@ -293,7 +293,7 @@ namespace Keysharp.Core.Common.Window
 				case Core.Keyword_RegEx:
 				{
 					var output = Strings.RegExMatch(a, b, 1);
-					return output.OutputVarCount > 0 && !string.IsNullOrEmpty(output[0]);
+					return output.Count > 0 && !string.IsNullOrEmpty(output[0]);
 					//return new Regex(b).IsMatch(a);
 				}
 			}

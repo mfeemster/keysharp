@@ -172,8 +172,8 @@ namespace Keysharp.Core
 					var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 					_ = map.EnsureCapacity(count);
 
-					for (var i = 0; i < count; i += 2)
-						Insert(temp[i + 1], temp[i + 2]);//Add 1 because the Array indexer internally subtracts 1.
+					for (var i = 0; i < count - 1; i += 2)
+						Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
 				}
 				else if (values[0] is Dictionary<string, object> tempm)
 				{

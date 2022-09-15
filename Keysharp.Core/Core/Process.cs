@@ -239,8 +239,14 @@ namespace Keysharp.Core
 				if (target.StartsWith('"'))
 				{
 					var nextQuote = target.IndexOf('"', 1);
-					parsedArgs = target.Substring(nextQuote + 1).Trim();
-					target = target.Substring(0, nextQuote + 1).Trim();
+
+					if (nextQuote > 0)
+					{
+						parsedArgs = target.Substring(nextQuote + 1).Trim();
+						target = target.Substring(0, nextQuote + 1).Trim();
+					}
+					else
+						target += '"';//Add the quote because it was missing, which is very unlikely.
 				}
 				else
 				{

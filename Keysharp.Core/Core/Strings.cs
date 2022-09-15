@@ -745,7 +745,7 @@ namespace Keysharp.Core
 			{
 				if (len == long.MinValue)//No length specified, only copy up to the first 0.
 				{
-					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAuto(ptr);
+					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAnsi(ptr);
 				}
 				else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
 				{
@@ -765,7 +765,7 @@ namespace Keysharp.Core
 				}
 				else//Positive length was passed, copy as long as length is not reached and value is not 0.
 				{
-					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr, (int)len) : Marshal.PtrToStringAuto(ptr, (int)len);
+					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr, (int)len) : Marshal.PtrToStringAnsi(ptr, (int)len);
 				}
 			}
 		}
@@ -1262,7 +1262,7 @@ namespace Keysharp.Core
 	{
 		private Match match;
 
-		public long OutputVarCount => match.Groups.Count - 1;
+		public long Count => match.Groups.Count - 1;
 		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public bool Success => match.Success;
 

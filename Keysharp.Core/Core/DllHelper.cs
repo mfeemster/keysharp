@@ -81,9 +81,9 @@ namespace Keysharp.Core
 				if (o is HashSet<GCHandle> hs)
 					foreach (var gch in hs) gch.Free();
 			};
-			void SetupPointerArg(int i, int n)
+			void SetupPointerArg(int i, int n, object obj = null)
 			{
-				var gch = GCHandle.Alloc(parameters[i], GCHandleType.Pinned);
+				var gch = GCHandle.Alloc(obj != null ? obj : parameters[i], GCHandleType.Pinned);
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
@@ -123,6 +123,8 @@ namespace Keysharp.Core
 				{
 					case "wstr":
 					case "str": type = typeof(string); break;
+
+					case "astr": type = typeof(IntPtr); break;
 
 					case "int64": type = typeof(long); break;
 
@@ -195,6 +197,13 @@ namespace Keysharp.Core
 								else
 									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 							}
+							else if (name == "astr")
+							{
+								if (parameters[i] is string s)
+									SetupPointerArg(i, n, ASCIIEncoding.ASCII.GetBytes(s));
+								else
+									throw new TypeError($"Argument had type astr but was not a string.");
+							}
 							else
 								SetupPointerArg(i, n);
 						}
@@ -203,7 +212,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception e)
 					{
-						throw new TypeError($"Argument type conversion failed: {e.Message}");
+						throw new TypeError($"Argument type conversion failed: {e.Message}.");
 					}
 				}
 			}
@@ -242,7 +251,7 @@ namespace Keysharp.Core
 
 					if (path.Length == 0)
 					{
-						throw new Error($"Unable to locate dll with path {name}");
+						throw new Error($"Unable to locate dll with path {name}.");
 					}
 				}
 				else
@@ -250,7 +259,7 @@ namespace Keysharp.Core
 					z++;
 
 					if (z >= path.Length)
-						throw new Error($"Improperly formatted path of {path}");
+						throw new Error($"Improperly formatted path of {path}.");
 
 					name = path.Substring(z);
 					path = path.Substring(0, z - 1);
@@ -289,7 +298,7 @@ namespace Keysharp.Core
 
 					if (returnName == "HRESULT" && value is int retval && retval < 0)
 					{
-						var ose = new OSError($"DllCall with return type of HRESULT returned {retval}");
+						var ose = new OSError($"DllCall with return type of HRESULT returned {retval}.");
 						ose.Extra = "0x" + ose.Number.ToString("X");
 						throw ose;
 					}
@@ -326,7 +335,7 @@ namespace Keysharp.Core
 				}
 				catch (Exception e)
 				{
-					var error = new Error($"An error occurred when calling {function}: {e.Message}");
+					var error = new Error($"An error occurred when calling {function}: {e.Message}.");
 					error.Extra = "0x" + Accessors.A_LastError.ToString("X");
 					throw error;
 				}
@@ -339,7 +348,7 @@ namespace Keysharp.Core
 			{
 				var val = Keysharp.Core.Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
 				return val == IntPtr.Zero
-					   ? throw new PropertyError($"Passed in object of type {function.GetType()} did not contain a property named Ptr")
+					   ? throw new PropertyError($"Passed in object of type {function.GetType()} did not contain a property named Ptr.")
 					   : val;
 			}
 		}
@@ -376,43 +385,43 @@ namespace Keysharp.Core
 			{
 				case "uint":
 					if (buf != null && (off + 4 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}.");
 
 					return (long)(uint)Marshal.ReadInt32(addr, off);
 
 				case "int":
 					if (buf != null && (off + 4 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}.");
 
 					return (long)Marshal.ReadInt32(addr, off);
 
 				case "short":
 					if (buf != null && (off + 2 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {(long)buf.Size}.");
 
 					return (long)Marshal.ReadInt16(addr, off);
 
 				case "ushort":
 					if (buf != null && (off + 2 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {(long)buf.Size}.");
 
 					return (long)(ushort)Marshal.ReadInt16(addr, off);
 
 				case "char":
 					if (buf != null && (off + 1 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {(long)buf.Size}.");
 
 					return (long)(sbyte)Marshal.ReadByte(addr, off);
 
 				case "uchar":
 					if (buf != null && (off + 1 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {(long)buf.Size}.");
 
 					return (long)Marshal.ReadByte(addr, off);
 
 				case "double":
 					if (buf != null && (off + 8 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}.");
 
 					unsafe
 					{
@@ -423,7 +432,7 @@ namespace Keysharp.Core
 
 				case "float":
 					if (buf != null && (off + 4 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}.");
 
 					unsafe
 					{
@@ -433,7 +442,7 @@ namespace Keysharp.Core
 
 				case "int64":
 					if (buf != null && (off + 8 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}.");
 
 					return Marshal.ReadInt64(addr, off);
 
@@ -441,7 +450,7 @@ namespace Keysharp.Core
 				case "uptr":
 				default:
 					if (buf != null && (off + 8 > (long)buf.Size))
-						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}");
+						throw new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}.");
 
 					return Marshal.ReadIntPtr(addr, off).ToInt64();
 			}
@@ -538,7 +547,7 @@ namespace Keysharp.Core
 					offset += inc;
 				}
 				else
-					throw new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {(long)buf.Size}");
+					throw new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {(long)buf.Size}.");
 			}
 
 			return buf.Ptr.ToInt64() + offset;

@@ -55,12 +55,20 @@ namespace Keysharp.Core
 
 		public void __New(object obj0, object obj1 = null)
 		{
-			if (obj0 is byte[] array)//This will sometimes be passed internally within the library.
+			if (obj0 is byte[] bytearray)//This will sometimes be passed internally within the library.
 			{
-				Size = array.Length;
+				Size = bytearray.Length;
 
-				for (var i = 0; i < array.Length; i++)
-					Marshal.WriteByte(Ptr, i, array[i]);
+				for (var i = 0; i < bytearray.Length; i++)
+					Marshal.WriteByte(Ptr, i, bytearray[i]);
+			}
+			else if (obj0 is Array array)
+			{
+				var ct = array.array.Count;
+				Size = ct;
+
+				for (var i = 0; i < ct; i++)
+					Marshal.WriteByte(Ptr, i, (byte)(Keysharp.Scripting.Script.ForceLong(array.array[i])));//Access the underlying ArrayList directly for performance.
 			}
 			else//This will be called by the user.
 			{
