@@ -776,7 +776,7 @@ gb2_CZ_Btn2.OnEvent("Click", "DeleteWhite2")
 gb2_CZ_Btn3 := MyGui.Add("Button", "x170 yp w80 h25", "-> Purple")
 gb2_CZ_Btn3.OnEvent("Click", "ChooseString_CB")
 
-gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w80 h25", "Click CB")
+gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w200 h25", "Click Win+R, show dropdown")
 gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
 
 gb2_CZ_Text2 := MyGui.Add("Text", "x10 y+10 w325", "Move the mouse to a color. Press Enter")
@@ -787,9 +787,10 @@ MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
 MyColorButton := MyGui.Add("Button", "h25 w160 x10 y+10 +Default", "Don't click, press 'Enter'")
 MyColorButton.OnEvent("Click", "GetPix")
 
-MyScLabel := MyGui.Add("Text", "x10 y+10 w300", "Get screenclip at 100, 100, 200, 200`nSave to 'MyScreenClip.png' on Desktop`nand display below`nN.B.: Reload to grab another clip.").SetFont("s8 cBlue")
+MyScLabel := MyGui.Add("Text", "x10 y+10 w300", "Get screenclip at 100, 100, 200, 200`nSave to 'MyScreenClip.png' on Desktop`& display for 2 seconds.")
+MyScLabel.SetFont("s8 cBlue")
 MyScBtn := MyGui.Add("Button", "w200 h25 x10 y+10", "Press to get screenclip").OnEvent("Click", "LoadSC")
-ReloaderBtn := MyGui.Add("Button", "w200 h25 x10 y+5", "Reload").OnEvent("Click", "Reload")
+;ReloaderBtn := MyGui.Add("Button", "w200 h25 x10 y+5", "Reload").OnEvent("Click", "Reload")
 
 ;ReloadMe() {
 ;    Reload()
@@ -978,7 +979,13 @@ LV_CountCol() {
 }
 
 Click_CB() {
-    ControlClick("WindowsForms10.ComboBox.app.0.3b95145_r3_ad11", MyGui)
+    Send("#r")  ; Open the Run dialog.
+    WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
+    ControlShowDropDown("ComboBox1")  ; Show the drop-down list. The second parameter is omitted so that the last found window is used.
+    Sleep(2000)
+    ControlHideDropDown("ComboBox1")  ; Hide the drop-down list.
+    Sleep(1000)
+    Send("{Esc}")  ; Close the Run dialog.
 }
 
 GetPix() {
@@ -995,10 +1002,11 @@ LoadSC() {
         Sleep(100)
     }
     MyPic := LoadPicture(A_Desktop "\MyScreenClip.png")
-    MyLoadedPic := MyGui.Add("Picture", "x10 y365 w200 h200", "HBITMAP:" MyPic["Handle"])
+    MyLoadedPic := MyGui.Add("Picture", "x10 y335 w200 h200", "HBITMAP:" MyPic["Handle"])
     Sleep(2000)
 
     DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
+    FileDelete(A_Desktop "\MyScreenClip.png")
 
 }
 
