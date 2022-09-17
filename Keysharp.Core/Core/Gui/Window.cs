@@ -792,14 +792,96 @@ namespace Keysharp.Core
 				WindowManager.LastFound = win;
 
 			WindowItemBase.DoWinDelay();
-			return win != null ? win.Handle.ToInt64() : 0;
+			return win != null ? win.Handle.ToInt64() : 0L;
 		}
 
-		public static long WinWaitActive(params object[] obj) => WinWaitX((win, seconds) => win.WaitActive(seconds), false, obj);
+		public static long WinWaitActive(params object[] obj)
+		{
+			var b = false;
+			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
+			var start = DateTime.Now;
+			var criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
+			var hwnd = 0L;
 
-		public static long WinWaitClose(params object[] obj) => WinWaitX((win, seconds) => win.WaitClose(seconds), true, obj);
+			while (!b && (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds))
+			{
+				var windows = WindowManager.FindWindowGroup(criteria, true);//Pass true because we must inspect all matching windows to see if any of them are active.
 
-		public static long WinWaitNotActive(params object[] obj) => WinWaitX((win, seconds) => win.WaitNotActive(seconds), false, obj);
+				foreach (var win in windows)
+				{
+					if (win.Active)
+					{
+						WindowManager.LastFound = win;
+						hwnd = win.Handle.ToInt64();
+						b = true;
+						break;
+					}
+				}
+
+				if (!b)
+					System.Threading.Thread.Sleep(100);
+			}
+
+			WindowItemBase.DoWinDelay();
+			return hwnd;
+		}
+
+		public static long WinWaitClose(params object[] obj)
+		{
+			var b = false;
+			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
+			var start = DateTime.Now;
+			var criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
+			var windows = WindowManager.FindWindowGroup(criteria);
+
+			foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
+			{
+				WindowManager.LastFound = win;
+
+				while (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds)
+				{
+					if (!win.Exists)
+					{
+						b = true;
+						break;
+					}
+					else
+						System.Threading.Thread.Sleep(100);
+				}
+			}
+
+			WindowItemBase.DoWinDelay();
+			return b ? 1L : 0L;
+		}
+
+		public static long WinWaitNotActive(params object[] obj)
+		{
+			var b = false;
+			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
+			var start = DateTime.Now;
+			var criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
+			var hwnd = 0L;
+
+			if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			{
+				//Keysharp.Scripting.Script.OutputDebug($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}");
+				//Keysharp.Core.File.FileAppend($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}\n", "out.txt");
+				WindowManager.LastFound = win;
+
+				while (!b && (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds))
+				{
+					if (!win.Active)
+					{
+						b = true;
+						break;
+					}
+
+					System.Threading.Thread.Sleep(100);
+				}
+			}
+			WindowItemBase.DoWinDelay();
+			return b ? 1L : 0L;
+		}
 
 		internal static void DoDelayedAction(Action act)
 		{
@@ -979,41 +1061,6 @@ namespace Keysharp.Core
 
 				WindowItemBase.DoWinDelay();
 			}
-		}
-
-		private static long WinWaitX(Func<WindowItemBase, double, bool> func, bool all, params object[] obj)
-		{
-			var b = true;
-			SearchCriteria crit;
-			List<WindowItemBase> windows;
-			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
-
-			if (all)//Used for WinWaitClose()
-			{
-				do
-				{
-					(windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText);
-
-					foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
-					{
-						WindowManager.LastFound = win;
-						b &= func(win, seconds);//The only way WinWaitClose() can return 0 is if any call to func() times out.
-					}
-				} while (windows.Count > 0);
-			}
-			else
-			{
-				if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
-				{
-					WindowManager.LastFound = win;
-					b &= func(win, seconds);
-				}
-				else
-					b = false;
-			}
-
-			WindowItemBase.DoWinDelay();
-			return b ? 1 : 0;//This return is totally wrong. For example with WinClose(), if no window is found, it returns 1, and only returns 0 if windows are found and the function times out.
 		}
 	}
 }

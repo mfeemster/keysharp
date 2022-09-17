@@ -37,7 +37,7 @@ namespace Keysharp.Core.Linux
 
 		internal override WindowItemBase FindWindow(SearchCriteria criteria, bool last = false) => throw new NotImplementedException();
 
-		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria) => null;
+		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false) => null;
 
 		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow) => throw new NotImplementedException();
 

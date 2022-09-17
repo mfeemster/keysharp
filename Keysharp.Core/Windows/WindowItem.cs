@@ -17,13 +17,23 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Active
 		{
-			get => IsSpecified&& WindowManagerProvider.Instance.ActiveWindow.Handle == Handle;
+			get
+			{
+				if (IsSpecified && WindowManagerProvider.Instance.ActiveWindow is WindowItem item)
+				{
+					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
+					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
+					if (item.Handle.ToInt64() == Handle.ToInt64())
+						return true;
+				}
 
+				return false;
+			}
 			set
 			{
 				if (IsSpecified)
 				{
-					if (WindowManagerProvider.Instance.ActiveWindow.Handle != Handle)
+					if (WindowManagerProvider.Instance.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
 						if (WindowsAPI.IsIconic(Handle))
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
