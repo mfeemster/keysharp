@@ -194,12 +194,15 @@ namespace Keysharp.Core.Common
 					}
 					else
 					{
-						bmp = (Bitmap)System.Drawing.Image.FromFile(filename);
-
-						if (w > 0 || h > 0)
+						using (var tempBmp = (Bitmap)System.Drawing.Image.FromFile(filename))//Must make a copy because the original will keep the file locked.
 						{
-							if (bmp.Width != w || bmp.Height != h)
-								bmp = bmp.Resize(w, h);
+							bmp = new Bitmap(tempBmp);
+
+							if (w > 0 || h > 0)
+							{
+								if (bmp.Width != w || bmp.Height != h)
+									bmp = bmp.Resize(w, h);
+							}
 						}
 					}
 				}
