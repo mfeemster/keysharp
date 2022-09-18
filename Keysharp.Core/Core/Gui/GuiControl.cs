@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -17,11 +18,9 @@ namespace Keysharp.Core
 		private readonly Control _control;
 		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();//These all need to be converted to FuncObj.
 		private readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
-
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
-
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
@@ -369,12 +368,16 @@ namespace Keysharp.Core
 
 		internal Control Ctrl => _control;
 
-		public GuiControl(Gui gui, Control control, string name)
+		public GuiControl(Gui gui, Control control, string name, bool wrap = false)
 		{
 			Gui = gui;
 			typename = name;
 			_control = control;
 			_control.Tag = this;
+
+			if (wrap)//Just a holder for the controls in the main window.
+				return;
+
 			_control.Click += _control_Click;
 			_control.DoubleClick += _control_DoubleClick;
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -9,8 +10,26 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
 {
+	public class MessageFilter : IMessageFilter
+	{
+		public bool PreFilterMessage(ref Message m)
+		{
+			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
+			{
+				var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
+
+				if (res.IsNotNullOrEmpty())
+					return true;
+			}
+
+			return false;
+		}
+	}
+
 	public static class GuiHelper
 	{
+		internal static ConcurrentDictionary<long, List<IFuncObj>> onMessageHandlers = new ();
+
 		[ThreadStatic]
 		private static string defaultGui;
 
@@ -66,9 +85,9 @@ namespace Keysharp.Core
 			return Icon.ExtractAssociatedIcon(source);
 		}
 
-		public static GuiControl GuiCtrlFromHwnd(object obj) => Control.FromHandle(new IntPtr(obj.Al())) is Control c&& c.Tag is GuiControl gui ? gui : null;
+		public static object GuiCtrlFromHwnd(object obj) => Control.FromHandle(new IntPtr(obj.Al())) is Control c&& c.Tag is GuiControl gui ? gui : "";
 
-		public static Gui GuiFromHwnd(object obj0, object obj1 = null)
+		public static object GuiFromHwnd(object obj0, object obj1 = null)
 		{
 			var hwnd = obj0.Al();
 			var recurse = obj1.Ab();
@@ -90,7 +109,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			return null;
+			return "";
 		}
 
 		/// <summary>

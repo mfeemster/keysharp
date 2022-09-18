@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -64,6 +65,8 @@ namespace Keysharp.Scripting
 		internal static FuncObj lastHotFunc;
 
 		internal static MainWindow mainWindow;
+
+		internal static Gui mainWindowGui;
 
 		internal static int MAX_THREADS_LIMIT = 0xFF;
 
@@ -235,7 +238,7 @@ namespace Keysharp.Scripting
 
 		public static void RunMainWindow(string title)
 		{
-			mainWindow = new MainWindow();
+			mainWindow =  new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
 				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
@@ -248,6 +251,7 @@ namespace Keysharp.Scripting
 			Parser.Persistent = true;
 			mainWindow.Load += MainWindow_Load;
 			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
+			mainWindowGui = new Gui(null, null, null, mainWindow);
 			Application.Run(mainWindow);
 		}
 
