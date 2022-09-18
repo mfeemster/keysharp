@@ -315,44 +315,56 @@ namespace Keysharp.Core
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public Gui(object obj0 = null, object obj1 = null, object obj2 = null)
+		public Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
 			var options = obj0.As();
 			var caption = obj1.As();
 			var eventObj = obj2;
 			var newCount = Interlocked.Increment(ref windowCount);
-			form = new KeysharpForm
+
+			if (obj3 is KeysharpForm kf)
 			{
-				//form.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-				//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-				//form.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
-				//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-				//form.ClientSize = new System.Drawing.Size(1042, 792);
-				eventObj = eventObj,
-				Icon = Keysharp.Core.Properties.Resources.Keysharp_ico,
-				Name = $"Keysharp window {newCount}",
-				KeyPreview = true,
-				StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
-				Text = caption != "" ? caption : Accessors.A_ScriptName,
-				Tag = this
-			};
-			//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
-			//be done in designer-generated code. It appears to cause layout problems.
+				form = kf;
+
+				foreach (var ctrl in form.GetAllControlsRecusrvive<Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
+					ctrl.Tag = new GuiControl(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
+			}
+			else
+			{
+				form = new KeysharpForm
+				{
+					//form.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+					//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+					//form.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
+					//form.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+					//form.ClientSize = new System.Drawing.Size(1042, 792);
+					eventObj = eventObj,
+					Icon = Keysharp.Core.Properties.Resources.Keysharp_ico,
+					Name = $"Keysharp window {newCount}",
+					KeyPreview = true,
+					StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
+					Text = caption != "" ? caption : Accessors.A_ScriptName,
+					Tag = this
+				};
+				//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
+				//be done in designer-generated code. It appears to cause layout problems.
+				Opt(options);
+				//var formHandle = form.Handle;//Force the creation.
+				form.FormClosing += Form_FormClosing;
+				form.KeyDown += Form_KeyDown;
+				form.Resize += Form_Resize;
+				form.MouseDown += Form_MouseDown;
+				form.DragDrop += Form_DragDrop;
+				form.Load += Form_Load;
+				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
+				var y = (int)Math.Round(form.Font.Size * 0.75f);
+				form.Margin = new Padding(x, y, x, y);
+			}
+
 			LastContainer = form;
-			Opt(options);
-			//var formHandle = form.Handle;//Force the creation.
-			form.FormClosing += Form_FormClosing;
-			form.KeyDown += Form_KeyDown;
-			form.Resize += Form_Resize;
-			form.MouseDown += Form_MouseDown;
-			form.DragDrop += Form_DragDrop;
 			allGuiHwnds[form.Handle.ToInt64()] = this;
-			form.Load += Form_Load;
 			//form.Show();//We must first show so that all handles are created and geometries calculated. We quickly hide in Form_Load().
 			Keysharp.Core.Common.Window.WindowManagerProvider.Instance.LastFound = new WindowItem(form.Handle);
-			var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
-			var y = (int)Math.Round(form.Font.Size * 0.75f);
-			form.Margin = new Padding(x, y, x, y);
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);

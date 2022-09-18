@@ -94,9 +94,18 @@ namespace Keysharp.Core
 		/// <param name="number">The number of the message to monitor.</param>
 		/// <param name="function">The name of a function to call whenever the specified message is received.</param>
 		/// <param name="maxThreads">The maximum number of concurrent threads to launch per message number.</param>
-		public static void OnMessage(string number, string function, string maxThreads)
+		public static void OnMessage(object obj0, object obj1, object obj2 = null)
 		{
-			// TODO: onmessage
+			FuncObj fo = null;
+
+			if (obj1 is string s)
+				fo = new FuncObj(s);
+			else if (obj1 is FuncObj f)
+				fo = f;
+			else if (obj1 == null)
+				throw new TypeError("Null was supplied for a function object.");
+
+			GuiHelper.onMessageHandlers.GetOrAdd(obj0.Al()).ModifyEventHandlers(fo, obj2.Al(1));
 		}
 
 		/// <summary>

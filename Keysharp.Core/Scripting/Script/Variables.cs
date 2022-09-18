@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Windows;
 
@@ -107,6 +108,7 @@ namespace Keysharp.Scripting
 
 				Reflections.Initialize();//For some reason, the program will crash if these are delay initialized, so do them now.
 				Accessors.SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
+				Application.AddMessageFilter(new Keysharp.Core.MessageFilter());
 			}
 
 			public object GetVariable(string key)
