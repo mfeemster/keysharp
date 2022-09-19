@@ -259,7 +259,7 @@ namespace Keysharp.Core.Windows
 
 		internal override string Title
 		{
-			get => !IsSpecified ? string.Empty : WindowsAPI.GetWindowText(Handle);
+			get => !IsSpecified ? string.Empty : WindowsAPI.GetWindowTextTimeout(Handle, 2000);
 
 			set
 			{

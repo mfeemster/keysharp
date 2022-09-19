@@ -178,7 +178,10 @@ namespace Keysharp.Core.Common.Window
 			//Need to implement that.//MATT
 			if (!string.IsNullOrEmpty(criteria.Title))//Put title first because it's the most likely.
 			{
-				if (!TitleCompare(Title, criteria.Title) || ((bool)Keysharp.Core.Accessors.A_DetectHiddenWindows && !WindowsAPI.IsWindowVisible(Handle)))
+				if (!TitleCompare(Title, criteria.Title))
+					return false;
+
+				if (!(bool)Keysharp.Core.Accessors.A_DetectHiddenWindows && !WindowsAPI.IsWindowVisible(Handle))
 					return false;
 			}
 

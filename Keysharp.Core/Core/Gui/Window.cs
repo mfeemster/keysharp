@@ -590,7 +590,7 @@ namespace Keysharp.Core
 		}
 
 
-		public static void WinHide(params object[] obj) => DoDelayedAction(() => SearchWindows(obj, true).ForEach(win => win.Hide()));
+		public static void WinHide(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.Hide()));
 
 		public static void WinKill(params object[] obj)
 		{
@@ -766,7 +766,7 @@ namespace Keysharp.Core
 		{
 			var prev = Accessors.A_DetectHiddenWindows;
 			Accessors.A_DetectHiddenWindows = true;
-			SearchWindows(obj, true).ForEach(win => win.Show());
+			SearchWindows(obj).ForEach(win => win.Show());
 			Accessors.A_DetectHiddenWindows = prev;
 			WindowItemBase.DoWinDelay();
 		}
