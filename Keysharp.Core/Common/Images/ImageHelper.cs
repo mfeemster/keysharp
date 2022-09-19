@@ -163,6 +163,10 @@ namespace Keysharp.Core.Common
 						if (w > 0 && h > 0)
 						{
 							var tempico = icos.FirstOrDefault(tempico => tempico.Width == w && tempico.Height == h);
+
+							if (tempico == null)
+								tempico = icos[0];
+
 							bmp = tempico?.ToBitmap();
 						}
 						else if (iconindex.Ai() is int iconint)
@@ -170,6 +174,9 @@ namespace Keysharp.Core.Common
 							if (iconint < icos.Count)
 								bmp = icos[iconint].ToBitmap();
 						}
+
+						if (bmp == null)
+							bmp = icos[0].ToBitmap();
 
 						if (w > 0 || h > 0)
 						{
