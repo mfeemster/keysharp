@@ -326,11 +326,11 @@ namespace Keysharp.Core.Windows
 				if (!WindowsAPI.GetWindowRect(item.Handle, out temprect))
 					throw new TargetError($"Could not get control rect in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				if (x == int.MinValue)
-					x = (temprect.Right - temprect.Left) / 2;
+				if (ctrlx == int.MinValue)
+					ctrlx = (temprect.Right - temprect.Left) / 2;
 
-				if (y == int.MinValue)
-					y = (temprect.Bottom - temprect.Top) / 2;
+				if (ctrly == int.MinValue)
+					ctrly = (temprect.Bottom - temprect.Top) / 2;
 			}
 
 			var lparam = KeyboardUtils.MakeLong((short)ctrlx, (short)ctrly);
