@@ -163,62 +163,6 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class KeysharpRichEdit : RichTextBox
-	{
-		private readonly int addstyle, removestyle;
-		private CharacterCasing casing = CharacterCasing.Normal;
-
-		protected override CreateParams CreateParams
-		{
-			get
-			{
-				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
-				return cp;
-			}
-		}
-
-		internal CharacterCasing CharacterCasing
-		{
-			get => casing;
-			set => casing = value;
-		}
-
-		public KeysharpRichEdit(int _add = 0, int _remove = 0)
-		{
-			addstyle = _add;
-			removestyle = _remove;
-			KeyPress += KeysharpRichEdit_KeyPress;
-		}
-
-		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
-		{
-			switch (casing)
-			{
-				case CharacterCasing.Normal:
-					break;
-
-				case CharacterCasing.Upper:
-					e.KeyChar = char.ToUpper(e.KeyChar);
-					break;
-
-				case CharacterCasing.Lower:
-					e.KeyChar = char.ToLower(e.KeyChar);
-					break;
-
-				default:
-					break;
-			}
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			if (!GuiHelper.CallMessageHandler(this, ref m))
-				base.WndProc(ref m);
-		}
-	}
-
 	public class KeysharpForm : Form
 	{
 		internal bool beenShown = false;
@@ -289,6 +233,8 @@ namespace Keysharp.Core
 			addstyle = _add;
 			removestyle = _remove;
 			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+			//SetStyle(ControlStyles.Opaque, true);
+			//SetStyle(ControlStyles.OptimizedDoubleBuffer, false);
 		}
 
 		protected override void WndProc(ref Message m)
@@ -470,25 +416,17 @@ namespace Keysharp.Core
 		}
 	}
 
+	/// <summary>
+	/// Derivation that allows setting the interpolation mode.
+	/// Gotten from: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
+	/// </summary>
 	public class KeysharpPictureBox : PictureBox
 	{
 		private readonly int addstyle, removestyle;
-		public string Filename { get; private set; }
-		private bool scaleWidth;
 		private bool scaleHeight;
-
-		public bool ScaleWidth
-		{
-			get => scaleWidth;
-
-			set
-			{
-				scaleWidth = value;
-
-				if (scaleWidth)
-					scaleHeight = false;
-			}
-		}
+		private bool scaleWidth;
+		public string Filename { get; private set; }
+		private InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
 
 		public bool ScaleHeight
 		{
@@ -500,6 +438,19 @@ namespace Keysharp.Core
 
 				if (scaleHeight)
 					scaleWidth = false;
+			}
+		}
+
+		public bool ScaleWidth
+		{
+			get => scaleWidth;
+
+			set
+			{
+				scaleWidth = value;
+
+				if (scaleWidth)
+					scaleHeight = false;
 			}
 		}
 
@@ -520,6 +471,13 @@ namespace Keysharp.Core
 			addstyle = _add;
 			removestyle = _remove;
 			SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+		}
+
+		protected override void OnPaint(PaintEventArgs pe)
+		{
+			pe.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
+			pe.Graphics.InterpolationMode = interpolationMode;
+			base.OnPaint(pe);
 		}
 
 		protected override void WndProc(ref Message m)
@@ -643,6 +601,62 @@ namespace Keysharp.Core
 		}
 	}
 
+	public class KeysharpRichEdit : RichTextBox
+	{
+		private readonly int addstyle, removestyle;
+		private CharacterCasing casing = CharacterCasing.Normal;
+
+		internal CharacterCasing CharacterCasing
+		{
+			get => casing;
+			set => casing = value;
+		}
+
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				var cp = base.CreateParams;
+				cp.Style |= addstyle;
+				cp.Style &= ~removestyle;
+				return cp;
+			}
+		}
+
+		public KeysharpRichEdit(int _add = 0, int _remove = 0)
+		{
+			addstyle = _add;
+			removestyle = _remove;
+			KeyPress += KeysharpRichEdit_KeyPress;
+		}
+
+		protected override void WndProc(ref Message m)
+		{
+			if (!GuiHelper.CallMessageHandler(this, ref m))
+				base.WndProc(ref m);
+		}
+
+		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			switch (casing)
+			{
+				case CharacterCasing.Normal:
+					break;
+
+				case CharacterCasing.Upper:
+					e.KeyChar = char.ToUpper(e.KeyChar);
+					break;
+
+				case CharacterCasing.Lower:
+					e.KeyChar = char.ToLower(e.KeyChar);
+					break;
+
+				default:
+					break;
+			}
+		}
+	}
+
 	public class KeysharpStatusStrip : StatusStrip
 	{
 		private readonly int addstyle, removestyle;
@@ -701,6 +715,15 @@ namespace Keysharp.Core
 			//SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 		}
 
+		internal void SetColor(Color color)
+		{
+			bgcolor = color;
+			DrawMode = TabDrawMode.OwnerDrawFixed;
+
+			foreach (TabPage tp in TabPages)
+				tp.BackColor = color;
+		}
+
 		protected override void OnDrawItem(DrawItemEventArgs e)
 		{
 			if (bgcolor.HasValue)
@@ -724,15 +747,6 @@ namespace Keysharp.Core
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
-		}
-
-		internal void SetColor(Color color)
-		{
-			bgcolor = color;
-			DrawMode = TabDrawMode.OwnerDrawFixed;
-
-			foreach (TabPage tp in TabPages)
-				tp.BackColor = color;
 		}
 
 		/// <summary>

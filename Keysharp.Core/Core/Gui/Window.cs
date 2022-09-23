@@ -297,9 +297,10 @@ namespace Keysharp.Core
 		public static string StatusBarGetText(params object[] obj)
 		{
 			var (part, title, text, excludeTitle, excludeText) = obj.I1O1S3();
-			var win = WindowManager.FindWindow(title, text, excludeTitle, excludeText);
+			WindowItemBase ctrl;
 
-			if (SearchControl(win, "msctls_statusbar321", false) is WindowItemBase ctrl)//This class name will be something else on Linux.//MATT
+			//These class names will be something else on Linux.//MATT
+			if ((ctrl = SearchControl("msctls_statusbar321", title, text, excludeTitle, excludeText, false)) != null)
 			{
 				var sb = new StatusBar(ctrl.Handle);
 				part = Math.Max(0, part - 1);
@@ -310,8 +311,19 @@ namespace Keysharp.Core
 					return sb.Captions[part];
 				}
 			}
-			else if (!Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+			else if ((ctrl = SearchControl("WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1", title, text, excludeTitle, excludeText, true)) != null)
+			{
+				if (Control.FromHandle(ctrl.Handle) is StatusStrip ss)
+				{
+					part = Math.Max(0, part - 1);
+
+					if (part < ss.Items.Count)
+					{
+						WindowItemBase.DoWinDelay();
+						return ss.Items[part].Text;
+					}
+				}
+			}
 
 			WindowItemBase.DoWinDelay();
 			return "";
@@ -896,28 +908,50 @@ namespace Keysharp.Core
 			return val;
 		}
 
-		/// <summary>
-		/// Taken from AHK.
-		/// </summary>
-		/// <param name="parent"></param>
-		/// <param name="className"></param>
-		/// <returns></returns>
-		internal static WindowItemBase SearchControl(WindowItemBase parent, object obj, bool throwifnull = true)
+		internal static WindowItemBase SearchControl(object ctrl, object title, string text, string excludeTitle, string excludeText, bool throwifnull = true)
 		{
-			if (parent == null || obj == null)
-				return null;
+			string s;
 
-			var isClass = false;
+			if (ctrl is long l)
+			{
+				var ptr = new IntPtr(l);
+
+				if (WindowsAPI.IsWindow(ptr))
+					return WindowManagerProvider.Instance.CreateWindow(ptr);
+				else if (throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
+					throw new TargetError($"Could not find child control with handle: {l}");
+				else
+					return null;
+			}
+			else if ((s = (ctrl as string)) == null)
+			{
+				var hwnd = Script.InternalGetPropertyValue(ctrl, "Hwnd");
+				var ptr = IntPtr.Zero;
+
+				if (hwnd.Item1 is long ll)
+					ptr = new IntPtr(ll);
+				else if (hwnd.Item1 is IntPtr p)
+					ptr = p;
+
+				if (WindowsAPI.IsWindow(ptr))
+					return WindowManagerProvider.Instance.CreateWindow(ptr);
+				else if (throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
+					throw new TargetError($"Could not find child control with handle: {ptr.ToInt64()}");
+				else
+					return null;
+			}
+
+			var parent = SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
+
+			if (ctrl == null)
+				return parent;
+
 			var sc = new SearchCriteria();
 			string classortext = null;
 
-			if (obj is long l)
+			if (!string.IsNullOrEmpty(s))
 			{
-				sc.ID = new IntPtr(l);
-			}
-			else if (obj is string s)
-			{
-				isClass = s.Length > 0 && char.IsDigit(s[ ^ 1]);
+				var isClass = s.Length > 0 && char.IsDigit(s[ ^ 1]);
 
 				if (isClass)
 					sc.ClassName = s;
@@ -925,15 +959,6 @@ namespace Keysharp.Core
 					sc.Text = s;
 
 				classortext = s;
-			}
-			else
-			{
-				var hwnd = Script.InternalGetPropertyValue(obj, "Hwnd");
-
-				if (hwnd.Item1 is long ll)
-					sc.ID = new IntPtr(ll);
-				else if (hwnd.Item1 is IntPtr ptr)
-					sc.ID = ptr;
 			}
 
 			var childitem = parent.FirstChild(sc);
@@ -971,7 +996,7 @@ namespace Keysharp.Core
 			}
 
 			if (childitem == null && throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new TargetError($"Could not find child control in window title: {parent.Title}");
+				throw new TargetError($"Could not find child control using text or class name match \"{s}\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 			return childitem;
 		}

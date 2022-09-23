@@ -388,6 +388,7 @@ namespace Keysharp.Core
 			{
 				case Core.Keyword_Text:
 				{
+					//var lbl = new KeysharpLabel(0x20)
 					var lbl = new KeysharpLabel
 					{
 						Font = form.Font
@@ -1044,6 +1045,8 @@ namespace Keysharp.Core
 
 			if (opts.bgtrans)
 				ctrl.BackColor = Color.Transparent;
+				//ctrl.BackColor = form.BackColor;
+			
 			else if (opts.bgcolor.HasValue)
 				ctrl.BackColor = opts.bgcolor.Value;
 
