@@ -732,20 +732,20 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var onoff = Options.OnOff(val);
+				var onoff = Options.ConvertOnOffToggle(val);
 				var ctrl2 = Control.FromHandle(item.Handle);
 
 				if (ctrl2 is CheckBox cb)
-					cb.Checked = onoff != null || !cb.Checked;
+					cb.Checked = onoff == ToggleValueType.Toggle ? !cb.Checked : onoff == ToggleValueType.On;
 				else if (ctrl2 is RadioButton rb)
-					rb.Checked = onoff != null || !rb.Checked;
+					rb.Checked = onoff == ToggleValueType.Toggle ? !rb.Checked : onoff == ToggleValueType.On;
 				else
 				{
 					var ischecked = WindowsAPI.IsChecked(item.Handle);//Check to see if it's already in the desired state.
 
-					if (onoff.IsTrue() && ischecked)
+					if (onoff == ToggleValueType.On && ischecked)
 						return;
-					else if (onoff.IsFalse() && !ischecked)
+					else if (onoff == ToggleValueType.Off && !ischecked)
 						return;
 
 					var thinfo = WindowsAPI.AttachThreadInput(item.Handle, false);//Pass false because the SetActiveWindow() call below is more specific.
