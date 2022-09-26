@@ -449,7 +449,7 @@ namespace Keysharp.Core.Windows
 					throw new TargetError($"Class name ${item.ClassName} did not contain Combo or List");
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, msg, -1, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var index) == 0 || index.ToInt64() == WindowsAPI.CB_ERR) // CB_ERR == LB_ERR
-					throw new Error($"Could not search for combo or list box item string ${str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+					throw new Error($"Could not search for combo or list box item string {str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoControlDelay();
 				return index.ToInt64() + 1;
@@ -767,11 +767,11 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var onoff = Options.OnOff(val);
+				var onoff = Options.ConvertOnOffToggle(val);
 
 				if (Control.FromHandle(item.Handle) is Control ctrl2)
-					ctrl2.Enabled = onoff != null ? true : !ctrl2.Enabled;
-				else if (!WindowsAPI.EnableWindow(item.Handle, onoff != null || !WindowsAPI.IsWindowEnabled(item.Handle)))
+					ctrl2.Enabled = onoff == ToggleValueType.Toggle ? !ctrl2.Enabled : onoff == ToggleValueType.On;
+				else if (!WindowsAPI.EnableWindow(item.Handle, onoff == ToggleValueType.Toggle ? !WindowsAPI.IsWindowEnabled(item.Handle) : onoff == ToggleValueType.On))
 					throw new Error($"Could not enable control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoControlDelay();
