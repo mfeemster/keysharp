@@ -802,7 +802,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSetStyleEx(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{

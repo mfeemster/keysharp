@@ -81,7 +81,7 @@ namespace Keysharp.Core
 
 		public static void ControlSetStyle(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetStyle);
 
-		public static void ControlSetStyleEx(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetStyleEx);
+		public static void ControlSetExStyle(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetExStyle);
 
 		public static void ControlSetText(params object[] obj) => obj.S1O2S3().Splat(ControlManager.ControlSetText);
 

@@ -60,7 +60,7 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract void ControlSetStyleEx(object val, object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal abstract void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText);
 
 		internal abstract void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText);
 
