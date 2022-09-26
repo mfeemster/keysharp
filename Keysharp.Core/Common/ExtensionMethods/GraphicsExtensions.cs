@@ -126,5 +126,7 @@ namespace System.Drawing
 			{ "Width", (rect.Right - rect.Left)* scale },
 			{ "Height", (rect.Bottom - rect.Top)* scale },
 		});
+
+		public static System.Drawing.Point ToPoint(this Keysharp.Core.Windows.RECT rect) => new System.Drawing.Point(rect.Left, rect.Top);
 	}
 }

@@ -636,13 +636,11 @@ namespace Keysharp.Core.Windows
 				if (!WindowsAPI.GetWindowRect(item.Handle, out var rect))
 					throw new Error($"Could not get rect control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				if (WindowsAPI.MapWindowPoints(IntPtr.Zero, item.Handle, ref rect, 2) == 0)
+				if (WindowsAPI.MapWindowPoints(IntPtr.Zero, WindowsAPI.GetParent(item.Handle), ref rect, 2) == 0)
 					throw new Error($"Could not map rect from screen to window in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				return rect.ToPos();
 			}
-			else if (!Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new Error($"Could not find control ${ctrl} to retrieve handle for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 			return new Keysharp.Core.Map();
 		}
@@ -665,8 +663,6 @@ namespace Keysharp.Core.Windows
 				else
 					_ = item.Visible;
 			}
-			else if (!Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new Error($"Could not find control ${ctrl} to retrieve visible state for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 			return 0L;
 		}
