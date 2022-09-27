@@ -8,29 +8,20 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common
 {
-	internal class GdiHandleHolder : KeysharpObject
-	{
-		IntPtr handle;
-		bool disposeHandle = true;
-
-		internal GdiHandleHolder(IntPtr h, bool d)
-		{
-			handle = h;
-			disposeHandle = d;
-		}
-
-		public static implicit operator long(GdiHandleHolder holder) => holder.handle.ToInt64();
-		public override string ToString() => handle.ToInt64().ToString();
-
-		~GdiHandleHolder()
-		{
-			if (disposeHandle && handle != IntPtr.Zero)
-				_ = WindowsAPI.DeleteObject(handle);//Windows specific, figure out how to do this, or if it's even needed on other platforms.//TODO
-		}
-	}
-
 	internal static class ImageHelper
 	{
+		internal static Bitmap ConvertCursorToBitmap(Cursor c)
+		{
+			var bmp = new Bitmap(c.Size.Width, c.Size.Height);
+
+			using (var g = Graphics.FromImage(bmp))
+			{
+				c.Draw(g, new Rectangle(0, 0, c.Size.Width, c.Size.Height));
+			}
+
+			return bmp;
+		}
+
 		internal static bool IsIcon(string filename)
 		{
 			var ext = System.IO.Path.GetExtension(filename).ToLower();
@@ -243,5 +234,27 @@ namespace Keysharp.Core.Common
 
 			return list;
 		}
+	}
+
+	internal class GdiHandleHolder : KeysharpObject
+	{
+		private bool disposeHandle = true;
+		private IntPtr handle;
+
+		internal GdiHandleHolder(IntPtr h, bool d)
+		{
+			handle = h;
+			disposeHandle = d;
+		}
+
+		~GdiHandleHolder()
+		{
+			if (disposeHandle && handle != IntPtr.Zero)
+				_ = WindowsAPI.DeleteObject(handle);//Windows specific, figure out how to do this, or if it's even needed on other platforms.//TODO
+		}
+
+		public static implicit operator long(GdiHandleHolder holder) => holder.handle.ToInt64();
+
+		public override string ToString() => handle.ToInt64().ToString();
 	}
 }
