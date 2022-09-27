@@ -583,15 +583,50 @@ Tab.UseTab("GroupBoxes")
 ; │  if you use GroupBoxes with Tabs.                  │
 ; └────────────────────────────────────────────────────┘
 
+; ┌───────────────────────┐
+; │  Image copying tests  │
+; └───────────────────────┘
 gb1 := MyGui.Add("GroupBox", "x10 y10 w330 h400", "Group One")
 MyGui.UseGroup(gb1)
-MyGui.Add("Text", , "Testing gb1")
+CpText := MyGui.Add("Text", , "gb1 - Image copying tests")
+CpText.SetFont("s8 cBlue")
+MyRE := MyGui.Add("RichEdit", "x10 y+10 w300 h100")
+MyPic := LoadPicture(A_ScriptDir "\Robin.png")
+CopyImageToClipboard("HBITMAP:" MyPic["Handle"])
+ShowBtn := MyGui.Add("Button", "x10 y+10", "Paste Pic")
+ShowBtn.OnEvent("Click", "PastePic")
+
+PastePic() {
+    ControlFocus(MyRE)
+    Send("^v")
+}
+
+; ┌──────────────────────────────┐
+; │  Now load a pic from a file  │
+; └──────────────────────────────┘
+
+LpText := MyGui.Add("Text", "x10 y+10", "Now copy a pic from a file.")
+LpText.SetFont("s8 cBlue")
+MyRE2 := MyGui.Add("RichEdit", "x10 y+10 w300 h100")
+ShowBtn2 := MyGui.Add("Button", "x10 y+10", "Paste from file")
+ShowBtn2.OnEvent("Click", "CopyPicFromFile")
+
+CopyPicFromFile() {
+    SelectedFile := FileSelect("3", "C:\Users\" A_UserName "\Pictures\Keysharp")
+    CopyImageToClipboard(SelectedFile)
+    Sleep(100)
+    ControlFocus(MyRE2)
+    Send("^v")
+}
+
+
 MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 gb2 := MyGui.Add("GroupBox", "x10 y+10 w330 h400", "Group Two")
 MyGui.UseGroup(gb2)
 MyGui.Add("Button", "cBlue s8", "Testing gb2")
 MyGui.Add("Text", , "Testing placement")
+
 MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 MyGui.AddText("s14 cBlue", "This should be below.")
@@ -604,6 +639,7 @@ gb3Edit.OnEvent("Focus", "StartEditTooltip")
 gb3Edit.OnEvent("LoseFocus", "StopToolTip")
 ;gb3Btn1 := MyGui.Add("Button", "s14 cLime", "Send to GB3")
 ;gb3Btn1.OnEvent("Click", "SendToGB3")
+
 MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 gb4 := MyGui.Add("GroupBox", "xp y420 w330 h400", "Group Four")
