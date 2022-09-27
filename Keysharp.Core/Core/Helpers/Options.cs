@@ -42,9 +42,9 @@ namespace Keysharp.Core
 			if (str?.Length == 0)
 				return ToggleValueType.Neutral;
 
-			if (string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
+			if (string.Compare(str, "true", true) == 0 || string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
 
-			if (string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
+			if (string.Compare(str, "false", true) == 0 || string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
 
 			return def;
 		}
