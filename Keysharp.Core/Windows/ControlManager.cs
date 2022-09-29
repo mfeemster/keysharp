@@ -1276,17 +1276,13 @@ namespace Keysharp.Core.Windows
 
 		internal override void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
-			var thehandle = title.ParseLong(false);
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
 					   : Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
 
 			if (item is WindowItem)
 			{
-				if (thehandle != WindowsAPI.HWND_BROADCAST)
-					thehandle = item.Handle.ToInt64();
-
-				if (!WindowsAPI.PostMessage(new IntPtr(thehandle.Value), (uint)msg, new IntPtr(wparam), new IntPtr(lparam)))
+				if (!WindowsAPI.PostMessage(item.Handle, (uint)msg, new IntPtr(wparam), new IntPtr(lparam)))
 					throw new Error($"Could not post message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 			}
 
@@ -1295,24 +1291,17 @@ namespace Keysharp.Core.Windows
 
 		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout)
 		{
-			var thehandle = title.ParseLong(false);
+			long ret;
 			var wbuf = Reflections.SafeGetProperty<Keysharp.Core.Buffer>(wparam, "Ptr");
 			var wptr = wbuf != null ? wbuf.Ptr : wparam != null ? new IntPtr(wparam.ParseLong().Value) : IntPtr.Zero;
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
 					   : Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
-
-			if (thehandle == WindowsAPI.HWND_BROADCAST)
-			{
-			}
-			else
-				thehandle = item.Handle.ToInt64();
-
-			long ret;
+			var thehandle = item.Handle;
 
 			if (lparam is string s)
 			{
-				if (WindowsAPI.SendMessageTimeout(new IntPtr(thehandle.Value), (uint)msg, wptr, s, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
+				if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, s, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
 					throw new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				ret = result.ToInt64();
@@ -1322,7 +1311,7 @@ namespace Keysharp.Core.Windows
 				var lbuf = Reflections.SafeGetProperty<Keysharp.Core.Buffer>(lparam, "Ptr");
 				var lptr = lbuf != null ? lbuf.Ptr : new IntPtr(lparam.ParseLong().Value);
 
-				if (WindowsAPI.SendMessageTimeout(new IntPtr(thehandle.Value), (uint)msg, wptr, lptr, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
+				if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, lptr, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
 					throw new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				ret = result.ToInt64();

@@ -246,7 +246,7 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void t()
+		public void RegExMatch()
 		{
 			var match = Strings.RegExMatch("abc123abc456", "abc\\d+", 1);
 			Assert.AreEqual(match[0], "abc123");
