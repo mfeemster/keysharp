@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
@@ -93,6 +94,7 @@ namespace Keysharp.Core
 		    }
 		    }
 		*/
+
 		public static object ToolTip(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
 			var text = obj0.As();
@@ -108,7 +110,12 @@ namespace Keysharp.Core
 				var one_or_both_coords_unspecified = x == int.MinValue || y == int.MinValue;
 
 				if (tooltipForm == null)
-					tooltipForm = Script.mainWindow;
+				{
+					tooltipForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != Keysharp.Scripting.Script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
+
+					if (tooltipForm == null)
+						tooltipForm = Script.mainWindow;
+				}
 
 				if (tooltipForm == null)
 					return "";
