@@ -705,7 +705,7 @@ CZ_ListBox := MyGui.Add("ListBox", "x10 h300 w160", ["Red","Green","Blue","Black
 CZ_Text3 := MyGui.Add("Text", "x10 y+5", "Edit control testing")
 CZ_Text3.SetFont("s8 CBlue")
 
-CZ_Edit1 := MyGui.Add("Edit", "x10 y+5 w160 h100", "Edit controls tests")
+CZ_Edit1 := MyGui.Add("Edit", "x10 y+5 w160 h100")
 
 ; ┌─────────────────────────────────────────────┐
 ; │  ControlZoo - end of Group One, Column One  │
@@ -815,13 +815,17 @@ gb2_CZ_Btn3.OnEvent("Click", "ChooseString_CB")
 gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w200 h25", "Click Win+R, show dropdown")
 gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
 
-gb2_CZ_Text2 := MyGui.Add("Text", "x10 y+10 w325", "Move the mouse to a color. Press Enter")
+gb2_CZ_Text2 := MyGui.Add("Text", "x10 y+10 w325", "Move mouse to color. Press Ctrl+Alt+9.")
 gb2_CZ_Text2.SetFont("s8 cBlue")
 
 MyColorLabel := MyGui.Add("Text", "x10 y+10 w200", "Color below, may be hard to see.")
 MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
-MyColorButton := MyGui.Add("Button", "h25 w160 x10 y+10 +Default", "Don't click, press 'Enter'")
-MyColorButton.OnEvent("Click", "GetPix")
+;MyColorButton := MyGui.Add("Button", "h25 w160 x10 y+10", "Don't click, press 'Enter'")
+;MyColorButton.OnEvent("Click", "GetPix")
+
+^!9:: {
+    GetPix()
+}
 
 MyScLabel := MyGui.Add("Text", "x10 y+10 w300", "Get screenclip at 100, 100, 200, 200`nSave to 'MyScreenClip.png' on Desktop`& display for 2 seconds.")
 MyScLabel.SetFont("s8 cBlue")
@@ -1024,13 +1028,15 @@ Click_CB() {
     Send("{Esc}")  ; Close the Run dialog.
 }
 
+
 GetPix() {
-    pos := MouseGetPos()
-    MyColorText.Text := PixelGetColor(pos["X"], pos["Y"])
+    posMouse := MouseGetPos()
+    MyColorText.Text := PixelGetColor(posMouse["X"], posMouse["Y"])
     ColorString := "Bold s12 c" MyColorText.Text
     ColorString := StrReplace(ColorString, "0x", "")
     MyColorText.SetFont(ColorString)
 }
+
 
 LoadSC() {
     If !(FileExist(A_Desktop "\MyScreenClip.png")) {
