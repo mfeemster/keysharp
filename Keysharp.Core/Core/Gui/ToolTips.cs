@@ -115,38 +115,6 @@ namespace Keysharp.Core
 
 				tooltipForm.CheckedBeginInvoke(() =>
 				{
-					var (ptx, pty) = (0, 0);
-
-					if (one_or_both_coords_unspecified)
-					{
-						var temppt = tooltipForm.PointToClient(System.Windows.Forms.Cursor.Position);//This is in terms of screen coordinates.
-						ptx = temppt.X + (tooltipForm.Width - tooltipForm.ClientRectangle.Width);
-						pty = temppt.Y + (tooltipForm.Height - tooltipForm.ClientRectangle.Height);
-					}
-
-					var tempx = 0;
-					var tempy = 0;
-
-					if (one_or_both_coords_specified)
-					{
-						var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
-
-						if (Mouse.Coords.Tooltip == CoordModeType.Screen)
-						{
-							//These calculations won't put 0,0 exactly in the top right of the screen, but it's close enough, about 5 pixels.
-							var temppt = tooltipForm.PointToClient(new Point(tempx + (tooltipForm.Width - tooltipForm.ClientRectangle.Width),
-																   tempy + (tooltipForm.Height - tooltipForm.ClientRectangle.Height)));
-							tempx = temppt.X - (tooltipForm.Margin.Left + tooltipForm.Margin.Right + SystemInformation.BorderSize.Width);
-							tempy = temppt.Y - (tooltipForm.Margin.Top + tooltipForm.Margin.Bottom + SystemInformation.BorderSize.Height);
-						}
-					}
-
-					if (x != int.MinValue)
-						ptx = x + tempx;
-
-					if (y != int.MinValue)
-						pty = y + tempy;
-
 					if (persistentTooltips[id] == null)
 						persistentTooltips[id] = new ToolTip { Active = true, AutomaticDelay = 0, InitialDelay = 0, ReshowDelay = 0, ShowAlways = true };
 
@@ -154,7 +122,63 @@ namespace Keysharp.Core
 
 					tt.Active = true;
 
-					tt.Show(text, tooltipForm, new Point(ptx, pty));
+					if (one_or_both_coords_unspecified)
+					{
+						var temppt = System.Windows.Forms.Cursor.Position;
+						temppt.X += 10;
+						temppt.Y += 10;
+						var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+						_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, temppt });
+					}
+					else
+					{
+						var tempx = 0;
+						var tempy = 0;
+
+						if (one_or_both_coords_specified)
+						{
+							var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
+
+							if (x != int.MinValue)
+								tempx = x;
+
+							if (y != int.MinValue)
+								tempy = y;
+
+							if (Mouse.Coords.Tooltip == CoordModeType.Screen)
+							{
+								var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+								_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, new Point(tempx, tempy) });
+							}
+							else
+							{
+								//This is the hard case. They've specified coordinates relative to a window, however if that window
+								//is minimized, then it's coordinates are impossible to get. Attempt to use the RestoreBounds property, but that is usually
+								//wrong.
+								if (tooltipForm.WindowState == FormWindowState.Minimized)
+								{
+									var actualbounds = tooltipForm.RestoreBounds;
+									tempx += actualbounds.X;
+									tempy += actualbounds.Y;
+									var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+									_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, new Point(tempx, tempy) });
+								}
+								else// if (tooltipForm.Visible && tooltipForm.Focused)//The coord is relative to a window, and the window is not minimized and is active.
+								{
+									var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
+									var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+									_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, pt });
+								}
+
+								//else//The coord is relative to a window, and the window is not minimized but is also not active.
+								//{
+								//  var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
+								//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+								//  _ = m.Invoke(tt, new object[] { tooltipForm, text, 2, pt });
+								//}
+							}
+						}
+					}
 
 					//AHK did a large amount of work to make sure the tooltip didn't go off screen
 					//and also to ensure it was not behind the mouse cursor. This seems like overkill
@@ -163,6 +187,7 @@ namespace Keysharp.Core
 					//to be entirely on the screen if any portion of it would have been off the screen.
 					//2: If the user needs to move the mouse out of the way, they can just do it.
 				});
+				return tooltipForm.Handle.ToInt64();
 			}
 			else
 			{
