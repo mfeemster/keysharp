@@ -408,7 +408,7 @@ namespace Keysharp.Scripting
 						var vars = string.Join(',', varlist);
 						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
-						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = {coldeclid} is IEnumerator<({enums})> {testid} ? {testid} : ((IEnumerable<({enums})>){coldeclid}).GetEnumerator()"));
+						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid})"));
 						_ = parent.Add(new CodeSnippetExpression("{"));
 						_ = parent.Add(coldecl);
 						_ = parent.Add(iterdecl);

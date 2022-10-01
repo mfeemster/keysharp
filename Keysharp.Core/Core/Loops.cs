@@ -374,6 +374,20 @@ namespace Keysharp.Core
 			//Caller must call Pop() after the loop exits.
 		}
 
+		public static IEnumerator<(object, object)> MakeEnumerator(object obj)
+		{
+			if (obj is IEnumerable<(object, object)> ie0)
+				return ie0.GetEnumerator();
+			else if (obj is IEnumerator<(object, object)> ie1)
+				return ie1;
+			else if (obj is object[] oa)
+				return new Array(oa).GetEnumerator();
+			else if (obj is null)
+				throw new Error($"Object was null and could not be converted to an IEnumerator<object, objecT>.");
+			else
+				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, objecT>.");
+		}
+
 		public static LoopInfo Pop()
 		{
 			var info = loops.Count > 0 ? loops.Pop() : null;

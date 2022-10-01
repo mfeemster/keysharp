@@ -138,7 +138,7 @@ namespace Keysharp.Benchmark
 		{
 			var total = 0.0;
 			var e0 = keysharparray;
-			var e2 = e0 is IEnumerator<(object, object)> e1 ? e1 : ((IEnumerable<(object, object)>)e0).GetEnumerator();
+			var e2 = MakeEnumerator(e0);
 			_ = Push();
 
 			for (
