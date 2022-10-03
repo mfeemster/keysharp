@@ -5328,7 +5328,16 @@ namespace Keysharp.Core.Windows
 									priority = 0;
 
 									if (so.OnEnd is IFuncObj ifo)
-										_ = await Threads.LaunchInThread(ifo, new object[] { so });
+									{
+										try
+										{
+											var tsk = await Threads.LaunchInThread(ifo, new object[] { so });
+										}
+										catch (Error ex)
+										{
+											Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+										}
+									}
 								}
 								else
 									continue;
@@ -5353,7 +5362,15 @@ namespace Keysharp.Core.Windows
 										: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.ScriptObject.OnKeyUp
 										: input_hook.ScriptObject.OnChar) is IFuncObj ifo)
 								{
-									_ = Threads.LaunchInThread(ifo, new object[] { input_hook.ScriptObject, lParamVal, lParamVal >> 16 });
+									try
+									{
+										var tsk = await Threads.LaunchInThread(ifo, new object[] { input_hook.ScriptObject, lParamVal, lParamVal >> 16 });
+									}
+									catch (Error ex)
+									{
+										Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+									}
+
 									priority = 0;
 								}
 								else

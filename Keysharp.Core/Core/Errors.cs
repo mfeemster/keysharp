@@ -78,11 +78,11 @@ namespace Keysharp.Core
 		public override string ToString()
 		{
 			var sb = new StringBuilder(512);
-			_ = sb.AppendLine($"Message: {Message}");
-			_ = sb.AppendLine($"What: {What}");
-			_ = sb.AppendLine($"Extra: {Extra}");
-			_ = sb.AppendLine($"File: {File}");
-			_ = sb.AppendLine($"Line: {Line}");
+			_ = sb.AppendLine($"Message: {Message}\n");
+			_ = sb.AppendLine($"What: {What}\n");
+			_ = sb.AppendLine($"Extra: {Extra}\n");
+			_ = sb.AppendLine($"File: {File}\n");
+			_ = sb.AppendLine($"Line: {Line}\n");
 			_ = sb.AppendLine($"Stack: {Stack}");
 			return sb.ToString();
 		}

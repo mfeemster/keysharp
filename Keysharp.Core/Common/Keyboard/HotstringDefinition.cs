@@ -499,7 +499,20 @@ namespace Keysharp.Core.Common.Keyboard
 			// is still timely/accurate -- it seems best to set to "no modifiers":
 			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
 			++existingThreads;  // This is the thread count for this particular hotstring only.
-			_ = await Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name }).ContinueWith((_) => --existingThreads);//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+
+			try
+			{
+				var tsk = await Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+			}
+			catch (Error ex)
+			{
+				Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}");
+			}
+			finally
+			{
+				--existingThreads;
+			}
+
 			return ResultType.Ok;
 		}
 

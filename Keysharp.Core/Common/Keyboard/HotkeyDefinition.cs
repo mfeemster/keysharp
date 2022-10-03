@@ -2344,8 +2344,18 @@ namespace Keysharp.Core.Common.Keyboard
 			KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
 			// LAUNCH HOTKEY SUBROUTINE:
 			++variant.existingThreads;  // This is the thread count for this particular hotkey only.
-			var tsk = Threads.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//.ContinueWith((t) => { --variant.existingThreads; });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
-			_ = await tsk;
+			Task<object> tsk = null;
+
+			try
+			{
+				tsk = Threads.LaunchInThread(variant.callback, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+				_ = await tsk;
+			}
+			catch (Error ex)
+			{
+				Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}");
+			}
+
 			--variant.existingThreads;
 			//tsk.Wait();
 

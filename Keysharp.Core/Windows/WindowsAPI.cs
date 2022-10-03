@@ -933,6 +933,7 @@ namespace Keysharp.Core.Windows
 		internal const int WM_GETDLGCODE                   = 0x0087;
 		internal const int WM_ENDSESSION                   = 0x0016;
 		internal const int WM_DESTROY                      = 0x0002;
+		internal const int WM_COPYDATA                     = 0x004A;
 		internal const uint ENDSESSION_LOGOFF          = 0x80000000;
 
 		internal const int HTERROR             = -2;
@@ -2038,9 +2039,32 @@ namespace Keysharp.Core.Windows
 			return path;
 		}
 
+		/// <summary>
+		/// Gotten from https://gist.github.com/BoyCook/5075907
+		/// </summary>
+		internal struct COPYDATASTRUCT
+		{
+			public IntPtr dwData;
+			public int cbData;
+			[MarshalAs(UnmanagedType.LPStr)]
+			public string lpData;
+		}
+
+		//For use with WM_COPYDATA and COPYDATASTRUCT
+		[DllImport(user32)]
+		internal static extern int SendMessageTimeout(IntPtr hWnd, int Msg, IntPtr wParam, ref COPYDATASTRUCT lParam,
+				SendMessageTimeoutFlags flags,
+				uint timeout,
+				out IntPtr result);
+
+		//For use with WM_COPYDATA and COPYDATASTRUCT
+		[DllImport(user32)]
+		internal static extern int PostMessage(IntPtr hWnd, int Msg, IntPtr wParam, ref COPYDATASTRUCT lParam);
+
+
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			object wParam,
 			string lParam,
@@ -2050,7 +2074,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			int wParam,
 			string lParam,
@@ -2060,7 +2084,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			int wParam,
 			int lParam,
@@ -2070,7 +2094,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			uint wParam,
 			IntPtr lParam,
@@ -2080,7 +2104,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			IntPtr wParam,
 			IntPtr lParam,
@@ -2089,7 +2113,7 @@ namespace Keysharp.Core.Windows
 			out IntPtr result);
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			uint wParam,
 			uint lParam,
@@ -2099,7 +2123,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			uint wParam,
 			StringBuilder lParam,
@@ -2109,7 +2133,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
-			IntPtr windowHandle,
+			IntPtr hWnd,
 			uint Msg,
 			uint wParam,
 			string lParam,

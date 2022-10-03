@@ -11,69 +11,46 @@ namespace Keysharp.Core.Common.Threading
 		{
 			//var context = TaskScheduler.FromCurrentSynchronizationContext();
 			Task<object> tsk = null;
+			_ = Interlocked.Increment(ref Keysharp.Scripting.Script.totalExistingThreads);
 
-			if (func is IFuncObj ifo)
+			//ifo.Call(o);
+			//return Task.FromResult<int>(1);
+
+			try
 			{
-				_ = Interlocked.Increment(ref Keysharp.Scripting.Script.totalExistingThreads);
-
-				//ifo.Call(o);
-				//return Task.FromResult<int>(1);
-
-				try
+				tsk = Task.Factory.StartNew<object>(() =>
 				{
-					tsk = Task.Factory.StartNew<object>(() =>
-					{
-						//throw new System.Exception("ASDf");
-						//throw new Error("ASDf");
-						System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
-						//_ = ifo.Call(o);
+					//throw new System.Exception("ASDf");
+					//throw new Error("ASDf");
+					System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
+
+					//_ = ifo.Call(o);
+					if (func is IFuncObj ifo)
 						return ifo.Call(o);
-					});
-					_ = await tsk;
-				}
-				//catch (AggregateException aex)
-				catch (Exception ex)
-				{
-					if (ex.InnerException != null)
-						throw ex.InnerException;
-					else
-						throw ex;
-				}
-				finally
-				{
-					Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads);
-				}
-
-				return tsk;
-				//tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
-				//return tsk.ContinueWith((t, tt) => { throw t.Exception; }, context, TaskContinuationOptions.OnlyOnFaulted);
-			}
-			else if (func is VariadicFunction vf)//Most likely no longer used.//TODO
-			{
-				_ = Interlocked.Increment(ref Keysharp.Scripting.Script.totalExistingThreads);
-
-				try
-				{
-					tsk = Task.Factory.StartNew(() =>
-					{
-						System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
+					else if (func is VariadicFunction vf)
 						return vf(o);
-					});
-					_ = await tsk;
-				}
-				catch (Exception ex)
-				{
-				}
-				finally
-				{
-					Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads);
-				}
-
-				return tsk;
-				//return tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
+					else
+						return "";
+				});
+				_ = await tsk;
+			}
+			//catch (AggregateException aex)
+			catch (Exception ex)
+			{
+				if (ex.InnerException != null)
+					throw ex.InnerException;
+				else
+					throw ex;
+			}
+			finally
+			{
+				Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads);
 			}
 
-			return Task.FromResult<object>("");
+			return tsk;
+			//tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
+			//return tsk.ContinueWith((t, tt) => { throw t.Exception; }, context, TaskContinuationOptions.OnlyOnFaulted);
+			//return Task.FromResult<object>("");
 		}
 	}
 }
