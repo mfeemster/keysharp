@@ -1301,6 +1301,9 @@ namespace Keysharp.Core.Windows
 
 			if (lparam is string s)
 			{
+				var sendresult = 0;
+				var result = IntPtr.Zero;
+
 				if (msg == WindowsAPI.WM_COPYDATA)
 				{
 					var sarr = System.Text.Encoding.Unicode.GetBytes(s);
@@ -1309,16 +1312,15 @@ namespace Keysharp.Core.Windows
 					cds.dwData = (IntPtr)1;
 					cds.lpData = s;
 					cds.cbData = len + 1;
-
-					if (WindowsAPI.SendMessageTimeout(thehandle, msg, wptr, ref cds, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
-						throw new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-					ret = result.ToInt64();
+					sendresult = WindowsAPI.SendMessageTimeout(thehandle, msg, wptr, ref cds, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out result);
 				}
-				else if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, s, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
-					throw new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 				else
-					ret = result.ToInt64();
+					sendresult = WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, s, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out result);
+
+				if (sendresult == 0)
+					throw new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+				ret = result.ToInt64();
 			}
 			else
 			{

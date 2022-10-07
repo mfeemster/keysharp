@@ -538,7 +538,7 @@ namespace Keysharp.Core
 				case Core.Keyword_Pic:
 				case Core.Keyword_Picture://No special support for GDI+, instead we just use whatever C# uses under the hood for its PictureBox control. Also, animated gifs do animate.
 				{
-					var pic = new KeysharpPictureBox(text);
+					var pic = new KeysharpPictureBox(text, 0x20);//Attempt to support transparency.
 
 					if (opts.width < 0 && opts.height < 0)
 					{
@@ -1045,8 +1045,6 @@ namespace Keysharp.Core
 
 			if (opts.bgtrans)
 				ctrl.BackColor = Color.Transparent;
-				//ctrl.BackColor = form.BackColor;
-			
 			else if (opts.bgcolor.HasValue)
 				ctrl.BackColor = opts.bgcolor.Value;
 
@@ -1366,6 +1364,7 @@ namespace Keysharp.Core
 					}
 
 					pbox.Image = bmp;
+					//pbox.BackgroundImage = bmp;
 				}
 			}
 

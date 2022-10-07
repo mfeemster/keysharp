@@ -81,7 +81,20 @@ namespace Keysharp.Core
 			set => _control.Name = value.ToString();
 		}
 
-		public KeysharpForm Parent
+		public object Parent
+		{
+			get => _control.Parent;
+
+			set
+			{
+				if (value is GuiControl gc)
+					_control.Parent = gc._control;
+				else if (value is Control c)
+					_control.Parent = c;
+			}
+		}
+
+		public KeysharpForm ParentForm
 		{
 			get
 			{

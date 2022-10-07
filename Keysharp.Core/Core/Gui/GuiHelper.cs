@@ -112,6 +112,8 @@ namespace Keysharp.Core
 			return "";
 		}
 
+		private static int imageindex = 1;
+
 		/// <summary>
 		/// The Windows API funcitons have serious limitations when it comes to loading icons.
 		/// They can't load any of size 256 or larger, plus they are platform specific.
@@ -138,6 +140,7 @@ namespace Keysharp.Core
 
 				int count = BitConverter.ToUInt16(src, 4);
 				var splitIcons = new List<Icon>(count);
+				//var sb = new StringBuilder(1024 * 1024);
 
 				for (var i = 0; i < count; i++)
 				{
@@ -151,17 +154,35 @@ namespace Keysharp.Core
 						//Copy ICONDIRENTRY and set dwImageOffset to 22.
 						dst.Write(src, 6 + (16 * i), 12);//ICONDIRENTRY except dwImageOffset.
 						dst.Write(22);                 //ICONDIRENTRY.dwImageOffset.
+						//var pixindex = 0;
+						var start = dst.BaseStream.Position + 40;
+						var end = dst.BaseStream.Position + length;
+
+						for (var ii = start; ii < end; ii += 4)
+						{
+							//sb.AppendLine($"{pixindex}: a: {src[ii + 3]}");
+							//sb.AppendLine($"{pixindex}: r: {src[ii + 2]}");
+							//sb.AppendLine($"{pixindex}: g: {src[ii + 1]}");
+							//sb.AppendLine($"{pixindex}: b: {src[ii]}");
+							var adouble = src[ii + 3] / 255.0;
+							src[ii + 2] = (byte)Math.Round(adouble * src[ii + 2]);
+							src[ii + 1] = (byte)Math.Round(adouble * src[ii + 1]);
+							src[ii] = (byte)Math.Round(adouble * src[ii]);
+							//pixindex++;
+						}
+
 						dst.Write(src, offset, length);//Copy an image.
 						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.
 						splitIcons.Add(new Icon(dst.BaseStream));
 					}
 				}
 
+				//System.IO.File.WriteAllText($"./file{imageindex++}out.txt", sb.ToString());
 				return splitIcons;
 			}
-			catch (Exception)// e)
+			catch (Exception e)
 			{
-				return new List<Icon>();//This should throw.//TODO
+				throw new Error($"Error splitting icon: {e.Message}");
 			}
 		}
 
