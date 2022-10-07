@@ -95,7 +95,14 @@ namespace Keysharp.Core
 				argslist.Add(args[argsused]);
 
 			while (argslist.Count < parameters.Length)
-				argslist.Add(null);
+			{
+				var param = parameters[argslist.Count];
+
+				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
+					argslist.Add(param.DefaultValue);
+				else
+					argslist.Add(null);
+			}
 
 			return base.Call(argslist.ToArray());
 		}
