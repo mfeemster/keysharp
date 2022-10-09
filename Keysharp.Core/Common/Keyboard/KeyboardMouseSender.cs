@@ -296,20 +296,20 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract void InitEventArray(int maxEvents, int aModifiersLR);
 
-		internal abstract void MouseClick(int aVK, int aX, int aY, int aRepeatCount, int aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
+		internal abstract void MouseClick(int aVK, int aX, int aY, int aRepeatCount, long aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
 
-		internal abstract void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, int speed, bool relative);
+		internal abstract void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative);
 
 		internal abstract void MouseEvent(uint aEventFlags, uint aData, int aX = CoordUnspecified, int aY = CoordUnspecified);
 
-		internal abstract void MouseMove(ref int aX, ref int aY, ref uint aEventFlags, int aSpeed, bool aMoveOffset);
+		internal abstract void MouseMove(ref int aX, ref int aY, ref uint aEventFlags, long aSpeed, bool aMoveOffset);
 
 		internal abstract int PbEventCount();
 
 		internal int TotalEventCount() => PbEventCount() + SiEventCount();
 
 		internal void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
-										 int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, int speed, bool relative)
+										 int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, long speed, bool relative)
 		{
 			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
 			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
@@ -318,7 +318,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
 			const int MAX_PERFORM_MOUSE_EVENTS = 10;
 			var ht = Keysharp.Scripting.Script.HookThread;
-			//Original differentiates between a thread specific value for sendmode and a global static one. Here, we just use the thread specific one.
+			sendMode = Accessors.SendMode;
 
 			if (sendMode == Common.Keyboard.SendModes.Input || sendMode == Common.Keyboard.SendModes.InputThenPlay)
 			{

@@ -38,7 +38,7 @@ namespace Keysharp.Core
 			var ht = Keysharp.Scripting.Script.HookThread;
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
 			ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
-											  , vk, x, y, 0, 0, repeat_count, event_type, (int)Accessors.A_DefaultMouseSpeed, move_offset);
+											  , vk, x, y, 0, 0, repeat_count, event_type, (long)Accessors.A_DefaultMouseSpeed, move_offset);
 		}
 
 		/// <summary>

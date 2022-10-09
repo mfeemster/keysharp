@@ -13,6 +13,25 @@ namespace System.Windows.Forms
 	/// </summary>
 	internal static class ControlExtensions
 	{
+		internal static void CheckedBeginInvoke(this Control control, Action action, bool runIfNull)
+		{
+			if (control == null)
+			{
+				if (runIfNull)
+					action();
+
+				return;
+			}
+
+			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
+				return;
+
+			if (control.InvokeRequired)
+				_ = control.BeginInvoke(action);
+			else
+				action();
+		}
+
 		internal static void CheckedBeginInvoke(this Control control, Action action)
 		{
 			if (control == null || !control.IsHandleCreated || control.IsDisposed || control.Disposing)
@@ -147,28 +166,6 @@ namespace System.Windows.Forms
 			control.Refresh();
 		}
 
-		internal static int TabHeight(this Control control)
-		{
-			if (control is TabControl tc && tc.TabPages.Count > 0)
-			{
-				if (tc.Alignment == System.Windows.Forms.TabAlignment.Top || tc.Alignment == System.Windows.Forms.TabAlignment.Bottom)
-					return tc.GetTabRect(0).Height;//GetTabRect() works, tc.ItemSize.Height does not.
-			}
-
-			return 0;
-		}
-
-		internal static int TabWidth(this Control control)
-		{
-			if (control is TabControl tc && tc.TabPages.Count > 0)
-			{
-				if (tc.Alignment == System.Windows.Forms.TabAlignment.Left || tc.Alignment == System.Windows.Forms.TabAlignment.Right)
-					return tc.GetTabRect(0).Width;
-			}
-
-			return 0;
-		}
-
 		internal static (Control, Control) RightBottomMost(this Control control)
 		{
 			var maxx = 0;
@@ -263,6 +260,28 @@ namespace System.Windows.Forms
 		}
 
 		internal static void SuspendDrawing(this Control control) => _ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 0, 0);
+
+		internal static int TabHeight(this Control control)
+		{
+			if (control is TabControl tc && tc.TabPages.Count > 0)
+			{
+				if (tc.Alignment == System.Windows.Forms.TabAlignment.Top || tc.Alignment == System.Windows.Forms.TabAlignment.Bottom)
+					return tc.GetTabRect(0).Height;//GetTabRect() works, tc.ItemSize.Height does not.
+			}
+
+			return 0;
+		}
+
+		internal static int TabWidth(this Control control)
+		{
+			if (control is TabControl tc && tc.TabPages.Count > 0)
+			{
+				if (tc.Alignment == System.Windows.Forms.TabAlignment.Left || tc.Alignment == System.Windows.Forms.TabAlignment.Right)
+					return tc.GetTabRect(0).Width;
+			}
+
+			return 0;
+		}
 
 		private static void GetMenuItems(ToolStripItem item, List<ToolStripItem> items)
 		{

@@ -115,16 +115,16 @@ namespace Keysharp.Core.Linux
 		internal override void InitEventArray(int maxEvents, int modifiersLR)
 		{ }
 
-		internal override void MouseClick(int vk, int x, int y, int repeatCount, int speed, KeyEventTypes eventType, bool moveOffset)
+		internal override void MouseClick(int vk, int x, int y, int repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{ }
 
-		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, int speed, bool relative)
+		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative)
 		{ }
 
 		internal override void MouseEvent(uint eventFlags, uint data, int x = CoordUnspecified, int y = CoordUnspecified)
 		{ }
 
-		internal override void MouseMove(ref int x, ref int y, ref uint eventFlags, int speed, bool moveOffset)
+		internal override void MouseMove(ref int x, ref int y, ref uint eventFlags, long speed, bool moveOffset)
 		{ }
 
 		internal override int PbEventCount() => 0;

@@ -314,10 +314,10 @@ namespace Keysharp.Core.Windows
 		/// <param name="x2"></param>
 		/// <param name="y2"></param>
 		/// <param name="speed"></param>
-		internal void DoIncrementalMouseMove(int x1, int y1, int x2, int y2, int speed)
+		internal void DoIncrementalMouseMove(long x1, long y1, long x2, long y2, long speed)
 		{
 			// AutoIt3: So, it's a more gradual speed that is needed :)
-			int delta;
+			long delta;
 			const int incrMouseMinSpeed = 32;
 
 			while (x1 != x2 || y1 != y2)
@@ -372,7 +372,7 @@ namespace Keysharp.Core.Windows
 						y1 -= delta;
 				}
 
-				MouseEvent((uint)MOUSEEVENTF.MOVE | (uint)MOUSEEVENTF.ABSOLUTE, 0, x1, y1);
+				MouseEvent((uint)MOUSEEVENTF.MOVE | (uint)MOUSEEVENTF.ABSOLUTE, 0, (int)x1, (int)y1);
 				DoMouseDelay();
 				// Above: A delay is required for backward compatibility and because it's just how the incremental-move
 				// feature was originally designed in AutoIt v3.  It may in fact improve reliability in some cases,
@@ -630,7 +630,7 @@ namespace Keysharp.Core.Windows
 			return hasaltgr;
 		}
 
-		internal override void MouseClick(int vk, int x, int y, int repeatCount, int speed, KeyEventTypes eventType, bool moveOffset)
+		internal override void MouseClick(int vk, int x, int y, int repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{
 			// Check if one of the coordinates is missing, which can happen in cases where this was called from
 			// a source that didn't already validate it (such as MouseClick, %x%, %BlankVar%).
@@ -874,7 +874,7 @@ namespace Keysharp.Core.Windows
 			workaroundVK = 0; // Reset this indicator in all cases except those for which above already returned.
 		}
 
-		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, int speed, bool relative)
+		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative)
 		{
 			// Check if one of the coordinates is missing, which can happen in cases where this was called from
 			// a source that didn't already validate it. Can't call Line::ValidateMouseCoords() because that accepts strings.
@@ -991,7 +991,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="eventFlags"></param>
 		/// <param name="speed"></param>
 		/// <param name="moveOffset"></param>
-		internal override void MouseMove(ref int x, ref int y, ref uint eventFlags, int speed, bool moveOffset)
+		internal override void MouseMove(ref int x, ref int y, ref uint eventFlags, long speed, bool moveOffset)
 		{
 			// Most callers have already validated this, but some haven't.  Since it doesn't take too long to check,
 			// do it here rather than requiring all callers to do (helps maintainability).
@@ -1682,11 +1682,7 @@ namespace Keysharp.Core.Windows
 			{
 				Keysharp.Scripting.Script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
 			};
-
-			if (Keysharp.Scripting.Script.mainWindow != null)
-				Keysharp.Scripting.Script.mainWindow.Invoke(func);
-			else
-				func();
+			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(func, true);
 
 			if (Keysharp.Scripting.Script.playbackHook == IntPtr.Zero)
 				return;
@@ -1838,7 +1834,7 @@ namespace Keysharp.Core.Windows
 				// will be readjusted (above) if the user presses/releases modifier keys during the mouse clicks.
 				if (vkIsMouse && targetWindow == IntPtr.Zero)
 				{
-					MouseClick(vk, x, y, 1, (int)Accessors.A_DefaultMouseSpeed, eventType, moveOffset);
+					MouseClick(vk, x, y, 1, (long)Accessors.A_DefaultMouseSpeed, eventType, moveOffset);
 				}
 				// Above: Since it's rare to send more than one click, it seems best to simplify and reduce code size
 				// by not doing more than one click at a time event when mode is SendInput/Play.
@@ -2350,7 +2346,7 @@ namespace Keysharp.Core.Windows
 
 								//Mixing parsing with the sending actions seems like a pretty terrible design, so should separate later.//TODO
 								if (repeatCount < 1) // Allow {Click 100, 100, 0} to do a mouse-move vs. click (but modifiers like ^{Click..} aren't supported in this case.
-									MouseMove(ref clickX, ref clickY, ref placeholder, (int)Accessors.A_DefaultMouseSpeed, moveOffset);
+									MouseMove(ref clickX, ref clickY, ref placeholder, (long)Accessors.A_DefaultMouseSpeed, moveOffset);
 								else // Use SendKey because it supports modifiers (e.g. ^{Click}) SendKey requires repeat_count>=1.
 									SendKey(vk, 0, modsForNextKey.Value, persistentModifiersForThisSendKeys
 											, repeatCount, eventType, 0, targetWindow, clickX, clickY, moveOffset);

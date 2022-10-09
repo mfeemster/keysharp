@@ -5255,15 +5255,9 @@ namespace Keysharp.Core.Windows
 									// Don't create a new quasi-thread or any of that other complexity done further
 									// below.  But also do the backspacing (if specified) for a non-autoreplace hotstring,
 									// even if it can't launch due to MaxThreads, MaxThreadsPerHotkey, or some other reason:
-									if (Keysharp.Scripting.Script.mainWindow != null)
-									{
-										Keysharp.Scripting.Script.mainWindow.Invoke(() =>//Any key sending must be on the main thread else keys will come in out of order.
-										{
-											hs.DoReplace(hmsg.caseMode, hmsg.endChar);// Does only the backspacing if it's not an auto-replace hotstring.
-										});
-									}
-									else
-										hs.DoReplace(hmsg.caseMode, hmsg.endChar);// Does only the backspacing if it's not an auto-replace hotstring.
+									//Any key sending must be on the main thread else keys will come in out of order.
+									//Does only the backspacing if it's not an auto-replace hotstring.
+									Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => hs.DoReplace(hmsg.caseMode, hmsg.endChar), true);
 
 									if (string.IsNullOrEmpty(hs.replacement))
 									{
@@ -5452,13 +5446,7 @@ namespace Keysharp.Core.Windows
 			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
 			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
 			//before Application.Run().
-
-			if (Keysharp.Scripting.Script.mainWindow != null)
-				Keysharp.Scripting.Script.mainWindow.Invoke(func);
-			//              Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func);
-			else
-				func();
-
+			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
 			return problem_activating_hooks;
 		}
 
