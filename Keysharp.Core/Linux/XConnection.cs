@@ -108,7 +108,7 @@ namespace Keysharp.Core.Linux
 			while (run)
 			{
 				FishEvent();
-				Thread.Sleep(10); // Be polite
+				Keysharp.Core.Flow.Sleep(10); // Be polite
 			}
 		}
 

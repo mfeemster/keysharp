@@ -114,7 +114,7 @@ namespace Keysharp.Core
 				if (!type ? Clipboard.ContainsText() || Clipboard.ContainsFileDropList() : !IsClipboardEmpty())
 					return true;
 
-				System.Threading.Thread.Sleep(frequency);
+				Keysharp.Core.Flow.Sleep(frequency);
 			}
 
 			return false;

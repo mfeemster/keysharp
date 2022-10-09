@@ -274,7 +274,7 @@ namespace Keysharp.Core.Common.Window
 		private static void DoDelay(long delay)
 		{
 			if (delay >= 0)
-				System.Threading.Thread.Sleep((int)delay);
+				Keysharp.Core.Flow.Sleep(delay);
 		}
 
 		private static bool TitleCompare(string a, string b, StringComparison comp = StringComparison.CurrentCulture)
@@ -313,8 +313,7 @@ namespace Keysharp.Core.Common.Window
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					return false;
 
-				//              System.Threading.Thread.Sleep(Delay * 50);
-				System.Threading.Thread.Sleep(Delay);
+				Keysharp.Core.Flow.Sleep(Delay);
 			}
 
 			return true;

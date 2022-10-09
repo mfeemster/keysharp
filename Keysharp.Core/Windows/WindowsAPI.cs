@@ -1472,7 +1472,7 @@ namespace Keysharp.Core.Windows
 				if ((DateTime.Now - dtStart).TotalMilliseconds > ms)
 					break;
 
-				System.Threading.Thread.Sleep(100);
+				Keysharp.Core.Flow.Sleep(100);
 			}
 
 			return open;

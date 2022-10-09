@@ -367,7 +367,7 @@ namespace Keysharp.Core
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					break;
 
-				System.Threading.Thread.Sleep(interval);
+				Keysharp.Core.Flow.Sleep(interval);
 			} while (true);
 
 			WindowItemBase.DoWinDelay();
@@ -797,7 +797,7 @@ namespace Keysharp.Core
 				if (win != null || (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds))
 					break;
 
-				System.Threading.Thread.Sleep(50);
+				Keysharp.Core.Flow.Sleep(50);
 			} while (win == null);
 
 			if (win != null)
@@ -831,7 +831,7 @@ namespace Keysharp.Core
 				}
 
 				if (!b)
-					System.Threading.Thread.Sleep(100);
+					Keysharp.Core.Flow.Sleep(100);
 			}
 
 			WindowItemBase.DoWinDelay();
@@ -858,7 +858,7 @@ namespace Keysharp.Core
 						break;
 					}
 					else
-						System.Threading.Thread.Sleep(100);
+						Keysharp.Core.Flow.Sleep(100);
 				}
 			}
 
@@ -888,7 +888,7 @@ namespace Keysharp.Core
 						break;
 					}
 
-					System.Threading.Thread.Sleep(100);
+					Keysharp.Core.Flow.Sleep(100);
 				}
 			}
 			WindowItemBase.DoWinDelay();

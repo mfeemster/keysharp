@@ -104,7 +104,7 @@ namespace Keysharp.Core
 
 			while ((proc = FindProcess(name)) == null)
 			{
-				System.Threading.Thread.Sleep(LoopFrequency);
+				Keysharp.Core.Flow.Sleep(LoopFrequency);
 
 				if (t >= 0 && Environment.TickCount - start > t)
 					break;

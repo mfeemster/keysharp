@@ -56,8 +56,7 @@ namespace Keysharp.Core.Common.Keyboard
 						break;
 				}
 
-				Application.DoEvents(); // This is necessary if the Wait Method gets called on the Main GUI Thread
-				Thread.Sleep(2);
+				Keysharp.Core.Flow.Sleep(2);
 			}
 
 			kbdMsSender.KeyEvent -= OnKeyEvent;

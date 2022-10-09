@@ -308,12 +308,16 @@ namespace Keysharp.Core
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
 		/// <param name="Delay">The amount of time to pause in milliseconds.</param>
-		public static void Sleep(object obj)
+		public static void Sleep(object obj = null)
 		{
-			var delay = obj.Al();
+			var delay = obj.Al(-1L);
 
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
-			if (delay == -1)
+			if (delay == 0L)
+			{
+				System.Threading.Thread.Sleep(1);//1 instructs the OS to yield t a thread of its choice.
+			}
+			else if (delay == -1L)
 			{
 				Application.DoEvents();
 			}
