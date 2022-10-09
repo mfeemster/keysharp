@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Scripting;
 using ThreadState = System.Threading.ThreadState;
@@ -21,7 +22,7 @@ namespace Keysharp.Core
 		internal static int NoSleep = -1;
 		//internal static ConcurrentDictionary<FuncObj, Timer> timers;
 		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers;
-		private static bool hasExited;
+		internal static bool hasExited;
 		private static System.Windows.Forms.Timer currentTimer;
 
 		/// <summary>
@@ -30,6 +31,11 @@ namespace Keysharp.Core
 		public static bool Suspended { get; private set; }
 
 		internal static bool AllowInterruption { get; set; }
+
+		public static void Init()
+		{
+			hasExited = false;
+		}
 
 		/// <summary>
 		/// Prevents the current thread from being interrupted by other
@@ -316,7 +322,7 @@ namespace Keysharp.Core
 				//System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(delay));
 				var stop = DateTime.Now.AddMilliseconds(delay);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
-				while (DateTime.Now < stop)
+				while (DateTime.Now < stop && !hasExited)
 				{
 					Application.DoEvents();
 					System.Threading.Thread.Sleep(10);
@@ -371,6 +377,12 @@ namespace Keysharp.Core
 			if (Script.HookThread is Common.Threading.HookThread ht)
 				ht.Stop();
 
+			StopMainTimer();
+
+			if (timers != null)
+				foreach (var kv in timers)
+					kv.Value.Stop();
+
 			if (!Script.IsMainWindowClosing)
 			{
 				Script.mainWindow.Close();
@@ -411,6 +423,9 @@ namespace Keysharp.Core
 				mainTimer = null;
 			}
 		}
+
+		public static bool IsTrueAndRunning(object obj) => !hasExited&& Keysharp.Scripting.Script.ForceBool(obj);
+
 		internal enum ExitReasons
 		{
 			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, SingleInstance

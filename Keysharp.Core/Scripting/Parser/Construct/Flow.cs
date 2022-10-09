@@ -345,8 +345,8 @@ namespace Keysharp.Scripting
 					var loop = new CodeIterationStatement
 					{
 						InitStatement = init,
-						IncrementStatement = new CodeSnippetStatement(string.Empty),
-						TestExpression = condition
+						TestExpression = new CodeMethodInvokeExpression(null, "IsTrueAndRunning", condition),
+						IncrementStatement = new CodeSnippetStatement(string.Empty)
 					};
 					var block = new CodeBlock(line, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID);
 					block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
@@ -417,8 +417,8 @@ namespace Keysharp.Scripting
 						condition.Method.MethodName = "MoveNext";
 						var loop = new CodeIterationStatement
 						{
-							TestExpression = condition,
 							InitStatement = new CodeSnippetStatement(string.Empty),
+							TestExpression = new CodeMethodInvokeExpression(null, "IsTrueAndRunning", condition),
 							IncrementStatement = new CodeSnippetStatement(string.Empty)
 						};
 						loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
@@ -441,10 +441,11 @@ namespace Keysharp.Scripting
 				{
 					var blockOpen = false;
 					var condition = parts.Length > 1 ? ParseFlowParameter(line, parts[1], true, out blockOpen, true) : new CodePrimitiveExpression(true);
+
 					var loop = new CodeIterationStatement
 					{
-						TestExpression = condition,
 						InitStatement = new CodeSnippetStatement(string.Empty),
+						TestExpression = new CodeMethodInvokeExpression(null, "IsTrueAndRunning", condition),
 						IncrementStatement = new CodeSnippetStatement(string.Empty)
 					};
 					loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));

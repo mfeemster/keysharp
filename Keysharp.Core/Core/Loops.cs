@@ -30,12 +30,12 @@ namespace Keysharp.Core
 
 				if (n != -1)
 				{
-					for (; info.index < n;)//Check info.index because the caller can change A_Index inside of the loop.
+					for (; info.index < n && !Keysharp.Core.Flow.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
 						yield return ++info.index;
 				}
 				else
 				{
-					while (true)
+					while (!Keysharp.Core.Flow.hasExited)
 						yield return ++info.index;
 				}
 
@@ -65,6 +65,9 @@ namespace Keysharp.Core
 			{
 				foreach (var (k, v) in map)
 				{
+					if (Keysharp.Core.Flow.hasExited)
+						break;
+
 					info.result = new[] { k, v };
 					info.index++;
 					yield return info.result;
@@ -76,6 +79,9 @@ namespace Keysharp.Core
 
 				while (enumerator.MoveNext())
 				{
+					if (Keysharp.Core.Flow.hasExited)
+						break;
+
 					info.result = new[] { null, enumerator.Current };
 					info.index++;
 					yield return info.result;
@@ -124,6 +130,9 @@ namespace Keysharp.Core
 
 			foreach (var file in GetFiles(dir, pattern, d, f, r))
 			{
+				if (Keysharp.Core.Flow.hasExited)
+					break;
+
 				info.file = file;
 				info.index++;
 				yield return file;
@@ -214,7 +223,7 @@ namespace Keysharp.Core
 					info.index++;
 					yield return result;
 
-					if (current == -1)
+					if (current == -1 || Keysharp.Core.Flow.hasExited)
 						break;
 				}
 			}
@@ -231,6 +240,9 @@ namespace Keysharp.Core
 
 				foreach (var part in parts)
 				{
+					if (Keysharp.Core.Flow.hasExited)
+						break;
+
 					info.result = part;
 					info.index++;
 					yield return part;
@@ -265,6 +277,9 @@ namespace Keysharp.Core
 
 				while ((line = reader.ReadLine()) != null)
 				{
+					if (Keysharp.Core.Flow.hasExited)
+						break;
+
 					info.line = line;
 					info.index++;
 					yield return line;
@@ -328,7 +343,12 @@ namespace Keysharp.Core
 				if (r)
 				{
 					foreach (var val in GetSubKeys(info, subkey, k, v))
+					{
+						if (Keysharp.Core.Flow.hasExited)
+							break;
+
 						yield return val;
+					}
 				}
 				else
 				{
@@ -336,6 +356,9 @@ namespace Keysharp.Core
 					{
 						foreach (var valueName in subkey.GetValueNames().Reverse())
 						{
+							if (Keysharp.Core.Flow.hasExited)
+								break;
+
 							info.index++;
 							info.regVal = subkey.GetValue(valueName, string.Empty, RegistryValueOptions.DoNotExpandEnvironmentNames);
 
@@ -352,6 +375,9 @@ namespace Keysharp.Core
 					{
 						foreach (var subKeyName in subkey.GetSubKeyNames().Reverse())//AHK spec says the subkeys and values are returned in reverse.
 						{
+							if (Keysharp.Core.Flow.hasExited)
+								break;
+
 							using (var tempKey = subkey.OpenSubKey(subKeyName, false))
 							{
 								info.index++;

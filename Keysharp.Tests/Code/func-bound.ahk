@@ -173,3 +173,46 @@ If (z == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+boundvarfunc0(theparams*)
+{
+	temp := 0
+
+	for n in theparams
+	{
+		temp += theparams[A_Index]
+	}
+
+	return temp
+}
+
+fo := FuncObj("boundvarfunc0")
+bf := fo.Bind(10)
+val := bf(20)
+
+If (val == 30)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+boundvarfunc1(p1, theparams*)
+{
+	temp := p1
+
+	for n in theparams
+	{
+		temp += theparams[A_Index]
+	}
+
+	return temp
+}
+
+fo := FuncObj("boundvarfunc1")
+bf := fo.Bind(10, 20)
+
+val := bf(20)
+
+If (val == 50)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

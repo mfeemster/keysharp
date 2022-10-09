@@ -236,9 +236,9 @@ namespace Keysharp.Scripting
 			//WindowsAPI.OutputDebugString(text);//Unsure if this is really needed, or will Debug.WriteLine() suffice?
 		}
 
-		public static void RunMainWindow(string title)
+		public static void RunMainWindow(string title, Action userInit)
 		{
-			mainWindow =  new MainWindow();
+			mainWindow = new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
 				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
@@ -252,6 +252,8 @@ namespace Keysharp.Scripting
 			mainWindow.Load += MainWindow_Load;
 			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
 			mainWindowGui = new Gui(null, null, null, mainWindow);
+			mainWindow.Show();
+			mainWindow.BeginInvoke(userInit);
 			Application.Run(mainWindow);
 		}
 

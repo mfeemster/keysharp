@@ -19,8 +19,10 @@ namespace Keysharp.Tests
 		public void FlowIf() => Assert.IsTrue(TestScript("flow-if", true));
 
 		[Test, Category("Flow")]
+		[NonParallelizable]
 		public void FlowLoop()
 		{
+			Keysharp.Core.Flow.Init();
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);
@@ -51,8 +53,10 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Flow")]
+		[NonParallelizable]
 		public void FlowWhile()
 		{
+			Keysharp.Core.Flow.Init();
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);
@@ -87,6 +91,8 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowLoopReg()
 		{
+			Keysharp.Core.Flow.Init();
+			
 			try
 			{
 				Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");

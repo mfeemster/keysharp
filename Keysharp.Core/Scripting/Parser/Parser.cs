@@ -25,7 +25,6 @@ namespace Keysharp.Scripting
 
 		//private CodeEntryPointMethod main = new CodeEntryPointMethod();
 		private CodeMemberMethod main = new CodeMemberMethod();
-
 		private Dictionary<string, CodeMemberMethod> methods = new Dictionary<string, CodeMemberMethod>();
 		private string name = string.Empty;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
@@ -172,8 +171,11 @@ namespace Keysharp.Scripting
 			{
 				var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 				_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
+				_ = inv.Parameters.Add(new CodeSnippetExpression("UserMainCode"));
 				_ = main.Statements.Add(new CodeExpressionStatement(inv));
 			}
+			else
+				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "UserMainCode"));
 
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit0.Parameters.Add(new CodePrimitiveExpression(0));
@@ -225,8 +227,8 @@ namespace Keysharp.Scripting
 								).ToList().ForEach(meth2 =>
 												   meth2.Statements.Add(new CodeMethodReturnStatement(
 														   new CodeFieldReferenceExpression(new CodeTypeReferenceExpression("System.String"), "Empty"))));
-			//meth2.Statements.Add(new CodeMethodReturnStatement(new CodeDefaultValueExpression(meth2.ReturnType))));
 
+			//meth2.Statements.Add(new CodeMethodReturnStatement(new CodeDefaultValueExpression(meth2.ReturnType))));
 			while (invokes.Count != 0)
 				StdLib();
 
@@ -274,6 +276,15 @@ namespace Keysharp.Scripting
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.Variables.InitGlobalVars()"));
 			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodeSnippetExpression($"@\"{name}\""));
 			_ = initial.Add(namevar);
+
+			var userMainMethod = new CodeMemberMethod()
+			{
+				Attributes = MemberAttributes.Public | MemberAttributes.Static,
+				Name = "UserMainCode"
+			};
+			userMainMethod.Statements.AddRange(main.Statements);
+			main.Statements.Clear();
+			targetClass.Members.Add(userMainMethod);
 
 			foreach (CodeStatement stmt in initial)
 				main.Statements.Insert(0, stmt);

@@ -322,7 +322,7 @@ namespace Keysharp.Core
 		TryParseWrapper(opt, prefix, double.TryParse, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref Color result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false) =>
-		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => { return Conversions.TryParseColor(v.ToString(), out r); }, ref result, comp, allowempty);
+		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => { return Conversions.TryParseColor(v.ToString(), out r); }, ref result, comp, allowempty, System.Windows.Forms.Control.DefaultForeColor);
 
 		internal static bool TryParse(string opt, string prefix, ref bool result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, bool def = default)
 		{
@@ -401,10 +401,22 @@ namespace Keysharp.Core
 		private static bool TryParseWrapper<T>(string opt, string prefix, TryParseHandler<T> handler, ref T result, StringComparison comp = StringComparison.OrdinalIgnoreCase,
 											   bool allowempty = false, T def = default)// where T : struct
 		{
+			var doit = false;
+			var suffix = ReadOnlySpan<char>.Empty;
+
 			if (opt.StartsWith(prefix, comp))
 			{
-				var suffix = opt.AsSpan(prefix.Length);
+				suffix = opt.AsSpan(prefix.Length);
+				doit = true;
+			}
+			else if (opt[0] == '+' && opt.AsSpan(1).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+			{
+				suffix = opt.AsSpan(2);
+				doit = true;
+			}
 
+			if (doit)
+			{
 				if (allowempty && suffix.CompareTo(ReadOnlySpan<char>.Empty, StringComparison.OrdinalIgnoreCase) == 0)//Need CompareTo() because == doesn't work with spans and "".
 				{
 					result = def;
