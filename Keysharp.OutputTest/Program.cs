@@ -80,12 +80,7 @@ namespace Keysharp.CompiledMain
 				HandleCommandLineParams(args);
 				SetProcessDPIAware();
 				CreateTrayMenu();
-				DoStuff();
-				mygui = Gui("+Resize");
-				mybtn = Invoke(GetMethodOrProperty(mygui, "Add"), "Button", "default", "&Test Keysharp Button");
-				Invoke(GetMethodOrProperty(mybtn, "OnEvent"), "Click", "DoStuff");
-				Invoke(GetMethodOrProperty(mygui, "Show"));
-				RunMainWindow(name);
+				RunMainWindow(name, UserMainCode);
 				ExitApp(0);
 				return 0;
 			}
@@ -101,20 +96,30 @@ namespace Keysharp.CompiledMain
 			}
 			catch (System.Exception mainex)
 			{
-				MsgBox("Uncaught exception:\r\n" + "Message: " + mainex.Message + "\r\nStack: " + mainex.StackTrace);
+				var ex = mainex.InnerException ?? mainex;
+
+				if (ex is Keysharp.Core.Error kserr)
+				{
+					if (ErrorOccurred(kserr))
+					{
+						MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
+					}
+				}
+				else
+				{
+					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace);
+				}
+
+				;
+
 				ExitApp(1);
+
 				return 1;
 			}
 		}
 
-		public static object mybtn;
-
-		public static object mygui;
-
-		public static object DoStuff()
+		public static void UserMainCode()
 		{
-			MsgBox("Hi.");
-			return string.Empty;
 		}
 	}
 }
