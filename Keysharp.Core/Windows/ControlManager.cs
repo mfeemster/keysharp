@@ -225,7 +225,7 @@ namespace Keysharp.Core.Windows
 
 				for (var i = 0; i < possplits.Length; i++)
 				{
-					var opt = optsplits[i].ToLower();
+					var opt = possplits[i].ToLower();
 
 					if (Options.TryParse(opt, "x", ref winx)) { }
 					else if (Options.TryParse(opt, "y", ref winy)) { }
@@ -247,7 +247,7 @@ namespace Keysharp.Core.Windows
 				{
 					if (winx != int.MinValue && winy != int.MinValue)
 					{
-						getctrlbycoords = false;
+						getctrlbycoords = true;
 					}
 					else
 					{
@@ -259,7 +259,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (winx != int.MinValue && winy != int.MinValue)
 				{
-					getctrlbycoords = false;
+					getctrlbycoords = true;
 				}
 			}
 
@@ -277,44 +277,10 @@ namespace Keysharp.Core.Windows
 				});
 				item.ChildFindPoint(pah);
 				item = pah.hwndFound != IntPtr.Zero ? new WindowItem(pah.hwndFound) : item;
-				//rect = new Point(newx, newy);
-				//_ = WindowsAPI.ScreenToClient(item.Handle, ref rect);
-				//ctrlx = rect.X;
-				//ctrly = rect.Y;
 			}
 
-			//if (x != int.MinValue && y != int.MinValue)
-			//  if (!(Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win))
-			//      return;
-
-			//if (!posoverride)
-			//  item = Window.SearchControl(win, ctrlorpos, false);
-
-			//if (item == null && ctrlorpos is string s)
-			//{
-			//  var rect = new Point(x, y);
-			//  _ = WindowsAPI.ClientToScreen(win.Handle, ref rect);
-			//  x = rect.X;
-			//  y = rect.Y;
-			//}
-
-			//if (item == null)
-			//{
-			//  if (x != int.MinValue && y != int.MinValue)
-			//  {
-			//      var pah = new PointAndHwnd(new POINT
-			//      {
-			//          x = x,
-			//          y = y
-			//      });
-			//      win.ChildFindPoint(pah);
-			//      item = pah.hwndFound != IntPtr.Zero ? new WindowItem(pah.hwndFound) : win;
-			//      var rect = new Point(x, y);
-			//      _ = WindowsAPI.ScreenToClient(item.Handle, ref rect);
-			//      x = rect.X;
-			//      y = rect.Y;
-			//  }
-			//}
+			if (item == null)
+				return;
 
 			if (clickCount < 1)
 				return;
