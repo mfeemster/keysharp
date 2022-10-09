@@ -13,7 +13,7 @@ namespace System.Windows.Forms
 	/// </summary>
 	internal static class ControlExtensions
 	{
-		internal static void CheckedBeginInvoke(this Control control, Action action, bool runIfNull)
+		internal static void CheckedBeginInvoke(this Control control, Action action, bool runIfNull, bool forceInvoke)
 		{
 			if (control == null)
 			{
@@ -26,7 +26,7 @@ namespace System.Windows.Forms
 			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
 				return;
 
-			if (control.InvokeRequired)
+			if (control.InvokeRequired || forceInvoke)
 				_ = control.BeginInvoke(action);
 			else
 				action();

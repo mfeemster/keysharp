@@ -1682,7 +1682,7 @@ namespace Keysharp.Core.Windows
 			{
 				Keysharp.Scripting.Script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
 			};
-			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(func, true);
+			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(func, true, false);
 
 			if (Keysharp.Scripting.Script.playbackHook == IntPtr.Zero)
 				return;
