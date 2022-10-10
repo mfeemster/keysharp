@@ -722,6 +722,7 @@ namespace Keysharp.Scripting
 			var scan = true;
 			var level = -1;
 
+			//Unsure what this final loop actually does.
 			while (scan)
 			{
 				scan = false;

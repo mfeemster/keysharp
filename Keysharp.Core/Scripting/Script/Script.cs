@@ -253,7 +253,12 @@ namespace Keysharp.Scripting
 			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.Show();
-			mainWindow.BeginInvoke(userInit);
+			mainWindow.BeginInvoke(() =>
+			{
+				userInit();
+				//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
+				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop));
+			});
 			Application.Run(mainWindow);
 		}
 
@@ -465,8 +470,6 @@ namespace Keysharp.Scripting
 
 		private static void MainWindow_Load(object sender, EventArgs e)
 		{
-			//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until Load() is called.
-			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop)
 			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
 		}
 
