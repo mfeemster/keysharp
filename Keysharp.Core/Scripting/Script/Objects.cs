@@ -347,6 +347,10 @@ namespace Keysharp.Scripting
 						throw;
 				}
 			}
+			else if (item is Map map)//If it wasn't a property, try it as a key to a map.
+			{
+				map[name] = value;
+			}
 		}
 
 		public static Keysharp.Core.StringBuffer StringBuffer(object obj0, object obj1 = null) => new StringBuffer(obj0.As(), obj1.Ai(256));
@@ -410,6 +414,11 @@ namespace Keysharp.Scripting
 				catch (Exception)
 				{
 				}
+			}
+			else if (item is Map map)
+			{
+				if (map.map.TryGetValue(name, out var val))
+					return (val, true);
 			}
 
 			return (null, false);

@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.Tests", "Keysharp.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keyview", "Keyview\Keyview.csproj", "{B5C755D9-BDA8-4DF9-A449-675B34F1D329}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keysharp.Benchmark", "Keysharp.Benchmark\Keysharp.Benchmark.csproj", "{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.Benchmark", "Keysharp.Benchmark\Keysharp.Benchmark.csproj", "{F9B7FD7F-4371-4A35-AEC9-061DB737A9D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -277,3 +277,22 @@ if (val >= 1000) ; Capacity will internall be made to be at least as big as we s
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+m := { "one" : 1, "two" : 2, "three" : 3 }
+
+if (m.one == 1)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m.one := 123
+
+if (m.one == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (m["one"] == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

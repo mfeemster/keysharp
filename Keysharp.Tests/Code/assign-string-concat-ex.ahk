@@ -30,26 +30,30 @@ If y = hello world
 else
 	FileAppend, fail, *
 
-y := %x% . " world"
+y := x . " world " x
 	
-If y != hello world
-	FileAppend, fail, *
-else
-	FileAppend, pass, *
-	
-If y = hello world
+If (y == "hello world hello")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-y := %x% " world"
+y := x " world " . x
 	
-If y != hello world
-	FileAppend, fail, *
-else
+If (y == "hello world hello")
 	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+y := x . " world " . x
 	
-If y = hello world
+If (y == "hello world hello")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+y := x " world " x
+	
+If (y == "hello world hello")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

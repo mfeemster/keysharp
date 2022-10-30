@@ -26,21 +26,12 @@ If (z = "123456")
 else
 	FileAppend, fail, *
 
-z := "The number is " %x%
-
-If (z = "The number is 123")
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-
 z := "The number is " . (x * 10)
 
 If (z = "The number is 1230")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
 
 z := "The number is"
 . " another line"

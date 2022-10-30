@@ -35,13 +35,7 @@ namespace Keysharp.Tests
 		public void AssignUnquoted() => Assert.IsTrue(TestScript("assign-unquoted", true));
 
 		[Test, Category("Assign")]
-		public void AssignVar() => Assert.IsTrue(TestScript("assign-var", true));
-
-		[Test, Category("Assign")]
-		public void AssignVarEx() => Assert.IsTrue(TestScript("assign-var-ex", true));
-
-		[Test, Category("Assign")]
-		public void AssignCompareDynVarEx() => Assert.IsTrue(TestScript("assign-compare-dyn-var-ex", false));//Dynamic variables only work as global statics, not function variables.
+		public void AssignVarEx() => Assert.IsTrue(TestScript("assign-var-ex", false));//Dynamic variables only work as global statics, not function variables.
 
 		[Test, Category("Assign")]
 		public void AssignIntEx() => Assert.IsTrue(TestScript("assign-int-ex", true));

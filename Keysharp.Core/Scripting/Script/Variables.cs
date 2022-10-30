@@ -252,8 +252,8 @@ namespace Keysharp.Scripting
 
 			public object this[object key]
 			{
-				get => key is string s ? GetVariable(s) : "";
-				set => _ = SetVariable(key is string s ? s : "", value);
+				get => GetVariable(key.ToString()) ?? "";
+				set => _ = SetVariable(key.ToString(), value);
 			}
 		}
 	}

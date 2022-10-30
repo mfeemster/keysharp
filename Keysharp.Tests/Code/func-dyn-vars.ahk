@@ -8,12 +8,12 @@ func()
 
 func()
 
-If (x == 1)
+If (x == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-If (y == 123)
+If (y == "x")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

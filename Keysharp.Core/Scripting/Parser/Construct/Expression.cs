@@ -135,6 +135,8 @@ namespace Keysharp.Scripting
 											throw new ParseException("Cannot have multipart expression in a property name.");
 										else if (index.Length == 0)
 											throw new ParseException("Cannot access an empty property.");
+										else if (index[0] is CodeArrayIndexerExpression caie)
+											_ = invoke.Parameters.Add(caie.Indices[0]);//Don't want to use Vars if the property was dynamically specified, rather use the expression that was returned as the index to Vars.
 										else
 											_ = invoke.Parameters.Add(index[0]);
 
@@ -152,6 +154,8 @@ namespace Keysharp.Scripting
 											throw new ParseException("Cannot have multipart expression in a property name.");
 										else if (index.Length == 0)
 											throw new ParseException("Cannot access an empty property.");
+										else if (index[0] is CodeArrayIndexerExpression caie)
+											_ = invoke.Parameters.Add(caie.Indices[0]);//Don't want to use Vars if the property was dynamically specified, rather use the expression that was returned as the index to Vars.
 										else
 											_ = invoke.Parameters.Add(index[0]);//The problem is that this will have quotes on it at this point and be treated as a string no matter what, even if it's a dynamic var.//TODO
 									}

@@ -42,4 +42,16 @@
     <ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Code\Gui\killbill.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="Code\Gui\monkey.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="Code\Gui\Robin.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

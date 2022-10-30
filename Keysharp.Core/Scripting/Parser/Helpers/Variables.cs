@@ -2,6 +2,7 @@ using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Keysharp.Core;
 using static Keysharp.Core.Core;
@@ -93,6 +94,10 @@ namespace Keysharp.Scripting
 			var id = false;
 			var sub = new StringBuilder();
 			var parts = new List<CodeExpression>();
+			var single = code.Length > 2
+						 && code[0] == Resolve
+						 && code[code.Length - 1] == Resolve
+						 && code.Count(ch => ch == Resolve) == 2;
 
 			for (var i = 0; i < code.Length; i++)
 			{
@@ -105,8 +110,15 @@ namespace Keysharp.Scripting
 						if (sub.Length == 0)
 							throw new ParseException(ExEmptyVarRef, i);
 
-						//sub.Append(Resolve);//MATT
-						parts.Add(VarRefOrPrimitive(VarIdOrConstant(sub.ToString(), false, true)));
+						var str = sub.ToString();
+
+						if (single)
+							parts.Add(VarRefOrPrimitive(VarIdOrConstant(str, false, true)));//Do double dispatching for single %variable%.
+						else if (libProperties.TryGetValue(str, out var prop))//Else it's a concatenated%variable%, so do single dispatching, but check if the concat includes an accessor.
+							parts.Add(new CodeVariableReferenceExpression(prop.Name));
+						else//Not an accessor, so just concat as is.
+							parts.Add(VarIdOrConstant(str, false, false));
+
 						sub.Length = 0;
 						id = false;
 					}
@@ -133,7 +145,7 @@ namespace Keysharp.Scripting
 			var all = parts.ToArray();
 			var concat = StringConcat(all);
 
-			if (all[0] is CodePrimitiveExpression cpe && cpe.Value.ToString()?.Length == 0)//For some reason, this is the case with legacy "between" statements where the args are enclosed in %%.
+			if (all[0] is CodePrimitiveExpression cpe && cpe.Value.ToString()?.Length == 0 && code.Contains(" and ", StringComparison.OrdinalIgnoreCase))//For some reason, this is the case with legacy "between" statements where the args are enclosed in %%.
 				return concat;
 
 			if (concat is CodeArrayIndexerExpression)//If there was only one variable lookup, it will already be in the form of Vars[].
@@ -208,7 +220,11 @@ namespace Keysharp.Scripting
 			else
 			{
 				var vars = new CodePropertyReferenceExpression(null, VarProperty);//Cut down on the extreme namespace and type qualification verbosity.
-				return new CodeArrayIndexerExpression(vars, new CodePrimitiveExpression(name));
+
+				if (libProperties.TryGetValue(name, out var prop))
+					return new CodeArrayIndexerExpression(vars, new CodeVariableReferenceExpression(prop.Name));
+				else
+					return new CodeArrayIndexerExpression(vars, new CodeVariableReferenceExpression(name));
 			}
 		}
 

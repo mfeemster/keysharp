@@ -169,7 +169,25 @@ Differences:
 	-A new accessor A_KeysharpCorePath provides the full path to the Keysharp.Core.dll file.
 	-The entire .NET SDK is required to run, not just the runtime.
 	-Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.
-	
+	-Passing "GetCommandLine" to DllCall() won't work exactly as the examples show. Instead, the type must be "ptr" and the result must be wrapped in StrGet() like:
+		-StrGet(DllCall("GetCommandLine", "ptr"))
+		-Also, a new accessor has been added named A_CommandLine which returns the same value. This is the preferred method.
+	-OnMessage() doesn't observe any of the threading behavior mentioned in the documentation. Instead, the handlers are called inline. The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message. The return value is observed and if not null or empty string, will prevent the remainder of the handlers from being called, as well as prevent any further processing of the message. Also, a GUI object is required for OnMessage() to be used.
+	-The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing
+	a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
+	-A new function CopyImageToClipboard() is supported which copies an image, using the same arguments as LoadPicture(), to the clipboard. Note this is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
+	-Tooltips function slightly differently. When specifying a coordinate for a ToolTip, it will attempt to show it relative to the currently focused Keysharp form. If there is no focused form, it will attempt to show it relative to the last form which was created. If none are found, it will use 
+	the main form shown when double clicking the tray icon. If the form is minimized, then it will attempt to use the RestoreBounds property of the form. This may not work sometimes, so the ToolTip may never show in that case.
+	-When sending a string through SendMessage() using the WM_COPYDATA message type, the caller is no longer responsible for creating the special
+	COPYDATA struct. Instead, just pass WM_COPYDATA (0x4A) as the message type and the string as the lparam, and SendMessage() will handle it internally.
+	-For transparent controls which are intended to be overlaid over other controls, special steps must be taken.
+		-Specify BackgroundTrans in the options for the transparent control.
+		-Then set the .Parent property of the transparent control to the one it's laid over.
+		-Note that this makes the x and y coordinates of the control be relative to its parent, not the overall form.
+	-Sleep() works, but uses Application.DoEvents() under the hood which is not a good programming practice and can lead to hard to solve bugs.
+		-For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to Sleep().
+		
+		
 TODO/ENSURE THESE WORK:
 	The function Thread() was never implemented.
 	Replace as many instances of Substring() with Span() as you can.
@@ -239,6 +257,9 @@ TODO/ENSURE THESE WORK:
 		Tuple splatter extension methods, attribution: https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter
 		Rich text box with line numbers in Keyview: https://www.codeproject.com/Articles/38858/Line-Numbers-for-RichText-Control-in-C
 		Semver: https://github.com/maxhauser/semver
+		PictureBox derivation: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
+		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
+		
 	The syntax used in the tests for associative arrays seems to be V1 style, we need to ensure we support V2 style which takes objects as keys.
 	Reading accessor properties works, but setting them does not, it thinks it's a variable.
 	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
@@ -255,6 +276,8 @@ TODO/ENSURE THESE WORK:
 		4) The version of keysharp the script was compiled with, to be checked when it's running.
 
 
+	The command line you were using for Keysharp.OutputTest is: /force /restart /ErrorStdOut /Debug /include "IncFile.ahk"
+	
 	For when you implement classes/objects, here are how get/set properties are defined.
 	
 	x := Gui() ; this can be any object, built-in or not
@@ -438,6 +461,19 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 			
 	cloaker: one thing to consider might be making all of the message numbers built in constants, since C# consts are effectively free (compared to AHK built in variables)
 	technically would make code un-portable, but would be super nice to have
+	Another code expander:
+		https://github.com/giosali/reginald.
+	Possibly investigate this later to see if it can be better than what we're doing with Windows API calls: https://mwinapi.sourceforge.net/
+		-If not better, then at least see if it provides good examples.
+	Possible COM library for MS Office. See how hard doing it from scratch is vs. this vs. copying some of its code:
+		https://netoffice.io/
+	For the linux work, SOTE on the forums said: phil294 (@phil294) whenever ready, who has an AHK Classic to Linux project on GitHub, and stated he would like to help in regards to Linux.
+	https://www.codeproject.com/script/Content/ViewAssociatedFile.aspx?rzp=/KB/system/CSLLKeyboard//csllkeyboard_demo.zip&zep=BabyKeyboardBash/Keyboard.cs&obid=14485&obtid=2&ovid=1
+	A general mouse and keyboard simulator: https://www.codeproject.com/Articles/28064/Global-Mouse-and-Keyboard-Library
+	Another COM	solution which Burque has gotten to mostly work:
+	https://www.codeproject.com/Articles/523417/Reflection-with-IDispatch-based-COM-objects
+	How Powershell implements it: https://github.com/PowerShell/PowerShell/tree/master/src/System.Management.Automation/engine/COM
+	
 	
 Closed development links to revisit:
 	https://docs.microsoft.com/en-us/dotnet/framework/tools/signtool-exe?redirectedfrom=MSDN
@@ -456,6 +492,8 @@ Closed development links to revisit:
 	https://www.codeproject.com/tips/715891/compiling-csharp-code-at-runtime
 	https://www.automatetheplanet.com/optimize-csharp-reflection-using-delegates/
 	https://www.youtube.com/watch?v=EgwnFhptwxI
+
+	
 	A program called Voice Macro for automation.
 	
 	
