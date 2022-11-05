@@ -2362,7 +2362,7 @@ namespace Keysharp.Core.Windows
 							}
 							else if (subspan.StartsWith("Text", StringComparison.OrdinalIgnoreCase)) // Added in v1.1.27
 							{
-								if (subspan.Slice(4).TrimStart(Keysharp.Core.Core.SpaceTab).Length == 1)//Pointing at the closing '}'.
+								if (subspan.Slice(4).TrimStart(Keysharp.Core.Core.SpaceTab).Length == 0)//Pointing at the closing '}'.
 									sendRaw = SendRawModes.RawText;
 
 								//else: ignore this {Text something} to reserve for future use.
@@ -2420,7 +2420,7 @@ namespace Keysharp.Core.Windows
 							if (repeatCount < 1)
 								goto bracecaseend; // Gets rid of one level of indentation. Well worth it.
 
-							subspanstr = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);//Consider the entire strin, minus the first {, below.
+							subspanstr = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);//Consider the entire string, minus the first {, below.
 
 							if (vk != 0 || sc != 0)
 							{
