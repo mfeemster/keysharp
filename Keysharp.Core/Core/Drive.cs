@@ -211,7 +211,7 @@ namespace Keysharp.Core
 		{
 			Common.Drive drive;
 
-			if (dr == "")
+			if (dr.Length == 0)
 			{
 				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom).ToList();
 				drive = allDrives.Count > 0

@@ -554,7 +554,7 @@ namespace Keysharp.Scripting
 					// The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
 					if (replacement.Length == 0 || hotkeyUsesOtb || hotstringExecute)
 					{
-						if (SetLastHotstringFunc(hotName) == "")// It is not auto-replace
+						if (SetLastHotstringFunc(hotName).Length == 0)// It is not auto-replace
 							return null;// ResultType.Fail;
 					}
 					else if (lastHotstringFunc.Length > 0 && replacement.Length > 0)//Can't have stacked auto replace hotstrings.

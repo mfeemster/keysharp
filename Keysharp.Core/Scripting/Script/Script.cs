@@ -170,7 +170,7 @@ namespace Keysharp.Scripting
 
 		public static void HandleSingleInstance(string name, eScriptInstance inst)
 		{
-			if (name == "" || name == "*")//Happens when running in Keysharp
+			if (name.Length == 0 || name == "*")//Happens when running in Keysharp
 				return;
 
 			if (Keysharp.Core.Env.FindCommandLineArg("force") != null || Keysharp.Core.Env.FindCommandLineArg("f") != null)

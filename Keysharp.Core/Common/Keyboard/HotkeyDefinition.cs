@@ -745,23 +745,23 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			if (string.IsNullOrEmpty(aBuf)) return 0;
 
-			if (string.Compare(aBuf, "AltTab") == 0) return HOTKEY_ID_ALT_TAB;
+			if (string.Compare(aBuf, "AltTab", true) == 0) return HOTKEY_ID_ALT_TAB;
 
-			if (string.Compare(aBuf, "ShiftAltTab") == 0) return HOTKEY_ID_ALT_TAB_SHIFT;
+			if (string.Compare(aBuf, "ShiftAltTab", true) == 0) return HOTKEY_ID_ALT_TAB_SHIFT;
 
-			if (string.Compare(aBuf, "AltTabMenu") == 0) return HOTKEY_ID_ALT_TAB_MENU;
+			if (string.Compare(aBuf, "AltTabMenu", true) == 0) return HOTKEY_ID_ALT_TAB_MENU;
 
-			if (string.Compare(aBuf, "AltTabAndMenu") == 0) return HOTKEY_ID_ALT_TAB_AND_MENU;
+			if (string.Compare(aBuf, "AltTabAndMenu", true) == 0) return HOTKEY_ID_ALT_TAB_AND_MENU;
 
-			if (string.Compare(aBuf, "AltTabMenuDismiss") == 0) return HOTKEY_ID_ALT_TAB_MENU_DISMISS;
+			if (string.Compare(aBuf, "AltTabMenuDismiss", true) == 0) return HOTKEY_ID_ALT_TAB_MENU_DISMISS;
 
 			if (aAllowOnOff)
 			{
-				if (string.Compare(aBuf, "On") == 0) return HOTKEY_ID_ON;
+				if (string.Compare(aBuf, "On", true) == 0) return HOTKEY_ID_ON;
 
-				if (string.Compare(aBuf, "Off") == 0) return HOTKEY_ID_OFF;
+				if (string.Compare(aBuf, "Off", true) == 0) return HOTKEY_ID_OFF;
 
-				if (string.Compare(aBuf, "Toggle") == 0) return HOTKEY_ID_TOGGLE;
+				if (string.Compare(aBuf, "Toggle", true) == 0) return HOTKEY_ID_TOGGLE;
 			}
 
 			return 0;
@@ -933,11 +933,12 @@ namespace Keysharp.Core.Common.Keyboard
 			// Caller has ensured that aCallback and _hookAction can't both be non-zero.  Furthermore,
 			// both can be zero/NULL only when the caller is updating an existing hotkey to have new options
 			// (i.e. it's retaining its current callback).
-			//if (aCallback)
-			//{
-			//  if (!ValidateFunctor(aCallback, 1, aResultToken))
-			//      return FAIL;
-			//}
+			if (_callback != null)
+			{
+				if (!_callback.IsValid)
+					return ResultType.Fail;
+			}
+
 			bool suffixHasTilde = false, hook_is_mandatory = false;
 			var hk = FindHotkeyByTrueNature(hotkeyName, ref suffixHasTilde, ref hook_is_mandatory); // NULL if not found.
 			var variant = hk?.FindVariant();
@@ -1122,10 +1123,11 @@ namespace Keysharp.Core.Common.Keyboard
 
 						case 'B':
 						{
-							var ch2 = options[i + 1];
-
 							if (variant != null)
+							{
+								var ch2 = options[i + 1];
 								variant.maxThreadsBuffer = ch2 != '0';  // i.e. if the char is NULL or something other than '0'.
+							}
 						}
 						break;
 
@@ -1140,10 +1142,11 @@ namespace Keysharp.Core.Common.Keyboard
 
 						case 'S':
 						{
-							var ch2 = options[i + 1];
-
 							if (variant != null)
+							{
+								var ch2 = options[i + 1];
 								variant.suspendExempt = ch2 != '0';
+							}
 						}
 						break;
 
@@ -1163,13 +1166,13 @@ namespace Keysharp.Core.Common.Keyboard
 							break;
 
 						case 'I':
-							if (variant != null && int.TryParse(options.Substring(i + 1), out var new_input_level))
+							if (variant != null && int.TryParse(options.AsSpan(i + 1), out var newInputLevel))
 							{
-								variant.maxThreads = new_input_level;
+								variant.maxThreads = newInputLevel;
 
-								if (KeyboardMouseSender.SendLevelIsValid(new_input_level))
+								if (KeyboardMouseSender.SendLevelIsValid(newInputLevel))
 								{
-									if (new_input_level != 0 && !hk.keybdHookMandatory)
+									if (newInputLevel != 0 && !hk.keybdHookMandatory)
 									{
 										// For simplicity, a hotkey requires the hook if any of its variants have a non-zero
 										// input level, even if those variants are disabled.  The same is done for the tilde
@@ -1178,7 +1181,7 @@ namespace Keysharp.Core.Common.Keyboard
 										updateAllHotkeys = true;
 									}
 
-									variant.inputLevel = new_input_level;
+									variant.inputLevel = newInputLevel;
 								}
 							}
 

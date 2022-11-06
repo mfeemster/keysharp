@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
+using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
@@ -168,115 +169,47 @@ namespace Keysharp.Core
 		/// </list>
 		/// </param>
 
-		/*  public static void Hotkey(params object[] obj)//Unused, will need to replace with AHK port code.//TODO
-		    {
-		    var (keyname, label, options) = obj.L().S3();
-		    var win = -1;
-		    var ht = Keysharp.Scripting.Script.HookThread;
-		    var kbdMouseSender = ht.kbdMsSender;
+		public static void Hotkey(object obj0, object obj1 = null, object obj2 = null)
+		{
+			var keyname = obj0.As();
+			var label = obj1.As();
+			var options = obj2.As();
+			FuncObj fo = null;
+			var hook_action = 0u;
 
-		    switch (keyname.ToLowerInvariant())
-		    {
-		        case Core.Keyword_IfWinActive: win = 0; break;
+			if (obj1 != null)
+			{
+				fo = obj1 as FuncObj;
 
-		        case Core.Keyword_IfWinExist: win = 1; break;
+				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
+				{
+					for (var i = 0; i < HotkeyDefinition.shk.Count; ++i)
+					{
+						if (HotkeyDefinition.shk[i].Name == label)
+							continue;
 
-		        case Core.Keyword_IfWinNotActive: win = 2; break;
+						for (var v = HotkeyDefinition.shk[i].firstVariant; v != null; v = v.nextVariant)
+						{
+							if (v.hotCriterion == Keysharp.Scripting.Script.hotCriterion)
+							{
+								fo = v.originalCallback;
+								goto break_twice;
+							}
+						}
+					}
 
-		        case Core.Keyword_IfWinNotExit: win = 3; break;
-		    }
+break_twice:;
 
-		    if (win != -1)
-		    {
-		        var cond = new string[4, 2];
-		        cond[win, 0] = label; // title
-		        cond[win, 1] = options; // text
-		        keyCondition = new FuncObj(new GenericFunction(delegate
-		        {
-		            return HotkeyPrecondition(cond);
-		        }), null);
-		        return;
-		    }
+					if (fo == null)
+						throw new Error($"Unable to find existing hotkey handler: {label}");
+				}
 
-		    bool? enabled = true;
+				if (fo == null)
+					hook_action = HotkeyDefinition.ConvertAltTab(label, true);
+			}
 
-		    foreach (var option in Options.ParseOptions(options))
-		    {
-		        switch (option.ToLowerInvariant())
-		        {
-		            case Core.Keyword_On: enabled = true; break;
-
-		            case Core.Keyword_Off: enabled = false; break;
-
-		            case Core.Keyword_Toggle: enabled = null; break;
-
-		            case Core.Keyword_UseErrorLevel: break;
-
-		            default:
-		                switch (option[0])
-		                {
-		                    case 'B':
-		                    case 'b':
-		                    case 'P':
-		                    case 'p':
-		                    case 'T':
-		                    case 't':
-		                        break;
-
-		                    default:
-		                        break;
-		                }
-
-		                break;
-		        }
-		    }
-
-		    HotkeyDefinition key;
-
-		    try
-		    {
-		        key = HotkeyDefinition.Parse(keyname);
-		    }
-		    catch (ArgumentException)
-		    {
-		        return;
-		    }
-
-		    var id = keyname;
-		    key.Name = id;
-
-		    if (keyCondition != null)
-		        id += "_" + keyCondition.GetHashCode().ToString("X");
-
-		    if (hotkeys.TryGetValue(id, out var hk))
-		    {
-		        hk.Enabled = enabled == null ? !hk.Enabled : enabled == true;
-
-		        switch (label.ToLowerInvariant())
-		        {
-		            case Core.Keyword_On: hk.Enabled = true; break;
-
-		            case Core.Keyword_Off: hk.Enabled = true; break;
-
-		            case Core.Keyword_Toggle: hk.Enabled = !hk.Enabled; break;
-		        }
-		    }
-		    else
-		    {
-		        var method = Reflections.FindLocalMethod(label);
-
-		        if (method == null)
-		        {
-		            return;
-		        }
-
-		        key.Proc = new FuncObj((GenericFunction)Delegate.CreateDelegate(typeof(GenericFunction), method), null);
-		        key.Precondition = keyCondition;
-		        hotkeys.Add(id, key);
-		        _ = kbdMouseSender.Add(key);
-		    }
-		    }
-		*/
+			_ = HotkeyDefinition.Dynamic(keyname, options, fo, hook_action);
+		}
 
 		public static object Hotstring(object obj0, object obj1 = null, object obj2 = null)
 		{

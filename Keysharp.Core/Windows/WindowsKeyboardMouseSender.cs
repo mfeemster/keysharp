@@ -2260,9 +2260,11 @@ namespace Keysharp.Core.Windows
 				if (sendMode == SendModes.Event)
 					LongOperationUpdateForSendKeys(); // This does not measurably affect the performance of SendPlay/Event.
 
-				if (sendRaw == SendRawModes.NotRaw && sendKeyChars.IndexOf(sub[keyIndex]) != -1)//  _tcschr(("^+!#{}"), *aKeys))
+				var ch = sub[keyIndex];
+
+				if (sendRaw == SendRawModes.NotRaw && sendKeyChars.IndexOf(ch) != -1)//  _tcschr(("^+!#{}"), *aKeys))
 				{
-					switch (sub[keyIndex])
+					switch (ch)
 					{
 						case '^':
 							if ((persistentModifiersForThisSendKeys & (MOD_LCONTROL | MOD_RCONTROL)) == 0)
