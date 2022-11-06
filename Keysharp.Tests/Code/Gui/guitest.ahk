@@ -45,7 +45,7 @@ MyGui.MenuBar := MyMenuBar
 ; │  Start TAB  │
 ; └─────────────┘
 
-Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo"])
+Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey"])
 
 Tab.UseTab("First")
 
@@ -185,7 +185,9 @@ ReadINI() {
     iniText.SetFont("s10 cBlue")
     IniFileText := FileRead(".\kstests.ini")
     ControlSetText(Val, iniText)
+    ;ControlSetText("Testing", iniText)
     ControlSetText(IniFileText, iniEdit)
+    ;ControlSetText("Still Testing", iniEdit)
 }
 
 iniWriteBtn := MyGui.Add("Button", "x10 y+10", "Write INI")
@@ -374,7 +376,6 @@ Tab.UseTab("Second")
 ; └───────────────┘
 MyPictureBtn := MyGui.Add("Button", "cBlue s10 x400 y600", "Display a Picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
-;MyPic := MyGui.Add("Picture", "xp y+20 w100 h-1", A_ScriptDir "\monkey.ico")
 SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Picture will display above")
 
 
@@ -562,7 +563,7 @@ MyHkInfoText.SetFont("cBlue s8")
 MyHotkey := MyGui.Add("Hotkey", "x10 y+5")
 MyHotkey.OnEvent("Change", "UpdateHK")
 MyHkText := MyGui.Add("Text", "x10 y+5 w200" , MyHotkey.Value)
-MyHkText2 := MyGui.Add("Text", "x10 y+5 w200 cRed", "NOTE: Combos w/Win not working.")
+;MyHkText2 := MyGui.Add("Text", "x10 y+5 w200 cRed", "NOTE: Combos w/Win not working.")
 
 UpdateHK() {
     ControlSetText( MyHotkey.Value, MyHkText)
@@ -591,8 +592,8 @@ MyGui.UseGroup(gb1)
 CpText := MyGui.Add("Text", , "gb1 - Image copying tests")
 CpText.SetFont("s8 cBlue")
 MyRE := MyGui.Add("RichEdit", "x10 y+10 w300 h100")
-MyPic := LoadPicture(A_ScriptDir "\Robin.png")
-CopyImageToClipboard("HBITMAP:" MyPic["Handle"])
+MySecondPic := LoadPicture(A_ScriptDir "\Robin.png")
+CopyImageToClipboard("HBITMAP:" MySecondPic["Handle"])
 ShowBtn := MyGui.Add("Button", "x10 y+10", "Paste Pic")
 ShowBtn.OnEvent("Click", "PastePic")
 
@@ -624,8 +625,48 @@ MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 gb2 := MyGui.Add("GroupBox", "x10 y+10 w330 h400", "Group Two")
 MyGui.UseGroup(gb2)
-MyGui.Add("Button", "cBlue s8", "Testing gb2")
-MyGui.Add("Text", , "Testing placement")
+MyGui.Add("Text", "cBlue s8 w200", "Testing various Send() types")
+gb2Edit := MyGui.Add("Edit", "x10 y+5 w300 h250")
+gb2Btn1 := MyGui.Add("Button", "x10", "Notepad")
+gb2Btn1.OnEvent("Click", "SendToApp")
+gb2Btn2 := MyGui.Add("Button", "x95 yp", "This Edit")
+gb2Btn2.OnEvent("Click", "SendToGui")
+
+
+;MyGui.Add("Text", , "Testing placement")
+
+SendToApp() {
+    Run("Notepad.exe")
+    WinWaitActive("ahk_exe Notepad.exe")
+    SendInput("Sincerely,{enter}John Smith")
+    Send("`n")
+    Send("Another line.`n")
+    Send("{Raw}``100`%`n")
+    Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
+    ; Line above produces [You should see '' after the ellipses ...] 
+    Send("{Blind}You should see nothing after the ellipses ... '{Blind}'")
+    Send("`n")
+    Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+    Sleep(500)
+    MsgBox("End of Notepad test", "Test finished", "T2")
+    Send("{Alt}Fx")
+    Sleep(100)
+    Send("{Tab}{Enter}")
+
+}
+
+SendToGui() {
+    WinActivate(MyGui)
+    ControlFocus(gb2Edit)
+    SendInput("Sincerely,{enter}John Smith")
+    Send("`n")
+    Send("Another line.`n")
+    Send("{Raw}``100`%`n")
+    Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
+    Send("{Blind}You should see nothing after the ellipses ... {Blind}")
+    Send("`n")
+    Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+}
 
 MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
@@ -1039,17 +1080,246 @@ GetPix() {
 
 
 LoadSC() {
+    ;MyGui.UseGroup()
+    ;Tab.UseTab("ControlZoo")
+    ;MyGui.UseGroup(gb2_CZ)
     If !(FileExist(A_Desktop "\MyScreenClip.png")) {
         GetScreenClip(100, 100, 200, 200, A_Desktop "\MyScreenClip.png")
         Sleep(100)
     }
-    MyPic := LoadPicture(A_Desktop "\MyScreenClip.png")
-    MyLoadedPic := MyGui.Add("Picture", "x10 y335 w200 h200", "HBITMAP:" MyPic["Handle"])
+    MyThirdPic := LoadPicture(A_Desktop "\MyScreenClip.png")
+
+    MyLoadedPic := MyGui.Add("Picture", "x10 y335 w200 h200", "HBITMAP:" MyThirdPic["Handle"])
     Sleep(2000)
 
     DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
+    ;Tab.UseTab()
     FileDelete(A_Desktop "\MyScreenClip.png")
+    MyThirdPic["Handle"] := ""
+    MyLoadedPic := ""
+    MyThirdPic := ""
+}
 
+; ┌───────────────────────┐
+; │  SEND & HOTKEY TESTS  │
+; └───────────────────────┘
+
+
+
+MyGui.UseGroup()
+Tab.UseTab("Send & Hotkey")
+SectionTopText := MyGui.Add("Text", "x10 y10 w600", "This section is for testing the various Send() variants and the Hotkey method.")
+SectionTopText.SetFont("cBlue s12")
+MySendEdit := MyGui.Add("Edit", "x10 y+10 w700 h250", "The buttons below this Edit will use various Send() variants.`n")
+BtnSend := MyGui.Add("Button", "x10 y+10 w80", "Send()")
+BtnSendText := MyGui.Add("Button", "xp+85 yp w80", "SendText()")
+BtnSendInput := MyGui.Add("Button", "xp+170 yp w80", "SendInput()")
+BtnSendPlay := MyGui.Add("Button", "xp+255 yp w80", "SendPlay()")
+BtnSendEvent := MyGui.Add("Button", "xp+340 yp w80", "SendEvent()")
+
+BtnSend.OnEvent("Click", "BtnSendFunc")
+BtnSendText.OnEvent("Click", "BtnSendTextFunc")
+BtnSendInput.OnEvent("Click", "BtnSendInputFunc")
+BtnSendPlay.OnEvent("Click", "BtnSendPlayFunc")
+BtnSendEvent.OnEvent("Click", "BtnSendEventFunc")
+
+; ┌────────────────────────────────────┐
+; │  Send and Hotkey button functions  │
+; └────────────────────────────────────┘
+
+BtnSendFunc(){   
+    TheSendMsg := "
+(
+From the AHK docs:
+
+"Sends simulated keystrokes and mouse clicks to the active window."
+        
+When you dismiss this button,
+Keysharp will send 'Sincerely, John Smith'
+(no quotes) to the Edit, then add a newline.
+)"
+
+    MsgBox(TheSendMsg, "Send")
+    WinActivate(MyGui)
+    ControlFocus(MySendEdit)
+    Send("{Ctrl}{End}{Enter}")
+    Send("Sincerely, John Smith`n")
+}
+
+
+BtnSendTextFunc(){
+
+    TheSendTextMsg := "
+(
+From the AHK docs:
+
+SendText: Similar to Send, except that all characters
+in Keys are interpreted and sent literally. 
+See Text mode for details.
+
+The Text mode can be either enabled with {Text}, SendText or ControlSendText,
+which is similar to the Raw mode, except that no attempt is made to translate
+characters (other than ``r, ``n, ``t and ``b) to keycodes;
+instead, the fallback method is used for all of the remaining characters. 
+
+For SendEvent, SendInput and ControlSend, this improves reliability
+because the characters are much less dependent on correct modifier state.
+
+This mode can be combined with the Blind mode to avoid releasing any modifier keys:
+        
+        Send "{Blind}{Text}your text". 
+        
+However, some applications require that the modifier keys be released.
+
+``n, ``r and ``r``n are all translated to a single Enter, unlike the default behavior and Raw mode,
+which translate ``r``n to two Enter. ``t is translated to Tab and ``b to Backspace,
+but all other characters are sent without translation.
+
+Like the Blind mode, the Text mode ignores SetStoreCapsLockMode (that is, the state of CapsLock is not changed)
+and does not wait for Win to be released. This is because the Text mode
+typically does not depend on the state of CapsLock and cannot trigger the system Win+L hotkey.
+However, this only applies when Keys begins with {Text} or {Blind}{Text}.
+        
+        When you dismiss this button,
+        Keysharp will open Notepad, wait a bit and
+        then send some text. You should see this:
+
+I want to send some {Blind}{Text} with SendText followed by a newline.
+
+and then a newline.
+
+Then, you should see:
+
+You should see the Blind mode syntax after the ellipses ... '{Blind}'
+)"
+    
+    
+    MsgBox(TheSendTextMsg, "SendText")
+
+TheSendText := "I want to send some {Blind}{Text} with SendText followed by a newline.`r`n"
+Run("Notepad.exe")
+WinWaitActive("ahk_exe Notepad.exe")
+;Sleep(500)
+SendText(TheSendText)
+Sleep(500)
+Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+Sleep(2000)
+Send("{Alt}fx{Tab}{Enter}")
+}
+
+BtnSendInputFunc(){
+
+    TheSendInputMsg := "
+(
+From the AHK docs:
+
+SendInput is generally the preferred method to send keystrokes and mouse clicks because of its superior speed and reliability. 
+Under most conditions, SendInput is nearly instantaneous, even when sending long strings. Since SendInput is so fast, 
+it is also more reliable because there is less opportunity for some other window to pop up unexpectedly and intercept the keystrokes. 
+Reliability is further improved by the fact that anything the user types during a SendInput is postponed until afterward.
+
+Unlike the other sending modes, the operating system limits SendInput to about 5000 characters
+(this may vary depending on the operating system's version and performance settings). 
+Characters and events beyond this limit are not sent.
+
+    Note: SendInput ignores SetKeyDelay because the operating system does not support a delay in this mode. 
+    However, when SendInput reverts to SendEvent under the conditions described below, it uses SetKeyDelay -1, 0
+    (unless SendEvent's KeyDelay is -1,-1, in which case -1,-1 is used). 
+    When SendInput reverts to SendPlay, it uses SendPlay's KeyDelay.
+
+If a script other than the one executing SendInput has a low-level keyboard hook installed, SendInput automatically reverts
+to SendEvent (or SendPlay if SendMode "InputThenPlay" is in effect). 
+This is done because the presence of an external hook disables all of SendInput's advantages,
+making it inferior to both SendPlay and SendEvent. However, since SendInput is unable to detect
+a low-level hook in programs other than AutoHotkey v1.0.43+,
+it will not revert in these cases, making it less reliable than SendPlay/Event.
+
+When SendInput sends mouse clicks by means such as {Click}, and CoordMode "Mouse", "Window"
+or CoordMode "Mouse", "Client" is in effect, every click will be relative to the window
+that was active at the start of the send. Therefore, if SendInput intentionally activates another window
+(by means such as alt-tab), the coordinates of subsequent clicks within the same function
+will be wrong if they were intended to be relative to the new window rather than the old one.
+        
+        When you dismiss this button,
+        Keysharp will open Notepad, wait a bit and
+        then send some text. You should see this:
+
+Now how did this get up here???
+The buttons below this Edit will use various Send() variants.
+
+Really, Cheeta, you shouldn't have
+Lord Greystoke
+
+
+Testing newlines with braces syntax
+
+)"
+
+    MsgBox(TheSendInputMsg, "SendInput")
+    WinActivate(MyGui)
+    ControlFocus(MySendEdit)
+    SendInput("{End}{Enter}")
+    SendInput("Really, Cheeta, you shouldn't have!{End}{Enter}Lord Greystoke`n")
+    Sleep(1000)
+    ControlFocus(MySendEdit)
+    SendInput("^{Home}")
+    SendInput("Now how did this get up here???`n")
+    SendInput("^{End}{Enter}")
+    SendInput("^{End}{Enter}")
+    SendInput("Testing newlines with braces syntax")
+
+}
+
+BtnSendPlayFunc(){
+    TheSendPlayMsg := "
+(
+Warning: SendPlay may have no effect at all if UAC is enabled, even if the script is running as an administrator. For more information, refer to the FAQ.
+
+SendPlay's biggest advantage is its ability to "play back" keystrokes and mouse clicks in a broader variety of games than the other modes. For example, a particular game may accept hotstrings only when they have the SendPlay option.
+
+Of the three sending modes, SendPlay is the most unusual because it does not simulate keystrokes and mouse clicks per se. Instead, it creates a series of events (messages) that flow directly to the active window (similar to ControlSend, but at a lower level). Consequently, SendPlay does not trigger hotkeys or hotstrings.
+
+Like SendInput, SendPlay's keystrokes do not get interspersed with keystrokes typed by the user. Thus, if the user happens to type something during a SendPlay, those keystrokes are postponed until afterward.
+
+Although SendPlay is considerably slower than SendInput, it is usually faster than the traditional SendEvent mode (even when KeyDelay is -1).
+
+Both Win (LWin and RWin) are automatically blocked during a SendPlay if the keyboard hook is installed. This prevents the Start Menu from appearing if the user accidentally presses Win during the send. By contrast, keys other than LWin and RWin do not need to be blocked because the operating system automatically postpones them until after the SendPlay (via buffering).
+
+SendPlay does not use the standard settings of SetKeyDelay and SetMouseDelay. Instead, it defaults to no delay at all, which can be changed as shown in the following examples:
+
+SetKeyDelay 0, 10, "Play"  ; Note that both 0 and -1 are the same in SendPlay mode.
+SetMouseDelay 10, "Play"
+
+SendPlay is unable to turn on or off CapsLock, NumLock, or ScrollLock. Similarly, it is unable to change a key's state as seen by GetKeyState unless the keystrokes are sent to one of the script's own windows. Even then, any changes to the left/right modifier keys (e.g. RControl) can be detected only via their neutral counterparts (e.g. Control). Also, SendPlay has other limitations described on the SendMode page.
+
+Unlike SendInput and SendEvent, the user may interrupt a SendPlay by pressing Ctrl+Alt+Del or Ctrl+Esc. When this happens, the remaining keystrokes are not sent but the script continues executing as though the SendPlay had completed normally.
+
+Although SendPlay can send LWin and RWin events, they are sent directly to the active window rather than performing their native operating system function. To work around this, use SendEvent. For example, SendEvent "#r" would show the Start Menu's Run dialog.
+)"
+    MsgBox(TheSendPlayMsg, "SendPlay")
+    SendPlay("#r")
+    MsgBox("Just sent '#r' with SendPlay, which should not work.`nNow I'll use SendEvent(), which should.`nI'll wait five seconds, then send Alt-F4 to kill the run dialog.", "SendPlay Testing", "T5")
+    SendEvent("#r")
+    Sleep(5000)
+    SendEvent("!{F4}")
+}
+
+BtnSendEventFunc(){
+    TheSendEventMsg := "
+(
+From the AHK docs:
+
+"SendEvent: SendEvent sends keystrokes using the Windows keybd_event function.
+(search MSDN for details)
+The rate at which keystrokes are sent is determined by SetKeyDelay. 
+SendMode can be used to make Send synonymous with SendEvent or SendPlay."
+        
+When you dismiss this button,
+Keysharp will send Win-R.
+The 'Run' dialog will open.
+)"
+    MsgBox(TheSendEventMsg, "SendEvent button")
+    SendEvent("#r")
 }
 
 
@@ -1211,7 +1481,11 @@ ClearRichEdit() {
 
 LoadPic() {
     Tab.UseTab("Second")
-    MyPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir "\monkey.ico")
+    MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir "\monkey.ico")
+    Sleep(2000)
+    DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
+    Tab.UseTab()
+    MyFirstPic := ""
     ; MyGui.Opts("+Redraw")
 }
 
