@@ -44,7 +44,7 @@ namespace Keysharp.Core.Common.Threading
 			}
 			finally
 			{
-				Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads);
+				_ = Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads);
 			}
 
 			return tsk;

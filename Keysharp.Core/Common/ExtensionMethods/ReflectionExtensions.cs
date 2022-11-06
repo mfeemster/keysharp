@@ -48,7 +48,7 @@ namespace System.Reflection
 			object ret = null;
 
 			if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-				ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, parameters), false);
+				_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, parameters), false);
 			else
 				ret = mi.Invoke(inst, parameters);
 

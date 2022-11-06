@@ -868,9 +868,9 @@ namespace Keysharp.Core.Windows
 			{
 				n--;
 				var buffer = new StringBuilder(32767);
-				buffer.Append((char)buffer.Capacity);
+				_ = buffer.Append((char)buffer.Capacity);
 
-				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINE, (uint)n, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var _) == 0)
+				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINE, (uint)n, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out _) == 0)
 					throw new Error($"Could not get line for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				if (buffer.Length == 0)

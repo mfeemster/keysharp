@@ -195,7 +195,7 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract int MapVkToSc(int vk, bool returnSecondary = false);
 
-		internal abstract void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref int repeatCount, ref bool moveOffset);
+		internal abstract void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset);
 
 		internal string SCtoKeyName(int sc, bool useFallback)
 		{

@@ -2353,7 +2353,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 			catch (Error ex)
 			{
-				Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}");
+				_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}");
 			}
 
 			--variant.existingThreads;

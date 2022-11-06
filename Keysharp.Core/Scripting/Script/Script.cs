@@ -253,7 +253,7 @@ namespace Keysharp.Scripting
 			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.Show();
-			mainWindow.BeginInvoke(() =>
+			_ = mainWindow.BeginInvoke(() =>
 			{
 				userInit();
 				//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.

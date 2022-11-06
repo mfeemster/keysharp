@@ -285,7 +285,7 @@ namespace Keysharp.Core.Windows
 				if (value is string s)
 				{
 					if (s.ToLower() == "off")
-						WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | ~WindowsAPI.WS_EX_LAYERED));
+						_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | ~WindowsAPI.WS_EX_LAYERED));
 				}
 				else
 				{

@@ -81,17 +81,17 @@ namespace Keysharp.CompiledMain
 				SetProcessDPIAware();
 				CreateTrayMenu();
 				RunMainWindow(name, UserMainCode);
-				ExitApp(0);
+				_ = ExitApp(0);
 				return 0;
 			}
 			catch (Keysharp.Core.Error kserr)
 			{
 				if (ErrorOccurred(kserr))
 				{
-					MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
+					_ = MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
 				}
 
-				ExitApp(1);
+				_ = ExitApp(1);
 				return 1;
 			}
 			catch (System.Exception mainex)
@@ -102,17 +102,17 @@ namespace Keysharp.CompiledMain
 				{
 					if (ErrorOccurred(kserr))
 					{
-						MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
+						_ = MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
 					}
 				}
 				else
 				{
-					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace);
+					_ = MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace);
 				}
 
 				;
 
-				ExitApp(1);
+				_ = ExitApp(1);
 
 				return 1;
 			}
@@ -120,6 +120,61 @@ namespace Keysharp.CompiledMain
 
 		public static void UserMainCode()
 		{
+			_ = Run("Notepad.exe");
+			_ = WinWaitActive("ahk_exe notepad.exe");
+			mygui = Gui(null, "Send tests");
+			myedit = Invoke(GetMethodOrProperty(mygui, "Add"), "Edit", "w400 h400");
+			mybtn1 = Invoke(GetMethodOrProperty(mygui, "Add"), "Button", "x10", "Notepad");
+			mybtn2 = Invoke(GetMethodOrProperty(mygui, "Add"), "Button", "x95 yp", "This Edit");
+			_ = Invoke(GetMethodOrProperty(mybtn1, "OnEvent"), "Click", "SendSimple");
+			_ = Invoke(GetMethodOrProperty(mybtn2, "OnEvent"), "Click", "SendToGui");
+			_ = Invoke(GetMethodOrProperty(mygui, "Show"));
+		}
+
+		public static object mybtn1;
+
+		public static object mybtn2;
+
+		public static object myedit;
+
+		public static object mygui;
+
+		public static object SendSimple()
+		{
+			WinActivate("ahk_exe Notepad.exe");
+			//SendInput("Sincerely,{enter}John Smith");
+			//Send("\n");
+			//Send("Another line.\n");
+			//Send("{Raw}`100%\n");
+			//Send("{Blind}{Text}You should see \'{Blind}{Text}\' after the ellipses ... {Blind}{Text}\n" +
+			//   "");
+			//Send("{Blind}You should not see anything after the ellipses ... \'{Blind}\'\n");
+			//Send("{Text}You should see the Blind mode syntax after the ellipses ... \'{Blind}\'");
+			//Send("{S 30}");
+			Send("{Up down}");
+			Sleep(1000);
+			Send("{Up up}");
+			return string.Empty;
+		}
+
+		public static object SendToGui()
+		{
+			WinActivate(mygui);
+			ControlFocus(myedit);
+			//SendInput("Sincerely,{enter}John Smith");
+			//Send("\n");
+			//Send("Another line.\n");
+			//Send("{Raw}`100%\n");
+			//Send("{Blind}{Text}You should see \'{Blind}{Text}\' after the ellipses ... {Blind}{Text}\n" +
+			//   "");
+			//Send("{Blind}You should not see anything after the ellipses ... \'{Blind}\'\n");
+			//Send("{Text}You should see the Blind mode syntax after the ellipses ... \'{Blind}\'");
+			//Send("+{Blind s 30}");
+			//Send("{Blind}+{s 30}");
+			Send("{Up down}");
+			Sleep(1000);
+			Send("{Up up}");
+			return string.Empty;
 		}
 	}
 }

@@ -506,7 +506,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 			catch (Error ex)
 			{
-				Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}");
+				_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}");
 			}
 			finally
 			{

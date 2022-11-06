@@ -693,7 +693,7 @@ namespace Keysharp.Scripting
 						var method = LocalMethod(funcname);
 						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 						method.Statements.AddRange(expr);
-						method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
+						_ = method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
 						methods.Add(method.Name, method);
 
 						if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)

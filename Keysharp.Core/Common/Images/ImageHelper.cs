@@ -115,7 +115,7 @@ namespace Keysharp.Core.Common
 						bmp = System.Drawing.Image.FromHbitmap(ptr);
 
 						if (!dontClear)
-							WindowsAPI.DeleteObject(ptr);
+							_ = WindowsAPI.DeleteObject(ptr);
 					}
 				}
 

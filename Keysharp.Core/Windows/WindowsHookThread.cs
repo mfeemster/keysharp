@@ -4320,14 +4320,14 @@ namespace Keysharp.Core.Windows
 			return returnSecondary ? 0 : sc; // Callers rely on zero being returned for VKs that don't have secondary SCs.
 		}
 
-		internal override void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref int repeatCount, ref bool moveOffset)
+		internal override void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset)
 		{
 			// Set defaults for all output parameters for caller.
 			x = CoordUnspecified;
 			y = CoordUnspecified;
 			vk = VK_LBUTTON;
 			eventType = KeyEventTypes.KeyDownAndUp;
-			repeatCount = 1;
+			repeatCount = 1L;
 			moveOffset = false;
 			int temp_vk;
 
@@ -4345,7 +4345,17 @@ namespace Keysharp.Core.Windows
 					else if (y == CoordUnspecified)
 						y = opt.ParseInt().Value;
 					else // Third number is the repeat-count (but if there's only one number total, that's repeat count too, see further below).
-						repeatCount = opt.ParseInt().Value;// If negative or zero, caller knows to handle it as a MouseMove vs. Click.
+					{
+						var templ = opt.ParseLong();
+
+						if (templ.HasValue)
+							repeatCount = templ.Value;// If negative or zero, caller knows to handle it as a MouseMove vs. Click.
+						else
+						{
+							_ = Dialogs.MsgBox($"Invalid value for click repeat count: {opt}", null, "16");
+							return;
+						}
+					}
 				}
 				else // Mouse button/name and/or Down/Up/Repeat-count is present.
 				{
@@ -5329,7 +5339,7 @@ namespace Keysharp.Core.Windows
 										}
 										catch (Error ex)
 										{
-											Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+											_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
 										}
 									}
 								}
@@ -5362,7 +5372,7 @@ namespace Keysharp.Core.Windows
 									}
 									catch (Error ex)
 									{
-										Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+										_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
 									}
 
 									priority = 0;

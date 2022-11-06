@@ -33,7 +33,7 @@ namespace Keysharp.Core
 			var options = obj.As();
 			int x = 0, y = 0, vk = 0;
 			var event_type = Keysharp.Core.Common.Keyboard.KeyEventTypes.KeyDown;
-			var repeat_count = 0;
+			var repeat_count = 0L;
 			var move_offset = false;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
@@ -98,7 +98,7 @@ namespace Keysharp.Core
 			var whichButton = obj0.As();
 			var x = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
 			var y = (int)obj2.Al(KeyboardMouseSender.CoordUnspecified);
-			var repeatCount = (int)obj3.Al(1);
+			var repeatCount = obj3.Al(1);
 			var speed = (int)obj4.Al((long)Accessors.A_DefaultMouseSpeed);
 			var downOrUp = obj5.As();
 			var relative = obj6.As();
@@ -233,7 +233,7 @@ namespace Keysharp.Core
 		}
 
 		private static void PerformMouse(Actions actionType, string button, int x1, int y1, int x2, int y2
-										 , int speed, string relative, int repeatCount, string downUp)
+										 , int speed, string relative, long repeatCount, string downUp)
 		{
 			int vk;
 			var ht = Keysharp.Scripting.Script.HookThread;

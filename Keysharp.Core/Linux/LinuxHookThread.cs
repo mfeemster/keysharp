@@ -36,7 +36,7 @@ namespace Keysharp.Core.Linux
 
 		internal override int MapVkToSc(int sc, bool returnSecondary = false) => 0;
 
-		internal override void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref int repeatCount, ref bool moveOffset)
+		internal override void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset)
 		{ }
 
 		internal override bool SystemHasAnotherKeybdHook() => false;

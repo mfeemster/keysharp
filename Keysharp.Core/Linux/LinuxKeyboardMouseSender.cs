@@ -115,7 +115,7 @@ namespace Keysharp.Core.Linux
 		internal override void InitEventArray(int maxEvents, int modifiersLR)
 		{ }
 
-		internal override void MouseClick(int vk, int x, int y, int repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
+		internal override void MouseClick(int vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{ }
 
 		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative)
@@ -133,7 +133,7 @@ namespace Keysharp.Core.Linux
 		{ }
 
 		internal override void SendKey(int vk, int sc, int modifiersLR, int modifiersLRPersistent
-									   , int repeatCount, KeyEventTypes eventType, int keyAsModifiersLR, IntPtr targetWindow
+									   , long repeatCount, KeyEventTypes eventType, int keyAsModifiersLR, IntPtr targetWindow
 									   , int x = CoordUnspecified, int y = CoordUnspecified, bool moveOffset = false)
 		{
 		}

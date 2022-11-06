@@ -296,7 +296,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract void InitEventArray(int maxEvents, int aModifiersLR);
 
-		internal abstract void MouseClick(int aVK, int aX, int aY, int aRepeatCount, long aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
+		internal abstract void MouseClick(int aVK, int aX, int aY, long aRepeatCount, long aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
 
 		internal abstract void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative);
 
@@ -309,7 +309,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int TotalEventCount() => PbEventCount() + SiEventCount();
 
 		internal void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
-										 int repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, long speed, bool relative)
+										 long repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, long speed, bool relative)
 		{
 			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
 			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
@@ -496,7 +496,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal abstract void SendEventArray(ref long aFinalKeyDelay, int aModsDuringSend);
 
 		internal abstract void SendKey(int aVK, int aSC, int aModifiersLR, int aModifiersLRPersistent
-									   , int aRepeatCount, KeyEventTypes aEventType, int aKeyAsModifiersLR, IntPtr aTargetWindow
+									   , long aRepeatCount, KeyEventTypes aEventType, int aKeyAsModifiersLR, IntPtr aTargetWindow
 									   , int aX = CoordUnspecified, int aY = CoordUnspecified, bool aMoveOffset = false);
 
 		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);

@@ -630,7 +630,7 @@ namespace Keysharp.Core.Windows
 			return hasaltgr;
 		}
 
-		internal override void MouseClick(int vk, int x, int y, int repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
+		internal override void MouseClick(int vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{
 			// Check if one of the coordinates is missing, which can happen in cases where this was called from
 			// a source that didn't already validate it (such as MouseClick, %x%, %BlankVar%).
@@ -638,7 +638,7 @@ namespace Keysharp.Core.Windows
 			// the number of clicks is a dereferenced script variable that may sometimes (by intent) resolve to
 			// zero or negative.  For backward compatibility, a RepeatCount <1 does not move the mouse (unlike
 			// the Click command and Send {Click}).
-			if ((x == CoordUnspecified && y != CoordUnspecified) || (x != CoordUnspecified && y == CoordUnspecified) || (repeatCount < 1))
+			if ((x == CoordUnspecified && y != CoordUnspecified) || (x != CoordUnspecified && y == CoordUnspecified) || (repeatCount < 1L))
 				return;
 
 			var eventFlags = 0u; // Set default.
@@ -840,7 +840,7 @@ namespace Keysharp.Core.Windows
 
 			// For simplicity and possibly backward compatibility, LONG_OPERATION_INIT/UPDATE isn't done.
 			// In addition, some callers might do it for themselves, at least when aRepeatCount==1.
-			for (var i = 0; i < repeatCount; ++i)
+			for (var i = 0L; i < repeatCount; ++i)
 			{
 				if (eventType != KeyEventTypes.KeyUp) // It's either KEYDOWN or KEYDOWNANDUP.
 				{
@@ -1756,7 +1756,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="y"></param>
 		/// <param name="moveOffset"></param>
 		internal override void SendKey(int vk, int sc, int modifiersLR, int modifiersLRPersistent
-									   , int repeatCount, KeyEventTypes eventType, int keyAsModifiersLR, IntPtr targetWindow
+									   , long repeatCount, KeyEventTypes eventType, int keyAsModifiersLR, IntPtr targetWindow
 									   , int x = CoordUnspecified, int y = CoordUnspecified, bool moveOffset = false)
 		{
 			// Caller is now responsible for verifying this:
@@ -1787,7 +1787,7 @@ namespace Keysharp.Core.Windows
 			var vkIsMouse = Keysharp.Scripting.Script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
 			var sendLevel = (uint)(long)Accessors.A_SendLevel;
 
-			for (var i = 0; i < repeatCount; ++i)
+			for (var i = 0L; i < repeatCount; ++i)
 			{
 				if (sendMode == SendModes.Event)
 					LongOperationUpdateForSendKeys();  // This does not measurably affect the performance of SendPlay/Event.
@@ -2245,7 +2245,8 @@ namespace Keysharp.Core.Windows
 			//char oldChar;
 			var keyDownType = KeyDownTypes.Temp;
 			var eventType = KeyEventTypes.KeyDown;
-			int repeatCount = 0, clickX = 0, clickY = 0;
+			long repeatCount = 0;
+			int clickX = 0, clickY = 0;
 			var moveOffset = false;
 			uint placeholder = 0;
 			//var msg = new Msg();//May not be needed.//TOOD
@@ -2372,7 +2373,7 @@ namespace Keysharp.Core.Windows
 							// Since above didn't "goto", this item isn't {Click}.
 							var subspanstr = subspan.ToString();
 							eventType = KeyEventTypes.KeyDownAndUp;         // Set defaults.
-							repeatCount = 1;                  //
+							repeatCount = 1L;
 							keyNameLength = keyTextLength;//TODO
 							var splits = subspanstr.Split(Keysharp.Core.Core.SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 
@@ -2405,9 +2406,21 @@ namespace Keysharp.Core.Windows
 											keyDownType = KeyDownTypes.Persistent;
 									}
 									else if (nextWord.StartsWith("Up", StringComparison.OrdinalIgnoreCase))
-										eventType = KeyEventTypes.KeyDownAndUp;
+										eventType = KeyEventTypes.KeyUp;
 									else if (!subspanstr.StartsWith("ASC"))
-										repeatCount = nextWord.ParseInt(false).Value;
+									{
+										var templ = nextWord.ParseLong(false);
+
+										if (templ.HasValue)
+										{
+											repeatCount = templ.Value;
+										}
+										else
+										{
+											_ = Dialogs.MsgBox($"Invalid character passed to Send(): {nextWord}", null, "16");
+											return;
+										}
+									}
 								}
 
 								// Above: If negative or zero, that is handled further below.
@@ -2417,7 +2430,7 @@ namespace Keysharp.Core.Windows
 
 							_ = ht.TextToVKandSC(subspanstr, ref vk, ref sc, ref modsForNextKey, targetKeybdLayout);
 
-							if (repeatCount < 1)
+							if (repeatCount < 1L)
 								goto bracecaseend; // Gets rid of one level of indentation. Well worth it.
 
 							subspanstr = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);//Consider the entire string, minus the first {, below.
@@ -2488,7 +2501,7 @@ namespace Keysharp.Core.Windows
 									{
 										// Although MSDN says WM_CHAR uses UTF-16, it seems to really do automatic
 										// translation between ANSI and UTF-16; we rely on this for correct results:
-										for (var ii = 0; ii < repeatCount; ++ii)
+										for (var ii = 0L; ii < repeatCount; ++ii)
 											_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, keys[0], 0);
 									}
 									else
@@ -2516,7 +2529,7 @@ namespace Keysharp.Core.Windows
 												   , sendMode == SendModes.Event ? eventModifiersLR : GetModifierLRState()
 												   , targetWindow, false, false); // It also does DoKeyDelay(g->PressDuration).
 
-								for (var ii = 0; ii < repeatCount; ++ii)
+								for (var ii = 0L; ii < repeatCount; ++ii)
 								{
 									// Don't tell it to save & restore modifiers because special keys like this one
 									// should have maximum flexibility (i.e. nothing extra should be done so that the
@@ -2884,7 +2897,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="ch"></param>
 		/// <param name="repeatCount"></param>
 		/// <param name="modifiersLR"></param>
-		internal void SendKeySpecial(char ch, int repeatCount, int modifiersLR)
+		internal void SendKeySpecial(char ch, long repeatCount, int modifiersLR)
 		{
 			// Caller must verify that aRepeatCount >= 1.
 			// Avoid changing modifier states and other things if there is nothing to be sent.
@@ -2943,7 +2956,7 @@ namespace Keysharp.Core.Windows
 				wc = ch;
 			}
 
-			for (var i = 0; i < repeatCount; ++i)
+			for (var i = 0L; i < repeatCount; ++i)
 			{
 				if (sendMode == SendModes.Event)
 					LongOperationUpdateForSendKeys();

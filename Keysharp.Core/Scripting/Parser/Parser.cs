@@ -196,7 +196,7 @@ namespace Keysharp.Scripting
 			_ = tcf.CatchClauses.Add(ctch2);
 			//
 			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
-			ctch.Statements.Add(new CodeSnippetExpression(@"var ex = mainex.InnerException ?? mainex;
+			_ = ctch.Statements.Add(new CodeSnippetExpression(@"var ex = mainex.InnerException ?? mainex;
 
 				if (ex is Keysharp.Core.Error kserr)
 				{
@@ -283,7 +283,7 @@ namespace Keysharp.Scripting
 			};
 			userMainMethod.Statements.AddRange(main.Statements);
 			main.Statements.Clear();
-			targetClass.Members.Add(userMainMethod);
+			_ = targetClass.Members.Add(userMainMethod);
 
 			foreach (CodeStatement stmt in initial)
 				main.Statements.Insert(0, stmt);
