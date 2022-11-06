@@ -1322,6 +1322,109 @@ The 'Run' dialog will open.
     SendEvent("#r")
 }
 
+; ┌─────────────────────────┐
+; │  HOTKEY() TEST SECTION  │
+; └─────────────────────────┘
+
+MyGui.Add("Text", "x0 y+20 w700", "_____________________________________________________________________________________________________________")
+HotkeySectionTopText := MyGui.Add("Text", "x10 y+5 w600", "HOTKEY TESTS")
+HotkeySectionTopText.SetFont("cBlue s14")
+FuncBtnOne := MyGui.Add("Button", "x10 y+5", "FuncObj")
+FuncBtnOne.OnEvent("Click", "DoTricks")
+
+FuncBtnTwo := MyGui.Add("Button", "x90 yp", "RCtrl and RTab -> AltTab")
+FuncBtnTwo.OnEvent("Click", "StupidTrickTwo")
+
+FuncBtnThree := MyGui.Add("Button", "x250 yp", "Hotkey Off")
+FuncBtnThree.OnEvent("Click", "StupidTrickThree")
+
+FuncBtnFour := MyGui.Add("Button", "x340 yp", "Hotkey with FuncObj")
+FuncBtnFour.OnEvent("Click", "FuncObjTest")
+
+FuncBtnFive := MyGui.Add("Button", "x10 y+30 w150", "Toggle AltTab Hotkey On or Off")
+FuncBtnFive.OnEvent("Click", "ToggleHotkey")
+
+FuncBtnSix := MyGui.Add("Button", "x170 yp w150", "Read Hotkey Val from .INI")
+FuncBtnSix.OnEvent("Click", "GrabFromIni")
+
+FuncBtnSeven := MyGui.Add("Button", "x340 yp w150", "Toggle Hotkey from .INI")
+FuncBtnSeven.OnEvent("Click", "ToggleFromIni")
+
+; ┌────────────────────┐
+; │  Hotkey functions  │
+; └────────────────────┘
+
+DoTricks() {
+    RealFn := FuncObj("RealFn")
+
+    fn := RealFn.Bind(1)  ; Bind first parameter only
+    fn(2)      ; Shows "1, 2"
+    fn.Call(3) ; Shows "1, 3"
+
+    fn := RealFn.Bind( , 1)  ; Bind second parameter only
+    fn(2)      ; Shows "2, 1"
+    fn.Call(3) ; Shows "3, 1"
+    ;fn(, 4)    ; Error: 'a' was omitted
+
+    RealFn(a, b, c:="c") {
+        MsgBox(a ", " b, "A bound function test")
+    }
+}
+
+StupidTrickTwo() {
+    Hotkey("RCtrl & RShift", "AltTab")
+}
+
+StupidTrickThree() {
+    Try 
+    {
+            Hotkey("RCtrl & RShift", "Off")
+            MsgBox("Hotkey RCtrl & RShift -> AltTab is Off", "Hotkey Off", "T2")
+    }
+    Catch 
+    {
+        MsgBox("Set the Hotkey first!")
+    }
+}
+
+FuncObjTest() {
+    RealFn2 := FuncObj("RealFn2")
+    fn2 := RealFn2.Bind("AltTab")
+    fn2()
+
+    RealFn2(TheMessage) {
+        Hotkey("RCtrl & RShift", TheMessage)
+    }
+}
+
+ToggleHotkey() {
+    Try 
+    {
+        Hotkey("RCtrl & RShift", "Toggle")
+    }
+    Catch
+    {
+        MsgBox("Set the AltTab hotkeyfirst!", "ERROR", "T2")
+    }
+
+}
+
+GrabFromIni() {
+    HotkeyVal := IniRead("hotkeyini_1.ini", "HotkeyToRead", "Key")
+    Hotkey(HotkeyVal, "AltTab")
+}
+
+ToggleFromIni() {
+    Try 
+    {
+        Hotkey("RCtrl & LShift", "Toggle")
+    }
+    Catch
+    {
+        MsgBox("Set the .INI hotkeyfirst!", "ERROR", "T2")
+    }
+}
+
 
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
