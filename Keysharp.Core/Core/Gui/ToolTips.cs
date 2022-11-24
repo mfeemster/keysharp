@@ -105,37 +105,48 @@ namespace Keysharp.Core
 
 			if (text != "")
 			{
-				var tooltipForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
+				var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
+				var focusedWindow = IntPtr.Zero;
 				var one_or_both_coords_specified = x != int.MinValue || y != int.MinValue;
 				var one_or_both_coords_unspecified = x == int.MinValue || y == int.MinValue;
 
-				if (tooltipForm == null)
+				if (tooltipInvokerForm == null)
 				{
-					tooltipForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != Keysharp.Scripting.Script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
+					tooltipInvokerForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != Keysharp.Scripting.Script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
 
-					if (tooltipForm == null)
-						tooltipForm = Script.mainWindow;
+					if (tooltipInvokerForm == null)
+						tooltipInvokerForm = Script.mainWindow;
 				}
 
-				if (tooltipForm == null)
+				if (tooltipInvokerForm == null)
 					return "";
 
-				tooltipForm.CheckedBeginInvoke(() =>
+				var handle = 0L;
+				ToolTip tt = null;
+				tooltipInvokerForm.CheckedInvoke(() =>
 				{
 					if (persistentTooltips[id] == null)
 						persistentTooltips[id] = new ToolTip { Active = true, AutomaticDelay = 0, InitialDelay = 0, ReshowDelay = 0, ShowAlways = true };
 
-					var tt = persistentTooltips[id];
+					tt = persistentTooltips[id];
 
+					var h = tt.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.NonPublic);
+
+					handle = ((IntPtr)h.GetValue(tt)).ToInt64();
+				}, false);
+				tooltipInvokerForm.CheckedBeginInvoke(() =>
+				{
 					tt.Active = true;
 
+					//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
+					//is active.
 					if (one_or_both_coords_unspecified)
 					{
 						var temppt = System.Windows.Forms.Cursor.Position;
 						temppt.X += 10;
 						temppt.Y += 10;
 						var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-						_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, temppt });
+						_ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, temppt });
 					}
 					else
 					{
@@ -144,8 +155,7 @@ namespace Keysharp.Core
 
 						if (one_or_both_coords_specified)
 						{
-							var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
-
+							//var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
 							if (x != int.MinValue)
 								tempx = x;
 
@@ -155,28 +165,34 @@ namespace Keysharp.Core
 							if (Mouse.Coords.Tooltip == CoordModeType.Screen)
 							{
 								var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-								_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, new Point(tempx, tempy) });
+								_ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, new Point(tempx, tempy) });
 							}
 							else
 							{
-								//This is the hard case. They've specified coordinates relative to a window, however if that window
-								//is minimized, then it's coordinates are impossible to get. Attempt to use the RestoreBounds property, but that is usually
-								//wrong.
-								if (tooltipForm.WindowState == FormWindowState.Minimized)
-								{
-									var actualbounds = tooltipForm.RestoreBounds;
-									tempx += actualbounds.X;
-									tempy += actualbounds.Y;
-									var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-									_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, new Point(tempx, tempy) });
-								}
-								else// if (tooltipForm.Visible && tooltipForm.Focused)//The coord is relative to a window, and the window is not minimized and is active.
-								{
-									var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
-									var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-									_ = m.Invoke(tt, new object[] { tooltipForm, text, 2, pt });
-								}
+								var foreground = WindowsAPI.GetForegroundWindow();
 
+								if (foreground != IntPtr.Zero)
+									WindowsAPI.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
+
+								//This is the hard case. They've specified coordinates relative to a window, however if that window
+								//is minimized, then its coordinates are impossible to get. Attempt to use the RestoreBounds property, but that is usually
+								//wrong.
+								//if (tooltipInvokerForm.WindowState == FormWindowState.Minimized)
+								//{
+								//  var actualbounds = tooltipInvokerForm.RestoreBounds;
+								//  tempx += actualbounds.X;
+								//  tempy += actualbounds.Y;
+								//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+								//  _ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, new Point(tempx, tempy) });
+								//}
+								//else// if (tooltipForm.Visible && tooltipForm.Focused)//The coord is relative to a window, and the window is not minimized and is active.
+								{
+									//var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
+									//var pt = tooltipForm.PointToClient(new Point(tempx, tempy));
+									var pt = new Point(tempx, tempy);
+									var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+									_ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, pt });
+								}
 								//else//The coord is relative to a window, and the window is not minimized but is also not active.
 								//{
 								//  var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
@@ -193,8 +209,8 @@ namespace Keysharp.Core
 					//1: That code is likely legacy. The Winforms ToolTip class already moves the tooltip
 					//to be entirely on the screen if any portion of it would have been off the screen.
 					//2: If the user needs to move the mouse out of the way, they can just do it.
-				});
-				return tooltipForm.Handle.ToInt64();
+				}, false, false);
+				return handle;
 			}
 			else
 			{

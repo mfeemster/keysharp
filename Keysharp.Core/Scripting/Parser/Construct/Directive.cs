@@ -26,9 +26,9 @@ namespace Keysharp.Scripting
 
 		internal static bool MaxThreadsBuffer = false;
 
-		internal static int MaxThreadsPerHotkey = 1;
+		internal static uint MaxThreadsPerHotkey = 1u;
 
-		internal static int MaxThreadsTotal = 10;
+		internal static uint MaxThreadsTotal = 10u;
 
 		//private bool NoEnv;// = NoEnvDefault;
 		internal static bool NoTrayIcon = NoTrayIconDefault;
@@ -122,7 +122,7 @@ namespace Keysharp.Scripting
 
 			parts[1] = StripComment(parts[1]).Trim(Spaces);
 
-			var value = default(int);
+			var value = 0u;
 
 			bool numeric;
 
@@ -135,7 +135,7 @@ namespace Keysharp.Scripting
 			}
 			else
 			{
-				numeric = int.TryParse(parts[1], out value);
+				numeric = uint.TryParse(parts[1], out value);
 				var split = parts[1].Split(new[] { Multicast }, 2);
 				sub = new[] { split[0].Trim(Spaces), split.Length > 1 ? split[1].Trim(Spaces) : string.Empty };
 			}
@@ -215,7 +215,7 @@ namespace Keysharp.Scripting
 
 				case "INPUTLEVEL":
 				{
-					Script.inputLevel = Math.Clamp(parts[1].ParseInt().Value, 0, 100);
+					Script.inputLevel = Math.Clamp(parts[1].ParseUInt().Value, 0u, 100u);
 				}
 				break;
 
@@ -246,7 +246,7 @@ namespace Keysharp.Scripting
 				case "MAXTHREADS":
 				{
 					if (numeric)
-						MaxThreadsTotal = Math.Clamp(value, 1, 255);
+						MaxThreadsTotal = Math.Clamp(value, 1u, 255u);
 				}
 				break;
 
@@ -259,7 +259,7 @@ namespace Keysharp.Scripting
 				case "MAXTHREADSPERHOTKEY":
 				{
 					if (numeric)
-						MaxThreadsPerHotkey = Math.Clamp(value, 1, 255);
+						MaxThreadsPerHotkey = Math.Clamp(value, 1u, 255u);
 				}
 				break;
 

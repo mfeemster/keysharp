@@ -126,7 +126,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int MODLR_MAX = 0xFF;
 		internal const string ModLRString = "<^>^<!>!<+>+<#>#";
 		internal const uint MsgOffsetMouseMove = 0x80000000;
-		internal const int SendLevelMax = 100;
+		internal const uint SendLevelMax = 100u;
 		internal const int StateDown = 0x80;
 		internal const int StateOn = 0x01;
 		internal static uint altGrExtraInfo;
@@ -217,7 +217,7 @@ namespace Keysharp.Core.Common.Keyboard
 			//      Send(key);
 		}
 
-		internal static bool HotInputLevelAllowsFiring(int inputLevel, uint aEventExtraInfo, ref char? aKeyHistoryChar)
+		internal static bool HotInputLevelAllowsFiring(uint inputLevel, uint aEventExtraInfo, ref char? aKeyHistoryChar)
 		{
 			if (InputLevelFromInfo(aEventExtraInfo) <= inputLevel)
 			{
@@ -268,7 +268,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static uint KeyIgnoreMin() => KeyIgnoreLevel(SendLevelMax);
 
-		internal static bool SendLevelIsValid(int level) => level >= 0 && level <= SendLevelMax;
+		internal static bool SendLevelIsValid(uint level) => level >= 0 && level <= SendLevelMax;
 
 		internal HotkeyDefinition Add(HotkeyDefinition hotkey)
 		{

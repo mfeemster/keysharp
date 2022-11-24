@@ -62,6 +62,7 @@ using static Keysharp.Core.GuiHelper;
 using static Keysharp.Core.Images;
 using static Keysharp.Core.ImageLists;
 using static Keysharp.Core.Ini;
+using static Keysharp.Core.Input;
 using static Keysharp.Core.Keyboard;
 using static Keysharp.Core.KeysharpObject;
 using static Keysharp.Core.Loops;

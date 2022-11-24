@@ -48,18 +48,7 @@ namespace Keysharp.Core.Common.Input
 		// Current size of EndChars buffer. (probably not needed)//TODO
 		internal List<string> match = new List<string>();
 
-		internal string MatchBuf = "";
-
-		// The is the buffer whose contents are pointed to by the match array.
-		internal uint MatchBufSize;
-
-		// Array of strings, each string is a match-phrase which if entered, terminates the input.
-		internal uint MatchCount;
-
-		// The number of strings currently in the array.
-		internal uint MatchCountMax;
-
-		internal int MinSendLevel;
+		internal long MinSendLevel;
 		internal bool NotifyNonText;
 		internal InputType Prev;
 		internal InputObject ScriptObject;
@@ -123,7 +112,7 @@ namespace Keysharp.Core.Common.Input
 				}
 				else // Not case sensitive.
 				{
-					for (var i = 0; i < MatchCount; ++i)
+					for (var i = 0; i < match.Count; ++i)
 					{
 						if (buffer.IndexOf(match[i], StringComparison.OrdinalIgnoreCase) != -1)
 						{
@@ -137,7 +126,7 @@ namespace Keysharp.Core.Common.Input
 			{
 				if (CaseSensitive)
 				{
-					for (var i = 0; i < MatchCount; ++i)
+					for (var i = 0; i < match.Count; ++i)
 					{
 						if (string.Compare(buffer, match[i], StringComparison.CurrentCulture) == 0)
 						{
@@ -148,7 +137,7 @@ namespace Keysharp.Core.Common.Input
 				}
 				else // Not case sensitive.
 				{
-					for (var i = 0; i < MatchCount; ++i)
+					for (var i = 0; i < match.Count; ++i)
 					{
 						// v1.0.43.03: Changed to locale-insensitive search.  See similar v1.0.43.03 comment above for more details.
 						if (string.Compare(buffer, match[i], StringComparison.InvariantCultureIgnoreCase) == 0)
@@ -307,7 +296,8 @@ namespace Keysharp.Core.Common.Input
 				// InputStart().  ScriptObject != NULL indicates this input_type is actually embedded in
 				// the InputObject and as such the link should never be broken until both are deleted.
 				//aInput->ScriptObject = NULL;
-				Script.ExitIfNotPersistent(Flow.ExitReasons.Exit); // In case this InputHook was the only thing keeping the script running.
+				//Seems extreme to do this, and the script should exit on its own if its not persistent.
+				//Script.ExitIfNotPersistent(Flow.ExitReasons.Exit); // In case this InputHook was the only thing keeping the script running.
 			}
 
 			return null;
@@ -329,7 +319,7 @@ namespace Keysharp.Core.Common.Input
 		internal bool IsInteresting(ref KBDLLHOOKSTRUCT ev)
 		{
 			char? ch = null;
-			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring(MinSendLevel - 1, (uint)ev.dwExtraInfo, ref ch);
+			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring((uint)MinSendLevel - 1, (uint)ev.dwExtraInfo, ref ch);
 		}
 
 		internal void ParseOptions(string options)
@@ -366,7 +356,7 @@ namespace Keysharp.Core.Common.Input
 
 					case 'T':
 						var sub = options.Substring(i + 1);
-						Timeout = sub.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? sub.ParseInt().Value : (int)(options[i + 1].ParseDouble() * 1000);
+						Timeout = (sub.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? sub.ParseInt().Value : (int)options[i + 1].ParseDouble()) * 1000;
 						break;
 
 					case 'V':
@@ -394,7 +384,7 @@ namespace Keysharp.Core.Common.Input
 			//of the behavior very unlikely. So it's copied verbatim and ported to ensure consistent functionality.
 			int? modifiersLR = 0;
 			int keyTextLength;
-			var singleCharCount = 0;
+			var singleCharCount = 0u;
 			//TCHAR* end_pos, single_char_string[2];
 			var endPos = 0;
 			var singleCharString = "";
@@ -411,7 +401,8 @@ namespace Keysharp.Core.Common.Input
 				vk = 0; // Set default.  Not strictly necessary but more maintainable.
 				singleCharString = "";  // Set default as "this key name is not a single-char string".
 				var ch = keys[i];
-				var sub = keys.Substring(i + 1);
+				//var sub = keys.Substring(i + 1);
+				var sub = keys.AsSpan().Slice(i + 1);
 
 				switch (ch)
 				{
@@ -455,12 +446,12 @@ namespace Keysharp.Core.Common.Input
 						// Handle the key by VK if it was given by number, such as {vk26}.
 						// Otherwise, for any key name which has a VK shared by two possible SCs
 						// (such as Up and NumpadUp), handle it by SC so it's identified correctly.
-						var nextkey = keys[i + 1].ToString();
+						var nextkey = sub.Slice(0, endPos).ToString();
 						vk = ht.TextToVK(nextkey, ref modifiersLR, true, true, WindowsAPI.GetKeyboardLayout(0));
 
 						if (vk != 0)
 						{
-							vkByNumber = sub.StartsWith("vk", StringComparison.OrdinalIgnoreCase);
+							vkByNumber = nextkey.StartsWith("vk", StringComparison.OrdinalIgnoreCase);
 
 							if (!vkByNumber && (sc = ht.MapVkToSc(vk, true)) != 0)
 							{
@@ -472,7 +463,7 @@ namespace Keysharp.Core.Common.Input
 							// No virtual key, so try to find a scan code.
 							sc = ht.TextToSC(nextkey, ref scByNumber);
 
-						i = endPos;  // In prep for ++i at the top of the loop.
+						i += endPos;  // In prep for ++i at the top of the loop.
 						break; // Break out of the switch() and do the vk handling beneath it (if there is a vk).
 					}
 
@@ -531,22 +522,24 @@ namespace Keysharp.Core.Common.Input
 
 			if (singleCharCount != 0)  // See single_char_count++ above for comments.
 			{
+				if (singleCharCount > EndCharsMax)
+					EndCharsMax = singleCharCount;
+
 				for (var i = 0; i < keys.Length; ++i)
 				{
 					var ch = keys[i];
 
-					if (ch == '{')
+					if (ch == '{' && i < keys.Length - 1)
 					{
-						var sub = keys.Substring(i);
-						endPos = sub.IndexOf('}');
+						endPos = keys.IndexOf('}', i + 1);
 
 						if (endPos != -1)
 						{
-							if (endPos == 1 && sub[1] == '}') // {}}
+							if (endPos == i + 1 && endPos < keys.Length - 1 && keys[endPos + 1] == '}') // {}}
 								endPos++;
 
-							if (endPos == 2)
-								EndChars += keys[1]; // Copy the single character from between the braces.
+							if (endPos == i + 2)
+								EndChars += keys[i + 1]; // Copy the single character from between the braces.
 
 							i = endPos; // Skip '{key'.  Loop does ++src to skip the '}'.
 						}
@@ -554,10 +547,10 @@ namespace Keysharp.Core.Common.Input
 					else if (ch == '}')// Otherwise, just ignore the '{'.
 						continue;
 
-					EndChars += ch;
+					EndChars += keys[i];
 				}
 			}
-			else if (endKeyMode) // single_char_count is false
+			else if (endKeyMode && EndCharsMax == 0) // single_char_count is false
 			{
 				EndChars = "";
 			}
@@ -591,25 +584,20 @@ namespace Keysharp.Core.Common.Input
 		private void EndByReason(InputStatusType aReason)
 		{
 			if (Script.HookThread is Keysharp.Core.Common.Threading.HookThread hook && hook.kbdMsSender != null)
-				EndingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
-
-			Status = aReason;
-			// It's done this way rather than calling InputRelease() directly...
-			// ...so that we can rely on MsgSleep() to create a new thread for the OnEnd event.
-			// ...because InputRelease() can't be called by the hook thread.
-			// ...because some callers rely on the list not being broken by this call.
-			//TODO
-			//WindowsAPI.PostMessage(Keysharp.Scripting.Script.mainWindow.Handle, (uint)UserMessages.AHK_INPUT_END, new IntPtr(this), IntPtr.Zero);
-			Script.mainWindow.CheckedBeginInvoke(() =>
 			{
-				if (InputRelease() is InputType it)
+				EndingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
+				Status = aReason;
+				// It's done this way rather than calling InputRelease() directly...
+				// ...so that we can rely on MsgSleep() to create a new thread for the OnEnd event.
+				// ...because InputRelease() can't be called by the hook thread.
+				// ...because some callers rely on the list not being broken by this call.
+				_ = hook.PostMessage(
+						new KeysharpMsg()
 				{
-					var so = it.ScriptObject;
-					//Threads.LaunchInThread(so.OnEnd, new object[] { so });//Why would we invoke this on the main window then launch another thread?
-					_ = so.OnEnd.Call(so);
-					//Original called Release() on so, but unsure what the equivalent of that would be here.
-				}
-			});
+					message = (uint)UserMessages.AHK_INPUT_END,
+					obj = this
+				});
+			}
 		}
 
 		private void InputTimer_Tick(object sender, EventArgs e)

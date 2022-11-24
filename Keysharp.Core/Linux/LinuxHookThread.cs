@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core.Linux

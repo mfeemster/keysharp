@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
@@ -380,7 +382,7 @@ namespace Keysharp.Core.Windows
 						else // Wait for the thread to terminate.
 						{
 							//GetExitCodeThread(new IntPtr(hookThreadID), out exit_code);
-							if (channelReadThread != null || channelReadThread.IsCompleted) // The hook thread is now gone.
+							if (IsReadThreadCompleted()) // The hook thread is now gone.
 							{
 								channelReadThread = null;
 								channelThreadID = 0;
@@ -796,7 +798,7 @@ namespace Keysharp.Core.Windows
 			// performance would be slightly worse for the "average" script).  Presumably, the
 			// caller is requesting the keyboard hook with zero hotkeys to support the forcing
 			// of Num/Caps/ScrollLock always on or off (a fairly rare situation, probably):
-			if (kvk == null)  // Since it's an initialized global, this indicates that all 4 objects are not yet allocated.
+			if (kvk == null || kvk.Length == 0)  // Since it's an initialized global, this indicates that all 4 objects are not yet allocated.
 			{
 				kvk = new KeyType[VK_ARRAY_COUNT];
 				ksc = new KeyType[SC_ARRAY_COUNT];
@@ -851,15 +853,15 @@ namespace Keysharp.Core.Windows
 			// the key's current status (since those are initialized only if the hook state is changing
 			// from OFF to ON (later below):
 
-			for (var i = 0; i < VK_ARRAY_COUNT; ++i)
-				kvk[i].ResetKeyTypeAttrib();
+			foreach (var k in kvk)
+				k.ResetKeyTypeAttrib();
 
-			for (var i = 0; i < SC_ARRAY_COUNT; ++i)
-				ksc[i].ResetKeyTypeAttrib();// Note: ksc not kvk.
+			foreach (var k in ksc)
+				k.ResetKeyTypeAttrib();// Note: ksc not kvk.
 
 			// Indicate here which scan codes should override their virtual keys:
 			foreach (var kv in keyToSc)
-				if (kv.Value > 0 && kv.Value <= SC_MAX)
+				if (kv.Value > 0 && kv.Value <= ksc.Length)
 					ksc[kv.Value].scTakesPrecedence = true;
 
 			// These have to be initialized with element value INVALID.
@@ -1667,7 +1669,8 @@ namespace Keysharp.Core.Windows
 						{
 							message = (uint)UserMessages.AHK_INPUT_KEYUP,
 							obj = input,
-							lParam = new IntPtr((sc << 16) | vk)
+							lParam = new IntPtr(vk),
+							wParam = new IntPtr(sc)
 						});
 						//Need to implement this using a special message that when processed, means to use a given input object, probably an index/count of .Prev
 						//WindowsAPI.PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_KEYUP, input, (uint)((sc << 16) | vk));
@@ -2069,7 +2072,8 @@ namespace Keysharp.Core.Windows
 					{
 						message = (uint)UserMessages.AHK_INPUT_KEYDOWN,
 						obj = input,
-						lParam = new IntPtr((sc << 16) | vk)
+						lParam = new IntPtr(vk),
+						wParam = new IntPtr(sc)
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_KEYDOWN, input, (uint)((sc << 16) | vk));
 				}
@@ -2082,7 +2086,8 @@ namespace Keysharp.Core.Windows
 					{
 						message = (uint)UserMessages.AHK_INPUT_CHAR,
 						obj = input,
-						lParam = new IntPtr((ch[1] << 16) | ch[0])
+						lParam = new IntPtr(ch[0]),
+						wParam = ch.Length > 1 ? new IntPtr(ch[1]) : IntPtr.Zero
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_CHAR, input, (uint)((ch[1] << 16) | ch[0]));
 				}
@@ -5075,7 +5080,8 @@ namespace Keysharp.Core.Windows
 		// Wait until the hook has reached a known idle state (i.e. finished any processing
 		// that it was in the middle of, though it could start something new immediately after).
 		{
-			if (channelReadThread != null)
+			//Make sure this is not called within the channel thread because it would deadlock if so.
+			if (channelThreadID != WindowsAPI.GetCurrentThreadId() && IsReadThreadRunning())
 			{
 				hookSynced = false;
 
@@ -5092,7 +5098,7 @@ namespace Keysharp.Core.Windows
 
 		protected internal override void DeregisterHooks()
 		{
-			if (channel != null && channelReadThread != null)
+			if (IsReadThreadRunning())
 			{
 				_ = ChangeHookState(HookType.None, false);
 				//var ksmsg = new KeysharpMsg()
@@ -5112,14 +5118,10 @@ namespace Keysharp.Core.Windows
 
 		protected internal override void Start()
 		{
-			if (channelReadThread != null && !channelReadThread.IsCompleted)
-			{
-				running = false;
-				channelReadThread?.Wait();
-				//thread.Join();//Need to figure out how to stop it, since Abort() is no longer supported.//TODO
-				channelReadThread = null;
-			}
+			if (IsReadThreadRunning())
+				Stop();
 
+			running = true;
 			channelThreadID = 0;
 			//This is a consolidation of the main windows proc, message sleep and the thread which they keyboard hook is created on.
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
@@ -5127,7 +5129,6 @@ namespace Keysharp.Core.Windows
 			{
 				//var msg = new Msg();
 				var problem_activating_hooks = false;
-				running = true;
 				var reader = channel.Reader;
 				IntPtr fore_window, focused_control, criterion_found_hwnd = IntPtr.Zero;
 				//while (running) // Infinite loop for pumping messages in this thread. This thread will exit via any use of "return" below.
@@ -5135,7 +5136,7 @@ namespace Keysharp.Core.Windows
 				channelThreadID = WindowsAPI.GetCurrentThreadId();
 				//WindowsAPI.GetMessage(out var _, IntPtr.Zero, 0, 0);
 
-				await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manure of obscure meaning into bits and bytes of wparam and lparam.
+				await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manner of obscure meaning into bits and bytes of wparam and lparam.
 				{
 					var priority = 0;
 					channelThreadID = WindowsAPI.GetCurrentThreadId();
@@ -5359,7 +5360,7 @@ namespace Keysharp.Core.Windows
 								{
 								}
 
-								if (input_hook != null)
+								if (input_hook == null)
 									continue;
 
 								if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.ScriptObject.OnKeyDown
@@ -5368,7 +5369,10 @@ namespace Keysharp.Core.Windows
 								{
 									try
 									{
-										var tsk = await Threads.LaunchInThread(ifo, new object[] { input_hook.ScriptObject, lParamVal, lParamVal >> 16 });
+										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
+												   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
+												   : new object[] { input_hook.ScriptObject, lParamVal, wParamVal };
+										var tsk = await Threads.LaunchInThread(ifo, args);
 									}
 									catch (Error ex)
 									{
@@ -5395,6 +5399,8 @@ namespace Keysharp.Core.Windows
 						kbdMsSender.lastPeekTime = DateTime.Now;
 					}
 				}
+
+				System.Diagnostics.Debug.WriteLine("Exiting reader channel.");
 			});
 
 			while (channelThreadID == 0)//Give it some time to startup before proceeding.
@@ -5402,7 +5408,6 @@ namespace Keysharp.Core.Windows
 
 			//WindowsAPI.PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_START_LOOP, UIntPtr.Zero, IntPtr.Zero);
 		}
-
 		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
 		{
 			var problem_activating_hooks = false;
@@ -5456,10 +5461,11 @@ namespace Keysharp.Core.Windows
 			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
 			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
 			//before Application.Run().
-			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
+			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
+			//which are not persistent, and thus no main window will be present.
+			Keysharp.Core.Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
 			return problem_activating_hooks;
 		}
-
 		//protected internal override void DeregisterKeyboardHook()
 		//{
 		//_ = WindowsAPI.UnhookWindowsHookEx(kbdHook);
@@ -5552,7 +5558,6 @@ namespace Keysharp.Core.Windows
 			MSDLLHOOKSTRUCT tempstruct = default;
 			return LowLevelCommon(kbdHook, code, wParamVal, ref lParam, ref tempstruct, vk, sc, keyUp, lParam.flags);
 		}
-
 		//protected internal override void DeregisterMouseHook()
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);

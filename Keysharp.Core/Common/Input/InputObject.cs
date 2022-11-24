@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 
@@ -8,11 +9,74 @@ namespace Keysharp.Core.Common.Input
 {
 	public class InputObject : KeysharpObject
 	{
+		public bool BackspaceIsUndo
+		{
+			get => input.BackspaceIsUndo;
+			set => input.BackspaceIsUndo = value;
+		}
+
+		public bool CaseSensitive
+		{
+			get => input.CaseSensitive;
+			set => input.CaseSensitive = value;
+		}
+
+		public bool FindAnywhere
+		{
+			get => input.FindAnywhere;
+			set => input.FindAnywhere = value;
+		}
+
+		public long MinSendLevel
+		{
+			get => input.MinSendLevel;
+			set => input.MinSendLevel = value;
+		}
+
+		public bool NotifyNonText
+		{
+			get => input.NotifyNonText;
+			set => input.NotifyNonText = value;
+		}
+
+		public bool VisibleNonText
+		{
+			get => input.VisibleNonText;
+			set => input.VisibleNonText = value;
+		}
+
+		public bool VisibleText
+		{
+			get => input.VisibleText;
+			set => input.VisibleText = value;
+		}
+
 		internal InputType input;
-		public IFuncObj OnChar { get; set; }
-		public IFuncObj OnEnd { get; set; }
-		public IFuncObj OnKeyDown { get; set; }
-		public IFuncObj OnKeyUp { get; set; }
+		private IFuncObj onChar, onEnd, onKeyDown, onKeyUp;
+
+		public object OnChar
+		{
+			get => onChar;
+			set => onChar = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+		}
+
+		public object OnEnd
+		{
+			get => onEnd;
+			set => onEnd = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+		}
+
+		public object OnKeyDown
+		{
+			get => onKeyDown;
+			set => onKeyDown = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+		}
+
+		public object OnKeyUp
+		{
+			get => onKeyUp;
+			set => onKeyUp = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+		}
 
 		public object Timeout
 		{
@@ -29,41 +93,50 @@ namespace Keysharp.Core.Common.Input
 
 		public InputObject(string options, string endKeys, string matchList) => input = new InputType(this, options, endKeys, matchList);
 
-		public string EndKey()
+		public string EndKey
 		{
-			if (input.Status == InputStatusType.TerminatedByEndKey)
+			get
 			{
-				var str = "";
-				_ = input.GetEndReason(ref str);
-				return str;
-			}
-
-			return "";
-		}
-
-		public string EndMods()
-		{
-			var sb = new StringBuilder(8);
-
-			for (var i = 0; i < 8; ++i)
-				if ((input.EndingMods & (1 << i)) != 0)
+				if (input.Status == InputStatusType.TerminatedByEndKey)
 				{
-					_ = sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
-					_ = sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
+					var str = "";
+					_ =  input.GetEndReason(ref str);
+					return str;
 				}
 
-			return sb.ToString();
+				return "";
+			}
 		}
 
-		public string EndReason()
+		public string EndMods
 		{
-			string str = null;
-			return input.GetEndReason(ref str);
+			get
+			{
+				var sb = new StringBuilder(8);
+
+				for (var i = 0; i < 8; ++i)
+					if ((input.EndingMods & (1 << i)) != 0)
+					{
+						_ = sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
+						_ = sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
+					}
+
+				return sb.ToString();
+			}
 		}
 
-		public bool InProgress() => input.InProgress();
+		public string EndReason
+		{
+			get
+			{
+				string str = null;
+				return input.GetEndReason(ref str);
+			}
+		}
 
-		public string Input() => input.buffer;
+		public bool InProgress => input.InProgress();
+
+		public string Input => input.buffer;
 
 		public void KeyOpt(object obj0, object obj1)
 		{
@@ -136,11 +209,14 @@ namespace Keysharp.Core.Common.Input
 			input.SetKeyFlags(keys, false, removeFlags, addFlags);
 		}
 
-		public string Match()
+		public string Match
 		{
-			return input.Status == InputStatusType.TerminatedByMatch && input.EndingMatchIndex < input.MatchCount
-				   ? input.match[input.EndingMatchIndex]
-				   : "";
+			get
+			{
+				return input.Status == InputStatusType.TerminatedByMatch && input.EndingMatchIndex < input.match.Count
+					   ? input.match[input.EndingMatchIndex]
+					   : "";
+			}
 		}
 
 		public void Start()
@@ -160,11 +236,11 @@ namespace Keysharp.Core.Common.Input
 
 		public void Wait(object obj)
 		{
-			var ms = obj.Al(uint.MaxValue) * 1000;
+			var ms = obj.Ad(double.MaxValue) * 1000.0;
 			var tickStart = DateTime.Now;
 
 			while (input.InProgress() && (DateTime.Now - tickStart).TotalMilliseconds < ms)
-				_ = Keysharp.Scripting.Script.MsgSleep();
+				Keysharp.Core.Flow.Sleep(20);
 		}
 	}
 }

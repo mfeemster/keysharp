@@ -78,6 +78,8 @@ namespace Keysharp.Scripting
 				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
 				SuspendedIcon = Keysharp.Core.Properties.Resources.Keysharp_s_ico;
 			}
+
+			Keysharp.Core.Processes.mainContext = System.Threading.SynchronizationContext.Current;
 		}
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)

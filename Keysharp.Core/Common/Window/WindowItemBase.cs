@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//MATT
 
@@ -262,7 +263,6 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract bool Show();
 
-		//Figure out CLS compliance.//TODO
 		internal bool Wait(double seconds) => Wait(seconds, () => Exists);
 
 		internal bool WaitActive(double seconds) => Wait(seconds, () => Active);

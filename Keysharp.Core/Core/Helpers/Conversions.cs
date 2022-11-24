@@ -279,15 +279,22 @@ namespace Keysharp.Core
 
 		internal static RegexWithTag ParseRegEx(string exp, bool reverse = false)
 		{
-			var mod = new Regex("^[imsxADJUXPS`nra]\\)");
-			var res = mod.Match(exp);
 			var opts = reverse ? RegexOptions.RightToLeft : RegexOptions.None;
+			opts |= RegexOptions.Compiled;
+			var parenIndex = exp.IndexOf(')');
 
-			if (res.Success)
+			if (parenIndex != -1)
 			{
-				var seq = res.Groups[0].Value;
-				opts |= ToRegexOptions(seq.Substring(0, seq.Length - 1));
-				return new RegexWithTag(exp.Substring(res.Length), opts);
+				var span = exp.AsSpan(0, parenIndex);
+				var substr = exp.Substring(parenIndex + 1);
+				opts |= ToRegexOptions(span);
+
+				if (span.Contains('A'))
+				{
+					substr = "\\A" + substr;
+				}
+
+				return new RegexWithTag(substr, opts);
 			}
 			else
 				return new RegexWithTag(exp, opts);
@@ -315,7 +322,7 @@ namespace Keysharp.Core
 			int i, k;
 
 			for (i = 0, k = 0; i < t.Length; i++, k += 2)
-				if (k + 1 >= time.Length || !int.TryParse(time.Substring(k, 2), out t[i]))
+				if (k + 1 >= time.Length || !int.TryParse(time.AsSpan(k, 2), out t[i]))
 					break;
 
 			return i == 0 ? DateTime.MinValue : new DateTime((t[0] * 100) + t[1], t[2], t[3], t[4], t[5], t[6], cal);
@@ -470,7 +477,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static RegexOptions ToRegexOptions(string sequence)
+		internal static RegexOptions ToRegexOptions(ReadOnlySpan<char> sequence)
 		{
 			var options = RegexOptions.None;
 

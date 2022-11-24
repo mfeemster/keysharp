@@ -18,6 +18,7 @@ namespace Keysharp.Scripting
 				case "onmessage":
 				case "onclipboardchange":
 				case "gui":
+					//case "inputhook":
 					Persistent = true;
 					break;
 			}

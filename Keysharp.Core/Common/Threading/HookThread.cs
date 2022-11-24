@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core.Common.Threading
@@ -72,7 +73,7 @@ namespace Keysharp.Core.Common.Threading
 		// depending on OS and the "AltTabSettings" registry value.
 		protected internal bool altTabMenuIsVisible;
 
-		protected internal System.Threading.Tasks.Task channelReadThread;
+		protected internal System.Threading.Tasks.Task<System.Threading.Tasks.Task> channelReadThread;
 
 		// Whether to disguise the next up-event for lwin/rwin to suppress Start Menu.
 		// There is only one variable because even if multiple modifiers are pressed
@@ -207,15 +208,36 @@ namespace Keysharp.Core.Common.Threading
 			return useFallback ? "sc" + sc.ToString("X3") : "";
 		}
 
+		internal bool PostMessage(KeysharpMsg msg)
+		=> IsReadThreadRunning()&& channel.Writer.TryWrite(msg);
+
+		internal bool IsReadThreadCompleted()
+		=> channelReadThread != null&&
+		channelReadThread.Result != null&&
+		channelReadThread.Result.IsCompleted&&
+		channelReadThread.IsCompleted;
+
+		internal bool IsReadThreadRunning()
+		=> running&&
+		channelReadThread != null&&
+		channelReadThread.Result != null&&
+		!channelReadThread.Result.IsCompleted;
+
 		internal void Stop()
 		{
 			if (running)
 			{
-				//DeregisterHooks();
-				channel?.Writer?.Complete();
+				try
+				{
+					channel?.Writer?.Complete();
+				}
+				catch (ChannelClosedException) { }
+
+				if (channelReadThread != null && channelReadThread.Result != null && channelReadThread.Result.Status != TaskStatus.WaitingForActivation && !channelReadThread.Result.IsCompleted)
+					channelReadThread?.Result?.Wait();
+
 				channelReadThread?.Wait();
-				//DeregisterKeyboardHook();
-				//DeregisterMouseHook();
+				channelReadThread = null;
 				running = false;
 			}
 		}

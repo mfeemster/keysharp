@@ -49,13 +49,13 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
 
-		internal int existingThreads, maxThreads;
+		internal uint existingThreads, maxThreads;
 
 		//internal Core.HotFunction callback;
 		internal IFuncObj funcObj;
 
 		internal HotkeyCriterion hotCriterion;
-		internal int inputLevel;
+		internal uint inputLevel;
 		internal int priority, keyDelay;
 		internal SendModes sendMode;
 		internal Keysharp.Core.Common.Keyboard.SendRawModes sendRaw;

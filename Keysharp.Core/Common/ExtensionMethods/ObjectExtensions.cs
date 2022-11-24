@@ -138,6 +138,29 @@ namespace System
 			return doconvert ? Convert.ToInt32(obj) : new int? ();
 		}
 
+		public static uint? ParseUInt(this object obj, bool doconvert = true)
+		{
+			if (obj is uint i)
+				return i;
+
+			if (obj is Keysharp.Scripting.BoolResult br)
+				return br.o.ParseUInt(doconvert);
+
+			var s = obj.ToString().AsSpan();
+
+			if (uint.TryParse(s, out i))
+				return i;
+
+			if (s.Length == 0)
+				return new uint? ();
+
+			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
+					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
+				return ii;
+
+			return doconvert ? Convert.ToUInt32(obj) : new uint? ();
+		}
+
 		public static long? ParseLong(this object obj, bool doconvert = true)
 		{
 			if (obj is long l)

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Microsoft.Win32;
@@ -2061,7 +2062,9 @@ namespace Keysharp.Core.Windows
 					var waitForWinKeyRelease = false;
 
 					if (sendRaw != SendRawModes.NotRaw)
+					{
 						waitForWinKeyRelease = sub.IndexOfAny(llChars) != -1; // StrChrAny(aKeys, ("Ll")) != NULL;
+					}
 					else
 					{
 						// It seems worthwhile to scan for any "L" characters to avoid waiting for the release
@@ -3384,6 +3387,7 @@ namespace Keysharp.Core.Windows
 			var pressDuration = (long)(sendMode == SendModes.Play ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration);
 
 			if (pressDuration > -1) // SM_PLAY does use DoKeyDelay() to store a delay item in the event array.
+			{
 				// Since modifiers were changed by the above, do a key-delay if the special intra-keystroke
 				// delay is in effect.
 				// Since there normally isn't a delay between a change in modifiers and the first keystroke,
@@ -3391,6 +3395,7 @@ namespace Keysharp.Core.Windows
 				// cases where modifiers need to be left alone for a short time in order for the keystrokes
 				// that follow to be be modified by the intended set of modifiers).
 				DoKeyDelay((int)pressDuration); // It knows not to do the delay for SM_INPUT.
+			}
 			else // Since no key-delay was done, check if a a delay is needed for any other reason.
 			{
 				// IMPORTANT UPDATE for v1.0.39: Now that the hooks are in a separate thread from the part
@@ -3552,7 +3557,7 @@ namespace Keysharp.Core.Windows
 			if ((now - lastPeekTime).TotalMilliseconds > (long)Accessors.A_PeekFrequency)
 			{
 				if (WindowsAPI.PeekMessage(out msg, IntPtr.Zero, 0, 0, WindowsAPI.PM_NOREMOVE))
-					_ = Keysharp.Scripting.Script.MsgSleep(-1);
+					Keysharp.Core.Flow.Sleep(-1);
 
 				now = DateTime.Now;
 				lastPeekTime = now;

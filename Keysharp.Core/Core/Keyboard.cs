@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
@@ -73,6 +74,7 @@ namespace Keysharp.Core
 			{
 				return new Keysharp.Core.Map(new Dictionary<object, object>()
 				{
+					{ "CaretFound", false },
 					{ "X", "" },
 					{ "Y", "" }
 				});
@@ -86,6 +88,7 @@ namespace Keysharp.Core
 			{
 				return new Keysharp.Core.Map(new Dictionary<object, object>()
 				{
+					{ "CaretFound", false },
 					{ "X", "" },
 					{ "Y", "" }
 				});
@@ -103,6 +106,7 @@ namespace Keysharp.Core
 			pt.Y -= y;
 			return new Keysharp.Core.Map(new Dictionary<object, object>()
 			{
+				{ "CaretFound", true },
 				{ "X",  pt.X },
 				{ "Y", pt.Y }
 			});

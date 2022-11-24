@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Keysharp.Scripting
 {
@@ -131,6 +132,7 @@ namespace Keysharp.Scripting
 			ns.Imports.Add(new CodeNamespaceImport("System.Reflection"));
 			ns.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
 			ns.Imports.Add(new CodeNamespaceImport("System.Text"));
+			ns.Imports.Add(new CodeNamespaceImport("System.Threading.Tasks"));
 			ns.Imports.Add(new CodeNamespaceImport("System.Windows.Forms"));
 			ns.Imports.Add(new CodeNamespaceImport("Keysharp.Core"));
 			ns.Imports.Add(new CodeNamespaceImport("Keysharp.Scripting"));
@@ -175,7 +177,10 @@ namespace Keysharp.Scripting
 				_ = main.Statements.Add(new CodeExpressionStatement(inv));
 			}
 			else
+			{
 				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "UserMainCode"));
+				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", new CodeExpression[] { new CodePrimitiveExpression(-2L) }));
+			}
 
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit0.Parameters.Add(new CodePrimitiveExpression(0));

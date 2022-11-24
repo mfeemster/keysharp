@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
+using System.Threading.Tasks;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
 
 namespace Keysharp.Core
@@ -12,6 +13,8 @@ namespace Keysharp.Core
 		internal static uint CurrentThreadID;
 
 		internal static uint MainThreadID;
+		public static System.Threading.SynchronizationContext mainContext;
+
 		private const int LoopFrequency = 50;
 
 		[ThreadStatic]
@@ -94,19 +97,19 @@ namespace Keysharp.Core
 		{
 			var name = obj0.As();
 			var timeout = obj1.Ad(-1.0);
-			var t = (int)timeout;
+			var t = timeout;
 			System.Diagnostics.Process proc;
 
 			if (t >= 0)
-				t = (int)(timeout * 1000);
+				t = timeout * 1000;
 
-			var start = Environment.TickCount;
+			var start = DateTime.Now;
 
 			while ((proc = FindProcess(name)) == null)
 			{
 				Keysharp.Core.Flow.Sleep(LoopFrequency);
 
-				if (t >= 0 && Environment.TickCount - start > t)
+				if (t >= 0.0 && (DateTime.Now - start).TotalMilliseconds > t)
 					break;
 			}
 

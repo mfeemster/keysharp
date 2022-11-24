@@ -1153,7 +1153,7 @@ namespace Keysharp.Core.Common.Keyboard
 						case 'T':
 							if (variant != null)
 							{
-								if (int.TryParse(options.Substring(i + 1), out var val))
+								if (uint.TryParse(options.Substring(i + 1), out var val))
 									variant.maxThreads = val;
 
 								if (variant.maxThreads > Keysharp.Scripting.Parser.MaxThreadsTotal) // To avoid array overflow, this limit must by obeyed except where otherwise documented.
@@ -1166,7 +1166,7 @@ namespace Keysharp.Core.Common.Keyboard
 							break;
 
 						case 'I':
-							if (variant != null && int.TryParse(options.AsSpan(i + 1), out var newInputLevel))
+							if (variant != null && uint.TryParse(options.AsSpan(i + 1), out var newInputLevel))
 							{
 								variant.maxThreads = newInputLevel;
 
@@ -2492,7 +2492,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			string levelStr;
-			int minLevel = 100, maxLevel = -1;
+			uint minLevel = 100u, maxLevel = 0u;
 
 			for (vp = firstVariant; vp != null; vp = vp.nextVariant)
 			{
@@ -2775,7 +2775,8 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		internal FuncObj callback;
 		internal bool enabled;
-		internal int existingThreads, maxThreads = int.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
+		internal int existingThreads;
+		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 
 		// Keep it to allow restoring it via hotkey() function if changed
 		// during run time.
@@ -2785,7 +2786,7 @@ namespace Keysharp.Core.Common.Keyboard
 		// 4-byte alignment:
 		internal int index;
 
-		internal int inputLevel;
+		internal uint inputLevel;
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
 		internal bool noSuppress;

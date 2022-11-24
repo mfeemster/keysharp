@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common;
@@ -53,7 +54,7 @@ namespace Keysharp.Scripting
 
 		internal static InputType input;
 
-		internal static int inputLevel;
+		internal static uint inputLevel;
 
 		// Last Found Window of last #HotIf expression.
 		internal static DateTime inputTimeoutAt = DateTime.Now;
@@ -268,7 +269,10 @@ namespace Keysharp.Scripting
 
 		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
 		{
-			if (totalExistingThreads > 0 || Parser.Persistent)
+			if (totalExistingThreads > 0 || Parser.Persistent || mainWindow != null)
+				return;
+
+			if (Script.input != null)//Only exit if the last InputHook has been removed.
 				return;
 
 			_ = Keysharp.Core.Flow.ExitApp((int)exitReason);

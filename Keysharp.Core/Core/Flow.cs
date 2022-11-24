@@ -315,15 +315,24 @@ namespace Keysharp.Core
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (delay == 0L)
 			{
-				System.Threading.Thread.Sleep(1);//1 instructs the OS to yield t a thread of its choice.
+				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
+				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
+				System.Threading.Thread.Sleep(0);
 			}
 			else if (delay == -1L)
 			{
 				Application.DoEvents();
 			}
+			else if (delay == -2)//Sleep indefinitely until all InputHooks are finished.
+			{
+				while (!hasExited && Keysharp.Scripting.Script.input != null && Keysharp.Scripting.Script.input.InProgress())
+				{
+					Application.DoEvents();
+					System.Threading.Thread.Sleep(10);
+				}
+			}
 			else
 			{
-				//System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(delay));
 				var stop = DateTime.Now.AddMilliseconds(delay);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
 				while (DateTime.Now < stop && !hasExited)
@@ -389,15 +398,21 @@ namespace Keysharp.Core
 
 			if (!Script.IsMainWindowClosing)
 			{
-				Script.mainWindow.Close();
-				Script.mainWindow = null;
+				Script.mainWindow.CheckedInvoke(() =>
+				{
+					Script.mainWindow.Close();
+					Script.mainWindow = null;
+				}, false);
 			}
 
-			if (Script.Tray != null)
+			if (Script.Tray != null && Script.Tray.ContextMenuStrip != null)
 			{
-				Script.Tray.Visible = false;
-				Script.Tray.Dispose();
-				Script.Tray = null;
+				Script.Tray.ContextMenuStrip.CheckedInvoke(() =>
+				{
+					Script.Tray.Visible = false;
+					Script.Tray.Dispose();
+					Script.Tray = null;
+				}, true);
 			}
 
 			Environment.ExitCode = exitCode;
