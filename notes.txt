@@ -547,23 +547,18 @@ Closed development links to revisit:
 
 FINAL TODO BEFORE INITIAL RELEASE:
 
+Get all menu items working, both on the main window, and on the system tray.
+	-suspend works, but resume does not.
+	-make sure system tray menus and main window menus both call the same functions to avoid code duplication.
 A_IsPaused
 ListLines, A_ListLines
-A_SendMode
-A_SendLevel
-A_KeyDuration
-A_MenuMaskKey
-A_EventInfo (needs to always be populated with the relevant info when a hotkey etc fires)
-
 Function objects will need to be created to be used, not all created on script load like the documentation says.
 Custom iterator objects won't be implemented.
 Ownprops
 threading interaction with timers
 Items under COM section
 The Mouse and Keyboard and Hotkeys and Hotstrings sections.
-props under Hotkeys, Hotstrings, and Custom Menu Items
 Thread functionality, where things can be pre-empted/suspended/resumed etc...
-ControlSend() and ControlSendText()
 classes
 a way to test if you've implemented all functions: https://lexikos.github.io/v2/docs/commands/index.htm
 ensure you've properly captured all of these changes between 1.1 to 2.0: https://lexikos.github.io/v2/docs/v2-changes.htm
