@@ -166,7 +166,7 @@ Differences:
 	-SubStr() uses a default of 1 for the second parameter, StartingPos, to relieve the user of always having to specify it.
 	-PixelGetColor() does not accept a mode as its third parameter.
 	-SoundGetInterface() is not implemented because it's COM.
-	-Run() and RunWait() take an extra parameter for the program arguments, rather than placing them inside of the progrma name string.
+	-Run() and RunWait() take an extra parameter for the program arguments, rather than placing them inside of the program name string.
 		-Run() does not take a ref param for OutputVarPID, and instead returns it.
 		-RunWait() does not take a ref param for OutputVarPID, and instead returns an object with two members: OutputVarPID and ExitCode.
 	-Double click handlers for buttons are not supported.
@@ -569,9 +569,7 @@ a way to test if you've implemented all functions: https://lexikos.github.io/v2/
 ensure you've properly captured all of these changes between 1.1 to 2.0: https://lexikos.github.io/v2/docs/v2-changes.htm
 see if renaming keysharp.exe to a scriptname.exe will automatically run scriptname.ahk
 implement window spy window.
-Need to implement properties under User Idle Time and Hotkeys, Hotstrings, Custom Menu Items and some under Misc.
-	-User Idle Time props, need to be integrated into the low level program hooks
-Make sure you have unit tests for Buffer
+Need to implement properties under Custom Menu Items and some under Misc.
 
 See how much some of the existing plugins work with Keysharp: https://lexikos.github.io/v2/docs/commands/Edit.htm
 I'm not sure if we talked about this before but I just had a conversation in 
