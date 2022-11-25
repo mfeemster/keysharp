@@ -2300,8 +2300,8 @@ namespace Keysharp.Core.Common.Keyboard
 			// tickcounts itself is greater than about 49 days:
 			timeUntilNow = timeNow - timePrev;
 
-			if (displayWarning = (throttledKeyCount > Accessors.A_MaxHotkeysPerInterval
-								  && timeUntilNow.TotalMilliseconds < (long)Accessors.A_HotkeyThrottleInterval))
+			if (displayWarning = (throttledKeyCount > Accessors.maxHotkeysPerInterval
+								  && timeUntilNow.TotalMilliseconds < Accessors.hotkeyThrottleInterval))
 			{
 				// The moment any dialog is displayed, hotkey processing is halted since this
 				// app currently has only one thread.
@@ -2322,7 +2322,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			// The display_warning var is needed due to the fact that there's an OR in this condition:
-			if (displayWarning || timeUntilNow.TotalMilliseconds > (long)Accessors.A_HotkeyThrottleInterval)
+			if (displayWarning || timeUntilNow.TotalMilliseconds > Accessors.hotkeyThrottleInterval)
 			{
 				// Reset the sliding interval whenever it expires.  Doing it this way makes the
 				// sliding interval more sensitive than alternate methods might be.

@@ -692,7 +692,7 @@ break_twice:;
 			return ToggleValueType.Invalid;
 		}
 
-		internal static string GetKeyNameHelper(int vk, int sc, string def)
+		internal static string GetKeyNameHelper(int vk, int sc, string def = "not found")
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var buf = ""; // Set default.

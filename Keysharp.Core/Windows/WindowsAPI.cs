@@ -528,6 +528,25 @@ namespace Keysharp.Core.Windows
 #endif
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct LASTINPUTINFO
+	{
+		internal static LASTINPUTINFO Default
+		{
+			get
+			{
+				var result = new LASTINPUTINFO();
+				result.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
+				return result;
+			}
+		}
+
+		[MarshalAs(UnmanagedType.U4)]
+		public uint cbSize;
+		[MarshalAs(UnmanagedType.U4)]
+		public uint dwTime;
+	}
+
 	internal struct EventMsg
 	{
 		internal uint message;
@@ -1812,6 +1831,9 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32)]
 		internal static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+
+		[DllImport(user32)]
+		internal static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
 		[DllImport(user32)]
 		internal static extern bool GetLayeredWindowAttributes(IntPtr hwnd, out uint crKey, out byte bAlpha, out uint dwFlags);
