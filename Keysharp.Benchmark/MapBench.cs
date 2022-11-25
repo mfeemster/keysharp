@@ -36,7 +36,6 @@ using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Script;
 using static Keysharp.Scripting.Script.Operator;
 
-[assembly: System.CLSCompliantAttribute(true)]
 [assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.1")]
 
 namespace Keysharp.Benchmark
@@ -64,9 +63,9 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MapReadBenchmark
 	{
-		private Dictionary<object, object> dkt;
-		private Map map, mapScript;
-		private List<string> strings;
+		private Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private Map map = Keysharp.Scripting.Script.Map(), mapScript = Keysharp.Scripting.Script.Map();
+		private List<string> strings = new List<string>();
 
 		[Params(10000)]
 		public int Size { get; set; }
@@ -115,9 +114,9 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MapWriteBenchmark
 	{
-		private Dictionary<object, object> dkt;
-		private Map map, mapScript;
-		private List<string> strings;
+		private Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private Map map = Keysharp.Scripting.Script.Map(), mapScript = Keysharp.Scripting.Script.Map();
+		private List<string> strings = new List<string>();
 
 		public MapWriteBenchmark()
 		{

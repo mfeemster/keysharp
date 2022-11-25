@@ -47,6 +47,10 @@ namespace System
 
 		public static bool IsKeysharpGui(this object obj) => obj is Keysharp.Core.Gui || obj is Keysharp.Core.GuiControl || obj is Keysharp.Core.Menu;
 
+		public static bool IsNotNullOrEmpty(this object ob) => ob != null&& !(ob is string s&& s?.Length == 0);
+
+		public static bool IsNullOrEmpty(this object obj) => obj == null ? true : obj is string s ? s?.Length == 0 : false;
+
 		public static bool IsTrue(this bool? b) => b.HasValue&& b.Value;
 
 		//public static IList L(this object[] obj) => obj.Length > 0 && obj[0] is IList oo ? oo : obj;
@@ -138,29 +142,6 @@ namespace System
 			return doconvert ? Convert.ToInt32(obj) : new int? ();
 		}
 
-		public static uint? ParseUInt(this object obj, bool doconvert = true)
-		{
-			if (obj is uint i)
-				return i;
-
-			if (obj is Keysharp.Scripting.BoolResult br)
-				return br.o.ParseUInt(doconvert);
-
-			var s = obj.ToString().AsSpan();
-
-			if (uint.TryParse(s, out i))
-				return i;
-
-			if (s.Length == 0)
-				return new uint? ();
-
-			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
-				return ii;
-
-			return doconvert ? Convert.ToUInt32(obj) : new uint? ();
-		}
-
 		public static long? ParseLong(this object obj, bool doconvert = true)
 		{
 			if (obj is long l)
@@ -194,12 +175,31 @@ namespace System
 
 		public static object ParseObject(this object obj) => obj is Keysharp.Scripting.BoolResult br ? br.o : obj;
 
+		public static uint? ParseUInt(this object obj, bool doconvert = true)
+		{
+			if (obj is uint i)
+				return i;
+
+			if (obj is Keysharp.Scripting.BoolResult br)
+				return br.o.ParseUInt(doconvert);
+
+			var s = obj.ToString().AsSpan();
+
+			if (uint.TryParse(s, out i))
+				return i;
+
+			if (s.Length == 0)
+				return new uint? ();
+
+			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
+					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
+				return ii;
+
+			return doconvert ? Convert.ToUInt32(obj) : new uint? ();
+		}
+
 		public static IList Pl(this object[] obj) => obj.Select(x => x).ToList();
 
 		public static string Str(this object obj) => obj != null ? obj.ToString() : "";
-
-		public static bool IsNullOrEmpty(this object obj) => obj == null ? true : obj is string s ? s?.Length == 0 : false;
-
-		public static bool IsNotNullOrEmpty(this object ob) => ob != null&& !(ob is string s&& s?.Length == 0);
 	}
 }

@@ -579,7 +579,6 @@ namespace Keysharp.Core.Windows
 		SOUND = 0xFFFFFFF5,
 	}
 
-	[CLSCompliant(false)]
 	public class WindowsAPI
 	{
 		// File / Device IO

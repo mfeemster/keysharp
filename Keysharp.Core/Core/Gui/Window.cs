@@ -871,8 +871,6 @@ namespace Keysharp.Core
 			var b = false;
 			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
 			var start = DateTime.Now;
-			var criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
-			var hwnd = 0L;
 
 			if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
 			{

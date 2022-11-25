@@ -61,12 +61,12 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MathBench
 	{
-		private Dictionary<object, object> dkt;
-		private Map map, mapScript;
+		private Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private Map map = Keysharp.Scripting.Script.Map(), mapScript = Keysharp.Scripting.Script.Map();
 		private double totalCos;
-		private List<double> vals;
-		private List<object> objvals;
-		private FuncObj fo;
+		private List<double> vals = new List<double>();
+		private List<object> objvals = new List<object>();
+		private FuncObj fo = Func("Cos");
 
 		[Params(100000)]
 		public int Size { get; set; }

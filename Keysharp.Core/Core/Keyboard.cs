@@ -503,9 +503,6 @@ break_twice:;
 			int sleepDuration;
 			DateTime startTime;
 			int vk; // For GetKeyState.
-			IntPtr runningProcess; // For RUNWAIT
-			uint exitCode; // For RUNWAIT
-			// For FID_KeyWait:
 			bool waitForKeyDown;
 			KeyStateTypes keyStateType;
 			var joy = JoyControls.Invalid;
@@ -588,34 +585,6 @@ break_twice:;
 				else // Done waiting.
 					return false; // Since it timed out, we override the default with this.
 			}
-
-			/*
-			    var keyWaitCommand = new KeyWaitCommand(keyboardHook);
-			    var key = KeyParser.ParseKey(keyname);
-			    var optsItems = new Dictionary<string, Regex>();
-			    optsItems.Add(Core.Keyword_TimeOutS, new Regex(Core.Keyword_TimeOutS + @"([\d|\.]*)"));
-			    optsItems.Add(Core.Keyword_DownS, new Regex("(" + Core.Keyword_DownS + ")"));
-			    var dicOptions = Options.ParseOptionsRegex(ref options, optsItems, true);
-
-			    if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_DownS]))
-			    {
-			    keyWaitCommand.TriggerOnKeyDown = true;
-			    }
-
-			    if (!string.IsNullOrEmpty(dicOptions[Core.Keyword_TimeOutS]))
-			    {
-			    try
-			    {
-			        var timeout = float.Parse(dicOptions[Core.Keyword_TimeOutS]);
-			        keyWaitCommand.TimeOutVal = (int)(timeout * 1000);
-			    }
-			    catch
-			    {
-			        keyWaitCommand.TimeOutVal = null;
-			    }
-			    }
-
-			    keyWaitCommand.Wait(key);*/
 		}
 
 		public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero), true, true);

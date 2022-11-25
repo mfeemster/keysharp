@@ -48,7 +48,7 @@ namespace Keysharp.Scripting
 		private char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
 		private string HotstringEndChars = string.Empty;
 		private string HotstringNewOptions = string.Empty;
-		private bool HotstringNoMouse;
+		internal static bool HotstringNoMouse { get; private set; } = false;
 		private string IfWinActive_WinText = string.Empty;
 
 		//private bool LTrimForced;

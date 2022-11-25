@@ -13,7 +13,6 @@ namespace Keysharp.Core
 {
 	public class GuiControl : KeysharpObject
 	{
-		internal MsgMonitorList monitorEvents;
 		internal string typename;
 		private readonly Control _control;
 		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();//These all need to be converted to FuncObj.
@@ -25,14 +24,13 @@ namespace Keysharp.Core
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
-		private bool fireEvents = true;//Need to figure out how to enable/disable events.//MATT//TODO
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
 		private List<IFuncObj> itemCheckHandlers;
 		private List<IFuncObj> itemEditHandlers;
 		private List<IFuncObj> itemExpandHandlers;
 		private List<IFuncObj> lostFocusHandlers;
-		private int mousecount = 0;
+		//private int mousecount = 0;
 		private Dictionary<int, List<IFuncObj>> notifyHandlers;
 		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
@@ -520,9 +518,10 @@ namespace Keysharp.Core
 
 		public void Choose(object obj)
 		{
+			//The documentation says "Unlike ControlChooseIndex, this method does not raise a Change or DoubleClick event."
+			//But we don't raise click events anyway here, so it shouldn't matter.
 			var s = obj as string;
 			var i = (int)obj.Al() - 1;
-			fireEvents = false;
 
 			if (_control is TabControl tc)
 			{
@@ -555,8 +554,6 @@ namespace Keysharp.Core
 					cb.ResetText();
 				}
 			}
-
-			fireEvents = true;
 		}
 
 		/// <summary>

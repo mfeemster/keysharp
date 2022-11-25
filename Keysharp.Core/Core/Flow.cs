@@ -28,7 +28,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Is the Script currently suspended?
 		/// </summary>
-		public static bool Suspended { get; private set; }
+		public static bool Suspended { get; internal set; }
 
 		internal static bool AllowInterruption { get; set; }
 
@@ -284,7 +284,7 @@ namespace Keysharp.Core
 						if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
 							existing.Enabled = true;
 					}
-					catch (Exception ex)
+					catch (Exception)
 					{
 						remove = true;
 					}

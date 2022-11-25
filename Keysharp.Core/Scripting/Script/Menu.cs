@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core;
+using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Scripting
 {
@@ -9,6 +10,7 @@ namespace Keysharp.Scripting
 	{
 		internal static NotifyIcon Tray;
 		internal static Menu trayMenu;
+		internal static ToolStripMenuItem suspendMenuItem;
 
 		public static void CreateTrayMenu()
 		{
@@ -42,6 +44,15 @@ namespace Keysharp.Scripting
 				Edit();
 				return "";
 			});
+			var suspend = new Func<object>(() =>
+			{
+				//Suspend seems to work, but resume does not.
+				Keysharp.Core.Flow.Suspended = !Keysharp.Core.Flow.Suspended;
+				HotstringDefinition.SuspendAll(Keysharp.Core.Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
+				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
+				suspendMenuItem.Checked = Keysharp.Core.Flow.Suspended;
+				return "";
+			});
 			var exitfunc = new Func<object>(() =>
 			{
 				_ = Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Menu);
@@ -55,7 +66,7 @@ namespace Keysharp.Scripting
 			_ = trayMenu.Add("&Reload This Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
 			_ = trayMenu.Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-			_ = trayMenu.Add("&Suspend Hotkeys", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			suspendMenuItem = trayMenu.Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
 			_ = trayMenu.Add("&Pause Script", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = trayMenu.Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 			trayMenu.Default = "&Open";

@@ -194,8 +194,6 @@ namespace Keysharp.Core.Common.Keyboard
 					//  modifiers |= MOD_ALT;
 				}
 
-				var temp = System.Windows.Forms.Keys.Control;
-
 				if (HK_TYPE_CAN_BECOME_KEYBD_HOOK(type)) // Added in v1.0.39 to make a hotkey such as "LButton & LCtrl" install the mouse hook.
 				{
 					switch (vk)
@@ -1476,115 +1474,117 @@ namespace Keysharp.Core.Common.Keyboard
 			ManifestAllHotkeysHotstringsHooks();
 		}
 
-		internal static HotkeyDefinition Parse(string sequence)
-		{
-			Keys keys = Keys.None, extra = Keys.None;
-			var options = Options.None;
-			var typed = string.Empty;
-			sequence = sequence.Replace(Core.Keyword_ModifierAltGr, new string(new[] { Core.Keyword_ModifierCtrl, Core.Keyword_ModifierAlt }));
+		/*
+		    internal static HotkeyDefinition Parse(string sequence)
+		    {
+		    Keys keys = Keys.None, extra = Keys.None;
+		    var options = Options.None;
+		    var typed = string.Empty;
+		    sequence = sequence.Replace(Core.Keyword_ModifierAltGr, new string(new[] { Core.Keyword_ModifierCtrl, Core.Keyword_ModifierAlt }));
 
-			for (var i = 0; i < sequence.Length; i++)
-			{
-				switch (sequence[i])
-				{
-					case Core.Keyword_ModifierLeftPair:
-						i++;
+		    for (var i = 0; i < sequence.Length; i++)
+		    {
+		        switch (sequence[i])
+		        {
+		            case Core.Keyword_ModifierLeftPair:
+		                i++;
 
-						if (i == sequence.Length)
-							throw new ArgumentException();
+		                if (i == sequence.Length)
+		                    throw new ArgumentException();
 
-						switch (sequence[i])
-						{
-							case Core.Keyword_ModifierWin: extra = Keys.LWin; break;
+		                switch (sequence[i])
+		                {
+		                    case Core.Keyword_ModifierWin: extra = Keys.LWin; break;
 
-							case Core.Keyword_ModifierAlt: extra = Keys.LMenu; break;
+		                    case Core.Keyword_ModifierAlt: extra = Keys.LMenu; break;
 
-							case Core.Keyword_ModifierCtrl: extra = Keys.LControlKey; break;
+		                    case Core.Keyword_ModifierCtrl: extra = Keys.LControlKey; break;
 
-							case Core.Keyword_ModifierShift: extra = Keys.LShiftKey; break;
+		                    case Core.Keyword_ModifierShift: extra = Keys.LShiftKey; break;
 
-							default: throw new ArgumentException();
-						}
+		                    default: throw new ArgumentException();
+		                }
 
-						break;
+		                break;
 
-					case Core.Keyword_ModifierRightPair:
-						i++;
+		            case Core.Keyword_ModifierRightPair:
+		                i++;
 
-						if (i == sequence.Length)
-							throw new ArgumentException();
+		                if (i == sequence.Length)
+		                    throw new ArgumentException();
 
-						switch (sequence[i])
-						{
-							case Core.Keyword_ModifierWin: extra = Keys.RWin; break;
+		                switch (sequence[i])
+		                {
+		                    case Core.Keyword_ModifierWin: extra = Keys.RWin; break;
 
-							case Core.Keyword_ModifierAlt: extra = Keys.RMenu; break;
+		                    case Core.Keyword_ModifierAlt: extra = Keys.RMenu; break;
 
-							case Core.Keyword_ModifierCtrl: extra = Keys.RControlKey; break;
+		                    case Core.Keyword_ModifierCtrl: extra = Keys.RControlKey; break;
 
-							case Core.Keyword_ModifierShift: extra = Keys.RShiftKey; break;
+		                    case Core.Keyword_ModifierShift: extra = Keys.RShiftKey; break;
 
-							default: throw new ArgumentException();
-						}
+		                    default: throw new ArgumentException();
+		                }
 
-						break;
+		                break;
 
-					case Core.Keyword_ModifierWin: extra = Keys.LWin; break;
+		            case Core.Keyword_ModifierWin: extra = Keys.LWin; break;
 
-					case Core.Keyword_ModifierAlt: keys |= Keys.Alt; break;
+		            case Core.Keyword_ModifierAlt: keys |= Keys.Alt; break;
 
-					case Core.Keyword_ModifierCtrl: keys |= Keys.Control; break;
+		            case Core.Keyword_ModifierCtrl: keys |= Keys.Control; break;
 
-					case Core.Keyword_ModifierShift: keys |= Keys.Shift; break;
+		            case Core.Keyword_ModifierShift: keys |= Keys.Shift; break;
 
-					case Core.Keyword_HotkeyIgnoreModifiers: options |= Options.IgnoreModifiers; break;
+		            case Core.Keyword_HotkeyIgnoreModifiers: options |= Options.IgnoreModifiers; break;
 
-					case Core.Keyword_HotkeyPassThrough: options |= Options.PassThrough; break;
+		            case Core.Keyword_HotkeyPassThrough: options |= Options.PassThrough; break;
 
-					case Core.Keyword_HotkeyNoRecurse: continue;
+		            case Core.Keyword_HotkeyNoRecurse: continue;
 
-					default:
-						if (i > 0)
-							sequence = sequence.Substring(i);
+		            default:
+		                if (i > 0)
+		                    sequence = sequence.Substring(i);
 
-						i = sequence.Length;
-						break;
-				}
-			}
+		                i = sequence.Length;
+		                break;
+		        }
+		    }
 
-			var z = sequence.IndexOf(Core.Keyword_HotkeyCombination);
+		    var z = sequence.IndexOf(Core.Keyword_HotkeyCombination);
 
-			if (z != -1)
-			{
-				z++;
+		    if (z != -1)
+		    {
+		        z++;
 
-				if (z < sequence.Length)
-				{
-					var alt = sequence.Substring(z).Trim();
-					extra = KeyParser.ParseKey(alt);
+		        if (z < sequence.Length)
+		        {
+		            var alt = sequence.Substring(z).Trim();
+		            extra = KeyParser.ParseKey(alt);
 
-					if (alt.Length == 1)
-						typed = alt;
-				}
+		            if (alt.Length == 1)
+		                typed = alt;
+		        }
 
-				sequence = sequence.Substring(0, z - 1).Trim();
-			}
+		        sequence = sequence.Substring(0, z - 1).Trim();
+		    }
 
-			z = sequence.LastIndexOf(Core.Keyword_Up, StringComparison.OrdinalIgnoreCase);
+		    z = sequence.LastIndexOf(Core.Keyword_Up, StringComparison.OrdinalIgnoreCase);
 
-			if (z > 0 && char.IsWhiteSpace(sequence, z - 1))
-			{
-				sequence = sequence.Substring(0, z).Trim();
-				options |= Options.Up;
-			}
+		    if (z > 0 && char.IsWhiteSpace(sequence, z - 1))
+		    {
+		        sequence = sequence.Substring(0, z).Trim();
+		        options |= Options.Up;
+		    }
 
-			keys |= KeyParser.ParseKey(sequence);
+		    keys |= KeyParser.ParseKey(sequence);
 
-			if (typed.Length == 0 && sequence.Length == 1)
-				typed = sequence;
+		    if (typed.Length == 0 && sequence.Length == 1)
+		        typed = sequence;
 
-			return new HotkeyDefinition(keys, extra, options, null) { Typed = typed };
-		}
+		    return new HotkeyDefinition(keys, extra, options, null) { Typed = typed };
+		    }
+		*/
 
 		/// <summary>
 		/// aVKorSC contains the virtual key or scan code of the specified prefix key (it's a scan code if aIsSC is true).
@@ -2360,7 +2360,6 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			--variant.existingThreads;
-			//tsk.Wait();
 
 			if (tsk.IsFaulted)//Original checked for result == FAIL, unsure if this accomplishes the same thing.//TODO
 			{
@@ -2776,7 +2775,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal FuncObj callback;
 		internal bool enabled;
 		internal int existingThreads;
-		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 
 		// Keep it to allow restoring it via hotkey() function if changed
 		// during run time.
@@ -2787,6 +2785,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int index;
 
 		internal uint inputLevel;
+		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
 		internal bool noSuppress;

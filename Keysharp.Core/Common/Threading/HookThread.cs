@@ -22,8 +22,6 @@ namespace Keysharp.Core.Common.Threading
 		internal const int SC_ARRAY_COUNT = SC_MAX + 1;
 		internal const int SC_MAX = 0x1FF;
 		internal const int VK_ARRAY_COUNT = VK_MAX + 1;
-
-		// The maximum number of virtual keys and scan codes that can ever exist.
 		internal const int VK_MAX = 0xFF;
 
 		internal static readonly Channel<object> channel = Channel.CreateUnbounded<object>(new UnboundedChannelOptions
@@ -32,31 +30,18 @@ namespace Keysharp.Core.Common.Threading
 		});
 
 		internal static System.Threading.Mutex keybdMutex, mouseMutex;
-
 		internal static string KeybdMutexName = "Keysharp Keybd";
-
 		internal static Dictionary<string, int> keyToSc;
-
 		internal static Dictionary<string, int> keyToVk;
-
 		internal static int KSCM_SIZE = (KeyboardMouseSender.MODLR_MAX + 1) * SC_ARRAY_COUNT;
-
 		internal static int KVKM_SIZE = (KeyboardMouseSender.MODLR_MAX + 1) * VK_ARRAY_COUNT;
-
 		internal static string MouseMutexName = "Keysharp Mouse";
-
 		internal static string[] vksc = new string[] { "vk", "sc" };
-
 		internal static Dictionary<int, string> vkToKey = new Dictionary<int, string>();
-
 		internal bool blockWinKeys;
-
 		internal IntPtr hsHwnd = IntPtr.Zero;
-
 		internal bool hsResetUponMouseClick = true;
-
 		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender;
-
 		internal byte[] physicalKeyState = new byte[VK_ARRAY_COUNT];
 
 		// The prefix key that's currently down (i.e. in effect).
@@ -85,35 +70,19 @@ namespace Keysharp.Core.Common.Threading
 		// we can ensure they are initialized by the keyboard init function every
 		// time it's called (currently it can be only called once):
 		protected internal bool disguiseNextMenu;
-
 		protected internal bool hookSynced;
-
 		protected internal uint channelThreadID;
-
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
-
-		// Hot-string vars (initialized when ResetHook() is first called):
 		protected internal char[] hsBuf = new char[HotstringDefinition.HS_BUF_SIZE];
-
 		protected internal IntPtr kbdHook = IntPtr.Zero;
-
 		protected internal List<KeyHistoryItem> keyHistory = new List<KeyHistoryItem>(40);
-
 		protected internal int keyHistoryNext;
-
 		protected internal KeyType[] ksc;
-
 		protected internal uint[] kscm;
-
 		protected internal KeyType[] kvk;
-
 		protected internal uint[] kvkm;
-
 		protected internal IntPtr mouseHook = IntPtr.Zero;
-
-		// Initialized by ResetHook().
 		protected internal bool undisguisedMenuInEffect;
-
 		protected volatile bool running;
 
 		internal HookThread()
@@ -126,10 +95,6 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false);
 
-		//~HookThread()
-		//{
-		//  Stop();
-		//}
 		internal abstract void ChangeHookState(List<HotkeyDefinition> hk, HookType whichHook, HookType whichHookAlways);
 
 		internal abstract int CharToVKAndModifiers(char ch, ref int? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false);
@@ -178,8 +143,6 @@ namespace Keysharp.Core.Common.Threading
 
 		internal ref uint Kvkm(int i, int j) => ref kvkm[(i * VK_ARRAY_COUNT) + j];
 
-		//
-		// Initialized by ResetHook().
 		internal void LinkKeysForCustomCombo(int neutral, int left, int right)
 		{
 			var first_neutral = kvk[neutral].firstHotkey;
@@ -307,10 +270,6 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract void WaitHookIdle();
 
-		//protected internal abstract void DeregisterKeyboardHook();
-
-		//protected internal abstract void DeregisterMouseHook();
-
 		protected internal abstract void DeregisterHooks();
 
 		protected internal void FreeHookMem()
@@ -336,7 +295,7 @@ namespace Keysharp.Core.Common.Threading
 
 	internal class KeyHistoryItem
 	{
-		internal double elapsedTime;
+		internal double elapsedTime;// Time since prior key or mouse button, in seconds.
 		internal char? eventType = '\0';
 
 		// space=none, i=ignored, s=suppressed, h=hotkey, etc.
@@ -344,7 +303,6 @@ namespace Keysharp.Core.Common.Threading
 
 		internal int sc;
 
-		// Time since prior key or mouse button, in seconds.
 		// It seems better to store the foreground window's title rather than its HWND since keystrokes
 		// might result in a window closing (being destroyed), in which case the displayed key history
 		// would not be able to display the title at the time the history is displayed, which would

@@ -337,7 +337,7 @@ namespace Keysharp.Core.Windows
 			// UPDATE: Also serialize all changes to the hook status so that our caller can rely on the new
 			// hook state being in effect immediately.  For example, the Input command installs the keyboard
 			// hook and it's more maintainable if we ensure the status is correct prior to returning.
-			DateTime startTime;
+			//DateTime startTime;
 			//bool problemActivatingHooks;
 			//for (problemActivatingHooks = false, startTime = DateTime.Now; ;) // For our caller, wait for hook thread to update the status of the hooks.
 			{
@@ -3745,8 +3745,6 @@ namespace Keysharp.Core.Windows
 							shift_put_up = true;
 						}
 
-						var controlPutUp = false;
-
 						if (whichControlDown != 0)
 						{
 							// In this case, the control key must be put up because the OS, at least
@@ -3755,7 +3753,6 @@ namespace Keysharp.Core.Windows
 							// it back down would cause it to be down even after the user releases
 							// it (since the up-event of a hotkey is also suppressed):
 							kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, whichControlDown);
-							controlPutUp = true;
 						}
 
 						// Alt-tab menu is not visible, or was not made visible by us.  In either case,
@@ -3764,6 +3761,7 @@ namespace Keysharp.Core.Windows
 						// ALT key itself is assigned to be one of the alt-tab actions:
 
 						if (vkIsAlt)
+						{
 							if (keyUp)
 								// The system won't see it as down for the purpose of alt-tab, so remove this
 								// modifier from consideration.  This is necessary to allow something like this
@@ -3773,6 +3771,7 @@ namespace Keysharp.Core.Windows
 								whichAltDown = 0;
 							else // Because there hasn't been a chance to update kbdMsSender.modifiersLR_logical yet:
 								whichAltDown = vk;
+						}
 
 						if (whichAltDown != 0)
 							kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDown, VK_MENU);
@@ -5127,12 +5126,8 @@ namespace Keysharp.Core.Windows
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
 			channelReadThread = System.Threading.Tasks.Task.Factory.StartNew(async () =>
 			{
-				//var msg = new Msg();
-				var problem_activating_hooks = false;
 				var reader = channel.Reader;
-				IntPtr fore_window, focused_control, criterion_found_hwnd = IntPtr.Zero;
-				//while (running) // Infinite loop for pumping messages in this thread. This thread will exit via any use of "return" below.
-				HotkeyDefinition hk = null;
+				var criterion_found_hwnd = IntPtr.Zero;
 				channelThreadID = WindowsAPI.GetCurrentThreadId();
 				//WindowsAPI.GetMessage(out var _, IntPtr.Zero, 0, 0);
 

@@ -44,18 +44,10 @@ namespace Keysharp.Scripting
 		{
 			var codeLine = lines[index];
 			var buf = codeLine.Code;
-			var isHotstring = buf[0] == HotkeyBound;
 			var hotstringOptionsIndex = 0;
 			var hotstringStartIndex = -1;
 			var hotkeyFlagIndex = -1;
 			var hotstringExecute = false;
-			var hotkeyUsesOtb = false;
-			var suffix_has_tilde = false;
-			var hook_is_mandatory = false;
-			var cp = 0;
-			var cp1 = 0;
-			var hotkeyValidity = ResultType.Ok;
-			var replacement = "";
 
 			if (buf.Length > 1 && buf[0] == ':')
 			{
@@ -79,6 +71,8 @@ namespace Keysharp.Scripting
 
 				//else it's just a naked "::", which is considered to be an ordinary label whose name is colon.
 			}
+
+			int cp;
 
 			if (hotstringStartIndex > 0)
 			{
@@ -115,7 +109,7 @@ namespace Keysharp.Scripting
 						break;
 					}
 
-					cp1 = cp + 1;
+					var cp1 = cp + 1;
 
 					if (buf[cp] == ':')
 					{
@@ -207,7 +201,7 @@ namespace Keysharp.Scripting
 					// Note: Hotstrings can't suffer from this type of ambiguity because a leading colon or pair of
 					// colons makes them easier to detect.
 					var temp = buf.OmitTrailingWhitespace(hotkeyFlagIndex); // For maintainability.
-					hotkeyValidity = HotkeyDefinition.TextInterpret(temp.TrimStart(Keysharp.Core.Core.SpaceTab), null); // Passing NULL calls it in validate-only mode.
+					var hotkeyValidity = HotkeyDefinition.TextInterpret(temp.TrimStart(Keysharp.Core.Core.SpaceTab), null);
 
 					switch (hotkeyValidity)
 					{
@@ -248,7 +242,7 @@ namespace Keysharp.Scripting
 				var options = buf.Substring(hotstringOptionsIndex, hotkeyFlagIndex - hotstringOptionsIndex);
 				var hotstring = hotstringStartIndex >= 0 ? buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex) : "";
 				hotkeyFlagIndex += HotkeySignal.Length;  // Now hotkey_flag is the hotkey's action, if any.
-				hotkeyUsesOtb = buf.AsSpan(hotkeyFlagIndex).TrimStart(SpaceTab).SequenceEqual("{");
+				var hotkeyUsesOtb = buf.AsSpan(hotkeyFlagIndex).TrimStart(SpaceTab).SequenceEqual("{");
 
 				if (hotstringStartIndex == -1)
 				{
@@ -402,7 +396,7 @@ namespace Keysharp.Scripting
 							}
 
 							// Otherwise, remap_keybd_to_mouse==false.
-							string blind_mods = "", next_blind_mod = "", this_mod = "", found_mod = "";
+							string blind_mods = "", next_blind_mod = "";
 							var modchars = "!#^+";
 
 							foreach (var ch in modchars)
@@ -490,6 +484,7 @@ namespace Keysharp.Scripting
 					lastHotstringFunc = "";//Don't clear replacement.
 					stackedHotstrings.Clear();
 				}
+				string replacement;
 				void ClearParserHotState()
 				{
 					replacement = "";
@@ -682,7 +677,6 @@ namespace Keysharp.Scripting
 					var hook_action = HotkeyDefinition.ConvertAltTab(buf.Substring(hotkeyFlagIndex), false);
 					var suffixHasTilde = false;
 					var hookIsMandatory = false;
-					HotkeyDefinition hk = null;
 					var funcname = "";
 					var nextIndex = index + 1;
 					replacement = !hotkeyUsesOtb && hotkeyFlagIndex >= 0 ? buf.Substring(hotkeyFlagIndex) : "";

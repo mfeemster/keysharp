@@ -23,7 +23,6 @@ namespace Keysharp.Core
 		internal List<IFuncObj> dropFilesHandlers;
 		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
-		internal MsgMonitorList monitorEvents;
 		internal List<IFuncObj> sizeHandlers;
 
 		//Need a way to retrieve contorls based on name, text class or hwnd. That will be hard because it'll require multiple dictionaries.//MATT

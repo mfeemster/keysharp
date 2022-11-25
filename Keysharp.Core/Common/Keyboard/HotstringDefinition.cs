@@ -27,33 +27,16 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static bool hsEndCharRequired = true;
 		internal static int hsKeyDelay;
 		internal static bool hsOmitEndChar;
-
-		// Hot-string global settings:
 		internal static int hsPriority;
-
-		// default priority is always 0
-		// Fast sends are much nicer for auto-replace and auto-backspace.
-		//internal static Keysharp.Core.Common.Keyboard.SendModes sendMode = Keysharp.Core.Common.Keyboard.SendModes.Input;
 		internal static SendModes hsSendMode = SendModes.Input;
-
-		// v1.0.43: New default for more reliable hotstrings.
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
-
 		internal static bool hsSuspendExempt;
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
-
-		//Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
-		internal static Dictionary<string, List<HotstringDefinition>> sksDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);
-
-		//Not used yet, but would much prefer it.//TODO
+		internal static Dictionary<string, List<HotstringDefinition>> sksDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);     //Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
-
 		internal uint existingThreads, maxThreads;
-
-		//internal Core.HotFunction callback;
 		internal IFuncObj funcObj;
-
 		internal HotkeyCriterion hotCriterion;
 		internal uint inputLevel;
 		internal int priority, keyDelay;
@@ -62,38 +45,25 @@ namespace Keysharp.Core.Common.Keyboard
 		internal string str, replacement;
 		internal int suspended;
 		protected internal static List<char> hsBuf = new List<char>(256);
+
 		public static string CurrentInputBuffer => new string(hsBuf.ToArray());
-
 		public static bool DefaultHotstringCaseSensitive => hsCaseSensitive;
-
 		public static bool DefaultHotstringConformToCase => hsConformToCase;
-
 		public static bool DefaultHotstringDetectWhenInsideWord => hsDetectWhenInsideWord;
-
 		public static bool DefaultHotstringDoBackspace => hsDoBackspace;
-
 		public static bool DefaultHotstringDoReset => hsDoReset;
-
 		public static bool DefaultHotstringEndCharRequired => hsEndCharRequired;
-
 		public static string DefaultHotstringEndChars => defEndChars;
-
 		public static int DefaultHotstringKeyDelay => hsKeyDelay;
-
 		public static bool DefaultHotstringOmitEndChar => hsOmitEndChar;
-
-		// This is just to prevent #Hotstring "S" from affecting hotkeys.
 		public static int DefaultHotstringPriority => hsPriority;
-
 		public static SendModes DefaultHotstringSendMode => hsSendMode;
 		public static SendRawModes DefaultHotstringSendRaw => hsSendRaw;
 		public static bool DefaultHotstringSuspendExempt => hsSuspendExempt;
 		public bool Enabled { get; set; }
 		public Options EnabledOptions { get; set; }
 		public string Name { get; set; }
-
 		public string Replacement { get; set; } = string.Empty;
-
 		public string Sequence { get; }
 
 		public HotstringDefinition(string sequence, string replacement)

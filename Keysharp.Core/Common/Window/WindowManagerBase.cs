@@ -18,11 +18,8 @@ namespace Keysharp.Core.Common.Window
 	internal abstract class WindowManagerBase
 	{
 		internal abstract WindowItemBase ActiveWindow { get; }
-
 		internal abstract IEnumerable<WindowItemBase> AllWindows { get; }
-
 		internal Dictionary<string, WindowGroup> Groups { get; } = new Dictionary<string, WindowGroup>();
-
 		internal abstract WindowItemBase LastFound { get; set; }
 
 		internal abstract WindowItemBase CreateWindow(IntPtr id);

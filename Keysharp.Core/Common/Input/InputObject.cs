@@ -9,6 +9,9 @@ namespace Keysharp.Core.Common.Input
 {
 	public class InputObject : KeysharpObject
 	{
+		internal InputType input;
+		private IFuncObj onChar, onEnd, onKeyDown, onKeyUp;
+
 		public bool BackspaceIsUndo
 		{
 			get => input.BackspaceIsUndo;
@@ -21,10 +24,65 @@ namespace Keysharp.Core.Common.Input
 			set => input.CaseSensitive = value;
 		}
 
+		public string EndKey
+		{
+			get
+			{
+				if (input.Status == InputStatusType.TerminatedByEndKey)
+				{
+					var str = "";
+					_ = input.GetEndReason(ref str);
+					return str;
+				}
+
+				return "";
+			}
+		}
+
+		public string EndMods
+		{
+			get
+			{
+				var sb = new StringBuilder(8);
+
+				for (var i = 0; i < 8; ++i)
+					if ((input.EndingMods & (1 << i)) != 0)
+					{
+						_ = sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
+						_ = sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
+					}
+
+				return sb.ToString();
+			}
+		}
+
+		public string EndReason
+		{
+			get
+			{
+				string str = null;
+				return input.GetEndReason(ref str);
+			}
+		}
+
 		public bool FindAnywhere
 		{
 			get => input.FindAnywhere;
 			set => input.FindAnywhere = value;
+		}
+
+		public bool InProgress => input.InProgress();
+
+		public string Input => input.buffer;
+
+		public string Match
+		{
+			get
+			{
+				return input.Status == InputStatusType.TerminatedByMatch && input.EndingMatchIndex < input.match.Count
+					   ? input.match[input.EndingMatchIndex]
+					   : "";
+			}
 		}
 
 		public long MinSendLevel
@@ -38,21 +96,6 @@ namespace Keysharp.Core.Common.Input
 			get => input.NotifyNonText;
 			set => input.NotifyNonText = value;
 		}
-
-		public bool VisibleNonText
-		{
-			get => input.VisibleNonText;
-			set => input.VisibleNonText = value;
-		}
-
-		public bool VisibleText
-		{
-			get => input.VisibleText;
-			set => input.VisibleText = value;
-		}
-
-		internal InputType input;
-		private IFuncObj onChar, onEnd, onKeyDown, onKeyUp;
 
 		public object OnChar
 		{
@@ -91,52 +134,19 @@ namespace Keysharp.Core.Common.Input
 			}
 		}
 
+		public bool VisibleNonText
+		{
+			get => input.VisibleNonText;
+			set => input.VisibleNonText = value;
+		}
+
+		public bool VisibleText
+		{
+			get => input.VisibleText;
+			set => input.VisibleText = value;
+		}
+
 		public InputObject(string options, string endKeys, string matchList) => input = new InputType(this, options, endKeys, matchList);
-
-		public string EndKey
-		{
-			get
-			{
-				if (input.Status == InputStatusType.TerminatedByEndKey)
-				{
-					var str = "";
-					_ =  input.GetEndReason(ref str);
-					return str;
-				}
-
-				return "";
-			}
-		}
-
-		public string EndMods
-		{
-			get
-			{
-				var sb = new StringBuilder(8);
-
-				for (var i = 0; i < 8; ++i)
-					if ((input.EndingMods & (1 << i)) != 0)
-					{
-						_ = sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
-						_ = sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
-					}
-
-				return sb.ToString();
-			}
-		}
-
-		public string EndReason
-		{
-			get
-			{
-				string str = null;
-				return input.GetEndReason(ref str);
-			}
-		}
-
-		public bool InProgress => input.InProgress();
-
-		public string Input => input.buffer;
 
 		public void KeyOpt(object obj0, object obj1)
 		{
@@ -207,16 +217,6 @@ namespace Keysharp.Core.Common.Input
 			}
 
 			input.SetKeyFlags(keys, false, removeFlags, addFlags);
-		}
-
-		public string Match
-		{
-			get
-			{
-				return input.Status == InputStatusType.TerminatedByMatch && input.EndingMatchIndex < input.match.Count
-					   ? input.match[input.EndingMatchIndex]
-					   : "";
-			}
 		}
 
 		public void Start()

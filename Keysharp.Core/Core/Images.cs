@@ -64,14 +64,11 @@ namespace Keysharp.Core
 		{
 			var filename = obj0.As();
 			var options = obj1.As();
-			var handle = IntPtr.Zero;
-			long imageType = -1;
 			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";
 			object iconnumber = 0;
-			var disposeHandle = false;
 
 			foreach (var opt in opts)
 			{

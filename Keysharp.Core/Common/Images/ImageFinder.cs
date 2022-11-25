@@ -18,7 +18,6 @@ namespace Keysharp.Core.Common
 		private Bitmap sourceImage;
 		private int threads = Environment.ProcessorCount;
 
-
 		public byte Variation { get; set; }
 
 		/// <summary>

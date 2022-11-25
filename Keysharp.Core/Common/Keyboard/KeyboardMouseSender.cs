@@ -31,43 +31,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal byte vk;
 	}
 
-	public class HotstringEventArgs : EventArgs
-	{
-		public string Sequence { get; }
-
-		public HotstringEventArgs() : this(string.Empty)
-		{
-		}
-
-		public HotstringEventArgs(string sequence) => Sequence = sequence;
-	}
-
-	public class KeyEventArgs : EventArgs
-	{
-		/// <summary>
-		/// Should this Key be blocked from the system
-		/// </summary>
-		public bool Block { get; set; } = false;
-
-		public bool Down { get; private set; }
-
-		/// <summary>
-		/// Has this Key already processed enought
-		/// </summary>
-		public bool Handled { get; set; } = false;
-
-		public Keys Keys { get; }
-
-		public string Typed { get; private set; }
-
-		public KeyEventArgs(Keys keys, string typed, bool down)
-		{
-			Keys = keys;
-			Typed = typed;
-			Down = down;
-		}
-	}
-
 	/// <summary>
 	/// Platform independent keyboard Hook base.
 	/// This Class is abstract.
@@ -306,8 +269,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract int PbEventCount();
 
-		internal int TotalEventCount() => PbEventCount() + SiEventCount();
-
 		internal void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
 										 long repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, long speed, bool relative)
 		{
@@ -507,6 +468,8 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue);
 
+		internal int TotalEventCount() => PbEventCount() + SiEventCount();
+
 		protected internal abstract void LongOperationUpdate();
 
 		protected internal abstract void LongOperationUpdateForSendKeys();
@@ -517,75 +480,6 @@ namespace Keysharp.Core.Common.Keyboard
 		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, int aVK, int aSC = 0, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
 		protected abstract void RegisterHook();
-
-		private bool HasModifiers(HotkeyDefinition hotkey)
-		{
-			if (hotkey.Extra != Keys.None && !pressed[hotkey.Extra])
-				return false;
-
-			if (hotkey.EnabledOptions.HasFlag(HotkeyDefinition.Options.IgnoreModifiers))
-				return true;
-
-			bool[,] modifiers =
-			{
-				{ (hotkey.Keys & Keys.Alt) == Keys.Alt, pressed[Keys.Alt] || pressed[Keys.LMenu] || pressed[Keys.RMenu], (hotkey.Keys & Keys.LMenu) == Keys.LMenu },
-				{ (hotkey.Keys & Keys.Control) == Keys.Control, pressed[Keys.Control] || pressed[Keys.LControlKey] || pressed[Keys.RControlKey], (hotkey.Keys & Keys.ControlKey) == Keys.ControlKey },
-				{ (hotkey.Keys & Keys.Shift) == Keys.Shift, pressed[Keys.Shift] || pressed[Keys.LShiftKey] || pressed[Keys.RShiftKey], (hotkey.Keys & Keys.ShiftKey) == Keys.ShiftKey }
-			};
-
-			for (var i = 0; i < 3; i++)
-				if ((modifiers[i, 0] && !modifiers[i, 1]) || (modifiers[i, 1] && !modifiers[i, 0] && !modifiers[i, 2]))
-					return false;
-
-			return true;
-		}
-
-		private bool KeyMatch(Keys expected, Keys received)
-		{
-			expected &= ~Keys.Modifiers;
-			received &= ~Keys.Modifiers;
-
-			if (expected == received)
-				return true;
-
-			switch (expected)
-			{
-				case Keys.ControlKey:
-					return received == Keys.LControlKey || received == Keys.RControlKey;
-
-				case Keys.ShiftKey:
-					return received == Keys.LShiftKey || received == Keys.RShiftKey;
-					//Shouldn't alt be here, and maybe lwin and rwin?//MATT
-			}
-
-			return false;
-		}
-
-		private char Letter(Keys key)
-		{
-			// HACK: remove Keys translation (and the overload) since it should be passed from the native handler
-			var caps = (key & Keys.Shift) == Keys.Shift || pressed[Keys.ShiftKey] || pressed[Keys.LShiftKey] || pressed[Keys.RShiftKey];
-			key &= ~Keys.Modifiers;
-
-			switch (key)
-			{
-				case Keys.Space: return ' ';
-
-				case Keys.Enter: return '\n';
-			}
-
-			var letter = key.ToString();
-
-			if (!caps)
-				letter = letter.ToLower();
-
-			return letter.Length == 1 ? letter[0] : (char)0;
-		}
-
-		/// <summary>
-		/// Raised when a Key is pressed/released
-		/// </summary>
-		public event EventHandler<KeyEventArgs> KeyEvent;
 	}
 
 	internal class KeyType

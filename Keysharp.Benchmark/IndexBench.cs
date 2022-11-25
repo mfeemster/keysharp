@@ -61,10 +61,9 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class IndexBench
 	{
-		private object[] nativearray;
-		private double[] nativedoublearray;
-		private Array keysharparray;
-		private object keysharparrayobject;
+		private object[] nativearray = System.Array.Empty<object>();
+		private double[] nativedoublearray = System.Array.Empty<double>();
+		private Array keysharparray = Keysharp.Scripting.Script.Array();
 		private double totalSum;
 
 		[Params(1000000)]
@@ -148,11 +147,11 @@ namespace Keysharp.Benchmark
 				_ = Inc();
 				var (_, val) = e2.Current;
 				total += (double)val;
-				e3:
-				;
+				//e3:
+				//;
 			}
 
-			e4:
+			//e4:
 			_ = Pop();
 
 			if (!total.IsAlmostEqual(totalSum))

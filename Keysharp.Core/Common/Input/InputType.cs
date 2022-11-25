@@ -9,63 +9,36 @@ using Keysharp.Scripting;
 
 namespace Keysharp.Core.Common.Input
 {
-	internal class InputType//Need to finish implementing this class. This is also very Windows specific, and needs to eventually be made into a common base with derived OS specific classes.//TODO
+	internal class InputType//This is also Windows specific, and needs to eventually be made into a common base with derived OS specific classes.//TODO
 	{
 		internal static System.Windows.Forms.Timer inputTimer;
 		internal bool BackspaceIsUndo = true;
 		internal string buffer = "";
-
-		// Stores the user's actual input.
-		//internal int BufferLength; // The current length of what the user entered.
 		internal int BufferLengthMax = 1023;
-
 		internal bool CaseSensitive;
 		internal bool EndCharMode;
-
-		// The maximum allowed length of the input.
 		internal string EndChars = "";
-
-		// A string of characters that should terminate the input.
 		internal uint EndCharsMax;
-
 		internal bool EndingBySC;
 		internal char EndingChar;
 		internal int EndingMatchIndex;
 		internal int EndingMods;
-
-		// Whether the Ending key was one handled by VK or SC.
 		internal bool EndingRequiredShift;
-
 		internal int EndingSC;
 		internal int EndingVK;
 		internal bool FindAnywhere;
 		internal int[] KeySC = new int[HookThread.SC_ARRAY_COUNT];
-
-		// The hook puts the terminating key into one of these if that's how it was terminated.
-		// Whether the key that terminated the input was one that needed the SHIFT key.
 		internal int[] KeyVK = new int[HookThread.VK_ARRAY_COUNT];
-
-		// Current size of EndChars buffer. (probably not needed)//TODO
 		internal List<string> match = new List<string>();
-
 		internal long MinSendLevel;
 		internal bool NotifyNonText;
 		internal InputType Prev;
 		internal InputObject ScriptObject;
 		internal InputStatusType Status = InputStatusType.Off;
-
-		// The maximum number of strings that the match array can contain.
-		// The capacity of the above buffer.
 		internal int Timeout;
-
 		internal DateTime TimeoutAt;
-
-		// The minimum SendLevel that can be captured by this input (0 allows all).
-		internal bool TranscribeModifiedKeys; // Whether the input command will attempt to transcribe modified keys such as ^c.
-
+		internal bool TranscribeModifiedKeys;
 		internal bool VisibleText, VisibleNonText = true;
-		// A sparse array of key flags by VK.
-		// A sparse array of key flags by SC.
 
 		internal InputType(InputObject io, string aOptions, string aEndKeys, string aMatchList)
 		{

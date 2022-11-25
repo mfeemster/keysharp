@@ -323,8 +323,13 @@ namespace Keysharp.Scripting
 			txtVars.Select(Math.Max(0, newCharIndex), 0);
 			txtVars.ScrollToCaret();
 		}
+
 		private void suspendHotkeysToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
+			//Keysharp.Core.Flow.Suspended = !Keysharp.Core.Flow.Suspended;
+			//HotstringDefinition.SuspendAll(Keysharp.Core.Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
+			//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
+			//suspendHotkeysToolStripMenuItem.Checked = Keysharp.Core.Flow.Suspended;
 		}
 		private void TpVars_HandleCreated(object sender, System.EventArgs e) => ShowInternalVars();
 		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)

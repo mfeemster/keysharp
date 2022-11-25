@@ -9,12 +9,13 @@ namespace Keysharp.Core.Common.Window
 {
 	internal class PointAndHwnd
 	{
-		internal PointAndHwnd(POINT p) => pt = p;
+		internal double distanceFound;
+		internal IntPtr hwndFound = IntPtr.Zero;
+		internal bool ignoreDisabled;
 		internal POINT pt;
 		internal RECT rectFound = new RECT();
-		internal IntPtr hwndFound = IntPtr.Zero;
-		internal double distanceFound;
-		internal bool ignoreDisabled;
+
+		internal PointAndHwnd(POINT p) => pt = p;
 	}
 
 	/// <summary>
@@ -23,23 +24,17 @@ namespace Keysharp.Core.Common.Window
 	internal abstract class WindowItemBase
 	{
 		internal abstract bool Active { get; set; }
-
 		internal abstract bool AlwaysOnTop { get; set; }
-
 		internal abstract bool Bottom { set; }
-
 		internal abstract List<WindowItemBase> ChildWindows { get; }
-
 		internal abstract string ClassName { get; }
 
 		/// <summary>
 		/// Get the ClassName + number of occurence of this window (control)
 		/// </summary>
 		internal abstract string ClassNN { get; }
-
 		internal abstract Rectangle ClientLocation { get; }
 		internal int Delay { get; set; } = 100;
-
 		internal abstract bool Enabled { get; set; }
 		internal abstract bool Exists { get; }
 		internal abstract long ExStyle { get; set; }
@@ -48,7 +43,6 @@ namespace Keysharp.Core.Common.Window
 		internal bool IsSpecified => Handle != IntPtr.Zero;
 		internal abstract Rectangle Location { get; set; }
 		internal abstract WindowItemBase ParentWindow { get; }
-		internal abstract void ChildFindPoint(PointAndHwnd pah);
 
 		internal virtual string Path
 		{
@@ -91,8 +85,6 @@ namespace Keysharp.Core.Common.Window
 			}
 		}
 
-		public override string ToString() => $"{Handle.ToInt64()}";
-
 		internal abstract Size Size { get; set; }
 		internal abstract long Style { get; set; }
 		internal abstract string[] Text { get; }
@@ -113,11 +105,14 @@ namespace Keysharp.Core.Common.Window
 
 		public override int GetHashCode() => base.GetHashCode();
 
-		//public override string ToString() => IsSpecified ? Title : "not specified window";
+		public override string ToString() => $"{Handle.ToInt64()}";
 
 		internal static void DoControlDelay() => DoDelay((long)Accessors.A_ControlDelay);
 
+		//public override string ToString() => IsSpecified ? Title : "not specified window";
 		internal static void DoWinDelay() => DoDelay((long)Accessors.A_WinDelay);
+
+		internal abstract void ChildFindPoint(PointAndHwnd pah);
 
 		/// <summary>
 		/// Left-Clicks on this window/control

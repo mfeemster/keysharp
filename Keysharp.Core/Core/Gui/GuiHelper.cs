@@ -16,6 +16,17 @@ namespace Keysharp.Core
 		{
 			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
 			{
+				Keysharp.Scripting.Script.hWndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
+				var now = DateTime.Now;
+
+				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&
+						ht.kbdMsSender is Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbd)
+				{
+					kbd.lastPeekTime = now;
+				}
+
+				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
+				//AHK seems to launch these in threads, but that seems odd, so just call them inline here.
 				var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
 
 				if (res.IsNotNullOrEmpty())
@@ -111,8 +122,6 @@ namespace Keysharp.Core
 
 			return "";
 		}
-
-		private static int imageindex = 1;
 
 		/// <summary>
 		/// The Windows API funcitons have serious limitations when it comes to loading icons.

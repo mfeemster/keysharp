@@ -46,7 +46,7 @@ namespace Keysharp.Scripting
 
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 
-		internal static bool hsResetUponMouseClick = true;
+		internal static bool hsResetUponMouseClick = Keysharp.Scripting.Parser.HotstringNoMouse;
 
 		internal static bool hsSameLineAction;
 
@@ -73,9 +73,6 @@ namespace Keysharp.Scripting
 
 		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = Keysharp.Core.Common.Keyboard.MenuType.None;
 
-		internal static Keysharp.Core.Common.MsgMonitorList msgMonitor = new Keysharp.Core.Common.MsgMonitorList();
-
-		//internal static int timerEnabledCount;
 		internal static int nLayersNeedingTimer;
 
 		internal static List<IFuncObj> OnExitHandlers = new List<IFuncObj>();
@@ -327,137 +324,6 @@ namespace Keysharp.Scripting
 		}
 
 		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
-
-		/// <summary>
-		/// Keep in mind that both of the MsgMonitor() functions appear to be doing a lot of processing having to do with AHK's
-		/// green threads design. Much of it doesn't apply here and is commented out. It's likely to be entirely removed once real
-		/// threads are fully implemented.//TODO
-		/// </summary>
-		internal static bool MsgMonitor(IntPtr aWnd, uint aMsg, IntPtr awParam, IntPtr alParam, Msg apMsg, ref long aMsgReply)
-		// Returns false if the message is not being monitored, or it is but the called function indicated
-		// that the message should be given its normal processing.  Returns true when the caller should
-		// not process this message but should instead immediately reply with aMsgReply (if a reply is possible).
-		// When false is returned, caller should ignore the value of aMsgReply.
-		{
-			// This function directly launches new threads rather than posting them as something like
-			// AHK_GUI_ACTION (which would allow them to be queued by means of MSG_FILTER_MAX) because a message
-			// monitor function in the script can return "true" to exempt the message from further processing.
-			// Consequently, the MSG_FILTER_MAX queuing effect will only occur for monitored messages that are
-			// numerically greater than WM_HOTKEY. Other messages will not be subject to the filter and thus
-			// will arrive here even when the script is currently uninterruptible, in which case it seems best
-			// for flexibility to allow the interruption (the same is done for CreateCallback).
-			//if (!INTERRUPTIBLE_IN_EMERGENCY)
-			//  return false;
-			var result = false; // Set default: Tell the caller to give this message any additional/default processing.
-			var inst = new MsgMonitorInstance(msgMonitor); // Register this instance so that index can be adjusted by BIF_OnMessage if an item is deleted.
-
-			// Linear search vs. binary search should perform better on average because the vast majority
-			// of message monitoring scripts are expected to monitor only a few message numbers.
-			for (inst.index = 0; inst.index < inst.count; ++inst.index)
-				if (msgMonitor[inst.index].msg == aMsg)
-				{
-					if (MsgMonitor(inst, aWnd, aMsg, awParam, alParam, apMsg, ref aMsgReply))
-					{
-						result = true;
-						break;
-					}
-				}
-
-			return result;
-		}
-
-		internal static bool MsgMonitor(MsgMonitorInstance aInstance, IntPtr aWnd, uint aMsg, IntPtr awParam, IntPtr alParam, Msg apMsg, ref long aMsgReply)
-		{
-			var monitor = msgMonitor[aInstance.index];
-			var func = monitor.func; // In case monitor item gets deleted while the function is running (e.g. by the function itself).
-			var kbdMsSender = HookThread.kbdMsSender;
-
-			// Many of the things done below are similar to the thread-launch procedure used in MsgSleep(),
-			// so maintain them together and see MsgSleep() for more detailed comments.
-			//if (g_nThreads >= g_MaxThreadsTotal)//We don't really care about max thread count here.//MATT
-			//return false;
-			if (monitor.instanceCount >= monitor.maxInstances || System.Threading.Thread.CurrentThread.Priority > System.Threading.ThreadPriority.Highest) // Monitor is already running more than the max number of instances, or existing thread's priority is too high to be interrupted.
-				return false;
-
-			// Since above didn't return, the launch of the new thread is now considered unavoidable.
-			// See MsgSleep() for comments about the following section.
-			//InitNewThread(0, false, true);//Unsure exactly how we should launch real threads in the context of this function.//TODO
-			//DEBUGGER_STACK_PUSH(_T("OnMessage")) // Push a "thread" onto the debugger's stack.  For simplicity and performance, use the function name vs something like "message 0x123".
-			// Set last found window (as documented).  Can be NULL.
-			// Nested controls like ComboBoxes require more than a simple call to GetParent().
-			hWndLastUsed = WindowsAPI.GetNonChildParent(aWnd); // Assign parent window as the last found window (it's ok if it's hidden).
-
-			if (apMsg.time != 0)//AHK checked for null, but can't check for null in C#, so check for time being 0 instead.
-			{
-				Accessors.A_EventInfo = apMsg.time;
-			}
-
-			//else leave them at their init-thread defaults.
-			// v1.0.38.04: Below was added to maximize responsiveness to incoming messages.  The reasoning
-			// is similar to why the same thing is done in MsgSleep() prior to its launch of a thread, so see
-			// MsgSleep for more comments:
-			kbdMsSender.lastPeekTime = DateTime.Now;
-			++monitor.instanceCount;
-			// Set up the array of parameters for func->Invoke().
-			//ExprTokenType param[] =
-			//{
-			//  (__int64)awParam,
-			//  (__int64)(DWORD_PTR)alParam, // Additional type-cast prevents sign-extension on 32-bit, since LPARAM is signed.
-			//  (__int64)aMsg,
-			//  (__int64)(size_t)aWnd
-			//};
-			//ResultType result;
-			//__int64 retval;
-			//result = CallMethod(func, func, nullptr, param, _countof(param), &retval);
-			var result = func.Call(awParam, alParam, aMsg, aWnd);//Unsure if this is the exact right order.//TODO
-			//Unsure how to translate any of this processing to Keysharp.//TODO
-			//bool block_further_processing = (result == EARLY_RETURN);
-
-			//if (block_further_processing)
-			//aMsgReply = (LRESULT)retval;
-
-			//else leave aMsgReply uninitialized because we'll be returning false later below, which tells our caller
-			// to ignore aMsgReply.
-			//DEBUGGER_STACK_POP()
-			//ResumeUnderlyingThread();
-
-			// Check that the msg monitor still exists (it may have been deleted during the thread that just finished,
-			// either by the thread itself or some other thread that interrupted it).  The following cases are possible:
-			// 1) This msg monitor is deleted, so g_MsgMonitor[aInstance.index] is either an obsolete array item
-			//    or some other msg monitor.  Ensure this item matches before decrementing instance_count.
-			// 2) An older msg monitor is deleted, so aInstance.index has been adjusted by BIF_OnMessage
-			//    and still points at the correct monitor.
-			// 3) This msg monitor is deleted and recreated.  aInstance.index might point to the new monitor,
-			//    in which case instance_count is zero and must not be decremented.  If other monitors were also
-			//    deleted, aInstance.index might point at a different monitor or an obsolete array item.
-			// 4) A newer msg monitor is deleted; nothing needs to be done since this item wasn't affected.
-			// 5) Some other msg monitor is created; nothing needs to be done since it's added at the end of the list.
-			//
-			// UPDATE: We now use a simpler method which flags this specific instance as having been deleted,
-			// so if the monitor is deleted and then recreated (with instance_count == 0), there's no chance
-			// it will be picked up as the same instance.
-			//
-			// If "monitor" is defunct due to deletion, decrementing its instance_count is harmless.  However,
-			// "monitor" might have been reused by BIF_OnMessage() to create a new msg monitor, so it must be
-			// checked to avoid wrongly decrementing some other msg monitor's instance_count.
-			if (!aInstance.deleted)
-			{
-				monitor = msgMonitor[aInstance.index]; // Retrieve it again in case it was moved.
-
-				if (monitor.instanceCount != 0) // Checked for maintainability.  Zero should be impossible due to the "deleted" check.
-					--monitor.instanceCount;
-			}
-			else
-			{
-				// "monitor" is now some other msg-monitor, so don't change it (see comments above).
-				aInstance.deleted = false; // Reset for subsequent iterations.
-			}
-
-			//Unsure what to return here.//TODO
-			return true;// block_further_processing; // If false, the caller will ignore aMsgReply and process this message normally. If true, aMsgReply contains the reply the caller should immediately send for this message.
-		}
-
-		internal static bool MsgSleep(int aSleepDuration = INTERVAL_UNSPECIFIED, MessageMode aMode = MessageMode.ReturnAfterMessages) => true;
 
 		internal static void SetHotNamesAndTimes(string name)
 		{

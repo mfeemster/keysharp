@@ -140,7 +140,6 @@ namespace Keysharp.Scripting
 			ns.Imports.Add(new CodeNamespaceImport("Buffer = Keysharp.Core.Buffer"));
 			_ = ns.Types.Add(targetClass);
 			_ = unit.Namespaces.Add(ns);
-			AddAssemblyAttribute(typeof(CLSCompliantAttribute), true);
 			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Keysharp.Core.Accessors.A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();

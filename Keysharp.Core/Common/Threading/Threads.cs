@@ -9,12 +9,8 @@ namespace Keysharp.Core.Common.Threading
 	{
 		internal static async Task<object> LaunchInThread(object func, object[] o)//Determine later the optimal threading model.//TODO
 		{
-			//var context = TaskScheduler.FromCurrentSynchronizationContext();
 			Task<object> tsk = null;
 			_ = Interlocked.Increment(ref Keysharp.Scripting.Script.totalExistingThreads);
-
-			//ifo.Call(o);
-			//return Task.FromResult<int>(1);
 
 			try
 			{
@@ -24,7 +20,6 @@ namespace Keysharp.Core.Common.Threading
 					//throw new Error("ASDf");
 					System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
 
-					//_ = ifo.Call(o);
 					if (func is IFuncObj ifo)
 						return ifo.Call(o);
 					else if (func is VariadicFunction vf)
@@ -40,7 +35,7 @@ namespace Keysharp.Core.Common.Threading
 				if (ex.InnerException != null)
 					throw ex.InnerException;
 				else
-					throw ex;
+					throw;//Do not pass ex because it will reset the stack information.
 			}
 			finally
 			{
@@ -48,9 +43,6 @@ namespace Keysharp.Core.Common.Threading
 			}
 
 			return tsk;
-			//tsk.ContinueWith((_) => Interlocked.Decrement(ref Keysharp.Scripting.Script.totalExistingThreads));
-			//return tsk.ContinueWith((t, tt) => { throw t.Exception; }, context, TaskContinuationOptions.OnlyOnFaulted);
-			//return Task.FromResult<object>("");
 		}
 	}
 }
