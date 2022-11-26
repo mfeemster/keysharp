@@ -1471,6 +1471,7 @@ namespace Keysharp.Core.Windows
 
 					// Now that we have a match, see if its InputLevel is allowed. If not,
 					// consider the key ignored (rather than continuing to search for more matches).
+
 					if (!HotInputLevelAllowsFiring(hs.inputLevel, (uint)ev.dwExtraInfo, ref keyHistoryCurr.eventType))
 						break;
 
@@ -5117,13 +5118,13 @@ namespace Keysharp.Core.Windows
 
 		protected internal override void Start()
 		{
-			if (IsReadThreadRunning())
-				Stop();
-
+			//if (IsReadThreadRunning())
+			//  Stop();
 			running = true;
 			channelThreadID = 0;
 			//This is a consolidation of the main windows proc, message sleep and the thread which they keyboard hook is created on.
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
+			//If Start() is called while this thread is already running, the foreach will exit, and thus the previous thread will exit.
 			channelReadThread = System.Threading.Tasks.Task.Factory.StartNew(async () =>
 			{
 				var reader = channel.Reader;
@@ -5459,6 +5460,7 @@ namespace Keysharp.Core.Windows
 			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
 			//which are not persistent, and thus no main window will be present.
 			Keysharp.Core.Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
+			//Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
 			return problem_activating_hooks;
 		}
 		//protected internal override void DeregisterKeyboardHook()

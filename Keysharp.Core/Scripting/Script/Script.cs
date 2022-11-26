@@ -255,7 +255,8 @@ namespace Keysharp.Scripting
 			{
 				userInit();
 				//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
-				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // We want these active now in case auto-execute never returns (e.g. loop));
+				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
+				isReadyToExecute = true;
 			});
 			Application.Run(mainWindow);
 		}
@@ -340,7 +341,7 @@ namespace Keysharp.Scripting
 
 		private static void MainWindow_Load(object sender, EventArgs e)
 		{
-			isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
+			//isReadyToExecute = true; // This is done only after the above to support error reporting in Hotkey.cpp.
 		}
 
 		/*

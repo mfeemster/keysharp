@@ -45,7 +45,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal string str, replacement;
 		internal int suspended;
 		protected internal static List<char> hsBuf = new List<char>(256);
-
 		public static string CurrentInputBuffer => new string(hsBuf.ToArray());
 		public static bool DefaultHotstringCaseSensitive => hsCaseSensitive;
 		public static bool DefaultHotstringConformToCase => hsConformToCase;
@@ -335,7 +334,7 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			var sb = new StringBuilder();//This might be able to be done more efficiently, but use sb unless performance issues show up.
 			var startOfReplacement = 0;
-			string sendBuf = "";
+			var sendBuf = "";
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 

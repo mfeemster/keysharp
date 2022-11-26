@@ -39,28 +39,17 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		//Need to figure out if these should be signed or not. Weird bugs can happen with wraparound comparisons if you get it wrong.//TODO
 		internal const int CoordCentered = int.MinValue + 1;
-
 		internal const int CoordModeCaret = 6;
 		internal const int CoordModeClient = 0;
 		internal const int CoordModeInvalid = -1;
 		internal const int CoordModeMask = 3;
 		internal const int CoordModeMenu = 8;
 		internal const int CoordModeMouse = 2;
-
-		// Bit-field offsets:
-		//internal const int CoordModePixel = 0;
-		//internal const int CoordModeScreen = 2;
-		//internal const int CoordModeTooltip = 4;
-		//internal const int CoordModeWindow = 1;
 		internal const int CoordUnspecified = int.MinValue;
-
 		internal const short CoordUnspecifiedShort = short.MinValue;
 		internal const int HookFail = 0xFF;
 		internal const int HookKeyboard = 0x01;
 		internal const int HookMouse = 0x02;
-
-		// This is used to generate an Alt key-up event for the purpose of changing system state, but having the hook
-		// block it from the active window to avoid unwanted side-effects:
 		internal const uint KeyBlockThis = KeyIgnore + 1;
 
 		// Below uses a pseudo-random value.It's best that this be constant so that if multiple instances
@@ -115,8 +104,6 @@ namespace Keysharp.Core.Common.Keyboard
 		private readonly List<HotkeyDefinition> hotkeys;
 		private readonly List<HotstringDefinition> hotstrings;
 		private readonly Dictionary<Keys, bool> pressed;
-
-		//public bool Block { get; set; }
 
 		public KeyboardMouseSender()
 		{

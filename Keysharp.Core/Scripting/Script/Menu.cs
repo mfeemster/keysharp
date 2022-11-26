@@ -11,6 +11,14 @@ namespace Keysharp.Scripting
 		internal static NotifyIcon Tray;
 		internal static Menu trayMenu;
 		internal static ToolStripMenuItem suspendMenuItem;
+		internal static void SuspendHotkeys()
+		{
+			//Suspend seems to work, but resume does not.
+			Keysharp.Core.Flow.Suspended = !Keysharp.Core.Flow.Suspended;
+			HotstringDefinition.SuspendAll(Keysharp.Core.Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
+			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
+			suspendMenuItem.Checked = Keysharp.Core.Flow.Suspended;
+		}
 
 		public static void CreateTrayMenu()
 		{
@@ -46,11 +54,7 @@ namespace Keysharp.Scripting
 			});
 			var suspend = new Func<object>(() =>
 			{
-				//Suspend seems to work, but resume does not.
-				Keysharp.Core.Flow.Suspended = !Keysharp.Core.Flow.Suspended;
-				HotstringDefinition.SuspendAll(Keysharp.Core.Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
-				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
-				suspendMenuItem.Checked = Keysharp.Core.Flow.Suspended;
+				SuspendHotkeys();
 				return "";
 			});
 			var exitfunc = new Func<object>(() =>

@@ -12,9 +12,7 @@ namespace Keysharp.Core.Common.Keyboard
 	public class HotkeyDefinition
 	{
 		internal const int AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
-
 		internal const int AT_LEAST_ONE_VARIANT_LACKS_TILDE = 0x04;
-
 		internal const int HOTKEY_ID_ALT_TAB = 0x7FFE;
 		internal const int HOTKEY_ID_ALT_TAB_AND_MENU = 0x7FFB;
 		internal const int HOTKEY_ID_ALT_TAB_MENU = 0x7FFC;
@@ -24,20 +22,13 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int HOTKEY_ID_MASK = 0x7FFF;
 		internal const int HOTKEY_ID_MAX = 0x7FF9;
 		internal const int HOTKEY_ID_OFF = 0x02;
-
 		internal const int HOTKEY_ID_ON = 0x01;
-
 		internal const int HOTKEY_ID_TOGGLE = 0x03;
-
 		internal const int HOTKEY_KEY_UP = 0x8000;
-
 		internal const int NO_SUPPRESS_NEXT_UP_EVENT = 0x08;
-
 		internal const int NO_SUPPRESS_PREFIX = 0x01;
 		internal const int NO_SUPPRESS_STATES = NO_SUPPRESS_NEXT_UP_EVENT;
-
 		internal const int NO_SUPPRESS_SUFFIX_VARIES = (AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE);
-
 		internal static string COMPOSITE_DELIMITER = " & ";
 		internal static uint enabledCount;
 		internal static uint joyHotkeyCount;
@@ -50,52 +41,32 @@ namespace Keysharp.Core.Common.Keyboard
 		internal uint id = HOTKEY_ID_INVALID;
 		internal bool isRegistered;
 		internal bool keybdHookMandatory;
-
 		internal bool keyUp;
-
 		internal int modifiers;
 		internal int modifierSC;
 		internal int modifiersConsolidatedLR;
 		internal int modifiersLR;
 		internal int modifierVK;
-
 		internal uint nextHotkey;
-
 		internal int noSuppress;
-
 		internal bool parentEnabled = true;
-
 		internal int sc;
-
 		internal HotkeyTypeEnum type = HotkeyTypeEnum.Normal;
-
 		internal int vk;
-
 		internal bool vkWasSpecifiedByNumber;
-
 		private static bool dialogIsDisplayed;
-
 		private static uint throttledKeyCount;
-
 		private static DateTime timeNow;
 		private static DateTime timePrev = DateTime.MinValue;
 		private static HookType whichHookAlways;
-
 		private static HookType whichHookNeeded;
 		internal bool Enabled { get; set; }
-
 		internal Options EnabledOptions { get; }
-
 		internal Keys Extra { get; }
-
 		internal Keys Keys { get; }
-
 		internal string Name { get; set; }
-
 		internal FuncObj Precondition { get; set; }
-
 		internal FuncObj Proc { get; set; }
-
 		internal string Typed { get; set; }
 
 		internal HotkeyDefinition(Keys keys, Keys extra, Options options, FuncObj proc)
@@ -308,14 +279,11 @@ namespace Keysharp.Core.Common.Keyboard
 			//++sHotkeyCount;  // Hmm, seems best to do this here, but revisit this sometime.
 		}
 
-		// v1.0.42: Linked list of variant hotkeys created via #HotIf directives.
 		~HotkeyDefinition()
 		{
 			if (isRegistered)
 				_ = Unregister();
 		}
-
-		// This var doesn't belong in struct since it's used only here.
 
 		/// <summary>
 		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
@@ -360,8 +328,8 @@ namespace Keysharp.Core.Common.Keyboard
 		///   HK_NORMAL to HK_KEYBD_HOOK.  For example, a newly added/enabled global hotkey variant can
 		///   cause a HK_KEYBD_HOOK hotkey to become HK_NORMAL, and the converse is also true.
 		/// - Based on the above, decide whether the keyboard and/or mouse hooks need to be (de)activated.
+		/// Needs to be public so tests can use it.
 		/// </summary>
-		//internal static void ManifestAllHotkeysHotstringsHooks()
 		public static void ManifestAllHotkeysHotstringsHooks()
 		{
 			// v1.0.37.05: A prefix key such as "a" in "a & b" should cause any use of "a" as a suffix
@@ -387,7 +355,6 @@ namespace Keysharp.Core.Common.Keyboard
 			HotkeyVariant vp;
 			int i, j;
 			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMouseSender = ht.kbdMsSender;
 
 			// FIRST PASS THROUGH THE HOTKEYS:
 			for (i = 0; i < shk.Count; ++i)
@@ -1293,8 +1260,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static uint FindPairedHotkey(uint firstID, int modsLR, bool keyUp)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMouseSender = ht.kbdMsSender;
-			var modifiers = kbdMouseSender.ConvertModifiersLR(modsLR); // Neutral modifiers.
+			var modifiers = ht.kbdMsSender.ConvertModifiersLR(modsLR); // Neutral modifiers.
 
 			for (var candidateId = firstID; candidateId != HOTKEY_ID_INVALID;)
 			{
@@ -1474,118 +1440,6 @@ namespace Keysharp.Core.Common.Keyboard
 			ManifestAllHotkeysHotstringsHooks();
 		}
 
-		/*
-		    internal static HotkeyDefinition Parse(string sequence)
-		    {
-		    Keys keys = Keys.None, extra = Keys.None;
-		    var options = Options.None;
-		    var typed = string.Empty;
-		    sequence = sequence.Replace(Core.Keyword_ModifierAltGr, new string(new[] { Core.Keyword_ModifierCtrl, Core.Keyword_ModifierAlt }));
-
-		    for (var i = 0; i < sequence.Length; i++)
-		    {
-		        switch (sequence[i])
-		        {
-		            case Core.Keyword_ModifierLeftPair:
-		                i++;
-
-		                if (i == sequence.Length)
-		                    throw new ArgumentException();
-
-		                switch (sequence[i])
-		                {
-		                    case Core.Keyword_ModifierWin: extra = Keys.LWin; break;
-
-		                    case Core.Keyword_ModifierAlt: extra = Keys.LMenu; break;
-
-		                    case Core.Keyword_ModifierCtrl: extra = Keys.LControlKey; break;
-
-		                    case Core.Keyword_ModifierShift: extra = Keys.LShiftKey; break;
-
-		                    default: throw new ArgumentException();
-		                }
-
-		                break;
-
-		            case Core.Keyword_ModifierRightPair:
-		                i++;
-
-		                if (i == sequence.Length)
-		                    throw new ArgumentException();
-
-		                switch (sequence[i])
-		                {
-		                    case Core.Keyword_ModifierWin: extra = Keys.RWin; break;
-
-		                    case Core.Keyword_ModifierAlt: extra = Keys.RMenu; break;
-
-		                    case Core.Keyword_ModifierCtrl: extra = Keys.RControlKey; break;
-
-		                    case Core.Keyword_ModifierShift: extra = Keys.RShiftKey; break;
-
-		                    default: throw new ArgumentException();
-		                }
-
-		                break;
-
-		            case Core.Keyword_ModifierWin: extra = Keys.LWin; break;
-
-		            case Core.Keyword_ModifierAlt: keys |= Keys.Alt; break;
-
-		            case Core.Keyword_ModifierCtrl: keys |= Keys.Control; break;
-
-		            case Core.Keyword_ModifierShift: keys |= Keys.Shift; break;
-
-		            case Core.Keyword_HotkeyIgnoreModifiers: options |= Options.IgnoreModifiers; break;
-
-		            case Core.Keyword_HotkeyPassThrough: options |= Options.PassThrough; break;
-
-		            case Core.Keyword_HotkeyNoRecurse: continue;
-
-		            default:
-		                if (i > 0)
-		                    sequence = sequence.Substring(i);
-
-		                i = sequence.Length;
-		                break;
-		        }
-		    }
-
-		    var z = sequence.IndexOf(Core.Keyword_HotkeyCombination);
-
-		    if (z != -1)
-		    {
-		        z++;
-
-		        if (z < sequence.Length)
-		        {
-		            var alt = sequence.Substring(z).Trim();
-		            extra = KeyParser.ParseKey(alt);
-
-		            if (alt.Length == 1)
-		                typed = alt;
-		        }
-
-		        sequence = sequence.Substring(0, z - 1).Trim();
-		    }
-
-		    z = sequence.LastIndexOf(Core.Keyword_Up, StringComparison.OrdinalIgnoreCase);
-
-		    if (z > 0 && char.IsWhiteSpace(sequence, z - 1))
-		    {
-		        sequence = sequence.Substring(0, z).Trim();
-		        options |= Options.Up;
-		    }
-
-		    keys |= KeyParser.ParseKey(sequence);
-
-		    if (typed.Length == 0 && sequence.Length == 1)
-		        typed = sequence;
-
-		    return new HotkeyDefinition(keys, extra, options, null) { Typed = typed };
-		    }
-		*/
-
 		/// <summary>
 		/// aVKorSC contains the virtual key or scan code of the specified prefix key (it's a scan code if aIsSC is true).
 		/// Returns true if this prefix key has no suffixes that can possibly.  Each such suffix is prevented from
@@ -1599,7 +1453,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static bool PrefixHasNoEnabledSuffixes(int VKorSC, bool isSC)//Need to fill in later.//TODO
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbdMouseSender = ht.kbdMsSender;
 			// v1.0.44: Added aAsModifier so that a pair of hotkeys such as:
 			//   LControl::tooltip LControl
 			//   <^c::tooltip ^c
@@ -2392,14 +2245,18 @@ namespace Keysharp.Core.Common.Keyboard
 			return tsk;//.Result;
 		}
 
+		/// <summary>
+		/// For now, attempts to launch another simultaneous instance of this subroutine
+		/// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
+		/// In the future, it might be better to have this user-configurable, i.e. to devise
+		/// some way for the hotkeys to be kept queued up so that they take effect only when
+		/// the number of currently active threads drops below the max.  But doing such
+		/// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
+		/// would be slowed down to prevent the subroutines from running concurrently:
+		/// </summary>
+		/// <param name="variant"></param>
+		/// <returns></returns>
 		internal bool PerformIsAllowed(HotkeyVariant variant) =>
-		// For now, attempts to launch another simultaneous instance of this subroutine
-		// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
-		// In the future, it might be better to have this user-configurable, i.e. to devise
-		// some way for the hotkeys to be kept queued up so that they take effect only when
-		// the number of currently active threads drops below the max.  But doing such
-		// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
-		// would be slowed down to prevent the subroutines from running concurrently:
 		variant.existingThreads < variant.maxThreads;
 
 		internal ResultType Register()
@@ -2745,18 +2602,20 @@ namespace Keysharp.Core.Common.Keyboard
 		*/
 	}
 
-	internal class HotkeyProperties // Struct used by TextToModifiers() and its callers.
+	/// <summary>
+	/// Used by TextToModifiers() and its callers.
+	/// </summary>
+	internal class HotkeyProperties
 	{
 		internal bool hasAsterisk;
 		internal bool hookIsMandatory;
 		internal bool isKeyUp;
 		internal int modifiers;
 		internal int modifiersLR;
-		internal string prefixText = "";  // Has to be large enough to hold the largest key name in g_key_to_vk,
+		internal string prefixText = "";
 		internal bool suffixHasTilde;
-		internal string suffixText = "";  // which is probably "Browser_Favorites" (17).
+		internal string suffixText = "";
 
-		// As opposed to "prefix has tilde".
 		internal void Reset()
 		{
 			modifiers = 0;
@@ -2775,15 +2634,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal FuncObj callback;
 		internal bool enabled;
 		internal int existingThreads;
-
-		// Keep it to allow restoring it via hotkey() function if changed
-		// during run time.
 		internal HotkeyCriterion hotCriterion;
-
-		// Keep members that are less than 32-bit adjacent to each other to conserve memory in with the default
-		// 4-byte alignment:
 		internal int index;
-
 		internal uint inputLevel;
 		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 		internal bool maxThreadsBuffer;
@@ -2791,13 +2643,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool noSuppress;
 		internal FuncObj originalCallback;   // This is the callback set at load time.
 		internal int priority;
-
-		// v1.0.44: This became a per-variant attribute because it's more useful/flexible that way.
 		internal bool runAgainAfterFinished;
-
 		internal DateTime runAgainTime;
-
-		// Whether this variant has been disabled via the Hotkey command.
 		internal bool suspendExempt;
 
 		internal void RunAgainAfterFinished()
@@ -2806,7 +2653,6 @@ namespace Keysharp.Core.Common.Keyboard
 				runAgainAfterFinished = true;
 
 			runAgainTime = DateTime.Now;
-			// Above: The time this event was buffered, to make sure it doesn't get too old.
 		}
 	}
 
