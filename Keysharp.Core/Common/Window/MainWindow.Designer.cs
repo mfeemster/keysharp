@@ -75,7 +75,6 @@
 			//
 			// mainMenu
 			//
-			this.mainMenu.ImageScalingSize = new System.Drawing.Size(28, 28);
 			this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[]
 			{
 				this.fileToolStripMenuItem,

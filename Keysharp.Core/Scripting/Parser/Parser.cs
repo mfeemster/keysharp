@@ -262,11 +262,6 @@ namespace Keysharp.Scripting
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
 
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)new MethodReference(typeof(Keysharp.Core.Window), "SetProcessDPIAware")));
-			}
-
 			_ = initial.Add(new CodeSnippetExpression("HandleCommandLineParams(args)"));
 
 			if (WinActivateForce)

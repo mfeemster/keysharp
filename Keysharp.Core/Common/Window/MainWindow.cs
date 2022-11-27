@@ -20,6 +20,7 @@ namespace Keysharp.Scripting
 		private readonly bool success;
 
 		public bool IsClosing { get; private set; }
+		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
 		//public uint ThreadId { get; private set; }
 
 		public MainWindow()
@@ -31,6 +32,9 @@ namespace Keysharp.Scripting
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			//          ThreadId = WindowsAPI.GetCurrentThreadId();
+			windowSpyToolStripMenuItem.Visible = false;
+			pauseScriptToolStripMenuItem.Visible = false;
+			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
 		}
 
 		public void AddText(string s, MainFocusedTab tab)
@@ -87,6 +91,8 @@ namespace Keysharp.Scripting
 		//  //  Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Destroy);
 		//  //}
 		//}
+
+		internal void ListHotkeys() => SetText(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Vars);
 
 		protected override void WndProc(ref Message m)
 		{
@@ -154,7 +160,9 @@ namespace Keysharp.Scripting
 		}
 
 		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.Edit();
+
 		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Exit);
+
 		private TabPage GetTab(MainFocusedTab tab)
 		{
 			switch (tab)
@@ -172,6 +180,7 @@ namespace Keysharp.Scripting
 					return tpMain;
 			}
 		}
+
 		private TextBox GetText(MainFocusedTab tab)
 		{
 			switch (tab)
@@ -189,12 +198,13 @@ namespace Keysharp.Scripting
 					return txtMain;
 			}
 		}
-		private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-		}
+
+		private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, System.EventArgs e) => ListHotkeys();
+
 		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 		}
+
 		/// <summary>
 		/// This will get called if the user manually closes the main window,
 		/// or if ExitApp() is called from somewhere within the code, which will also close the main window.
@@ -215,12 +225,15 @@ namespace Keysharp.Scripting
 			if (success)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 		}
+
 		private void MainWindow_Load(object sender, EventArgs e)
 		{
 		}
+
 		private void MainWindow_Shown(object sender, EventArgs e)
 		{
 		}
+
 		private void MainWindow_SizeChanged(object sender, EventArgs e)
 		{
 			if (WindowState == FormWindowState.Minimized)
@@ -233,9 +246,11 @@ namespace Keysharp.Scripting
 				ShowInTaskbar = true;
 			}
 		}
+
 		private void pauseScriptToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 		}
+
 		private void refreshToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 			if (tcMain.SelectedTab == tpVars)
@@ -243,9 +258,9 @@ namespace Keysharp.Scripting
 				ShowInternalVars();
 			}
 		}
-		private void reloadScriptToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-		}
+
+		private void reloadScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.Reload();
+
 		private void ShowInternalVars()
 		{
 			var sb = new StringBuilder();
@@ -324,27 +339,31 @@ namespace Keysharp.Scripting
 			txtVars.ScrollToCaret();
 		}
 
-		private void suspendHotkeysToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-			Keysharp.Scripting.Script.SuspendHotkeys();
-		}
+		private void suspendHotkeysToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Scripting.Script.SuspendHotkeys();
+
 		private void TpVars_HandleCreated(object sender, System.EventArgs e) => ShowInternalVars();
+
 		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 		}
+
 		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.ListVars();
+
 		private void websiteToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 		}
+
 		private void windowSpyToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 		}
+
 		public enum MainFocusedTab
 		{
 			Main,
 			Debug,
 			Vars
 		}
+
 		public event VariadicAction ClipboardUpdate;
 	}
 }

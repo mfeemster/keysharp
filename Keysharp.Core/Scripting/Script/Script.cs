@@ -133,6 +133,12 @@ namespace Keysharp.Scripting
 
 		public static void Edit()
 		{
+			if (Accessors.A_IsCompiled)
+			{
+				_ = Keysharp.Core.Dialogs.MsgBox("Cannot edit a compiled script.");
+				return;
+			}
+
 			var title = mainWindow != null ? mainWindow.Text : "";
 			var mm = Accessors.A_TitleMatchMode;
 			Accessors.A_TitleMatchMode = 2;//Match anywhere.
@@ -146,10 +152,24 @@ namespace Keysharp.Scripting
 
 			if (hwnd == 0)
 			{
-				var ed = Registrys.RegRead(@"HKCR\KeysharpScript\Shell\Edit\Command") as string;
+				var ed = "";
 
-				if (string.IsNullOrEmpty(ed))
-					ed = Registrys.RegRead(@"HKCR\AutoHotkeyScript\Shell\Edit\Command") as string;
+				try
+				{
+					ed = Registrys.RegRead(@"HKCR\KeysharpScript\Shell\Edit\Command") as string;
+				}
+				catch
+				{
+				}
+
+				try
+				{
+					if (string.IsNullOrEmpty(ed))
+						ed = Registrys.RegRead(@"HKCR\AutoHotkeyScript\Shell\Edit\Command") as string;
+				}
+				catch
+				{
+				}
 
 				if (!string.IsNullOrEmpty(ed))
 				{
@@ -234,6 +254,23 @@ namespace Keysharp.Scripting
 			//WindowsAPI.OutputDebugString(text);//Unsure if this is really needed, or will Debug.WriteLine() suffice?
 		}
 
+		/*
+
+		    LPTSTR Hotkey::ListHotkeys(LPTSTR aBuf, int aBufSize)
+		    // Translates this script's list of variables into text equivalent, putting the result
+		    // into aBuf and returning the position in aBuf of its new string terminator.
+		    {
+		    LPTSTR aBuf_orig = aBuf;
+		    // Save vertical space by limiting newlines here:
+		    aBuf += sntprintf(aBuf, BUF_SPACE_REMAINING, _T("Type\tOff?\tLevel\tRunning\tName\r\n")
+		                     _T("-------------------------------------------------------------------\r\n"));
+		    // Start at the oldest and continue up through the newest:
+		    for (int i = 0; i < sHotkeyCount; ++i)
+		    aBuf = shk[i]->ToText(aBuf, BUF_SPACE_REMAINING, true);
+		    return aBuf;
+		    }
+
+		 * */
 		public static void RunMainWindow(string title, Action userInit)
 		{
 			mainWindow = new MainWindow();

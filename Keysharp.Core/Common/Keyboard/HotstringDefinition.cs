@@ -33,8 +33,10 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static bool hsSuspendExempt;
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
 		internal static Dictionary<string, List<HotstringDefinition>> sksDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);     //Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
+
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
+
 		internal uint existingThreads, maxThreads;
 		internal IFuncObj funcObj;
 		internal HotkeyCriterion hotCriterion;

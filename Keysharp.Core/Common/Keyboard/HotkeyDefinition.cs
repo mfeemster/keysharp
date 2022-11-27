@@ -320,6 +320,11 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 		/// <summary>
+		/// Get the hotkey descriptions and put them in the Vars tab of the main window.
+		/// </summary>
+		public static void ListHotkeys() => Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => ListHotkeys(), false);
+
+		/// <summary>
 		/// This function examines all hotkeys and hotstrings to determine:
 		/// - Which hotkeys to register/unregister, or activate/deactivate in the hook.
 		/// - Which hotkeys to be changed from HK_NORMAL to HK_KEYBD_HOOK (or vice versa).
@@ -1282,6 +1287,21 @@ namespace Keysharp.Core.Common.Keyboard
 			return HOTKEY_ID_INVALID;
 		}
 
+		/// <summary>
+		/// Get the text description of all hotkeys in this script.
+		/// </summary>
+		internal static string GetHotkeyDescriptions()
+		{
+			var sb = new StringBuilder(4096);
+			_ = sb.Append("Type\tOff?\tLevel\tRunning\tName\r\n-------------------------------------------------------------------\r\n");
+
+			//Start at the oldest and continue up through the newest.
+			for (var i = 0; i < shk.Count; ++i)
+				_ = sb.Append(shk[i].ToText(true));
+
+			return sb.ToString();
+		}
+
 		internal static bool HK_TYPE_CAN_BECOME_KEYBD_HOOK(HotkeyTypeEnum type) => type == HotkeyTypeEnum.Normal;
 
 		internal static bool HK_TYPE_IS_HOOK(HotkeyTypeEnum type) => type > HotkeyTypeEnum.Normal&& type < HotkeyTypeEnum.Joystick;
@@ -1408,23 +1428,6 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 		internal static bool IsAltTab(uint id) => id > HOTKEY_ID_MAX&& id < HOTKEY_ID_INVALID;
-
-		/// <summary>
-		/// Translates this script's list of variables into text equivalent, putting the result
-		/// into aBuf and returning the position in aBuf of its new string terminator.
-		/// </summary>
-		internal static string ListHotkeys(string buf)
-		{
-			var sb = new StringBuilder(4096);
-			_ = sb.Append(buf);
-			_ = sb.Append("Type\tOff?\tLevel\tRunning\tName\r\n-------------------------------------------------------------------\r\n");// Save vertical space by limiting newlines here:
-
-			// Start at the oldest and continue up through the newest:
-			for (var i = 0; i < shk.Count; ++i)
-				_ = sb.Append(shk[i].ToText(buf, true));
-
-			return sb.ToString();
-		}
 
 		/// <summary>
 		/// Caller knows that one of the users of the keyboard hook no longer requires it,
@@ -2301,10 +2304,9 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 		/// <summary>
-		/// Translates this var into its text equivalent, putting the result into aBuf and
-		/// returning the position in aBuf of its new string terminator.
+		/// Return the text description of this hotkey.
 		/// </summary>
-		internal string ToText(string buf, bool appendNewline)
+		internal string ToText(bool appendNewline)
 		{
 			HotkeyVariant vp;
 			int existingThreads;
@@ -2366,7 +2368,7 @@ namespace Keysharp.Core.Common.Keyboard
 			else // Show nothing for level 0.
 				levelStr = "";
 
-			buf += $"{htype}{((type == HotkeyTypeEnum.Normal && !isRegistered) ? "(no)" : "")}\t{enabledStr}\t{levelStr}\t{existingThreadsStr}\t{Name}";
+			var buf = $"{htype}{((type == HotkeyTypeEnum.Normal && !isRegistered) ? "(no)" : "")}\t{enabledStr}\t{levelStr}\t{existingThreadsStr}\t{Name}";
 
 			if (appendNewline)
 				buf += "\r\n";

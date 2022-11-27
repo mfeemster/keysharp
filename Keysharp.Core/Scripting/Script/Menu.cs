@@ -8,27 +8,21 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
+		internal static ToolStripMenuItem suspendMenuItem;
 		internal static NotifyIcon Tray;
 		internal static Menu trayMenu;
-		internal static ToolStripMenuItem suspendMenuItem;
-		internal static void SuspendHotkeys()
-		{
-			//Suspend seems to work, but resume does not.
-			Keysharp.Core.Flow.Suspended = !Keysharp.Core.Flow.Suspended;
-			HotstringDefinition.SuspendAll(Keysharp.Core.Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
-			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
-			suspendMenuItem.Checked = Keysharp.Core.Flow.Suspended;
-		}
 
 		public static void CreateTrayMenu()
 		{
+			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
+			Keysharp.Core.Processes.mainContext = System.Threading.SynchronizationContext.Current;//This must happen after the icon is created.
+
 			if (Environment.OSVersion.Platform != PlatformID.Win32NT)//Hopefully this is possible on non-windows OSes.//TODO
 				return;
 
 			if (Parser.NoTrayIcon)
 				return;
 
-			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
 			trayMenu = new Menu(Tray.ContextMenuStrip);
 			var emptyfunc = new Func<object>(() => "");
 			var openfunc = new Func<object>(() =>
@@ -66,12 +60,15 @@ namespace Keysharp.Scripting
 			//Need to properly fill in all of these event handlers when the proper functionality is implemented.
 			_ = trayMenu.Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-			_ = trayMenu.Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			//_ = trayMenu.Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = trayMenu.Add("&Reload This Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
-			_ = trayMenu.Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
+
+			if (!Accessors.A_IsCompiled)
+				_ = trayMenu.Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
+
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
 			suspendMenuItem = trayMenu.Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
-			_ = trayMenu.Add("&Pause Script", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			//_ = trayMenu.Add("&Pause Script", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = trayMenu.Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 			trayMenu.Default = "&Open";
 			trayIcon.Tag = trayMenu;
@@ -93,8 +90,18 @@ namespace Keysharp.Scripting
 				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
 				SuspendedIcon = Keysharp.Core.Properties.Resources.Keysharp_s_ico;
 			}
+		}
 
-			Keysharp.Core.Processes.mainContext = System.Threading.SynchronizationContext.Current;
+		internal static void SuspendHotkeys()
+		{
+			mainWindow.CheckedInvoke(() =>
+			{
+				Keysharp.Core.Flow.Suspended = !Keysharp.Core.Flow.Suspended;
+				HotstringDefinition.SuspendAll(Keysharp.Core.Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
+				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
+				suspendMenuItem.Checked = Keysharp.Core.Flow.Suspended;
+				mainWindow.SuspendHotkeysToolStripMenuItem.Checked = Keysharp.Core.Flow.Suspended;
+			}, true);
 		}
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)

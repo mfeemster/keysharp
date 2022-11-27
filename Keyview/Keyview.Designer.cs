@@ -180,7 +180,7 @@ namespace Keyview
 			this.toolStrip1.AutoSize = false;
 			this.toolStrip1.Dock = System.Windows.Forms.DockStyle.Bottom;
 			this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-			this.toolStrip1.ImageScalingSize = new System.Drawing.Size(28, 28);
+			//this.toolStrip1.ImageScalingSize = new System.Drawing.Size(28, 28);
 			this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[]
 			{
 				this.tslCodeStatus,

@@ -21,6 +21,7 @@ namespace Keysharp.Scripting
 
 			public static void InitGlobalVars()
 			{
+				Keysharp.Core.Window.SetProcessDPIAware();
 				Keysharp.Core.Flow.Init();
 #if WINDOWS
 				Keysharp.Core.Processes.MainThreadID = Keysharp.Core.Windows.WindowsAPI.GetCurrentThreadId();

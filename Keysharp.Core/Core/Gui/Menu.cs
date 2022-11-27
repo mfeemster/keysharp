@@ -11,10 +11,9 @@ namespace Keysharp.Core
 	public class Menu
 	{
 		internal ToolStripItem defaultItem;
+		protected long dummyHandle;
 		private static int menuCount = 0;
 		private Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
-		protected long dummyHandle;
-
 		public long ClickCount { get; set; } = 2;
 
 		public string Default
@@ -45,7 +44,7 @@ namespace Keysharp.Core
 		public Menu(ContextMenuStrip strip = null)
 		{
 			MenuItem = strip ?? new ContextMenuStrip();
-			GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);
+			//GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);//Don't set scaling, it makes the checked icons look funny.
 			var newCount = Interlocked.Increment(ref menuCount);
 			GetMenu().Name = $"Menu_{newCount}";
 			dummyHandle = Handle;
@@ -197,6 +196,8 @@ namespace Keysharp.Core
 			}
 		}
 
+		protected internal virtual ToolStrip GetMenu() => MenuItem;
+
 		protected static void HandleColor(ToolStrip menu, string name, bool submenus, bool backcolor)
 		{
 			if (Conversions.TryParseColor(name, out var color))
@@ -220,8 +221,6 @@ namespace Keysharp.Core
 		}
 
 		protected virtual long GetIndex(ToolStripItem tsi) => tsi.GetCurrentParent() is ToolStripDropDownMenu tsddm ? tsddm.Items.IndexOf(tsi) : GetMenu().Items.IndexOf(tsi);
-
-		protected internal virtual ToolStrip GetMenu() => MenuItem;
 
 		protected virtual ToolStripItem GetMenuItem(string s)
 		{
@@ -374,8 +373,8 @@ namespace Keysharp.Core
 			MenuStrip.Dock = DockStyle.Top;
 		}
 
-		protected override long GetIndex(ToolStripItem tsi) => MenuStrip.Items.IndexOf(tsi);
-
 		protected internal override ToolStrip GetMenu() => MenuStrip;
+
+		protected override long GetIndex(ToolStripItem tsi) => MenuStrip.Items.IndexOf(tsi);
 	}
 }
