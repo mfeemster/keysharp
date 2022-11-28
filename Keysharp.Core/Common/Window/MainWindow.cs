@@ -20,6 +20,7 @@ namespace Keysharp.Scripting
 		private readonly bool success;
 
 		public bool IsClosing { get; private set; }
+		internal System.Windows.Forms.ToolStripMenuItem PauseScriptToolStripMenuItem => pauseScriptToolStripMenuItem;
 		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
 		//public uint ThreadId { get; private set; }
 
@@ -33,7 +34,6 @@ namespace Keysharp.Scripting
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			//          ThreadId = WindowsAPI.GetCurrentThreadId();
 			windowSpyToolStripMenuItem.Visible = false;
-			pauseScriptToolStripMenuItem.Visible = false;
 			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
 		}
 
@@ -92,7 +92,11 @@ namespace Keysharp.Scripting
 		//  //}
 		//}
 
-		internal void ListHotkeys() => SetText(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Vars);
+		internal void ListHotkeys() => SetText(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys);
+
+		internal void Pause() => Keysharp.Scripting.Script.PauseThread();
+
+		internal void ShowHistory() => SetText(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History);
 
 		protected override void WndProc(ref Message m)
 		{
@@ -167,8 +171,8 @@ namespace Keysharp.Scripting
 		{
 			switch (tab)
 			{
-				case MainFocusedTab.Main:
-					return tpMain;
+				case MainFocusedTab.Stack:
+					return tpStack;
 
 				case MainFocusedTab.Debug:
 					return tpDebug;
@@ -176,8 +180,14 @@ namespace Keysharp.Scripting
 				case MainFocusedTab.Vars:
 					return tpVars;
 
+				case MainFocusedTab.Hotkeys:
+					return tpHotkeys;
+
+				case MainFocusedTab.History:
+					return tpHistory;
+
 				default:
-					return tpMain;
+					return tpStack;
 			}
 		}
 
@@ -185,8 +195,8 @@ namespace Keysharp.Scripting
 		{
 			switch (tab)
 			{
-				case MainFocusedTab.Main:
-					return txtMain;
+				case MainFocusedTab.Stack:
+					return txtStack;
 
 				case MainFocusedTab.Debug:
 					return txtDebug;
@@ -194,16 +204,20 @@ namespace Keysharp.Scripting
 				case MainFocusedTab.Vars:
 					return txtVars;
 
+				case MainFocusedTab.Hotkeys:
+					return txtHotkeys;
+
+				case MainFocusedTab.History:
+					return txtHistory;
+
 				default:
-					return txtMain;
+					return txtStack;
 			}
 		}
 
 		private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, System.EventArgs e) => ListHotkeys();
 
-		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-		}
+		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowHistory();
 
 		/// <summary>
 		/// This will get called if the user manually closes the main window,
@@ -254,9 +268,11 @@ namespace Keysharp.Scripting
 		private void refreshToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 			if (tcMain.SelectedTab == tpVars)
-			{
 				ShowInternalVars();
-			}
+			else if (tcMain.SelectedTab == tpHotkeys)
+				ListHotkeys();
+			else if (tcMain.SelectedTab == tpHistory)
+				ShowHistory();
 		}
 
 		private void reloadScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.Reload();
@@ -359,9 +375,11 @@ namespace Keysharp.Scripting
 
 		public enum MainFocusedTab
 		{
-			Main,
+			Stack,
 			Debug,
-			Vars
+			Vars,
+			Hotkeys,
+			History
 		}
 
 		public event VariadicAction ClipboardUpdate;

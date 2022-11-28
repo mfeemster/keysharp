@@ -20,8 +20,7 @@ namespace Keysharp.Core
 
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
-		//internal static ConcurrentDictionary<FuncObj, Timer> timers;
-		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers;
+		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
 		internal static bool hasExited;
 		private static System.Windows.Forms.Timer currentTimer;
 
@@ -61,12 +60,9 @@ namespace Keysharp.Core
 		{
 			var ct = 0L;
 
-			if (timers != null)
-			{
-				foreach (var kv in timers)
-					if (kv.Value.Enabled)
-						ct++;
-			}
+			foreach (var kv in timers)
+				if (kv.Value.Enabled)
+					ct++;
 
 			return ct;
 		}
@@ -184,9 +180,6 @@ namespace Keysharp.Core
 			var priority = obj2.Al();
 			FuncObj func = null;
 			var once = period < 0;
-
-			if (timers == null)
-				timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
 
 			if (once)
 				period = -period;
@@ -392,9 +385,8 @@ namespace Keysharp.Core
 
 			StopMainTimer();
 
-			if (timers != null)
-				foreach (var kv in timers)
-					kv.Value.Stop();
+			foreach (var kv in timers)
+				kv.Value.Stop();
 
 			if (!Script.IsMainWindowClosing)
 			{

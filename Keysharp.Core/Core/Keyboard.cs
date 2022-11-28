@@ -406,7 +406,35 @@ break_twice:;
 			return null;
 		}
 
-		public static void KeyHistory() => throw new NotImplementedException("KeyHistory() is not implemented yet");//TODO
+		public static void KeyHistory(object obj0)
+		{
+			if (obj0 != null)
+			{
+				var max = Math.Clamp(obj0.Al(), 0, 500);
+
+				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht)
+				{
+					if (ht.HasEitherHook())
+					{
+						_ = ht.PostMessage(new Keysharp.Core.Common.Threading.KeysharpMsg()
+						{
+							message = (uint)UserMessages.AHK_HOOK_SET_KEYHISTORY,
+							wParam = new IntPtr(max)
+						});
+					}
+					else
+						ht.keyHistory = new KeyHistory((int)max);
+				}
+			}
+			else if (Keysharp.Scripting.Script.mainWindow != null)
+			{
+				Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+				{
+					Keysharp.Scripting.Script.mainWindow.Show();
+					Keysharp.Scripting.Script.mainWindow.ShowHistory();
+				});
+			}
+		}
 
 		/// <summary>
 		/// Waits for a key or mouse/joystick button to be released or pressed down.
@@ -516,28 +544,19 @@ break_twice:;
 					return false; // Since it timed out, we override the default with this.
 			}
 		}
-
 		public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero), true, true);
-
 		public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero), true, true);
-
 		/// <summary>
 		/// Sends simulated keystrokes and mouse clicks to the active window.
 		/// </summary>
 		/// <param name="Keys">The sequence of keys to send.</param>
 		public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero), true, true);
-
 		public static void SendLevel(object obj) => Accessors.A_SendLevel = obj;
-
 		//public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendMixed(obj.L().S1());
 		public static void SendMode(object obj) => Accessors.A_SendMode = obj;
-
 		public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero), true, true);
-
 		public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
-
 		public static void SetCapsLockState(object obj) => SetToggleState(WindowsAPI.VK_CAPITAL, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
-
 		public static void SetKeyDelay(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var play = obj2.As().ToLowerInvariant();
@@ -562,13 +581,9 @@ break_twice:;
 				Accessors.A_KeyDuration = dur;
 			}
 		}
-
 		public static void SetNumLockState(object obj) => SetToggleState(WindowsAPI.VK_NUMLOCK, ref toggleStates.forceNumLock, obj.As());//Shouldn't have windows code in a common location.//TODO
-
 		public static void SetScrollLockState(object obj) => SetToggleState(WindowsAPI.VK_SCROLL, ref toggleStates.forceScrollLock, obj.As());//Shouldn't have windows code in a common location.//TODO
-
 		public static void SetStoreCapsLockMode(object obj) => Accessors.A_StoreCapsLockMode = obj;
-
 		internal static ToggleValueType ConvertBlockInput(string buf)
 		{
 			var toggle = Keysharp.Core.Options.ConvertOnOff(buf);
@@ -590,7 +605,6 @@ break_twice:;
 
 			return ToggleValueType.Invalid;
 		}
-
 		internal static string GetKeyNameHelper(int vk, int sc, string def = "not found")
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -617,7 +631,6 @@ break_twice:;
 
 			return def;// Since this key is unrecognized, return the caller-supplied default value.
 		}
-
 		/// <summary>
 		/// Always returns OK for caller convenience.
 		/// </summary>
@@ -633,7 +646,6 @@ break_twice:;
 			blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
 		}
-
 		/// <summary>
 		///
 		/// </summary>
@@ -656,11 +668,11 @@ break_twice:;
 				case KeyStateTypes.Physical: // Physical state of key.
 					if (ht.IsMouseVK(vk)) // mouse button
 					{
-						return ht.mouseHook != IntPtr.Zero ? (ht.physicalKeyState[vk] & KeyboardMouseSender.StateDown) != 0 : ht.IsKeyDownAsync(vk); // mouse hook is installed, so use it's tracking of physical state.
+						return ht.HasMouseHook() ? (ht.physicalKeyState[vk] & KeyboardMouseSender.StateDown) != 0 : ht.IsKeyDownAsync(vk); // mouse hook is installed, so use it's tracking of physical state.
 					}
 					else // keyboard
 					{
-						if (ht.kbdHook != IntPtr.Zero)
+						if (ht.HasKbdHook())
 						{
 							bool? dummy = null;
 
@@ -688,7 +700,6 @@ break_twice:;
 			// A new mode can be added to KeyWait & GetKeyState if Async is ever explicitly needed.
 			return ht.IsKeyDown(vk);
 		}
-
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -712,7 +723,6 @@ break_twice:;
 
 			return "";
 		}
-
 		private static bool HotkeyPrecondition(string[,] win)
 		{
 			if (!string.IsNullOrEmpty(win[0, 0]) || !string.IsNullOrEmpty(win[0, 1]))
@@ -733,7 +743,6 @@ break_twice:;
 
 			return true;
 		}
-
 		private static void SetToggleState(int vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Keysharp.Core.Options.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);

@@ -274,6 +274,29 @@ namespace Keysharp.Core.Windows
 			return modifiers;
 		}
 
+		internal override string ModifiersLRToText(int aModifiersLR)
+		{
+			var sb = new StringBuilder(64);
+
+			if ((aModifiersLR & MOD_LWIN) != 0) _ = sb.Append("LWin ");
+
+			if ((aModifiersLR & MOD_RWIN) != 0) _ = sb.Append("RWin ");
+
+			if ((aModifiersLR & MOD_LSHIFT) != 0) _ = sb.Append("LShift ");
+
+			if ((aModifiersLR & MOD_RSHIFT) != 0) _ = sb.Append("RShift ");
+
+			if ((aModifiersLR & MOD_LCONTROL) != 0) _ = sb.Append("LCtrl ");
+
+			if ((aModifiersLR & MOD_RCONTROL) != 0) _ = sb.Append("RCtrl ");
+
+			if ((aModifiersLR & MOD_LALT) != 0) _ = sb.Append("LAlt ");
+
+			if ((aModifiersLR & MOD_RALT) != 0) _ = sb.Append("RAlt ");
+
+			return sb.ToString();
+		}
+
 		/// <summary>
 		/// For v1.0.25, the following situation is fixed by the code below: If LWin or LAlt
 		/// becomes a persistent modifier (e.g. via Send {LWin down}) and the user physically
@@ -1253,7 +1276,9 @@ namespace Keysharp.Core.Windows
 						// The event is logged here rather than higher above so that its timestamp is accurate.
 						// It's also so that events aren't logged if the user cancel's the operation in the middle
 						// (by pressing Ctrl-Alt-Del or Ctrl-Esc).
-						ht.UpdateKeyEventHistory(sourceEvent.messagetype == WM_KEYUP || sourceEvent.messagetype == WM_SYSKEYUP, sourceEvent.scvk.vk, sourceEvent.scvk.sc);
+						if (ht.keyHistory is KeyHistory kh)
+							kh.UpdateKeyEventHistory(sourceEvent.messagetype == WM_KEYUP || sourceEvent.messagetype == WM_SYSKEYUP, sourceEvent.scvk.vk, sourceEvent.scvk.sc);
+
 						thisEventHasBeenLogged = true;
 					}
 
@@ -3888,8 +3913,8 @@ namespace Keysharp.Core.Windows
 						altGrExtraInfo = 0; // Unconditional reset.
 					}
 
-					if (doKeyHistory)
-						ht.UpdateKeyEventHistory(false, vk, sc); // Should be thread-safe since if no hook means only one thread ever sends keystrokes (with possible exception of mouse hook, but that seems too rare).
+					if (doKeyHistory && ht.keyHistory is KeyHistory kh)
+						kh.UpdateKeyEventHistory(false, vk, sc); // Should be thread-safe since if no hook means only one thread ever sends keystrokes (with possible exception of mouse hook, but that seems too rare).
 				}
 
 				// The press-duration delay is done only when this is a down-and-up because otherwise,
@@ -3918,8 +3943,8 @@ namespace Keysharp.Core.Windows
 					if (targetLayoutHasAltGr != ResultType.Fail && sc == SC_RALT)
 						eventModifiersLR &= ~MOD_LCONTROL;
 
-					if (doKeyHistory)
-						ht.UpdateKeyEventHistory(true, vk, sc);
+					if (doKeyHistory && ht.keyHistory is KeyHistory kh)
+						kh.UpdateKeyEventHistory(true, vk, sc);
 				}
 
 				if (weTurnedBlockinputOff)  // Already made thread-safe by action higher above.

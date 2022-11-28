@@ -106,6 +106,8 @@ namespace Keysharp.Core.Linux
 
 		internal override int ConvertModifiersLR(int modifiersLR) => 0;
 
+		internal override string ModifiersLRToText(int aModifiersLR) => "";
+
 		internal override void DoMouseDelay()
 		{ }
 

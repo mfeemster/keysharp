@@ -463,7 +463,7 @@ namespace Keysharp.Core.Windows
 		/// neutral one.
 		/// </summary>
 		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, int vk, int sc,
-							  bool keyUp, Keysharp.Core.Common.Threading.KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost)
+							  bool keyUp, Keysharp.Core.Common.Keyboard.KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost)
 		{
 			HotstringDefinition hsOut = null;
 			var caseConformMode = CaseConformModes.None;
@@ -2336,29 +2336,23 @@ namespace Keysharp.Core.Windows
 			// KeyHistoryNext, in most cases before we had a chance to finish using the old value.  In other
 			// words, we use an automatic variable so that every instance of this function will get its
 			// own copy of the variable whose value will stay constant until that instance returns:
-			KeyHistoryItem keyHistoryCurr, khiTemp = new KeyHistoryItem(); // Must not be static (see above).  Serves as a storage spot for a single keystroke in case key history is disabled.
+			KeyHistoryItem keyHistoryCurr; // Must not be static (see above).  Serves as a storage spot for a single keystroke in case key history is disabled.
 
 			if (keyHistory == null)
 			{
-				keyHistoryCurr = khiTemp;  // Having a non-NULL pKeyHistoryCurr simplifies the code in other places.
+				keyHistoryCurr = new KeyHistoryItem();  // Having a non-NULL pKeyHistoryCurr simplifies the code in other places.
 			}
 			else
 			{
-				keyHistoryCurr = keyHistory[keyHistoryNext];
-
-				if (++keyHistoryNext >= keyHistory.Count)
-					keyHistoryNext = 0;
-
+				var kh = keyHistory;//In case it's being updated on the channel thread.
+				keyHistoryCurr = kh.NextItem();
 				keyHistoryCurr.vk = vk; // aSC is done later below.
 				keyHistoryCurr.keyUp = keyUp;
-				Keysharp.Scripting.Script.historyTickNow = DateTime.Now;
-				keyHistoryCurr.elapsedTime = (Keysharp.Scripting.Script.historyTickNow - Keysharp.Scripting.Script.historyTickPrev).TotalMilliseconds / 1000;
-				Keysharp.Scripting.Script.historyTickPrev = Keysharp.Scripting.Script.historyTickNow;
 				var fore_win = GetForegroundWindow();
 
 				if (fore_win != IntPtr.Zero)
 				{
-					if (fore_win != Keysharp.Scripting.Script.historyHwndPrev)
+					if (fore_win != kh.HistoryHwndPrev)
 					{
 						// The following line is commented out in favor of the one beneath it (seem below comment):
 						//GetWindowText(fore_win, pKeyHistoryCurr.target_window, sizeof(pKeyHistoryCurr.target_window));
@@ -2425,7 +2419,7 @@ namespace Keysharp.Core.Windows
 				else
 					keyHistoryCurr.targetWindow = "N/A";// Due to AHK_GETWINDOWTEXT, this could collide with main thread's writing to same string; but in addition to being extremely rare, it would likely be inconsequential.
 
-				Keysharp.Scripting.Script.historyHwndPrev = fore_win;  // Updated unconditionally in case fore_win is NULL.
+				kh.HistoryHwndPrev = fore_win;  // Updated unconditionally in case fore_win is NULL.
 			}
 
 			// Keep the following flush with the above to indicate that they're related.
@@ -3653,7 +3647,7 @@ namespace Keysharp.Core.Windows
 						&& (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) != 0 // No need to mask if Ctrl is down (the key-repeat issue that affects the WIN key does not affect ALT).
 						&& HotkeyDefinition.HotkeyRequiresModLR(hotkeyIdToFire, MOD_LALT | MOD_RALT) != 0) // Avoid masking hotkeys which could be intended to send {Alt up}, such as for AppsKey::Alt.
 				{
-					if (kbdHook != IntPtr.Zero)
+					if (HasKbdHook())
 						disguiseNextMenu = true;
 					else
 						// Since no keyboard hook, no point in setting the variable because it would never be acted upon.
@@ -5229,9 +5223,7 @@ namespace Keysharp.Core.Windows
 								break;
 
 							case (uint)UserMessages.AHK_HOOK_SET_KEYHISTORY:
-								if (wParamVal == 0)//Keysharp doesn't need to support resizing with AHK_HOOK_SET_KEYHISTORY, but it can be used to clear the history.
-									ClearKeyHistory();
-
+								keyHistory = new KeyHistory((int)wParamVal);
 								break;
 
 							//These were taken from MsgSleep().
@@ -5429,7 +5421,7 @@ namespace Keysharp.Core.Windows
 					}
 				}
 				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
-					if (kbdHook != IntPtr.Zero)
+					if (HasKbdHook())
 						if (UnhookWindowsHookEx(kbdHook))
 							kbdHook = IntPtr.Zero;
 

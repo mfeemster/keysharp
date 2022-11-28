@@ -8,6 +8,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
+		internal static ToolStripMenuItem pauseMenuItem;
 		internal static ToolStripMenuItem suspendMenuItem;
 		internal static NotifyIcon Tray;
 		internal static Menu trayMenu;
@@ -51,6 +52,11 @@ namespace Keysharp.Scripting
 				SuspendHotkeys();
 				return "";
 			});
+			var pause = new Func<object>(() =>
+			{
+				PauseThread();
+				return "";
+			});
 			var exitfunc = new Func<object>(() =>
 			{
 				_ = Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Menu);
@@ -68,7 +74,7 @@ namespace Keysharp.Scripting
 
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
 			suspendMenuItem = trayMenu.Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
-			//_ = trayMenu.Add("&Pause Script", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			pauseMenuItem = trayMenu.Add("&Pause Script", new FuncObj(pause.Method, pause.Target));
 			_ = trayMenu.Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 			trayMenu.Default = "&Open";
 			trayIcon.Tag = trayMenu;
@@ -92,6 +98,16 @@ namespace Keysharp.Scripting
 			}
 		}
 
+		internal static void PauseThread()
+		{
+			mainWindow.CheckedInvoke(() =>
+			{
+				mainWindow.PauseScriptToolStripMenuItem.Checked = !mainWindow.PauseScriptToolStripMenuItem.Checked;
+				pauseMenuItem.Checked = Keysharp.Core.Flow.Suspended;
+				Keysharp.Core.Flow.Pause(pauseMenuItem.Checked);
+			}, false);
+		}
+
 		internal static void SuspendHotkeys()
 		{
 			mainWindow.CheckedInvoke(() =>
@@ -101,7 +117,7 @@ namespace Keysharp.Scripting
 				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
 				suspendMenuItem.Checked = Keysharp.Core.Flow.Suspended;
 				mainWindow.SuspendHotkeysToolStripMenuItem.Checked = Keysharp.Core.Flow.Suspended;
-			}, true);
+			}, false);
 		}
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)

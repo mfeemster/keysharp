@@ -238,6 +238,8 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract int ConvertModifiersLR(int aModifiersLR);
 
+		internal abstract string ModifiersLRToText(int aModifiersLR);
+
 		internal abstract void DoMouseDelay();
 
 		internal abstract IntPtr GetFocusedKeybdLayout(IntPtr aWindow);

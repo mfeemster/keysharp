@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core;
@@ -34,12 +35,6 @@ namespace Keysharp.Scripting
 		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotExpr, lastHotExpr;
 
 		internal static bool forceKeybdHook;
-
-		internal static IntPtr historyHwndPrev = IntPtr.Zero;
-
-		internal static DateTime historyTickNow = DateTime.Now;
-
-		internal static DateTime historyTickPrev = DateTime.Now;
 
 		[ThreadStatic]
 		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion hotCriterion;
@@ -232,7 +227,65 @@ namespace Keysharp.Scripting
 
 		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
 
-		public static void ListVars() => mainWindow?.SetText(Reflections.GetVariableInfo(), MainWindow.MainFocusedTab.Main);
+		public static void ListVars() => mainWindow?.SetText(Reflections.GetVariableInfo(), MainWindow.MainFocusedTab.Stack);
+
+		public static string ListKeyHistory()
+		{
+			var sb = new StringBuilder(2048);
+			var target_window = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow();
+			var win_title = target_window.IsSpecified ? target_window.Title : "";
+			var enabledTimers = 0;
+
+			foreach (var timer in Keysharp.Core.Flow.timers)
+			{
+				if (timer.Value.Enabled)
+				{
+					enabledTimers++;
+					_ = sb.Append($"{timer.Key.Name} ");
+				}
+			}
+
+			if (sb.Length > 123)
+			{
+				var tempstr = sb.ToString(0, 123).TrimEnd() + "...";
+				_ = sb.Clear();
+				_ = sb.Append(tempstr);
+			}
+			else if (sb.Length > 0)
+			{
+				if (sb[sb.Length - 1] == ' ')
+				{
+					var tempstr = sb.ToString().TrimEnd();
+					_ = sb.Clear();
+					_ = sb.Append(tempstr);
+				}
+			}
+
+			var timerlist = sb.ToString();
+			var mod = "";
+			var hookstatus = "";
+			var cont = "Key History has been disabled via KeyHistory(0).";
+			sb.Clear();
+
+			if (HookThread != null)
+			{
+				mod = HookThread.kbdMsSender.ModifiersLRToText(HookThread.kbdMsSender.GetModifierLRState(true));
+				hookstatus = HookThread.GetHookStatus();
+
+				if (HookThread.keyHistory != null && HookThread.keyHistory.Size > 0)
+					cont = "Press [F5] to refresh.";
+			}
+
+			_ = sb.AppendLine($"Window: {win_title}");
+			_ = sb.AppendLine($"Keybd hook: {(HookThread != null && HookThread.HasKbdHook() ? "yes" : "no")}");
+			_ = sb.AppendLine($"Mouse hook: {(HookThread != null && HookThread.HasMouseHook() ? "yes" : "no")}");
+			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {Keysharp.Core.Flow.timers.Count} ({timerlist})");
+			_ = sb.AppendLine($"Threads: {Keysharp.Scripting.Script.totalExistingThreads}");
+			_ = sb.AppendLine($"Modifiers (GetKeyState() now) = {mod}");
+			_ = sb.AppendLine(hookstatus);
+			_ = sb.Append(cont);
+			return sb.ToString();
+		}
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.

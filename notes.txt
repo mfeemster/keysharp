@@ -218,12 +218,14 @@ Differences:
 	-Sleep() works, but uses Application.DoEvents() under the hood which is not a good programming practice and can lead to hard to solve bugs.
 		-For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to Sleep().
 	-Assignment statements inside of control statements, such as "if ((x := Func()))" must be enclosed in parentheses. This statement, "if (x := Func())" will not work.
+	-Pausing a script, invluding via menu item, may not work exactly the same way as it does in AHK, so its' best to avoid calling Pause().
+	-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
+		if ((x := myfunc()) ; will not work without declaring x first above.
 		
 TODO/ENSURE THESE WORK:
 	The function Thread() was never implemented.
 	Replace as many instances of Substring() with Span() as you can.
 	InstallKeybdHook()/mouse need to use the wrapper that AHK uses, which requires hotkeys to be implemented.
-	KeyHistory(), InputHook() are not implemented, but need to be.
 	Implement all hotstring modes.
 	Figure out the difference between EVENT and PLAY modes. AHK treats them totally differently: kbd event vs post message.
 	When b0 no backspace is enabled, pressing control keeps triggering the hotstring.

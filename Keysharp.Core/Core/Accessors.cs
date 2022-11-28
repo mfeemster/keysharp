@@ -1322,37 +1322,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_PriorHotkey => Keysharp.Scripting.Script.priorHotkeyName;
 
-		public static string A_PriorKey
-		{
-			get
-			{
-				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht)
-				{
-					var validEventCount = 0;
-
-					//Start at the current event (offset 1).
-					for (var iOffset = 1; iOffset <= ht.keyHistory.Count; ++iOffset)
-					{
-						//Get index for circular buffer.
-						var i = (ht.keyHistoryNext + ht.keyHistory.Count - iOffset) % ht.keyHistory.Count;
-
-						//Keep looking until we hit the second valid event.
-						if (ht.keyHistory[i].eventType != 'i'//Not an ignored event.
-								&& ht.keyHistory[i].eventType != 'U'//Not a Unicode packet (SendInput/VK_PACKET).
-								&& ++validEventCount > 1)
-						{
-							//Find the next most recent key-down.
-							if (!ht.keyHistory[i].keyUp)
-							{
-								return Keysharp.Core.Keyboard.GetKeyNameHelper(ht.keyHistory[i].vk, ht.keyHistory[i].sc);
-							}
-						}
-					}
-				}
-
-				return "";
-			}
-		}
+		public static string A_PriorKey => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht ? ht.keyHistory.PriorKey() : "";
 
 		public static object A_Priority
 		{
@@ -1573,7 +1543,7 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && (ht.kbdHook != IntPtr.Zero || ht.mouseHook != IntPtr.Zero)
+				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasEitherHook()
 					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputPhysical).TotalMilliseconds
 					   : A_TimeIdle;
 			}
@@ -1583,7 +1553,7 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.kbdHook != IntPtr.Zero
+				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasKbdHook()
 					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputKeyboard).TotalMilliseconds
 					   : A_TimeIdle;
 			}
@@ -1593,7 +1563,7 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.mouseHook != IntPtr.Zero
+				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasMouseHook()
 					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputMouse).TotalMilliseconds
 					   : A_TimeIdle;
 			}
