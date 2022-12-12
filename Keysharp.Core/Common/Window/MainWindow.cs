@@ -152,7 +152,7 @@ namespace Keysharp.Scripting
 
 				case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
 					//Sadly, we cannot make this method async, so this will just be fire and forget.
-					_ = Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), WindowsAPI.WM_HOTKEY);
+					_ = Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
 					handled = true;
 					break;
 			}

@@ -338,7 +338,7 @@ namespace Keysharp.Scripting
 			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			Parser.Persistent = true;
 			mainWindow.Load += MainWindow_Load;
-			Parser.SuspendExempt = false; // #SuspendExempt should not affect Hotkey()/Hotstring().
+			Parser.SuspendExempt = false;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.Show();
 			_ = mainWindow.BeginInvoke(() =>

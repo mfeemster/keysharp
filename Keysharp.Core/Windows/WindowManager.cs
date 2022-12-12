@@ -93,8 +93,18 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
+			if (criteria.HasID)
+			{
+				var temp = CreateWindow(criteria.ID);
+
+				if (temp.Exists)
+					return temp;
+			}
+
 			if (!string.IsNullOrEmpty(criteria.ClassName) && !criteria.HasExcludes && !criteria.HasID && string.IsNullOrEmpty(criteria.Text))//Unsure why this doesn't just use the code in the else block.//MATT
+			{
 				found = new WindowItem(WindowsAPI.FindWindow(criteria.ClassName, criteria.Title));
+			}
 			else
 			{
 				foreach (var window in AllWindows)
@@ -129,23 +139,19 @@ namespace Keysharp.Core.Windows
 
 			return found;
 		}
-
 		internal override WindowItemBase GetForeGroundWindow() => new WindowItem(WindowsAPI.GetForegroundWindow());
-
 		internal override void MinimizeAll()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
 			_ = WindowsAPI.PostMessage(window.Handle, (uint)WindowsAPI.WM_COMMAND, new IntPtr(419), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
 		}
-
 		internal override void MinimizeAllUndo()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
 			_ = WindowsAPI.PostMessage(window.Handle, (uint)WindowsAPI.WM_COMMAND, new IntPtr(416), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
 		}
-
 		internal override WindowItemBase WindowFromPoint(Point location)
 		{
 			var ctrl = WindowsAPI.WindowFromPoint(location);

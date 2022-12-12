@@ -221,7 +221,9 @@ Differences:
 	-Pausing a script, invluding via menu item, may not work exactly the same way as it does in AHK, so its' best to avoid calling Pause().
 	-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
 		if ((x := myfunc()) ; will not work without declaring x first above.
-		
+	-The Optimization section of the #HotIf documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
+	
+	
 TODO/ENSURE THESE WORK:
 	The function Thread() was never implemented.
 	Replace as many instances of Substring() with Span() as you can.

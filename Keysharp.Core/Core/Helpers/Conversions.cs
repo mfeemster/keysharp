@@ -285,19 +285,24 @@ namespace Keysharp.Core
 
 			if (parenIndex != -1)
 			{
-				var span = exp.AsSpan(0, parenIndex);
-				var substr = exp.Substring(parenIndex + 1);
-				opts |= ToRegexOptions(span);
+				var leftParenIndex = exp.IndexOf('(');
 
-				if (span.Contains('A'))
+				if (leftParenIndex == -1 || (leftParenIndex > parenIndex))//Make sure it was just a ) for options and not a ().
 				{
-					substr = "\\A" + substr;
-				}
+					var span = exp.AsSpan(0, parenIndex);
+					var substr = exp.Substring(parenIndex + 1);
+					opts |= ToRegexOptions(span);
 
-				return new RegexWithTag(substr, opts);
+					if (span.Contains('A'))
+					{
+						substr = "\\A" + substr;
+					}
+
+					return new RegexWithTag(substr, opts);
+				}
 			}
-			else
-				return new RegexWithTag(exp, opts);
+
+			return new RegexWithTag(exp, opts);
 		}
 
 		/// <summary>

@@ -39,6 +39,7 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		//Need to figure out if these should be signed or not. Weird bugs can happen with wraparound comparisons if you get it wrong.//TODO
 		internal const int CoordCentered = int.MinValue + 1;
+
 		internal const int CoordModeCaret = 6;
 		internal const int CoordModeClient = 0;
 		internal const int CoordModeInvalid = -1;
@@ -238,8 +239,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract int ConvertModifiersLR(int aModifiersLR);
 
-		internal abstract string ModifiersLRToText(int aModifiersLR);
-
 		internal abstract void DoMouseDelay();
 
 		internal abstract IntPtr GetFocusedKeybdLayout(IntPtr aWindow);
@@ -247,6 +246,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal abstract int GetModifierLRState(bool aExplicitlyGet = false);
 
 		internal abstract void InitEventArray(int maxEvents, int aModifiersLR);
+
+		internal abstract string ModifiersLRToText(int aModifiersLR);
 
 		internal abstract void MouseClick(int aVK, int aX, int aY, long aRepeatCount, long aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
 
@@ -321,10 +322,9 @@ namespace Keysharp.Core.Common.Keyboard
 				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
 		}
 
-		internal async Task<object> ProcessHotkey(int wParamVal, int lParamVal, uint msg)
+		internal async Task<object> ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)
 		{
-			wParamVal &= HotkeyDefinition.HOTKEY_ID_MASK;
-			var hkId = wParamVal;
+			var hkId = wParamVal & HotkeyDefinition.HOTKEY_ID_MASK;
 
 			if (hkId < HotkeyDefinition.shk.Count)//Ensure hotkey ID is valid.
 			{
@@ -375,27 +375,10 @@ namespace Keysharp.Core.Common.Keyboard
 				//   WinText and/or "SetTitleMatchMode 'Slow'" slow down window searches, those are rarely
 				//   used too.
 				//
-				HotkeyVariant variant = null; // Set default.
-				var variant_id = 0;
-
-				// For #HotIf hotkey variants, we don't want to evaluate the expression a second time. If the hook
-				// thread determined that a specific variant should fire, it is passed via the high word of wParam:
-				if ((variant_id = Conversions.HighWord(wParamVal)) != 0)
-				{
-					// The following relies on the fact that variants can't be removed or re-ordered;
-					// variant_id should always be the variant's one-based index in the linked list:
-					--variant_id; // i.e. index 1 should be mFirstVariant, not mFirstVariant->mNextVariant.
-
-					for (variant = hk.firstVariant; variant_id != 0; variant = variant.nextVariant, --variant_id)
-					{
-					}
-				}
-
 				char? dummy = null;
 				var criterion_found_hwnd = IntPtr.Zero;
 
-				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd
-													, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
+				if (!(variant != null || (variant = hk.CriterionAllowsFiring(msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
 					return ""; // No criterion is eligible, so ignore this hotkey event (see other comments).
 
 				// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
@@ -417,12 +400,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 				// Now that above has ensured variant is non-NULL:
 				var hc = variant.hotCriterion;
-
-				if (hc == null || hc.type == HotCriterionEnum.IfNotActive || hc.type == HotCriterionEnum.IfNotExist)
-					criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
-				else if (HotkeyDefinition.HOT_IF_REQUIRES_EVAL(hc.type))
-					criterion_found_hwnd = Keysharp.Scripting.Script.hotExprLFW; // For #HotIf WinExist(WinTitle) and similar.
-
 				var priority = variant.priority;
 				Keysharp.Scripting.Script.SetHotNamesAndTimes(hk.Name);
 

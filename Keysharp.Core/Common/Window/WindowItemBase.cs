@@ -174,6 +174,9 @@ namespace Keysharp.Core.Common.Window
 			//Need to implement that.//MATT
 			if (!string.IsNullOrEmpty(criteria.Title))//Put title first because it's the most likely.
 			{
+				if (criteria.Title == "A")
+					return Active;
+
 				if (!TitleCompare(Title, criteria.Title))
 					return false;
 

@@ -229,101 +229,118 @@ namespace Keysharp.Scripting
 						var paren = ExtractRange(parts, n, Set(parts, i));
 						parts.RemoveAt(n);
 						CodeMethodInvokeExpression invoke = null;
-						CodeExpression[] passed = null;
-						var inparenct = 0;
-						var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
-						//List<int> refIndexes = null;//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
-						var paramIndex = 0;
-						inparenct = 0;
-						//refIndexes = new List<int>(paren.Count);//Refs can't be done in C# with variadic params, which we use for most calls.
 
-						for (var i1 = 0; i1 < paren.Count; i1++)
+						//Special processing is needed to convert an expression passed to a HotIf() to a separate function, then pass it with FuncObj().
+						//Do not do this if a FuncObj is already being passed, whcih will be the case when #HotIf is found in the preprocessing stage.
+						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
 						{
-							var p = paren[i1].ToString();
-
-							if (p.Contains('('))//Indicates the start of a new expression as a parameter, so don't count it, because it'll be handled recursively on its own.
-								inparenct++;
-							else if (p.Contains(')'))
-								inparenct--;
-							else if (inparenct == 0)
-							{
-								if (p == ",")//Reached the end of a parameter, so increment parameter index.
-								{
-									paramIndex++;
-								}
-								else if (lastisstar && p == "*")//p can be * if the param is just a variable reference, or if it's a function call whose result is to be expanded. Ex: func(func2(val)*)
-								{
-									paren.RemoveAt(i1);
-									i1--;
-								}
-
-								//else if (p == "&" && (i1 == 0 || paren[i1 - 1].ToString() == ","))
-								//{
-								//  refIndexes.Add(paramIndex);
-								//  paren.RemoveAt(i1);
-								//}
-							}
-						}
-
-						if (paren.Count != 0)
-							passed = ParseMultiExpression(paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
-
-						if (dynamic)
-						{
-							invoke = (CodeMethodInvokeExpression)InternalMethods.FunctionCall;
-							_ = invoke.Parameters.Add(VarIdExpand(name));
-						}
-						else
+							var hotiffuncname = $"HotIf_{hotifcount++}";
+							var hotifexpr = ParseExpression(paren, false);
+							var hotifmethod = LocalMethod(hotiffuncname);
+							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
+							methods.Add(hotiffuncname, hotifmethod);
 							invoke = LocalMethodInvoke(name);
-
-						if (passed?.Length > 0)
+							_ = invoke.Parameters.Add(new CodeSnippetExpression($"FuncObj(\"{hotiffuncname}\")"));
+						}
+						else//Any other function call aside from HotIf().
 						{
-							if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+							CodeExpression[] passed = null;
+							var inparenct = 0;
+							var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
+							//List<int> refIndexes = null;//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
+							var paramIndex = 0;
+							inparenct = 0;
+							//refIndexes = new List<int>(paren.Count);//Refs can't be done in C# with variadic params, which we use for most calls.
+
+							for (var i1 = 0; i1 < paren.Count; i1++)
 							{
-								_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(passed[0], "ParseObject"));
+								var p = paren[i1].ToString();
+
+								if (p.Contains('('))//Indicates the start of a new expression as a parameter, so don't count it, because it'll be handled recursively on its own.
+									inparenct++;
+								else if (p.Contains(')'))
+									inparenct--;
+								else if (inparenct == 0)
+								{
+									if (p == ",")//Reached the end of a parameter, so increment parameter index.
+									{
+										paramIndex++;
+									}
+									else if (lastisstar && p == "*")//p can be * if the param is just a variable reference, or if it's a function call whose result is to be expanded. Ex: func(func2(val)*)
+									{
+										paren.RemoveAt(i1);
+										i1--;
+									}
+
+									//else if (p == "&" && (i1 == 0 || paren[i1 - 1].ToString() == ","))
+									//{
+									//  refIndexes.Add(paramIndex);
+									//  paren.RemoveAt(i1);
+									//}
+								}
+							}
+
+							if (paren.Count != 0)
+								passed = ParseMultiExpression(paren.ToArray(), /*create*/
+															  false);//override the value of create with false because the arguments passed into a function should never be created automatically.
+
+							if (dynamic)
+							{
+								invoke = (CodeMethodInvokeExpression)InternalMethods.FunctionCall;
+								_ = invoke.Parameters.Add(VarIdExpand(name));
 							}
 							else
+								invoke = LocalMethodInvoke(name);
+
+							if (passed?.Length > 0)
 							{
-								if (lastisstar)
+								if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 								{
-									invoke.Parameters.AddRange(passed.Take(passed.Length - 1).ToArray());
-									var combineExpr = LocalMethodInvoke("FlattenParam");
-									_ = combineExpr.Parameters.Add(passed[passed.Length - 1]);
-									_ = invoke.Parameters.Add(combineExpr);
+									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(passed[0], "ParseObject"));
 								}
 								else
-									invoke.Parameters.AddRange(passed);
-
-								//for (var i1 = 0; i1 < invoke.Parameters.Count; i1++)
-								//{
-								//  if (refIndexes.Contains(i1))
-								//  {
-								//      var p = invoke.Parameters[i1];
-								//      invoke.Parameters[i1] = new CodeDirectionExpression(FieldDirection.Ref, p);
-								//  }
-								//}
-							}
-						}
-
-						//If the function being called has the same name as a variable, then we assume it's a function object.
-						//So we need assume that the name of the function is actually the name of an object, then we make a method call named Call() on that object.
-						for (var blocklevel = blocks.Count; blocklevel >= 0; blocklevel--)//Innermost to outermost.
-						{
-							var tempscope = GetScope(blocklevel);
-
-							if (allVars.TryGetValue(tempscope, out var scopevars))
-							{
-								//if (tempscope != "")
-								//  name = tempscope + ScopeVar + name;
-								if (scopevars.Contains(name))
 								{
-									var specialinvoke = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){name})"), "Call"));
+									if (lastisstar)
+									{
+										invoke.Parameters.AddRange(passed.Take(passed.Length - 1).ToArray());
+										var combineExpr = LocalMethodInvoke("FlattenParam");
+										_ = combineExpr.Parameters.Add(passed[passed.Length - 1]);
+										_ = invoke.Parameters.Add(combineExpr);
+									}
+									else
+										invoke.Parameters.AddRange(passed);
 
-									if (paren.Count != 0)
-										specialinvoke.Parameters.AddRange(passed);
+									//for (var i1 = 0; i1 < invoke.Parameters.Count; i1++)
+									//{
+									//  if (refIndexes.Contains(i1))
+									//  {
+									//      var p = invoke.Parameters[i1];
+									//      invoke.Parameters[i1] = new CodeDirectionExpression(FieldDirection.Ref, p);
+									//  }
+									//}
+								}
+							}
 
-									parts[i] = specialinvoke;
-									goto specialaddcall;
+							//If the function being called has the same name as a variable, then we assume it's a function object.
+							//So we need assume that the name of the function is actually the name of an object, then we make a method call named Call() on that object.
+							for (var blocklevel = blocks.Count; blocklevel >= 0; blocklevel--)//Innermost to outermost.
+							{
+								var tempscope = GetScope(blocklevel);
+
+								if (allVars.TryGetValue(tempscope, out var scopevars))
+								{
+									//if (tempscope != "")
+									//  name = tempscope + ScopeVar + name;
+									if (scopevars.Contains(name))
+									{
+										var specialinvoke = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){name})"), "Call"));
+
+										if (paren.Count != 0)
+											specialinvoke.Parameters.AddRange(passed);
+
+										parts[i] = specialinvoke;
+										goto specialaddcall;
+									}
 								}
 							}
 						}

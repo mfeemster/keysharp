@@ -293,31 +293,122 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		public static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
 		{
-			var hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
+			HotkeyDefinition hk;
+			var suffixHasTilde = false;
+			var hookIsMandatory = false;
 
-			if (hk.constructedOK)
+			//We must first check if the hotkey exists before creating a new one because this might just be a variant.
+			//The code to check for a variant was in the parsing section of AHK, but we move it here because Keysharp adds them at runtime.
+			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
 			{
-				shk.Add(hk);
-				Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
+				if (_hookAction != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
+				{
+					// HotkeyDefinition::Dynamic() contains logic and comments similar to this, so maintain them together.
+					// An attempt to add an alt-tab variant to an existing hotkey.  This might have
+					// merit if the intention is to make it alt-tab now but to later disable that alt-tab
+					// aspect via the Hotkey cmd to let the context-sensitive variants shine through
+					// (take effect).
+					hk.hookAction = _hookAction;
+				}
+				else
+				{
+					// Detect duplicate hotkey variants to help spot bugs in scripts.
+					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
+					{
+						//mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
+						throw new Error($"Duplicate hotkey: {_name}");
+					}
+
+					if (hk.AddVariant(_callback, _suffixHasTilde) == null)
+						return null;// ScriptError(ERR_OUTOFMEM, buf);
+
+					if (hookIsMandatory || Keysharp.Scripting.Script.forceKeybdHook)
+					{
+						// Require the hook for all variants of this hotkey if any variant requires it.
+						// This seems more intuitive than the old behavior, which required $ or #UseHook
+						// to be used on the *first* variant, even though it affected all variants.
+						hk.keybdHookMandatory = true;
+					}
+				}
+
 				return hk;
 			}
-			else//This was originally in the parsing code, but fits better here.
+			else
 			{
-				var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
+				hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
 
-				if (valid != ResultType.ConditionTrue)
-					return null;// ResultType.Fail; // It already displayed the error.
+				if (hk.constructedOK)
+				{
+					shk.Add(hk);
+					Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
+					return hk;
+				}
+				else//This was originally in the parsing code, but fits better here.
+				{
+					var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
 
-				// This hotkey uses a single-character key name, which could be valid on some other
-				// keyboard layout.  Allow the script to start, but warn the user about the problem.
-				// Note that this hotkey's label is still valid even though the hotkey wasn't created.
+					if (valid != ResultType.ConditionTrue)
+						return null;// ResultType.Fail; // It already displayed the error.
 
-				if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-					_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
+					// This hotkey uses a single-character key name, which could be valid on some other
+					// keyboard layout.  Allow the script to start, but warn the user about the problem.
+					// Note that this hotkey's label is still valid even though the hotkey wasn't created.
+
+					if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+						_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
+				}
 			}
 
 			return null;
 		}
+
+		public static ResultType HotIf(object obj0 = null)
+		{
+			if (obj0 != null)
+			{
+				FuncObj funcobj = null;
+
+				if (obj0 is FuncObj fo)
+				{
+					funcobj = fo;
+				}
+				else if (obj0 is string s)//Unlike AHK, only function names can be passed, not expression text.
+				{
+					if (s.Length == 0)
+					{
+						Keysharp.Scripting.Script.hotCriterion = null;
+						return ResultType.Ok;
+					}
+
+					funcobj = new FuncObj(s, null);
+
+					if (!funcobj.IsValid)
+						throw new ValueError("Invalid callback function.");
+				}
+
+				var cp = FindHotkeyCriterion(funcobj);
+
+				if (cp == null)
+					cp = AddHotkeyIfExpr(funcobj);
+
+				Keysharp.Scripting.Script.hotCriterion = cp;
+			}
+			else
+			{
+				Keysharp.Scripting.Script.hotCriterion = null;
+				return ResultType.Ok;
+			}
+
+			return ResultType.Fail;
+		}
+
+		public static void HotIfWinActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinActivePrivate", obj0, obj1);
+
+		public static void HotIfWinExist(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinExistPrivate", obj0, obj1);
+
+		public static void HotIfWinNotActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinNotActivePrivate", obj0, obj1);
+
+		public static void HotIfWinNotExist(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinNotExistPrivate", obj0, obj1);
 
 		/// <summary>
 		/// Get the hotkey descriptions and put them in the Vars tab of the main window.
@@ -626,15 +717,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		public override string ToString() => Name;
 
-		internal static HotkeyCriterion AddHotkeyCriterion(HotCriterionEnum type, string winTitle, string winText)
-		{
-			var cp = new HotkeyCriterion();
-			cp.type = type;
-			cp.originalExpr = null;
-			cp.winTitle = !string.IsNullOrEmpty(winTitle) ? winTitle : "";
-			cp.winText = !string.IsNullOrEmpty(winText) ? winText : "";
-			return AddHotkeyCriterion(cp);
-		}
+		internal static HotkeyCriterion AddHotkeyCriterion(FuncObj fo) => AddHotkeyCriterion(new HotkeyCriterion(fo));
 
 		internal static HotkeyCriterion AddHotkeyCriterion(HotkeyCriterion cp)
 		{
@@ -653,11 +736,9 @@ namespace Keysharp.Core.Common.Keyboard
 			return cp;
 		}
 
-		internal static HotkeyCriterion AddHotkeyIfExpr()
+		internal static HotkeyCriterion AddHotkeyIfExpr(FuncObj fo)
 		{
-			var cp = new HotkeyCriterion();
-			cp.nextExpr = null;
-			cp.originalExpr = null;
+			var cp = new HotkeyCriterion(fo);
 
 			if (Keysharp.Scripting.Script.lastHotExpr != null)
 				Keysharp.Scripting.Script.lastHotExpr.nextExpr = cp;
@@ -737,8 +818,6 @@ namespace Keysharp.Core.Common.Keyboard
 			return 0;
 		}
 
-		//There is a function named PreparseHotkeyIfExpr() which is not implemented here because I'm not sure how to translate it
-		//but looks like it would need to be done somewhere.//TODO
 		/// <summary>
 		/// v1.0.44: Caller has ensured that aFireWithNoSuppress is true if has already been decided and false if undecided.
 		/// Upon return, caller can assume that the value in it is now decided rather than undecided.
@@ -795,7 +874,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// should fire.
 			var zero = IntPtr.Zero;
 
-			if ((vp = hk.CriterionAllowsFiring(ref zero, extraInfo, ref singleChar)) != null)
+			if ((vp = hk.CriterionAllowsFiring(extraInfo, ref singleChar)) != null)
 			{
 				if (!fireWithNoSuppress) // Caller hasn't yet determined its value with certainty (currently, this statement might always be true).
 					fireWithNoSuppress = vp.noSuppress;
@@ -852,7 +931,7 @@ namespace Keysharp.Core.Common.Keyboard
 					   )
 					{
 						// The following section is similar to one higher above, so maintain them together:
-						if ((vp = hk2.CriterionAllowsFiring(ref zero, extraInfo, ref singleChar)) != null)
+						if ((vp = hk2.CriterionAllowsFiring(extraInfo, ref singleChar)) != null)
 						{
 							if (!fireWithNoSuppress) // Caller hasn't yet determined its value with certainty (currently, this statement might always be true).
 								fireWithNoSuppress = vp.noSuppress;
@@ -1242,22 +1321,24 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;  // No match found.
 		}
 
-		internal static HotkeyCriterion FindHotkeyCriterion(HotCriterionEnum type, string winTitle, string winText)
+		internal static HotkeyCriterion FindHotkeyCriterion(FuncObj fo)
 		{
 			HotkeyCriterion cp;
 
+			if (fo == null)
+				return null;
+
 			for (cp = Keysharp.Scripting.Script.firstHotCriterion; cp != null; cp = cp.nextCriterion)
-				if (cp.type == type && cp.winTitle == winTitle && cp.winText == winText)
-					return cp;
+			{
+				if (cp.callback != null)
+				{
+					if (cp.callback == fo)
+						return cp;
 
-			return null;
-		}
-
-		internal static HotkeyCriterion FindHotkeyIfExpr(string expr)
-		{
-			for (var cp = Keysharp.Scripting.Script.firstHotExpr; cp != null; cp = cp.nextExpr)
-				if (!string.IsNullOrEmpty(cp.originalExpr) && expr == cp.originalExpr) // Case-sensitive since the expression might be.
-					return cp;
+					if (cp.callback.Name == fo.Name && ReferenceEquals(cp.callback.Inst, fo.Inst))
+						return cp;
+				}
+			}
 
 			return null;
 		}
@@ -1318,96 +1399,10 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="criterion"></param>
 		/// <param name="hotkeyName"></param>
 		/// <returns></returns>
-		internal static IntPtr HotCriterionAllowsFiring(HotkeyCriterion criterion, string hotkeyName)
-		{
-			var foundHwnd = IntPtr.Zero;
-
-			if (criterion == null)
-				return new IntPtr(1); // Always allow hotkey to fire.
-
-			switch (criterion.type)
-			{
-				case HotCriterionEnum.IfActive:
-				case HotCriterionEnum.IfNotActive:
-					foundHwnd = new IntPtr(Keysharp.Core.Window.WinActive(criterion.winTitle, criterion.winText, "", "", false)); // Thread-safe, AHK passed g_default, unsure if that's needed here.
-					break;
-
-				case HotCriterionEnum.IfExist:
-				case HotCriterionEnum.IfNotExist:
-					foundHwnd = new IntPtr(Keysharp.Core.Window.WinExist(criterion.winTitle, criterion.winText, "", "", false, false)); // Thread-safe.
-					break;
-
-				// L4: Handling of #HotIf (expression) hotkey variants.
-				case HotCriterionEnum.IfCallback:
-					// Expression evaluation must be done in the main thread. If the message times out, the hotkey/hotstring is not allowed to fire.
-					var handle = GCHandle.Alloc(criterion);
-					var wparam = (IntPtr)handle;
-					var val = (WindowsAPI.SendMessageTimeout(Keysharp.Scripting.Script.mainWindow.Handle,
-							   (uint)UserMessages.AHK_HOT_IF_EVAL,//We are currently not processing this and will need to do so.//TODO
-							   wparam,
-							   hotkeyName,
-							   SendMessageTimeoutFlags.SMTO_BLOCK | SendMessageTimeoutFlags.SMTO_ABORTIFHUNG,
-							   (uint)Keysharp.Scripting.Parser.HotExprTimeout, out var res) != 0 &&
-							   res == (IntPtr)ResultType.ConditionTrue) ? 1 : 0;
-					handle.Free();
-					return new IntPtr(val);
-			}
-
-			return (criterion.type == HotCriterionEnum.IfActive || criterion.type == HotCriterionEnum.IfExist) ? foundHwnd : IntPtr.Zero;
-		}
+		internal static bool HotCriterionAllowsFiring(HotkeyCriterion criterion, string hotkeyName) =>
+		criterion == null ? true : Keysharp.Scripting.Script.ForceBool(criterion.callback.Call(hotkeyName));
 
 		internal static int HotkeyRequiresModLR(uint hotkeyID, int modLR) => hotkeyID < shk.Count ? shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0;
-
-		internal static ResultType IfExpr(string expr, object exprObj)
-		// HotIf ; Set null criterion.
-		// HotIf "Exact-expression-text"
-		// HotIf FunctionObject
-		{
-			if (exprObj != null)
-			{
-				HotkeyCriterion cp;
-				FuncObj funcobj = null;//I think the logic for this will work, but will need testing.//TODO
-
-				if (exprObj is string s)
-				{
-					funcobj = new FuncObj(s, null);
-
-					if (!funcobj.IsValid)
-						throw new ValueError("Invalid callback function.");
-				}
-				else if (exprObj is FuncObj fo)
-					funcobj = fo;
-
-				for (cp = Keysharp.Scripting.Script.firstHotExpr; ; cp = cp.nextExpr)
-				{
-					if (cp == null) // End of the list and it wasn't found.
-					{
-						cp = AddHotkeyIfExpr();
-						cp.type = HotCriterionEnum.IfCallback;
-						cp.callback = funcobj;
-						cp.winTitle = "";
-						cp.winText = "";
-						break;
-					}
-
-					if (cp.type == HotCriterionEnum.IfCallback && cp.callback == funcobj)
-						break;
-				}
-
-				Keysharp.Scripting.Script.hotCriterion = cp;
-			}
-			else if (string.IsNullOrEmpty(expr))
-			{
-				Keysharp.Scripting.Script.hotCriterion = null;
-			}
-			else
-			{
-				var cp = FindHotkeyIfExpr(expr);
-				Keysharp.Scripting.Script.hotCriterion = cp ?? throw new ValueError("Parameter #1 must match an existing #HotIf expression.");
-			}
-
-			return ResultType.Ok;
-		}
 
 		internal static void InstallKeybdHook()
 		{
@@ -1491,7 +1486,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// whether the hotkey was enabled (above), which isn't enough):
 					if (vp.enabled // This particular variant within its parent hotkey is enabled.
 							&& (!Accessors.A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
-							&& (vp.hotCriterion == null || HotCriterionAllowsFiring(vp.hotCriterion, hk.Name) != IntPtr.Zero)) // ... and its criteria allow it to fire.
+							&& (vp.hotCriterion == null || HotCriterionAllowsFiring(vp.hotCriterion, hk.Name))) // ... and its criteria allow it to fire.
 						return false; // At least one of this prefix's suffixes is eligible for firing.
 				}
 			}
@@ -1505,19 +1500,6 @@ namespace Keysharp.Core.Common.Keyboard
 			for (var i = 0; i < shk.Count; ++i)
 				for (var vp = shk[i].firstVariant; vp != null; vp = vp.nextVariant)
 					vp.runAgainAfterFinished = false;
-		}
-
-		internal static ResultType SetHotkeyCriterion(HotCriterionEnum type, string winTitle, string winText)
-		{
-			HotkeyCriterion cp = null;
-
-			if ((!string.IsNullOrEmpty(winTitle) || !string.IsNullOrEmpty(winText))
-					&& (cp = FindHotkeyCriterion(type, winTitle, winText)) != null
-					&& (cp = AddHotkeyCriterion(type, winTitle, winText)) != null)
-				return ResultType.Fail;
-
-			Keysharp.Scripting.Script.hotCriterion = cp;
-			return ResultType.Ok;
 		}
 
 		/// <summary>
@@ -1989,13 +1971,13 @@ namespace Keysharp.Core.Common.Keyboard
 				// mRunAgainTime
 				// mPriority (default priority is always 0)
 				callback = _callback,
-				originalCallback = Keysharp.Scripting.Script.lastHotFunc,
+				originalCallback = Proc,
 				maxThreads = Keysharp.Scripting.Parser.MaxThreadsPerHotkey,    // The values of these can vary during load-time.
 				maxThreadsBuffer = Keysharp.Scripting.Parser.MaxThreadsBuffer, //
 				inputLevel = Keysharp.Scripting.Script.inputLevel,
 				hotCriterion = Keysharp.Scripting.Script.hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
-				enabled = true,
-				suspendExempt = Keysharp.Scripting.Parser.SuspendExempt
+				suspendExempt = Keysharp.Scripting.Parser.SuspendExempt,
+				enabled = true
 			};
 
 			if (vp.inputLevel > 0)
@@ -2050,7 +2032,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// when the match is a global variant.  Even when set, aFoundHWND will be (HWND)1 for
 		/// "not-criteria" such as #HotIf Not WinActive().
 		/// </summary>
-		internal HotkeyVariant CriterionAllowsFiring(ref IntPtr _foundHwnd, uint extraInfo, ref char? singleChar)
+		internal HotkeyVariant CriterionAllowsFiring(uint extraInfo, ref char? singleChar)
 		{
 			// Check mParentEnabled in case the hotkey became disabled between the time the message was posted
 			// and the time it arrived.  A similar check is done for "suspend" later below (since "suspend"
@@ -2059,8 +2041,6 @@ namespace Keysharp.Core.Common.Keyboard
 				return null;
 
 			var unused = IntPtr.Zero;
-			ref var foundHwnd = ref (_foundHwnd != IntPtr.Zero ? ref _foundHwnd : ref unused);   // To simplify other things.
-			foundHwnd = IntPtr.Zero;  // Set default output parameter for caller (in case loop never sets it).
 			HotkeyVariant vp, vpToFire;
 
 			// aHookAction isn't checked because this should never be called for alt-tab hotkeys (see other comments above).
@@ -2077,7 +2057,7 @@ namespace Keysharp.Core.Common.Keyboard
 				if (vp.enabled // This particular variant within its parent hotkey is enabled.
 						&& (!Accessors.A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
 						&& KeyboardMouseSender.HotInputLevelAllowsFiring(vp.inputLevel, extraInfo, ref singleChar) // ... its #InputLevel allows it to fire...
-						&& (vp.hotCriterion == null || (foundHwnd = HotCriterionAllowsFiring(vp.hotCriterion, Name)) != IntPtr.Zero)) // ... and its criteria allow it to fire.
+						&& (vp.hotCriterion == null || HotCriterionAllowsFiring(vp.hotCriterion, Name))) // ... and its criteria allow it to fire.
 				{
 					if (vp.hotCriterion != null) // Since this is the first criteria hotkey, it takes precedence.
 						return vp;
@@ -2391,6 +2371,27 @@ namespace Keysharp.Core.Common.Keyboard
 			return ResultType.Ok;
 		}
 
+		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Active;
+
+		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Exists;
+
+		private static bool HotIfWinNotActivePrivate(object title, object text, object hotkey) => !HotIfWinActivePrivate(title, text, hotkey);
+
+		private static bool HotIfWinNotExistPrivate(object title, object text, object hotkey) => !HotIfWinExistPrivate(title, text, hotkey);
+
+		private static void SetupHotIfWin(string funcname, object obj0 = null, object obj1 = null)
+		{
+			if (obj0 != null || obj1 != null)
+			{
+				var mi = typeof(HotkeyDefinition).GetMethod(funcname, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+				var fo = new FuncObj(mi);
+				var bf = fo.Bind(obj0 ?? "", obj1 ?? "");//Must not pass null so that the logic in BoundFunc.Call() works.
+				Keysharp.Scripting.Script.hotCriterion = AddHotkeyIfExpr(bf);
+			}
+			else
+				Keysharp.Scripting.Script.hotCriterion = null;
+		}
+
 		private bool Disable(HotkeyVariant aVariant) // Returns true if the variant needed to be disabled, in which case caller should generally call ManifestAllHotkeysHotstringsHooks().
 		{
 			if (!aVariant.enabled) // Added for v1.0.23 to greatly improve performance when hotkey is already in the right state.
@@ -2528,80 +2529,9 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		internal FuncObj callback;
 
-		//Unsure if this should be a function or a function object.//TODO
-		internal HotkeyCriterion nextCriterion, nextExpr;
+		internal HotkeyCriterion nextCriterion, nextExpr;//Rather than next, we should just use a list or queue.//TODO.
 
-		internal string originalExpr;
-		internal HotCriterionEnum type;
-		internal string winTitle, winText;
-
-		// For finding expr in #HotIf expr
-		// Evaluate an #HotIf expression or callback function.
-		// This is called by MainWindowProc when it receives an AHK_HOT_IF_EVAL message.
-		/*
-		    internal ResultType Eval(string aHotkeyName)//Appears to be for evaluating new hotkeys at runtime, fill in later.//TODO
-		    {
-		    // Initialize a new quasi-thread to evaluate the expression. This may not be necessary for simple
-		    // expressions, but expressions which call user-defined functions may otherwise interfere with
-		    // whatever quasi-thread is running when the hook thread requests that this expression be evaluated.
-
-		    // Based on parts of MsgMonitor(). See there for comments.
-
-		    if (g_nThreads >= g_MaxThreadsTotal)
-		    return CONDITION_FALSE;
-
-		    bool prev_defer_messages = g_DeferMessagesForUnderlyingPump;
-		    // Force the use of PeekMessage() within MsgSleep() since GetMessage() is known to stall while
-		    // the system is waiting for our keyboard hook to return (last confirmed on Windows 10.0.18356).
-		    // This might relate to WM_TIMER being lower priority than the input hardware processing
-		    // performed by GetMessage().  MsgSleep() relies on WM_TIMER acting as a timeout for GetMessage().
-		    g_DeferMessagesForUnderlyingPump = true;
-
-		    // See MsgSleep() for comments about the following section.
-		    // Critical seems to improve reliability, either because the thread completes faster (i.e. before the timeout) or because we check for messages less often.
-		    InitNewThread(0, false, true, true);
-		    ResultType result;
-
-		    // Let HotIf default to the criterion currently being evaluated, in case Hotkey() is called.
-		    g.HotCriterion = this;
-
-		    // Update A_ThisHotkey, useful if #HotIf calls a function to do its dirty work.
-		    LPTSTR prior_hotkey_name[] = { g_script.mThisHotkeyName, g_script.mPriorHotkeyName };
-		    DWORD prior_hotkey_time[] = { g_script.mThisHotkeyStartTime, g_script.mPriorHotkeyStartTime };
-		    g_script.mPriorHotkeyName = g_script.mThisHotkeyName;           // For consistency
-		    g_script.mPriorHotkeyStartTime = g_script.mThisHotkeyStartTime; //
-		    g_script.mThisHotkeyName = aHotkeyName;
-		    g_script.mThisHotkeyStartTime = // Updated for consistency.
-		    g_script.mLastPeekTime = GetTickCount();
-
-		    // CALL THE CALLBACK
-		    ExprTokenType param = aHotkeyName;
-		    __int64 retval;
-		    result = IObjectPtr(Callback).ExecuteInNewThread(_T("#HotIf"), &param, 1, &retval);
-		    if (result != FAIL)
-		    result = retval ? CONDITION_TRUE : CONDITION_FALSE;
-
-		    // The following allows the expression to set the Last Found Window for the
-		    // hotkey function.
-		    // There may be some rare cases where the wrong hotkey gets this HWND (perhaps
-		    // if there are multiple hotkey messages in the queue), but there doesn't seem
-		    // to be any easy way around that.
-		    g_HotExprLFW = g.hWndLastUsed; // Even if above failed, for simplicity.
-
-		    // A_ThisHotkey must be restored else A_PriorHotkey will get an incorrect value later.
-		    g_script.mThisHotkeyName = prior_hotkey_name[0];
-		    g_script.mThisHotkeyStartTime = prior_hotkey_time[0];
-		    g_script.mPriorHotkeyName = prior_hotkey_name[1];
-		    g_script.mPriorHotkeyStartTime = prior_hotkey_time[1];
-
-		    ResumeUnderlyingThread();
-
-		    g_DeferMessagesForUnderlyingPump = prev_defer_messages;
-
-		    return result;
-		    return ResultType.ConditionTrue;
-		    }
-		*/
+		internal HotkeyCriterion(FuncObj fo) => callback = fo;
 	}
 
 	/// <summary>

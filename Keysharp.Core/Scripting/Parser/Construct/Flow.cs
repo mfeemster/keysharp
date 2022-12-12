@@ -441,7 +441,6 @@ namespace Keysharp.Scripting
 				{
 					var blockOpen = false;
 					var condition = parts.Length > 1 ? ParseFlowParameter(line, parts[1], true, out blockOpen, true) : new CodePrimitiveExpression(true);
-
 					var loop = new CodeIterationStatement
 					{
 						InitStatement = new CodeSnippetStatement(string.Empty),
@@ -678,12 +677,32 @@ namespace Keysharp.Scripting
 					var tcf = new CodeTryCatchFinallyStatement();
 					var ctch = new CodeCatchClause($"ex{excount++}", new CodeTypeReference("Keysharp.Core.Error"));
 					_ = tcf.CatchClauses.Add(ctch);
-					var block = new CodeBlock(line, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
+
+					if (parts.Length > 1 && parts[1] != "{")
 					{
-						Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
-					};
-					_ = CloseTopSingleBlock();
-					blocks.Push(block);
+						if (parts[1].StartsWith("throw", StringComparison.OrdinalIgnoreCase))
+						{
+							var templines = new List<CodeLine>();
+							templines.Add(new CodeLine(line.FileName, line.LineNumber, parts[1]));
+							var result = ParseFlow(templines, 0);
+							tcf.TryStatements.AddRange(result);
+						}
+						else//Any other control flow statements aren't supported on a singel line, such as try if, try while etc...
+						{
+							var result = ParseSingleExpression(parts[1], true);//Allow a single line try statement to create vars.
+							_ = tcf.TryStatements.Add(result);
+						}
+					}
+					else
+					{
+						var block = new CodeBlock(line, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
+						{
+							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
+						};
+						_ = CloseTopSingleBlock();
+						blocks.Push(block);
+					}
+
 					return new CodeStatement[] { tcf };
 				}
 

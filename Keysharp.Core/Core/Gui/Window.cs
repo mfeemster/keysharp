@@ -150,8 +150,6 @@ namespace Keysharp.Core
 			if (string.IsNullOrEmpty(name))
 				return;
 
-			name = name.ToLowerInvariant();
-
 			if (!windowGroups.ContainsKey(name))
 				windowGroups.Add(name, new WindowGroup());
 

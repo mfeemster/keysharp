@@ -266,9 +266,9 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring")]
 		public void ResetOnMouseClick()
 		{
-			var newVal = false;
+			var newVal = true;
 			var origVal = Script.ResetUponMouseClick;
-			Assert.AreEqual(origVal, true);
+			Assert.AreEqual(origVal, false);
 			var oldVal = Keysharp.Core.Keyboard.Hotstring("MouseReset", newVal);
 			Assert.AreNotEqual(origVal, Script.ResetUponMouseClick);
 			Assert.AreEqual(Script.ResetUponMouseClick, newVal);

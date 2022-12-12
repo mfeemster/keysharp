@@ -16,7 +16,7 @@ namespace Keysharp.Scripting
 		private readonly string multiLineComments = new string(new[] { MultiComB, MultiComA });
 		private string includePath = "./";
 		private char[] libBrackets = new char[] { '<', '>' };
-		// Environment.NewLine;
+		private int hotifcount;
 
 		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
 		{
@@ -177,6 +177,7 @@ namespace Keysharp.Scripting
 			string code;
 			var line = 0;
 			var list = new List<CodeLine>();
+			var extralines = new List<CodeLine>();
 			var replace = new[,]//These will need to be done differently on linux.//LINUXTODO
 			{
 				{ "%A_AhkPath%", Accessors.A_AhkPath },
@@ -410,6 +411,30 @@ namespace Keysharp.Scripting
 						}
 						break;
 
+						case "HOTIF":
+							if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
+							{
+								var hotiffuncname = $"HotIf_{hotifcount++}";
+								extralines.Add(new CodeLine(name, line, $"{hotiffuncname}(thehotkey)"));
+								extralines.Add(new CodeLine(name, line, "{"));
+								extralines.Add(new CodeLine(name, line, $"return {parts[1]}"));
+								extralines.Add(new CodeLine(name, line, "}"));
+								var tempcl = new CodeLine(name, line, $"HotIf(FuncObj(\"{hotiffuncname}\"))");
+
+								if (line < list.Count)
+								{
+									list.Insert(line, tempcl);
+								}
+								else
+								{
+									list.Add(tempcl);
+								}
+							}
+							else
+								list.Add(new CodeLine(name, line, "HotIf(\"\")"));
+
+							break;
+
 						case "NODYNAMICVARS":
 							DynamicVars = false;
 							break;
@@ -620,6 +645,14 @@ namespace Keysharp.Scripting
 					if (code.Length != 0)
 						list.Add(new CodeLine(name, line, code));
 				}
+			}
+
+			line = list.Count > 0 ? list[list.Count - 1].LineNumber : 0;
+
+			foreach (var extraline in extralines)
+			{
+				extraline.LineNumber = ++line;
+				list.Add(extraline);
 			}
 
 			return list;

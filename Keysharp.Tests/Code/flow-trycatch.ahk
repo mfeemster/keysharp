@@ -356,3 +356,31 @@ if (b == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+b := false
+
+try b := true
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+try bb := true
+
+if (bb == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+b := false
+try throw Error("test")
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

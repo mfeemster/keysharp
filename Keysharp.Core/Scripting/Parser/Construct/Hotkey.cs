@@ -347,8 +347,7 @@ namespace Keysharp.Scripting
 								// part of y::z.
 								return null;// ScriptError(ERR_HOTKEY_MISSING_BRACE);
 
-							/*
-							*/
+							//Need to figure out "remapping".//TODO
 							Func<string, ResultType> make_remap_hotkey = (string aKey) => //[&](LPTSTR aKey)
 							{
 								/*
@@ -809,83 +808,38 @@ namespace Keysharp.Scripting
 			var suffix_has_tilde = false;//Need to figure out passing this in or what to do with them later.//TODO
 			var hook_is_mandatory = false;
 
-			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(buf, ref suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
-			{
-				if (hook_action != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
-				{
-					// Hotkey::Dynamic() contains logic and comments similar to this, so maintain them together.
-					// An attempt to add an alt-tab variant to an existing hotkey.  This might have
-					// merit if the intention is to make it alt-tab now but to later disable that alt-tab
-					// aspect via the Hotkey cmd to let the context-sensitive variants shine through
-					// (take effect).
-					hk.hookAction = hook_action;
-				}
-				else
-				{
-					// Detect duplicate hotkey variants to help spot bugs in scripts.
-					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-					{
-						//mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
-						return null;// ScriptError(_T("Duplicate hotkey."), buf);
-					}
+			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
+				// A hotkey is stacked above, eg,
+				// x::
+				// y & z::altTab
+				// Not supported.
+				return null; // ScriptError(ERR_HOTKEY_MISSING_BRACE);
 
-					//if (set_last_hotfunc() == null)//TODO
-					//return null;// ResultType.Fail;
+			if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
+				return null;
 
-					if (hk.AddVariant(new FuncObj(lastHotkeyFunc, null), suffix_has_tilde) == null)
-						return null;// ScriptError(ERR_OUTOFMEM, buf);
+			Persistent = true;
+			var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
+			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotkeyFunc}\", null)") : new CodePrimitiveExpression(null));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotkeyName));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffix_has_tilde));
 
-					if (hook_is_mandatory || Keysharp.Scripting.Script.forceKeybdHook)
-					{
-						// Require the hook for all variants of this hotkey if any variant requires it.
-						// This seems more intuitive than the old behavior, which required $ or #UseHook
-						// to be used on the *first* variant, even though it affected all variants.
-						hk.keybdHookMandatory = true;
-					}
-				}
+			if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
+				stackedHotkeys.Add(invoke);
 
-				//Not sure if stackedHotkeys should be used here too?//TODO
-				lastHotstringFunc = "";//After adding a hotkey, we must clear any hotstring state.
-				Parser.Persistent = true;
-				//Need to figure out what to return here, else it'll just return null below.//TODO
-			}
-			else // No parent hotkey yet, so create it.
-			{
-				if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
-					// A hotkey is stacked above, eg,
-					// x::
-					// y & z::altTab
-					// Not supported.
-					return null; // ScriptError(ERR_HOTKEY_MISSING_BRACE);
-
-				if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
-					return null;
-
-				Persistent = true;
-				var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
-				_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotkeyFunc}\", null)") : new CodePrimitiveExpression(null));
-				_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
-				_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotkeyName));
-				_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffix_has_tilde));
-
-				if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
-					stackedHotkeys.Add(invoke);
-
-				return invoke;
-				//hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
-				//if (hk == null)
-				//{
-				//  if (hotkeyValidity != ResultType.ConditionTrue)
-				//      return null;// ResultType.Fail; // It already displayed the error.
-				//  // This hotkey uses a single-character key name, which could be valid on some other
-				//  // keyboard layout.  Allow the script to start, but warn the user about the problem.
-				//  // Note that this hotkey's label is still valid even though the hotkey wasn't created.
-				//  if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-				//      _ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
-				//}
-			}
-
-			return null;
+			//hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
+			//if (hk == null)
+			//{
+			//  if (hotkeyValidity != ResultType.ConditionTrue)
+			//      return null;// ResultType.Fail; // It already displayed the error.
+			//  // This hotkey uses a single-character key name, which could be valid on some other
+			//  // keyboard layout.  Allow the script to start, but warn the user about the problem.
+			//  // Note that this hotkey's label is still valid even though the hotkey wasn't created.
+			//  if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+			//      _ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
+			//}
+			return invoke;
 		}
 	}
 }

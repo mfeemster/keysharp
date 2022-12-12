@@ -463,7 +463,7 @@ namespace Keysharp.Core.Windows
 		/// neutral one.
 		/// </summary>
 		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, int vk, int sc,
-							  bool keyUp, Keysharp.Core.Common.Keyboard.KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost)
+							  bool keyUp, Keysharp.Core.Common.Keyboard.KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, HotkeyVariant variant)
 		{
 			HotstringDefinition hsOut = null;
 			var caseConformMode = CaseConformModes.None;
@@ -527,12 +527,12 @@ namespace Keysharp.Core.Windows
 
 					if (forceToggle != null) // Key is a toggleable key.
 						if (forceToggle != ToggleValueType.Neutral) // Prevent toggle.
-							return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIDToPost);
+							return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIDToPost, variant);
 				}
 
 				if ((HotstringDefinition.enabledCount > 0 && !isIgnored) || Keysharp.Scripting.Script.input != null)
 					if (!CollectInput(ref kbd, vk, sc, keyUp, isIgnored, keyHistoryCurr, ref hsOut, ref caseConformMode, ref endChar)) // Key should be invisible (suppressed).
-						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIDToPost, hsOut, caseConformMode, endChar);
+						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIDToPost, variant, hsOut, caseConformMode, endChar);
 
 				// Do this here since the above "return SuppressThisKey" will have already done it in that case.
 				UpdateKeybdState(ref kbd, vk, sc, keyUp, false);
@@ -712,7 +712,8 @@ namespace Keysharp.Core.Windows
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 					wParam = new IntPtr(hotkeyIDToPost),
-					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level))
+					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)),
+					obj = variant
 				});
 				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyIDToPost, KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)); // v1.0.43.03: sc is posted currently only to support the number of wheel turns (to store in A_EventInfo).
 
@@ -725,6 +726,7 @@ namespace Keysharp.Core.Windows
 						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
 						lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level))
+						//Do not pass the variant.
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK], KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level));
 				}
@@ -1449,7 +1451,7 @@ namespace Keysharp.Core.Windows
 							// ... v1.0.41: Or it's a perfect match but the right window isn't active or doesn't exist.
 							// In that case, continue searching for other matches in case the script contains
 							// hotstrings that would trigger simultaneously were it not for the "only one" rule.
-							|| HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name) == IntPtr.Zero)
+							|| !HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name))
 						continue; // No match or not eligible to fire.
 
 					// v1.0.42: The following scenario defeats the ability to give criterion hotstrings
@@ -2433,7 +2435,7 @@ namespace Keysharp.Core.Windows
 				// Artificial character input via VK_PACKET isn't supported by hotkeys, since they always work via
 				// keycode, but hotstrings and Input are supported via the macro below when #InputLevel is non-zero.
 				// Must return now to avoid misinterpreting aSC as an actual scancode in the code below.
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			//else: Use usual modified value.
@@ -2479,7 +2481,7 @@ namespace Keysharp.Core.Windows
 			// Also, it seems best to block artificial LWIN keystrokes too, in case some other script or
 			// program tries to display the Start Menu during playback.
 			if (blockWinKeys && (vk == VK_LWIN || vk == VK_RWIN) && !keyUp)
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 			// v1.0.37.07: Cancel the alt-tab menu upon receipt of Escape so that it behaves like the OS's native Alt-Tab.
 			// Even if is_ignored==true, it seems more flexible/useful to cancel the Alt-Tab menu upon receiving
@@ -2528,7 +2530,7 @@ namespace Keysharp.Core.Windows
 					//    alt-tab suffix, testing shows that the existing alt-tab logic here in the hook will put
 					//    alt or shift-alt back down if it needs to.
 					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, (kbdMsSender.modifiersLRLogical & MOD_RALT) != 0 ? VK_RMENU : VK_LMENU);
-					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));// Testing shows that by contrast, the upcoming key-up on Escape doesn't require this logic.
+					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));// Testing shows that by contrast, the upcoming key-up on Escape doesn't require this logic.
 				}
 
 				// Otherwise, the alt-tab window doesn't exist or (more likely) it's owned by some other process
@@ -2573,7 +2575,7 @@ namespace Keysharp.Core.Windows
 					prefixKey = null;
 				}
 
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			if (!keyUp) // Set defaults for this down event.
@@ -2592,7 +2594,7 @@ namespace Keysharp.Core.Windows
 			{
 				// If no vk, there's no mapping for this key, so currently there's no way to process it.
 				if (vk == 0)
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// Also, if the script is displaying a menu (tray, main, or custom popup menu), always
 				// pass left-button events through -- even if LButton is defined as a hotkey -- so
@@ -2629,7 +2631,7 @@ namespace Keysharp.Core.Windows
 					// ...because it returned too early here before it could get to that part further below.
 					thisKey.downPerformedAction = false; // Seems ok in this case to do this for both aKeyUp and !aKeyUp.
 					thisKey.isDown = !keyUp;
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 			} // Mouse hook.
 
@@ -2667,7 +2669,7 @@ namespace Keysharp.Core.Windows
 				// Fix for v1.1.31.03: Done conditionally because its previous value is used below.  This affects
 				// modifier keys as hotkeys, such as Shift::MsgBox.
 				thisKey.isDown = !keyUp;
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			var hotkeyIdWithFlags = (uint)HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
@@ -2881,7 +2883,7 @@ namespace Keysharp.Core.Windows
 					// this_toggle_key_can_be_toggled
 					if (thisKey.asModifiersLR != 0 || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0
 							|| thisToggleKeyCanBeToggled || hasNoEnabledSuffixes)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// Mark this key as having been suppressed.  This currently doesn't have any known effect
 					// since the change to tilde (~) handling in v1.0.95 (commit 161162b8), but may in future.
@@ -2892,7 +2894,7 @@ namespace Keysharp.Core.Windows
 					//      originally intended.
 					//   2) #if false .. ~prefixkey:: causes the key-up to pass through when it should be suppressed.
 					thisKey.hotkeyDownWasSuppressed = true;
-					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				//else valid suffix hotkey has been found; this will now fall through to Case #4 by virtue of aKeyUp==false.
@@ -2966,8 +2968,8 @@ namespace Keysharp.Core.Windows
 						suppress_up_event = true;
 
 					return (downPerformedAction && suppress_up_event) ?
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				//else continue checking to see if the right modifiers are down to trigger one of this
@@ -3017,7 +3019,7 @@ namespace Keysharp.Core.Windows
 				if (hotkeyIdWithFlags == HotkeyDefinition.HOTKEY_ID_INVALID && (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT) != 0)
 				{
 					thisKey.noSuppress &= ~HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;  // This ticket has been used up.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));// This should handle pForceToggle for us, suppressing if necessary.
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));// This should handle pForceToggle for us, suppressing if necessary.
 				}
 
 				if (thisToggleKeyCanBeToggled) // Always false if our caller is the mouse hook.
@@ -3038,7 +3040,7 @@ namespace Keysharp.Core.Windows
 					{
 						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyPhysIgnore);// Mark it as physical for any other hook instances.
 						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, vk, sc);
-						return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 					}
 
 					// Otherwise, if it was used to modify a non-suffix key, or it was just
@@ -3046,7 +3048,7 @@ namespace Keysharp.Core.Windows
 					// at all.  UPDATE: Don't return here if it didn't modify anything because
 					// this prefix might also be a suffix. Let later sections handle it then.
 					if (thisKey.wasJustUsed == KeyType.AS_PREFIX)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 				else // It's not a toggleable key, or it is but it's being kept forcibly on or off.
 
@@ -3064,11 +3066,11 @@ namespace Keysharp.Core.Windows
 							&& hotkeyIdWithFlags == HotkeyDefinition.HOTKEY_ID_INVALID) // v1.0.44.04: Must check this because this prefix might be being used in its role as a suffix instead.
 					{
 						if (thisKey.asModifiersLR != 0) // Always false if our caller is the mouse hook.
-							return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));// Win/Alt will be disguised if needed.
+							return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));// Win/Alt will be disguised if needed.
 
 						return (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0 ?
-							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-							   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)) :
+							   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 					}
 
 				// v1.0.41: This spot cannot be reached when a disabled prefix key's up-action fires on
@@ -3090,8 +3092,8 @@ namespace Keysharp.Core.Windows
 					return (thisKey.asModifiersLR != 0 || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0
 							// The order on this line important; it relies on short-circuit boolean:
 							|| thisToggleKeyCanBeToggled) ?
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// Since the above didn't return, this key is both a prefix and a suffix, but
 				// is currently operating in its capacity as a suffix.
@@ -3108,7 +3110,7 @@ namespace Keysharp.Core.Windows
 				// even when *no* keyboard management software is installed). Some keyboards also have
 				// scroll wheels that generate a stream of up events in one direction and down in the other.
 				if (!(wasDownBeforeUp || thisKey.usedAsKeyUp)) // Verified correct.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				//else v1.0.37.05: Since no suffix action was triggered while it was held down, fall through
 				// rather than returning so that the key's own unmodified/naked suffix action will be considered.
@@ -3220,7 +3222,7 @@ namespace Keysharp.Core.Windows
 
 						if ((firingIsCertain = HotkeyDefinition.CriterionFiringIsCertain(ref hotkeyIdWithFlags
 											   , keyUp, (uint)kbd.dwExtraInfo, ref thisKey.noSuppress, ref fireWithNoSuppress, ref keyHistoryCurr.eventType)) == null)
-							return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));// This should handle pForceToggle for us, suppressing if necessary.
+							return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));// This should handle pForceToggle for us, suppressing if necessary.
 					}
 
 					hotkeyIdTemp = hotkeyIdWithFlags;
@@ -3336,7 +3338,7 @@ namespace Keysharp.Core.Windows
 					if (!keyUp)
 						thisKey.hotkeyDownWasSuppressed = true;
 
-					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 				} // end of alt-tab section.
 
 				// Since above didn't return, this isn't a prefix-triggered alt-tab action (though it might be
@@ -3487,8 +3489,8 @@ namespace Keysharp.Core.Windows
 								|| thisKey.usedAsPrefix == 0
 								// The order on this line important; it relies on short-circuit boolean:
 								|| thisToggleKeyCanBeToggled) ?
-							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-							   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)) :
+							   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// v1.0.37.02: Added !this_key.used_as_prefix for mouse hook too (see comment above).
 
@@ -3517,7 +3519,7 @@ namespace Keysharp.Core.Windows
 					// So in summary, by default a prefix key's native function is always suppressed except if it's
 					// a toggleable key such as num/caps/scroll-lock.
 					if (thisKey.hotkeyToFireUponRelease == HotkeyDefinition.HOTKEY_ID_INVALID)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 					char? ch = null;
 					// Otherwise (v1.0.44): Since there is a hotkey to fire upon release (somewhat rare under these conditions),
@@ -3532,8 +3534,8 @@ namespace Keysharp.Core.Windows
 							, ref fireWithNoSuppress, ref ch); // fire_with_no_suppress is the value we really need to get back from it.
 					thisKey.hotkeyDownWasSuppressed = !fireWithNoSuppress; // Fixed for v1.1.33.01: If this isn't set, the key-up won't be suppressed even after the key-down is.
 					return fireWithNoSuppress ?
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				//else an eligible hotkey was found.
@@ -3562,7 +3564,7 @@ namespace Keysharp.Core.Windows
 					&& (firingIsCertain = HotkeyDefinition.CriterionFiringIsCertain(ref hotkeyIdWithFlags, keyUp, (uint)kbd.dwExtraInfo, ref thisKey.noSuppress, ref fireWithNoSuppress, ref keyHistoryCurr.eventType)) == null)
 			{
 				if (keyHistoryCurr.eventType == 'i') // This non-zero SendLevel event is being ignored due to #InputLevel, so unconditionally pass it through, like with is_ignored.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// v1.1.08: Although the hotkey corresponding to this event is disabled, it may need to
 				// be suppressed if it has a counterpart (key-down or key-up) hotkey which is enabled.
@@ -3575,11 +3577,11 @@ namespace Keysharp.Core.Windows
 				//     Prior to v1.1.08, neither event was suppressed.
 				if (keyUp)
 					return thisKey.hotkeyDownWasSuppressed ?
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				if (thisKey.hotkeyToFireUponRelease == HotkeyDefinition.HOTKEY_ID_INVALID)
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				char? ch = null;
 				// Otherwise, this is a key-down event with a corresponding key-up hotkey.
@@ -3592,13 +3594,13 @@ namespace Keysharp.Core.Windows
 						, ref fireWithNoSuppress, ref ch); // fire_with_no_suppress is the value we really need to get back from it.
 
 				if (fireWithNoSuppress)
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// Both this down event and the corresponding up event should be suppressed, so
 				// unset the flag which was set by the first call to CriterionFiringIsCertain():
 				thisKey.noSuppress &= ~HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;
 				thisKey.hotkeyDownWasSuppressed = true;
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			hotkeyIdTemp = hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_ID_MASK; // Update in case CriterionFiringIsCertain() changed the naked/raw ID.
@@ -3662,7 +3664,7 @@ namespace Keysharp.Core.Windows
 
 			//Had to pull this out of the case statement because it's not allowed to fall though.
 			if (hotkeyIdToFire == HotkeyDefinition.HOTKEY_ID_ALT_TAB_MENU_DISMISS && !altTabMenuIsVisible)// This case must occur before HOTKEY_ID_ALT_TAB_MENU due to non-break.
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)); // Let the key do its native function.
+				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null)); // Let the key do its native function.
 
 			switch (hotkeyIdToFire)
 			{
@@ -3808,7 +3810,7 @@ namespace Keysharp.Core.Windows
 					// WheelDown::AltTab     ; But if the menu is displayed, the wheel will function normally.
 					// WheelUp::ShiftAltTab  ; But if the menu is displayed, the wheel will function normally.
 					if (!altTabMenuIsVisible)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// Unlike CONTROL, SHIFT, AND ALT, the LWIN/RWIN keys don't seem to need any
 					// special handling to make them work with the alt-tab features.
@@ -3881,12 +3883,14 @@ namespace Keysharp.Core.Windows
 					//return
 					hotkeyIdToPost = hotkeyIdToFire; // Set this only when it is certain that this ID should be sent to the main thread via msg.
 
-					if (firingIsCertain.hotCriterion != null && HotkeyDefinition.HOT_IF_REQUIRES_EVAL(firingIsCertain.hotCriterion.type))
+					if (firingIsCertain.hotCriterion != null)
 					{
 						// To avoid evaluating the expression twice, indicate to the main thread that the appropriate variant
 						// has already been determined, by packing the variant's index into the high word of the param:
-						hotkeyIdToPost |= (uint)(firingIsCertain.index << 16);
+						//hotkeyIdToPost |= (uint)(firingIsCertain.index << 16);
 					}
+					else
+						firingIsCertain = null;
 
 					// Otherwise CriterionFiringIsCertain() might have returned a global variant (not necessarily the one
 					// that will actually fire), so if we ever decide to do the above for other criterion types rather than
@@ -3913,7 +3917,7 @@ namespace Keysharp.Core.Windows
 				// be able to toggle the CapsLock key):
 				kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyPhysIgnore);// Mark it as physical for any other hook instances.
 				kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, vk, sc);
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 			}
 
 			if (keyUp)
@@ -3930,8 +3934,8 @@ namespace Keysharp.Core.Windows
 					// *LAlt up::Send {LWin up}
 					// *LAlt::Send {LWin down}
 					return thisKey.hotkeyDownWasSuppressed ?
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost)) :
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain)) :
+						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 
 				if (fireWithNoSuppress) // Plus we know it's not a modifier since otherwise it would've returned above.
 				{
@@ -3942,7 +3946,7 @@ namespace Keysharp.Core.Windows
 					// That info plus anything else relevant in MSLLHOOKSTRUCT would have to be
 					// translated into the correct info for a call to mouse_event().
 					if (hook == mouseHook)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 
 					// Otherwise, our caller is the keyboard hook.
 					// The following section is currently disabled because it hasn't been working as intended
@@ -3995,7 +3999,7 @@ namespace Keysharp.Core.Windows
 					// it probably does no harm to let the key-up pass through, and in this case, it's exactly
 					// what the script is asking to happen (by prefixing the key-up hotkey with '~').
 					// this_key.pForceToggle isn't checked because AllowIt() handles that.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 				} // No suppression.
 			}
 			else // Key Down
@@ -4044,7 +4048,7 @@ namespace Keysharp.Core.Windows
 					// since doing so would result in the UP event having preceded the DOWN, which would
 					// be the wrong order.
 					thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 				}
 				else if (vk == VK_LMENU || vk == VK_RMENU)
 				{
@@ -4087,7 +4091,7 @@ namespace Keysharp.Core.Windows
 			if (!keyUp)
 				thisKey.hotkeyDownWasSuppressed = true;
 
-			return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost));
+			return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 		}
 
 		internal IntPtr LowLevelMouseHandler(int code, IntPtr param, ref MSDLLHOOKSTRUCT lParam)
@@ -4546,7 +4550,7 @@ namespace Keysharp.Core.Windows
 		}
 
 		internal long SuppressThisKeyFunc(IntPtr hook, ref KBDLLHOOKSTRUCT lParam, int vk, int sc, bool keyUp,
-										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost,
+										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, HotkeyVariant variant,
 										  HotstringDefinition hs = null, CaseConformModes caseConformMode = CaseConformModes.None, char endChar = (char)0)
 		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
 		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
@@ -4610,8 +4614,9 @@ namespace Keysharp.Core.Windows
 				_ = channel.Writer.TryWrite(new KeysharpMsg()
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-					wParam = new IntPtr(hotkeyIDToPost),
-					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level))
+					wParam = new IntPtr(hotkeyIDToPost),//Would be so much better to eventually pass around object references rather than array indexes.//TODO
+					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)),
+					obj = variant
 				});
 				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyIDToPost, KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)); // v1.0.43.03: sc is posted currently only to support the number of wheel turns (to store in A_EventInfo).
 
@@ -4624,6 +4629,7 @@ namespace Keysharp.Core.Windows
 						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
 						lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level))
+						//Do not pass the variant.
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK], KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level));
 				}
@@ -5235,17 +5241,13 @@ namespace Keysharp.Core.Windows
 									if (hs.hotCriterion != null)
 									{
 										// For details, see comments in the hotkey section of this switch().
-										if ((criterion_found_hwnd = HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name)) == IntPtr.Zero)
+										if (!HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name))
 											// Hotstring is no longer eligible to fire even though it was when the hook sent us
 											// the message.  Abort the firing even though the hook may have already started
 											// executing the hotstring by suppressing the final end-character or other actions.
 											// It seems preferable to abort midway through the execution than to continue sending
 											// keystrokes to the wrong window, or when the hotstring has become suspended.
 											continue;
-
-										// For details, see comments in the hotkey section of this switch().
-										if (!(hs.hotCriterion.type == HotCriterionEnum.IfActive || hs.hotCriterion.type == HotCriterionEnum.IfExist))
-											criterion_found_hwnd = IntPtr.Zero; // For "NONE" and "NOT", there is no last found window.
 									}
 									else // No criterion, so it's a global hotstring.  It can always fire, but it has no "last found window".
 										criterion_found_hwnd = IntPtr.Zero;
@@ -5266,7 +5268,6 @@ namespace Keysharp.Core.Windows
 										Accessors.A_EndChar = hs.endCharRequired ? hmsg.endChar.ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
 										priority = hs.priority;
 										Keysharp.Scripting.Script.SetHotNamesAndTimes(hs.Name);
-										Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
 										Accessors.A_SendLevel = hs.inputLevel;
 										Keysharp.Scripting.Script.hotCriterion = hs.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotstring by default.
 										_ = hs.PerformInNewThreadMadeByCaller();
@@ -5276,7 +5277,7 @@ namespace Keysharp.Core.Windows
 								break;
 
 							case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
-								_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, (uint)UserMessages.AHK_HOOK_HOTKEY);
+								_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, msg.obj as HotkeyVariant, (uint)UserMessages.AHK_HOOK_HOTKEY);
 								break;
 
 							//case (uint)UserMessages.AHK_HOTSTRING: // Added for v1.0.36.02 so that hotstrings work even while an InputBox or other non-standard msg pump is running.
@@ -5446,12 +5447,17 @@ namespace Keysharp.Core.Windows
 				            mouseHook = IntPtr.Zero;
 				*/
 			};
+
 			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
 			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
 			//before Application.Run().
 			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
 			//which are not persistent, and thus no main window will be present.
-			Keysharp.Core.Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
+			if (Keysharp.Core.Processes.mainContext != null)//Will be null during unit tests.
+				Keysharp.Core.Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
+			else
+				func();
+
 			//Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
 			return problem_activating_hooks;
 		}

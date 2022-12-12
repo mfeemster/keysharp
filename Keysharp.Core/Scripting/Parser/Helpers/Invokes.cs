@@ -12,8 +12,9 @@ namespace Keysharp.Scripting
 	{
 		private const string invokeCommand = "IsCommand";
 		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
+		private static int labelct;
 
-		internal static string LabelMethodName(string raw) => $"label_{raw.GetHashCode():X}";
+		internal static string LabelMethodName(string raw) => $"label_{raw.GetHashCode():X}_{labelct++:X}";
 
 		internal bool IsLocalMethodReference(string name)
 		{

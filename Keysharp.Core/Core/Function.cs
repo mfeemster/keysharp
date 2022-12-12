@@ -214,7 +214,7 @@ namespace Keysharp.Core
 		protected bool isVariadic;
 		protected MethodInfo mi;
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
-
+		public object Inst => inst;
 		public bool IsValid => mi != null;
 		public bool IsVariadic => isVariadic;
 
