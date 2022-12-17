@@ -9,7 +9,7 @@ namespace Keysharp.Core
 	public interface IFuncObj
 	{
 		public string Name { get; }
-
+		public bool IsValid { get; }
 		public object Call(params object[] obj);
 	}
 

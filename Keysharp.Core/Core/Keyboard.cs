@@ -178,12 +178,12 @@ namespace Keysharp.Core
 			var keyname = obj0.As();
 			var label = obj1.As();
 			var options = obj2.As();
-			FuncObj fo = null;
+			IFuncObj fo = null;
 			var hook_action = 0u;
 
 			if (obj1 != null)
 			{
-				fo = obj1 as FuncObj;
+				fo = GuiControl.GetFuncObj(obj1, null);
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
 				{
@@ -300,23 +300,7 @@ break_twice:;
 			IFuncObj ifunc = null;
 
 			if (xOption)
-			{
-				if (!string.IsNullOrEmpty(action))//The string could be a replacement string, a function name, a function object, or an expression to execute. These probably all don't work.//TODO
-				{
-					try
-					{
-						ifunc = new FuncObj(action);
-					}
-					catch
-					{
-						throw new ValueError($"Could not find built in or local method {action}() for hotstring.");
-					}
-
-					// Otherwise, it's always replacement text (the 'X' option is ignored at runtime).
-				}
-				else if (replacement is IFuncObj fo)
-					ifunc = fo;
-			}
+				ifunc = GuiControl.GetFuncObj(replacement, null);
 
 			var toggle = ToggleValueType.Neutral;
 

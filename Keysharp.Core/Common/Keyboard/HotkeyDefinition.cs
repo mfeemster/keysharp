@@ -65,11 +65,11 @@ namespace Keysharp.Core.Common.Keyboard
 		internal Keys Extra { get; }
 		internal Keys Keys { get; }
 		internal string Name { get; set; }
-		internal FuncObj Precondition { get; set; }
-		internal FuncObj Proc { get; set; }
+		internal IFuncObj Precondition { get; set; }
+		internal IFuncObj Proc { get; set; }
 		internal string Typed { get; set; }
 
-		internal HotkeyDefinition(Keys keys, Keys extra, Options options, FuncObj proc)
+		internal HotkeyDefinition(Keys keys, Keys extra, Options options, IFuncObj proc)
 		{
 			Keys = keys;
 			Extra = extra;
@@ -78,7 +78,7 @@ namespace Keysharp.Core.Common.Keyboard
 			Enabled = true;
 		}
 
-		internal HotkeyDefinition(uint _id, FuncObj callback, uint _hookAction, string _name, bool suffixHasTilde)
+		internal HotkeyDefinition(uint _id, IFuncObj callback, uint _hookAction, string _name, bool suffixHasTilde)
 		{
 			hookAction = _hookAction;
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -291,7 +291,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Returns the address of the new hotkey on success, or NULL otherwise.
 		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
 		/// </summary>
-		public static HotkeyDefinition AddHotkey(FuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
+		public static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
 		{
 			HotkeyDefinition hk;
 			var suffixHasTilde = false;
@@ -975,7 +975,7 @@ namespace Keysharp.Core.Common.Keyboard
 			return ref first;
 		}
 
-		internal static ResultType Dynamic(string hotkeyName, string options, FuncObj _callback, uint _hookAction)//Unsure if this should take a callback or a string/funcobj?//TODO
+		internal static ResultType Dynamic(string hotkeyName, string options, IFuncObj _callback, uint _hookAction)//Unsure if this should take a callback or a string/funcobj?//TODO
 		// Creates, updates, enables, or disables a hotkey dynamically (while the script is running).
 		// Returns OK or FAIL.
 		{
@@ -1960,7 +1960,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="_callback"></param>
 		/// <param name="_suffixHasTilde"></param>
 		/// <returns></returns>
-		internal HotkeyVariant AddVariant(FuncObj _callback, bool _suffixHasTilde)
+		internal HotkeyVariant AddVariant(IFuncObj _callback, bool _suffixHasTilde)
 		{
 			var vp = new HotkeyVariant
 			{
@@ -2563,7 +2563,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 	internal class HotkeyVariant
 	{
-		internal FuncObj callback;
+		internal IFuncObj callback;
 		internal bool enabled;
 		internal int existingThreads;
 		internal HotkeyCriterion hotCriterion;
@@ -2573,7 +2573,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
 		internal bool noSuppress;
-		internal FuncObj originalCallback;   // This is the callback set at load time.
+		internal IFuncObj originalCallback;   // This is the callback set at load time.
 		internal int priority;
 		internal bool runAgainAfterFinished;
 		internal DateTime runAgainTime;
