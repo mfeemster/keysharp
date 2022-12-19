@@ -233,7 +233,9 @@ namespace Keysharp.Core
 		{
 			mi = m;
 			inst = o;
-			Init();
+
+			if (mi != null)
+				Init();
 		}
 
 		public BoundFunc Bind(params object[] obj)

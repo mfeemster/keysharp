@@ -1680,7 +1680,12 @@ namespace Keysharp.Core
 			IFuncObj del = null;
 
 			if (h is string s)
-				del = new FuncObj(s, eventObj);//If eventObj is not null, then s is assumed to be a method on that object, else s is assumed to be a global function.
+			{
+				var tempdel = new FuncObj(s, eventObj);
+
+				if (tempdel.IsValid)
+					del = tempdel;
+			}
 			else if (h is IFuncObj fo)
 				del = fo;
 
