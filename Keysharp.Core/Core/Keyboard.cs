@@ -122,7 +122,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="KeyName">Use autohotkey definition or virtual key starting from "VK"</param>
 		/// <param name="Mode"></param>
-		public static object GetKeyState(object obj0, object obj1)
+		public static object GetKeyState(object obj0, object obj1 = null)
 		{
 			var keyname = obj0.As();
 			var mode = obj1.As();
@@ -143,14 +143,12 @@ namespace Keysharp.Core
 			// Since above didn't return: There is a virtual key (not a joystick control).
 			KeyStateTypes keystatetype;
 
-			switch (char.ToUpper(mode[0])) // Second parameter.
-			{
-				case 'T': keystatetype = KeyStateTypes.Toggle; break; // Whether a toggleable key such as CapsLock is currently turned on.
-
-				case 'P': keystatetype = KeyStateTypes.Physical; break; // Physical state of key.
-
-				default: keystatetype = KeyStateTypes.Logical; break;
-			}
+			if (string.Compare(mode, "T", true) == 0)
+				keystatetype = KeyStateTypes.Toggle;//Whether a toggleable key such as CapsLock is currently turned on.
+			else if (string.Compare(mode, "P", true) == 0)
+				keystatetype = KeyStateTypes.Physical;//Physical state of key.
+			else
+				keystatetype = KeyStateTypes.Logical;
 
 			return ScriptGetKeyState(vk, keystatetype); // 1 for down and 0 for up.
 		}

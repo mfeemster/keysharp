@@ -33,7 +33,7 @@ namespace Keysharp.Scripting
 		{
 			Line = line;
 			Method = method;
-			Statements = statements;
+			Statements = statements ?? new CodeStatementCollection();
 			Type = BlockType.Expect;
 			Kind = kind;
 			Parent = parent;
@@ -42,7 +42,7 @@ namespace Keysharp.Scripting
 			ExitLabel = exitLabel;
 		}
 
-		internal enum BlockKind { Dummy, IfElse, Function, Label, Loop, Try, Catch, Finally, TryElse, Switch, CaseWithBrace, CaseWithoutBrace, CaseDefault };
+		internal enum BlockKind { Dummy, IfElse, Function, Label, Loop, Try, Catch, Finally, TryElse, Switch, CaseWithBrace, CaseWithoutBrace, CaseDefault, Class };
 
 		internal enum BlockType { None, Expect, Within };
 	}

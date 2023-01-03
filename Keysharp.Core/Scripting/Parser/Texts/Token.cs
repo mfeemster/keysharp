@@ -62,6 +62,8 @@ namespace Keysharp.Scripting
 				return true;
 			else if (code[i] == Multicast)
 				return true;
+			else if (IsKeyword(code.Substring(0, i)))
+				return false;
 			else if (IsSpace(code[i]))
 			{
 				i++;
@@ -113,11 +115,21 @@ namespace Keysharp.Scripting
 			Spaces.CopyTo(delimiters, offset);
 			var word = code.Split(delimiters, 2)[0].ToLowerInvariant();
 
+			if (Scope.Length > 0)
+			{
+				switch (word)
+				{
+					case FunctionStatic:
+						return true;
+				}
+			}
+
 			switch (word)
 			{
 				case FlowBreak:
 				case FlowContinue:
 				case FlowCase:
+				case FlowClass:
 				case FlowDefault:
 				case FlowFor:
 				case FlowElse:
@@ -129,7 +141,6 @@ namespace Keysharp.Scripting
 				case FlowWhile:
 				case FunctionLocal:
 				case FunctionGlobal:
-				case FunctionStatic:
 				case FlowTry:
 				case FlowCatch:
 				case FlowFinally:

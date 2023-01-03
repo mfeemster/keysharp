@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <StartupObject>Keysharp.CompiledMain.Program</StartupObject>
+    <StartupObject>Keysharp.CompiledMain.program</StartupObject>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
     <Version>0.0.0.1</Version>
     <Authors>Matt Feemster</Authors>

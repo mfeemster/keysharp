@@ -79,31 +79,34 @@ namespace Keysharp.Scripting
 			parts.RemoveAt(i);
 		}
 
-		private void MergeObjectAssignmentAt(List<object> parts, int i)//Unsure how this function works, but it's converting a bunch of statements to a call to SetObject().
+		/// <summary>
+		/// When parsing an assignment to an element of a collection, it will parse to the following before this function is called:
+		///     Index(myobject, 1L) := 123
+		/// Which doesn't make sense, so it must be converted into a call to SetObject() like so:
+		///     SetObject(1L, myobject, 123L);
+		/// </summary>
+		/// <param name="parts"></param>
+		/// <param name="i"></param>
+		private void MergeObjectAssignmentAt(List<object> parts, int i)
 		{
 			int x = i - 1, y = i + 1;
 			var invoke = (CodeMethodInvokeExpression)parts[x];
-			CodeExpression target = null;
-			var step = new List<CodeExpression>();
+			CodeExpression p0, p1;
 
-			while (invoke.Parameters.Count == 2 && invoke.Method.MethodName == InternalMethods.Index.MethodName)
+			if (invoke.Parameters.Count == 2 && invoke.Method.MethodName == InternalMethods.Index.MethodName)
 			{
-				step.Add(invoke.Parameters[1]);
-
-				if (invoke.Parameters[0] is CodeMethodInvokeExpression inv)
-					invoke = inv;
-				else
-				{
-					target = invoke.Parameters[0];
-					break;
-				}
+				p0 = invoke.Parameters[1];
+				p1 = invoke.Parameters[0];
+			}
+			else//Should never happen.
+			{
+				p0 = new CodePrimitiveExpression(null);
+				p1 = new CodePrimitiveExpression(null);
 			}
 
 			var set = (CodeMethodInvokeExpression)InternalMethods.SetObject;
-			_ = set.Parameters.Add(step[0]);
-			step.RemoveAt(0);
-			_ = set.Parameters.Add(target);
-			_ = set.Parameters.Add(new CodeSnippetExpression("System.Array.Empty<object>()"));
+			_ = set.Parameters.Add(p0);
+			_ = set.Parameters.Add(p1);
 
 			if (y < parts.Count)
 			{

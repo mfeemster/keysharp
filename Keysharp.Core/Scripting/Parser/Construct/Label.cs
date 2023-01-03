@@ -38,8 +38,7 @@ namespace Keysharp.Scripting
 			};
 			_ = CloseTopSingleBlock();
 			blocks.Push(block);
-			//methods.Add(method.Name, method);
-			methods[method.Name] = method;//MATT
+			methods[typeStack.Peek()][method.Name] = method;
 			return method;
 		}
 	}

@@ -62,37 +62,6 @@ namespace Keysharp.Scripting
 		private string IfWinNotExist_WinTitle = string.Empty;
 		private eScriptInstance SingleInstance = eScriptInstance.Force;
 
-		internal void Init()
-		{
-			ErrorStdOut = false;
-			MaxThreadsPerHotkey = 1;
-			MaxThreadsTotal = 10;
-			HotExprTimeout = 1000;
-			MaxThreadsBuffer = false;
-			SuspendExempt = false;
-			HotstringDefinition.hsSuspendExempt = false;
-			preloadedDlls.Clear();
-			//NoEnv = NoEnvDefault;
-			NoTrayIcon = NoTrayIconDefault;
-			Persistent = PersistentDefault;
-			SingleInstance = eScriptInstance.Force;
-			WinActivateForce = WinActivateForceDefault;
-			HotstringNoMouse = false;
-			HotstringEndChars = string.Empty;
-			HotstringNewOptions = string.Empty;
-			//LTrimForced = false;
-			IfWinActive_WinTitle = string.Empty;
-			IfWinActive_WinText = string.Empty;
-			IfWinExist_WinTitle = string.Empty;
-			IfWinExist_WinText = string.Empty;
-			IfWinNotActive_WinTitle = string.Empty;
-			IfWinNotActive_WinText = string.Empty;
-			IfWinNotExist_WinTitle = string.Empty;
-			IfWinNotExist_WinText = string.Empty;
-			includes.Clear();
-			allVars.Clear();
-		}
-
 		internal void PrintCompilerErrors(string s)
 		{
 			if (ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)

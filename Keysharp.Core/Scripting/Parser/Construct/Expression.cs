@@ -1,14 +1,19 @@
 using System;
 using System.CodeDom;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management;
 using Keysharp.Core;
+using static System.Formats.Asn1.AsnWriter;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
+		bool memberVarsStatic = false;
+
 		private CodeExpression ParseExpression(List<object> parts, bool create)
 		{
 			RemoveExcessParentheses(parts);
@@ -71,6 +76,23 @@ namespace Keysharp.Scripting
 					else if (PrimitiveToExpression(part) is CodeExpression result)
 					{
 						parts[i] = result;
+
+						if (i >= 2)
+						{
+							if (parts[i - 1] is CodeBinaryOperatorType.Assign && parts[i - 2] is CodeVariableReferenceExpression cvre)
+							{
+								if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)//We are in a type that is not the main class, and also not inside of a function.
+								{
+									var orig = allVars[typeStack.Peek()].GetOrAdd(Scope).GetOrAdd(cvre.VariableName);
+
+									foreach (DictionaryEntry origkv in orig.UserData)//Copy "isstatic" if it exists.
+										result.UserData[origkv.Key] = orig.UserData[origkv.Key];
+
+									allVars[typeStack.Peek()].GetOrAdd(Scope)[cvre.VariableName] = result;
+								}
+							}
+						}
+
 						//if (result != null)
 						//{
 						//  var longresult = result.ParseLong(false);//Also supports hex.
@@ -90,6 +112,15 @@ namespace Keysharp.Scripting
 								   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 								   //Check for function or property calls on an object, which only count as read operations.
 								   : VarIdOrConstant(part, i == 0 && create && (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("["))), false);
+
+						if (memberVarsStatic && typeStack.Peek().Name != mainClassName && Scope.Length == 0)//Check if they are declaring a static member variable in a class other than the main one.
+						{
+							if (parts[i] is CodeVariableReferenceExpression cvre)
+							{
+								var member = allVars[typeStack.Peek()].GetOrAdd(Scope).GetOrAdd(cvre.VariableName);
+								member.UserData["isstatic"] = true;
+							}
+						}
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{
@@ -142,6 +173,7 @@ namespace Keysharp.Scripting
 
 										_ = invoke.Parameters.Add(val[0]);
 										parts.RemoveAt(n);//Remove first element (done again below).
+										setPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 									}
 									else
 									{
@@ -158,6 +190,8 @@ namespace Keysharp.Scripting
 											_ = invoke.Parameters.Add(caie.Indices[0]);//Don't want to use Vars if the property was dynamically specified, rather use the expression that was returned as the index to Vars.
 										else
 											_ = invoke.Parameters.Add(index[0]);//The problem is that this will have quotes on it at this point and be treated as a string no matter what, even if it's a dynamic var.//TODO
+
+										getPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 									}
 
 									parts[i] = invoke;
@@ -238,7 +272,7 @@ namespace Keysharp.Scripting
 							var hotifexpr = ParseExpression(paren, false);
 							var hotifmethod = LocalMethod(hotiffuncname);
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
-							methods.Add(hotiffuncname, hotifmethod);
+							methods[targetClass].Add(hotiffuncname, hotifmethod);
 							invoke = LocalMethodInvoke(name);
 							_ = invoke.Parameters.Add(new CodeSnippetExpression($"FuncObj(\"{hotiffuncname}\")"));
 						}
@@ -327,20 +361,15 @@ namespace Keysharp.Scripting
 							{
 								var tempscope = GetScope(blocklevel);
 
-								if (allVars.TryGetValue(tempscope, out var scopevars))
+								if (VarExistsAtCurrentOrParentScope(typeStack.Peek(), tempscope, name))
 								{
-									//if (tempscope != "")
-									//  name = tempscope + ScopeVar + name;
-									if (scopevars.Contains(name))
-									{
-										var specialinvoke = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){name})"), "Call"));
+									var specialinvoke = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){name})"), "Call"));
 
-										if (paren.Count != 0)
-											specialinvoke.Parameters.AddRange(passed);
+									if (paren.Count != 0)
+										specialinvoke.Parameters.AddRange(passed);
 
-										parts[i] = specialinvoke;
-										goto specialaddcall;
-									}
+									parts[i] = specialinvoke;
+									goto specialaddcall;
 								}
 							}
 						}
@@ -397,6 +426,7 @@ namespace Keysharp.Scripting
 								var val = ParseMultiExpression(extract.ToArray(), create);
 								_ = invoke.Parameters.Add(val[0]);
 								parts[0] = invoke;
+								setPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 								parts.RemoveAt(1);
 							}
 						}
@@ -433,12 +463,14 @@ namespace Keysharp.Scripting
 							// UNDONE: use generic approach to ++/-- for all types of operands?
 							if (x > -1 && parts[x] is CodeMethodInvokeExpression)
 							{
-								var sub = new List<object>(5);
-								sub.Add(parts[x]);
-								sub.Add(CodeBinaryOperatorType.Assign);
-								sub.Add(parts[x]);
-								sub.Add(Script.Operator.Add);
-								sub.Add(d);//See if this still works with d = 1.//MATT
+								var sub = new List<object>(5)
+								{
+									parts[x],
+										  CodeBinaryOperatorType.Assign,
+										  parts[x],
+										  Script.Operator.Add,
+										  d//See if this still works with d = 1.//MATT
+								};
 								//sub.Add(ops == Script.Operator.Increment ? d : -d);//MATT
 								parts.RemoveAt(i);
 								parts[x] = ParseExpression(sub, create);
@@ -1032,12 +1064,21 @@ namespace Keysharp.Scripting
 		{
 			var sub = new List<object>();
 			var expr = new List<CodeExpression>();
+			memberVarsStatic = false;
 
 			for (var i = 0; i < parts.Length; i++)
 			{
 				if (!(parts[i] is string s) || s.Length == 0)
 				{
 					sub.Add(parts[i]);
+					continue;
+				}
+
+				var part = parts[i] as string;
+
+				if (i == 0 && part == FunctionStatic)
+				{
+					memberVarsStatic = true;
 					continue;
 				}
 

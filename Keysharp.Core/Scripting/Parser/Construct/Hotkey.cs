@@ -578,7 +578,7 @@ namespace Keysharp.Scripting
 						var method = LocalMethod(funcname);
 						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 						method.Statements.AddRange(expr);
-						methods.Add(method.Name, method);
+						methods[targetClass].Add(method.Name, method);
 						ClearParserHotstringState();
 					}
 					else if (nextIndex < lines.Count)//Merge this with detecting otb, and see how X fits into this above.//TODO
@@ -608,7 +608,7 @@ namespace Keysharp.Scripting
 								block.Type = expect ? CodeBlock.BlockType.Expect : CodeBlock.BlockType.Within;
 								_ = CloseTopSingleBlock();
 								blocks.Push(block);
-								methods.Add(method.Name, method);
+								methods[typeStack.Peek()].Add(method.Name, method);
 								ClearParserHotstringState();
 							}
 							else if (replacement.Length == 0)//Check for stacked
@@ -646,7 +646,7 @@ namespace Keysharp.Scripting
 									block.Type = CodeBlock.BlockType.Expect;
 									_ = CloseTopSingleBlock();
 									blocks.Push(block);
-									methods.Add(method.Name, method);
+									methods[targetClass].Add(method.Name, method);
 									ClearParserHotstringState();
 								}
 							}
@@ -687,7 +687,7 @@ namespace Keysharp.Scripting
 						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 						method.Statements.AddRange(expr);
 						_ = method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
-						methods.Add(method.Name, method);
+						methods[targetClass].Add(method.Name, method);
 
 						if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 						{
@@ -733,7 +733,7 @@ namespace Keysharp.Scripting
 								block.Type = expect ? CodeBlock.BlockType.Expect : CodeBlock.BlockType.Within;
 								_ = CloseTopSingleBlock();
 								blocks.Push(block);
-								methods.Add(method.Name, method);
+								methods[targetClass].Add(method.Name, method);
 
 								if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 								{
@@ -783,7 +783,7 @@ namespace Keysharp.Scripting
 									block.Type = CodeBlock.BlockType.Expect;
 									_ = CloseTopSingleBlock();
 									blocks.Push(block);
-									methods.Add(method.Name, method);
+									methods[targetClass].Add(method.Name, method);
 
 									if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 									{

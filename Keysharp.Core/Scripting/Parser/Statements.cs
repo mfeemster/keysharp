@@ -41,7 +41,7 @@ namespace Keysharp.Scripting
 					case BlockOpen:
 						if (blocks.Count == 0)
 						{
-							block = new CodeBlock(lines[i], Scope, new CodeStatementCollection(), CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
+							block = new CodeBlock(lines[i], Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
 							_ = CloseTopSingleBlock();
 							blocks.Push(block);
 						}
@@ -75,7 +75,9 @@ namespace Keysharp.Scripting
 							}
 							else if (parentBlock.Kind == CodeBlock.BlockKind.Function)
 							{
-								if (methods.TryGetValue(parentBlock.Method, out var meth))
+								var typeMethods = methods[typeStack.Peek()];
+
+								if (typeMethods.TryGetValue(parentBlock.Method, out var meth))
 								{
 									var vari = 0;
 
@@ -83,7 +85,7 @@ namespace Keysharp.Scripting
 										foreach (CodeStatement cs in csc)
 											meth.Statements.Insert(vari++, cs);
 
-									if (staticFuncVars.PeekOrNull() is Dictionary<string, CodeExpression> dkt)
+									if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
 									{
 										foreach (var kv in dkt)
 										{
@@ -96,21 +98,21 @@ namespace Keysharp.Scripting
 											if (kv.Value is CodeExpression ce)
 												cmf.InitExpression = ce;
 
-											_ = targetClass.Members.Add(cmf);
+											_ = typeStack.Peek().Members.Add(cmf);
 										}
 									}
 
 									var scope = Scope.ToLower();
 
-									if (allVars.TryGetValue(scope, out var av))
+									if (allVars[typeStack.Peek()].TryGetValue(scope, out var av))
 									{
 										var gfv = globalFuncVars.PeekOrNull();
 
 										foreach (var v in av)
 										{
-											if (gfv == null || !gfv.Contains(v))
+											if (gfv == null || !gfv.Contains(v.Key))
 											{
-												var dec = new CodeVariableDeclarationStatement(typeof(object), v, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
+												var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
 												meth.Statements.Insert(vari++, dec);
 											}
 										}
@@ -122,8 +124,10 @@ namespace Keysharp.Scripting
 								_ = allStaticVars.TryPop(out _);
 								_ = globalFuncVars.PopOrNull();
 								_ = localFuncVars.PopOrNull();
-								_ = staticFuncVars.PopOrNull();
+								_ = staticFuncVars[typeStack.Peek()].PopOrNull();
 							}
+							else if (parentBlock.Kind == CodeBlock.BlockKind.Class)
+								_ = typeStack.PopOrNull();
 						}
 
 						CloseBlock();

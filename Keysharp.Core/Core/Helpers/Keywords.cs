@@ -604,6 +604,7 @@ namespace Keysharp.Core
 		internal const string FlowBreak = "break";
 		internal const string FlowCase = "case";
 		internal const string FlowContinue = "continue";
+		internal const string FlowClass = "class";
 		internal const string FlowDefault = "default";
 		internal const string FlowElse = "else";
 		internal const string FlowFor = "for";

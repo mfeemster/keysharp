@@ -14,13 +14,12 @@ namespace Keysharp.Scripting
 
 		private Stack<bool> allGlobalVars = new Stack<bool>();
 		private Stack<bool> allStaticVars = new Stack<bool>();
-		private Dictionary<string, SortedSet<string>> allVars = new Dictionary<string, SortedSet<string>>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
 		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private Stack<List<string>> globalFuncVars = new Stack<List<string>>();
 		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
-		private Stack<Dictionary<string, CodeExpression>> staticFuncVars = new Stack<Dictionary<string, CodeExpression>>();
-		//This will probably not work with global funcs and class funcs with the same name, need some type of more granular scoping.//MATT
+		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
 
 		public string ParseFunction(CodeLine line)
 		{
@@ -122,7 +121,7 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			methods.Add(method.Name, method);
+			methods[typeStack.Peek()].Add(method.Name, method);
 			return method.Name;
 		}
 
@@ -155,7 +154,7 @@ namespace Keysharp.Scripting
 			allStaticVars.Push(false);
 			globalFuncVars.Push(new List<string>());
 			localFuncVars.Push(new List<string>());
-			staticFuncVars.Push(new Dictionary<string, CodeExpression>());
+			staticFuncVars[typeStack.Peek()].Push(new Dictionary<string, CodeExpression>());
 			currentFuncParams.Push(new List<string>());
 		}
 

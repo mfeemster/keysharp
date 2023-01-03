@@ -296,3 +296,48 @@ if (m["one"] == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+m := { "one" : [1, 1, 1], "two" : [2, 2, 2], "three" : [3, 3, 3] }
+val := m["one"][1]
+
+if (val == 1)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m["one"][1] := 123
+
+if (m["one"][1] == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+val := m["one"][1]
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+
+m := { "one" : [[1, 1, 1], [2, 2, 2], [3, 3, 3]] }
+val := m["one"][3][1]
+
+if (val == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m["one"][3][1] := 123
+
+if (m["one"][3][1] == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+val := m["one"][3][1]
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

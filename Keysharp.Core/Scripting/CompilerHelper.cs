@@ -163,7 +163,7 @@ using static Keysharp.Scripting.Script.Operator;
 					IncludeDebugInformation = false,
 					GenerateInMemory = true,
 					OutputAssembly = outputname,
-					MainClass = "Keysharp.CompiledMain.Program",
+					MainClass = "Keysharp.CompiledMain.program",
 					ReferencedAssemblies =
 					{
 						"System.dll",

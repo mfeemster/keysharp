@@ -95,6 +95,26 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
+		public static object GetStaticMemberValueT<T>(object name)
+		{
+			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi)
+			{
+				try
+				{
+					pi.GetValue(null);
+				}
+				catch (Exception e)
+				{
+					if (e.InnerException is KeysharpException ke)
+						throw ke;
+					else
+						throw;
+				}
+			}
+
+			return null;
+		}
+
 		public static object GetPropertyValue(object item, object name)
 		{
 			var ret = InternalGetPropertyValue(item, name.ToString());
@@ -293,27 +313,9 @@ namespace Keysharp.Scripting
 
 		public static PropertyError PropertyError(params object[] obj) => new (obj);
 
-		public static object SetObject(object key, object item, object[] parents, object value)
+		public static object SetObject(object key, object item, object value)
 		{
-			if (parents.Length > 0)
-			{
-				for (var i = parents.Length - 1; i > -1; i--)//No idea what this is actually doing, it's probably left over legacy code.//TODO
-				{
-					var pi = parents[i];
-					var child = Index(item, pi);
-
-					if (child == null)
-					{
-						if (item is Map map1)
-							map1[pi] = item = new Map();
-						else
-							return null;
-					}
-					else
-						item = child;
-				}
-			}
-			else if (item is Map map2)//This function has been redesigned to handle assigning a map key/value pair, or assigning a value to an array index. It is NOT for setting properties.
+			if (item is Map map2)//This function has been redesigned to handle assigning a map key/value pair, or assigning a value to an array index. It is NOT for setting properties.
 			{
 				map2[key] = value;
 			}
@@ -326,6 +328,24 @@ namespace Keysharp.Scripting
 				return null;
 
 			return value;
+		}
+
+		public static void SetStaticMemberValueT<T>(object name, object value)
+		{
+			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi)
+			{
+				try
+				{
+					pi.SetValue(null, value);
+				}
+				catch (Exception e)
+				{
+					if (e.InnerException is KeysharpException ke)
+						throw ke;
+					else
+						throw;
+				}
+			}
 		}
 
 		public static void SetPropertyValue(object item, object name, object value)
@@ -382,29 +402,17 @@ namespace Keysharp.Scripting
 		internal static (object, bool) InternalGetPropertyValue(object item, string name)
 		{
 			var type = item.GetType();
-			//PropertyInfo match = null;
-			//foreach (var property in type.GetProperties())
-			//{
-			//  if (property.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-			//  {
-			//      match = property;
-			//      break;
-			//  }
-			//}
-			//if (!match.CanRead)
-			//  return null;
-			var match = Reflections.FindAndCacheProperty(type, name);//Cleaned this up.//MATT
 
-			if (match != null)
+			if (Reflections.FindAndCacheProperty(type, name) is PropertyInfo pi)
 			{
 				try
 				{
 					(object, bool) ret = (null, false);
 
 					if (item.GetControl() is Control ctrl)
-						_ = ctrl.CheckedInvoke(() => ret = (match.GetValue(item, null), true), false);//If it's a gui control, then invoke on the gui thread.
+						_ = ctrl.CheckedInvoke(() => ret = (pi.GetValue(item, null), true), false);//If it's a gui control, then invoke on the gui thread.
 					else
-						ret = (match.GetValue(item, null), true);
+						ret = (pi.GetValue(item, null), true);
 
 					if (ret.Item1 is int i)
 						ret.Item1 = (long)i;//Try to keep everything as long.

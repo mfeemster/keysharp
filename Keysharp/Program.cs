@@ -250,7 +250,7 @@ namespace Keysharp.Main
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
-				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.Program");
+				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
 				//var temp = Array.Empty<string>();
 				//_ = main.Invoke(null, new object[] { temp });

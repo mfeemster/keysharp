@@ -115,6 +115,28 @@ namespace Keysharp.Scripting
 				case FalseTxt:
 				case NullTxt:
 				case IsTxt:
+				case FlowBreak:
+				case FlowContinue:
+				case FlowCase:
+				case FlowClass:
+				case FlowDefault:
+				case FlowFor:
+				case FlowElse:
+				case FlowGosub:
+				case FlowGoto:
+				case FlowIf:
+				case FlowLoop:
+				case FlowReturn:
+				case FlowWhile:
+				case FunctionLocal:
+				case FunctionGlobal:
+				case FunctionStatic:
+				case FlowTry:
+				case FlowCatch:
+				case FlowFinally:
+				case FlowUntil:
+				case FlowSwitch:
+				case Throw:
 					return true;
 
 				default:

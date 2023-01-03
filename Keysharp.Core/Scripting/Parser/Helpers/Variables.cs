@@ -32,7 +32,7 @@ namespace Keysharp.Scripting
 					_ = allGlobalVars.TryPeek(out var allglobal);
 					_ = allStaticVars.TryPeek(out var allstat);
 					_ = localFuncVars.TryPeek(out var l);
-					_ = staticFuncVars.TryPeek(out var stat);
+					_ = staticFuncVars[typeStack.Peek()].TryPeek(out var stat);
 					_ = currentFuncParams.TryPeek(out var f);
 					allglobal |= globalFuncVars.TryPeek(out var gg) && gg.Contains(toplevelvar);
 					var explicitLocal = l != null && l.Contains(toplevelvar);
@@ -60,10 +60,10 @@ namespace Keysharp.Scripting
 							}
 							else if (!isparam && !isstatic/* && islocal*/)
 							{
-								_ = allVars.GetOrAdd(tempscope).Add(toplevelvar);
+								allVars[typeStack.Peek()].GetOrAdd(tempscope)[toplevelvar] = new CodePrimitiveExpression(null);
 							}
 							else if (!isparam && allglobal)
-								_ = allVars.GetOrAdd("").Add(toplevelvar);
+								allVars[typeStack.Peek()].GetOrAdd("")[toplevelvar] = new CodePrimitiveExpression(null);
 						}
 
 						return isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);

@@ -528,6 +528,18 @@ namespace Keysharp.Scripting
 						return new CodeStatement[] { new CodeMethodReturnStatement(result) };
 					}
 
+				case FlowClass:
+				{
+					AddType(parts[1].ToLower());
+					var block = new CodeBlock(line, Scope, null, CodeBlock.BlockKind.Class, blocks.PeekOrNull(), InternalID, InternalID)
+					{
+						Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
+					};
+					_ = CloseTopSingleBlock();
+					blocks.Push(block);
+					return null;
+				}
+
 				case FunctionLocal:
 					if (localFuncVars.PeekOrNull() is List<string> lflist)
 					{
@@ -610,7 +622,7 @@ namespace Keysharp.Scripting
 				case FunctionStatic:
 					if (parts.Length > 1)
 					{
-						if (staticFuncVars.PeekOrNull() is Dictionary<string, CodeExpression> dkt)
+						if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
 						{
 							var parencount = 0;
 							var temptoks = SplitTokens(parts[1]);//Find the variable names because they needed to be added to the static vars before ParseMultiExpression() is called so they get properly added.
