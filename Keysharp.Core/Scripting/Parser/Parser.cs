@@ -321,41 +321,47 @@ namespace Keysharp.Scripting
 													  meth2.Statements.Add(new CodeMethodReturnStatement(
 															  new CodeFieldReferenceExpression(new CodeTypeReferenceExpression("System.String"), "Empty"))));
 
-			//Find every call to SetPropertyValue and determine if it's actually setting it for a type, in which case it's setting a static member of a type, and thus needs to be converted to SetPropertyValueT().
+			//Find every call to SetPropertyValue() and determine if it's actually setting it for a type, in which case it's setting a static member of a type, and thus needs to be converted to SetPropertyValueT().
 			foreach (var cmietype in setPropertyValueCalls)
 			{
 				foreach (var cmietypefunc in cmietype.Value)
 				{
 					foreach (var cmie in cmietypefunc.Value)
 					{
-						var name = ((CodeVariableReferenceExpression)cmie.Parameters[0]).VariableName;
-
-						if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
-								&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+						if (cmie.Parameters[0] is CodeVariableReferenceExpression cvre)
 						{
-							cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "SetStaticMemberValueT");
-							cmie.Method.TypeArguments.Add(name);
-							cmie.Parameters.RemoveAt(0);
+							var name = cvre.VariableName;
+
+							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
+									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+							{
+								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "SetStaticMemberValueT");
+								cmie.Method.TypeArguments.Add(name);
+								cmie.Parameters.RemoveAt(0);
+							}
 						}
 					}
 				}
 			}
 
-			//Do the same for all calls to GetPropertyValue.
+			//Do the same for all calls to GetPropertyValue().
 			foreach (var cmietype in getPropertyValueCalls)
 			{
 				foreach (var cmietypefunc in cmietype.Value)
 				{
 					foreach (var cmie in cmietypefunc.Value)
 					{
-						var name = ((CodeVariableReferenceExpression)cmie.Parameters[0]).VariableName;
-
-						if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
-								&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+						if (cmie.Parameters[0] is CodeVariableReferenceExpression cvre)
 						{
-							cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
-							cmie.Method.TypeArguments.Add(name);
-							cmie.Parameters.RemoveAt(0);
+							var name = cvre.VariableName;
+
+							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
+									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+							{
+								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+								cmie.Method.TypeArguments.Add(name);
+								cmie.Parameters.RemoveAt(0);
+							}
 						}
 					}
 				}
