@@ -530,13 +530,57 @@ namespace Keysharp.Scripting
 
 				case FlowClass:
 				{
-					AddType(parts[1].ToLower());
+					string basetype;
+					var classparts = parts[1].Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
+					var classtype = AddType(classparts[0].ToLower());
 					var block = new CodeBlock(line, Scope, null, CodeBlock.BlockKind.Class, blocks.PeekOrNull(), InternalID, InternalID)
 					{
 						Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
 					};
 					_ = CloseTopSingleBlock();
 					blocks.Push(block);
+					var constructor = new CodeConstructor
+					{
+						Attributes = MemberAttributes.Public | MemberAttributes.Final
+					};
+
+					if (classparts.Length > 2 && string.Compare(classparts[1], "extends", true) == 0)
+					{
+						basetype = classparts[2];
+						classtype.BaseTypes.Add(basetype);
+					}
+					else
+					{
+						basetype = "KeysharpObject";
+						classtype.BaseTypes.Add(basetype);
+					}
+
+					_ = constructor.Statements.Add(new CodeSnippetExpression("__Init()"));
+					_ = classtype.Members.Add(constructor);
+					var callmeth = new CodeMemberMethod
+					{
+						Name = "Call",
+						ReturnType = new CodeTypeReference(classtype.Name),
+						Attributes = MemberAttributes.Public | MemberAttributes.Static
+					};
+					//Body of Call() will be added later.
+					_ = classtype.Members.Add(callmeth);
+					methods[typeStack.Peek()][callmeth.Name] = callmeth;
+					var initmeth = new CodeMemberMethod
+					{
+						Name = "__Init",
+						Attributes = MemberAttributes.Private
+					};
+					_ = classtype.Members.Add(initmeth);
+					methods[typeStack.Peek()][initmeth.Name] = initmeth;
+					var nameprop = new CodeMemberProperty
+					{
+						Name = "__Class",
+						Type = new CodeTypeReference(typeof(string)),
+						Attributes = MemberAttributes.Public | MemberAttributes.Static
+					};
+					nameprop.GetStatements.Add(new CodeSnippetExpression($"return \"{classtype.Name}\""));
+					_ = classtype.Members.Add(nameprop);
 					return null;
 				}
 

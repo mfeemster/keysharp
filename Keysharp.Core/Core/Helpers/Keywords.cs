@@ -438,7 +438,6 @@ namespace Keysharp.Core
 
 		// Centered
 		internal const string Keyword_ZH = "ZH";
-
 		internal const string Keyword_Zoom = "zoom";
 		internal const string Keyword_ZW = "ZW";
 		internal const string Keyword_ZX = "ZX";
@@ -449,7 +448,6 @@ namespace Keysharp.Core
 
 		//
 		internal const char CR = '\r';
-
 		internal const char LF = '\n';
 		internal const char SingleSpace = ' ';
 		internal const char Reserved = '\0';

@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Accessors;
+﻿
+using static Keysharp.Core.Accessors;
 using static Keysharp.Core.Core;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
@@ -122,28 +123,6 @@ namespace Keysharp.CompiledMain
 
 		public static void UserMainCode()
 		{
-			x = 11L;
-			y11 = 123L;
-			z = Vars[string.Concat<object>(new object[]
-			{
-				"y",
-				x
-			})];
-
-			if (IfTest(Operate(IdentityEquality, z, 123L)))
-			{
-				FileAppend("pass", "*");
-			}
-			else
-			{
-				FileAppend("fail", "*");
-			}
 		}
-
-		public static object x { get; set; }
-
-		public static object y11 { get; set; }
-
-		public static object z { get; set; }
 	}
 }

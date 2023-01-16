@@ -200,14 +200,19 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private CodeExpression VarMixedExpr(object part) =>
-		IsVarReference(part) ?
-		VarRefOrPrimitive(part) :
-		IsVarAssignment(part) ?
-		(CodeBinaryOperatorExpression)part
-		: part is CodeExpression ce
-		? ce
-		: new CodePrimitiveExpression(part);
+		private CodeExpression VarMixedExpr(object part)
+		{
+			if (IsVarReference(part))
+				return VarRefOrPrimitive(part);
+			else if (part is CodePrimitiveExpression cpe)
+				return cpe;
+			else if (IsVarAssignment(part))
+				return (CodeBinaryOperatorExpression)part;
+			else if (part is CodeExpression ce)
+				return ce;
+			else
+				return new CodePrimitiveExpression(part);
+		}
 
 		private string VarNormalizedName(string name) => name.ToLowerInvariant();
 

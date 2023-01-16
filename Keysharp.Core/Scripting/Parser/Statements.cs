@@ -1,5 +1,6 @@
 ﻿using System.CodeDom;
 using System.Collections.Generic;
+using System.IO;
 using Keysharp.Core;
 using static Keysharp.Core.Core;
 
@@ -232,6 +233,16 @@ namespace Keysharp.Scripting
 										continue;
 									else
 										statements[n] = new CodeExpressionStatement(expr);
+
+									//This is checking for the declaration and initialization of class member variables. Only record here after the parsing and optimization above have been done.
+									if (typeStack.Peek().Name != mainClassName && Scope.Length == 0 && expr is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign
+											&& cboe.Left is CodeVariableReferenceExpression cvre)//We are in a type that is not the main class, and also not inside of a function. Static or instance properties can be initialized with a string.
+									{
+										allVars[typeStack.Peek()].GetOrAdd(Scope)[cvre.VariableName] = cboe.Right;
+
+										if (memberVarsStatic)
+											cboe.Right.UserData["isstatic"] = true;
+									}
 
 									//statements[n].LinePragma = lines[n];
 									//if (parentBlock != null && parentBlock.Kind == CodeBlock.BlockKind.Try && parentBlock.Statements.Count > 0)

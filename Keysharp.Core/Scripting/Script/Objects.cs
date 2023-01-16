@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using Keysharp.Core;
 
@@ -95,13 +96,21 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
+		public static object GetStaticMethodT<T>(object name)
+		{
+			if (Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodInfo mi)
+				return mi;
+
+			return null;
+		}
+
 		public static object GetStaticMemberValueT<T>(object name)
 		{
 			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi)
 			{
 				try
 				{
-					pi.GetValue(null);
+					return pi.GetValue(null);
 				}
 				catch (Exception e)
 				{
@@ -350,7 +359,17 @@ namespace Keysharp.Scripting
 
 		public static void SetPropertyValue(object item, object name, object value)
 		{
-			if (Reflections.FindAndCacheProperty(item.GetType(), name.ToString()) is PropertyInfo pi)
+			Type typetouse;
+
+			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+			{
+				typetouse = t;
+				item = o;
+			}
+			else
+				typetouse = item.GetType();
+
+			if (Reflections.FindAndCacheProperty(typetouse, name.ToString()) is PropertyInfo pi)
 			{
 				try
 				{
@@ -401,9 +420,17 @@ namespace Keysharp.Scripting
 
 		internal static (object, bool) InternalGetPropertyValue(object item, string name)
 		{
-			var type = item.GetType();
+			Type typetouse;
 
-			if (Reflections.FindAndCacheProperty(type, name) is PropertyInfo pi)
+			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+			{
+				typetouse = t;
+				item = o;
+			}
+			else
+				typetouse = item.GetType();
+
+			if (Reflections.FindAndCacheProperty(typetouse, name) is PropertyInfo pi)
 			{
 				try
 				{

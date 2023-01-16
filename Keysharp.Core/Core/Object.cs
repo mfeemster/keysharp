@@ -11,6 +11,14 @@ namespace Keysharp.Core
 
 		public object Base => GetType().BaseType;//Documentation says this can be set, but C# doesn't support changing a base at runtime.
 
+		public (Type, object) super
+		{
+			get
+			{
+				return (GetType().BaseType, this);
+			}
+		}
+
 		public virtual FuncObj GetMethod(object obj0, object obj1 = null)
 		{
 			var name = obj0.As();

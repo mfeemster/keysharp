@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 
 namespace System
 {
@@ -85,10 +86,22 @@ namespace System
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
 				return i;
 
-			var s = obj.ToString();
-			return requiredot && !s.Contains('.')
-				   ? new decimal? ()
-				   : decimal.TryParse(s, out m) ? m : doconvert ? Convert.ToDecimal(obj) : new decimal? ();
+			var s = obj.ToString().AsSpan();
+
+			if (requiredot && !s.Contains('.'))
+				return new decimal? ();
+
+			if (decimal.TryParse(s, out m))
+				return m;
+
+			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a double like "123.0D".
+				if (decimal.TryParse(s.Slice(0, s.Length - 1), out m))
+					return m;
+
+			if (doconvert)
+				return Convert.ToDecimal(obj);
+
+			return new decimal? ();
 		}
 
 		public static double? ParseDouble(this object obj, bool doconvert = true, bool requiredot = false)
@@ -105,10 +118,22 @@ namespace System
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
 				return i;
 
-			var s = obj.ToString();
-			return requiredot && !s.Contains('.')
-				   ? new double? ()
-				   : double.TryParse(s, out d) ? d : doconvert ? Convert.ToDouble(obj) : new double? ();
+			var s = obj.ToString().AsSpan();
+
+			if (requiredot && !s.Contains('.'))
+				return new double? ();
+
+			if (double.TryParse(s, out d))
+				return d;
+
+			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a double like "123.0D".
+				if (double.TryParse(s.Slice(0, s.Length - 1), out d))
+					return d;
+
+			if (doconvert)
+				return Convert.ToDouble(obj);
+
+			return new double? ();
 		}
 
 		public static int? ParseInt(this object obj, bool doconvert = true)//Need to make everywhere use this.//MATT
@@ -123,6 +148,10 @@ namespace System
 
 			if (int.TryParse(s, out i))
 				return i;
+
+			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a int like "123I".
+				if (int.TryParse(s.Slice(0, s.Length - 1), out i))
+					return i;
 
 			if (s.Length == 0)
 				return new int? ();
@@ -154,6 +183,10 @@ namespace System
 
 			if (long.TryParse(s, out l))
 				return l;
+
+			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a long like "123L".
+				if (long.TryParse(s.Slice(0, s.Length - 1), out l))
+					return l;
 
 			if (s.Length == 0)
 				return new long? ();
@@ -188,6 +221,10 @@ namespace System
 			if (uint.TryParse(s, out i))
 				return i;
 
+			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a uint like "123U".
+				if (uint.TryParse(s.Slice(0, s.Length - 1), out i))
+					return i;
+
 			if (s.Length == 0)
 				return new uint? ();
 
@@ -201,5 +238,15 @@ namespace System
 		public static IList Pl(this object[] obj) => obj.Select(x => x).ToList();
 
 		public static string Str(this object obj) => obj != null ? obj.ToString() : "";
+
+		public static T CastTo<T>(this object o) => (T)o;
+
+		public static object CastToReflected(this object o, Type type)
+		{
+			var methodInfo = typeof(ObjectExtensions).GetMethod(nameof(CastTo), BindingFlags.Static | BindingFlags.Public);
+			var genericArguments = new[] { type };
+			var genericMethodInfo = methodInfo?.MakeGenericMethod(genericArguments);
+			return genericMethodInfo?.Invoke(null, new[] { o });
+		}
 	}
 }

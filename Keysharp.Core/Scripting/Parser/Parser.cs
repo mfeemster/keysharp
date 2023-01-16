@@ -33,6 +33,8 @@ namespace Keysharp.Scripting
 		private CodeStatementCollection prepend = new CodeStatementCollection();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private List<CodeMethodInvokeExpression> allMethodCalls = new List<CodeMethodInvokeExpression>(100);
 
 		private StringBuilder sbld = new StringBuilder();
 		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
@@ -86,6 +88,8 @@ namespace Keysharp.Scripting
 			staticFuncVars.Clear();
 			setPropertyValueCalls.Clear();
 			getPropertyValueCalls.Clear();
+			getMethodCalls.Clear();
+			allMethodCalls.Clear();
 			initial = new CodeStatementCollection();
 			prepend = new CodeStatementCollection();
 			mainNs = new CodeNamespace("Keysharp.CompiledMain");
@@ -121,6 +125,7 @@ namespace Keysharp.Scripting
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
 			getPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			getMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
 			return ctd;
 		}
 
@@ -144,12 +149,36 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-
 		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
 			foreach (CodeTypeDeclaration type in mainNs.Types)
 				if (type.Name == varName)
 					return true;
+
+			foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
+				if (type is CodeTypeDeclaration ctd)
+					if (ctd.Name == varName)
+						return true;
+
+			return false;
+		}
+
+		private CodeTypeDeclaration FindUserDefinedType(string typeName)
+		{
+			foreach (CodeTypeMember type in targetClass.Members)
+				if (type is CodeTypeDeclaration ctd)
+					if (ctd.Name == typeName)
+						return ctd;
+
+			return null;
+		}
+
+		private bool IsUserDefinedType(string typeName)
+		{
+			foreach (CodeTypeMember type in targetClass.Members)
+				if (type is CodeTypeDeclaration ctd)
+					if (ctd.Name == typeName)
+						return true;
 
 			return false;
 		}
@@ -367,12 +396,112 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			//Do the same for all calls to GetMethodOrProperty().
+			foreach (var cmietype in getMethodCalls)
+			{
+				foreach (var cmietypefunc in cmietype.Value)
+				{
+					foreach (var cmie in cmietypefunc.Value)
+					{
+						if (cmie.Parameters[0] is CodeVariableReferenceExpression cvre)
+						{
+							var name = cvre.VariableName;
+
+							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
+									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+							{
+								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMethodT");
+								cmie.Method.TypeArguments.Add(name);
+								cmie.Parameters.RemoveAt(0);
+							}
+						}
+					}
+				}
+			}
+
+			foreach (var cmie in allMethodCalls)
+			{
+				if (IsUserDefinedType(cmie.Method.MethodName))
+				{
+					cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(cmie.Method.MethodName), "Call");
+				}
+			}
+
 			while (invokes.Count != 0)
 				StdLib();
 
 			foreach (var typeMethods in methods)
-				foreach (var method in typeMethods.Value.Values)
-					_ = typeMethods.Key.Members.Add(method);
+			{
+				CodeMemberMethod newmeth = null, callmeth = null;
+
+				if (typeMethods.Key != targetClass)
+				{
+					foreach (var method in typeMethods.Value.Values)
+					{
+						if (newmeth == null && string.Compare(method.Name, "__New", true) == 0)//__New() and Call() have already been added.
+							newmeth = method;
+						else if (callmeth == null && string.Compare(method.Name, "Call", true) == 0)
+							callmeth = method;
+						else if (string.Compare(method.Name, "__Init", true) == 0)
+						{
+						}
+						else
+							_ = typeMethods.Key.Members.Add(method);
+					}
+
+					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) as CodeConstructor;
+
+					if (newmeth != null)
+					{
+						_ = typeMethods.Key.Members.Add(newmeth);
+
+						if (thisconstructor != null)
+						{
+							thisconstructor.Parameters.Clear();
+							thisconstructor.Parameters.AddRange(newmeth.Parameters);
+							//get param names and pass.
+							var newparams = newmeth.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => p.Name).ToArray();
+							var newparamnames = string.Join(',', newparams);
+							_ = thisconstructor.Statements.Add(new CodeSnippetExpression($"__New({newparamnames})"));
+							callmeth.Parameters.Clear();
+							callmeth.Parameters.AddRange(newmeth.Parameters);
+							callmeth.Statements.Clear();
+							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+						}
+					}
+					else
+					{
+						callmeth.Statements.Clear();
+						_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}()"));
+						callmeth.Parameters.Clear();
+					}
+
+					var baseType = typeMethods.Key.BaseTypes[0].BaseType;
+
+					if (baseType != "KeysharpObject" && thisconstructor != null)
+					{
+						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)
+						{
+							if (ctdbase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
+							{
+								var i = 0;
+								thisconstructor.BaseConstructorArgs.Clear();
+
+								for (; i < thisconstructor.Parameters.Count && i < ctm2.Parameters.Count; i++)//Iterate through all of the parameters in this class's constructor.
+									_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
+
+								for (; i < ctm2.Parameters.Count; i++)//Fill whatever remains of the base constructor parameters with empty strings.
+									_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression("\"\""));
+							}
+						}
+					}
+				}
+				else
+				{
+					foreach (var method in typeMethods.Value.Values)
+						_ = typeMethods.Key.Members.Add(method);
+				}
+			}
 
 			return unit;
 		}
@@ -435,14 +564,36 @@ namespace Keysharp.Scripting
 				{
 					foreach (var scopekv in typekv.Value.Where(kv => kv.Key.Length == 0))
 					{
+						CodeMemberMethod initcmm = null;
+
 						foreach (var globalvar in scopekv.Value)
 						{
 							var name = globalvar.Key.Replace(ScopeVar[0], '_');
+							var isstatic = globalvar.Value.UserData.Contains("isstatic");
+							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
-								Text = globalvar.Value.UserData.Contains("isstatic") ? $"\t\t\tpublic static object {name} {{ get; set; }}"
+								Text = isstatic ? $"\t\t\tpublic static object {name} {{ get; set; }} = {init};"
 									   : $"\t\t\tpublic object {name} {{ get; set; }}"
 							});
+
+							if (init.Length > 0 && !isstatic)
+							{
+								if (initcmm == null)
+								{
+									foreach (CodeTypeMember ctm in typekv.Key.Members)
+									{
+										if (ctm is CodeMemberMethod cmm && cmm.Name == "__Init")
+										{
+											initcmm = cmm;
+											break;
+										}
+									}
+								}
+
+								if (initcmm != null)
+									_ = initcmm.Statements.Add(new CodeSnippetExpression($"{name} = {init}"));
+							}
 						}
 					}
 				}

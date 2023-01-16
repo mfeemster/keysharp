@@ -50,7 +50,19 @@ namespace Keysharp.Scripting
 
 				if (left != null && right != null)
 				{
-					result = Script.Operate((Script.Operator)invoke.Parameters[0].UserData[RawData], left, right);
+					var ll = left.ParseLong();
+					var rl = right.ParseLong();
+
+					if (ll is long l && rl is long r)
+					{
+						result = Script.Operate((Script.Operator)invoke.Parameters[0].UserData[RawData], l, r);
+
+						if (result is long lresult)
+							return new CodeSnippetExpression($"{lresult}L");
+					}
+					else
+						result = Script.Operate((Script.Operator)invoke.Parameters[0].UserData[RawData], left, right);
+
 					return new CodePrimitiveExpression(result);
 				}
 			}

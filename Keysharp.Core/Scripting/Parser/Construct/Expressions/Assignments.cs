@@ -70,7 +70,7 @@ namespace Keysharp.Scripting
 								   ? caie
 								   : parts[x] is CodePropertyReferenceExpression cpre ? cpre : VarId(parts[x] as CodeExpression, false);
 
-			assign.Right = right ? VarMixedExpr(parts[y]) : new CodePrimitiveExpression(null);
+			assign.Right = right ? (parts[y] is CodeVariableReferenceExpression cvre2 ? cvre2 : VarMixedExpr(parts[y])) : new CodePrimitiveExpression(null);
 			parts[x] = assign;
 
 			if (right)

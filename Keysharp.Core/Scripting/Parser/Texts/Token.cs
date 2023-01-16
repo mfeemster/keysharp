@@ -161,6 +161,9 @@ namespace Keysharp.Scripting
 			var stage = 0;
 			var str = false;
 
+			if (code.StartsWith("static", StringComparison.OrdinalIgnoreCase))
+				code = code.Substring(6).Trim(SpaceTab);
+
 			for (var i = 0; i < code.Length; i++)
 			{
 				var sym = code[i];

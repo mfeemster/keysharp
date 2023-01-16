@@ -222,6 +222,13 @@ Differences:
 	-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
 		if ((x := myfunc()) ; will not work without declaring x first above.
 	-The Optimization section of the #HotIf documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
+	-Global variables can be accessed from within class methods by using the program. prefix.
+	-You don't have to use this. to access member variables in member functions. Instead, just reference the member variable using global, and that will distinguish it between a local function variable. Using this is still supported, but is slower.
+	-Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
+	-Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { "y", 42 }
+	-Nested classes are not supported.
+	-Variadic property parameters are not supported.
+	-Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 	
 	
 TODO/ENSURE THESE WORK:

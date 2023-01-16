@@ -47,6 +47,7 @@ namespace Keysharp.Scripting
 								tempinvoke.Parameters.Clear();
 								tempinvoke.Parameters.AddRange(indexcmie.Parameters);
 								parts[n] = tempinvoke;//Replace Index with MethodIndex.
+								getMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(tempinvoke);
 							}
 
 							_ = invoke.Parameters.Add((CodeExpression)parts[n]);
@@ -76,23 +77,6 @@ namespace Keysharp.Scripting
 					else if (PrimitiveToExpression(part) is CodeExpression result)
 					{
 						parts[i] = result;
-
-						if (i >= 2)
-						{
-							if (parts[i - 1] is CodeBinaryOperatorType.Assign && parts[i - 2] is CodeVariableReferenceExpression cvre)
-							{
-								if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)//We are in a type that is not the main class, and also not inside of a function.
-								{
-									var orig = allVars[typeStack.Peek()].GetOrAdd(Scope).GetOrAdd(cvre.VariableName);
-
-									foreach (DictionaryEntry origkv in orig.UserData)//Copy "isstatic" if it exists.
-										result.UserData[origkv.Key] = orig.UserData[origkv.Key];
-
-									allVars[typeStack.Peek()].GetOrAdd(Scope)[cvre.VariableName] = result;
-								}
-							}
-						}
-
 						//if (result != null)
 						//{
 						//  var longresult = result.ParseLong(false);//Also supports hex.
@@ -112,15 +96,6 @@ namespace Keysharp.Scripting
 								   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 								   //Check for function or property calls on an object, which only count as read operations.
 								   : VarIdOrConstant(part, i == 0 && create && (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("["))), false);
-
-						if (memberVarsStatic && typeStack.Peek().Name != mainClassName && Scope.Length == 0)//Check if they are declaring a static member variable in a class other than the main one.
-						{
-							if (parts[i] is CodeVariableReferenceExpression cvre)
-							{
-								var member = allVars[typeStack.Peek()].GetOrAdd(Scope).GetOrAdd(cvre.VariableName);
-								member.UserData["isstatic"] = true;
-							}
-						}
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{
@@ -159,7 +134,16 @@ namespace Keysharp.Scripting
 										var val = ParseMultiExpression(valtokens.ToArray(), create);
 										invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
 										n = i - 1;
-										_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+
+										if (parts[n] is CodeVariableReferenceExpression cvre && string.Compare(cvre.VariableName, "this", true) == 0)
+										{
+											var cse = new CodeSnippetExpression("this");//Required because otherwise it will be @this, which fails to compile.
+											parts[n] = cse;
+											_ = invoke.Parameters.Add(cse);
+										}
+										else
+											_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+
 										var index = ParseMultiExpression(proptokens.ToArray(), create);
 
 										if (index.Length > 1)
@@ -179,7 +163,16 @@ namespace Keysharp.Scripting
 									{
 										invoke = (CodeMethodInvokeExpression)InternalMethods.GetPropertyValue;
 										n = i - 1;
-										_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+
+										if (parts[n] is CodeVariableReferenceExpression cvre && string.Compare(cvre.VariableName, "this", true) == 0)
+										{
+											var cse = new CodeSnippetExpression("this");//Required because otherwise it will be @this, which fails to compile.
+											parts[n] = cse;
+											_ = invoke.Parameters.Add(cse);
+										}
+										else
+											_ = invoke.Parameters.Add((CodeExpression)parts[n]);
+
 										var index = ParseMultiExpression(proptokens.ToArray(), create);
 
 										if (index.Length > 1)
@@ -361,6 +354,7 @@ namespace Keysharp.Scripting
 							{
 								var tempscope = GetScope(blocklevel);
 
+								//Unsure if this will work on vars which are not declared until later in the script.
 								if (VarExistsAtCurrentOrParentScope(typeStack.Peek(), tempscope, name))
 								{
 									var specialinvoke = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){name})"), "Call"));
@@ -372,6 +366,9 @@ namespace Keysharp.Scripting
 									goto specialaddcall;
 								}
 							}
+
+							//Wasn't special, so record it to see if it is actually an object creation statement later.
+							allMethodCalls.Add(invoke);
 						}
 
 						parts[i] = invoke;

@@ -1,3 +1,4 @@
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +29,13 @@ namespace Keysharp.Scripting
 			int i;
 			var buf = new StringBuilder();
 			string name;
+			var isStatic = false;
+
+			if (code.StartsWith("static", StringComparison.OrdinalIgnoreCase))
+			{
+				isStatic = true;
+				code = code.Substring(6).Trim(SpaceTab);
+			}
 
 			for (i = 0; i < code.Length; i++)
 			{
@@ -107,6 +115,10 @@ namespace Keysharp.Scripting
 			}
 
 			var method = LocalMethod(name);
+
+			if (isStatic)
+				method.Attributes |= MemberAttributes.Static;
+
 			var block = new CodeBlock(line, method.Name, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 			block.Type = blockType;
 			_ = CloseTopSingleBlock();
@@ -121,7 +133,7 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			methods[typeStack.Peek()].Add(method.Name, method);
+			methods[typeStack.Peek()][method.Name] = method;
 			return method.Name;
 		}
 

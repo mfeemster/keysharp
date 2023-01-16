@@ -26,6 +26,8 @@ namespace Keysharp.Scripting
 
 					//return mi.Invoke(ob, mi.GetParameters().Length == 0 ? null : new object[] { isVariadic ? parameters : parameters[0] });//Even though parameters itself is an object[], we still must put it in an object[] array for variadic functions.
 				}
+				else if (del is MethodInfo mi2)
+					return mi2.ArgumentAdjustedInvoke(null, parameters);
 
 				if (del is Delegate d)//Unlikely ever used, we don't use raw delegates anymore and instead use FuncObj.
 				{
