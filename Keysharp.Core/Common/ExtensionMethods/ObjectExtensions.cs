@@ -88,6 +88,9 @@ namespace System
 
 			var s = obj.ToString().AsSpan();
 
+			if (s.Length == 0)
+				return new decimal? ();
+
 			if (requiredot && !s.Contains('.'))
 				return new decimal? ();
 
@@ -120,6 +123,9 @@ namespace System
 
 			var s = obj.ToString().AsSpan();
 
+			if (s.Length == 0)
+				return new double? ();
+
 			if (requiredot && !s.Contains('.'))
 				return new double? ();
 
@@ -146,15 +152,15 @@ namespace System
 
 			var s = obj.ToString().AsSpan();
 
+			if (s.Length == 0)
+				return new int? ();
+
 			if (int.TryParse(s, out i))
 				return i;
 
 			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a int like "123I".
 				if (int.TryParse(s.Slice(0, s.Length - 1), out i))
 					return i;
-
-			if (s.Length == 0)
-				return new int? ();
 
 			var neg = false;
 
@@ -181,15 +187,15 @@ namespace System
 
 			var s = obj.ToString().AsSpan();
 
+			if (s.Length == 0)
+				return new long? ();
+
 			if (long.TryParse(s, out l))
 				return l;
 
 			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a long like "123L".
 				if (long.TryParse(s.Slice(0, s.Length - 1), out l))
 					return l;
-
-			if (s.Length == 0)
-				return new long? ();
 
 			var neg = false;
 
@@ -218,15 +224,15 @@ namespace System
 
 			var s = obj.ToString().AsSpan();
 
+			if (s.Length == 0)
+				return new uint? ();
+
 			if (uint.TryParse(s, out i))
 				return i;
 
 			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a uint like "123U".
 				if (uint.TryParse(s.Slice(0, s.Length - 1), out i))
 					return i;
-
-			if (s.Length == 0)
-				return new uint? ();
 
 			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
 					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
