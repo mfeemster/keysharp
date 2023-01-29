@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using static Keysharp.Core.Core;
@@ -14,7 +15,13 @@ namespace Keysharp.Scripting
 			if (code.Length == 0)
 				return Token.Unknown;
 
-			if (IsFlowOperator(code))
+			if (IsGetOrSet(code, "get"))
+				return Token.PropGet;
+			else if (IsGetOrSet(code, "set"))
+				return Token.PropSet;
+			else if (IsProperty(code))
+				return Token.Prop;
+			else if (IsFlowOperator(code))
 				return Token.Flow;
 			else if (IsLabel(code))
 				return Token.Label;
@@ -152,6 +159,32 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
+
+		private bool IsProperty(string code)
+		{
+			if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)
+			{
+				var i = 0;
+				var splits = code.Split(SpaceTab);
+
+				if (string.Compare(splits[0], "static", true) == 0)
+					i++;
+
+				if (splits.Length == i + 1)//We don't support property params.
+				{
+					if (IsIdentifier(splits[i]))
+					{
+						//Will need to check further here that it's not a function.
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private bool IsGetOrSet(string code, string name)
+		=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
 
 		private bool IsFunction(string code, string next)
 		{
@@ -312,6 +345,6 @@ namespace Keysharp.Scripting
 		}
 
 		private enum Token
-		{ Unknown, Assign, Command, Label, Hotkey, Flow, Throw, Expression, Directive }
+		{ Unknown, Assign, Command, Label, Hotkey, Flow, Throw, Expression, Directive, Prop, PropGet, PropSet }
 	}
 }

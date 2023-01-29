@@ -28,7 +28,11 @@ namespace Keysharp.Scripting
 
 				ct++;
 
-				if (block.Kind == CodeBlock.BlockKind.Function)
+				if (block.Kind == CodeBlock.BlockKind.Function
+						|| block.Kind == CodeBlock.BlockKind.Prop
+						|| block.Kind == CodeBlock.BlockKind.PropGet
+						|| block.Kind == CodeBlock.BlockKind.PropSet
+				   )
 				{
 					if (sb.Length > 0)
 						_ = sb.Insert(0, ScopeVar);

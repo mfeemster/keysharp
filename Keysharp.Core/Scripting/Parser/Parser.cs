@@ -29,6 +29,7 @@ namespace Keysharp.Scripting
 		private CodeMemberMethod main = new CodeMemberMethod();
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>>();
 		private string name = string.Empty;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
@@ -84,6 +85,7 @@ namespace Keysharp.Scripting
 			includes.Clear();
 			allVars.Clear();
 			methods.Clear();
+			properties.Clear();
 			typeStack.Clear();
 			staticFuncVars.Clear();
 			setPropertyValueCalls.Clear();
@@ -121,6 +123,7 @@ namespace Keysharp.Scripting
 				_ = targetClass.Members.Add(ctd);
 
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>();
+			properties[ctd] = new Dictionary<string, CodeMemberProperty>();
 			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
@@ -447,6 +450,11 @@ namespace Keysharp.Scripting
 						}
 						else
 							_ = typeMethods.Key.Members.Add(method);
+
+						if (string.Compare(method.Name, "__Delete", true) == 0)
+						{
+							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}"));
+						}
 					}
 
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) as CodeConstructor;
@@ -500,6 +508,17 @@ namespace Keysharp.Scripting
 				{
 					foreach (var method in typeMethods.Value.Values)
 						_ = typeMethods.Key.Members.Add(method);
+				}
+			}
+
+			foreach (var typeProperties in properties)
+			{
+				if (typeProperties.Key != targetClass)
+				{
+					foreach (var propkv in typeProperties.Value)
+					{
+						_ = typeProperties.Key.Members.Add(propkv.Value);
+					}
 				}
 			}
 

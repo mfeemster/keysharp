@@ -1,4 +1,5 @@
-﻿using System.CodeDom;
+﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using Keysharp.Core;
@@ -18,6 +19,52 @@ namespace Keysharp.Scripting
 
 		private CodeStatementCollection parent;
 		private CodeBlock parentBlock;
+
+		private void AddPropStatements(CodeBlock.BlockKind blockKind)
+		{
+			var scope = Scope.TrimEndOf(blockKind == CodeBlock.BlockKind.PropGet ? "_get" : "_set");
+
+			if (properties[typeStack.Peek()].TryGetValue(scope, out var cmp))
+			{
+				if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
+				{
+					foreach (var kv in dkt)
+					{
+						var scopedvar = kv.Key;
+						var cmf = new CodeMemberField(typeof(object), scopedvar)
+						{
+							Attributes = MemberAttributes.Public | MemberAttributes.Static
+						};
+
+						if (kv.Value is CodeExpression ce)
+							cmf.InitExpression = ce;
+
+						_ = typeStack.Peek().Members.Add(cmf);
+					}
+				}
+
+				scope = Scope.ToLower();
+				var statements = blockKind == CodeBlock.BlockKind.PropGet ? cmp.GetStatements : cmp.SetStatements;
+
+				if (allVars[typeStack.Peek()].TryGetValue(scope, out var av))
+				{
+					var gfv = globalFuncVars.PeekOrNull();
+
+					foreach (var v in av)
+					{
+						if (gfv == null || !gfv.Contains(v.Key))
+						{
+							var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));
+							statements.Add(dec);
+						}
+					}
+				}
+
+				statements.AddRange(parentBlock.Statements);
+			}
+
+			EndFunction();
+		}
 
 		private void Statements(List<CodeLine> lines)
 		{
@@ -120,15 +167,24 @@ namespace Keysharp.Scripting
 									}
 								}
 
-								_ = currentFuncParams.PopOrNull();
-								_ = allGlobalVars.TryPop(out _);
-								_ = allStaticVars.TryPop(out _);
-								_ = globalFuncVars.PopOrNull();
-								_ = localFuncVars.PopOrNull();
-								_ = staticFuncVars[typeStack.Peek()].PopOrNull();
+								EndFunction();
 							}
 							else if (parentBlock.Kind == CodeBlock.BlockKind.Class)
+							{
 								_ = typeStack.PopOrNull();
+							}
+							else if (parentBlock.Kind == CodeBlock.BlockKind.Prop)
+							{
+								EndFunction();
+							}
+							else if (parentBlock.Kind == CodeBlock.BlockKind.PropGet)
+							{
+								AddPropStatements(CodeBlock.BlockKind.PropGet);
+							}
+							else if (parentBlock.Kind == CodeBlock.BlockKind.PropSet)
+							{
+								AddPropStatements(CodeBlock.BlockKind.PropSet);
+							}
 						}
 
 						CloseBlock();
@@ -203,17 +259,62 @@ namespace Keysharp.Scripting
 								//  result[n].LinePragma = lines[i];
 								parent.AddRange(result);
 							}
+
+							break;
 						}
-						break;
 
-						//case Token.Throw:
-						//{
-						//  var result = ParseFlow(lines, i);
+						case Token.Prop:
+						{
+							if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)
+							{
+								var splitpos = 0;
+								var splits = code.Split(SpaceTab);
 
-						//  if (result != null)
-						//      parent.AddRange(result);
-						//}
-						//break;
+								if (splits.Length > 0)
+								{
+									var isstatic = false;
+
+									if (string.Compare(splits[0], "static", true) == 0)
+									{
+										splitpos++;
+										isstatic = true;
+									}
+
+									var name = splits[splitpos];//No need to check here for whether it's a valid identifier, because that was done by IsProperty() in GetToken().
+									var prop = new CodeMemberProperty
+									{
+										Name = name,
+										Attributes = MemberAttributes.Public,
+										Type = new CodeTypeReference(typeof(object))
+									};
+
+									if (isstatic)
+										prop.Attributes |= MemberAttributes.Static;
+
+									properties[typeStack.Peek()][name] = prop;
+									//Will need to check further here that it's not a function, but also to check for [] params.
+									var blockType = CodeBlock.BlockType.Expect;
+									var propblock = new CodeBlock(lines[i], prop.Name, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull());
+									propblock.Type = blockType;
+									_ = CloseTopSingleBlock();
+									blocks.Push(propblock);
+								}
+							}
+
+							break;
+						}
+
+						case Token.PropGet:
+						case Token.PropSet:
+						{
+							StartNewFunction();
+							var blockType = CodeBlock.BlockType.Expect;
+							var propblock = new CodeBlock(lines[i], token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
+							propblock.Type = blockType;
+							_ = CloseTopSingleBlock();
+							blocks.Push(propblock);
+							break;
+						}
 
 						case Token.Expression:
 						{

@@ -12,7 +12,6 @@ namespace Keysharp.Scripting
 	{
 		private const string args = "args";
 		private const string initParams = "initparams";
-
 		private Stack<bool> allGlobalVars = new Stack<bool>();
 		private Stack<bool> allStaticVars = new Stack<bool>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
@@ -157,6 +156,16 @@ namespace Keysharp.Scripting
 				throw new ParseException(ExUnexpected);
 
 			return buf.ToString();
+		}
+		
+		internal void EndFunction()
+		{
+			_ = currentFuncParams.PopOrNull();
+			_ = allGlobalVars.TryPop(out _);
+			_ = allStaticVars.TryPop(out _);
+			_ = globalFuncVars.PopOrNull();
+			_ = localFuncVars.PopOrNull();
+			_ = staticFuncVars[typeStack.Peek()].PopOrNull();
 		}
 
 		internal void StartNewFunction()
