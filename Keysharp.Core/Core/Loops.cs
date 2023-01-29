@@ -399,6 +399,16 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
+		
+		public static IEnumerator MakeBaseEnumerator(object obj)
+		{
+			if (obj is IEnumerable ie)
+				return ie.GetEnumerator();
+			else if (obj is IEnumerator ie2)
+				return ie2;
+			else
+				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.");
+		}
 
 		public static IEnumerator<(object, object)> MakeEnumerator(object obj)
 		{

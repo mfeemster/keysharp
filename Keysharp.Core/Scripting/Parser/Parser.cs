@@ -8,6 +8,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Scripting
@@ -454,6 +456,43 @@ namespace Keysharp.Scripting
 						if (string.Compare(method.Name, "__Delete", true) == 0)
 						{
 							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}"));
+						}
+						else if (string.Compare(method.Name, "__Enum", true) == 0)
+						{
+							var getEnumMeth = new CodeMemberMethod();
+							getEnumMeth.Name = "IEnumerable.GetEnumerator";
+							getEnumMeth.Attributes = MemberAttributes.Final;
+							getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
+							getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
+							typeMethods.Key.Members.Add(getEnumMeth);
+							var paramVal = 1;
+
+							if (method.Parameters.Count > 0)
+							{
+								var methParam = method.Parameters[0];
+								var val = methParam.Name.ParseInt(false);
+
+								if (val.HasValue && val.Value > 0)
+									paramVal = val.Value;
+
+								method.Parameters.Clear();
+							}
+
+							var leftParen = paramVal > 1 ? "(" : "";
+							var rightParen = paramVal > 1 ? ")" : "";
+							var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
+							var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
+							var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
+							var baseCtr = new CodeTypeReference(baseTypeStr);
+							var returnCtr = new CodeTypeReference(returnTypeStr);
+							typeMethods.Key.BaseTypes.Add(baseCtr);
+							//
+							getEnumMeth = new CodeMemberMethod();
+							getEnumMeth.Name = "GetEnumerator";
+							getEnumMeth.Attributes = MemberAttributes.Public | MemberAttributes.Final;
+							getEnumMeth.ReturnType = returnCtr;
+							getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
+							typeMethods.Key.Members.Add(getEnumMeth);
 						}
 					}
 

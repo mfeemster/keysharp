@@ -12,7 +12,7 @@ using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
-	public class Gui : KeysharpObject
+	public class Gui : KeysharpObject, IEnumerable<(object, object)>
 	{
 		public TabPage CurrentTab;
 		public KeysharpForm form;
@@ -20,6 +20,7 @@ namespace Keysharp.Core
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
 		internal List<IFuncObj> closedHandlers;
 		internal List<IFuncObj> contextMenuChangedHandlers;
+		internal Dictionary<object, object> controls = new Dictionary<object, object>();
 		internal List<IFuncObj> dropFilesHandlers;
 		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
@@ -369,6 +370,8 @@ namespace Keysharp.Core
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
 
 		public static Gui New(object obj0 = null, object obj1 = null, object obj2 = null) => new Gui(obj0, obj1, obj2);
+
+		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
 		public GuiControl Add(object obj0, object obj1 = null, object obj2 = null)
 		{
@@ -1055,6 +1058,7 @@ namespace Keysharp.Core
 				Reflections.SafeSetProperty(ctrl, "TextAlign", ContentAlignment.MiddleRight);
 
 			holder = new GuiControl(this, ctrl, typeo);
+			controls[ctrl.Handle.ToInt64()] = holder;
 			var prevParent = LastContainer;
 
 			if (ctrl is KeysharpTabControl ktc)
@@ -1432,6 +1436,8 @@ namespace Keysharp.Core
 		}
 
 		public Map GetClientPos() => GuiControl.GetClientPos(form, dpiscaling);
+
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls);
 
 		public Map GetPos() => GuiControl.GetPos(form, dpiscaling);
 
@@ -1821,6 +1827,8 @@ namespace Keysharp.Core
 			else
 				LastContainer = form;
 		}
+
+		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);//(float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
 

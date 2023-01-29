@@ -418,13 +418,16 @@ namespace System.Collections.Generic
 
 			foreach (var handler in handlers)
 			{
-				result = handler.Call(obj);
+				if (handler != null)
+				{
+					result = handler.Call(obj);
 
-				if (result == null)
-					continue;
+					if (result == null)
+						continue;
 
-				if (result.IsCallbackResultNonEmpty())
-					break;
+					if (result.IsCallbackResultNonEmpty())
+						break;
+				}
 			}
 
 			return result;
