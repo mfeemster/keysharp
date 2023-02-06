@@ -226,6 +226,7 @@ Differences:
 	-You don't have to use this. to access member variables in member functions. Instead, just reference the member variable using global, and that will distinguish it between a local function variable. Using this is still supported, but is slower.
 	-Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
 	-Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { "y", 42 }
+	-__Init() and __New are not static. They are instance methods so they can access static and instance member variables.
 	-Nested classes are not supported.
 	-Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 	-The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no .Prototype member.
@@ -233,7 +234,11 @@ Differences:
 		-Variadic property parameters are not supported.
 	-For any __Enum() class method, it should have a parameter value of 2 when returning Array or Map, since their enumerators have two fields.
 	-Static __Item[] properties are not allowed, only instance __Item[] properties. This is because C# does not support static indexers.
-	
+	-A new method Collect() has been added which calls GC.Collect() to force a memory collection.
+	-ObjAddRef() and ObjPtrAddRef() are not supported. Instead, use the following:
+		newref := theobj ; adds 1 to the reference count
+		newref := "" ; subtracts 1 from the reference count
+		
 TODO/ENSURE THESE WORK:
 	The function Thread() was never implemented.
 	Replace as many instances of Substring() with Span() as you can.

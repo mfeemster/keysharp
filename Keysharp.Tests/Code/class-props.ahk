@@ -77,37 +77,3 @@ If (val == 100)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
-class testclass2
-{
-	arr := [1, 2, 3, 4, 5, 6]
-
-	__Item[x, y]
-	{
-		get
-		{
-			return arr[x + y]
-		}
-
-		set
-		{
-			arr[x + y] := value
-		}
-	}
-}
-
-testclassobj := testclass2()
-val := testclassobj[3, 1]
-
-If (val == 4)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *
-
-testclassobj[3, 1] := 100
-val := testclassobj[3, 1]
-
-If (val == 100)
-	FileAppend, pass, *
-else
-	FileAppend, fail, *

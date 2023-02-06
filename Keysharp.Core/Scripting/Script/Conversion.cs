@@ -12,6 +12,7 @@ namespace Keysharp.Scripting
 	/// </summary>
 	public class BoolResult// : Keysharp.Core.KeysharpObject
 	{
+		//Should this class be a struct instead?
 		internal bool b;
 		internal object o;
 
@@ -40,10 +41,10 @@ namespace Keysharp.Scripting
 	{
 		internal static bool ForceBool(object input)
 		{
-			if (input == null)
-				return false;
-			else if (input is bool b)//MATT
+			if (input is bool b)//MATT
 				return b;
+			else if (input == null)
+				return false;
 			else if (input is long || input is double || input is decimal || input is float || input is int || input is byte || input is char)
 				return ForceDouble(input) != 0;
 			else if (input is string s)

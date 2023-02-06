@@ -276,6 +276,8 @@ namespace Keysharp.Scripting
 			return 1L;
 		}
 
+		public static void Collect() => GC.Collect();
+
 		public static KeyError KeyError(params object[] obj) => new (obj);
 
 		public static Map Map(params object[] obj) => Object(obj);

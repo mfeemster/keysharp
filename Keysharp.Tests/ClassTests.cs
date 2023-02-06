@@ -26,5 +26,8 @@ namespace Keysharp.Tests
 
 		[Test, Category("Class")]
 		public void ClassProperties() => Assert.IsTrue(TestScript("class-props", false));
+
+		[Test, Category("Class")]
+		public void ClassSpecialFunctions() => Assert.IsTrue(TestScript("class-special-funcs", false));
 	}
 }
