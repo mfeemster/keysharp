@@ -2,6 +2,7 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Keysharp.Core;
 using static Keysharp.Core.Core;
 
@@ -70,13 +71,14 @@ namespace Keysharp.Scripting
 		{
 			for (var i = 0; i < lines.Count; i++)
 			{
-				var code = lines[i].Code;
+				var codeline = lines[i];
+				var code = codeline.Code;
 
 				if (string.IsNullOrEmpty(code))
 					continue;
 
-				line = lines[i].LineNumber;
-				fileName = lines[i].FileName;
+				line = codeline.LineNumber;
+				fileName = codeline.FileName;
 				parentBlock = blocks.Count > 0 ? blocks.Peek() : null;
 				parent = parentBlock != null ? parentBlock.Statements : main.Statements;
 				var blocksCount = -1;
@@ -89,7 +91,7 @@ namespace Keysharp.Scripting
 					case BlockOpen:
 						if (blocks.Count == 0)
 						{
-							block = new CodeBlock(lines[i], Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
+							block = new CodeBlock(codeline, Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
 							_ = CloseTopSingleBlock();
 							blocks.Push(block);
 						}
@@ -104,7 +106,7 @@ namespace Keysharp.Scripting
 
 					case BlockClose:
 						if (blocks.Count == 0)
-							throw new ParseException(ExUnexpected, lines[i]);
+							throw new ParseException(ExUnexpected, codeline);
 
 						//Case statements don't need to be enclosed in braces.
 						//But different action needs to be taken based on whether it was opened with a brace.
@@ -210,10 +212,10 @@ namespace Keysharp.Scripting
 					if (code.Length == 0)
 						continue;
 
-					lines[i].Code = code;
+					codeline.Code = code;
 				}
 
-				var token = GetToken(code);
+				var token = GetToken(codeline);
 
 				try
 				{
@@ -225,7 +227,7 @@ namespace Keysharp.Scripting
 							//{
 							//  AddMainVar(assign.Right.GetType().ToString(), assign.Left.ToString());
 							//}
-							//assign.LinePragma = lines[i];
+							//assign.LinePragma = codeline;
 							_ = parent.Add(assign);
 							break;
 
@@ -235,7 +237,7 @@ namespace Keysharp.Scripting
 							if (command.Expression == null)
 								continue;
 
-							//command.LinePragma = lines[i];
+							//command.LinePragma = codeline;
 							_ = parent.Add(command);
 							break;
 
@@ -245,7 +247,7 @@ namespace Keysharp.Scripting
 
 						case Token.Hotkey:
 							var hotkey = ParseHotkey(lines, i);
-							//hotkey.LinePragma = lines[i];
+							//hotkey.LinePragma = codeline;
 							_ = parent.Add(hotkey);
 							break;
 
@@ -256,7 +258,7 @@ namespace Keysharp.Scripting
 							if (result != null)
 							{
 								//for (var n = 0; n < result.Length; n++)
-								//  result[n].LinePragma = lines[i];
+								//  result[n].LinePragma = codeline;
 								parent.AddRange(result);
 							}
 
@@ -267,49 +269,70 @@ namespace Keysharp.Scripting
 						{
 							if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)
 							{
-								var splitpos = 0;
-								var splits = code.Split(SpaceTab);
+								var copy = code;
+								var isstatic = false;
 
-								if (splits.Length > 0)
+								if (copy.StartsWith("static "))
 								{
-									var isstatic = false;
-
-									if (string.Compare(splits[0], "static", true) == 0)
-									{
-										splitpos++;
-										isstatic = true;
-									}
-
-									var name = splits[splitpos];//No need to check here for whether it's a valid identifier, because that was done by IsProperty() in GetToken().
-									var prop = new CodeMemberProperty
-									{
-										Name = name,
-										Attributes = MemberAttributes.Public,
-										Type = new CodeTypeReference(typeof(object))
-									};
-
-									if (isstatic)
-										prop.Attributes |= MemberAttributes.Static;
-
-									properties[typeStack.Peek()][name] = prop;
-									//Will need to check further here that it's not a function, but also to check for [] params.
-									var blockType = CodeBlock.BlockType.Expect;
-									var propblock = new CodeBlock(lines[i], prop.Name, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull());
-									propblock.Type = blockType;
-									_ = CloseTopSingleBlock();
-									blocks.Push(propblock);
+									copy = copy.Substring(7, copy.Length - 7);
+									isstatic = true;
 								}
-							}
 
-							break;
+								var openBracket = copy.IndexOf('[');
+
+								if (openBracket != -1)
+								{
+									copy = copy.Substring(0, openBracket).Trim();
+								}
+
+								var prop = new CodeMemberProperty
+								{
+									Attributes = MemberAttributes.Public,
+									Type = new CodeTypeReference(typeof(object)),
+									Name = copy//No need to check here for whether it's a valid identifier, because that was done by IsProperty() in GetToken().
+								};
+
+								if (copy.Length > 0)
+								{
+									if (openBracket != -1)
+									{
+										openBracket = code.IndexOf('[');
+										var closeBracket = code.IndexOf(']');
+										var indexParams = code.Substring(openBracket + 1, closeBracket - openBracket - 1).Split(Comma, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+										prop.Attributes |= MemberAttributes.Final;
+
+										foreach (var p in indexParams)
+											_ = prop.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(object)), p));
+									}
+								}
+
+								if (isstatic)
+									prop.Attributes |= MemberAttributes.Static;
+
+								var lower = prop.Name.ToLower();
+								properties[typeStack.Peek()][lower] = prop;
+								var blockType = CodeBlock.BlockType.Expect;
+								var propblock = new CodeBlock(codeline, lower, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull());
+								propblock.Type = blockType;
+								_ = CloseTopSingleBlock();
+								blocks.Push(propblock);
+							}
 						}
+						break;
 
 						case Token.PropGet:
 						case Token.PropSet:
 						{
 							StartNewFunction();
+							var propName = blocks.Peek().Method;
+							var funcParams = currentFuncParams.Peek();
+							var prop = properties[typeStack.Peek()][propName];
+
+							foreach (CodeParameterDeclarationExpression p in prop.Parameters)
+								funcParams.Add(p.Name);
+
 							var blockType = CodeBlock.BlockType.Expect;
-							var propblock = new CodeBlock(lines[i], token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
+							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
 							propblock.Type = blockType;
 							_ = CloseTopSingleBlock();
 							blocks.Push(propblock);
@@ -321,7 +344,7 @@ namespace Keysharp.Scripting
 							var n = i + 1;
 
 							if (IsFunction(code, n < lines.Count ? lines[n].Code : string.Empty))
-								_ = ParseFunction(lines[i]);
+								_ = ParseFunction(codeline);
 							else
 							{
 								var statements = ParseMultiExpression(code, true);
@@ -361,12 +384,12 @@ namespace Keysharp.Scripting
 
 						case Token.Unknown:
 						default:
-							throw new ParseException(ExUnexpected, lines[i]);
+							throw new ParseException(ExUnexpected, codeline);
 					}
 				}
 				catch (ParseException e)
 				{
-					throw new ParseException(e.Message, lines[i]);
+					throw new ParseException(e.Message, codeline);
 				}
 				finally { }
 

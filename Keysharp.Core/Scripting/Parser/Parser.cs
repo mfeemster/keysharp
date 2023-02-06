@@ -556,6 +556,11 @@ namespace Keysharp.Scripting
 				{
 					foreach (var propkv in typeProperties.Value)
 					{
+						var prop = propkv.Value;
+
+						if (string.Compare(prop.Name, "__Item", true) == 0)
+							prop.Name = "Item";
+
 						_ = typeProperties.Key.Members.Add(propkv.Value);
 					}
 				}

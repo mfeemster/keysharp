@@ -207,34 +207,20 @@ namespace Keysharp.Scripting
 								_ = invoke.Parameters.Add((CodeExpression)parts[n]);
 								var index = ParseMultiExpression(paren.ToArray(), create);
 
-								if (index.Length > 1)
-									throw new ParseException("Cannot have multipart expression in index.");
-								else if (index.Length == 0)
-								{
-									//Unsure what ExtendArray is supposed to be doing. Instead, interpret empty brackets to mean passing null.//MATT
+								if (index.Length == 0)
 									_ = invoke.Parameters.Add(new CodeSnippetExpression("null"));
-									//var extend = (CodeMethodInvokeExpression)InternalMethods.ExtendArray;
-									//var sub = new List<object>(1);
-									//sub.Add(parts[n]);
-									//_ = extend.Parameters.Add(ParseExpression(sub));
-									//invoke = extend;
-								}
 								else if (index[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(index[0], "ParseObject"));
 								else
-									_ = invoke.Parameters.Add(index[0]);
+									foreach (var p in index)
+										_ = invoke.Parameters.Add(p);
 
 								parts[i] = invoke;
 								parts.RemoveAt(n);
 								i--;
 							}
 							else
-							{
-								//var array = new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray()));
-								//MATT
-								var array = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray(), create)));
-								parts[i] = array;
-							}
+								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray(), create)));
 						}
 					}
 					else if (part.Length > 1 && part[part.Length - 1] == ParenOpen)

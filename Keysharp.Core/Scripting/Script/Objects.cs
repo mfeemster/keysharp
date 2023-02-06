@@ -134,7 +134,7 @@ namespace Keysharp.Scripting
 
 		public static long HasBase(object obj0, object obj1) => obj1.GetType().IsAssignableFrom(obj0.GetType()) ? 1L : 0L;
 
-		public static object Index(object item, object key) => item == null ? null : IndexAt(item, key);
+		public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
 
 		public static IndexError IndexError(params object[] obj) => new (obj);
 
@@ -322,19 +322,59 @@ namespace Keysharp.Scripting
 
 		public static PropertyError PropertyError(params object[] obj) => new (obj);
 
-		public static object SetObject(object key, object item, object value)
+		public static object SetObject(object value, object item, params object[] index)
 		{
+			var key = index[0];
+
 			if (item is Map map2)//This function has been redesigned to handle assigning a map key/value pair, or assigning a value to an array index. It is NOT for setting properties.
 			{
 				map2[key] = value;
+				return value;
 			}
-			else if (item is Core.Array al)
+
+			var position = (int)ForceLong(key);
+
+			if (item is Core.Array al)
 			{
-				var index = (int)ForceLong(key);
-				al[index] = value;
+				al[position] = value;
+				return value;
+			}
+			else if (item is Core.Buffer buf)
+			{
+				throw new IndexError("Cannot call SetObject() on a Buffer object.");
 			}
 			else if (item == null)
+			{
 				return null;
+			}
+
+			foreach (var mi in item.GetType().GetMethods().Where(m => m.Name == "set_Item"))//Try to see if this is the indexer property __Item.
+			{
+				var parameters = mi.GetParameters();
+
+				if (parameters.Length > 1)
+					return mi.Invoke(item, index.Concat( new object[] { value }));// new object[] { index, value });
+				var p = parameters[0];
+
+				if (p.ParameterType == typeof(object))
+					return mi.Invoke(item, new object[] { key, value });
+				else if (key is long l && p.ParameterType == typeof(long))//Subtract one because arrays are 1-indexed, negative numbers are reverse indexed.
+					return mi.Invoke(item, new object[] { l - 1, value });
+				else if (key is int i && p.ParameterType == typeof(int))
+					return mi.Invoke(item, new object[] { i - 1, value });
+			}
+
+			//These are probably never used.
+			if (item is object[] objarr)
+			{
+				var actualindex = position < 0 ? objarr.Length + position : position - 1;
+				return objarr[actualindex];
+			}
+			else if (item is System.Array array)
+			{
+				var actualindex = position < 0 ? array.Length + position : position - 1;
+				return array.GetValue(actualindex);
+			}
 
 			return value;
 		}
@@ -459,9 +499,14 @@ namespace Keysharp.Scripting
 			return (null, false);
 		}
 
-		private static object IndexAt(object item, object index)
+		private static object IndexAt(object item, params object[] index)
 		{
-			var position = ForceInt(index);
+			var key = index == null || index.Length == 0 ? 0 : index[0];
+
+			if (item is Map table)
+				return table[key];
+
+			var position = (int)ForceLong(key);
 
 			//The most common is going to be a string, array, map or buffer.
 			if (item is string s)
@@ -470,28 +515,28 @@ namespace Keysharp.Scripting
 				return s[actualindex];
 			}
 			else if (item is Core.Array al)
-			{
 				return al[position];
-			}
-			else if (item is Map table)
-			{
-				return table[index];
-			}
 			else if (item is Core.Buffer buf)
-			{
 				return buf[position];
-			}
 
 			foreach (var mi in item.GetType().GetMethods().Where(m => m.Name == "get_Item"))
 			{
-				if (index is int i && mi.GetParameters()[0].ParameterType == typeof(int))//Subtract one because arrays are 1-indexed, negative numbers are reverse indexed.
-					return mi.Invoke(item, new object[] { i - 1 });
-				else if (index is long l && mi.GetParameters()[0].ParameterType == typeof(long))
+				var parameters = mi.GetParameters();
+
+				if (parameters.Length > 1)
+					return mi.Invoke(item, index);
+
+				var p = parameters[0];
+
+				if (p.ParameterType == typeof(object))
+					return mi.Invoke(item, new object[] { key });
+				else if (key is long l && p.ParameterType == typeof(long))//Subtract one because arrays are 1-indexed, negative numbers are reverse indexed.
 					return mi.Invoke(item, new object[] { l - 1 });
-				else if (mi.GetParameters()[0].ParameterType == typeof(object))
-					return mi.Invoke(item, new object[] { index });
+				else if (key is int i && p.ParameterType == typeof(int))
+					return mi.Invoke(item, new object[] { i - 1 });
 			}
 
+			//These are probably never used.
 			if (item is object[] objarr)
 			{
 				var actualindex = position < 0 ? objarr.Length + position : position - 1;

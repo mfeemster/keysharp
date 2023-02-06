@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Keysharp.Core;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private Token GetToken(string code)
+		private Token GetToken(CodeLine line)
 		{
+			var code = line.Code;
 			code = code.TrimStart(Spaces);
 
 			if (code.Length == 0)
@@ -19,7 +21,7 @@ namespace Keysharp.Scripting
 				return Token.PropGet;
 			else if (IsGetOrSet(code, "set"))
 				return Token.PropSet;
-			else if (IsProperty(code))
+			else if (IsProperty(line))
 				return Token.Prop;
 			else if (IsFlowOperator(code))
 				return Token.Flow;
@@ -160,23 +162,53 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool IsProperty(string code)
+		private bool IsProperty(CodeLine line)
 		{
+			var code = line.Code;
+
 			if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)
 			{
-				var i = 0;
-				var splits = code.Split(SpaceTab);
+				if (code.Contains(":="))
+					return false;
 
-				if (string.Compare(splits[0], "static", true) == 0)
-					i++;
+				var copy = code;
+				var isstatic = false;
 
-				if (splits.Length == i + 1)//We don't support property params.
+				if (copy.StartsWith("static "))
 				{
-					if (IsIdentifier(splits[i]))
+					copy = copy.Substring(7, code.Length - 7);
+					isstatic = true;
+				}
+
+				var openBracket = copy.IndexOf('[');
+
+				if (openBracket != -1)
+					copy = copy.Substring(0, openBracket).Trim();
+
+				if (copy.Length > 0)
+				{
+					var isitem = string.Compare(copy, "__Item", true) == 0;
+
+					if (openBracket != -1)
 					{
-						//Will need to check further here that it's not a function.
-						return true;
+						var closeBracket = code.IndexOf(']');
+
+						if (closeBracket == code.Length - 1)
+						{
+							if (!isitem)
+								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", line);
+						}
+						else
+							throw new ParseException("Missing close bracket on property indexer.", line);
 					}
+					else if (isitem)
+						throw new ParseException("The __Item property must have brackets and take at least one parameter.", line);
+
+					if (isstatic && isitem)
+						throw new ParseException("The __Item property cannot be static.", line);
+
+					if (IsIdentifier(copy))
+						return true;
 				}
 			}
 
@@ -333,7 +365,7 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool IsSpace(char sym) => Array.IndexOf(Spaces, sym) != -1;
+		private bool IsSpace(char sym) => System.Array.IndexOf(Spaces, sym) != -1;
 
 		private bool IsSpace(string code)
 		{

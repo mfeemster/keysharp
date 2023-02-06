@@ -1,5 +1,6 @@
 ﻿using System.CodeDom;
 using System.Collections.Generic;
+using System.Linq;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
@@ -91,22 +92,14 @@ namespace Keysharp.Scripting
 		{
 			int x = i - 1, y = i + 1;
 			var invoke = (CodeMethodInvokeExpression)parts[x];
-			CodeExpression p0, p1;
+			CodeExpression[] parameters;
 
-			if (invoke.Parameters.Count == 2 && invoke.Method.MethodName == InternalMethods.Index.MethodName)
-			{
-				p0 = invoke.Parameters[1];
-				p1 = invoke.Parameters[0];
-			}
+			if (invoke.Method.MethodName == InternalMethods.Index.MethodName)
+				parameters = invoke.Parameters.Cast<CodeExpression>().ToArray();
 			else//Should never happen.
-			{
-				p0 = new CodePrimitiveExpression(null);
-				p1 = new CodePrimitiveExpression(null);
-			}
+				parameters = new CodeExpression[0];
 
 			var set = (CodeMethodInvokeExpression)InternalMethods.SetObject;
-			_ = set.Parameters.Add(p0);
-			_ = set.Parameters.Add(p1);
 
 			if (y < parts.Count)
 			{
@@ -116,6 +109,7 @@ namespace Keysharp.Scripting
 			else
 				_ = set.Parameters.Add(new CodePrimitiveExpression(null));
 
+			set.Parameters.AddRange(parameters);//Indexes go at the end because there can be a variable number of them.
 			parts.RemoveAt(i);
 			parts[x] = set;
 		}
