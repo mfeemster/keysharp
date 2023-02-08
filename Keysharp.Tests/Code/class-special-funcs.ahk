@@ -73,3 +73,28 @@ If (gval == 15)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+class testclass2
+{
+	a := 1
+	b := 2
+	c := 3
+}
+
+testclassobj := testclass2()
+cloneobj := testclassobj.Clone()
+
+If (cloneobj.a == 1)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (cloneobj.b == 2)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (cloneobj.c == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

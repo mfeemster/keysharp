@@ -54,7 +54,11 @@ namespace Keysharp.Core
 	{
 		public static KeysharpObject Object() => new KeysharpObject();
 
-		public virtual object Clone(params object[] obj) => null;
+		public virtual object Clone(params object[] obj)
+		{
+			return MemberwiseClone();
+			//If ownprops are implemented, might need to add extra code for those.
+		}
 
 		public void DefineProp(params object[] obj)
 		{
