@@ -40,7 +40,7 @@ namespace Keysharp.Scripting
 					if (z == -1)
 						z = variable.Length;
 
-					if (double.TryParse(test.Substring(0, z), out var low) && double.TryParse(test.Substring(z + And.Length), out var high))
+					if (double.TryParse(test.AsSpan(0, z), out var low) && double.TryParse(test.AsSpan(z + And.Length), out var high))
 					{
 						var d = ForceDouble(subject);
 						ret = d >= low && d <= high;

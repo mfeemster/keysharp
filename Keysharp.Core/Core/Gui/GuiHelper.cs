@@ -320,7 +320,7 @@ namespace Keysharp.Core
 
 					case Core.Keyword_Focus: row.Focused = enable; break;
 
-					case Core.Keyword_Icon: row.ImageIndex = int.Parse(mode.Substring(4)); break;
+					case Core.Keyword_Icon: row.ImageIndex = int.Parse(mode.AsSpan(4)); break;
 
 					case Core.Keyword_Select: row.Selected = enable; break;
 

@@ -104,7 +104,7 @@ namespace Keysharp.Scripting
 					}
 				}
 
-				var pre = code.Substring(0, i).TrimEnd(Spaces);
+				var pre = code.AsSpan(0, i).TrimEnd(Spaces).ToString();
 				return !IsPrimitiveObject(pre);
 			}
 			else
@@ -183,7 +183,7 @@ namespace Keysharp.Scripting
 				var openBracket = copy.IndexOf('[');
 
 				if (openBracket != -1)
-					copy = copy.Substring(0, openBracket).Trim();
+					copy = copy.AsSpan(0, openBracket).Trim().ToString();
 
 				if (copy.Length > 0)
 				{
@@ -227,7 +227,7 @@ namespace Keysharp.Scripting
 			var str = false;
 
 			if (code.StartsWith("static", StringComparison.OrdinalIgnoreCase))
-				code = code.Substring(6).Trim(SpaceTab);
+				code = code.AsSpan(6).Trim(SpaceTab).ToString();
 
 			for (var i = 0; i < code.Length; i++)
 			{

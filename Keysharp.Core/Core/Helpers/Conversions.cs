@@ -308,15 +308,15 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/311165/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-and-vice-versa
 		/// </summary>
-		/// <param name="hex">The input string to convert</param>
-		/// <returns>The input hex string converted to an array of bytes</returns>
+		/// <param name="hex">The hexadecimal formatted input string to convert</param>
+		/// <returns>The hexadecimal formatted input string converted to an array of bytes</returns>
 		internal static byte[] StringToByteArray(string hex)
 		{
 			var len = hex.Length;
 			var bytes = new byte[len / 2];
 
 			for (var i = 0; i < len; i += 2)
-				bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);//Sadly, ToByte() doesn't yet have an overload that takes a Span, so we're stuck with Substring().
+				bytes[i / 2] = byte.Parse(hex.AsSpan(i, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
 
 			return bytes;
 		}

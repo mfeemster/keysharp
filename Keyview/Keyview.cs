@@ -142,8 +142,7 @@ namespace Keyview
 					fullCode = code;
 					var token = "[System.STAThreadAttribute()]";
 					var start = code.IndexOf(token);
-					code = code.Substring(start + token.Length + 2);
-					code = code.TrimEnd(trimend);
+					code = code.AsSpan(start + token.Length + 2).TrimEnd(trimend).ToString();
 					var sb = new StringBuilder(code.Length);
 
 					foreach (var line in code.SplitLines())

@@ -1157,7 +1157,7 @@ namespace Keysharp.Core.Common.Keyboard
 								if (hk.hookAction != 0 ? hk.EnableParent() : hk.Enable(variant)) // Under these conditions, earlier logic has ensured variant is non-NULL.
 									updateAllHotkeys = true; // Do it this way so that any previous "true" value isn't lost.
 							}
-							else if (options.Substring(i).StartsWith("Off", StringComparison.OrdinalIgnoreCase))
+							else if (options.AsSpan(i).StartsWith("Off", StringComparison.OrdinalIgnoreCase))
 							{
 								i += 2; // Omit the letters of the word from further consideration in case "f" ever becomes a valid option letter.
 
@@ -1184,7 +1184,7 @@ namespace Keysharp.Core.Common.Keyboard
 						// as hex when in fact the B was meant to be an option letter:
 						case 'P':
 						{
-							if (variant != null && int.TryParse(options.Substring(i + 1), out var val))
+							if (variant != null && int.TryParse(options.AsSpan(i + 1), out var val))
 								variant.priority = val;
 						}
 						break;
@@ -1202,7 +1202,7 @@ namespace Keysharp.Core.Common.Keyboard
 						case 'T':
 							if (variant != null)
 							{
-								if (uint.TryParse(options.Substring(i + 1), out var val))
+								if (uint.TryParse(options.AsSpan(i + 1), out var val))
 									variant.maxThreads = val;
 
 								if (variant.maxThreads > Keysharp.Scripting.Parser.MaxThreadsTotal) // To avoid array overflow, this limit must by obeyed except where otherwise documented.
@@ -1577,7 +1577,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 				if (spaceindex != -1)
 				{
-					var trimmed = text.Substring(spaceindex).TrimStart(Keysharp.Core.Core.SpaceTab);
+					var trimmed = text.AsSpan(spaceindex).TrimStart(Keysharp.Core.Core.SpaceTab);
 
 					if (trimmed.EndsWith("Up", StringComparison.OrdinalIgnoreCase))
 					{

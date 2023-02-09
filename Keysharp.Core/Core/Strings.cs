@@ -81,19 +81,19 @@ namespace Keysharp.Core
 				{
 					if (!haslsys && splits[i].StartsWith("L"))
 					{
-						var sub = splits[i].Substring(1);
+						var sub = splits[i].AsSpan(1);
 
 						if (!int.TryParse(sub, out var li))
-							li = Convert.ToInt32(sub, 16);
+							li = int.Parse(sub.StartsWith("0x") ? sub.Slice(2) : sub, NumberStyles.AllowHexSpecifier);
 
 						ci = new System.Globalization.CultureInfo(li, false);
 					}
 					else if (splits[i].StartsWith("D"))
 					{
-						var sub = splits[i].Substring(1);
+						var sub = splits[i].AsSpan(1);
 
 						if (!ulong.TryParse(sub, out var di))
-							di = Convert.ToUInt64(sub, 16);
+							di = ulong.Parse(sub.StartsWith("0x") ? sub.Slice(2) : sub, NumberStyles.AllowHexSpecifier);
 
 						if (di == 0x80000000)
 							if (!haslsys)
@@ -101,10 +101,10 @@ namespace Keysharp.Core
 					}
 					else if (splits[i].StartsWith("T"))
 					{
-						var sub = splits[i].Substring(1);
+						var sub = splits[i].AsSpan(1);
 
 						if (!ulong.TryParse(sub, out var ti))
-							ti = Convert.ToUInt64(sub, 16);
+							ti = ulong.Parse(sub.StartsWith("0x") ? sub.Slice(2) : sub, NumberStyles.AllowHexSpecifier);
 
 						if (ti == 0x80000000)
 							if (!haslsys)
@@ -196,32 +196,6 @@ namespace Keysharp.Core
 
 			return output;
 		}
-
-		//Just pass the whole array again as the format, because the first position is ignored because we use 1-based indexing. //Need to add an element in the front because the format string is 1 indexed.
-		/// <summary>
-		/// Decodes a hexadecimal string to binary data.
-		/// </summary>
-		/// <param name="hex">The hexadecimal string to decode.</param>
-		/// <returns>A binary byte array of the given sequence.</returns>
-		public static byte[] HexDecode(string hex)
-		{
-			var binary = new byte[hex.Length / 2];
-
-			for (var i = 0; i < hex.Length; i += 2)
-			{
-				var n = new string(new[] { hex[i], hex[i + 1] });
-				binary[i / 2] = byte.Parse(n, NumberStyles.AllowHexSpecifier);
-			}
-
-			return binary;
-		}
-
-		/// <summary>
-		/// Encodes binary data to a hexadecimal string.
-		/// </summary>
-		/// <param name="value">The data to encode.</param>
-		/// <returns>A hexadecimal string representation of the given binary data.</returns>
-		public static string HexEncode(object value) => BytesToHexString(Crypt.ToByteArray(value));
 
 		/// <summary>
 		/// Returns the position of the first or last occurrence of the specified substring within a string.
@@ -518,9 +492,9 @@ namespace Keysharp.Core
 
 			if (!string.IsNullOrEmpty(dopt))
 			{
-				var ddelim = dopt.Substring(1);
+				var ddelim = dopt.AsSpan(1);
 
-				if (!string.IsNullOrEmpty(ddelim))
+				if (ddelim.Length > 0)
 					split = ddelim[0];
 			}
 
@@ -544,9 +518,9 @@ namespace Keysharp.Core
 
 			if (!string.IsNullOrEmpty(copt))
 			{
-				var cdelim = copt.Substring(1);
+				var cdelim = copt.AsSpan(1);
 
-				if (!string.IsNullOrEmpty(cdelim) && cdelim.Equals("l", StringComparison.OrdinalIgnoreCase))
+				if (cdelim.Length > 0 && cdelim.Equals("l", StringComparison.OrdinalIgnoreCase))
 					withlocale = true;
 				else
 					withcase = true;
@@ -558,9 +532,9 @@ namespace Keysharp.Core
 
 			if (!string.IsNullOrEmpty(popt))
 			{
-				var pdelim = popt.Substring(1);
+				var pdelim = popt.AsSpan(1);
 
-				if (!string.IsNullOrEmpty(pdelim) && int.TryParse(pdelim, out var pp))
+				if (pdelim.Length > 0 && int.TryParse(pdelim, out var pp))
 					sortAt = pp;
 			}
 

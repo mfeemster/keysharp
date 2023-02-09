@@ -86,8 +86,8 @@ namespace Keysharp.Core.Common
 			{
 				if (filename.StartsWith("HICON:", StringComparison.OrdinalIgnoreCase))
 				{
-					var hstr = filename.Substring(6);
-					var dontClear = hstr.StartsWith('*');
+					var hstr = filename.AsSpan(6);
+					var dontClear = hstr[0] == '*';
 
 					if (dontClear)
 						hstr = hstr.Trim('*');
@@ -103,8 +103,8 @@ namespace Keysharp.Core.Common
 				}
 				else if (filename.StartsWith("HBITMAP:", StringComparison.OrdinalIgnoreCase))
 				{
-					var hstr = filename.Substring(8);
-					var dontClear = hstr.StartsWith('*');
+					var hstr = filename.AsSpan(8);
+					var dontClear = hstr[0] == '*';
 
 					if (dontClear)
 						hstr = hstr.Trim('*');

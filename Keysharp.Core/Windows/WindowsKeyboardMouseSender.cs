@@ -2463,7 +2463,7 @@ namespace Keysharp.Core.Windows
 							if (repeatCount < 1L)
 								goto bracecaseend; // Gets rid of one level of indentation. Well worth it.
 
-							subspanstr = sub.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);//Consider the entire string, minus the first {, below.
+							subspanstr = sub.AsSpan(1).TrimStart(Keysharp.Core.Core.SpaceTab).ToString();//Consider the entire string, minus the first {, below.
 
 							if (vk != 0 || sc != 0)
 							{
@@ -2574,7 +2574,7 @@ namespace Keysharp.Core.Windows
 							{
 								// Include the trailing space in "ASC " to increase uniqueness (selectivity).
 								// Also, sending the ASC sequence to window doesn't work, so don't even try:
-								SendASC(System.Text.ASCIIEncoding.ASCII.GetBytes(subspanstr.Substring(3).TrimStart()));
+								SendASC(System.Text.ASCIIEncoding.ASCII.GetBytes(subspanstr.AsSpan(3).TrimStart().ToString()));
 								// Do this only once at the end of the sequence:
 								DoKeyDelay(); // It knows not to do the delay for SM_INPUT.
 							}

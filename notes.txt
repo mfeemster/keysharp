@@ -48,25 +48,6 @@ Bugs:
 	-Sort() did not support locales, and numeric sort (option n) was broken for decimal numbers.
 	-FileGetTime() erroneously returned a long integer instead of the date time string.
 	-File related functions did not properly use the current file loop if the passed in file name was empty.
-	
-Inefficiencies:
-	-For every single key pressed, it would call:
-		GetKeyboardLayout()
-		
-	...then allocate:
-		-256 byte array
-		-3 byte array
-		-StringBuilder(4)
-		-IAKeyEventArgs
-		-List<HotkeyDefinition> populated with every matched hotkey. Made into a reused class variable instead. May not even need a list, AHK appears to only use the first matched hotstring.
-		-Thread and run it
-			-Loop through every matched hotkey string, allocate a copy and call its handler if its condition is met
-		-List<HotstringDefinition> populated with every matched hotstring and make a copy of each to check if its condition si met
-		-Thread and run it for each matched hotstring
-			-Copy of the hotstring in each thread, and call its handler
-	
-	-For every trigger key pressed, such as space or enter:
-		-An exception was thrown when parsing the key.
 			
 Differences:
 	-AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
@@ -499,11 +480,11 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	DataGridView:
 		https://github.com/topics/datagridview?l=c%23
 		https://github.com/BekoSan/ProductivityFunctions
-	A project the tried to use IronAHK to do automation in node.js: https://github.com/1j01/node-ahk
+	A project that tried to use IronAHK to do automation in node.js: https://github.com/1j01/node-ahk
 	RobotJS: an automation project in JS: https://github.com/octalmage/robotjs
 	Messages in cosole apps: https://docs.microsoft.com/en-us/archive/msdn-magazine/2007/june/net-matters-handling-messages-in-console-apps
 	
-	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If ti doesn't, then yes, we can add it in Keysharp. 
+	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
 		In AHK, you can write to stdout using FileAppend by specifying * for the file name. 
 

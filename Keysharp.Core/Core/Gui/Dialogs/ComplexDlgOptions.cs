@@ -132,8 +132,8 @@ namespace Keysharp.Core
 
 			if (dktOptions[Core.Keyword_Centered] != "")
 			{
-				CenterMainText = dktOptions[Core.Keyword_Centered].Substring(0, 1) == "1";
-				CenterSubText = dktOptions[Core.Keyword_Centered].Substring(1, 1) == "1";
+				CenterMainText = MemoryExtensions.Equals(dktOptions[Core.Keyword_Centered].AsSpan(0, 1), "1", StringComparison.Ordinal);
+				CenterSubText  = MemoryExtensions.Equals(dktOptions[Core.Keyword_Centered].AsSpan(1, 1), "1", StringComparison.Ordinal);
 			}
 
 			try

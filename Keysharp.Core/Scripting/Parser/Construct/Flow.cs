@@ -94,7 +94,7 @@ namespace Keysharp.Scripting
 					}
 					else if (elses.Count > 0)//This must come last otherwise it will take precedence over the special situations above.
 					{
-						var next = line.Code.TrimStart(Spaces).Substring(FlowElse.Length).TrimStart(Spaces);
+						var next = line.Code.AsSpan().TrimStart(Spaces).Slice(FlowElse.Length).TrimStart(Spaces).ToString();
 
 						if (!IsEmptyStatement(next))
 							lines.Insert(index + 1, new CodeLine(line.FileName, line.LineNumber, next.TrimEnd(BlockOpenAndSpace)));
@@ -106,7 +106,7 @@ namespace Keysharp.Scripting
 					}
 					else if (parent.Count > 0 && parent[parent.Count - 1] is CodeExpressionStatement ces && ces.Expression is CodeMethodInvokeExpression cmie && cmie.Method.MethodName == "Pop")
 					{
-						var blockOpen = parts.Length > 1 && parts[1].Trim().EndsWith(BlockOpen);
+						var blockOpen = parts.Length > 1 && parts[1].AsSpan().Trim().EndsWith("{");
 						parent.RemoveAt(parent.Count - 1);
 						var ifelse = new CodeConditionStatement { Condition = new CodeSnippetExpression("Pop().index == 0L") };
 						var block = new CodeBlock(line, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
@@ -159,7 +159,7 @@ namespace Keysharp.Scripting
 
 							if (colonindex < parts[1].Length)
 							{
-								var next = parts[1].Substring(colonindex).TrimStart(Spaces);
+								var next = parts[1].AsSpan(colonindex).TrimStart(Spaces).ToString();
 
 								if (!IsEmptyStatement(next))
 									lines.Insert(index + 1, new CodeLine(line.FileName, line.LineNumber, next));
@@ -877,7 +877,7 @@ namespace Keysharp.Scripting
 				if (code.Length > 0 && code[l] == BlockOpen)
 				{
 					blockOpen = true;
-					code = code.Substring(0, l).Trim();
+					code = code.AsSpan(0, l).Trim().ToString();
 				}
 
 				this.blockOpen = false;
@@ -904,7 +904,7 @@ namespace Keysharp.Scripting
 				if (code.Length > 0 && code[l] == BlockOpen)
 				{
 					blockOpen = true;
-					code = code.Substring(0, l).Trim();
+					code = code.AsSpan(0, l).Trim().ToString();
 				}
 
 				if (inequality)

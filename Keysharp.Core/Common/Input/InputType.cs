@@ -328,8 +328,8 @@ namespace Keysharp.Core.Common.Input
 						break;
 
 					case 'T':
-						var sub = options.Substring(i + 1);
-						Timeout = (sub.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? sub.ParseInt().Value : (int)options[i + 1].ParseDouble()) * 1000;
+						var sub = options.AsSpan(i + 1);
+						Timeout = sub.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? (int.Parse(sub.Slice(2)) * 1000) : (int)(double.Parse(sub) * 1000);
 						break;
 
 					case 'V':

@@ -160,7 +160,7 @@ namespace Keysharp.Core
 
 						if (z != -1)
 						{
-							var port = smtpHost.Substring(z + 1);
+							var port = smtpHost.AsSpan(z + 1);
 							smtpHost = smtpHost.Substring(0, z);
 
 							if (int.TryParse(port, out var n))

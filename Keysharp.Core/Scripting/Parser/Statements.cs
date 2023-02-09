@@ -282,7 +282,7 @@ namespace Keysharp.Scripting
 
 								if (openBracket != -1)
 								{
-									copy = copy.Substring(0, openBracket).Trim();
+									copy = copy.AsSpan(0, openBracket).Trim().ToString();
 								}
 
 								var prop = new CodeMemberProperty

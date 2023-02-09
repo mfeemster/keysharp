@@ -299,7 +299,7 @@ namespace Keysharp.Core
 						_ = sb.AppendLine($"Class: {meth.ReflectedType.Name}");
 						_ = sb.AppendLine();
 
-						foreach (var v in meth.ReflectedType.GetFields(BindingFlags.Public | BindingFlags.Static))
+						foreach (var v in meth.ReflectedType.GetProperties(BindingFlags.Public | BindingFlags.Static))
 						{
 							var val = v.GetValue(null);
 							var varstr = $"\t{val?.GetType()} {v.Name}: ";

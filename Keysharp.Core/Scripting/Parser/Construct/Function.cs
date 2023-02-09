@@ -33,7 +33,7 @@ namespace Keysharp.Scripting
 			if (code.StartsWith("static", StringComparison.OrdinalIgnoreCase))
 			{
 				isStatic = true;
-				code = code.Substring(6).Trim(SpaceTab);
+				code = code.AsSpan(6).Trim(SpaceTab).ToString();
 			}
 
 			for (i = 0; i < code.Length; i++)
@@ -157,7 +157,7 @@ namespace Keysharp.Scripting
 
 			return buf.ToString();
 		}
-		
+
 		internal void EndFunction()
 		{
 			_ = currentFuncParams.PopOrNull();
@@ -289,7 +289,7 @@ namespace Keysharp.Scripting
 						}
 						else
 						{
-							var sub = code.Substring(x, i - x).Trim(Spaces);
+							var sub = code.AsSpan(x, i - x).Trim(Spaces).ToString();
 
 							if (sub.ToLower() == "unset")
 							{

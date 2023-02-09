@@ -109,7 +109,7 @@ namespace Keysharp.Scripting
 
 		private Script.Operator OperatorFromString(string code)
 		{
-			var op = code.ToCharArray();
+			var op = code;
 
 			switch (op[0])
 			{

@@ -185,7 +185,7 @@ namespace Keysharp.Core.Common.Keyboard
 				if (split.Length == 0)
 					continue;
 
-				var next = split.Length > 1 ? split.Substring(1) : "";
+				var next = split.Length > 1 ? split.AsSpan(1) : "";
 
 				switch (char.ToUpper(split[0]))
 				{

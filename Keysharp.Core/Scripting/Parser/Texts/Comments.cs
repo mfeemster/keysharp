@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 using static Keysharp.Core.Core;
 
@@ -45,7 +46,7 @@ namespace Keysharp.Scripting
 		{
 			var spaced = offset == 0 || IsSpace(code[offset - 1]);
 #if LEGACY
-			return code.Length - offset >= Comment.Length && code.Substring(offset, Comment.Length) == Comment && spaced;
+			return code.Length - offset >= Comment.Length && MemoryExtensions.Equals(code.AsSpan(offset, Comment.Length), Comment, StringComparison.Ordinal) && spaced;
 #endif
 #if !LEGACY
 			return code[offset] == Comment && spaced;
@@ -54,7 +55,7 @@ namespace Keysharp.Scripting
 
 		private bool IsCommentLine(string code) =>
 #if LEGACY
-		code.Length >= Comment.Length&& code.Substring(0, Comment.Length) == Comment;
+		code.Length >= Comment.Length&& MemoryExtensions.Equals(code.AsSpan(0, Comment.Length), Comment, StringComparison.Ordinal);
 #endif
 #if !LEGACY
 		return code.Length > 0 && code[0] == Comment;

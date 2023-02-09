@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Text;
 using Keysharp.Core;
@@ -45,7 +46,7 @@ namespace Keysharp.Scripting
 			else
 			{
 				cmd = code.Substring(0, z);
-				param = code.Substring(z).TrimStart(delim);
+				param = code.AsSpan(z).TrimStart(delim).ToString();
 			}
 
 			var replaced = new StringBuilder(code.Length);
