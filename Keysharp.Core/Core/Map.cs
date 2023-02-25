@@ -220,9 +220,9 @@ namespace Keysharp.Core
 						val = kv.Value.ToString();
 
 					if (i < map.Count - 1)
-						_ = sb.Append($"{key} : {val}, ");
+						_ = sb.Append($"{key}: {val}, ");
 					else
-						_ = sb.Append($"{key} : {val}");
+						_ = sb.Append($"{key}: {val}");
 
 					i++;
 				}
