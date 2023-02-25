@@ -222,63 +222,18 @@ Differences:
 		
 TODO/ENSURE THESE WORK:
 	The function Thread() was never implemented.
-	Replace as many instances of Substring() with Span() as you can.
-	InstallKeybdHook()/mouse need to use the wrapper that AHK uses, which requires hotkeys to be implemented.
-	Implement all hotstring modes.
-	Figure out the difference between EVENT and PLAY modes. AHK treats them totally differently: kbd event vs post message.
-	When b0 no backspace is enabled, pressing control keeps triggering the hotstring.
-	C is case sensitive, C1 is match either all caps or first cap. You should make a third opion C2 to match any caps.
-	Figure out difference between sendinput/play/event modes. Input should be the default with a fallback of play.
-	Long hotstrings with commans in them are improperly parsed, and an escape ` is inserted before each comma, which is not used as an escape, but is treated literally.
-	Make sure if(expression) if (expression) and if expression all work properly.
-	if %MyVar% is equivalent to if MyVar, and should work like in C where if (1) is a valid statement that evaluates to true.
-	Test if with {} braces for the block.
-	Unlike an If statement, an Else statement supports any type of statement immediately to its right, so test an Else x = 1 type of statement.
-	if Var between LowerBound and UpperBound checks whether a variable is between two values, and if Var in MatchList can be used to check whether a variable's contents exist within a list of values.
-	Comparison is single = equal sign. See what happens with C style double equals ==.
-	SetEnv, Var, Value and Var = Value and Var := Value should all do the same thing.
-	MsgBox % "The value in the variable named Var is " . Var . "."  the % is used to turn legacy mode off for the command, because all commands use legacy style syntax by default.
-	Legacy if is treated literally. So comparing if var = "" is literally testing for a string with two quotes in it. So to test for empty string, do if var =
-	Make sure booleans like x = false work.
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
-	Allow for including/excluding line pragmas when generating code. Default to off.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
-	It's assigning all numbers as int with a D suffix, when it should support double too.
-	Figure out a way to discern the type of a default function parameter value. Currently, they are all treated as strings.
-	Figure out variadic functions with the * syntax, seems unnecessary.
-	Make sure flip/combine global/local/static within funcs works.
-	Function local static variables get initialized once at script startup, so really they should just be class static vars that get initialized in some init function.
-	Arrays can have each element declared global or local. This is probably a dumb feature you don't need to implement.
-	If the function cannot be called due to one of the reasons below, the evaluation of the expression containing the call stops silently and prematurely, which may lead to inconsistent results:
-		Silently failing is probably a huge source of bugs and frustration. Should at least log this.
-	Functions that do gosub inside seem pretty scary, revisit later.
 	Make sure code like GetNextLine(BlankArray%i%) creates the variable on the fly.
-	When used inside a function, ListVars displays a function's local variables along with their contents. This can help debug a script. Reflection should work here, just get the right stack frame.
 	Make sure searching of paths for local, user and standard library folders works when looking for files whose name is the same as a function being called. Make sure prefix works too.
-	Global standard functions can be overidden/replaced with user defined functions of the same name. Make sure this works.
-	Make sure DLLCall works. It should play nicely with pinvoke.
-	Labels should be called whenever they are declared. Maybe they should be lambdas? Is there an easy way to declare and call a lambda together?
 	Gotos for breaking out of nested loops, using the loops as labels, might be tough.
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
-	Creating an array like arr1 := [1, 2, 3] works, but arr2 := Array(4, 5, 6) does not, because it thinks Array() is wrongly interpreted as a function.
 	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
-		
-	Passing ref variables to functions doesn't work. Such as: Swap(ByRef Left, ByRef Right).
-	Variadic parameters didn't work. It needs major work and is unlikely unsupportable in the current paradigm of using object arrays for all function parameters. Need to do better here.
-	Can reflection list/access all local vars? The function ListVars needs this.
 	IfLess, %x%, %y% doesn't work, can only see one as a variable.
-	MsgBox %var% doesn't work, ambiguous match.
-	Should have a mode to set whether arrays are 1 or 0 indexed.
 	SetFormat float etc... and string caching appears to not be supported. We should leave it out as it makes no sense at all in C#.
-	Rather than a very convoluted and error prone set of functions for x++ ++x x-- and --x, just make and use internal prefix and postfix functions: PreInc(), PostInc(), PreDec(), PostDec().
-		--Need to test x += 1, x -= 1
-	Variables named a or aa don't work?
-	See if you can use immutable array/list? Should be faster with foreach.
-	Function objects and classes are going to be hell to implement.
 	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
 	Perhaps look into including a long integer/extended precision library.
-	MsgBox() is completely broken. Only works if you use parens with no space.
 	Ensure V2 H multithreading works
 	Make sure CoordMode is properly applied to all of the functions it affects.
 	Give attribution to:
@@ -291,21 +246,15 @@ TODO/ENSURE THESE WORK:
 		PictureBox derivation: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
 		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
 		
-	The syntax used in the tests for associative arrays seems to be V1 style, we need to ensure we support V2 style which takes objects as keys.
-	Reading accessor properties works, but setting them does not, it thinks it's a variable.
 	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
 	Should have a diagnostic tab on the basic gui system tray window that shows all A_* variable values as well as the assembly info attributes, and regular program version. Only load if the user selects that tab, to avoid doing it every time and not using it.
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
-	Make classes sealed that can be, because it can help the compiler optimize.
-	AHK has its own MsgBox() function which does things differently. Will need to see if we need to do all of that.
-	
 	
 	There are four areas/types of versions being dealt with.
 		1) The version of keysharp that is compiling the script.
 		2) The embedded version of the script as specified by the #ASSEMBLY* directives.
 		3) The version of keysharp that is running the script. Is the same as #1 when compiling.
 		4) The version of keysharp the script was compiled with, to be checked when it's running.
-
 
 	The command line you were using for Keysharp.OutputTest is: /force /restart /ErrorStdOut /Debug /include "IncFile.ahk"
 	

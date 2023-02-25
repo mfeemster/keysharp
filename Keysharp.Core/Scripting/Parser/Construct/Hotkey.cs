@@ -188,7 +188,7 @@ namespace Keysharp.Scripting
 				// Note that there may be an action following the HOTKEY_FLAG (on the same line).
 				if (hotkeyFlagIndex != -1) // Find the first one from the left, in case there's more than 1.
 				{
-					if (hotkeyFlagIndex == 0 && buf[hotkeyFlagIndex + 2] == ':') // v1.0.46: Support ":::" to mean "colon is a hotkey".
+					if (hotkeyFlagIndex == 0 && buf.Length > hotkeyFlagIndex + 2 && buf[hotkeyFlagIndex + 2] == ':') // v1.0.46: Support ":::" to mean "colon is a hotkey".
 						++hotkeyFlagIndex;
 
 					// Above: Hotkeys like "^:::" and "l & :::" are not supported because: 1) some cases are
@@ -804,9 +804,9 @@ namespace Keysharp.Scripting
 
 		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string buf, string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
 		{
-			HotkeyDefinition hk;
+			//HotkeyDefinition hk;
 			var suffix_has_tilde = false;//Need to figure out passing this in or what to do with them later.//TODO
-			var hook_is_mandatory = false;
+			//var hook_is_mandatory = false;
 
 			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
 				// A hotkey is stacked above, eg,

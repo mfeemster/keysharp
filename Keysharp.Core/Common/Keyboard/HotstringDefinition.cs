@@ -176,38 +176,32 @@ namespace Keysharp.Core.Common.Keyboard
 			// In this case, colon rather than zero marks the end of the string.  However, the string
 			// might be empty so check for that too.  In addition, this is now called from
 			// IsDirective(), so that's another reason to check for normal string termination.
-			var firstColon = _options.IndexOf(':');
-
-			foreach (var split in firstColon == -1
-					 ? _options.Split(Core.SpaceColon, StringSplitOptions.TrimEntries)
-					 : _options.Substring(0, firstColon).Split(Core.SpaceColon, StringSplitOptions.TrimEntries))
+			for (var i = 0; i < _options.Length && _options[i] != ':'; i++)
 			{
-				if (split.Length == 0)
-					continue;
+				var ch = char.ToUpper(_options[i]);
+				var next = _options.Length > i ? _options.AsSpan(i + 1) : "";
 
-				var next = split.Length > 1 ? split.AsSpan(1) : "";
-
-				switch (char.ToUpper(split[0]))
+				switch (ch)
 				{
 					case '*':
-						_endCharRequired = next == "0";
+						_endCharRequired = next[0] == '0';
 						break;
 
 					case '?':
-						_detectWhenInsideWord = next != "0";
+						_detectWhenInsideWord = next[0] != '0';
 						break;
 
 					case 'B':
-						_doBackspace = next != "0";
+						_doBackspace = next[0] != '0';
 						break;
 
 					case 'C':
-						if (next == "0") // restore both settings to default.
+						if (next[0] == '0') // restore both settings to default.
 						{
 							_conformToCase = true;
 							_caseSensitive = false;
 						}
-						else if (next == "1")
+						else if (next[0] == '1')
 						{
 							_conformToCase = false;
 							_caseSensitive = false;
@@ -221,7 +215,7 @@ namespace Keysharp.Core.Common.Keyboard
 						break;
 
 					case 'O':
-						_omitEndChar = next != "0";
+						_omitEndChar = next[0] != '0';
 						break;
 
 					// For options such as K & P: Use atoi() vs. ATOI() to avoid interpreting something like 0x01C
@@ -241,37 +235,42 @@ namespace Keysharp.Core.Common.Keyboard
 					break;
 
 					case 'R':
-						_sendRaw = (next != "0") ? SendRawModes.Raw : SendRawModes.NotRaw;
+						_sendRaw = (next[0] != '0') ? SendRawModes.Raw : SendRawModes.NotRaw;
 						break;
 
 					case 'T':
-						_sendRaw = (next != "0") ? SendRawModes.RawText : SendRawModes.NotRaw;
+						_sendRaw = (next[0] != '0') ? SendRawModes.RawText : SendRawModes.NotRaw;
 						break;
 
 					case 'S':
 					{
-						switch (next.Length > 0 ? next[0] : (char)0)
+						if (next.Length > 0)
 						{
-							// There is no means to choose SM_INPUT because it seems too rarely desired (since auto-replace
-							// hotstrings would then become interruptible, allowing the keystrokes of fast typists to get
-							// interspersed with the replacement text).
-							case 'I': _sendMode = SendModes.InputThenPlay; break;
+							++i; // Skip over S's sub-letter (if any) to exclude it from  further consideration.
 
-							case 'E': _sendMode = SendModes.Event; break;
+							switch (char.ToUpper(next[0]))
+							{
+								// There is no means to choose SM_INPUT because it seems too rarely desired (since auto-replace
+								// hotstrings would then become interruptible, allowing the keystrokes of fast typists to get
+								// interspersed with the replacement text).
+								case 'I': _sendMode = SendModes.InputThenPlay; break;
 
-							case 'P': _sendMode = SendModes.Play; break;
+								case 'E': _sendMode = SendModes.Event; break;
 
-							default: _suspendExempt = next != "0"; break;
+								case 'P': _sendMode = SendModes.Play; break;
+
+								default: _suspendExempt = next[0] != '0'; break;
+							}
 						}
 					}
 					break;
 
 					case 'Z':
-						_doReset = next != "0";
+						_doReset = next[0] != '0';
 						break;
 
 					case 'X':
-						_executeAction = next != "0";
+						_executeAction = next[0] != '0';
 						break;
 						// Otherwise: Ignore other characters, such as the digits that comprise the number after the P option.
 				}

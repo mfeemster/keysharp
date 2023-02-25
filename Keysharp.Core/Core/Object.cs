@@ -48,6 +48,8 @@ namespace Keysharp.Core
 			//Figure out ownprops.//TODO
 			return 0L;
 		}
+
+		//public virtual string tostring() => ToString();
 	}
 
 	public class KeysharpObject : Any

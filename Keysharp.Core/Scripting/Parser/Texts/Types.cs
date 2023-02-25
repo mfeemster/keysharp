@@ -227,7 +227,7 @@ namespace Keysharp.Scripting
 			//  xf = n < codeTrim.Length ? double.TryParse(codeTrim.Substring(e + 1), out x) : false;
 			//  codeTrim = codeTrim.Substring(0, e);
 			//}
-			var longresult = codeTrim.ParseLong(false);
+			var longresult = codeTrim.ParseLong(false);//Also supports hex.
 
 			if (longresult.HasValue)
 			{
@@ -259,8 +259,10 @@ namespace Keysharp.Scripting
 			{
 				if (result != null)
 				{
-					var longresult = result.ParseLong(false);//Also supports hex.
-					return longresult.HasValue ? new CodeSnippetExpression($"{longresult.Value}L") : new CodePrimitiveExpression(result);
+					if (result is long ll)
+						return new CodeSnippetExpression($"{ll}L");
+					else
+						return new CodePrimitiveExpression(result);
 				}
 				else
 					return new CodePrimitiveExpression(result);

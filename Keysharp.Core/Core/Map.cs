@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Keysharp.Core
 {
@@ -192,6 +193,45 @@ namespace Keysharp.Core
 				for (var i = 0; i < count; i += 2)
 					Insert(values[i], values[i + 1]);
 			}
+		}
+
+		public override string ToString()
+		{
+			if (map.Count > 0)
+			{
+				var sb = new StringBuilder(map.Count * 10);
+				_ = sb.Append('{');
+				var i = 0;
+
+				foreach (var kv in map)
+				{
+					string key;
+
+					if (kv.Key is string ks)
+						key = $"\"{ks}\"";
+					else
+						key = kv.Key.ToString();
+
+					string val;
+
+					if (kv.Value is string vs)
+						val = $"\"{vs}\"";
+					else
+						val = kv.Value.ToString();
+
+					if (i < map.Count - 1)
+						_ = sb.Append($"{key} : {val}, ");
+					else
+						_ = sb.Append($"{key} : {val}");
+
+					i++;
+				}
+
+				_ = sb.Append('}');
+				return sb.ToString();
+			}
+			else
+				return "{}";
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();

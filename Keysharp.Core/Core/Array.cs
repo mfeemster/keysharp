@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
+using System.Windows.Forms;
 
 namespace Keysharp.Core
 {
@@ -37,7 +39,7 @@ namespace Keysharp.Core
 				if (i > array.Count)
 				{
 					if (array.Capacity < i)
-						array.Capacity = (int)i;
+						array.Capacity = i;
 
 					for (var ii = 0; ii < i; ii++)
 						if (ii >= array.Count)
@@ -197,6 +199,36 @@ namespace Keysharp.Core
 			}
 
 			return null;
+		}
+
+		public override string ToString()
+		{
+			if (array.Count > 0)
+			{
+				var sb = new StringBuilder(array.Count * 10);
+				_ = sb.Append('[');
+
+				for (var i = 0; i < array.Count; i++)
+				{
+					string str;
+					var val = array[i];
+
+					if (val is string vs)
+						str = $"\"{vs}\"";
+					else
+						str = val.ToString();
+
+					if (i < array.Count - 1)
+						_ = sb.Append($"{str}, ");
+					else
+						_ = sb.Append($"{str}");
+				}
+
+				_ = sb.Append(']');
+				return sb.ToString();
+			}
+			else
+				return "[]";
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
