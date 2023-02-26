@@ -67,6 +67,7 @@ namespace Keysharp.Tests
 				index++;
 			}
 
+			Assert.AreEqual(arr.ToString(), "[10, 20, 30]");
 			Assert.IsTrue(TestScript("collections-array-ex", true));
 		}
 
@@ -133,6 +134,7 @@ namespace Keysharp.Tests
 					Assert.IsTrue(false);
 			}
 
+			Assert.AreEqual(arr.ToString(), "{\"one\": 1, \"two\": 2, \"three\": 3}");
 			Assert.IsTrue(TestScript("collections-associative-array-ex", true));
 		}
 

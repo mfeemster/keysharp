@@ -228,13 +228,20 @@ namespace Keysharp.Scripting
 
 				case FlowGosub://Might be good to see if this call can be made directly rather than through reflection with LabelCall(). Might still need it when the call is with a variable.//MATT
 				{
-					throw new ParseException("Gosub is no longer supported, use a label with goto instead.", line);
+					throw new ParseException("Gosub is no longer supported, use goto with a label instead", line);
 				}
 
 				case FlowGoto:
 				{
-					return parts.Length < 1 ? throw new ParseException("No label specified", line)
-					: (new CodeStatement[] { new CodeGotoStatement(parts[1]) });
+					if (parts.Length < 1)
+						throw new ParseException("No label specified for goto statement", line);
+
+					var cgs = new CodeGotoStatement(parts[1]);
+
+					if (parentBlock != null)
+						gotos[cgs] = parentBlock;
+
+					return new CodeStatement[] { cgs };
 				}
 
 				case FlowLoop:
@@ -350,6 +357,10 @@ namespace Keysharp.Scripting
 					};
 					var block = new CodeBlock(line, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID);
 					block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
+
+					if (parent.Count > 0 && parent[parent.Count - 1] is CodeLabeledStatement cls)
+						block.Name = cls.Label;
+
 					_ = CloseTopSingleBlock();
 					blocks.Push(block);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
@@ -476,24 +487,51 @@ namespace Keysharp.Scripting
 				break;
 
 				case FlowBreak:
+				{
 					var b = 1;
+					string exit = null;
 
 					if (parts.Length > 1)
 					{
 						parts[1] = StripCommentSingle(parts[1]);
 
-						if (!int.TryParse(parts[1], out b) || b < 1)
-							throw new ParseException("Break parameter must be a static integer greater than zero", line);
-					}
+						if (int.TryParse(parts[1], out b))
+						{
+							if (b < 1)
+								throw new ParseException("Break parameter must be a static integer greater than zero", line);
 
-					var exit = PeekLoopLabel(true, b);
+							exit = PeekLoopLabel(true, b);
+
+							if (exit == null)
+								throw new ParseException($"Could not find a loop {b} levels above", line);
+						}
+						else//Assume it was a label if parsing an int failed.
+						{
+							(exit, b) = PeekLoopLabel(true, parts[1]);
+
+							if (exit == null)
+								throw new ParseException($"Could not find a loop above with the name {parts[1]}", line);
+						}
+					}
+					else
+						(exit, b) = PeekLoopLabel(true, "");
 
 					if (exit == null)
-						throw new ParseException("Cannot break outside a loop", line);//This needs to work with switch/case.//MATT
+						throw new ParseException("Cannot break outside of a loop", line);
 
-					return new CodeStatement[] { new CodeExpressionStatement(new CodeSnippetExpression("break")) };
+					//Handle calls to Pop() here instead of in Parser.GenerateCompileUnit() where gotos are handled.
+					var codeStatements = new List<CodeStatement>(b);
+					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
+
+					for (var i = 1; i < b; i++)
+						codeStatements.Add(pop);
+
+					codeStatements.Add(new CodeGotoStatement(exit));
+					return codeStatements.ToArray();
+				}
 
 				case FlowContinue:
+				{
 					var c = 1;
 
 					if (parts.Length > 1)
@@ -511,8 +549,10 @@ namespace Keysharp.Scripting
 
 					//Need to use a goto instead of a continue statement because Until statements still need to be executed after continue.
 					return new CodeStatement[] { new CodeExpressionStatement(new CodeSnippetExpression($"goto {cont}")) };
+				}
 
 				case FlowReturn:
+				{
 					if (Scope?.Length == 0)
 					{
 						_ = CloseTopLabelBlock();//MATT
@@ -527,6 +567,7 @@ namespace Keysharp.Scripting
 						var result = parts.Length > 1 ? ParseSingleExpression(parts[1], false) : new CodePrimitiveExpression("");
 						return new CodeStatement[] { new CodeMethodReturnStatement(result) };
 					}
+				}
 
 				case FlowClass:
 				{
@@ -585,6 +626,7 @@ namespace Keysharp.Scripting
 				}
 
 				case FunctionLocal:
+				{
 					if (localFuncVars.PeekOrNull() is List<string> lflist)
 					{
 						if (parts.Length > 1)
@@ -619,12 +661,13 @@ namespace Keysharp.Scripting
 								return funclocalvarinitstatements.ToArray();
 						}
 						else
-							throw new ParseException("local keyword must be followed be one or more variable names.", line);
+							throw new ParseException("local keyword must be followed be one or more variable names", line);
 					}
-
-					break;
+				}
+				break;
 
 				case FunctionGlobal:
+				{
 					if (parts.Length > 1)
 					{
 						var mutltiexprs = ParseMultiExpression(parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
@@ -660,10 +703,11 @@ namespace Keysharp.Scripting
 						_ = allGlobalVars.TryPop(out _);
 						allGlobalVars.Push(true);
 					}
-
-					break;
+				}
+				break;
 
 				case FunctionStatic:
+				{
 					if (parts.Length > 1)
 					{
 						if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
@@ -707,8 +751,8 @@ namespace Keysharp.Scripting
 						_ = allStaticVars.TryPop(out _);
 						allStaticVars.Push(true);
 					}
-
-					break;
+				}
+				break;
 
 				case Throw:
 				{

@@ -1,5 +1,7 @@
-﻿using System.CodeDom;
+﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Keysharp.Scripting
 {
@@ -58,11 +60,13 @@ namespace Keysharp.Scripting
 
 								foreach (CodeStatement tempcsc in csc)
 								{
-									if (!(tempcsc is CodeGotoStatement))
+									if (tempcsc is CodeGotoStatement cgs)
 									{
-										anyNonGotos = true;
-										break;
+										if (gotos.TryGetValue(cgs, out var tempBlock) && stack.Count > 0)
+											gotos[cgs] = stack.Peek();
 									}
+									else
+										anyNonGotos = true;
 								}
 
 								if (anyNonGotos)//This allows multiple case statements to run the same code (equivalent of no breaks in C#).
@@ -80,6 +84,7 @@ namespace Keysharp.Scripting
 						}
 
 						_ = origlocalparent.Add(css.FinalLabelStatement);
+						_ = origlocalparent.Add(new CodeSnippetStatement(";"));//End labels seem to need a semicolon.
 
 						if (css.CaseSense != null)
 							_ = origlocalparent.Add(new CodeAssignStatement(new CodeSnippetExpression(css.SwitchVarTempName), new CodeSnippetExpression("null")));
@@ -87,7 +92,7 @@ namespace Keysharp.Scripting
 				}
 			}
 			else if (top.EndLabel != null)
-				_ = top.Statements.Add(new CodeLabeledStatement(top.EndLabel, new CodeSnippetStatement(";")));//End labels in for loops seem to need a semicolon.//MATT
+				_ = top.Statements.Add(new CodeLabeledStatement(top.EndLabel, new CodeSnippetStatement(";")));//End labels seem to need a semicolon.
 		}
 
 		private void CloseBlock()
@@ -164,6 +169,77 @@ namespace Keysharp.Scripting
 			}
 
 			return null;
+		}
+
+		private (string, int) PeekLoopLabel(bool exit, string label)
+		{
+			if (blocks.Count == 0)
+				return (null, 0);
+
+			var depth = 0;
+			var parent = blocks.Peek();
+
+			while (parent != null)
+			{
+				if (parent.Kind == CodeBlock.BlockKind.Loop)
+				{
+					depth++;
+
+					if (label.Length == 0 || parent.Name == label)
+						return exit ? (parent.ExitLabel, depth) : (parent.EndLabel, depth);
+				}
+
+				parent = parent.Parent;
+			}
+
+			return (null, 0);
+		}
+
+		private int LoopDepth()
+		{
+			if (blocks.Count == 0)
+				return 0;
+
+			var depth = 0;
+			var parent = blocks.Peek();
+
+			while (parent != null)
+			{
+				if (parent.Kind == CodeBlock.BlockKind.Loop)
+					depth++;
+
+				parent = parent.Parent;
+			}
+
+			return depth;
+		}
+
+		private int GotoLoopDepth(CodeBlock block, string label)
+		{
+			var depth = 0;
+			var parent = block;
+
+			while (parent != null)
+			{
+				if (parent.Kind == CodeBlock.BlockKind.Loop)
+				{
+					foreach (var cs in parent.Statements)
+					{
+						if (cs is CodeLabeledStatement cls)
+						{
+							if (cls.Label == label)
+								goto found;
+						}
+					}
+
+					depth++;
+				}
+
+				parent = parent.Parent;
+			}
+
+			found:
+			return depth;
 		}
 	}
 }

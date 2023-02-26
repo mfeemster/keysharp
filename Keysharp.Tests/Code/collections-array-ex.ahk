@@ -42,6 +42,13 @@ if (len == 3)
 else
 	FileAppend, fail, *
 	
+str := arr.ToString()
+
+if (str == "[10, 20, 30]")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 arr.Length += 123
 len := arr.Length
 

@@ -27,6 +27,13 @@ if (val = 1)
 else
 	FileAppend, fail, *
 
+str := m.ToString()
+
+if (str == '{"one": 1, "two": 2, "three": 3}')
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 m := { 123 : 456, "two" : 2, "three" : 3 }
 val := m[123]
 

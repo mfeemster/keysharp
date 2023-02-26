@@ -152,7 +152,8 @@ Differences:
 		-RunWait() does not take a ref param for OutputVarPID, and instead returns an object with two members: OutputVarPID and ExitCode.
 	-Double click handlers for buttons are not supported.
 	-Spin boxes with paired "buddy" controls are not supported. Just use the regular spin box in C#.
-	-Goto statements cannot use any type of variables. They must be labels known at compile time.
+	-Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
+	-Goto statements being called as a function like Goto("Label") are not supported. Instead, just use goto Label.
 	-Enumerator.Call() is not supported because it takes ref variables.
 	-Func isn't supported, but FuncObj is and is created by the Func() function.
 	-Deleting a tab via GuiCtrl.Delete() does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
@@ -221,20 +222,19 @@ Differences:
 		newref := "" ; subtracts 1 from the reference count
 		
 TODO/ENSURE THESE WORK:
-	The function Thread() was never implemented.
+	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
+		Ensure V2 H multithreading works
+		The function Thread() was never implemented.
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
 	Make sure code like GetNextLine(BlankArray%i%) creates the variable on the fly.
 	Make sure searching of paths for local, user and standard library folders works when looking for files whose name is the same as a function being called. Make sure prefix works too.
-	Gotos for breaking out of nested loops, using the loops as labels, might be tough.
-	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
 	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
 	IfLess, %x%, %y% doesn't work, can only see one as a variable.
 	SetFormat float etc... and string caching appears to not be supported. We should leave it out as it makes no sense at all in C#.
 	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
 	Perhaps look into including a long integer/extended precision library.
-	Ensure V2 H multithreading works
 	Make sure CoordMode is properly applied to all of the functions it affects.
 	Give attribution to:
 		Need to include this https://opensource.org/licenses/cddl1.php for the logical string comparison code: https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer

@@ -89,10 +89,13 @@ namespace Keysharp.Tests
 		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", true));
 
 		[Test, Category("Flow")]
+		public void FlowLoopSwitchBreakGoto() => Assert.IsTrue(TestScript("flow-loop-switch-break-goto", true));
+
+		[Test, Category("Flow")]
 		public void FlowLoopReg()
 		{
 			Keysharp.Core.Flow.Init();
-			
+
 			try
 			{
 				Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");

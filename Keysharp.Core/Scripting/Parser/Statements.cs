@@ -242,7 +242,8 @@ namespace Keysharp.Scripting
 							break;
 
 						case Token.Label:
-							_ = parent.Add(new CodeLabeledStatement(code.Trim(HotkeyBound)));//Labels in AHK scrip behave exactly as labels in C# do.
+							//Labels in AHK scrip behave exactly as labels in C# do.
+							_ = parent.Add(new CodeLabeledStatement(code.Trim(HotkeyBound), new CodeSnippetStatement(";")));//End labels seem to need a semicolon.
 							break;
 
 						case Token.Hotkey:

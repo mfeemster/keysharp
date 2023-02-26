@@ -38,7 +38,7 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private List<CodeMethodInvokeExpression> allMethodCalls = new List<CodeMethodInvokeExpression>(100);
-
+		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
 		private StringBuilder sbld = new StringBuilder();
 		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
 		private CodeTypeDeclaration targetClass;
@@ -564,6 +564,17 @@ namespace Keysharp.Scripting
 						_ = typeProperties.Key.Members.Add(propkv.Value);
 					}
 				}
+			}
+
+			//Handle gotos inside of loops. Note that breaks are handled as they're parsed instead of being handled here.
+			foreach (var gkv in gotos)
+			{
+				var gotoIndex = gkv.Value.Statements.IndexOf(gkv.Key);
+				var gotoLoopDepth = GotoLoopDepth(gkv.Value, gkv.Key.Label);
+				var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
+
+				for (var i = 0; i < gotoLoopDepth; i++)
+					gkv.Value.Statements.Insert(gotoIndex, pop);
 			}
 
 			return unit;
