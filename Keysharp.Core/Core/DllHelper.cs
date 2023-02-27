@@ -459,27 +459,26 @@ namespace Keysharp.Core
 		public static long NumPut(params object[] obj)
 		{
 			Buffer buf;
-			var l = obj.L();
 			var offset = 0;
 			int lastPairIndex;
-			var offsetSpecified = !((l.Count & 1) == 1);
+			var offsetSpecified = !((obj.Length & 1) == 1);
 
 			if (offsetSpecified)
 			{
-				lastPairIndex = l.Count - 4;
-				offset = l.Ai(l.Count - 1);
-				buf = l[l.Count - 2] as Buffer;
+				lastPairIndex = obj.Length - 4;
+				offset = obj.Ai(obj.Length - 1);
+				buf = obj[obj.Length - 2] as Buffer;
 			}
 			else
 			{
-				lastPairIndex = l.Count - 3;
-				buf = l[l.Count - 1] as Buffer;
+				lastPairIndex = obj.Length - 3;
+				buf = obj[obj.Length - 1] as Buffer;
 			}
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
-				var type = l[i] as string;
-				var number = l[i + 1];
+				var type = obj[i] as string;
+				var number = obj[i + 1];
 				var inc = 0;
 				byte[] bytes;
 

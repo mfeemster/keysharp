@@ -765,34 +765,32 @@ namespace Keysharp.Core
 
 		public static long StrPut(params object[] obj)//Leave this as variadic because the parameter scheme is complex.
 		{
-			var o = obj.L();
-
-			if (o.Count > 0 && o[0] != null)
+			if (obj.Length > 0 && obj[0] != null)
 			{
-				var s = o.As(0);
+				var s = obj.As(0);
 				var len = long.MinValue;
 				var encoding = Encoding.Unicode;
 				var ptr = IntPtr.Zero;
 				Buffer buf = null;
 
-				if (o.Count > 1)
+				if (obj.Length > 1)
 				{
-					buf = o[1] as Buffer;
+					buf = obj[1] as Buffer;
 
 					if (buf != null)
 						ptr = buf.Ptr;
-					else if (o[1] is long l)
+					else if (obj[1] is long l)
 						ptr = new IntPtr(l);
 				}
 
 				if (ptr != IntPtr.Zero && ptr.ToInt64() < 65536)//65536 is the first valid address.
 					throw new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.");
 
-				if (o.Count > 2 && !o[2].IsNullOrEmpty())
-					len = Math.Abs(o.Al(2));
+				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
+					len = Math.Abs(obj.Al(2));
 
-				if (o.Count > 3)
-					encoding = File.GetEncoding(o[3]);
+				if (obj.Length > 3)
+					encoding = File.GetEncoding(obj[3]);
 
 				var bytes = encoding.GetBytes(s);
 

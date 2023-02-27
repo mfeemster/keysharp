@@ -842,10 +842,9 @@ namespace Keysharp.Core
 		{
 			if (_control is ListView lv)//Note that this index might not actually be where the row is shown, due to sorting.
 			{
-				var o = obj.L();
-				var (rownumber, opts, cols) = o.Is2();
+				var (rownumber, opts, cols) = obj.Is2();
 				var lvo = opts is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
-				var strs = o.Count > 2 ? o.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
+				var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
 				GuiHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
 			}
 		}
@@ -904,11 +903,9 @@ namespace Keysharp.Core
 
 		public long Modify(params object[] obj)
 		{
-			var o = obj.L();
-
 			if (_control is TreeView tv)
 			{
-				var (id, options, name) = o.Ls2();
+				var (id, options, name) = obj.Ls2();
 
 				if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
@@ -927,12 +924,12 @@ namespace Keysharp.Core
 			{
 				try
 				{
-					var (rownumber, opts, cols) = o.Is2();
+					var (rownumber, opts, cols) = obj.Is2();
 
 					if (rownumber < lv.Items.Count)
 					{
 						var lvo = opts is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
-						var strs = o.Count > 2 ? o.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
+						var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
 						var start = Math.Max(0, rownumber - 1);
 						var end = rownumber == 0 ? lv.Items.Count : Math.Min(rownumber, lv.Items.Count);
 
@@ -1551,13 +1548,12 @@ namespace Keysharp.Core
 		{
 			if (_control is StatusStrip ss)
 			{
-				var parts = obj.L();
 				KeysharpToolStripStatusLabel tssl = null;
 				ss.Items.Clear();
 
-				for (var i = 0; i < parts.Count - 1; i++)
+				for (var i = 0; i < obj.Length - 1; i++)
 				{
-					var part = parts[i];
+					var part = obj[i];
 
 					if (part != null)
 					{

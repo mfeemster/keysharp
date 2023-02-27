@@ -156,26 +156,24 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Returns the greater of two numbers.
+		/// Returns the greatest of a list of numbers.
 		/// </summary>
 		/// <param name="dividend">The first number to compare.</param>
 		/// <param name="divisor">The second number to compare.</param>
 		/// <returns>The larger of the two numbers, or the empty string if either number is not numeric.</returns>
 		public static object Max(params object[] obj)
 		{
-			var o = obj.L();//Flatten here to find the max of anything contained in any sub item.
-
-			if (o.Count > 1)
+			if (obj.Length > 1)
 			{
 				var max = double.MinValue;
 
-				for (var i = 1; i < o.Count; i++)
+				for (var i = 1; i < obj.Length; i++)
 				{
-					if (!Scripting.Script.IsNumeric(o[i]) || !Scripting.Script.IsNumeric(o[i - 1]))
+					if (!Scripting.Script.IsNumeric(obj[i]) || !Scripting.Script.IsNumeric(obj[i - 1]))
 						return string.Empty;
 
-					var x = Convert.ToDouble(o[i]);
-					var y = Convert.ToDouble(o[i - 1]);
+					var x = Convert.ToDouble(obj[i]);
+					var y = Convert.ToDouble(obj[i - 1]);
 					var z = Math.Max(x, y);
 
 					if (z is double dz)
@@ -190,26 +188,24 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Returns the lesser of two numbers.
+		/// Returns the least of a list of numbers.
 		/// </summary>
 		/// <param name="dividend">The first number to compare.</param>
 		/// <param name="divisor">The second number to compare.</param>
 		/// <returns>The lesser of the two numbers, or the empty string if either number is not numeric.</returns>
 		public static object Min(params object[] obj)
 		{
-			var o = obj.L();//Flatten here to find the max of anything contained in any sub item.
-
-			if (o.Count > 1)
+			if (obj.Length > 1)
 			{
 				var min = double.MaxValue;
 
-				for (var i = 1; i < o.Count; i++)
+				for (var i = 1; i < obj.Length; i++)
 				{
-					if (!Scripting.Script.IsNumeric(o[i]) || !Scripting.Script.IsNumeric(o[i - 1]))
+					if (!Scripting.Script.IsNumeric(obj[i]) || !Scripting.Script.IsNumeric(obj[i - 1]))
 						return string.Empty;
 
-					var x = Convert.ToDouble(o[i]);
-					var y = Convert.ToDouble(o[i - 1]);
+					var x = Convert.ToDouble(obj[i]);
+					var y = Convert.ToDouble(obj[i - 1]);
 					var z = Math.Min(x, y);
 
 					if (z is double dz)

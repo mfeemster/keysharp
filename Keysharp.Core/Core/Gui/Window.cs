@@ -669,7 +669,7 @@ namespace Keysharp.Core
 
 		public static void WinSetEnabled(params object[] obj) => WinSetToggleX((win, b) => win.Enabled = b, win => win.Enabled, obj);
 
-		public static void WinSetExStyle(params object[] obj) => WinSetStyleHelper(obj.L().Cast<object>().ToArray(), true);
+		public static void WinSetExStyle(params object[] obj) => WinSetStyleHelper(obj, true);
 
 		public static void WinSetRegion(params object[] obj)//This function is entirely windows specific.
 		{
@@ -757,13 +757,12 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 		}
 
-		public static void WinSetStyle(params object[] obj) => WinSetStyleHelper(obj.L().Cast<object>().ToArray(), false);
+		public static void WinSetStyle(params object[] obj) => WinSetStyleHelper(obj, false);
 
 		public static void WinSetTitle(params object[] obj)
 		{
-			var l = obj.L();
-			var o = l.Cast<object>();
-			var newtitle = l.S1();
+			var o = obj.Cast<object>();
+			var newtitle = obj.S1();
 
 			if (SearchWindow(o.Skip(1).ToArray(), true) is WindowItem win)
 			{
@@ -999,8 +998,7 @@ namespace Keysharp.Core
 
 		internal static WindowItemBase SearchWindow(object[] obj, bool throwifnull, bool last = false)
 		{
-			var l = obj.L();
-			var (title, text, excludeTitle, excludeText) = l.O1S3();
+			var (title, text, excludeTitle, excludeText) = obj.O1S3();
 			var win = WindowManager.FindWindow(title, text, excludeTitle, excludeText, last);
 
 			if (win == null && throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
