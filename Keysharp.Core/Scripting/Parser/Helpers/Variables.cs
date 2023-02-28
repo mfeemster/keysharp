@@ -152,7 +152,7 @@ namespace Keysharp.Scripting
 			{
 				return concat;
 			}
-			else//If there was mroe than one variable lookup, it needs to be wrapped in one final Vars[] lookup.
+			else//If there was more than one variable lookup, it needs to be wrapped in one final Vars[] lookup.
 			{
 				var vars = new CodePropertyReferenceExpression(null, VarProperty);
 				return new CodeArrayIndexerExpression(vars, concat);

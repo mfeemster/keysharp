@@ -194,3 +194,16 @@ If (arr.%prefix%City == 2000)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+MyArray1 := 10
+MyArray2 := 20
+MyArray3 := 30
+x := 0
+
+Loop 3
+    x += MyArray%A_Index%
+
+If (x == 60)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

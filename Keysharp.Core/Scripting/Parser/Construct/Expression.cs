@@ -299,8 +299,19 @@ namespace Keysharp.Scripting
 
 							if (dynamic)
 							{
-								invoke = (CodeMethodInvokeExpression)InternalMethods.FunctionCall;
-								_ = invoke.Parameters.Add(VarIdExpand(name));
+								invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
+								var getmethod = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
+								var expand = VarIdExpand(name);
+								_ = getmethod.Parameters.Add(new CodePrimitiveExpression(null));
+
+								//The returned object is a call to Vars, but since we are doing a function call here
+								//we need to call Invoke() instead, but we still want the arguments that
+								//were passed to Vars, so extract them.
+								if (expand is CodeArrayIndexerExpression caie)
+									foreach (CodeExpression index in caie.Indices)
+										_ = getmethod.Parameters.Add(index);
+
+								_ = invoke.Parameters.Add(getmethod);
 							}
 							else
 								invoke = LocalMethodInvoke(name);

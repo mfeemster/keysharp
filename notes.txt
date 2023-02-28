@@ -232,10 +232,8 @@ TODO/ENSURE THESE WORK:
 	Make sure searching of paths for local, user and standard library folders works when looking for files whose name is the same as a function being called. Make sure prefix works too.
 	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
 	IfLess, %x%, %y% doesn't work, can only see one as a variable.
-	SetFormat float etc... and string caching appears to not be supported. We should leave it out as it makes no sense at all in C#.
 	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
 	Perhaps look into including a long integer/extended precision library.
-	Make sure CoordMode is properly applied to all of the functions it affects.
 	Give attribution to:
 		Need to include this https://opensource.org/licenses/cddl1.php for the logical string comparison code: https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 		Ini utility, attribution: https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class
@@ -247,7 +245,6 @@ TODO/ENSURE THESE WORK:
 		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
 		
 	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
-	Should have a diagnostic tab on the basic gui system tray window that shows all A_* variable values as well as the assembly info attributes, and regular program version. Only load if the user selects that tab, to avoid doing it every time and not using it.
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
 	
 	There are four areas/types of versions being dealt with.

@@ -341,6 +341,8 @@ namespace Keysharp.Core
 								_ = tempsb.Append('}');
 								varstr += tempsb.ToString();
 							}
+							else if (val == null)
+								varstr += "null";
 							else
 								varstr += val.ToString();
 

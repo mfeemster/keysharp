@@ -17,7 +17,6 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExtendArray => new MethodReference(typeof(Script), "ExtendArray");
 
 			internal static MethodReference ForceBool => new MethodReference(typeof(Script), "ForceBool");
-			internal static MethodReference FunctionCall => new MethodReference(typeof(Script), "FunctionCall");
 			internal static MethodReference GetMethodOrProperty => new MethodReference(typeof(Script), "GetMethodOrProperty");
 			internal static MethodReference HandleSingleInstance => new MethodReference(typeof(Script), "HandleSingleInstance");
 			internal static MethodReference Hotkey => new MethodReference(typeof(Core.Keyboard), "Hotkey");

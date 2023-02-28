@@ -37,3 +37,53 @@ If (y11 == 222)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+x := "unc"
+y := 0
+
+myfunc()
+{
+	global y := 999
+}
+
+myf%x%()
+
+If (y == 999)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := "unc2"
+y := 0
+
+myfunc2(funcparam)
+{
+	global y := funcparam
+}
+
+myf%x%(123)
+
+If (y == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := "myfunc"
+y := 0
+
+%x%()
+
+If (y == 999)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := "myfunc2"
+y := 0
+
+%x%(123)
+
+If (y == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

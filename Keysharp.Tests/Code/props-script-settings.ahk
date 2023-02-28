@@ -4,7 +4,7 @@ if (A_IsSuspended == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 Suspend, On
 
 if (A_IsSuspended == 1) 
@@ -39,7 +39,7 @@ if (A_TitleMatchMode == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 SetTitleMatchMode, 1
 
 if (A_TitleMatchMode == 1) 
@@ -60,7 +60,7 @@ if (A_TitleMatchMode == 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 SetTitleMatchMode, RegEx
 
 if (A_TitleMatchMode == "regex") 
@@ -253,7 +253,7 @@ if (A_SendLevel == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 SendLevel, 1
 
 if (A_SendLevel == 1) 
