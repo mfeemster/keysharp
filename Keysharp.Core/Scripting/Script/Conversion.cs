@@ -41,7 +41,7 @@ namespace Keysharp.Scripting
 	{
 		internal static bool ForceBool(object input)
 		{
-			if (input is bool b)//MATT
+			if (input is bool b)
 				return b;
 			else if (input == null)
 				return false;
@@ -127,7 +127,7 @@ namespace Keysharp.Scripting
 			}
 			//else if (input is BoolResult br)
 			//return ForceDouble(br.o);
-			else if (input is bool b)//MATT
+			else if (input is bool b)
 				return b ? 1.0 : 0.0;
 			else if (input is byte by)
 				return (double)by;

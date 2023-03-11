@@ -88,7 +88,7 @@ namespace Keysharp.Core
 		/// Specifies a label to run automatically when the program exits.
 		/// </summary>
 		/// <param name="label">The name of a label. Leave blank to remove an existing label, if any.</param>
-		public static void OnExit(object obj0, object obj1 = null) => Script.OnExitHandlers.ModifyEventHandlers(obj0 is IFuncObj fo ? fo : new FuncObj(obj0.As()), obj1.Al(1L));
+		public static void OnExit(object obj0, object obj1 = null) => Script.OnExitHandlers.ModifyEventHandlers(Function.GetFuncObj(obj0, null, true), obj1.Al(1L));
 
 		/// <summary>
 		/// Specifies a function to call automatically when the program receives the specified message.
@@ -96,19 +96,7 @@ namespace Keysharp.Core
 		/// <param name="number">The number of the message to monitor.</param>
 		/// <param name="function">The name of a function to call whenever the specified message is received.</param>
 		/// <param name="maxThreads">The maximum number of concurrent threads to launch per message number.</param>
-		public static void OnMessage(object obj0, object obj1, object obj2 = null)
-		{
-			FuncObj fo = null;
-
-			if (obj1 is string s)
-				fo = new FuncObj(s);
-			else if (obj1 is FuncObj f)
-				fo = f;
-			else if (obj1 == null)
-				throw new TypeError("Null was supplied for a function object.");
-
-			GuiHelper.onMessageHandlers.GetOrAdd(obj0.Al()).ModifyEventHandlers(fo, obj2.Al(1));
-		}
+		public static void OnMessage(object obj0, object obj1, object obj2 = null) => GuiHelper.onMessageHandlers.GetOrAdd(obj0.Al()).ModifyEventHandlers(Function.GetFuncObj(obj1, null, true), obj2.Al(1));
 
 		/// <summary>
 		/// Pauses the current thread.
@@ -135,7 +123,7 @@ namespace Keysharp.Core
 			if (state == null && mode.Equals(Core.Keyword_Toggle, System.StringComparison.OrdinalIgnoreCase))
 				state = !(thread.ThreadState == ThreadState.Suspended || thread.ThreadState == ThreadState.SuspendRequested);
 
-			//Should figure out the right way to do this.//MATT
+			//Should figure out the right way to do this.//TODO
 #pragma warning disable 612, 618
 
 			if (state == true)
@@ -170,7 +158,7 @@ namespace Keysharp.Core
 		public static void Reload()
 		{
 			if (!ExitAppInternal(ExitReasons.Reload))
-				Application.Restart();//What about the cmd line args?//MATT
+				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.y
 		}
 
 		public static void SetTimer(object obj0 = null, object obj1 = null, object obj2 = null)
@@ -267,7 +255,7 @@ namespace Keysharp.Core
 
 					System.Threading.Thread.CurrentThread.Priority = level;
 
-					//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented.//TODO
+					//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented, specifically the Thread() function.//TODO
 					try
 					{
 						//_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(ee.SignalTime));

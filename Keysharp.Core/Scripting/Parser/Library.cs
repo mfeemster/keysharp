@@ -8,7 +8,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		internal static Dictionary<string, MethodInfo> libMethods;//Changed to contain the entire method info instead of just its params.//MATT
+		internal static Dictionary<string, MethodInfo> libMethods;
 		internal static Dictionary<string, PropertyInfo> libProperties;
 
 		private static void ScanLibrary()
@@ -24,13 +24,12 @@ namespace Keysharp.Scripting
 				libProperties.Clear();
 
 			var ignore = new List<string>();
-			//Needed a more detailed search since we've refactored into different classes, so linq is better here.//MATT
 			var types = Reflections.loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
 						.Where(t => t.Namespace == "Keysharp.Core" && t.IsClass && t.IsPublic/* && t.IsAbstract && t.IsSealed*/);
 			var methods = types
 						  .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
-						  .Where(m => !m.IsSpecialName)//Original included all set_ and get_ methods which properties generate. Unsure if we want those. Exclude for now, as well as the applicationexit event handler.//MATT
+						  .Where(m => !m.IsSpecialName)
 						  ;
 			var props = types
 						.SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Static))
@@ -43,15 +42,12 @@ namespace Keysharp.Scripting
 				//continue;
 				var name = method.Name.ToLowerInvariant();
 
-				//if (name == "msgbox")//MATT
-				//  Console.WriteLine(name);
-
 				//if (ignore.Contains(name))
 				//continue;
 
 				//var param = method.GetParameters();
 
-				if (!libMethods.ContainsKey(name))//Quick hack to get it to work, figure out dupes later. Will likely need a multimap.//MATT
+				if (!libMethods.ContainsKey(name))//If we ever want to support duplicates, we'll likely need a multimap.
 					//{
 					//  _ = libMethods.Remove(name);
 					//  ignore.Add(name);

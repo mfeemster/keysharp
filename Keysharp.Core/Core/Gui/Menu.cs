@@ -63,7 +63,7 @@ namespace Keysharp.Core
 			return AddOrInsert("", obj0.As(), obj1, obj2.As());
 		}
 
-		public void AddStandard()//Need to make this actually od something//TODO
+		public void AddStandard()//Need to make this actually add something//TODO
 		{
 			ToolStripMenuItem item;
 
@@ -290,10 +290,8 @@ namespace Keysharp.Core
 					while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.
 						_ = item.DropDownItems.Add(mnu.MenuItem.Items[0]);
 				}
-				else if (funcorsub is IFuncObj fo)
-					clickHandlers.GetOrAdd(item).ModifyEventHandlers(fo, 1);
-				else if (funcorsub is string s && s.Length > 0)
-					clickHandlers.GetOrAdd(item).ModifyEventHandlers(new FuncObj(s), 1);
+				else
+					clickHandlers.GetOrAdd(item).ModifyEventHandlers(Function.GetFuncObj(funcorsub, null, true), 1);
 
 				foreach (var opt in Options.ParseOptions(options))
 				{

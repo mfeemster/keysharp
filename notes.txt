@@ -141,6 +141,8 @@ Differences:
 			
 			\K is not supported, instead, try using (?<=abc)
 			
+			PCRE exceptions are not thrown when there is an error, isntead C# regex exceptions are thrown.
+			
 			To learn more about C# regular expression, see here: https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions
 			
 	-RegExMatch() omits the third parameter &OutputVar because it's a ref param, which is not supported. Instead, it's returned as a member in the result object.
@@ -158,12 +160,14 @@ Differences:
 	-Func isn't supported, but FuncObj is and is created by the Func() function.
 	-Deleting a tab via GuiCtrl.Delete() does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 	-ListView supports a new method DeleteCol() to remove a column.
+	-When adding a ListView, the Count option is not supported because C# can't preallocate memory for a ListView.
 	-TreeView supports a new method GetNode() which retrieves a raw winforms TreeNode object based on a passed in ID.
 	-TabControl supports a new method SetTabIcon() to relieve the caller of having to use SendMessage().
 	-IL_Create() only takes one parameter: LargeIcons. InitialCount and GrowCount are no longer needed because memory is handled internally.
 	-Menu supports new methods HideItem(), ShowItem() and ToggleItemVis() which can show, hide or toggle the visibility of a specific menu item.
 	-Menu supports a new method MenuItemId() to get the name of a menu item, rather than having to use DllCall().
 	-Menu supports a new method SetForeColor() to set the fore (text) color of a menu item.
+	-For slider events, the second parameter passed to the event handler will always be 0 because it's not possible to retrieve the method by which the slider was moved in C#.
 	-New string method NormalizeEol() used to take in a string and make all line endings match the value passed in, or the default for the current environment.
 	-CallbackFree() is no longer needed/supported because C# handles garbage collection.
 	-The v1 Map methods MaxIndex() and MinIndex() are still supported.
@@ -216,11 +220,13 @@ Differences:
 		-Variadic property parameters are not supported.
 	-For any __Enum() class method, it should have a parameter value of 2 when returning Array or Map, since their enumerators have two fields.
 	-Static __Item[] properties are not allowed, only instance __Item[] properties. This is because C# does not support static indexers.
+	-The built in classes Array and Map do not have a property named __Item[] because in C#, the only properties which can have an index passed to them are the this[] properties. Just use the brackets directly. However, when overriding, using __Item[] will work if you derive from Array or Map.
 	-A new method Collect() has been added which calls GC.Collect() to force a memory collection.
 	-ObjAddRef() and ObjPtrAddRef() are not supported. Instead, use the following:
 		newref := theobj ; adds 1 to the reference count
 		newref := "" ; subtracts 1 from the reference count
-		
+	-#Warn to enable/disable compiler warnings is not supported yet.
+	
 TODO/ENSURE THESE WORK:
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
 		Ensure V2 H multithreading works
@@ -228,12 +234,15 @@ TODO/ENSURE THESE WORK:
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
-	Make sure code like GetNextLine(BlankArray%i%) creates the variable on the fly.
 	Make sure searching of paths for local, user and standard library folders works when looking for files whose name is the same as a function being called. Make sure prefix works too.
+	Make sure WinSetRegion() supports polygon and rectangle.
+	Remapping has not been implemented.
+	Make sure the standard menu items actually do something. Window Spy probably won't be implemented until the second release.
+	Validate then exit mode is not implemented.
 	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
-	IfLess, %x%, %y% doesn't work, can only see one as a variable.
 	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
 	Perhaps look into including a long integer/extended precision library.
+
 	Give attribution to:
 		Need to include this https://opensource.org/licenses/cddl1.php for the logical string comparison code: https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 		Ini utility, attribution: https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class
@@ -381,9 +390,6 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Be sure to keep in touch and coordinate with Tab Nation at https://www.youtube.com/c/TABNationAutoHotkey/videos and tadamm88@gmail.com
 	Good writeup on scan codes and fake shift: https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
 	Legacy style syntax is IfEqual, whereas new syntax is if (x = 1)
-	AHK does very strange things with variable management where it tries very hard to determine if a var is an int, a float, or a string. But uses strings in all of the assignments, and keeps a cached string every time the numeric value changes. This is *insane*. Verify if this needs to be done in Keysharp. Should work with int, double, sci-not and hex 0x.
-	A function parameter can be either a value, or be treated as a label. Such as with Hotstring(). Need to figure out a way to collect all of these labels and turn them into functions.
-		Documentation says the label should not have a colon, but we could probably make it work with or without it anyway by just ignoring it if found.
 	Be sure A_ThisHotkey is set when calling a hotstring's function, so you can know which string triggered it.
 	Hotstring() can also take special actions if the passed in strings are reserved values like "EndChars", "MouseReset", "Reset" or a string to set options with no colons.
 	Labels are like functions, they run until a return. Unsure if they can return data?
@@ -429,6 +435,7 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	A project that tried to use IronAHK to do automation in node.js: https://github.com/1j01/node-ahk
 	RobotJS: an automation project in JS: https://github.com/octalmage/robotjs
 	Messages in cosole apps: https://docs.microsoft.com/en-us/archive/msdn-magazine/2007/june/net-matters-handling-messages-in-console-apps
+	There is something called TVX, check it out sometime at www.autohotkey.com/forum/topic19021.html
 	
 	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
@@ -436,8 +443,6 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 
 			Thanks for reply. But, FileAppend just wirte to stdio not the console. DllCall("AllocConsole") is needed for wirting console. And AllocConsole will always display message in a new console
 			
-	cloaker: one thing to consider might be making all of the message numbers built in constants, since C# consts are effectively free (compared to AHK built in variables)
-	technically would make code un-portable, but would be super nice to have
 	Another code expander:
 		https://github.com/giosali/reginald.
 	Possibly investigate this later to see if it can be better than what we're doing with Windows API calls: https://mwinapi.sourceforge.net/
@@ -511,8 +516,9 @@ ensure you've properly captured all of these changes between 1.1 to 2.0: https:/
 see if renaming keysharp.exe to a scriptname.exe will automatically run scriptname.ahk
 implement window spy window.
 Need to implement properties under Custom Menu Items and some under Misc.
-
+Need to implement the functionality of the standard menu in Menu.cs: public void AddStandard()//Need to make this actually od something//TODO
 See how much some of the existing plugins work with Keysharp: https://lexikos.github.io/v2/docs/commands/Edit.htm
+Map.cs: public object this[object key]//Unsure how this will work with __item and allowing overriding, mark as virtual for now.//TODO
 I'm not sure if we talked about this before but I just had a conversation in 
 meta about AltTab hotkeys and I just wanted to say: if you ever get around to them – just leave them out. They serve next to no purpose, are very hackily implemented in AHK, they need a ton of edge-cases and weirdness, and they are just overall a mess. So yeah, just a heads-up I guess.
 If you want to read up on why I said this: https://discord.com/channels/115993023636176902/546213647526133760/888810883675983902

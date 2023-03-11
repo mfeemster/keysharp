@@ -501,19 +501,19 @@ namespace Keysharp.Core
 		internal const char DefaultMulticast = ',';
 
 #if !LEGACY
-		internal static char Escape = DefaultEscape;//All this had was "const", so just made it the same.//MATT
+		internal static char Escape = DefaultEscape;
 #else
 		internal static char Escape = DefaultEscape;
 #endif
 
 #if !LEGACY
 		internal static string Comment = DefaultComment.ToString();
-#else//Had to make these #else, otherwise the variables were duped when undefining LEGACY.//MATT
+#else
 		internal static string Comment = DefaultComment.ToString();
 #endif
 
 #if !LEGACY
-		internal static char Resolve = DefaultResolve;//Made same.//MATT
+		internal static char Resolve = DefaultResolve;
 #else
 		internal static char Resolve = DefaultResolve;
 #endif
@@ -526,7 +526,7 @@ namespace Keysharp.Core
 
 #if LEGACY
 		internal const string VarExt = "#_@$?"; // []
-#else//MATT
+#else
 		internal const string VarExt = "#_$";
 #endif
 
@@ -582,7 +582,7 @@ namespace Keysharp.Core
 
 		internal const string ErrorLevelStr = "ErrorLevel";
 
-		internal const string AssignEqual = "=";//Changed these up to use them.//MATT
+		internal const string AssignEqual = "=";
 		internal const string BooleanAnd = "&&";
 		internal const string BooleanOr = "||";
 		//internal const string AssignAdd = "+" + Equal;

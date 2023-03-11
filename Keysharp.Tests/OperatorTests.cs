@@ -4,8 +4,8 @@ namespace Keysharp.Tests
 {
 	public partial class Scripting
 	{
-		[Test, Category("Operator")]
-		public void DereferenceEx() => Assert.IsTrue(TestScript("op-dereference-ex", true));
+		//[Test, Category("Operator")]
+		//public void DereferenceEx() => Assert.IsTrue(TestScript("op-dereference-ex", true));//Probably will never implement this.
 
 		[Test, Category("Operator")]
 		public void UnaryMinusEx() => Assert.IsTrue(TestScript("op-unary-minus-ex", true));

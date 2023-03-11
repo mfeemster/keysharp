@@ -7,7 +7,6 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		//private CodeExpressionStatement ParseAssign(string code)//MATT
 		private CodeAssignStatement ParseAssign(string code)
 		{
 			string name, value;
@@ -16,7 +15,7 @@ namespace Keysharp.Scripting
 			char sym;
 			var bound = false;
 
-			for (i = 0; i < code.Length; i++)//Probably a way easier way to do this with split.//MATT
+			for (i = 0; i < code.Length; i++)
 			{
 				sym = code[i];
 
@@ -59,13 +58,10 @@ namespace Keysharp.Scripting
 			CodeExpression left;
 			var nameLow = name.ToLowerInvariant();
 			left = libProperties.TryGetValue(nameLow, out var pi)
-				   ? new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(bcl), pi.Name)//bcl won't work here, need type from property.//MATT
+				   ? new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(bcl), pi.Name)
 				   : VarId(name, true);
 			var result = value == null ? new CodePrimitiveExpression(null) : IsExpressionParameter(value) ? ParseSingleExpression(value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(value);
 			return new CodeAssignStatement(left, result);
-			//Used to be a binary operator, wrapped in a code expression, but this added erroneous parens. Better to directly use a CodeAssignStatement.//MATT
-			//var assign = new CodeBinaryOperatorExpression(left, CodeBinaryOperatorType.Assign, result);
-			//return new CodeExpressionStatement(assign);
 		}
 	}
 }

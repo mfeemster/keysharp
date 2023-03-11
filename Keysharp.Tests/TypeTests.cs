@@ -17,7 +17,8 @@ namespace Keysharp.Tests
 			Assert.IsTrue(typeof(Keysharp.Core.ParseException).IsAssignableTo(typeof(Keysharp.Core.Error)));
 			Assert.IsTrue(typeof(Keysharp.Core.IndexError).IsAssignableTo(typeof(Keysharp.Core.Error)));
 			Assert.IsTrue(typeof(Keysharp.Core.KeyError).IsAssignableTo(typeof(Keysharp.Core.Error)));
-			Assert.IsTrue(typeof(Keysharp.Core.MemberError).IsAssignableTo(typeof(Keysharp.Core.Error)));
+			Assert.IsTrue(typeof(Keysharp.Core.MemberError).IsAssignableTo(typeof(Keysharp.Core.UnsetError)));
+			Assert.IsTrue(typeof(Keysharp.Core.UnsetItemError).IsAssignableTo(typeof(Keysharp.Core.UnsetError)));
 			Assert.IsTrue(typeof(Keysharp.Core.MemoryError).IsAssignableTo(typeof(Keysharp.Core.Error)));
 			Assert.IsTrue(typeof(Keysharp.Core.MethodError).IsAssignableTo(typeof(Keysharp.Core.MemberError)));
 			Assert.IsTrue(typeof(Keysharp.Core.PropertyError).IsAssignableTo(typeof(Keysharp.Core.MemberError)));
@@ -28,6 +29,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(typeof(Keysharp.Core.ValueError).IsAssignableTo(typeof(Keysharp.Core.Error)));
 			Assert.IsTrue(typeof(Keysharp.Core.ZeroDivisionError).IsAssignableTo(typeof(Keysharp.Core.Error)));
 			Assert.IsTrue(typeof(Keysharp.Core.ClipboardAll).IsAssignableTo(typeof(Keysharp.Core.Buffer)));
+			Assert.IsTrue(typeof(Keysharp.Core.Buffer).IsAssignableTo(typeof(Keysharp.Core.KeysharpObject)));
 			Assert.IsTrue(typeof(Keysharp.Core.Array).IsAssignableTo(typeof(Keysharp.Core.KeysharpObject)));
 			Assert.IsTrue(typeof(Keysharp.Core.Map).IsAssignableTo(typeof(Keysharp.Core.KeysharpObject)));
 		}

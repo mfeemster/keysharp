@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -103,7 +103,7 @@ namespace Keysharp.Core
 
 		public static bool ClipWait(object obj0 = null, object obj1 = null)
 		{
-			//Will need to see if this works in a cross platform way.//MATT
+			//Will need to see if this works in a cross platform way.//TODO
 			var timeout = obj0.Ad(double.MinValue);
 			var type = obj1.Ab();
 			var checktime = timeout != double.MinValue;
@@ -142,14 +142,12 @@ namespace Keysharp.Core
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 			{
-				//SendMessage() freezes when running in a unit test. PostMessage seems to work.//MATT
-				//try { _ = WindowsAPI.SendMessage(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, IntPtr.Zero, IntPtr.Zero); }
-				//try { _ = WindowsAPI.PostMessage(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, IntPtr.Zero, IntPtr.Zero); }
+				//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
 				try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
 				catch (Exception ex) { throw new OSError(ex); }
 			}
 
-			//Linux probably has some built in cmd exe which does this.//MATT
+			//Linux probably has some built in cmd exe which does this.//TODO
 		}
 
 		public static string FindCommandLineArg(string arg, bool startswith = true)

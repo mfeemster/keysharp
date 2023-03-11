@@ -450,7 +450,7 @@ namespace Keysharp.Core.Windows
 	{
 		internal int dx;
 		internal int dy;
-		internal uint mouseData;//Original was signed, but the winapi uses unsigned.//MATT
+		internal uint mouseData;
 		internal uint dwFlags;
 		internal uint time;
 		internal ulong dwExtraInfo;

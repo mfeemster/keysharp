@@ -285,21 +285,26 @@ namespace Keysharp.Core.Common.Keyboard
 				_ = Unregister();
 		}
 
+		public static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name,  bool _suffixHasTilde)
+		{
+			var b = _suffixHasTilde;
+			return AddHotkey(_callback, _hookAction, _name, ref b);
+		}
+
 		/// <summary>
 		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
 		/// aName must not be NULL.
 		/// Returns the address of the new hotkey on success, or NULL otherwise.
 		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
 		/// </summary>
-		public static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
+		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref bool _suffixHasTilde)
 		{
 			HotkeyDefinition hk;
-			var suffixHasTilde = false;
 			var hookIsMandatory = false;
 
 			//We must first check if the hotkey exists before creating a new one because this might just be a variant.
 			//The code to check for a variant was in the parsing section of AHK, but we move it here because Keysharp adds them at runtime.
-			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
+			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref _suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
 			{
 				if (_hookAction != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
 				{
@@ -366,32 +371,14 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			if (obj0 != null)
 			{
-				FuncObj funcobj = null;
-
-				if (obj0 is FuncObj fo)
-				{
-					funcobj = fo;
-				}
-				else if (obj0 is string s)//Unlike AHK, only function names can be passed, not expression text.
-				{
-					if (s.Length == 0)
-					{
-						Keysharp.Scripting.Script.hotCriterion = null;
-						return ResultType.Ok;
-					}
-
-					funcobj = new FuncObj(s, null);
-
-					if (!funcobj.IsValid)
-						throw new ValueError("Invalid callback function.");
-				}
-
+				var funcobj = Function.GetFuncObj(obj0, null, true);
 				var cp = FindHotkeyCriterion(funcobj);
 
 				if (cp == null)
-					cp = AddHotkeyIfExpr(funcobj);
+					AddHotkeyIfExpr(funcobj);
 
 				Keysharp.Scripting.Script.hotCriterion = cp;
+				return ResultType.Ok;
 			}
 			else
 			{
@@ -399,7 +386,7 @@ namespace Keysharp.Core.Common.Keyboard
 				return ResultType.Ok;
 			}
 
-			return ResultType.Fail;
+			//return ResultType.Fail;
 		}
 
 		public static void HotIfWinActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinActivePrivate", obj0, obj1);
@@ -717,37 +704,9 @@ namespace Keysharp.Core.Common.Keyboard
 
 		public override string ToString() => Name;
 
-		internal static HotkeyCriterion AddHotkeyCriterion(FuncObj fo) => AddHotkeyCriterion(new HotkeyCriterion(fo));
+		internal static void AddHotkeyCriterion(IFuncObj fo) => Keysharp.Scripting.Script.hotCriterions.Add(fo);
 
-		internal static HotkeyCriterion AddHotkeyCriterion(HotkeyCriterion cp)
-		{
-			cp.nextCriterion = null;
-
-			if (Keysharp.Scripting.Script.firstHotCriterion == null)
-			{
-				Keysharp.Scripting.Script.firstHotCriterion = Keysharp.Scripting.Script.lastHotCriterion = cp;
-			}
-			else
-			{
-				Keysharp.Scripting.Script.lastHotCriterion.nextCriterion = cp;
-				Keysharp.Scripting.Script.lastHotCriterion = cp;// This must be done after the above.
-			}
-
-			return cp;
-		}
-
-		internal static HotkeyCriterion AddHotkeyIfExpr(FuncObj fo)
-		{
-			var cp = new HotkeyCriterion(fo);
-
-			if (Keysharp.Scripting.Script.lastHotExpr != null)
-				Keysharp.Scripting.Script.lastHotExpr.nextExpr = cp;
-			else
-				Keysharp.Scripting.Script.firstHotExpr = cp;
-
-			Keysharp.Scripting.Script.lastHotExpr = cp;
-			return cp;
-		}
+		internal static void AddHotkeyIfExpr(IFuncObj fo) => Keysharp.Scripting.Script.hotExprs.Add(fo);
 
 		internal static void AllDestruct(int exitCode)
 		{
@@ -975,16 +934,23 @@ namespace Keysharp.Core.Common.Keyboard
 			return ref first;
 		}
 
-		internal static ResultType Dynamic(string hotkeyName, string options, IFuncObj _callback, uint _hookAction)//Unsure if this should take a callback or a string/funcobj?//TODO
-		// Creates, updates, enables, or disables a hotkey dynamically (while the script is running).
-		// Returns OK or FAIL.
+		/// <summary>
+		/// Creates, updates, enables, or disables a hotkey dynamically (while the script is running).
+		/// </summary>
+		/// <param name="hotkeyName"></param>
+		/// <param name="options"></param>
+		/// <param name="callback"></param>
+		/// <param name="hookAction"></param>
+		/// <returns></returns>
+		/// <exception cref="ValueError"></exception>
+		internal static ResultType Dynamic(string hotkeyName, string options, IFuncObj callback, uint hookAction)
 		{
-			// Caller has ensured that aCallback and _hookAction can't both be non-zero.  Furthermore,
+			// Caller has ensured that aCallback and _hookAction can't both be non-zero. Furthermore,
 			// both can be zero/NULL only when the caller is updating an existing hotkey to have new options
 			// (i.e. it's retaining its current callback).
-			if (_callback != null)
+			if (callback != null)
 			{
-				if (!_callback.IsValid)
+				if (!callback.IsValid)
 					return ResultType.Fail;
 			}
 
@@ -994,7 +960,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var updateAllHotkeys = false;  // This method avoids multiple calls to ManifestAllHotkeysHotstringsHooks() (which is high-overhead).
 			var variantWasJustCreated = false;
 
-			switch (_hookAction)
+			switch (hookAction)
 			{
 				case HOTKEY_ID_ON:
 				case HOTKEY_ID_OFF:
@@ -1008,12 +974,12 @@ namespace Keysharp.Core.Common.Keyboard
 						// onto some "default variant" such as the global variant (if any).
 						throw new ValueError("Nonexistent hotkey variant(IfWin).", hotkeyName);
 
-					if (_hookAction == HOTKEY_ID_TOGGLE)
-						_hookAction = hk.hookAction != 0
-									  ? (uint)(hk.parentEnabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON) // Enable/disable parent hotkey (due to alt-tab being a global hotkey).
-									  : (uint)(variant.enabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON); // Enable/disable individual variant.
+					if (hookAction == HOTKEY_ID_TOGGLE)
+						hookAction = hk.hookAction != 0
+									 ? (uint)(hk.parentEnabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON) // Enable/disable parent hotkey (due to alt-tab being a global hotkey).
+									 : (uint)(variant.enabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON); // Enable/disable individual variant.
 
-					if (_hookAction == HOTKEY_ID_ON)
+					if (hookAction == HOTKEY_ID_ON)
 					{
 						if (hk.hookAction != 0 ? hk.EnableParent() : hk.Enable(variant))
 							updateAllHotkeys = true; // Do it this way so that any previous "true" value isn't lost.
@@ -1026,14 +992,14 @@ namespace Keysharp.Core.Common.Keyboard
 				default: // _hookAction is 0 or an AltTab action.  COMMAND: Hotkey, Name, Callback|AltTabAction
 					if (hk == null) // No existing hotkey of this name, so create a new hotkey.
 					{
-						if (_hookAction != 0) // Create hotkey: Hotkey Name, AltTabAction
-							hk = AddHotkey(null, _hookAction, hotkeyName, suffixHasTilde);
+						if (hookAction != 0) // Create hotkey: Hotkey Name, AltTabAction
+							hk = AddHotkey(null, hookAction, hotkeyName, ref suffixHasTilde);
 						else // Create hotkey: Hotkey Name, Callback [, Options]
 						{
-							if (_callback == null) // Caller is trying to set new aOptions for a nonexistent hotkey.
+							if (callback == null) // Caller is trying to set new aOptions for a nonexistent hotkey.
 								throw new ValueError("Nonexistent hotkey.", hotkeyName);
 
-							hk = AddHotkey(_callback, 0, hotkeyName, suffixHasTilde);
+							hk = AddHotkey(callback, 0, hotkeyName, ref suffixHasTilde);
 						}
 
 						if (hk == null)
@@ -1045,7 +1011,7 @@ namespace Keysharp.Core.Common.Keyboard
 					}
 					else // Hotkey already exists (though possibly not the required variant).  Update the hotkey if appropriate.
 					{
-						if (hk.hookAction != _hookAction) // COMMAND: Change to/from alt-tab hotkey.
+						if (hk.hookAction != hookAction) // COMMAND: Change to/from alt-tab hotkey.
 						{
 							// LoadIncludedFile() contains logic and comments similar to this, so maintain them together.
 							// If _hookAction isn't zero, the caller is converting this hotkey into a global alt-tab
@@ -1053,9 +1019,9 @@ namespace Keysharp.Core.Common.Keyboard
 							// be NULL because making a hotkey become alt-tab doesn't require the creation or existence
 							// of a variant matching the current #HotIf criteria.  However, continue on to process the
 							// Options parameter in case it contains "On" or some other keyword applicable to alt-tab.
-							hk.hookAction = _hookAction;
+							hk.hookAction = hookAction;
 
-							if (_hookAction == 0)
+							if (hookAction == 0)
 								// Since this hotkey is going from alt-tab to non-alt-tab, make sure it's not disabled
 								// because currently, mParentEnabled is only actually used by alt-tab hotkeys (though it
 								// may have other uses in the future, which is why it's implemented and named the way it is).
@@ -1080,17 +1046,17 @@ namespace Keysharp.Core.Common.Keyboard
 
 						// If the above changed the action from an Alt-tab type to non-alt-tab, there may be a callback
 						// to be applied to the existing variant (or created as a new variant).
-						if (_callback != null) // Update hotkey: Hotkey Name, Callback [, Options]
+						if (callback != null) // Update hotkey: Hotkey Name, Callback [, Options]
 						{
 							// If there's a matching variant, update its callback. Otherwise, create a new variant.
 							if (variant != null) // There's an existing variant...
 							{
-								if (_callback != variant.callback) // ...and its callback is being changed.
-									variant.callback = _callback;
+								if (callback != variant.callback) // ...and its callback is being changed.
+									variant.callback = callback;
 							}
 							else // No existing variant matching current criteria, so create a new variant.
 							{
-								variant = hk.AddVariant(_callback, suffixHasTilde);
+								variant = hk.AddVariant(callback, suffixHasTilde);
 								variantWasJustCreated = true;
 								updateAllHotkeys = true;
 
@@ -1237,8 +1203,8 @@ namespace Keysharp.Core.Common.Keyboard
 							break;
 							// Otherwise: Ignore other characters, such as the digits that comprise the number after the T option.
 					}
-				} // for()
-			} // if (*aOptions)
+				}
+			}
 
 			if (updateAllHotkeys)
 				ManifestAllHotkeysHotstringsHooks(); // See its comments for why it's done in so many of the above situations.
@@ -1321,21 +1287,19 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;  // No match found.
 		}
 
-		internal static HotkeyCriterion FindHotkeyCriterion(FuncObj fo)
+		internal static IFuncObj FindHotkeyCriterion(IFuncObj fo)
 		{
-			HotkeyCriterion cp;
-
 			if (fo == null)
 				return null;
 
-			for (cp = Keysharp.Scripting.Script.firstHotCriterion; cp != null; cp = cp.nextCriterion)
+			foreach (var cp in Keysharp.Scripting.Script.hotCriterions)
 			{
-				if (cp.callback != null)
+				if (cp != null)
 				{
-					if (cp.callback == fo)
+					if (cp == fo)
 						return cp;
 
-					if (cp.callback.Name == fo.Name && ReferenceEquals(cp.callback.Inst, fo.Inst))
+					if (cp.Name == fo.Name && ReferenceEquals(cp.Inst, fo.Inst))
 						return cp;
 				}
 			}
@@ -1399,8 +1363,8 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="criterion"></param>
 		/// <param name="hotkeyName"></param>
 		/// <returns></returns>
-		internal static bool HotCriterionAllowsFiring(HotkeyCriterion criterion, string hotkeyName) =>
-		criterion == null ? true : Keysharp.Scripting.Script.ForceBool(criterion.callback.Call(hotkeyName));
+		internal static bool HotCriterionAllowsFiring(IFuncObj criterion, string hotkeyName) =>
+		criterion == null ? true : Keysharp.Scripting.Script.ForceBool(criterion.Call(hotkeyName));
 
 		internal static int HotkeyRequiresModLR(uint hotkeyID, int modLR) => hotkeyID < shk.Count ? shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0;
 
@@ -1448,7 +1412,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="VKorSC"></param>
 		/// <param name="isSC"></param>
 		/// <returns></returns>
-		internal static bool PrefixHasNoEnabledSuffixes(int VKorSC, bool isSC)//Need to fill in later.//TODO
+		internal static bool PrefixHasNoEnabledSuffixes(int VKorSC, bool isSC)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			// v1.0.44: Added aAsModifier so that a pair of hotkeys such as:
@@ -2386,7 +2350,8 @@ namespace Keysharp.Core.Common.Keyboard
 				var mi = typeof(HotkeyDefinition).GetMethod(funcname, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 				var fo = new FuncObj(mi);
 				var bf = fo.Bind(obj0 ?? "", obj1 ?? "");//Must not pass null so that the logic in BoundFunc.Call() works.
-				Keysharp.Scripting.Script.hotCriterion = AddHotkeyIfExpr(bf);
+				Keysharp.Scripting.Script.hotCriterion = bf;
+				AddHotkeyIfExpr(bf);
 			}
 			else
 				Keysharp.Scripting.Script.hotCriterion = null;
@@ -2525,15 +2490,6 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 	}
 
-	internal class HotkeyCriterion
-	{
-		internal FuncObj callback;
-
-		internal HotkeyCriterion nextCriterion, nextExpr;//Rather than next, we should just use a list or queue.//TODO.
-
-		internal HotkeyCriterion(FuncObj fo) => callback = fo;
-	}
-
 	/// <summary>
 	/// Used by TextToModifiers() and its callers.
 	/// </summary>
@@ -2566,7 +2522,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal IFuncObj callback;
 		internal bool enabled;
 		internal int existingThreads;
-		internal HotkeyCriterion hotCriterion;
+		internal IFuncObj hotCriterion;
 		internal int index;
 		internal uint inputLevel;
 		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.

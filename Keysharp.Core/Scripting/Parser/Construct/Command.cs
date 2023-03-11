@@ -16,7 +16,7 @@ namespace Keysharp.Scripting
 			if (parts.Length > 1 && parts[1].Length != 0)
 			{
 				var low = parts[0].ToLowerInvariant();
-				_ = libMethods.TryGetValue(low, out var meth);//MATT
+				_ = libMethods.TryGetValue(low, out var meth);
 				var info = meth?.GetParameters();
 				var exp = info == null ? new bool[] { } : new bool[info.Length];
 

@@ -7,8 +7,9 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Keysharp.Core
 {
@@ -25,9 +26,6 @@ namespace Keysharp.Core
 		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
 		internal List<IFuncObj> sizeHandlers;
-
-		//Need a way to retrieve contorls based on name, text class or hwnd. That will be hard because it'll require multiple dictionaries.//MATT
-		//private static Dictionary<string, Control> controls;
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new Dictionary<string, Action<Gui, object>>
 		{
 			{
@@ -187,7 +185,7 @@ namespace Keysharp.Core
 			{
 				"Theme", (f, o) =>
 				{
-					//Not supporting this, perhaps it's from older versions of windows. Should put a log message here noting that.//MATT
+					Keysharp.Scripting.Script.OutputDebug("Themes are not supported", false);
 				}
 			},
 			{
@@ -356,7 +354,7 @@ namespace Keysharp.Core
 				form.MouseDown += Form_MouseDown;
 				form.DragDrop += Form_DragDrop;
 				form.Load += Form_Load;
-				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//MATT
+				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//TODO
 				var y = (int)Math.Round(form.Font.Size * 0.75f);
 				form.Margin = new Padding(x, y, x, y);
 			}
@@ -504,7 +502,7 @@ namespace Keysharp.Core
 
 				case Core.Keyword_UpDown:
 				{
-					//MATT
+					//TODO
 					//This is done differently than how the documentation says.
 					//There is no such thing as a "buddy". rather, the numeric up down control is entirely self
 					//contained. This is because the buddy style control was a remnant of MFC, and C# doesn't support such a control.
@@ -697,7 +695,7 @@ namespace Keysharp.Core
 
 				case Core.Keyword_ListView:
 				{
-					//There is no way to preallocate memory with the "Count" option, so that is ignored.//MATT
+					//There is no way to preallocate memory with the "Count" option, so that is ignored.
 					var lv = new KeysharpListView();
 					lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
@@ -855,7 +853,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Slider://Still need to figure out how to do buddy controls.//MATT
+				case Core.Keyword_Slider://Buddy controls are not supported.
 				{
 					var style = 0;
 
@@ -924,8 +922,6 @@ namespace Keysharp.Core
 					if (o is long pos)
 						prg.Value = (int)pos;
 
-					prg.ForeColor = opts.c;//Probably not needed since it's set below.//MATT
-
 					if (opts.bgcolor.HasValue)
 						prg.BackColor = opts.bgcolor.Value;
 
@@ -943,7 +939,7 @@ namespace Keysharp.Core
 				case Core.Keyword_Tab2:
 				case Core.Keyword_Tab3:
 				{
-					var kstc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().//MATT
+					var kstc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 
 					if (opts.leftj.IsTrue())
@@ -1466,7 +1462,7 @@ namespace Keysharp.Core
 			var h = obj1;
 			var i = obj2.Al(1);
 			e = e.ToLower();
-			var del = GuiControl.GetFuncObj(h, form.eventObj);
+			var del = Function.GetFuncObj(h, form.eventObj, true);
 
 			if (e == "close")
 			{
@@ -1556,8 +1552,35 @@ namespace Keysharp.Core
 						else if (split[0] == '-')
 							func(this, false);
 					}
-					else//Special style, windows only.//MATT
+					else//Special style, windows only. Need to figure out how to make this cross platform.//TODO
 					{
+						var temp = 0;
+						var handle = this.form.Handle;
+
+						if (Options.TryParse(split, "+E", ref temp))
+						{
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
+						}
+						else if (Options.TryParse(split, "E", ref temp))
+						{
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
+						}
+						else if (Options.TryParse(split, "-E", ref temp))
+						{
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, dwNewLong: new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() & ~(long)temp));
+						}
+						else if (Options.TryParse(split, "-", ref temp))
+						{
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() & ~(long)temp));
+						}
+						else if (Options.TryParse(split, "+", ref temp))
+						{
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
+						}
+						else if (Options.TryParse(split, "", ref temp))
+						{
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
+						}
 					}
 				}
 			}
@@ -2007,9 +2030,9 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "+LV", ref temp)) { options.addlvstyle |= temp; }
 				else if (Options.TryParse(opt, "LV", ref temp)) { options.addlvstyle |= temp; }
 				else if (Options.TryParse(opt, "-LV", ref temp)) { options.remlvstyle &= ~temp; }
-				else if (Options.TryParse(opt, "-", ref temp)) { options.remstyle = temp; }
-				else if (Options.TryParse(opt, "+", ref temp)) { options.addstyle = temp; }
-				else if (Options.TryParse(opt, "", ref temp)) { options.addstyle = temp; }
+				else if (Options.TryParse(opt, "-", ref options.remstyle)) { }
+				else if (Options.TryParse(opt, "+", ref options.addstyle)) { }
+				else if (Options.TryParse(opt, "", ref options.addstyle)) { }
 			}
 
 			return options;
@@ -2117,10 +2140,37 @@ namespace Keysharp.Core
 		{
 			get
 			{
+				var handle = controlname.ParseLong();
+
+				if (handle.HasValue)
+				{
+					if (controls.TryGetValue(handle.Value, out var val) && val is GuiControl gc)
+						return gc;
+				}
+
 				if (controlname is string s)
 				{
-					if (form.Controls.Find(s, true) is Control[] ctrls && ctrls.Length > 0 && ctrls[0].Tag is GuiControl guictrl)
-						return guictrl;
+					foreach (var ctrlkv in controls)
+					{
+						if (ctrlkv.Value is GuiControl gc)
+						{
+							if (string.Compare(gc.Name as string, s, true) == 0)
+								return gc;
+
+							if (string.Compare(gc.Text as string, s, true) == 0)
+								return gc;
+						}
+					}
+
+					//Put the ClassNN search in a separate loop to be done as a last resort because it's very slow.
+					foreach (var ctrlkv in controls)
+					{
+						if (ctrlkv.Value is GuiControl gc)
+						{
+							if (string.Compare(gc.ClassNN as string, s, true) == 0)
+								return gc;
+						}
+					}
 				}
 
 				throw new Error($"No controls matched the name {controlname}.");

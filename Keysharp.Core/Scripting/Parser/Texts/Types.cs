@@ -93,12 +93,11 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			//Make sure these TryParse() calls do not break other things.
-			if (double.TryParse(token, out var d))//Need to ensure it's not a number, because identifiers can't be numbers.//MATT
+			if (double.TryParse(token, out var _))//Need to ensure it's not a number, because identifiers can't be numbers.
 				return false;
 
 			if (token.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var ii))
+					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
 				return false;
 
 			return true;
@@ -200,34 +199,12 @@ namespace Keysharp.Scripting
 					return true;
 			}
 
-			// Mono incorrectly determines "." as a numeric value
+			//Mono incorrectly determines "." as a numeric value.
 			if (code.Length == 1 && code[0] == Concatenate)
 				return false;
 
 			var codeTrim = code.Trim(Spaces);
-			//const string hex = "0x";
-			//double x = 0;
-			//var xf = false;
-			//var z = codeTrim.IndexOf(hex);
-			//var negative = false;
-			//if (z == 1 && codeTrim[0] == Minus)
-			//{
-			//  negative = true;
-			//  codeTrim = codeTrim.Substring(1);
-			//}
-			//if ((z == 0 || negative) && long.TryParse(codeTrim.Replace(hex, string.Empty), NumberStyles.HexNumber, culture, out var i))
-			//{
-			//  result = negative ? -i : i;
-			//  goto exp;
-			//}
-			//var e = codeTrim.IndexOfAny(new[] { 'e', 'E' });//You don't need to manually do this, double.TryParse handles it internally.//MATT
-			//if (e != -1)
-			//{
-			//  var n = e + 1;
-			//  xf = n < codeTrim.Length ? double.TryParse(codeTrim.Substring(e + 1), out x) : false;
-			//  codeTrim = codeTrim.Substring(0, e);
-			//}
-			var longresult = codeTrim.ParseLong(false);//Also supports hex.
+			var longresult = codeTrim.ParseLong(false, false);//Also supports hex, but do not consider raw hex, because then a variable name like a would be returned as 10.
 
 			if (longresult.HasValue)
 			{
@@ -235,7 +212,7 @@ namespace Keysharp.Scripting
 				goto exp;
 			}
 
-			if (double.TryParse(codeTrim, NumberStyles.Any, culture, out var d))//This will make any number be a double internally. Not sure if this is what AHK does.//MATT
+			if (double.TryParse(codeTrim, NumberStyles.Any, culture, out var d))//This will make any number be a double internally. Not sure if this is what AHK does.
 			{
 				result = d;
 				goto exp;
@@ -244,12 +221,6 @@ namespace Keysharp.Scripting
 			result = null;
 			return false;
 			exp:
-			//if (x != 0)//Again, not needed.//MATT
-			//{
-			//  if (!xf)
-			//      throw new ParseException(ExInvalidExponent);
-			//  result = (double)result * Math.Pow(10, x);
-			//}
 			return true;
 		}
 

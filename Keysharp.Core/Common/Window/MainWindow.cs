@@ -59,39 +59,6 @@ namespace Keysharp.Scripting
 			});
 		}
 
-		//protected override async void OnNotifyMessage(Message m)
-		//{
-		//  if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
-		//  {
-		//      var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
-		//
-		//      if (res.IsNotNullOrEmpty())
-		//          return;
-		//  }
-		//
-		//  switch (m.Msg)
-		//  {
-		//      case WindowsAPI.WM_CLIPBOARDUPDATE:
-		//          if (success)
-		//              ClipboardUpdate?.Invoke(null);
-		//
-		//          break;
-		//
-		//      case WindowsAPI.WM_ENDSESSION:
-		//          _ = Core.Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Core.Flow.ExitReasons.LogOff : Core.Flow.ExitReasons.Shutdown);
-		//          break;
-		//
-		//      case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
-		//          _ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), WindowsAPI.WM_HOTKEY);
-		//          break;
-		//  }
-		//
-		//  //else if (m.Msg == WindowsAPI.WM_DESTROY && m.HWnd == Handle)//AHK looked for WM_DESTROY, but we seem to get many of them, so it probably won't work here. It's ok because it's a corner case anyway.
-		//  //{
-		//  //  Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Destroy);
-		//  //}
-		//}
-
 		internal void ListHotkeys() => SetText(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys);
 
 		internal void Pause() => Keysharp.Scripting.Script.PauseThread();
@@ -100,29 +67,6 @@ namespace Keysharp.Scripting
 
 		protected override void WndProc(ref Message m)
 		{
-			//  switch (m.Msg)
-			//  {
-			//      case WindowsAPI.WM_CLIPBOARDUPDATE:
-			//          if (success)
-			//              ClipboardUpdate?.Invoke(null);
-			//          break;
-			//      case WindowsAPI.WM_ENDSESSION:
-			//          _ = Core.Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Core.Flow.ExitReasons.LogOff : Core.Flow.ExitReasons.Shutdown);
-			//          break;
-			//      case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
-			//                                //_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), WindowsAPI.WM_HOTKEY);
-			//          break;
-			//  }
-			//else if (m.Msg == WindowsAPI.WM_DESTROY && m.HWnd == Handle)//AHK looked for WM_DESTROY, but we seem to get many of them, so it probably won't work here. It's ok because it's a corner case anyway.
-			//  {
-			//      Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Destroy);
-			//  }
-			//if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
-			//{
-			//  var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
-			//  if (res.IsNotNullOrEmpty())
-			//      return;
-			//}
 			var handled = false;
 
 			switch (m.Msg)

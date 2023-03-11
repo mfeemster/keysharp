@@ -6,7 +6,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		public static bool IfLegacy(object subject, string op, string test, bool not = false)//Added the not parameter.//MATT
+		public static bool IfLegacy(object subject, string op, string test, bool not = false)
 		{
 			const string Between = "between";
 			const string In = "in";
@@ -583,12 +583,12 @@ namespace Keysharp.Scripting
 					throw new TypeError($"Unary operand of logical not was not an integer, and instead was of type {right.GetType()}.");
 				}
 
-				case Operator.Dereference:
-					// TODO: dereference operator
-					return null;
-
-				case Operator.BitwiseAnd:
-					return GCHandle.Alloc(right, GCHandleType.Pinned).AddrOfPinnedObject().ToInt64();//This seems almost certainly wrong, and would need to be freed elsewhere.//MATT
+				//Not supporting references at this time.
+				//case Operator.Dereference:
+				// TODO: dereference operator
+				//return null;
+				//case Operator.BitwiseAnd:
+				//return GCHandle.Alloc(right, GCHandleType.Pinned).AddrOfPinnedObject().ToInt64();//This seems almost certainly wrong, and would need to be freed elsewhere.
 
 				default:
 					throw new ArgumentOutOfRangeException();

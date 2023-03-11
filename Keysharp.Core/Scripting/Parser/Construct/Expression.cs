@@ -103,8 +103,7 @@ namespace Keysharp.Scripting
 						var paren = ExtractRange(parts, n, Set(parts, i));
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.Dictionary;
 						ParseObject(paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
-						//_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(string), keys));
-						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), keys)); //MATT
+						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), keys));
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), values));
 						parts[i] = invoke;
 						parts.RemoveAt(n);
@@ -384,8 +383,13 @@ namespace Keysharp.Scripting
 						{
 							if (LaxExpressions)
 							{
-								if (parts[n] is CodePrimitiveExpression cpe && cpe.Value is decimal val)//What about double?//MATT
-									parts[n] = VarId(val.ToString(), i == 0 && create);
+								if (parts[n] is CodePrimitiveExpression cpe)
+								{
+									if (cpe.Value is decimal decval)
+										parts[n] = VarId(decval.ToString(), i == 0 && create);
+									else if (cpe.Value is double d)
+										parts[n] = VarId(d.ToString(), i == 0 && create);
+								}
 							}
 							else
 								throw new ParseException("Can only assign to a variable");
@@ -447,14 +451,12 @@ namespace Keysharp.Scripting
 					{
 						var ops = OperatorFromString(part);
 
-						if (ops == Script.Operator.Increment || ops == Script.Operator.Decrement)//Should really replace this with a single function call.//MATT
+						if (ops == Script.Operator.Increment || ops == Script.Operator.Decrement)
 						{
 							int z = -1, x = i - 1, y = i + 1;
-							//var d = ops == Script.Operator.Increment ? 1 : -1;
-							var d = 1L;//The logic above was broken for x-- postfix.//MATT
+							var d = 1L;
 							CodeMethodInvokeExpression shadow = null;
 
-							// UNDONE: use generic approach to ++/-- for all types of operands?
 							if (x > -1 && parts[x] is CodeMethodInvokeExpression)
 							{
 								var sub = new List<object>(5)
@@ -463,9 +465,8 @@ namespace Keysharp.Scripting
 										  CodeBinaryOperatorType.Assign,
 										  parts[x],
 										  Script.Operator.Add,
-										  d//See if this still works with d = 1.//MATT
+										  d
 								};
-								//sub.Add(ops == Script.Operator.Increment ? d : -d);//MATT
 								parts.RemoveAt(i);
 								parts[x] = ParseExpression(sub, create);
 								i = x;
@@ -584,10 +585,12 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							var list = new List<object>(9);
-							list.Add(parts[z]);
-							list.Add(new string(new[] { Add, Equal }));
-							list.Add(new CodeSnippetExpression($"{(ops == Script.Operator.Increment ? d : -d)}L"));//MATT
+							var list = new List<object>(9)
+							{
+								parts[z],
+									  new string(new[] { Add, Equal }),
+									  new CodeSnippetExpression($"{(ops == Script.Operator.Increment ? d : -d)}L")
+							};
 
 							if (shadow != null)
 							{
@@ -599,8 +602,7 @@ namespace Keysharp.Scripting
 							{
 								list.Insert(0, ParenOpen.ToString());
 								list.Add(ParenClose.ToString());
-								//list.Add(d > 0 ? Script.Operator.Minus : Script.Operator.Add);//ORIG
-								list.Add(ops == Script.Operator.Increment ? Script.Operator.Minus : Script.Operator.Add);//MATT
+								list.Add(ops == Script.Operator.Increment ? Script.Operator.Minus : Script.Operator.Add);
 								list.Add(new CodePrimitiveExpression(d));
 							}
 
@@ -706,17 +708,14 @@ namespace Keysharp.Scripting
 					//  Console.WriteLine("power op is next");
 					//}
 
-					if (parts[n] is CodePrimitiveExpression parent
-							&& op == Script.Operator.Subtract
-							//&& !(parts.Count > n + 1 && parts[n + 1] is Script.Operator opp && opp == Script.Operator.Power)//MATT
-					   )
+					if (parts[n] is CodePrimitiveExpression parent && op == Script.Operator.Subtract)
 					{
 						if (parent.Value is long ll)
 							parent.Value = -ll;
 						else if (parent.Value is double dd)
 							parent.Value = -dd;
 						else if (parent.Value is string ss)
-							parent.Value = string.Concat(Minus.ToString(), ss);//This is really the only place you'd take a different action.//MATT
+							parent.Value = string.Concat(Minus.ToString(), ss);
 						else if (parent.Value is int ii)
 							parent.Value = -ii;
 						else if (parent.Value is decimal mm)
@@ -737,31 +736,12 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
-						//if (op == Script.Operator.Subtract)
-						//{
-						//  var sub = new List<object>(5);
-						//  sub.Add(new CodePrimitiveExpression(-1));
-						//  sub.Add(CodeBinaryOperatorType.Multiply);
-						//  //parts.RemoveAt(i);
-						//  parts[i] = ParseExpression(sub);
-						//}
-						//else
-						{
-							var invoke = (CodeMethodInvokeExpression)InternalMethods.OperateUnary;
-							_ = invoke.Parameters.Add(OperatorAsFieldReference(op));
-							//if (LaxExpressions)//This appears to break basic negation: z := -(x**y)//MATT
-							//{
-							//  if (!(IsVarReference(parts[n]) || IsVarAssignment(parts[n])))
-							//  {
-							//      _ = invoke.Parameters.Add(new CodePrimitiveExpression(null));
-							//      goto next;
-							//  }
-							//}
-							_ = invoke.Parameters.Add(VarMixedExpr(parts[n]));
-							next:
-							parts[i] = invoke;
-							parts.RemoveAt(n);
-						}
+						var invoke = (CodeMethodInvokeExpression)InternalMethods.OperateUnary;
+						_ = invoke.Parameters.Add(OperatorAsFieldReference(op));
+						_ = invoke.Parameters.Add(VarMixedExpr(parts[n]));
+						next:
+						parts[i] = invoke;
+						parts.RemoveAt(n);
 					}
 				}
 			}
@@ -848,7 +828,7 @@ namespace Keysharp.Scripting
 							//i++;//Tried, but not needed.
 							//continue;
 						}
-						else if (op == Script.Operator.NullAssign)//Unsure what this does.//MATT
+						else if (op == Script.Operator.NullAssign)//Unsure what this does.
 						{
 							if (x < 0)
 								throw new ParseException("Nullable assignment with no condition.");
@@ -964,11 +944,11 @@ namespace Keysharp.Scripting
 
 						i--;
 					}
-					else if (parts[i] as CodeBinaryOperatorType? != CodeBinaryOperatorType.Assign && !(parts[i] is CodeSnippetStatement))//Added check for code snippet.//MATT
+					else if (parts[i] as CodeBinaryOperatorType? != CodeBinaryOperatorType.Assign && !(parts[i] is CodeSnippetStatement))
 					{
 						var x = i - 1;
 
-						if (x > 0 && !(parts[x] is Script.Operator || parts[x] is CodeBinaryOperatorType || parts[x] is CodeSnippetStatement))//Added check for code snippet.//MATT
+						if (x > 0 && !(parts[x] is Script.Operator || parts[x] is CodeBinaryOperatorType || parts[x] is CodeSnippetStatement))
 						{
 							parts.Insert(i, Script.Operator.Concat);
 							i--;

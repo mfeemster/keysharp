@@ -40,7 +40,7 @@ namespace Keysharp.Scripting
 					_ = sb.Insert(0, block.Method.ToLower() ?? mainScope);
 				}
 
-				//Unsure if these should be scoped. Probably not.//MATT
+				//Unsure if these should be scoped. Probably not.
 				//else if (block.Kind == CodeBlock.BlockKind.Catch)
 				//{
 				//  if (sb.Length > 0)

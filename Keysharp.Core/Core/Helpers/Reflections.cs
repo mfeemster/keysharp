@@ -25,15 +25,15 @@ namespace Keysharp.Core
 
 	public static class Reflections
 	{
-		private static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		private static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-		private static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		private static readonly Dictionary<string, Dictionary<Type, PropertyInfo>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, PropertyInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		private static readonly int sttcap = 1000;
-		private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 10);
-		private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 10);
-		private static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 5);
-		private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> typeToStringProperties = new Dictionary<Type, Dictionary<string, PropertyInfo>>(sttcap / 5);
+		internal static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, MethodInfo>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, MethodInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, PropertyInfo>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, PropertyInfo>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static readonly int sttcap = 1000;
+		internal static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 10);
+		internal static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 10);
+		internal static readonly Dictionary<Type, Dictionary<string, MethodInfo>> typeToStringMethods = new Dictionary<Type, Dictionary<string, MethodInfo>>(sttcap / 5);
+		internal static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> typeToStringProperties = new Dictionary<Type, Dictionary<string, PropertyInfo>>(sttcap / 5);
 		//private static Dictionary<Guid, Dictionary<string, MethodInfo>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodInfo>>(sttcap / 20);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 
@@ -168,9 +168,6 @@ namespace Keysharp.Core
 				if (dkt.TryGetValue(name, out var mi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
 					return mi;
 
-				//foreach (var kv in dkt)//Case insensitive match.//This is probably not needed anymore because we use StringComparer.OrdinalIgnoreCase.//TODO
-				//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-				//      return kv.Value;
 				t = t.BaseType;
 			} while (t.Assembly == typeof(Any).Assembly);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
 
@@ -212,9 +209,6 @@ namespace Keysharp.Core
 					if (dkt.TryGetValue(name, out var pi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
 						return pi;
 
-					//foreach (var kv in dkt)//Case insensitive match.//This is probably not needed anymore because we use StringComparer.OrdinalIgnoreCase.//TODO
-					//  if (kv.Value.Name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
-					//      return kv.Value;
 					t = t.BaseType;
 				} while (t != typeof(object));
 			}

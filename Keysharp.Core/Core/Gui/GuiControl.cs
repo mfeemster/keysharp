@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Keysharp.Core.Common;
 using Keysharp.Core.Windows;
 
@@ -1021,7 +1022,7 @@ namespace Keysharp.Core
 			var e = obj0.As().ToLower();
 			var h = obj1;
 			var i = obj2.Al(1);
-			var del = GetFuncObj(h, Gui.form.eventObj);
+			var del = Function.GetFuncObj(h, Gui.form.eventObj, true);
 
 			if (del != null)
 			{
@@ -1479,7 +1480,7 @@ namespace Keysharp.Core
 		public long SetImageList(object obj0, object obj1 = null)
 		{
 			var id = obj0.Al();
-			var type = obj1.Al();//Type is for something called "state icons", which the documentation says are not supported yet, so we ignore for now.
+			var type = obj1.Al(-1);
 			var oldil = 0L;
 
 			if (ImageLists.IL_Get(id) is ImageList il)
@@ -1491,46 +1492,48 @@ namespace Keysharp.Core
 				}
 				else if (_control is ListView lv)
 				{
-					switch (type)
+					var newil = ImageLists.IL_Get(id);
+
+					if (newil != null)
 					{
-						case 1:
+						switch (type)
 						{
-							var newil = ImageLists.IL_Get(id);
-
-							if (newil != null)
-							{
-								oldil = ImageLists.IL_GetId(lv.SmallImageList);
-								lv.SmallImageList = newil;
-							}
-
-							break;
-						}
-
-						case 2://Documentation says state icons don't work, but they do here.//NEW
-						{
-							var newil = ImageLists.IL_Get(id);
-
-							if (newil != null)
-							{
-								oldil = ImageLists.IL_GetId(lv.StateImageList);
-								lv.StateImageList = newil;
-							}
-
-							break;
-						}
-
-						case 0://Documentation says default is deduced, but unsure how, so default to large.//MATT
-						default:
-						{
-							var newil = ImageLists.IL_Get(id);
-
-							if (newil != null)
+							case 0:
 							{
 								oldil = ImageLists.IL_GetId(lv.LargeImageList);
 								lv.LargeImageList = newil;
+								break;
 							}
 
-							break;
+							case 1:
+							{
+								oldil = ImageLists.IL_GetId(lv.SmallImageList);
+								lv.SmallImageList = newil;
+								break;
+							}
+
+							case 2://Documentation says state icons don't work, but they do here.
+							{
+								oldil = ImageLists.IL_GetId(lv.StateImageList);
+								lv.StateImageList = newil;
+								break;
+							}
+
+							default:
+							{
+								if (il.ImageSize.Width > Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics(SystemMetric.SM_CXSMICON))//Need a cross platform way to do this.//TODO
+								{
+									oldil = ImageLists.IL_GetId(lv.LargeImageList);
+									lv.LargeImageList = newil;
+								}
+								else
+								{
+									oldil = ImageLists.IL_GetId(lv.SmallImageList);
+									lv.SmallImageList = newil;
+								}
+
+								break;
+							}
 						}
 					}
 				}
@@ -1605,7 +1608,7 @@ namespace Keysharp.Core
 				if (part < ss.Items.Count)
 				{
 					var item = ss.Items[part];
-					item.Text = text;//Documentation says tabs get expanded, but that doesn't seem to work here.//MATT
+					item.Text = text;
 
 					if (item is ToolStripStatusLabel tssl)
 					{
@@ -1670,23 +1673,6 @@ namespace Keysharp.Core
 		}
 
 		internal static Map GetClientPos(Control control, bool scaling) => control.ClientRectangle.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI);
-
-		internal static IFuncObj GetFuncObj(object h, object eventObj)
-		{
-			IFuncObj del = null;
-
-			if (h is string s)
-			{
-				var tempdel = new FuncObj(s, eventObj);
-
-				if (tempdel.IsValid)
-					del = tempdel;
-			}
-			else if (h is IFuncObj fo)
-				del = fo;
-
-			return del;
-		}
 
 		internal static Map GetPos(Control control, bool scaling) => control.Bounds.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI);
 
@@ -1821,16 +1807,13 @@ namespace Keysharp.Core
 
 		private void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
-			var del = GetFuncObj(callback, Gui.form.eventObj);
+			var del = Function.GetFuncObj(callback, Gui.form.eventObj, true);
 
-			if (del != null)
-			{
-				if (handlers == null)
-					handlers = new Dictionary<int, List<IFuncObj>>();
+			if (handlers == null)
+				handlers = new Dictionary<int, List<IFuncObj>>();
 
-				var h = handlers.GetOrAdd((int)code);
-				h.ModifyEventHandlers(del, addremove);
-			}
+			var h = handlers.GetOrAdd((int)code);
+			h.ModifyEventHandlers(del, addremove);
 		}
 
 		private void Hkb_TextChanged(object sender, EventArgs e)
@@ -1896,13 +1879,13 @@ namespace Keysharp.Core
 		private void Tb_MouseCaptureChanged(object sender, EventArgs e)
 		{
 			if (_control is TrackBar && !AltSubmit)
-				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Need to figure out how to pass the method by which the slider was changed.//MATT
+				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Winforms doesn't support the ability to pass the method by which the slider was changed.
 		}
 
 		private void Tb_ValueChanged(object sender, EventArgs e)
 		{
 			if (_control is TrackBar && AltSubmit)
-				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Need to figure out how to pass the method by which the slider was changed.//MATT
+				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Winforms doesn't support the ability to pass the method by which the slider was changed.
 		}
 
 		private void Tc_Selected(object sender, TabControlEventArgs e)

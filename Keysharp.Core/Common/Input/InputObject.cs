@@ -100,25 +100,25 @@ namespace Keysharp.Core.Common.Input
 		public object OnChar
 		{
 			get => onChar;
-			set => onChar = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+			set => onChar = Keysharp.Core.Function.GetFuncObj(value, null, true);
 		}
 
 		public object OnEnd
 		{
 			get => onEnd;
-			set => onEnd = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+			set => onEnd = Keysharp.Core.Function.GetFuncObj(value, null, true);
 		}
 
 		public object OnKeyDown
 		{
 			get => onKeyDown;
-			set => onKeyDown = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+			set => onKeyDown = Keysharp.Core.Function.GetFuncObj(value, null, true);
 		}
 
 		public object OnKeyUp
 		{
 			get => onKeyUp;
-			set => onKeyUp = Keysharp.Core.GuiControl.GetFuncObj(value, null);
+			set => onKeyUp = Keysharp.Core.Function.GetFuncObj(value, null, true);
 		}
 
 		public object Timeout

@@ -301,7 +301,7 @@ namespace Keysharp.Core
 				{
 					try
 					{
-						exp = Conversions.ParseRegEx(needle, reverse);//This will not throw PCRE style errors like the documentation says.//MATT
+						exp = Conversions.ParseRegEx(needle, reverse);//This will not throw PCRE style errors like the documentation says.
 					}
 					catch (Exception ex)
 					{
@@ -480,15 +480,8 @@ namespace Keysharp.Core
 			var split = '\n';
 			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
 
-			if (obj2 is string strfunc)
-			{
-				function = new FuncObj(strfunc);
-
-				if (function.Name == null)
-					return "";
-			}
-			else if (obj2 is IFuncObj fo)
-				function = fo;
+			if (obj2 != null)
+				function = Function.GetFuncObj(obj2, null, true);//If supplied, throw if bad.
 
 			if (!string.IsNullOrEmpty(dopt))
 			{

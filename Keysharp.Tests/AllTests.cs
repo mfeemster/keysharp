@@ -89,6 +89,7 @@ namespace Keysharp.Tests
 		public void ReflectionsInit() => Reflections.Initialize();
 
 		[Test, Category("BuiltInVars")]
+		[NonParallelizable]
 		public void Suspend() => Assert.IsTrue(TestScript("suspend", true));
 		/*
 		            [Test]

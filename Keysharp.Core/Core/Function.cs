@@ -10,12 +10,13 @@ namespace Keysharp.Core
 	{
 		public string Name { get; }
 		public bool IsValid { get; }
+		public object Inst { get; }
 		public object Call(params object[] obj);
 	}
 
 	public static class Function
 	{
-		public static FuncObj Func(object obj)//This needs to be consolidated with the code in CallbackCreate(), HotstringLabel() and FunctionReference() //MATT
+		public static FuncObj Func(object obj)
 		{
 			var name = obj.As();
 			var fo = new FuncObj(name);
@@ -23,11 +24,35 @@ namespace Keysharp.Core
 				   : throw new MethodError($"Unable to retrieve method {name}.");
 		}
 
+		internal static IFuncObj GetFuncObj(object h, object eventObj, bool throwIfBad = false)
+		{
+			IFuncObj del = null;
+
+			if (h is string s)
+			{
+				if (s.Length > 0)
+				{
+					var tempdel = new FuncObj(s, eventObj);
+
+					if (tempdel.IsValid)
+						del = tempdel;
+					else if (throwIfBad)
+						throw new MethodError($"Unable to retrieve method {s} when creating a function object.");
+				}//Empty string will just return null, which is a valid value in some cases.
+			}
+			else if (h is IFuncObj fo)
+				del = fo;
+			else if (throwIfBad)
+				throw new TypeError($"Improper value of {h} was supplied for a function object.");
+
+			return del;
+		}
+
 		public static FuncObj GetMethod(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var val = obj0;
 			var name = obj1.As();
-			var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
+			//var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
 			var mi = Reflections.FindAndCacheMethod(val.GetType(), name);
 			return mi != null ? new FuncObj(mi, val)
 				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()}.");
@@ -37,7 +62,7 @@ namespace Keysharp.Core
 		{
 			var val = obj0;
 			var name = obj1.As();
-			var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
+			//var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
 			var mi = Reflections.FindAndCacheMethod(val.GetType(), name);
 			return mi != null ? 1L : 0L;
 		}
@@ -118,13 +143,7 @@ namespace Keysharp.Core
 
 		public DelegateHolder(object obj, bool f, bool r)
 		{
-			if (obj is string s)
-				funcObj = Function.Func(s);
-			else if (obj is IFuncObj fo)
-				funcObj = fo;
-			else
-				throw new TypeError($"Argument of type {obj.GetType()} was neither a string or function object.");
-
+			funcObj = Function.GetFuncObj(obj, null, true);
 			fast = f;
 			reference = r;
 			thisdel = (PlaceholderFunction)Delegate.CreateDelegate(typeof(PlaceholderFunction), this, "DelegatePlaceholder");

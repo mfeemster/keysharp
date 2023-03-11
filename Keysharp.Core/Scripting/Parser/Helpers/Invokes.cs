@@ -25,29 +25,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private CodeMethodInvokeExpression LocalLabelInvoke(string name)
-		{
-			var invoke = (CodeMethodInvokeExpression)InternalMethods.LabelCall;
-			_ = invoke.Parameters.Add(new CodePrimitiveExpression(name));
-			return invoke;
-		}
-
-		private CodeMemberMethod LocalLabelMethod(string name)//Label methods need no parameters and no return types//MATT
-		{
-			var method = new CodeMemberMethod { Name = name, ReturnType = new CodeTypeReference(typeof(void)) };
-			method.Attributes = MemberAttributes.Public | MemberAttributes.Final;
-
-			if (typeStack.PeekOrNull() == targetClass)
-				method.Attributes |= MemberAttributes.Static;
-
-			var param = new CodeParameterDeclarationExpression("params object[]", args);
-			//var codeAttrDecl =
-			//  new CodeAttributeDeclaration("Optional");
-			//param.CustomAttributes.Add(codeAttrDecl);
-			_ = method.Parameters.Add(param);
-			return method;
-		}
-
 		private CodeMemberMethod LocalMethod(string name)
 		{
 			var method = new CodeMemberMethod { Name = name, ReturnType = new CodeTypeReference(typeof(object)) };

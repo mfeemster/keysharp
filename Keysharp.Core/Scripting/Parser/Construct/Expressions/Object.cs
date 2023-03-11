@@ -12,10 +12,8 @@ namespace Keysharp.Scripting
 
 		private bool IsJsonObject(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.Index.MethodName;
 
-		//private void ParseObject(List<object> parts, out CodePrimitiveExpression[] keys, out CodeExpression[] values)
-		private void ParseObject(List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)//MATT
+		private void ParseObject(List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
 		{
-			//var names = new List<CodePrimitiveExpression>();
 			var names = new List<CodeExpression>();
 			var entries = new List<CodeExpression>();
 

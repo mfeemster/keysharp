@@ -24,10 +24,9 @@ namespace Keysharp.Core
 		public int GetHashCode(object obj) => obj.GetHashCode();
 	}
 
-	//public class Map : KeysharpObject, ICollection<KeyValuePair<object, object>>
 	public class Map : KeysharpObject, IEnumerable<(object, object)>, ICollection
 	{
-		internal Dictionary<object, object> map = new Dictionary<object, object>();
+		internal Dictionary<object, object> map;
 
 		private eCaseSense caseSense = eCaseSense.On;
 
@@ -66,13 +65,25 @@ namespace Keysharp.Core
 
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
 
-		public Map()
+		public Map(object values = null)
 		{
+			if (values == null)
+			{
+				map = new Dictionary<object, object>();
+			}
+			else
+			{
+				if (values is Map m)
+				{
+					map = m.map;
+					caseSense = m.caseSense;
+				}
+				else if (values is Dictionary<object, object> dkt)
+					map = dkt;
+				else
+					Set(values);
+			}
 		}
-
-		public Map(params object[] values) => Set(values);
-
-		internal Map(Dictionary<object, object> dkt) => map = dkt;
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
@@ -275,17 +286,14 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public object this[object key]//Unsure how this will work with __item and allowing overriding, mark as virtual for now.//TODO
+		public virtual object this[object key]
 		{
 			get
 			{
 				if (TryGetValue(key, out var val))
 					return val;
 
-				if (Default != null)
-					return Default;
-
-				throw new KeyError($"Key {key} was not present in the map.");
+				return Default ?? throw new UnsetItemError($"Key {key} was not present in the map.");
 			}
 
 			set => Insert(key, value);

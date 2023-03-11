@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Window;
-using Keysharp.Core.Windows;//This will make this file only work on windows. Need a way to reference linux.windows.//MATT
+using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -297,7 +297,7 @@ namespace Keysharp.Core
 			var (part, title, text, excludeTitle, excludeText) = obj.I1O1S3();
 			WindowItemBase ctrl;
 
-			//These class names will be something else on Linux.//MATT
+			//These class names will be something else on Linux. Need a cross platform way to do this.//TODO
 			if ((ctrl = SearchControl("msctls_statusbar321", title, text, excludeTitle, excludeText, false)) != null)
 			{
 				var sb = new StatusBar(ctrl.Handle);

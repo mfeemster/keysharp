@@ -45,7 +45,7 @@ namespace Keysharp.Scripting
 			if (i == 0 || i == code.Length)
 				return false;
 
-			while (IsSpace(code[i])) i++;//This should really use Array.IndexOf(Spaces, code);//MATT
+			while (IsSpace(code[i])) i++;
 
 			if (i < code.Length && code[i] == Equal)
 				return true;
@@ -120,7 +120,7 @@ namespace Keysharp.Scripting
 			delimiters[0] = Multicast;
 			delimiters[1] = BlockOpen;
 			delimiters[2] = ParenOpen;
-			delimiters[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.//MATT
+			delimiters[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
 			Spaces.CopyTo(delimiters, offset);
 			var word = code.Split(delimiters, 2)[0].ToLowerInvariant();
 

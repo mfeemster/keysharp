@@ -126,7 +126,6 @@ namespace Keysharp.Scripting
 					{
 						parts.Add(new CodePrimitiveExpression(sub.ToString()));
 						sub.Length = 0;
-						//sub.Append(Resolve);//MATT
 						id = true;
 					}
 				}
@@ -238,7 +237,7 @@ namespace Keysharp.Scripting
 			if (var is CodePrimitiveExpression cpe)
 				return cpe;
 
-			if (var is CodeSnippetExpression cse)//MATT
+			if (var is CodeSnippetExpression cse)
 				return cse;
 
 			if (var is CodeVariableReferenceExpression cvre)

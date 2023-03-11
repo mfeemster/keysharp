@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Keysharp.Core;
 
 namespace Keysharp.Scripting
@@ -25,7 +26,7 @@ namespace Keysharp.Scripting
 
 		public static Keysharp.Core.Buffer Buffer(object obj0, object obj1 = null) => new (obj0, obj1);
 
-		public static Map Dictionary(object[] keys, object[] values)//MATT
+		public static Map Dictionary(object[] keys, object[] values)
 		{
 			var table = new Map();
 
@@ -93,7 +94,7 @@ namespace Keysharp.Scripting
 					return (item, pi);
 			}
 
-			return null;
+			throw new MemberError($"Attempting to get method or property {item} with key {key} failed.");
 		}
 
 		public static object GetStaticMethodT<T>(object name)
@@ -101,7 +102,7 @@ namespace Keysharp.Scripting
 			if (Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodInfo mi)
 				return mi;
 
-			return null;
+			throw new MethodError($"Attempting to get method {name} failed.");
 		}
 
 		public static object GetStaticMemberValueT<T>(object name)
@@ -121,7 +122,7 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			return null;
+			throw new PropertyError($"Attempting to get property {name} failed.");
 		}
 
 		public static object GetPropertyValue(object item, object name)
@@ -312,7 +313,7 @@ namespace Keysharp.Scripting
 		{
 			var e = obj0;
 			var i = obj1.Al(1L);
-			var del = GuiControl.GetFuncObj(e, null);
+			var del = Function.GetFuncObj(e, null, true);
 
 			if (errorHandlers == null)
 				errorHandlers = new List<IFuncObj>();
@@ -323,6 +324,8 @@ namespace Keysharp.Scripting
 		public static OSError OSError(params object[] obj) => new (obj);
 
 		public static PropertyError PropertyError(params object[] obj) => new (obj);
+
+		public static UnsetItemError UnsetItemError(params object[] obj) => new (obj);
 
 		public static object SetObject(object value, object item, params object[] index)
 		{
@@ -378,7 +381,7 @@ namespace Keysharp.Scripting
 				return array.GetValue(actualindex);
 			}
 
-			return value;
+			throw new MemberError($"Attempting to set index {key} of object {item} to value {value} failed.");
 		}
 
 		public static void SetStaticMemberValueT<T>(object name, object value)
@@ -397,6 +400,8 @@ namespace Keysharp.Scripting
 						throw;
 				}
 			}
+			else
+				throw new PropertyError($"Attempting to set property {name} to value {value} failed.");
 		}
 
 		public static void SetPropertyValue(object item, object name, object value)
@@ -432,6 +437,8 @@ namespace Keysharp.Scripting
 			{
 				map[name] = value;
 			}
+			else
+				throw new PropertyError($"Attempting to set property {name} on object {item} to value {value} failed.");
 		}
 
 		public static Keysharp.Core.StringBuffer StringBuffer(object obj0, object obj1 = null) => new StringBuffer(obj0.As(), obj1.Ai(256));
@@ -573,7 +580,7 @@ namespace Keysharp.Scripting
 				return null;
 			}
 
-			return null;
+			throw new IndexError($"Attempting to get index of {key} on item {item} failed.");
 		}
 
 		private static Map Object(params object[] obj)

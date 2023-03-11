@@ -104,20 +104,14 @@ namespace Keysharp.Core
 			if (opts.TryGetValue(Core.Keyword_Variation, out var varopt) && varopt != "")
 				_ = byte.TryParse(varopt, out variation);
 
-			if (opts.TryGetValue(Core.Keyword_Trans, out var vartrans) && vartrans != "")//You should use parsecolor() here.//MATT
+			if (opts.TryGetValue(Core.Keyword_Trans, out var vartrans) && vartrans != "")
 			{
-				if (int.TryParse(vartrans, out var transopt))//You should use parseint here.//MATT
-					trans = transopt;
-				else if (vartrans.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-						 int.TryParse(vartrans.AsSpan(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var trans0xHex))
-					trans = trans0xHex;
-				else if (int.TryParse(vartrans, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var transHex))
-					trans = transHex;
+				var temp = vartrans.ParseInt(false);
+
+				if (temp.HasValue)
+					trans = temp.Value;
 				else
-				{
-					var tempcol = Color.FromName(vartrans);
-					trans = tempcol.ToArgb();
-				}
+					trans = Color.FromName(vartrans).ToArgb();
 			}
 
 			if (opts.TryGetValue("w", out var wopt) && wopt != "")

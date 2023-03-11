@@ -52,11 +52,24 @@ namespace Keysharp.Core
 
 		object ICollection.SyncRoot => ((ICollection)array).SyncRoot;
 
-		public Array() => array = new ArrayList();
+		public Array(object obj = null)
+		{
+			if (obj == null)
+				array = new ArrayList();
+			else if (obj is Array arr)
+				array = arr.array;
+			else if (obj is ICollection c)
+				array = new ArrayList(c);
+			else
+			{
+				var l = obj.Al(-1);
 
-		public Array(ICollection c) => array = new ArrayList(c);
-
-		public Array(int capacity) => array = new ArrayList(capacity);
+				if (l > 0)
+					array = new ArrayList((int)l);
+				else
+					throw new ValueError(obj: $"Invalid value of {obj} passed to Array constructor.");
+			}
+		}
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
@@ -235,10 +248,24 @@ namespace Keysharp.Core
 
 		void IList.RemoveAt(int index) => RemoveAt(new object[] { index });//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
 
-		public object this[int index]
+		object IList.this[int index]
 		{
 			get
 			{
+				return this[index];
+			}
+			set
+			{
+				this[index] = value;
+			}
+		}
+
+		public virtual object this[object idx]
+		{
+			get
+			{
+				var index = idx.Ai();
+
 				if (index > 0)
 					return array[index - 1];
 				else if (index < 0)
@@ -248,6 +275,8 @@ namespace Keysharp.Core
 			}
 			set
 			{
+				var index = idx.Ai();
+
 				if (index > 0)
 					array[index - 1] = value;
 				else if (index < 0)

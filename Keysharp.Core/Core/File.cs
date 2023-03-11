@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Microsoft.VisualBasic.FileIO;
 
 namespace Keysharp.Core

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -84,7 +84,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="path">Path of drive to receive information from.</param>
 		/// <returns>The serial number of the drive</returns>
-		public static long DriveGetSerial(object obj)//Will need a cross platform version.//TODO
+		public static long DriveGetSerial(object obj)//Will need a cross platform way to query version.//TODO
 		{
 			var drive = obj.As().TrimEnd('\\');
 			var serialstr = Wmi.Identifier("Win32_LogicalDisk", "VolumeSerialNumber", $"SELECT * FROM Win32_LogicalDisk WHERE Name = \"{drive}\"");

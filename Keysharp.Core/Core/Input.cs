@@ -5,7 +5,7 @@ namespace Keysharp.Core
 {
 	public static class Input
 	{
-		public static InputObject InputHook(object obj0 = null, object obj1 = null, object obj2 = null)//Need to make this work.//TODO
+		public static InputObject InputHook(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var options = obj0.As();
 			var endKeys = obj1.As();

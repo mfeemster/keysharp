@@ -112,7 +112,7 @@ namespace Keysharp.Main
 
 			if (string.IsNullOrEmpty(script))
 			{
-				var dirs = new string[]//Will need linux specific folder.//MATT
+				var dirs = new string[]//Will need linux specific folders.//TODO
 				{
 					$"{Environment.CurrentDirectory}\\Keysharp.ahk",//Current executable dir.
 					$"{Keysharp.Core.Accessors.A_MyDocuments}\\Keysharp.ahk",//Documents.

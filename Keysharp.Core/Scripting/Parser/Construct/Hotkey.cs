@@ -468,7 +468,6 @@ namespace Keysharp.Scripting
 							if (define_remap_func() == ResultType.Fail) // define the "up" function.
 								return null;// ResultType.Fail;
 
-							//goto continue_main_loop;//TODO
 							return null;
 						}
 
@@ -544,8 +543,7 @@ namespace Keysharp.Scripting
 
 					replacement = hotkeyFlagIndex >= 0 ? buf.Substring(hotkeyFlagIndex) : "";
 
-					//All of this here needs work.//TODO
-					// The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
+					//The hotstring never uses otb if it uses X or T options (either explicitly or via #hotstring).
 					if (replacement.Length == 0 || hotkeyUsesOtb || hotstringExecute)
 					{
 						if (SetLastHotstringFunc(hotName).Length == 0)// It is not auto-replace
@@ -804,10 +802,6 @@ namespace Keysharp.Scripting
 
 		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string buf, string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
 		{
-			//HotkeyDefinition hk;
-			var suffix_has_tilde = false;//Need to figure out passing this in or what to do with them later.//TODO
-			//var hook_is_mandatory = false;
-
 			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
 				// A hotkey is stacked above, eg,
 				// x::
@@ -823,22 +817,11 @@ namespace Keysharp.Scripting
 			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotkeyFunc}\", null)") : new CodePrimitiveExpression(null));
 			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
 			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotkeyName));
-			_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffix_has_tilde));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffixHasTilde));
 
 			if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
 				stackedHotkeys.Add(invoke);
 
-			//hk = HotkeyDefinition.AddHotkey(new FuncObj(lastHotFunc, null), hook_action, buf, suffix_has_tilde);
-			//if (hk == null)
-			//{
-			//  if (hotkeyValidity != ResultType.ConditionTrue)
-			//      return null;// ResultType.Fail; // It already displayed the error.
-			//  // This hotkey uses a single-character key name, which could be valid on some other
-			//  // keyboard layout.  Allow the script to start, but warn the user about the problem.
-			//  // Note that this hotkey's label is still valid even though the hotkey wasn't created.
-			//  if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-			//      _ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {buf} will not be active because it does not exist in the current keyboard layout.");
-			//}
 			return invoke;
 		}
 	}

@@ -11,7 +11,10 @@ namespace Keysharp.Core
 {
 	public static class Loops
 	{
-		internal static Stack<LoopInfo> loops = new Stack<LoopInfo>();//This probably needs to be made threadstatic//TODO
+		[ThreadStatic]
+		internal static Stack<LoopInfo> loops = new Stack<LoopInfo>();
+
+		[ThreadStatic]
 		private static StringBuilder regsb = new StringBuilder(1024);
 
 		public static long Inc() => loops.Count > 0 ? ++loops.Peek().index : 0;
@@ -39,11 +42,10 @@ namespace Keysharp.Core
 						yield return ++info.index;
 				}
 
-				//_ = Pop();
 				//The caller *MUST* call Pop(). This design is used because this
 				//function may exit prematurely if the caller does a goto or break out
 				//of the loop. In which case, all code below the yield return statement
-				//would not get executed. So the burden is shifted to the caller to pop.//MATT
+				//would not get executed. So the burden is shifted to the caller to pop.
 			}
 		}
 
@@ -234,7 +236,7 @@ namespace Keysharp.Core
 				var remove = omit.ToCharArray();
 
 				if (string.IsNullOrEmpty(delimiters))
-					parts = input.ToCharArray().Select(x => x.ToString().Trim(remove)).Where(x => x != string.Empty).ToArray();//MATT
+					parts = input.ToCharArray().Select(x => x.ToString().Trim(remove)).Where(x => x != string.Empty).ToArray();
 				else
 					parts = input.Split(delimiters.ToCharArray(), StringSplitOptions.None).Select(x => x.Trim(remove)).Where(x => x != string.Empty).ToArray();
 
@@ -399,7 +401,7 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
-		
+
 		public static IEnumerator MakeBaseEnumerator(object obj)
 		{
 			if (obj is IEnumerable ie)

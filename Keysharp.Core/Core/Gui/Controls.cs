@@ -178,7 +178,6 @@ namespace Keysharp.Core
 			DoubleBuffered = true;
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
-
 			Shown += (o, e) =>
 			{
 				beenShown = true;//Will not trigger on initial temporary show/hide in constructor, and instead will only happen after Gui.Show() completes.
@@ -812,7 +811,7 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class KeysharpTreeView : TreeView//There is something called TVX, check it out sometime at www.autohotkey.com/forum/topic19021.html //MATT
+	public class KeysharpTreeView : TreeView
 	{
 		private readonly int addstyle, removestyle;
 		private readonly Dictionary<TreeNode, bool> expandStates = new Dictionary<TreeNode, bool>();

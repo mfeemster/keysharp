@@ -101,21 +101,14 @@ namespace Keysharp.Core.Windows
 					return temp;
 			}
 
-			if (!string.IsNullOrEmpty(criteria.ClassName) && !criteria.HasExcludes && !criteria.HasID && string.IsNullOrEmpty(criteria.Text))//Unsure why this doesn't just use the code in the else block.//MATT
+			foreach (var window in AllWindows)
 			{
-				found = new WindowItem(WindowsAPI.FindWindow(criteria.ClassName, criteria.Title));
-			}
-			else
-			{
-				foreach (var window in AllWindows)
+				if (window.Equals(criteria))
 				{
-					if (window.Equals(criteria))
-					{
-						found = window;
+					found = window;
 
-						if (!last)
-							break;
-					}
+					if (!last)
+						break;
 				}
 			}
 

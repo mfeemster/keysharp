@@ -6,14 +6,14 @@ using Keysharp.Core.Common.Window;
 using Keysharp.Core.Linux.Proxies;
 using Keysharp.Core.Linux.X11;
 using Keysharp.Core.Linux.X11.Types;
-using Keysharp.Core.Windows;//Code in Linux probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Linux probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
 	/// Represents a window under the Linux platform.
 	/// </summary>
-	internal class WindowItem : Common.Window.WindowItemBase//Do we want to prefix each of these derived classes with Windws/Linux?//MATT
+	internal class WindowItem : Common.Window.WindowItemBase//Do we want to prefix each of these derived classes with Windws/Linux?//TODO
 	{
 		private XWindow _xwindow = null;
 
@@ -45,7 +45,7 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				var attr = _xwindow.Attributes;
-				return new Rectangle(attr.x, attr.y, attr.width, attr.height);//These need to be client values, unsure how.//MATT
+				return new Rectangle(attr.x, attr.y, attr.width, attr.height);//These need to be client values, unsure how.//TODO
 			}
 		}
 

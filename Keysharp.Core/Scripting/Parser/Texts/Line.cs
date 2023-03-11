@@ -71,12 +71,6 @@ namespace Keysharp.Scripting
 					break;
 			}
 
-			//This is really weird, and likely wrong, and means a variable name can never start with and or or, such as original.//MATT
-			//if (code.Length >= AndTxt.Length && code.Substring(0, AndTxt.Length).Equals(AndTxt, StringComparison.OrdinalIgnoreCase))
-			//  return true;
-			//else if (code.Length >= OrTxt.Length && code.Substring(0, OrTxt.Length).Equals(OrTxt, StringComparison.OrdinalIgnoreCase))
-			//  return true;
-			//What they probably meant was this.//MATT
 			var splits = code.Split(new char [] { ' ', '\t' });
 			index = next ? splits.Length - 1 : 0;
 

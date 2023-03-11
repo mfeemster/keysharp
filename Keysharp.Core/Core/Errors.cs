@@ -88,9 +88,25 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class MemberError : Error
+	public class UnsetError : Error
+	{
+		public UnsetError(params object[] obj)
+			: base(obj)
+		{
+		}
+	}
+
+	public class MemberError : UnsetError
 	{
 		public MemberError(params object[] obj)
+			: base(obj)
+		{
+		}
+	}
+
+	public class UnsetItemError : UnsetError
+	{
+		public UnsetItemError(params object[] obj)
 			: base(obj)
 		{
 		}

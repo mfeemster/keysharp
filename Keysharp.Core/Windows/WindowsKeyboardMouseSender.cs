@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -703,7 +704,7 @@ namespace Keysharp.Core.Windows
 					return;
 
 				case VK_WHEEL_DOWN:
-					MouseEvent(eventFlags | (uint)MOUSEEVENTF.WHEEL, (uint)(-(repeatCount * WindowsAPI.WHEEL_DELTA)), x, y);//Unsure if casting a negative int to uint will work.//TODO
+					MouseEvent(eventFlags | (uint)MOUSEEVENTF.WHEEL, (uint)(-(repeatCount * WindowsAPI.WHEEL_DELTA)), x, y);//Unsure if casting a negative int to uint will work, need to test scrolling with mouse events.//TODO
 					return;
 
 				// v1.0.48: Lexikos: Support horizontal scrolling in Windows Vista and later.
@@ -2369,13 +2370,9 @@ namespace Keysharp.Core.Windows
 
 							if (subspan.StartsWith("Click", StringComparison.OrdinalIgnoreCase))
 							{
-								//end_pos = sub.Length;// '\0';  // Temporarily terminate the string here to omit the closing brace from consideration below.
 								ht.ParseClickOptions(subspan.Slice(5).TrimStart(Keysharp.Core.Core.SpaceTab).ToString(), ref clickX, ref clickY, ref vk
 													 , ref eventType, ref repeatCount, ref moveOffset);
 
-								//end_pos = '}';  // Undo temp termination.
-
-								//Mixing parsing with the sending actions seems like a pretty terrible design, so should separate later.//TODO
 								if (repeatCount < 1) // Allow {Click 100, 100, 0} to do a mouse-move vs. click (but modifiers like ^{Click..} aren't supported in this case.
 									MouseMove(ref clickX, ref clickY, ref placeholder, (long)Accessors.A_DefaultMouseSpeed, moveOffset);
 								else // Use SendKey because it supports modifiers (e.g. ^{Click}) SendKey requires repeat_count>=1.
@@ -2404,12 +2401,12 @@ namespace Keysharp.Core.Windows
 							var subspanstr = subspan.ToString();
 							eventType = KeyEventTypes.KeyDownAndUp;         // Set defaults.
 							repeatCount = 1L;
-							keyNameLength = keyTextLength;//TODO
+							keyNameLength = keyTextLength;
 							var splits = subspanstr.Split(Keysharp.Core.Core.SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 
 							if (splits.Length > 0)
 							{
-								keyNameLength = splits[0].Length;//Unsure if this is exactly right.//TODO
+								keyNameLength = splits[0].Length;
 
 								if (splits.Length > 1)
 								{
@@ -2646,7 +2643,6 @@ namespace Keysharp.Core.Windows
 							// In addition, reset the modifiers, since they were intended to apply only to
 							// the key inside {}.  Also, the below is done even if repeat-count is zero.
 							bracecaseend: // This label is used to simplify the code without sacrificing performance.
-							//sub = sub.Substring(endPos);//This is probably completely wrong, you need to change how you do parsing, the AHK C++ pointer logic obviously doesn't apply here.//TODO  // In prep for aKeys++ done by the loop.
 							keyIndex = endPos;
 							modsForNextKey = 0;
 							continue;
@@ -2896,7 +2892,7 @@ namespace Keysharp.Core.Windows
 			// causes g_script.mLastScriptRest to be reset, so it's unlikely that a sleep would occur between Send calls.
 			// To solve this, call MsgSleep(-1) now (unless no delays were performed, or the thread is uninterruptible):
 			if (sendModeOrig == SendModes.Event && lastPeekTime != origLastPeekTime && Keysharp.Core.Processes.IsInterruptible())
-				Keysharp.Core.Flow.Sleep(0);// MsgSleep(-1);//MsgSleep() is going to be extremely hard to implement, so just do regular sleep for now.//TODO
+				Keysharp.Core.Flow.Sleep(0);// MsgSleep(-1);//MsgSleep() is going to be extremely hard to implement, so just do regular sleep for now until we get real threads implemented.//TODO
 
 			// v1.0.43.03: Someone reported that when a non-autoreplace hotstring calls us to do its backspacing, the
 			// hotstring's subroutine can execute a command that activates another window owned by the script before
@@ -3641,7 +3637,7 @@ namespace Keysharp.Core.Windows
 		/*
 		    protected internal override void Send(Keys key)
 		    {
-		    //This is supposed to prevent modifer keys currently pressed from applying to the key which is sent, but it doesn't seem to work.//MATT
+		    //This is supposed to prevent modifer keys currently pressed from applying to the key which is sent, but it doesn't seem to work.
 		    key &= ~Keys.Modifiers;
 
 		    if (key == Keys.None)
@@ -3657,16 +3653,16 @@ namespace Keysharp.Core.Windows
 		    down.i.k = new KEYBDINPUT
 		    {
 		        wVk = vk,//Was
-		        //wVk = 0,//MATT
-		        //wScan = vk,//MATT
+		        //wVk = 0,
+		        //wScan = vk,
 		        dwFlags = flag
 		    };
 		    var up = new INPUT { type = WindowsAPI.INPUT_KEYBOARD };
 		    up.i.k = new KEYBDINPUT
 		    {
 		        wVk = vk,//Was
-		        //wVk = 0,//MATT
-		        //wScan = vk,//MATT
+		        //wVk = 0,
+		        //wScan = vk,
 		        dwFlags = flag | WindowsAPI.KEYEVENTF_KEYUP
 		    };
 		    var inputs = new[] { down, up };
@@ -3704,18 +3700,8 @@ namespace Keysharp.Core.Windows
 		///
 		protected internal override void SendKeyEvent(KeyEventTypes eventType, int vk, int sc = 0, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
-			if ((vk | sc) == 0) // MUST USE BITWISE-OR (see comment below).
+			if ((vk | sc) == 0)//If neither VK nor SC was specified, return.
 				return;
-
-			// The above implements the rule "if neither VK nor SC was specified, return".  But they must be done as
-			// bitwise-OR rather than logical-AND/OR, otherwise MSVC++ 7.1 generates 16KB of extra OBJ size for some reason.
-			// That results in an 2 KB increase in compressed EXE size, and I think about 6 KB uncompressed.
-			// I tried all kids of variations and reconfigurations, but the above is the only simple one that works.
-			// Strangely, the same logic above (but with the preferred logical-AND/OR operator) appears elsewhere in the
-			// code but doesn't bloat there.  Examples:
-			//   !vk && !aSC
-			//   !vk && !sc
-			//   !(vk || aSC)
 
 			if (extraInfo == 0) // Shouldn't be called this way because 0 is considered false in some places below (search on " = aExtraInfo" to find them).
 				extraInfo = KeyIgnoreAllExceptModifier; // Seems slightly better to use a standard default rather than something arbitrary like 1.
@@ -3795,7 +3781,7 @@ namespace Keysharp.Core.Windows
 					// than one modifier is being changed, the multiple calls to Get/SetKeyboardState() could
 					// be consolidated into one call), but it is much easier to code and maintain this way
 					// since many different functions might call us to change the modifier state:
-					var state = new byte[256];//Would be better to use an array pool here.//TODO
+					var state = keyStatePool.Rent(256);//Original did not clear state here, so presumably GetKeyboardState() overwrites all elements.
 					_ = WindowsAPI.GetKeyboardState(state);
 
 					if (eventType == KeyEventTypes.KeyDown)
@@ -3839,6 +3825,7 @@ namespace Keysharp.Core.Windows
 					}
 
 					_ = WindowsAPI.SetKeyboardState(state);
+					keyStatePool.Return(state);
 					// Even after doing the above, we still continue on to send the keystrokes
 					// themselves to the window, for greater reliability (same as AutoIt3).
 				}
@@ -3979,11 +3966,8 @@ namespace Keysharp.Core.Windows
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(hookId);
 		//}
-		protected override void RegisterHook()//This appears to do nothing and can probably be removed.//TODO
+		protected override void RegisterHook()
 		{
-			//ScanDeadKeys();
-			//proc = LowLevelKeybdProc;
-			//hookId = WindowsAPI.SetWindowsHookEx(WH_KEYBOARD_LL, proc, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
 		}
 
 		/// <summary>
@@ -4077,18 +4061,18 @@ namespace Keysharp.Core.Windows
 		/*
 		    private string MapKey(uint vk, uint sc)
 		    {
-		    _ = buf.Clear();//MATT
+		    _ = buf.Clear();
 		    _ = WindowsAPI.GetKeyboardState(state);
 
 		    foreach (var key in ctrls)
 		    {
 		        const byte d = 0x80;
 		        const byte u = d - 1;
-		        //var s = WindowsAPI.GetKeyState(key) >> 8 != 0;//This appears redundant, since GetKeyboardState() queried all key states above.//MATT
-		        var s = WindowsAPI.GetAsyncKeyState(key) >> 8 != 0;//This appears redundant, since GetKeyboardState() queried all key states above.//MATT
+		        //var s = WindowsAPI.GetKeyState(key) >> 8 != 0;
+		        var s = WindowsAPI.GetAsyncKeyState(key) >> 8 != 0;
 		        state[key] &= s ? d : u;
 
-		        if (s)//MATT
+		        if (s)
 		        {
 		            if ((Keys)key == Keys.LShiftKey || (Keys)key == Keys.RShiftKey)//For some reason, neither GetKeyboardState() or GetKeyState() properly sets these.
 		                state[(int)Keys.ShiftKey] = 0x80;
@@ -4104,8 +4088,8 @@ namespace Keysharp.Core.Windows
 		/*
 		    private void ScanDeadKeys()
 		    {
-		    //var kbd = WindowsAPI.GetKeyboardLayout(0);//MATT
-		    _ = buf.Clear();//MATT
+		    //var kbd = WindowsAPI.GetKeyboardLayout(0);
+		    _ = buf.Clear();
 		    deadKeys = new List<uint>();
 
 		    for (var i = 0u; i < VKMAX; i++)

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Media;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core
 {
@@ -21,7 +21,7 @@ namespace Keysharp.Core
 		public static void SoundBeep(object obj0 = null, object obj1 = null) => Console.Beep((int)obj0.Al(523), (int)obj1.Al(150));
 
 		/// <summary>
-		/// Not implemented. COM will never be cross platform anyway.//MATT
+		/// Not implemented. COM will never be cross platform anyway.//TODO
 		/// </summary>
 		/// <returns></returns>
 		public static string SoundGetInterface() => "";

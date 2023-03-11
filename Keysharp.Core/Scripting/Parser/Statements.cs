@@ -223,10 +223,6 @@ namespace Keysharp.Scripting
 					{
 						case Token.Assign:
 							var assign = ParseAssign(code);
-							//if (parent == main.Statements)//Test to see if we're processing statements within main.//MATT
-							//{
-							//  AddMainVar(assign.Right.GetType().ToString(), assign.Left.ToString());
-							//}
 							//assign.LinePragma = codeline;
 							_ = parent.Add(assign);
 							break;
@@ -373,7 +369,7 @@ namespace Keysharp.Scripting
 									//if (parentBlock != null && parentBlock.Kind == CodeBlock.BlockKind.Try && parentBlock.Statements.Count > 0)
 									//  parentBlock.Statements.Insert(parentBlock.Statements.Count - 1, statements[n]);
 									//else
-									_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.//MATT
+									_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
 								}
 							}
 						}

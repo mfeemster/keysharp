@@ -97,17 +97,6 @@ namespace Keysharp.Scripting
 					break;
 
 				case "setbatchlines":
-
-				//case "setcontroldelay":
-				//case "setdefaultmousespeed":
-
-				//case "setkeydelay":
-				//case "setmousedelay":
-
-				//case "setstorecapslockmode":
-
-				//case "settitlematchmode"://MATT
-				//case "setwindelay":
 				case "setworkingdir":
 					_ = replaced.Append("A_");
 					_ = replaced.Append(cmd, 3, cmd.Length - 3);
@@ -121,36 +110,6 @@ namespace Keysharp.Scripting
 					_ = replaced.Append(Equal);
 					_ = parts.Length > 1 ? replaced.Append(parts[1]) : replaced.Append(NullTxt);
 					break;
-
-				//case "setformat":
-				//  if (parts.Length != 2)
-				//      throw new ParseException(ExTooFewParams);
-				//
-				//  _ = replaced.Append("A_Format");
-				//  const string fast = "fast";
-				//  parts[0] = parts[0].Substring(1, parts[0].Length - 2);
-				//
-				//  if (parts[0].EndsWith(fast, System.StringComparison.OrdinalIgnoreCase))
-				//      parts[0] = parts[0].Substring(0, parts[0].Length - fast.Length);
-				//
-				//  _ = replaced.Append(parts[0]);
-				//  _ = replaced.Append(AssignPre);
-				//  _ = replaced.Append(Equal);
-				//  _ = replaced.Append(parts[1]);
-				//  break;
-
-				//case "autotrim":
-
-				//case "detecthiddentext"://MATT
-				//case "detecthiddenwindows"://MATT
-				//case "stringcasesense":
-				// _ = replaced.Append("A_");
-				// _ = replaced.Append(cmd);
-				// _ = replaced.Append(Equal);
-				// _ = replaced.Append(param);
-				// break;
-
-				// TODO: push single conditional command on same line as legacy converted equality-if statements
 
 				case "ifequal":
 					if (parts.Length < 1)
@@ -522,8 +481,6 @@ namespace Keysharp.Scripting
 					_ = replaced.Append(ParenClose);
 					_ = replaced.Append(ParenClose);
 					break;
-
-				// TODO: translate legacy EnvMult, EnvDiv etc
 
 				case "sendevent":
 				case "sendinput":

@@ -149,7 +149,7 @@ namespace Keysharp.Scripting
 							CloseBlock();
 						}
 
-						if (parts.Length > 1)//You must keep track here of whether this case starts with a { or not.//TODO
+						if (parts.Length > 1)//Note that case does not support OTB style braces.
 						{
 							var colonindex = parts[1].IndexOf(':');
 							var casearg = colonindex != -1 ? parts[1].Substring(0, colonindex) : throw new ParseException("Case not terminated with a colon", line);
@@ -194,8 +194,8 @@ namespace Keysharp.Scripting
 								css.CaseExpressions.Add(casename, string.Join("||", casearr));
 							}
 
-							var hasbrace = lines.Count > index + 1 && lines[index + 1].Code.TrimStart(Spaces).StartsWith(BlockOpen);
-							var type = CodeBlock.BlockType.Within;//Might want this to always be within to avoid the funny stuff Statements does for normal blocks.
+							var hasbrace = blockOpen || (lines.Count > index + 1 && lines[index + 1].Code.TrimStart(Spaces).StartsWith(BlockOpen));
+							var type = CodeBlock.BlockType.Within;
 							var block = new CodeBlock(line, Scope, css.CaseBodyStatements.GetOrAdd(casename), hasbrace ? CodeBlock.BlockKind.CaseWithBrace : CodeBlock.BlockKind.CaseWithoutBrace, blocks.PeekOrNull()) { Type = type };
 							_ = CloseTopSingleBlock();
 							blocks.Push(block);
@@ -226,7 +226,7 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				case FlowGosub://Might be good to see if this call can be made directly rather than through reflection with LabelCall(). Might still need it when the call is with a variable.//MATT
+				case FlowGosub:
 				{
 					throw new ParseException("Gosub is no longer supported, use goto with a label instead", line);
 				}
@@ -259,7 +259,7 @@ namespace Keysharp.Scripting
 					{
 						var sub = parts[1].Split(SpaceTabComma, 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 						var regex = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))");//Gotten from https://stackoverflow.com/questions/3147836/c-sharp-regex-split-commas-outside-quotes
-						var sub2 = sub.Length > 1 ? regex.Split(sub[1])/*.Select(x => x.Trim(SpacesQuotes)).ToArray()*/ : new string[] { };
+						var sub2 = sub.Length > 1 ? regex.Split(sub[1]) : new string[] { };
 						//sub2[0] = sub2[0].Trim(new char[] { '"' });
 						//sub = new[] { sub[0].Trim(), sub.Length > 1 ? sub[1].Trim() : string.Empty };
 						sub = new string[] { sub[0] }.Concat(sub2);
@@ -329,11 +329,7 @@ namespace Keysharp.Scripting
 						sub = skip ? sub.Skip(1).ToArray() : sub;
 
 						foreach (var s in sub)
-						{
-							var arg = s;
-							//foreach (var arg in SplitCommandParameters(s))//MATT
-							_ = iterator.Parameters.Add(ParseCommandParameter(arg.Trim(), false, true));
-						}
+							_ = iterator.Parameters.Add(ParseCommandParameter(s.Trim(), false, true));
 					}
 					else
 					{
@@ -372,7 +368,7 @@ namespace Keysharp.Scripting
 					//The documentation shows this working with function objects, where the constructor returns an enumeration object, and the
 					//Call() method is called each time the enumerator is incremented (like MoveNext() would be calling it under the hood).
 					//The class Enumerator has one method, which is Call (you can think of it inheriting from Func, which also has that method).
-					//However, we've not implemented that here yet.//TODO
+					//However, we've not implemented that here yet, and probably won't.//TODO
 					var trimmed = StripCommentSingle(parts[1]).Trim(Parens);
 					var temp = trimmed.Split(" in ");
 
@@ -555,7 +551,7 @@ namespace Keysharp.Scripting
 				{
 					if (Scope?.Length == 0)
 					{
-						_ = CloseTopLabelBlock();//MATT
+						_ = CloseTopLabelBlock();
 
 						if (parts.Length > 1)
 							throw new ParseException("Cannot have return parameter for entry point method", line);
@@ -864,15 +860,21 @@ namespace Keysharp.Scripting
 						System.Array.Sort(catches,
 										  (c1, c2) =>
 						{
-							var t1 = Type.GetType(c1.CatchExceptionType.BaseType).BaseType;
-							var t2 = Type.GetType(c2.CatchExceptionType.BaseType).BaseType;
+							var t1 = Type.GetType(c1.CatchExceptionType.BaseType);
+							var t2 = Type.GetType(c2.CatchExceptionType.BaseType);
 
 							if (t1 == t2)
 								return 0;
-							else if (t1.IsSubclassOf(t2))
-								return -1;
-							else
+
+							var d1 = TypeDistance(t1, typeof(KeysharpException));
+							var d2 = TypeDistance(t2, typeof(KeysharpException));
+
+							if (d1 == d2)
+								return 0;
+							else if (d1 < d2)
 								return 1;
+							else
+								return -1;
 						});
 						tcf.CatchClauses.Clear();
 						tcf.CatchClauses.AddRange(catches);
@@ -1023,8 +1025,7 @@ namespace Keysharp.Scripting
 
 			if (parts[1].Equals(NotTxt, System.StringComparison.OrdinalIgnoreCase))
 			{
-				//not = false;
-				not = true;//Original set not to false here, which makes no sense.//MATT
+				not = true;
 				var sub = parts[2].Split(Spaces, 2);
 				parts[1] = sub[0];
 				parts[2] = sub[1];
@@ -1049,30 +1050,23 @@ namespace Keysharp.Scripting
 
 			_ = invoke.Parameters.Add(ParseCommandParameter(parts[2]));
 
-			if (not)//Easiest way to do not since CodeDOM does not support unary ! operators.//MATT
-			{
+			if (not)//Easiest way to do not since CodeDOM does not support unary ! operators.
 				_ = invoke.Parameters.Add(new CodePrimitiveExpression(true));
+
+			return invoke;
+		}
+
+		public static int TypeDistance(Type t1, Type t2)
+		{
+			var distance = 0;
+
+			while (t1 != null && t1 != t2)
+			{
+				distance++;
+				t1 = t1.BaseType;
 			}
 
-			/*
-
-			                //Just pass the not string directly to IfLegacy() and handle the logical inversion internally
-			                if (not)
-			                {
-			                var forcebool = (CodeMethodInvokeExpression)InternalMethods.ForceBool;
-			                var flip = (CodeMethodInvokeExpression)InternalMethods.OperateUnary;
-			                //_ = flip.Parameters.Add(OperatorAsFieldReference(Script.Operator.BitwiseNot));
-			                _ = flip.Parameters.Add(OperatorAsFieldReference(Script.Operator.LogicalNot));//Original did bitwise not, but we probably want logical not since LegacyIf returns bool.//MATT
-			                _ = flip.Parameters.Add(invoke);
-			                forcebool.Parameters.Add(flip);
-			                invoke = forcebool;
-			                //invoke = flip;
-			                //var castExpression = new CodeCastExpression(
-			                //  "System.Int32",
-			                //  invoke);
-			                //return castExpression;
-			                }*/
-			return invoke;
+			return distance;
 		}
 	}
 }

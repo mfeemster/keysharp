@@ -142,10 +142,13 @@ namespace System
 			return new double? ();
 		}
 
-		public static int? ParseInt(this object obj, bool doconvert = true)//Need to make everywhere use this.//MATT
+		public static int? ParseInt(this object obj, bool doconvert = true, bool donoprefixhex = true)
 		{
 			if (obj is int i)
 				return i;
+
+			if (obj is long l)
+				return (int)l;
 
 			if (obj is Keysharp.Scripting.BoolResult br)
 				return br.o.ParseInt(doconvert);
@@ -174,10 +177,14 @@ namespace System
 					int.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
 				return neg ? -ii : ii;
 
+			if (donoprefixhex)
+				if (int.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out ii))
+					return neg ? -ii : ii;
+
 			return doconvert ? Convert.ToInt32(obj) : new int? ();
 		}
 
-		public static long? ParseLong(this object obj, bool doconvert = true)
+		public static long? ParseLong(this object obj, bool doconvert = true, bool donoprefixhex = true)
 		{
 			if (obj is long l)
 				return l;
@@ -209,12 +216,16 @@ namespace System
 					long.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
 				return neg ? -ii : ii;
 
+			if (donoprefixhex)
+				if (long.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out ii))
+					return neg ? -ii : ii;
+
 			return doconvert ? Convert.ToInt64(obj) : new long? ();
 		}
 
 		public static object ParseObject(this object obj) => obj is Keysharp.Scripting.BoolResult br ? br.o : obj;
 
-		public static uint? ParseUInt(this object obj, bool doconvert = true)
+		public static uint? ParseUInt(this object obj, bool doconvert = true, bool donoprefixhex = true)
 		{
 			if (obj is uint i)
 				return i;
@@ -237,6 +248,10 @@ namespace System
 			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
 					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
 				return ii;
+
+			if (donoprefixhex)
+				if (uint.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out ii))
+					return ii;
 
 			return doconvert ? Convert.ToUInt32(obj) : new uint? ();
 		}

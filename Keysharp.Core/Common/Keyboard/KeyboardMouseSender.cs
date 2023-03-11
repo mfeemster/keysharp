@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -39,7 +40,6 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		//Need to figure out if these should be signed or not. Weird bugs can happen with wraparound comparisons if you get it wrong.//TODO
 		internal const int CoordCentered = int.MinValue + 1;
-
 		internal const int CoordModeCaret = 6;
 		internal const int CoordModeClient = 0;
 		internal const int CoordModeInvalid = -1;
@@ -98,6 +98,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int modifiersLRNumpadMask;
 		internal int modifiersLRPhysical;
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
+		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		private const int retention = 1024;
 		private readonly StringBuilder caser = new StringBuilder(32);
 		private readonly List<HotstringDefinition> expand = new List<HotstringDefinition>();
@@ -153,19 +154,6 @@ namespace Keysharp.Core.Common.Keyboard
 				Debug.Fail("Thre should'nt be any key not in this table...");
 				return false;
 			}
-		}
-
-		public void SendMixed(string sequence)
-		{
-			//Using virual keys doesn't work, need real scan codes.
-			//However, we must also be able to recognize things like {ctrl} from the stream.
-			//For now, use this for testing and fix the rest later.//MATT
-			//Send(sequence);
-			// TODO: modifiers in mixed mode send e.g. ^{a down}
-			//var keys = KeyParser.ParseKeyStream(sequence);
-			//foreach (var key in keys)
-			//  if (key != Keys.None)
-			//      Send(key);
 		}
 
 		internal static bool HotInputLevelAllowsFiring(uint inputLevel, uint aEventExtraInfo, ref char? aKeyHistoryChar)
@@ -229,7 +217,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal HotstringDefinition Add(HotstringDefinition hotstring)
 		{
-			hotstrings.Add(hotstring);//What about dupes?//MATT
+			hotstrings.Add(hotstring);//This will not check for duplicates.
 			return hotstring;
 		}
 

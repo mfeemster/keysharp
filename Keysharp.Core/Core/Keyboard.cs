@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core
 {
@@ -181,7 +181,7 @@ namespace Keysharp.Core
 
 			if (obj1 != null)
 			{
-				fo = GuiControl.GetFuncObj(obj1, null);
+				fo = Function.GetFuncObj(obj1, null);//Don't throw on failure because returning null is a valid action.
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
 				{
@@ -298,7 +298,7 @@ break_twice:;
 			IFuncObj ifunc = null;
 
 			if (xOption)
-				ifunc = GuiControl.GetFuncObj(replacement, null);
+				ifunc = Function.GetFuncObj(replacement, null);
 
 			var toggle = ToggleValueType.Neutral;
 
@@ -517,7 +517,7 @@ break_twice:;
 				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Keysharp.Scripting.Script.SLEEP_INTERVAL_HALF)
 				{
 					Keysharp.Core.Flow.Sleep(Keysharp.Scripting.Script.SLEEP_INTERVAL);
-					//MsgSleep() might not even be needed if we use real //TODO
+					//MsgSleep() might not even be needed if we use real threads//TODO
 					//if (Keysharp.Scripting.Script.MsgSleep(Keysharp.Scripting.Script.INTERVAL_UNSPECIFIED)) // INTERVAL_UNSPECIFIED performs better.
 					//{
 					//}

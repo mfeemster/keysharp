@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core.Common.Window
 {
@@ -169,9 +169,6 @@ namespace Keysharp.Core.Common.Window
 				}
 			}
 
-			//Documentation says in the case of multiple matched:
-			//If multiple windows match WinTitle and any other criteria, the topmost matching window is used.
-			//Need to implement that.//MATT
 			if (!string.IsNullOrEmpty(criteria.Title))//Put title first because it's the most likely.
 			{
 				if (criteria.Title == "A")

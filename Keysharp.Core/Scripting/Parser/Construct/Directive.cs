@@ -113,9 +113,8 @@ namespace Keysharp.Scripting
 			const string res = "__IFWIN\0";
 
 			/*
-			    HotIf
 			    Warn
-			 * */
+			*/
 
 			switch (cmd.ToUpperInvariant())
 			{
@@ -232,53 +231,6 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				//              case "COMMENTFLAG":
-				//                  if (parts[1].Length == 2 && parts[1][0] == MultiComA && parts[1][1] == MultiComB)
-				//                      throw new ParseException(ExIllegalCommentFlag);
-
-				//#if LEGACY
-				//                  Comment = parts[1];
-				//#else//MATT
-				//                  Comment = parts[1][0];
-				//#endif
-				//                  break;
-
-				//case "DEREFCHAR":
-				//  Resolve = parts[1][0];
-				//  break;
-
-				//case "ESCAPECHAR":
-				//  Escape = parts[1][0];
-				//  break;
-
-				//case "DELIMITER":
-				//  Multicast = parts[1][0];
-				//  break;
-
-				//case "IFWINACTIVE":
-				//  IfWinActive_WinTitle = sub[0];
-				//  IfWinActive_WinText = sub[1];
-
-				//goto case res;
-
-				//case "IFWINEXIST":
-				//  IfWinExist_WinTitle = sub[0];
-				//  IfWinExist_WinText = sub[1];
-
-				//goto case res;
-
-				//case "IFWINNOTACTIVE":
-				//  IfWinNotExist_WinTitle = sub[0];
-				//  IfWinNotActive_WinText = sub[1];
-
-				//goto case res;
-
-				//case "IFWINNOTEXIST":
-				//  IfWinNotExist_WinTitle = sub[0];
-				//  IfWinNotExist_WinText = sub[1];
-
-				//goto case res;
-
 				case res:
 					var cond = (CodeMethodInvokeExpression)InternalMethods.Hotkey;
 					_ = cond.Parameters.Add(new CodePrimitiveExpression(cmd));
@@ -286,24 +238,6 @@ namespace Keysharp.Scripting
 					_ = cond.Parameters.Add(new CodePrimitiveExpression(sub[1]));
 					_ = prepend.Add(cond);
 					break;
-
-				//case "LTRIM":
-				//  switch (sub[0].ToUpperInvariant())
-				//  {
-				//      case "":
-				//      case "ON":
-				//          LTrimForced = true;
-				//          break;
-
-				//      case "OFF":
-				//          LTrimForced = false;
-				//          break;
-
-				//      default:
-				//          throw new ParseException("Directive parameter must be either \"on\" or \"off\"");
-				//  }
-
-				//  break;
 
 				default:
 					throw new ParseException(ExUnknownDirv);

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Window;
 
 namespace Keysharp.Core.Windows
@@ -400,6 +401,7 @@ namespace Keysharp.Core.Windows
 				return IntPtr.Zero;
 
 			var orig_foreground_wnd = WindowsAPI.GetForegroundWindow();
+			var sender = Keysharp.Scripting.Script.HookThread.kbdMsSender;
 
 			//Restore the window *before* checking if it is already active.
 			if (WindowsAPI.IsIconic(targetWindow))
@@ -487,7 +489,7 @@ namespace Keysharp.Core.Windows
 					// installed, the Alt-up will be suppressed to further reduce the risk of side-effects.  Testing
 					// showed that the suppressed event worked just as well (in theory, because the system's handling
 					// of it isn't and can't be suppressed).
-					//KeyEvent(KEYUP, VK_MENU, 0, NULL, false, KEY_BLOCK_THIS);//Porting these will be tough.//MATT
+					sender.SendKeyEvent(KeyEventTypes.KeyUp, WindowsAPI.VK_MENU, 0, IntPtr.Zero, false, KeyboardMouseSender.KeyBlockThis);//Porting these will be tough.
 				}
 
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
@@ -527,8 +529,8 @@ namespace Keysharp.Core.Windows
 				// but later, after the hotkey is released, it can be.  So perhaps this is being
 				// caused by the fact that the user has keys held down (logically or physically?)
 				// Releasing those keys with a key-up event might help, so try that sometime:
-				//KeyEvent(KEYDOWNANDUP, VK_MENU);//Porting these will be tough.//MATT
-				//KeyEvent(KEYDOWNANDUP, VK_MENU);
+				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, WindowsAPI.VK_MENU);
+				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, WindowsAPI.VK_MENU);
 				// Also replacing "2-alts" with "alt-tab" below, for now:
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
 			}
@@ -794,7 +796,7 @@ namespace Keysharp.Core.Windows
 		private static IntPtr AttemptSetForeground(IntPtr targetWindow, IntPtr foreWindow)
 		{
 			_ = WindowsAPI.SetForegroundWindow(targetWindow);
-			//Need to be able to set interrupt disable here which prevents both timers and hotkeys from firing while this sleep is happening.//MATT
+			//Need to be able to set interrupt disable here which prevents both timers and hotkeys from firing while this sleep is happening.//TODO
 			Keysharp.Core.Flow.Sleep(10);//The MsgSleep() function in AHK is massive. Unsure how to duplicate here, so just use regular thread sleep.
 			var new_fore_window = WindowsAPI.GetForegroundWindow();
 

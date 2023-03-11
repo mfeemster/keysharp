@@ -85,19 +85,21 @@ namespace Keysharp.Core.Common.Joystick
 		// Also the max that Windows supports.
 		internal static bool IsJoystickButton(JoyControls joy) => joy >= JoyControls.Button1&& joy <= JoyControls.ButtonMax;
 
+		/// <summary>
+		/// It's best to call this function only directly from MsgSleep() or when there is an instance of
+		/// MsgSleep() closer on the call stack than the nearest dialog's message pump (e.g. MsgBox).
+		/// This is because events posted to the thread indirectly by us here would be discarded or mishandled
+		/// by a non-standard (dialog) message pump.
+		///
+		/// Polling the joysticks this way rather than using joySetCapture() is preferable for several reasons:
+		/// 1) I believe joySetCapture() internally polls the joystick anyway, via a system timer, so it probably
+		///    doesn't perform much better (if at all) than polling "manually".
+		/// 2) joySetCapture() only supports 4 buttons;
+		/// 3) joySetCapture() will fail if another app is already capturing the joystick;
+		/// 4) Even if the joySetCapture() succeeds, other programs (e.g. older games), would be prevented from
+		///    capturing the joystick while the script in question is running.
+		/// </summary>
 		internal static void PollJoysticks()//Will need to figure out making this cross platform.//TODO
-		// It's best to call this function only directly from MsgSleep() or when there is an instance of
-		// MsgSleep() closer on the call stack than the nearest dialog's message pump (e.g. MsgBox).
-		// This is because events posted to the thread indirectly by us here would be discarded or mishandled
-		// by a non-standard (dialog) message pump.
-		//
-		// Polling the joysticks this way rather than using joySetCapture() is preferable for several reasons:
-		// 1) I believe joySetCapture() internally polls the joystick anyway, via a system timer, so it probably
-		//    doesn't perform much better (if at all) than polling "manually".
-		// 2) joySetCapture() only supports 4 buttons;
-		// 3) joySetCapture() will fail if another app is already capturing the joystick;
-		// 4) Even if the joySetCapture() succeeds, other programs (e.g. older games), would be prevented from
-		//    capturing the joystick while the script in question is running.
 		{
 			// Even if joystick hotkeys aren't currently allowed to fire, poll it anyway so that hotkey
 			// messages can be buffered for later.

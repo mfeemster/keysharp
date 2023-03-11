@@ -128,3 +128,117 @@ If (classname == "testsubclass")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+class MyArray extends Array
+{
+__Item[index]
+{
+	get
+	{
+		return 123
+	}
+}
+}
+
+classname := MyArray()
+val := classname[100]
+
+If (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class MyMap extends Map
+{
+__Item[index]
+{
+	get
+	{
+		return 321
+	}
+}
+}
+
+classname := MyMap()
+val := classname[100]
+
+If (val == 321)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class base1
+{
+__Item[index]
+{
+	get
+	{
+		return 1
+	}
+}
+}
+
+class sub1 extends base1
+{
+__Item[index]
+{
+	get
+	{
+		return 2
+	}
+}
+}
+
+class subarr1 extends Array
+{
+}
+
+class subarr2 extends subarr1
+{
+__Item[index]
+{
+	get
+	{
+		return 3
+	}
+}
+}
+
+obj := sub1()
+val := obj[999]
+
+If (val == 2)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+obj := subarr2()
+val := obj[999]
+
+If (val == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class submap1 extends Map
+{
+}
+
+class submap2 extends submap1
+{
+__Item[index]
+{
+	get
+	{
+		return 4
+	}
+}
+}
+
+obj := submap2()
+val := obj[999]
+
+If (val == 4)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

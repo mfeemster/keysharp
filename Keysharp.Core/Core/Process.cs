@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
 using System.Threading.Tasks;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core
 {
@@ -201,7 +201,7 @@ namespace Keysharp.Core
 		public static void Shutdown(object obj)
 		{
 			if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-				return;//Does linux have a shutdown command?//MATT
+				return;//Does linux have a shutdown command?//TODO
 
 			_ = WindowsAPI.ExitWindowsEx((uint)obj.Al(), 0);
 		}

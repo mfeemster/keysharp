@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -23,11 +24,8 @@ namespace Keysharp.Scripting
 		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
 		private CompilerHelper Ch;
 		private string fileName;
-
 		private CodeStatementCollection initial = new CodeStatementCollection();
 		private long line;
-
-		//private CodeEntryPointMethod main = new CodeEntryPointMethod();
 		private CodeMemberMethod main = new CodeMemberMethod();
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
@@ -42,7 +40,6 @@ namespace Keysharp.Scripting
 		private StringBuilder sbld = new StringBuilder();
 		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
 		private CodeTypeDeclaration targetClass;
-		//Not sure if we always want this locale, might want others? See what AHK supports.//MATT
 
 		private CompilerParameters CompilerParameters { get; set; }
 
@@ -154,15 +151,98 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
+		private bool PropExistsInTypeOrBase(string t, string p)
+		{
+			if (properties.Count > 0)
+			{
+				while (!string.IsNullOrEmpty(t))
+				{
+					var anyFound = false;
+
+					foreach (var typekv in properties)
+					{
+						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
+						{
+							anyFound = true;
+
+							if (typekv.Value.TryGetValue(p, out var _))//If the property existed in the type, return.
+								return true;
+
+							//Wasn't found in this type, so check its base.
+							if (typekv.Key.BaseTypes.Count > 0)
+							{
+								t = typekv.Key.BaseTypes[0].BaseType;
+
+								//The base might have been a user defined type, or a built in type. Check built in type first.
+								//Ex: subclass : theclass : Array
+								if (PropExistsInBuiltInClass(t, p))
+									return true;
+
+								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
+							}
+							else
+								return false;
+						}
+					}
+
+					//Nothing found in user defined types or their bases, so try built in types.
+					//Ex: theclass : Array
+					if (!anyFound)
+					{
+						if (PropExistsInBuiltInClass(t, p))
+							return true;
+						else
+							break;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private bool PropExistsInTypeOrBase(Type t, string p)
+		{
+			while (t != null)
+			{
+				var props = t.GetProperties();
+
+				foreach (var prop in props)
+					if (string.Compare(prop.Name, p, true) == 0)
+						return true;
+
+				t = t.BaseType;
+			}
+
+			return false;
+		}
+
+		private bool PropExistsInBuiltInClass(string baseType, string p)
+		{
+			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
+			{
+				//Must iterate rather than look up because we only have the string name, not the type.
+				foreach (var typekv in props)
+				{
+					if (string.Compare(typekv.Key.Name, baseType, true) == 0)
+						if (PropExistsInTypeOrBase(typekv.Key, p))
+							return true;
+						else
+							return false;
+				}
+			}
+
+			return false;
+		}
+
 		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
 			foreach (CodeTypeDeclaration type in mainNs.Types)
-				if (type.Name == varName)
+				if (string.Compare(type.Name, varName, true) == 0)
 					return true;
 
 			foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
 				if (type is CodeTypeDeclaration ctd)
-					if (ctd.Name == varName)
+					if (string.Compare(ctd.Name, varName, true) == 0)
 						return true;
 
 			return false;
@@ -172,22 +252,57 @@ namespace Keysharp.Scripting
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
 				if (type is CodeTypeDeclaration ctd)
-					if (ctd.Name == typeName)
+					if (string.Compare(ctd.Name, typeName, true) == 0)
 						return ctd;
 
 			return null;
 		}
 
-		private bool IsUserDefinedType(string typeName)
+		private string GetUserDefinedTypename(string typeName)
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
 				if (type is CodeTypeDeclaration ctd)
-					if (ctd.Name == typeName)
-						return true;
+					if (string.Compare(ctd.Name, typeName, true) == 0)
+						return ctd.Name;
 
-			return false;
+			return "";
 		}
 
+		/*
+		    private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
+		    {
+		    foreach (CodeTypeDeclaration type in mainNs.Types)
+		        if (type.Name == varName)
+		            return true;
+
+		    foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
+		        if (type is CodeTypeDeclaration ctd)
+		            if (ctd.Name == varName)
+		                return true;
+
+		    return false;
+		    }
+
+		    private CodeTypeDeclaration FindUserDefinedType(string typeName)
+		    {
+		    foreach (CodeTypeMember type in targetClass.Members)
+		        if (type is CodeTypeDeclaration ctd)
+		            if (ctd.Name == typeName)
+		                return ctd;
+
+		    return null;
+		    }
+
+		    private bool IsUserDefinedType(string typeName)
+		    {
+		    foreach (CodeTypeMember type in targetClass.Members)
+		        if (type is CodeTypeDeclaration ctd)
+		            if (ctd.Name == typeName)
+		                return true;
+
+		    return false;
+		    }
+		*/
 		public static string TrimParens(string code)
 		{
 			var parenssb = new StringBuilder(code.Length);
@@ -264,21 +379,6 @@ namespace Keysharp.Scripting
 			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Keysharp.Core.Accessors.A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
-			//var container = new CodeTypeDeclaration(className);
-			//container.BaseTypes.Add(bcl);
-			//container.Attributes = MemberAttributes.Private;
-			//_ = ns.Types.Add(targetClass);
-			//var csc = new CodeStatementCollection();
-			//csc.Add()
-			//main.Statements.AddRange(new CodeStatementCollection(prepend.Where(x => !(x is CodeMethodReturnStatement)).ToArray()));
-			//for (var i = 0; i < prepend.Count; i++)
-			//{
-			//  if (prepend[i] is CodeMethodReturnStatement)
-			//      continue;
-
-			//  //break;
-			//  main.Statements.Add(prepend[i]);
-			//}
 
 			foreach (var p in prepend)
 				if (!(p is CodeMethodReturnStatement))
@@ -346,7 +446,7 @@ namespace Keysharp.Scripting
 			main.Statements.Clear();
 			_ = main.Statements.Add(tcf);
 
-			//It's hard to properly set return statements during parsing, so ensure their correctness here.//MATT
+			//It's hard to properly set return statements during parsing, so ensure their correctness here.
 			foreach (var typeMethods in methods)
 				typeMethods.Value.Values.Where(meth =>
 											   meth.ReturnType.BaseType != "System.Void"
@@ -426,11 +526,21 @@ namespace Keysharp.Scripting
 
 			foreach (var cmie in allMethodCalls)
 			{
-				if (IsUserDefinedType(cmie.Method.MethodName))
+				if (GetUserDefinedTypename(cmie.Method.MethodName) is string s && s.Length > 0)
 				{
-					cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(cmie.Method.MethodName), "Call");
+					cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
 				}
 			}
+
+			/*
+			    foreach (var cmie in allMethodCalls)
+			    {
+			    if (IsUserDefinedType(cmie.Method.MethodName))
+			    {
+			        cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(cmie.Method.MethodName), "Call");
+			    }
+			    }
+			*/
 
 			while (invokes.Count != 0)
 				StdLib();
@@ -527,7 +637,7 @@ namespace Keysharp.Scripting
 
 					if (baseType != "KeysharpObject" && thisconstructor != null)
 					{
-						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)
+						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)//There is a severe problem here: they can derive from non-user defined types. How to find them?//TODO
 						{
 							if (ctdbase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
 							{
@@ -537,8 +647,39 @@ namespace Keysharp.Scripting
 								for (; i < thisconstructor.Parameters.Count && i < ctm2.Parameters.Count; i++)//Iterate through all of the parameters in this class's constructor.
 									_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
 
-								for (; i < ctm2.Parameters.Count; i++)//Fill whatever remains of the base constructor parameters with empty strings.
-									_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression("\"\""));
+								for (; i < ctm2.Parameters.Count; i++)//Fill whatever remains of the base constructor parameters with nulls.
+									_ = thisconstructor.BaseConstructorArgs.Add(new CodePrimitiveExpression(null));
+							}
+						}
+						else//Try built in types.
+						{
+							foreach (var typekv in Reflections.typeToStringMethods)
+							{
+								if (string.Compare(typekv.Key.Name, baseType, true) == 0)
+								{
+									var ctors = typekv.Key.GetConstructors();
+
+									foreach (var ctor in ctors)
+									{
+										var ctorparams = ctor.GetParameters();//Built in types will always just have on constructor, such as Array and Map because users don't control those.
+
+										if (ctorparams.Length > 0)
+										{
+											var i = 0;
+											thisconstructor.BaseConstructorArgs.Clear();
+
+											for (; i < thisconstructor.Parameters.Count && i < ctorparams.Length; i++)//Iterate through all of the parameters in this class's constructor.
+												_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
+
+											for (; i < ctorparams.Length; i++)//Fill whatever remains of the base constructor parameters with empty strings.
+												_ = thisconstructor.BaseConstructorArgs.Add(new CodePrimitiveExpression(null));
+
+											break;
+										}
+									}
+
+									break;
+								}
 							}
 						}
 					}
@@ -550,6 +691,29 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			//Must explicitly mark all index operators as override if they exist in a base.
+			//This is because in the function IndexAt(), Array[] and Map[] are called directly, after doing a cast check.
+			//First go through all user defined properties and change the name __Item to Item.
+			foreach (var typeProperties in properties)
+			{
+				if (typeProperties.Key != targetClass)
+				{
+					foreach (var propkv in typeProperties.Value.ToArray())
+					{
+						var prop = propkv.Value;
+
+						if (string.Compare(prop.Name, "__Item", true) == 0)
+						{
+							prop.Name = "Item";
+							prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
+							typeProperties.Value.Remove("__item");//Was stored as lowercase.
+							typeProperties.Value["Item"] = prop;
+						}
+					}
+				}
+			}
+
+			//Now go through and find which ones need to be declared as override.
 			foreach (var typeProperties in properties)
 			{
 				if (typeProperties.Key != targetClass)
@@ -558,10 +722,11 @@ namespace Keysharp.Scripting
 					{
 						var prop = propkv.Value;
 
-						if (string.Compare(prop.Name, "__Item", true) == 0)
-							prop.Name = "Item";
+						if (typeProperties.Key.BaseTypes.Count > 0)
+							if (PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item"))
+								prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
 
-						_ = typeProperties.Key.Members.Add(propkv.Value);
+						_ = typeProperties.Key.Members.Add(prop);
 					}
 				}
 			}

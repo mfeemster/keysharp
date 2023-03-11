@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -420,7 +421,6 @@ namespace Keysharp.Core
 			return attribs;
 		}
 
-		//This seems somewhat duplicative of other file iteration loop constructs. Should consolidate.//MATT.
 		internal static string[] ToFiles(string path, bool files, bool dirs, bool recurse)
 		{
 			var filelist = Directory.GetFiles(Path.GetDirectoryName(path), Path.GetFileName(path),
@@ -428,36 +428,30 @@ namespace Keysharp.Core
 
 			if (dirs)
 			{
-				var dirlist = new List<string>();
+				var dirlist = new HashSet<string>();
 
 				foreach (var file in filelist)
-				{
-					var parent = Path.GetDirectoryName(file);
-
-					if (!dirlist.Contains(parent)) dirlist.Add(parent);
-				}
-
-				var dirarray = dirlist.ToArray();
+					dirlist.Add(Path.GetDirectoryName(file));
 
 				if (files)
 				{
-					var merge = new string[dirarray.Length + filelist.Length];
 					int i;
+					var merge = new string[dirlist.Count + filelist.Length];
 
 					for (i = 0; i < filelist.Length; i++)
 						merge[i] = filelist[i];
 
-					for (var j = 0; j < dirarray.Length; j++)
-						merge[i + j] = dirarray[j];
+					foreach (var dir in dirlist)
+						merge[i++] = dir;
 
 					return merge;
 				}
-				else return dirarray;
+				else return dirlist.ToArray();
 			}
 			else if (files)
 				return filelist;
 
-			return new string[] { };
+			return System.Array.Empty<string>();
 		}
 
 		internal static string ToOSType(PlatformID id)

@@ -30,14 +30,13 @@ namespace Keysharp.Scripting
 
 		internal static bool deferMessagesForUnderlyingPump;
 
-		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotCriterion, lastHotCriterion;
-
-		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion firstHotExpr, lastHotExpr;
+		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
+		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
 
 		internal static bool forceKeybdHook;
 
 		[ThreadStatic]
-		internal static Keysharp.Core.Common.Keyboard.HotkeyCriterion hotCriterion;
+		internal static IFuncObj hotCriterion;
 
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 
@@ -58,7 +57,7 @@ namespace Keysharp.Scripting
 
 		internal static bool isReadyToExecute;
 
-		internal static FuncObj lastHotFunc;
+		internal static IFuncObj lastHotFunc;
 
 		internal static MainWindow mainWindow;
 
@@ -94,7 +93,6 @@ namespace Keysharp.Scripting
 
 		internal static int totalExistingThreads;
 
-		//Unsure exactly where these globals should go. AHK spreads them across global vars, ThreadState (per thread) and ThreadSettings. Need to properly place.//TODO
 		internal static bool validateThenExit;
 
 		private static IntPtr mainWindowHandle;
@@ -290,7 +288,8 @@ namespace Keysharp.Scripting
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.
 		/// </summary>
-		/// <param name="text">The text to send to the debugger for display.</param>
+		/// <param name="obj0">The text to send to the debugger for display.</param>
+		/// <param name="obj1">True to first clear the display, else false to append.</param>
 		public static void OutputDebug(object obj0, object obj1 = null)
 		{
 			var text = obj0.As();
@@ -386,7 +385,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		//Also probably not needed.//TODO
 		internal static ResultType IsCycleComplete(int aSleepDuration, DateTime aStartTime, bool aAllowEarlyReturn)
 		// This function is used just to make MsgSleep() more readable/understandable.
 		{

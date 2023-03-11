@@ -66,7 +66,7 @@ namespace Keysharp.Core
 		/// </remarks>
 		public static object DllCall(object function, params object[] parameters)
 		{
-			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//MATT
+			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
 			var types = new Type[parameters.Length / 2];
 			var args = new object[types.Length];
 			var returnType = typeof(int);
@@ -268,9 +268,6 @@ namespace Keysharp.Core
 				if (Environment.OSVersion.Platform == PlatformID.Win32NT && path.Length != 0 && !Path.HasExtension(path))
 					path += ".dll";
 
-				//if (!System.IO.File.Exists(path))
-				//throw new Error($"{path} does not exist.");
-				//Changed this from AppDomain.CurrentDomain.DefineDynamicAssembly to AssemblyBuilder.//MATT
 				var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.Run);
 				var module = assembly.DefineDynamicModule("module");
 				var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
@@ -285,7 +282,6 @@ namespace Keysharp.Core
 								 CharSet.Auto);
 				invoke.SetImplementationFlags(invoke.GetMethodImplementationFlags() | MethodImplAttributes.PreserveSig);
 				var created = container.CreateType();
-				// TODO: pinvoke method caching
 
 				try
 				{

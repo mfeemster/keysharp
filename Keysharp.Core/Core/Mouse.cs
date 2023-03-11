@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
-using static Keysharp.Core.Windows.WindowsAPI;//Code in Core probably shouldn't be referencing windows specific code.//MATT
+using static Keysharp.Core.Windows.WindowsAPI;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core
 {
@@ -203,7 +203,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//MATT
+				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
 				x += rect.Left;
 				y += rect.Top;
 			}
@@ -213,7 +213,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//MATT
+				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
 				x1 += rect.Left;
 				y1 += rect.Top;
 				x2 += rect.Left;
@@ -224,9 +224,9 @@ namespace Keysharp.Core
 		internal static Point RevertPoint(Point p, CoordModeType modeType)
 		{
 			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
-			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//MATT
+			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//TODO
 			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//MATT
+				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
 				return new Point(p.X - rect.Left, p.Y - rect.Top);
 			}
 

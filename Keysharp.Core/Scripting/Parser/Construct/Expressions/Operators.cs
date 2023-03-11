@@ -89,7 +89,7 @@ namespace Keysharp.Scripting
 				case Script.Operator.Dereference:
 					return true;
 
-				//MATT
+				//TODO
 				//This messes up the postfix operator when used in an assignment like y := x++
 				//case Script.Operator.Add:
 				//return true;
@@ -131,8 +131,6 @@ namespace Keysharp.Scripting
 					{
 						case 1:
 							return Script.Operator.Subtract;
-
-						//return Script.Operator.Minus;//MATT
 
 						case 2:
 							return Script.Operator.Decrement;

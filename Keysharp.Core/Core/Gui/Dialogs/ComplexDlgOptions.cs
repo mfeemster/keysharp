@@ -61,7 +61,6 @@ namespace Keysharp.Core
 		/// <param name="complexDlg"></param>
 		public void AppendTo(IComplexDialog complexDlg)
 		{
-			//ToDo: Implement the missing Options
 			if (complexDlg.InvokeRequired)
 			{
 				_ = complexDlg.Invoke(new Dialogs.AsyncComplexDialoge(AppendTo), complexDlg);
@@ -102,8 +101,6 @@ namespace Keysharp.Core
 			optsItems.Add(Core.Keyword_ZW, new Regex(Core.Keyword_ZW + @"([-,\d]*)"));
 			optsItems.Add(Core.Keyword_ZX, new Regex(Core.Keyword_ZX + @"(\d*)"));
 			optsItems.Add(Core.Keyword_ZY, new Regex(Core.Keyword_ZY + @"(\d*)"));
-			//ToDo
-			//ToDo
 			var dktOptions = Options.ParseOptionsRegex(ref options, optsItems, true);
 			AlwaysOnTop = (dktOptions[Core.Keyword_NotAlwaysOnTop]?.Length == 0);
 			Borderless = (dktOptions[Core.Keyword_Borderless] != "");

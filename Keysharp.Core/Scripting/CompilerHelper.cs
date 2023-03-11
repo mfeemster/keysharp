@@ -245,10 +245,10 @@ using static Keysharp.Scripting.Script.Operator;
 
 			try
 			{
-				foreach (var unit in units)//Not sure if it should be units or the global targetClass.//MATT
+				foreach (var unit in units)
 				{
 					var sourceWriter = new StringWriter();
-					provider.GenerateCodeFromCompileUnit(unit, sourceWriter, cgo);//This relieves us of any manual traversal of the DOM.
+					provider.GenerateCodeFromCompileUnit(unit, sourceWriter, cgo);//Generating code, then compiling that relieves us of any manual traversal of the DOM.
 					_ = sb.Append(sourceWriter.ToString());
 				}
 			}

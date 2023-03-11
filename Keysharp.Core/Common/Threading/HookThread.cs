@@ -76,7 +76,6 @@ namespace Keysharp.Core.Common.Threading
 
 		protected internal bool hookSynced;
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
-		protected internal char[] hsBuf = new char[HotstringDefinition.HS_BUF_SIZE];
 		protected internal IntPtr kbdHook = IntPtr.Zero;
 		protected internal KeyHistory keyHistory = new KeyHistory();
 		protected internal KeyType[] ksc;
