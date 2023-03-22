@@ -248,9 +248,10 @@ namespace Keysharp.Core.Windows
 					return new string[0];
 
 				var items = new List<string>();
+				var doFast = (string)Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast;
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
-					var text = (string)Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
+					var text = doFast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
 					items.Add(text);
 					return true;
 				}, 0);
@@ -421,7 +422,7 @@ namespace Keysharp.Core.Windows
 			var new_foreground_wnd = IntPtr.Zero;
 
 			//Try a simple approach first.
-			if (!(bool)Accessors.WinActivateForce)
+			if (!Keysharp.Scripting.Parser.WinActivateForce)
 			{
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
 
@@ -466,7 +467,7 @@ namespace Keysharp.Core.Windows
 			// The log showed that it never seemed to need more than two tries.  But there's
 			// not much harm in trying a few extra times.  The number of tries needed might
 			// vary depending on how fast the CPU is:
-			var activateforce = (bool)Accessors.WinActivateForce ? 1 : 0;
+			var activateforce = Keysharp.Scripting.Parser.WinActivateForce ? 1 : 0;
 
 			for (var i = 0; i < 5; ++i)
 			{

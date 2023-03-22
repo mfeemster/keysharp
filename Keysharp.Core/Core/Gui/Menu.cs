@@ -82,7 +82,6 @@ namespace Keysharp.Core
 			item = Add("&Edit Script");
 			item = Add();
 			item = Add("&Suspend Hotkeys");
-			item = Add("&Pause Script");
 			item = Add("E&xit");
 		}
 

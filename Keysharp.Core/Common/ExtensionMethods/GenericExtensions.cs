@@ -118,6 +118,8 @@ namespace System.Collections.Generic
 
 		public static int Ai(this object obj, int def = default) => obj != null ? obj.ParseInt().Value : def;
 
+		public static uint Aui(this object obj, uint def = default) => obj != null ? obj.ParseUInt().Value : def;
+
 		public static int Ai(this IList obj, int index, int def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseInt().Value : def;
 
 		public static long Al(this object obj, long def = default) => obj != null ? obj.ParseLong().Value : def;

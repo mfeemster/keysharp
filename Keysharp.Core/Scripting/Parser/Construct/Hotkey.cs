@@ -1,6 +1,7 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Globalization;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
@@ -48,6 +49,26 @@ namespace Keysharp.Scripting
 			var hotstringStartIndex = -1;
 			var hotkeyFlagIndex = -1;
 			var hotstringExecute = false;
+			var suffixHasTilde = false;
+			var hookIsMandatory = false;
+			HotkeyDefinition hk = null;
+			var ht = Keysharp.Scripting.Script.HookThread;
+			var kbLayout = WindowsAPI.GetKeyboardLayout(0);
+			string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
+			void ClearParserHotstringState()
+			{
+				lastHotstringFunc = "";//Don't clear replacement.
+				stackedHotstrings.Clear();
+			}
+			string replacement;
+			void ClearParserHotState()
+			{
+				replacement = "";
+				lastHotkeyFunc = "";
+				lastHotstringFunc = "";
+				stackedHotkeys.Clear();
+				stackedHotstrings.Clear();
+			}
 
 			if (buf.Length > 1 && buf[0] == ':')
 			{
@@ -238,6 +259,8 @@ namespace Keysharp.Scripting
 				    return ScriptError(_T("Hotkeys/hotstrings are not allowed inside functions or classes."), buf);
 				    }
 				*/
+				//This is extremely messy because it tries to mimic what AHK did, which is usually the least intuitive, and most complex way to do something.
+				//If we could some day determine the exact components of the string we are looking for, we could probably reduce this to 2 or 3 lines using Split().
 				var hotName = buf.Substring(0, hotkeyFlagIndex);
 				var options = buf.Substring(hotstringOptionsIndex, hotkeyFlagIndex - hotstringOptionsIndex);
 				var hotstring = hotstringStartIndex >= 0 ? buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex) : "";
@@ -246,31 +269,30 @@ namespace Keysharp.Scripting
 
 				if (hotstringStartIndex == -1)
 				{
-					// Mustn't use ltrim(hotkey_flag) because that would cause buf.length to become incorrect:
 					hotkeyFlagIndex = buf.FindFirstNotOf(SpaceTab, hotkeyFlagIndex);
 
-					// Not done because Hotkey::TextInterpret() does not allow trailing whitespace:
-					//rtrim(buf); // Trim the new substring inside of buf (due to temp termination). It has already been ltrimmed.
-
-					// To use '{' as remap_dest, escape it!.
+					//To use '{' as remap_dest, escape it!.
 					if (hotkeyFlagIndex >= 0 &&
-							hotkeyFlagIndex < buf.Length &&
+							hotkeyFlagIndex < buf.Length - 1 &&
 							buf[hotkeyFlagIndex] == Escape &&
 							buf[hotkeyFlagIndex + 1] == '{')
 						hotkeyFlagIndex++;
 
-					cp = hotkeyFlagIndex; // Set default, conditionally overridden below (v1.0.44.07).
-					int remap_dest_vk;
+					var remap_dest_vk = 0;
+					var remap_dest_sc = 0;
 					var temp = buf.Substring(hotkeyFlagIndex);//Default.
 					int? modifiersLR = null;
-					var ht = Keysharp.Scripting.Script.HookThread;
+					int? modLR = null;
 
 					// v1.0.40: Check if this is a remap rather than hotkey:
 					if (!hotkeyUsesOtb
-							&& hotkeyFlagIndex >= 0 && hotkeyFlagIndex < buf.Length - 1 // This hotkey's action is on the same line as its trigger definition.
-							&& ((remap_dest_vk = buf[hotkeyFlagIndex + 1]) != 0 ? ht.TextToVK(
-									temp = HotkeyDefinition.TextToModifiers(buf.Substring(hotkeyFlagIndex), null),
-									ref modifiersLR, false, true, WindowsAPI.GetKeyboardLayout(0)) : 0xFF) != 0) // And the action appears to be a remap destination rather than a command.
+							&& hotkeyFlagIndex >= 0 && hotkeyFlagIndex < buf.Length//This hotkey's action is on the same line as its trigger definition.
+							&& (hotkeyFlagIndex < buf.Length - 1 ? ht.TextToVKandSC(temp = HotkeyDefinition.TextToModifiers(temp, null), ref remap_dest_vk, ref remap_dest_sc, ref modLR, kbLayout)
+								: true)
+							//&& (remap_dest_vk = hotkeyFlagIndex < buf.Length - 1 ? ht.TextToVK(temp = HotkeyDefinition.TextToModifiers(temp, null),
+							//                  ref modifiersLR, false, true, kbLayout)
+							//                  : 0xFF) != 0 // And the action appears to be a remap destination rather than a command.
+					   )
 						// For above:
 						// Fix for v1.0.44.07: Set remap_dest_vk to 0xFF if hotkey_flag's length is only 1 because:
 						// 1) It allows a destination key that doesn't exist in the keyboard layout (such as 6::ð in
@@ -284,25 +306,29 @@ namespace Keysharp.Scripting
 						// the line shouldn't be a remap.  For example, I think a hotkey such as "x & y::return"
 						// would trigger such a bug.
 					{
+						if (remap_dest_vk == 0)
+							remap_dest_vk = 0xFF;//Way to do what the original did, but with using TextToVKandSC() above.
+
 						int remap_source_vk;
 						string tempcp1, remap_source, remap_dest, remap_dest_modifiers; // Must fit the longest key name (currently Browser_Favorites [17]), but buffer overflow is checked just in case.
 						bool remap_source_is_combo, remap_source_is_mouse, remap_dest_is_mouse, remap_keybd_to_mouse;
 						// These will be ignored in other stages if it turns out not to be a remap later below:
-						remap_source_vk = ht.TextToVK(tempcp1 = HotkeyDefinition.TextToModifiers(buf, null), ref modifiersLR, false, true, WindowsAPI.GetKeyboardLayout(0));//An earlier stage verified that it's a valid hotkey, though VK could be zero.
+						remap_source_vk = ht.TextToVK(tempcp1 = HotkeyDefinition.TextToModifiers(hotName, null), ref modifiersLR, false, true, kbLayout);//An earlier stage verified that it's a valid hotkey, though VK could be zero.
 						remap_source_is_combo = tempcp1.IndexOf(HotkeyDefinition.COMPOSITE_DELIMITER) != -1;
 						remap_source_is_mouse = ht.IsMouseVK(remap_source_vk);
 						remap_dest_is_mouse = ht.IsMouseVK(remap_dest_vk);
 						remap_keybd_to_mouse = !remap_source_is_mouse && remap_dest_is_mouse;
 						remap_source = (remap_source_is_combo ? "" : "*") +// v1.1.27.01: Omit * when the remap source is a custom combo.
 									   (tempcp1.Length == 1 && char.IsUpper(tempcp1[0]) ? "+" : "") +// Allow A::b to be different than a::b.
-									   buf;// Include any modifiers too, e.g. ^b::c.
+									   hotName;// Include any modifiers too, e.g. ^b::c.
 
 						if (temp[0] == '"' || temp[0] == Escape) // Need to escape these.
 							remap_dest = $"{Escape}{temp[0]}";
 						else
 							remap_dest = temp;// But exclude modifiers here; they're wanted separately.
 
-						remap_dest_modifiers = buf.Substring(hotkeyFlagIndex);
+						var tempindex = buf.IndexOf(temp[0], hotkeyFlagIndex);
+						remap_dest_modifiers = buf.Substring(hotkeyFlagIndex, tempindex - hotkeyFlagIndex);
 
 						if (remap_dest_modifiers.Length == 0
 								&& (remap_dest_vk == WindowsAPI.VK_PAUSE)
@@ -339,74 +365,26 @@ namespace Keysharp.Scripting
 							//  return CallNextHookEx(g_KeybdHook, aCode, wParam, lParam);
 							// }
 							//Unsure exactly how we'll check for this, revisit later.//TODO
-							if (lastHotstringFunc != null)
+							if (!string.IsNullOrEmpty(lastHotstringFunc))
 								// Checking this to disallow stacking, eg
 								// x::
 								// y::z
 								// which would cause x:: to just do the "down"
 								// part of y::z.
-								return null;// ScriptError(ERR_HOTKEY_MISSING_BRACE);
-
-							//Need to figure out "remapping".//TODO
-							Func<string, ResultType> make_remap_hotkey = (string aKey) => //[&](LPTSTR aKey)
-							{
-								/*
-								    if (!CreateHotFunc())
-								    return ResultType.Fail;
-
-								    hk = Hotkey::FindHotkeyByTrueNature(aKey, suffix_has_tilde, hook_is_mandatory);
-
-								    if (hk)
-								    {
-								    if (!hk->AddVariant(mLastHotFunc, suffix_has_tilde))
-								        return ResultType.Fail;
-								    }
-								    else if (!Hotkey::AddHotkey(mLastHotFunc, HK_NORMAL, aKey, suffix_has_tilde))
-								    return ResultType.Fail;
-								*/
-								return ResultType.Ok;
-							};
-
-							// Start with the "down" hotkey:
-							if (make_remap_hotkey(remap_source) == ResultType.Fail)
-								return null;// ResultType.Fail;
-
-							var remap_buf = $"{(remap_dest_is_mouse ? "SetMouseDelay" : "SetKeyDelay")}(-1)"; // Does NOT need to be "-1, -1" for SetKeyDelay (see below).
-
-							//cp = remap_buf;
-							// It seems unnecessary to set press-duration to -1 even though the auto-exec section might
-							// have set it to something higher than -1 because:
-							// 1) Press-duration doesn't apply to normal remappings since they use down-only and up-only events.
-							// 2) Although it does apply to remappings such as a::B and a::^b (due to press-duration being
-							//    applied after a change to modifier state), those remappings are fairly rare and supporting
-							//    a non-negative-one press-duration (almost always 0) probably adds a degree of flexibility
-							//    that may be desirable to keep.
-							// 3) SendInput may become the predominant SendMode, so press-duration won't often be in effect anyway.
-							// 4) It has been documented that remappings use the auto-execute section's press-duration.
-							// The primary reason for adding Key/MouseDelay -1 is to minimize the chance that a one of
-							// these hotkey threads will get buried under some other thread such as a timer, which
-							// would disrupt the remapping if #MaxThreadsPerHotkey is at its default of 1.
-							if (remap_keybd_to_mouse)
-							{
-								// Since source is keybd and dest is mouse, prevent keyboard auto-repeat from auto-repeating
-								// the mouse button (since that would be undesirable 90% of the time).  This is done
-								// by inserting a single extra IF-statement above the Send that produces the down-event:
-								remap_buf += $"!GetKeyState(\"{remap_dest}\") &&";// Should be no risk of buffer overflow due to prior validation.
-							}
+								throw new ParseException("Hotkey or hotstring is missing its opening brace.");
 
 							// Otherwise, remap_keybd_to_mouse==false.
-							string blind_mods = "", next_blind_mod = "";
+							var blind_mods = "";
 							var modchars = "!#^+";
 
 							foreach (var ch in modchars)
 							{
-								var tempindex = remap_source.IndexOf(ch);
+								tempindex = remap_source.IndexOf(ch);
 
 								if (tempindex != -1 && tempindex < modchars.Length - 1)//Exclude the last char for !:: and similar.
-									next_blind_mod += ch;
+									blind_mods += ch;
 							}
 
-							//next_blind_mod = '\0';
 							var extra_event = ""; // Set default.
 
 							switch (remap_dest_vk)
@@ -440,57 +418,64 @@ namespace Keysharp.Scripting
 									break;
 							}
 
-							remap_buf += string.Format("Send(\"{{Blind{0}}}{1}{2}{{{3} DownR}}\")", blind_mods, extra_event, remap_dest_modifiers, remap_dest);//DownR vs. Down. See Send's DownR handler for details.
-							Func<ResultType> define_remap_func = () =>
+							lastHotkeyFunc = LabelMethodName(remap_source);
+							var method = LocalMethod(lastHotkeyFunc);
+							// It seems unnecessary to set press-duration to -1 even though the auto-exec section might
+							// have set it to something higher than -1 because:
+							// 1) Press-duration doesn't apply to normal remappings since they use down-only and up-only events.
+							// 2) Although it does apply to remappings such as a::B and a::^b (due to press-duration being
+							//    applied after a change to modifier state), those remappings are fairly rare and supporting
+							//    a non-negative-one press-duration (almost always 0) probably adds a degree of flexibility
+							//    that may be desirable to keep.
+							// 3) SendInput may become the predominant SendMode, so press-duration won't often be in effect anyway.
+							// 4) It has been documented that remappings use the auto-execute section's press-duration.
+							// The primary reason for adding Key/MouseDelay -1 is to minimize the chance that a one of
+							// these hotkey threads will get buried under some other thread such as a timer, which
+							// would disrupt the remapping if #MaxThreadsPerHotkey is at its default of 1.
+							var p = $"{{Blind{blind_mods}}}{extra_event}{remap_dest_modifiers}{{{remap_dest} DownR}}";
+							var md = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(remap_dest_is_mouse ? "Keysharp.Core.Mouse" : "Keysharp.Core.Keyboard"), remap_dest_is_mouse ? "SetMouseDelay" : "SetKeyDelay", new CodeExpression[] { new CodePrimitiveExpression(-1) });
+							_ = method.Statements.Add(md);
+							var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression(p) });
+
+							if (remap_keybd_to_mouse)
 							{
-								//if (!AddLine(ACT_BLOCK_BEGIN)
-								//      || !ParseAndAddLine(remap_buf)
-								//      || !AddLine(ACT_BLOCK_END))
-								//  return FAIL;
-								return ResultType.Ok;
-							};
+								// Since source is keybd and dest is mouse, prevent keyboard auto-repeat from auto-repeating
+								// the mouse button (since that would be undesirable 90% of the time).  This is done
+								// by inserting a single extra IF-statement above the Send that produces the down-event:
+								var ks = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "GetKeyState", new CodeExpression[] { new CodePrimitiveExpression(remap_dest) });
+								_ = method.Statements.Add(new CodeConditionStatement(new CodeCastExpression("Boolean", ks), new CodeStatement[] { new CodeExpressionStatement(send) }));
+							}
+							else
+								_ = method.Statements.Add(send);
 
-							if (define_remap_func() == ResultType.Fail) // the "down" function.
-								return null;// ResultType.Fail;
+							methods[targetClass].Add(method.Name, method);
 
-							//
-							// "Down" is finished, proceed with "Up":
-							//
-							remap_buf = $"{remap_source} up";// Key-up hotkey, e.g. *LButton up::
+							//"Down" is finished, proceed with "Up".
+							if (AddHotkeyMethodInvoke(remap_source, (uint)HotkeyTypeEnum.Normal, remap_dest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+							{
+								_ = parent.Add(cmie);//Normally the caller does this, but since we're adding two of them here, we need to do it manually. The second one will get added by the caller.
+								ClearParserHotState();
+								remap_source = $"{remap_source} up";//Key-up hotkey, e.g. *LButton up::
+								lastHotkeyFunc = LabelMethodName(remap_source);
+								method = LocalMethod(lastHotkeyFunc);
+								_ = method.Statements.Add(md);
+								send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression($"{{Blind}}{{{remap_dest} Up}}") });
+								_ = method.Statements.Add(send);
+								methods[targetClass].Add(method.Name, method);
 
-							if (make_remap_hotkey(remap_buf) == ResultType.Fail)
-								return null;// ResultType.Fail;
-
-							//Unlike the down-event above, remap_dest_modifiers is not included for the up-event; e.g. ^{b up} is inappropriate.
-							//Using the full function names vs. Set%sDelay might help size due to string pooling.
-							remap_buf = $"{(remap_dest_is_mouse ? "SetMouseDelay" : "SetKeyDelay")}(-1),Send(\"{{Blind}}{{{remap_dest} Up}}\")\n";
-
-							if (define_remap_func() == ResultType.Fail) // define the "up" function.
-								return null;// ResultType.Fail;
-
-							return null;
+								if (AddHotkeyMethodInvoke(remap_source, (uint)HotkeyTypeEnum.Normal, remap_dest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie2)
+								{
+									ClearParserHotState();
+									return cmie2;
+								}
+							}
 						}
 
-						// Since above didn't goto this is not a remap after all:
+						//Since above didn't return this is not a remap after all.
 					}
 				}
 
 				// else don't trim hotstrings since literal spaces in both substrings are significant.
-				string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
-				void ClearParserHotstringState()
-				{
-					lastHotstringFunc = "";//Don't clear replacement.
-					stackedHotstrings.Clear();
-				}
-				string replacement;
-				void ClearParserHotState()
-				{
-					replacement = "";
-					lastHotkeyFunc = "";
-					lastHotstringFunc = "";
-					stackedHotkeys.Clear();
-					stackedHotstrings.Clear();
-				}
 
 				if (hotstringStartIndex != -1)
 				{
@@ -672,8 +657,6 @@ namespace Keysharp.Scripting
 				else // It's a hotkey vs. hotstring.
 				{
 					var hook_action = HotkeyDefinition.ConvertAltTab(buf.Substring(hotkeyFlagIndex), false);
-					var suffixHasTilde = false;
-					var hookIsMandatory = false;
 					var funcname = "";
 					var nextIndex = index + 1;
 					replacement = !hotkeyUsesOtb && hotkeyFlagIndex >= 0 ? buf.Substring(hotkeyFlagIndex) : "";
@@ -682,12 +665,43 @@ namespace Keysharp.Scripting
 					{
 						funcname = SetLastHotkeyFunc(hotName);
 						var method = LocalMethod(funcname);
-						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
-						method.Statements.AddRange(expr);
+						CodeStatement[] result = null;
+
+						try
+						{
+							result = ParseFlow(new List<CodeLine>() { new CodeLine(fileName, index, replacement) }, 0);//This is for handling ::return
+						}
+						catch (Exception)
+						{
+						}
+
+						if (result != null)
+						{
+							method.Statements.AddRange(result);
+						}
+						else//Some other code asside from simple return.
+						{
+							var vk = 0;
+							var sc = 0;
+							int? modLR = null;
+							var valid = ht.TextToVKandSC(replacement, ref vk, ref sc, ref modLR, kbLayout);//Should have been handled above with the other call to this method. But just in case.
+
+							if (valid)//If it was a VK and/or an SC, send those but don't do the extra up/down sending like above for normal remapping.
+							{
+								var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression($"{{{replacement}}}") });
+								_ = method.Statements.Add(send);
+							}
+							else
+							{
+								var expr = ParseMultiExpression(replacement, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+								method.Statements.AddRange(expr);
+							}
+						}
+
 						_ = method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
 						methods[targetClass].Add(method.Name, method);
 
-						if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+						if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 						{
 							ClearParserHotState();
 							return cmie;
@@ -710,7 +724,7 @@ namespace Keysharp.Scripting
 							if (nextBuf.RemoveAll(Spaces).Contains($"{lastHotkeyFunc}()"))//They didn't explicitly supply the ThisHotkey parameter, so add it.
 								lines[nextIndex] = new CodeLine(nextLine.FileName, nextLine.LineNumber, nextBuf.Insert(nextBuf.IndexOf('(') + 1, "thishotkey"));
 
-							if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+							if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 							{
 								ClearParserHotState();
 								return cmie;
@@ -733,7 +747,7 @@ namespace Keysharp.Scripting
 								blocks.Push(block);
 								methods[targetClass].Add(method.Name, method);
 
-								if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+								if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 								{
 									ClearParserHotState();
 									return cmie;
@@ -745,7 +759,7 @@ namespace Keysharp.Scripting
 								{
 									funcname = SetLastHotkeyFunc(hotName);//If this is the first of a stack, set the function name to the hash of the first stacked item's name, else keep that name for subsequent stacked hotkeys.
 
-									if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+									if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 									{
 										return cmie;//Do not clear state here, we want to save it for future stacked hotkeys.
 									}
@@ -783,7 +797,7 @@ namespace Keysharp.Scripting
 									blocks.Push(block);
 									methods[targetClass].Add(method.Name, method);
 
-									if (AddHotkeyMethodInvoke(buf, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+									if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 									{
 										ClearParserHotState();
 										return cmie;
@@ -800,14 +814,14 @@ namespace Keysharp.Scripting
 
 		private string SetLastHotkeyFunc(string hotkeyName) => lastHotkeyFunc.Length == 0 ? (lastHotkeyFunc = LabelMethodName(hotkeyName)) : lastHotkeyFunc;
 
-		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string buf, string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
+		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
 		{
 			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
 				// A hotkey is stacked above, eg,
 				// x::
 				// y & z::altTab
 				// Not supported.
-				return null; // ScriptError(ERR_HOTKEY_MISSING_BRACE);
+				throw new ParseException("Hotkey or hotstring is missing its opening brace.");
 
 			if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
 				return null;

@@ -114,35 +114,37 @@ namespace Keysharp.Core
 		/// <item><term>1</term>: <description>marks the thread beneath the current thread as paused so that when it resumes, it will finish the command it was running (if any) and then enter a paused state. If there is no thread beneath the current thread, the program itself is paused, which prevents timers from running.</description></item>
 		/// </list>
 		/// </param>
-		public static void Pause(object obj)
-		{
-			var mode = obj.As();
-			var thread = System.Threading.Thread.CurrentThread;
-			var state = Options.OnOff(mode);
+		/*
+		    public static void Pause(object obj)
+		    {
+		    var mode = obj.As();
+		    var thread = System.Threading.Thread.CurrentThread;
+		    var state = Options.OnOff(mode);
 
-			if (state == null && mode.Equals(Core.Keyword_Toggle, System.StringComparison.OrdinalIgnoreCase))
-				state = !(thread.ThreadState == ThreadState.Suspended || thread.ThreadState == ThreadState.SuspendRequested);
+		    if (state == null && mode.Equals(Core.Keyword_Toggle, System.StringComparison.OrdinalIgnoreCase))
+		        state = !(thread.ThreadState == ThreadState.Suspended || thread.ThreadState == ThreadState.SuspendRequested);
 
-			//Should figure out the right way to do this.//TODO
-#pragma warning disable 612, 618
+		    //Should figure out the right way to do this.//TODO
+		    #pragma warning disable 612, 618
 
-			if (state == true)
-			{
-				if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-					Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
+		    if (state == true)
+		    {
+		        if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
+		            Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
 
-				thread.Suspend();
-			}
-			else if (state == false)
-			{
-				thread.Resume();
+		        thread.Suspend();
+		    }
+		    else if (state == false)
+		    {
+		        thread.Resume();
 
-				if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-					Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
-			}
+		        if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
+		            Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+		    }
 
-#pragma warning restore 612, 618
-		}
+		    #pragma warning restore 612, 618
+		    }
+		*/
 
 		public static object Persistent(object obj)
 		{

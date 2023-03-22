@@ -10,6 +10,10 @@ using Microsoft.CodeAnalysis.Emit;
 using System.Text.Json;
 using System.Runtime.InteropServices;
 using System.Collections.Immutable;
+using Keysharp.Core;
+using System.Windows.Forms;
+
+
 
 #if WINDOWS
 
@@ -280,7 +284,7 @@ using static Keysharp.Scripting.Script.Operator;
 			{
 				try
 				{
-					if (File.Exists(fileNames[i]))
+					if (System.IO.File.Exists(fileNames[i]))
 					{
 						Script.scriptName = fileNames[i];
 						units[i] = parser.Parse(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
@@ -302,11 +306,16 @@ using static Keysharp.Scripting.Script.Operator;
 				finally { }
 			}
 
-			//_ = entryPoint.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));
 			return (units, errors);
 		}
 
-		public void PrintCompilerErrors(string s) => parser?.PrintCompilerErrors(s);
+		public void PrintCompilerErrors(string s)
+		{
+			if (Keysharp.Scripting.Parser.ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)
+				Console.WriteLine(s);//For this to show on the command line, they need to pipe to more like: | more
+			else
+				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
 
 		public static (string, string) GetCompilerErrors(CompilerErrorCollection results, string filename = "")
 		{

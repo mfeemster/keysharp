@@ -52,26 +52,28 @@ namespace Keysharp.Scripting
 		{
 			Ch = ch;
 			CompilerParameters = options;
+			Init();
 		}
 
 		internal void Init()
 		{
+			//This is a collection of various variables which can be set by #directives and other methods, so reset them all to a default state here.
 			ErrorStdOut = false;
-			MaxThreadsPerHotkey = 1;
-			MaxThreadsTotal = 10;
-			HotExprTimeout = 1000;
+			MaxThreadsPerHotkey = 1u;
+			MaxThreadsTotal = 10u;
 			MaxThreadsBuffer = false;
-			SuspendExempt = false;
-			HotstringDefinition.hsSuspendExempt = false;
-			preloadedDlls.Clear();
-			//NoEnv = NoEnvDefault;
+			HotExprTimeout = 1000;
 			NoTrayIcon = NoTrayIconDefault;
 			Persistent = PersistentDefault;
 			SingleInstance = eScriptInstance.Force;
-			WinActivateForce = WinActivateForceDefault;
+			WinActivateForce = false;
 			HotstringNoMouse = false;
-			HotstringEndChars = string.Empty;
 			HotstringNewOptions = string.Empty;
+			DynamicVars = LaxExpressions;
+			Accessors.A_ClipboardTimeout = 1000;
+			Accessors.A_SendLevel = 0;
+			HotstringDefinition.DefaultHotstringSuspendExempt = false;
+			Keysharp.Scripting.Script.ForceKeybdHook = false;
 			//LTrimForced = false;
 			IfWinActive_WinTitle = string.Empty;
 			IfWinActive_WinText = string.Empty;
@@ -81,6 +83,7 @@ namespace Keysharp.Scripting
 			IfWinNotActive_WinText = string.Empty;
 			IfWinNotExist_WinTitle = string.Empty;
 			IfWinNotExist_WinText = string.Empty;
+			preloadedDlls.Clear();
 			includes.Clear();
 			allVars.Clear();
 			methods.Clear();
@@ -91,6 +94,7 @@ namespace Keysharp.Scripting
 			getPropertyValueCalls.Clear();
 			getMethodCalls.Clear();
 			allMethodCalls.Clear();
+			assemblyAttributes.Clear();
 			initial = new CodeStatementCollection();
 			prepend = new CodeStatementCollection();
 			mainNs = new CodeNamespace("Keysharp.CompiledMain");
@@ -268,41 +272,6 @@ namespace Keysharp.Scripting
 			return "";
 		}
 
-		/*
-		    private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
-		    {
-		    foreach (CodeTypeDeclaration type in mainNs.Types)
-		        if (type.Name == varName)
-		            return true;
-
-		    foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
-		        if (type is CodeTypeDeclaration ctd)
-		            if (ctd.Name == varName)
-		                return true;
-
-		    return false;
-		    }
-
-		    private CodeTypeDeclaration FindUserDefinedType(string typeName)
-		    {
-		    foreach (CodeTypeMember type in targetClass.Members)
-		        if (type is CodeTypeDeclaration ctd)
-		            if (ctd.Name == typeName)
-		                return ctd;
-
-		    return null;
-		    }
-
-		    private bool IsUserDefinedType(string typeName)
-		    {
-		    foreach (CodeTypeMember type in targetClass.Members)
-		        if (type is CodeTypeDeclaration ctd)
-		            if (ctd.Name == typeName)
-		                return true;
-
-		    return false;
-		    }
-		*/
 		public static string TrimParens(string code)
 		{
 			var parenssb = new StringBuilder(code.Length);
@@ -532,19 +501,6 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			/*
-			    foreach (var cmie in allMethodCalls)
-			    {
-			    if (IsUserDefinedType(cmie.Method.MethodName))
-			    {
-			        cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(cmie.Method.MethodName), "Call");
-			    }
-			    }
-			*/
-
-			while (invokes.Count != 0)
-				StdLib();
-
 			foreach (var typeMethods in methods)
 			{
 				CodeMemberMethod newmeth = null, callmeth = null;
@@ -759,17 +715,23 @@ namespace Keysharp.Scripting
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
 
 			_ = initial.Add(new CodeSnippetExpression("HandleCommandLineParams(args)"));
-
-			if (WinActivateForce)
-				_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Accessors.WinActivateForce = true"));
-
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
-			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));
+			//_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));
+			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{SingleInstance}"));
 			_ = initial.Add(new CodeExpressionStatement(inst));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.SetName(name)"));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.Variables.InitGlobalVars()"));
-			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodeSnippetExpression($"@\"{name}\""));
+
+			foreach (var (p, s) in preloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
+			{
+				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Parser"), "AddPreLoadedDll");
+				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
+				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
+				initial.Add(new CodeExpressionStatement(cmie));
+			}
+
+			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodePrimitiveExpression(name));
 			_ = initial.Add(namevar);
 			var userMainMethod = new CodeMemberMethod()
 			{

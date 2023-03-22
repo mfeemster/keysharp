@@ -156,7 +156,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 		}
 
-		internal static bool HotInputLevelAllowsFiring(uint inputLevel, uint aEventExtraInfo, ref char? aKeyHistoryChar)
+		internal static bool HotInputLevelAllowsFiring(uint inputLevel, ulong aEventExtraInfo, ref char? aKeyHistoryChar)
 		{
 			if (InputLevelFromInfo(aEventExtraInfo) <= inputLevel)
 			{
@@ -169,12 +169,12 @@ namespace Keysharp.Core.Common.Keyboard
 			return true;
 		}
 
-		internal static uint InputLevelFromInfo(uint aExtraInfo)
+		internal static int InputLevelFromInfo(ulong aExtraInfo)
 		{
 			if (aExtraInfo >= KeyIgnoreMin() && aExtraInfo <= KeyIgnoreMax)
-				return KeyIgnoreLevel(0) - aExtraInfo;
+				return (int)(KeyIgnoreLevel(0) - aExtraInfo);
 
-			return SendLevelMax + 1;
+			return (int)(SendLevelMax + 1);
 		}
 
 		/// <summary>
@@ -392,13 +392,13 @@ namespace Keysharp.Core.Common.Keyboard
 				Keysharp.Scripting.Script.SetHotNamesAndTimes(hk.Name);
 
 				if (ht.IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
-					Accessors.A_EventInfo = lParamVal; // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
+					Accessors.A_EventInfo = Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
 
 				// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
-				Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
-				Accessors.A_SendLevel = variant.inputLevel;
-				Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
-				return await hk.PerformInNewThreadMadeByCallerAsync(variant);
+				//Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
+				//Accessors.A_SendLevel = variant.inputLevel;
+				//Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
+				return await hk.PerformInNewThreadMadeByCallerAsync(variant, criterion_found_hwnd);
 			}
 
 			return "";

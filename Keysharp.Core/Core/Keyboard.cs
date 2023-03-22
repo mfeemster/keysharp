@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.Design;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
@@ -258,7 +259,7 @@ break_twice:;
 			{
 				HotstringDefinition.ParseOptions(name, ref HotstringDefinition.hsPriority, ref HotstringDefinition.hsKeyDelay, ref HotstringDefinition.hsSendMode, ref HotstringDefinition.hsCaseSensitive
 												 , ref HotstringDefinition.hsConformToCase, ref HotstringDefinition.hsDoBackspace, ref HotstringDefinition.hsOmitEndChar, ref HotstringDefinition.hsSendRaw, ref HotstringDefinition.hsEndCharRequired
-												 , ref HotstringDefinition.hsDetectWhenInsideWord, ref HotstringDefinition.hsDoReset, ref xOption, ref HotstringDefinition.hsSuspendExempt);
+												 , ref HotstringDefinition.hsDetectWhenInsideWord, ref HotstringDefinition.hsDoReset, ref xOption, ref HotstringDefinition.DefaultHotstringSuspendExempt);
 				return null;
 			}
 
@@ -435,7 +436,7 @@ break_twice:;
 		/// </list>
 		/// <para>The timeout value can be a floating point number such as 2.5, but it should not be a hexadecimal value such as 0x03.</para>
 		/// </param>
-		public static bool KeyWait(object obj0, object obj1)
+		public static bool KeyWait(object obj0, object obj1 = null)
 		{
 			var keyname = obj0.As();
 			var options = obj1.As();
@@ -526,19 +527,24 @@ break_twice:;
 					return false; // Since it timed out, we override the default with this.
 			}
 		}
-		public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero), true, true);
-		public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero), true, true);
-		/// <summary>
-		/// Sends simulated keystrokes and mouse clicks to the active window.
-		/// </summary>
-		/// <param name="Keys">The sequence of keys to send.</param>
-		public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero), true, true);
+		//We initially had these using BeginInvoke(), but that is wrong, because these will often be launched from threads in responde to a hotkey/string.
+		//The state of those threads needs to be preserved, but invoking will overwrite that state by putting the call on the main GUI thread.
+		//So put them back to just straight calls, revisit if cross threading bugs occur.
+		//public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero), true, true);
+		//public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero), true, true);
+		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero), true, true);
+		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero), true, true);
+		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
+
+		public static void Send(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero);
+		public static void SendEvent(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+		public static void SendInput(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
 		public static void SendLevel(object obj) => Accessors.A_SendLevel = obj;
-		//public static void Send(params object[] obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendMixed(obj.L().S1());
 		public static void SendMode(object obj) => Accessors.A_SendMode = obj;
-		public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero), true, true);
-		public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
+		public static void SendPlay(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+		public static void SendText(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero);
 		public static void SetCapsLockState(object obj) => SetToggleState(WindowsAPI.VK_CAPITAL, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+
 		public static void SetKeyDelay(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var play = obj2.As().ToLowerInvariant();

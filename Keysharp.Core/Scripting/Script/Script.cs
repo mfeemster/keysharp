@@ -33,10 +33,13 @@ namespace Keysharp.Scripting
 		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
 		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
 
-		internal static bool forceKeybdHook;
+		public static bool ForceKeybdHook;
 
 		[ThreadStatic]
 		internal static IFuncObj hotCriterion;
+
+		[ThreadStatic]
+		internal static IntPtr hwndLastUsed = IntPtr.Zero;
 
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 
@@ -44,11 +47,7 @@ namespace Keysharp.Scripting
 
 		internal static bool hsSameLineAction;
 
-		internal static IntPtr hWndLastUsed = IntPtr.Zero;
-
 		internal static InputType input;
-
-		internal static uint inputLevel;
 
 		// Last Found Window of last #HotIf expression.
 		internal static DateTime inputTimeoutAt = DateTime.Now;
@@ -181,7 +180,7 @@ namespace Keysharp.Scripting
 
 		public static void HandleSingleInstance(string name, eScriptInstance inst)
 		{
-			if (name.Length == 0 || name == "*")//Happens when running in Keysharp
+			if (name.Length == 0 || name == "*")//Happens when running in Keyview.
 				return;
 
 			if (Keysharp.Core.Env.FindCommandLineArg("force") != null || Keysharp.Core.Env.FindCommandLineArg("f") != null)
@@ -337,7 +336,6 @@ namespace Keysharp.Scripting
 			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			Parser.Persistent = true;
 			mainWindow.Load += MainWindow_Load;
-			Parser.SuspendExempt = false;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.Show();
 			_ = mainWindow.BeginInvoke(() =>

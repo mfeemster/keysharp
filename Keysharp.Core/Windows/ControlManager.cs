@@ -914,6 +914,9 @@ namespace Keysharp.Core.Windows
 				var start = Conversions.LowWord(res);
 				var end = Conversions.HighWord(res);
 
+				if (start > end)
+					throw new Error($"Start position of {start} was > end position of {end} when querying selected text of an edit control.");
+
 				if (start == end)
 					return "";
 

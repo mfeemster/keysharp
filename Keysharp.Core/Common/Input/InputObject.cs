@@ -85,7 +85,7 @@ namespace Keysharp.Core.Common.Input
 			}
 		}
 
-		public long MinSendLevel
+		public uint MinSendLevel
 		{
 			get => input.MinSendLevel;
 			set => input.MinSendLevel = value;

@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Keysharp.Core.Common.Threading;
+using static Keysharp.Core.Misc;
 
 namespace Keysharp.Core.Common.Keyboard
 {
 	public class HotstringDefinition
 	{
 		internal const int HOTSTRING_BLOCK_SIZE = 1024;
-		internal const int HS_BUF_DELETE_COUNT = (HS_BUF_SIZE / 2);
-		internal const int HS_BUF_SIZE = (MAX_HOTSTRING_LENGTH * 2 + 10);
+		internal const int HS_BUF_DELETE_COUNT = HS_BUF_SIZE / 2;
+		internal const int HS_BUF_SIZE = (MAX_HOTSTRING_LENGTH * 2) + 10;
 		internal const int HS_MAX_END_CHARS = 100;
 		internal const int HS_SUSPENDED = 0x01;
 		internal const int HS_TEMPORARILY_DISABLED = 0x04;
@@ -30,13 +31,10 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static int hsPriority;
 		internal static SendModes hsSendMode = SendModes.Input;
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
-		internal static bool hsSuspendExempt;
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
 		//internal static Dictionary<string, List<HotstringDefinition>> shsDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);     //Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
-
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
-
 		internal uint existingThreads, maxThreads;
 		internal IFuncObj funcObj;
 		internal IFuncObj hotCriterion;
@@ -60,7 +58,7 @@ namespace Keysharp.Core.Common.Keyboard
 		public static int DefaultHotstringPriority => hsPriority;
 		public static SendModes DefaultHotstringSendMode => hsSendMode;
 		public static SendRawModes DefaultHotstringSendRaw => hsSendRaw;
-		public static bool DefaultHotstringSuspendExempt => hsSuspendExempt;
+		public static bool DefaultHotstringSuspendExempt;
 		public bool Enabled { get; set; }
 		public Options EnabledOptions { get; set; }
 		public string Name { get; set; }
@@ -93,8 +91,8 @@ namespace Keysharp.Core.Common.Keyboard
 			endCharRequired = hsEndCharRequired;
 			detectWhenInsideWord = hsDetectWhenInsideWord;
 			doReset = hsDoReset;
-			inputLevel = Keysharp.Scripting.Script.inputLevel;
-			suspendExempt = Keysharp.Scripting.Parser.SuspendExempt || DefaultHotstringSuspendExempt;
+			inputLevel = (uint)Accessors.A_InputLevel;
+			suspendExempt = DefaultHotstringSuspendExempt;
 			constructedOK = false;
 			var executeAction = false; // do not assign  mReplacement if execute_action is true.
 			ParseOptions(_options, ref priority, ref keyDelay, ref sendMode, ref caseSensitive, ref conformToCase, ref doBackspace
@@ -427,7 +425,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// Setting the SendLevel to 0 rather than this->mInputLevel since auto-replace hotstrings are used for text replacement rather than
 			// key remapping, which means the user almost always won't want the generated input to trigger other hotkeys or hotstrings.
 			// Action hotstrings (not using auto-replace) do get their thread's SendLevel initialized to the hotstring's InputLevel.
-			Accessors.A_SendLevel = 0;
+			Accessors.A_SendLevel = 0u;
 
 			// v1.0.43: The following section gives time for the hook to pass the final keystroke of the hotstring to the
 			// system.  This is necessary only for modes other than the original/SendEvent mode because that one takes
@@ -460,7 +458,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// has been done.  Caller must have already created a new thread for us, and must close the thread when
 		/// we return.
 		/// </summary>
-		internal async Task<ResultType> PerformInNewThreadMadeByCaller()
+		internal async Task<ResultType> PerformInNewThreadMadeByCaller(IntPtr hwndCritFound)
 		{
 			if (existingThreads >= maxThreads)
 				return ResultType.Fail;
@@ -470,10 +468,18 @@ namespace Keysharp.Core.Common.Keyboard
 			// is still timely/accurate -- it seems best to set to "no modifiers":
 			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
 			++existingThreads;  // This is the thread count for this particular hotstring only.
+			VariadicFunction vf = (o) =>
+			{
+				Accessors.A_SendLevel = inputLevel;
+				Keysharp.Scripting.Script.hwndLastUsed = hwndCritFound;
+				Keysharp.Scripting.Script.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
+				return funcObj.Call(o);
+			};
 
 			try
 			{
-				var tsk = await Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+				//var tsk = await Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+				var tsk = await Threads.LaunchInThread(vf, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
 			}
 			catch (Error ex)
 			{

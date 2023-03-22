@@ -998,10 +998,13 @@ namespace Keysharp.Core.Windows
 			if (sendMode != SendModes.Event)
 				PutMouseEventIntoArray(eventFlags, data, x, y);
 			else
+			{
+				//Keysharp.Scripting.Script.OutputDebug($"Sending mouse_event() with sendlevel {Accessors.A_SendLevel}");
 				WindowsAPI.mouse_event(eventFlags
 									   , x == CoordUnspecified ? 0 : x // v1.0.43.01: Must be zero if no change in position is desired
 									   , y == CoordUnspecified ? 0 : y // (fixes compatibility with certain apps/games).
-									   , data, new UIntPtr(KeyIgnoreLevel((uint)(long)Accessors.A_SendLevel)));
+									   , data, new UIntPtr(KeyIgnoreLevel((uint)Accessors.A_SendLevel)));
+			}
 		}
 
 		/// <summary>
@@ -1455,7 +1458,7 @@ namespace Keysharp.Core.Windows
 			if (sendMode == SendModes.Input)
 			{
 				var thisEvent = new INPUT();
-				var sendLevel = (uint)(long)Accessors.A_SendLevel;
+				var sendLevel = (uint)Accessors.A_SendLevel;
 				thisEvent.type = WindowsAPI.INPUT_MOUSE;
 				thisEvent.i.m.dx = (x == CoordUnspecified) ? 0 : x; // v1.0.43.01: Must be zero if no change in position is
 				thisEvent.i.m.dy = (y == CoordUnspecified) ? 0 : y; // desired (fixes compatibility with certain apps/games).
@@ -1812,7 +1815,7 @@ namespace Keysharp.Core.Windows
 			// in pressed down even after it's sent.
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
 			var vkIsMouse = Keysharp.Scripting.Script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
-			var sendLevel = (uint)(long)Accessors.A_SendLevel;
+			var sendLevel = (uint)Accessors.A_SendLevel;
 
 			for (var i = 0L; i < repeatCount; ++i)
 			{
@@ -3011,7 +3014,7 @@ namespace Keysharp.Core.Windows
 			// key combinations with Unicode packets either do nothing at all or do the same as
 			// without the modifiers.  All modifiers are known to interfere in some applications.
 			SetModifierLRState(modifiers, sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState(), IntPtr.Zero, false, true, KeyIgnore);
-			var sendLevel = (uint)(long)Accessors.A_SendLevel;
+			var sendLevel = (uint)Accessors.A_SendLevel;
 
 			if (sendMode == SendModes.Input)
 			{

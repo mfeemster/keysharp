@@ -316,8 +316,20 @@ namespace Keysharp.Main
 
 			if (failed)
 			{
-				var errstr = $"{desc} failed:\n\n{errors}\n\n\n{warnings}\n\n{message}";
-				File.WriteAllText($"{path}_compiler_errors.txt", errstr);
+				var sb = new StringBuilder(1024);
+				_ = sb.AppendLine($"{desc} failed:");
+
+				if (!string.IsNullOrEmpty(errors))
+					_ = sb.Append(errors);
+
+				if (!string.IsNullOrEmpty(warnings))
+					_ = sb.Append(warnings);
+
+				if (!string.IsNullOrEmpty(message))
+					_ = sb.Append(message);
+
+				var errstr = sb.ToString();
+				//File.WriteAllText($"{path}_compiler_errors.txt", errstr);
 				_ = Message(errstr, true);
 			}
 			else

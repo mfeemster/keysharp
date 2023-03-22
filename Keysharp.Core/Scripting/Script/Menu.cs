@@ -52,11 +52,6 @@ namespace Keysharp.Scripting
 				SuspendHotkeys();
 				return "";
 			});
-			var pause = new Func<object>(() =>
-			{
-				PauseThread();
-				return "";
-			});
 			var exitfunc = new Func<object>(() =>
 			{
 				_ = Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Menu);
@@ -74,7 +69,6 @@ namespace Keysharp.Scripting
 
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
 			suspendMenuItem = trayMenu.Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
-			pauseMenuItem = trayMenu.Add("&Pause Script", new FuncObj(pause.Method, pause.Target));
 			_ = trayMenu.Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 			trayMenu.Default = "&Open";
 			trayIcon.Tag = trayMenu;
@@ -93,19 +87,9 @@ namespace Keysharp.Scripting
 
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)//Not sure whether resources work on non-windows implementations of C#.//TODO
 			{
-				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
+				PausedIcon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;//Pause isn't really needed since pausing is not supported. Perhaps it can be used for something else some day.
 				SuspendedIcon = Keysharp.Core.Properties.Resources.Keysharp_s_ico;
 			}
-		}
-
-		internal static void PauseThread()
-		{
-			mainWindow.CheckedInvoke(() =>
-			{
-				mainWindow.PauseScriptToolStripMenuItem.Checked = !mainWindow.PauseScriptToolStripMenuItem.Checked;
-				pauseMenuItem.Checked = Keysharp.Core.Flow.Suspended;
-				Keysharp.Core.Flow.Pause(pauseMenuItem.Checked);
-			}, false);
 		}
 
 		internal static void SuspendHotkeys()

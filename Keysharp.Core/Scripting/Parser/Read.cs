@@ -3,8 +3,10 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Keysharp.Core;
+using Keysharp.Core.Common.Keyboard;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
@@ -215,8 +217,8 @@ namespace Keysharp.Scripting
 				{
 					if (!includes.Contains(cmdinc))
 					{
-						list.AddRange(Read(new StreamReader(cmdinc), cmdinc));
 						_ = includes.AddUnique(cmdinc);
+						list.AddRange(Read(new StreamReader(cmdinc), cmdinc));
 					}
 				}
 				else
@@ -287,6 +289,7 @@ namespace Keysharp.Scripting
 								p1 = p1.Replace(replace[i, 0], replace[i, 1]);
 
 							preloadedDlls.Add((p1, silent));
+							//The generated code for this is handled in Parser.Parse() because it must come before the InitGlobalVars();
 						}
 						break;
 
@@ -294,7 +297,7 @@ namespace Keysharp.Scripting
 						{
 							var silent = false;
 							var isLib = false;
-							p1 = p1.Trim('"');//Quotes throw off the system file/path functions, so remove them.
+							p1 = p1.RemoveAll("\"");//Quotes throw off the system file/path functions, so remove them.
 
 							if (p1.StartsWith('<') && p1.EndsWith('>'))
 							{
@@ -319,15 +322,26 @@ namespace Keysharp.Scripting
 
 							if (isLib)
 							{
-								var dirs = new string[]
+								var paths = new List<string>(6);
+
+								if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 								{
-									$"{Path.GetDirectoryName(this.name)}\\Lib\\{p1}",//Local library
-									$"{Accessors.A_MyDocuments}\\AutoHotkey\\Lib\\{p1}",//User library
-									$"{Path.GetDirectoryName(Accessors.A_KeysharpPath)}\\Lib\\{p1}"//Standard library
-								};
+									paths.Add($"{includePath}\\{p1}");//Folder relative to the script file, or as overriden.
+									paths.Add($"{Accessors.A_MyDocuments}\\AutoHotkey\\{LibDir}\\{p1}");//User library.
+									paths.Add($"{Accessors.A_KeysharpPath}\\{LibDir}\\{p1}");//Executable folder, standard library.
+								}
+								else if (Path.DirectorySeparatorChar == '/' && Environment.OSVersion.Platform == PlatformID.Unix)
+								{
+									paths.Add($"{includePath}/{p1}");
+									paths.Add(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("HOME"), "/AutoHotkey"), p1));
+									paths.Add($"{Accessors.A_KeysharpPath}/{LibDir}/{p1}");//Three ways to get the possible executable folder.
+									paths.Add($"/usr/{LibDir}/AutoHotkey/{LibDir}/{p1}");
+									paths.Add($"/usr/local/{LibDir}/AutoHotkey/{LibDir}/{p1}");
+								}
+
 								var found = false;
 
-								foreach (var dir in dirs)
+								foreach (var dir in paths)
 								{
 									if (System.IO.File.Exists(dir))
 									{
@@ -336,14 +350,14 @@ namespace Keysharp.Scripting
 										if (includeOnce && includes.Contains(dir))
 											break;
 
-										list.AddRange(Read(new StreamReader(dir), dir));
 										_ = includes.AddUnique(dir);
+										list.AddRange(Read(new StreamReader(dir), dir));
 										break;
 									}
 								}
 
 								if (!found && !silent)
-									throw new ParseException($"Include file {p1} not found", line);
+									throw new ParseException($"Include file {p1} not found at any of the locations: {string.Join(Environment.NewLine, paths)}", line);
 							}
 							else
 							{
@@ -368,13 +382,13 @@ namespace Keysharp.Scripting
 									if (includeOnce && includes.Contains(path))
 										break;
 
-									list.AddRange(Read(new StreamReader(path), path));
 									_ = includes.AddUnique(path);
+									list.AddRange(Read(new StreamReader(path), path));
 								}
 								else
 								{
 									if (!silent)
-										throw new ParseException($"Include file {p1} not found", line);
+										throw new ParseException($"Include file {p1} not found at location {path}", line);
 
 									break;
 								}
@@ -399,11 +413,11 @@ namespace Keysharp.Scripting
 
 									Options.VerifyVersion(ver, plus, line, name);
 									//In addition to being checked here, it must be added to the code for when it runs as a compiled exe.
-									var cmie = (CodeMethodInvokeExpression)new MethodReference(typeof(Keysharp.Core.Options), "VerifyVersion");
-									_ = cmie.Parameters.Add(new CodeSnippetExpression($"\"{ver}\""));
+									var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Options"), "VerifyVersion");
+									_ = cmie.Parameters.Add(new CodePrimitiveExpression(ver));
 									_ = cmie.Parameters.Add(new CodePrimitiveExpression(plus));
 									_ = cmie.Parameters.Add(new CodePrimitiveExpression(0));
-									_ = cmie.Parameters.Add(new CodePrimitiveExpression(""));
+									_ = cmie.Parameters.Add(new CodeSnippetExpression("name"));
 									initial.Insert(0, new CodeExpressionStatement(cmie));
 									//Sub release designators such as "-alpha", "-beta" are not supported in C#. Only the assembly version is supported.
 								}
@@ -443,10 +457,6 @@ namespace Keysharp.Scripting
 						//  NoEnv = true;
 						//  break;
 
-						case "NOTRAYICON":
-							NoTrayIcon = true;
-							break;
-
 						case "PERSISTENT":
 							Persistent = true;
 							break;
@@ -476,27 +486,35 @@ namespace Keysharp.Scripting
 
 							break;
 
-						case "WINACTIVATEFORCE":
-							WinActivateForce = true;
-							break;
-
 						case "HOTSTRING":
-							switch (p1.ToUpperInvariant())
+						{
+							if (sub.Length > 1)
 							{
-								case "NOMOUSE":
-									HotstringNoMouse = true;
-									break;
+								var splits = sub[1].Split(' ', 2);
 
-								case "ENDCHARS":
-									HotstringEndChars = p1;
-									break;
+								if (splits.Length > 0)
+								{
+									p1 = splits[0].ToUpperInvariant();
 
-								default:
-									next = false;
-									break;
+									switch (p1.ToUpperInvariant())
+									{
+										case "NOMOUSE":
+											list.Add(new CodeLine(name, line, code));
+											break;
+
+										case "ENDCHARS":
+											list.Add(new CodeLine(name, line, code));
+											break;
+
+										default:
+											list.Add(new CodeLine(name, line, $"Hotstring(\"{sub[1]}\")"));
+											next = false;
+											break;
+									}
+								}
 							}
-
-							break;
+						}
+						break;
 
 						//Deprecated directives.
 						case "ALLOWSAMELINECOMMENTS":
@@ -507,10 +525,6 @@ namespace Keysharp.Scripting
 						case "KEYHISTORY":
 						case "MAXHOTKEYSPERINTERVAL":
 						case "MAXMEM":
-						case "MAXTHREADS":
-						case "MAXTHREADSBUFFER":
-						case "MAXTHREADSPERHOTKEY":
-						case "USEHOOK":
 							break;
 
 						//Directives that will be processed in Statements().
@@ -524,6 +538,13 @@ namespace Keysharp.Scripting
 						case "ASSEMBLYVERSION":
 						case "CLIPBOARDTIMEOUT":
 						case "ERRORSTDOUT":
+						case "USEHOOK":
+						case "MAXTHREADS":
+						case "MAXTHREADSBUFFER":
+						case "MAXTHREADSPERHOTKEY":
+						case "NOTRAYICON":
+						case "SUSPENDEXEMPT":
+						case "WINACTIVATEFORCE":
 						case Keyword_IfWin:
 							list.Add(new CodeLine(name, line, code));
 							break;

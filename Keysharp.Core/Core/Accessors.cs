@@ -16,12 +16,19 @@ using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keysharp.Core
 {
 	public static class Accessors
 	{
-		internal static long ClipboardTimeout = 1000L;
+		private static long clipboardTimeout = 1000L;
+
+		public static object A_ClipboardTimeout
+		{
+			get => clipboardTimeout;
+			set => clipboardTimeout = value.Al();
+		}
 
 		private static bool allowMainWindow = true;
 
@@ -65,6 +72,9 @@ namespace Keysharp.Core
 		internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
 
 		[ThreadStatic]
+		private static bool? allowTimers;
+
+		[ThreadStatic]
 		private static long? keyDelay;
 		private static long keyDelayDef = 10L;
 
@@ -91,9 +101,6 @@ namespace Keysharp.Core
 		private static long mouseDelayPlayDef = -1L;
 
 		[ThreadStatic]
-		private static bool? noTimers;
-
-		[ThreadStatic]
 		private static long? peekFrequency;
 
 		private static Icon prevTrayIcon;
@@ -102,8 +109,10 @@ namespace Keysharp.Core
 		private static long? priority;
 
 		[ThreadStatic]
-		private static long? sendLevel;
-		private static long sendLevelDef;
+		private static uint? sendLevel;
+		private static uint sendLevelDef;
+
+		private static uint inputLevel;
 
 		[ThreadStatic]
 		private static long? regView;
@@ -124,8 +133,6 @@ namespace Keysharp.Core
 		[ThreadStatic]
 		private static bool? titleMatchModeSpeed;
 		private static bool titleMatchModeSpeedDef = true;
-
-		private static bool? winActivateForce;
 
 		[ThreadStatic]
 		private static long? winDelay;
@@ -305,7 +312,7 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (WindowsAPI.OpenClipboard(ClipboardTimeout))//Will need a cross platform version of this.//TODO
+				if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
 				{
 					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
@@ -340,7 +347,7 @@ namespace Keysharp.Core
 			{
 				if (value != null)
 				{
-					if (WindowsAPI.OpenClipboard(ClipboardTimeout))
+					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
@@ -408,7 +415,7 @@ namespace Keysharp.Core
 			set => controlDelay = value.Al();
 		}
 
-		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
+		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();//Mouse.Coords is marked [ThreadStatic].
 
 		public static string A_CoordModeMenu => Mouse.Coords.Menu.ToString();
 
@@ -805,8 +812,6 @@ namespace Keysharp.Core
 				if (Loops.loops.Count == 0)
 					return null;
 
-				//var stack = loops.ToArray();
-
 				foreach (var l in Loops.loops)//Since loop is a stack, this goes in reverse order, which is what we want.
 				{
 					switch (l.type)
@@ -1040,18 +1045,16 @@ namespace Keysharp.Core
 				if (Loops.loops.Count == 0)
 					return null;
 
-				var stack = Loops.loops.ToArray();
-
-				for (var i = 0; i < stack.Length; i++)
+				foreach (var l in Loops.loops)
 				{
-					switch (stack[i].type)
+					switch (l.type)
 					{
 						case LoopType.Each:
 						{
-							if (!(stack[i].result is object[]))
+							if (!(l.result is object[]))
 								return null;
 
-							var pair = (object[])stack[i].result;
+							var pair = (object[])l.result;
 							return pair[0];
 						}
 					}
@@ -1277,14 +1280,9 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// The full path and name of the current user's "My Documents" folder.
+		/// Need a cross platform way to do this.//TODO
 		/// </summary>
 		public static string A_MyDocuments => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-		public static object A_NoTimers
-		{
-			get => noTimers ?? (noTimers = false).Value;
-			set => noTimers = value.ParseBool();
-		}
 
 		/// <summary>
 		/// The current local time in YYYYMMDDHH24MISS format.
@@ -1329,6 +1327,12 @@ namespace Keysharp.Core
 			get => priority ?? (priority = 0).Value;
 			set => priority = value.Al();
 		}
+
+		//internal static IntPtr A_HwndLastUsed
+		//{
+		//  get => hwndLastUsed;
+		//  set => hwndLastUsed = value;
+		//}
 
 		/// <summary>
 		/// The Program Files directory (e.g. <code>C:\Program Files</code>).
@@ -1416,11 +1420,17 @@ namespace Keysharp.Core
 
 			set
 			{
-				sendLevel = Math.Clamp(value.Al(), 0L, 100L);
+				sendLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
 
 				if (!Keysharp.Scripting.Script.isReadyToExecute)
 					sendLevelDef = sendLevel.Value;
 			}
+		}
+
+		public static object A_InputLevel
+		{
+			get => inputLevel;
+			set => inputLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
 		}
 
 		public static object A_SendMode
@@ -1725,10 +1735,10 @@ namespace Keysharp.Core
 
 		public static long True => 1L;
 
-		public static object WinActivateForce
+		public static object A_AllowTimers
 		{
-			get => winActivateForce ?? (winActivateForce = false).Value;
-			set => winActivateForce = value.ParseBool();
+			get => allowTimers ?? (allowTimers = true).Value;
+			set => allowTimers = value.Ab();
 		}
 
 		/// <summary>

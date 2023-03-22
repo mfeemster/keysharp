@@ -309,8 +309,10 @@ namespace Keysharp.Scripting
 								var lower = prop.Name.ToLower();
 								properties[typeStack.Peek()][lower] = prop;
 								var blockType = CodeBlock.BlockType.Expect;
-								var propblock = new CodeBlock(codeline, lower, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull());
-								propblock.Type = blockType;
+								var propblock = new CodeBlock(codeline, lower, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
+								{
+									Type = blockType
+								};
 								_ = CloseTopSingleBlock();
 								blocks.Push(propblock);
 							}
@@ -329,8 +331,10 @@ namespace Keysharp.Scripting
 								funcParams.Add(p.Name);
 
 							var blockType = CodeBlock.BlockType.Expect;
-							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
-							propblock.Type = blockType;
+							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull())
+							{
+								Type = blockType
+							};
 							_ = CloseTopSingleBlock();
 							blocks.Push(propblock);
 							break;

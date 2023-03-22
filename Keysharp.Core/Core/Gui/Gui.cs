@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Keysharp.Core.Common;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Keysharp.Core
@@ -56,7 +57,14 @@ namespace Keysharp.Core
 				"DPIScale", (f, o) => { if (o is bool b) f.dpiscaling = b; }
 			},
 			{
-				"LastFound", (f, o) => { if (o is bool b) f.lastfound = b; }
+				"LastFound", (f, o) =>
+				{
+					if (o is bool b)
+					{
+						f.lastfound = b;
+						Keysharp.Scripting.Script.hwndLastUsed = f.Hwnd;
+					}
+				}
 			},
 			{
 				"MaximizeBox", (f, o) => { if (o is bool b) f.form.MaximizeBox = b; }
@@ -361,7 +369,11 @@ namespace Keysharp.Core
 
 			LastContainer = form;
 			allGuiHwnds[form.Handle.ToInt64()] = this;
+
 			//form.Show();//We must first show so that all handles are created and geometries calculated. We quickly hide in Form_Load().
+			if (lastfound)//Unsure if we should use this or the one below?
+				Keysharp.Scripting.Script.hwndLastUsed = Hwnd;
+
 			Keysharp.Core.Common.Window.WindowManagerProvider.Instance.LastFound = new WindowItem(form.Handle);
 		}
 

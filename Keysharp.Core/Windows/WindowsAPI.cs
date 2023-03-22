@@ -2309,7 +2309,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal unsafe static string GetWindowTextTimeout(IntPtr hwnd, uint timeout)
+		internal static string GetWindowTextTimeout(IntPtr hwnd, uint timeout)
 		{
 			_ = SendMessageTimeout(hwnd, WM_GETTEXTLENGTH, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var length);
 

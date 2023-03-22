@@ -20,7 +20,7 @@ namespace Keysharp.Scripting
 		private readonly bool success;
 
 		public bool IsClosing { get; private set; }
-		internal System.Windows.Forms.ToolStripMenuItem PauseScriptToolStripMenuItem => pauseScriptToolStripMenuItem;
+
 		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
 		//public uint ThreadId { get; private set; }
 
@@ -60,8 +60,6 @@ namespace Keysharp.Scripting
 		}
 
 		internal void ListHotkeys() => SetText(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys);
-
-		internal void Pause() => Keysharp.Scripting.Script.PauseThread();
 
 		internal void ShowHistory() => SetText(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History);
 
@@ -203,10 +201,6 @@ namespace Keysharp.Scripting
 				lastWindowState = WindowState;
 				ShowInTaskbar = true;
 			}
-		}
-
-		private void pauseScriptToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
 		}
 
 		private void refreshToolStripMenuItem_Click(object sender, System.EventArgs e)

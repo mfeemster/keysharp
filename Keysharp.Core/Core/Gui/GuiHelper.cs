@@ -16,7 +16,7 @@ namespace Keysharp.Core
 		{
 			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
 			{
-				Keysharp.Scripting.Script.hWndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
+				Keysharp.Scripting.Script.hwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
 				var now = DateTime.Now;
 
 				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&

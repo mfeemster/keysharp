@@ -377,7 +377,7 @@ namespace Keysharp.Core
 		internal static bool TryParseString(string opt, string prefix, ref string result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowEmpty = false) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out string r) => { r = v.ToString(); return true; }, ref result, comp, allowEmpty);
 
-		internal static void VerifyVersion(string ver, bool plus, int line, string source)
+		public static void VerifyVersion(string ver, bool plus, int line, string source)
 		{
 			var ahkver = Accessors.A_AhkVersion;
 			var reqvers = ParseVersionToInts(ver);

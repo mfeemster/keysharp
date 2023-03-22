@@ -38,9 +38,9 @@ namespace Keysharp.Core
 			var move_offset = false;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
-			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-					ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
-							, vk, x, y, 0, 0, repeat_count, event_type, (long)Accessors.A_DefaultMouseSpeed, move_offset), true, true);
+			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+			ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
+											  , vk, x, y, 0, 0, repeat_count, event_type, (long)Accessors.A_DefaultMouseSpeed, move_offset);//, true, true);
 		}
 
 		/// <summary>
@@ -103,9 +103,9 @@ namespace Keysharp.Core
 			var speed = (int)obj4.Al((long)Accessors.A_DefaultMouseSpeed);
 			var downOrUp = obj5.As();
 			var relative = obj6.As();
-			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-					PerformMouse(Actions.ACT_MOUSECLICK, whichButton, x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
-								 speed, relative, repeatCount, downOrUp), true, true);
+			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+			PerformMouse(Actions.ACT_MOUSECLICK, whichButton, x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
+						 speed, relative, repeatCount, downOrUp);//, true, true);
 		}
 
 		public static void MouseClickDrag(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null, object obj6 = null)
@@ -117,9 +117,9 @@ namespace Keysharp.Core
 			var y2 = (int)obj4.Al(KeyboardMouseSender.CoordUnspecified);
 			var speed = (int)obj5.Al((long)Accessors.A_DefaultMouseSpeed);
 			var relative = obj6.As();
-			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-					PerformMouse(Actions.ACT_MOUSECLICKDRAG, whichButton, x1, y1, x2, y2,
-								 speed, relative, 1, ""), true, true);
+			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+			PerformMouse(Actions.ACT_MOUSECLICKDRAG, whichButton, x1, y1, x2, y2,
+						 speed, relative, 1, "");//, true, true);
 		}
 
 		/// <summary>
@@ -176,9 +176,9 @@ namespace Keysharp.Core
 			var y = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);
 			var speed = (int)obj2.Al((long)Accessors.A_DefaultMouseSpeed);
 			var relative = obj3.As();
-			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-					PerformMouse(Actions.ACT_MOUSEMOVE, "", x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
-								 speed, relative, 1, ""), true, true);
+			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+			PerformMouse(Actions.ACT_MOUSEMOVE, "", x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
+						 speed, relative, 1, "");//, true, true);
 		}
 
 		public static void SetDefaultMouseSpeed(object obj) => Accessors.A_DefaultMouseSpeed = obj;
@@ -274,17 +274,17 @@ namespace Keysharp.Core
 				}
 			}
 
-			Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-					ht.kbdMsSender.PerformMouseCommon(actionType
-							, vk
-							, x1
-							, y1
-							, x2//These two are blank except for dragging.
-							, y2
-							, repeatCount
-							, eventType
-							, speed
-							, relative.Length > 0 && char.ToUpper(relative[0]) == 'R'), true, true);
+			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+			ht.kbdMsSender.PerformMouseCommon(actionType
+											  , vk
+											  , x1
+											  , y1
+											  , x2//These two are blank except for dragging.
+											  , y2
+											  , repeatCount
+											  , eventType
+											  , speed
+											  , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');//, true, true);
 		}
 	}
 

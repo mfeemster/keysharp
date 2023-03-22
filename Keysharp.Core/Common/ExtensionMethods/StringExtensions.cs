@@ -61,14 +61,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return -1;
 		}
 
-		public static string OmitTrailingWhitespace(this string input, int marker)
-		{
-			for (; marker >= 0 && marker < input.Length && (input[marker] == ' ' || input[marker] == '\t'); --marker)
-			{
-			}
-
-			return input.Substring(0, marker);
-		}
+		public static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();
 
 		public static string RemoveAfter(this string input, string token)
 		{

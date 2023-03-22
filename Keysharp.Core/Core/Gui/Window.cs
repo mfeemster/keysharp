@@ -275,9 +275,9 @@ namespace Keysharp.Core
 		/// <param name="obj">String or integers 1, 2, 3, or string RegEx to set TitleMatchMode, else strings fast/slow to set TitleMatchModeSpeed.</param>
 		public static void SetTitleMatchMode(params object[] obj)
 		{
-			var val = obj.S1().ToLowerInvariant();
+			var val = obj.S1();
 
-			if (val == "fast" || val == "slow")
+			if (string.Compare(val, "fast", true) == 0 || string.Compare(val, "slow", true) == 0)
 				Accessors.A_TitleMatchModeSpeed = val;
 			else
 				Accessors.A_TitleMatchMode = val;
@@ -685,8 +685,6 @@ namespace Keysharp.Core
 			var rw = 30;
 			var rh = 30;
 			var ellipse = false;
-			//var polygon = false;//Is this ever used?//TODO
-			//var rectangle = false;//Is this ever used?//TODO
 			var wind = false;
 			var points = new List<Point>(16);
 
@@ -697,8 +695,6 @@ namespace Keysharp.Core
 				if (Options.TryParse(opt, "w", ref w)) { }
 				else if (Options.TryParse(opt, "h", ref h)) { }
 				else if (string.Compare(opt, "e", true) == 0) { ellipse = true; }
-				//else if (string.Compare(opt, "Rectangle", true) == 0) { rectangle = true; }
-				//else if (string.Compare(opt, "Polygon", true) == 0) { polygon = true; }
 				else if (string.Compare(opt, "Wind", true) == 0) { wind = true; }
 				else if (Options.TryParseString(opt, "r", ref tempstr))
 				{
@@ -733,8 +729,8 @@ namespace Keysharp.Core
 			}
 			else if (w != int.MinValue && h != int.MinValue)
 			{
-				w += points[0].X;   // Make width become the right side of the rect.
-				h += points[0].Y;  // Make height become the bottom.
+				w += points[0].X;//Make width become the right side of the rect.
+				h += points[0].Y;//Make height become the bottom.
 
 				if (ellipse)
 					hrgn = WindowsAPI.CreateEllipticRgn(points[0].X, points[0].Y, w, h);
@@ -749,10 +745,13 @@ namespace Keysharp.Core
 			if (hrgn != IntPtr.Zero)
 			{
 				if (WindowsAPI.SetWindowRgn(win.Handle, hrgn, true) == 0)
+				{
 					_ = WindowsAPI.DeleteObject(hrgn);
+					throw new OSError("", $"Could not set region for window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				}
 			}
 			else
-				throw new OSError("", $"Could not set window region with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				throw new ValueError($"Could not create region for window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 			WindowItemBase.DoWinDelay();
 		}

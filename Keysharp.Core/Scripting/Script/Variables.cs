@@ -83,13 +83,15 @@ namespace Keysharp.Scripting
 				{
 					if (dll.Item1.Length == 0)
 					{
-						if (!WindowsAPI.SetDllDirectory(null))// an empty #DllLoad restores the default search order.
-							throw new Error("An internal function call failed.");
+						if (!WindowsAPI.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
+							if (!dll.Item2)
+								throw new Error("WindowsAPI.SetDllDirectory(null) failed.");
 					}
 					else if (Directory.Exists(dll.Item1))
 					{
 						if (!WindowsAPI.SetDllDirectory(dll.Item1))
-							throw new Error("An internal function call failed.");
+							if (!dll.Item2)
+								throw new Error($"WindowsAPI.SetDllDirectory({dll.Item1}) failed.");
 					}
 					else
 					{
@@ -108,7 +110,7 @@ namespace Keysharp.Scripting
 							_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
 						}
 						else if (!dll.Item2)
-							throw new Error("Failed to load DLL.", dllname);
+							throw new Error($"Failed to load DLL {dllname}.");
 					}
 				}
 

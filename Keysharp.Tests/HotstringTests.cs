@@ -216,18 +216,9 @@ namespace Keysharp.Tests
 
 		[NonParallelizable]
 		[Test, Category("Hotstring")]
-		public void ChangeHotstringReplacement()
+		public void HotstringParsing()
 		{
-			//HotstringDefinition.AddHotstring("::btw", null, ":btw", "btw", "by the way", false);
-			//var tester = new HotstringDefinitionTester("tester", "");
-			//tester.AddChars("asdf");
-			//var origVal = HotstringDefinition.CurrentInputBuffer;
-			//Assert.AreEqual(origVal, "asdf");
-			//origVal = Keysharp.Core.Keyboard.Hotstring("Reset") as string;
-			//Assert.AreEqual(origVal, "asdf");
-			//var newVal = HotstringDefinition.CurrentInputBuffer;
-			//Assert.AreNotEqual(origVal, newVal);
-			//Assert.AreEqual(newVal, "");
+			Assert.IsTrue(TestScript("hotkey-hotstring-parsing", false));
 		}
 
 		[NonParallelizable]

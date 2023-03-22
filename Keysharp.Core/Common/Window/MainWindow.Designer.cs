@@ -36,7 +36,6 @@
 			this.editScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.windowSpyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-			this.pauseScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.suspendHotkeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -104,7 +103,6 @@
 				this.editScriptToolStripMenuItem,
 				this.windowSpyToolStripMenuItem,
 				this.toolStripSeparator1,
-				this.pauseScriptToolStripMenuItem,
 				this.suspendHotkeysToolStripMenuItem,
 				this.exitToolStripMenuItem
 			});
@@ -139,13 +137,6 @@
 			//
 			this.toolStripSeparator1.Name = "toolStripSeparator1";
 			this.toolStripSeparator1.Size = new System.Drawing.Size(181, 6);
-			//
-			// pauseScriptToolStripMenuItem
-			//
-			this.pauseScriptToolStripMenuItem.Name = "pauseScriptToolStripMenuItem";
-			this.pauseScriptToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-			this.pauseScriptToolStripMenuItem.Text = "&Pause Script";
-			this.pauseScriptToolStripMenuItem.Click += new System.EventHandler(this.pauseScriptToolStripMenuItem_Click);
 			//
 			// suspendHotkeysToolStripMenuItem
 			//
@@ -412,7 +403,6 @@
 		private System.Windows.Forms.ToolStripMenuItem editScriptToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem windowSpyToolStripMenuItem;
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-		private System.Windows.Forms.ToolStripMenuItem pauseScriptToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem suspendHotkeysToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem variablesAndTheirContentsToolStripMenuItem;

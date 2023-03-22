@@ -20,10 +20,10 @@ namespace Keysharp.Core.Common.Threading
 					//throw new Error("ASDf");
 					System.Threading.Thread.CurrentThread.Priority = Accessors.threadPriorityDef;
 
-					if (func is IFuncObj ifo)
-						return ifo.Call(o);
-					else if (func is VariadicFunction vf)
+					if (func is VariadicFunction vf)
 						return vf(o);
+					else if (func is IFuncObj ifo)
+						return ifo.Call(o);
 					else
 						return "";
 				});

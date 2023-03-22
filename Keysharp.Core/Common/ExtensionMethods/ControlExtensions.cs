@@ -26,7 +26,7 @@ namespace System.Windows.Forms
 				return;
 			}
 
-			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
+			if (!runIfNull && (!control.IsHandleCreated || control.IsDisposed || control.Disposing))
 				return;
 
 			if (control.InvokeRequired || forceInvoke)
@@ -56,7 +56,7 @@ namespace System.Windows.Forms
 				return;
 			}
 
-			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
+			if (!runIfNull && (!control.IsHandleCreated || control.IsDisposed || control.Disposing))
 				return;
 
 			if (control.InvokeRequired)
@@ -70,7 +70,7 @@ namespace System.Windows.Forms
 			if (control == null)
 				return runIfNull ? action() : default;
 
-			if (!control.IsHandleCreated || control.IsDisposed || control.Disposing)
+			if (!runIfNull && (!control.IsHandleCreated || control.IsDisposed || control.Disposing))
 				return default;
 
 			if (control.InvokeRequired)

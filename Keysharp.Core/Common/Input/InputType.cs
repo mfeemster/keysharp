@@ -30,7 +30,7 @@ namespace Keysharp.Core.Common.Input
 		internal int[] KeySC = new int[HookThread.SC_ARRAY_COUNT];
 		internal int[] KeyVK = new int[HookThread.VK_ARRAY_COUNT];
 		internal List<string> match = new List<string>();
-		internal long MinSendLevel;
+		internal uint MinSendLevel;
 		internal bool NotifyNonText;
 		internal InputType Prev;
 		internal InputObject ScriptObject;
@@ -292,7 +292,7 @@ namespace Keysharp.Core.Common.Input
 		internal bool IsInteresting(ref KBDLLHOOKSTRUCT ev)
 		{
 			char? ch = null;
-			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring((uint)MinSendLevel - 1, (uint)ev.dwExtraInfo, ref ch);
+			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring(MinSendLevel - 1, ev.dwExtraInfo, ref ch);
 		}
 
 		internal void ParseOptions(string options)
@@ -310,7 +310,7 @@ namespace Keysharp.Core.Common.Input
 						break;
 
 					case 'I':
-						MinSendLevel = (options[i + 1] <= '9' && options[i + 1] >= '0') ? options[i + 1].ParseInt(false).Value : 1;
+						MinSendLevel = (options[i + 1] <= '9' && options[i + 1] >= '0') ? options[i + 1].ParseUInt(false).Value : 1u;
 						break;
 
 					case 'M':

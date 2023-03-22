@@ -254,7 +254,7 @@ namespace Keysharp.Core
 		{
 			if (format != 0)
 			{
-				if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))
+				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))
 				{
 					byte[] buf;
 					var gLock = IntPtr.Zero;
@@ -288,7 +288,7 @@ namespace Keysharp.Core
 		{
 			unsafe
 			{
-				if (WindowsAPI.OpenClipboard(Accessors.ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
+				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
 				{
 					var ptr = clip.Ptr;
 					length = Math.Min(Math.Max(0U, length), (long)clip.Size);

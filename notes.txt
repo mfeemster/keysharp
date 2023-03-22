@@ -226,6 +226,15 @@ Differences:
 		newref := theobj ; adds 1 to the reference count
 		newref := "" ; subtracts 1 from the reference count
 	-#Warn to enable/disable compiler warnings is not supported yet.
+	-The /script option for compiled scripts does not apply and is therefore not implemented.
+	-In addition to using #ClipboardTimeout, an accessor named A_ClipboardTimeout can be used at any point in the program to get or set that value.
+	-The #Requires directive differs in the following ways:
+		-In addition to supporting "AutoHotkey", it also supports "Keysharp".
+		-Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.
+	-The #ErrorStdOut directive will not print to the console unless piping is used. For example:
+		.\Keysharp.exe .\test.ahk | more
+		.\Keysharp.exe .\test.ahk | more > out.txt
+	-Pausing a script is not supported because it's actually a running program. As such, the pause menu item has been removed.
 	
 TODO/ENSURE THESE WORK:
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
@@ -234,15 +243,25 @@ TODO/ENSURE THESE WORK:
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
-	Make sure searching of paths for local, user and standard library folders works when looking for files whose name is the same as a function being called. Make sure prefix works too.
-	Make sure WinSetRegion() supports polygon and rectangle.
 	Remapping has not been implemented.
 	Make sure the standard menu items actually do something. Window Spy probably won't be implemented until the second release.
-	Validate then exit mode is not implemented.
 	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
 	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
+	
+		do in order:
+			get hWndLastUsed working, it seems somewhat off and conflicting with the LastFound member in the WindowItem class.
+				go through ahk's script state struct and make sure you have a corresponding match to each of those vars that is threadstatic.
+			finish up with remapping, especially with sendlevel/inputlevel. then implement Thread() function. See how ahk_h does it.
+				preliminarily have sendlevel/inputlevel working.
+				implement A_AllowTimers
+			pull in latest ahk_v2 code to see what's changed.
+		
 	Perhaps look into including a long integer/extended precision library.
-
+	What to do about references to specific locations named AutoHotkey, such as the library paths? Should we:
+		-Keep that with no change.
+		-No longer support it.
+		-Support that, but also "Keysharp" in its place?
+		
 	Give attribution to:
 		Need to include this https://opensource.org/licenses/cddl1.php for the logical string comparison code: https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 		Ini utility, attribution: https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class
