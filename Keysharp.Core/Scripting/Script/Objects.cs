@@ -97,17 +97,13 @@ namespace Keysharp.Scripting
 			throw new MemberError($"Attempting to get method or property {item} with key {key} failed.");
 		}
 
-		public static object GetStaticMethodT<T>(object name)
-		{
-			if (Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodInfo mi)
-				return mi;
-
-			throw new MethodError($"Attempting to get method {name} failed.");
-		}
+		public static object GetStaticMethodT<T>(object name) => Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodInfo mi&& mi.Attributes.HasFlag(MethodAttributes.Static)
+		? mi
+		: throw new MethodError($"Attempting to get method {name} failed.");
 
 		public static object GetStaticMemberValueT<T>(object name)
 		{
-			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi)
+			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi && pi.GetAccessors().Any(x => x.IsStatic))
 			{
 				try
 				{

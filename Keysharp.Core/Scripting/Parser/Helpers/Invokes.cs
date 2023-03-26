@@ -11,7 +11,6 @@ namespace Keysharp.Scripting
 	public partial class Parser
 	{
 		private const string invokeCommand = "IsCommand";
-		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
 		private static int labelct;
 
 		internal static string LabelMethodName(string raw) => $"label_{raw.GetHashCode():X}_{labelct++:X}";

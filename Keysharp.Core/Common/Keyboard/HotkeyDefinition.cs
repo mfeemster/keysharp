@@ -29,7 +29,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int NO_SUPPRESS_NEXT_UP_EVENT = 0x08;
 		internal const int NO_SUPPRESS_PREFIX = 0x01;
 		internal const int NO_SUPPRESS_STATES = NO_SUPPRESS_NEXT_UP_EVENT;
-		internal const int NO_SUPPRESS_SUFFIX_VARIES = (AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE);
+		internal const int NO_SUPPRESS_SUFFIX_VARIES = AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE;
 		internal static string COMPOSITE_DELIMITER = " & ";
 		internal static uint enabledCount;
 		internal static uint joyHotkeyCount;
@@ -43,17 +43,17 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool isRegistered;
 		internal bool keybdHookMandatory;
 		internal bool keyUp;
-		internal int modifiers;
-		internal int modifierSC;
-		internal int modifiersConsolidatedLR;
-		internal int modifiersLR;
-		internal int modifierVK;
+		internal uint modifiers;
+		internal uint modifierSC;
+		internal uint modifiersConsolidatedLR;
+		internal uint modifiersLR;
+		internal uint modifierVK;
 		internal uint nextHotkey;
 		internal int noSuppress;
 		internal bool parentEnabled = true;
-		internal int sc;
+		internal uint sc;
 		internal HotkeyTypeEnum type = HotkeyTypeEnum.Normal;
-		internal int vk;
+		internal uint vk;
 		internal bool vkWasSpecifiedByNumber;
 		private static bool dialogIsDisplayed;
 		private static uint throttledKeyCount;
@@ -96,7 +96,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// weird hotkeys such as <^Control and ^LControl are not currently validated and might yield
 				// unpredictable results.
 				bool? is_neutral = false;
-				int modifiers_lr;
+				uint modifiers_lr;
 
 				if ((modifiers_lr = ht.KeyToModifiersLR(vk, sc, ref is_neutral)) != 0)
 				{
@@ -395,7 +395,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <summary>
 		/// Get the hotkey descriptions and put them in the Vars tab of the main window.
 		/// </summary>
-		public static void ListHotkeys() => Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => ListHotkeys(), false);
+		public static void ListHotkeys() => Keysharp.Scripting.Script.mainWindow?.ListHotkeys();
 
 		/// <summary>
 		/// This function examines all hotkeys and hotstrings to determine:
@@ -1270,7 +1270,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		/// <param name="modifiersLR"></param>
 		/// <returns></returns>
-		internal static HotkeyDefinition FindHotkeyContainingModLR(int modifiersLR)
+		internal static HotkeyDefinition FindHotkeyContainingModLR(uint modifiersLR)
 		{
 			if (modifiersLR == 0)
 				return null;
@@ -1332,7 +1332,7 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 
-		internal static uint FindPairedHotkey(uint firstID, int modsLR, bool keyUp)
+		internal static uint FindPairedHotkey(uint firstID, uint modsLR, bool keyUp)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var modifiers = ht.kbdMsSender.ConvertModifiersLR(modsLR); // Neutral modifiers.
@@ -1402,7 +1402,7 @@ namespace Keysharp.Core.Common.Keyboard
 				return 0L;
 		}
 
-		internal static int HotkeyRequiresModLR(uint hotkeyID, int modLR) => hotkeyID < shk.Count ? shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0;
+		internal static uint HotkeyRequiresModLR(uint hotkeyID, uint modLR) => hotkeyID < shk.Count ? shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0u;
 
 		internal static void InstallKeybdHook()
 		{
@@ -1448,7 +1448,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="VKorSC"></param>
 		/// <param name="isSC"></param>
 		/// <returns></returns>
-		internal static bool PrefixHasNoEnabledSuffixes(int VKorSC, bool isSC)
+		internal static bool PrefixHasNoEnabledSuffixes(uint VKorSC, bool isSC)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			// v1.0.44: Added aAsModifier so that a pair of hotkeys such as:
@@ -1457,7 +1457,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// ...works as it did in versions prior to 1.0.41, namely that LControl fires on key-up rather than
 			// down because it is considered a prefix key for the <^c hotkey .
 			bool? b = null;
-			var asModifier = ht.KeyToModifiersLR(isSC ? 0 : VKorSC, isSC ? VKorSC : 0, ref b);
+			var asModifier = ht.KeyToModifiersLR(isSC ? 0u : VKorSC, isSC ? VKorSC : 0u, ref b);
 
 			for (var i = 0; i < shk.Count; ++i)
 			{
@@ -1561,11 +1561,11 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Returns OK or FAIL.
 		internal static ResultType TextToKey(ref string text, bool isModifier, HotkeyDefinition thisHotkey)
 		{
-			int tempVk; // No need to initialize this one.
-			var tempSc = 0;
-			int? modifiersLR = 0;
+			uint tempVk; // No need to initialize this one.
+			var tempSc = 0u;
+			uint? modifiersLR = 0u;
 			var isMouse = false;
-			int? joystickId = 0;
+			uint? joystickId = 0u;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 			var hotkeyTypeTemp = HotkeyTypeEnum.Normal;
@@ -1627,7 +1627,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 				if ((tempSc = ht.TextToSC(text, ref dummy)) == 0)
 				{
-					if ((tempSc = (int)Joystick.Joystick.ConvertJoy(text, ref joystickId, true)) == 0)  // Is there a joystick control/button?
+					if ((tempSc = (uint)Joystick.Joystick.ConvertJoy(text, ref joystickId, true)) == 0)  // Is there a joystick control/button?
 					{
 						if (text.Length == 1 && !Keysharp.Scripting.Script.isReadyToExecute)
 						{
@@ -1729,7 +1729,7 @@ namespace Keysharp.Core.Common.Keyboard
 			int marker;
 			bool keyLeft, keyRight;
 			//Simplifies and reduces code size below:
-			int tempModifiers = 0, tempModifiersLR = 0;
+			uint tempModifiers = 0u, tempModifiersLR = 0u;
 			ref var modifiers = ref tempModifiers;
 			ref var modifiersLR = ref tempModifiersLR;
 
@@ -1931,7 +1931,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// is still polled even when some joystick hotkeys are disabled.  UPDATE: In v1.0.42, Suspend
 				// is checked upon receipt of the message, not here upon sending.
 				if (hk.type == HotkeyTypeEnum.Joystick && hk.vk == joystickID
-						&& (buttonsNewlyDown & (0x01 << (hk.sc - (int)Keysharp.Core.Common.Joystick.JoyControls.Button1))) != 0) // This hotkey's button is among those newly pressed.
+						&& (buttonsNewlyDown & (0x01 << (int)(hk.sc - (uint)Keysharp.Core.Common.Joystick.JoyControls.Button1))) != 0) // This hotkey's button is among those newly pressed.
 				{
 					// Criteria are checked, and variant determined, upon arrival of message rather than when sending
 					// ("suspend" is also checked then).  This is because joystick button presses are never hidden
@@ -2450,10 +2450,10 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		internal bool allowExtraModifiers;
 		internal uint idWithFlags;
-		internal int modifiers;
-		internal int modifiersLR;
-		internal int sc;
-		internal int vk;
+		internal uint modifiers;
+		internal uint modifiersLR;
+		internal uint sc;
+		internal uint vk;
 
 		/// <summary>
 		/// The only items whose order are important are those with the same suffix.  For a given suffix,
@@ -2465,10 +2465,10 @@ namespace Keysharp.Core.Common.Keyboard
 
 		{
 			if (b1.vk != b2.vk)
-				return b1.vk - b2.vk;
+				return (int)b1.vk - (int)b2.vk;
 
 			if (b1.sc != b2.sc)
-				return b1.sc - b2.sc;
+				return (int)b1.sc - (int)b2.sc;
 
 			// If the above didn't return, we now know that a1 and a2 have the same vk's or sc's.  So
 			// we use a tie-breaker to cause the most general keys to appear closer to the top of the
@@ -2491,10 +2491,10 @@ namespace Keysharp.Core.Common.Keyboard
 			// a1's modifiers are a subset of a2's or vice versa (since the subset would always have
 			// fewer bits).  This new method helps prioritize combinations which overlap but have a
 			// different number of modifiers, such as "*<^a" vs. "*<^>^a".
-			var nmodLR_a1 = System.Numerics.BitOperations.PopCount((uint)b1.modifiersLR);
-			var nmodLR_a2 = System.Numerics.BitOperations.PopCount((uint)b2.modifiersLR);
-			var nmod_a1 = System.Numerics.BitOperations.PopCount((uint)b1.modifiers) + nmodLR_a1;
-			var nmod_a2 = System.Numerics.BitOperations.PopCount((uint)b2.modifiers) + nmodLR_a2;
+			var nmodLR_a1 = System.Numerics.BitOperations.PopCount(b1.modifiersLR);
+			var nmodLR_a2 = System.Numerics.BitOperations.PopCount(b2.modifiersLR);
+			var nmod_a1   = System.Numerics.BitOperations.PopCount(b1.modifiers) + nmodLR_a1;
+			var nmod_a2   = System.Numerics.BitOperations.PopCount(b2.modifiers) + nmodLR_a2;
 
 			if (nmod_a1 != nmod_a2)
 				return nmod_a1 - nmod_a2;
@@ -2506,10 +2506,10 @@ namespace Keysharp.Core.Common.Keyboard
 			// counterparts, otherwise we get odd results like Alt+Shift+A firing "*!a" and "*+a up"
 			// instead of "*!a" and "*!a up" or "*+a" and "*+a up".
 			if (b1.modifiers != b2.modifiers)
-				return b1.modifiers - b2.modifiers; // !^+#
+				return (int)b1.modifiers - (int)b2.modifiers; // !^+#
 
 			if (b1.modifiersLR != b2.modifiersLR)
-				return b1.modifiersLR - b2.modifiersLR; // <^>^<!>!<+>+<#>#
+				return (int)b1.modifiersLR - (int)b2.modifiersLR; // <^>^<!>!<+>+<#>#
 
 			// v1.0.38.03: The following check is added to handle a script containing hotkeys
 			// such as the following (in this order):
@@ -2545,16 +2545,16 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool hasAsterisk;
 		internal bool hookIsMandatory;
 		internal bool isKeyUp;
-		internal int modifiers;
-		internal int modifiersLR;
+		internal uint modifiers;
+		internal uint modifiersLR;
 		internal string prefixText = "";
 		internal bool suffixHasTilde;
 		internal string suffixText = "";
 
 		internal void Reset()
 		{
-			modifiers = 0;
-			modifiersLR = 0;
+			modifiers = 0u;
+			modifiersLR = 0u;
 			suffixHasTilde = false;
 			hasAsterisk = false;
 			isKeyUp = false;

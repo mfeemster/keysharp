@@ -584,7 +584,7 @@ namespace Keysharp.Core
 			{
 				var color = win.Transparency.Al();
 				WindowItemBase.DoWinDelay();
-				return color != -1 ? (object)color : "";
+				return color != -1 ? color : "";
 			}
 
 			return "";

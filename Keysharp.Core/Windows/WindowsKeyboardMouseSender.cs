@@ -40,15 +40,15 @@ namespace Keysharp.Core.Windows
 
 		internal static int MaxInitialEventsSI = 500;
 
-		internal static int menuMaskKeySC = SC_LCONTROL;
+		internal static uint menuMaskKeySC = SC_LCONTROL;
 
-		internal static int menuMaskKeyVK = VK_CONTROL;
+		internal static uint menuMaskKeyVK = VK_CONTROL;
 
 		internal static DateTime thisHotkeyStartTime = DateTime.Now;
 
 		internal int currentEvent;
 
-		internal int eventModifiersLR;
+		internal uint eventModifiersLR;
 
 		internal List<PlaybackEvent> eventPb = new List<PlaybackEvent>(MaxInitialEventsPB);
 
@@ -56,17 +56,17 @@ namespace Keysharp.Core.Windows
 
 		// sizeof(INPUT) == 28 as of 2006. Since Send is called so often, and since most Sends are short, reducing the load on the stack is also a deciding factor for these.
 		// sizeof(PlaybackEvent) == 8, so more events are justified before resorting to malloc().
-		internal int hooksToRemoveDuringSendInput;
+		internal uint hooksToRemoveDuringSendInput;
 
-		internal int modifiersLRPersistent;
+		internal uint modifiersLRPersistent;
 
-		internal int modifiersLRRemapped;
+		internal uint modifiersLRRemapped;
 
-		internal int prevEventModifierDown;
+		internal uint prevEventModifierDown;
 
 		internal KeyEventTypes prevEventType;
 
-		internal int prevVK;
+		internal uint prevVK;
 
 		// Tracks this script's own lifetime/persistent modifiers (the ones it caused to be persistent and thus is responsible for tracking).
 		internal System.Drawing.Point sendInputCursorPos;
@@ -79,7 +79,7 @@ namespace Keysharp.Core.Windows
 		internal long workaroundHitTest;
 
 		//Tracks/predicts cursor position as SendInput array is built.
-		internal int workaroundVK;
+		internal uint workaroundVK;
 
 		// Below uses a pseudo-random value.  It's best that this be constant so that if multiple instances
 		// of the app are running, they will all ignore each other's keyboard & mouse events.  Also, a value
@@ -105,7 +105,7 @@ namespace Keysharp.Core.Windows
 
 		private DateTime thisEventTime;
 
-		internal static void AdjustKeyState(byte[] keyState, int modifiersLR)//Unsure if this should be in the base. Can it be cross platform?
+		internal static void AdjustKeyState(byte[] keyState, uint modifiersLR)//Unsure if this should be in the base. Can it be cross platform?
 		// Caller has ensured that aKeyState is a 256-BYTE array of key states, in the same format used
 		// by GetKeyboardState() and ToAsciiEx().
 		{
@@ -245,9 +245,9 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="modifiers"></param>
 		/// <returns></returns>
-		internal override int ConvertModifiers(int modifiers)
+		internal override uint ConvertModifiers(uint modifiers)
 		{
-			var modifiersLR = 0;
+			var modifiersLR = 0u;
 
 			if ((modifiers & MOD_WIN) != 0) modifiersLR |= MOD_LWIN | MOD_RWIN;
 
@@ -260,9 +260,9 @@ namespace Keysharp.Core.Windows
 			return modifiersLR;
 		}
 
-		internal override int ConvertModifiersLR(int modifiersLR)
+		internal override uint ConvertModifiersLR(uint modifiersLR)
 		{
-			var modifiers = 0;
+			var modifiers = 0u;
 
 			if ((modifiersLR & (MOD_LWIN | MOD_RWIN)) != 0) modifiers |= MOD_WIN;
 
@@ -275,7 +275,7 @@ namespace Keysharp.Core.Windows
 			return modifiers;
 		}
 
-		internal override string ModifiersLRToText(int aModifiersLR)
+		internal override string ModifiersLRToText(uint aModifiersLR)
 		{
 			var sb = new StringBuilder(64);
 
@@ -317,7 +317,7 @@ namespace Keysharp.Core.Windows
 		/// don't disguise Win and Alt keystrokes then.
 		/// </summary>
 		/// <param name="vk"></param>
-		internal void DisguiseWinAltIfNeeded(int vk)
+		internal void DisguiseWinAltIfNeeded(uint vk)
 		{
 			// Caller has ensured that vk is about to have a key-up event, so if the event immediately
 			// prior to this one is a key-down of the same type of modifier key, it's our job here
@@ -511,7 +511,7 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="explicitlyGet"></param>
 		/// <returns></returns>
-		internal override int GetModifierLRState(bool explicitlyGet = false)
+		internal override uint GetModifierLRState(bool explicitlyGet = false)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 
@@ -524,7 +524,7 @@ namespace Keysharp.Core.Windows
 			// accurate key state when a console window is active, it seems.  I've also seen other
 			// cases where GetKeyboardState() is incorrect (at least under WinXP) when GetKeyState(),
 			// in its place, yields the correct info.  Very strange.
-			var modifiersLR = 0;  // Allows all to default to up/off to simplify the below.
+			var modifiersLR = 0u;  // Allows all to default to up/off to simplify the below.
 
 			if (ht.IsKeyDownAsync(VK_LSHIFT)) modifiersLR |= MOD_LSHIFT;
 
@@ -602,7 +602,7 @@ namespace Keysharp.Core.Windows
 			//  return g_KeybdHook ? (g_modifiersLR_logical & g_modifiersLR_get) : g_modifiersLR_get;
 		}
 
-		internal override void InitEventArray(int maxEvents, int modifiersLR)
+		internal override void InitEventArray(int maxEvents, uint modifiersLR)
 		{
 			eventSi.Clear();
 			eventPb.Clear();
@@ -655,7 +655,7 @@ namespace Keysharp.Core.Windows
 			return hasaltgr;
 		}
 
-		internal override void MouseClick(int vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
+		internal override void MouseClick(uint vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{
 			// Check if one of the coordinates is missing, which can happen in cases where this was called from
 			// a source that didn't already validate it (such as MouseClick, %x%, %BlankVar%).
@@ -697,7 +697,7 @@ namespace Keysharp.Core.Windows
 			// some existing scripts.  Maybe it can be a script option in the future.  In the meantime,
 			// it seems best not to adjust the modifiers for any mouse events and just document that
 			// behavior in the MouseClick command.
-			switch ((ushort)vk)
+			switch (vk)
 			{
 				case VK_WHEEL_UP:
 					MouseEvent(eventFlags | (uint)MOUSEEVENTF.WHEEL, (uint)(repeatCount * WindowsAPI.WHEEL_DELTA), x, y);  // It ignores aX and aY when MOUSEEVENTF_MOVE is absent.
@@ -859,7 +859,7 @@ namespace Keysharp.Core.Windows
 				case VK_XBUTTON2:
 					eventDown = (uint)MOUSEEVENTF.XDOWN;
 					eventUp = (uint)MOUSEEVENTF.XUP;
-					eventData = (uint)((vk == VK_XBUTTON1) ? WindowsAPI.XBUTTON1 : WindowsAPI.XBUTTON2);
+					eventData = (vk == VK_XBUTTON1) ? WindowsAPI.XBUTTON1 : WindowsAPI.XBUTTON2;
 					break;
 			} // switch()
 
@@ -899,7 +899,7 @@ namespace Keysharp.Core.Windows
 			workaroundVK = 0; // Reset this indicator in all cases except those for which above already returned.
 		}
 
-		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative)
+		internal override void MouseClickDrag(uint vk, int x1, int y1, int x2, int y2, long speed, bool relative)
 		{
 			// Check if one of the coordinates is missing, which can happen in cases where this was called from
 			// a source that didn't already validate it. Can't call Line::ValidateMouseCoords() because that accepts strings.
@@ -947,7 +947,7 @@ namespace Keysharp.Core.Windows
 				case WindowsAPI.VK_XBUTTON2:
 					eventdown = (uint)MOUSEEVENTF.XDOWN;
 					eventup = (uint)MOUSEEVENTF.XUP;
-					eventdata = (vk == WindowsAPI.VK_XBUTTON1) ? (uint)WindowsAPI.XBUTTON1 : (uint)WindowsAPI.XBUTTON2;
+					eventdata = (vk == WindowsAPI.VK_XBUTTON1) ? XBUTTON1 : XBUTTON2;
 					break;
 			}
 
@@ -1359,7 +1359,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="sc"></param>
 		/// <param name="eventFlags"></param>
 		/// <param name="extraInfo"></param>
-		internal void PutKeybdEventIntoArray(int keyAsModifiersLR, int vk, int sc, uint eventFlags, uint extraInfo)
+		internal void PutKeybdEventIntoArray(uint keyAsModifiersLR, uint vk, uint sc, uint eventFlags, uint extraInfo)
 		{
 			var key_up = (eventFlags & WindowsAPI.KEYEVENTF_KEYUP) != 0;
 
@@ -1589,7 +1589,7 @@ namespace Keysharp.Core.Windows
 				// such keys take up to 3 or 4 times as long to send (AutoIt3 avoids doing the
 				// delay also).  Note that strings longer than 4 digits are allowed because
 				// some or all OSes support Unicode characters 0 through 65535.
-				SendKeyEvent(KeyEventTypes.KeyDownAndUp, ascii[index] + 48);
+				SendKeyEvent(KeyEventTypes.KeyDownAndUp, (uint)(ascii[index] + 48));
 			}
 
 			// Must release the key regardless of whether it was already down, so that the sequence will take effect
@@ -1611,7 +1611,7 @@ namespace Keysharp.Core.Windows
 		/// <param name=""></param>
 		/// <param name=""></param>
 		/// <param name="modsDuringSend"></param>
-		internal override void SendEventArray(ref long finalKeyDelay, int modsDuringSend)
+		internal override void SendEventArray(ref long finalKeyDelay, uint modsDuringSend)
 		{
 			if (sendMode == SendModes.Input)
 			{
@@ -1785,8 +1785,8 @@ namespace Keysharp.Core.Windows
 		/// <param name="x"></param>
 		/// <param name="y"></param>
 		/// <param name="moveOffset"></param>
-		internal override void SendKey(int vk, int sc, int modifiersLR, int modifiersLRPersistent
-									   , long repeatCount, KeyEventTypes eventType, int keyAsModifiersLR, IntPtr targetWindow
+		internal override void SendKey(uint vk, uint sc, uint modifiersLR, uint modifiersLRPersistent
+									   , long repeatCount, KeyEventTypes eventType, uint keyAsModifiersLR, IntPtr targetWindow
 									   , int x = CoordUnspecified, int y = CoordUnspecified, bool moveOffset = false)
 		{
 			// Caller is now responsible for verifying this:
@@ -1940,7 +1940,7 @@ namespace Keysharp.Core.Windows
 					// causes ^-modified hotkeys to fire when they shouldn't and prevents non-^ hotkeys from firing.
 					// By ignoring the current modifier state and only specifying the modifiers we want released,
 					// we avoid any chance of sending any unwanted key-down:
-					SetModifierLRState(0, winAltToBeReplaced, targetWindow, true, false); // It also does DoKeyDelay(g->PressDuration).
+					SetModifierLRState(0u, winAltToBeReplaced, targetWindow, true, false); // It also does DoKeyDelay(g->PressDuration).
 				}
 			}
 		}
@@ -1965,7 +1965,7 @@ namespace Keysharp.Core.Windows
 				return;
 
 			var origLastPeekTime = lastPeekTime;
-			byte modsExcludedFromBlind = 0;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
+			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
 			var i = 0;
 			var sub = keys;
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -2155,9 +2155,9 @@ namespace Keysharp.Core.Windows
 			// keys that are also logically down (it's possible for a key to be down physically
 			// but not logically such as when R-control, for example, is a suffix hotkey and the
 			// user is physically holding it down):
-			int modsDownPhysicallyOrig,
-				modsDownPhysicallyAndLogically,
-				modsDownPhysicallyButNotLogicallyOrig;
+			uint modsDownPhysicallyOrig,
+				 modsDownPhysicallyAndLogically,
+				 modsDownPhysicallyButNotLogicallyOrig;
 
 			//if (hookId != IntPtr.Zero)
 			if (ht.HasKbdHook())
@@ -2174,7 +2174,7 @@ namespace Keysharp.Core.Windows
 				// DWORD subtraction still gives the right answer as long as g_script.mThisHotkeyStartTime
 				// itself isn't more than about 49 days ago:
 				if ((DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < Accessors.hotkeyModifierTimeout) // Elapsed time < timeout-value
-					modsDownPhysicallyOrig = (modsCurrent & thisHotkeyModifiersLR); // Bitwise AND is set intersection.
+					modsDownPhysicallyOrig = modsCurrent & thisHotkeyModifiersLR; // Bitwise AND is set intersection.
 				else
 					// Since too much time as passed since the user pressed the hotkey, it seems best,
 					// based on the action that will occur below, to assume that no hotkey modifiers
@@ -2202,8 +2202,8 @@ namespace Keysharp.Core.Windows
 			// to enforce it as "always-down" during the send operation.  Thus, the key would
 			// basically get stuck down even after the send was over:
 			modifiersLRPersistent &= modsCurrent & ~modsDownPhysicallyAndLogically;
-			int persistentModifiersForThisSendKeys;
-			var modsReleasedForSelectiveBlind = 0;
+			uint persistentModifiersForThisSendKeys;
+			var modsReleasedForSelectiveBlind = 0u;
 
 			if (inBlindMode)
 			{
@@ -2216,8 +2216,8 @@ namespace Keysharp.Core.Windows
 
 				if (modsExcludedFromBlind != 0) // Caller specified modifiers to exclude from Blind treatment.
 				{
-					persistentModifiersForThisSendKeys &= (~modsExcludedFromBlind);
-					modsReleasedForSelectiveBlind = (modsCurrent ^ persistentModifiersForThisSendKeys);
+					persistentModifiersForThisSendKeys &= ~modsExcludedFromBlind;
+					modsReleasedForSelectiveBlind = modsCurrent ^ persistentModifiersForThisSendKeys;
 				}
 			}
 			else
@@ -2263,14 +2263,14 @@ namespace Keysharp.Core.Windows
 			if (doSelectiveBlockInput)
 				_ = Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 
-			var vk = 0;
-			var sc = 0;
-			var keyAsModifiersLR = 0;
-			int? modsForNextKey = 0;
+			var vk = 0u;
+			var sc = 0u;
+			var keyAsModifiersLR = 0u;
+			uint? modsForNextKey = 0u;
 			// Above: For v1.0.35, it was changed to modLR vs. mod so that AltGr keys such as backslash and '{'
 			// are supported on layouts such as German when sending to apps such as Putty that are fussy about
 			// which ALT key is held down to produce the character.
-			var thisEventModifierDown = 0;
+			var thisEventModifierDown = 0u;
 			var keyTextLength = 0;
 			var keyNameLength = 0;
 			int endPos;//, spacePos;
@@ -2710,7 +2710,7 @@ namespace Keysharp.Core.Windows
 				}
 			} // for()
 
-			int modsToSet;
+			uint modsToSet;
 
 			if (sendMode != SendModes.Event)
 			{
@@ -2744,10 +2744,10 @@ namespace Keysharp.Core.Windows
 					//    installed.  This too is documented, so scripts should generally avoid using SendInput when
 					//    they know there are other LL hooks in the system.  In any case, there's no known solution
 					//    for it, so nothing can be done.
-					modsToSet = (persistentModifiersForThisSendKeys
-								 | modifiersLRRemapped // Restore any modifiers which were put in the down state by remappings or {key DownR} prior to this Send.
-								 | (inBlindMode ? modsReleasedForSelectiveBlind
-									: (modsDownPhysicallyOrig & ~modsDownPhysicallyButNotLogicallyOrig))); // The last item is usually 0.
+					modsToSet = persistentModifiersForThisSendKeys
+								| modifiersLRRemapped // Restore any modifiers which were put in the down state by remappings or {key DownR} prior to this Send.
+								| (inBlindMode ? modsReleasedForSelectiveBlind
+								   : (modsDownPhysicallyOrig & ~modsDownPhysicallyButNotLogicallyOrig)); // The last item is usually 0.
 					// Above: When in blind mode, don't restore physical modifiers.  This is done to allow a hotkey
 					// such as the following to release Shift:
 					//    +space::SendInput/Play {Blind}{Shift up}
@@ -2767,7 +2767,7 @@ namespace Keysharp.Core.Windows
 			{
 				// Determine (or use best-guess, if necessary) which modifiers are down physically now as opposed
 				// to right before the Send began.
-				var modsDownPhysically = 0; // As compared to modsDownPhysicallyOrig.
+				var modsDownPhysically = 0u; // As compared to modsDownPhysicallyOrig.
 
 				if (ht.HasKbdHook())
 					modsDownPhysically = modifiersLRPhysical;
@@ -2926,7 +2926,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="ch"></param>
 		/// <param name="repeatCount"></param>
 		/// <param name="modifiersLR"></param>
-		internal void SendKeySpecial(char ch, long repeatCount, int modifiersLR)
+		internal void SendKeySpecial(char ch, long repeatCount, uint modifiersLR)
 		{
 			// Caller must verify that aRepeatCount >= 1.
 			// Avoid changing modifier states and other things if there is nothing to be sent.
@@ -3008,7 +3008,7 @@ namespace Keysharp.Core.Windows
 			//    modify and thus not need to be disguised.
 		}
 
-		internal void SendUnicodeChar(char ch, int modifiers)
+		internal void SendUnicodeChar(char ch, uint modifiers)
 		{
 			// Set modifier keystate as specified by caller.  Generally this will be 0, since
 			// key combinations with Unicode packets either do nothing at all or do the same as
@@ -3068,7 +3068,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="disguiseDownWinAlt"></param>
 		/// <param name="disguiseUpWinAlt"></param>
 		/// <param name="extraInfo"></param>
-		internal void SetModifierLRState(int modifiersLRnew, int modifiersLRnow, IntPtr targetWindow
+		internal void SetModifierLRState(uint modifiersLRnew, uint modifiersLRnow, IntPtr targetWindow
 										 , bool disguiseDownWinAlt, bool disguiseUpWinAlt, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
 			if (modifiersLRnow == modifiersLRnew) // They're already in the right state, so avoid doing all the checks.
@@ -3516,7 +3516,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="vk"></param>
 		/// <param name="toggleValue"></param>
 		/// <returns></returns>
-		internal override ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue)
+		internal override ToggleValueType ToggleKeyState(uint vk, ToggleValueType toggleValue)
 		{
 			// Can't use IsKeyDownAsync/GetAsyncKeyState() because it doesn't have this info:
 			var startingState = Keysharp.Scripting.Script.HookThread.IsKeyToggledOn(vk) ? ToggleValueType.On : ToggleValueType.Off;
@@ -3701,7 +3701,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="doKeyDelay"></param>
 		/// <param name="extraInfo"></param>
 		///
-		protected internal override void SendKeyEvent(KeyEventTypes eventType, int vk, int sc = 0, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
+		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
 			if ((vk | sc) == 0)//If neither VK nor SC was specified, return.
 				return;
@@ -3737,13 +3737,13 @@ namespace Keysharp.Core.Windows
 				sc = ht.MapVkToSc(vk);
 
 			var scLowByte = (sc & 0xFF);
-			var eventFlags = ((sc >> 8) & 0xFF) != 0 ? (uint)WindowsAPI.KEYEVENTF_EXTENDEDKEY : 0u;
+			var eventFlags = ((sc >> 8) & 0xFF) != 0 ? KEYEVENTF_EXTENDEDKEY : 0u;
 
 			// v1.0.43: Apparently, the journal playback hook requires neutral modifier keystrokes
 			// rather than left/right ones.  Otherwise, the Shift key can't capitalize letters, etc.
 			if (sendMode == SendModes.Play)
 			{
-				switch ((ushort)vk)
+				switch (vk)
 				{
 					case VK_LCONTROL:
 					case VK_RCONTROL: vk = VK_CONTROL; break; // But leave scan code set to a left/right specific value rather than converting it to "left" unconditionally.
@@ -3797,7 +3797,7 @@ namespace Keysharp.Core.Windows
 					// It's rarely if ever called that way anyway.
 
 					// If vk is a left/right specific key, be sure to also update the state of the neutral key:
-					switch ((ushort)vk)
+					switch (vk)
 					{
 						case VK_LCONTROL:
 						case VK_RCONTROL:
@@ -3838,7 +3838,7 @@ namespace Keysharp.Core.Windows
 				var lParam = (long)(sc << 16);
 
 				if (eventType != KeyEventTypes.KeyUp)  // i.e. always do it for KEYDOWNANDUP
-					_ = WindowsAPI.PostMessage(targetWindow, WM_KEYDOWN, (uint)vk, (uint)(lParam | 0x00000001));
+					_ = WindowsAPI.PostMessage(targetWindow, WM_KEYDOWN, vk, (uint)(lParam | 0x00000001));
 
 				// The press-duration delay is done only when this is a down-and-up because otherwise,
 				// the normal g->KeyDelay will be in effect.  In other words, it seems undesirable in
@@ -3847,7 +3847,7 @@ namespace Keysharp.Core.Windows
 					DoKeyDelay((long)Accessors.A_KeyDuration); // Since aTargetWindow!=NULL, sendMode!=SM_PLAY, so no need for to ever use the SendPlay press-duration.
 
 				if (eventType != KeyEventTypes.KeyDown)
-					_ = WindowsAPI.PostMessage(targetWindow, WM_KEYUP, (uint)vk, (uint)(lParam | 0xC0000001));
+					_ = WindowsAPI.PostMessage(targetWindow, WM_KEYUP, vk, (uint)(lParam | 0xC0000001));
 			}
 			else // Keystrokes are to be sent with keybd_event() or the event array rather than PostMessage().
 			{

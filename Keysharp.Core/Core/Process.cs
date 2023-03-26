@@ -309,7 +309,7 @@ namespace Keysharp.Core
 					if (wait)
 					{
 						prc.WaitForExit();
-						return (pid, (long)prc.ExitCode);
+						return (pid, prc.ExitCode);
 					}
 				}
 			}

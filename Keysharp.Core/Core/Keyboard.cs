@@ -129,13 +129,13 @@ namespace Keysharp.Core
 			var mode = obj1.As();
 			var ht = Keysharp.Scripting.Script.HookThread;
 			Keysharp.Core.Common.Joystick.JoyControls joy;
-			int? joystickid = 0;
-			int? dummy = null;
+			uint? joystickid = 0u;
+			uint? dummy = null;
 			var vk = ht.TextToVK(keyname, ref dummy, false, true, WindowsAPI.GetKeyboardLayout(0));
 
 			if (vk == 0)
 			{
-				if ((joy = (JoyControls)Joystick.ConvertJoy(keyname, ref joystickid)) == 0)
+				if ((joy = Joystick.ConvertJoy(keyname, ref joystickid)) == 0)
 					throw new ValueError("Invalid value.");//It is neither a key name nor a joystick button/axis.
 
 				return Joystick.ScriptGetJoyState(joy, joystickid.Value);
@@ -443,14 +443,14 @@ break_twice:;
 			bool waitIndefinitely;
 			int sleepDuration;
 			DateTime startTime;
-			int vk; // For GetKeyState.
+			uint vk; // For GetKeyState.
 			bool waitForKeyDown;
 			KeyStateTypes keyStateType;
 			var joy = JoyControls.Invalid;
-			int? joystickId = 0;
+			uint? joystickId = 0;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
-			int? modLR = null;
+			uint? modLR = null;
 
 			if ((vk = ht.TextToVK(keyname, ref modLR, false, true, WindowsAPI.GetKeyboardLayout(0))) == 0)
 			{
@@ -593,7 +593,7 @@ break_twice:;
 
 			return ToggleValueType.Invalid;
 		}
-		internal static string GetKeyNameHelper(int vk, int sc, string def = "not found")
+		internal static string GetKeyNameHelper(uint vk, uint sc, string def = "not found")
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var buf = ""; // Set default.
@@ -640,7 +640,7 @@ break_twice:;
 		/// <param name="vk"></param>
 		/// <param name="keyStateType"></param>
 		/// <returns>true if down, else false</returns>
-		internal static bool ScriptGetKeyState(int vk, KeyStateTypes keyStateType)
+		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
@@ -692,9 +692,9 @@ break_twice:;
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
-			var vk = 0;
-			var sc = 0;
-			int? modLR = null;
+			var vk = 0u;
+			var sc = 0u;
+			uint? modLR = null;
 			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, WindowsAPI.GetKeyboardLayout(0));//Need to make cross platform.
 
 			switch (callid)
@@ -731,7 +731,7 @@ break_twice:;
 
 			return true;
 		}
-		private static void SetToggleState(int vk, ref ToggleValueType forceLock, string toggleText)
+		private static void SetToggleState(uint vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Keysharp.Core.Options.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);
 			var ht = Keysharp.Scripting.Script.HookThread;

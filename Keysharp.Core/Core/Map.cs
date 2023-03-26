@@ -157,7 +157,7 @@ namespace Keysharp.Core
 					val = temp;
 			}
 
-			return val != long.MinValue ? val : (object)string.Empty;
+			return val != long.MinValue ? val : string.Empty;
 		}
 
 		public object MinIndex()
@@ -172,7 +172,7 @@ namespace Keysharp.Core
 					val = temp;
 			}
 
-			return val != long.MaxValue ? val : (object)string.Empty;
+			return val != long.MaxValue ? val : string.Empty;
 		}
 
 		public void Set(params object[] values)

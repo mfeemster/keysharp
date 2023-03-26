@@ -86,9 +86,9 @@ namespace Keysharp.Scripting
 			else if (input is bool b)
 				return b ? 1m : 0m;
 			else if (input is byte by)
-				return (decimal)by;
+				return by;
 			else if (input is char c)
-				return (decimal)c;
+				return c;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -106,7 +106,7 @@ namespace Keysharp.Scripting
 			if (input is double d)
 				return d;
 			else if (input is long l)
-				return (double)l;
+				return l;
 			else if (input is string s)
 			{
 				if (s != "")
@@ -130,19 +130,19 @@ namespace Keysharp.Scripting
 			else if (input is bool b)
 				return b ? 1.0 : 0.0;
 			else if (input is byte by)
-				return (double)by;
+				return by;
 			else if (input is char c)
-				return (double)c;
+				return c;
 			else if (input is null)
 				return 0.0;
 			else if (input is int i)//These should never happen.
-				return (double)i;
+				return i;
 			else if (input is float f)
 				return (double)f;
 			else if (input is uint ui)
-				return (double)ui;
+				return ui;
 			else if (input is ulong ul)
-				return (double)ul;
+				return ul;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -189,9 +189,9 @@ namespace Keysharp.Scripting
 			else if (input is bool b)
 				return b ? 1 : 0;
 			else if (input is byte by)
-				return (int)by;
+				return by;
 			else if (input is char c)
-				return (int)c;
+				return c;
 			else if (input is null)
 				return 0;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
@@ -240,9 +240,9 @@ namespace Keysharp.Scripting
 			else if (input is bool b)
 				return b ? 1 : 0;
 			else if (input is byte by)
-				return (long)by;
+				return by;
 			else if (input is char c)
-				return (long)c;
+				return c;
 			else if (input is null)
 				return 0;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)

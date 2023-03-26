@@ -755,7 +755,7 @@ namespace Keysharp.Core.Windows
 				click.Y = size.Height / 2;
 			}
 
-			var lparam = new IntPtr(Conversions.MakeInt((short)click.X, (short)click.Y));
+			var lparam = new IntPtr(Conversions.MakeInt(click.X, click.Y));
 			_ = WindowsAPI.PostMessage(Handle, (uint)mouseevent, new IntPtr(1), lparam);
 		}
 

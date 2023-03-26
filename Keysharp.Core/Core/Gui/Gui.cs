@@ -1579,11 +1579,11 @@ namespace Keysharp.Core
 						}
 						else if (Options.TryParse(split, "-E", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, dwNewLong: new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() & ~(long)temp));
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, dwNewLong: new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() & ~temp));
 						}
 						else if (Options.TryParse(split, "-", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() & ~(long)temp));
+							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() & ~temp));
 						}
 						else if (Options.TryParse(split, "+", ref temp))
 						{
@@ -1808,9 +1808,9 @@ namespace Keysharp.Core
 					else if (control is CheckBox cb)
 						dkt[cb.Name] = cb.Checked ? 1L : 0L;
 					else if (control is TabControl tc)
-						dkt[tc.Name] = !guictrl.AltSubmit ? tc.SelectedTab != null ? tc.SelectedTab.Text : "" : (object)(long)(tc.SelectedIndex + 1);
+						dkt[tc.Name] = !guictrl.AltSubmit ? tc.SelectedTab != null ? tc.SelectedTab.Text : "" : (long)(tc.SelectedIndex + 1);
 					else if (control is ComboBox cmb)
-						dkt[cmb.Name] = !guictrl.AltSubmit || cmb.Items.IndexOf(cmb.Text) == -1 ? cmb.Text : (object)(long)(cmb.SelectedIndex + 1);
+						dkt[cmb.Name] = !guictrl.AltSubmit || cmb.Items.IndexOf(cmb.Text) == -1 ? cmb.Text : (long)(cmb.SelectedIndex + 1);
 					else if (control is TrackBar tb)
 						dkt[tb.Name] = tb.Value;
 					else if (control is ListBox lb)
@@ -1819,7 +1819,7 @@ namespace Keysharp.Core
 									   ? guictrl.Value
 									   : lb.SelectionMode == SelectionMode.One
 									   ? lb.SelectedItem as string ?? ""
-									   : (object)new Array(lb.SelectedItems.Cast<object>().Where(xx => xx is string).Select(x => x as string).ToList());
+									   : new Array(lb.SelectedItems.Cast<object>().Where(xx => xx is string).Select(x => x as string).ToList());
 					}
 					else if (control is RadioButton rb)//This is supposed to do something special if it's part of a group, but unsure how to determine that.
 					{
@@ -2179,7 +2179,7 @@ namespace Keysharp.Core
 					{
 						if (ctrlkv.Value is GuiControl gc)
 						{
-							if (string.Compare(gc.ClassNN as string, s, true) == 0)
+							if (string.Compare(gc.ClassNN, s, true) == 0)
 								return gc;
 						}
 					}

@@ -16,7 +16,7 @@ namespace Keysharp.Core.Common.Joystick
 		/// that can fit in a sc_type (USHORT) is returned, which is true since the joystick buttons
 		/// are very small numbers (JOYCTRL_1==12).
 		/// </summary>
-		internal static JoyControls ConvertJoy(string buf, ref int? joystickID, bool allowOnlyButtons = false)
+		internal static JoyControls ConvertJoy(string buf, ref uint? joystickID, bool allowOnlyButtons = false)
 		{
 			if (joystickID != null)
 				joystickID = 0;  // Set default output value for the caller.
@@ -30,8 +30,8 @@ namespace Keysharp.Core.Common.Joystick
 
 			if (index < buf.Length) // The string starts with a number.
 			{
-				var val = buf.ParseInt(false);
-				var joystick_id = val.HasValue ? val.Value - 1 : 0;
+				var val = buf.ParseUInt(false);
+				var joystick_id = val.HasValue ? val.Value - 1 : 0u;
 
 				if (joystick_id < 0 || joystick_id >= MaxJoysticks)
 					return JoyControls.Invalid;
@@ -133,7 +133,7 @@ namespace Keysharp.Core.Common.Joystick
 			}
 		}
 
-		internal static object ScriptGetJoyState(JoyControls joy, int joystickID)
+		internal static object ScriptGetJoyState(JoyControls joy, uint joystickID)
 		// Caller must ensure that aToken.marker is a buffer large enough to handle the longest thing put into
 		// it here, which is currently jc.szPname (size=32). Caller has set aToken.symbol to be SYM_STRING.
 		// aToken is used for the value being returned by GetKeyState() to the script, while this function's
@@ -161,7 +161,7 @@ namespace Keysharp.Core.Common.Joystick
 			{
 				jie.dwFlags = WindowsAPI.JOY_RETURNALL;
 
-				if (WindowsAPI.joyGetPosEx(joystickID, ref jie) != WindowsAPI.JOYERR_NOERROR)
+				if (WindowsAPI.joyGetPosEx((int)joystickID, ref jie) != WindowsAPI.JOYERR_NOERROR)
 					return false; // And leave aToken set to blank.
 
 				if (joyIsButton)

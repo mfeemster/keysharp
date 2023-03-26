@@ -59,7 +59,7 @@ namespace Keysharp.Core.Common.Keyboard
 			return "";
 		}
 
-		internal void UpdateKeyEventHistory(bool keyUp, int vk, int sc)
+		internal void UpdateKeyEventHistory(bool keyUp, uint vk, uint sc)
 		{
 			if (keyHistory.Count == 0)//Don't update if the count is 0, meaning key history is disabled.
 				return;
@@ -127,7 +127,7 @@ namespace Keysharp.Core.Common.Keyboard
 		// space=none, i=ignored, s=suppressed, h=hotkey, etc.
 		internal bool keyUp;
 
-		internal int sc;
+		internal uint sc;
 
 		// It seems better to store the foreground window's title rather than its HWND since keystrokes
 		// might result in a window closing (being destroyed), in which case the displayed key history
@@ -139,6 +139,6 @@ namespace Keysharp.Core.Common.Keyboard
 		// to keep it simple:
 		internal string targetWindow = "";
 
-		internal int vk;
+		internal uint vk;
 	}
 }

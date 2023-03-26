@@ -9,17 +9,17 @@ namespace Keysharp.Core.Common.Threading
 {
 	internal abstract class HookThread//Fill in base stuff here later, but this serves as the thread which attaches/detaches the keyboard hooks.
 	{
-		internal const int END_KEY_ENABLED = END_KEY_WITH_SHIFT | END_KEY_WITHOUT_SHIFT;
-		internal const int END_KEY_WITH_SHIFT = 0x01;
-		internal const int END_KEY_WITHOUT_SHIFT = 0x02;
-		internal const int INPUT_KEY_DOWN_SUPPRESSED = 0x80;
-		internal const int INPUT_KEY_IGNORE_TEXT = 0x10;
-		internal const int INPUT_KEY_IS_TEXT = 0x40;
-		internal const int INPUT_KEY_NOTIFY = 0x20;
-		internal const int INPUT_KEY_OPTION_MASK = 0x3F;
-		internal const int INPUT_KEY_SUPPRESS = 0x04;
-		internal const int INPUT_KEY_VISIBILITY_MASK = INPUT_KEY_SUPPRESS | INPUT_KEY_VISIBLE;
-		internal const int INPUT_KEY_VISIBLE = 0x08;
+		internal const uint END_KEY_ENABLED = END_KEY_WITH_SHIFT | END_KEY_WITHOUT_SHIFT;
+		internal const uint END_KEY_WITH_SHIFT = 0x01;
+		internal const uint END_KEY_WITHOUT_SHIFT = 0x02;
+		internal const uint INPUT_KEY_DOWN_SUPPRESSED = 0x80;
+		internal const uint INPUT_KEY_IGNORE_TEXT = 0x10;
+		internal const uint INPUT_KEY_IS_TEXT = 0x40;
+		internal const uint INPUT_KEY_NOTIFY = 0x20;
+		internal const uint INPUT_KEY_OPTION_MASK = 0x3F;
+		internal const uint INPUT_KEY_SUPPRESS = 0x04;
+		internal const uint INPUT_KEY_VISIBILITY_MASK = INPUT_KEY_SUPPRESS | INPUT_KEY_VISIBLE;
+		internal const uint INPUT_KEY_VISIBLE = 0x08;
 		internal const int SC_ARRAY_COUNT = SC_MAX + 1;
 		internal const int SC_MAX = 0x1FF;
 		internal const int VK_ARRAY_COUNT = VK_MAX + 1;
@@ -32,13 +32,13 @@ namespace Keysharp.Core.Common.Threading
 
 		internal static System.Threading.Mutex keybdMutex, mouseMutex;
 		internal static string KeybdMutexName = "Keysharp Keybd";
-		internal static Dictionary<string, int> keyToSc;
-		internal static Dictionary<string, int> keyToVk;
-		internal static int KSCM_SIZE = (KeyboardMouseSender.MODLR_MAX + 1) * SC_ARRAY_COUNT;
-		internal static int KVKM_SIZE = (KeyboardMouseSender.MODLR_MAX + 1) * VK_ARRAY_COUNT;
+		internal static Dictionary<string, uint> keyToSc;
+		internal static Dictionary<string, uint> keyToVk;
+		internal static int KSCM_SIZE = (int)((KeyboardMouseSender.MODLR_MAX + 1) * SC_ARRAY_COUNT);
+		internal static int KVKM_SIZE = (int)((KeyboardMouseSender.MODLR_MAX + 1) * VK_ARRAY_COUNT);
 		internal static string MouseMutexName = "Keysharp Mouse";
 		internal static string[] vksc = new string[] { "vk", "sc" };
-		internal static Dictionary<int, string> vkToKey = new Dictionary<int, string>();
+		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
 		internal bool blockWinKeys;
 		internal IntPtr hsHwnd = IntPtr.Zero;
 		internal bool hsResetUponMouseClick = true;
@@ -96,9 +96,9 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract void ChangeHookState(List<HotkeyDefinition> hk, HookType whichHook, HookType whichHookAlways);
 
-		internal abstract int CharToVKAndModifiers(char ch, ref int? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false);
+		internal abstract uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false);
 
-		internal abstract int ConvertMouseButton(string buf, bool allowWheel = true);
+		internal abstract uint ConvertMouseButton(string buf, bool allowWheel = true);
 
 		internal HookType GetActiveHooks()
 		{
@@ -153,13 +153,13 @@ namespace Keysharp.Core.Common.Threading
 
 		internal virtual bool IsHotstringWordChar(char ch) => char.IsLetterOrDigit(ch) ? true : !char.IsWhiteSpace(ch);
 
-		internal abstract bool IsKeyDown(int vk);
+		internal abstract bool IsKeyDown(uint vk);
 
-		internal abstract bool IsKeyDownAsync(int vk);
+		internal abstract bool IsKeyDownAsync(uint vk);
 
-		internal abstract bool IsKeyToggledOn(int vk);
+		internal abstract bool IsKeyToggledOn(uint vk);
 
-		internal abstract bool IsMouseVK(int vk);
+		internal abstract bool IsMouseVK(uint vk);
 
 		internal bool IsReadThreadCompleted()
 		=> channelReadThread != null&&
@@ -173,15 +173,15 @@ namespace Keysharp.Core.Common.Threading
 		channelReadThread.Result != null&&
 		!channelReadThread.Result.IsCompleted;
 
-		internal abstract bool IsWheelVK(int vk);
+		internal abstract bool IsWheelVK(uint vk);
 
-		internal abstract int KeyToModifiersLR(int vk, int sc, ref bool? isNeutral);
+		internal abstract uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral);
 
-		internal ref uint Kscm(int i, int j) => ref kscm[(i * SC_ARRAY_COUNT) + j];
+		internal ref uint Kscm(uint i, uint j) => ref kscm[(i * SC_ARRAY_COUNT) + j];
 
-		internal ref uint Kvkm(int i, int j) => ref kvkm[(i * VK_ARRAY_COUNT) + j];
+		internal ref uint Kvkm(uint i, uint j) => ref kvkm[(i * VK_ARRAY_COUNT) + j];
 
-		internal void LinkKeysForCustomCombo(int neutral, int left, int right)
+		internal void LinkKeysForCustomCombo(uint neutral, uint left, uint right)
 		{
 			var first_neutral = kvk[neutral].firstHotkey;
 
@@ -193,16 +193,16 @@ namespace Keysharp.Core.Common.Threading
 			HotkeyDefinition.CustomComboLast(ref kvk[right].firstHotkey) = first_neutral;
 		}
 
-		internal abstract int MapScToVk(int sc);
+		internal abstract uint MapScToVk(uint sc);
 
-		internal abstract int MapVkToSc(int vk, bool returnSecondary = false);
+		internal abstract uint MapVkToSc(uint vk, bool returnSecondary = false);
 
-		internal abstract void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset);
+		internal abstract void ParseClickOptions(string options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset);
 
 		internal bool PostMessage(KeysharpMsg msg)
 		=> IsReadThreadRunning()&& channel.Writer.TryWrite(msg);
 
-		internal string SCtoKeyName(int sc, bool useFallback)
+		internal string SCtoKeyName(uint sc, bool useFallback)
 		{
 			foreach (var kv in keyToSc)
 				if (kv.Value == sc)
@@ -236,17 +236,17 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract bool SystemHasAnotherMouseHook();
 
-		internal abstract int TextToSC(string text, ref bool? specifiedByNumber);
+		internal abstract uint TextToSC(string text, ref bool? specifiedByNumber);
 
-		internal abstract int TextToSpecial(string text, ref KeyEventTypes eventType, ref int modifiersLR, bool updatePersistent);
+		internal abstract uint TextToSpecial(string text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent);
 
-		internal abstract int TextToVK(string text, ref int? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout);
+		internal abstract uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout);
 
-		internal abstract bool TextToVKandSC(string text, ref int vk, ref int sc, ref int? modifiersLR, IntPtr keybdLayout);
+		internal abstract bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout);
 
-		internal abstract char VKtoChar(int vk, IntPtr keybdLayout);
+		internal abstract char VKtoChar(uint vk, IntPtr keybdLayout);
 
-		internal string VKtoKeyName(int vk, bool useFallback)
+		internal string VKtoKeyName(uint vk, bool useFallback)
 		{
 			if (vkToKey.TryGetValue(vk, out var name))
 				return name;

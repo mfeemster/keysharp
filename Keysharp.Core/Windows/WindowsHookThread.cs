@@ -27,7 +27,7 @@ namespace Keysharp.Core.Windows
 
 		static WindowsHookThread()
 		{
-			keyToSc = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
+			keyToSc = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
 			{
 				{"NumpadEnter", SC_NUMPADENTER},
 				{"Delete", SC_DELETE},
@@ -44,7 +44,7 @@ namespace Keysharp.Core.Windows
 				{"PgUp", SC_PGUP},
 				{"PgDn", SC_PGDN}
 			};
-			keyToVk = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+			keyToVk = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
 			{
 				{"Numpad0", VK_NUMPAD0},
 				{"Numpad1", VK_NUMPAD1},
@@ -203,7 +203,7 @@ namespace Keysharp.Core.Windows
 			var kbdStruct = new KBDLLHOOKSTRUCT()
 			{
 				vkCode = key,
-				scanCode = (uint)MapVkToSc((int)key),
+				scanCode = MapVkToSc(key),
 				flags = 0,
 				time = (uint)DateTime.Now.Ticks,
 				dwExtraInfo = 0
@@ -458,7 +458,7 @@ namespace Keysharp.Core.Windows
 		/// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		/// neutral one.
 		/// </summary>
-		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, int vk, int sc,
+		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc,
 							  bool keyUp, ulong extraInfo, Keysharp.Core.Common.Keyboard.KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, HotkeyVariant variant)
 		{
 			HotstringDefinition hsOut = null;
@@ -610,7 +610,7 @@ namespace Keysharp.Core.Windows
 						&& (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0) // Neither CTRL key is down.
 					altTabMenuIsVisible = true;
 
-				int modLR;
+				uint modLR;
 
 				if ((modLR = kvk[vk].asModifiersLR) != 0) // It's a modifier key.
 				{
@@ -1044,13 +1044,15 @@ namespace Keysharp.Core.Windows
 				//#endif
 				// At this point, since the above didn't "continue", this hotkey is one without a ModifierVK/SC.
 				// Put it into a temporary array, which will be later sorted:
-				var hkst = new HkSortedType();
-				hkst.idWithFlags = hk.hookAction != 0 ? hk.hookAction : hotkeyIdWithFlags;
-				hkst.vk = hk.vk;
-				hkst.sc = hk.sc;
-				hkst.modifiers = hk.modifiers;
-				hkst.modifiersLR = hk.modifiersLR;
-				hkst.allowExtraModifiers = hk.allowExtraModifiers;
+				var hkst = new HkSortedType
+				{
+					idWithFlags = hk.hookAction != 0 ? hk.hookAction : hotkeyIdWithFlags,
+					vk = hk.vk,
+					sc = hk.sc,
+					modifiers = hk.modifiers,
+					modifiersLR = hk.modifiersLR,
+					allowExtraModifiers = hk.allowExtraModifiers
+				};
 				hkSorted.Add(hkst);
 			}
 
@@ -1061,9 +1063,9 @@ namespace Keysharp.Core.Windows
 				hkSorted.Sort(HkSortedType.SortMostGeneralBeforeLeast);
 				// For each hotkey without a ModifierVK/SC (which override normal modifiers), expand its modifiers and
 				// modifiersLR into its column in the kvkm or kscm arrays.
-				int modifiers, modifiersMerged;
-				int modifiersLRExcluded;
-				int modifiersLR;  // Don't make this modLR_type to avoid integer overflow, since it's a loop-counter.
+				uint modifiers, modifiersMerged;
+				uint modifiersLRExcluded;
+				uint modifiersLR;  // Don't make this modLR_type to avoid integer overflow, since it's a loop-counter.
 				bool prevHkIsKeyUp, thisHkIsKeyUp;
 				int prevHkId, thisHkId;
 
@@ -1287,7 +1289,7 @@ namespace Keysharp.Core.Windows
 			AddRemoveHooks(hooksToBeActive);
 		}
 
-		internal override int CharToVKAndModifiers(char ch, ref int? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false)
+		internal override uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false)
 		// If non-NULL, pModifiersLR contains the initial set of modifiers provided by the caller, to which
 		// we add any extra modifiers required to realize aChar.
 		{
@@ -1298,7 +1300,7 @@ namespace Keysharp.Core.Windows
 
 			// Otherwise:
 			var modPlusVk = WindowsAPI.VkKeyScanEx(ch, keybdLayout); // v1.0.44.03: Benchmark shows that VkKeyScanEx() is the same speed as VkKeyScan() when the layout has been pre-fetched.
-			var vk = modPlusVk & 0xFF;
+			var vk = (uint)(modPlusVk & 0xFF);
 			var keyscanModifiers = (char)((modPlusVk >> 8) & 0xFF);
 
 			if (keyscanModifiers == -1 && vk == 0xFF) // No translation could be made.
@@ -1645,7 +1647,7 @@ namespace Keysharp.Core.Windows
 			return !suppressHotstringFinalChar;
 		}
 
-		internal bool CollectInput(ref KBDLLHOOKSTRUCT ev, int vk, int sc, bool keyUp, bool isIgnored
+		internal bool CollectInput(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, bool keyUp, bool isIgnored
 								   , KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut, ref CaseConformModes caseConformMode, ref char endChar)
 		// Caller is responsible for having initialized aHotstringWparamToPost to HOTSTRING_INDEX_INVALID.
 		// Returns true if the caller should treat the key as visible (non-suppressed).
@@ -1791,7 +1793,7 @@ namespace Keysharp.Core.Windows
 			}
 			else if (transcribeKey)
 			{
-				charCount = ToUnicodeOrAsciiEx((uint)vk, ev.scanCode  // Uses the original scan code, not the adjusted "sc" one.
+				charCount = ToUnicodeOrAsciiEx(vk, ev.scanCode  // Uses the original scan code, not the adjusted "sc" one.
 											   , keyState, sb, Keysharp.Scripting.Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
 				ch = sb.ToString().ToCharArray();
 
@@ -1880,8 +1882,8 @@ namespace Keysharp.Core.Windows
 			if (charCount < 0) // It's a dead key, and it doesn't complete a sequence since in that case char_count would be >= 1.
 			{
 				// Since above did not return, treat_as_visible must be true.
-				pendingDeadKeyVK = (uint)vk;
-				pendingDeadKeySC = (uint)sc;
+				pendingDeadKeyVK = vk;
+				pendingDeadKeySC = sc;
 				pendingDeadKeyUsedShift = (kbdMsSender.modifiersLRLogical & (MOD_LSHIFT | MOD_RSHIFT)) != 0;
 				// Detect AltGr as fully and completely as possible in case the current keyboard layout
 				// doesn't even have an AltGr key.  The section above which references sPendingDeadKeyUsedAltGr
@@ -1913,7 +1915,7 @@ namespace Keysharp.Core.Windows
 				//
 				// The other half of this workaround can be found by searching for "if (dead_key_sequence_complete)".
 				//
-				_ = ToUnicodeOrAsciiEx((uint)vk, ev.scanCode, keyState, sb, Keysharp.Scripting.Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
+				_ = ToUnicodeOrAsciiEx(vk, ev.scanCode, keyState, sb, Keysharp.Scripting.Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
 				return true; // Visible.
 			}
 
@@ -1990,7 +1992,7 @@ namespace Keysharp.Core.Windows
 			return true; // Visible.
 		}
 
-		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, int vk, int sc, char[] ch, int charCount, bool isIgnored)
+		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, char[] ch, int charCount, bool isIgnored)
 		{
 			var input = Keysharp.Scripting.Script.input;
 
@@ -2108,7 +2110,7 @@ namespace Keysharp.Core.Windows
 			return true;
 		}
 
-		internal override int ConvertMouseButton(string buf, bool allowWheel = true)
+		internal override uint ConvertMouseButton(string buf, bool allowWheel = true)
 		{
 			if (buf?.Length == 0 || buf.StartsWith("Left", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("L", StringComparison.OrdinalIgnoreCase))
 				return VK_LBUTTON; // Some callers rely on this default when buf is empty.
@@ -2163,19 +2165,19 @@ namespace Keysharp.Core.Windows
 			return false;
 		}
 
-		internal override bool IsKeyDown(int vk) => (WindowsAPI.GetKeyState(vk) & 0x8000) != 0;
+		internal override bool IsKeyDown(uint vk) => (WindowsAPI.GetKeyState((int)vk) & 0x8000) != 0;
 
-		internal override bool IsKeyDownAsync(int vk) => (WindowsAPI.GetAsyncKeyState(vk) & 0x8000) != 0;
+		internal override bool IsKeyDownAsync(uint vk) => (WindowsAPI.GetAsyncKeyState((int)vk) & 0x8000) != 0;
 
-		internal override bool IsKeyToggledOn(int vk) => (WindowsAPI.GetKeyState(vk) & 0x01) != 0;
+		internal override bool IsKeyToggledOn(uint vk) => (WindowsAPI.GetKeyState((int)vk) & 0x01) != 0;
 
-		internal override bool IsMouseVK(int vk)
+		internal override bool IsMouseVK(uint vk)
 		{
 			return vk >= VK_LBUTTON && vk <= VK_XBUTTON2 && vk != VK_CANCEL
 				   || vk >= VK_NEW_MOUSE_FIRST && vk <= VK_NEW_MOUSE_LAST;
 		}
 
-		internal override bool IsWheelVK(int vk) => vk >= VK_WHEEL_LEFT&& vk <= VK_WHEEL_UP;
+		internal override bool IsWheelVK(uint vk) => vk >= VK_WHEEL_LEFT&& vk <= VK_WHEEL_UP;
 
 		/// <summary>
 		/// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -2187,7 +2189,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="vk"></param>
 		/// <param name="keyUp"></param>
 		/// <returns></returns>
-		internal bool KeybdEventIsPhysical(uint eventFlags, int vk, bool keyUp)
+		internal bool KeybdEventIsPhysical(uint eventFlags, uint vk, bool keyUp)
 		{
 			// MSDN: "The keyboard input can come from the local keyboard driver or from calls to the keybd_event
 			// function. If the input comes from a call to keybd_event, the input was "injected"".
@@ -2236,7 +2238,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="sc"></param>
 		/// <param name="pIsNeutral"></param>
 		/// <returns></returns>
-		internal override int KeyToModifiersLR(int vk, int sc, ref bool? isNeutral)
+		internal override uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral)
 		{
 			if (vk == 0 && sc == 0)
 				return 0;
@@ -2324,7 +2326,7 @@ namespace Keysharp.Core.Windows
 		/// maintainability.  The code size savings as of v1.0.38.06 is 3.5 KB of uncompressed code, but that
 		/// savings will grow larger if more complexity is ever added to the hooks.
 		/// </summary>
-		internal IntPtr LowLevelCommon(IntPtr hook, int code, long wParam, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, int vk, int sc, bool keyUp, ulong extraInfo, uint eventFlags)
+		internal IntPtr LowLevelCommon(IntPtr hook, int code, long wParam, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc, bool keyUp, ulong extraInfo, uint eventFlags)
 		{
 			var hotkeyIdToPost = (uint)HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
 			var isIgnored = KeyboardMouseSender.IsIgnored(extraInfo);
@@ -2423,10 +2425,10 @@ namespace Keysharp.Core.Windows
 			// Keep the following flush with the above to indicate that they're related.
 			// The following is done even if key history is disabled because firing a wheel hotkey via PostMessage gets
 			// the notch count from pKeyHistoryCurr.sc.
-			if (vk == (int)System.Windows.Forms.Keys.Packet) // Win2k/XP: VK_PACKET is used to send Unicode characters as if they were keystrokes.  sc is a 16-bit character code in that case.
+			if (vk == (uint)System.Windows.Forms.Keys.Packet) // Win2k/XP: VK_PACKET is used to send Unicode characters as if they were keystrokes.  sc is a 16-bit character code in that case.
 			{
 				sc = 0; // This held a truncated character code, not to be mistaken for a real scan code.
-				keyHistoryCurr.sc = (int)kbd.scanCode; // Get the full character code.
+				keyHistoryCurr.sc = kbd.scanCode; // Get the full character code.
 				keyHistoryCurr.eventType = 'U'; // Give it a unique identifier even though it can be distinguished by the 4-digit "SC".  'U' vs 'u' to avoid confusion with 'u'=up.
 				// Artificial character input via VK_PACKET isn't supported by hotkeys, since they always work via
 				// keycode, but hotstrings and Input are supported via the macro below when #InputLevel is non-zero.
@@ -2722,7 +2724,7 @@ namespace Keysharp.Core.Windows
 				}
 			}
 
-			int modifiersLRnew;
+			uint modifiersLRnew;
 			var toggleVal = thisKey.ToggleVal(thisKeyIndex);
 			var thisToggleKeyCanBeToggled = toggleVal != null && toggleVal.Value == ToggleValueType.Neutral; // Relies on short-circuit boolean order.
 
@@ -3668,7 +3670,7 @@ namespace Keysharp.Core.Windows
 				case HotkeyDefinition.HOTKEY_ID_ALT_TAB_MENU:  // These cases must occur before the Alt-tab ones due to conditional break.
 				case HotkeyDefinition.HOTKEY_ID_ALT_TAB_AND_MENU:
 				{
-					var whichAltDown = 0;
+					var whichAltDown = 0u;
 
 					if ((kbdMsSender.modifiersLRLogical & MOD_LALT) != 0)
 						whichAltDown = VK_LMENU;
@@ -3712,7 +3714,7 @@ namespace Keysharp.Core.Windows
 						var vkIsAlt = vk == VK_LMENU || vk == VK_RMENU;  // Translated & no longer needed: || vk == VK_MENU;
 						var vkIsShift = vk == VK_LSHIFT || vk == VK_RSHIFT;  // || vk == VK_SHIFT;
 						var vkIsControl = vk == VK_LCONTROL || vk == VK_RCONTROL;  // || vk == VK_CONTROL;
-						var whichShiftDown = 0;
+						var whichShiftDown = 0u;
 
 						if ((kbdMsSender.modifiersLRLogical & MOD_LSHIFT) != 0)
 							whichShiftDown = VK_LSHIFT;
@@ -3721,7 +3723,7 @@ namespace Keysharp.Core.Windows
 						else if (!keyUp && vkIsShift)
 							whichShiftDown = vk;
 
-						var whichControlDown = 0;
+						var whichControlDown = 0u;
 
 						if ((kbdMsSender.modifiersLRLogical & MOD_LCONTROL) != 0)
 							whichControlDown = VK_LCONTROL;
@@ -3766,7 +3768,7 @@ namespace Keysharp.Core.Windows
 								whichAltDown = vk;
 						}
 
-						if (whichAltDown != 0)
+						if (whichAltDown == 0)
 							kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDown, VK_MENU);
 
 						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, VK_TAB); // v1.0.28: KEYDOWNANDUP vs. KEYDOWN.
@@ -4124,55 +4126,65 @@ namespace Keysharp.Core.Windows
 			// What about doubleclicks (e.g. WM_LBUTTONDBLCLK): I checked: They are NOT received.
 			// This is expected because each click in a doubleclick could be separately suppressed by
 			// the hook, which would make it become a non-doubleclick.
-			var vk = 0;
-			var sc = 0; // To be overridden if this even is a wheel turn.
-			int wheelDelta;
+			var vk = 0u;
+			var sc = 0u; // To be overridden if this even is a wheel turn.
 			var keyUp = true;  // Set default to safest value.
 
 			switch (iwParam)
 			{
 				case WM_MOUSEWHEEL:
-				case WM_MOUSEHWHEEL: // v1.0.48: Lexikos: Support horizontal scrolling in Windows Vista and later.
+				case WM_MOUSEHWHEEL:
+				{
+					// v1.0.48: Lexikos: Support horizontal scrolling in Windows Vista and later.
 					// MSDN: "A positive value indicates that the wheel was rotated forward, away from the user;
 					// a negative value indicates that the wheel was rotated backward, toward the user. One wheel
 					// click is defined as WHEEL_DELTA, which is 120."  Testing shows that on XP at least, the
 					// abs(delta) is greater than 120 when the user turns the wheel quickly (also depends on
 					// granularity of wheel hardware); i.e. the system combines multiple turns into a single event.
-					wheelDelta = Conversions.HighWord(lParam.mouseData);
+					var wheelDelta = Conversions.HighWord(lParam.mouseData);
 
 					if (iwParam == WM_MOUSEWHEEL)
 						vk = wheelDelta < 0 ? VK_WHEEL_DOWN : VK_WHEEL_UP;
 					else
 						vk = wheelDelta < 0 ? VK_WHEEL_LEFT : VK_WHEEL_RIGHT;
 
-					sc = (wheelDelta > 0 ? wheelDelta : -wheelDelta); // Note that sc is unsigned.
+					sc = (uint)wheelDelta;
 					keyUp = false; // Always consider wheel movements to be "key down" events.
-					break;
+				}
+				break;
 
-				case WM_LBUTTONUP: vk = VK_LBUTTON; break;
+				case WM_LBUTTONUP:
+					vk = VK_LBUTTON; break;
 
-				case WM_RBUTTONUP: vk = VK_RBUTTON; break;
+				case WM_RBUTTONUP:
+					vk = VK_RBUTTON; break;
 
-				case WM_MBUTTONUP: vk = VK_MBUTTON; break;
+				case WM_MBUTTONUP:
+					vk = VK_MBUTTON; break;
 
 				case WM_NCXBUTTONUP:  // NC means non-client.
-				case WM_XBUTTONUP: vk = (Conversions.HighWord(lParam.mouseData) == XBUTTON1) ? VK_XBUTTON1 : VK_XBUTTON2; break;
+				case WM_XBUTTONUP:
+					vk = Conversions.HighWord(lParam.mouseData) == XBUTTON1 ? VK_XBUTTON1 : VK_XBUTTON2; break;
 
-				case WM_LBUTTONDOWN: vk = VK_LBUTTON; keyUp = false; break;
+				case WM_LBUTTONDOWN:
+					vk = VK_LBUTTON; keyUp = false; break;
 
-				case WM_RBUTTONDOWN: vk = VK_RBUTTON; keyUp = false; break;
+				case WM_RBUTTONDOWN:
+					vk = VK_RBUTTON; keyUp = false; break;
 
-				case WM_MBUTTONDOWN: vk = VK_MBUTTON; keyUp = false; break;
+				case WM_MBUTTONDOWN:
+					vk = VK_MBUTTON; keyUp = false; break;
 
 				case WM_NCXBUTTONDOWN:
-				case WM_XBUTTONDOWN: vk = (Conversions.HighWord(lParam.mouseData) == XBUTTON1) ? VK_XBUTTON1 : VK_XBUTTON2; keyUp = false; break;
+				case WM_XBUTTONDOWN:
+					vk = (Conversions.HighWord(lParam.mouseData) == XBUTTON1) ? VK_XBUTTON1 : VK_XBUTTON2; keyUp = false; break;
 			}
 
 			KBDLLHOOKSTRUCT tempstruct = default;
 			return LowLevelCommon(mouseHook, code, iwParam, ref tempstruct, ref lParam, vk, sc, keyUp, lParam.dwExtraInfo.ToUInt64(), lParam.flags);
 		}
 
-		internal override int MapScToVk(int sc)
+		internal override uint MapScToVk(uint sc)
 		{
 			// aSC is actually a combination of the last byte of the keyboard make code combined with
 			// 0x100 for the extended-key flag.  Although in most cases the flag corresponds to a prefix
@@ -4227,7 +4239,7 @@ namespace Keysharp.Core.Windows
 				sc = 0xE000 | (sc & 0xFF);
 			}
 
-			return (int)MapVirtualKey((uint)sc, MAPVK_VSC_TO_VK_EX);
+			return MapVirtualKey(sc, MAPVK_VSC_TO_VK_EX);
 		}
 
 		/// <summary>
@@ -4244,11 +4256,11 @@ namespace Keysharp.Core.Windows
 		/// <param name="vk"></param>
 		/// <param name="returnSecondary"></param>
 		/// <returns></returns>
-		internal override int MapVkToSc(int vk, bool returnSecondary = false)
+		internal override uint MapVkToSc(uint vk, bool returnSecondary = false)
 		{
 			// Try to minimize the number mappings done manually because MapVirtualKey is a more reliable
 			// way to get the mapping if user has non-standard or custom keyboard layout.
-			var sc = 0;
+			var sc = 0u;
 
 			switch (vk)
 			{
@@ -4269,10 +4281,10 @@ namespace Keysharp.Core.Windows
 			if (sc != 0) // Above found a match.
 				return returnSecondary ? 0 : sc; // Callers rely on zero being returned for VKs that don't have secondary SCs.
 
-			if ((sc = (int)WindowsAPI.MapVirtualKey((uint)vk, WindowsAPI.MAPVK_VK_TO_VSC_EX)) == 0)
+			if ((sc = WindowsAPI.MapVirtualKey(vk, WindowsAPI.MAPVK_VK_TO_VSC_EX)) == 0u)
 				return 0; // Indicate "no mapping".
 
-			if ((sc & 0xE000) != 0) // Prefix byte E0 or E1 (but E1 should only be possible for Pause/Break, which was already handled above).
+			if ((sc & 0xE000) != 0u) // Prefix byte E0 or E1 (but E1 should only be possible for Pause/Break, which was already handled above).
 				sc = 0x0100 | (sc & 0xFF);
 
 			switch (vk)
@@ -4319,7 +4331,7 @@ namespace Keysharp.Core.Windows
 			return returnSecondary ? 0 : sc; // Callers rely on zero being returned for VKs that don't have secondary SCs.
 		}
 
-		internal override void ParseClickOptions(string options, ref int x, ref int y, ref int vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset)
+		internal override void ParseClickOptions(string options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset)
 		{
 			// Set defaults for all output parameters for caller.
 			x = CoordUnspecified;
@@ -4328,7 +4340,7 @@ namespace Keysharp.Core.Windows
 			eventType = KeyEventTypes.KeyDownAndUp;
 			repeatCount = 1L;
 			moveOffset = false;
-			int temp_vk;
+			uint temp_vk;
 
 			foreach (var opt in options.Split(Core.SpaceTabComma, StringSplitOptions.RemoveEmptyEntries))
 			{
@@ -4453,7 +4465,7 @@ namespace Keysharp.Core.Windows
 
 				if (resetKVKandKSC)
 				{
-					for (var i = 0; i < kvk.Length; ++i)
+					for (var i = 0u; i < kvk.Length; ++i)
 						if (!IsMouseVK(i))  // Don't do mouse VKs since those must be handled by the mouse section.
 							kvk[i].ResetKeyTypeState();
 
@@ -4463,7 +4475,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal void SetModifierAsPrefix(int vk, int sc, bool alwaysSetAsPrefix = false)
+		internal void SetModifierAsPrefix(uint vk, uint sc, bool alwaysSetAsPrefix = false)
 		// The caller has already ensured that vk and/or sc is a modifier such as VK_CONTROL.
 		{
 			if (vk != 0)
@@ -4545,7 +4557,7 @@ namespace Keysharp.Core.Windows
 				ksc[sc].usedAsPrefix = KeyType.PREFIX_ACTUAL;
 		}
 
-		internal long SuppressThisKeyFunc(IntPtr hook, ref KBDLLHOOKSTRUCT lParam, int vk, int sc, bool keyUp, ulong extraInfo,
+		internal long SuppressThisKeyFunc(IntPtr hook, ref KBDLLHOOKSTRUCT lParam, uint vk, uint sc, bool keyUp, ulong extraInfo,
 										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, HotkeyVariant variant,
 										  HotstringDefinition hs = null, CaseConformModes caseConformMode = CaseConformModes.None, char endChar = (char)0)
 		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -4574,7 +4586,7 @@ namespace Keysharp.Core.Windows
 			// might be caused due to the keybd events sent below.
 			if (hook == kbdHook)
 			{
-				var nl = (int)System.Windows.Forms.Keys.NumLock;
+				var nl = (uint)System.Windows.Forms.Keys.NumLock;
 
 				if (vk == nl && !keyUp && !IsIgnored(lParam.dwExtraInfo))
 				{
@@ -4652,10 +4664,10 @@ namespace Keysharp.Core.Windows
 
 		internal override bool SystemHasAnotherMouseHook() => SystemHasAnotherdHook(ref mouseMutex, MouseMutexName);
 
-		internal override int TextToSC(string text, ref bool? specifiedByNumber)
+		internal override uint TextToSC(string text, ref bool? specifiedByNumber)
 		{
 			if (text.Length == 0)
-				return 0;
+				return 0u;
 
 			if (keyToSc.TryGetValue(text, out var val))
 				return val;
@@ -4670,7 +4682,7 @@ namespace Keysharp.Core.Windows
 					if (ch.IsHex())
 						digits++;
 
-				var ok = int.TryParse(s, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii);
+				var ok = uint.TryParse(s, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii);
 
 				if (!ok || (2 + digits < text.Length))
 					return 0; // Fixed for v1.1.27: Disallow any invalid suffix so that hotkeys like a::scb() are not misinterpreted as remappings.
@@ -4681,7 +4693,7 @@ namespace Keysharp.Core.Windows
 				return ii;
 			}
 
-			return 0; // Indicate "not found".
+			return 0u; // Indicate "not found".
 		}
 
 		/// <summary>
@@ -4696,7 +4708,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="modifiersLR"></param>
 		/// <param name="updatePersistent"></param>
 		/// <returns></returns>
-		internal override int TextToSpecial(string text, ref KeyEventTypes eventType, ref int modifiersLR, bool updatePersistent)
+		internal override uint TextToSpecial(string text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent)
 		{
 			if (text.StartsWith("ALTDOWN", StringComparison.OrdinalIgnoreCase))
 			{
@@ -4810,7 +4822,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="allowExplicitVK"></param>
 		/// <param name="keybdLayout"></param>
 		/// <returns></returns>
-		internal override int TextToVK(string text, ref int? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout)
+		internal override uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout)
 		{
 			if (text.Length == 0)
 				return 0;
@@ -4834,7 +4846,7 @@ namespace Keysharp.Core.Windows
 					if (ch.IsHex())
 						digits++;
 
-				var ok = int.TryParse(s, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii);
+				var ok = uint.TryParse(s, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii);
 				return !ok || (2 + digits < text.Length) ? 0 : ii; // Fixed for v1.1.27: Disallow any invalid suffix so that hotkeys like a::vkb() are not misinterpreted as remappings.
 			}
 
@@ -4851,7 +4863,7 @@ namespace Keysharp.Core.Windows
 			return sc != 0 ? MapScToVk(sc) : 0;
 		}
 
-		internal override bool TextToVKandSC(string text, ref int vk, ref int sc, ref int? modifiersLR, IntPtr keybdLayout)
+		internal override bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout)
 		{
 			if ((vk = TextToVK(text, ref modifiersLR, true, true, keybdLayout)) != 0)
 			{
@@ -4872,8 +4884,8 @@ namespace Keysharp.Core.Windows
 
 				if (splits.Length >= 2)//C# doesn't really have the facilities to detect an invalid suffix, so just assume it's not there.
 				{
-					if (int.TryParse(splits[0], NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var t1) &&
-							int.TryParse(splits[1], NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var t2))
+					if (uint.TryParse(splits[0], NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var t1) &&
+							uint.TryParse(splits[1], NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var t2))
 					{
 						vk = t1;
 						sc = t2;
@@ -4891,14 +4903,14 @@ namespace Keysharp.Core.Windows
 		/// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		/// neutral one.
 		/// </summary>
-		internal void UpdateKeybdState(ref KBDLLHOOKSTRUCT ev, int vk, int sc, bool keyUp, bool isSuppressed)
+		internal void UpdateKeybdState(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, bool keyUp, bool isSuppressed)
 		{
 			// If this function was called from SuppressThisKey(), these comments apply:
 			// Currently SuppressThisKey is only called with a modifier in the rare case
 			// when sDisguiseNextLWinUp/RWinUp is in effect.  But there may be other cases in the
 			// future, so we need to make sure the physical state of the modifiers is updated
 			// in our tracking system even though the key is being suppressed:
-			int modLR;
+			uint modLR;
 
 			if ((modLR = kvk[vk].asModifiersLR) != 0) // Update our tracking of LWIN/RWIN/RSHIFT etc.
 			{
@@ -5016,7 +5028,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="vk"></param>
 		/// <param name="keybdLayout"></param>
 		/// <returns></returns>
-		internal override char VKtoChar(int vk, IntPtr keybdLayout)
+		internal override char VKtoChar(uint vk, IntPtr keybdLayout)
 		{
 			if (keybdLayout == IntPtr.Zero)
 				keybdLayout = WindowsAPI.GetKeyboardLayout(0);
@@ -5024,7 +5036,7 @@ namespace Keysharp.Core.Windows
 			// MapVirtualKeyEx() always produces 'A'-'Z' for those keys regardless of keyboard layout,
 			// but for any other keys it produces the correct results, so we'll use it:
 			if (vk > 'Z' || vk < 'A')
-				return (char)WindowsAPI.MapVirtualKeyEx((uint)vk, MAPVK_VK_TO_CHAR, keybdLayout);
+				return (char)WindowsAPI.MapVirtualKeyEx(vk, MAPVK_VK_TO_CHAR, keybdLayout);
 
 			// For any other keys,
 			var ch = new StringBuilder();
@@ -5044,7 +5056,7 @@ namespace Keysharp.Core.Windows
 			}
 
 			// Retrieve the character that corresponds to aVK, if any.
-			n = ToUnicodeOrAsciiEx((uint)vk, 0, keyState, ch, 0, keybdLayout);
+			n = ToUnicodeOrAsciiEx(vk, 0, keyState, ch, 0, keybdLayout);
 
 			if (n < 0) // aVK is a dead key, and we've just placed it into aKeybdLayout's buffer.
 			{
@@ -5056,13 +5068,13 @@ namespace Keysharp.Core.Windows
 			{
 				// Re-inject the dead-key char so that user input is not interrupted.
 				// To do this, we need to find the right VK and modifier key combination:
-				int? modLR = 0;
+				uint? modLR = 0u;
 				var dead_vk = CharToVKAndModifiers(deadChar, ref modLR, keybdLayout);
 
 				if (dead_vk != 0)
 				{
 					WindowsKeyboardMouseSender.AdjustKeyState(keyState, modLR.Value);
-					_ = ToUnicodeOrAsciiEx((uint)dead_vk, 0, keyState, chNotUsed, 0, keybdLayout);
+					_ = ToUnicodeOrAsciiEx(dead_vk, 0, keyState, chNotUsed, 0, keybdLayout);
 				}
 
 				//else: can't do it.
@@ -5496,8 +5508,8 @@ namespace Keysharp.Core.Windows
 			// the keyboard hook must be able to handle hotkeys by either their virtual key or their scan code.
 			// i.e. if sc were always used in preference to vk, we wouldn't be able to distinguish between such keys.
 			var keyUp = (wParamVal == WindowsAPI.WM_KEYUP || wParamVal == WindowsAPI.WM_SYSKEYUP);
-			var vk = (int)lParam.vkCode;
-			var sc = (int)lParam.scanCode;
+			var vk = lParam.vkCode;
+			var sc = lParam.scanCode;
 
 			//if (vk == 'B')
 			//{

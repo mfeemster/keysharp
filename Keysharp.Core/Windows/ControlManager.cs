@@ -12,7 +12,7 @@ namespace Keysharp.Core.Windows
 {
 	internal class ControlManager : ControlManagerBase
 	{
-		internal static int ConvertMouseButton(string buf, bool allowWheel = true)
+		internal static uint ConvertMouseButton(string buf, bool allowWheel = true)
 		{
 			if (buf?.Length == 0 || buf.StartsWith("L"))
 				return WindowsAPI.VK_LBUTTON;
@@ -909,10 +909,9 @@ namespace Keysharp.Core.Windows
 				if (Control.FromHandle(item.Handle) is TextBox ctrl2)
 					return ctrl2.SelectedText;
 
-				_ = WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETSEL, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result);
-				var res = result.ToInt32();
-				var start = Conversions.LowWord(res);
-				var end = Conversions.HighWord(res);
+				var start = 0;
+				var end = 0;
+				_ = WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETSEL, ref start, ref end, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result);
 
 				if (start > end)
 					throw new Error($"Start position of {start} was > end position of {end} when querying selected text of an edit control.");
@@ -1234,11 +1233,11 @@ namespace Keysharp.Core.Windows
 
 			// Proceed even if control_id == 0, since some applications are known to
 			// utilize the notification in that case (e.g. Notepad's Save As dialog).
-			if (WindowsAPI.SendMessageTimeout(immediate_parent, WindowsAPI.WM_COMMAND, (uint)KeyboardUtils.MakeLong((short)control_id, (short)x_msg)
+			if (WindowsAPI.SendMessageTimeout(immediate_parent, WindowsAPI.WM_COMMAND, KeyboardUtils.MakeLong((short)control_id, (short)x_msg)
 											  , handle, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 				throw new TargetError($"Could not send WM_COMMAND message of {x_msg} to ${immediate_parent.ToInt64()}");
 
-			if (WindowsAPI.SendMessageTimeout(immediate_parent, WindowsAPI.WM_COMMAND, (uint)KeyboardUtils.MakeLong((short)control_id, (short)y_msg)
+			if (WindowsAPI.SendMessageTimeout(immediate_parent, WindowsAPI.WM_COMMAND, KeyboardUtils.MakeLong((short)control_id, (short)y_msg)
 											  , handle, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result2) == 0)
 				throw new TargetError($"Could not send WM_COMMAND message of {y_msg} to ${immediate_parent.ToInt64()}");
 		}

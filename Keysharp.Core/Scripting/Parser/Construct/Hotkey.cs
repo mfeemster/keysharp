@@ -278,11 +278,11 @@ namespace Keysharp.Scripting
 							buf[hotkeyFlagIndex + 1] == '{')
 						hotkeyFlagIndex++;
 
-					var remap_dest_vk = 0;
-					var remap_dest_sc = 0;
+					var remap_dest_vk = 0u;
+					var remap_dest_sc = 0u;
 					var temp = buf.Substring(hotkeyFlagIndex);//Default.
-					int? modifiersLR = null;
-					int? modLR = null;
+					uint? modifiersLR = null;
+					uint? modLR = null;
 
 					// v1.0.40: Check if this is a remap rather than hotkey:
 					if (!hotkeyUsesOtb
@@ -309,7 +309,7 @@ namespace Keysharp.Scripting
 						if (remap_dest_vk == 0)
 							remap_dest_vk = 0xFF;//Way to do what the original did, but with using TextToVKandSC() above.
 
-						int remap_source_vk;
+						uint remap_source_vk;
 						string tempcp1, remap_source, remap_dest, remap_dest_modifiers; // Must fit the longest key name (currently Browser_Favorites [17]), but buffer overflow is checked just in case.
 						bool remap_source_is_combo, remap_source_is_mouse, remap_dest_is_mouse, remap_keybd_to_mouse;
 						// These will be ignored in other stages if it turns out not to be a remap later below:
@@ -656,50 +656,55 @@ namespace Keysharp.Scripting
 				}
 				else // It's a hotkey vs. hotstring.
 				{
-					var hook_action = HotkeyDefinition.ConvertAltTab(buf.Substring(hotkeyFlagIndex), false);
+					var sub = hotkeyFlagIndex >= 0 ? buf.Substring(hotkeyFlagIndex) : "";
+					var hook_action = HotkeyDefinition.ConvertAltTab(sub, false);
 					var funcname = "";
 					var nextIndex = index + 1;
-					replacement = !hotkeyUsesOtb && hotkeyFlagIndex >= 0 ? buf.Substring(hotkeyFlagIndex) : "";
+					replacement = !hotkeyUsesOtb && sub.Length > 0 ? sub : "";
 
 					if (replacement.Length > 0)//For hotkeys, there is no 'X' for treating the replacement as an execute. Instead, if any replacement exists on the same line, it's an execute.
 					{
-						funcname = SetLastHotkeyFunc(hotName);
-						var method = LocalMethod(funcname);
 						CodeStatement[] result = null;
 
-						try
+						if (hook_action == 0)
 						{
-							result = ParseFlow(new List<CodeLine>() { new CodeLine(fileName, index, replacement) }, 0);//This is for handling ::return
-						}
-						catch (Exception)
-						{
-						}
+							funcname = SetLastHotkeyFunc(hotName);
+							var method = LocalMethod(funcname);
 
-						if (result != null)
-						{
-							method.Statements.AddRange(result);
-						}
-						else//Some other code asside from simple return.
-						{
-							var vk = 0;
-							var sc = 0;
-							int? modLR = null;
-							var valid = ht.TextToVKandSC(replacement, ref vk, ref sc, ref modLR, kbLayout);//Should have been handled above with the other call to this method. But just in case.
-
-							if (valid)//If it was a VK and/or an SC, send those but don't do the extra up/down sending like above for normal remapping.
+							try
 							{
-								var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression($"{{{replacement}}}") });
-								_ = method.Statements.Add(send);
+								result = ParseFlow(new List<CodeLine>() { new CodeLine(fileName, index, replacement) }, 0);//This is for handling ::return
 							}
-							else
+							catch (Exception)
 							{
-								var expr = ParseMultiExpression(replacement, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
-								method.Statements.AddRange(expr);
 							}
-						}
 
-						_ = method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
-						methods[targetClass].Add(method.Name, method);
+							if (result != null)
+							{
+								method.Statements.AddRange(result);
+							}
+							else//Some other code asside from simple return.
+							{
+								var vk = 0u;
+								var sc = 0u;
+								uint? modLR = null;
+								var valid = ht.TextToVKandSC(replacement, ref vk, ref sc, ref modLR, kbLayout);//Should have been handled above with the other call to this method. But just in case.
+
+								if (valid)//If it was a VK and/or an SC, send those but don't do the extra up/down sending like above for normal remapping.
+								{
+									var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression($"{{{replacement}}}") });
+									_ = method.Statements.Add(send);
+								}
+								else
+								{
+									var expr = ParseMultiExpression(replacement, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+									method.Statements.AddRange(expr);
+								}
+							}
+
+							_ = method.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "thishotkey"));
+							methods[targetClass].Add(method.Name, method);
+						}
 
 						if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 						{

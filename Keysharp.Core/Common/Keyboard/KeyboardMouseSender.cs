@@ -63,20 +63,20 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const uint KeyIgnoreMax = KeyIgnore;
 		internal const uint KeyPhysIgnore = KeyIgnore - 1;
 		internal const int MaxMouseSpeed = 100;
-		internal const int MOD_ALT = 0x0001;
-		internal const int MOD_CONTROL = 0x0002;
-		internal const int MOD_LALT = 0x04;
-		internal const int MOD_LCONTROL = 0x01;
-		internal const int MOD_LSHIFT = 0x10;
-		internal const int MOD_LWIN = 0x40;
-		internal const int MOD_RALT = 0x08;
-		internal const int MOD_RCONTROL = 0x02;
-		internal const int MOD_RSHIFT = 0x20;
-		internal const int MOD_RWIN = 0x80;
-		internal const int MOD_SHIFT = 0x0004;
-		internal const int MOD_WIN = 0x0008;
-		internal const int MODLR_COUNT = 8;
-		internal const int MODLR_MAX = 0xFF;
+		internal const uint MOD_ALT = 0x0001;
+		internal const uint MOD_CONTROL = 0x0002;
+		internal const uint MOD_LALT = 0x04;
+		internal const uint MOD_LCONTROL = 0x01;
+		internal const uint MOD_LSHIFT = 0x10;
+		internal const uint MOD_LWIN = 0x40;
+		internal const uint MOD_RALT = 0x08;
+		internal const uint MOD_RCONTROL = 0x02;
+		internal const uint MOD_RSHIFT = 0x20;
+		internal const uint MOD_RWIN = 0x80;
+		internal const uint MOD_SHIFT = 0x0004;
+		internal const uint MOD_WIN = 0x0008;
+		internal const uint MODLR_COUNT = 8;
+		internal const uint MODLR_MAX = 0xFF;
 		internal const string ModLRString = "<^>^<!>!<+>+<#>#";
 		internal const uint MsgOffsetMouseMove = 0x80000000;
 		internal const uint SendLevelMax = 100u;
@@ -88,15 +88,15 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static char[] llChars = "Ll".ToCharArray();
 		internal static KeyType prefixKey;
 		internal static string sendKeyChars = "^+!#{}";
-		internal static int thisHotkeyModifiersLR;
+		internal static uint thisHotkeyModifiersLR;
 		internal bool abortArraySend;
 		internal DateTime lastPeekTime;
 		internal int maxEvents;
-		internal int modifiersLRCtrlAltDelMask;
-		internal int modifiersLRLogical;
-		internal int modifiersLRLogicalNonIgnored;
-		internal int modifiersLRNumpadMask;
-		internal int modifiersLRPhysical;
+		internal uint modifiersLRCtrlAltDelMask;
+		internal uint modifiersLRLogical;
+		internal uint modifiersLRLogicalNonIgnored;
+		internal uint modifiersLRNumpadMask;
+		internal uint modifiersLRPhysical;
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		private const int retention = 1024;
@@ -223,23 +223,23 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract void CleanupEventArray(long aFinalKeyDelay);
 
-		internal abstract int ConvertModifiers(int aModifiers);
+		internal abstract uint ConvertModifiers(uint aModifiers);
 
-		internal abstract int ConvertModifiersLR(int aModifiersLR);
+		internal abstract uint ConvertModifiersLR(uint aModifiersLR);
 
 		internal abstract void DoMouseDelay();
 
 		internal abstract IntPtr GetFocusedKeybdLayout(IntPtr aWindow);
 
-		internal abstract int GetModifierLRState(bool aExplicitlyGet = false);
+		internal abstract uint GetModifierLRState(bool aExplicitlyGet = false);
 
-		internal abstract void InitEventArray(int maxEvents, int aModifiersLR);
+		internal abstract void InitEventArray(int maxEvents, uint aModifiersLR);
 
-		internal abstract string ModifiersLRToText(int aModifiersLR);
+		internal abstract string ModifiersLRToText(uint aModifiersLR);
 
-		internal abstract void MouseClick(int aVK, int aX, int aY, long aRepeatCount, long aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
+		internal abstract void MouseClick(uint aVK, int aX, int aY, long aRepeatCount, long aSpeed, KeyEventTypes aEventType, bool aMoveOffset);
 
-		internal abstract void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative);
+		internal abstract void MouseClickDrag(uint vk, int x1, int y1, int x2, int y2, long speed, bool relative);
 
 		internal abstract void MouseEvent(uint aEventFlags, uint aData, int aX = CoordUnspecified, int aY = CoordUnspecified);
 
@@ -247,7 +247,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract int PbEventCount();
 
-		internal void PerformMouseCommon(Actions actionType, int vk, int x1, int y1, int x2, int y2,
+		internal void PerformMouseCommon(Actions actionType, uint vk, int x1, int y1, int x2, int y2,
 										 long repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, long speed, bool relative)
 		{
 			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
@@ -392,7 +392,7 @@ namespace Keysharp.Core.Common.Keyboard
 				Keysharp.Scripting.Script.SetHotNamesAndTimes(hk.Name);
 
 				if (ht.IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
-					Accessors.A_EventInfo = Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
+					Accessors.A_EventInfo = (long)Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
 
 				// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
 				//Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
@@ -408,10 +408,10 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal void Remove(HotstringDefinition hotstring) => _ = hotstrings.Remove(hotstring);
 
-		internal abstract void SendEventArray(ref long aFinalKeyDelay, int aModsDuringSend);
+		internal abstract void SendEventArray(ref long aFinalKeyDelay, uint aModsDuringSend);
 
-		internal abstract void SendKey(int aVK, int aSC, int aModifiersLR, int aModifiersLRPersistent
-									   , long aRepeatCount, KeyEventTypes aEventType, int aKeyAsModifiersLR, IntPtr aTargetWindow
+		internal abstract void SendKey(uint aVK, uint aSC, uint aModifiersLR, uint aModifiersLRPersistent
+									   , long aRepeatCount, KeyEventTypes aEventType, uint aKeyAsModifiersLR, IntPtr aTargetWindow
 									   , int aX = CoordUnspecified, int aY = CoordUnspecified, bool aMoveOffset = false);
 
 		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);
@@ -420,7 +420,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal abstract int SiEventCount();
 
-		internal abstract ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue);
+		internal abstract ToggleValueType ToggleKeyState(uint vk, ToggleValueType toggleValue);
 
 		internal int TotalEventCount() => PbEventCount() + SiEventCount();
 
@@ -431,7 +431,7 @@ namespace Keysharp.Core.Common.Keyboard
 		//protected internal abstract void Send(string keys);
 
 		//protected internal abstract void Send(Keys key);
-		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, int aVK, int aSC = 0, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
+		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, uint aVK, uint aSC = 0u, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
 		protected abstract void RegisterHook();
 	}
@@ -442,7 +442,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const byte AS_PREFIX_FOR_HOTKEY = 2;
 		internal const byte PREFIX_ACTUAL = 1; // Values for used_as_prefix below, for places that need to distinguish between type of prefix.
 		internal const byte PREFIX_FORCED = 2; // v1.0.44: Added so that a neutral hotkey like Control can be forced to fire on key-up even though it isn't actually a prefix key.
-		internal byte asModifiersLR;// If this key is a modifier, this will have the corresponding bit(s) for that key.
+		internal uint asModifiersLR;// If this key is a modifier, this will have the corresponding bit(s) for that key.
 		internal bool downPerformedAction;
 		internal uint firstHotkey;
 		internal ToggleStates forceToggle;  // Pointer to a global variable for toggleable keys only.  NULL for others.
@@ -496,7 +496,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		internal ToggleValueType? ToggleVal(int key)
+		internal ToggleValueType? ToggleVal(uint key)
 		{
 			if (forceToggle != null) // Key is a toggleable key.
 			{

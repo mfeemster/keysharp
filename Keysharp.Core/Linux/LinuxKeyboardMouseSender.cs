@@ -102,26 +102,26 @@ namespace Keysharp.Core.Linux
 		internal override void CleanupEventArray(long finalKeyDelay)
 		{ }
 
-		internal override int ConvertModifiers(int modifiers) => 0;
+		internal override uint ConvertModifiers(uint modifiers) => 0;
 
-		internal override int ConvertModifiersLR(int modifiersLR) => 0;
+		internal override uint ConvertModifiersLR(uint modifiersLR) => 0;
 
-		internal override string ModifiersLRToText(int aModifiersLR) => "";
+		internal override string ModifiersLRToText(uint aModifiersLR) => "";
 
 		internal override void DoMouseDelay()
 		{ }
 
 		internal override IntPtr GetFocusedKeybdLayout(IntPtr window) => IntPtr.Zero;
 
-		internal override int GetModifierLRState(bool explicitlyGet = false) => 0;
+		internal override uint GetModifierLRState(bool explicitlyGet = false) => 0;
 
-		internal override void InitEventArray(int maxEvents, int modifiersLR)
+		internal override void InitEventArray(int maxEvents, uint modifiersLR)
 		{ }
 
-		internal override void MouseClick(int vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
+		internal override void MouseClick(uint vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{ }
 
-		internal override void MouseClickDrag(int vk, int x1, int y1, int x2, int y2, long speed, bool relative)
+		internal override void MouseClickDrag(uint vk, int x1, int y1, int x2, int y2, long speed, bool relative)
 		{ }
 
 		internal override void MouseEvent(uint eventFlags, uint data, int x = CoordUnspecified, int y = CoordUnspecified)
@@ -132,11 +132,11 @@ namespace Keysharp.Core.Linux
 
 		internal override int PbEventCount() => 0;
 
-		internal override void SendEventArray(ref long finalKeyDelay, int modsDuringSend)
+		internal override void SendEventArray(ref long finalKeyDelay, uint modsDuringSend)
 		{ }
 
-		internal override void SendKey(int vk, int sc, int modifiersLR, int modifiersLRPersistent
-									   , long repeatCount, KeyEventTypes eventType, int keyAsModifiersLR, IntPtr targetWindow
+		internal override void SendKey(uint vk, uint sc, uint modifiersLR, uint modifiersLRPersistent
+									   , long repeatCount, KeyEventTypes eventType, uint keyAsModifiersLR, IntPtr targetWindow
 									   , int x = CoordUnspecified, int y = CoordUnspecified, bool moveOffset = false)
 		{
 		}
@@ -151,7 +151,7 @@ namespace Keysharp.Core.Linux
 
 		internal override int SiEventCount() => 0;
 
-		internal override ToggleValueType ToggleKeyState(int vk, ToggleValueType toggleValue) => ToggleValueType.Invalid;
+		internal override ToggleValueType ToggleKeyState(uint vk, ToggleValueType toggleValue) => ToggleValueType.Invalid;
 
 		protected internal override void LongOperationUpdate()
 		{ }
@@ -195,7 +195,7 @@ namespace Keysharp.Core.Linux
 		//{
 		//  // TODO disposal
 		//}
-		protected internal override void SendKeyEvent(KeyEventTypes eventType, int vk, int sc = 0, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
+		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
 		}
 

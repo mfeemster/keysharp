@@ -1207,15 +1207,15 @@ namespace Keysharp.Core
 			return s;
 		}
 
-		public object ReadChar() => br != null ? (object)br.ReadByte() : "";
+		public object ReadChar() => br != null ? br.ReadByte() : "";
 
-		public object ReadDouble() => br != null ? (object)br.ReadDouble() : "";
+		public object ReadDouble() => br != null ? br.ReadDouble() : "";
 
-		public object ReadFloat() => br != null ? (object)br.ReadSingle() : "";
+		public object ReadFloat() => br != null ? br.ReadSingle() : "";
 
-		public object ReadInt() => br != null ? (object)br.ReadInt32() : "";
+		public object ReadInt() => br != null ? br.ReadInt32() : "";
 
-		public object ReadInt64() => br != null ? (object)br.ReadInt64() : "";
+		public object ReadInt64() => br != null ? br.ReadInt64() : "";
 
 		public string ReadLine()
 		{
@@ -1229,14 +1229,14 @@ namespace Keysharp.Core
 			return s;
 		}
 
-		public object ReadShort() => br != null ? (object)br.ReadInt16() : "";
+		public object ReadShort() => br != null ? br.ReadInt16() : "";
 
 		//Char in this case is meant to be 1 byte, according to the AHK DllCall() documentation.
-		public object ReadUChar() => br != null ? (object)br.ReadByte() : "";
+		public object ReadUChar() => br != null ? br.ReadByte() : "";
 
-		public object ReadUInt() => br != null ? (object)br.ReadUInt32() : "";
+		public object ReadUInt() => br != null ? br.ReadUInt32() : "";
 
-		public object ReadUShort() => br != null ? (object)br.ReadUInt16() : "";
+		public object ReadUShort() => br != null ? br.ReadUInt16() : "";
 
 		public void Seek(object obj0, object obj1 = null)
 		{

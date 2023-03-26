@@ -161,15 +161,15 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static int HighByte(int i) => (int)(i & 0xFF000000) >> 24;
+		internal static byte HighByte(int i) => (byte)((((ulong)i) >> 8) & 0xff);
 
-		internal static int HighWord(int i) => (i >> 16) & 0xFFFF;
+		internal static short HighWord(int i) => (short)((((ulong)i) >> 16) & 0xffff);
 
-		internal static int LowByte(int i) => i & 0xFF;
+		internal static byte LowByte(int i) => (byte)(((ulong)i) & 0xff);
 
-		internal static int LowWord(int i) => i & 0xFFFF;
+		internal static short LowWord(int i) => (short)(((ulong)i) & 0xffff);
 
-		internal static int MakeInt(short lowPart, short highPart) => (int)(((ushort)lowPart) | (uint)(highPart << 16));
+		internal static int MakeInt(int lowPart, int highPart) => (lowPart & 0x0000FFFF) | (highPart << 16);
 
 		internal static StringComparison ParseComparisonOption(object option)
 		{

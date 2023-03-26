@@ -225,7 +225,7 @@ namespace Keysharp.Core
 				{
 					return lb.SelectionMode == SelectionMode.One
 						   ? (long)lb.SelectedIndex + 1
-						   : (object)new Array(lb.SelectedIndices.Cast<int>().Select(x => x + 1).ToList());
+						   : new Array(lb.SelectedIndices.Cast<int>().Select(x => x + 1).ToList());
 				}
 				else if (_control is DateTimePicker dtp)
 					return Conversions.ToYYYYMMDDHH24MISS(dtp.Value);
@@ -1728,7 +1728,7 @@ namespace Keysharp.Core
 					if (!ll.clickSet)
 						_ = KeysharpLinkLabel.OnLinkLabelClicked(ll, lllce);
 					else if (lllce.Link.LinkData is Tuple<string, string> tss)
-						_ = clickHandlers.InvokeEventHandlers(this, tss.Item1 != "" ? tss.Item1 : (object)(ll.Links.IndexOf(lllce.Link) + 1L), tss.Item2);
+						_ = clickHandlers.InvokeEventHandlers(this, tss.Item1 != "" ? tss.Item1 : ll.Links.IndexOf(lllce.Link) + 1L, tss.Item2);
 				}
 			}
 			else if (_control is KeysharpButton)

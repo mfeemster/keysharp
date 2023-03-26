@@ -364,13 +364,13 @@ namespace Keysharp.Core
 
 			if (lvco.inttype.HasValue)
 			{
-				lv.ListViewItemSorter = lvco.inttype.Value ? new ListViewIntegerComparer(col) : (System.Collections.IComparer)new ListViewCaseInsensitiveComparer(col);
+				lv.ListViewItemSorter = lvco.inttype.Value ? new ListViewIntegerComparer(col) : new ListViewCaseInsensitiveComparer(col);
 				col.TextAlign = HorizontalAlignment.Right;
 			}
 
 			if (lvco.floattype.HasValue)
 			{
-				lv.ListViewItemSorter = lvco.floattype.Value ? new ListViewFloatComparer(col) : (System.Collections.IComparer)new ListViewCaseInsensitiveComparer(col);
+				lv.ListViewItemSorter = lvco.floattype.Value ? new ListViewFloatComparer(col) : new ListViewCaseInsensitiveComparer(col);
 				col.TextAlign = HorizontalAlignment.Right;
 			}
 

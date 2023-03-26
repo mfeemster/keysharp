@@ -115,6 +115,29 @@ class myclass
 		val := this.a
 		return val
 	}
+
+	ClassFuncCaseSensitive()
+	{
+		this.a := 1000
+		ClassFuncCaseSensitive2()
+		classfunccasesensitive2()
+	}
+
+	ClassFuncCaseSensitive2()
+	{
+		this.b := 2000
+	}
+
+	static ClassFuncCaseSensitiveStatic()
+	{
+		ClassFuncCaseSensitiveStatic2()
+		classfunccasesensitivestatic2()
+	}
+
+	static ClassFuncCaseSensitiveStatic2()
+	{
+		global s1 := 999
+	}
 }
 
 classobj := myclass()
@@ -236,6 +259,41 @@ else
 val := classobj.classfuncwiththis()
 
 If (val == 999)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+classobj.ClassFuncCaseSensitive()
+
+if (classobj.a == 1000)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (classobj.b == 2000)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+classobj.a := ""
+classobj.b := ""
+
+classobj.classfunccasesensitive()
+
+if (classobj.a == 1000)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (classobj.b == 2000)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+myclass.s1 := ""
+myclass.ClassFuncCaseSensitiveStatic()
+
+if (myclass.s1 == 999)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

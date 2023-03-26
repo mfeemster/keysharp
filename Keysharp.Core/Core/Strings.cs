@@ -275,7 +275,7 @@ namespace Keysharp.Core
 		public static long Ord(object obj)
 		{
 			var str = obj.As();
-			return string.IsNullOrEmpty(str) ? 0L : (long)str[0];
+			return string.IsNullOrEmpty(str) ? 0L : str[0];
 		}
 
 		/// <summary>
@@ -984,7 +984,7 @@ namespace Keysharp.Core
 				length += d;
 
 			length = Math.Max(0, Math.Min(length, d));
-			return input.Substring((int)index, (int)length);
+			return input.Substring(index, (int)length);
 		}
 
 		/// <summary>

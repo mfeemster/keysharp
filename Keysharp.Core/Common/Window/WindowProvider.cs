@@ -7,7 +7,7 @@ namespace Keysharp.Core.Common.Window
 		/// <summary>
 		/// Creates a ControlManager for the current Platform
 		/// </summary>
-		public static ControlManagerBase CreateControlManager() => Environment.OSVersion.Platform == PlatformID.Win32NT ? new Windows.ControlManager() : (ControlManagerBase)new Linux.ControlManager();
+		public static ControlManagerBase CreateControlManager() => Environment.OSVersion.Platform == PlatformID.Win32NT ? new Windows.ControlManager() : new Linux.ControlManager();
 	}
 
 	internal static class WindowProvider
@@ -15,6 +15,6 @@ namespace Keysharp.Core.Common.Window
 		/// <summary>
 		/// Creates a WindowManager for the current Platform
 		/// </summary>
-		public static WindowManagerBase CreateWindowManager() => Environment.OSVersion.Platform == PlatformID.Win32NT ? new Windows.WindowManager() : (WindowManagerBase)new Linux.WindowManager();
+		public static WindowManagerBase CreateWindowManager() => Environment.OSVersion.Platform == PlatformID.Win32NT ? new Windows.WindowManager() : new Linux.WindowManager();
 	}
 }

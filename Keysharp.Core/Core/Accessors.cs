@@ -673,14 +673,17 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_Index
 		{
-			get =>
-			//return Loops.loops.Count > 0 ? Loops.loops.Peek().index + 1 : default;
-			Loops.loops.Count > 0 ? Loops.loops.Peek().index : default;
-
+			get
+			{
+				var s = Loops.LoopStack;
+				return s.Count > 0 ? s.Peek().index : default;
+			}
 			set
 			{
-				if (Loops.loops.Count > 0)
-					Loops.loops.Peek().index = value.Al();
+				var s = Loops.LoopStack;
+
+				if (s.Count > 0)
+					s.Peek().index = value.Al();
 			}
 		}
 
@@ -809,10 +812,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return null;
 
-				foreach (var l in Loops.loops)//Since loop is a stack, this goes in reverse order, which is what we want.
+				foreach (var l in s)//Since loop is a stack, this goes in reverse order, which is what we want.
 				{
 					switch (l.type)
 					{
@@ -1042,10 +1047,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return null;
 
-				foreach (var l in Loops.loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{
@@ -1071,10 +1078,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return "";
 
-				foreach (var l in Loops.loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{
@@ -1094,10 +1103,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return "";
 
-				foreach (var l in Loops.loops)//Since loop is a stack, this goes in reverse order, which is what we want.
+				foreach (var l in s)//Since loop is a stack, this goes in reverse order, which is what we want.
 				{
 					switch (l.type)
 					{
@@ -1117,10 +1128,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return "";
 
-				foreach (var l in Loops.loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{
@@ -1140,10 +1153,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return "";
 
-				foreach (var l in Loops.loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{
@@ -1163,10 +1178,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return "";
 
-				foreach (var l in Loops.loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{
@@ -1183,10 +1200,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (Loops.loops.Count == 0)
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
 					return "";
 
-				foreach (var l in Loops.loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{

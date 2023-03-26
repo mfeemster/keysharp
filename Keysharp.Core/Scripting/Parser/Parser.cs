@@ -35,7 +35,8 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
-		private List<CodeMethodInvokeExpression> allMethodCalls = new List<CodeMethodInvokeExpression>(100);
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> allMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
 		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
 		private StringBuilder sbld = new StringBuilder();
 		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
@@ -58,6 +59,7 @@ namespace Keysharp.Scripting
 		internal void Init()
 		{
 			//This is a collection of various variables which can be set by #directives and other methods, so reset them all to a default state here.
+			labelct = 0;
 			ErrorStdOut = false;
 			MaxThreadsPerHotkey = 1u;
 			MaxThreadsTotal = 10u;
@@ -125,13 +127,14 @@ namespace Keysharp.Scripting
 			else
 				_ = targetClass.Members.Add(ctd);
 
-			methods[ctd] = new Dictionary<string, CodeMemberMethod>();
+			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
 			properties[ctd] = new Dictionary<string, CodeMemberProperty>();
 			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
 			getPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
 			getMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			allMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
 			return ctd;
 		}
 
@@ -250,6 +253,69 @@ namespace Keysharp.Scripting
 						return true;
 
 			return false;
+		}
+
+		//private bool MethodExistsInTypeOrBase(Type t, string m)
+		//{
+		//  while (t != null)
+		//  {
+		//      var meths = t.GetMethods();
+
+		//      foreach (var meth in meths)
+		//          if (string.Compare(meth.Name, m, true) == 0)
+		//              return true;
+
+		//      t = t.BaseType;
+		//  }
+
+		//  return false;
+		//}
+
+		//private bool MethodExistsInBuiltInClass(string baseType, string m)
+		//{
+		//  if (Reflections.stringToTypeBuiltInMethods.TryGetValue(m, out var meths))
+		//  {
+		//      //Must iterate rather than look up because we only have the string name, not the type.
+		//      foreach (var typekv in meths)
+		//      {
+		//          if (string.Compare(typekv.Key.Name, baseType, true) == 0)
+		//              if (MethodExistsInTypeOrBase(typekv.Key, m))
+		//                  return true;
+		//              else
+		//                  return false;
+		//      }
+		//  }
+
+		//  return false;
+		//}
+
+		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
+		{
+			if (methods.Count > 0)
+			{
+				while (!string.IsNullOrEmpty(t))
+				{
+					foreach (var typekv in methods)
+					{
+						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
+						{
+							if (typekv.Value.TryGetValue(m, out var cmm))//If the method existed in the type, return.
+								return cmm;
+
+							//Wasn't found in this type, so check its base. This will not check for built in types, because those can be gotten with FindBuiltInMethod().
+							if (typekv.Key.BaseTypes.Count > 0)
+							{
+								t = typekv.Key.BaseTypes[0].BaseType;
+								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
+							}
+							else
+								return null;
+						}
+					}
+				}
+			}
+
+			return null;
 		}
 
 		private CodeTypeDeclaration FindUserDefinedType(string typeName)
@@ -421,8 +487,7 @@ namespace Keysharp.Scripting
 											   meth.ReturnType.BaseType != "System.Void"
 											   && !(meth.Statements.Cast<CodeStatement>().LastOrDefault() is CodeMethodReturnStatement)
 											  ).ToList().ForEach(meth2 =>
-													  meth2.Statements.Add(new CodeMethodReturnStatement(
-															  new CodeFieldReferenceExpression(new CodeTypeReferenceExpression("System.String"), "Empty"))));
+													  meth2.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(""))));
 
 			//Find every call to SetPropertyValue() and determine if it's actually setting it for a type, in which case it's setting a static member of a type, and thus needs to be converted to SetPropertyValueT().
 			foreach (var cmietype in setPropertyValueCalls)
@@ -493,11 +558,23 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			foreach (var cmie in allMethodCalls)
+			foreach (var cmietype in allMethodCalls)
 			{
-				if (GetUserDefinedTypename(cmie.Method.MethodName) is string s && s.Length > 0)
+				foreach (var cmietypefunc in cmietype.Value)
 				{
-					cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
+					foreach (var cmie in cmietypefunc.Value)
+					{
+						//Handle changing myfuncobj() to myfuncobj.Call().
+						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), "Call");
+						else if (GetUserDefinedTypename(cmie.Method.MethodName) is string s && s.Length > 0)//Convert myclass() to myclass.Call().
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
+						//Handle proper casing for all method calls.
+						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
+							cmie.Method.MethodName = cmm.Name;
+						else if (Keysharp.Core.Reflections.FindBuiltInMethod(cmie.Method.MethodName) is MethodInfo mi)//This will find the first built in method with this name, but they are all cased the same, so it shoudl be ok.
+							cmie.Method.MethodName = mi.Name;
+					}
 				}
 			}
 

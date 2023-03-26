@@ -12,12 +12,18 @@ namespace Keysharp.Core
 	public static class Loops
 	{
 		[ThreadStatic]
-		internal static Stack<LoopInfo> loops = new Stack<LoopInfo>();
+		private static Stack<LoopInfo> loops = new Stack<LoopInfo>();
+
+		internal static Stack<LoopInfo> LoopStack => loops ?? (loops = new Stack<LoopInfo>());
 
 		[ThreadStatic]
 		private static StringBuilder regsb = new StringBuilder(1024);
 
-		public static long Inc() => loops.Count > 0 ? ++loops.Peek().index : 0;
+		public static long Inc()
+		{
+			var s = LoopStack;
+			return s.Count > 0 ? ++s.Peek().index : 0;
+		}
 
 		/// <summary>
 		/// Perform a series of commands repeatedly: either the specified number of times or until break is encountered.
@@ -60,7 +66,8 @@ namespace Keysharp.Core
 				yield break;
 
 			var info = new LoopInfo { type = LoopType.Each };
-			loops.Push(info);
+			var s = LoopStack;
+			s.Push(info);
 			var type = array.GetType();
 
 			if (array is Map map)
@@ -90,7 +97,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			_ = loops.Pop();
+			_ = s.Pop();
 		}
 
 		/// <summary>
@@ -143,7 +150,11 @@ namespace Keysharp.Core
 			//Caller must call Pop() after the loop exits.
 		}
 
-		public static long LoopIndex() => loops.Count > 0 ? loops.Peek().index : 0;
+		public static long LoopIndex()
+		{
+			var s = LoopStack;
+			return s.Count > 0 ? s.Peek().index : 0;
+		}
 
 		/// <summary>
 		/// Retrieves substrings (fields) from a string, one at a time.
@@ -428,7 +439,8 @@ namespace Keysharp.Core
 
 		public static LoopInfo Pop()
 		{
-			var info = loops.Count > 0 ? loops.Pop() : null;
+			var s = LoopStack;
+			var info = s.Count > 0 ? s.Pop() : null;
 
 			if (info != null && info.type == LoopType.File && info.sw != null)
 				info.sw.Close();
@@ -439,15 +451,17 @@ namespace Keysharp.Core
 		public static LoopInfo Push(LoopType t = LoopType.Normal)
 		{
 			var info = new LoopInfo { type = t };
-			loops.Push(info);
+			LoopStack.Push(info);
 			return info;
 		}
 
 		internal static LoopInfo GetDirLoop()
 		{
-			if (loops.Count > 0)
+			var s = LoopStack;
+
+			if (s.Count > 0)
 			{
-				foreach (var l in loops)
+				foreach (var l in s)
 				{
 					switch (l.type)
 					{
@@ -462,10 +476,12 @@ namespace Keysharp.Core
 
 		internal static string GetDirLoopFilename()
 		{
-			if (loops.Count == 0)
+			var s = LoopStack;
+
+			if (s.Count == 0)
 				return string.Empty;
 
-			foreach (var l in loops)
+			foreach (var l in s)
 			{
 				switch (l.type)
 				{
@@ -508,11 +524,11 @@ namespace Keysharp.Core
 			return buffer.ToString();
 		}
 
-		internal static LoopInfo Peek() => loops.PeekOrNull();
+		internal static LoopInfo Peek() => LoopStack.PeekOrNull();
 
 		internal static LoopInfo Peek(LoopType looptype)
 		{
-			foreach (var l in loops)
+			foreach (var l in LoopStack)
 				if (l.type == looptype)
 					return l;
 

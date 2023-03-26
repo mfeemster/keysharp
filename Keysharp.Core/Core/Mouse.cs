@@ -32,7 +32,8 @@ namespace Keysharp.Core
 		public static void Click(object obj)
 		{
 			var options = obj.As();
-			int x = 0, y = 0, vk = 0;
+			int x = 0, y = 0;
+			var vk = 0u;
 			var event_type = Keysharp.Core.Common.Keyboard.KeyEventTypes.KeyDown;
 			var repeat_count = 0L;
 			var move_offset = false;
@@ -236,7 +237,7 @@ namespace Keysharp.Core
 		private static void PerformMouse(Actions actionType, string button, int x1, int y1, int x2, int y2
 										 , int speed, string relative, long repeatCount, string downUp)
 		{
-			int vk;
+			uint vk;
 			var ht = Keysharp.Scripting.Script.HookThread;
 
 			if (actionType == Actions.ACT_MOUSEMOVE)

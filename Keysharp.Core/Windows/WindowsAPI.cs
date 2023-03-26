@@ -699,12 +699,12 @@ namespace Keysharp.Core.Windows
 		internal const int LV_TEXT_BUF_SIZE   = 8192;// Max amount of text in a ListView sub-item.  Somewhat arbitrary: not sure what the real limit is, if any.
 
 
-		internal const int VK_LBUTTON = 0x01;
-		internal const int VK_RBUTTON = 0x02;
-		internal const int VK_CANCEL = 0x03;
-		internal const int VK_MBUTTON = 0x04;//NOT contiguous with L & RBUTTON
-		internal const int VK_XBUTTON1 = 0x05;//NOT contiguous with L & RBUTTON
-		internal const int VK_XBUTTON2 = 0x06;//NOT contiguous with L & RBUTTON
+		internal const uint VK_LBUTTON = 0x01;
+		internal const uint VK_RBUTTON = 0x02;
+		internal const uint VK_CANCEL = 0x03;
+		internal const uint VK_MBUTTON = 0x04;//NOT contiguous with L & RBUTTON
+		internal const uint VK_XBUTTON1 = 0x05;//NOT contiguous with L & RBUTTON
+		internal const uint VK_XBUTTON2 = 0x06;//NOT contiguous with L & RBUTTON
 		// Create some "fake" virtual keys to simplify sections of the code.
 		// According to winuser.h, the following ranges (among others)
 		// are considered "unassigned" rather than "reserved", so should be
@@ -714,69 +714,69 @@ namespace Keysharp.Core.Windows
 		// to indicate failure by many functions that deal with virtual keys.
 		// 0x88 - 0x8F : unassigned
 		// 0x97 - 0x9F : unassigned (this range seems less likely to be used)
-		internal const int VK_NEW_MOUSE_FIRST = 0x9A;
-		internal const int VK_WHEEL_LEFT = 0x9C;
-		internal const int VK_WHEEL_RIGHT = 0x9D;
-		internal const int VK_WHEEL_DOWN = 0x9E;
-		internal const int VK_WHEEL_UP = 0x9F;
-		internal const int VK_NEW_MOUSE_LAST = 0x9F;
-		internal const int WHEEL_DELTA = 120;
-		internal const int XBUTTON1 = 0x0001;
-		internal const int XBUTTON2 = 0x0002;
-		internal const int SC_NUMPADENTER = 0x11C;
-		internal const int SC_INSERT = 0x152;
-		internal const int SC_DELETE = 0x153;
-		internal const int SC_HOME = 0x147;
-		internal const int SC_END = 0x14F;
-		internal const int SC_UP = 0x148;
-		internal const int SC_DOWN = 0x150;
-		internal const int SC_LEFT = 0x14B;
-		internal const int SC_RIGHT = 0x14D;
-		internal const int SC_PGUP = 0x149;
-		internal const int SC_PGDN = 0x151;
+		internal const uint VK_NEW_MOUSE_FIRST = 0x9A;
+		internal const uint VK_WHEEL_LEFT = 0x9C;
+		internal const uint VK_WHEEL_RIGHT = 0x9D;
+		internal const uint VK_WHEEL_DOWN = 0x9E;
+		internal const uint VK_WHEEL_UP = 0x9F;
+		internal const uint VK_NEW_MOUSE_LAST = 0x9F;
+		internal const uint WHEEL_DELTA = 120;
+		internal const uint XBUTTON1 = 0x0001;
+		internal const uint XBUTTON2 = 0x0002;
+		internal const uint SC_NUMPADENTER = 0x11C;
+		internal const uint SC_INSERT = 0x152;
+		internal const uint SC_DELETE = 0x153;
+		internal const uint SC_HOME = 0x147;
+		internal const uint SC_END = 0x14F;
+		internal const uint SC_UP = 0x148;
+		internal const uint SC_DOWN = 0x150;
+		internal const uint SC_LEFT = 0x14B;
+		internal const uint SC_RIGHT = 0x14D;
+		internal const uint SC_PGUP = 0x149;
+		internal const uint SC_PGDN = 0x151;
 		// These are the same scan codes as their counterpart except the extended flag is 0 rather than
 		// 1 (0xE0 uncompressed):
-		internal const int SC_ENTER = 0x1C;
+		internal const uint SC_ENTER = 0x1C;
 		// In addition, the below dual-state numpad keys share the same scan code (but different vk's)
 		// regardless of the state of numlock:
-		internal const int SC_NUMPADDEL = 0x53;
-		internal const int SC_NUMPADINS = 0x52;
-		internal const int SC_NUMPADEND = 0x4F;
-		internal const int SC_NUMPADHOME = 0x47;
-		internal const int SC_NUMPADCLEAR = 0x4C;
-		internal const int SC_NUMPADUP = 0x48;
-		internal const int SC_NUMPADDOWN = 0x50;
-		internal const int SC_NUMPADLEFT = 0x4B;
-		internal const int SC_NUMPADRIGHT = 0x4D;
-		internal const int SC_NUMPADPGUP = 0x49;
-		internal const int SC_NUMPADPGDN = 0x51;
-		internal const int SC_NUMPADDOT = SC_NUMPADDEL;
-		internal const int SC_NUMPAD0 = SC_NUMPADINS;
-		internal const int SC_NUMPAD1 = SC_NUMPADEND;
-		internal const int SC_NUMPAD2 = SC_NUMPADDOWN;
-		internal const int SC_NUMPAD3 = SC_NUMPADPGDN;
-		internal const int SC_NUMPAD4 = SC_NUMPADLEFT;
-		internal const int SC_NUMPAD5 = SC_NUMPADCLEAR;
-		internal const int SC_NUMPAD6 = SC_NUMPADRIGHT;
-		internal const int SC_NUMPAD7 = SC_NUMPADHOME;
-		internal const int SC_NUMPAD8 = SC_NUMPADUP;
-		internal const int SC_NUMPAD9 = SC_NUMPADPGUP;
-		internal const int SC_NUMLOCK = 0x145;
-		internal const int SC_NUMPADDIV = 0x135;
-		internal const int SC_NUMPADMULT = 0x037;
-		internal const int SC_NUMPADSUB = 0x04A;
-		internal const int SC_NUMPADADD = 0x04E;
-		internal const int SC_PAUSE = 0x045;
-		internal const int SC_LCONTROL = 0x01D;
-		internal const int SC_RCONTROL = 0x11D;
-		internal const int SC_LSHIFT = 0x02A;
-		internal const int SC_RSHIFT = 0x136; // Must be extended, at least on WinXP, or there will be problems, e.g. SetModifierLRState().
-		internal const int SC_LALT = 0x038;
-		internal const int SC_RALT = 0x138;
-		internal const int SC_LWIN = 0x15B;
-		internal const int SC_RWIN = 0x15C;
-		internal const int SC_APPSKEY = 0x15D;
-		internal const int SC_PRINTSCREEN = 0x137;
+		internal const uint SC_NUMPADDEL = 0x53;
+		internal const uint SC_NUMPADINS = 0x52;
+		internal const uint SC_NUMPADEND = 0x4F;
+		internal const uint SC_NUMPADHOME = 0x47;
+		internal const uint SC_NUMPADCLEAR = 0x4C;
+		internal const uint SC_NUMPADUP = 0x48;
+		internal const uint SC_NUMPADDOWN = 0x50;
+		internal const uint SC_NUMPADLEFT = 0x4B;
+		internal const uint SC_NUMPADRIGHT = 0x4D;
+		internal const uint SC_NUMPADPGUP = 0x49;
+		internal const uint SC_NUMPADPGDN = 0x51;
+		internal const uint SC_NUMPADDOT = SC_NUMPADDEL;
+		internal const uint SC_NUMPAD0 = SC_NUMPADINS;
+		internal const uint SC_NUMPAD1 = SC_NUMPADEND;
+		internal const uint SC_NUMPAD2 = SC_NUMPADDOWN;
+		internal const uint SC_NUMPAD3 = SC_NUMPADPGDN;
+		internal const uint SC_NUMPAD4 = SC_NUMPADLEFT;
+		internal const uint SC_NUMPAD5 = SC_NUMPADCLEAR;
+		internal const uint SC_NUMPAD6 = SC_NUMPADRIGHT;
+		internal const uint SC_NUMPAD7 = SC_NUMPADHOME;
+		internal const uint SC_NUMPAD8 = SC_NUMPADUP;
+		internal const uint SC_NUMPAD9 = SC_NUMPADPGUP;
+		internal const uint SC_NUMLOCK = 0x145;
+		internal const uint SC_NUMPADDIV = 0x135;
+		internal const uint SC_NUMPADMULT = 0x037;
+		internal const uint SC_NUMPADSUB = 0x04A;
+		internal const uint SC_NUMPADADD = 0x04E;
+		internal const uint SC_PAUSE = 0x045;
+		internal const uint SC_LCONTROL = 0x01D;
+		internal const uint SC_RCONTROL = 0x11D;
+		internal const uint SC_LSHIFT = 0x02A;
+		internal const uint SC_RSHIFT = 0x136; // Must be extended, at least on WinXP, or there will be problems, e.g. SetModifierLRState().
+		internal const uint SC_LALT = 0x038;
+		internal const uint SC_RALT = 0x138;
+		internal const uint SC_LWIN = 0x15B;
+		internal const uint SC_RWIN = 0x15C;
+		internal const uint SC_APPSKEY = 0x15D;
+		internal const uint SC_PRINTSCREEN = 0x137;
 		//
 		// The system injects events with these scan codes:
 		//  - For Shift-up prior to a Numpad keydown or keyup if Numlock is on and Shift is down;
@@ -789,113 +789,113 @@ namespace Keysharp.Core.Windows
 		// simplify the code, so these values can only be found in KBDLLHOOKSTRUCT::scanCode.
 		// Find "fake shift-key events" for older and more detailed comments.
 		// Note that 0x0200 corresponds to SCANCODE_SIMULATED in kbd.h (DDK).
-		internal const int SC_FAKE_FLAG   = 0x200;
-		internal const int SC_FAKE_LSHIFT = 0x22A;
-		internal const int SC_FAKE_RSHIFT = 0x236; // This is the actual scancode received by the hook, excluding the 0x100 we add for "extended" keys.
+		internal const uint SC_FAKE_FLAG   = 0x200;
+		internal const uint SC_FAKE_LSHIFT = 0x22A;
+		internal const uint SC_FAKE_RSHIFT = 0x236; // This is the actual scancode received by the hook, excluding the 0x100 we add for "extended" keys.
 		// Testing with the KbdEdit Demo preview mode indicates that AltGr will send this SC
 		// even if the VK assigned to 0x1D is changed.  It is a combination of SCANCODE_CTRL
 		// and SCANCODE_SIMULATED, which are defined in kbd.h (Windows DDK).
-		internal const int SC_FAKE_LCTRL = 0x21D;
+		internal const uint SC_FAKE_LCTRL = 0x21D;
 		//
-		internal const int VK_LSHIFT = 0xA0;
-		internal const int VK_RSHIFT = 0xA1;
-		internal const int VK_LCONTROL = 0xA2;
-		internal const int VK_RCONTROL = 0xA3;
-		internal const int VK_LMENU = 0xA4;
-		internal const int VK_RMENU = 0xA5;
-		internal const int VK_BROWSER_BACK = 0xA6;
-		internal const int VK_BROWSER_FORWARD = 0xA7;
-		internal const int VK_BROWSER_REFRESH = 0xA8;
-		internal const int VK_BROWSER_STOP = 0xA9;
-		internal const int VK_BROWSER_SEARCH = 0xAA;
-		internal const int VK_BROWSER_FAVORITES = 0xAB;
-		internal const int VK_BROWSER_HOME = 0xAC;
-		internal const int VK_VOLUME_MUTE = 0xAD;
-		internal const int VK_VOLUME_DOWN = 0xAE;
-		internal const int VK_VOLUME_UP = 0xAF;
-		internal const int VK_MEDIA_NEXT_TRACK = 0xB0;
-		internal const int VK_MEDIA_PREV_TRACK = 0xB1;
-		internal const int VK_MEDIA_STOP = 0xB2;
-		internal const int VK_MEDIA_PLAY_PAUSE = 0xB3;
-		internal const int VK_LAUNCH_MAIL = 0xB4;
-		internal const int VK_LAUNCH_MEDIA_SELECT = 0xB5;
-		internal const int VK_LAUNCH_APP1 = 0xB6;
-		internal const int VK_LAUNCH_APP2 = 0xB7;
+		internal const uint VK_LSHIFT = 0xA0;
+		internal const uint VK_RSHIFT = 0xA1;
+		internal const uint VK_LCONTROL = 0xA2;
+		internal const uint VK_RCONTROL = 0xA3;
+		internal const uint VK_LMENU = 0xA4;
+		internal const uint VK_RMENU = 0xA5;
+		internal const uint VK_BROWSER_BACK = 0xA6;
+		internal const uint VK_BROWSER_FORWARD = 0xA7;
+		internal const uint VK_BROWSER_REFRESH = 0xA8;
+		internal const uint VK_BROWSER_STOP = 0xA9;
+		internal const uint VK_BROWSER_SEARCH = 0xAA;
+		internal const uint VK_BROWSER_FAVORITES = 0xAB;
+		internal const uint VK_BROWSER_HOME = 0xAC;
+		internal const uint VK_VOLUME_MUTE = 0xAD;
+		internal const uint VK_VOLUME_DOWN = 0xAE;
+		internal const uint VK_VOLUME_UP = 0xAF;
+		internal const uint VK_MEDIA_NEXT_TRACK = 0xB0;
+		internal const uint VK_MEDIA_PREV_TRACK = 0xB1;
+		internal const uint VK_MEDIA_STOP = 0xB2;
+		internal const uint VK_MEDIA_PLAY_PAUSE = 0xB3;
+		internal const uint VK_LAUNCH_MAIL = 0xB4;
+		internal const uint VK_LAUNCH_MEDIA_SELECT = 0xB5;
+		internal const uint VK_LAUNCH_APP1 = 0xB6;
+		internal const uint VK_LAUNCH_APP2 = 0xB7;
 
-		internal const int VK_BACK = 0x08;
-		internal const int VK_TAB = 0x09;
-		internal const int VK_CLEAR = 0x0C;
-		internal const int VK_RETURN = 0x0D;
-		internal const int VK_SHIFT = 0x10;
-		internal const int VK_CONTROL = 0x11;
-		internal const int VK_MENU = 0x12;
-		internal const int VK_PAUSE = 0x13;
-		internal const int VK_CAPITAL = 0x14;
-		internal const int VK_ESCAPE = 0x1B;
-		internal const int VK_CONVERT = 0x1C;
-		internal const int VK_NONCONVERT = 0x1D;
-		internal const int VK_ACCEPT = 0x1E;
-		internal const int VK_MODECHANGE = 0x1F;
-		internal const int VK_SPACE = 0x20;
-		internal const int VK_PRIOR = 0x21;
-		internal const int VK_NEXT = 0x22;
-		internal const int VK_END = 0x23;
-		internal const int VK_HOME = 0x24;
-		internal const int VK_LEFT = 0x25;
-		internal const int VK_UP = 0x26;
-		internal const int VK_RIGHT = 0x27;
-		internal const int VK_DOWN = 0x28;
-		internal const int VK_SELECT = 0x29;
-		internal const int VK_PRINT = 0x2A;
-		internal const int VK_EXECUTE = 0x2B;
-		internal const int VK_SNAPSHOT = 0x2C;
-		internal const int VK_INSERT = 0x2D;
-		internal const int VK_DELETE = 0x2E;
-		internal const int VK_HELP = 0x2F;
-		internal const int VK_LWIN = 0x5B;
-		internal const int VK_RWIN = 0x5C;
-		internal const int VK_APPS = 0x5D;
-		internal const int VK_SLEEP = 0x5F;
-		internal const int VK_NUMPAD0 = 0x60;
-		internal const int VK_NUMPAD1 = 0x61;
-		internal const int VK_NUMPAD2 = 0x62;
-		internal const int VK_NUMPAD3 = 0x63;
-		internal const int VK_NUMPAD4 = 0x64;
-		internal const int VK_NUMPAD5 = 0x65;
-		internal const int VK_NUMPAD6 = 0x66;
-		internal const int VK_NUMPAD7 = 0x67;
-		internal const int VK_NUMPAD8 = 0x68;
-		internal const int VK_NUMPAD9 = 0x69;
-		internal const int VK_MULTIPLY = 0x6A;
-		internal const int VK_ADD = 0x6B;
-		internal const int VK_SEPARATOR = 0x6C;
-		internal const int VK_SUBTRACT = 0x6D;
-		internal const int VK_DECIMAL = 0x6E;
-		internal const int VK_DIVIDE = 0x6F;
-		internal const int VK_F1 = 0x70;
-		internal const int VK_F2 = 0x71;
-		internal const int VK_F3 = 0x72;
-		internal const int VK_F4 = 0x73;
-		internal const int VK_F5 = 0x74;
-		internal const int VK_F6 = 0x75;
-		internal const int VK_F7 = 0x76;
-		internal const int VK_F8 = 0x77;
-		internal const int VK_F9 = 0x78;
-		internal const int VK_F10 = 0x79;
-		internal const int VK_F11 = 0x7A;
-		internal const int VK_F12 = 0x7B;
-		internal const int VK_F13 = 0x7C;
-		internal const int VK_F14 = 0x7D;
-		internal const int VK_F15 = 0x7E;
-		internal const int VK_F16 = 0x7F;
-		internal const int VK_F17 = 0x80;
-		internal const int VK_F18 = 0x81;
-		internal const int VK_F19 = 0x82;
-		internal const int VK_F20 = 0x83;
-		internal const int VK_F21 = 0x84;
-		internal const int VK_F22 = 0x85;
-		internal const int VK_F23 = 0x86;
-		internal const int VK_F24 = 0x87;
+		internal const uint VK_BACK = 0x08;
+		internal const uint VK_TAB = 0x09;
+		internal const uint VK_CLEAR = 0x0C;
+		internal const uint VK_RETURN = 0x0D;
+		internal const uint VK_SHIFT = 0x10;
+		internal const uint VK_CONTROL = 0x11;
+		internal const uint VK_MENU = 0x12;
+		internal const uint VK_PAUSE = 0x13;
+		internal const uint VK_CAPITAL = 0x14;
+		internal const uint VK_ESCAPE = 0x1B;
+		internal const uint VK_CONVERT = 0x1C;
+		internal const uint VK_NONCONVERT = 0x1D;
+		internal const uint VK_ACCEPT = 0x1E;
+		internal const uint VK_MODECHANGE = 0x1F;
+		internal const uint VK_SPACE = 0x20;
+		internal const uint VK_PRIOR = 0x21;
+		internal const uint VK_NEXT = 0x22;
+		internal const uint VK_END = 0x23;
+		internal const uint VK_HOME = 0x24;
+		internal const uint VK_LEFT = 0x25;
+		internal const uint VK_UP = 0x26;
+		internal const uint VK_RIGHT = 0x27;
+		internal const uint VK_DOWN = 0x28;
+		internal const uint VK_SELECT = 0x29;
+		internal const uint VK_PRINT = 0x2A;
+		internal const uint VK_EXECUTE = 0x2B;
+		internal const uint VK_SNAPSHOT = 0x2C;
+		internal const uint VK_INSERT = 0x2D;
+		internal const uint VK_DELETE = 0x2E;
+		internal const uint VK_HELP = 0x2F;
+		internal const uint VK_LWIN = 0x5B;
+		internal const uint VK_RWIN = 0x5C;
+		internal const uint VK_APPS = 0x5D;
+		internal const uint VK_SLEEP = 0x5F;
+		internal const uint VK_NUMPAD0 = 0x60;
+		internal const uint VK_NUMPAD1 = 0x61;
+		internal const uint VK_NUMPAD2 = 0x62;
+		internal const uint VK_NUMPAD3 = 0x63;
+		internal const uint VK_NUMPAD4 = 0x64;
+		internal const uint VK_NUMPAD5 = 0x65;
+		internal const uint VK_NUMPAD6 = 0x66;
+		internal const uint VK_NUMPAD7 = 0x67;
+		internal const uint VK_NUMPAD8 = 0x68;
+		internal const uint VK_NUMPAD9 = 0x69;
+		internal const uint VK_MULTIPLY = 0x6A;
+		internal const uint VK_ADD = 0x6B;
+		internal const uint VK_SEPARATOR = 0x6C;
+		internal const uint VK_SUBTRACT = 0x6D;
+		internal const uint VK_DECIMAL = 0x6E;
+		internal const uint VK_DIVIDE = 0x6F;
+		internal const uint VK_F1 = 0x70;
+		internal const uint VK_F2 = 0x71;
+		internal const uint VK_F3 = 0x72;
+		internal const uint VK_F4 = 0x73;
+		internal const uint VK_F5 = 0x74;
+		internal const uint VK_F6 = 0x75;
+		internal const uint VK_F7 = 0x76;
+		internal const uint VK_F8 = 0x77;
+		internal const uint VK_F9 = 0x78;
+		internal const uint VK_F10 = 0x79;
+		internal const uint VK_F11 = 0x7A;
+		internal const uint VK_F12 = 0x7B;
+		internal const uint VK_F13 = 0x7C;
+		internal const uint VK_F14 = 0x7D;
+		internal const uint VK_F15 = 0x7E;
+		internal const uint VK_F16 = 0x7F;
+		internal const uint VK_F17 = 0x80;
+		internal const uint VK_F18 = 0x81;
+		internal const uint VK_F19 = 0x82;
+		internal const uint VK_F20 = 0x83;
+		internal const uint VK_F21 = 0x84;
+		internal const uint VK_F22 = 0x85;
+		internal const uint VK_F23 = 0x86;
+		internal const uint VK_F24 = 0x87;
 		internal const int VK_NUMLOCK = 0x90;
 		internal const int VK_SCROLL = 0x91;
 		internal const int VK_PACKET = 0xE7;
@@ -1668,8 +1668,8 @@ namespace Keysharp.Core.Windows
 			var threadsAreAttached = false;
 			var targetThread = GetWindowThreadProcessId(targetWindow, out _);
 
-			if (targetThread != 0 && targetThread != (uint)Processes.CurrentThreadID && !IsHungAppWindow(targetWindow))
-				threadsAreAttached = AttachThreadInput((uint)Processes.CurrentThreadID, targetThread, true);
+			if (targetThread != 0 && targetThread != Processes.CurrentThreadID && !IsHungAppWindow(targetWindow))
+				threadsAreAttached = AttachThreadInput(Processes.CurrentThreadID, targetThread, true);
 
 			if (setActive)
 				_ = SetActiveWindow(targetWindow);
@@ -1680,7 +1680,7 @@ namespace Keysharp.Core.Windows
 		internal static void DetachThreadInput(bool threadsAreAttached, uint targetThread)
 		{
 			if (threadsAreAttached)
-				_ = AttachThreadInput((uint)Processes.CurrentThreadID, targetThread, false);
+				_ = AttachThreadInput(Processes.CurrentThreadID, targetThread, false);
 		}
 
 
@@ -2099,6 +2099,16 @@ namespace Keysharp.Core.Windows
 			uint Msg,
 			int wParam,
 			string lParam,
+			SendMessageTimeoutFlags flags,
+			uint timeout,
+			out IntPtr result);
+
+		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
+		internal static extern int SendMessageTimeout(
+			IntPtr hWnd,
+			uint Msg,
+			ref int wParam,
+			ref int lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
 			out IntPtr result);

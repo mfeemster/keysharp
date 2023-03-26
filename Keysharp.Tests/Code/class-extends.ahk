@@ -4,6 +4,17 @@ class testclass
 	b := 456
 	static c := 888
 	static d := 1000
+
+	BaseCaseSensitiveFunc()
+	{
+		global a := 999
+		this.a := 1212
+	}
+	
+	static BaseCaseSensitiveFuncStatic()
+	{
+		global c := 3131
+	}
 }
 
 class testsubclass extends testclass
@@ -18,9 +29,19 @@ class testsubclass extends testclass
 		super.a := 500
 	}
 
-	getbasea()
+	GetBasea()
 	{
 		return super.a
+	}
+
+	SubCaseSensitiveFunc()
+	{
+		basecasesensitivefunc()
+	}
+	
+	static SubCaseSensitiveFuncStatic()
+	{
+		testclass.basecasesensitivefuncstatic()
 	}
 }
 
@@ -125,6 +146,29 @@ else
 classname := testsubclassobj.__Class
 
 If (classname == "testsubclass")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+testsubclassobj.a := ""
+testsubclassobj.super.a := ""
+
+testsubclassobj.subcasesensitivefunc()
+
+if (testsubclassobj.super.a == 999)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (testsubclassobj.a == 1212)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+testclass.c := ""
+testsubclass.subcasesensitivefuncstatic()
+
+if (testclass.c == 3131)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

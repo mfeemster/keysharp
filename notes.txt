@@ -158,6 +158,7 @@ Differences:
 	-Goto statements being called as a function like Goto("Label") are not supported. Instead, just use goto Label.
 	-Enumerator.Call() is not supported because it takes ref variables.
 	-Func isn't supported, but FuncObj is and is created by the Func() function.
+		-This is because C# already contains a built in class named Func.
 	-Deleting a tab via GuiCtrl.Delete() does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 	-ListView supports a new method DeleteCol() to remove a column.
 	-When adding a ListView, the Count option is not supported because C# can't preallocate memory for a ListView.
@@ -210,6 +211,10 @@ Differences:
 	-The Optimization section of the #HotIf documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
 	-Global variables can be accessed from within class methods by using the program. prefix.
 	-You don't have to use this. to access member variables in member functions. Instead, just reference the member variable using global, and that will distinguish it between a local function variable. Using this is still supported, but is slower.
+		-Note that if a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
+			-global propname refers to the property defined in the base class.
+			-this.propname refers to the property in the most derived subclass.
+		-To avoid confusion, it is best not to give properties the same name between base and sub classes.
 	-Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
 	-Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { "y", 42 }
 	-__Init() and __New are not static. They are instance methods so they can access static and instance member variables.
@@ -235,6 +240,7 @@ Differences:
 		.\Keysharp.exe .\test.ahk | more
 		.\Keysharp.exe .\test.ahk | more > out.txt
 	-Pausing a script is not supported because it's actually a running program. As such, the pause menu item has been removed.
+	-A_EventInfo is not limited to positive values when reporting the mouse wheel scroll amount. When scrolling up, the value will be positive, and negative when scrolling down.
 	
 TODO/ENSURE THESE WORK:
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
@@ -243,25 +249,76 @@ TODO/ENSURE THESE WORK:
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
-	Remapping has not been implemented.
 	Make sure the standard menu items actually do something. Window Spy probably won't be implemented until the second release.
 	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
 	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
 	
 		do in order:
+			finish up the remaining hotkey work, test mouse functionality, and write unit tests that at least cover parsing of them.
 			get hWndLastUsed working, it seems somewhat off and conflicting with the LastFound member in the WindowItem class.
 				go through ahk's script state struct and make sure you have a corresponding match to each of those vars that is threadstatic.
 			finish up with remapping, especially with sendlevel/inputlevel. then implement Thread() function. See how ahk_h does it.
 				preliminarily have sendlevel/inputlevel working.
 				implement A_AllowTimers
 			pull in latest ahk_v2 code to see what's changed.
-		
 	Perhaps look into including a long integer/extended precision library.
 	What to do about references to specific locations named AutoHotkey, such as the library paths? Should we:
 		-Keep that with no change.
 		-No longer support it.
 		-Support that, but also "Keysharp" in its place?
 		
+	
+	Get all menu items working, both on the main window, and on the system tray.
+		-suspend works, but resume does not.
+		-make sure system tray menus and main window menus both call the same functions to avoid code duplication.
+	A_IsPaused
+	ListLines, A_ListLines
+	Function objects will need to be created to be used, not all created on script load like the documentation says.
+	Custom iterator objects won't be implemented.
+	Ownprops
+	threading interaction with timers
+	Items under COM section
+	Thread functionality, where things can be pre-empted/suspended/resumed etc...
+	a way to test if you've implemented all functions: https://lexikos.github.io/v2/docs/commands/index.htm
+	ensure you've properly captured all of these changes between 1.1 to 2.0: https://lexikos.github.io/v2/docs/v2-changes.htm
+	implement window spy window.
+	Need to implement properties under Custom Menu Items and some under Misc.
+	Need to implement the functionality of the standard menu in Menu.cs: public void AddStandard()//Need to make this actually od something//TODO
+	See how much some of the existing plugins work with Keysharp: https://lexikos.github.io/v2/docs/commands/Edit.htm
+	I'm not sure if we talked about this before but I just had a conversation in 
+	meta about AltTab hotkeys and I just wanted to say: if you ever get around to them – just leave them out. They serve next to no purpose, are very hackily implemented in AHK, they need a ton of edge-cases and weirdness, and they are just overall a mess. So yeah, just a heads-up I guess.
+	If you want to read up on why I said this: https://discord.com/channels/115993023636176902/546213647526133760/888810883675983902
+
+	tanks says:  also please msg me when you post code i very do mch want to feature it and offer direct hosting for downloads. we all accept that initial versions arent ready for primetime. but the more exposure the better.
+
+	Here is an example of something not working because we haven't implemented threads properly.
+	#MaxThreadsPerHotkey 3
+	#z::  ; Win+Z hotkey (change this hotkey to suit your preferences).
+	{
+		static KeepWinZRunning := false
+		if KeepWinZRunning  ; This means an underlying thread is already running the loop below.
+		{
+			KeepWinZRunning := false  ; Signal that thread's loop to stop.
+			return  ; End this thread so that the one underneath will resume and see the change made by the line above.
+		}
+		; Otherwise:
+		KeepWinZRunning := true
+		Loop
+		{
+			; The next four lines are the action you want to repeat (update them to suit your preferences):
+			ToolTip("Press Win-Z again to stop this from flashing.")
+			Sleep(1000)
+			ToolTip()
+			Sleep(1000)
+			; But leave the rest below unchanged.
+			if(not KeepWinZRunning)  ; The user signaled the loop to stop by pressing Win-Z again.
+				break  ; Break out of this loop.
+		}
+		KeepWinZRunning := false  ; Reset in preparation for the next press of this hotkey.
+	}
+	#MaxThreadsPerHotkey 1
+
+
 	Give attribution to:
 		Need to include this https://opensource.org/licenses/cddl1.php for the logical string comparison code: https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 		Ini utility, attribution: https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class
@@ -271,7 +328,8 @@ TODO/ENSURE THESE WORK:
 		Semver: https://github.com/maxhauser/semver
 		PictureBox derivation: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
 		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
-		
+		The program icon is a derivative of work by Bamicon: https://thenounproject.com/bamicon/
+
 	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
 	
@@ -404,6 +462,7 @@ for example, let's say you try calling a registry-related function on linux. wha
 i'll also need substantial help testing. despite writing unit tests for each piece of functionality, i'm sure i will miss many of the corner cases. so i'll need a team of testers in close coordination and rapid communication to start testing their old scripts on multiple OSes and give me feedback on what isn't working. it will be a big effort.
 
 INFO/FURTHER RESEARCH/OTHER PROJECTS:
+	A version/fork of AHK called AHK_H which uses some threading, but not entirely: https://github.com/thqby/AutoHotkey_H
 	This is just a thought for a future feature, perhaps pending extensive COM support. I've used code like this below to create Word instances in node-red using edge-js. IMHO support for at least MS Office apps would be a huge plus:
 		Activator.CreateInstance(Type.GetTypeFromProgID("Word.Application")
 	Be sure to keep in touch and coordinate with Tab Nation at https://www.youtube.com/c/TABNationAutoHotkey/videos and tadamm88@gmail.com
@@ -424,7 +483,6 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	https://github.com/rbreaves/kinto 
 	http://daviddeley.com/autohotkey/xprxmp/autohotkey_expression_examples.htm
 	https://github.com/Run1e/autohotkey-oofs
-	The program icon is a derivative of work by Bamicon: https://thenounproject.com/bamicon/
 	https://stackoverflow.com/questions/27977924/in-windows-10-how-can-we-determine-which-virtual-desktop-a-window-belongs-to/32527200#32527200
 	shutdown command on linux: https://stackoverflow.com/questions/11803283/shutdown-linux-using-c-sharp-and-mono/11803470#11803470
 	 http://msdn.microsoft.com/en-us/library/aa376874%28v=vs.85%29.aspx
@@ -512,40 +570,6 @@ Closed development links to revisit:
 ,v`:`=`"v`"`,`w`:`=`"`w`"`,`x`:`=`"`x`"`,`y`:`=`"`y`"`,`z`:`=`"`z`"
 
 %`p%%r%%`i%%n%%t%(%`h% %`e% %`l% %`l% %`o%)
-
-
-
-FINAL TODO BEFORE INITIAL RELEASE:
-
-Get all menu items working, both on the main window, and on the system tray.
-	-suspend works, but resume does not.
-	-make sure system tray menus and main window menus both call the same functions to avoid code duplication.
-A_IsPaused
-ListLines, A_ListLines
-Function objects will need to be created to be used, not all created on script load like the documentation says.
-Custom iterator objects won't be implemented.
-Ownprops
-threading interaction with timers
-Items under COM section
-The Mouse and Keyboard and Hotkeys and Hotstrings sections.
-Thread functionality, where things can be pre-empted/suspended/resumed etc...
-classes
-a way to test if you've implemented all functions: https://lexikos.github.io/v2/docs/commands/index.htm
-ensure you've properly captured all of these changes between 1.1 to 2.0: https://lexikos.github.io/v2/docs/v2-changes.htm
-see if renaming keysharp.exe to a scriptname.exe will automatically run scriptname.ahk
-implement window spy window.
-Need to implement properties under Custom Menu Items and some under Misc.
-Need to implement the functionality of the standard menu in Menu.cs: public void AddStandard()//Need to make this actually od something//TODO
-See how much some of the existing plugins work with Keysharp: https://lexikos.github.io/v2/docs/commands/Edit.htm
-Map.cs: public object this[object key]//Unsure how this will work with __item and allowing overriding, mark as virtual for now.//TODO
-I'm not sure if we talked about this before but I just had a conversation in 
-meta about AltTab hotkeys and I just wanted to say: if you ever get around to them – just leave them out. They serve next to no purpose, are very hackily implemented in AHK, they need a ton of edge-cases and weirdness, and they are just overall a mess. So yeah, just a heads-up I guess.
-If you want to read up on why I said this: https://discord.com/channels/115993023636176902/546213647526133760/888810883675983902
-
-tanks says:  also please msg me when you post code i very do mch want to feature it and offer direct hosting for downloads. we all accept that initial versions arent ready for primetime. but the more exposure the better.
-
-
-
 
 ///////Code storage
 

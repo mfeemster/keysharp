@@ -344,27 +344,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							//If the function being called has the same name as a variable, then we assume it's a function object.
-							//So we need assume that the name of the function is actually the name of an object, then we make a method call named Call() on that object.
-							for (var blocklevel = blocks.Count; blocklevel >= 0; blocklevel--)//Innermost to outermost.
-							{
-								var tempscope = GetScope(blocklevel);
-
-								//Unsure if this will work on vars which are not declared until later in the script.
-								if (VarExistsAtCurrentOrParentScope(typeStack.Peek(), tempscope, name))
-								{
-									var specialinvoke = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){name})"), "Call"));
-
-									if (paren.Count != 0)
-										specialinvoke.Parameters.AddRange(passed);
-
-									parts[i] = specialinvoke;
-									goto specialaddcall;
-								}
-							}
-
-							//Wasn't special, so record it to see if it is actually an object creation statement later.
-							allMethodCalls.Add(invoke);
+							allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 						}
 
 						parts[i] = invoke;

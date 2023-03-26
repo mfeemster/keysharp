@@ -136,13 +136,13 @@ namespace Keysharp.Core.Windows
 		internal override void MinimizeAll()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
-			_ = WindowsAPI.PostMessage(window.Handle, (uint)WindowsAPI.WM_COMMAND, new IntPtr(419), IntPtr.Zero);
+			_ = WindowsAPI.PostMessage(window.Handle, WindowsAPI.WM_COMMAND, new IntPtr(419), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
 		}
 		internal override void MinimizeAllUndo()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
-			_ = WindowsAPI.PostMessage(window.Handle, (uint)WindowsAPI.WM_COMMAND, new IntPtr(416), IntPtr.Zero);
+			_ = WindowsAPI.PostMessage(window.Handle, WindowsAPI.WM_COMMAND, new IntPtr(416), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
 		}
 		internal override WindowItemBase WindowFromPoint(Point location)

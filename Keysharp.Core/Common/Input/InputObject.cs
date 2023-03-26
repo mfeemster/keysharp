@@ -153,7 +153,7 @@ namespace Keysharp.Core.Common.Input
 			var keys = obj0.As();
 			var options = obj1.As();
 			var adding = true;
-			int flag, addFlags = 0, removeFlags = 0;
+			uint flag, addFlags = 0u, removeFlags = 0u;
 
 			for (var i = 0; i < options.Length; ++i)
 			{

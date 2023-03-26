@@ -22,13 +22,13 @@ namespace Keysharp.Core.Common.Input
 		internal bool EndingBySC;
 		internal char EndingChar;
 		internal int EndingMatchIndex;
-		internal int EndingMods;
+		internal uint EndingMods;
 		internal bool EndingRequiredShift;
-		internal int EndingSC;
-		internal int EndingVK;
+		internal uint EndingSC;
+		internal uint EndingVK;
 		internal bool FindAnywhere;
-		internal int[] KeySC = new int[HookThread.SC_ARRAY_COUNT];
-		internal int[] KeyVK = new int[HookThread.VK_ARRAY_COUNT];
+		internal uint[] KeySC = new uint[HookThread.SC_ARRAY_COUNT];
+		internal uint[] KeyVK = new uint[HookThread.VK_ARRAY_COUNT];
 		internal List<string> match = new List<string>();
 		internal uint MinSendLevel;
 		internal bool NotifyNonText;
@@ -134,7 +134,7 @@ namespace Keysharp.Core.Common.Input
 			EndByReason(InputStatusType.TerminatedByEndKey);
 		}
 
-		internal void EndByKey(int vk, int sc, bool bySC, bool requiredShift)
+		internal void EndByKey(uint vk, uint sc, bool bySC, bool requiredShift)
 		{
 			EndingVK = vk;
 			EndingSC = sc;
@@ -192,7 +192,7 @@ namespace Keysharp.Core.Common.Input
 							var sb = new StringBuilder();
 							state[(int)Keys.ShiftKey] |= 0x80; // Indicate that the neutral shift key is down for conversion purposes.
 							var active_window_keybd_layout = hook.kbdMsSender.GetFocusedKeybdLayout(IntPtr.Zero);
-							var count = WindowsAPI.ToUnicodeEx((uint)EndingVK, (uint)hook.MapVkToSc(EndingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
+							var count = WindowsAPI.ToUnicodeEx(EndingVK, hook.MapVkToSc(EndingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
 															   , sb, 2, Script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
 							keyName = keyName.Substring(0, count);
 						}
@@ -351,19 +351,19 @@ namespace Keysharp.Core.Common.Input
 			}
 		}
 
-		internal void SetKeyFlags(string keys, bool endKeyMode = true, int flagsRemove = 0, int flagsAdd = HookThread.END_KEY_ENABLED)
+		internal void SetKeyFlags(string keys, bool endKeyMode = true, uint flagsRemove = 0u, uint flagsAdd = HookThread.END_KEY_ENABLED)
 		{
 			//While this may have been easier and more concise to do C# style, there are extremely hard to decipher details in the original which make exact duplication
 			//of the behavior very unlikely. So it's copied verbatim and ported to ensure consistent functionality.
-			int? modifiersLR = 0;
+			uint? modifiersLR = 0u;
 			int keyTextLength;
 			var singleCharCount = 0u;
 			//TCHAR* end_pos, single_char_string[2];
 			var endPos = 0;
 			var singleCharString = "";
 			var endcharMode = endKeyMode && EndCharMode;
-			var vk = 0;
-			var sc = 0;
+			var vk = 0u;
+			var sc = 0u;
 			var vkByNumber = false;
 			bool? scByNumber = false;
 			var ht = Script.HookThread;
@@ -448,7 +448,7 @@ namespace Keysharp.Core.Common.Input
 						}
 
 						singleCharString = ch.ToString();
-						modifiersLR = 0;  // Init prior to below.
+						modifiersLR = 0u;  // Init prior to below.
 						vk = ht.TextToVK(singleCharString, ref modifiersLR, true, true, WindowsAPI.GetKeyboardLayout(0));
 						vkByNumber = false;
 						break;
@@ -475,7 +475,7 @@ namespace Keysharp.Core.Common.Input
 						KeyVK[vk] = (KeyVK[vk] & ~flagsRemove) | flagsAdd;
 						// Apply flag removal to this key's SC as well.  This is primarily
 						// to support combinations like {All} +E, {LCtrl}{RCtrl} -E.
-						int temp_sc;
+						uint temp_sc;
 
 						if (flagsRemove != 0 && !vkByNumber && (temp_sc = ht.MapVkToSc(vk)) != 0)
 						{

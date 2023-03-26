@@ -54,7 +54,7 @@ namespace Keysharp.Tests
 		internal string WrapInFunc(string source)
 		{
 			var sb = new StringBuilder();
-			_ = sb.AppendLine("func()");
+			_ = sb.AppendLine("TestFunc()");
 			_ = sb.AppendLine("{");
 
 			using (var sr = new StringReader(source))
@@ -67,7 +67,7 @@ namespace Keysharp.Tests
 			}
 
 			_ = sb.AppendLine("}");
-			_ = sb.AppendLine("func()");
+			_ = sb.AppendLine("testfunc()");//Deliberately change case to always make sure case insensitivity works.
 			return sb.ToString();
 		}
 
