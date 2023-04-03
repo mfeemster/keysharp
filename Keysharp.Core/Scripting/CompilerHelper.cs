@@ -155,7 +155,7 @@ using static Keysharp.Scripting.Script.Operator;
 #if !WINDOWS
 		public (CompilerResults, Exception) Compile(string code, string outputname)
 #else
-		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname)
+		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir)
 #endif
 		{
 			try
@@ -219,7 +219,10 @@ using static Keysharp.Scripting.Script.Operator;
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
-					MetadataReference.CreateFromFile("Keysharp.Core.dll"),
+					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
+					//Note that Keysharp.Core.dll *must* remain in that location for a compiled executable to work.
+					//MetadataReference.CreateFromFile(Path.Combine(Environment.CurrentDirectory, "Keysharp.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(currentDir, "Keysharp.Core.dll")),
 				};
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
@@ -267,7 +270,7 @@ using static Keysharp.Scripting.Script.Operator;
 		public (CodeCompileUnit[], CompilerErrorCollection) CreateDomFromFile(params string[] fileNames)
 		{
 			var units = new CodeCompileUnit[fileNames.Length];
-			var errors = new CompilerErrorCollection();//Maybe make a member so it can be retrieved outside of this.
+			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
 			var x = Keysharp.Core.Env.FindCommandLineArg("cp");
 			parser = new Parser(this, new CompilerParameters());
@@ -297,7 +300,7 @@ using static Keysharp.Scripting.Script.Operator;
 				}
 				catch (Keysharp.Core.ParseException e)
 				{
-					_ = errors.Add(new CompilerError(e.Source, (int)e.Line, 0, e.Message.GetHashCode().ToString(), e.Message));
+					_ = errors.Add(new CompilerError(e.File, (int)e.Line, 0, "0", e.Message));
 				}
 				catch (Exception e)
 				{
@@ -312,7 +315,7 @@ using static Keysharp.Scripting.Script.Operator;
 		public void PrintCompilerErrors(string s)
 		{
 			if (Keysharp.Scripting.Parser.ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)
-				Console.WriteLine(s);//For this to show on the command line, they need to pipe to more like: | more
+				Keysharp.Scripting.Script.OutputDebug(s);//For this to show on the command line, they need to pipe to more like: | more
 			else
 				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
@@ -338,8 +341,8 @@ using static Keysharp.Scripting.Script.Operator;
 			{
 				var file = string.IsNullOrEmpty(error.FileName) ? filename : error.FileName;
 				_ = !error.IsWarning
-					? sbe.AppendLine($"{Path.GetFileName(file)}:{error.Line} - {error.ErrorText}")
-					: sbw.AppendLine($"{Path.GetFileName(file)}:{error.Line} - {error.ErrorText}");
+					? sbe.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}.")
+					: sbw.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}.");
 			}
 
 			return (sbe.ToString(), sbw.ToString());

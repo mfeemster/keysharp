@@ -15,6 +15,7 @@
     <Company>Keysharp</Company>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

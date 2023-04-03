@@ -10,6 +10,7 @@
     <Authors>Matt Feemster</Authors>
     <Company>Keysharp</Company>
     <Description>A simple test program to paste generated code into for debugging</Description>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

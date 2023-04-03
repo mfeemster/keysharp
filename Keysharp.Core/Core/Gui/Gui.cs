@@ -18,7 +18,6 @@ namespace Keysharp.Core
 	{
 		public TabPage CurrentTab;
 		public KeysharpForm form;
-
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
 		internal List<IFuncObj> closedHandlers;
 		internal List<IFuncObj> contextMenuChangedHandlers;
@@ -27,6 +26,7 @@ namespace Keysharp.Core
 		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
 		internal List<IFuncObj> sizeHandlers;
+
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new Dictionary<string, Action<Gui, object>>
 		{
 			{
@@ -217,13 +217,10 @@ namespace Keysharp.Core
 		};
 
 		private static int windowCount = 0;
-
+		private bool closingFromDestroy;
 		private bool dpiscaling = true;
-
 		private bool lastfound = false;
-
 		private bool owndialogs = false;
-
 		private bool resizable = false;
 
 		public object BackColor
@@ -378,6 +375,22 @@ namespace Keysharp.Core
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
+
+		public static void DestroyAll()
+		{
+			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Keysharp.Scripting.Script.mainWindow).ToArray())//Destroy everything but the main window, which will destroy itself.
+			{
+				try
+				{
+					gui.Destroy();
+				}
+				catch
+				{
+				}
+			}
+
+			allGuiHwnds.Clear();
+		}
 
 		public static Gui New(object obj0 = null, object obj1 = null, object obj2 = null) => new Gui(obj0, obj1, obj2);
 
@@ -1433,7 +1446,11 @@ namespace Keysharp.Core
 
 		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_WebBrowser, obj0, obj1);
 
-		public void Destroy() => form.Close();
+		public void Destroy()
+		{
+			closingFromDestroy = true;
+			form.Close();
+		}
 
 		public void Flash(object obj)
 		{
@@ -2090,18 +2107,22 @@ namespace Keysharp.Core
 		{
 			var result = closedHandlers?.InvokeEventHandlers(this);
 
-			if (result.IsCallbackResultNonEmpty())
+			if (!closingFromDestroy)
 			{
 				e.Cancel = true;
-				form.Show();
-				return;
+
+				if (result.IsCallbackResultNonEmpty())
+					return;
+
+				form.Hide();
 			}
-
-			_ = allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
-			form = null;
-
-			if (Core.Debug)//Only for making testing easier, never meant to run in production.
-				Script.mainWindow?.Close();
+			else
+			{
+				_ = allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
+				form = null;
+				//if (Core.Debug)//Only for making testing easier, never meant to run in production.
+				//  Script.mainWindow?.Close();
+			}
 		}
 
 		internal void Form_KeyDown(object sender, KeyEventArgs e)

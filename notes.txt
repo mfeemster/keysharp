@@ -14,7 +14,12 @@ Code obsolescence/deprecation:
 	-Rather than make every publicly available static function for scripting be a part of a massive class named Core, split them into many public static classes with public static methods.
 	-No custom rand code for mt19937, C# already has this.
 	-No need for qmath.h, C# already has its own math functions that are likely faster.
-	
+	-The files needed to run a standalone compiled executable (named test) are:
+		-text.exe
+		-test.dll
+		-test.runtimeconfig.json
+		-Keysharp.Core.dll
+		
 Bugs:
 	-Space and enter did not properly trigger hotstrings.
 	-Backspace within a trigger, then retyping it, would prevent triggering hotstrings.

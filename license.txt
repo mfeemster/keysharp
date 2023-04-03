@@ -1,7 +1,7 @@
 ﻿Keysharp: a continuation of IronAHK, which is a C# re-write of AutoHotKey.
 
-Copyright (c) 2010 A. <inspiration3@gmail.com>, Tobias Kappé <tobias@ntlabs.org>
 Copyright (c) 2020 Matt Feemster <matt.feemster@gmail.com>
+Copyright (c) 2010 A. <inspiration3@gmail.com>, Tobias Kappé <tobias@ntlabs.org>
 
 And other contributors.
 

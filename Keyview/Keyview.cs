@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core;
@@ -12,7 +14,7 @@ namespace Keyview
 	{
 		private readonly CompilerHelper ch = new CompilerHelper();
 		private readonly CheckBox chkFullCode = new CheckBox();
-		private readonly string lastrun = "./lastkeyviewrun.txt";
+		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 		private readonly System.Windows.Forms.Timer timer = new Timer();
 		private readonly char[] trimend = new char[] { '\n', '\r' };
 		private readonly double updateFreqSeconds = 1;
@@ -32,8 +34,10 @@ namespace Keyview
 			Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			chkFullCode.Text = "Full code";
 			chkFullCode.CheckStateChanged += chkFullCode_CheckStateChanged;
-			var host = new ToolStripControlHost(chkFullCode);
-			host.Alignment = ToolStripItemAlignment.Right;
+			var host = new ToolStripControlHost(chkFullCode)
+			{
+				Alignment = ToolStripItemAlignment.Right
+			};
 			_ = toolStrip1.Items.Add(host);
 			txtIn.AllowDrop = true;
 			txtIn.DragEnter += TxtIn_DragEnter;
@@ -129,7 +133,8 @@ namespace Keyview
 				Refresh();
 				code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
 				tslCodeStatus.Text = "Compiling C# code...";
-				var (results, ms, compileexc) = ch.Compile(code, "Keyview");
+				var asm = Assembly.GetExecutingAssembly();
+				var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
 
 				if (results == null)
 				{

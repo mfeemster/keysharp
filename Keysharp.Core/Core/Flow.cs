@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -425,6 +426,7 @@ namespace Keysharp.Core
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool IsTrueAndRunning(object obj) => !hasExited&& Keysharp.Scripting.Script.ForceBool(obj);
 
 		internal enum ExitReasons

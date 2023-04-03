@@ -70,7 +70,10 @@ namespace Keysharp.Benchmark
 			//ib.KeysharpArrayIndex();
 			//ib.KeysharpArrayIndexNoDefaultIndexer();
 			//return;
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
+			//var fb = new FuncBench();
+			//fb.Setup();
+			//fb.KeysharpNativeLongSimNativeLoopIncrement();
+			//return;
 			var config = new ManualConfig();
 			_ = config.AddColumnProvider(DefaultConfig.Instance.GetColumnProviders().ToArray());
 			_ = config.AddExporter(DefaultConfig.Instance.GetExporters().ToArray());
@@ -81,7 +84,8 @@ namespace Keysharp.Benchmark
 			config.UnionRule = ConfigUnionRule.AlwaysUseGlobal; // Overriding the default
 			//var summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
 			//var summary = BenchmarkRunner.Run<MathBench>(config);
-			var summary = BenchmarkRunner.Run<IndexBench>(config);
+			//var summary = BenchmarkRunner.Run<IndexBench>(config);
+			var summary = BenchmarkRunner.Run<FuncBench>(config);
 			var logger = ConsoleLogger.Default;
 			MarkdownExporter.Console.ExportToLog(summary, logger);
 			ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());

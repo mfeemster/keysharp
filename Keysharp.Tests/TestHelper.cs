@@ -140,7 +140,8 @@ namespace Keysharp.Tests
 
 			CompilerHelper.compiledasm = results.CompiledAssembly;
 #else
-			var (results, ms, compileexc) = ch.Compile(code, name);
+			var asm = Assembly.GetExecutingAssembly();
+			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
 
 			if (compileexc != null)
 			{

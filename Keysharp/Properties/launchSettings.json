@@ -2,7 +2,7 @@
   "profiles": {
     "Keysharp": {
       "commandName": "Project",
-      "commandLineArgs": "-codeout -exeout .\\assign.ahk",
+      "commandLineArgs": "-codeout -exeout .\\test.ks",
       "workingDirectory": "$(OutputDir)"
     }
   }
