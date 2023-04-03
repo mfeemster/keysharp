@@ -42,6 +42,23 @@ namespace Keysharp.Main
 			return dir;
 		}
 
+		internal static void InstallToPath(string path)
+		{
+			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
+			var oldPath = (string)Registry.LocalMachine.CreateSubKey(keyName).GetValue("PATH", "", RegistryValueOptions.DoNotExpandEnvironmentNames);//Get non-expanded PATH environment variable.
+
+			if (!oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Any(s => string.Compare(s, path, true) == 0))
+				Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", oldPath + (oldPath.EndsWith(';') ? path : $";{path}"), RegistryValueKind.ExpandString);//Set the path as an an expandable string with the passed in value included.
+		}
+
+		internal static void RemoveFromPath(string path)
+		{
+			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
+			var oldPath = (string)Registry.LocalMachine.CreateSubKey(keyName).GetValue("PATH", "", RegistryValueOptions.DoNotExpandEnvironmentNames);//Get non-expanded PATH environment variable.
+			var newPath = string.Join(';', oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(s => string.Compare(s, path, true) != 0));
+			Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", newPath, RegistryValueKind.ExpandString);//Restore the old path to what it was without the passed in value included.
+		}
+
 		[STAThread]
 		public static int Main(string[] args)
 		{
@@ -56,6 +73,8 @@ namespace Keysharp.Main
 
 				Keysharp.Core.Window.SetProcessDPIAware();
 				var asm = Assembly.GetExecutingAssembly();
+				var exePath = Path.GetFullPath(asm.Location);
+				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var nsname = typeof(Program).Namespace;
 				var codeout = false;
 				var exeout = false;
@@ -108,6 +127,14 @@ namespace Keysharp.Main
 						case "codeout":
 							codeout = true;
 							break;
+
+						case "install"://To be called by the installer during installation.
+							InstallToPath(exeDir);
+							return 0;
+
+						case "uninstall"://To be called by the uninstaller during uninstallation.
+							RemoveFromPath(exeDir);
+							return 0;
 							//default:
 							//  return Message($"Unrecognized switch: {args[i]}", true);
 					}
@@ -206,8 +233,6 @@ namespace Keysharp.Main
 				CompilerHelper.compiledasm = results.CompiledAssembly;
 #else
 				//Message($"Before compiling, setting current dir to {Environment.CurrentDirectory}", false);
-				var exePath = Path.GetFullPath(asm.Location);
-				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
 
 				if (results == null)
