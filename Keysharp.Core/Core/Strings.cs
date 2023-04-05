@@ -81,19 +81,11 @@ namespace Keysharp.Core
 				{
 					if (!haslsys && splits[i].StartsWith("L"))
 					{
-						var sub = splits[i].AsSpan(1);
-
-						if (!int.TryParse(sub, out var li))
-							li = int.Parse(sub.StartsWith("0x") ? sub.Slice(2) : sub, NumberStyles.AllowHexSpecifier);
-
-						ci = new System.Globalization.CultureInfo(li, false);
+						ci = new System.Globalization.CultureInfo(splits[i].Substring(1).ParseInt(false).Value, false);
 					}
 					else if (splits[i].StartsWith("D"))
 					{
-						var sub = splits[i].AsSpan(1);
-
-						if (!ulong.TryParse(sub, out var di))
-							di = ulong.Parse(sub.StartsWith("0x") ? sub.Slice(2) : sub, NumberStyles.AllowHexSpecifier);
+						var di = splits[i].Substring(1).ParseLong(false).Value;
 
 						if (di == 0x80000000)
 							if (!haslsys)
@@ -101,10 +93,7 @@ namespace Keysharp.Core
 					}
 					else if (splits[i].StartsWith("T"))
 					{
-						var sub = splits[i].AsSpan(1);
-
-						if (!ulong.TryParse(sub, out var ti))
-							ti = ulong.Parse(sub.StartsWith("0x") ? sub.Slice(2) : sub, NumberStyles.AllowHexSpecifier);
+						var ti = splits[i].Substring(1).ParseLong(false).Value;
 
 						if (ti == 0x80000000)
 							if (!haslsys)

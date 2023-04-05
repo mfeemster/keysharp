@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Keysharp.Core
 {
@@ -25,13 +26,13 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static double Abs(object obj) => Math.Abs(obj is double d ? d : obj.Ad());
-
 		/// <summary>
 		/// Returns the absolute value of a number.
 		/// </summary>
 		/// <param name="n">Any number.</param>
 		/// <returns>The magnitude of <paramref name="n"/>.</returns>
+		public static double Abs(object obj) => Math.Abs(obj is double d ? d : obj.Ad());
+
 		/// <summary>
 		/// Returns the angle whose cosine is the specified number.
 		/// </summary>
@@ -62,13 +63,14 @@ namespace Keysharp.Core
 			return Math.Asin(n);
 		}
 
-		public static double ATan(object obj) => Math.Atan(obj is double d ? d : obj.Ad());
-
 		/// <summary>
 		/// Returns the angle whose tangent is the specified number.
 		/// </summary>
 		/// <param name="n">A number representing a tangent.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
+		public static double ATan(object obj) => Math.Atan(obj is double d ? d : obj.Ad());
+
+		
 		/// <summary>
 		/// Returns the angle whose tangent is the y/x number.
 		/// </summary>
@@ -103,6 +105,55 @@ namespace Keysharp.Core
 		/// <param name="n">A number specifying a power.</param>
 		/// <returns>The number <c>e</c> raised to the power <paramref name="n"/>.</returns>
 		public static double Exp(object obj) => Math.Exp(obj is double d ? d : obj.Ad());
+
+		public static string DateAdd(object obj0, object obj1, object obj2)
+		{
+			var s1 = obj0.As();
+			var t = obj1.Ad();
+			var units = obj2.As();
+
+			if (s1.Length == 0)
+				s1 = Accessors.A_Now;
+
+			var d1 = Conversions.ToDateTime(s1);
+
+			if (units.StartsWith("s", StringComparison.OrdinalIgnoreCase))
+				d1 = d1.AddSeconds(t);
+			else if (units.StartsWith("m", StringComparison.OrdinalIgnoreCase))
+				d1 = d1.AddMinutes(t);
+			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
+				d1 = d1.AddHours(t);
+			else
+				d1 = d1.AddDays(t);
+
+			return Conversions.ToYYYYMMDDHH24MISS(d1);
+		}
+
+		public static long DateDiff(object obj0, object obj1, object obj2)
+		{
+			var s1 = obj0.As();
+			var s2 = obj1.As();
+			var units = obj2.As();
+
+			if (s1.Length == 0)
+				s1 = Accessors.A_Now;
+
+			if (s2.Length == 0)
+				s2 = Accessors.A_Now;
+
+			var d1 = Conversions.ToDateTime(s1);
+			var d2 = Conversions.ToDateTime(s2);
+			var diff = d1 - d2;
+
+			if (units.StartsWith("s", StringComparison.OrdinalIgnoreCase))
+				return diff.Seconds;
+			else if (units.StartsWith("m", StringComparison.OrdinalIgnoreCase))
+				return diff.Minutes;
+			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
+				return diff.Hours;
+			else
+				return diff.Days;
+		}
 
 		/// <summary>
 		/// Returns the largest integer less than or equal to the specified double number.
@@ -252,6 +303,35 @@ namespace Keysharp.Core
 					throw new Error($"Mod() divisor argument of {divisor} was 0 {new StackFrame(0).GetMethod().Name}");
 
 				return dividend % divisor;
+			}
+		}
+
+		public static object Number(object obj0)
+		{
+			if (obj0 is long l)
+				return l;
+			else if (obj0 is double d)
+				return d;
+			else
+			{
+				var s = obj0.As();
+
+				if (s.Contains('.'))
+				{
+					var val = s.ParseDouble(false);
+
+					if (val.HasValue)
+						return val.Value;
+				}
+				else
+				{
+					var val = s.ParseLong(false);
+
+					if (val.HasValue)
+						return val.Value;
+				}
+
+				throw new TypeError($"Could not convert {obj0.As()} to an integer or float.");
 			}
 		}
 

@@ -462,7 +462,7 @@ namespace Keysharp.Tests
 		{
 			var dir = string.Concat(path, "DirCopy/file1.txt");
 			var filetime = Keysharp.Core.File.FileGetTime(dir);
-			var dt = Keysharp.Core.Conversions.FromYYYYMMDDHH24MISS(filetime);
+			var dt = Keysharp.Core.Conversions.ToDateTime(filetime);
 			Assert.AreNotEqual(dt, DateTime.MinValue);
 			Assert.IsTrue(TestScript("file-filegettime", true));
 		}

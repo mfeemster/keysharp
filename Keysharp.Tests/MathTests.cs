@@ -135,6 +135,90 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Math")]
+		public void DateAdd()
+		{
+			var d1 = "20040126000000";
+			var d2 = "20050126000000";
+			var val = Maths.DateAdd(d1, 366, "days");
+			Assert.AreEqual(d2, val);
+			val = Maths.DateAdd(d2, -366L, "days");
+			Assert.AreEqual(d1, val);
+			d1 = "2023021002";
+			d2 = "20230210070000";
+			val = Maths.DateAdd(d1, 5L, "h");
+			Assert.AreEqual(d2, val);
+			d1 = "20230210020000";
+			val = Maths.DateAdd(d2, -5L, "h");
+			Assert.AreEqual(d1, val);
+			d1 = "202302100225";
+			d2 = "20230210023000";
+			val = Maths.DateAdd(d1, 5L, "m");
+			Assert.AreEqual(d2, val);
+			d1 = "20230210022500";
+			val = Maths.DateAdd(d2, -5L, "m");
+			Assert.AreEqual(d1, val);
+			d1 = "20230210022510";
+			d2 = "20230210022515";
+			val = Maths.DateAdd(d1, 5L, "s");
+			Assert.AreEqual(d2, val);
+			val = Maths.DateAdd(d2, -5L, "s");
+			Assert.AreEqual(d1, val);
+			d1 = "20230210022500";
+			d2 = "20230210022530";
+			val = Maths.DateAdd(d1, 0.5, "m");
+			Assert.AreEqual(d2, val);
+			val = Maths.DateAdd(d2, -0.5, "m");
+			Assert.AreEqual(d1, val);
+			d1 = "20230210020000";
+			d2 = "20230210023000";
+			val = Maths.DateAdd(d1, 0.5, "h");
+			Assert.AreEqual(d2, val);
+			val = Maths.DateAdd(d2, -0.5, "h");
+			Assert.AreEqual(d1, val);
+			d1 = "20040126000000";
+			d2 = "20040126120000";
+			val = Maths.DateAdd(d1, 0.5, "d");
+			Assert.AreEqual(d2, val);
+			val = Maths.DateAdd(d2, -0.5, "d");
+			Assert.AreEqual(d1, val);
+			Assert.IsTrue(TestScript("math-dateadd", true));
+		}
+
+		[Test, Category("Math")]
+		public void DateDiff()
+		{
+			var d1 = "20050126";
+			var d2 = "20040126";
+			var val = Maths.DateDiff(d1, d2, "days");
+			Assert.AreEqual(366L, val);
+			d1 = "20230110";
+			d2 = "20230115";
+			val = Maths.DateDiff(d2, d1, "days");
+			Assert.AreEqual(5L, val);
+			val = Maths.DateDiff(d1, d2, "days");
+			Assert.AreEqual(-5L, val);
+			d1 = "2023021002";
+			d2 = "2023021001";
+			val = Maths.DateDiff(d1, d2, "h");
+			Assert.AreEqual(1L, val);
+			val = Maths.DateDiff(d2, d1, "h");
+			Assert.AreEqual(-1L, val);
+			d1 = "202302100230";
+			d2 = "202302100225";
+			val = Maths.DateDiff(d1, d2, "m");
+			Assert.AreEqual(5L, val);
+			val = Maths.DateDiff(d2, d1, "m");
+			Assert.AreEqual(-5L, val);
+			d1 = "20230210023015";
+			d2 = "20230210022510";
+			val = Maths.DateDiff(d1, d2, "s");
+			Assert.AreEqual(5L, val);
+			val = Maths.DateDiff(d2, d1, "s");
+			Assert.AreEqual(-5L, val);
+			Assert.IsTrue(TestScript("math-datediff", true));
+		}
+
+		[Test, Category("Math")]
 		public void Exp()
 		{
 			foreach (var n in new[] { -1, -0.5, 0, -0, 0.5, 1, 0.675 })
@@ -293,6 +377,29 @@ namespace Keysharp.Tests
 			}
 
 			Assert.IsTrue(caught);
+		}
+
+		[Test, Category("Math")]
+		public void Number()
+		{
+			Assert.AreEqual(Maths.Number("0"), 0L);
+			Assert.AreEqual(Maths.Number("0.0"), 0.0);
+			Assert.AreEqual(Maths.Number("1"), 1L);
+			Assert.AreEqual(Maths.Number("1.0"), 1.0);
+			Assert.AreNotEqual(Maths.Number("1.5"), 1L);
+			Assert.AreEqual(Maths.Number(1L), 1L);
+			Assert.AreNotEqual(Maths.Number(1.5), 1L);
+			Assert.AreEqual(Maths.Number(-1L), -1L);
+			Assert.AreEqual(Maths.Number("-1"), -1L);
+			Assert.AreEqual(Maths.Number("1L"), 1L);
+			Assert.AreEqual(Maths.Number("+1L"), 1L);
+			Assert.AreEqual(Maths.Number("-1.0"), -1.0);
+			Assert.AreEqual(Maths.Number("1.0D"), 1.0);
+			Assert.AreEqual(Maths.Number("1.0d"), 1.0);
+			Assert.AreEqual(Maths.Number("-1.0D"), -1.0);
+			Assert.AreEqual(Maths.Number("-1.0d"), -1.0);
+			Assert.AreEqual(Maths.Number("0xF"), 15L);
+			Assert.AreEqual(Maths.Number("-0xF"), -15L);
 		}
 
 		[Test, Category("Math")]

@@ -72,17 +72,10 @@ namespace Keysharp.Scripting
 					if (subject != null)
 					{
 						var type = subject.GetType();
-
-						switch (test)
+						if (Keysharp.Scripting.Parser.IsTypeOrBase(type, test))
 						{
-							case Map:
-							case Object:
-								ret = subject is Map;
-								goto done;
-
-							case Array:
-								ret = type.IsArray;
-								goto done;
+							ret = true;
+							goto done;
 						}
 					}
 
@@ -99,6 +92,12 @@ namespace Keysharp.Scripting
 								variable = variable.Substring(2);
 
 							break;
+
+						case "true":
+							return ForceBool(subject);
+
+						case "false":
+							return !ForceBool(subject);
 					}
 
 					switch (test)

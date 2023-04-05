@@ -300,7 +300,7 @@ namespace Keysharp.Core
 					if (val?.Length == 0)
 						dtp.Checked = false;
 					else
-						dtp.Value = Conversions.FromYYYYMMDDHH24MISS(val);
+						dtp.Value = Conversions.ToDateTime(val);
 				}
 				else if (_control is MonthCalendar mc)
 				{

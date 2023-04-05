@@ -70,11 +70,11 @@ namespace Keysharp.Tests
 			Assert.AreEqual(now.ToString("ss"), ss);
 			//Don't test Accessors.A_MSec because it'll probably be different between calls.
 			var full = Accessors.A_Now;
-			var dt = Conversions.FromYYYYMMDDHH24MISS(full);
+			var dt = Conversions.ToDateTime(full);
 			var full2 = dt.ToString("yyyyMMddHHmmss");
 			Assert.AreEqual(full, full2);
 			full = Accessors.A_NowUTC;
-			dt = Conversions.FromYYYYMMDDHH24MISS(full);
+			dt = Conversions.ToDateTime(full);
 			full2 = dt.ToString("yyyyMMddHHmmss");
 			Assert.AreEqual(full, full2);
 			Assert.IsTrue(Accessors.A_TickCount > 0);

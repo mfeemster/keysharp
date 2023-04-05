@@ -913,7 +913,18 @@ namespace Keysharp.Scripting
 								else
 									_ = invoke.Parameters.Add(VarMixedExpr(parts[x]));
 
-								_ = invoke.Parameters.Add(VarMixedExpr(parts[y]));
+								var py = parts[y];
+
+								if (op == Script.Operator.Is)//When using "is", we pass the type as a string, which is then compared internally inside of IfLegacy().
+								{
+									if (py is CodeVariableReferenceExpression pycvre)
+										_ = invoke.Parameters.Add(new CodePrimitiveExpression(pycvre.VariableName));
+									else if (py is CodePrimitiveExpression pycpe)
+										_ = invoke.Parameters.Add(new CodePrimitiveExpression(pycpe.Value.ToString()));
+								}
+								else
+									_ = invoke.Parameters.Add(VarMixedExpr(py));
+
 								parts[x] = invoke;
 								next:
 								parts.RemoveAt(y);

@@ -29,20 +29,54 @@ namespace Keysharp.Core
 
 		private const string unk = "UNKNOWN";
 
-		public static DateTime FromYYYYMMDDHH24MISS(string time)
-		{
-			if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
-				return dt;
-
-			return DateTime.MinValue;
-		}
-
 		/// <summary>
 		/// Need to manually provide a wrapper because calendar is not a constant, which is required for default parameters.
 		/// </summary>
 		/// <param name="time"></param>
 		/// <returns></returns>
-		public static DateTime ToDateTime(string time) => ToDateTime(time, System.Globalization.CultureInfo.CurrentCulture.Calendar);
+		public static DateTime ToDateTime(string time)
+		{
+			switch (time.Length)
+			{
+				case 14:
+					if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
+						return dt;
+
+					break;
+
+				case 12:
+					if (DateTime.TryParseExact(time, "yyyyMMddHHmm", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+						return dt;
+
+					break;
+
+				case 10:
+					if (DateTime.TryParseExact(time, "yyyyMMddHH", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+						return dt;
+
+					break;
+
+				case 8:
+					if (DateTime.TryParseExact(time, "yyyyMMdd", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+						return dt;
+
+					break;
+
+				case 6:
+					if (DateTime.TryParseExact(time, "yyyyMM", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+						return dt;
+
+					break;
+
+				case 4:
+					if (DateTime.TryParseExact(time, "yyyy", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+						return dt;
+
+					break;
+			}
+
+			return DateTime.MinValue;
+		}
 
 		internal static string FromFileAttribs(FileAttributes attribs)
 		{

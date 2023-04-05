@@ -48,6 +48,21 @@ class testsubclass extends testclass
 testclassobj := testclass()
 testsubclassobj := testsubclass()
 
+If (testclassobj is testclass)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (testsubclassobj is testclass)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (testsubclassobj is testsubclass)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 val := testclassobj.a
 
 If (val == 123)
@@ -185,6 +200,17 @@ __Item[index]
 }
 
 classname := MyArray()
+
+If (classname is Array)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (classname is MyArray)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 val := classname[100]
 
 If (val == 123)
@@ -204,6 +230,17 @@ __Item[index]
 }
 
 classname := MyMap()
+
+If (classname is Map)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (classname is MyMap)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 val := classname[100]
 
 If (val == 321)
@@ -257,6 +294,12 @@ else
 	FileAppend, fail, *
 
 obj := subarr2()
+
+If (obj is subarr2 && obj is subarr1 && obj is Array)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 val := obj[999]
 
 If (val == 3)
@@ -280,6 +323,12 @@ __Item[index]
 }
 
 obj := submap2()
+
+If (obj is submap2 && obj is submap1 && obj is Map)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
 val := obj[999]
 
 If (val == 4)

@@ -289,6 +289,19 @@ namespace Keysharp.Scripting
 		//  return false;
 		//}
 
+		public static bool IsTypeOrBase(Type t1, string t2)
+		{
+			while (t1 != null)
+			{
+				if (string.Compare(t1.Name, t2, true) == 0)
+					return true;
+
+				t1 = t1.BaseType;
+			}
+
+			return false;
+		}
+
 		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
 		{
 			if (methods.Count > 0)
