@@ -64,6 +64,7 @@ Differences:
 	-Object methods and properties will be case sensitive because that's how they are in C#.
 	-Had to rework much of the infrastructure for dynamically calling methods and properties on objects, such as array.InsertAt(). This may or may not be more efficient.
 	-No such thing as negative indices.
+	-Array has a new method called Add() which should be more efficient than Push() when adding a single item. It also returns the length of the array after the add completes.
 	-IronAHK used decimal in some math functions. Keysharp will just use double for everything.
 	-AHK only supported Atan(), but Keysharp also supports Atan2(x, y).
 	-Added hyperbolic versions of trigonometric functions: Sinh(), Cosh(), Tanh().

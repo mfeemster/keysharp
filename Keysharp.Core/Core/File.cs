@@ -1162,7 +1162,7 @@ namespace Keysharp.Core
 				else if (buf is Array arr)
 				{
 					len = count != long.MinValue ? Math.Min(arr.Count, (int)count) : arr.Count;
-					bw.Write((byte[])arr.array.ToArray(typeof(byte)), 0, len);//No way to know what is in the array since they are objects, so just assume they are bytes.
+					bw.Write(arr.array.ConvertAll(el => (byte)el.ParseLong(false).Value).ToArray(), 0, len);//No way to know what is in the array since they are objects, so convert them to bytes.
 				}
 				else if (buf is string s)
 				{

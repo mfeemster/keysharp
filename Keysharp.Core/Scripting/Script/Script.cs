@@ -43,7 +43,7 @@ namespace Keysharp.Scripting
 
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 
-		internal static bool hsResetUponMouseClick = Keysharp.Scripting.Parser.HotstringNoMouse;
+		internal static bool hsResetUponMouseClick = Parser.HotstringNoMouse;
 
 		internal static bool hsSameLineAction;
 
@@ -64,7 +64,7 @@ namespace Keysharp.Scripting
 
 		internal static int MAX_THREADS_LIMIT = 0xFF;
 
-		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = Keysharp.Core.Common.Keyboard.MenuType.None;
+		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = MenuType.None;
 
 		internal static int nLayersNeedingTimer;
 
@@ -127,7 +127,7 @@ namespace Keysharp.Scripting
 		{
 			if (Accessors.A_IsCompiled)
 			{
-				_ = Keysharp.Core.Dialogs.MsgBox("Cannot edit a compiled script.");
+				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
 				return;
 			}
 
@@ -183,23 +183,23 @@ namespace Keysharp.Scripting
 			if (name.Length == 0 || name == "*")//Happens when running in Keyview.
 				return;
 
-			if (Keysharp.Core.Env.FindCommandLineArg("force") != null || Keysharp.Core.Env.FindCommandLineArg("f") != null)
+			if (Env.FindCommandLineArg("force") != null || Env.FindCommandLineArg("f") != null)
 				inst = eScriptInstance.Off;
 
-			if (Keysharp.Core.Env.FindCommandLineArg("restart") != null || Keysharp.Core.Env.FindCommandLineArg("r") != null)
+			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
 				inst = eScriptInstance.Force;
 
 			switch (inst)
 			{
 				case eScriptInstance.Force:
 				{
-					Keysharp.Core.Window.WinClose(name, "", 2);
+					Window.WinClose(name, "", 2);
 				}
 				break;
 
 				case eScriptInstance.Ignore:
-					if (Keysharp.Core.Window.WinExist(name) != 0)
-						_ = Flow.ExitApp(Keysharp.Core.Flow.ExitReasons.SingleInstance);
+					if (Window.WinExist(name) != 0)
+						_ = Flow.ExitApp(Flow.ExitReasons.SingleInstance);
 
 					break;
 
@@ -208,14 +208,14 @@ namespace Keysharp.Scripting
 
 				case eScriptInstance.Prompt:
 				default:
-					var hwnd = Keysharp.Core.Window.WinExist(name);
+					var hwnd = Window.WinExist(name);
 
 					if (hwnd != 0)
 					{
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
-							Keysharp.Core.Window.WinClose(hwnd, "", 2);
+							Window.WinClose(hwnd, "", 2);
 						else
-							_ = Flow.ExitApp(Keysharp.Core.Flow.ExitReasons.SingleInstance);
+							_ = Flow.ExitApp(Flow.ExitReasons.SingleInstance);
 					}
 
 					break;
@@ -229,11 +229,11 @@ namespace Keysharp.Scripting
 		public static string ListKeyHistory()
 		{
 			var sb = new StringBuilder(2048);
-			var target_window = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow();
+			var target_window = Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow();
 			var win_title = target_window.IsSpecified ? target_window.Title : "";
 			var enabledTimers = 0;
 
-			foreach (var timer in Keysharp.Core.Flow.timers)
+			foreach (var timer in Flow.timers)
 			{
 				if (timer.Value.Enabled)
 				{
@@ -276,8 +276,8 @@ namespace Keysharp.Scripting
 			_ = sb.AppendLine($"Window: {win_title}");
 			_ = sb.AppendLine($"Keybd hook: {(HookThread != null && HookThread.HasKbdHook() ? "yes" : "no")}");
 			_ = sb.AppendLine($"Mouse hook: {(HookThread != null && HookThread.HasMouseHook() ? "yes" : "no")}");
-			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {Keysharp.Core.Flow.timers.Count} ({timerlist})");
-			_ = sb.AppendLine($"Threads: {Keysharp.Scripting.Script.totalExistingThreads}");
+			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {Flow.timers.Count} ({timerlist})");
+			_ = sb.AppendLine($"Threads: {totalExistingThreads}");
 			_ = sb.AppendLine($"Modifiers (GetKeyState() now) = {mod}");
 			_ = sb.AppendLine(hookstatus);
 			_ = sb.Append(cont);
@@ -293,35 +293,24 @@ namespace Keysharp.Scripting
 		{
 			var text = obj0.As();
 			var clear = obj1.Ab();
-			System.Diagnostics.Debug.WriteLine(text);
+			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
 
-			if (Script.mainWindow != null)
+			//This will throw when running tests.
+			try
+			{
+				Console.Out.WriteLine(text);//Will print to the console when piped to | more, even though this is a windows application.
+			}
+			catch
+			{
+			}
+
+			if (!IsMainWindowClosing)
 				if (clear)
-					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
+					mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
 				else
-					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
-
-			//if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			//WindowsAPI.OutputDebugString(text);//Unsure if this is really needed, or will Debug.WriteLine() suffice?
+					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
 		}
 
-		/*
-
-		    LPTSTR Hotkey::ListHotkeys(LPTSTR aBuf, int aBufSize)
-		    // Translates this script's list of variables into text equivalent, putting the result
-		    // into aBuf and returning the position in aBuf of its new string terminator.
-		    {
-		    LPTSTR aBuf_orig = aBuf;
-		    // Save vertical space by limiting newlines here:
-		    aBuf += sntprintf(aBuf, BUF_SPACE_REMAINING, _T("Type\tOff?\tLevel\tRunning\tName\r\n")
-		                     _T("-------------------------------------------------------------------\r\n"));
-		    // Start at the oldest and continue up through the newest:
-		    for (int i = 0; i < sHotkeyCount; ++i)
-		    aBuf = shk[i]->ToText(aBuf, BUF_SPACE_REMAINING, true);
-		    return aBuf;
-		    }
-
-		 * */
 		public static void RunMainWindow(string title, Action userInit)
 		{
 			mainWindow = new MainWindow();
@@ -333,7 +322,7 @@ namespace Keysharp.Scripting
 			mainWindow.WindowState = FormWindowState.Minimized;
 			//mainWindow.WindowState = FormWindowState.Maximized;
 			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
-			mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
 			Parser.Persistent = true;
 			mainWindow.Load += MainWindow_Load;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
@@ -357,10 +346,10 @@ namespace Keysharp.Scripting
 			if (totalExistingThreads > 0 || Parser.Persistent || mainWindow != null)
 				return;
 
-			if (Script.input != null)//Only exit if the last InputHook has been removed.
+			if (input != null)//Only exit if the last InputHook has been removed.
 				return;
 
-			_ = Keysharp.Core.Flow.ExitApp((int)exitReason);
+			_ = Flow.ExitApp((int)exitReason);
 		}
 
 		internal static bool InitHook()
@@ -416,13 +405,13 @@ namespace Keysharp.Scripting
 		{
 			// Just prior to launching the hotkey, update these values to support built-in
 			// variables such as A_TimeSincePriorHotkey:
-			Keysharp.Scripting.Script.priorHotkeyName = Keysharp.Scripting.Script.thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
-			Keysharp.Scripting.Script.priorHotkeyStartTime = Keysharp.Scripting.Script.thisHotkeyStartTime;
+			priorHotkeyName = thisHotkeyName;//None of this will work until we come up with a way to manage thread order.//TODO
+			priorHotkeyStartTime = thisHotkeyStartTime;
 			// Unlike hotkeys -- which can have a name independent of their label by being created or updated
 			// with the HOTKEY command -- a hot string's unique name is always its label since that includes
 			// the options that distinguish between (for example) :c:ahk:: and ::ahk::
-			Keysharp.Scripting.Script.thisHotkeyName = name;
-			Keysharp.Scripting.Script.thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
+			thisHotkeyName = name;
+			thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
 		}
 
 		private static void MainWindow_Load(object sender, EventArgs e)

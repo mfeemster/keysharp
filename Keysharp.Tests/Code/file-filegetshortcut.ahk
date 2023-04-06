@@ -35,7 +35,7 @@ if ("TestDescription" == shortcut.OutDescription)
 else
   	FileAppend, fail, *
 
-if ("" == shortcut["OutArgs"])
+if ("" == shortcut.OutArgs)
  	FileAppend, pass, *
 else
   	FileAppend, fail, *

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -9,7 +10,7 @@ namespace Keysharp.Core
 {
 	public class Array : KeysharpObject, IEnumerable<(object, object)>, ICollection, IList
 	{
-		internal ArrayList array;
+		internal List<object> array;
 
 		public object Capacity
 		{
@@ -43,7 +44,7 @@ namespace Keysharp.Core
 
 					for (var ii = 0; ii < i; ii++)
 						if (ii >= array.Count)
-							_ = array.Add(null);
+							array.Add(null);
 				}
 			}
 		}
@@ -55,17 +56,17 @@ namespace Keysharp.Core
 		public Array(object obj = null)
 		{
 			if (obj == null)
-				array = new ArrayList();
+				array = new List<object>();
 			else if (obj is Array arr)
 				array = arr.array;
 			else if (obj is ICollection c)
-				array = new ArrayList(c);
+				array = new List<object>(c.Cast<object>().ToList());
 			else
 			{
 				var l = obj.Al(-1);
 
 				if (l > 0)
-					array = new ArrayList((int)l);
+					array = new List<object>((int)l);
 				else
 					throw new ValueError(obj: $"Invalid value of {obj} passed to Array constructor.");
 			}
@@ -73,13 +74,15 @@ namespace Keysharp.Core
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
-		//public static ArrayList New(params object[] values) => __New(values);
-
 		public void __New(params object[] values) => Push(values);
 
-		public int Add(object value) => ((IList)array).Add(value);
+		public int Add(object value)
+		{
+			array.Add(value);
+			return array.Count;
+		}
 
-		public void AddRange(ICollection c) => array.AddRange(c);
+		public void AddRange(ICollection c) => array.AddRange(c.Cast<object>());
 
 		public void Clear() => ((IList)array).Clear();
 
@@ -182,7 +185,7 @@ namespace Keysharp.Core
 			return val;
 		}
 
-		public void Push(params object[] values) => AddRange(values);
+		public void Push(params object[] values) => array.AddRange(values);
 
 		public void Remove(object value) => ((IList)array).Remove(value);
 
@@ -289,7 +292,7 @@ namespace Keysharp.Core
 
 	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
-		private ArrayList arr;
+		private List<object> arr;
 		private int position = -1;
 
 		public (object, object) Current
@@ -309,7 +312,7 @@ namespace Keysharp.Core
 
 		object IEnumerator.Current => Current;
 
-		public ArrayIndexValueIterator(ArrayList a)
+		public ArrayIndexValueIterator(List<object> a)
 		{
 			arr = a;
 		}

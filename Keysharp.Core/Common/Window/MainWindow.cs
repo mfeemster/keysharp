@@ -39,13 +39,15 @@ namespace Keysharp.Scripting
 
 		public void AddText(string s, MainFocusedTab tab)
 		{
-			this.Invoke(() =>
+			//Use CheckedBeginInvoke() because CheckedInvoke() seems to crash if this is called right as the window is closing.
+			//Such as with a hotkey that prints on mouse click, which will cause a print when the X is clicked to close.
+			this.CheckedBeginInvoke(() =>
 			{
 				GetText(tab).AppendText($"{s}\r\n");//This should scroll to the bottom, if not, try this:
 				//txt.SelectionStart = txt.TextLength;
 				//txt.ScrollToCaret();
 				tcMain.SelectedTab = GetTab(tab);
-			});
+			}, false, false);
 		}
 
 		public void ClearText(MainFocusedTab tab) => SetText(string.Empty, tab);

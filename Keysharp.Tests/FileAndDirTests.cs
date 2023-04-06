@@ -589,10 +589,10 @@ namespace Keysharp.Tests
 			{
 				var arr = new Array(4);
 
-				for (var i = 0; i < (long)arr.Count; i++)
-					arr.Push((byte)i);
+				for (var i = 0L; i < (long)arr.Count; i++)
+					arr.Push(i);
 
-				var count = f.RawWrite(arr);
+				var count = f.RawWrite(arr);//The values added were longs, this internally converts them to bytes.
 				f.Seek(0);
 				var arr2 = new Array(4);
 				f.RawRead(arr2);
@@ -970,10 +970,12 @@ groupkey13=groupval13
 			var namenoext = splitpath.OutNameNoExt;
 			var drive = splitpath.OutDrive;
 			Assert.AreEqual("file1.txt", filename);
-			Assert.AreEqual("H:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
+			Assert.AreEqual("C:\\D\\bu\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
+			//Assert.AreEqual("H:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
 			Assert.AreEqual("txt", ext);
 			Assert.AreEqual("file1", namenoext);
-			Assert.AreEqual("H:\\", drive);
+			//Assert.AreEqual("H:\\", drive);
+			Assert.AreEqual("C:\\", drive);
 			Assert.IsTrue(TestScript("file-filesplitpath", true));
 		}
 	}

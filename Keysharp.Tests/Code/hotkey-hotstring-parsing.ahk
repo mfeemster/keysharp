@@ -38,7 +38,8 @@ e::b
 *Numpad0 up::SendEvent("{Blind}{Click Up}")
 #InputLevel 0
 ; This hotkey can be triggered by both Numpad0 and LButton:
-~LButton::OutputDebug("Clicked")
+x := 0
+~LButton::x := 999
 
 ; Stacked hotkeys.
 c::
