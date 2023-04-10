@@ -66,7 +66,7 @@ class myclass
 		return val1 * val2
 	}
 
-	static classfuncwithparams(val1, val2)
+	classfuncwithparams(val1, val2)
 	{
 		return val1 * val2
 	}
@@ -294,6 +294,42 @@ myclass.s1 := ""
 myclass.ClassFuncCaseSensitiveStatic()
 
 if (myclass.s1 == 999)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+funcadd := FuncObj("classfuncwithparams", classobj)
+
+val := funcadd(10, 20)
+
+if (val == 200)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+funcadd := FuncObj("classfuncstaticwithparams", classobj)
+
+val := funcadd(10, 10)
+
+if (val == 100)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+funcadd := FuncObj("classvarfunc", classobj)
+
+val := funcadd(1, 2, 3)
+
+if (val == 12)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+funcadd := FuncObj("classvarfuncstatic", classobj)
+
+val := funcadd(1, 2, 3)
+
+if (val == 12)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

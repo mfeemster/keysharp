@@ -355,7 +355,7 @@ using static Keysharp.Scripting.Script.Operator;
 
 			foreach (var diag in diagnostics)
 			{
-				var str = $"{Path.GetFileName(filename)}:{diag.Location.GetLineSpan()} - {diag.GetMessage()}";
+				var str = $"{Path.GetFileName(filename)}{diag.Location.GetLineSpan()} - {diag.GetMessage()}";
 
 				if (diag.Severity == DiagnosticSeverity.Warning)
 					_ = sbw.AppendLine(str);
@@ -366,13 +366,13 @@ using static Keysharp.Scripting.Script.Operator;
 
 			if (sbw.Length != 0)
 			{
-				_ = sbw.Insert(0, "The following warnings occurred:");
+				_ = sbw.Insert(0, "The following warnings occurred: ");
 				_ = sbw.AppendLine();
 			}
 
 			if (sbe.Length != 0)
 			{
-				_ = sbe.Insert(0, "The following errors occurred:");
+				_ = sbe.Insert(0, "The following errors occurred: ");
 				_ = sbe.AppendLine();
 				return $"{desc} failed:\n\n{sbe}\n\n\n{sbw}{(message != "" ? "\n\n" + message : "")}";
 			}

@@ -216,3 +216,26 @@ If (val == 50)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+arr1 := Array()
+arr2 := [10, 20, 30]
+funcadd := FuncObj("Add", arr1)
+
+funcadd(10)
+funcadd(20)
+funcadd(30)
+
+if (arr1 == arr2)
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+
+arr1 := Array()
+funcadd := FuncObj("Push", arr1)
+
+funcadd(10, 20, 30)
+
+if (arr1 == arr2)
+	FileAppend, fail, *
+else
+	FileAppend, pass, *

@@ -25,9 +25,6 @@ namespace Keysharp.Scripting
 			const string Alnum = "alnum";
 			const string Space = "space";
 			const string Time = "time";
-			const string Map = "map";
-			const string Object = "object";
-			const string Array = "array";
 			var variable = ForceString(subject);
 			var ret = false;
 
@@ -72,6 +69,7 @@ namespace Keysharp.Scripting
 					if (subject != null)
 					{
 						var type = subject.GetType();
+
 						if (Keysharp.Scripting.Parser.IsTypeOrBase(type, test))
 						{
 							ret = true;

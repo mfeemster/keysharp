@@ -69,6 +69,7 @@ namespace Keysharp.Scripting
 		internal static int nLayersNeedingTimer;
 
 		internal static List<IFuncObj> OnExitHandlers = new List<IFuncObj>();
+		internal static List<IFuncObj> OnErrorHandlers;
 
 		internal static Icon PausedIcon;
 

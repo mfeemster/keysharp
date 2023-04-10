@@ -57,7 +57,7 @@ namespace Keysharp.Scripting
 				_ = Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Menu);
 				return "";
 			});
-			_ = trayMenu.Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
+			_ = trayMenu.Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
 			//Need to properly fill in all of these event handlers when the proper functionality is implemented.
 			_ = trayMenu.Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());

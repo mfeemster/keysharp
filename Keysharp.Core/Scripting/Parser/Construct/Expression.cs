@@ -308,7 +308,12 @@ namespace Keysharp.Scripting
 								//were passed to Vars, so extract them.
 								if (expand is CodeArrayIndexerExpression caie)
 									foreach (CodeExpression index in caie.Indices)
-										_ = getmethod.Parameters.Add(index);
+									{
+										if (index is CodeVariableReferenceExpression cvre)
+											_ = getmethod.Parameters.Add(new CodeSnippetExpression($"{cvre.VariableName}.ToString()"));
+										else
+											_ = getmethod.Parameters.Add(index);
+									}
 
 								_ = invoke.Parameters.Add(getmethod);
 							}

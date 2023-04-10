@@ -53,8 +53,8 @@ namespace Keysharp.Core
 			var val = obj0;
 			var name = obj1.As();
 			//var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
-			var mi = Reflections.FindAndCacheMethod(val.GetType(), name);
-			return mi != null ? new FuncObj(mi, val)
+			var mph = Reflections.FindAndCacheMethod(val.GetType(), name);
+			return mph != null && mph.mi != null ? new FuncObj(mph.mi, val)
 				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()}.");
 		}
 
@@ -72,12 +72,12 @@ namespace Keysharp.Core
 			var (o, name) = obj.Os();
 			object[] args = null;
 
-			if (Reflections.FindAndCacheMethod(o.GetType(), name) is MethodInfo mi)
+			if (Reflections.FindAndCacheMethod(o.GetType(), name) is MethodPropertyHolder mph && mph.mi != null)
 			{
 				if (obj.Length > 2)
 					args = obj.Skip(2).ToArray();
 
-				return new BoundFunc(mi, args, o);
+				return new BoundFunc(mph.mi, args, o);
 			}
 
 			return null;
@@ -99,8 +99,7 @@ namespace Keysharp.Core
 		public override object Call(params object[] args)
 		{
 			int i = 0, argsused = 0;
-			var parameters = mi.GetParameters();
-			var argslist = new List<object>(parameters.Length);
+			var argslist = new List<object>(mph.parameters.Length);
 
 			for (; i < boundargs.Length; i++)
 			{
@@ -117,12 +116,12 @@ namespace Keysharp.Core
 					argslist.Add(null);
 			}
 
-			for (; argsused < args.Length && argsused < parameters.Length; argsused++)
+			for (; argsused < args.Length && argsused < mph.parameters.Length; argsused++)
 				argslist.Add(args[argsused]);
 
-			while (argslist.Count < parameters.Length)
+			while (argslist.Count < mph.parameters.Length)
 			{
-				var param = parameters[argslist.Count];
+				var param = mph.parameters[argslist.Count];
 
 				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
 					argslist.Add(param.DefaultValue);
@@ -229,12 +228,13 @@ namespace Keysharp.Core
 	public class FuncObj : KeysharpObject, IFuncObj
 	{
 		protected bool anyRef;
-		protected object inst;
 		protected bool isVariadic;
+		protected object inst;
 		protected MethodInfo mi;
+		protected MethodPropertyHolder mph;
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public object Inst => inst;
-		public bool IsValid => mi != null;
+		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
 		public bool IsVariadic => isVariadic;
 
 		public long MaxParams => 9999;//All functions in keysharp are variadic so this property doesn't apply.
@@ -244,7 +244,7 @@ namespace Keysharp.Core
 		public string Name => mi != null ? mi.Name : "";
 
 		public FuncObj(string s, object o = null)
-			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s) : Reflections.FindMethod(s), o)
+			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s).mi : Reflections.FindMethod(s).mi, o)
 		{
 		}
 
@@ -260,7 +260,7 @@ namespace Keysharp.Core
 		public BoundFunc Bind(params object[] obj)
 		=> new BoundFunc(mi, obj, inst);
 
-		public virtual object Call(params object[] obj) => mi.ArgumentAdjustedInvoke(inst, obj);
+		public virtual object Call(params object[] obj) => mph.callFunc(inst, obj);
 
 		public bool IsByRef(params object[] obj)//Ref args are not supported, so this should always return false.
 		{
@@ -308,9 +308,10 @@ namespace Keysharp.Core
 
 		private void Init()
 		{
-			var funcParams = mi.GetParameters();
+			mph = new MethodPropertyHolder(mi, null);
+			var parameters = mph.parameters;
 
-			foreach (var p in funcParams)
+			foreach (var p in parameters)
 			{
 				if (p.ParameterType.IsByRef)
 				{
@@ -319,7 +320,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			isVariadic = funcParams.Length == 1 && funcParams[0].ParameterType == typeof(object[]);
+			isVariadic = parameters.Length > 0 && parameters[parameters.Length - 1].ParameterType == typeof(object[]);
 		}
 	}
 }

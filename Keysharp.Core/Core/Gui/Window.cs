@@ -919,12 +919,19 @@ namespace Keysharp.Core
 			}
 			else if ((s = (ctrl as string)) == null)
 			{
-				var hwnd = Script.InternalGetPropertyValue(ctrl, "Hwnd");
+				object hwnd = null;
+
+				try
+				{
+					hwnd = Script.GetPropertyValue(ctrl, "Hwnd");
+				}
+				catch { }
+
 				var ptr = IntPtr.Zero;
 
-				if (hwnd.Item1 is long ll)
+				if (hwnd is long ll)
 					ptr = new IntPtr(ll);
-				else if (hwnd.Item1 is IntPtr p)
+				else if (hwnd is IntPtr p)
 					ptr = p;
 
 				if (WindowsAPI.IsWindow(ptr))

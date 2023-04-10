@@ -34,6 +34,8 @@ namespace System
 				return ctrl.Control;
 			else if (obj is Keysharp.Core.Menu menu)
 				return menu.GetMenu();
+			else if (obj is System.Windows.Forms.Control control)//Final check in the event it's some kind of native control or form.
+				return control;
 
 			return null;
 		}

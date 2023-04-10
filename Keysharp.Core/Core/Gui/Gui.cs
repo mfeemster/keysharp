@@ -26,6 +26,15 @@ namespace Keysharp.Core
 		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
 		internal List<IFuncObj> sizeHandlers;
+		internal static Type[] GuiTypes = new Type[]
+		{
+			typeof(Keysharp.Core.Gui),
+			typeof(Keysharp.Core.GuiControl),
+			typeof(Keysharp.Core.Menu),
+			typeof(System.Windows.Forms.Control)//Add native control and form types just to be safe.
+		};
+
+		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new Dictionary<string, Action<Gui, object>>
 		{

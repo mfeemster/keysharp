@@ -12,8 +12,6 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		internal static List<IFuncObj> errorHandlers;
-
 		public static Core.Array Array(params object[] obj)
 		{
 			if (obj.Length == 0)
@@ -25,6 +23,8 @@ namespace Keysharp.Scripting
 		}
 
 		public static Keysharp.Core.Buffer Buffer(object obj0, object obj1 = null) => new (obj0, obj1);
+
+		public static void Collect() => GC.Collect();
 
 		public static Map Dictionary(object[] keys, object[] values)
 		{
@@ -53,9 +53,9 @@ namespace Keysharp.Scripting
 		{
 			object result = null;
 
-			if (errorHandlers != null)
+			if (OnErrorHandlers != null)
 			{
-				foreach (var handler in errorHandlers)
+				foreach (var handler in OnErrorHandlers)
 				{
 					result = handler.Call(err, err.ExcType);
 
@@ -79,53 +79,9 @@ namespace Keysharp.Scripting
 
 		public static FuncObj FuncObj(object obj0, object obj1 = null) => new FuncObj(obj0.As(), obj1);
 
-		public static object GetMethodOrProperty(object item, object key)//This has to be public because the script will emit it in Main().
-		{
-			if (key is string ks)
-			{
-				if (item == null)
-				{
-					if (Reflections.FindMethod(ks) is MethodInfo mi1)
-						return (item, mi1);
-				}
-				else if (Reflections.FindAndCacheMethod(item.GetType(), ks) is MethodInfo mi)
-					return (item, mi);
-				else if (Reflections.FindAndCacheProperty(item.GetType(), ks) is PropertyInfo pi)
-					return (item, pi);
-			}
-
-			throw new MemberError($"Attempting to get method or property {item} with key {key} failed.");
-		}
-
-		public static object GetStaticMethodT<T>(object name) => Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodInfo mi&& mi.Attributes.HasFlag(MethodAttributes.Static)
-		? mi
+		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name) => Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
+		? (null, mph)
 		: throw new MethodError($"Attempting to get method {name} failed.");
-
-		public static object GetStaticMemberValueT<T>(object name)
-		{
-			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi && pi.GetAccessors().Any(x => x.IsStatic))
-			{
-				try
-				{
-					return pi.GetValue(null);
-				}
-				catch (Exception e)
-				{
-					if (e.InnerException is KeysharpException ke)
-						throw ke;
-					else
-						throw;
-				}
-			}
-
-			throw new PropertyError($"Attempting to get property {name} failed.");
-		}
-
-		public static object GetPropertyValue(object item, object name)
-		{
-			var ret = InternalGetPropertyValue(item, name.ToString());
-			return ret.Item2 ? ret.Item1 : "";
-		}
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new (obj0, obj1, obj2);
 
@@ -181,7 +137,7 @@ namespace Keysharp.Scripting
 		/// </summary>
 		/// <param name="name">The name of a function.</param>
 		/// <returns><c>true</c> if the specified function exists in the current scope, <c>false</c> otherwise.</returns>
-		public static long IsFunc(object name) => Reflections.FindMethod(name.ToString()) is MethodInfo ? 1L : 0L;
+		public static long IsFunc(object name) => Reflections.FindMethod(name.ToString()) is MethodPropertyHolder mph&& mph.mi != null ? 1L : 0L;
 
 		public static long IsInteger(object obj)
 		{
@@ -273,8 +229,6 @@ namespace Keysharp.Scripting
 			return 1L;
 		}
 
-		public static void Collect() => GC.Collect();
-
 		public static KeyError KeyError(params object[] obj) => new (obj);
 
 		public static Map Map(params object[] obj) => Object(obj);
@@ -311,17 +265,15 @@ namespace Keysharp.Scripting
 			var i = obj1.Al(1L);
 			var del = Function.GetFuncObj(e, null, true);
 
-			if (errorHandlers == null)
-				errorHandlers = new List<IFuncObj>();
+			if (OnErrorHandlers == null)
+				OnErrorHandlers = new List<IFuncObj>();
 
-			errorHandlers.ModifyEventHandlers(del, i);
+			OnErrorHandlers.ModifyEventHandlers(del, i);
 		}
 
 		public static OSError OSError(params object[] obj) => new (obj);
 
 		public static PropertyError PropertyError(params object[] obj) => new (obj);
-
-		public static UnsetItemError UnsetItemError(params object[] obj) => new (obj);
 
 		public static object SetObject(object value, object item, params object[] index)
 		{
@@ -354,7 +306,7 @@ namespace Keysharp.Scripting
 				var parameters = mi.GetParameters();
 
 				if (parameters.Length > 1)
-					return mi.Invoke(item, index.Concat( new object[] { value }));// new object[] { index, value });
+					return mi.Invoke(item, index.Concat(new object[] { value }));// new object[] { index, value });
 				var p = parameters[0];
 
 				if (p.ParameterType == typeof(object))
@@ -380,63 +332,6 @@ namespace Keysharp.Scripting
 			throw new MemberError($"Attempting to set index {key} of object {item} to value {value} failed.");
 		}
 
-		public static void SetStaticMemberValueT<T>(object name, object value)
-		{
-			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString()) is PropertyInfo pi)
-			{
-				try
-				{
-					pi.SetValue(null, value);
-				}
-				catch (Exception e)
-				{
-					if (e.InnerException is KeysharpException ke)
-						throw ke;
-					else
-						throw;
-				}
-			}
-			else
-				throw new PropertyError($"Attempting to set property {name} to value {value} failed.");
-		}
-
-		public static void SetPropertyValue(object item, object name, object value)
-		{
-			Type typetouse;
-
-			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
-			{
-				typetouse = t;
-				item = o;
-			}
-			else
-				typetouse = item.GetType();
-
-			if (Reflections.FindAndCacheProperty(typetouse, name.ToString()) is PropertyInfo pi)
-			{
-				try
-				{
-					if (item.GetControl() is Control ctrl)
-						ctrl.CheckedInvoke(() => pi.SetValue(item, value), false);//If it's a gui control, then invoke on the gui thread.
-					else
-						pi.SetValue(item, value);
-				}
-				catch (Exception e)
-				{
-					if (e.InnerException is KeysharpException ke)
-						throw ke;
-					else
-						throw;
-				}
-			}
-			else if (item is Map map)//If it wasn't a property, try it as a key to a map.
-			{
-				map[name] = value;
-			}
-			else
-				throw new PropertyError($"Attempting to set property {name} on object {item} to value {value} failed.");
-		}
-
 		public static Keysharp.Core.StringBuffer StringBuffer(object obj0, object obj1 = null) => new StringBuffer(obj0.As(), obj1.Ai(256));
 
 		public static TargetError TargetError(params object[] obj) => new (obj);
@@ -446,6 +341,8 @@ namespace Keysharp.Scripting
 		public static string Type(object t) => t.GetType().Name;
 
 		public static TypeError TypeError(params object[] obj) => new (obj);
+
+		public static UnsetItemError UnsetItemError(params object[] obj) => new (obj);
 
 		public static ValueError ValueError(params object[] obj) => new (obj);
 
@@ -462,47 +359,6 @@ namespace Keysharp.Scripting
 		public void ObjSetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
 		public object ObjSetCapacity(params object[] obj) => true;
-
-		internal static (object, bool) InternalGetPropertyValue(object item, string name)
-		{
-			Type typetouse;
-
-			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
-			{
-				typetouse = t;
-				item = o;
-			}
-			else
-				typetouse = item.GetType();
-
-			if (Reflections.FindAndCacheProperty(typetouse, name) is PropertyInfo pi)
-			{
-				try
-				{
-					(object, bool) ret = (null, false);
-
-					if (item.GetControl() is Control ctrl)
-						_ = ctrl.CheckedInvoke(() => ret = (pi.GetValue(item, null), true), false);//If it's a gui control, then invoke on the gui thread.
-					else
-						ret = (pi.GetValue(item, null), true);
-
-					if (ret.Item1 is int i)
-						ret.Item1 = (long)i;//Try to keep everything as long.
-
-					return ret;
-				}
-				catch (Exception)
-				{
-				}
-			}
-			else if (item is Map map)
-			{
-				if (map.map.TryGetValue(name, out var val))
-					return (val, true);
-			}
-
-			return (null, false);
-		}
 
 		private static object IndexAt(object item, params object[] index)
 		{

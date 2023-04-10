@@ -75,14 +75,14 @@ namespace Keysharp.Core
 					Default = item.Name;
 			}
 
-			item = Add("&Help");
-			item = Add();
-			item = Add("&Window Spy");
-			item = Add("&Reload Script");
-			item = Add("&Edit Script");
-			item = Add();
-			item = Add("&Suspend Hotkeys");
-			item = Add("E&xit");
+			_ = Add("&Help");
+			_ = Add();
+			_ = Add("&Window Spy");
+			_ = Add("&Reload Script");
+			_ = Add("&Edit Script");
+			_ = Add();
+			_ = Add("&Suspend Hotkeys");
+			_ = Add("E&xit");
 		}
 
 		public void Check(object obj) => Check(obj.As(), eCheckToggle.Check);

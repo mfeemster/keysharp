@@ -335,3 +335,41 @@ If (val == 4)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+testclass.c := 101
+myfunc := FuncObj("basecasesensitivefuncstatic", testsubclassobj)
+
+myfunc()
+
+if (testclass.c == 3131)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+testclass.c := 101
+myfunc := FuncObj("subcasesensitivefuncstatic", testsubclassobj)
+
+myfunc()
+
+if (testclass.c == 3131)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+testsubclassobj.a := 0
+myfunc := FuncObj("basecasesensitivefunc", testsubclassobj)
+myfunc()
+
+if (testsubclassobj.a == 1212)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+testsubclassobj.a := 0
+myfunc := FuncObj("SubCaseSensitiveFunc", testsubclassobj)
+myfunc()
+
+if (testsubclassobj.a == 1212)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

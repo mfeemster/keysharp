@@ -8,7 +8,7 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		[Test, Category("Collections")]
-		public void ArrayEx()
+		public void Array()
 		{
 			var arr = new Keysharp.Core.Array(new object[]
 			{
@@ -68,11 +68,11 @@ namespace Keysharp.Tests
 			}
 
 			Assert.AreEqual(arr.ToString(), "[10, 20, 30]");
-			Assert.IsTrue(TestScript("collections-array-ex", true));
+			Assert.IsTrue(TestScript("collections-array", true));
 		}
 
 		[Test, Category("Collections")]
-		public void AssociativeArrayEx()
+		public void AssociativeArray()
 		{
 			var arr = Keysharp.Scripting.Script.Dictionary(new object[]
 			{
@@ -135,7 +135,7 @@ namespace Keysharp.Tests
 			}
 
 			Assert.AreEqual(arr.ToString(), "{\"one\": 1, \"two\": 2, \"three\": 3}");
-			Assert.IsTrue(TestScript("collections-associative-array-ex", true));
+			Assert.IsTrue(TestScript("collections-associative-array", true));
 		}
 
 		[Test, Category("Collections")]

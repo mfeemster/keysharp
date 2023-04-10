@@ -38,15 +38,23 @@ namespace Keysharp.Core.Common.Window
 				return criteria;
 			}
 
-			var hwnd = Script.InternalGetPropertyValue(obj, "Hwnd");
+			object hwnd = null;
 
-			if (hwnd.Item1 is long ll)
+			try
+			{
+				hwnd = Script.GetPropertyValue(obj, "Hwnd");
+			}
+			catch
+			{
+			}
+
+			if (hwnd is long ll)
 			{
 				criteria.ID = new IntPtr(ll);
 				return criteria;
 			}
 
-			if (hwnd.Item1 is IntPtr ptr2)
+			if (hwnd is IntPtr ptr2)
 			{
 				criteria.ID = ptr2;
 				return criteria;

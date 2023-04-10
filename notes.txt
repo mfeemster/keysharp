@@ -102,6 +102,7 @@ Differences:
 	-Built in functions are case sensitive, because they are called directly in the generated code.
 	-VarRef and reference variables are not supported.
 		-Because of this, users will need to rework how they use MonitorGet(), MonitorGetWorkArea(), SplitPath(), FileGetShortcut(), StrReplace(), LoadPicture(), WinGetPos(), ImageSearch(), MouseGetPos(), 
+		-Might be possible: https://stackoverflow.com/questions/8779731/how-to-pass-a-parameter-as-a-reference-with-methodinfo-invoke
 	-There is no variable caching with strings vs numbers. All variables are C# objects.
 	-Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless rtrim is specified.
 	-Implicit comparison to empty string is not supported:

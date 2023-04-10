@@ -92,7 +92,7 @@ namespace Keysharp.Main
 					{
 						if (!gotscript)//Script name.
 						{
-							script = args[i];
+							script = Path.GetFullPath(args[i]);
 							gotscript = true;
 							continue;
 						}

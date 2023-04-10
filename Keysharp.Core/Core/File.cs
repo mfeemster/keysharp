@@ -253,7 +253,7 @@ namespace Keysharp.Core
 					if (text is string s)
 					{
 						if (s == "fail")
-							Console.WriteLine(s);
+							Keysharp.Scripting.Script.OutputDebug(s);
 
 						if (raw)
 							//sw.Write(Encoding.Unicode.GetBytes(s));
