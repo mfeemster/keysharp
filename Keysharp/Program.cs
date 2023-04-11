@@ -18,12 +18,13 @@ using System.Linq;
 using Microsoft.VisualBasic;
 using Keysharp.Core;
 using System.Threading.Tasks;
+using System.Security.AccessControl;
 
 namespace Keysharp.Main
 {
 	public static class Program
 	{
-		private static char dotNetMajorVersion = '6';
+		private static char dotNetMajorVersion = '7';
 		private static CompilerHelper ch = new CompilerHelper();
 
 		internal static Version Version
