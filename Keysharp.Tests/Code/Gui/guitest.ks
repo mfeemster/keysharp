@@ -1594,9 +1594,9 @@ MsgBox("You clicked the last radio button.", "Radio 3 Clicked")
 CheckBoxOneClicked() {
 IsChecked := ControlGetChecked(CheckBoxOne, "KEYSHARP TESTS")
 MsgBox("1 is checked - 0 is unchecked`nTests 'ControlGetChecked' also`n`nValue is: " IsChecked, "Checkbox Test")
-TrayTip("TrayTipTest", "I will see myself out, thanks!")
+TrayTip("TrayTipTest", "I will see myself out, thanks!", "Icon!")
 Sleep(1000)
-;HideTrayTip()
+HideTrayTip()
 }
 
 ; ┌─────────────────┐
