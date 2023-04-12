@@ -244,7 +244,12 @@ namespace Keysharp.Core
 		public string Name => mi != null ? mi.Name : "";
 
 		public FuncObj(string s, object o = null)
-			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s).mi : Reflections.FindMethod(s).mi, o)
+			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s) : Reflections.FindMethod(s), o)
+		{
+		}
+
+		internal FuncObj(MethodPropertyHolder m, object o = null)
+			: this(m?.mi, o)
 		{
 		}
 
