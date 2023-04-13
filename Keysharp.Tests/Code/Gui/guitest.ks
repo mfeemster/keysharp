@@ -906,7 +906,7 @@ Gui2GetControlsButton.OnEvent("Click", "GetTheControls")
 Gui2FindCtrlsButton := Gui2.Add("Button", "x180 yp", "Enum Ctrls")
 Gui2FindCtrlsButton.OnEvent("Click", "EnumCtrls")
 
-Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w400")
+Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w400 +Multiline")
 ;MsgBox(Gui2Edit.Hwnd, "Hwnd of Edit")
 
 
@@ -946,8 +946,13 @@ FindSecondGuiEdit() {
 }
 
 EnumCtrls() {
-    Controls := WinGetControls(Gui2.Hwnd)
-    MsgBox("Found " . Controls.Length . " controls:`n`n" . Controls, "Enumerate controls")
+    For Hwnd, GuiCtrlObj in MyGui {
+        theMsg .= "Control #" A_Index " is " GuiCtrlObj.ClassNN "`n"
+    }
+    Gui2Edit.Value := theMsg
+    ;MsgBox(theMsg, "Enumerating GUI Control")
+    ;Controls := WinGetControls(Gui2.Hwnd)
+    ;MsgBox("Found " . Controls.Length . " controls:`n`n" . Controls, "Enumerate controls")
 }
 
 StyleTest()  {
