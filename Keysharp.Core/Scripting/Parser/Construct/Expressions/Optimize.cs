@@ -50,8 +50,8 @@ namespace Keysharp.Scripting
 
 				if (left != null && right != null)
 				{
-					var ll = left.ParseLong();
-					var rl = right.ParseLong();
+					var ll = left.ParseLong(false);
+					var rl = right.ParseLong(false);
 
 					if (ll is long l && rl is long r)
 					{
@@ -66,7 +66,10 @@ namespace Keysharp.Scripting
 					return new CodePrimitiveExpression(result);
 				}
 			}
-			catch (Exception) { }
+			catch (Exception)
+			{
+				return expr;
+			}
 
 			return invoke;
 		}

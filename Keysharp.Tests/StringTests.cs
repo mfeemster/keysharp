@@ -34,13 +34,13 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
-		public void CompareCaseEx() => Assert.IsTrue(TestScript("string-compare-case-ex", true));
+		public void CompareCase() => Assert.IsTrue(TestScript("string-compare-case", true));
 
 		[Test, Category("String")]
 		public void Continuation() => Assert.IsTrue(TestScript("string-continuation", false));//False because WrapInFunc() adds tabs to the lines.
 
 		[Test, Category("String")]
-		public void ConcatEx() => Assert.IsTrue(TestScript("string-concat-ex", true));
+		public void Concat() => Assert.IsTrue(TestScript("string-concat", true));
 
 		[Test, Category("String")]
 		public void Escape() => Assert.IsTrue(TestScript("string-escape", true));

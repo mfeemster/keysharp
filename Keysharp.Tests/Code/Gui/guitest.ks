@@ -1,5 +1,8 @@
 If (FileExist(A_Desktop "\MyScreenClip.png"))
     FileDelete(A_Desktop "\MyScreenClip.png")
+
+temp :=
+(
 """
 -Make a new button which pops up a new gui window with some controls on it.
 -Add a button to the new window which toggles some windows styles after its creation, such as being borderless.
@@ -8,6 +11,7 @@ If (FileExist(A_Desktop "\MyScreenClip.png"))
     -Can do this by caching variables on creation which store the handles, then searching for them and verifying they match.
     -The purpose of this test is to verify all of our methods of searching for controls work.
 """
+)
 
 GuiBGColor := "BackgroundFF9A9A"
 ;BGColor2 := "0xFFFFAA"

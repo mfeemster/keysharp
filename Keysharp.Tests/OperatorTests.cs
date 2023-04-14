@@ -5,13 +5,13 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		//[Test, Category("Operator")]
-		//public void DereferenceEx() => Assert.IsTrue(TestScript("op-dereference-ex", true));//Probably will never implement this.
+		//public void Dereference() => Assert.IsTrue(TestScript("op-dereference", true));//Probably will never implement this.
 
 		[Test, Category("Operator")]
-		public void UnaryMinusEx() => Assert.IsTrue(TestScript("op-unary-minus-ex", true));
+		public void UnaryMinus() => Assert.IsTrue(TestScript("op-unary-minus", true));
 
 		[Test, Category("Operator")]
-		public void MultiStatementEx() => Assert.IsTrue(TestScript("op-multi-statement-ex", true));
+		public void MultiStatement() => Assert.IsTrue(TestScript("op-multi-statement", true));
 
 		[Test, Category("Operator")]
 		public void BetweenNumeric() => Assert.IsTrue(TestScript("op-between-numeric", true));
@@ -38,48 +38,48 @@ namespace Keysharp.Tests
 		public void BetweenStringVarNot() => Assert.IsTrue(TestScript("op-between-string-var-not", true));
 
 		[Test, Category("Operator")]
-		public void BitwiseAndOrXorEx() => Assert.IsTrue(TestScript("op-bitwise-and-or-xor-ex", true));
+		public void BitwiseAndOrXor() => Assert.IsTrue(TestScript("op-bitwise-and-or-xor", true));
 
 		[Test, Category("Operator")]
-		public void BitwiseNotEx() => Assert.IsTrue(TestScript("op-bitwise-not-ex", true));
+		public void BitwiseNot() => Assert.IsTrue(TestScript("op-bitwise-not", true));
 
 		[Test, Category("Operator")]
-		public void CombinedAssignEx() => Assert.IsTrue(TestScript("op-combined-assign-ex", true));
+		public void CombinedAssign() => Assert.IsTrue(TestScript("op-combined-assign", true));
 
 		[Test, Category("Operator")]
-		public void DivideEx() => Assert.IsTrue(TestScript("op-divide-ex", true));
+		public void Divide() => Assert.IsTrue(TestScript("op-divide", true));
 
 		[Test, Category("Operator")]
-		public void GreaterLessEqualEx() => Assert.IsTrue(TestScript("op-greater-less-equal-ex", true));
+		public void GreaterLessEqual() => Assert.IsTrue(TestScript("op-greater-less-equal", true));
 
 		[Test, Category("Operator")]
-		public void GreaterLessEx() => Assert.IsTrue(TestScript("op-greater-less-ex", true));
+		public void GreaterLess() => Assert.IsTrue(TestScript("op-greater-less", true));
 
 		[Test, Category("Operator")]
-		public void IncDec() => Assert.IsTrue(TestScript("op-inc-dec-ex", true));
+		public void IncDec() => Assert.IsTrue(TestScript("op-inc-dec", true));
 
 		[Test, Category("Operator")]
-		public void LeftShiftEx() => Assert.IsTrue(TestScript("op-lsh-ex", true));
+		public void LeftShift() => Assert.IsTrue(TestScript("op-lsh", true));
 
 		[Test, Category("Operator")]
-		public void LogicalAndEx() => Assert.IsTrue(TestScript("op-logical-and-ex", true));
+		public void LogicalAnd() => Assert.IsTrue(TestScript("op-logical-and", true));
 
 		[Test, Category("Operator")]
-		public void LogicalNotEx() => Assert.IsTrue(TestScript("op-logical-not-ex", true));
+		public void LogicalNot() => Assert.IsTrue(TestScript("op-logical-not", true));
 
 		[Test, Category("Operator")]
-		public void LogicalOrEx() => Assert.IsTrue(TestScript("op-logical-or-ex", true));
+		public void LogicalOr() => Assert.IsTrue(TestScript("op-logical-or", true));
 
 		[Test, Category("Operator")]
-		public void MultiplyEx() => Assert.IsTrue(TestScript("op-multiply-ex", true));
+		public void Multiply() => Assert.IsTrue(TestScript("op-multiply", true));
 
 		[Test, Category("Operator")]
-		public void PowerEx() => Assert.IsTrue(TestScript("op-power-ex", true));
+		public void Power() => Assert.IsTrue(TestScript("op-power", true));
 
 		[Test, Category("Operator")]
-		public void RightShiftEx() => Assert.IsTrue(TestScript("op-rsh-ex", false));
+		public void RightShift() => Assert.IsTrue(TestScript("op-rsh", false));
 
 		[Test, Category("Operator")]
-		public void TernaryEx() => Assert.IsTrue(TestScript("op-ternary-ex", true));
+		public void Ternary() => Assert.IsTrue(TestScript("op-ternary", true));
 	}
 }

@@ -2125,7 +2125,7 @@ namespace Keysharp.Core
 
 				form.Hide();
 			}
-			else
+			else if (form != null)
 			{
 				_ = allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
 				form = null;
