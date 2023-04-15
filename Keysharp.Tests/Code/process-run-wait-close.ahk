@@ -12,6 +12,7 @@ if (exists != 0)
 	ProcessWaitClose(pid)
 }
 
+Sleep(1000)
 exists := ProcessExist("notepad.exe")
 
 if (exists == 0)
@@ -20,6 +21,7 @@ else
 	FileAppend, fail, *
 
 pid := RunWait("notepad.exe", "", "max")
+Sleep(1000)
 exists := ProcessExist("notepad.exe")
 
 if (exists == 0)

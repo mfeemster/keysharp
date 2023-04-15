@@ -8,7 +8,6 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Keysharp.Core.Windows
 {
-
 	internal enum SystemMetric : int
 	{
 		SM_CXSCREEN = 0,  // 0x00
@@ -106,7 +105,6 @@ namespace Keysharp.Core.Windows
 		SM_SHUTTINGDOWN = 0x2000, // 0x2000
 		SM_REMOTECONTROL = 0x2001, // 0x2001
 
-
 		SM_CONVERTIBLESLATEMODE = 0x2003,
 		SM_SYSTEMDOCKED = 0x2004,
 	}
@@ -117,10 +115,12 @@ namespace Keysharp.Core.Windows
 		/// Retrieves the parent window. This does not include the owner, as it does with the GetParent function.
 		/// </summary>
 		GetParent = 1,
+
 		/// <summary>
 		/// Retrieves the root window by walking the chain of parent windows.
 		/// </summary>
 		GetRoot = 2,
+
 		/// <summary>
 		/// Retrieves the owned root window by walking the chain of parent and owner windows returned by GetParent.
 		/// </summary>
@@ -134,6 +134,7 @@ namespace Keysharp.Core.Windows
 		Alt = 1,
 		Control = 2,
 		Shift = 4,
+
 		// Either WINDOWS key was held down. These keys are labeled with the Windows logo.
 		// Keyboard shortcuts that involve the WINDOWS key are reserved for use by the
 		// operating system.
@@ -203,8 +204,8 @@ namespace Keysharp.Core.Windows
 		internal uint wMaxAxes;            /* maximum number of axes supported */
 		internal uint wNumAxes;            /* number of axes in use */
 		internal uint wMaxButtons;         /* maximum number of buttons supported */
-		string szRegKey;/* registry key */
-		string szOEMVxD; /* OEM VxD in use */
+		private string szRegKey;/* registry key */
+		private string szOEMVxD; /* OEM VxD in use */
 	}
 
 	[Serializable, StructLayoutAttribute(LayoutKind.Sequential)]
@@ -249,8 +250,10 @@ namespace Keysharp.Core.Windows
 		internal byte bMaxVSCtoVK;
 		internal ulong pVSCtoVK_E0;
 		internal ulong pVSCtoVK_E1;
+
 		// This is the one we want:
 		internal uint fLocaleFlags;
+
 		// Struct definition truncated.
 	}
 
@@ -289,7 +292,6 @@ namespace Keysharp.Core.Windows
 		PAGE_WRITECOMBINE = 0x400
 	}
 
-
 	[Flags]
 	internal enum VirtualAllocExTypes
 	{
@@ -310,6 +312,7 @@ namespace Keysharp.Core.Windows
 		MEM_LARGE_PAGES = 0x20000000,
 		MEM_IMAGE = SEC_IMAGE
 	}
+
 	internal enum ProcessAccessTypes
 	{
 		PROCESS_TERMINATE = 0x00000001,
@@ -325,6 +328,7 @@ namespace Keysharp.Core.Windows
 		PROCESS_QUERY_INFORMATION = 0x00000400,
 		STANDARD_RIGHTS_REQUIRED = 0x000F0000,
 		SYNCHRONIZE = 0x00100000,
+
 		PROCESS_ALL_ACCESS = PROCESS_TERMINATE | PROCESS_CREATE_THREAD | PROCESS_SET_SESSIONID | PROCESS_VM_OPERATION |
 							 PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_DUP_HANDLE | PROCESS_CREATE_PROCESS | PROCESS_SET_QUOTA |
 							 PROCESS_SET_INFORMATION | PROCESS_QUERY_INFORMATION | STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE
@@ -373,9 +377,8 @@ namespace Keysharp.Core.Windows
 		ABSOLUTE = 0x8000,  // absolute move
 		HWHEEL = 0x01000, // hwheel button rolled
 		MOVE_NOCOALESCE = 0x2000//do not coalesce mouse moves.
-
-
 	}
+
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct FILETIME
 	{
@@ -543,6 +546,7 @@ namespace Keysharp.Core.Windows
 
 		[MarshalAs(UnmanagedType.U4)]
 		public uint cbSize;
+
 		[MarshalAs(UnmanagedType.U4)]
 		public uint dwTime;
 	}
@@ -584,15 +588,14 @@ namespace Keysharp.Core.Windows
 		// File / Device IO
 		internal const uint GENERICREAD = 0x80000000;
 
-		internal const int GW_HWNDFIRST        = 0;
-		internal const int GW_HWNDLAST         = 1;
-		internal const int GW_HWNDNEXT         = 2;
-		internal const int GW_HWNDPREV         = 3;
-		internal const int GW_OWNER            = 4;
-		internal const int GW_CHILD            = 5;
-		internal const int GW_ENABLEDPOPUP     = 6;
-		internal const int GW_MAX              = 6;
-
+		internal const int GW_HWNDFIRST = 0;
+		internal const int GW_HWNDLAST = 1;
+		internal const int GW_HWNDNEXT = 2;
+		internal const int GW_HWNDPREV = 3;
+		internal const int GW_OWNER = 4;
+		internal const int GW_CHILD = 5;
+		internal const int GW_ENABLEDPOPUP = 6;
+		internal const int GW_MAX = 6;
 
 		internal const int GWL_EXSTYLE = -20;
 
@@ -631,13 +634,11 @@ namespace Keysharp.Core.Windows
 
 		internal const int LWA_COLORKEY = 0x1;
 
-
-		internal const int MAPVK_VK_TO_VSC     = 0;
-		internal const int MAPVK_VSC_TO_VK     = 1;
-		internal const int MAPVK_VK_TO_CHAR    = 2;
-		internal const int MAPVK_VSC_TO_VK_EX  = 3;
-		internal const int MAPVK_VK_TO_VSC_EX  = 4;
-
+		internal const int MAPVK_VK_TO_VSC = 0;
+		internal const int MAPVK_VSC_TO_VK = 1;
+		internal const int MAPVK_VK_TO_CHAR = 2;
+		internal const int MAPVK_VSC_TO_VK_EX = 3;
+		internal const int MAPVK_VK_TO_VSC_EX = 4;
 
 		internal const int MF_BYCOMMAND = 0;
 
@@ -696,8 +697,7 @@ namespace Keysharp.Core.Windows
 		internal const int SYNCHRONIZE = 0x00100000;
 
 		internal const int LV_REMOTE_BUF_SIZE = 1024;// 8192 (below) seems too large in hindsight, given that an LV can only display the first 260 chars in a field.
-		internal const int LV_TEXT_BUF_SIZE   = 8192;// Max amount of text in a ListView sub-item.  Somewhat arbitrary: not sure what the real limit is, if any.
-
+		internal const int LV_TEXT_BUF_SIZE = 8192;// Max amount of text in a ListView sub-item.  Somewhat arbitrary: not sure what the real limit is, if any.
 
 		internal const uint VK_LBUTTON = 0x01;
 		internal const uint VK_RBUTTON = 0x02;
@@ -705,6 +705,7 @@ namespace Keysharp.Core.Windows
 		internal const uint VK_MBUTTON = 0x04;//NOT contiguous with L & RBUTTON
 		internal const uint VK_XBUTTON1 = 0x05;//NOT contiguous with L & RBUTTON
 		internal const uint VK_XBUTTON2 = 0x06;//NOT contiguous with L & RBUTTON
+
 		// Create some "fake" virtual keys to simplify sections of the code.
 		// According to winuser.h, the following ranges (among others)
 		// are considered "unassigned" rather than "reserved", so should be
@@ -715,6 +716,7 @@ namespace Keysharp.Core.Windows
 		// 0x88 - 0x8F : unassigned
 		// 0x97 - 0x9F : unassigned (this range seems less likely to be used)
 		internal const uint VK_NEW_MOUSE_FIRST = 0x9A;
+
 		internal const uint VK_WHEEL_LEFT = 0x9C;
 		internal const uint VK_WHEEL_RIGHT = 0x9D;
 		internal const uint VK_WHEEL_DOWN = 0x9E;
@@ -734,12 +736,15 @@ namespace Keysharp.Core.Windows
 		internal const uint SC_RIGHT = 0x14D;
 		internal const uint SC_PGUP = 0x149;
 		internal const uint SC_PGDN = 0x151;
+
 		// These are the same scan codes as their counterpart except the extended flag is 0 rather than
 		// 1 (0xE0 uncompressed):
 		internal const uint SC_ENTER = 0x1C;
+
 		// In addition, the below dual-state numpad keys share the same scan code (but different vk's)
 		// regardless of the state of numlock:
 		internal const uint SC_NUMPADDEL = 0x53;
+
 		internal const uint SC_NUMPADINS = 0x52;
 		internal const uint SC_NUMPADEND = 0x4F;
 		internal const uint SC_NUMPADHOME = 0x47;
@@ -777,6 +782,7 @@ namespace Keysharp.Core.Windows
 		internal const uint SC_RWIN = 0x15C;
 		internal const uint SC_APPSKEY = 0x15D;
 		internal const uint SC_PRINTSCREEN = 0x137;
+
 		//
 		// The system injects events with these scan codes:
 		//  - For Shift-up prior to a Numpad keydown or keyup if Numlock is on and Shift is down;
@@ -789,15 +795,19 @@ namespace Keysharp.Core.Windows
 		// simplify the code, so these values can only be found in KBDLLHOOKSTRUCT::scanCode.
 		// Find "fake shift-key events" for older and more detailed comments.
 		// Note that 0x0200 corresponds to SCANCODE_SIMULATED in kbd.h (DDK).
-		internal const uint SC_FAKE_FLAG   = 0x200;
+		internal const uint SC_FAKE_FLAG = 0x200;
+
 		internal const uint SC_FAKE_LSHIFT = 0x22A;
 		internal const uint SC_FAKE_RSHIFT = 0x236; // This is the actual scancode received by the hook, excluding the 0x100 we add for "extended" keys.
+
 		// Testing with the KbdEdit Demo preview mode indicates that AltGr will send this SC
 		// even if the VK assigned to 0x1D is changed.  It is a combination of SCANCODE_CTRL
 		// and SCANCODE_SIMULATED, which are defined in kbd.h (Windows DDK).
 		internal const uint SC_FAKE_LCTRL = 0x21D;
+
 		//
 		internal const uint VK_LSHIFT = 0xA0;
+
 		internal const uint VK_RSHIFT = 0xA1;
 		internal const uint VK_LCONTROL = 0xA2;
 		internal const uint VK_RCONTROL = 0xA3;
@@ -909,7 +919,7 @@ namespace Keysharp.Core.Windows
 		internal const int WM_QUIT = 0x0012;
 		internal const int WM_COMMAND = 0x0111;
 		internal const int WM_SETREDRAW = 0x000B;
-		internal const int WM_SETTEXT   = 0x000C;
+		internal const int WM_SETTEXT = 0x000C;
 		internal const int WM_GETTEXT = 0x000D;
 		internal const int WM_GETTEXTLENGTH = 0x000E;
 		internal const int WM_SETTINGCHANGE = 0x001A;
@@ -923,108 +933,108 @@ namespace Keysharp.Core.Windows
 		internal const int WM_UNICHAR = 0x0109;
 		internal const int WM_KEYLAST = 0x0109;
 		internal const int WM_MOUSEFIRST = 0x0200;
-		internal const int WM_MOUSEMOVE                    = 0x0200;
-		internal const int WM_LBUTTONDOWN                  = 0x0201;
-		internal const int WM_LBUTTONUP                    = 0x0202;
-		internal const int WM_LBUTTONDBLCLK                = 0x0203;
-		internal const int WM_RBUTTONDOWN                  = 0x0204;
-		internal const int WM_RBUTTONUP                    = 0x0205;
-		internal const int WM_RBUTTONDBLCLK                = 0x0206;
-		internal const int WM_MBUTTONDOWN                  = 0x0207;
-		internal const int WM_MBUTTONUP                    = 0x0208;
-		internal const int WM_MBUTTONDBLCLK                = 0x0209;
-		internal const int WM_MOUSEWHEEL                   = 0x020A;
-		internal const int WM_MOUSEHWHEEL                  = 0x020E;
-		internal const int WM_XBUTTONDOWN                  = 0x020B;
+		internal const int WM_MOUSEMOVE = 0x0200;
+		internal const int WM_LBUTTONDOWN = 0x0201;
+		internal const int WM_LBUTTONUP = 0x0202;
+		internal const int WM_LBUTTONDBLCLK = 0x0203;
+		internal const int WM_RBUTTONDOWN = 0x0204;
+		internal const int WM_RBUTTONUP = 0x0205;
+		internal const int WM_RBUTTONDBLCLK = 0x0206;
+		internal const int WM_MBUTTONDOWN = 0x0207;
+		internal const int WM_MBUTTONUP = 0x0208;
+		internal const int WM_MBUTTONDBLCLK = 0x0209;
+		internal const int WM_MOUSEWHEEL = 0x020A;
+		internal const int WM_MOUSEHWHEEL = 0x020E;
+		internal const int WM_XBUTTONDOWN = 0x020B;
 		internal const int WM_NCXBUTTONDOWN = 0x00AB;
-		internal const int WM_XBUTTONUP                    = 0x020C;
+		internal const int WM_XBUTTONUP = 0x020C;
 		internal const int WM_NCXBUTTONUP = 0x00AC;
-		internal const int WM_XBUTTONDBLCLK                = 0x020D;
-		internal const int WM_MOUSELAST                    = 0x020E;
+		internal const int WM_XBUTTONDBLCLK = 0x020D;
+		internal const int WM_MOUSELAST = 0x020E;
 		internal const int WM_CLIPBOARDUPDATE = 0x031D;
-		internal const int WM_NCCREATE                     = 0x0081;
-		internal const int WM_NCDESTROY                    = 0x0082;
-		internal const int WM_NCCALCSIZE                   = 0x0083;
-		internal const int WM_NCHITTEST                    = 0x0084;
-		internal const int WM_NCPAINT                      = 0x0085;
-		internal const int WM_NCACTIVATE                   = 0x0086;
-		internal const int WM_GETDLGCODE                   = 0x0087;
-		internal const int WM_ENDSESSION                   = 0x0016;
-		internal const int WM_DESTROY                      = 0x0002;
-		internal const int WM_COPYDATA                     = 0x004A;
-		internal const uint ENDSESSION_LOGOFF          = 0x80000000;
+		internal const int WM_NCCREATE = 0x0081;
+		internal const int WM_NCDESTROY = 0x0082;
+		internal const int WM_NCCALCSIZE = 0x0083;
+		internal const int WM_NCHITTEST = 0x0084;
+		internal const int WM_NCPAINT = 0x0085;
+		internal const int WM_NCACTIVATE = 0x0086;
+		internal const int WM_GETDLGCODE = 0x0087;
+		internal const int WM_ENDSESSION = 0x0016;
+		internal const int WM_DESTROY = 0x0002;
+		internal const int WM_COPYDATA = 0x004A;
+		internal const uint ENDSESSION_LOGOFF = 0x80000000;
 
-		internal const int HTERROR             = -2;
-		internal const int HTTRANSPARENT       = -1;
-		internal const int HTNOWHERE           = 0;
-		internal const int HTCLIENT            = 1;
-		internal const int HTCAPTION           = 2;
-		internal const int HTSYSMENU           = 3;
-		internal const int HTGROWBOX           = 4;
-		internal const int HTSIZE              = HTGROWBOX;
-		internal const int HTMENU              = 5;
-		internal const int HTHSCROLL           = 6;
-		internal const int HTVSCROLL           = 7;
-		internal const int HTMINBUTTON         = 8;
-		internal const int HTMAXBUTTON         = 9;
-		internal const int HTLEFT              = 10;
-		internal const int HTRIGHT             = 11;
-		internal const int HTTOP               = 12;
-		internal const int HTTOPLEFT           = 13;
-		internal const int HTTOPRIGHT          = 14;
-		internal const int HTBOTTOM            = 15;
-		internal const int HTBOTTOMLEFT        = 16;
-		internal const int HTBOTTOMRIGHT       = 17;
-		internal const int HTBORDER            = 18;
-		internal const int HTREDUCE            = HTMINBUTTON;
-		internal const int HTZOOM              = HTMAXBUTTON;
-		internal const int HTSIZEFIRST         = HTLEFT;
-		internal const int HTSIZELAST          = HTBOTTOMRIGHT;
-		internal const int HTOBJECT            = 19;
+		internal const int HTERROR = -2;
+		internal const int HTTRANSPARENT = -1;
+		internal const int HTNOWHERE = 0;
+		internal const int HTCLIENT = 1;
+		internal const int HTCAPTION = 2;
+		internal const int HTSYSMENU = 3;
+		internal const int HTGROWBOX = 4;
+		internal const int HTSIZE = HTGROWBOX;
+		internal const int HTMENU = 5;
+		internal const int HTHSCROLL = 6;
+		internal const int HTVSCROLL = 7;
+		internal const int HTMINBUTTON = 8;
+		internal const int HTMAXBUTTON = 9;
+		internal const int HTLEFT = 10;
+		internal const int HTRIGHT = 11;
+		internal const int HTTOP = 12;
+		internal const int HTTOPLEFT = 13;
+		internal const int HTTOPRIGHT = 14;
+		internal const int HTBOTTOM = 15;
+		internal const int HTBOTTOMLEFT = 16;
+		internal const int HTBOTTOMRIGHT = 17;
+		internal const int HTBORDER = 18;
+		internal const int HTREDUCE = HTMINBUTTON;
+		internal const int HTZOOM = HTMAXBUTTON;
+		internal const int HTSIZEFIRST = HTLEFT;
+		internal const int HTSIZELAST = HTBOTTOMRIGHT;
+		internal const int HTOBJECT = 19;
 
-		internal const int HTCLOSE             = 20;
-		internal const int HTHELP              = 21;
+		internal const int HTCLOSE = 20;
+		internal const int HTHELP = 21;
 
 		internal const uint PM_NOREMOVE = 0x0000;
-		internal const uint PM_REMOVE   = 0x0001;
-		internal const uint PM_NOYIELD  = 0x0002;
+		internal const uint PM_REMOVE = 0x0001;
+		internal const uint PM_NOYIELD = 0x0002;
 
 		internal const int MK_LBUTTON = 0x0001;
-		internal const int MK_RBUTTON          = 0x0002;
-		internal const int MK_SHIFT            = 0x0004;
-		internal const int MK_CONTROL          = 0x0008;
-		internal const int MK_MBUTTON          = 0x0010;
-		internal const int MK_XBUTTON1         = 0x0020;
-		internal const int MK_XBUTTON2         = 0x0040;
+		internal const int MK_RBUTTON = 0x0002;
+		internal const int MK_SHIFT = 0x0004;
+		internal const int MK_CONTROL = 0x0008;
+		internal const int MK_MBUTTON = 0x0010;
+		internal const int MK_XBUTTON1 = 0x0020;
+		internal const int MK_XBUTTON2 = 0x0040;
 
 		internal const int WS_EX_LAYERED = 0x80000;
 		internal const int WS_EX_TOPMOST = 8;
 		internal const int WS_EX_NOACTIVATE = 0x08000000;
 		internal const int WS_EX_TOOLWINDOW = 0x00000080;
 		internal const int WS_EX_APPWINDOW = 0x00040000;
-		internal const int WS_OVERLAPPED       = 0x00000000;
-		internal const uint WS_POPUP            = 0x80000000;
-		internal const int WS_CHILD            = 0x40000000;
-		internal const int WS_MINIMIZE         = 0x20000000;
-		internal const int WS_VISIBLE          = 0x10000000;
-		internal const int WS_DISABLED         = 0x08000000;
-		internal const int WS_CLIPSIBLINGS     = 0x04000000;
-		internal const int WS_CLIPCHILDREN     = 0x02000000;
-		internal const int WS_MAXIMIZE         = 0x01000000;
-		internal const int WS_CAPTION          = 0x00C00000;     /* WS_BORDER | WS_DLGFRAME  */
-		internal const int WS_BORDER           = 0x00800000;
-		internal const int WS_DLGFRAME         = 0x00400000;
-		internal const int WS_VSCROLL          = 0x00200000;
-		internal const int WS_HSCROLL          = 0x00100000;
-		internal const int WS_SYSMENU          = 0x00080000;
-		internal const int WS_THICKFRAME       = 0x00040000;
-		internal const int WS_GROUP            = 0x00020000;
-		internal const int WS_TABSTOP          = 0x00010000;
-		internal const int WS_MINIMIZEBOX      = 0x00020000;
-		internal const int WS_MAXIMIZEBOX      = 0x00010000;
-		internal const int WS_TILED            = WS_OVERLAPPED;
-		internal const int WS_ICONIC           = WS_MINIMIZE;
-		internal const int WS_SIZEBOX          = WS_THICKFRAME;
+		internal const int WS_OVERLAPPED = 0x00000000;
+		internal const uint WS_POPUP = 0x80000000;
+		internal const int WS_CHILD = 0x40000000;
+		internal const int WS_MINIMIZE = 0x20000000;
+		internal const int WS_VISIBLE = 0x10000000;
+		internal const int WS_DISABLED = 0x08000000;
+		internal const int WS_CLIPSIBLINGS = 0x04000000;
+		internal const int WS_CLIPCHILDREN = 0x02000000;
+		internal const int WS_MAXIMIZE = 0x01000000;
+		internal const int WS_CAPTION = 0x00C00000;     /* WS_BORDER | WS_DLGFRAME  */
+		internal const int WS_BORDER = 0x00800000;
+		internal const int WS_DLGFRAME = 0x00400000;
+		internal const int WS_VSCROLL = 0x00200000;
+		internal const int WS_HSCROLL = 0x00100000;
+		internal const int WS_SYSMENU = 0x00080000;
+		internal const int WS_THICKFRAME = 0x00040000;
+		internal const int WS_GROUP = 0x00020000;
+		internal const int WS_TABSTOP = 0x00010000;
+		internal const int WS_MINIMIZEBOX = 0x00020000;
+		internal const int WS_MAXIMIZEBOX = 0x00010000;
+		internal const int WS_TILED = WS_OVERLAPPED;
+		internal const int WS_ICONIC = WS_MINIMIZE;
+		internal const int WS_SIZEBOX = WS_THICKFRAME;
 
 		internal const int ES_LEFT = 0x0000;
 		internal const int ES_CENTER = 0x0001;
@@ -1052,183 +1062,183 @@ namespace Keysharp.Core.Windows
 		internal const uint SB_GETPARTS = WM_USER + 6;
 		internal const uint SB_GETTEXTLENGTH = WM_USER + 12;
 
-		internal const int EM_GETSEL               = 0x00B0;
-		internal const int EM_SETSEL               = 0x00B1;
-		internal const int EM_GETRECT              = 0x00B2;
-		internal const int EM_SETRECT              = 0x00B3;
-		internal const int EM_SETRECTNP            = 0x00B4;
-		internal const int EM_SCROLL               = 0x00B5;
-		internal const int EM_LINESCROLL           = 0x00B6;
-		internal const int EM_SCROLLCARET          = 0x00B7;
-		internal const int EM_GETMODIFY            = 0x00B8;
-		internal const int EM_SETMODIFY            = 0x00B9;
-		internal const int EM_GETLINECOUNT         = 0x00BA;
-		internal const int EM_LINEINDEX            = 0x00BB;
-		internal const int EM_SETHANDLE            = 0x00BC;
-		internal const int EM_GETHANDLE            = 0x00BD;
-		internal const int EM_GETTHUMB             = 0x00BE;
-		internal const int EM_LINELENGTH           = 0x00C1;
-		internal const int EM_REPLACESEL           = 0x00C2;
-		internal const int EM_GETLINE              = 0x00C4;
-		internal const int EM_LIMITTEXT            = 0x00C5;
-		internal const int EM_CANUNDO              = 0x00C6;
-		internal const int EM_UNDO                 = 0x00C7;
-		internal const int EM_FMTLINES             = 0x00C8;
-		internal const int EM_LINEFROMCHAR         = 0x00C9;
-		internal const int EM_SETTABSTOPS          = 0x00CB;
-		internal const int EM_SETPASSWORDCHAR      = 0x00CC;
-		internal const int EM_EMPTYUNDOBUFFER      = 0x00CD;
-		internal const int EM_GETFIRSTVISIBLELINE  = 0x00CE;
-		internal const int EM_SETREADONLY          = 0x00CF;
-		internal const int EM_SETWORDBREAKPROC     = 0x00D0;
-		internal const int EM_GETWORDBREAKPROC     = 0x00D1;
-		internal const int EM_GETPASSWORDCHAR      = 0x00D2;
-		internal const int EM_SETMARGINS           = 0x00D3;
-		internal const int EM_GETMARGINS           = 0x00D4;
-		internal const int EM_SETLIMITTEXT         = EM_LIMITTEXT;   //win40 Name change
-		internal const int EM_GETLIMITTEXT         = 0x00D5;
-		internal const int EM_POSFROMCHAR          = 0x00D6;
-		internal const int EM_CHARFROMPOS          = 0x00D7;
-		internal const int EM_SETIMESTATUS         = 0x00D8;
-		internal const int EM_GETIMESTATUS         = 0x00D9;
-		internal const int EM_ENABLEFEATURE        = 0x00DA;
+		internal const int EM_GETSEL = 0x00B0;
+		internal const int EM_SETSEL = 0x00B1;
+		internal const int EM_GETRECT = 0x00B2;
+		internal const int EM_SETRECT = 0x00B3;
+		internal const int EM_SETRECTNP = 0x00B4;
+		internal const int EM_SCROLL = 0x00B5;
+		internal const int EM_LINESCROLL = 0x00B6;
+		internal const int EM_SCROLLCARET = 0x00B7;
+		internal const int EM_GETMODIFY = 0x00B8;
+		internal const int EM_SETMODIFY = 0x00B9;
+		internal const int EM_GETLINECOUNT = 0x00BA;
+		internal const int EM_LINEINDEX = 0x00BB;
+		internal const int EM_SETHANDLE = 0x00BC;
+		internal const int EM_GETHANDLE = 0x00BD;
+		internal const int EM_GETTHUMB = 0x00BE;
+		internal const int EM_LINELENGTH = 0x00C1;
+		internal const int EM_REPLACESEL = 0x00C2;
+		internal const int EM_GETLINE = 0x00C4;
+		internal const int EM_LIMITTEXT = 0x00C5;
+		internal const int EM_CANUNDO = 0x00C6;
+		internal const int EM_UNDO = 0x00C7;
+		internal const int EM_FMTLINES = 0x00C8;
+		internal const int EM_LINEFROMCHAR = 0x00C9;
+		internal const int EM_SETTABSTOPS = 0x00CB;
+		internal const int EM_SETPASSWORDCHAR = 0x00CC;
+		internal const int EM_EMPTYUNDOBUFFER = 0x00CD;
+		internal const int EM_GETFIRSTVISIBLELINE = 0x00CE;
+		internal const int EM_SETREADONLY = 0x00CF;
+		internal const int EM_SETWORDBREAKPROC = 0x00D0;
+		internal const int EM_GETWORDBREAKPROC = 0x00D1;
+		internal const int EM_GETPASSWORDCHAR = 0x00D2;
+		internal const int EM_SETMARGINS = 0x00D3;
+		internal const int EM_GETMARGINS = 0x00D4;
+		internal const int EM_SETLIMITTEXT = EM_LIMITTEXT;   //win40 Name change
+		internal const int EM_GETLIMITTEXT = 0x00D5;
+		internal const int EM_POSFROMCHAR = 0x00D6;
+		internal const int EM_CHARFROMPOS = 0x00D7;
+		internal const int EM_SETIMESTATUS = 0x00D8;
+		internal const int EM_GETIMESTATUS = 0x00D9;
+		internal const int EM_ENABLEFEATURE = 0x00DA;
 
-		internal const int BM_GETCHECK        = 0x00F0;
-		internal const int BM_SETCHECK        = 0x00F1;
-		internal const int BM_GETSTATE        = 0x00F2;
-		internal const int BM_SETSTATE        = 0x00F3;
-		internal const int BM_SETSTYLE        = 0x00F4;
-		internal const int BM_CLICK           = 0x00F5;
-		internal const int BM_GETIMAGE        = 0x00F6;
-		internal const int BM_SETIMAGE        = 0x00F7;
-		internal const int BM_SETDONTCLICK    = 0x00F8;
-		internal const int BST_UNCHECKED      = 0x0000;
-		internal const int BST_CHECKED        = 0x0001;
-		internal const int BST_INDETERMINATE  = 0x0002;
-		internal const int BST_PUSHED         = 0x0004;
+		internal const int BM_GETCHECK = 0x00F0;
+		internal const int BM_SETCHECK = 0x00F1;
+		internal const int BM_GETSTATE = 0x00F2;
+		internal const int BM_SETSTATE = 0x00F3;
+		internal const int BM_SETSTYLE = 0x00F4;
+		internal const int BM_CLICK = 0x00F5;
+		internal const int BM_GETIMAGE = 0x00F6;
+		internal const int BM_SETIMAGE = 0x00F7;
+		internal const int BM_SETDONTCLICK = 0x00F8;
+		internal const int BST_UNCHECKED = 0x0000;
+		internal const int BST_CHECKED = 0x0001;
+		internal const int BST_INDETERMINATE = 0x0002;
+		internal const int BST_PUSHED = 0x0004;
 		internal const int BST_FOCUS = 0x0008;
 
-		internal const int CBN_ERRSPACE        = - 1;
-		internal const int CBN_SELCHANGE       = 1;
-		internal const int CBN_DBLCLK          = 2;
-		internal const int CBN_SETFOCUS        = 3;
-		internal const int CBN_KILLFOCUS       = 4;
-		internal const int CBN_EDITCHANGE      = 5;
-		internal const int CBN_EDITUPDATE      = 6;
-		internal const int CBN_DROPDOWN        = 7;
-		internal const int CBN_CLOSEUP         = 8;
-		internal const int CBN_SELENDOK        = 9;
-		internal const int CBN_SELENDCANCEL    = 10;
+		internal const int CBN_ERRSPACE = -1;
+		internal const int CBN_SELCHANGE = 1;
+		internal const int CBN_DBLCLK = 2;
+		internal const int CBN_SETFOCUS = 3;
+		internal const int CBN_KILLFOCUS = 4;
+		internal const int CBN_EDITCHANGE = 5;
+		internal const int CBN_EDITUPDATE = 6;
+		internal const int CBN_DROPDOWN = 7;
+		internal const int CBN_CLOSEUP = 8;
+		internal const int CBN_SELENDOK = 9;
+		internal const int CBN_SELENDCANCEL = 10;
 
 		internal const int CB_ERR = -1;
 		internal const int CB_ERRSPACE = -2;
 		internal const int CB_GETEDITSEL = 0x0140;
-		internal const int CB_LIMITTEXT                = 0x0141;
-		internal const int CB_SETEDITSEL               = 0x0142;
-		internal const int CB_ADDSTRING                = 0x0143;
-		internal const int CB_DELETESTRING             = 0x0144;
-		internal const int CB_DIR                      = 0x0145;
-		internal const int CB_GETCOUNT                 = 0x0146;
-		internal const int CB_GETCURSEL                = 0x0147;
-		internal const int CB_GETLBTEXT                = 0x0148;
-		internal const int CB_GETLBTEXTLEN             = 0x0149;
-		internal const int CB_INSERTSTRING             = 0x014A;
-		internal const int CB_RESETCONTENT             = 0x014B;
-		internal const int CB_FINDSTRING               = 0x014C;
-		internal const int CB_SELECTSTRING             = 0x014D;
-		internal const int CB_SETCURSEL                = 0x014E;
-		internal const int CB_SHOWDROPDOWN             = 0x014F;
-		internal const int CB_GETITEMDATA              = 0x0150;
-		internal const int CB_SETITEMDATA              = 0x0151;
-		internal const int CB_GETDROPPEDCONTROLRECT    = 0x0152;
-		internal const int CB_SETITEMHEIGHT            = 0x0153;
-		internal const int CB_GETITEMHEIGHT            = 0x0154;
-		internal const int CB_SETEXTENDEDUI            = 0x0155;
-		internal const int CB_GETEXTENDEDUI            = 0x0156;
-		internal const int CB_GETDROPPEDSTATE          = 0x0157;
-		internal const int CB_FINDSTRINGEXACT          = 0x0158;
-		internal const int CB_SETLOCALE                = 0x0159;
-		internal const int CB_GETLOCALE                = 0x015A;
-		internal const int CB_GETTOPINDEX              = 0x015b;
-		internal const int CB_SETTOPINDEX              = 0x015c;
-		internal const int CB_GETHORIZONTALEXTENT      = 0x015d;
-		internal const int CB_SETHORIZONTALEXTENT      = 0x015e;
-		internal const int CB_GETDROPPEDWIDTH          = 0x015f;
-		internal const int CB_SETDROPPEDWIDTH          = 0x0160;
-		internal const int CB_INITSTORAGE              = 0x0161;
+		internal const int CB_LIMITTEXT = 0x0141;
+		internal const int CB_SETEDITSEL = 0x0142;
+		internal const int CB_ADDSTRING = 0x0143;
+		internal const int CB_DELETESTRING = 0x0144;
+		internal const int CB_DIR = 0x0145;
+		internal const int CB_GETCOUNT = 0x0146;
+		internal const int CB_GETCURSEL = 0x0147;
+		internal const int CB_GETLBTEXT = 0x0148;
+		internal const int CB_GETLBTEXTLEN = 0x0149;
+		internal const int CB_INSERTSTRING = 0x014A;
+		internal const int CB_RESETCONTENT = 0x014B;
+		internal const int CB_FINDSTRING = 0x014C;
+		internal const int CB_SELECTSTRING = 0x014D;
+		internal const int CB_SETCURSEL = 0x014E;
+		internal const int CB_SHOWDROPDOWN = 0x014F;
+		internal const int CB_GETITEMDATA = 0x0150;
+		internal const int CB_SETITEMDATA = 0x0151;
+		internal const int CB_GETDROPPEDCONTROLRECT = 0x0152;
+		internal const int CB_SETITEMHEIGHT = 0x0153;
+		internal const int CB_GETITEMHEIGHT = 0x0154;
+		internal const int CB_SETEXTENDEDUI = 0x0155;
+		internal const int CB_GETEXTENDEDUI = 0x0156;
+		internal const int CB_GETDROPPEDSTATE = 0x0157;
+		internal const int CB_FINDSTRINGEXACT = 0x0158;
+		internal const int CB_SETLOCALE = 0x0159;
+		internal const int CB_GETLOCALE = 0x015A;
+		internal const int CB_GETTOPINDEX = 0x015b;
+		internal const int CB_SETTOPINDEX = 0x015c;
+		internal const int CB_GETHORIZONTALEXTENT = 0x015d;
+		internal const int CB_SETHORIZONTALEXTENT = 0x015e;
+		internal const int CB_GETDROPPEDWIDTH = 0x015f;
+		internal const int CB_SETDROPPEDWIDTH = 0x0160;
+		internal const int CB_INITSTORAGE = 0x0161;
 
 		internal const int LB_OKAY = 0;
 		internal const int LB_ERR = -1;
 		internal const int LB_ERRSPACE = -2;
 
-		internal const int LB_ADDSTRING            = 0x0180;
-		internal const int LB_INSERTSTRING         = 0x0181;
-		internal const int LB_DELETESTRING         = 0x0182;
-		internal const int LB_SELITEMRANGEEX       = 0x0183;
-		internal const int LB_RESETCONTENT         = 0x0184;
-		internal const int LB_SETSEL               = 0x0185;
-		internal const int LB_SETCURSEL            = 0x0186;
-		internal const int LB_GETSEL               = 0x0187;
-		internal const int LB_GETCURSEL            = 0x0188;
-		internal const int LB_GETTEXT              = 0x0189;
-		internal const int LB_GETTEXTLEN           = 0x018A;
-		internal const int LB_GETCOUNT             = 0x018B;
-		internal const int LB_SELECTSTRING         = 0x018C;
-		internal const int LB_DIR                  = 0x018D;
-		internal const int LB_GETTOPINDEX          = 0x018E;
-		internal const int LB_FINDSTRING           = 0x018F;
-		internal const int LB_GETSELCOUNT          = 0x0190;
-		internal const int LB_GETSELITEMS          = 0x0191;
-		internal const int LB_SETTABSTOPS          = 0x0192;
-		internal const int LB_GETHORIZONTALEXTENT  = 0x0193;
-		internal const int LB_SETHORIZONTALEXTENT  = 0x0194;
-		internal const int LB_SETCOLUMNWIDTH       = 0x0195;
-		internal const int LB_ADDFILE              = 0x0196;
-		internal const int LB_SETTOPINDEX          = 0x0197;
-		internal const int LB_GETITEMRECT          = 0x0198;
-		internal const int LB_GETITEMDATA          = 0x0199;
-		internal const int LB_SETITEMDATA          = 0x019A;
-		internal const int LB_SELITEMRANGE         = 0x019B;
-		internal const int LB_SETANCHORINDEX       = 0x019C;
-		internal const int LB_GETANCHORINDEX       = 0x019D;
-		internal const int LB_SETCARETINDEX        = 0x019E;
-		internal const int LB_GETCARETINDEX        = 0x019F;
-		internal const int LB_SETITEMHEIGHT        = 0x01A0;
-		internal const int LB_GETITEMHEIGHT        = 0x01A1;
-		internal const int LB_FINDSTRINGEXACT      = 0x01A2;
-		internal const int LB_SETLOCALE            = 0x01A5;
-		internal const int LB_GETLOCALE            = 0x01A6;
-		internal const int LB_SETCOUNT             = 0x01A7;
-		internal const int LB_INITSTORAGE          = 0x01A8;
-		internal const int LB_ITEMFROMPOINT        = 0x01A9;
+		internal const int LB_ADDSTRING = 0x0180;
+		internal const int LB_INSERTSTRING = 0x0181;
+		internal const int LB_DELETESTRING = 0x0182;
+		internal const int LB_SELITEMRANGEEX = 0x0183;
+		internal const int LB_RESETCONTENT = 0x0184;
+		internal const int LB_SETSEL = 0x0185;
+		internal const int LB_SETCURSEL = 0x0186;
+		internal const int LB_GETSEL = 0x0187;
+		internal const int LB_GETCURSEL = 0x0188;
+		internal const int LB_GETTEXT = 0x0189;
+		internal const int LB_GETTEXTLEN = 0x018A;
+		internal const int LB_GETCOUNT = 0x018B;
+		internal const int LB_SELECTSTRING = 0x018C;
+		internal const int LB_DIR = 0x018D;
+		internal const int LB_GETTOPINDEX = 0x018E;
+		internal const int LB_FINDSTRING = 0x018F;
+		internal const int LB_GETSELCOUNT = 0x0190;
+		internal const int LB_GETSELITEMS = 0x0191;
+		internal const int LB_SETTABSTOPS = 0x0192;
+		internal const int LB_GETHORIZONTALEXTENT = 0x0193;
+		internal const int LB_SETHORIZONTALEXTENT = 0x0194;
+		internal const int LB_SETCOLUMNWIDTH = 0x0195;
+		internal const int LB_ADDFILE = 0x0196;
+		internal const int LB_SETTOPINDEX = 0x0197;
+		internal const int LB_GETITEMRECT = 0x0198;
+		internal const int LB_GETITEMDATA = 0x0199;
+		internal const int LB_SETITEMDATA = 0x019A;
+		internal const int LB_SELITEMRANGE = 0x019B;
+		internal const int LB_SETANCHORINDEX = 0x019C;
+		internal const int LB_GETANCHORINDEX = 0x019D;
+		internal const int LB_SETCARETINDEX = 0x019E;
+		internal const int LB_GETCARETINDEX = 0x019F;
+		internal const int LB_SETITEMHEIGHT = 0x01A0;
+		internal const int LB_GETITEMHEIGHT = 0x01A1;
+		internal const int LB_FINDSTRINGEXACT = 0x01A2;
+		internal const int LB_SETLOCALE = 0x01A5;
+		internal const int LB_GETLOCALE = 0x01A6;
+		internal const int LB_SETCOUNT = 0x01A7;
+		internal const int LB_INITSTORAGE = 0x01A8;
+		internal const int LB_ITEMFROMPOINT = 0x01A9;
 
-		internal const int LBN_ERRSPACE        = -2;
-		internal const int LBN_SELCHANGE       = 1;
-		internal const int LBN_DBLCLK          = 2;
-		internal const int LBN_SELCANCEL       = 3;
-		internal const int LBN_SETFOCUS        = 4;
-		internal const int LBN_KILLFOCUS       = 5;
+		internal const int LBN_ERRSPACE = -2;
+		internal const int LBN_SELCHANGE = 1;
+		internal const int LBN_DBLCLK = 2;
+		internal const int LBN_SELCANCEL = 3;
+		internal const int LBN_SETFOCUS = 4;
+		internal const int LBN_KILLFOCUS = 5;
 
-		internal const int LBS_NOTIFY            = 0x0001;
-		internal const int LBS_SORT              = 0x0002;
-		internal const int LBS_NOREDRAW          = 0x0004;
-		internal const int LBS_MULTIPLESEL       = 0x0008;
-		internal const int LBS_OWNERDRAWFIXED    = 0x0010;
+		internal const int LBS_NOTIFY = 0x0001;
+		internal const int LBS_SORT = 0x0002;
+		internal const int LBS_NOREDRAW = 0x0004;
+		internal const int LBS_MULTIPLESEL = 0x0008;
+		internal const int LBS_OWNERDRAWFIXED = 0x0010;
 		internal const int LBS_OWNERDRAWVARIABLE = 0x0020;
-		internal const int LBS_HASSTRINGS        = 0x0040;
-		internal const int LBS_USETABSTOPS       = 0x0080;
-		internal const int LBS_NOINTEGRALHEIGHT  = 0x0100;
-		internal const int LBS_MULTICOLUMN       = 0x0200;
+		internal const int LBS_HASSTRINGS = 0x0040;
+		internal const int LBS_USETABSTOPS = 0x0080;
+		internal const int LBS_NOINTEGRALHEIGHT = 0x0100;
+		internal const int LBS_MULTICOLUMN = 0x0200;
 		internal const int LBS_WANTKEYBOARDINPUT = 0x0400;
-		internal const int LBS_EXTENDEDSEL       = 0x0800;
-		internal const int LBS_DISABLENOSCROLL   = 0x1000;
-		internal const int LBS_NODATA            = 0x2000;
-		internal const int LBS_NOSEL             = 0x4000;
-		internal const int LBS_COMBOBOX          = 0x8000;
+		internal const int LBS_EXTENDEDSEL = 0x0800;
+		internal const int LBS_DISABLENOSCROLL = 0x1000;
+		internal const int LBS_NODATA = 0x2000;
+		internal const int LBS_NOSEL = 0x4000;
+		internal const int LBS_COMBOBOX = 0x8000;
 		internal const int LBS_STANDARD = LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER;
 
 		internal const int LVM_FIRST = 0x1000;//ListView messages
-		internal const int TV_FIRST  = 0x1100;//TreeView messages
+		internal const int TV_FIRST = 0x1100;//TreeView messages
 		internal const int LVM_GETITEMCOUNT = LVM_FIRST + 4;
 		internal const int LVM_GETHEADER = LVM_FIRST + 31;
 		internal const int LVM_GETNEXTITEM = LVM_FIRST + 12;
@@ -1246,25 +1256,25 @@ namespace Keysharp.Core.Windows
 
 		internal const int HDM_GETITEMCOUNT = HDM_FIRST;
 
-		internal const int TCS_SCROLLOPPOSITE      = 0x0001;// assumes multiline tab
-		internal const int TCS_BOTTOM              = 0x0002;
-		internal const int TCS_RIGHT               = 0x0002;
-		internal const int TCS_MULTISELECT         = 0x0004;// allow multi-select in button mode
-		internal const int TCS_FLATBUTTONS         = 0x0008;
-		internal const int TCS_FORCEICONLEFT       = 0x0010;
-		internal const int TCS_FORCELABELLEFT      = 0x0020;
-		internal const int TCS_HOTTRACK            = 0x0040;
-		internal const int TCS_VERTICAL            = 0x0080;
-		internal const int TCS_TABS                = 0x0000;
-		internal const int TCS_BUTTONS             = 0x0100;
-		internal const int TCS_SINGLELINE          = 0x0000;
-		internal const int TCS_MULTILINE           = 0x0200;
-		internal const int TCS_RIGHTJUSTIFY        = 0x0000;
-		internal const int TCS_FIXEDWIDTH          = 0x0400;
-		internal const int TCS_RAGGEDRIGHT         = 0x0800;
-		internal const int TCS_FOCUSONBUTTONDOWN   = 0x1000;
-		internal const int TCS_OWNERDRAWFIXED      = 0x2000;
-		internal const int TCS_TOOLTIPS            = 0x4000;
+		internal const int TCS_SCROLLOPPOSITE = 0x0001;// assumes multiline tab
+		internal const int TCS_BOTTOM = 0x0002;
+		internal const int TCS_RIGHT = 0x0002;
+		internal const int TCS_MULTISELECT = 0x0004;// allow multi-select in button mode
+		internal const int TCS_FLATBUTTONS = 0x0008;
+		internal const int TCS_FORCEICONLEFT = 0x0010;
+		internal const int TCS_FORCELABELLEFT = 0x0020;
+		internal const int TCS_HOTTRACK = 0x0040;
+		internal const int TCS_VERTICAL = 0x0080;
+		internal const int TCS_TABS = 0x0000;
+		internal const int TCS_BUTTONS = 0x0100;
+		internal const int TCS_SINGLELINE = 0x0000;
+		internal const int TCS_MULTILINE = 0x0200;
+		internal const int TCS_RIGHTJUSTIFY = 0x0000;
+		internal const int TCS_FIXEDWIDTH = 0x0400;
+		internal const int TCS_RAGGEDRIGHT = 0x0800;
+		internal const int TCS_FOCUSONBUTTONDOWN = 0x1000;
+		internal const int TCS_OWNERDRAWFIXED = 0x2000;
+		internal const int TCS_TOOLTIPS = 0x4000;
 		internal const int TCS_FOCUSNEVER = 0x8000;
 
 		internal const uint LVM_GETCOLUMN = LVM_FIRST + 95;
@@ -1289,32 +1299,32 @@ namespace Keysharp.Core.Windows
 		internal const int UNCHECKED_FOCUSED = 1048580; // if control is focused
 		internal const int CHECKED_FOCUSED = 1048596; // if control is focused
 
-		internal const int CF_TEXT             = 1;
-		internal const int CF_BITMAP           = 2;
-		internal const int CF_METAFILEPICT     = 3;
-		internal const int CF_SYLK             = 4;
-		internal const int CF_DIF              = 5;
-		internal const int CF_TIFF             = 6;
-		internal const int CF_OEMTEXT          = 7;
-		internal const int CF_DIB              = 8;
+		internal const int CF_TEXT = 1;
+		internal const int CF_BITMAP = 2;
+		internal const int CF_METAFILEPICT = 3;
+		internal const int CF_SYLK = 4;
+		internal const int CF_DIF = 5;
+		internal const int CF_TIFF = 6;
+		internal const int CF_OEMTEXT = 7;
+		internal const int CF_DIB = 8;
 		internal const int CF_PALETTE = 9;
-		internal const int CF_PENDATA          = 10;
-		internal const int CF_RIFF             = 11;
-		internal const int CF_WAVE             = 12;
-		internal const int CF_UNICODETEXT      = 13;
-		internal const int CF_ENHMETAFILE      = 14;
-		internal const int CF_HDROP            = 15;
-		internal const int CF_LOCALE           = 16;
+		internal const int CF_PENDATA = 10;
+		internal const int CF_RIFF = 11;
+		internal const int CF_WAVE = 12;
+		internal const int CF_UNICODETEXT = 13;
+		internal const int CF_ENHMETAFILE = 14;
+		internal const int CF_HDROP = 15;
+		internal const int CF_LOCALE = 16;
 		internal const int CF_DIBV5 = 17;
-		internal const int CF_OWNERDISPLAY     = 0x0080;
-		internal const int CF_DSPTEXT          = 0x0081;
-		internal const int CF_DSPBITMAP        = 0x0082;
-		internal const int CF_DSPMETAFILEPICT  = 0x0083;
-		internal const int CF_DSPENHMETAFILE   = 0x008E;
-		internal const int CF_PRIVATEFIRST     = 0x0200;
-		internal const int CF_PRIVATELAST      = 0x02FF;
-		internal const int CF_GDIOBJFIRST      = 0x0300;
-		internal const int CF_GDIOBJLAST       = 0x03FF;
+		internal const int CF_OWNERDISPLAY = 0x0080;
+		internal const int CF_DSPTEXT = 0x0081;
+		internal const int CF_DSPBITMAP = 0x0082;
+		internal const int CF_DSPMETAFILEPICT = 0x0083;
+		internal const int CF_DSPENHMETAFILE = 0x008E;
+		internal const int CF_PRIVATEFIRST = 0x0200;
+		internal const int CF_PRIVATELAST = 0x02FF;
+		internal const int CF_GDIOBJFIRST = 0x0300;
+		internal const int CF_GDIOBJLAST = 0x03FF;
 
 		internal const int HC_ACTION = 0;
 		internal const int HC_GETNEXT = 1;
@@ -1322,10 +1332,11 @@ namespace Keysharp.Core.Windows
 		internal const int HC_NOREMOVE = 3;
 		internal const int HC_NOREM = HC_NOREMOVE;
 		internal const int HC_SYSMODALON = 4;
-		internal const int HC_SYSMODALOFF     = 5;
+		internal const int HC_SYSMODALOFF = 5;
 
 		//WM_KEYUP/DOWN/CHAR HIWORD(lParam) flags
 		public const int KF_ALTDOWN = 0x2000;
+
 		public const int KF_DLGMODE = 0x0800;
 		public const int KF_EXTENDED = 0x0100;
 		public const int KF_MENUMODE = 0x1000;
@@ -1335,6 +1346,7 @@ namespace Keysharp.Core.Windows
 
 		//Low level hook flags
 		public const uint LLKHF_EXTENDED = (KF_EXTENDED >> 8);
+
 		public const uint LLKHF_INJECTED = 0x00000010;
 		public const uint LLKHF_LOWER_IL_INJECTED = 0x00000002;
 		public const uint LLKHF_UP = (KF_UP >> 8);//0x00000020
@@ -1360,42 +1372,42 @@ namespace Keysharp.Core.Windows
 		public const int CT_CTYPE1 = 0x00000001;  // ctype 1 information
 		public const int CT_CTYPE2 = 0x00000002;  // ctype 2 information
 		public const int CT_CTYPE3 = 0x00000004;  // ctype 3 information
-		public const int C3_NONSPACING             = 0x0001;// nonspacing character
-		public const int C3_DIACRITIC              = 0x0002;// diacritic mark
-		public const int C3_VOWELMARK              = 0x0004;// vowel mark
-		public const int C3_SYMBOL                 = 0x0008;// symbols
-		public const int C3_KATAKANA               = 0x0010;// katakana character
-		public const int C3_HIRAGANA               = 0x0020;// hiragana character
-		public const int C3_HALFWIDTH              = 0x0040;// half width character
-		public const int C3_FULLWIDTH              = 0x0080;// full width character
-		public const int C3_IDEOGRAPH              = 0x0100;// ideographic character
-		public const int C3_KASHIDA                = 0x0200;// Arabic kashida character
-		public const int C3_LEXICAL                = 0x0400;// lexical character
-		public const int C3_HIGHSURROGATE          = 0x0800;// high surrogate code unit
-		public const int C3_LOWSURROGATE           = 0x1000;// low surrogate code unit
-		public const int C3_ALPHA                  = 0x8000;// any linguistic char (C1_ALPHA)
+		public const int C3_NONSPACING = 0x0001;// nonspacing character
+		public const int C3_DIACRITIC = 0x0002;// diacritic mark
+		public const int C3_VOWELMARK = 0x0004;// vowel mark
+		public const int C3_SYMBOL = 0x0008;// symbols
+		public const int C3_KATAKANA = 0x0010;// katakana character
+		public const int C3_HIRAGANA = 0x0020;// hiragana character
+		public const int C3_HALFWIDTH = 0x0040;// half width character
+		public const int C3_FULLWIDTH = 0x0080;// full width character
+		public const int C3_IDEOGRAPH = 0x0100;// ideographic character
+		public const int C3_KASHIDA = 0x0200;// Arabic kashida character
+		public const int C3_LEXICAL = 0x0400;// lexical character
+		public const int C3_HIGHSURROGATE = 0x0800;// high surrogate code unit
+		public const int C3_LOWSURROGATE = 0x1000;// low surrogate code unit
+		public const int C3_ALPHA = 0x8000;// any linguistic char (C1_ALPHA)
 		public const int C3_NOTAPPLICABLE = 0x0000;// ctype 3 is not applicable
 
 		public const int WH_MIN = -1;
 		public const int WH_MSGFILTER = -1;
-		public const int WH_JOURNALRECORD    = 0;
-		public const int WH_JOURNALPLAYBACK  = 1;
-		public const int WH_KEYBOARD         = 2;
-		public const int WH_GETMESSAGE       = 3;
-		public const int WH_CALLWNDPROC      = 4;
-		public const int WH_CBT              = 5;
-		public const int WH_SYSMSGFILTER     = 6;
+		public const int WH_JOURNALRECORD = 0;
+		public const int WH_JOURNALPLAYBACK = 1;
+		public const int WH_KEYBOARD = 2;
+		public const int WH_GETMESSAGE = 3;
+		public const int WH_CALLWNDPROC = 4;
+		public const int WH_CBT = 5;
+		public const int WH_SYSMSGFILTER = 6;
 		public const int WH_MOUSE = 7;
 
-		public const int WH_HARDWARE        = 8;
+		public const int WH_HARDWARE = 8;
 		public const int WH_DEBUG = 9;
-		public const int WH_SHELL           = 10;
-		public const int WH_FOREGROUNDIDLE  = 11;
-		public const int WH_CALLWNDPROCRET  = 12;
-		public const int WH_KEYBOARD_LL     = 13;
-		public const int WH_MOUSE_LL        = 14;
+		public const int WH_SHELL = 10;
+		public const int WH_FOREGROUNDIDLE = 11;
+		public const int WH_CALLWNDPROCRET = 12;
+		public const int WH_KEYBOARD_LL = 13;
+		public const int WH_MOUSE_LL = 14;
 		public const int WH_MAX = 14;
-		public const int WH_MINHOOK         = WH_MIN;
+		public const int WH_MINHOOK = WH_MIN;
 		public const int WH_MAXHOOK = WH_MAX;
 		public const int JOYERR_BASE = 160;
 		public const int JOYERR_NOERROR = 0;
@@ -1403,11 +1415,11 @@ namespace Keysharp.Core.Windows
 		public const int JOYERR_NOCANDO = JOYERR_BASE + 6;
 		public const int JOYERR_UNPLUGGED = JOYERR_BASE + 7;
 
-		public const int JOYCAPS_HASZ    = 0x0001;
-		public const int JOYCAPS_HASR    = 0x0002;
-		public const int JOYCAPS_HASU    = 0x0004;
-		public const int JOYCAPS_HASV    = 0x0008;
-		public const int JOYCAPS_HASPOV  = 0x0010;
+		public const int JOYCAPS_HASZ = 0x0001;
+		public const int JOYCAPS_HASR = 0x0002;
+		public const int JOYCAPS_HASU = 0x0004;
+		public const int JOYCAPS_HASV = 0x0008;
+		public const int JOYCAPS_HASPOV = 0x0010;
 		public const int JOYCAPS_POV4DIR = 0x0020;
 		public const int JOYCAPS_POVCTS = 0x0040;
 
@@ -1417,22 +1429,22 @@ namespace Keysharp.Core.Windows
 		public const int JOY_POVBACKWARD = 18000;
 		public const int JOY_POVLEFT = 27000;
 
-		public const int JOY_RETURNX        = 0x00000001;
-		public const int JOY_RETURNY        = 0x00000002;
-		public const int JOY_RETURNZ        = 0x00000004;
-		public const int JOY_RETURNR        = 0x00000008;
-		public const int JOY_RETURNU        = 0x00000010;     /* axis 5 */
-		public const int JOY_RETURNV        = 0x00000020;     /* axis 6 */
-		public const int JOY_RETURNPOV      = 0x00000040;
-		public const int JOY_RETURNBUTTONS  = 0x00000080;
-		public const int JOY_RETURNRAWDATA  = 0x00000100;
-		public const int JOY_RETURNPOVCTS   = 0x00000200;
+		public const int JOY_RETURNX = 0x00000001;
+		public const int JOY_RETURNY = 0x00000002;
+		public const int JOY_RETURNZ = 0x00000004;
+		public const int JOY_RETURNR = 0x00000008;
+		public const int JOY_RETURNU = 0x00000010;     /* axis 5 */
+		public const int JOY_RETURNV = 0x00000020;     /* axis 6 */
+		public const int JOY_RETURNPOV = 0x00000040;
+		public const int JOY_RETURNBUTTONS = 0x00000080;
+		public const int JOY_RETURNRAWDATA = 0x00000100;
+		public const int JOY_RETURNPOVCTS = 0x00000200;
 		public const int JOY_RETURNCENTERED = 0x00000400;
 		public const int JOY_USEDEADZONE = 0x00000800;
+
 		public const int JOY_RETURNALL = (JOY_RETURNX | JOY_RETURNY | JOY_RETURNZ |
 										  JOY_RETURNR | JOY_RETURNU | JOY_RETURNV |
 										  JOY_RETURNPOV | JOY_RETURNBUTTONS);
-
 
 		public const long MB_SETFOREGROUND = 0x00010000L;
 
@@ -1442,6 +1454,7 @@ namespace Keysharp.Core.Windows
 		internal const long ERROR_ALREADY_EXISTS = 183L;
 
 		private const string dwmapi = "dwmapi.dll", kernel32 = "kernel32.dll", shell32 = "shell32.dll", user32 = "user32.dll", gdi32 = "gdi32.dll", version = "version.dll", winmm = "winmm.dll", advapi = "advapi32.dll";
+
 		[DllImport("oleacc.dll")]
 		internal static extern int AccessibleObjectFromWindow(IntPtr hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
 
@@ -1496,7 +1509,6 @@ namespace Keysharp.Core.Windows
 			return open;
 		}
 
-
 		internal static IntPtr GetClipboardData(int format, ref bool nullIsOkay)
 		{
 			nullIsOkay = false;
@@ -1529,7 +1541,6 @@ namespace Keysharp.Core.Windows
 
 			return GetClipboardData((uint)format);
 		}
-
 
 		[DllImport(kernel32)]
 		internal static extern IntPtr GlobalSize(IntPtr handle);
@@ -1603,7 +1614,7 @@ namespace Keysharp.Core.Windows
 			[In] ref System.Threading.NativeOverlapped lpOverlapped);
 
 		[DllImport(user32)]
-		internal extern static bool DestroyIcon(IntPtr handle);
+		internal static extern bool DestroyIcon(IntPtr handle);
 
 		//[DllImport(kernel32, SetLastError = true)]
 		//internal static extern bool DeviceIoControl(IntPtr driveHandle,
@@ -1683,7 +1694,6 @@ namespace Keysharp.Core.Windows
 				_ = AttachThreadInput(Processes.CurrentThreadID, targetThread, false);
 		}
 
-
 		internal static IntPtr AllocInterProcMem(uint size, IntPtr hwnd, ProcessAccessTypes extraAccess, out IntPtr handle)
 		// aHandle is an output parameter that receives the process handle.
 		// Returns NULL on failure (in which case caller should ignore the value of aHandle).
@@ -1708,7 +1718,6 @@ namespace Keysharp.Core.Windows
 			return mem;
 		}
 
-
 		[DllImport(user32)]
 		internal static extern IntPtr GetActiveWindow(IntPtr hWnd);
 
@@ -1717,7 +1726,6 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, CharSet = CharSet.Auto, ExactSpelling = true)]
 		internal static extern IntPtr GetAncestor(IntPtr hWnd, gaFlags gaFlags);
-
 
 		[DllImport(user32)]
 		internal static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
@@ -2067,6 +2075,7 @@ namespace Keysharp.Core.Windows
 		{
 			public IntPtr dwData;
 			public int cbData;
+
 			[MarshalAs(UnmanagedType.LPStr)]
 			public string lpData;
 		}
@@ -2081,7 +2090,6 @@ namespace Keysharp.Core.Windows
 		//For use with WM_COPYDATA and COPYDATASTRUCT
 		[DllImport(user32)]
 		internal static extern int PostMessage(IntPtr hWnd, int Msg, IntPtr wParam, ref COPYDATASTRUCT lParam);
-
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
@@ -2142,6 +2150,7 @@ namespace Keysharp.Core.Windows
 			SendMessageTimeoutFlags flags,
 			uint timeout,
 			out IntPtr result);
+
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Auto)]
 		internal static extern int SendMessageTimeout(
 			IntPtr hWnd,
@@ -2186,7 +2195,6 @@ namespace Keysharp.Core.Windows
 			IntPtr lpcbMaxValueLen,
 			IntPtr lpcbSecurityDescriptor,
 			out long lpftLastWriteTime);
-
 
 		[DllImport(kernel32)]
 		internal static extern int GetShortPathName(string longPath, StringBuilder shortPath, int bufSize);
@@ -2434,7 +2442,9 @@ namespace Keysharp.Core.Windows
 		internal delegate bool _EnumWindowsProc(IntPtr hwnd, int lParam);//Add an underscore to this name because some sample programs use EnumWindowsProc as a function name.
 
 		internal delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam);
+
 		internal delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, ref MSDLLHOOKSTRUCT lParam);
+
 		internal delegate IntPtr PlaybackProc(int nCode, IntPtr wParam, ref EventMsg lParam);
 
 		//[DllImport(user32)]

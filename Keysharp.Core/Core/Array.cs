@@ -251,18 +251,6 @@ namespace Keysharp.Core
 
 		void IList.RemoveAt(int index) => RemoveAt(new object[] { index });//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
 
-		object IList.this[int index]
-		{
-			get
-			{
-				return this[index];
-			}
-			set
-			{
-				this[index] = value;
-			}
-		}
-
 		public virtual object this[object idx]
 		{
 			get
@@ -286,6 +274,18 @@ namespace Keysharp.Core
 					array[array.Count + index] = value;
 				else
 					throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+			}
+		}
+
+		object IList.this[int index]
+		{
+			get
+			{
+				return this[index];
+			}
+			set
+			{
+				this[index] = value;
 			}
 		}
 	}

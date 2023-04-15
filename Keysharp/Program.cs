@@ -24,41 +24,10 @@ namespace Keysharp.Main
 {
 	public static class Program
 	{
-		private static char dotNetMajorVersion = '7';
-		private static CompilerHelper ch = new CompilerHelper();
+		private static readonly CompilerHelper ch = new CompilerHelper();
+		private static readonly char dotNetMajorVersion = '7';
 
-		internal static Version Version
-		{
-			get { return Assembly.GetExecutingAssembly().GetName().Version; }
-		}
-
-		internal static string GetLatestDotNetVersion()
-		{
-			//var key = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
-			//key = key.OpenSubKey(@"SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
-			//var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
-			//versions.Sort();
-			//return versions.Last().ToString();
-			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(x => System.IO.Path.GetFileName(x)).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
-			return dir;
-		}
-
-		internal static void InstallToPath(string path)
-		{
-			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
-			var oldPath = (string)Registry.LocalMachine.CreateSubKey(keyName).GetValue("PATH", "", RegistryValueOptions.DoNotExpandEnvironmentNames);//Get non-expanded PATH environment variable.
-
-			if (!oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Any(s => string.Compare(s, path, true) == 0))
-				Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", oldPath + (oldPath.EndsWith(';') ? path : $";{path}"), RegistryValueKind.ExpandString);//Set the path as an an expandable string with the passed in value included.
-		}
-
-		internal static void RemoveFromPath(string path)
-		{
-			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
-			var oldPath = (string)Registry.LocalMachine.CreateSubKey(keyName).GetValue("PATH", "", RegistryValueOptions.DoNotExpandEnvironmentNames);//Get non-expanded PATH environment variable.
-			var newPath = string.Join(';', oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(s => string.Compare(s, path, true) != 0));
-			Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", newPath, RegistryValueKind.ExpandString);//Restore the old path to what it was without the passed in value included.
-		}
+		internal static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
 		[STAThread]
 		public static int Main(string[] args)
@@ -338,7 +307,36 @@ namespace Keysharp.Main
 			return 0;
 		}
 
+		internal static string GetLatestDotNetVersion()
+		{
+			//var key = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
+			//key = key.OpenSubKey(@"SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
+			//var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
+			//versions.Sort();
+			//return versions.Last().ToString();
+			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(x => System.IO.Path.GetFileName(x)).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
+			return dir;
+		}
+
+		internal static void InstallToPath(string path)
+		{
+			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
+			var oldPath = (string)Registry.LocalMachine.CreateSubKey(keyName).GetValue("PATH", "", RegistryValueOptions.DoNotExpandEnvironmentNames);//Get non-expanded PATH environment variable.
+
+			if (!oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Any(s => string.Compare(s, path, true) == 0))
+				Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", oldPath + (oldPath.EndsWith(';') ? path : $";{path}"), RegistryValueKind.ExpandString);//Set the path as an an expandable string with the passed in value included.
+		}
+
+		internal static void RemoveFromPath(string path)
+		{
+			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
+			var oldPath = (string)Registry.LocalMachine.CreateSubKey(keyName).GetValue("PATH", "", RegistryValueOptions.DoNotExpandEnvironmentNames);//Get non-expanded PATH environment variable.
+			var newPath = string.Join(';', oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(s => string.Compare(s, path, true) != 0));
+			Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", newPath, RegistryValueKind.ExpandString);//Restore the old path to what it was without the passed in value included.
+		}
+
 #if WINDOWS
+
 		private static int HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string path, string desc, string message = "")
 		{
 			var errstr = CompilerHelper.HandleCompilerErrors(diagnostics, filename, desc, message);
@@ -352,6 +350,7 @@ namespace Keysharp.Main
 
 			return 0;
 		}
+
 #endif
 
 		private static int HandleCompilerErrors(CompilerErrorCollection results, string filename, string path, string desc, string message = "")

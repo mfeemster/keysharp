@@ -42,8 +42,10 @@ namespace Keysharp.Scripting
 			ExitLabel = exitLabel;
 		}
 
-		internal enum BlockKind { Dummy, IfElse, Function, Label, Loop, Try, Catch, Finally, TryElse, Switch, CaseWithBrace, CaseWithoutBrace, CaseDefault, Class, Prop, PropGet, PropSet };
+		internal enum BlockKind
+		{ Dummy, IfElse, Function, Label, Loop, Try, Catch, Finally, TryElse, Switch, CaseWithBrace, CaseWithoutBrace, CaseDefault, Class, Prop, PropGet, PropSet };
 
-		internal enum BlockType { None, Expect, Within };
+		internal enum BlockType
+		{ None, Expect, Within };
 	}
 }

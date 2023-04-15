@@ -8,9 +8,10 @@ namespace Keysharp.Core
 {
 	public interface IFuncObj
 	{
-		public string Name { get; }
-		public bool IsValid { get; }
 		public object Inst { get; }
+		public bool IsValid { get; }
+		public string Name { get; }
+
 		public object Call(params object[] obj);
 	}
 
@@ -22,30 +23,6 @@ namespace Keysharp.Core
 			var fo = new FuncObj(name);
 			return fo.Name != "" ? fo
 				   : throw new MethodError($"Unable to retrieve method {name}.");
-		}
-
-		internal static IFuncObj GetFuncObj(object h, object eventObj, bool throwIfBad = false)
-		{
-			IFuncObj del = null;
-
-			if (h is string s)
-			{
-				if (s.Length > 0)
-				{
-					var tempdel = new FuncObj(s, eventObj);
-
-					if (tempdel.IsValid)
-						del = tempdel;
-					else if (throwIfBad)
-						throw new MethodError($"Unable to retrieve method {s} when creating a function object.");
-				}//Empty string will just return null, which is a valid value in some cases.
-			}
-			else if (h is IFuncObj fo)
-				del = fo;
-			else if (throwIfBad)
-				throw new TypeError($"Improper value of {h} was supplied for a function object.");
-
-			return del;
 		}
 
 		public static FuncObj GetMethod(object obj0, object obj1 = null, object obj2 = null)
@@ -84,6 +61,30 @@ namespace Keysharp.Core
 		}
 
 		public static string ObjGetBase(object obj) => obj.GetType().BaseType.Name;
+
+		internal static IFuncObj GetFuncObj(object h, object eventObj, bool throwIfBad = false)
+		{
+			IFuncObj del = null;
+
+			if (h is string s)
+			{
+				if (s.Length > 0)
+				{
+					var tempdel = new FuncObj(s, eventObj);
+
+					if (tempdel.IsValid)
+						del = tempdel;
+					else if (throwIfBad)
+						throw new MethodError($"Unable to retrieve method {s} when creating a function object.");
+				}//Empty string will just return null, which is a valid value in some cases.
+			}
+			else if (h is IFuncObj fo)
+				del = fo;
+			else if (throwIfBad)
+				throw new TypeError($"Improper value of {h} was supplied for a function object.");
+
+			return del;
+		}
 	}
 
 	public class BoundFunc : FuncObj
@@ -228,12 +229,12 @@ namespace Keysharp.Core
 	public class FuncObj : KeysharpObject, IFuncObj
 	{
 		protected bool anyRef;
-		protected bool isVariadic;
 		protected object inst;
+		protected bool isVariadic;
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
-		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public object Inst => inst;
+		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
 		public bool IsVariadic => isVariadic;
 

@@ -16,9 +16,9 @@ namespace Keysharp.Scripting
 		public static readonly string newlineToUse = "\n";
 		private readonly List<string> includes = new List<string>();
 		private readonly string multiLineComments = new string(new[] { MultiComB, MultiComA });
+		private int hotifcount;
 		private string includePath = "./";
 		private char[] libBrackets = new char[] { '<', '>' };
-		private int hotifcount;
 
 		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
 		{

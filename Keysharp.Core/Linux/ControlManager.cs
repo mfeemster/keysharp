@@ -81,11 +81,11 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
 
-		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
 

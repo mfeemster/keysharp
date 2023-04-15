@@ -14,6 +14,16 @@ namespace System
 		/// <returns></returns>
 		public static IEnumerator __Enum(this IEnumerable obj, params object[] values) => obj.GetEnumerator();
 
+		public static T CastTo<T>(this object o) => (T)o;
+
+		public static object CastToReflected(this object o, Type type)
+		{
+			var methodInfo = typeof(ObjectExtensions).GetMethod(nameof(CastTo), BindingFlags.Static | BindingFlags.Public);
+			var genericArguments = new[] { type };
+			var genericMethodInfo = methodInfo?.MakeGenericMethod(genericArguments);
+			return genericMethodInfo?.Invoke(null, new[] { o });
+		}
+
 		public static T[] Concat<T>(this T[] x, T[] y)
 		{
 			if (x == null) throw new ArgumentNullException("x");
@@ -261,15 +271,5 @@ namespace System
 		public static IList Pl(this object[] obj) => obj.Select(x => x).ToList();
 
 		public static string Str(this object obj) => obj != null ? obj.ToString() : "";
-
-		public static T CastTo<T>(this object o) => (T)o;
-
-		public static object CastToReflected(this object o, Type type)
-		{
-			var methodInfo = typeof(ObjectExtensions).GetMethod(nameof(CastTo), BindingFlags.Static | BindingFlags.Public);
-			var genericArguments = new[] { type };
-			var genericMethodInfo = methodInfo?.MakeGenericMethod(genericArguments);
-			return genericMethodInfo?.Invoke(null, new[] { o });
-		}
 	}
 }

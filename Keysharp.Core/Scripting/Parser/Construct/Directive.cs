@@ -54,7 +54,6 @@ namespace Keysharp.Scripting
 	        FreeConsole();
 	    }
 
-
 	    public void WriteLine(string line)
 	    {
 	        _stdOutWriter.WriteLine(line);
@@ -64,28 +63,21 @@ namespace Keysharp.Scripting
 
 	public partial class Parser
 	{
-		public static bool WinActivateForce = false;
-
 		public static int HotExprTimeout = 1000;
-
+		public static bool HotstringNoMouse = false;
 		public static bool MaxThreadsBuffer = false;
-
 		public static uint MaxThreadsPerHotkey = 1u;
-
 		public static uint MaxThreadsTotal = 10u;
-
 		public static bool NoTrayIcon = NoTrayIconDefault;
-
+		public static bool WinActivateForce = false;
+		internal static bool ErrorStdOut = false;
 		internal static bool Persistent = PersistentDefault;
 
 		internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
-		internal static bool ErrorStdOut = false;
-
 		private const bool NoTrayIconDefault = false;
 		private const bool PersistentDefault = false;
 		private char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
 		private string HotstringNewOptions = string.Empty;
-		public static bool HotstringNoMouse = false;
 		private string IfWinActive_WinText = string.Empty;
 
 		//private bool LTrimForced;
@@ -100,6 +92,8 @@ namespace Keysharp.Scripting
 		private eScriptInstance SingleInstance = eScriptInstance.Force;
 		//private GUIConsoleWriter consoleWriter = new GUIConsoleWriter();
 
+		public static void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
+
 		private void AddAssemblyAttribute(Type attribute, object value)
 		{
 			var type = new CodeTypeReference(attribute);
@@ -108,8 +102,6 @@ namespace Keysharp.Scripting
 			var dec = new CodeAttributeDeclaration(type, arg);
 			_ = assemblyAttributes.Add(dec);
 		}
-
-		public static void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
 
 		private void ParseDirective(string code)
 		{

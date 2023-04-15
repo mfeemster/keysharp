@@ -160,6 +160,8 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
+		internal override void ChildFindPoint(PointAndHwnd pah) => throw new NotImplementedException();
+
 		internal override bool Close() => throw new NotImplementedException();
 
 		internal override uint GetMenuItemId(params string[] items) => throw new NotImplementedException();
@@ -169,8 +171,6 @@ namespace Keysharp.Core.Linux
 		internal override bool Kill() => throw new NotImplementedException();
 
 		internal override WindowItemBase RealChildWindowFromPoint(System.Drawing.Point location) => throw new NotImplementedException();
-
-		internal override void ChildFindPoint(PointAndHwnd pah) => throw new NotImplementedException();
 
 		internal override bool Redraw() => throw new NotImplementedException();
 

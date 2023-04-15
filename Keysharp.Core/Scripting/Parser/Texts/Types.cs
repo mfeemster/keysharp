@@ -224,24 +224,6 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		private CodeExpression PrimitiveToExpression(string code)
-		{
-			if (IsPrimitiveObject(code, out var result))
-			{
-				if (result != null)
-				{
-					if (result is long ll)
-						return new CodeSnippetExpression($"{ll}L");
-					else
-						return new CodePrimitiveExpression(result);
-				}
-				else
-					return new CodePrimitiveExpression(result);
-			}
-
-			return null;
-		}
-
 		private bool IsPrimitiveObject(string code) => IsPrimitiveObject(code, out var result);
 
 		private bool IsRemap(string code)//This is totally wrong and has nothing to do with how remaps are done in v2.//TODO
@@ -266,5 +248,23 @@ namespace Keysharp.Scripting
 		}
 
 		private bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
+
+		private CodeExpression PrimitiveToExpression(string code)
+		{
+			if (IsPrimitiveObject(code, out var result))
+			{
+				if (result != null)
+				{
+					if (result is long ll)
+						return new CodeSnippetExpression($"{ll}L");
+					else
+						return new CodePrimitiveExpression(result);
+				}
+				else
+					return new CodePrimitiveExpression(result);
+			}
+
+			return null;
+		}
 	}
 }

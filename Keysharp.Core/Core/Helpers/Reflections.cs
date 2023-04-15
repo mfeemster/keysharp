@@ -10,19 +10,6 @@ using System.Windows.Forms;
 
 namespace Keysharp.Core
 {
-	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext
-	{
-		private readonly AssemblyDependencyResolver resolver;
-
-		public UnloadableAssemblyLoadContext(string mainAssemblyToLoadPath) : base(isCollectible: true) => resolver = new AssemblyDependencyResolver(mainAssemblyToLoadPath);
-
-		protected override Assembly Load(AssemblyName name)
-		{
-			var assemblyPath = resolver.ResolveAssemblyToPath(name);
-			return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
-		}
-	}
-
 	public static class Reflections
 	{
 		internal static readonly Dictionary<string, Dictionary<Type, MethodPropertyHolder>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, MethodPropertyHolder>>(sttcap, StringComparer.OrdinalIgnoreCase);
@@ -34,29 +21,9 @@ namespace Keysharp.Core
 		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 10);
 		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringMethods = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 5);
 		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringProperties = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 5);
+
 		//private static Dictionary<Guid, Dictionary<string, MethodPropertyHolder>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodPropertyHolder>>(sttcap / 20);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
-
-		private static Dictionary<string, Assembly> GetLoadedAssemblies()
-		{
-			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-			var dkt = new Dictionary<string, Assembly>(assemblies.Length);
-
-			foreach (var assembly in assemblies)
-			{
-				try
-				{
-					if (!assembly.IsDynamic)
-						dkt[assembly.Location] = assembly;
-				}
-				catch (Exception ex)
-				{
-					Keysharp.Scripting.Script.OutputDebug(ex.Message);
-				}
-			}
-
-			return dkt;
-		}
 
 		static Reflections() => Initialize();
 
@@ -234,21 +201,6 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		/*
-		        internal static MethodInfo FindExtensionMethod(Type t, string meth)
-		        {
-		            //if (typeof(IDictionary).IsAssignableFrom(t))
-		            //  if (ExtensionMethods.TryGetValue(typeof(IDictionary).GUID, out var idkt))
-		            //      if (idkt.TryGetValue(meth, out var mi))
-		            //          return mi;
-		            if (ExtensionMethods.TryGetValue(t.GUID, out var dkt))
-		                if (dkt.TryGetValue(meth, out var mi))
-		                    return mi;
-
-		            return null;
-		        }
-		*/
-
 		internal static MethodPropertyHolder FindLocalMethod(string name)
 		{
 			if (stringToTypeLocalMethods.TryGetValue(name, out var meths))
@@ -359,6 +311,63 @@ namespace Keysharp.Core
 			return sb.ToString();
 		}
 
+		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
+
+		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
+
+		/// <summary>
+		/// This Methode extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.
+		/// </summary>
+		/// <remarks>
+		/// Insired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
+		/// </remarks>
+		/// <returns>returns MethodInfo[] with the extended Method</returns>
+		private static List<MethodInfo> GetExtensionMethods(this Type t, List<Type> types)
+		{
+			var query = from type in types
+						where type.IsSealed && /*!type.IsGenericType &&*/ !type.IsNested
+						from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+						where method.IsDefined(typeof(ExtensionAttribute), false)
+						where method.GetParameters().Length > 0 && method.GetParameters()[0].ParameterType.Name == t.Name
+						select method;
+			return query.Select(m => m.IsGenericMethod ? m.MakeGenericMethod(t.GenericTypeArguments) : m).ToList();
+		}
+
+		private static Dictionary<string, Assembly> GetLoadedAssemblies()
+		{
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			var dkt = new Dictionary<string, Assembly>(assemblies.Length);
+
+			foreach (var assembly in assemblies)
+			{
+				try
+				{
+					if (!assembly.IsDynamic)
+						dkt[assembly.Location] = assembly;
+				}
+				catch (Exception ex)
+				{
+					Keysharp.Scripting.Script.OutputDebug(ex.Message);
+				}
+			}
+
+			return dkt;
+		}
+
+		/*
+		        internal static MethodInfo FindExtensionMethod(Type t, string meth)
+		        {
+		            //if (typeof(IDictionary).IsAssignableFrom(t))
+		            //  if (ExtensionMethods.TryGetValue(typeof(IDictionary).GUID, out var idkt))
+		            //      if (idkt.TryGetValue(meth, out var mi))
+		            //          return mi;
+		            if (ExtensionMethods.TryGetValue(t.GUID, out var dkt))
+		                if (dkt.TryGetValue(meth, out var mi))
+		                    return mi;
+
+		            return null;
+		        }
+		*/
 		/*
 		    public MethodInfo BestMatch(string name, int length)
 		    {
@@ -389,27 +398,18 @@ namespace Keysharp.Core
 		    return result;
 		    }
 		*/
+	}
 
-		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
+	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext
+	{
+		private readonly AssemblyDependencyResolver resolver;
 
-		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
+		public UnloadableAssemblyLoadContext(string mainAssemblyToLoadPath) : base(isCollectible: true) => resolver = new AssemblyDependencyResolver(mainAssemblyToLoadPath);
 
-		/// <summary>
-		/// This Methode extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.
-		/// </summary>
-		/// <remarks>
-		/// Insired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
-		/// </remarks>
-		/// <returns>returns MethodInfo[] with the extended Method</returns>
-		private static List<MethodInfo> GetExtensionMethods(this Type t, List<Type> types)
+		protected override Assembly Load(AssemblyName name)
 		{
-			var query = from type in types
-						where type.IsSealed && /*!type.IsGenericType &&*/ !type.IsNested
-						from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-						where method.IsDefined(typeof(ExtensionAttribute), false)
-						where method.GetParameters().Length > 0 && method.GetParameters()[0].ParameterType.Name == t.Name
-						select method;
-			return query.Select(m => m.IsGenericMethod ? m.MakeGenericMethod(t.GenericTypeArguments) : m).ToList();
+			var assemblyPath = resolver.ResolveAssemblyToPath(name);
+			return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
 		}
 	}
 }

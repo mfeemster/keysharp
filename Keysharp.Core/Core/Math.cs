@@ -70,7 +70,6 @@ namespace Keysharp.Core
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
 		public static double ATan(object obj) => Math.Atan(obj is double d ? d : obj.Ad());
 
-		
 		/// <summary>
 		/// Returns the angle whose tangent is the y/x number.
 		/// </summary>
@@ -98,13 +97,6 @@ namespace Keysharp.Core
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
 		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns <c>e</c> raised to the specified power.
-		/// </summary>
-		/// <param name="n">A number specifying a power.</param>
-		/// <returns>The number <c>e</c> raised to the power <paramref name="n"/>.</returns>
-		public static double Exp(object obj) => Math.Exp(obj is double d ? d : obj.Ad());
 
 		public static string DateAdd(object obj0, object obj1, object obj2)
 		{
@@ -154,6 +146,13 @@ namespace Keysharp.Core
 			else
 				return diff.Days;
 		}
+
+		/// <summary>
+		/// Returns <c>e</c> raised to the specified power.
+		/// </summary>
+		/// <param name="n">A number specifying a power.</param>
+		/// <returns>The number <c>e</c> raised to the power <paramref name="n"/>.</returns>
+		public static double Exp(object obj) => Math.Exp(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the largest integer less than or equal to the specified double number.

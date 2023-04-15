@@ -71,7 +71,7 @@ namespace Keysharp.Scripting
 					break;
 			}
 
-			var splits = code.Split(new char [] { ' ', '\t' });
+			var splits = code.Split(new char[] { ' ', '\t' });
 			index = next ? splits.Length - 1 : 0;
 
 			if (splits[index].Equals(AndTxt, System.StringComparison.OrdinalIgnoreCase) ||

@@ -16,6 +16,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script : Core.Core
 	{
+		public static bool ForceKeybdHook;
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
 
 		internal const int SLEEP_INTERVAL = 10;
@@ -30,22 +31,18 @@ namespace Keysharp.Scripting
 
 		internal static bool deferMessagesForUnderlyingPump;
 
-		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
-		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
-
-		public static bool ForceKeybdHook;
-
 		[ThreadStatic]
 		internal static IFuncObj hotCriterion;
 
-		[ThreadStatic]
-		internal static IntPtr hwndLastUsed = IntPtr.Zero;
-
+		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
-
+		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
 		internal static bool hsResetUponMouseClick = Parser.HotstringNoMouse;
 
 		internal static bool hsSameLineAction;
+
+		[ThreadStatic]
+		internal static IntPtr hwndLastUsed = IntPtr.Zero;
 
 		internal static InputType input;
 
@@ -68,9 +65,8 @@ namespace Keysharp.Scripting
 
 		internal static int nLayersNeedingTimer;
 
-		internal static List<IFuncObj> OnExitHandlers = new List<IFuncObj>();
 		internal static List<IFuncObj> OnErrorHandlers;
-
+		internal static List<IFuncObj> OnExitHandlers = new List<IFuncObj>();
 		internal static Icon PausedIcon;
 
 		internal static IntPtr playbackHook = IntPtr.Zero;
@@ -102,6 +98,8 @@ namespace Keysharp.Scripting
 		public static Variables Vars { get; private set; }
 
 		internal static Keysharp.Core.Common.Threading.HookThread HookThread { get; private set; }
+
+		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
 
 		internal static IntPtr MainWindowHandle
 		{
@@ -223,10 +221,6 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
-
-		public static void ListVars() => mainWindow?.SetText(Reflections.GetVariableInfo(), MainWindow.MainFocusedTab.Stack);
-
 		public static string ListKeyHistory()
 		{
 			var sb = new StringBuilder(2048);
@@ -284,6 +278,10 @@ namespace Keysharp.Scripting
 			_ = sb.Append(cont);
 			return sb.ToString();
 		}
+
+		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+
+		public static void ListVars() => mainWindow?.SetText(Reflections.GetVariableInfo(), MainWindow.MainFocusedTab.Stack);
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.
@@ -399,8 +397,6 @@ namespace Keysharp.Scripting
 			kbdMouseSender.lastPeekTime = tick_now;
 			return ResultType.Ok;
 		}
-
-		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
 
 		internal static void SetHotNamesAndTimes(string name)
 		{

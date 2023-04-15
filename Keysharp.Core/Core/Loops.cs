@@ -16,10 +16,10 @@ namespace Keysharp.Core
 		[ThreadStatic]
 		private static Stack<LoopInfo> loops = new Stack<LoopInfo>();
 
-		internal static Stack<LoopInfo> LoopStack => loops ?? (loops = new Stack<LoopInfo>());
-
 		[ThreadStatic]
 		private static StringBuilder regsb = new StringBuilder(1024);
+
+		internal static Stack<LoopInfo> LoopStack => loops ?? (loops = new Stack<LoopInfo>());
 
 		public static long Inc()
 		{

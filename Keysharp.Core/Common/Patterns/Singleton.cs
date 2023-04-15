@@ -2,6 +2,22 @@
 
 namespace Keysharp.Core.Common.Patterns
 {
+	internal class ScopeHelper
+	{
+		public EventHandler<object> eh;
+		private object obj;
+
+		public ScopeHelper(object o)
+		{
+			obj = o;
+		}
+
+		~ScopeHelper()
+		{
+			eh?.Invoke(this, obj);
+		}
+	}
+
 	/// <summary>
 	/// generic for singletons
 	/// </summary>
@@ -24,22 +40,6 @@ namespace Keysharp.Core.Common.Patterns
 			static SingletonCreator()
 			{
 			}
-		}
-	}
-
-	internal class ScopeHelper
-	{
-		private object obj;
-		public EventHandler<object> eh;
-
-		public ScopeHelper(object o)
-		{
-			obj = o;
-		}
-
-		~ScopeHelper()
-		{
-			eh?.Invoke(this, obj);
 		}
 	}
 

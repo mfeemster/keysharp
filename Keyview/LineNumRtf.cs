@@ -220,6 +220,19 @@ namespace Rtf
 			}
 		}
 
+		[System.ComponentModel.Browsable(true)]
+		public override System.Drawing.Font Font
+		{
+			get => base.Font;
+
+			set
+			{
+				base.Font = value;
+				Refresh();
+				Invalidate();
+			}
+		}
+
 		[System.ComponentModel.Category("Additional Appearance")]
 		public Color GridLines_Color
 		{
@@ -487,19 +500,6 @@ namespace Rtf
 			set
 			{
 				base.Text = "";
-				Invalidate();
-			}
-		}
-
-		[System.ComponentModel.Browsable(true)]
-		public override System.Drawing.Font Font
-		{
-			get => base.Font;
-
-			set
-			{
-				base.Font = value;
-				Refresh();
 				Invalidate();
 			}
 		}

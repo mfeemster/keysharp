@@ -150,6 +150,53 @@ namespace Keysharp.Scripting
 			while (CloseTopSingleBlock()) ;
 		}
 
+		private int GotoLoopDepth(CodeBlock block, string label)
+		{
+			var depth = 0;
+			var parent = block;
+
+			while (parent != null)
+			{
+				if (parent.Kind == CodeBlock.BlockKind.Loop)
+				{
+					foreach (var cs in parent.Statements)
+					{
+						if (cs is CodeLabeledStatement cls)
+						{
+							if (cls.Label == label)
+								goto found;
+						}
+					}
+
+					depth++;
+				}
+
+				parent = parent.Parent;
+			}
+
+			found:
+			return depth;
+		}
+
+		private int LoopDepth()
+		{
+			if (blocks.Count == 0)
+				return 0;
+
+			var depth = 0;
+			var parent = blocks.Peek();
+
+			while (parent != null)
+			{
+				if (parent.Kind == CodeBlock.BlockKind.Loop)
+					depth++;
+
+				parent = parent.Parent;
+			}
+
+			return depth;
+		}
+
 		private string PeekLoopLabel(bool exit, int n)
 		{
 			if (blocks.Count == 0)
@@ -193,53 +240,6 @@ namespace Keysharp.Scripting
 			}
 
 			return (null, 0);
-		}
-
-		private int LoopDepth()
-		{
-			if (blocks.Count == 0)
-				return 0;
-
-			var depth = 0;
-			var parent = blocks.Peek();
-
-			while (parent != null)
-			{
-				if (parent.Kind == CodeBlock.BlockKind.Loop)
-					depth++;
-
-				parent = parent.Parent;
-			}
-
-			return depth;
-		}
-
-		private int GotoLoopDepth(CodeBlock block, string label)
-		{
-			var depth = 0;
-			var parent = block;
-
-			while (parent != null)
-			{
-				if (parent.Kind == CodeBlock.BlockKind.Loop)
-				{
-					foreach (var cs in parent.Statements)
-					{
-						if (cs is CodeLabeledStatement cls)
-						{
-							if (cls.Label == label)
-								goto found;
-						}
-					}
-
-					depth++;
-				}
-
-				parent = parent.Parent;
-			}
-
-			found:
-			return depth;
 		}
 	}
 }

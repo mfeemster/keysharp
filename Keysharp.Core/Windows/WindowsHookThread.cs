@@ -5419,6 +5419,7 @@ namespace Keysharp.Core.Windows
 			while (channelThreadID == 0)//Give it some time to startup before proceeding.
 				System.Threading.Thread.Sleep(10);
 		}
+
 		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
 		{
 			var problem_activating_hooks = false;
@@ -5480,6 +5481,7 @@ namespace Keysharp.Core.Windows
 			//Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
 			return problem_activating_hooks;
 		}
+
 		//protected internal override void DeregisterKeyboardHook()
 		//{
 		//_ = WindowsAPI.UnhookWindowsHookEx(kbdHook);
@@ -5572,6 +5574,7 @@ namespace Keysharp.Core.Windows
 			MSDLLHOOKSTRUCT tempstruct = default;
 			return LowLevelCommon(kbdHook, code, wParamVal, ref lParam, ref tempstruct, vk, sc, keyUp, lParam.dwExtraInfo, lParam.flags);
 		}
+
 		//protected internal override void DeregisterMouseHook()
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);

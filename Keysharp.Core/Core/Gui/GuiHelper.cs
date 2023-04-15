@@ -10,33 +10,6 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
 {
-	public class MessageFilter : IMessageFilter
-	{
-		public bool PreFilterMessage(ref Message m)
-		{
-			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
-			{
-				Keysharp.Scripting.Script.hwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
-				var now = DateTime.Now;
-
-				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&
-						ht.kbdMsSender is Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbd)
-				{
-					kbd.lastPeekTime = now;
-				}
-
-				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
-				//AHK seems to launch these in threads, but that seems odd, so just call them inline here.
-				var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
-
-				if (res.IsNotNullOrEmpty())
-					return true;
-			}
-
-			return false;
-		}
-	}
-
 	public static class GuiHelper
 	{
 		internal static ConcurrentDictionary<long, List<IFuncObj>> onMessageHandlers = new ();
@@ -515,6 +488,12 @@ namespace Keysharp.Core
 			return lvo;
 		}
 
+		internal static void SetListViewColumnSizes(this ListView lv, int width = -2)
+		{
+			foreach (ColumnHeader col in lv.Columns)
+				col.Width = width;
+		}
+
 		internal static TreeNode TV_FindNode(TreeView parent, long id)
 		{
 			if (id == 0)
@@ -641,13 +620,6 @@ namespace Keysharp.Core
 		//      e.Handled = true;
 		//  }
 		//}
-
-		internal static void SetListViewColumnSizes(this ListView lv, int width = -2)
-		{
-			foreach (ColumnHeader col in lv.Columns)
-				col.Width = width;
-		}
-
 		internal class ListViewColumnOptions
 		{
 			public bool? auto;
@@ -783,6 +755,33 @@ namespace Keysharp.Core
 			l is ListViewItem x&& r is ListViewItem y&& col.Index < x.SubItems.Count&& col.Index < y.SubItems.Count
 			? SortOrder()* NaturalComparer.NaturalCompare(x.SubItems[col.Index].Text, y.SubItems[col.Index].Text)
 			: 0;
+		}
+	}
+
+	public class MessageFilter : IMessageFilter
+	{
+		public bool PreFilterMessage(ref Message m)
+		{
+			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
+			{
+				Keysharp.Scripting.Script.hwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
+				var now = DateTime.Now;
+
+				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&
+						ht.kbdMsSender is Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbd)
+				{
+					kbd.lastPeekTime = now;
+				}
+
+				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
+				//AHK seems to launch these in threads, but that seems odd, so just call them inline here.
+				var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
+
+				if (res.IsNotNullOrEmpty())
+					return true;
+			}
+
+			return false;
 		}
 	}
 }

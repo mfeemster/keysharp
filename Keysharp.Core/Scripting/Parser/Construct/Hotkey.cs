@@ -12,10 +12,35 @@ namespace Keysharp.Scripting
 	public partial class Parser
 	{
 		private Dictionary<string, string> conditionIds;
-		private string lastHotstringFunc = "";
 		private string lastHotkeyFunc = "";
-		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
+		private string lastHotstringFunc = "";
 		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
+		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
+
+		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
+		{
+			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
+				// A hotkey is stacked above, eg,
+				// x::
+				// y & z::altTab
+				// Not supported.
+				throw new ParseException("Hotkey or hotstring is missing its opening brace.");
+
+			if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
+				return null;
+
+			Persistent = true;
+			var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
+			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotkeyFunc}\", null)") : new CodePrimitiveExpression(null));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotkeyName));
+			_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffixHasTilde));
+
+			if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
+				stackedHotkeys.Add(invoke);
+
+			return invoke;
+		}
 
 		private string HotkeyConditionId()
 		{
@@ -51,7 +76,6 @@ namespace Keysharp.Scripting
 			var hotstringExecute = false;
 			var suffixHasTilde = false;
 			var hookIsMandatory = false;
-			HotkeyDefinition hk = null;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbLayout = WindowsAPI.GetKeyboardLayout(0);
 			string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
@@ -818,30 +842,5 @@ namespace Keysharp.Scripting
 		}
 
 		private string SetLastHotkeyFunc(string hotkeyName) => lastHotkeyFunc.Length == 0 ? (lastHotkeyFunc = LabelMethodName(hotkeyName)) : lastHotkeyFunc;
-
-		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
-		{
-			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
-				// A hotkey is stacked above, eg,
-				// x::
-				// y & z::altTab
-				// Not supported.
-				throw new ParseException("Hotkey or hotstring is missing its opening brace.");
-
-			if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
-				return null;
-
-			Persistent = true;
-			var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
-			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression($"new FuncObj(\"{lastHotkeyFunc}\", null)") : new CodePrimitiveExpression(null));
-			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
-			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotkeyName));
-			_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffixHasTilde));
-
-			if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
-				stackedHotkeys.Add(invoke);
-
-			return invoke;
-		}
 	}
 }

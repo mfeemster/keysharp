@@ -21,27 +21,26 @@ namespace Keysharp.Scripting
 		private const string mainClassName = "program";
 		private const string mainScope = "";
 		private readonly Type bcl = typeof(Script).BaseType;
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> allMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
 		private CompilerHelper Ch;
 		private string fileName;
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
 		private CodeStatementCollection initial = new CodeStatementCollection();
+		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
 		private long line;
 		private CodeMemberMethod main = new CodeMemberMethod();
-		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>>();
 		private string name = string.Empty;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> allMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
-		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
-		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>>();
 		private StringBuilder sbld = new StringBuilder();
-		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private CodeTypeDeclaration targetClass;
-
+		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
 		private CompilerParameters CompilerParameters { get; set; }
 
 		static Parser()
@@ -56,239 +55,6 @@ namespace Keysharp.Scripting
 			Init();
 		}
 
-		internal void Init()
-		{
-			//This is a collection of various variables which can be set by #directives and other methods, so reset them all to a default state here.
-			labelct = 0;
-			ErrorStdOut = false;
-			MaxThreadsPerHotkey = 1u;
-			MaxThreadsTotal = 10u;
-			MaxThreadsBuffer = false;
-			HotExprTimeout = 1000;
-			NoTrayIcon = NoTrayIconDefault;
-			Persistent = PersistentDefault;
-			SingleInstance = eScriptInstance.Force;
-			WinActivateForce = false;
-			HotstringNoMouse = false;
-			HotstringNewOptions = string.Empty;
-			DynamicVars = LaxExpressions;
-			Accessors.A_ClipboardTimeout = 1000;
-			Accessors.A_SendLevel = 0;
-			HotstringDefinition.DefaultHotstringSuspendExempt = false;
-			Keysharp.Scripting.Script.ForceKeybdHook = false;
-			//LTrimForced = false;
-			IfWinActive_WinTitle = string.Empty;
-			IfWinActive_WinText = string.Empty;
-			IfWinExist_WinTitle = string.Empty;
-			IfWinExist_WinText = string.Empty;
-			IfWinNotActive_WinTitle = string.Empty;
-			IfWinNotActive_WinText = string.Empty;
-			IfWinNotExist_WinTitle = string.Empty;
-			IfWinNotExist_WinText = string.Empty;
-			preloadedDlls.Clear();
-			includes.Clear();
-			allVars.Clear();
-			methods.Clear();
-			properties.Clear();
-			typeStack.Clear();
-			staticFuncVars.Clear();
-			setPropertyValueCalls.Clear();
-			getPropertyValueCalls.Clear();
-			getMethodCalls.Clear();
-			allMethodCalls.Clear();
-			assemblyAttributes.Clear();
-			initial = new CodeStatementCollection();
-			prepend = new CodeStatementCollection();
-			mainNs = new CodeNamespace("Keysharp.CompiledMain");
-			main = new CodeMemberMethod()
-			{
-				Attributes = MemberAttributes.Public | MemberAttributes.Static,
-				Name = "Main"
-			};
-			main.ReturnType = new CodeTypeReference(typeof(int));
-			_ = main.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string[]), "args"));
-			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
-			targetClass = AddType(mainClassName);
-			_ = targetClass.Members.Add(main);
-		}
-
-		private CodeTypeDeclaration AddType(string typename)
-		{
-			var ctd = new CodeTypeDeclaration(typename)
-			{
-				IsClass = true,
-				//IsPartial = true,
-				TypeAttributes = TypeAttributes.Public
-			};
-			typeStack.Push(ctd);
-
-			if (typename == mainClassName)
-				_ = mainNs.Types.Add(ctd);
-			else
-				_ = targetClass.Members.Add(ctd);
-
-			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
-			properties[ctd] = new Dictionary<string, CodeMemberProperty>();
-			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
-			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
-			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			getPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			getMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			allMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			return ctd;
-		}
-
-		private bool VarExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
-		{
-			if (allVars.TryGetValue(currentType, out var typeFuncs))
-			{
-				foreach (CodeTypeMember typemember in currentType.Members)//First, see if the type contains the variable.
-				{
-					if (typemember is CodeSnippetTypeMember ctsm && ctsm.Name == varName)
-						return true;
-				}
-
-				if (typeFuncs.TryGetValue(currentScope, out var scopeVars))//The type didn't contain the variable, so see if the local function scope contains it.
-				{
-					if (scopeVars.ContainsKey(varName))
-						return true;
-				}
-			}
-
-			return false;
-		}
-
-		private bool PropExistsInTypeOrBase(string t, string p)
-		{
-			if (properties.Count > 0)
-			{
-				while (!string.IsNullOrEmpty(t))
-				{
-					var anyFound = false;
-
-					foreach (var typekv in properties)
-					{
-						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
-						{
-							anyFound = true;
-
-							if (typekv.Value.TryGetValue(p, out var _))//If the property existed in the type, return.
-								return true;
-
-							//Wasn't found in this type, so check its base.
-							if (typekv.Key.BaseTypes.Count > 0)
-							{
-								t = typekv.Key.BaseTypes[0].BaseType;
-
-								//The base might have been a user defined type, or a built in type. Check built in type first.
-								//Ex: subclass : theclass : Array
-								if (PropExistsInBuiltInClass(t, p))
-									return true;
-
-								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
-							}
-							else
-								return false;
-						}
-					}
-
-					//Nothing found in user defined types or their bases, so try built in types.
-					//Ex: theclass : Array
-					if (!anyFound)
-					{
-						if (PropExistsInBuiltInClass(t, p))
-							return true;
-						else
-							break;
-					}
-				}
-			}
-
-			return false;
-		}
-
-		private bool PropExistsInTypeOrBase(Type t, string p)
-		{
-			while (t != null)
-			{
-				var props = t.GetProperties();
-
-				foreach (var prop in props)
-					if (string.Compare(prop.Name, p, true) == 0)
-						return true;
-
-				t = t.BaseType;
-			}
-
-			return false;
-		}
-
-		private bool PropExistsInBuiltInClass(string baseType, string p)
-		{
-			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
-			{
-				//Must iterate rather than look up because we only have the string name, not the type.
-				foreach (var typekv in props)
-				{
-					if (string.Compare(typekv.Key.Name, baseType, true) == 0)
-						if (PropExistsInTypeOrBase(typekv.Key, p))
-							return true;
-						else
-							return false;
-				}
-			}
-
-			return false;
-		}
-
-		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
-		{
-			foreach (CodeTypeDeclaration type in mainNs.Types)
-				if (string.Compare(type.Name, varName, true) == 0)
-					return true;
-
-			foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
-				if (type is CodeTypeDeclaration ctd)
-					if (string.Compare(ctd.Name, varName, true) == 0)
-						return true;
-
-			return false;
-		}
-
-		//private bool MethodExistsInTypeOrBase(Type t, string m)
-		//{
-		//  while (t != null)
-		//  {
-		//      var meths = t.GetMethods();
-
-		//      foreach (var meth in meths)
-		//          if (string.Compare(meth.Name, m, true) == 0)
-		//              return true;
-
-		//      t = t.BaseType;
-		//  }
-
-		//  return false;
-		//}
-
-		//private bool MethodExistsInBuiltInClass(string baseType, string m)
-		//{
-		//  if (Reflections.stringToTypeBuiltInMethods.TryGetValue(m, out var meths))
-		//  {
-		//      //Must iterate rather than look up because we only have the string name, not the type.
-		//      foreach (var typekv in meths)
-		//      {
-		//          if (string.Compare(typekv.Key.Name, baseType, true) == 0)
-		//              if (MethodExistsInTypeOrBase(typekv.Key, m))
-		//                  return true;
-		//              else
-		//                  return false;
-		//      }
-		//  }
-
-		//  return false;
-		//}
-
 		public static bool IsTypeOrBase(Type t1, string t2)
 		{
 			while (t1 != null)
@@ -300,55 +66,6 @@ namespace Keysharp.Scripting
 			}
 
 			return false;
-		}
-
-		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
-		{
-			if (methods.Count > 0)
-			{
-				while (!string.IsNullOrEmpty(t))
-				{
-					foreach (var typekv in methods)
-					{
-						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
-						{
-							if (typekv.Value.TryGetValue(m, out var cmm))//If the method existed in the type, return.
-								return cmm;
-
-							//Wasn't found in this type, so check its base. This will not check for built in types, because those can be gotten with FindBuiltInMethod().
-							if (typekv.Key.BaseTypes.Count > 0)
-							{
-								t = typekv.Key.BaseTypes[0].BaseType;
-								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
-							}
-							else
-								return null;
-						}
-					}
-				}
-			}
-
-			return null;
-		}
-
-		private CodeTypeDeclaration FindUserDefinedType(string typeName)
-		{
-			foreach (CodeTypeMember type in targetClass.Members)
-				if (type is CodeTypeDeclaration ctd)
-					if (string.Compare(ctd.Name, typeName, true) == 0)
-						return ctd;
-
-			return null;
-		}
-
-		private string GetUserDefinedTypename(string typeName)
-		{
-			foreach (CodeTypeMember type in targetClass.Members)
-				if (type is CodeTypeDeclaration ctd)
-					if (string.Compare(ctd.Name, typeName, true) == 0)
-						return ctd.Name;
-
-			return "";
 		}
 
 		public static string TrimParens(string code)
@@ -892,5 +609,286 @@ namespace Keysharp.Scripting
 
 			return GenerateCompileUnit();
 		}
+
+		internal void Init()
+		{
+			//This is a collection of various variables which can be set by #directives and other methods, so reset them all to a default state here.
+			labelct = 0;
+			ErrorStdOut = false;
+			MaxThreadsPerHotkey = 1u;
+			MaxThreadsTotal = 10u;
+			MaxThreadsBuffer = false;
+			HotExprTimeout = 1000;
+			NoTrayIcon = NoTrayIconDefault;
+			Persistent = PersistentDefault;
+			SingleInstance = eScriptInstance.Force;
+			WinActivateForce = false;
+			HotstringNoMouse = false;
+			HotstringNewOptions = string.Empty;
+			DynamicVars = LaxExpressions;
+			Accessors.A_ClipboardTimeout = 1000;
+			Accessors.A_SendLevel = 0;
+			HotstringDefinition.DefaultHotstringSuspendExempt = false;
+			Keysharp.Scripting.Script.ForceKeybdHook = false;
+			//LTrimForced = false;
+			IfWinActive_WinTitle = string.Empty;
+			IfWinActive_WinText = string.Empty;
+			IfWinExist_WinTitle = string.Empty;
+			IfWinExist_WinText = string.Empty;
+			IfWinNotActive_WinTitle = string.Empty;
+			IfWinNotActive_WinText = string.Empty;
+			IfWinNotExist_WinTitle = string.Empty;
+			IfWinNotExist_WinText = string.Empty;
+			preloadedDlls.Clear();
+			includes.Clear();
+			allVars.Clear();
+			methods.Clear();
+			properties.Clear();
+			typeStack.Clear();
+			staticFuncVars.Clear();
+			setPropertyValueCalls.Clear();
+			getPropertyValueCalls.Clear();
+			getMethodCalls.Clear();
+			allMethodCalls.Clear();
+			assemblyAttributes.Clear();
+			initial = new CodeStatementCollection();
+			prepend = new CodeStatementCollection();
+			mainNs = new CodeNamespace("Keysharp.CompiledMain");
+			main = new CodeMemberMethod()
+			{
+				Attributes = MemberAttributes.Public | MemberAttributes.Static,
+				Name = "Main"
+			};
+			main.ReturnType = new CodeTypeReference(typeof(int));
+			_ = main.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string[]), "args"));
+			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
+			targetClass = AddType(mainClassName);
+			_ = targetClass.Members.Add(main);
+		}
+
+		private CodeTypeDeclaration AddType(string typename)
+		{
+			var ctd = new CodeTypeDeclaration(typename)
+			{
+				IsClass = true,
+				//IsPartial = true,
+				TypeAttributes = TypeAttributes.Public
+			};
+			typeStack.Push(ctd);
+
+			if (typename == mainClassName)
+				_ = mainNs.Types.Add(ctd);
+			else
+				_ = targetClass.Members.Add(ctd);
+
+			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
+			properties[ctd] = new Dictionary<string, CodeMemberProperty>();
+			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
+			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
+			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			getPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			getMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			allMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			return ctd;
+		}
+
+		private CodeTypeDeclaration FindUserDefinedType(string typeName)
+		{
+			foreach (CodeTypeMember type in targetClass.Members)
+				if (type is CodeTypeDeclaration ctd)
+					if (string.Compare(ctd.Name, typeName, true) == 0)
+						return ctd;
+
+			return null;
+		}
+
+		private string GetUserDefinedTypename(string typeName)
+		{
+			foreach (CodeTypeMember type in targetClass.Members)
+				if (type is CodeTypeDeclaration ctd)
+					if (string.Compare(ctd.Name, typeName, true) == 0)
+						return ctd.Name;
+
+			return "";
+		}
+
+		//  return false;
+		//}
+		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
+		{
+			if (methods.Count > 0)
+			{
+				while (!string.IsNullOrEmpty(t))
+				{
+					foreach (var typekv in methods)
+					{
+						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
+						{
+							if (typekv.Value.TryGetValue(m, out var cmm))//If the method existed in the type, return.
+								return cmm;
+
+							//Wasn't found in this type, so check its base. This will not check for built in types, because those can be gotten with FindBuiltInMethod().
+							if (typekv.Key.BaseTypes.Count > 0)
+							{
+								t = typekv.Key.BaseTypes[0].BaseType;
+								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
+							}
+							else
+								return null;
+						}
+					}
+				}
+			}
+
+			return null;
+		}
+
+		private bool PropExistsInBuiltInClass(string baseType, string p)
+		{
+			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
+			{
+				//Must iterate rather than look up because we only have the string name, not the type.
+				foreach (var typekv in props)
+				{
+					if (string.Compare(typekv.Key.Name, baseType, true) == 0)
+						if (PropExistsInTypeOrBase(typekv.Key, p))
+							return true;
+						else
+							return false;
+				}
+			}
+
+			return false;
+		}
+
+		private bool PropExistsInTypeOrBase(string t, string p)
+		{
+			if (properties.Count > 0)
+			{
+				while (!string.IsNullOrEmpty(t))
+				{
+					var anyFound = false;
+
+					foreach (var typekv in properties)
+					{
+						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
+						{
+							anyFound = true;
+
+							if (typekv.Value.TryGetValue(p, out var _))//If the property existed in the type, return.
+								return true;
+
+							//Wasn't found in this type, so check its base.
+							if (typekv.Key.BaseTypes.Count > 0)
+							{
+								t = typekv.Key.BaseTypes[0].BaseType;
+
+								//The base might have been a user defined type, or a built in type. Check built in type first.
+								//Ex: subclass : theclass : Array
+								if (PropExistsInBuiltInClass(t, p))
+									return true;
+
+								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
+							}
+							else
+								return false;
+						}
+					}
+
+					//Nothing found in user defined types or their bases, so try built in types.
+					//Ex: theclass : Array
+					if (!anyFound)
+					{
+						if (PropExistsInBuiltInClass(t, p))
+							return true;
+						else
+							break;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private bool PropExistsInTypeOrBase(Type t, string p)
+		{
+			while (t != null)
+			{
+				var props = t.GetProperties();
+
+				foreach (var prop in props)
+					if (string.Compare(prop.Name, p, true) == 0)
+						return true;
+
+				t = t.BaseType;
+			}
+
+			return false;
+		}
+
+		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
+		{
+			foreach (CodeTypeDeclaration type in mainNs.Types)
+				if (string.Compare(type.Name, varName, true) == 0)
+					return true;
+
+			foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
+				if (type is CodeTypeDeclaration ctd)
+					if (string.Compare(ctd.Name, varName, true) == 0)
+						return true;
+
+			return false;
+		}
+
+		private bool VarExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
+		{
+			if (allVars.TryGetValue(currentType, out var typeFuncs))
+			{
+				foreach (CodeTypeMember typemember in currentType.Members)//First, see if the type contains the variable.
+				{
+					if (typemember is CodeSnippetTypeMember ctsm && ctsm.Name == varName)
+						return true;
+				}
+
+				if (typeFuncs.TryGetValue(currentScope, out var scopeVars))//The type didn't contain the variable, so see if the local function scope contains it.
+				{
+					if (scopeVars.ContainsKey(varName))
+						return true;
+				}
+			}
+
+			return false;
+		}
+
+		//private bool MethodExistsInTypeOrBase(Type t, string m)
+		//{
+		//  while (t != null)
+		//  {
+		//      var meths = t.GetMethods();
+
+		//      foreach (var meth in meths)
+		//          if (string.Compare(meth.Name, m, true) == 0)
+		//              return true;
+
+		//      t = t.BaseType;
+		//  }
+
+		//  return false;
+		//}
+
+		//private bool MethodExistsInBuiltInClass(string baseType, string m)
+		//{
+		//  if (Reflections.stringToTypeBuiltInMethods.TryGetValue(m, out var meths))
+		//  {
+		//      //Must iterate rather than look up because we only have the string name, not the type.
+		//      foreach (var typekv in meths)
+		//      {
+		//          if (string.Compare(typekv.Key.Name, baseType, true) == 0)
+		//              if (MethodExistsInTypeOrBase(typekv.Key, m))
+		//                  return true;
+		//              else
+		//                  return false;
+		//      }
+		//  }
 	}
 }

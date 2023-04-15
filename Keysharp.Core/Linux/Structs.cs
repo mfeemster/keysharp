@@ -7,7 +7,7 @@ using System.Timers;
 // X11 Version
 namespace Keysharp.Core.Linux
 {
-	partial class LinuxAPI
+	internal partial class LinuxAPI
 	{
 		//
 		// In the structures below, fields of type long are mapped to IntPtr.

@@ -29,39 +29,6 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow)
-		{
-			// Determine the thread for which we want the keyboard layout.
-			// When no foreground window, the script's own layout seems like the safest default.
-			var thread_id = 0u;
-
-			if (aWindow == IntPtr.Zero)
-				aWindow = WindowsAPI.GetForegroundWindow();
-
-			if (aWindow != IntPtr.Zero)
-			{
-				// Get thread of aWindow (which should be the foreground window).
-				thread_id = WindowsAPI.GetWindowThreadProcessId(aWindow, out var _);
-				// Get focus.  Benchmarks showed this additional step added only 6% to the time,
-				// and the total was only around 4µs per iteration anyway (on a Core i5-4460).
-				// It is necessary for UWP apps such as Microsoft Edge, and any others where
-				// the top-level window belongs to a different thread than the focused control.
-				var thread_info = GUITHREADINFO.Default;
-
-				if (WindowsAPI.GetGUIThreadInfo(thread_id, out thread_info) && thread_info.hwndFocus != IntPtr.Zero)
-				{
-					// Use the focused control's thread.
-					thread_id = WindowsAPI.GetWindowThreadProcessId(thread_info.hwndFocus, out var _);
-
-					if (apControl != IntPtr.Zero)
-						apControl = thread_info.hwndFocus;
-				}
-			}
-
-			return thread_id;
-		}
-
-
 		internal override WindowItemBase LastFound { get; set; }
 
 		internal WindowManager() => Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
@@ -132,19 +99,55 @@ namespace Keysharp.Core.Windows
 
 			return found;
 		}
+
+		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow)
+		{
+			// Determine the thread for which we want the keyboard layout.
+			// When no foreground window, the script's own layout seems like the safest default.
+			var thread_id = 0u;
+
+			if (aWindow == IntPtr.Zero)
+				aWindow = WindowsAPI.GetForegroundWindow();
+
+			if (aWindow != IntPtr.Zero)
+			{
+				// Get thread of aWindow (which should be the foreground window).
+				thread_id = WindowsAPI.GetWindowThreadProcessId(aWindow, out var _);
+				// Get focus.  Benchmarks showed this additional step added only 6% to the time,
+				// and the total was only around 4µs per iteration anyway (on a Core i5-4460).
+				// It is necessary for UWP apps such as Microsoft Edge, and any others where
+				// the top-level window belongs to a different thread than the focused control.
+				var thread_info = GUITHREADINFO.Default;
+
+				if (WindowsAPI.GetGUIThreadInfo(thread_id, out thread_info) && thread_info.hwndFocus != IntPtr.Zero)
+				{
+					// Use the focused control's thread.
+					thread_id = WindowsAPI.GetWindowThreadProcessId(thread_info.hwndFocus, out var _);
+
+					if (apControl != IntPtr.Zero)
+						apControl = thread_info.hwndFocus;
+				}
+			}
+
+			return thread_id;
+		}
+
 		internal override WindowItemBase GetForeGroundWindow() => new WindowItem(WindowsAPI.GetForegroundWindow());
+
 		internal override void MinimizeAll()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
 			_ = WindowsAPI.PostMessage(window.Handle, WindowsAPI.WM_COMMAND, new IntPtr(419), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
 		}
+
 		internal override void MinimizeAllUndo()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
 			_ = WindowsAPI.PostMessage(window.Handle, WindowsAPI.WM_COMMAND, new IntPtr(416), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
 		}
+
 		internal override WindowItemBase WindowFromPoint(Point location)
 		{
 			var ctrl = WindowsAPI.WindowFromPoint(location);

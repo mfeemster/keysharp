@@ -18,24 +18,28 @@ namespace Keysharp.Core
 		private readonly Control _control;
 		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();//These all need to be converted to FuncObj.
 		private readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
+
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
+
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
 		private bool dpiscaling = true;
+		private IntPtr dummyHandle;
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
 		private List<IFuncObj> itemCheckHandlers;
 		private List<IFuncObj> itemEditHandlers;
 		private List<IFuncObj> itemExpandHandlers;
 		private List<IFuncObj> lostFocusHandlers;
+
 		//private int mousecount = 0;
 		private Dictionary<int, List<IFuncObj>> notifyHandlers;
+
 		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
-		private IntPtr dummyHandle;
 		public bool AltSubmit { get; internal set; } = false;
 
 		public string ClassNN
@@ -1906,16 +1910,16 @@ namespace Keysharp.Core
 				_ = (itemExpandHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.IsExpanded ? 1L : 0L));
 		}
 
-		private void Tv_AfterSelect(object sender, TreeViewEventArgs e)
-		{
-			if (_control is TreeView)
-				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
-		}
-
 		private void Tv_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
 		{
 			if (_control is TreeView)
 				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
+		}
+
+		private void Tv_AfterSelect(object sender, TreeViewEventArgs e)
+		{
+			if (_control is TreeView)
+				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
 		private void Tv_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)

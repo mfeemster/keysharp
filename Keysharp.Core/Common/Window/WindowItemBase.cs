@@ -33,6 +33,7 @@ namespace Keysharp.Core.Common.Window
 		/// Get the ClassName + number of occurence of this window (control)
 		/// </summary>
 		internal abstract string ClassNN { get; }
+
 		internal abstract Rectangle ClientLocation { get; }
 		internal int Delay { get; set; } = 100;
 		internal abstract bool Enabled { get; set; }
@@ -48,18 +49,15 @@ namespace Keysharp.Core.Common.Window
 		{
 			get
 			{
-				var filename = "";
-
 				try
 				{
 					var proc = System.Diagnostics.Process.GetProcessById((int)PID.ToInt64());
-					filename = proc.MainModule.FileName;
+					return proc.MainModule.FileName;
 				}
 				catch
 				{
+					return "";
 				}
-
-				return filename;
 			}
 		}
 

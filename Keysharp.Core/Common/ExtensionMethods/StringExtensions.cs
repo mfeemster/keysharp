@@ -93,11 +93,6 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return new string(buffer, 0, idx);
 		}
 
-		public static string TrimEndOf(this string str, string trim, bool ignoreCase = true) =>
-		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
-		? str.Substring(0, str.LastIndexOf(trim))
-		: str;
-
 		/// <summary>
 		/// Provide an easy way to iterate through the lines of a string without using as much memory as string.Split().
 		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper
@@ -182,6 +177,11 @@ namespace System//Extension methods should be in the same namespace of the objec
 
 			return s.AsSpan(0, len);
 		}
+
+		public static string TrimEndOf(this string str, string trim, bool ignoreCase = true) =>
+		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
+		? str.Substring(0, str.LastIndexOf(trim))
+		: str;
 
 		public static string TrimNofAny(this string str, string any, int n)
 		{

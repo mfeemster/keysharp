@@ -106,8 +106,6 @@ namespace Keysharp.Core.Linux
 
 		internal override uint ConvertModifiersLR(uint modifiersLR) => 0;
 
-		internal override string ModifiersLRToText(uint aModifiersLR) => "";
-
 		internal override void DoMouseDelay()
 		{ }
 
@@ -117,6 +115,8 @@ namespace Keysharp.Core.Linux
 
 		internal override void InitEventArray(int maxEvents, uint modifiersLR)
 		{ }
+
+		internal override string ModifiersLRToText(uint aModifiersLR) => "";
 
 		internal override void MouseClick(uint vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
 		{ }

@@ -217,10 +217,6 @@ namespace Keysharp.Core.Windows
 			return hmod;
 		}
 
-		internal override int PbEventCount() => eventPb.Count;
-
-		internal override int SiEventCount() => eventSi.Count;
-
 		internal override void CleanupEventArray(long finalKeyDelay)
 		{
 			if (sendMode == SendModes.Input)
@@ -273,29 +269,6 @@ namespace Keysharp.Core.Windows
 			if ((modifiersLR & (MOD_LCONTROL | MOD_RCONTROL)) != 0) modifiers |= MOD_CONTROL;
 
 			return modifiers;
-		}
-
-		internal override string ModifiersLRToText(uint aModifiersLR)
-		{
-			var sb = new StringBuilder(64);
-
-			if ((aModifiersLR & MOD_LWIN) != 0) _ = sb.Append("LWin ");
-
-			if ((aModifiersLR & MOD_RWIN) != 0) _ = sb.Append("RWin ");
-
-			if ((aModifiersLR & MOD_LSHIFT) != 0) _ = sb.Append("LShift ");
-
-			if ((aModifiersLR & MOD_RSHIFT) != 0) _ = sb.Append("RShift ");
-
-			if ((aModifiersLR & MOD_LCONTROL) != 0) _ = sb.Append("LCtrl ");
-
-			if ((aModifiersLR & MOD_RCONTROL) != 0) _ = sb.Append("RCtrl ");
-
-			if ((aModifiersLR & MOD_LALT) != 0) _ = sb.Append("LAlt ");
-
-			if ((aModifiersLR & MOD_RALT) != 0) _ = sb.Append("RAlt ");
-
-			return sb.ToString();
 		}
 
 		/// <summary>
@@ -460,10 +433,14 @@ namespace Keysharp.Core.Windows
 				Keysharp.Core.Flow.SleepWithoutInterruption(mouseDelay);
 		}
 
-		//internal ResultType ExpandEventArray()
-		//{
-		//  if (abortArraySend) // A prior call failed (might be impossible).  Avoid malloc() in this case.
-		//      return ResultType.Fail;
+		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
+		{
+			if (window == IntPtr.Zero)
+				window = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow().Handle;
+
+			var tempzero = IntPtr.Zero;
+			return WindowsAPI.GetKeyboardLayout(Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, window));
+		}
 
 		//  // SendInput() appears to be limited to 5000 chars (10000 events in array), at least on XP.  This is
 		//  // either an undocumented SendInput limit or perhaps it's due to the system setting that determines
@@ -485,16 +462,6 @@ namespace Keysharp.Core.Windows
 		//      return ResultType.Fail;//Leave sEventSI and sMaxEvents in their current valid state, to be freed by CleanupEventArray().
 		//  }
 		//}
-
-		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
-		{
-			if (window == IntPtr.Zero)
-				window = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow().Handle;
-
-			var tempzero = IntPtr.Zero;
-			return WindowsAPI.GetKeyboardLayout(Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, window));
-		}
-
 		/// <summary>
 		/// Try to report a more reliable state of the modifier keys than GetKeyboardState alone could.
 		/// Fix for v1.0.42.01: On Windows 2000/XP or later, GetAsyncKeyState() should be called rather than
@@ -602,6 +569,10 @@ namespace Keysharp.Core.Windows
 			//  return g_KeybdHook ? (g_modifiersLR_logical & g_modifiersLR_get) : g_modifiersLR_get;
 		}
 
+		//internal ResultType ExpandEventArray()
+		//{
+		//  if (abortArraySend) // A prior call failed (might be impossible).  Avoid malloc() in this case.
+		//      return ResultType.Fail;
 		internal override void InitEventArray(int maxEvents, uint modifiersLR)
 		{
 			eventSi.Clear();
@@ -653,6 +624,29 @@ namespace Keysharp.Core.Windows
 				hkl = layout// This is done here (immediately after has_altgr is set) rather than earlier to minimize the consequences of not being fully thread-safe.
 			});
 			return hasaltgr;
+		}
+
+		internal override string ModifiersLRToText(uint aModifiersLR)
+		{
+			var sb = new StringBuilder(64);
+
+			if ((aModifiersLR & MOD_LWIN) != 0) _ = sb.Append("LWin ");
+
+			if ((aModifiersLR & MOD_RWIN) != 0) _ = sb.Append("RWin ");
+
+			if ((aModifiersLR & MOD_LSHIFT) != 0) _ = sb.Append("LShift ");
+
+			if ((aModifiersLR & MOD_RSHIFT) != 0) _ = sb.Append("RShift ");
+
+			if ((aModifiersLR & MOD_LCONTROL) != 0) _ = sb.Append("LCtrl ");
+
+			if ((aModifiersLR & MOD_RCONTROL) != 0) _ = sb.Append("RCtrl ");
+
+			if ((aModifiersLR & MOD_LALT) != 0) _ = sb.Append("LAlt ");
+
+			if ((aModifiersLR & MOD_RALT) != 0) _ = sb.Append("RAlt ");
+
+			return sb.ToString();
 		}
 
 		internal override void MouseClick(uint vk, int x, int y, long repeatCount, long speed, KeyEventTypes eventType, bool moveOffset)
@@ -1127,6 +1121,8 @@ namespace Keysharp.Core.Windows
 				MouseCoordToAbs(cursor_pos.Y, screen_height),
 				x, y, speed);                             //Destination/ending coords.
 		}
+
+		internal override int PbEventCount() => eventPb.Count;
 
 		internal IntPtr PlaybackHandler(int code, IntPtr wParam, ref EventMsg lParam)
 		// Journal playback hook.
@@ -3507,6 +3503,8 @@ namespace Keysharp.Core.Windows
 			// alt-down ctrl-down ctrl-up alt-up
 			// (also seems true for all other permutations of Ctrl/Alt)
 		}
+
+		internal override int SiEventCount() => eventSi.Count;
 
 		/// <summary>
 		/// Toggle the given vk into another state.  For performance, it is the caller's responsibility to

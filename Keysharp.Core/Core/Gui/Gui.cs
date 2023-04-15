@@ -19,13 +19,7 @@ namespace Keysharp.Core
 		public TabPage CurrentTab;
 		public KeysharpForm form;
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
-		internal List<IFuncObj> closedHandlers;
-		internal List<IFuncObj> contextMenuChangedHandlers;
-		internal Dictionary<object, object> controls = new Dictionary<object, object>();
-		internal List<IFuncObj> dropFilesHandlers;
-		internal List<IFuncObj> escapeHandlers;
-		internal MenuBar menuBar;
-		internal List<IFuncObj> sizeHandlers;
+
 		internal static Type[] GuiTypes = new Type[]
 		{
 			typeof(Keysharp.Core.Gui),
@@ -34,7 +28,13 @@ namespace Keysharp.Core
 			typeof(System.Windows.Forms.Control)//Add native control and form types just to be safe.
 		};
 
-		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
+		internal List<IFuncObj> closedHandlers;
+		internal List<IFuncObj> contextMenuChangedHandlers;
+		internal Dictionary<object, object> controls = new Dictionary<object, object>();
+		internal List<IFuncObj> dropFilesHandlers;
+		internal List<IFuncObj> escapeHandlers;
+		internal MenuBar menuBar;
+		internal List<IFuncObj> sizeHandlers;
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new Dictionary<string, Action<Gui, object>>
 		{
@@ -226,10 +226,15 @@ namespace Keysharp.Core
 		};
 
 		private static int windowCount = 0;
+
 		private bool closingFromDestroy;
+
 		private bool dpiscaling = true;
+
 		private bool lastfound = false;
+
 		private bool owndialogs = false;
+
 		private bool resizable = false;
 
 		public object BackColor
@@ -249,6 +254,7 @@ namespace Keysharp.Core
 		}
 
 		public Control FocusedCtrl => form.ActiveControl;
+
 		public IntPtr Hwnd => form.Handle;
 
 		public long MarginX
@@ -302,6 +308,7 @@ namespace Keysharp.Core
 		}
 
 		internal Font Font { get; set; }
+
 		internal Control LastContainer { get; set; }
 
 		internal Control LastControl
@@ -1891,7 +1898,9 @@ namespace Keysharp.Core
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
-		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);//(float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
+		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
+
+		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type)); //(float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
 
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{

@@ -162,62 +162,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool IsProperty(CodeLine line)
-		{
-			var code = line.Code;
-
-			if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)
-			{
-				if (code.Contains(":="))
-					return false;
-
-				var copy = code;
-				var isstatic = false;
-
-				if (copy.StartsWith("static "))
-				{
-					copy = copy.Substring(7, code.Length - 7);
-					isstatic = true;
-				}
-
-				var openBracket = copy.IndexOf('[');
-
-				if (openBracket != -1)
-					copy = copy.AsSpan(0, openBracket).Trim().ToString();
-
-				if (copy.Length > 0)
-				{
-					var isitem = string.Compare(copy, "__Item", true) == 0;
-
-					if (openBracket != -1)
-					{
-						var closeBracket = code.IndexOf(']');
-
-						if (closeBracket == code.Length - 1)
-						{
-							if (!isitem)
-								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", line);
-						}
-						else
-							throw new ParseException("Missing close bracket on property indexer.", line);
-					}
-					else if (isitem)
-						throw new ParseException("The __Item property must have brackets and take at least one parameter.", line);
-
-					if (isstatic && isitem)
-						throw new ParseException("The __Item property cannot be static.", line);
-
-					if (IsIdentifier(copy))
-						return true;
-				}
-			}
-
-			return false;
-		}
-
-		private bool IsGetOrSet(string code, string name)
-		=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
-
 		private bool IsFunction(string code, string next)
 		{
 			if (code.Length == 0 || code[0] == ParenOpen)
@@ -282,6 +226,9 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
+
+		private bool IsGetOrSet(string code, string name)
+		=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
 
 		private bool IsHotkeyLabel(string code)
 		{
@@ -359,6 +306,59 @@ namespace Keysharp.Scripting
 
 					default:
 						return false;
+				}
+			}
+
+			return false;
+		}
+
+		private bool IsProperty(CodeLine line)
+		{
+			var code = line.Code;
+
+			if (typeStack.Peek().Name != mainClassName && Scope.Length == 0)
+			{
+				if (code.Contains(":="))
+					return false;
+
+				var copy = code;
+				var isstatic = false;
+
+				if (copy.StartsWith("static "))
+				{
+					copy = copy.Substring(7, code.Length - 7);
+					isstatic = true;
+				}
+
+				var openBracket = copy.IndexOf('[');
+
+				if (openBracket != -1)
+					copy = copy.AsSpan(0, openBracket).Trim().ToString();
+
+				if (copy.Length > 0)
+				{
+					var isitem = string.Compare(copy, "__Item", true) == 0;
+
+					if (openBracket != -1)
+					{
+						var closeBracket = code.IndexOf(']');
+
+						if (closeBracket == code.Length - 1)
+						{
+							if (!isitem)
+								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", line);
+						}
+						else
+							throw new ParseException("Missing close bracket on property indexer.", line);
+					}
+					else if (isitem)
+						throw new ParseException("The __Item property must have brackets and take at least one parameter.", line);
+
+					if (isstatic && isitem)
+						throw new ParseException("The __Item property cannot be static.", line);
+
+					if (IsIdentifier(copy))
+						return true;
 				}
 			}
 

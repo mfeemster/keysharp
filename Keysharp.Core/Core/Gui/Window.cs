@@ -79,9 +79,9 @@ namespace Keysharp.Core
 
 		public static void ControlSetEnabled(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetEnabled);
 
-		public static void ControlSetStyle(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetStyle);
-
 		public static void ControlSetExStyle(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetExStyle);
+
+		public static void ControlSetStyle(params object[] obj) => obj.O3S3().Splat(ControlManager.ControlSetStyle);
 
 		public static void ControlSetText(params object[] obj) => obj.S1O2S3().Splat(ControlManager.ControlSetText);
 
@@ -569,15 +569,6 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public static void WinSetTransColor(params object[] obj)
-		{
-			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
-			{
-				win.TransparentColor = obj[0];
-				WindowItemBase.DoWinDelay();
-			}
-		}
-
 		public static object WinGetTransparent(params object[] obj)
 		{
 			if (SearchWindow(obj, true) is WindowItem win)
@@ -589,16 +580,6 @@ namespace Keysharp.Core
 
 			return "";
 		}
-
-		public static void WinSetTransparent(params object[] obj)
-		{
-			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
-			{
-				win.Transparency = obj[0];
-				WindowItemBase.DoWinDelay();
-			}
-		}
-
 
 		public static void WinHide(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.Hide()));
 
@@ -766,6 +747,24 @@ namespace Keysharp.Core
 			if (SearchWindow(o.Skip(1).ToArray(), true) is WindowItem win)
 			{
 				win.Title = newtitle;
+				WindowItemBase.DoWinDelay();
+			}
+		}
+
+		public static void WinSetTransColor(params object[] obj)
+		{
+			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
+			{
+				win.TransparentColor = obj[0];
+				WindowItemBase.DoWinDelay();
+			}
+		}
+
+		public static void WinSetTransparent(params object[] obj)
+		{
+			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
+			{
+				win.Transparency = obj[0];
 				WindowItemBase.DoWinDelay();
 			}
 		}

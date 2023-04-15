@@ -22,21 +22,23 @@ namespace Keysharp.Core
 {
 	public static class Accessors
 	{
-		private static long clipboardTimeout = 1000L;
-
-		public static object A_ClipboardTimeout
-		{
-			get => clipboardTimeout;
-			set => clipboardTimeout = value.Al();
-		}
-
+		internal static long hotkeyModifierTimeout = 50L;
+		internal static long hotkeyThrottleInterval = 2000L;
+		internal static long maxHotkeysPerInterval = 2000L;
+		internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
 		private static bool allowMainWindow = true;
+
+		[ThreadStatic]
+		private static bool? allowTimers;
+
+		private static long clipboardTimeout = 1000L;
 
 		[ThreadStatic]
 		private static long? controlDelay;
 
 		[ThreadStatic]
 		private static long? defaultMouseSpeed;
+
 		private static long defaultMouseSpeedDef = 2;
 
 		[ThreadStatic]
@@ -54,14 +56,11 @@ namespace Keysharp.Core
 
 		[ThreadStatic]
 		private static Encoding fileEncoding;
+
 		private static Encoding fileEncodingDef = Encoding.Default;
 
 		[ThreadStatic]
 		private static string formatNumeric;
-
-		internal static long hotkeyModifierTimeout = 50L;
-
-		internal static long hotkeyThrottleInterval = 2000L;
 
 		private static bool? iconFrozen;
 
@@ -69,17 +68,16 @@ namespace Keysharp.Core
 
 		private static string initialWorkingDir = Environment.CurrentDirectory;
 
-		internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
-
-		[ThreadStatic]
-		private static bool? allowTimers;
+		private static uint inputLevel;
 
 		[ThreadStatic]
 		private static long? keyDelay;
+
 		private static long keyDelayDef = 10L;
 
 		[ThreadStatic]
 		private static long? keyDelayPlay;
+
 		private static long keyDelayPlayDef = -1L;
 
 		[ThreadStatic]
@@ -88,16 +86,16 @@ namespace Keysharp.Core
 		[ThreadStatic]
 		private static long? keyDurationPlay;
 
-		internal static long maxHotkeysPerInterval = 2000L;
-
 		private static string menuMaskKey = "";
 
 		[ThreadStatic]
 		private static long? mouseDelay;
+
 		private static long mouseDelayDef = 10L;
 
 		[ThreadStatic]
 		private static long? mouseDelayPlay;
+
 		private static long mouseDelayPlayDef = -1L;
 
 		[ThreadStatic]
@@ -109,33 +107,38 @@ namespace Keysharp.Core
 		private static long? priority;
 
 		[ThreadStatic]
-		private static uint? sendLevel;
-		private static uint sendLevelDef;
-
-		private static uint inputLevel;
-
-		[ThreadStatic]
 		private static long? regView;
+
 		private static long regViewDef = 64;
 
 		[ThreadStatic]
+		private static uint? sendLevel;
+
+		private static uint sendLevelDef;
+
+		[ThreadStatic]
 		private static SendModes? sendMode;
+
 		private static SendModes sendModeDef = SendModes.Input;
 
 		[ThreadStatic]
 		private static bool? storeCapsLockMode;
+
 		private static bool storeCapsLockModeDef = true;
 
 		[ThreadStatic]
 		private static long? titleMatchMode;
+
 		private static long titleMatchModeDef = 2L;
 
 		[ThreadStatic]
 		private static bool? titleMatchModeSpeed;
+
 		private static bool titleMatchModeSpeedDef = true;
 
 		[ThreadStatic]
 		private static long? winDelay;
+
 		private static long winDelayDef = 100L;
 
 		/// <summary>
@@ -188,6 +191,12 @@ namespace Keysharp.Core
 					allowMainWindow = val.Value;
 				}
 			}
+		}
+
+		public static object A_AllowTimers
+		{
+			get => allowTimers ?? (allowTimers = true).Value;
+			set => allowTimers = value.Ab();
 		}
 
 		/// <summary>
@@ -360,6 +369,12 @@ namespace Keysharp.Core
 					}
 				}
 			}
+		}
+
+		public static object A_ClipboardTimeout
+		{
+			get => clipboardTimeout;
+			set => clipboardTimeout = value.Al();
 		}
 
 		public static string A_CommandLine
@@ -589,16 +604,16 @@ namespace Keysharp.Core
 			set => formatNumeric = value.ToString();
 		}
 
-		public static object A_HotkeyModifierTimeout
-		{
-			get => hotkeyModifierTimeout;
-			set => hotkeyModifierTimeout = value.Al();
-		}
-
 		public static object A_HotkeyInterval
 		{
 			get => hotkeyThrottleInterval;
 			set => hotkeyThrottleInterval = value.Al();
+		}
+
+		public static object A_HotkeyModifierTimeout
+		{
+			get => hotkeyModifierTimeout;
+			set => hotkeyModifierTimeout = value.Al();
 		}
 
 		/// <summary>
@@ -688,6 +703,12 @@ namespace Keysharp.Core
 		}
 
 		public static string A_InitialWorkingDir => initialWorkingDir;
+
+		public static object A_InputLevel
+		{
+			get => inputLevel;
+			set => inputLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
+		}
 
 		/// <summary>
 		/// The IP addresses of the network adapters in the computer.
@@ -791,9 +812,8 @@ namespace Keysharp.Core
 			set => keyDurationPlay = value.Al();
 		}
 
-		public static string A_KeysharpPath => A_AhkPath;
-
 		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Keysharp.Core.Accessors)).Location;
+		public static string A_KeysharpPath => A_AhkPath;
 
 		/// <summary>
 		/// The system's default language code.
@@ -1339,14 +1359,13 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_PriorHotkey => Keysharp.Scripting.Script.priorHotkeyName;
 
-		public static string A_PriorKey => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht ? ht.keyHistory.PriorKey() : "";
-
 		public static object A_Priority
 		{
 			get => priority ?? (priority = 0).Value;
 			set => priority = value.Al();
 		}
 
+		public static string A_PriorKey => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht ? ht.keyHistory.PriorKey() : "";
 		//internal static IntPtr A_HwndLastUsed
 		//{
 		//  get => hwndLastUsed;
@@ -1444,12 +1463,6 @@ namespace Keysharp.Core
 				if (!Keysharp.Scripting.Script.isReadyToExecute)
 					sendLevelDef = sendLevel.Value;
 			}
-		}
-
-		public static object A_InputLevel
-		{
-			get => inputLevel;
-			set => inputLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
 		}
 
 		public static object A_SendMode
@@ -1565,19 +1578,6 @@ namespace Keysharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Same as above but ignores artificial keystrokes and/or mouse clicks whenever the corresponding hook (keyboard or mouse) is installed. If neither hook is installed, this variable is equivalent to A_TimeIdle. If only one hook is present, only that one type of artificial input will be ignored. A_TimeIdlePhysical may be more useful than A_TimeIdle for determining whether the user is truly present.
-		/// </summary>
-		public static long A_TimeIdlePhysical
-		{
-			get
-			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasEitherHook()
-					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputPhysical).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
-
 		public static long A_TimeIdleKeyboard
 		{
 			get
@@ -1594,6 +1594,19 @@ namespace Keysharp.Core
 			{
 				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasMouseHook()
 					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputMouse).TotalMilliseconds
+					   : A_TimeIdle;
+			}
+		}
+
+		/// <summary>
+		/// Same as above but ignores artificial keystrokes and/or mouse clicks whenever the corresponding hook (keyboard or mouse) is installed. If neither hook is installed, this variable is equivalent to A_TimeIdle. If only one hook is present, only that one type of artificial input will be ignored. A_TimeIdlePhysical may be more useful than A_TimeIdle for determining whether the user is truly present.
+		/// </summary>
+		public static long A_TimeIdlePhysical
+		{
+			get
+			{
+				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasEitherHook()
+					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputPhysical).TotalMilliseconds
 					   : A_TimeIdle;
 			}
 		}
@@ -1753,12 +1766,6 @@ namespace Keysharp.Core
 		public static long False => 0L;
 
 		public static long True => 1L;
-
-		public static object A_AllowTimers
-		{
-			get => allowTimers ?? (allowTimers = true).Value;
-			set => allowTimers = value.Ab();
-		}
 
 		/// <summary>
 		/// The most recent reason the script was asked to terminate. This variable is blank unless the script has an OnExit subroutine and that subroutine is currently running or has been called at least once by an exit attempt. See OnExit for details.

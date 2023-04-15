@@ -346,6 +346,7 @@ namespace Keysharp.Core
 			if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s_ico : Keysharp.Core.Properties.Resources.Keysharp_ico;
 		}
+
 		/// <summary>
 		/// This method is obsolete, use <see cref="Critical"/>.
 		/// </summary>
@@ -353,6 +354,7 @@ namespace Keysharp.Core
 		public static void Thread()
 		{
 		}
+
 		internal static bool ExitAppInternal(ExitReasons obj0, object obj1 = null)
 		{
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
@@ -402,6 +404,7 @@ namespace Keysharp.Core
 			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 			return false;
 		}
+
 		internal static void SetMainTimer()
 		{
 			if (mainTimer == null)
@@ -411,12 +414,14 @@ namespace Keysharp.Core
 				mainTimer.Start();
 			}
 		}
+
 		internal static void SleepWithoutInterruption(object obj = null)
 		{
 			AllowInterruption = false;
 			Sleep(obj);
 			AllowInterruption = true;
 		}
+
 		internal static void StopMainTimer()
 		{
 			if (mainTimer != null)

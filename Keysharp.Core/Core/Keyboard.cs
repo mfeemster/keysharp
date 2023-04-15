@@ -527,6 +527,7 @@ break_twice:;
 					return false; // Since it timed out, we override the default with this.
 			}
 		}
+
 		//We initially had these using BeginInvoke(), but that is wrong, because these will often be launched from threads in responde to a hotkey/string.
 		//The state of those threads needs to be preserved, but invoking will overwrite that state by putting the call on the main GUI thread.
 		//So put them back to just straight calls, revisit if cross threading bugs occur.
@@ -537,12 +538,19 @@ break_twice:;
 		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
 
 		public static void Send(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero);
+
 		public static void SendEvent(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+
 		public static void SendInput(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+
 		public static void SendLevel(object obj) => Accessors.A_SendLevel = obj;
+
 		public static void SendMode(object obj) => Accessors.A_SendMode = obj;
+
 		public static void SendPlay(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+
 		public static void SendText(object obj) => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero);
+
 		public static void SetCapsLockState(object obj) => SetToggleState(WindowsAPI.VK_CAPITAL, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
 		public static void SetKeyDelay(object obj0 = null, object obj1 = null, object obj2 = null)
@@ -569,9 +577,13 @@ break_twice:;
 				Accessors.A_KeyDuration = dur;
 			}
 		}
+
 		public static void SetNumLockState(object obj) => SetToggleState(WindowsAPI.VK_NUMLOCK, ref toggleStates.forceNumLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+
 		public static void SetScrollLockState(object obj) => SetToggleState(WindowsAPI.VK_SCROLL, ref toggleStates.forceScrollLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+
 		public static void SetStoreCapsLockMode(object obj) => Accessors.A_StoreCapsLockMode = obj;
+
 		internal static ToggleValueType ConvertBlockInput(string buf)
 		{
 			var toggle = Keysharp.Core.Options.ConvertOnOff(buf);
@@ -593,6 +605,7 @@ break_twice:;
 
 			return ToggleValueType.Invalid;
 		}
+
 		internal static string GetKeyNameHelper(uint vk, uint sc, string def = "not found")
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -619,6 +632,7 @@ break_twice:;
 
 			return def;// Since this key is unrecognized, return the caller-supplied default value.
 		}
+
 		/// <summary>
 		/// Always returns OK for caller convenience.
 		/// </summary>
@@ -634,6 +648,7 @@ break_twice:;
 			blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
 		}
+
 		/// <summary>
 		///
 		/// </summary>
@@ -688,6 +703,7 @@ break_twice:;
 			// A new mode can be added to KeyWait & GetKeyState if Async is ever explicitly needed.
 			return ht.IsKeyDown(vk);
 		}
+
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -711,6 +727,7 @@ break_twice:;
 
 			return "";
 		}
+
 		private static bool HotkeyPrecondition(string[,] win)
 		{
 			if (!string.IsNullOrEmpty(win[0, 0]) || !string.IsNullOrEmpty(win[0, 1]))
@@ -731,6 +748,7 @@ break_twice:;
 
 			return true;
 		}
+
 		private static void SetToggleState(uint vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Keysharp.Core.Options.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);

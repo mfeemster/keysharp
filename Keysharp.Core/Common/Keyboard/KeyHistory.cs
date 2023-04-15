@@ -25,6 +25,37 @@ namespace Keysharp.Core.Common.Keyboard
 				keyHistory.Add(new KeyHistoryItem());
 		}
 
+		public override string ToString()
+		{
+			//Start at the oldest key, which is KeyHistoryNext.
+			var sb = new StringBuilder(2048);
+			string title_curr = "", title_prev;
+
+			for (int item = keyHistoryNext, i = 0; i < keyHistory.Count; ++i, ++item)
+			{
+				if (item >= keyHistory.Count)
+					item = 0;
+
+				var histitem = keyHistory[item];
+				title_prev = title_curr;
+				title_curr = histitem.targetWindow;
+
+				if (histitem.vk == WindowsAPI.VK_PACKET)//Unicode character probably sent via SendInput. Need to remove Windows specific code from here.//TODO
+				{
+					_ = sb.AppendLine();
+					_ = sb.Append($"E7 {histitem.sc:X4}\t{histitem.eventType}\t{(histitem.keyUp ? 'u' : 'd')}\t{histitem.elapsedTime:F2}\t{(char)histitem.sc}              \t{((title_curr != title_prev) ? title_curr : "")}");//Display title only when it changes.
+				}
+				else if (histitem.vk != 0 || histitem.sc != 0)
+				{
+					var keyname = Keysharp.Core.Keyboard.GetKeyNameHelper(histitem.vk, histitem.sc);
+					_ = sb.AppendLine();
+					_ = sb.Append($"{histitem.vk:X2}  {histitem.sc:X3}\t{histitem.eventType}\t{(histitem.keyUp ? 'u' : 'd')}\t{histitem.elapsedTime:F2}\t{keyname,-15}\t{((title_curr != title_prev) ? title_curr : "")}");
+				}
+			}
+
+			return sb.ToString();
+		}
+
 		internal KeyHistoryItem NextItem()
 		{
 			var next = Interlocked.Increment(ref keyHistoryNext) % keyHistory.Count;
@@ -85,37 +116,6 @@ namespace Keysharp.Core.Common.Keyboard
 			historyTickNow = DateTime.Now;
 			item.elapsedTime = (historyTickNow - historyTickPrev).TotalMilliseconds / 1000;
 			historyTickPrev = historyTickNow;
-		}
-
-		public override string ToString()
-		{
-			//Start at the oldest key, which is KeyHistoryNext.
-			var sb = new StringBuilder(2048);
-			string title_curr = "", title_prev;
-
-			for (int item = keyHistoryNext, i = 0; i < keyHistory.Count; ++i, ++item)
-			{
-				if (item >= keyHistory.Count)
-					item = 0;
-
-				var histitem = keyHistory[item];
-				title_prev = title_curr;
-				title_curr = histitem.targetWindow;
-
-				if (histitem.vk == WindowsAPI.VK_PACKET)//Unicode character probably sent via SendInput. Need to remove Windows specific code from here.//TODO
-				{
-					_ = sb.AppendLine();
-					_ = sb.Append($"E7 {histitem.sc:X4}\t{histitem.eventType}\t{(histitem.keyUp ? 'u' : 'd')}\t{histitem.elapsedTime:F2}\t{(char)histitem.sc}              \t{((title_curr != title_prev) ? title_curr : "")}");//Display title only when it changes.
-				}
-				else if (histitem.vk != 0 || histitem.sc != 0)
-				{
-					var keyname = Keysharp.Core.Keyboard.GetKeyNameHelper(histitem.vk, histitem.sc);
-					_ = sb.AppendLine();
-					_ = sb.Append($"{histitem.vk:X2}  {histitem.sc:X3}\t{histitem.eventType}\t{(histitem.keyUp ? 'u' : 'd')}\t{histitem.elapsedTime:F2}\t{keyname,-15}\t{((title_curr != title_prev) ? title_curr : "")}");
-				}
-			}
-
-			return sb.ToString();
 		}
 	}
 

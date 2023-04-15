@@ -36,6 +36,8 @@ namespace Keysharp.Core
 		/// <returns>A Unicode character whose value is <paramref name="n"/>.</returns>
 		public static string Chr(object obj) => ((char)obj.Al()).ToString();
 
+		public static long EndsWith(object obj0, object obj1, object obj2 = null) => obj0.As().EndsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
+
 		/// <summary>
 		/// Formats a string using the same syntax used by string.Format(), except it uses 1-based indexing.
 		/// Traditional AHK formatting syntax is not supported.
@@ -654,6 +656,8 @@ namespace Keysharp.Core
 			return string.Join(split.ToString(), list);
 		}
 
+		public static long StartsWith(object obj0, object obj1, object obj2 = null) => obj0.As().StartsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
+
 		public static long StrCompare(object obj0, object obj1, object obj2 = null)
 		{
 			var s1 = obj0.As();
@@ -1136,10 +1140,6 @@ namespace Keysharp.Core
 			return semver1.CompareSortOrderTo(semver2);
 		}
 
-		public static long EndsWith(object obj0, object obj1, object obj2 = null) => obj0.As().EndsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
-
-		public static long StartsWith(object obj0, object obj1, object obj2 = null) => obj0.As().StartsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
-
 		/// <summary>
 		/// This appears to be the fastest known way to do this.
 		/// Gotten from: https://www.meziantou.net/comparing-implementations-with-benchmarkdotnet.htm
@@ -1224,8 +1224,6 @@ namespace Keysharp.Core
 
 		public static implicit operator long(RegExResults r) => r.Pos();
 
-		public override string ToString() => Pos().ToString();
-
 		public IEnumerator GetEnumerator() => match.Groups.GetEnumerator();
 
 		public long Len(object obj)
@@ -1245,6 +1243,8 @@ namespace Keysharp.Core
 			var g = GetGroup(obj);
 			return g != null && g.Success ? g.Index + 1 : 0;
 		}
+
+		public override string ToString() => Pos().ToString();
 
 		private Group GetGroup(object obj)
 		{

@@ -187,7 +187,6 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-
 		internal override void ControlClick(object ctrlorpos, object title, string text, string whichButton, int clickCount, string options, string excludeTitle, string excludeText)
 		{
 			var winx = int.MinValue;
@@ -740,30 +739,6 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (val is int i)
-					item.Style = i;
-				else if (val is uint ui)
-					item.Style = ui;
-				else if (val is long l)
-					item.Style = l;
-				else if (val is double d)
-					item.Style = (long)d;
-				else if (val is string s)
-				{
-					long temp = 0;
-
-					if (Options.TryParse(s, "+", ref temp)) { item.Style |= temp; }
-					else if (Options.TryParse(s, "-", ref temp)) { item.Style &= ~temp; }
-					else if (Options.TryParse(s, "^", ref temp)) { item.Style ^= temp; }
-					else item.Style = val.ParseLong(true).Value;
-				}
-			}
-		}
-
 		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -784,6 +759,30 @@ namespace Keysharp.Core.Windows
 					else if (Options.TryParse(s, "-", ref temp)) { item.ExStyle &= ~temp; }
 					else if (Options.TryParse(s, "^", ref temp)) { item.ExStyle ^= temp; }
 					else item.ExStyle = val.ParseLong(true).Value;
+				}
+			}
+		}
+
+		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (val is int i)
+					item.Style = i;
+				else if (val is uint ui)
+					item.Style = ui;
+				else if (val is long l)
+					item.Style = l;
+				else if (val is double d)
+					item.Style = (long)d;
+				else if (val is string s)
+				{
+					long temp = 0;
+
+					if (Options.TryParse(s, "+", ref temp)) { item.Style |= temp; }
+					else if (Options.TryParse(s, "-", ref temp)) { item.Style &= ~temp; }
+					else if (Options.TryParse(s, "^", ref temp)) { item.Style ^= temp; }
+					else item.Style = val.ParseLong(true).Value;
 				}
 			}
 		}

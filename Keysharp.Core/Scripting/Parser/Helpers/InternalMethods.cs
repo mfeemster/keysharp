@@ -6,8 +6,8 @@ namespace Keysharp.Scripting
 	{
 		internal class InternalMethods
 		{
-			internal static MethodReference AddHotstring => new MethodReference(typeof(Keysharp.Core.Common.Keyboard.HotstringDefinition), "AddHotstring");
 			internal static MethodReference AddHotkey => new MethodReference(typeof(Keysharp.Core.Common.Keyboard.HotkeyDefinition), "AddHotkey");
+			internal static MethodReference AddHotstring => new MethodReference(typeof(Keysharp.Core.Common.Keyboard.HotstringDefinition), "AddHotstring");
 			internal static MethodReference CreateTrayMenu => new MethodReference(typeof(Script), "CreateTrayMenu");
 			internal static MethodReference Dictionary => new MethodReference(typeof(Script), "Dictionary");
 			internal static MethodReference Exit => new MethodReference(typeof(Core.Flow), "Exit");
@@ -15,6 +15,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExtendArray => new MethodReference(typeof(Script), "ExtendArray");
 			internal static MethodReference ForceBool => new MethodReference(typeof(Script), "ForceBool");
 			internal static MethodReference GetMethodOrProperty => new MethodReference(typeof(Script), "GetMethodOrProperty");
+			internal static MethodReference GetPropertyValue => new MethodReference(typeof(Script), "GetPropertyValue");
 			internal static MethodReference HandleSingleInstance => new MethodReference(typeof(Script), "HandleSingleInstance");
 			internal static MethodReference Hotkey => new MethodReference(typeof(Core.Keyboard), "Hotkey");
 			internal static MethodReference Hotstring => new MethodReference(typeof(Core.Keyboard), "Hotstring");
@@ -22,8 +23,6 @@ namespace Keysharp.Scripting
 			internal static MethodReference IfLegacy => new MethodReference(typeof(Script), "IfLegacy");
 			internal static MethodReference Inc => new MethodReference(typeof(Loops), "Inc");
 			internal static MethodReference Index => new MethodReference(typeof(Script), "Index");
-			internal static MethodReference GetPropertyValue => new MethodReference(typeof(Script), "GetPropertyValue");
-			internal static MethodReference SetPropertyValue => new MethodReference(typeof(Script), "SetPropertyValue");
 			internal static MethodReference Invoke => new MethodReference(typeof(Script), "Invoke");
 			internal static MethodReference LabelCall => new MethodReference(typeof(Script), "LabelCall");
 			internal static MethodReference Loop => new MethodReference(typeof(Core.Loops), "Loop");
@@ -43,6 +42,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference RunMainWindow => new MethodReference(typeof(Script), "RunMainWindow");
 			internal static MethodReference Send => new MethodReference(typeof(Core.Keyboard), "Send");
 			internal static MethodReference SetObject => new MethodReference(typeof(Script), "SetObject");
+			internal static MethodReference SetPropertyValue => new MethodReference(typeof(Script), "SetPropertyValue");
 			internal static MethodReference StringConcat => new MethodReference(typeof(string), "Concat", new[] { typeof(object) });
 		}
 	}

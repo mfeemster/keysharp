@@ -9,12 +9,12 @@ namespace Keysharp.Core
 {
 	public static class Processes
 	{
+		public static System.Threading.SynchronizationContext mainContext;
+
 		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
 		internal static uint CurrentThreadID;
 
 		internal static uint MainThreadID;
-		public static System.Threading.SynchronizationContext mainContext;
-
 		private const int LoopFrequency = 50;
 
 		[ThreadStatic]
@@ -48,7 +48,7 @@ namespace Keysharp.Core
 		{
 			var name = obj.As();
 			var proc = string.IsNullOrEmpty(name) ? System.Diagnostics.Process.GetCurrentProcess() : FindProcess(name);
-			return proc != null ? proc.Id : 0;
+			return proc != null ? proc.Id : 0L;
 		}
 
 		public static long ProcessSetPriority(object obj0, object obj1 = null)
@@ -213,15 +213,31 @@ namespace Keysharp.Core
 		private static Process FindProcess(string name)
 		{
 			if (int.TryParse(name, out var id))
-				return System.Diagnostics.Process.GetProcessById(id);
+			{
+				try
+				{
+					return System.Diagnostics.Process.GetProcessById(id);
+				}
+				catch
+				{
+					return null;
+				}
+			}
 
 			const string exe = ".exe";
 
 			if (name.EndsWith(exe, StringComparison.OrdinalIgnoreCase))
 				name = name.Substring(0, name.Length - exe.Length);
 
-			var prc = System.Diagnostics.Process.GetProcessesByName(name);
-			return prc.Length > 0 ? prc[0] : null;
+			try
+			{
+				var prc = System.Diagnostics.Process.GetProcessesByName(name);
+				return prc.Length > 0 ? prc[0] : null;
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
 		private static (long, long) RunInternal(string target, string workingDir, string showMode, string arg, bool wait = false)

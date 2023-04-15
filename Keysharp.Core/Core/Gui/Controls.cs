@@ -420,10 +420,10 @@ namespace Keysharp.Core
 	public class KeysharpPictureBox : PictureBox
 	{
 		private readonly int addstyle, removestyle;
+		private InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
 		private bool scaleHeight;
 		private bool scaleWidth;
 		public string Filename { get; private set; }
-		private InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
 
 		public bool ScaleHeight
 		{
@@ -490,16 +490,16 @@ namespace Keysharp.Core
 	/// </summary>
 	public class KeysharpProgressBar : ProgressBar
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int removestyle;
 
-		public int AddStyle => addstyle;
+		public int AddStyle { get; }
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
+				cp.Style |= AddStyle;
 				cp.Style &= ~removestyle;
 				return cp;
 			}
@@ -507,7 +507,7 @@ namespace Keysharp.Core
 
 		public KeysharpProgressBar(int _add = 0, int _remove = 0)
 		{
-			addstyle = _add;
+			AddStyle = _add;
 			removestyle = _remove;
 			SetStyle(ControlStyles.UserPaint, true);
 		}
@@ -522,11 +522,11 @@ namespace Keysharp.Core
 				{
 					var rect = new Rectangle(0, 0, Width, Height);
 					var scaleFactor = ((double)Value - Minimum) / ((double)Maximum - Minimum);
-					var vert = (addstyle & 0x04) == 0x04;
+					var vert = (AddStyle & 0x04) == 0x04;
 
 					if (ProgressBarRenderer.IsSupported)
 					{
-						if ((addstyle & 0x04) == 0x04)
+						if ((AddStyle & 0x04) == 0x04)
 							ProgressBarRenderer.DrawVerticalBar(offscreen, rect);
 						else
 							ProgressBarRenderer.DrawHorizontalBar(offscreen, rect);
@@ -600,13 +600,8 @@ namespace Keysharp.Core
 	public class KeysharpRichEdit : RichTextBox
 	{
 		private readonly int addstyle, removestyle;
-		private CharacterCasing casing = CharacterCasing.Normal;
 
-		internal CharacterCasing CharacterCasing
-		{
-			get => casing;
-			set => casing = value;
-		}
+		internal CharacterCasing CharacterCasing { get; set; } = CharacterCasing.Normal;
 
 		protected override CreateParams CreateParams
 		{
@@ -634,7 +629,7 @@ namespace Keysharp.Core
 
 		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			switch (casing)
+			switch (CharacterCasing)
 			{
 				case CharacterCasing.Normal:
 					break;

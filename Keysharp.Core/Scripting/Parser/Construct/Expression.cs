@@ -12,7 +12,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		bool memberVarsStatic = false;
+		private bool memberVarsStatic = false;
 
 		private CodeExpression ParseExpression(List<object> parts, bool create)
 		{

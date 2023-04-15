@@ -286,86 +286,10 @@ namespace Keysharp.Core.Common.Keyboard
 				_ = Unregister();
 		}
 
-		public static void AddHotkey(IFuncObj _callback, uint _hookAction, string _name,  bool _suffixHasTilde)
+		public static void AddHotkey(IFuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
 		{
 			var b = _suffixHasTilde;
 			_ = AddHotkey(_callback, _hookAction, _name, ref b);
-		}
-
-		/// <summary>
-		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
-		/// aName must not be NULL.
-		/// Returns the address of the new hotkey on success, or NULL otherwise.
-		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
-		/// </summary>
-		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref bool _suffixHasTilde)
-		{
-			HotkeyDefinition hk;
-			var hookIsMandatory = false;
-
-			//We must first check if the hotkey exists before creating a new one because this might just be a variant.
-			//The code to check for a variant was in the parsing section of AHK, but we move it here because Keysharp adds them at runtime.
-			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref _suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
-			{
-				if (_hookAction != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
-				{
-					// HotkeyDefinition::Dynamic() contains logic and comments similar to this, so maintain them together.
-					// An attempt to add an alt-tab variant to an existing hotkey.  This might have
-					// merit if the intention is to make it alt-tab now but to later disable that alt-tab
-					// aspect via the Hotkey cmd to let the context-sensitive variants shine through
-					// (take effect).
-					hk.hookAction = _hookAction;
-				}
-				else
-				{
-					// Detect duplicate hotkey variants to help spot bugs in scripts.
-					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-					{
-						//mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
-						throw new Error($"Duplicate hotkey: {_name}");
-					}
-
-					if (hk.AddVariant(_callback, _suffixHasTilde) == null)
-						return null;// ScriptError(ERR_OUTOFMEM, buf);
-
-					if (hookIsMandatory || Keysharp.Scripting.Script.ForceKeybdHook)
-					{
-						// Require the hook for all variants of this hotkey if any variant requires it.
-						// This seems more intuitive than the old behavior, which required $ or #UseHook
-						// to be used on the *first* variant, even though it affected all variants.
-						hk.keybdHookMandatory = true;
-					}
-				}
-
-				return hk;
-			}
-			else
-			{
-				hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
-
-				if (hk.constructedOK)
-				{
-					shk.Add(hk);
-					Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
-					return hk;
-				}
-				else//This was originally in the parsing code, but fits better here.
-				{
-					var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
-
-					if (valid != ResultType.ConditionTrue)
-						return null;// ResultType.Fail; // It already displayed the error.
-
-					// This hotkey uses a single-character key name, which could be valid on some other
-					// keyboard layout.  Allow the script to start, but warn the user about the problem.
-					// Note that this hotkey's label is still valid even though the hotkey wasn't created.
-
-					if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
-						_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
-				}
-			}
-
-			return null;
 		}
 
 		public static void HotIf(object obj0 = null)
@@ -698,6 +622,82 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 		public override string ToString() => Name;
+
+		/// <summary>
+		/// aCallback can be NULL if the caller is creating a dynamic hotkey that has an aHookAction.
+		/// aName must not be NULL.
+		/// Returns the address of the new hotkey on success, or NULL otherwise.
+		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
+		/// </summary>
+		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref bool _suffixHasTilde)
+		{
+			HotkeyDefinition hk;
+			var hookIsMandatory = false;
+
+			//We must first check if the hotkey exists before creating a new one because this might just be a variant.
+			//The code to check for a variant was in the parsing section of AHK, but we move it here because Keysharp adds them at runtime.
+			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref _suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
+			{
+				if (_hookAction != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
+				{
+					// HotkeyDefinition::Dynamic() contains logic and comments similar to this, so maintain them together.
+					// An attempt to add an alt-tab variant to an existing hotkey.  This might have
+					// merit if the intention is to make it alt-tab now but to later disable that alt-tab
+					// aspect via the Hotkey cmd to let the context-sensitive variants shine through
+					// (take effect).
+					hk.hookAction = _hookAction;
+				}
+				else
+				{
+					// Detect duplicate hotkey variants to help spot bugs in scripts.
+					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
+					{
+						//mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
+						throw new Error($"Duplicate hotkey: {_name}");
+					}
+
+					if (hk.AddVariant(_callback, _suffixHasTilde) == null)
+						return null;// ScriptError(ERR_OUTOFMEM, buf);
+
+					if (hookIsMandatory || Keysharp.Scripting.Script.ForceKeybdHook)
+					{
+						// Require the hook for all variants of this hotkey if any variant requires it.
+						// This seems more intuitive than the old behavior, which required $ or #UseHook
+						// to be used on the *first* variant, even though it affected all variants.
+						hk.keybdHookMandatory = true;
+					}
+				}
+
+				return hk;
+			}
+			else
+			{
+				hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
+
+				if (hk.constructedOK)
+				{
+					shk.Add(hk);
+					Keysharp.Scripting.Script.HookThread.hotkeyUp.Add(0);
+					return hk;
+				}
+				else//This was originally in the parsing code, but fits better here.
+				{
+					var valid = TextInterpret(_name, null); // Passing NULL calls it in validate-only mode._name
+
+					if (valid != ResultType.ConditionTrue)
+						return null;// ResultType.Fail; // It already displayed the error.
+
+					// This hotkey uses a single-character key name, which could be valid on some other
+					// keyboard layout.  Allow the script to start, but warn the user about the problem.
+					// Note that this hotkey's label is still valid even though the hotkey wasn't created.
+
+					if (!Keysharp.Scripting.Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+						_ = Keysharp.Core.Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
+				}
+			}
+
+			return null;
+		}
 
 		internal static void AddHotkeyCriterion(IFuncObj fo) => Keysharp.Scripting.Script.hotCriterions.Add(fo);
 
@@ -1285,52 +1285,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static IFuncObj FindHotkeyCriterion(IFuncObj fo) => FindHotkeyIf(fo, Keysharp.Scripting.Script.hotCriterions);
 
 		internal static IFuncObj FindHotkeyIfExpr(IFuncObj fo) => FindHotkeyIf(fo, Keysharp.Scripting.Script.hotExprs);
-
-		private static IFuncObj FindHotkeyIf(IFuncObj fo, List<IFuncObj> list)
-		{
-			if (fo == null)
-				return null;
-
-			foreach (var cp in list)
-			{
-				if (cp != null)
-				{
-					if (cp == fo)
-						return cp;
-
-					var bf1 = cp as BoundFunc;
-					var bf2 = fo as BoundFunc;
-
-					if (bf1 != null ^ bf2 != null)
-						continue;
-
-					if (bf1 != null && bf2 != null)
-					{
-						if (bf1.boundargs != null ^ bf2.boundargs != null)
-							goto keeptrying;
-
-						if (bf1.boundargs != null && bf2.boundargs != null)
-						{
-							if (bf1.boundargs.Length != bf2.boundargs.Length)
-								goto keeptrying;
-
-							for (var i = 0; i < bf1.boundargs.Length; i++)
-								if (!bf1.boundargs[i].Equals(bf2.boundargs[i]))
-									goto keeptrying;
-						}
-					}
-
-					if (cp.Name == fo.Name && ReferenceEquals(cp.Inst, fo.Inst))
-						return cp;
-				}
-
-				keeptrying:
-				;
-			}
-
-			return null;
-		}
-
 
 		internal static uint FindPairedHotkey(uint firstID, uint modsLR, bool keyUp)
 		{
@@ -2379,6 +2333,51 @@ namespace Keysharp.Core.Common.Keyboard
 			return ResultType.Ok;
 		}
 
+		private static IFuncObj FindHotkeyIf(IFuncObj fo, List<IFuncObj> list)
+		{
+			if (fo == null)
+				return null;
+
+			foreach (var cp in list)
+			{
+				if (cp != null)
+				{
+					if (cp == fo)
+						return cp;
+
+					var bf1 = cp as BoundFunc;
+					var bf2 = fo as BoundFunc;
+
+					if (bf1 != null ^ bf2 != null)
+						continue;
+
+					if (bf1 != null && bf2 != null)
+					{
+						if (bf1.boundargs != null ^ bf2.boundargs != null)
+							goto keeptrying;
+
+						if (bf1.boundargs != null && bf2.boundargs != null)
+						{
+							if (bf1.boundargs.Length != bf2.boundargs.Length)
+								goto keeptrying;
+
+							for (var i = 0; i < bf1.boundargs.Length; i++)
+								if (!bf1.boundargs[i].Equals(bf2.boundargs[i]))
+									goto keeptrying;
+						}
+					}
+
+					if (cp.Name == fo.Name && ReferenceEquals(cp.Inst, fo.Inst))
+						return cp;
+				}
+
+				keeptrying:
+				;
+			}
+
+			return null;
+		}
+
 		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Active;
 
 		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Exists;
@@ -2493,8 +2492,8 @@ namespace Keysharp.Core.Common.Keyboard
 			// different number of modifiers, such as "*<^a" vs. "*<^>^a".
 			var nmodLR_a1 = System.Numerics.BitOperations.PopCount(b1.modifiersLR);
 			var nmodLR_a2 = System.Numerics.BitOperations.PopCount(b2.modifiersLR);
-			var nmod_a1   = System.Numerics.BitOperations.PopCount(b1.modifiers) + nmodLR_a1;
-			var nmod_a2   = System.Numerics.BitOperations.PopCount(b2.modifiers) + nmodLR_a2;
+			var nmod_a1 = System.Numerics.BitOperations.PopCount(b1.modifiers) + nmodLR_a1;
+			var nmod_a2 = System.Numerics.BitOperations.PopCount(b2.modifiers) + nmodLR_a2;
 
 			if (nmod_a1 != nmod_a2)
 				return nmod_a1 - nmod_a2;

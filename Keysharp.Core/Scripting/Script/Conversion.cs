@@ -14,6 +14,7 @@ namespace Keysharp.Scripting
 	{
 		//Should this class be a struct instead?
 		internal bool b;
+
 		internal object o;
 
 		public BoolResult(bool _b, object _o)

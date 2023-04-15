@@ -40,6 +40,7 @@ namespace Keysharp.Core.Common.Keyboard
 	{
 		//Need to figure out if these should be signed or not. Weird bugs can happen with wraparound comparisons if you get it wrong.//TODO
 		internal const int CoordCentered = int.MinValue + 1;
+
 		internal const int CoordModeCaret = 6;
 		internal const int CoordModeClient = 0;
 		internal const int CoordModeInvalid = -1;
@@ -97,8 +98,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal uint modifiersLRLogicalNonIgnored;
 		internal uint modifiersLRNumpadMask;
 		internal uint modifiersLRPhysical;
-		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
+		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
 		private readonly StringBuilder caser = new StringBuilder(32);
 		private readonly List<HotstringDefinition> expand = new List<HotstringDefinition>();
