@@ -150,16 +150,18 @@ namespace Keysharp.Main
 				}
 
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
-				string namenoext, path;
+				string namenoext, path, scriptdir;
 
 				if (!fromstdin)
 				{
 					namenoext = Path.GetFileNameWithoutExtension(script);
-					path = $"{Path.GetDirectoryName(Path.GetFullPath(script))}{Path.DirectorySeparatorChar}{namenoext}";
+					scriptdir = Path.GetDirectoryName(script);
+					path = $"{scriptdir}{Path.DirectorySeparatorChar}{namenoext}";
 				}
 				else
 				{
 					namenoext = "pipestdin";
+					scriptdir = Environment.CurrentDirectory;
 					path = $".{Path.DirectorySeparatorChar}{namenoext}";
 				}
 
@@ -236,11 +238,13 @@ namespace Keysharp.Main
 									windowsGraphicalUserInterface: true,
 									assemblyToCopyResorcesFrom: $"{path}.dll");
 								var ksCorePath = Path.Combine(exeDir, "Keysharp.Core.dll");
+								//Need to copy Keysharp.Core from the install path to folder the script resides in. Without it, the compiled exe cannot be run in a standalone manner.
+								//MessageBox.Show($"scriptdir = {scriptdir}");
+								//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
 
-								//Need to copy Keysharp.Core from the install path to here. Without it, the compiled exe cannot be run in a standalone manner.
-								if (string.Compare(exeDir, Environment.CurrentDirectory, true) != 0)
+								if (string.Compare(exeDir, scriptdir, true) != 0)
 									if (System.IO.File.Exists(ksCorePath))
-										System.IO.File.Copy(ksCorePath, Path.Combine(Environment.CurrentDirectory, "Keysharp.Core.dll"), true);
+										System.IO.File.Copy(ksCorePath, Path.Combine(scriptdir, "Keysharp.Core.dll"), true);
 							}
 							catch (Exception writeex)
 							{
