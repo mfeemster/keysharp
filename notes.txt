@@ -203,6 +203,10 @@ Differences:
 	-Tooltips function slightly differently. When specifying a coordinate for a ToolTip, it will attempt to show it relative to the currently focused Keysharp form. If there is no focused form, it will attempt to show it relative to the last form which was created. If none are found, it will use 
 	the main form shown when double clicking the tray icon. If the form is minimized, then it will attempt to use the RestoreBounds property of the form. This may not work sometimes, so the ToolTip may never show in that case.
 		-Tooltips cannot be used if the script is not persistent (meaning, it has no main window). This is because C# tooltips require a parent control or form.
+	-TrayTip() has some differences:
+		-Muting the sound played by the tip is not supported with the "Mute" option. The sound will be whatever the user has configured in their system settings.
+		-The option 4 to use the program's tray icon is not supported. It is always shown in the title of the tip.
+		-The option 32 to use the large version of the program's tray icon is not supported. Windows will always show the small version.
 	-When sending a string through SendMessage() using the WM_COPYDATA message type, the caller is no longer responsible for creating the special
 	COPYDATA struct. Instead, just pass WM_COPYDATA (0x4A) as the message type and the string as the lparam, and SendMessage() will handle it internally.
 	-For transparent controls which are intended to be overlaid over other controls, special steps must be taken.

@@ -199,13 +199,21 @@ namespace Keysharp.Core
 			if (Script.Tray == null)
 				Script.CreateTrayMenu();
 
-			if (text?.Length == 0 && title?.Length == 0)
+			//As passing an empty string hides the TrayTip (or does nothing on Windows 10),
+			//pass a space to ensure the TrayTip is shown.  Testing showed that Windows 10
+			//will size the notification to fit only the title, as if there was no text.
+			if (title.Length > 0 && text.Length == 0)
+			{
+				text = " ";
+			}
+
+			if (text.Length == 0 && title.Length == 0)
 			{
 				Script.Tray.Visible = false;
+				Script.Tray.Visible = true;
 				return;
 			}
 
-			var duration = 5;
 			var icon = ToolTipIcon.None;
 			void HandleInt(object o)
 			{
@@ -223,13 +231,10 @@ namespace Keysharp.Core
 			{
 				foreach (var opt in Options.ParseOptions(s.ToLower()))
 				{
-					var temp = 0;
-
 					if (opt == "iconi") icon = ToolTipIcon.Info;
 					else if (opt == "icon!") icon = ToolTipIcon.Warning;
 					else if (opt == "iconx") icon = ToolTipIcon.Error;
 					else if (opt == "mute") { }
-					else if (Options.TryParse(opt, "dur", ref temp)) { duration = temp; }
 					else HandleInt(opt);
 				}
 			}
@@ -237,7 +242,7 @@ namespace Keysharp.Core
 				HandleInt(options);
 
 			Script.Tray.Visible = true;
-			Script.Tray.ShowBalloonTip(duration * 1000, title, text, icon);
+			Script.Tray.ShowBalloonTip(1000, title, text, icon);//Duration is now ignored by Windows.
 		}
 	}
 }

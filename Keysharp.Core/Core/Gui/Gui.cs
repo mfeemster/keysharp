@@ -383,7 +383,6 @@ namespace Keysharp.Core
 			LastContainer = form;
 			allGuiHwnds[form.Handle.ToInt64()] = this;
 
-			//form.Show();//We must first show so that all handles are created and geometries calculated. We quickly hide in Form_Load().
 			if (lastfound)//Unsure if we should use this or the one below?
 				Keysharp.Scripting.Script.hwndLastUsed = Hwnd;
 
@@ -1898,6 +1897,8 @@ namespace Keysharp.Core
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
+		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Keysharp.Scripting.Script.mainWindow && g.form.Visible);
+
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
 
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type)); //(float)Accessors.A_ScaledScreenDPI* (font.Size * (font.FontFamily.GetCellAscent(FontStyle.Regular) + font.FontFamily.GetCellDescent(FontStyle.Regular)) / font.FontFamily.GetEmHeight(FontStyle.Regular));
@@ -2138,9 +2139,11 @@ namespace Keysharp.Core
 			{
 				_ = allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
 				form = null;
-				//if (Core.Debug)//Only for making testing easier, never meant to run in production.
-				//  Script.mainWindow?.Close();
 			}
+
+			//If there is nothing else keeping the program alive, and the program is not already exiting, close it.
+			if (!Keysharp.Scripting.Script.IsMainWindowClosing && !Keysharp.Scripting.Script.AnyPeristent())
+				Script.mainWindow?.Close();
 		}
 
 		internal void Form_KeyDown(object sender, KeyEventArgs e)

@@ -23,6 +23,7 @@ namespace Keysharp.Core
 		internal static int NoSleep = -1;
 		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
 		internal static bool hasExited;
+		internal static bool persistentValueSetByUser;
 		private static System.Windows.Forms.Timer currentTimer;
 
 		/// <summary>
@@ -147,11 +148,11 @@ namespace Keysharp.Core
 		    }
 		*/
 
-		public static object Persistent(object obj)
+		public static object Persistent(object obj = null)
 		{
 			var b = obj.Ab(true);
 			var old = Parser.Persistent;
-			Parser.Persistent = b;
+			Parser.Persistent = persistentValueSetByUser = b;
 			return old;
 		}
 
@@ -380,6 +381,9 @@ namespace Keysharp.Core
 
 			foreach (var kv in timers)
 				kv.Value.Stop();
+
+			while (Keysharp.Scripting.Script.totalExistingThreads > 0)
+				Sleep(200);
 
 			if (!Script.IsMainWindowClosing)
 			{
