@@ -17,7 +17,15 @@ namespace Keysharp.Tests
 			if (System.IO.File.Exists(filename))
 				Keysharp.Core.File.FileDelete(filename);
 
-			_ = Download("http://textfiles.com/art/asciiart.txt", filename);
+			Download("http://textfiles.com/art/asciiart.txt", filename);
+			Assert.IsTrue(System.IO.File.Exists(filename));
+			Assert.AreEqual(16048L, Keysharp.Core.File.FileGetSize(filename));
+			System.Threading.Thread.Sleep(1000);
+
+			if (System.IO.File.Exists(filename))
+				Keysharp.Core.File.FileDelete(filename);
+
+			Download("*0 http://textfiles.com/art/asciiart.txt", filename);
 			Assert.IsTrue(System.IO.File.Exists(filename));
 			Assert.AreEqual(16048L, Keysharp.Core.File.FileGetSize(filename));
 			Assert.IsTrue(TestScript("network-download", false));

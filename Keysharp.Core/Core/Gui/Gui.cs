@@ -383,10 +383,8 @@ namespace Keysharp.Core
 			LastContainer = form;
 			allGuiHwnds[form.Handle.ToInt64()] = this;
 
-			if (lastfound)//Unsure if we should use this or the one below?
+			if (lastfound)
 				Keysharp.Scripting.Script.hwndLastUsed = Hwnd;
-
-			Keysharp.Core.Common.Window.WindowManagerProvider.Instance.LastFound = new WindowItem(form.Handle);
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);

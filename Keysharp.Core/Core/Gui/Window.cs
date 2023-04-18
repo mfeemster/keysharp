@@ -606,9 +606,9 @@ namespace Keysharp.Core
 
 		public static void WinMinimize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Minimized));
 
-		public static void WinMinimizeAll(params object[] obj) => DoDelayedAction(() => WindowManager.MinimizeAll());
+		public static void WinMinimizeAll(params object[] obj) => DoDelayedAction(WindowManager.MinimizeAll);
 
-		public static void WinMinimizeAllUndo(params object[] obj) => DoDelayedAction(() => WindowManager.MinimizeAllUndo());
+		public static void WinMinimizeAllUndo(params object[] obj) => DoDelayedAction(WindowManager.MinimizeAllUndo);
 
 		public static void WinMove(params object[] obj)
 		{
@@ -996,8 +996,7 @@ namespace Keysharp.Core
 			}
 
 			if (childitem == null && throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new TargetError($"Could not find child control using text or class name match \"{s}\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
+				throw new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			return childitem;
 		}
 

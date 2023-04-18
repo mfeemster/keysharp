@@ -4,7 +4,7 @@ namespace System.IO
 {
 	public static class SystemIoExtensions
 	{
-		public static string ReadLine(this BinaryReader reader)
+		internal static string ReadLine(this BinaryReader reader)
 		{
 			var result = new StringBuilder();
 			var foundEndOfLine = false;

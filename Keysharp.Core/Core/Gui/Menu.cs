@@ -63,26 +63,65 @@ namespace Keysharp.Core
 			return AddOrInsert("", obj0.As(), obj1, obj2.As());
 		}
 
-		public void AddStandard()//Need to make this actually add something//TODO
+		public void AddStandard()
 		{
-			ToolStripMenuItem item;
-
-			if (Accessors.A_AllowMainWindow is bool b && b)
+			var menu = GetMenu();
+			var emptyfunc = new Func<object>(() => "");
+			var openfunc = new Func<object>(() =>
 			{
-				item = Add("&Open");
+				var mainWindow = Keysharp.Scripting.Script.mainWindow;
 
-				if (defaultItem == null)
-					Default = item.Name;
+				if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
+				{
+					mainWindow.Show();
+					mainWindow.BringToFront();
+					mainWindow.WindowState = mainWindow.lastWindowState;
+				}
+
+				return "";
+			});
+			var reloadfunc = new Func<object>(() =>
+			{
+				Keysharp.Core.Flow.Reload();
+				return "";
+			});
+			var suspend = new Func<object>(() =>
+			{
+				Keysharp.Scripting.Script.SuspendHotkeys();
+				return "";
+			});
+			var exitfunc = new Func<object>(() =>
+			{
+				_ = Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Menu);
+				return "";
+			});
+			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
+			Keysharp.Scripting.Script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
+
+			if (!Accessors.A_AllowMainWindow.Ab())
+				Keysharp.Scripting.Script.openMenuItem.Visible = false;
+
+			//Need to fill in the event handlers for help and window spy when the proper functionality is implemented.//TODO
+			//_ = Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			if (menu.Items.Cast<ToolStripItem>().Any(tsi => tsi.Visible))
+				_ = menu.Items.Add(new ToolStripSeparator());
+
+			//_ = Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
+			_ = Add("&Reload This Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
+
+			if (!Accessors.A_IsCompiled)
+			{
+				var editfunc = new Func<object>(() =>
+				{
+					Keysharp.Scripting.Script.Edit();
+					return "";
+				});
+				_ = Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
 			}
 
-			_ = Add("&Help");
-			_ = Add();
-			_ = Add("&Window Spy");
-			_ = Add("&Reload Script");
-			_ = Add("&Edit Script");
-			_ = Add();
-			_ = Add("&Suspend Hotkeys");
-			_ = Add("E&xit");
+			_ = menu.Items.Add(new ToolStripSeparator());
+			Keysharp.Scripting.Script.suspendMenuItem = Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
+			_ = Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 		}
 
 		public void Check(object obj) => Check(obj.As(), eCheckToggle.Check);
@@ -284,6 +323,11 @@ namespace Keysharp.Core
 
 			if (item != null)
 			{
+				if (string.IsNullOrEmpty(Default) && item.Text == "&Open")
+				{
+					Default = "&Open";
+				}
+
 				if (funcorsub is Menu mnu)
 				{
 					while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.

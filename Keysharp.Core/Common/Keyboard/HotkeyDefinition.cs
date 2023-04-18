@@ -4,32 +4,35 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
+using static System.Net.Mime.MediaTypeNames;
 using static Keysharp.Core.Misc;
 
 namespace Keysharp.Core.Common.Keyboard
 {
 	public class HotkeyDefinition
 	{
-		internal const int AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
-		internal const int AT_LEAST_ONE_VARIANT_LACKS_TILDE = 0x04;
-		internal const int HOTKEY_ID_ALT_TAB = 0x7FFE;
-		internal const int HOTKEY_ID_ALT_TAB_AND_MENU = 0x7FFB;
-		internal const int HOTKEY_ID_ALT_TAB_MENU = 0x7FFC;
-		internal const int HOTKEY_ID_ALT_TAB_MENU_DISMISS = 0x7FFA;
-		internal const int HOTKEY_ID_ALT_TAB_SHIFT = 0x7FFD;
-		internal const int HOTKEY_ID_INVALID = HOTKEY_ID_MASK;
+		internal const uint AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
+		internal const uint AT_LEAST_ONE_VARIANT_LACKS_TILDE = 0x04;
+		internal const uint HOTKEY_ID_ALT_TAB = 0x7FFE;
+		internal const uint HOTKEY_ID_ALT_TAB_AND_MENU = 0x7FFB;
+		internal const uint HOTKEY_ID_ALT_TAB_MENU = 0x7FFC;
+		internal const uint HOTKEY_ID_ALT_TAB_MENU_DISMISS = 0x7FFA;
+		internal const uint HOTKEY_ID_ALT_TAB_SHIFT = 0x7FFD;
+		internal const uint HOTKEY_ID_INVALID = HOTKEY_ID_MASK;
 		internal const int HOTKEY_ID_MASK = 0x7FFF;
-		internal const int HOTKEY_ID_MAX = 0x7FF9;
-		internal const int HOTKEY_ID_OFF = 0x02;
-		internal const int HOTKEY_ID_ON = 0x01;
-		internal const int HOTKEY_ID_TOGGLE = 0x03;
-		internal const int HOTKEY_KEY_UP = 0x8000;
-		internal const int NO_SUPPRESS_NEXT_UP_EVENT = 0x08;
-		internal const int NO_SUPPRESS_PREFIX = 0x01;
-		internal const int NO_SUPPRESS_STATES = NO_SUPPRESS_NEXT_UP_EVENT;
-		internal const int NO_SUPPRESS_SUFFIX_VARIES = AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE;
+		internal const uint HOTKEY_ID_MAX = 0x7FF9;
+		internal const uint HOTKEY_ID_OFF = 0x02;
+		internal const uint HOTKEY_ID_ON = 0x01;
+		internal const uint HOTKEY_ID_TOGGLE = 0x03;
+		internal const uint HOTKEY_KEY_UP = 0x8000;
+		internal const uint NO_SUPPRESS_NEXT_UP_EVENT = 0x08;
+		internal const uint AT_LEAST_ONE_COMBO_HAS_TILDE = 0x10;
+		internal const uint NO_SUPPRESS_PREFIX = 0x01;
+		internal const uint NO_SUPPRESS_STATES = NO_SUPPRESS_NEXT_UP_EVENT;
+		internal const uint NO_SUPPRESS_SUFFIX_VARIES = AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE;
 		internal static string COMPOSITE_DELIMITER = " & ";
 		internal static uint enabledCount;
 		internal static uint joyHotkeyCount;
@@ -49,7 +52,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal uint modifiersLR;
 		internal uint modifierVK;
 		internal uint nextHotkey;
-		internal int noSuppress;
+		internal uint noSuppress;
 		internal bool parentEnabled = true;
 		internal uint sc;
 		internal HotkeyTypeEnum type = HotkeyTypeEnum.Normal;
@@ -79,7 +82,7 @@ namespace Keysharp.Core.Common.Keyboard
 			Enabled = true;
 		}
 
-		internal HotkeyDefinition(uint _id, IFuncObj callback, uint _hookAction, string _name, bool suffixHasTilde)
+		internal HotkeyDefinition(uint _id, IFuncObj callback, uint _hookAction, string _name, uint _noSuppress)
 		{
 			hookAction = _hookAction;
 			var ht = Keysharp.Scripting.Script.HookThread;
@@ -88,7 +91,14 @@ namespace Keysharp.Core.Common.Keyboard
 			if (TextInterpret(_name, this) == ResultType.Fail) // The called function will display the error.
 				return;
 
-			if (type != HotkeyTypeEnum.Joystick) // Perform modifier adjustment and other activities that don't apply to joysticks.
+			if (type == HotkeyTypeEnum.Joystick)
+			{
+				if (modifiers != 0 || modifierVK != 0 || modifierSC != 0)
+				{
+					throw new ValueError("Invalid hotkey.", _name);
+				}
+			}
+			else // Perform modifier adjustment and other activities that don't apply to joysticks.
 			{
 				// Remove any modifiers that are obviously redundant from keys (even NORMAL/registered ones
 				// due to cases where RegisterHotkey() fails and the key is then auto-enabled via the hook).
@@ -270,7 +280,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 			// If mKeybdHookMandatory==true, ManifestAllHotkeysHotstringsHooks() will set mType to HK_KEYBD_HOOK for us.
 			Name = _name;
-			_ = AddVariant(callback, suffixHasTilde);
+			_ = AddVariant(callback, _noSuppress);
 			// Above has ensured that both mFirstVariant and mLastVariant are non-NULL, so callers can rely on that.
 			// Always assign the ID last, right before a successful return, so that the caller is notified
 			// that the constructor succeeded:
@@ -282,13 +292,12 @@ namespace Keysharp.Core.Common.Keyboard
 
 		~HotkeyDefinition()
 		{
-			if (isRegistered)
-				_ = Unregister();
+			_ = Unregister();
 		}
 
-		public static void AddHotkey(IFuncObj _callback, uint _hookAction, string _name, bool _suffixHasTilde)
+		public static void AddHotkey(IFuncObj _callback, uint _hookAction, string _name)
 		{
-			var b = _suffixHasTilde;
+			var b = 0u;
 			_ = AddHotkey(_callback, _hookAction, _name, ref b);
 		}
 
@@ -629,14 +638,14 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Returns the address of the new hotkey on success, or NULL otherwise.
 		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
 		/// </summary>
-		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref bool _suffixHasTilde)
+		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref uint _noSuppress)
 		{
 			HotkeyDefinition hk;
 			var hookIsMandatory = false;
 
 			//We must first check if the hotkey exists before creating a new one because this might just be a variant.
 			//The code to check for a variant was in the parsing section of AHK, but we move it here because Keysharp adds them at runtime.
-			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref _suffixHasTilde, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
+			if ((hk = HotkeyDefinition.FindHotkeyByTrueNature(_name, ref _noSuppress, ref hookIsMandatory)) != null) // Parent hotkey found.  Add a child/variant hotkey for it.
 			{
 				if (_hookAction != 0) // suffix_has_tilde has always been ignored for these types (alt-tab hotkeys).
 				{
@@ -656,7 +665,7 @@ namespace Keysharp.Core.Common.Keyboard
 						throw new Error($"Duplicate hotkey: {_name}");
 					}
 
-					if (hk.AddVariant(_callback, _suffixHasTilde) == null)
+					if (hk.AddVariant(_callback, _noSuppress) == null)
 						return null;// ScriptError(ERR_OUTOFMEM, buf);
 
 					if (hookIsMandatory || Keysharp.Scripting.Script.ForceKeybdHook)
@@ -672,7 +681,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 			else
 			{
-				hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _suffixHasTilde);
+				hk = new HotkeyDefinition((uint)shk.Count, _callback, _hookAction, _name, _noSuppress);
 
 				if (hk.constructedOK)
 				{
@@ -703,7 +712,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static void AddHotkeyIfExpr(IFuncObj fo) => Keysharp.Scripting.Script.hotExprs.Add(fo);
 
-		internal static void AllDestruct(int exitCode)
+		internal static void AllDestruct()
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			// PostQuitMessage() might be needed to prevent hang-on-exit.  Once this is done, no message boxes or
@@ -717,33 +726,10 @@ namespace Keysharp.Core.Common.Keyboard
 			if (Keysharp.Scripting.Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
 				_ = WindowsAPI.UnhookWindowsHookEx(Keysharp.Scripting.Script.playbackHook);
 
-			shk.Clear();//Hotkeys will unregister as they go out of scope.
-			// Do this only at the last possible moment prior to exit() because otherwise
-			// it may free memory that is still in use by objects that depend on it.
-			// This is actually kinda wrong because when exit() is called, the destructors
-			// of static, global, and main-scope objects will be called.  If any of these
-			// destructors try to reference memory freed() by DeleteAll(), there could
-			// be trouble.
-			// It's here mostly for traditional reasons.  I'm 99.99999 percent sure that there would be no
-			// penalty whatsoever to omitting this, since any modern OS will reclaim all
-			// memory dynamically allocated upon program termination.  Indeed, omitting
-			// deletes and free()'s for simple objects will often improve the reliability
-			// and performance since the OS is far more efficient at reclaiming the memory
-			// than us doing it manually (which involves a potentially large number of deletes
-			// due to all the objects and sub-objects to be destructed in a typical C++ program).
-			// UPDATE: In light of the first paragraph above, it seems best not to do this at all,
-			// instead letting all implicitly-called destructors run prior to program termination,
-			// at which time the OS will reclaim all remaining memory:
-			//SimpleHeap::DeleteAll();
-			// I know this isn't the preferred way to exit the program.  However, due to unusual
-			// conditions such as the script having MsgBoxes or other dialogs displayed on the screen
-			// at the time the user exits (in which case our main event loop would be "buried" underneath
-			// the event loops of the dialogs themselves), this is the only reliable way I've found to exit
-			// so far.  The caller has already called PostQuitMessage(), which might not help but it doesn't hurt:
-			//Original called this exit here, but the Keysharp design has this function called from that one, so we omit the call here to avoid infinite recursion.
-			//Keysharp.Core.Flow.ExitApp(exitCode); // exit() is insignificant in code size.  It does more than ExitProcess(), but perhaps nothing more that this application actually requires.
-			// By contrast to _exit(), exit() flushes all file buffers before terminating the process. It also
-			// calls any functions registered via atexit or _onexit.
+			foreach (var hk in shk)
+				hk.Unregister();//Hotkeys will unregister as they go out of scope, but force them to do it now.
+
+			shk.Clear();
 		}
 
 		internal static uint ConvertAltTab(string aBuf, bool aAllowOnOff)
@@ -782,7 +768,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// If present, they're removed.
 		/// </summary>
 		internal static HotkeyVariant CriterionFiringIsCertain(ref uint hotkeyIDwithFlags, bool _keyUp, ulong extraInfo
-				, ref int _noSuppress, ref bool fireWithNoSuppress, ref char? singleChar)
+				, ref uint _noSuppress, ref bool fireWithNoSuppress, ref char? singleChar)
 		{
 			// aHookAction isn't checked because this should never be called for alt-tab hotkeys (see other comments above).
 			var hotkeyId = hotkeyIDwithFlags & HOTKEY_ID_MASK;
@@ -831,7 +817,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if ((vp = hk.CriterionAllowsFiring(extraInfo, ref singleChar)) != null)
 			{
 				if (!fireWithNoSuppress) // Caller hasn't yet determined its value with certainty (currently, this statement might always be true).
-					fireWithNoSuppress = vp.noSuppress;
+					fireWithNoSuppress = (vp.noSuppress & AT_LEAST_ONE_VARIANT_HAS_TILDE) != 0;
 
 				return vp; // It found an eligible variant to fire.
 			}
@@ -888,7 +874,7 @@ namespace Keysharp.Core.Common.Keyboard
 						if ((vp = hk2.CriterionAllowsFiring(extraInfo, ref singleChar)) != null)
 						{
 							if (!fireWithNoSuppress) // Caller hasn't yet determined its value with certainty (currently, this statement might always be true).
-								fireWithNoSuppress = vp.noSuppress;
+								fireWithNoSuppress = (vp.noSuppress & AT_LEAST_ONE_VARIANT_HAS_TILDE) != 0;
 
 							hotkeyIDwithFlags = hk2.id; // Caller currently doesn't need the flags put onto it, so they're omitted.
 							return vp; // It found an eligible variant to fire.
@@ -949,8 +935,9 @@ namespace Keysharp.Core.Common.Keyboard
 					return ResultType.Fail;
 			}
 
-			bool suffixHasTilde = false, hook_is_mandatory = false;
-			var hk = FindHotkeyByTrueNature(hotkeyName, ref suffixHasTilde, ref hook_is_mandatory); // NULL if not found.
+			uint noSuppress = 0;
+			bool hook_is_mandatory = false;
+			var hk = FindHotkeyByTrueNature(hotkeyName, ref noSuppress, ref hook_is_mandatory); // NULL if not found.
 			var variant = hk?.FindVariant();
 			var updateAllHotkeys = false;  // This method avoids multiple calls to ManifestAllHotkeysHotstringsHooks() (which is high-overhead).
 			var variantWasJustCreated = false;
@@ -988,13 +975,13 @@ namespace Keysharp.Core.Common.Keyboard
 					if (hk == null) // No existing hotkey of this name, so create a new hotkey.
 					{
 						if (hookAction != 0) // Create hotkey: Hotkey Name, AltTabAction
-							hk = AddHotkey(null, hookAction, hotkeyName, ref suffixHasTilde);
+							hk = AddHotkey(null, hookAction, hotkeyName, ref noSuppress);
 						else // Create hotkey: Hotkey Name, Callback [, Options]
 						{
 							if (callback == null) // Caller is trying to set new aOptions for a nonexistent hotkey.
 								throw new ValueError("Nonexistent hotkey.", hotkeyName);
 
-							hk = AddHotkey(callback, 0, hotkeyName, ref suffixHasTilde);
+							hk = AddHotkey(callback, 0, hotkeyName, ref noSuppress);
 						}
 
 						if (hk == null)
@@ -1051,7 +1038,7 @@ namespace Keysharp.Core.Common.Keyboard
 							}
 							else // No existing variant matching current criteria, so create a new variant.
 							{
-								variant = hk.AddVariant(callback, suffixHasTilde);
+								variant = hk.AddVariant(callback, noSuppress);
 								variantWasJustCreated = true;
 								updateAllHotkeys = true;
 
@@ -1069,13 +1056,16 @@ namespace Keysharp.Core.Common.Keyboard
 						// v1.1.15: Allow the ~tilde prefix to be added/removed from an existing hotkey variant.
 						// v1.1.19: Apply this change even if _callback is omitted.  This is redundant if
 						// variant_was_just_created, but checking that condition seems counter-productive.
-						if (variant.noSuppress = suffixHasTilde)
-							hk.noSuppress |= AT_LEAST_ONE_VARIANT_HAS_TILDE;
-						else
+						variant.noSuppress = noSuppress;
+						// hk.noSuppress might be inaccurate if a no-suppress flag was just removed from this variant,
+						// but that just means a slight reduction in efficiency if tilde is removed from all variants.
+						hk.noSuppress |= noSuppress; // Apply both AT_LEAST_ONE_VARIANT_HAS_TILDE and NO_SUPPRESS_PREFIX, if present.
+
+						if ((noSuppress & AT_LEAST_ONE_VARIANT_HAS_TILDE) == 0)
 							hk.noSuppress |= AT_LEAST_ONE_VARIANT_LACKS_TILDE;
 
 						// v1.1.19: Allow the $UseHook prefix to be added to an existing hotkey.
-						if (!hk.keybdHookMandatory && (hook_is_mandatory || suffixHasTilde))
+						if (!hk.keybdHookMandatory && (hook_is_mandatory || (noSuppress != 0)))
 						{
 							// Require the hook for all variants of this hotkey if any variant requires it.
 							// This seems more intuitive than the old behavior, which required $ or #UseHook
@@ -1219,11 +1209,12 @@ namespace Keysharp.Core.Common.Keyboard
 		///    one of them would never fire because the hook isn't capable or storing two hotkey IDs for the same combination of
 		///    modifiers+VK/SC.
 		/// </summary>
-		internal static HotkeyDefinition FindHotkeyByTrueNature(string _name, ref bool _suffixHasTilde, ref bool _hookIsMandatory)
+		internal static HotkeyDefinition FindHotkeyByTrueNature(string _name, ref uint _noSuppress, ref bool _hookIsMandatory)
 		{
 			HotkeyProperties propCandidate = new HotkeyProperties(), propExisting = new HotkeyProperties();
 			_ = TextToModifiers(_name, null, propCandidate);
-			_suffixHasTilde = propCandidate.suffixHasTilde; // Set for caller.
+			_noSuppress = (propCandidate.prefixHasTilde ? NO_SUPPRESS_PREFIX : 0)//Set for caller.
+						  | (propCandidate.suffixHasTilde ? AT_LEAST_ONE_VARIANT_HAS_TILDE : 0);
 			_hookIsMandatory = propCandidate.hookIsMandatory; // Set for caller.
 			// Both suffix_has_tilde and a hypothetical prefix_has_tilde are ignored during dupe-checking below.
 			// See comments inside the loop for details.
@@ -1248,9 +1239,9 @@ namespace Keysharp.Core.Common.Keyboard
 						// ID slot within the VK/SC hook arrays).  The advantages of allowing tilde to be a per-variant attribute
 						// seem substantial, namely to have some variant/siblings pass-through while others do not.
 						&& propExisting.hasAsterisk == propCandidate.hasAsterisk
-						// v1.0.43.05: Use stricmp not lstrcmpi so that the higher ANSI letters because an uppercase
-						// high ANSI letter isn't necessarily produced by holding down the shift key and pressing the
-						// lowercase letter.  In addition, it preserves backward compatibility and may improve flexibility.
+						// v1.0.43.05: Use stricmp not lstrcmpi because an uppercase high ANSI letter isn't necessarily
+						// produced by holding down the shift key and pressing the lowercase letter.  In addition, it
+						// preserves backward compatibility and may improve flexibility.
 						&& string.Compare(propExisting.prefixText, propCandidate.prefixText, true) == 0
 						&& string.Compare(propExisting.suffixText, propCandidate.suffixText, true) == 0)
 					return shk[i]; // Match found.
@@ -1401,8 +1392,9 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		/// <param name="VKorSC"></param>
 		/// <param name="isSC"></param>
+		/// <param name="suppress">Caller is expected to set to a default value of false.</param>
 		/// <returns></returns>
-		internal static bool PrefixHasNoEnabledSuffixes(uint VKorSC, bool isSC)
+		internal static bool PrefixHasNoEnabledSuffixes(uint VKorSC, bool isSC, ref bool suppress)
 		{
 			var ht = Keysharp.Scripting.Script.HookThread;
 			// v1.0.44: Added aAsModifier so that a pair of hotkeys such as:
@@ -1412,6 +1404,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// down because it is considered a prefix key for the <^c hotkey .
 			bool? b = null;
 			var asModifier = ht.KeyToModifiersLR(isSC ? 0u : VKorSC, isSC ? VKorSC : 0u, ref b);
+			bool hasEnabledSuffix = false;
 
 			for (var i = 0; i < shk.Count; ++i)
 			{
@@ -1428,9 +1421,18 @@ namespace Keysharp.Core.Common.Keyboard
 						// alt-tab hotkeys have no subroutine capable of making them exempt.  So g_IsSuspended is checked
 						// for alt-tab hotkeys here; and for other types of hotkeys, it's checked further below.
 						continue;
-					else // This alt-tab hotkey is currently active.
+
+					//else // This alt-tab hotkey is currently active.
+
+					if ((hk.noSuppress & NO_SUPPRESS_PREFIX) != 0 || suppress)
 						return false; // Since any stored mHotCriterion are ignored for alt-tab hotkeys, no further checking is needed.
+
+					hasEnabledSuffix = true;
+					continue; // Still need to check other hotkeys for NO_SUPPRESS_PREFIX.
 				}
+
+				if (hasEnabledSuffix && ((hk.noSuppress & NO_SUPPRESS_PREFIX) == 0))
+					continue; // No need to evaluate this hotkey's variants.
 
 				// Otherwise, find out if any of its variants is eligible to fire.  If so, immediately return
 				// false because even one eligible hotkey means this prefix is enabled.
@@ -1441,12 +1443,26 @@ namespace Keysharp.Core.Common.Keyboard
 					if (vp.enabled // This particular variant within its parent hotkey is enabled.
 							&& (!Accessors.A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
 							&& (vp.hotCriterion == null || (HotCriterionAllowsFiring(vp.hotCriterion, hk.Name) != 0L))) // ... and its criteria allow it to fire.
-						return false; // At least one of this prefix's suffixes is eligible for firing.
+					{
+						if ((vp.noSuppress & NO_SUPPRESS_PREFIX) != 0 || suppress)
+							return false; // At least one of this prefix's suffixes is eligible for firing.
+
+						hasEnabledSuffix = true;
+
+						if ((hk.noSuppress & NO_SUPPRESS_PREFIX) == 0)
+							break; // None of this hotkey's variants have NO_SUPPRESS_PREFIX.
+
+						// Keep checking to ensure no other enabled variants have NO_SUPPRESS_PREFIX.
+					}
+
+					//return false; // At least one of this prefix's suffixes is eligible for firing.
 				}
 			}
 
-			// Since above didn't return, no hotkeys were found for this prefix that are capable of firing.
-			return true;
+			// Since above didn't return, either no hotkeys were found for this prefix that are capable of firing,
+			// or no variants were found with the NO_SUPPRESS_PREFIX flag.
+			suppress = hasEnabledSuffix;
+			return !hasEnabledSuffix;
 		}
 
 		internal static void ResetRunAgainAfterFinished()  // For all hotkeys and all variants of each.
@@ -1462,33 +1478,25 @@ namespace Keysharp.Core.Common.Keyboard
 		/// hotkey only rather than populating the members of the new hotkey aThisHotkey. This function
 		/// and those it calls should avoid showing any error dialogs in validation mode.  Instead,
 		/// it should simply return OK if aName is a valid hotkey and FAIL otherwise.
-		internal static ResultType TextInterpret(string name, HotkeyDefinition thisHotkey)
+		internal static ResultType TextInterpret(string name, HotkeyDefinition thisHotkey, bool syntaxCheckOnly = false)
 		{
 			var splits = name.Split(COMPOSITE_DELIMITER);
 
 			if (splits.Length == 1)
 			{
 				var ttm = TextToModifiers(splits[0], thisHotkey);
-				return TextToKey(ref ttm, false, thisHotkey);
+				return TextToKey(ref ttm, false, thisHotkey, syntaxCheckOnly);
 			}
 
 			var term1 = splits[0];
 
 			if (term1[0] == '~')
-			{
-				if (thisHotkey != null)
-				{
-					thisHotkey.noSuppress |= NO_SUPPRESS_PREFIX;
-					thisHotkey.keybdHookMandatory = true;
-				}
-
-				term1 = term1.Substring(1).TrimStart(Keysharp.Core.Core.SpaceTab);
-			}
+				term1 = term1.Substring(1);
 
 			term1 = term1.TrimEnd(Keysharp.Core.Core.SpaceTab);
-			var result = TextToKey(ref term1, true, thisHotkey);
+			var result = TextToKey(ref term1, true, thisHotkey, syntaxCheckOnly);
 
-			if (result != ResultType.Ok)
+			if (result == ResultType.Fail || result == ResultType.ConditionFalse)
 				return result;
 
 			var term2 = splits[1].TrimStart(Keysharp.Core.Core.SpaceTab);
@@ -1501,7 +1509,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (term2[0] == '~')
 				term2 = term2.Substring(1); // Some other stage handles this modifier, so just ignore it here.
 
-			return TextToKey(ref term2, false, thisHotkey);
+			return TextToKey(ref term2, false, thisHotkey, syntaxCheckOnly);
 		}
 
 		/// <summary>
@@ -1513,7 +1521,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// It may also merge new modifiers into the existing value of modifiers, so the caller
 		/// should never reset modifiers after calling this.
 		/// Returns OK or FAIL.
-		internal static ResultType TextToKey(ref string text, bool isModifier, HotkeyDefinition thisHotkey)
+		internal static ResultType TextToKey(ref string text, bool isModifier, HotkeyDefinition thisHotkey, bool syntaxCheckOnly)
 		{
 			uint tempVk; // No need to initialize this one.
 			var tempSc = 0u;
@@ -1522,40 +1530,44 @@ namespace Keysharp.Core.Common.Keyboard
 			uint? joystickId = 0u;
 			var ht = Keysharp.Scripting.Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
-			var hotkeyTypeTemp = HotkeyTypeEnum.Normal;
-			ref var hotkeyType = ref (thisHotkey != null ? ref thisHotkey.type : ref hotkeyTypeTemp);
+			// Previous steps should make it unnecessary to call omit_leading_whitespace(aText).
+			var keynameEndIndex = text.FindIdentifierEnd();
 
-			if (!isModifier)
+			if (keynameEndIndex == 0 && text.Length > 0) // Any single character except '\0' can be a key name.
+				keynameEndIndex = 1;
+
+			var keynameEnd = text.AsSpan(keynameEndIndex);
+
+			if (!isModifier && keynameEnd.IndexOfAny(Keysharp.Core.Core.SpaceTab) == 0 && keynameEnd.TrimStart(Keysharp.Core.Core.SpaceTab).StartsWith("Up", StringComparison.OrdinalIgnoreCase))
 			{
-				var spaceindex = text.IndexOfAny(Keysharp.Core.Core.SpaceTab);
+				if (syntaxCheckOnly)
+					return ResultType.Ok; // It's a word or single character followed by " up" -- looks valid.
 
-				if (spaceindex != -1)
-				{
-					var trimmed = text.AsSpan(spaceindex).TrimStart(Keysharp.Core.Core.SpaceTab);
+				// This is a key-up hotkey, such as "Ctrl Up::".
+				if (thisHotkey != null)
+					thisHotkey.keyUp = true;
 
-					if (trimmed.EndsWith("Up", StringComparison.OrdinalIgnoreCase))
-					{
-						text = spaceindex == 0 ? text : text.Substring(0, spaceindex);//The word "up" is removed from further consideration by us and callers.
-
-						// This is a key-up hotkey, such as "Ctrl Up::".
-						if (thisHotkey != null)
-							thisHotkey.keyUp = true;
-					}
-				}
+				text = text.Substring(0, keynameEndIndex);
 			}
+			else
+			{
+				// If there's something after the first word/character, it's not a hotkey.
+				if (syntaxCheckOnly)
+					return keynameEnd.Length > 0 ? ResultType.Fail : ResultType.Ok;
+
+				if (keynameEnd.Length > 0)
+					return ResultType.ConditionFalse;
+			}
+
+			var hotkeyTypeTemp = HotkeyTypeEnum.Normal;
+			ref var hotkeyType = ref (thisHotkey != null ? ref thisHotkey.type : ref hotkeyTypeTemp);//Simplifies and reduces code size below.
 
 			if ((tempVk = ht.TextToVK(text, ref modifiersLR, true, true, IntPtr.Zero)) != 0) // Assign.
 			{
 				if (isModifier)
 				{
 					if (ht.IsWheelVK(tempVk))
-					{
-						throw new ValueError("Unsupported prefix key.", text);
-						// When aThisHotkey==NULL, return CONDITION_FALSE to indicate to our caller that it's
-						// an invalid hotkey and we've already shown the error message.  Unlike the old method,
-						// this method respects /ErrorStdOut and avoids the second, generic error message.
-						//return aThisHotkey == null ? ResultType.ConditionFalse : ResultType.Fail;
-					}
+						throw new ValueError("Unsupported prefix key.", text, ResultType.Fail);
 				}
 				else
 
@@ -1593,25 +1605,17 @@ namespace Keysharp.Core.Common.Keyboard
 							return ResultType.Fail; // Second stage: return FAIL to avoid creating an invalid hotkey.
 						}
 
-						if (thisHotkey != null)
-						{
-							// If it fails while aThisHotkey!=NULL, that should mean that this was called as
-							// a result of the Hotkey command rather than at loadtime.  This is because at
-							// loadtime, the first call here (for validation, i.e. aThisHotkey==NULL) should have
-							// caught the error and converted the line into a non-hotkey (command), which in turn
-							// would make loadtime's second call to create the hotkey always succeed. Also, it's
-							// more appropriate to say "key name" than "hotkey" in this message because it's only
-							// showing the one bad key name when it's a composite hotkey such as "Capslock & y".
-							throw new ValueError("Invalid key name.", text);
-						}
-
-						//else do not show an error in this case because the loader will attempt to interpret
-						// this line as a command.  If that too fails, it will show an "unrecognized action"
-						// dialog.
-						return ResultType.Fail;
+						// It's more appropriate to say "key name" than "hotkey" in this message because it's only
+						// showing the one bad key name when it's a composite hotkey such as "Capslock & y".
+						throw new ValueError("Invalid key name.", text, ResultType.Fail);
 					}
 					else
 					{
+						// Block joystick buttons as prefix keys at this stage in case hotkey_type would be overridden
+						// by the suffix key.  For example, the hotkey `Joy1 & LButton::` would reinterpret Joy1 as sc0C.
+						if (isModifier)
+							throw new ValueError("Unsupported prefix key.", text, ResultType.Fail);
+
 						++joyHotkeyCount;
 						hotkeyType = HotkeyTypeEnum.Joystick;
 						tempVk = joystickId.Value;  // 0 is the 1st joystick, 1 the 2nd, etc.
@@ -1854,11 +1858,12 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					properties.prefixText = splits[0].TrimEnd(Keysharp.Core.Core.SpaceTab);
 					properties.suffixText = splits[1].TrimStart(Keysharp.Core.Core.SpaceTab);
+					properties.prefixHasTilde = properties.suffixHasTilde;
 
-					if (properties.suffixHasTilde = properties.suffixText.StartsWith('~')) // Override any value of suffix_has_tilde set higher above.
+					if (properties.suffixHasTilde = properties.suffixText.StartsWith('~')) // Override any value of noSuppress set higher above.
 						properties.suffixText = properties.suffixText.Substring(1); // For simplicity, no skipping of leading whitespace between tilde and the suffix key name.
 				}
-				else // A normal (non-composite) hotkey, so suffix_has_tilde was already set properly (higher above).
+				else // A normal (non-composite) hotkey, so noSuppress was already set properly (higher above).
 					properties.suffixText = sub.TrimStart(Keysharp.Core.Core.SpaceTab);
 
 				var tempIndex = properties.suffixText.IndexOf(" Up", StringComparison.OrdinalIgnoreCase);
@@ -1914,7 +1919,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="_callback"></param>
 		/// <param name="_suffixHasTilde"></param>
 		/// <returns></returns>
-		internal HotkeyVariant AddVariant(IFuncObj _callback, bool _suffixHasTilde)
+		internal HotkeyVariant AddVariant(IFuncObj _callback, uint _noSuppress)
 		{
 			var vp = new HotkeyVariant
 			{
@@ -1931,6 +1936,7 @@ namespace Keysharp.Core.Common.Keyboard
 				inputLevel = (uint)Accessors.A_InputLevel,
 				hotCriterion = Keysharp.Scripting.Script.hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
 				suspendExempt = HotstringDefinition.DefaultHotstringSuspendExempt,
+				noSuppress = _noSuppress,
 				enabled = true
 			};
 
@@ -1939,10 +1945,10 @@ namespace Keysharp.Core.Common.Keyboard
 				keybdHookMandatory = true;// A non-zero InputLevel only works when using the hook
 			}
 
-			if (_suffixHasTilde)
+			noSuppress |= _noSuppress;
+
+			if ((_noSuppress & AT_LEAST_ONE_VARIANT_HAS_TILDE) != 0)
 			{
-				vp.noSuppress = true; // Override the false value set by ZeroMemory above.
-				noSuppress |= AT_LEAST_ONE_VARIANT_HAS_TILDE;
 				// For simplicity, make the hook mandatory for any hotkey that has at least one non-suppressed variant.
 				// Otherwise, ManifestAllHotkeysHotstringsHooks() would have to do a loop to check if any
 				// non-suppressed variants are actually enabled & non-suspended to decide if the hook is actually needed
@@ -2547,13 +2553,15 @@ namespace Keysharp.Core.Common.Keyboard
 		internal uint modifiers;
 		internal uint modifiersLR;
 		internal string prefixText = "";
-		internal bool suffixHasTilde;
+		internal bool prefixHasTilde;
+		internal bool suffixHasTilde;//As opposed to "prefix has tilde".
 		internal string suffixText = "";
 
 		internal void Reset()
 		{
 			modifiers = 0u;
 			modifiersLR = 0u;
+			prefixHasTilde = false;
 			suffixHasTilde = false;
 			hasAsterisk = false;
 			isKeyUp = false;
@@ -2574,7 +2582,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
-		internal bool noSuppress;
+		internal uint noSuppress;
 		internal IFuncObj originalCallback;   // This is the callback set at load time.
 		internal int priority;
 		internal bool runAgainAfterFinished;

@@ -433,7 +433,7 @@ namespace Keysharp.Scripting
 								extralines.Add(new CodeLine(name, line, "{"));
 								extralines.Add(new CodeLine(name, line, $"return {parts[1]}"));
 								extralines.Add(new CodeLine(name, line, "}"));
-								var tempcl = new CodeLine(name, line, $"HotIf(FuncObj(\"{hotiffuncname}\"))");
+								var tempcl = new CodeLine(name, line, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 
 								if (line < list.Count)
 								{
@@ -507,7 +507,7 @@ namespace Keysharp.Scripting
 											break;
 
 										default:
-											list.Add(new CodeLine(name, line, $"Hotstring(\"{sub[1]}\")"));
+											list.Add(new CodeLine(name, line, "Hotstring(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 											next = false;
 											break;
 									}

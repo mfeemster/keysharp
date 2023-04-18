@@ -247,7 +247,7 @@ namespace Keysharp.Core
 			else
 			{
 				if ((vk = ht.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
-					vk = VK_LBUTTON;
+					throw new ValueError($"Invalid mouse button type of {button}.");
 			}
 
 			// v1.0.43: Seems harmless (due to rarity) to treat invalid button names as "Left" (keeping in
@@ -269,6 +269,9 @@ namespace Keysharp.Core
 							eventType = KeyEventTypes.KeyDown;
 							break;
 
+						case '\0':
+							break;
+
 						default:
 							break;
 					}
@@ -285,7 +288,7 @@ namespace Keysharp.Core
 											  , repeatCount
 											  , eventType
 											  , speed
-											  , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');//, true, true);
+											  , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');
 		}
 	}
 

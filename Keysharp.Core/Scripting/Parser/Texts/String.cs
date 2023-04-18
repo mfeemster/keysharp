@@ -170,7 +170,7 @@ namespace Keysharp.Scripting
 				if (literalEscape)
 					line = line.Replace(escape, escapeEscaped);
 
-				line = line.Replace("\"", $"{Escape}\"");
+				line = line.Replace("\"", Escape + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 				line = line.Replace(cast, castEscaped);
 				_ = str.Append(line);
 				_ = str.Append(join);

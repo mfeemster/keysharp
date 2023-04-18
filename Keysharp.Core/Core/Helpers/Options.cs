@@ -216,7 +216,6 @@ namespace Keysharp.Core
 
 		internal static bool OptionContains(string options, string key, bool casesensitive = false)
 		{
-			// TODO: test OptionContains method
 			var comp = casesensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase;
 			var i = 0;
 
@@ -240,38 +239,6 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		internal static List<string> ParseFlags(ref string arg)
-		{
-			var list = new List<string>();
-			const char flag = '*';
-			var i = -1;
-
-			foreach (var sym in arg)
-			{
-				i++;
-
-				if (System.Array.IndexOf(Core.Keyword_Spaces, sym) != -1)
-					continue;
-
-				if (sym != flag)
-					break;
-
-				var z = i;
-
-				for (; i < arg.Length; i++)
-					if (char.IsWhiteSpace(arg, i) || arg[i] == flag)
-						break;
-
-				if (z == i)
-					continue;
-
-				var item = arg.Substring(z, i - z);
-				list.Add(item);
-			}
-
-			arg = arg.Substring(i);
-			return list;
-		}
 
 		internal static string[] ParseOptions(string options) => options.Split(Core.Keyword_Spaces, StringSplitOptions.RemoveEmptyEntries);
 

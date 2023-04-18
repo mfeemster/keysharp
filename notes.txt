@@ -191,7 +191,6 @@ Differences:
 		-Upper and lower case are supported, but only for key presses, not for pasting.
 	-Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
 	-A new accessor A_KeysharpCorePath provides the full path to the Keysharp.Core.dll file.
-	-The entire .NET SDK is required to run, not just the runtime.
 	-Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.
 	-Passing "GetCommandLine" to DllCall() won't work exactly as the examples show. Instead, the type must be "ptr" and the result must be wrapped in StrGet() like:
 		-StrGet(DllCall("GetCommandLine", "ptr"))
@@ -251,37 +250,26 @@ Differences:
 		.\Keysharp.exe .\test.ahk | more
 		.\Keysharp.exe .\test.ahk | more > out.txt
 	-Pausing a script is not supported because it's actually a running program. As such, the pause menu item has been removed.
+	-AHK does not support reloading a compiled script, however Keysharp does.
+	-The Help and Window Spy menu items are not implemented yet.
+	-AddStandard() detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
 	-A_EventInfo is not limited to positive values when reporting the mouse wheel scroll amount. When scrolling up, the value will be positive, and negative when scrolling down.
+	-Download() only supports the *0 option, and not any other numerical values.
 	
 TODO/ENSURE THESE WORK:
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
 		Ensure V2 H multithreading works
-		The function Thread() was never implemented.
+		The function Thread() was never implemented, unsure how it will work with notimers and such.
+		implement A_AllowTimers
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
+			pull in latest ahk_v2 code to see what's changed.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
-	Make sure the standard menu items actually do something. Window Spy probably won't be implemented until the second release.
-	OwnDialogs seems odd and probably doesn't work. Ensure it does, especially with relation to tooltips.
-	You need to make sure exception error messages bubble all the way up, especially for parsing errors, to ensure the user sees them.
-	
-		do in order:
-			finish up the remaining hotkey work, test mouse functionality, and write unit tests that at least cover parsing of them.
-			get hWndLastUsed working, it seems somewhat off and conflicting with the LastFound member in the WindowItem class.
-				go through ahk's script state struct and make sure you have a corresponding match to each of those vars that is threadstatic.
-			finish up with remapping, especially with sendlevel/inputlevel. then implement Thread() function. See how ahk_h does it.
-				preliminarily have sendlevel/inputlevel working.
-				implement A_AllowTimers
-			pull in latest ahk_v2 code to see what's changed.
 	Perhaps look into including a long integer/extended precision library.
 	What to do about references to specific locations named AutoHotkey, such as the library paths? Should we:
 		-Keep that with no change.
 		-No longer support it.
 		-Support that, but also "Keysharp" in its place?
-		
-	
-	Get all menu items working, both on the main window, and on the system tray.
-		-suspend works, but resume does not.
-		-make sure system tray menus and main window menus both call the same functions to avoid code duplication.
 	A_IsPaused
 	ListLines, A_ListLines
 	Function objects will need to be created to be used, not all created on script load like the documentation says.
@@ -292,9 +280,6 @@ TODO/ENSURE THESE WORK:
 	Thread functionality, where things can be pre-empted/suspended/resumed etc...
 	a way to test if you've implemented all functions: https://lexikos.github.io/v2/docs/commands/index.htm
 	ensure you've properly captured all of these changes between 1.1 to 2.0: https://lexikos.github.io/v2/docs/v2-changes.htm
-	implement window spy window.
-	Need to implement properties under Custom Menu Items and some under Misc.
-	Need to implement the functionality of the standard menu in Menu.cs: public void AddStandard()//Need to make this actually od something//TODO
 	See how much some of the existing plugins work with Keysharp: https://lexikos.github.io/v2/docs/commands/Edit.htm
 	I'm not sure if we talked about this before but I just had a conversation in 
 	meta about AltTab hotkeys and I just wanted to say: if you ever get around to them – just leave them out. They serve next to no purpose, are very hackily implemented in AHK, they need a ton of edge-cases and weirdness, and they are just overall a mess. So yeah, just a heads-up I guess.

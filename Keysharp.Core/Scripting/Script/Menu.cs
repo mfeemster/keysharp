@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core;
@@ -8,6 +9,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
+		internal static ToolStripMenuItem openMenuItem;
 		internal static ToolStripMenuItem pauseMenuItem;
 		internal static ToolStripMenuItem suspendMenuItem;
 		internal static NotifyIcon Tray;
@@ -25,52 +27,7 @@ namespace Keysharp.Scripting
 				return;
 
 			trayMenu = new Menu(Tray.ContextMenuStrip);
-			var emptyfunc = new Func<object>(() => "");
-			var openfunc = new Func<object>(() =>
-			{
-				if (mainWindow != null)
-				{
-					mainWindow.Show();
-					mainWindow.BringToFront();
-					mainWindow.WindowState = mainWindow.lastWindowState;
-				}
-
-				return "";
-			});
-			var reloadfunc = new Func<object>(() =>
-			{
-				Keysharp.Core.Flow.Reload();
-				return "";
-			});
-			var editfunc = new Func<object>(() =>
-			{
-				Edit();
-				return "";
-			});
-			var suspend = new Func<object>(() =>
-			{
-				SuspendHotkeys();
-				return "";
-			});
-			var exitfunc = new Func<object>(() =>
-			{
-				_ = Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Menu);
-				return "";
-			});
-			_ = trayMenu.Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
-			//Need to properly fill in all of these event handlers when the proper functionality is implemented.
-			_ = trayMenu.Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
-			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-			//_ = trayMenu.Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
-			_ = trayMenu.Add("&Reload This Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
-
-			if (!Accessors.A_IsCompiled)
-				_ = trayMenu.Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
-
-			_ = trayIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-			suspendMenuItem = trayMenu.Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
-			_ = trayMenu.Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
-			trayMenu.Default = "&Open";
+			trayMenu.AddStandard();
 			trayIcon.Tag = trayMenu;
 			trayIcon.MouseClick += TrayIcon_MouseClick;
 			trayIcon.MouseDoubleClick += TrayIcon_MouseDoubleClick;

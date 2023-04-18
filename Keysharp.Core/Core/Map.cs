@@ -219,14 +219,14 @@ namespace Keysharp.Core
 					string key;
 
 					if (kv.Key is string ks)
-						key = $"\"{ks}\"";
+						key = "\"" + ks + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
 					else
 						key = kv.Key.ToString();
 
 					string val;
 
 					if (kv.Value is string vs)
-						val = $"\"{vs}\"";
+						val = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
 					else
 						val = kv.Value.ToString();
 

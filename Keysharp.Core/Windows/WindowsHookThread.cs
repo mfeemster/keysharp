@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using System.Windows.Forms;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
+using Keysharp.Core.Linux.X11;
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Windows.WindowsAPI;
 
@@ -801,11 +803,11 @@ namespace Keysharp.Core.Windows
 				kvk = new KeyType[VK_ARRAY_COUNT];
 				ksc = new KeyType[SC_ARRAY_COUNT];
 
-				for (var i = 0; i < kvk.Length; i++)
-					kvk[i] = new KeyType();
+				for (var i = 0u; i < kvk.Length; i++)
+					kvk[i] = new KeyType(i);
 
-				for (var i = 0; i < ksc.Length; i++)
-					ksc[i] = new KeyType();
+				for (var i = 0u; i < ksc.Length; i++)
+					ksc[i] = new KeyType(i);
 
 				kvkm = new uint[KVKM_SIZE];
 				kscm = new uint[KSCM_SIZE];
@@ -1004,7 +1006,7 @@ namespace Keysharp.Core.Windows
 							kvk[hk.modifierVK].usedAsPrefix = KeyType.PREFIX_ACTUAL;
 
 							if ((hk.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0)
-								kvk[hk.modifierVK].noSuppress |= HotkeyDefinition.NO_SUPPRESS_PREFIX;
+								kvk[hk.modifierVK].noSuppress |= HotkeyDefinition.AT_LEAST_ONE_COMBO_HAS_TILDE;
 						}
 					}
 					else //if (hk.mModifierSC)
@@ -1017,7 +1019,7 @@ namespace Keysharp.Core.Windows
 							ksc[hk.modifierSC].usedAsPrefix = KeyType.PREFIX_ACTUAL;
 
 							if ((hk.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0)
-								ksc[hk.modifierSC].noSuppress |= HotkeyDefinition.NO_SUPPRESS_PREFIX;
+								ksc[hk.modifierSC].noSuppress |= HotkeyDefinition.AT_LEAST_ONE_COMBO_HAS_TILDE;
 
 							// For some scan codes this was already set above.  But to support explicit scan code prefixes,
 							// such as "SC118 & SC122::MsgBox", make sure it's set for every prefix that uses an explicit
@@ -1031,17 +1033,7 @@ namespace Keysharp.Core.Windows
 					thisKey.firstHotkey = hk.id;
 					continue;
 				}
-				// !SEND_NOSUPPRESS_PREFIX_KEY_ON_RELEASE // Search for this symbol for details.
-				else
-				{
-					// If this hotkey is a lone key with ~ prefix such as "~a::", the following ensures that
-					// the ~ prefix is respected even if the key is also used as a prefix in a custom combo,
-					// such as "a & b::".  This is consistent with the behavior of "~a & b::".
-					if (hk.modifiersConsolidatedLR == 0 && ((hk.noSuppress & HotkeyDefinition.AT_LEAST_ONE_VARIANT_HAS_TILDE) != 0))
-						thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_PREFIX;
-				}
 
-				//#endif
 				// At this point, since the above didn't "continue", this hotkey is one without a ModifierVK/SC.
 				// Put it into a temporary array, which will be later sorted:
 				var hkst = new HkSortedType
@@ -1757,8 +1749,8 @@ namespace Keysharp.Core.Windows
 			}
 
 			int charCount;
-			var sb = new StringBuilder(16);
 			var ch = new char[3];
+			var sb = new StringBuilder(16);
 			var keyState = new byte[physicalKeyState.Length];
 			System.Array.Copy(physicalKeyState, keyState, physicalKeyState.Length);
 
@@ -1807,14 +1799,6 @@ namespace Keysharp.Core.Windows
 						if (ch[1] == '\r')  // But it's never referred to if byte_count < 2
 							ch[1] = '\n';
 				}
-
-				//if (ch.Length > 0)
-				//{
-				//  if (ch[0] == 'b')
-				//      Console.WriteLine(ch[0]);
-				//  if (ch[0] == 'B')
-				//      Console.WriteLine(ch[0]);
-				//}
 			}
 			else
 			{
@@ -1961,7 +1945,10 @@ namespace Keysharp.Core.Windows
 				if (charCount > 0
 						&& !CollectHotstring(ref ev, ch, charCount, activeWindow, keyHistoryCurr,
 											 ref hsOut, ref caseConformMode, ref endChar))
+				{
+					pendingDeadKeyVK = 0;
 					return false; // Suppress.
+				}
 			}
 
 			// Fix for v1.0.37.06: The following section was moved beneath the hotstring section so that
@@ -1975,18 +1962,41 @@ namespace Keysharp.Core.Windows
 			// the letter "a" to produce á.
 			if (deadKeySequenceComplete)
 			{
-				// Since our call to ToUnicodeOrAsciiEx above has removed the pending dead key from the
-				// buffer, we need to put it back for the active window or the next hook in the chain.
-				// This is not needed when ch (the character or characters produced by combining the dead
-				// key with the last keystroke) is being suppressed, since in that case we don't want the
-				// dead key back in the buffer.
-				System.Array.Clear(keyState, 0, keyState.Length);
-				WindowsKeyboardMouseSender.AdjustKeyState(keyState
-						, (pendingDeadKeyUsedAltGr ? MOD_LCONTROL | MOD_RALT : 0)
-						| (pendingDeadKeyUsedShift ? MOD_RSHIFT : 0)); // Left vs Right Shift probably doesn't matter in this context.
-				var tempsb = new StringBuilder(4);
-				_ = ToUnicodeOrAsciiEx(pendingDeadKeyVK, pendingDeadKeySC, keyState, tempsb, 0, activeWindowKeybdLayout);
-				pendingDeadKeyVK = 0;
+				// Fix for v1.1.34.03: Avoid reinserting the dead char if it wasn't actually in the buffer
+				// (which can happen if there's another keyboard hook that removed it due to a suppressed
+				// hotstring end-char).
+				var newCh = sb;
+				_ = newCh.Clear();
+				newCh.Capacity = 16;
+				var newCharCount = ToUnicodeOrAsciiEx(vk, ev.scanCode, keyState, newCh, 0, activeWindowKeybdLayout);
+
+				if (newCharCount < 0)
+				{
+					// aVK is also a dead key and wasn't in the buffer, so take it back out.  This also implies
+					// that sPendingDeadKeyVK needs to be reinserted, since the buffer state apparently differed
+					// between our two ToUnicode() calls, and sPendingDeadKeyVK is probably the reason.
+					_ = newCh.Clear();
+					newCh.Capacity = 16;
+					_ = ToUnicodeOrAsciiEx(vk, ev.scanCode, keyState, newCh, 0, activeWindowKeybdLayout);
+				}
+
+				var newChArr = sb.ToString().ToCharArray();
+
+				if (newCharCount != charCount || ch[0] != (newChArr[0] == '\r' ? '\n' : newChArr[0])) // Translation differs, likely due to pending dead key having been removed.
+				{
+					// Since our earlier call to ToUnicodeOrAsciiEx above has removed the pending dead key from the
+					// buffer, we need to put it back for the active window or the next hook in the chain.
+					// This is not needed when ch (the character or characters produced by combining the dead
+					// key with the last keystroke) is being suppressed, since in that case we don't want the
+					// dead key back in the buffer.
+					System.Array.Clear(keyState, 0, keyState.Length);
+					WindowsKeyboardMouseSender.AdjustKeyState(keyState
+							, (pendingDeadKeyUsedAltGr ? MOD_LCONTROL | MOD_RALT : 0)
+							| (pendingDeadKeyUsedShift ? MOD_RSHIFT : 0)); // Left vs Right Shift probably doesn't matter in this context.
+					var tempsb = new StringBuilder(4);
+					_ = ToUnicodeOrAsciiEx(pendingDeadKeyVK, pendingDeadKeySC, keyState, tempsb, 0, activeWindowKeybdLayout);
+					pendingDeadKeyVK = 0;
+				}
 			}
 
 			return true; // Visible.
@@ -2640,9 +2650,10 @@ namespace Keysharp.Core.Windows
 			// when the key is released, which is probably the correct thing to do 90%
 			// or more of the time.  But don't consider the modifiers themselves to have
 			// been modified by a prefix key, since that is almost never desirable:
-			if (prefixKey != null && prefixKey != thisKey && !keyUp) // There is a prefix key being held down and the user has now pressed some other key.
-				if ((hook == kbdHook ? (thisKey.asModifiersLR == 0 ? 1 : 0) : prefixKey.asModifiersLR) != 0)//Use ^ xor to toggle.
-					prefixKey.wasJustUsed = KeyType.AS_PREFIX; // Indicate that currently-down prefix key has been "used".
+			if (prefixKey != null && prefixKey != thisKey && !keyUp // There is a prefix key being held down and the user has now pressed some other key.
+					&& prefixKey.wasJustUsed != KeyType.AS_PASSTHROUGH_PREFIX // v1.1.34.02: Retain this value for prefix key-up.
+					&& ((hook == kbdHook ? (thisKey.asModifiersLR == 0 ? 1 : 0) : prefixKey.asModifiersLR) != 0))//Use ^ xor to toggle.
+				prefixKey.wasJustUsed = KeyType.AS_PREFIX; // Indicate that currently-down prefix key has been "used".
 
 			// Formerly, the above was done only for keyboard hook, not the mouse.  This was because
 			// most people probably would not want a prefix key's suffix-action to be stopped
@@ -2673,6 +2684,7 @@ namespace Keysharp.Core.Windows
 			var hotkeyIdWithFlags = (uint)HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
 			HotkeyVariant firingIsCertain = null;
 			uint hotkeyIdTemp; // For informal/temp storage of the ID-without-flags.
+			bool fireWithNoSuppress = false; // Set default.
 			bool downPerformedAction = false, wasDownBeforeUp = false;
 
 			if (keyUp)
@@ -2690,6 +2702,15 @@ namespace Keysharp.Core.Windows
 					// The line below is done even though the down-event also resets it in case it is ever
 					// possible for keys to generate multiple consecutive key-up events (faulty or unusual keyboards?)
 					thisKey.hotkeyToFireUponRelease = HotkeyDefinition.HOTKEY_ID_INVALID;
+				}
+
+				// v1.1.34.01: Use up the no-suppress ticket early for simplicity and maintainability.  Its value
+				// might not be used further below, but in any case the ticket shouldn't be applied to any event
+				// after this one.
+				if ((thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT) != 0)
+				{
+					fireWithNoSuppress = true;
+					thisKey.noSuppress &= ~HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT; // This ticket has been used up, so remove it.
 				}
 			}
 
@@ -2757,10 +2778,11 @@ namespace Keysharp.Core.Windows
 				// introduce a new hotkey modifier such as an "up2" keyword that makes any key into a prefix
 				// key even if it never acts as a prefix for other keys, which in turn has the benefit of firing
 				// on key-up, but only if the no other key was pressed while the user was holding it down.
+				bool suppressThisPrefix = (thisKey.noSuppress & HotkeyDefinition.AT_LEAST_ONE_COMBO_HAS_TILDE) == 0; // Set default.
 				bool hasNoEnabledSuffixes;
 
 				if (!(hasNoEnabledSuffixes = (thisKey.usedAsPrefix == KeyType.PREFIX_ACTUAL)
-											 && HotkeyDefinition.PrefixHasNoEnabledSuffixes(scTakesPrecedence ? sc : vk, scTakesPrecedence)))
+											 && HotkeyDefinition.PrefixHasNoEnabledSuffixes(scTakesPrecedence ? sc : vk, scTakesPrecedence, ref suppressThisPrefix)))
 				{
 					// This check is necessary in cases such as the following, in which the "A" key continues
 					// to repeat because pressing a mouse button (unlike pressing a keyboard key) does not
@@ -2818,23 +2840,65 @@ namespace Keysharp.Core.Windows
 						// Hotkeys are not defined to modify themselves, so look for a match accordingly.
 						modifiersLRnew &= ~thisKey.asModifiersLR;
 
-					// For this case to be checked, there must be at least one modifier key currently down (other
-					// than this key itself if it's a modifier), because if there isn't and this prefix is also
-					// a suffix, its suffix action should only fire on key-up (i.e. not here, but later on).
-					// UPDATE: In v1.0.41, an exception to the above is when a prefix is disabled via
-					// has_no_enabled_suffixes, in which case it seems desirable for most uses to have its
-					// suffix action fire on key-down rather than key-up.
-					// UPDATE: Another exception was added so that the no-suppress prefix allows the key to function
-					// as if the custom combination wasn't defined.  For example, ~x & y:: allows x:: to retain its
-					// normal behavior, firing the subroutine on key-down and blocking the keystroke.  This is more
-					// useful and intuitive/consistent than the old behavior, which was to fire the suffix hotkey
-					// on key-up even though the key-down wasn't suppressed (unless either of the first two conditions
-					// below were met).
-					if (modifiersLRnew != 0 || hasNoEnabledSuffixes || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0)
+					// This prefix key's hotkey needs to be checked even if it will ultimately fire only on release.
+					// If suppress_this_prefix == false, this prefix key's key-down hotkey should fire immediately.
+					// If suppress_this_prefix == true, its final value can only be confirmed by verifying whether
+					// this prefix key's hotkey has the no-suppress prefix (which should cause the hotkey to fire
+					// immediately and not be suppressed).
+					// This prefix key's hotkey should also be fired immediately if there are any modifiers down.
+					// Check hook type too in case a script ever explicitly specifies scan code zero as a hotkey:
+					//if (modifiersLRnew != 0 || hasNoEnabledSuffixes || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0)
+					//{
+					// Check hook type too in case a script every explicitly specifies scan code zero as a hotkey:
+					hotkeyIdWithFlags = (hook == kbdHook && scTakesPrecedence)
+										? Kscm(modifiersLRnew, sc) : Kvkm(modifiersLRnew, vk);
+					hotkeyIdTemp = hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_ID_MASK;
+
+					if (HotkeyDefinition.IsAltTab(hotkeyIdTemp))
 					{
-						// Check hook type too in case a script every explicitly specifies scan code zero as a hotkey:
-						hotkeyIdWithFlags = (hook == kbdHook && scTakesPrecedence)
-											? Kscm(modifiersLRnew, sc) : Kvkm(modifiersLRnew, vk);
+						hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID; // Let it be rediscovered when the key is released.
+					}
+					else if (hotkeyIdWithFlags != HotkeyDefinition.HOTKEY_ID_INVALID)
+					{
+						if (!suppressThisPrefix) // v1.1.34.02: Retain this as a flag for key-up.
+							thisKey.wasJustUsed = KeyType.AS_PASSTHROUGH_PREFIX;
+
+						if (suppressThisPrefix && modifiersLRnew == 0) // So far, it looks like the prefix should be suppressed.
+						{
+							char? ch = null;
+							uint unusedNoSuppress = 0; // Leave this_key.no_suppress unchanged in case !firing_is_certain.
+							firingIsCertain = HotkeyDefinition.CriterionFiringIsCertain(ref hotkeyIdWithFlags, keyUp, extraInfo, ref unusedNoSuppress, ref fireWithNoSuppress, ref ch);
+
+							if (firingIsCertain == null || !fireWithNoSuppress) // Hotkey is ineligible to fire or lacks the no-suppress prefix.
+							{
+								// Resetting the ID is necessary to avoid the following cases:
+								//  1) A key-down hotkey which isn't eligible to fire prevents the prefix key from being suppressed.
+								//  2) A key-down hotkey which isn't eligible to fire causes its key-up counterpart to fire even if
+								//     the prefix key was used to activate a custom combo.
+								//  3) A key-down hotkey without ~ fires immediately instead of on release.
+								//  4) A key-up hotkey without ~ fires even if the prefix key was used to activate a custom combo.
+								if (hotkeyIdWithFlags < HotkeyDefinition.shk.Count && hotkeyUp[(int)hotkeyIdWithFlags] != HotkeyDefinition.HOTKEY_ID_INVALID)
+								{
+									// This key-down hotkey has a key-up counterpart.
+									fireWithNoSuppress = false; // Reset for the call below.
+									var hkuwf = hotkeyUp[(int)hotkeyIdWithFlags];
+									var firingUp = HotkeyDefinition.CriterionFiringIsCertain(ref hkuwf, keyUp, extraInfo, ref unusedNoSuppress, ref fireWithNoSuppress, ref ch);
+									hotkeyUp[(int)hotkeyIdWithFlags] = hkuwf;
+
+									if (!(firingUp != null && fireWithNoSuppress)) // Both key-down and key-up are either ineligible or lack the no-suppress prefix.
+										hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID; // See comments above about resetting the ID.
+									else if (firingIsCertain != null) // Both key-down and key-up are eligible, but key-down should be suppressed.
+										fireWithNoSuppress = false; // For backward-compatibility, suppress the key-down but leave hotkey_id_with_flags set so it fires immediately.
+									else // Key-down is not eligible, but key-up is.
+									{
+										firingIsCertain = firingUp;
+										hotkeyIdWithFlags = hotkeyUp[(int)hotkeyIdWithFlags];
+									}
+								}
+								else
+									hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID; // See comments above about resetting the ID.
+							}
+						}
 
 						if ((hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_KEY_UP) != 0) // And it's okay even if it's is HotkeyDefinition.HOTKEY_ID_INVALID.
 						{
@@ -2846,13 +2910,9 @@ namespace Keysharp.Core.Windows
 							thisKey.hotkeyToFireUponRelease = hotkeyIdWithFlags;
 							hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID;
 						}
-						else // hotkey_id_with_flags is either HotkeyDefinition.HOTKEY_ID_INVALID or a valid key-down hotkey.
+						else if (hotkeyIdWithFlags < HotkeyDefinition.shk.Count)//Valid key-down hotkey.
 						{
-							hotkeyIdTemp = hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_ID_MASK;
-
-							if (hotkeyIdTemp < Keyboard.hotkeys.Count)
-								thisKey.hotkeyToFireUponRelease = hotkeyUp[(int)hotkeyIdTemp]; // Might assign HotkeyDefinition.HOTKEY_ID_INVALID.
-
+							thisKey.hotkeyToFireUponRelease = hotkeyUp[(int)hotkeyIdWithFlags];//Might assign HotkeyDefinition.HOTKEY_ID_INVALID.
 							// Since this prefix key is being used in its capacity as a suffix instead,
 							// hotkey_id_with_flags now contains a hotkey ready for firing later below.
 							// v1.0.41: Above is done even if the hotkey is subject to #HotIf because:
@@ -2871,7 +2931,6 @@ namespace Keysharp.Core.Windows
 				{
 					if (hasNoEnabledSuffixes)
 					{
-						thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT; // Since the "down" is non-suppressed, so should the "up".
 						keyHistoryCurr.eventType = '#'; // '#' to indicate this prefix key is disabled due to #HotIf WinActive/Exist criterion.
 					}
 
@@ -2879,18 +2938,14 @@ namespace Keysharp.Core.Windows
 					// If our caller is the mouse hook, both of the following will always be false:
 					// this_key.as_modifiersLR
 					// this_toggle_key_can_be_toggled
-					if (thisKey.asModifiersLR != 0 || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0
-							|| thisToggleKeyCanBeToggled || hasNoEnabledSuffixes)
+					if (!suppressThisPrefix) // Only for this condition. Not needed for toggle keys and not wanted for modifiers as it would prevent menu suppression.
+						thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT; // Since the "down" is non-suppressed, so should the "up".
+
+					if (thisKey.asModifiersLR != 0 || !suppressThisPrefix || thisToggleKeyCanBeToggled)
 						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// Mark this key as having been suppressed.  This currently doesn't have any known effect
 					// since the change to tilde (~) handling in v1.0.95 (commit 161162b8), but may in future.
-					// Search for "SEND_NOSUPPRESS_PREFIX_KEY_ON_RELEASE" for related comments.
-					//#define SEND_NOSUPPRESS_PREFIX_KEY_ON_RELEASE
-					// Without this next assignment, the following issues occur if the above line is uncommented:
-					//   1) ~prefixkey:: allows just a key-up to pass through, without first sending a key-down as
-					//      originally intended.
-					//   2) #if false .. ~prefixkey:: causes the key-up to pass through when it should be suppressed.
 					thisKey.hotkeyDownWasSuppressed = true;
 					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 				}
@@ -2955,17 +3010,7 @@ namespace Keysharp.Core.Windows
 				// this check is now also needed to allow fall-through in cases like "b" and "b up" both existing.
 				if (!thisKey.usedAsKeyUp)
 				{
-					bool suppress_up_event;
-
-					if ((thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT) != 0)
-					{
-						suppress_up_event = false;
-						thisKey.noSuppress &= ~HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;  // This ticket has been used up.
-					}
-					else // the default is to suppress the up-event.
-						suppress_up_event = true;
-
-					return (downPerformedAction && suppress_up_event) ?
+					return (downPerformedAction && !fireWithNoSuppress) ?
 						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
 						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 				}
@@ -3002,22 +3047,6 @@ namespace Keysharp.Core.Windows
 				{
 					thisKey.itPutShiftDown = false;
 					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, VK_SHIFT);
-				}
-
-				// Section added in v1.0.41:
-				// Fix for v1.0.44.04: Defer use of the ticket and avoid returning here if hotkey_id_with_flags is valid,
-				// which only happens by means of this_key.hotkey_to_fire_upon_release.  This fixes custom combination
-				// hotkeys whose composite hotkey is also present such as:
-				//LShift & ~LAlt::
-				//LAlt & ~LShift::
-				//LShift & ~LAlt up::
-				//LAlt & ~LShift up::
-				//ToolTip %A_ThisHotkey%
-				//return
-				if (hotkeyIdWithFlags == HotkeyDefinition.HOTKEY_ID_INVALID && (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT) != 0)
-				{
-					thisKey.noSuppress &= ~HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;  // This ticket has been used up.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));// This should handle pForceToggle for us, suppressing if necessary.
 				}
 
 				if (thisToggleKeyCanBeToggled) // Always false if our caller is the mouse hook.
@@ -3060,15 +3089,14 @@ namespace Keysharp.Core.Windows
 					// when they are used to modify other keys.  For example, if "Capslock & A" is a hotkey,
 					// the state of the Capslock key should not be changed when the hotkey is pressed.
 					// Do this check prior to the below check (give it precedence).
-					if (thisKey.wasJustUsed != 0  // AS_PREFIX or AS_PREFIX_FOR_HOTKEY.
+					if (thisKey.wasJustUsed > 0  // AS_PREFIX or AS_PREFIX_FOR_HOTKEY.  v1.1.34.02: Excludes AS_PASSTHROUGH_PREFIX, which would indicate the prefix key's suffix hotkey should always fire.
 							&& hotkeyIdWithFlags == HotkeyDefinition.HOTKEY_ID_INVALID) // v1.0.44.04: Must check this because this prefix might be being used in its role as a suffix instead.
 					{
-						if (thisKey.asModifiersLR != 0) // Always false if our caller is the mouse hook.
+						if (thisKey.asModifiersLR != 0 // Always false if our caller is the mouse hook.
+								|| fireWithNoSuppress) // Shouldn't be true unless it's a modifier, but seems safest to check anyway.
 							return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));// Win/Alt will be disguised if needed.
 
-						return (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0 ?
-							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
-							   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+						return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 					}
 
 				// v1.0.41: This spot cannot be reached when a disabled prefix key's up-action fires on
@@ -3087,8 +3115,8 @@ namespace Keysharp.Core.Windows
 					// If our caller is the mouse hook, both of the following will always be false:
 					// this_key.as_modifiersLR
 					// this_toggle_key_can_be_toggled
-					return (thisKey.asModifiersLR != 0 || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0
-							// The order on this line important; it relies on short-circuit boolean:
+					return (thisKey.asModifiersLR != 0
+							|| fireWithNoSuppress
 							|| thisToggleKeyCanBeToggled) ?
 						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
 						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
@@ -3122,7 +3150,6 @@ namespace Keysharp.Core.Windows
 			// it fell through from CASE #3 or #2 above).  This case can also happen if it fell through from
 			// case #1 (i.e. it already determined the value of hotkey_id_with_flags).
 			////////////////////////////////////////////////////////////////////////////////////////////////////
-			var fireWithNoSuppress = false; // Set default.
 
 			if (prefixKey != null && (!keyUp || thisKey.usedAsKeyUp) && hotkeyIdWithFlags == HotkeyDefinition.HOTKEY_ID_INVALID) // Helps performance by avoiding all the below checking.
 			{
@@ -3224,7 +3251,9 @@ namespace Keysharp.Core.Windows
 					}
 
 					hotkeyIdTemp = hotkeyIdWithFlags;
-					prefixKey.wasJustUsed = KeyType.AS_PREFIX_FOR_HOTKEY;
+
+					if (prefixKey.wasJustUsed != KeyType.AS_PASSTHROUGH_PREFIX)
+						prefixKey.wasJustUsed = KeyType.AS_PREFIX_FOR_HOTKEY;
 				}
 
 				// Alt-tab: Alt-tab actions that require a prefix key are handled directly here rather than via
@@ -3478,13 +3507,12 @@ namespace Keysharp.Core.Windows
 						// toggled, just allow this up-event to go through because the
 						// previous down-event for it (in its role as a prefix) would not
 						// have been suppressed:
-						// NO_SUPPRESS_PREFIX can occur if it fell through from Case #3 but the right
-						// modifier keys aren't down to have triggered a key-up hotkey:
-						return (thisKey.asModifiersLR != 0 || (thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_PREFIX) != 0
+						return (thisKey.asModifiersLR != 0
 								// The following line was added for v1.0.37.02 to take into account key-up hotkeys,
 								// the release of which should never be suppressed if it didn't actually fire the
 								// up-hotkey (due to the wrong modifiers being down):
 								|| thisKey.usedAsPrefix == 0
+								|| fireWithNoSuppress
 								// The order on this line important; it relies on short-circuit boolean:
 								|| thisToggleKeyCanBeToggled) ?
 							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
@@ -3541,19 +3569,6 @@ namespace Keysharp.Core.Windows
 
 			// Since above didn't return, hotkey_id_with_flags is now a valid hotkey.  The only thing that can
 			// stop it from firing now is CriterionFiringIsCertain().
-
-			// v1.0.41: Below should be done prior to the next section's "return AllowKeyToGoToSystem" so that the
-			// NO_SUPPRESS_NEXT_UP_EVENT ticket is used up rather than staying around to possibly take effect for
-			// a future key-up for which it wasn't intended.
-			// Handling for NO_SUPPRESS_NEXT_UP_EVENT was added because it seems more correct that key-up
-			// hotkeys should obey NO_SUPPRESS_NEXT_UP_EVENT too.  The absence of this might have been inconsequential
-			// due to other safety/redundancies; but it seems more maintainable this way.
-			if ((thisKey.noSuppress & HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT) != 0 && keyUp)
-			{
-				fireWithNoSuppress = true; // In spite of this being a key-up, there may be circumstances in which this was already true due to action above.
-				thisKey.noSuppress &= ~HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT; // This ticket has been used up, so remove it.
-			}
-
 			// v1.0.41: This must be done prior to the setting of sDisguiseNextMenu below.
 			hotkeyIdTemp = hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_ID_MASK;
 
@@ -3937,62 +3952,6 @@ namespace Keysharp.Core.Windows
 
 				if (fireWithNoSuppress) // Plus we know it's not a modifier since otherwise it would've returned above.
 				{
-					// Currently not supporting the mouse buttons for the above method, because KeyEvent()
-					// doesn't support the translation of a mouse-VK into a mouse_event() call.
-					// Such a thing might not work anyway because the hook probably received extra
-					// info such as the location where the mouse click should occur and other things.
-					// That info plus anything else relevant in MSLLHOOKSTRUCT would have to be
-					// translated into the correct info for a call to mouse_event().
-					if (hook == mouseHook)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
-
-					// Otherwise, our caller is the keyboard hook.
-					// The following section is currently disabled because it hasn't been working as intended
-					// for quite some time, and doesn't seem to be what users expect.  It also contains some
-					// contradictions; for instance, explicit key-up hotkeys such as the one in the example
-					// were excluded, apparently by design (since v1.0.36.02).  Explicit key-up hotkeys which
-					// are turned on after the key is pressed were erroneously included, but this has been
-					// fixed in the code below.  Implicit key-up hotkeys (which act on key-up because the key
-					// is used as a prefix key) did not work because this_key.hotkey_down_was_suppressed was
-					// not set when the prefix key was suppressed -- and later because it was not suppressed
-					// at all due to a change in v1.0.95 (commit 161162b8).
-					/*  only enalbe this for:
-					    SEND_NOSUPPRESS_PREFIX_KEY_ON_RELEASE
-					    // Since this hotkey is firing on key-up but the user specified not to suppress its native
-					    // function, send a down event to make up for the fact that the original down event was
-					    // suppressed (since key-up hotkeys' down events are always suppressed because they
-					    // are also prefix keys by definition).  UPDATE: Now that it is possible for a prefix key
-					    // to be non-suppressed, this is done only if the prior down event wasn't suppressed.
-					    // Note that for a pair of hotkeys such as:
-					    // *capslock::Send {Ctrl Down}
-					    // *~capslock up:: Send {Ctrl Up}  ; Specify tilde to allow caps lock to be toggled upon release.
-					    // ... the following key history is produced (see note):
-					    //14  03A   h   d   3.46    Caps Lock
-					    //A2  01D   i   d   0.00    Ctrl
-					    //14  03A   h   u   0.10    Caps Lock
-					    //14  03A   i   d   0.00    Caps Lock    <<< This actually came before the prior due to re-entrancy.
-					    //A2  01D   i   u   0.00    Ctrl
-					    // Can't use this_toggle_key_can_be_toggled in this case. Relies on short-circuit boolean order:
-					    bool suppress_to_prevent_toggle = this_key.pForceToggle && *this_key.pForceToggle != NEUTRAL;
-
-					    // The following isn't checked as part of the above because this_key.was_just_used would
-					    // never be true with hotkeys such as the Capslock pair shown above. That's because
-					    // Capslock isn't a prefix in that case, it's just a suffix. Even if it were a prefix, it would
-					    // never reach this point in the execution because places higher above return early if the value of
-					    // this_key.was_just_used is AS_PREFIX/AS_PREFIX_FOR_HOTKEY.
-					    // Used as either a prefix for a hotkey or just a plain modifier for another key.
-					    // ... && (*this_key.pForceToggle != NEUTRAL || this_key.was_just_used);
-					    if (this_key.hotkey_down_was_suppressed // Down was suppressed.
-					        && !(hotkey_id_with_flags & HOTKEY_KEY_UP) // v1.0.36.02: Prevents a hotkey such as "~5 up::" from generating double characters, regardless of whether it's paired with a "~5::" hotkey.
-					        && !suppress_to_prevent_toggle) // Mouse vs. keybd hook was already checked higher above.
-					    KeyEvent(KEYDOWN, aVK, aSC); // Substitute this to make up for the suppression (a check higher above has already determined that no_supress==true).
-
-					    // Now allow the up-event to go through.  The DOWN should always wind up taking effect
-					    // before the UP because the above should already have "finished" by now, since
-					    // it resulted in a recursive call to this function (using our hook-thread
-					    // rather than our main thread or some other thread):
-					    return suppress_to_prevent_toggle ? SuppressThisKey : AllowKeyToGoToSystem;
-					*/
 					// Although it seems more sensible to suppress the key-up if the key-down was suppressed,
 					// it probably does no harm to let the key-up pass through, and in this case, it's exactly
 					// what the script is asking to happen (by prefixing the key-up hotkey with '~').
@@ -4027,7 +3986,7 @@ namespace Keysharp.Core.Windows
 				// when we reached this point after having fallen through from Case #1 above.
 				// The reason for this is that we just fired a hotkey action for this key,
 				// so we don't want it's action to fire again upon key-up:
-				if (prefixKey != null && prefixKey.asModifiersLR != 0)
+				if (prefixKey != null && prefixKey.asModifiersLR != 0 && prefixKey.wasJustUsed != KeyType.AS_PASSTHROUGH_PREFIX)
 					prefixKey.wasJustUsed = KeyType.AS_PREFIX_FOR_HOTKEY;
 
 				if (fireWithNoSuppress)
@@ -4400,8 +4359,16 @@ namespace Keysharp.Core.Windows
 		internal void ResetHook(bool allModifiersUp = false, HookType whichHook = HookType.Keyboard | HookType.Mouse, bool resetKVKandKSC = false)
 		// Caller should ensure that aWhichHook indicates at least one of the hooks (not none).
 		{
-			// Reset items common to both hooks:
-			prefixKey = null;
+			if (prefixKey != null)
+			{
+				// Reset pPrefixKey only if the corresponding hook is being reset.  This fixes
+				// custom combo mouse hotkeys breaking when the prefix key does something which
+				// causes the keyboard hook to be reset, or vice versa.
+				bool isMouseKey = IsMouseVK(prefixKey.Pos);
+
+				if ((whichHook & (isMouseKey ? HookType.Mouse : HookType.Keyboard)) != 0)
+					prefixKey = null;
+			}
 
 			if (((uint)whichHook & HookMouse) != 0)
 			{

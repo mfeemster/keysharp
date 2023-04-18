@@ -252,7 +252,7 @@ namespace Keysharp.Scripting
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
 							methods[targetClass].Add(hotiffuncname, hotifmethod);
 							invoke = LocalMethodInvoke(name);
-							_ = invoke.Parameters.Add(new CodeSnippetExpression($"FuncObj(\"{hotiffuncname}\")"));
+							_ = invoke.Parameters.Add(new CodeSnippetExpression("FuncObj(\"" + hotiffuncname + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 						}
 						else//Any other function call aside from HotIf().
 						{

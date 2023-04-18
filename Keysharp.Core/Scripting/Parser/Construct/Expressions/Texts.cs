@@ -109,7 +109,7 @@ namespace Keysharp.Scripting
 						if (parts[n].Contains("%"))//If it was a dynamic variable, don't enclose in quotes.
 							list.Add($"{parts[n]}");
 						else
-							list.Add($"\"{parts[n]}\"");
+							list.Add("\"" + parts[n] + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 
 						list.Add("*]");
 						//list.Add(ArrayOpen.ToString());

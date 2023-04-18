@@ -629,7 +629,7 @@ namespace Keysharp.Scripting
 						Type = new CodeTypeReference(typeof(string)),
 						Attributes = MemberAttributes.Public | MemberAttributes.Static
 					};
-					nameprop.GetStatements.Add(new CodeSnippetExpression($"return \"{classtype.Name}\""));
+					nameprop.GetStatements.Add(new CodeSnippetExpression("return \"" + classtype.Name + "\""));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 					_ = classtype.Members.Add(nameprop);
 					return null;
 				}

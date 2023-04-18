@@ -96,13 +96,13 @@ namespace Keysharp.Core.Common.Keyboard
 			inputLevel = (uint)Accessors.A_InputLevel;
 			suspendExempt = DefaultHotstringSuspendExempt;
 			constructedOK = false;
-			var executeAction = false; // do not assign  mReplacement if execute_action is true.
+			var unusedX = false; // do not assign  mReplacement if execute_action is true.
 			ParseOptions(_options, ref priority, ref keyDelay, ref sendMode, ref caseSensitive, ref conformToCase, ref doBackspace
-						 , ref omitEndChar, ref sendRaw, ref endCharRequired, ref detectWhenInsideWord, ref doReset, ref executeAction, ref suspendExempt);
+						 , ref omitEndChar, ref sendRaw, ref endCharRequired, ref detectWhenInsideWord, ref doReset, ref unusedX, ref suspendExempt);
 			str = _hotstring;
 			Name = _name;
 
-			if (!executeAction && !string.IsNullOrEmpty(_replacement))
+			if (!string.IsNullOrEmpty(_replacement))
 				replacement = _replacement;
 			else // Leave mReplacement NULL, but make this false so that the hook doesn't do extra work.
 				conformToCase = false;
@@ -342,15 +342,23 @@ namespace Keysharp.Core.Common.Keyboard
 
 			if (doBackspace)
 			{
+				var backspaceCount = str.Length;
+
+				for (var i = 0; i < str.Length; i++)
+					if (char.IsSurrogatePair(str, i))
+					{
+						i++;
+						backspaceCount--;
+					}
+
 				// Subtract 1 from backspaces because the final key pressed by the user to make a
 				// match was already suppressed by the hook (it wasn't sent through to the active
 				// window).  So what we do is backspace over all the other keys prior to that one,
 				// put in the replacement text (if applicable), then send the EndChar through
 				// (if applicable) to complete the sequence.
-				var backspaceCount = str.Length - 1;
 
-				if (endCharRequired)
-					++backspaceCount;
+				if (!endCharRequired)
+					--backspaceCount;
 
 				for (var i = 0; i < backspaceCount; ++i)
 				{

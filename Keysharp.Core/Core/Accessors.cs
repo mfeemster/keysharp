@@ -183,12 +183,13 @@ namespace Keysharp.Core
 
 				if (val.HasValue)
 				{
-					if (!val.Value)
-						Script.trayMenu.HideItem("&Open");
-					else
-						Script.trayMenu.ShowItem("&Open");
-
 					allowMainWindow = val.Value;
+					Keysharp.Scripting.Script.openMenuItem.Visible = val.Value;
+
+					if (!Accessors.A_AllowMainWindow.Ab())
+						Keysharp.Scripting.Script.openMenuItem.Visible = false;
+					else
+						Keysharp.Scripting.Script.trayMenu.Default = "&Open";
 				}
 			}
 		}

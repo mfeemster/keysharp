@@ -1,9 +1,16 @@
+using Keysharp.Core.Windows;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Cache;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Mail;
+using System.Threading.Tasks;
+using System.Windows.Forms.VisualStyles;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Keysharp.Core
 {
@@ -18,24 +25,59 @@ namespace Keysharp.Core
 		/// Leave blank to return the data as a string.
 		/// </param>
 		/// <returns>The downloaded data if <paramref name="filename"/> is blank, otherwise an empty string.</returns>
-		public static string Download(object obj0, object obj1)
+		public static void Download(object obj0, object obj1)
 		{
 			var address = obj0.As();
 			var filename = obj1.As();
-			var flags = Options.ParseFlags(ref address);
+			var flags = -1;
 
-			using (var http = new WebClient())//Obsolete, unsure if Mono supports the new HttpClient though.
+			if (address.StartsWith('*'))
 			{
-				if (flags.Contains("0"))
-					http.CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable);
+				var splits = address.Split(Keysharp.Core.Core.SpaceTab);
 
-				if (string.IsNullOrEmpty(filename))
-					return http.DownloadString(address);
-
-				http.DownloadFile(address, filename);
+				if (splits.Length == 2)
+				{
+					flags = splits[0].TrimStart('*').Ai();
+					address = splits[1];
+				}
 			}
 
-			return string.Empty;
+			var t = Task.Run(async () =>//We explicitly do NOT use Task.Factory.StartNew() here, because it does not understand async delegates.
+			{
+				try
+				{
+					using (var client = new HttpClient())
+					{
+						if (flags != 0)
+						{
+							client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
+							{
+								NoCache = true
+							};
+						}
+
+						var uri = new Uri(address);
+
+						using (var response = await client.GetStreamAsync(address))
+						{
+							using (var fs = new FileStream(filename, FileMode.Create))
+							{
+								await response.CopyToAsync(fs);
+								return true;
+							}
+						}
+					}
+
+					return false;
+				}
+				catch (Exception ex)
+				{
+					throw;//Do not pass ex because it will reset the stack information.
+				}
+
+				return false;
+			});
+			t.Wait();
 		}
 
 		/// <summary>

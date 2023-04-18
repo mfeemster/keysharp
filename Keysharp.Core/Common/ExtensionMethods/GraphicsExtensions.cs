@@ -76,7 +76,7 @@ namespace System.Drawing
 
 	public static class GraphicsExtensions
 	{
-		public static bool CompareWithVar(this FastColor col, FastColor match, int variation)
+		internal static bool CompareWithVar(this FastColor col, FastColor match, int variation)
 		{
 			if (col.A == 0)
 				return true;
@@ -90,7 +90,7 @@ namespace System.Drawing
 			return r && g && b;
 		}
 
-		public static Bitmap Resize(this Bitmap bmp, int width, int height)
+		internal static Bitmap Resize(this Bitmap bmp, int width, int height)
 		{
 			//AHK used these formulas and rounded.
 			if (width == -1)
@@ -111,9 +111,9 @@ namespace System.Drawing
 			return bmp2;
 		}
 
-		public static System.Drawing.Point ToPoint(this Keysharp.Core.Windows.RECT rect) => new System.Drawing.Point(rect.Left, rect.Top);
+		internal static System.Drawing.Point ToPoint(this Keysharp.Core.Windows.RECT rect) => new System.Drawing.Point(rect.Left, rect.Top);
 
-		public static Keysharp.Core.Map ToPos(this Rectangle rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		internal static Keysharp.Core.Map ToPos(this Rectangle rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
 		{
 			{ "X", rect.Left * scale },
 			{ "Y", rect.Top * scale },
@@ -121,7 +121,7 @@ namespace System.Drawing
 			{ "Height", rect.Height * scale },
 		});
 
-		public static Keysharp.Core.Map ToPos(this Keysharp.Core.Windows.RECT rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		internal static Keysharp.Core.Map ToPos(this Keysharp.Core.Windows.RECT rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
 		{
 			{ "X", rect.Left * scale },
 			{ "Y", rect.Top * scale },

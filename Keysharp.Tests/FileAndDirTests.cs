@@ -970,12 +970,10 @@ groupkey13=groupval13
 			var namenoext = splitpath.OutNameNoExt;
 			var drive = splitpath.OutDrive;
 			Assert.AreEqual("file1.txt", filename);
-			Assert.AreEqual("C:\\D\\bu\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
-			//Assert.AreEqual("H:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
+			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
 			Assert.AreEqual("txt", ext);
 			Assert.AreEqual("file1", namenoext);
-			//Assert.AreEqual("H:\\", drive);
-			Assert.AreEqual("C:\\", drive);
+			Assert.AreEqual("D:\\", drive);
 			Assert.IsTrue(TestScript("file-filesplitpath", true));
 		}
 	}

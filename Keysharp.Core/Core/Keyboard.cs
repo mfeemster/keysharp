@@ -227,8 +227,8 @@ break_twice:;
 			{
 				var old = HotstringDefinition.defEndChars;
 
-				if (replacement is string s && s.Length > 0)
-					HotstringDefinition.defEndChars = s;
+				if (!string.IsNullOrEmpty(action))
+					HotstringDefinition.defEndChars = action;
 
 				return old;//Return the old value.
 			}
@@ -292,14 +292,20 @@ break_twice:;
 			var caseSensitive = HotstringDefinition.DefaultHotstringCaseSensitive;
 			var detectInsideWord = HotstringDefinition.DefaultHotstringDetectWhenInsideWord;
 			var un = false; var iun = 0; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
+			var executeAction = false;
 
 			if (hotstringOptions.Length > 0)
-				HotstringDefinition.ParseOptions(hotstringOptions, ref iun, ref iun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref xOption, ref un);
+				HotstringDefinition.ParseOptions(hotstringOptions, ref iun, ref iun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref executeAction, ref un);
 
 			IFuncObj ifunc = null;
 
-			if (xOption)
-				ifunc = Function.GetFuncObj(replacement, null);
+			if (replacement != null)
+			{
+				if (xOption)
+					ifunc = Function.GetFuncObj(replacement, null);
+				else if (executeAction)
+					throw new ValueError("The 'X' option must be used together with a function object.");
+			}
 
 			var toggle = ToggleValueType.Neutral;
 
@@ -348,7 +354,7 @@ break_twice:;
 			else // No matching hotstring yet.
 			{
 				if (ifunc == null && string.IsNullOrEmpty(action))
-					throw new TargetError("Nonexistent hotstring.");
+					throw new TargetError("Nonexistent hotstring.", name);
 
 				var initialSuspendState = (toggle == ToggleValueType.Off) ? HotstringDefinition.HS_TURNED_OFF : 0;
 

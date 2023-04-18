@@ -12,16 +12,16 @@ namespace Keysharp.Core.Common.Input
 		internal InputType input;
 		private IFuncObj onChar, onEnd, onKeyDown, onKeyUp;
 
-		public bool BackspaceIsUndo
+		public object BackspaceIsUndo
 		{
 			get => input.BackspaceIsUndo;
-			set => input.BackspaceIsUndo = value;
+			set => input.BackspaceIsUndo = value.Ab();
 		}
 
-		public bool CaseSensitive
+		public object CaseSensitive
 		{
 			get => input.CaseSensitive;
-			set => input.CaseSensitive = value;
+			set => input.CaseSensitive = value.Ab();
 		}
 
 		public string EndKey
@@ -65,10 +65,10 @@ namespace Keysharp.Core.Common.Input
 			}
 		}
 
-		public bool FindAnywhere
+		public object FindAnywhere
 		{
 			get => input.FindAnywhere;
-			set => input.FindAnywhere = value;
+			set => input.FindAnywhere = value.Ab();
 		}
 
 		public bool InProgress => input.InProgress();
@@ -85,16 +85,25 @@ namespace Keysharp.Core.Common.Input
 			}
 		}
 
-		public uint MinSendLevel
+		public object MinSendLevel
 		{
-			get => input.MinSendLevel;
-			set => input.MinSendLevel = value;
+			get => (long)input.MinSendLevel;
+
+			set
+			{
+				var val = value.Al();
+
+				if (val < 0 || val > 101)
+					throw new ValueError($"Cannot set InputObject.MinSendLevel to a value outside of the range 0 - 101 ({value}).");
+
+				input.MinSendLevel = (uint)val;
+			}
 		}
 
-		public bool NotifyNonText
+		public object NotifyNonText
 		{
 			get => input.NotifyNonText;
-			set => input.NotifyNonText = value;
+			set => input.NotifyNonText = value.Ab();
 		}
 
 		public object OnChar
@@ -134,16 +143,16 @@ namespace Keysharp.Core.Common.Input
 			}
 		}
 
-		public bool VisibleNonText
+		public object VisibleNonText
 		{
 			get => input.VisibleNonText;
-			set => input.VisibleNonText = value;
+			set => input.VisibleNonText = value.Ab();
 		}
 
-		public bool VisibleText
+		public object VisibleText
 		{
 			get => input.VisibleText;
-			set => input.VisibleText = value;
+			set => input.VisibleText = value.Ab();
 		}
 
 		public InputObject(string options, string endKeys, string matchList) => input = new InputType(this, options, endKeys, matchList);

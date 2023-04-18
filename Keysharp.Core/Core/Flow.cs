@@ -286,7 +286,7 @@ namespace Keysharp.Core
 					}
 				}
 			};
-			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => timer.Start(), true);
+			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(timer.Start, true);
 		}
 
 		/// <summary>
@@ -372,7 +372,7 @@ namespace Keysharp.Core
 				Keysharp.Scripting.Script.OnExitHandlers.Clear();
 
 			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
-			Keysharp.Core.Common.Keyboard.HotkeyDefinition.AllDestruct(0);
+			Keysharp.Core.Common.Keyboard.HotkeyDefinition.AllDestruct();
 
 			if (Script.HookThread is Common.Threading.HookThread ht)
 				ht.Stop();

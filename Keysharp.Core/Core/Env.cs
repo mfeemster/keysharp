@@ -215,7 +215,7 @@ namespace Keysharp.Core
 		{
 			var dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
 							  .Select(f => f.Name);
-			var containsSomething = dataFormats.Any(x => Clipboard.ContainsData(x));
+			var containsSomething = dataFormats.Any(Clipboard.ContainsData);
 			return !containsSomething;
 		}
 

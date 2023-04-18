@@ -7,17 +7,20 @@ namespace System//Extension methods should be in the same namespace of the objec
 {
 	public static class CharExtensions
 	{
-		public static bool IsHex(this char c)
+		internal static bool IsHex(this char c)
 		{
 			return (c >= '0' && c <= '9') ||
 				   (c >= 'a' && c <= 'f') ||
 				   (c >= 'A' && c <= 'F');
 		}
+
+		internal static bool IsIdentifierChar(this char c) => (uint)c > 0x7F || char.IsAsciiLetterOrDigit(c) || c == '_';
+		internal static bool IsLeadingIdentifierChar(this char c) => (uint)c > 0x7F || char.IsLetter(c) || c == '_';
 	}
 
 	public static class StringExtensions
 	{
-		public static bool AllHex(this string source)
+		internal static bool AllHex(this string source)
 		{
 			foreach (var ch in source)
 				if (!ch.IsHex())
@@ -26,7 +29,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return true;
 		}
 
-		public static int FindFirstNotOf(this string source, string chars, int offset = 0)
+		internal static int FindFirstNotOf(this string source, string chars, int offset = 0)
 		{
 			if (source.Length == 0) return -1;
 
@@ -39,7 +42,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return -1;
 		}
 
-		public static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
+		internal static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
 		{
 			if (source.Length == 0) return 0;// -1;
 
@@ -52,7 +55,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return source.Length;// -1;
 		}
 
-		public static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0)
+		internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0)
 		{
 			for (var i = offset; i < source.Length; i++)
 				if (func(source[i]))
@@ -61,15 +64,31 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return -1;
 		}
 
-		public static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();
+		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();
 
-		public static string RemoveAfter(this string input, string token)
+		/// <summary>
+		/// Returns the remainder of the string, starting at the character which is not valid in an identifier (var, func, or obj.key name).
+		/// </summary>
+		/// <param name="buf"></param>
+		/// <returns></returns>
+		internal static int FindIdentifierEnd(this string buf)
+		{
+			var i = 0;
+
+			for (; i < buf.Length; i++)
+				if (!buf[i].IsIdentifierChar())
+					return i;
+
+			return i;
+		}
+
+		internal static string RemoveAfter(this string input, string token)
 		{
 			var index = input.IndexOf(token);
 			return index > 0 ? input.Substring(0, index) : input;
 		}
 
-		public static string RemoveAll(this string str, string chars)
+		internal static string RemoveAll(this string str, string chars)
 		{
 			var buffer = new char[str.Length];
 			var idx = 0;
@@ -81,7 +100,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return new string(buffer, 0, idx);
 		}
 
-		public static string RemoveAll(this string str, char[] chars)
+		internal static string RemoveAll(this string str, char[] chars)
 		{
 			var buffer = new char[str.Length];
 			var idx = 0;
@@ -117,7 +136,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			}
 		}
 
-		public static List<string> SplitWithDelimiter(this string aMatchList, char[] delims, bool append)
+		internal static List<string> SplitWithDelimiter(this string aMatchList, char[] delims, bool append)
 		{
 			var match = new List<string>();
 
@@ -168,7 +187,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return match;
 		}
 
-		public static ReadOnlySpan<char> TrimEndAlpha(this string s)
+		internal static ReadOnlySpan<char> TrimEndAlpha(this string s)
 		{
 			var len = s.Length;
 
@@ -178,7 +197,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return s.AsSpan(0, len);
 		}
 
-		public static string TrimEndOf(this string str, string trim, bool ignoreCase = true) =>
+		internal static string TrimEndOf(this string str, string trim, bool ignoreCase = true) =>
 		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		? str.Substring(0, str.LastIndexOf(trim))
 		: str;

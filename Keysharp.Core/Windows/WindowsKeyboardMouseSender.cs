@@ -2528,7 +2528,7 @@ namespace Keysharp.Core.Windows
 										// Although MSDN says WM_CHAR uses UTF-16, it seems to really do automatic
 										// translation between ANSI and UTF-16; we rely on this for correct results:
 										for (var ii = 0L; ii < repeatCount; ++ii)
-											_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, keys[0], 0);
+											_ = WindowsAPI.PostMessage(targetWindow, WindowsAPI.WM_CHAR, subspanstr[0], 0);
 									}
 									else
 										SendKeySpecial(subspanstr[0], repeatCount, modsForNextKey.Value | persistentModifiersForThisSendKeys);
@@ -3857,20 +3857,6 @@ namespace Keysharp.Core.Windows
 				// Users of the below want them updated only for keybd_event() keystrokes (not PostMessage ones):
 				prevEventType = eventType;
 				prevVK = vk;
-				// Turn off BlockInput momentarily to support sending of the ALT key.
-				// Jon Bennett noted: "As many of you are aware BlockInput was "broken" by a SP1 hotfix under
-				// Windows XP so that the ALT key could not be sent. I just tried it under XP SP2 and it seems
-				// to work again."  In light of this, it seems best to unconditionally and momentarily disable
-				// input blocking regardless of which OS is being used.
-				// For thread safety, allow block-input modification only by the main thread.  This should avoid
-				// any chance that block-input will get stuck on due to two threads simultaneously reading+changing
-				// g_BlockInput (changes occur via calls to ScriptBlockInput).
-				var weTurnedBlockinputOff = Keyboard.blockInput && (vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
-											&& !callerIsKeybdHook; // Ordered for short-circuit performance.
-
-				if (weTurnedBlockinputOff)
-					_ = Keyboard.ScriptBlockInput(false);
-
 				var tempTargetLayoutHasAltGr = callerIsKeybdHook ? LayoutHasAltGr(GetFocusedKeybdLayout(IntPtr.Zero)) : targetLayoutHasAltGr;
 				var hookableAltGr = (vk == VK_RMENU) && (tempTargetLayoutHasAltGr == ResultType.ConditionTrue) && !putEventIntoArray && ht.HasKbdHook();// hookId != IntPtr.Zero;
 				// Calculated only once for performance (and avoided entirely if not needed):
@@ -3934,9 +3920,6 @@ namespace Keysharp.Core.Windows
 					if (doKeyHistory && ht.keyHistory is KeyHistory kh)
 						kh.UpdateKeyEventHistory(true, vk, sc);
 				}
-
-				if (weTurnedBlockinputOff)  // Already made thread-safe by action higher above.
-					_ = Keyboard.ScriptBlockInput(true);  // Turn BlockInput back on.
 			}
 
 			if (doKeyDelay) // SM_PLAY also uses DoKeyDelay(): it stores the delay item in the event array.

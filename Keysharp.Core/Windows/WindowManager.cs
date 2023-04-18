@@ -29,7 +29,11 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override WindowItemBase LastFound { get; set; }
+		internal override WindowItemBase LastFound
+		{
+			get => CreateWindow(Keysharp.Scripting.Script.hwndLastUsed);
+			set => Keysharp.Scripting.Script.hwndLastUsed = value.Handle;
+		}
 
 		internal WindowManager() => Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
 

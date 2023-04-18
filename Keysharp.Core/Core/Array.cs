@@ -230,7 +230,7 @@ namespace Keysharp.Core
 					var val = array[i];
 
 					if (val is string vs)
-						str = $"\"{vs}\"";
+						str = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
 					else
 						str = val.ToString();
 

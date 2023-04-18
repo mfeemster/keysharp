@@ -18,7 +18,7 @@ namespace Keysharp.Core.Linux
 
 		internal override IEnumerable<WindowItemBase> AllWindows => throw new NotImplementedException();
 
-		internal override WindowItemBase LastFound
+		internal override WindowItemBase LastFound//If Hwnds work on linux, then it might just be ok to use the base.
 		{
 			get => throw new NotImplementedException();
 			set => throw new NotImplementedException();
