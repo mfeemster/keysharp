@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using Keysharp.Core.Common;
+using Keysharp.Core.Common.Window;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
@@ -42,27 +43,7 @@ namespace Keysharp.Core
 		private List<IFuncObj> selectedItemChangedHandlers;
 		public bool AltSubmit { get; internal set; } = false;
 
-		public string ClassNN
-		{
-			get
-			{
-				var i = 0;
-
-				foreach (Control ctrl in Gui.form.Controls)
-				{
-					if (Control.Tag is GuiControl gc)
-					{
-						if (string.Compare(gc.typename, typename, true) == 0)
-							i++;
-
-						if (ctrl == _control)
-							break;
-					}
-				}
-
-				return $"{typename}{i}";
-			}
-		}
+		public string ClassNN => WindowManagerProvider.Instance.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 		public Control Control => _control;
 
