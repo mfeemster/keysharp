@@ -199,6 +199,53 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
+		internal override string NetClassName
+		{
+			get
+			{
+				if (Control.FromHandle(Handle) is Control c)
+					return c.GetType().Name;
+
+				return "";
+			}
+		}
+
+		internal override string NetClassNN
+		{
+			get
+			{
+				if (Control.FromHandle(Handle) is Control ctrl)
+				{
+					var className = ctrl.GetType().Name;
+					var classNN = className;
+					var parent = ctrl.Parent;
+
+					if (parent != null)
+					{
+						var nn = 1; // Class NN counter
+
+						// now we must know the postion of our "control"
+						foreach (var c in parent.GetAllControlsRecusrvive<Control>())
+						{
+							if (c.GetType().Name == className)
+							{
+								if (c == ctrl)
+									break;
+								else
+									++nn;  // if its the same class but not our control
+							}
+						}
+
+						classNN += nn.ToString(); // if its the same class and our control
+					}
+
+					return classNN;
+				}
+
+				return "";
+			}
+		}
+
 		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
 
 		internal override IntPtr PID

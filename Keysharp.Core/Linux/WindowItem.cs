@@ -76,6 +76,8 @@ namespace Keysharp.Core.Linux
 			set => throw new NotImplementedException();
 		}
 
+		internal override string NetClassName => throw new NotImplementedException();
+		internal override string NetClassNN => throw new NotImplementedException();
 		internal override WindowItemBase ParentWindow => throw new NotImplementedException();
 
 		internal override IntPtr PID => throw new NotImplementedException();

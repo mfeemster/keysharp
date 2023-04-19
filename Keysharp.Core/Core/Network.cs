@@ -67,15 +67,11 @@ namespace Keysharp.Core
 							}
 						}
 					}
-
-					return false;
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
 					throw;//Do not pass ex because it will reset the stack information.
 				}
-
-				return false;
 			});
 			t.Wait();
 		}

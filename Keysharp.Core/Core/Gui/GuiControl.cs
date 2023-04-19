@@ -44,7 +44,6 @@ namespace Keysharp.Core
 		public bool AltSubmit { get; internal set; } = false;
 
 		public string ClassNN => WindowManagerProvider.Instance.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
-
 		public Control Control => _control;
 
 		public object Enabled
@@ -54,9 +53,7 @@ namespace Keysharp.Core
 		}
 
 		public object Focused => _control.Focused;
-
 		public Gui Gui { get; private set; }
-
 		public long Hwnd => _control.Handle.ToInt64();
 
 		public object Name
@@ -64,6 +61,8 @@ namespace Keysharp.Core
 			get => _control.Name;
 			set => _control.Name = value.ToString();
 		}
+
+		public string NetClassNN => WindowManagerProvider.Instance.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 		public object Parent
 		{

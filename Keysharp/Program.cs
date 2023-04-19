@@ -318,7 +318,7 @@ namespace Keysharp.Main
 			//var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
 			//versions.Sort();
 			//return versions.Last().ToString();
-			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(x => System.IO.Path.GetFileName(x)).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
+			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
 			return dir;
 		}
 

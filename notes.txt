@@ -255,7 +255,11 @@ Differences:
 	-AddStandard() detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
 	-A_EventInfo is not limited to positive values when reporting the mouse wheel scroll amount. When scrolling up, the value will be positive, and negative when scrolling down.
 	-Download() only supports the *0 option, and not any other numerical values.
-	
+	-Using the class name with ClassNN on .NET controls gives long, version specific names because a simpler class name can't be specified in code the way it can in AHK with calls to CreatWindowEx().
+		-So there is an additional NetClassNN property alongside ClassNN. This is used internally in the index operator for the Gui class, where if a control with a matching ClassNN is not found, then controls are searched for their NetClassNN values.
+		-All GUI controls created in Keysharp are prefixed with the string "Keysharp". So for example: KeysharpButton, KeysharpEdit etc...
+		
+		
 TODO/ENSURE THESE WORK:
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
 		Ensure V2 H multithreading works

@@ -43,6 +43,8 @@ namespace Keysharp.Core.Common.Window
 		internal abstract bool IsHung { get; }
 		internal bool IsSpecified => Handle != IntPtr.Zero;
 		internal abstract Rectangle Location { get; set; }
+		internal abstract string NetClassName { get; }
+		internal abstract string NetClassNN { get; }
 		internal abstract WindowItemBase ParentWindow { get; }
 
 		internal virtual string Path

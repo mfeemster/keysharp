@@ -2192,7 +2192,7 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				var handle = controlname.ParseLong();
+				var handle = controlname.ParseLong(false);
 
 				if (handle.HasValue)
 				{
@@ -2214,12 +2214,21 @@ namespace Keysharp.Core
 						}
 					}
 
-					//Put the ClassNN search in a separate loop to be done as a last resort because it's very slow.
+					//Put the ClassNN searches in a separate loop to be done as a last resort because they're very slow.
 					foreach (var ctrlkv in controls)
 					{
 						if (ctrlkv.Value is GuiControl gc)
 						{
 							if (string.Compare(gc.ClassNN, s, true) == 0)
+								return gc;
+						}
+					}
+
+					foreach (var ctrlkv in controls)
+					{
+						if (ctrlkv.Value is GuiControl gc)
+						{
+							if (string.Compare(gc.NetClassNN, s, true) == 0)
 								return gc;
 						}
 					}
