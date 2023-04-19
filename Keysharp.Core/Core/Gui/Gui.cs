@@ -281,7 +281,11 @@ namespace Keysharp.Core
 			}
 		}
 
-		public string Name => form.Name;
+		public object Name
+		{
+			get => form.Name;
+			set => form.Name = value.ToString();
+		}
 
 		public KeysharpForm Parent
 		{
