@@ -151,7 +151,7 @@ namespace Keysharp.Core
 
 			foreach (var el in map)
 			{
-				var temp = Convert.ToInt64(el.Key);
+				var temp = el.Key.Al();
 
 				if (temp > val)
 					val = temp;
@@ -166,7 +166,7 @@ namespace Keysharp.Core
 
 			foreach (var el in map)
 			{
-				var temp = Convert.ToInt64(el.Key);
+				var temp = el.Key.Al();
 
 				if (temp < val)
 					val = temp;

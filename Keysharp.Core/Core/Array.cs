@@ -150,7 +150,7 @@ namespace Keysharp.Core
 
 			foreach (var el in array)
 			{
-				var temp = Convert.ToInt64(el);
+				var temp = el.Al();
 
 				if (temp > val)
 					val = temp;
@@ -165,7 +165,7 @@ namespace Keysharp.Core
 
 			foreach (var el in array)
 			{
-				var temp = Convert.ToInt64(el);
+				var temp = el.Al();
 
 				if (temp < val)
 					val = temp;

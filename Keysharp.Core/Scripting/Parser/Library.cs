@@ -26,45 +26,22 @@ namespace Keysharp.Scripting
 			var ignore = new List<string>();
 			var types = Reflections.loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
-						.Where(t => t.Namespace == "Keysharp.Core" && t.IsClass && t.IsPublic/* && t.IsAbstract && t.IsSealed*/);
+						.Where(t => t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core") && t.IsClass && t.IsPublic/* && t.IsAbstract && t.IsSealed*/);
 			var methods = types
 						  .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
-						  .Where(m => !m.IsSpecialName)
-						  ;
+						  .Where(m => !m.IsSpecialName);
 			var props = types
-						.SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Static))
-						.Where(p => p.Name.StartsWith("A_"))
-						;
+						.SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Static));
 
 			foreach (var method in methods)
-			{
-				//if (!method.IsPublic || !method.IsStatic)
-				//continue;
-				var name = method.Name.ToLowerInvariant();
-
-				//if (ignore.Contains(name))
-				//continue;
-
-				//var param = method.GetParameters();
-
-				if (!libMethods.ContainsKey(name))//If we ever want to support duplicates, we'll likely need a multimap.
-					//{
-					//  _ = libMethods.Remove(name);
-					//  ignore.Add(name);
-					//}
-					//else
-					libMethods.Add(name, method);
-
-				//else
-				//Console.WriteLine($"dupe: {name}");
-			}
+				libMethods.TryAdd(method.Name.ToLowerInvariant(), method);//If we ever want to support duplicates, we'll likely need a multimap.
 
 			var list = libMethods.Keys.ToList();
 			list.Sort();
 			//File.WriteAllText("methodskeysharp.txt", string.Join("\n", list.ToArray()));
 
 			foreach (var property in props)
-				libProperties.Add(property.Name.ToLowerInvariant(), property);
+				libProperties.TryAdd(property.Name.ToLowerInvariant(), property);
 		}
 	}
 }
