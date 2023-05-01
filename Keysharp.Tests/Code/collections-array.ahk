@@ -27,6 +27,21 @@ if (arr[3] = 30)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+if (arr[-1] == 30)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (arr[-2] == 20)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+if (arr[-3] == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
 
 x := arr[1]
 

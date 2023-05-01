@@ -13,11 +13,14 @@ namespace Keysharp.Tests
 		public void NumPutNumGet() => Assert.IsTrue(TestScript("external-numput-numget", true));
 
 		[Test, Category("External")]
+		public void CallbackCreate() => Assert.IsTrue(TestScript("external-callbackcreate", false));
+
+		[Test, Category("External")]
 		public void DllCall()
 		{
 			var desktop = WindowsAPI.GetDesktopWindow();
 			var rect = new RECT();
-			var buf = Script.Buffer(16, 0);
+			var buf = Keysharp.Core.Misc.Buffer(16, 0);
 			_ = DllHelper.DllCall("user32.dll\\GetWindowRect", "ptr", desktop, "ptr", buf);
 			_ = WindowsAPI.GetWindowRect(desktop, out rect);
 			var l = (long)NumGet(buf, 0, "UInt");
@@ -31,7 +34,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(rect.Bottom, b);
 			var str = "lower";
 			var len = str.Length;
-			var strbuf = Keysharp.Scripting.Script.StringBuffer(str);
+			var strbuf = Keysharp.Core.Misc.StringBuffer(str);
 			_ = DllHelper.DllCall("user32.dll\\CharUpperBuff", "ptr", strbuf, "UInt", len);
 			Assert.AreEqual(strbuf.ToString(), str.ToUpper());
 			Assert.IsTrue(TestScript("external-dllcall", true));

@@ -497,7 +497,7 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void StrPutStrGet()
 		{
-			var buf1 = Script.Buffer(32);
+			var buf1 = Keysharp.Core.Misc.Buffer(32);
 			var s = "tester";
 			//Unicode test.
 			var testlen = StrPut(s);
@@ -550,7 +550,7 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d";
 			var y = Strings.StrSplit(x, ",");
-			var exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c", "d" });
+			var exp = Keysharp.Core.Misc.Array(new string[] { "a", "b", "c", "d" });
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x);
@@ -565,27 +565,27 @@ namespace Keysharp.Tests
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x, null, null, 1);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "abcd" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "abcd" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 2);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "bcd" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "a", "bcd" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 3);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "cd" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "a", "b", "cd" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 4);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c", "d" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "a", "b", "c", "d" });
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 5);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c", "d" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "a", "b", "c", "d" });
 			Assert.AreEqual(exp, y);
 			x = "a,b,c,d";
 			y = Strings.StrSplit(x, ",", null, 3);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c,d" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "a", "b", "c,d" });
 			Assert.AreEqual(exp, y);
 			x = "	a, b-c _d	";
 			y = Strings.StrSplit(x, new string[] { ",", "-", "_" }, "\t ", 3);
-			exp = Keysharp.Scripting.Script.Array(new string[] { "a", "b", "c _d" });
+			exp = Keysharp.Core.Misc.Array(new string[] { "a", "b", "c _d" });
 			Assert.AreEqual(exp, y);
 			Assert.IsTrue(TestScript("string-strsplit", true));
 		}

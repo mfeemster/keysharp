@@ -62,7 +62,7 @@ namespace Keysharp.Benchmark
 	public class MathBench
 	{
 		private Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private Map map = Keysharp.Scripting.Script.Map(), mapScript = Keysharp.Scripting.Script.Map();
+		private Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
 		private double totalCos;
 		private List<double> vals = new List<double>();
 		private List<object> objvals = new List<object>();

@@ -213,7 +213,7 @@ namespace Keysharp.Scripting
 					if (part == "*")
 					{
 						variadic = true;
-						part = "obj";//Parameter is variadic, but unused.
+						part = "args";//Parameter is variadic, but the name is unspecified, so use "args" as a default (because "params" is a reserved word).
 					}
 					else if (part.EndsWith('*'))
 					{

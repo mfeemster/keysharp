@@ -185,7 +185,7 @@ namespace Keysharp.Scripting
 			if (success)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
-			Gui.DestroyAll();
+			Keysharp.Core.Gui.DestroyAll();
 		}
 
 		private void MainWindow_Load(object sender, EventArgs e)

@@ -139,3 +139,17 @@ If (z == "first fieldSecondFieldthe word `"special`" is quoted literallylast fie
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+x := "h.e-l,l;o"
+y := ".-,;"
+z := ""
+
+Loop Parse x, y
+{
+	z .= A_LoopField
+}
+
+If (z == "hello")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

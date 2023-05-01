@@ -63,7 +63,7 @@ namespace Keysharp.Benchmark
 	{
 		private object[] nativearray = System.Array.Empty<object>();
 		private double[] nativedoublearray = System.Array.Empty<double>();
-		private Array keysharparray = Keysharp.Scripting.Script.Array();
+		private Array keysharparray = Keysharp.Core.Misc.Array();
 		private double totalSum;
 
 		[Params(1000000)]

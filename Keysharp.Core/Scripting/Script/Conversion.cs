@@ -195,6 +195,8 @@ namespace Keysharp.Scripting
 				return c;
 			else if (input is null)
 				return 0;
+			else if (input is IntPtr ptr)
+				return ptr.ToInt32();
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -246,6 +248,8 @@ namespace Keysharp.Scripting
 				return c;
 			else if (input is null)
 				return 0;
+			else if (input is IntPtr ptr)
+				return ptr.ToInt64();
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)

@@ -64,7 +64,7 @@ namespace Keysharp.Benchmark
 	public class MapReadBenchmark
 	{
 		private Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private Map map = Keysharp.Scripting.Script.Map(), mapScript = Keysharp.Scripting.Script.Map();
+		private Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
 		private List<string> strings = new List<string>();
 
 		[Params(10000)]
@@ -95,8 +95,8 @@ namespace Keysharp.Benchmark
 		public void Setup()
 		{
 			Keysharp.Scripting.Script.Variables.InitGlobalVars();
-			map = Keysharp.Scripting.Script.Map();
-			mapScript = Keysharp.Scripting.Script.Map();
+			map = Keysharp.Core.Misc.Map();
+			mapScript = Keysharp.Core.Misc.Map();
 			dkt = new Dictionary<object, object>();
 			strings = new List<string>();
 
@@ -115,14 +115,14 @@ namespace Keysharp.Benchmark
 	public class MapWriteBenchmark
 	{
 		private Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private Map map = Keysharp.Scripting.Script.Map(), mapScript = Keysharp.Scripting.Script.Map();
+		private Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
 		private List<string> strings = new List<string>();
 
 		public MapWriteBenchmark()
 		{
 			Keysharp.Scripting.Script.Variables.InitGlobalVars();
-			map = Keysharp.Scripting.Script.Map();
-			mapScript = Keysharp.Scripting.Script.Map();
+			map = Keysharp.Core.Misc.Map();
+			mapScript = Keysharp.Core.Misc.Map();
 			dkt = new Dictionary<object, object>();
 			strings = new List<string>();
 		}

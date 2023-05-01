@@ -302,7 +302,7 @@ namespace Keysharp.Scripting
 						//Handle proper casing for all method calls.
 						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
 							cmie.Method.MethodName = cmm.Name;
-						else if (Keysharp.Core.Reflections.FindBuiltInMethod(cmie.Method.MethodName) is MethodPropertyHolder mph && mph.mi != null)//This will find the first built in method with this name, but they are all cased the same, so it shoudl be ok.
+						else if (Keysharp.Core.Reflections.FindBuiltInMethod(cmie.Method.MethodName) is MethodPropertyHolder mph && mph.mi != null)//This will find the first built in method with this name, but they are all cased the same, so it should be ok.
 							cmie.Method.MethodName = mph.mi.Name;
 					}
 				}

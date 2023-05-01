@@ -70,6 +70,7 @@ namespace Keysharp.Core
 						_ = FindAndCacheMethod(type, "");
 
 			foreach (var typekv in typeToStringMethods)
+			{
 				foreach (var methkv in typekv.Value)
 				{
 					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
@@ -85,6 +86,7 @@ namespace Keysharp.Core
 						_ = typeToStringBuiltInMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, MethodPropertyHolder>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
 					}
 				}
+			}
 		}
 
 		internal static void CacheAllProperties()

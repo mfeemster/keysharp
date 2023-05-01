@@ -246,12 +246,12 @@ namespace Keysharp.Scripting
 		//  return result is string s ? !string.IsNullOrEmpty(s) : result != null;
 
 		public static bool IsNumeric(Type type) =>
-		type == typeof(int)
+		type == typeof(long)
+		|| type == typeof(double)
+		|| type == typeof(int)
 		|| type == typeof(uint)
-		|| type == typeof(long)
 		|| type == typeof(ulong)
 		|| type == typeof(float)
-		|| type == typeof(double)
 		|| type == typeof(decimal)
 		|| type == typeof(byte)
 		|| type == typeof(sbyte)
@@ -394,13 +394,13 @@ namespace Keysharp.Scripting
 
 				case Operator.IdentityInequality:
 				{
-					_ = MatchTypes(ref left, ref right);//Still need this.
+					_ = MatchTypes(ref left, ref right);
 					return left == null ? right != null : !left.Equals(right);
 				}
 
 				case Operator.IdentityEquality://This is for a double equal sign in a conditional, and uses case sensitive comparison for strings.
 				{
-					_ = MatchTypes(ref left, ref right);//Still need this.
+					_ = MatchTypes(ref left, ref right);
 					return left == null ? right == null : left.Equals(right);
 				}
 

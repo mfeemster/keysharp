@@ -55,51 +55,60 @@ Bugs:
 	-File related functions did not properly use the current file loop if the passed in file name was empty.
 			
 Differences:
-	-AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
-	-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x**y really means -(x**y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
-		To negate the result of a power operation, use parentheses: -(x**y).
-		To negate one term of a power operation before applying, use parentheses around the term: (-x)**y or -(x)**y
-	-There is no such thing as dereferencing in C#, so the * operator is not supported.
-		However the & operator is still supported to get the numeric value of the memory address at which an object is stored.
-	-Object methods and properties will be case sensitive because that's how they are in C#.
-	-Had to rework much of the infrastructure for dynamically calling methods and properties on objects, such as array.InsertAt(). This may or may not be more efficient.
-	-No such thing as negative indices.
-	-Array has a new method called Add() which should be more efficient than Push() when adding a single item. It also returns the length of the array after the add completes.
-	-IronAHK used decimal in some math functions. Keysharp will just use double for everything.
-	-AHK only supported Atan(), but Keysharp also supports Atan2(x, y).
-	-Added hyperbolic versions of trigonometric functions: Sinh(), Cosh(), Tanh().
-	-IronAHK did not implement OnClipboardChange().
-	-IronAHK did not implement Loop Reg.
-	-Added a new property named A_LoopRegValue which makes it easy to get a registry value when using Loop Reg.
-	-AHK could not use multi character strings as delimiters for Loop Parse, but Keysharp supports this.
-	-IronAHK did not support writing to the standard error output in FileAppend using **.
-	-Not supporting R, Dn or Tn parameters in FormatDateTime(), except for 0x80000000 to disallow user overrides. If you want to specify a particular format or order, do it in the format argument. There is no need or reason to have one argument alter the other.
-		The C# style formatters are supported: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings
-	-AHK appears to have created a complex memory management system, because C++ does not inherently contain one. As such, functions like VarSetStrCapacity() exist, as well as special rules for when memory gets cleared. None of this exists in Keysharp because it's all managed by the .NET runtime. As such, functions like VarSetStrCapacity() will throw an exception if used.
-	-Keysharp has a special variable called args which is the original, unaltered array passed into a function. All functions support this because they are all variadic. This is an alternative to the params variable listed in the AHK documentation, because params ia a reserved word in C#.
-	-Because all functions are variadic, the * doesn't apply.
-	-DllCall() requires the user to use a StrigBuffer object when specifying type "ptr" to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
-		--Do not use str if the function will modify it.
-		--Also use "ptr" and StringBuffer for double pointer parameters such as LPTSTR*.
-	-Function objects will need to be created to be used. They are not all created automatically on script load like the documentation says. Possibly might be a way for the compiler to detect which ones are used and do them automatically.
-	-For CallbackCreate, the & option won't work. C# doesn't do functions the same way. Hopefully it doesn't matter. Just pass the parameters you need.
-	-ListLines() is omitted because C# doesn't support it.
-	-Process.Run() can take an extra string for the argument.
-	-Exception classes aren't, and can't be, derived from KeysharpObject. That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base System.Exception class, and multiple inheritance is not allowed.
-	-IsAlpha(), IsUpper(), IsLower() do not accept a locale parameter because all strings are Unicode.
+
+	Behaviors/Functionality:
+		-Keysharp follows the .NET memory model.
+		-AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
+		-Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
+		-Exception classes aren't, and can't be, derived from KeysharpObject. That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base System.Exception class, and multiple inheritance is not allowed.
+		
+		-CallbackCreate() does not support the CDecl/C option because the program will be run in 64-bit mode.
+			-The Fast/F option is enabled by default because threads are not implemented yet.
+			-The ParamCount parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
+			-Passing string pointers to DllCall() when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
+			-Usage of the created callback will be extremely inefficient, so usage of CallbackCreate() is discouraged.
+			
+	Syntax:
+		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x**y really means -(x**y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
+			To negate the result of a power operation, use parentheses: -(x**y).
+			To negate one term of a power operation before applying, use parentheses around the term: (-x)**y or -(x)**y
+		-The default name for the array of parameters in a variadic function is "args", instead of "params". This is due to "params" being a reserved word in C#.
+		-DllCall() requires the user to use a StrigBuffer object when specifying type "ptr" to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
+			--Do not use str if the function will modify it.
+			--Also use "ptr" and StringBuffer for double pointer parameters such as LPTSTR*.
+		-A leading plus sign on numeric values, such as +123 or +0x123 is not supported. It has no effect anyway, so just omit it.
+		-AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
+		-Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: ++Var := X is evaluated as ++(Var := X)
+			--Use var := x, ++var instead.
+		-Built in functions are case sensitive, because they are called directly in the generated code.
+		
+	Additions/Improvements: Keysharp has added...
+		-A new method to Array called Add() which should be more efficient than Push() when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
+		-Atan2(y, x) while AHK only supports Atan().
+		-Hyperbolic versions of the trigonometric functions: Sinh(), Cosh(), Tanh().
+		-A new property named A_LoopRegValue which makes it easy to get a registry value when using Loop Reg.
+		-Process.Run/RunWait() can take an extra string for the argument instead of appending it to the program name string. The original functionality still works too. The signature is: Run/RunWait(Target[, WorkingDir, Options, Args])
+			-Because reference variables are not supported, Run/RunWait() do not take &OutputVarPID as the last argument. Instead, they return (ExitCode, OutputVarPID).
+			
+	Removals:	
+		-VarSetStrCapacity() has been removed due to it being incompatible with the .NET memory model.
+		-ListLines() is omitted because C# doesn't support it.
+		-There is no such thing as dereferencing in C#, so the * dereferencing operator is not supported.		
+		-The R, Dn or Tn parameters in FormatDateTime() are not supported, except for 0x80000000 to disallow user overrides. If you want to specify a particular format or order, do it in the format argument. There is no need or reason to have one argument alter the other.
+			The C# style formatters are supported: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings
+		-Static text controls do not send the Windows API WM_CTLCOLORSTATIC (0x0138) message to their parent controls.
+		-IsAlpha(), IsUpper(), IsLower() do not accept a locale parameter because all strings are Unicode.
+		-Renaming Keysharp.exe to run a specific script by default will not work.
+		-User definable properties will not be included in the first release, and Map values will not be considered OwnProps until future work is done.
+		-ObjPtr() is not implemented because objects can be moved by the GC.
+		-ObjGet/SetCapacity() are not implemented because C# manages its own memory internally.
+		
 	-In SetTimer(), the priority is not -2147483648 and 2147483647, instead it is only 0-4.
 		--Also, you cannot omit the function parameter to have it act on the last timer from this thread. You must explicitly pass the timer or function name to the timer so it knows which timer to operate on.
 		--Timers are not disabled when the program menu is shown.
 		--The callback is passed the function object as the first object, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string. This allows the handler to alter the timer by passing the function object back to another call to SetTimer().
-	-Renaming Keysharp.exe to run a specific script by default will not work.
-	-A leading plus sign on numeric values, such as +123 or +0x123 is not supported. It has no effect anyway, so just omit it.
-	-AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
-	-Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: ++Var := X is evaluated as ++(Var := X)
-		--Use var := x, ++var instead.
-	-User defined classes will not be included in the first release.
-	-User definable properties will not be included in the first release, and Map values will not be considered OwnProps until future work is done.
-	-ObjPtr() is not implemented because objects can be moved by the GC.
-	-Built in functions are case sensitive, because they are called directly in the generated code.
+	
+	
 	-VarRef and reference variables are not supported.
 		-Because of this, users will need to rework how they use MonitorGet(), MonitorGetWorkArea(), SplitPath(), FileGetShortcut(), StrReplace(), LoadPicture(), WinGetPos(), ImageSearch(), MouseGetPos(), 
 		-Might be possible: https://stackoverflow.com/questions/8779731/how-to-pass-a-parameter-as-a-reference-with-methodinfo-invoke
@@ -258,7 +267,8 @@ Differences:
 	-Using the class name with ClassNN on .NET controls gives long, version specific names because a simpler class name can't be specified in code the way it can in AHK with calls to CreatWindowEx().
 		-So there is an additional NetClassNN property alongside ClassNN. This is used internally in the index operator for the Gui class, where if a control with a matching ClassNN is not found, then controls are searched for their NetClassNN values.
 		-All GUI controls created in Keysharp are prefixed with the string "Keysharp". So for example: KeysharpButton, KeysharpEdit etc...
-		
+		-Using 'ClassNN' to operate on WinForms/.NET GUIs may give unexpected results.
+		-The ClassNN for a WinForms control (e.g. 'WindowsForms10.Button.app.0.21de5e3_r3_ad16' for a Button) may change from machine to machine, and may change for the same GUI if you edit its code (which, since Keysharp is a .NET DLL, you'll be doing a lot). A better approach is to to use the 'NetClassNN' of the control, e.g. 'KeysharpButton6' (note that the final digit is the same for the ClassNN and the NetClassNN). 
 		
 TODO/ENSURE THESE WORK:
 	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.

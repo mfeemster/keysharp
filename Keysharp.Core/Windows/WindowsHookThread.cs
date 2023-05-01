@@ -4306,7 +4306,7 @@ namespace Keysharp.Core.Windows
 				// Parameters can occur in almost any order to enhance usability (at the cost of
 				// slightly diminishing the ability unambiguously add more parameters in the future).
 				// Seems okay to support floats because ATOI() will just omit the decimal portion.
-				if (Keysharp.Scripting.Script.IsNumber(opt) != 0)
+				if (Keysharp.Core.Misc.IsNumber(opt) != 0)
 				{
 					// Any numbers present must appear in the order: X, Y, RepeatCount
 					// (optionally with other options between them).

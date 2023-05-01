@@ -2238,7 +2238,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				throw new Error($"No controls matched the name {controlname}.");
+				throw new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.");
 			}
 		}
 

@@ -5,8 +5,11 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Text;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Patterns;
 using Keysharp.Core.Windows;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace Keysharp.Core
 {
@@ -32,6 +35,12 @@ namespace Keysharp.Core
 			var options = obj1.As();
 			//obj2/paramcount is unused.
 			return new DelegateHolder(obj0, options.Contains("f", StringComparison.OrdinalIgnoreCase), options.Contains("&"));
+		}
+
+		public static void CallbackFree(object obj0)
+		{
+			if (obj0 is DelegateHolder dh)
+				dh.Clear();
 		}
 
 		/// <summary>
@@ -175,14 +184,14 @@ namespace Keysharp.Core
 									args[n] = IntPtr.Zero;
 								else if (parameters[i] is IntPtr)
 									args[n] = parameters[i];
-								else if (parameters[i] is int || parameters[i] is long)
+								else if (parameters[i] is int || parameters[i] is long || parameters[i] is uint)
 									args[n] = new IntPtr((long)Convert.ChangeType(parameters[i], typeof(long)));
 								else if (parameters[i] is Buffer buf)
 									args[n] = buf.Ptr;
 								else if (parameters[i] is DelegateHolder delholder)
 								{
-									args[n] = delholder.thisdel;
-									types[n] = delholder.thisdel.GetType();
+									args[n] = delholder.delRef;
+									types[n] = delholder.delRef.GetType();
 								}
 								else if (parameters[i] is StringBuffer sb)
 								{
@@ -197,6 +206,15 @@ namespace Keysharp.Core
 								else
 									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 							}
+							else if (name == "uint" || name == "int")
+							{
+								if (parameters[i] is null)
+									args[n] = 0;
+								else if (parameters[i] is IntPtr ip)
+									args[n] = ip.ToInt64();
+								else
+									args[n] = (int)parameters[i].Al();
+							}
 							else if (name == "astr")
 							{
 								if (parameters[i] is string s)
@@ -206,6 +224,24 @@ namespace Keysharp.Core
 							}
 							else
 								SetupPointerArg(i, n);
+						}
+						else if (type == typeof(int))
+						{
+							if (parameters[i] is null)
+								args[n] = 0;
+							else if (parameters[i] is IntPtr ip)
+								args[n] = (int)ip.ToInt32();
+							else
+								args[n] = (int)parameters[i].Al();
+						}
+						else if (type == typeof(uint))
+						{
+							if (parameters[i] is null)
+								args[n] = 0u;
+							else if (parameters[i] is IntPtr ip)
+								args[n] = (uint)ip.ToInt64();
+							else
+								args[n] = (uint)parameters[i].Al();
 						}
 						else
 							args[n] = Convert.ChangeType(parameters[i], type);
@@ -313,6 +349,80 @@ namespace Keysharp.Core
 					throw error;
 				}
 			}
+			else if (function is DelegateHolder dh)
+			{
+				var longs = new IntPtr[31];
+				unsafe
+				{
+					//fixed (object* pin = args)
+					{
+						for (var i = 0; i < args.Length && i < longs.Length; i++)
+						{
+							if (types[i] == typeof(float))
+							{
+								var f = (float)args[i];
+								int* iref = (int*)&f;
+								longs[i] = new IntPtr(*iref);
+							}
+							else if (types[i] == typeof(double))
+							{
+								var d = (double)args[i];
+								long* lref = (long*)&d;
+								longs[i] = new IntPtr(*lref);
+							}
+							else if (types[i] == typeof(long))
+							{
+								var l = (long)args[i];
+								longs[i] = new IntPtr(l);
+							}
+							else if (types[i] == typeof(IntPtr))
+							{
+								longs[i] = (IntPtr)args[i];
+							}
+							else if (types[i] == typeof(string))
+							{
+								var str = args[i] as string;
+
+								fixed (char* p = str)//If the string moves after this is assigned, the program will likely crash. Unsure what else to do.
+								{
+									longs[i] = new IntPtr(p);
+								}
+							}
+							else if (types[i] == typeof(ulong))
+							{
+								var ul = (ulong)args[i];
+								longs[i] = new IntPtr((long)ul);
+							}
+							else if (types[i] == typeof(int))
+							{
+								var ii = (int)args[i];
+								longs[i] = new IntPtr((long)ii);
+							}
+							else if (types[i] == typeof(uint))
+							{
+								var ui = (uint)args[i];
+								longs[i] = new IntPtr(ui);
+							}
+							else if (types[i] == typeof(short))
+							{
+								var s = (short)args[i];
+								longs[i] = new IntPtr(s);
+							}
+							else if (types[i] == typeof(ushort))
+							{
+								var us = (ushort)args[i];
+								longs[i] = new IntPtr(us);
+							}
+							else if (types[i] == typeof(char))
+							{
+								var c = (char)args[i];
+								longs[i] = new IntPtr(c);
+							}
+						}
+					}
+				}
+				return dh.DelegatePlaceholderArr(longs);
+			}
 			else if (function is Delegate del)
 			{
 				return del.DynamicInvoke(args);
@@ -368,6 +478,8 @@ namespace Keysharp.Core
 
 			if (buf != null)
 				addr = buf.Ptr;
+			else if (address is object[] objarr && objarr.Length > 0)//Assume the first element was a long which was an address.
+				addr = new nint(objarr[0].Al());
 			else if (address is IntPtr ptr)
 				addr = ptr;
 			else if (address is long l)

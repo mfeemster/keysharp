@@ -9,7 +9,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference AddHotkey => new MethodReference(typeof(Keysharp.Core.Common.Keyboard.HotkeyDefinition), "AddHotkey");
 			internal static MethodReference AddHotstring => new MethodReference(typeof(Keysharp.Core.Common.Keyboard.HotstringDefinition), "AddHotstring");
 			internal static MethodReference CreateTrayMenu => new MethodReference(typeof(Script), "CreateTrayMenu");
-			internal static MethodReference Dictionary => new MethodReference(typeof(Script), "Dictionary");
+			internal static MethodReference Dictionary => new MethodReference(typeof(Keysharp.Core.Misc), "Dictionary");
 			internal static MethodReference Exit => new MethodReference(typeof(Core.Flow), "Exit");
 			internal static MethodReference ExitApp => new MethodReference(typeof(Core.Flow), "ExitApp");
 			internal static MethodReference ExtendArray => new MethodReference(typeof(Script), "ExtendArray");

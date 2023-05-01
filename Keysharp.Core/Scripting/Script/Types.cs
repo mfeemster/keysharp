@@ -57,12 +57,18 @@ namespace Keysharp.Scripting
 				right = ForceInt(right);
 				return typeof(int);
 			}
-			//else if (left is uint || right is uint)
-			//{
-			//  left = ForceUint(left);
-			//  right = ForceUint(right);
-			//  return typeof(uint);
-			//}
+			else if (left is uint || right is uint)
+			{
+				left = (uint)ForceLong(left);
+				right = (uint)ForceLong(right);
+				return typeof(uint);
+			}
+			else if (left is IntPtr || right is IntPtr)
+			{
+				left = ForceLong(left);
+				right = ForceLong(right);
+				return typeof(long);
+			}
 			else
 			{
 				return null;

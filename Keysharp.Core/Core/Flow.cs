@@ -47,9 +47,9 @@ namespace Keysharp.Core
 		/// <item><term>Off</term>: <description>resets the current thread priority to normal.</description></item>
 		/// </list>
 		/// </param>
-		public static void Critical(object obj)
+		public static void Critical(object obj = null)
 		{
-			var on = Options.OnOff(obj.As()) ?? true;
+			var on = obj == null || (Options.OnOff(obj.As()) ?? true);
 			var p = on ? ThreadPriority.Highest : ThreadPriority.Normal;
 
 			if (!Keysharp.Scripting.Script.isReadyToExecute)
@@ -181,7 +181,7 @@ namespace Keysharp.Core
 				if (cachedFuncObj.TryGetValue(s, out var tempfunc))
 					func = tempfunc;
 				else
-					cachedFuncObj[s] = func = Keysharp.Scripting.Script.FuncObj(s);
+					cachedFuncObj[s] = func = Keysharp.Core.Misc.FuncObj(s);
 			}
 
 			if (function != null && func == null)

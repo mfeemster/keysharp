@@ -387,3 +387,15 @@ If (val == 6)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+varfunc4(*)
+{
+	return args[1] + args[2] + args[3]
+}
+
+val := varfunc3(1, 2, 3)
+
+If (val == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
