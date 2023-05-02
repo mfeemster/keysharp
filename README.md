@@ -29,9 +29,9 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 ###	Behaviors/Functionality:###
 		-Keysharp follows the .NET memory model.
 		-There is no variable caching with strings vs numbers. All variables are C# objects.
-		-AHK says about the inc/dec ++/-- operators on empty variables: \"Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line\". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
+		-AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
 		-Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
-			-This is done by calling Func(\"FunctionName\")
+			-This is done by calling Func("FunctionName")
 		-Exception classes aren't, and can't be, derived from KeysharpObject. That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base System.Exception class, and multiple inheritance is not allowed.
 		-CallbackCreate() does not support the CDecl/C option because the program will be run in 64-bit mode.
 			-The Fast/F option is enabled by default because threads are not implemented yet.
@@ -40,8 +40,8 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 			-Usage of the created callback will be extremely inefficient, so usage of CallbackCreate() is discouraged.
 		-Deleting a tab via GuiCtrl.Delete() does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 		-The size and positioning of some GUI components will be slightly different than AHK because WinForms uses different defaults.
-		-The class name for statusbar/statusstrip objects created by Keysharp is \"WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1\". However, for accessing a statusbar created by another, non .NET program, the class name is still \"msctls_statusbar321\".
-		-Using the class name with ClassNN on .NET controls gives long, version specific names such as \"WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1\" for a statusbar/statusstrip.
+		-The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
+		-Using the class name with ClassNN on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
 			-This is because a simpler class names can't be specified in code the way they can in AHK with calls to CreatWindowEx().
 			-These long names may change from machine to machine, and may change for the same GUI if you edit its code.
 			-There is an new NetClassNN property alongside ClassNN.
@@ -76,9 +76,9 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x\*\*y really means -(x\*\*y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 			To negate the result of a power operation, use parentheses: -(x\*\*y).
 			To negate one term of a power operation before applying, use parentheses around the term: (-x)\*\*y or -(x)\*\*y
-		-The default name for the array of parameters in a variadic function is \"args\", instead of \"params\". This is due to "params" being a reserved word in C#.
+		-The default name for the array of parameters in a variadic function is "args", instead of "params". This is due to "params" being a reserved word in C#.
 			-You cannot use the word "params" because it's a reserved word in C#.
-		-DllCall() requires the user to use a StrigBuffer object when specifying type \"ptr\" to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
+		-DllCall() requires the user to use a StrigBuffer object when specifying type "ptr" to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
 			--Do not use str if the function will modify it.
 			--Also use "ptr" and StringBuffer for double pointer parameters such as LPTSTR\*.
 		-A leading plus sign on numeric values, such as +123 or +0x123 is not supported. It has no effect anyway, so just omit it.
@@ -94,16 +94,16 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
 		-Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 		-Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
-		-Goto statements being called as a function like Goto(\"Label\") are not supported. Instead, just use goto Label.
+		-Goto statements being called as a function like Goto("Label") are not supported. Instead, just use goto Label.
 		-Enumerator.Call() is not supported because it takes ref variables.
 		-The underlying function object class is called FuncObj. This was named so, instead of Func, because C# already contains a built in class named Func.
 			-Func() is still used to create an instance of FuncObj, by passing the name of the desired function as a string.
 		-Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.	
-		-Assignment statements inside of control statements, such as \"if ((x := Func()))\" must be enclosed in parentheses. This statement, \"if (x := Func())\" will not work.
+		-Assignment statements inside of control statements, such as "if ((x := Func()))" must be enclosed in parentheses. This statement, "if (x := Func())" will not work.
 		-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
 			if ((x := myfunc()) ; will not work without declaring x first above.
 		-The #Requires directive differs in the following ways:
-			-In addition to supporting "AutoHotkey", it also supports \"Keysharp\".
+			-In addition to supporting "AutoHotkey", it also supports "Keysharp".
 			-Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.	
 		-Global variables can be accessed from within class methods by using the program. prefix.
 		-Accessing class member variables within member functions does not require the this. prefix.
@@ -115,11 +115,11 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 			-To avoid confusion, it is best not to give properties the same name between base and sub classes.
 		-For any __Enum() class method, it should have a parameter value of 2 when returning Array or Map, since their enumerators have two fields.
 		-Passing "GetCommandLine" to DllCall() won't work exactly as the examples show. Instead, the type must be "ptr" and the result must be wrapped in StrGet() like:
-			-StrGet(DllCall(\"GetCommandLine\", \"ptr\"))
+			-StrGet(DllCall("GetCommandLine", "ptr"))
 		-Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
 			-Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 				-The following options are different:
-					-A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as \"^\".
+					-A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as "^".
 						-This is not supported, instead just use ^ or \A in your regex string.
 					
 					-C: Enables the auto-callout mode.
