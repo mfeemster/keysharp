@@ -72,12 +72,12 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 		
 ###	Syntax: ###
-		-The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
+		-The syntax used in `Format()` is exactly that of `string.Format()` in C\#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`. In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 			To negate the result of a power operation, use parentheses: `-(x**y)`.
 			To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`
 		-The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
-		-DllCall() requires the user to use a StrigBuffer object when specifying type `ptr` to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
+		-DllCall() requires the user to use a StrigBuffer object when specifying type `ptr` to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C\# P/Invoke handles string pointers.
 			--Do not use str if the function will modify it.
 			--Also use `ptr` and StringBuffer for double pointer parameters such as LPTSTR*.
 		-A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
