@@ -73,14 +73,14 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		
 ###	Syntax: ###
 		-The syntax used in Format() is exactly that of string.Format() in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
-		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x\*\*y really means -(x\*\*y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
-			To negate the result of a power operation, use parentheses: -(x\*\*y).
-			To negate one term of a power operation before applying, use parentheses around the term: (-x)\*\*y or -(x)\*\*y
+		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x**y really means -(x**y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
+			To negate the result of a power operation, use parentheses: -(x**y).
+			To negate one term of a power operation before applying, use parentheses around the term: (-x)**y or -(x)**y
 		-The default name for the array of parameters in a variadic function is "args", instead of "params". This is due to "params" being a reserved word in C#.
 			-You cannot use the word "params" because it's a reserved word in C#.
 		-DllCall() requires the user to use a StrigBuffer object when specifying type "ptr" to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
 			--Do not use str if the function will modify it.
-			--Also use "ptr" and StringBuffer for double pointer parameters such as LPTSTR\*.
+			--Also use "ptr" and StringBuffer for double pointer parameters such as LPTSTR*.
 		-A leading plus sign on numeric values, such as +123 or +0x123 is not supported. It has no effect anyway, so just omit it.
 		-AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
 		-Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: ++Var := X is evaluated as ++(Var := X)
@@ -91,7 +91,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless rtrim is specified.
 		-In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if LTrim is specified.
 		-Ternary operators with multiple statements in a branch are not supported. Use an if/else statement instead if such functionality is needed.
-		-Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
+		-Quotes in strings cannot be escaped with double quotes, they must use the escape character, `.
 		-Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 		-Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
 		-Goto statements being called as a function like Goto("Label") are not supported. Instead, just use goto Label.
