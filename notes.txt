@@ -20,52 +20,7 @@ Code obsolescence/deprecation:
 		-test.runtimeconfig.json
 		-Keysharp.Core.dll
 		
-Differences:
 
-	Behaviors/Functionality:
-		-Keysharp follows the .NET memory model.
-		-There is no variable caching with strings vs numbers. All variables are C# objects.
-		-AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
-		-Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
-			-This is done by calling Func("FunctionName")
-		-Exception classes aren't, and can't be, derived from KeysharpObject. That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base System.Exception class, and multiple inheritance is not allowed.
-		-CallbackCreate() does not support the CDecl/C option because the program will be run in 64-bit mode.
-			-The Fast/F option is enabled by default because threads are not implemented yet.
-			-The ParamCount parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
-			-Passing string pointers to DllCall() when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
-			-Usage of the created callback will be extremely inefficient, so usage of CallbackCreate() is discouraged.
-		-Deleting a tab via GuiCtrl.Delete() does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
-		-The size and positioning of some GUI components will be slightly different than AHK because WinForms uses different defaults.
-		-The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
-		-Using the class name with ClassNN on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
-			-This is because a simpler class names can't be specified in code the way they can in AHK with calls to CreatWindowEx().
-			-These long names may change from machine to machine, and may change for the same GUI if you edit its code.
-			-There is an new NetClassNN property alongside ClassNN.
-			-All GUI controls created in Keysharp are prefixed with the string "Keysharp", eg: KeysharpButton, KeysharpEdit etc...
-			-NetClassNN will give values like 'KeysharpButton6' (note that the final digit is the same for the ClassNN and the NetClassNN). 
-			-This is used internally in the index operator for the Gui class, where if a control with a matching ClassNN is not found, then controls are searched for their NetClassNN values.
-		-Tooltips function slightly differently.
-			-When specifying a coordinate for a ToolTip, it will attempt to show it relative to the currently focused Keysharp form.
-			-If there is no focused form, it will attempt to show it relative to the last form which was created. If none are found, it will use the main form shown when double clicking the tray icon.
-			-If the form is minimized, then it will attempt to use the RestoreBounds property of the form. This may not work sometimes, so the ToolTip may never show in that case.
-			-Tooltips cannot be used if the script is not persistent (meaning, it has no main window). This is because C# tooltips require a parent control or form.
-		-TrayTip() function slightly differently.
-			-Muting the sound played by the tip is not supported with the "Mute" option. The sound will be whatever the user has configured in their system settings.
-			-The option 4 to use the program's tray icon is not supported. It is always shown in the title of the tip.
-			-The option 32 to use the large version of the program's tray icon is not supported. Windows will always show the small version.
-		-Sleep() works, but uses Application.DoEvents() under the hood which is not a good programming practice and can lead to hard to solve bugs.
-			-For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to Sleep().
-		-The Optimization section of the #HotIf documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
-		-For transparent controls which are intended to be overlaid over other controls, special steps must be taken.
-			-Specify BackgroundTrans in the options for the transparent control.
-			-Then set the .Parent property of the transparent control to the one it's laid over.
-			-This makes the x and y coordinates of the control be relative to its parent, which may be different than the overall form if it's a nested control.
-		-The #ErrorStdOut directive will not print to the console unless piping is used. For example:
-			.\Keysharp.exe .\test.ahk | more
-			.\Keysharp.exe .\test.ahk | more > out.txt
-		-AddStandard() detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
-		-The built in class methods __Init() and __New are not static. They are instance methods so they can access static and instance member variables.
-		-Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 		
 	Syntax:
 		-The syntax used in Format() is exactly that of string.Format() in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
@@ -247,7 +202,6 @@ TODO/ENSURE THESE WORK:
 		The function Thread() was never implemented, unsure how it will work with notimers and such.
 		implement A_AllowTimers
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
-			pull in latest ahk_v2 code to see what's changed.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
 	Perhaps look into including a long integer/extended precision library.
@@ -448,8 +402,6 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 		Activator.CreateInstance(Type.GetTypeFromProgID("Word.Application")
 	Be sure to keep in touch and coordinate with Tab Nation at https://www.youtube.com/c/TABNationAutoHotkey/videos and tadamm88@gmail.com
 	Good writeup on scan codes and fake shift: https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
-	Labels are like functions, they run until a return. Unsure if they can return data?
-		Dynamic calls are when the func/label name is contained in a variable. In that case, you must use reflection to look up the proper variable to call. Probably should wrap in a t/c.
 	Might be usable: https://github.com/Paris/AutoHotkey-Scripts/blob/master/Functions.ahk and https://github.com/Paris/AutoHotkey-Scripts
 	See here for more community: https://www.reddit.com/r/AutoHotkey
 	Make sure DPI scaling works: https://stackoverflow.com/questions/22735174/how-to-write-winforms-code-that-auto-scales-to-system-font-and-dpi-settings
@@ -488,6 +440,7 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	RobotJS: an automation project in JS: https://github.com/octalmage/robotjs
 	Messages in cosole apps: https://docs.microsoft.com/en-us/archive/msdn-magazine/2007/june/net-matters-handling-messages-in-console-apps
 	There is something called TVX, check it out sometime at www.autohotkey.com/forum/topic19021.html
+	Middle click scroll script for Notepad++: https://www.autohotkey.com/boards/viewtopic.php?p=34722&sid=9b2b27116d94f0552a149430d9ab623f#p34722
 	
 	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
