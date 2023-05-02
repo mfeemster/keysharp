@@ -76,11 +76,10 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x**y really means -(x**y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 			To negate the result of a power operation, use parentheses: -(x**y).
 			To negate one term of a power operation before applying, use parentheses around the term: (-x)**y or -(x)**y
-		-The default name for the array of parameters in a variadic function is "args", instead of "params". This is due to "params" being a reserved word in C#.
-			-You cannot use the word "params" because it's a reserved word in C#.
-		-DllCall() requires the user to use a StrigBuffer object when specifying type "ptr" to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
+		-The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
+		-DllCall() requires the user to use a StrigBuffer object when specifying type `ptr` to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C# P/Invoke handles string pointers.
 			--Do not use str if the function will modify it.
-			--Also use "ptr" and StringBuffer for double pointer parameters such as LPTSTR*.
+			--Also use `ptr` and StringBuffer for double pointer parameters such as LPTSTR*.
 		-A leading plus sign on numeric values, such as +123 or +0x123 is not supported. It has no effect anyway, so just omit it.
 		-AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
 		-Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: ++Var := X is evaluated as ++(Var := X)
@@ -94,16 +93,16 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-Quotes in strings cannot be escaped with double quotes, they must use the escape character, `.
 		-Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 		-Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
-		-Goto statements being called as a function like Goto("Label") are not supported. Instead, just use goto Label.
+		-Goto statements being called as a function like Goto(`Label`) are not supported. Instead, just use goto Label.
 		-Enumerator.Call() is not supported because it takes ref variables.
 		-The underlying function object class is called FuncObj. This was named so, instead of Func, because C# already contains a built in class named Func.
 			-Func() is still used to create an instance of FuncObj, by passing the name of the desired function as a string.
 		-Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.	
-		-Assignment statements inside of control statements, such as "if ((x := Func()))" must be enclosed in parentheses. This statement, "if (x := Func())" will not work.
+		-Assignment statements inside of control statements, such as `if ((x := Func()))` must be enclosed in parentheses. This statement, `if (x := Func())` will not work.
 		-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
 			if ((x := myfunc()) ; will not work without declaring x first above.
 		-The #Requires directive differs in the following ways:
-			-In addition to supporting "AutoHotkey", it also supports "Keysharp".
+			-In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
 			-Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.	
 		-Global variables can be accessed from within class methods by using the program. prefix.
 		-Accessing class member variables within member functions does not require the this. prefix.
@@ -114,18 +113,18 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 			-this.propname refers to the property in the most derived subclass.
 			-To avoid confusion, it is best not to give properties the same name between base and sub classes.
 		-For any __Enum() class method, it should have a parameter value of 2 when returning Array or Map, since their enumerators have two fields.
-		-Passing "GetCommandLine" to DllCall() won't work exactly as the examples show. Instead, the type must be "ptr" and the result must be wrapped in StrGet() like:
-			-StrGet(DllCall("GetCommandLine", "ptr"))
+		-Passing `GetCommandLine` to DllCall() won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in StrGet() like:
+			-StrGet(DllCall(`GetCommandLine`, `ptr`))
 		-Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
 			-Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 				-The following options are different:
-					-A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as "^".
+					-A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
 						-This is not supported, instead just use ^ or \A in your regex string.
 					
 					-C: Enables the auto-callout mode.
 						-This is not supported. C# regular expressions don't support calling an event handler for each match. You must manually iterate through the matches yourself.
 						
-					-D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the "m" option is present.
+					-D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the `m` option is present.
 						-This is not supported, instead just use $. However, this will only match \n, not \r\n. To match the CR/LF character combination, include \r?$ in the regular expression pattern.
 					
 					-J: Allows duplicate named subpatterns.
@@ -170,7 +169,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-New function GetScreenClip(x, y, width, height, filename) can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
 		-Two new functions for strings: StartsWith() and EndsWith() to examine the beginning and end of a string.
 		-Run/Wait(target, dir, options, args) can take a fourth parameter, args, for the program arguments, rather than placing them inside of the program name string.
-		-Rich text boxes are supported by passing "RichEdit" to Gui.Add(). The same options from "Edit" are supported with the following caveats:
+		-Rich text boxes are supported by passing `RichEdit` to Gui.Add(). The same options from `Edit` are supported with the following caveats:
 			-Multiline is true by default.
 			-WantReturn and Password are not supported.
 			-Upper and lower case are supported, but only for key presses, not for pasting.
@@ -185,7 +184,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-In addition to using #ClipboardTimeout, an accessor named A_ClipboardTimeout can be used at any point in the program to get or set that value.
 		-AHK does not support reloading a compiled script, however Keysharp does.
 		-A_EventInfo is not limited to positive values when reporting the mouse wheel scroll amount. When scrolling up, the value will be positive, and negative when scrolling down.
-		-A new accessor named A_CommandLine which returns the command line string. This is preferred over passing "GetCommandLine" to DllCall() as noted above.
+		-A new accessor named A_CommandLine which returns the command line string. This is preferred over passing `GetCommandLine` to DllCall() as noted above.
 		-The defaults for hotstring creation can be retrieved by the global static DefaultHotstring* properties.
 		-Log() is by default base 10, but you can pass a double as the second parameter to specify a custom base.
 		-In SetTimer(), the priority is not -2147483648 and 2147483647, instead it is only 0-4.
@@ -208,14 +207,14 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-ObjPtr() is not implemented because objects can be moved by the GC.
 		-ObjGet/SetCapacity() are not implemented because C# manages its own memory internally.
 		-Double click handlers for buttons are not supported.
-		-Spin boxes with paired "buddy" controls are not supported. Just use the regular spin box in C#.
+		-Spin boxes with paired `buddy` controls are not supported. Just use the regular spin box in C#.
 		-IL_Create() only takes one parameter: LargeIcons. InitialCount and GrowCount are no longer needed because memory is handled internally.
 		-For slider events, the second parameter passed to the event handler will always be 0 because it's not possible to retrieve the method by which the slider was moved in C#.
 		-PixelGetColor() does not accept a mode as its third parameter.
 		-Run() does not take a ref param for OutputVarPID, and instead returns it.
 		-RegExMatch() omits the third parameter &OutputVar because it's a ref param, which is not supported. Instead, it's returned as a member in the result object.
 		-SoundGetInterface() is not implemented because it's COM.
-		-The sound functions don't have the concept of a "component" because the underlying NAudio library does not group hardware into components. However, the component parameter of the sound functions is kept for backward compatibility. Just use device name or index instead.
+		-The sound functions don't have the concept of a `component` because the underlying NAudio library does not group hardware into components. However, the component parameter of the sound functions is kept for backward compatibility. Just use device name or index instead.
 		-The 3 and 5 options for DirSelect() don't apply in C#.
 		-Only Tab3 is supported, no older tab functionality is present.
 		-VarRef and reference variables are not supported.
@@ -235,7 +234,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-The Help and Window Spy menu items are not implemented yet.
 		-Download() only supports the *0 option, and not any other numerical values.
 		-Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-		-Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { "y", 42 }
+		-Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { `y`, 42 }
 		-Nested classes are not supported.
 		-Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 		-The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no .Prototype member.
