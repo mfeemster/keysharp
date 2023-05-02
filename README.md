@@ -24,7 +24,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 	It gives real-time feedback so you can see immediately when you have a syntax error.
 	Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. Others still are just slight syntax changes.
 
-##Differences:##
+## Differences: ##
 
 ###	Behaviors/Functionality:###
 		-Keysharp follows the .NET memory model.
@@ -71,7 +71,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-The built in class methods __Init() and __New are not static. They are instance methods so they can access static and instance member variables.
 		-Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 		
-###	Syntax:###
+###	Syntax: ###
 		-The syntax used in Format() is exactly that of string.Format() in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So -x**y really means -(x**y). In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 			To negate the result of a power operation, use parentheses: -(x**y).
@@ -148,7 +148,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 				PCRE exceptions are not thrown when there is an error, isntead C# regex exceptions are thrown.
 				To learn more about C# regular expression, see here: https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions
 				
-###	Additions/Improvements: Keysharp has added/improved the following:###
+###	Additions/Improvements: Keysharp has added/improved the following: ###
 		-A new method to Array called Add() which should be more efficient than Push() when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
 		-Atan2(y, x) while AHK only supports Atan().
 		-Hyperbolic versions of the trigonometric functions: Sinh(), Cosh(), Tanh().
@@ -193,7 +193,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 			-This allows the handler to alter the timer by passing the function object back to another call to SetTimer().
 			-Timers are not disabled when the program menu is shown.			
 			
-###	Removals:###
+###	Removals: ###
 		-Fat arrow functions like => are not implemented yet.
 		-COM is not implemented yet.
 		-User definable properties are not implemented yet, and Map values will not be considered OwnProps until future work is done.
@@ -247,7 +247,7 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 			
 ## How do I get set up? ##
 
-###Windows###
+### Windows ###
 	Download Visual Studio 2022
 	Open Keysharp.sln
 	Build all (building the installer is not necessary)
