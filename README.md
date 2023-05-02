@@ -4,25 +4,30 @@ Keysharp is a fork and improvement of the abandoned IronAHK project, which itsel
 
 This project is in an extremely early state and should not be used on production systems by anyone.
 
-Some general notes about Keysharp's implementation of the AutoHotKey specification as detailed here: https://www.autohotkey.com/docs/v2/
+Some general notes about Keysharp's implementation of the [AutoHotKey V2 specification] (https://www.autohotkey.com/docs/v2/)
 
-	-The syntax is V2 style. While some remnants of V1 will work, it's unintentional and only V2 is supported.
-	-The operation of Keysharp is different than AHK. While AHK is an interpreted scripting language, Keysharp actually creates a compiled .NET executable and runs it.
-	-The process for reading and running a script is:
-		-Pass the script to Keysharp.exe which parses it and generates a DOM tree.
-		-Have the DOM generate C# code for a single program.
-		-Compile the C# program into an in-memory executable.
-		-Run the executable in memory as a new process.
-		-Optionally output the generated C# code to a .cs file for debugging purposes.
-		-Optionally output the generated executable to a file to a .exe file for running standalone in the future.
-	-Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
-	-The following are not implemented yet:
-		-Fat arrow functions.
-		-COM.
-		-Threads.
-	-In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated for the script code.
-	It gives real-time feedback so you can see immediately when you have a syntax error.
-	Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. Others still are just slight syntax changes.
+* The syntax is V2 style. While some remnants of V1 will work, it's unintentional and only V2 is supported.
+
+* The operation of Keysharp is different than AHK. While AHK is an interpreted scripting language, Keysharp actually creates a compiled .NET executable and runs it.
+
+* The process for reading and running a script is:
+	+ Pass the script to Keysharp.exe which parses it and generates a DOM tree.
+	+ Have the DOM generate C# code for a single program.
+	+ Compile the C# program into an in-memory executable.
+	+ Run the executable in memory as a new process.
+	+ Optionally output the generated C# code to a .cs file for debugging purposes.
+	+ Optionally output the generated executable to a file to a .exe file for running standalone in the future.
+
+* Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
+	+ The following are not implemented yet:
+		+ Fat arrow functions.
+		+ COM.
+		+ Threads.
+
+* In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated for the script code.
+	+ It gives real-time feedback so you can see immediately when you have a syntax error.
+
+Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. Others still are just slight syntax changes.
 
 ## Differences: ##
 
@@ -72,80 +77,80 @@ Some general notes about Keysharp's implementation of the AutoHotKey specificati
 		-Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 		
 ###	Syntax: ###
-		-The syntax used in `Format()` is exactly that of `string.Format()` in C\#, except with 1-based indexing. Traditional AHK style formatting is not supported.
-		-In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`. In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
-			To negate the result of a power operation, use parentheses: `-(x**y)`.
-			To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`
-		-The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
-		-DllCall() requires the user to use a StrigBuffer object when specifying type `ptr` to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C\# P/Invoke handles string pointers.
-			--Do not use str if the function will modify it.
-			--Also use `ptr` and StringBuffer for double pointer parameters such as LPTSTR*.
-		-A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
-		-AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
-		-Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++Var := X` is evaluated as `++(Var := X)`
-			--Use `var := x, ++var` instead.
-		-Implicit comparison to empty string is not supported:
-			--`If (x != )` is not supported
-			--`If (x != "")` is supported
-		-Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless rtrim is specified.
-		-In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if LTrim is specified.
-		-Ternary operators with multiple statements in a branch are not supported. Use an if/else statement instead if such functionality is needed.
-		-Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
-		-Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
-		-Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
-		-Goto statements being called as a function like Goto(`Label`) are not supported. Instead, just use goto Label.
-		-`Enumerator.Call()` is not supported because it takes ref variables.
-		-The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
-			-Func() is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string.
-		-Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.	
-		-Assignment statements inside of control statements, such as `if ((x := Func()))` must be enclosed in parentheses. This statement, `if (x := Func())` will not work.
-		-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
-			if `((x := myfunc())` ; will not work without declaring x first above.
-		-The #Requires directive differs in the following ways:
-			-In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
-			-Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.	
-		-Global variables can be accessed from within class methods by using the program. prefix.
-		-Accessing class member variables within member functions does not require the this. prefix.
-			-Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name.
-			-Using this is still supported, but is slower, so avoid using it.
-		-If a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
-			-global propname refers to the property defined in the base class.
-			-this.propname refers to the property in the most derived subclass.
-			-To avoid confusion, it is best not to give properties the same name between base and sub classes.
-		-For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
-		-Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in `StrGet()` like:
-			-`StrGet(DllCall(`GetCommandLine`, `ptr`))`
-		-Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
-			-Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
-				-The following options are different:
-					-A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as "^".
-						-This is not supported, instead just use ^ or \A in your regex string.
-					
-					-C: Enables the auto-callout mode.
-						-This is not supported. C# regular expressions don't support calling an event handler for each match. You must manually iterate through the matches yourself.
-						
-					-D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the `m` option is present.
-						-This is not supported, instead just use $. However, this will only match \n, not \r\n. To match the CR/LF character combination, include \r?$ in the regular expression pattern.
-					
-					-J: Allows duplicate named subpatterns.
-						-This is not supported.
-						
-					-S: Studies the pattern to try improve its performance.
-						-This is not supported. All RegEx objects are internally created with the RegexOptions.Compiled option specified, so performance should be reasonable.
-						
-					-U: Ungreedy.	
-						-This is not supported, instead use ? after: *, ?, +, and {min,max}.
-						
-					-X: Enables PCRE features that are incompatible with Perl.
-						-This is not supported because it's Perl specific.
-						
-					`a `n `r: Causes specific characters to be recognized as newlines.
-						-This is not supported.
-					
-					\K is not supported, instead, try using (?<=abc)
-					
-				PCRE exceptions are not thrown when there is an error, isntead C# regex exceptions are thrown.
-				To learn more about C# regular expression, see here: https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions
+-The syntax used in `Format()` is exactly that of `string.Format()` in C\#, except with 1-based indexing. Traditional AHK style formatting is not supported.
+-In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`. In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
+	To negate the result of a power operation, use parentheses: `-(x**y)`.
+	To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`
+-The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
+-DllCall() requires the user to use a StrigBuffer object when specifying type `ptr` to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C\# P/Invoke handles string pointers.
+	--Do not use str if the function will modify it.
+	--Also use `ptr` and StringBuffer for double pointer parameters such as LPTSTR*.
+-A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
+-AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
+-Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++Var := X` is evaluated as `++(Var := X)`
+	--Use `var := x, ++var` instead.
+-Implicit comparison to empty string is not supported:
+	--`If (x != )` is not supported
+	--`If (x != "")` is supported
+-Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless rtrim is specified.
+-In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if LTrim is specified.
+-Ternary operators with multiple statements in a branch are not supported. Use an if/else statement instead if such functionality is needed.
+-Quotes in strings cannot be escaped with double quotes, they must use the escape character, ``.
+-Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
+-Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
+-Goto statements being called as a function like Goto(`Label`) are not supported. Instead, just use goto Label.
+-`Enumerator.Call()` is not supported because it takes ref variables.
+-The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
+	-Func() is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string.
+-Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.	
+-Assignment statements inside of control statements, such as `if ((x := Func()))` must be enclosed in parentheses. This statement, `if (x := Func())` will not work.
+-Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
+	if `((x := myfunc())` ; will not work without declaring x first above.
+-The #Requires directive differs in the following ways:
+	-In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
+	-Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.	
+-Global variables can be accessed from within class methods by using the program. prefix.
+-Accessing class member variables within member functions does not require the this. prefix.
+	-Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name.
+	-Using this is still supported, but is slower, so avoid using it.
+-If a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
+	-global propname refers to the property defined in the base class.
+	-this.propname refers to the property in the most derived subclass.
+	-To avoid confusion, it is best not to give properties the same name between base and sub classes.
+-For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
+-Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in `StrGet()` like:
+	-`StrGet(DllCall(`GetCommandLine`, `ptr`))`
+-Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
+	-Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
+		-The following options are different:
+			-A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as "^".
+				-This is not supported, instead just use ^ or \A in your regex string.
+			
+			-C: Enables the auto-callout mode.
+				-This is not supported. C# regular expressions don't support calling an event handler for each match. You must manually iterate through the matches yourself.
+				
+			-D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the `m` option is present.
+				-This is not supported, instead just use $. However, this will only match \n, not \r\n. To match the CR/LF character combination, include \r?$ in the regular expression pattern.
+			
+			-J: Allows duplicate named subpatterns.
+				-This is not supported.
+				
+			-S: Studies the pattern to try improve its performance.
+				-This is not supported. All RegEx objects are internally created with the RegexOptions.Compiled option specified, so performance should be reasonable.
+				
+			-U: Ungreedy.	
+				-This is not supported, instead use ? after: *, ?, +, and {min,max}.
+				
+			-X: Enables PCRE features that are incompatible with Perl.
+				-This is not supported because it's Perl specific.
+				
+			`a `n `r: Causes specific characters to be recognized as newlines.
+				-This is not supported.
+			
+			\K is not supported, instead, try using (?<=abc)
+			
+		PCRE exceptions are not thrown when there is an error, isntead C# regex exceptions are thrown.
+		To learn more about C# regular expression, see here: https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions
 				
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
 		-A new method to Array called `Add()` which should be more efficient than `Push()` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
