@@ -34,123 +34,139 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 ###	Behaviors/Functionality: ###
 * Keysharp follows the .NET memory model.
 * There is no variable caching with strings vs numbers. All variables are C# objects.
-* AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line". Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it. Example, a file with nothing but the line x++ in it, will end with a variable named x which has the value of 1.
+* AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line".
+	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
+	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
-	+ This is done by calling Func("FunctionName")
-* Exception classes aren't, and can't be, derived from KeysharpObject. That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base System.Exception class, and multiple inheritance is not allowed.
-* CallbackCreate() does not support the CDecl/C option because the program will be run in 64-bit mode.
-	+ The Fast/F option is enabled by default because threads are not implemented yet.
-	+ The ParamCount parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
-	+ Passing string pointers to DllCall() when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
-	+ Usage of the created callback will be extremely inefficient, so usage of CallbackCreate() is discouraged.
-* Deleting a tab via GuiCtrl.Delete() does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
+	+ This is done by calling `Func("FunctionName")`
+* Exception classes aren't, and can't be, derived from KeysharpObject.
+	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
+* `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
+	+ The `Fast/F` option is enabled by default because threads are not implemented yet.
+	+ The `ParamCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
+	+ Passing string pointers to `DllCall()` when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
+	+ Usage of the created callback will be extremely inefficient, so usage of `CallbackCreate()` is discouraged.
+* Deleting a tab via `GuiCtrl.Delete()` does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 * The size and positioning of some GUI components will be slightly different than AHK because WinForms uses different defaults.
 * The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
-* Using the class name with ClassNN on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
-	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to CreatWindowEx().
+* Using the class name with `ClassNN` on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
+	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to `CreatWindowEx()`.
 	+ These long names may change from machine to machine, and may change for the same GUI if you edit its code.
-	+ There is an new NetClassNN property alongside ClassNN.
+	+ There is an new `NetClassNN` property alongside `ClassNN`.
 	+ All GUI controls created in Keysharp are prefixed with the string "Keysharp", eg: KeysharpButton, KeysharpEdit etc...
-	+ NetClassNN will give values like 'KeysharpButton6' (note that the final digit is the same for the ClassNN and the NetClassNN). 
-	+ This is used internally in the index operator for the Gui class, where if a control with a matching ClassNN is not found, then controls are searched for their NetClassNN values.
+	+ `NetClassNN` will give values like 'KeysharpButton6' (note that the final digit is the same for the `ClassNN` and the `NetClassNN`).
+	+ Due to the added simplicity, `NetClassNN` is preferred over `ClassNN` for WinForms controls created with Keysharp.
+	+ This is used internally in the index operator for the Gui class, where if a control with a matching `ClassNN` is not found, then controls are searched for their `NetClassNN` values.
 * Tooltips function slightly differently.
 	+ When specifying a coordinate for a ToolTip, it will attempt to show it relative to the currently focused Keysharp form.
 	+ If there is no focused form, it will attempt to show it relative to the last form which was created. If none are found, it will use the main form shown when double clicking the tray icon.
 	+ If the form is minimized, then it will attempt to use the RestoreBounds property of the form. This may not work sometimes, so the ToolTip may never show in that case.
 	+ Tooltips cannot be used if the script is not persistent (meaning, it has no main window). This is because C# tooltips require a parent control or form.
-* TrayTip() function slightly differently.
-	+ Muting the sound played by the tip is not supported with the "Mute" option. The sound will be whatever the user has configured in their system settings.
-	+ The option 4 to use the program's tray icon is not supported. It is always shown in the title of the tip.
-	+ The option 32 to use the large version of the program's tray icon is not supported. Windows will always show the small version.
-* Sleep() works, but uses Application.DoEvents() under the hood which is not a good programming practice and can lead to hard to solve bugs.
-	+ For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to Sleep().
-* The Optimization section of the #HotIf documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
+* `TrayTip()` function slightly differently.
+	+ Muting the sound played by the tip is not supported with the `Mute` option. The sound will be whatever the user has configured in their system settings.
+	+ The option `4` to use the program's tray icon is not supported. It is always shown in the title of the tip.
+	+ The option `32` to use the large version of the program's tray icon is not supported. Windows will always show the small version.
+* `Sleep()` works, but uses `Application.DoEvents()` internally which is not a good programming practice and can lead to hard to solve bugs.
+	+ For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to `Sleep()`.
+* The Optimization section of the `#HotIf` documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
 * For transparent controls which are intended to be overlaid over other controls, special steps must be taken.
-	+ Specify BackgroundTrans in the options for the transparent control.
-	+ Then set the .Parent property of the transparent control to the one it's laid over.
+	+ Specify `BackgroundTrans` in the options for the transparent control.
+	+ Then set the `.Parent` property of the transparent control to the one it's laid over.
 	+ This makes the x and y coordinates of the control be relative to its parent, which may be different than the overall form if it's a nested control.
-* The #ErrorStdOut directive will not print to the console unless piping is used. For example:
+* The `#ErrorStdOut` directive will not print to the console unless piping is used. For example:
 	+ .\Keysharp.exe .\test.ahk | more
 	+ .\Keysharp.exe .\test.ahk | more > out.txt
-* AddStandard() detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
-* The built in class methods __Init() and __New are not static. They are instance methods so they can access static and instance member variables.
+* `AddStandard()` detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
+* The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
-		
+* Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
+
 ###	Syntax: ###
-* The syntax used in `Format()` is exactly that of `string.Format()` in C\#, except with 1-based indexing. Traditional AHK style formatting is not supported.
-* In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`. In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
+* The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
+	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
+* In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
+	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 	+ To negate the result of a power operation, use parentheses: `-(x**y)`.
-	+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`
+	+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.
 * The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
-* DllCall() requires the user to use a StrigBuffer object when specifying type `ptr` to hold a string that the function will modify, such as wsprintf. StringBuffer internally uses a StringBuilder which is how C\# P/Invoke handles string pointers.
-	+ Do not use str if the function will modify it.
-	+ Also use `ptr` and StringBuffer for double pointer parameters such as LPTSTR*.
+* `DllCall()` requires the user to use a `StringBuffer` object when specifying type `ptr` to hold a string that the function will modify, such as `wsprintf`.
+	+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.
+	+ Do not use `str` if the function will modify it.
+	+ Also use `ptr` and StringBuffer for double pointer parameters such as `LPTSTR*`.
 * A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
 * AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
-* Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++Var := X` is evaluated as `++(Var := X)`
+* Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++var := x` is evaluated as `++(var := x)`
 	+ Use `var := x, ++var` instead.
 * Implicit comparison to empty string is not supported:
 	+ `If (x != )` is not supported
 	+ `If (x != "")` is supported
-* Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless rtrim is specified.
-* In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if LTrim is specified.
-* Ternary operators with multiple statements in a branch are not supported. Use an if/else statement instead if such functionality is needed.
+* Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless `RTrim` is specified.
+* In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if `LTrim` is specified.
+* Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
 * Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
 * Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
-* Goto statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
-* Goto statements being called as a function like Goto(`Label`) are not supported. Instead, just use goto Label.
+* `Goto` statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
+* `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * `Enumerator.Call()` is not supported because it takes ref variables.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
-	+ Func() is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string.
-* Optional function parameters can be specified using the ? suffix, however it is not needed or supported when referring to that parameter inside of the function.	
+	+ `Func()` is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string.
+* Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
+```
+	myfunc(a, b, c?, d?)
+	{
+		e := a
+		f := b
+		g := c
+		h := d
+	}
+```
 * Assignment statements inside of control statements, such as `if ((x := Func()))` must be enclosed in parentheses. This statement, `if (x := Func())` will not work.
 * Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
-	+ if `((x := myfunc())` ; will not work without declaring x first above.
-* The #Requires directive differs in the following ways:
+	+ if `((x := myfunc())` will not work without declaring x first above.
+* The `#Requires` directive differs in the following ways:
 	+ In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
 	+ Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.	
-* Global variables can be accessed from within class methods by using the program. prefix.
-* Accessing class member variables within member functions does not require the this. prefix.
+* Global variables can be accessed from within class methods by using the `program.` prefix.
+* Accessing class member variables within member functions does not require the `this.` prefix.
 	+ Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name.
 	+ Using this is still supported, but is slower, so avoid using it.
 * If a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
-	+ global propname refers to the property defined in the base class.
-	+ this.propname refers to the property in the most derived subclass.
+	+ `global propname` refers to the property defined in the base class.
+	+ `this.propname` refers to the property in the most derived subclass.
 	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
 * Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in `StrGet()` like:
-	+ `StrGet(DllCall(`GetCommandLine`, `ptr`))`
-* Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
-	+ Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
-		+ The following options are different:
-			+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as "^".
-				+ -This is not supported, instead just use ^ or \A in your regex string.
+	+ `StrGet(DllCall("GetCommandLine", "ptr"))`
+* Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
+	+ The following options are different:
+		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
+			+ -This is not supported, instead just use `^` or `\A` in your regex string.
 
-			+ -C: Enables the auto-callout mode.
-			 	+ -This is not supported. C# regular expressions don't support calling an event handler for each match. You must manually iterate through the matches yourself.
-			 	
-			+ -D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the `m` option is present.
-			 	+ -This is not supported, instead just use $. However, this will only match \n, not \r\n. To match the CR/LF character combination, include \r?$ in the regular expression pattern.
-
-			+ -J: Allows duplicate named subpatterns.
-			 	+ -This is not supported.
-
-			+ -S: Studies the pattern to try improve its performance.
-			 	+ -This is not supported. All RegEx objects are internally created with the RegexOptions.Compiled option specified, so performance should be reasonable.
-
-			+ -U: Ungreedy.	
-			 	+ -This is not supported, instead use ? after: *, ?, +, and {min,max}.
-
-			+ -X: Enables PCRE features that are incompatible with Perl.
-			 	+ -This is not supported because it's Perl specific.
-
-			+ \`a \`n \`r: Causes specific characters to be recognized as newlines.
-			 	+ -This is not supported.
-
-			+ \\K is not supported, instead, try using (?<=abc)
+		+ -C: Enables the auto-callout mode.
+			+ -This is not supported. C# regular expressions don't support calling an event handler for each match. You must manually iterate through the matches yourself.
 			
-		PCRE exceptions are not thrown when there is an error, isntead C# regex exceptions are thrown.
-		To learn more about C# regular expression, see here: https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions
+		+ -D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the `m` option is present.
+			+ -This is not supported, instead just use `$`. However, this will only match `\n`, not `\r\n`. To match the `CR/LF` character combination, include `\r?$` in the regular expression pattern.
+
+		+ -J: Allows duplicate named subpatterns.
+			+ -This is not supported.
+
+		+ -S: Studies the pattern to try improve its performance.
+			+ -This is not supported. All RegEx objects are internally created with the `RegexOptions.Compiled` option specified, so performance should be reasonable.
+
+		+ -U: Ungreedy.	
+			+ -This is not supported, instead use `?` after: `*, ?, +, and {min,max}`.
+
+		+ -X: Enables PCRE features that are incompatible with Perl.
+			+ -This is not supported because it's Perl specific.
+
+		+ ``` `a `n `r ```: Causes specific characters to be recognized as newlines.
+			+ -This is not supported.
+
+		+ `\K` is not supported, instead, try using `(?<=abc)`
+			
+	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
+	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 				
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
 		-A new method to Array called `Add()` which should be more efficient than `Push()` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
@@ -189,7 +205,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		-In addition to using #ClipboardTimeout, an accessor named A_ClipboardTimeout can be used at any point in the program to get or set that value.
 		-AHK does not support reloading a compiled script, however Keysharp does.
 		-A_EventInfo is not limited to positive values when reporting the mouse wheel scroll amount. When scrolling up, the value will be positive, and negative when scrolling down.
-		-A new accessor named A_CommandLine which returns the command line string. This is preferred over passing `GetCommandLine` to DllCall() as noted above.
+		-A new accessor named A_CommandLine which returns the command line string. This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
 		-The defaults for hotstring creation can be retrieved by the global static DefaultHotstring* properties.
 		-Log() is by default base 10, but you can pass a double as the second parameter to specify a custom base.
 		-In SetTimer(), the priority is not -2147483648 and 2147483647, instead it is only 0-4.
