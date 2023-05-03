@@ -176,7 +176,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Hyperbolic versions of the trigonometric functions: `Sinh()`, `Cosh()`, `Tanh()`.
 * A new property `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 * Process.Run/RunWait() can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
-	+ The new signature is: Run/RunWait(Target[, WorkingDir, Options, Args]).
+	+ The new signature is: `Run/RunWait(Target[, WorkingDir, Options, Args])`.
 * `ListView` supports a new method `DeleteCol()` to remove a column.
 * `TabControl` supports a new method `SetTabIcon()` to relieve the caller of having to use `SendMessage()`.
 * `Menu` supports several new methods:
@@ -214,13 +214,14 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * `Log(number, base)` is by default base 10, but you can pass a double as the second parameter to specify a custom base.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
-	+ This allows the handler to alter the timer by passing the function object back to another call to SetTimer().
+	+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
 	+ Timers are not disabled when the program menu is shown.
 			
 ###	Removals: ###
 * Fat arrow functions like `=>` are not implemented yet.
 * COM is not implemented yet.
 * User definable properties are not implemented yet, and `Map` values will not be considered `OwnProps` until future work is done.
+* Nested classes are not supported.
 * `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
 * `ListLines()` is omitted because C# doesn't support it.
 * `ObjPtr()` is not implemented because objects can be moved by the GC.
@@ -243,31 +244,30 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
 * VarRef and reference variables are not supported.
-	+ Users will need to rework how they use `MonitorGet()`, `MonitorGetWorkArea()`, `SplitPath()`, `FileGetShortcut()`, StrReplace(), `RegExMatch()`, LoadPicture(), WinGetPos(), ImageSearch(), MouseGetPos().
-		+ They instead return Map objects whose keys match the names of what would have been the reference parameters.
-	+ Because reference variables are not supported, Run/RunWait() do not take &OutputVarPID as the last argument. Instead, Run returns OutputVarPID and RunWait() returns (ExitCode, OutputVarPID).
-* OnMessage() doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
+	+ Users will need to rework how they use `FileGetShortcut()`, `ImageSearch()`, `LoadPicture()`, `MonitorGet()`, `MonitorGetWorkArea()`, `MouseGetPos()`, `RegExMatch()`, `Run()`, `RunWait()`, `SplitPath()`, `StrReplace()`, `WinGetPos()`.
+		+ They instead return Map objects whose keys match the names of what would have been the reference parameters. For example:
+		+ `Run/RunWait()` do not take `&OutputVarPID` as the last argument. Instead, `Run()` returns `OutputVarPID` and `RunWait()` returns `(ExitCode, OutputVarPID)`.
+* `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
 	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
-	+ A GUI object is required for OnMessage() to be used.
+	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
 	+ The pause menu item has been removed.
-* ObjAddRef() and ObjPtrAddRef() are not supported. Instead, use the following:
-	+ newref := theobj ; adds 1 to the reference count
-	+ newref := "" ; subtracts 1 from the reference count
-* #Warn to enable/disable compiler warnings is not supported yet.
-* The /script option for compiled scripts does not apply and is therefore not implemented.
+* `ObjAddRef()` and `ObjPtrAddRef()` are not supported. Instead, use the following:
+	+ `newref := theobj` ; adds 1 to the reference count
+	+ `newref := ""` ; subtracts 1 from the reference count
+* `#Warn` to enable/disable compiler warnings is not supported yet.
+* The `/script` option for compiled scripts does not apply and is therefore not implemented.
 * The Help and Window Spy menu items are not implemented yet.
-* Download() only supports the *0 option, and not any other numerical values.
+* `Download()` only supports the `*0` option, and not any other numerical values.
 * Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-* Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { `y`, 42 }
-* Nested classes are not supported.
+* Static class member variable initializers like static `x.y := z` are not supported. Instead, just initialize in one step like static x := { `y`, 42 }
 * Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
-* The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no .Prototype member.
-* Properties other than __Item[] cannot take parameters. If you need to pass a parameter, use a method instead.
+* The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
+* Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
 	+ Variadic property parameters are not supported.
-* Static __Item[] properties are not allowed, only instance __Item[] properties. This is because C# does not support static indexers.
-* The built in classes Array and Map do not have a property named __Item[] because in C#, the only properties which can have an index passed to them are the this[] properties.
-	+ Just use the brackets directly. However, when overriding, using __Item[] will work if you derive from Array or Map.
+* Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
+* The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
+	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
 			
 ## How do I get set up? ##
 
