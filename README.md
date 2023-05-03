@@ -2,9 +2,11 @@
 
 Keysharp is a fork and improvement of the abandoned IronAHK project, which itself was a C# re-write of the C++ AutoHotKey project.
 
+The intent is for Keysharp to run on Windows, Linux and eventually Mac. For now, only Windows is supported.
+
 This project is in an extremely early state and should not be used on production systems by anyone.
 
-Some general notes about Keysharp's implementation of the [AutoHotKey V2 specification] (https://www.autohotkey.com/docs/v2/)
+Some general notes about Keysharp's implementation of the [AutoHotKey V2 specification](https://www.autohotkey.com/docs/v2/):
 
 * The syntax is V2 style. While some remnants of V1 will work, it's unintentional and only V2 is supported.
 
@@ -27,7 +29,7 @@ Some general notes about Keysharp's implementation of the [AutoHotKey V2 specifi
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated for the script code.
 	+ It gives real-time feedback so you can see immediately when you have a syntax error.
 
-Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. Others still are just slight syntax changes.
+Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. There are also slight syntax changes.
 
 ## Differences: ##
 
@@ -169,101 +171,103 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 				
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
-		-A new method to Array called `Add()` which should be more efficient than `Push()` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
-		-`Atan2(y, x)` while AHK only supports `Atan()`.
-		-Hyperbolic versions of the trigonometric functions: `Sinh()`, `Cosh()`, `Tanh()`.
-		-A new property named `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
-		-Process.Run/RunWait() can take an extra string for the argument instead of appending it to the program name string. The original functionality still works too. The new signature is: Run/RunWait(Target[, WorkingDir, Options, Args]).
-		-ListView supports a new method DeleteCol() to remove a column.
-		-TabControl supports a new method SetTabIcon() to relieve the caller of having to use SendMessage().
-		-Menu supports new methods:
-			-HideItem(), ShowItem() and ToggleItemVis() which can show, hide or toggle the visibility of a specific menu item.
-			-MenuItemId() to get the name of a menu item, rather than having to use DllCall().
-			-SetForeColor() to set the fore (text) color of a menu item.
-		-The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
-		-FileGetSize() supports 'G' and 'T' for gigabytes and terabytes.
-		-When adding a ListView, the Count option is not supported because C# can't preallocate memory for a ListView.
-		-TreeView supports a new method GetNode() which retrieves a raw winforms TreeNode object based on a passed in ID.
-		-SubStr() uses a default of 1 for the second parameter, StartingPos, to relieve the user of always having to specify it.
-		-New string method NormalizeEol() used to take in a string and make all line endings match the value passed in, or the default for the current environment.
-		-The v1 Map methods MaxIndex() and MinIndex() are still supported. They are also supported for Array.
-		-New function GetScreenClip(x, y, width, height, filename) can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
-		-Two new functions for strings: StartsWith() and EndsWith() to examine the beginning and end of a string.
-		-Run/Wait(target, dir, options, args) can take a fourth parameter, args, for the program arguments, rather than placing them inside of the program name string.
-		-Rich text boxes are supported by passing `RichEdit` to Gui.Add(). The same options from `Edit` are supported with the following caveats:
-			-Multiline is true by default.
-			-WantReturn and Password are not supported.
-			-Upper and lower case are supported, but only for key presses, not for pasting.
-		-Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
-		-A new accessor A_KeysharpCorePath provides the full path to the Keysharp.Core.dll file.
-		-A new function CopyImageToClipboard() is supported which copies an image to the clipboard.
-			-Using the same arguments as LoadPicture().
-			-This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
-		-When sending a string through SendMessage() using the WM_COPYDATA message type, the caller is no longer responsible for creating the special COPYDATA struct.
-			-Instead, just pass WM_COPYDATA (0x4A) as the message type and the string as the lparam, and SendMessage() will handle it internally.
-		-A new method Collect() has been added which calls GC.Collect() to force a memory collection. This rarely ever has to be used in properly written code.
-		-In addition to using #ClipboardTimeout, an accessor named A_ClipboardTimeout can be used at any point in the program to get or set that value.
-		-AHK does not support reloading a compiled script, however Keysharp does.
-		-A_EventInfo is not limited to positive values when reporting the mouse wheel scroll amount. When scrolling up, the value will be positive, and negative when scrolling down.
-		-A new accessor named A_CommandLine which returns the command line string. This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
-		-The defaults for hotstring creation can be retrieved by the global static DefaultHotstring* properties.
-		-Log() is by default base 10, but you can pass a double as the second parameter to specify a custom base.
-		-In SetTimer(), the priority is not -2147483648 and 2147483647, instead it is only 0-4.
-			-The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
-			-This allows the handler to alter the timer by passing the function object back to another call to SetTimer().
-			-Timers are not disabled when the program menu is shown.			
+* A new method to `Array` called `Add()` which should be more efficient than `Push()` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
+* A new function `Atan2(y, x)` while AHK only supports `Atan()`.
+* Hyperbolic versions of the trigonometric functions: `Sinh()`, `Cosh()`, `Tanh()`.
+* A new property `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
+* Process.Run/RunWait() can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
+	+ The new signature is: Run/RunWait(Target[, WorkingDir, Options, Args]).
+* `ListView` supports a new method `DeleteCol()` to remove a column.
+* `TabControl` supports a new method `SetTabIcon()` to relieve the caller of having to use `SendMessage()`.
+* `Menu` supports several new methods:
+	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
+	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
+	+ `SetForeColor()` to set the fore (text) color of a menu item.
+* The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
+* `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
+* `TreeView` supports a new method `GetNode()` which retrieves a raw winforms TreeNode object based on a passed in ID.
+* `SubStr()` uses a default of 1 for the second parameter, `StartingPos`, to relieve the user of always having to specify it.
+* A new string function `NormalizeEol(str, eol)` used to take in a string and make all line endings match the value passed in, or the default for the current environment.
+* Two new string functions: `StartsWith()` and `EndsWith()` to examine the beginning and end of a string.
+* The v1 `Map` methods `MaxIndex()` and `MinIndex()` are still supported. They are also supported for `Array`.
+* New function `GetScreenClip(x, y, width, height, filename)` can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
+* Rich text boxes are supported by passing `RichEdit` to `Gui.Add()`. The same options from `Edit` are supported with the following caveats:
+	+ `Multiline` is true by default.
+	+ `WantReturn` and `Password` are not supported.
+	+ `Uppercase` and `Lowercase` are supported, but only for key presses, not for pasting.
+* Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
+* A new accessor `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
+* A new function `CopyImageToClipboard()` is supported which copies an image to the clipboard.
+	+ Uses the same arguments as `LoadPicture()`.
+	+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
+* When sending a string through `SendMessage()` using the `WM_COPYDATA` message type, the caller is no longer responsible for creating the special `COPYDATA` struct.
+	+ Instead, just pass `WM_COPYDATA (0x4A)` as the message type and the string as the `lparam`, and `SendMessage()` will handle it internally.
+* A new function `Collect()` which calls `GC.Collect()` to force a memory collection.
+	+ This rarely ever has to be used in properly written code.
+* In addition to using `#ClipboardTimeout`, a new accessor named `A_ClipboardTimeout` can be used at any point in the program to get or set that value.
+* AHK does not support reloading a compiled script, however Keysharp does.
+* `A_EventInfo` is not limited to positive values when reporting the mouse wheel scroll amount.
+	+ When scrolling up, the value will be positive, and negative when scrolling down.
+* A new accessor named `A_CommandLine` which returns the command line string.
+	+ This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
+* The defaults for hotstring creation can be retrieved by the global static `DefaultHotstring*` properties.
+* `Log(number, base)` is by default base 10, but you can pass a double as the second parameter to specify a custom base.
+* In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
+	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
+	+ This allows the handler to alter the timer by passing the function object back to another call to SetTimer().
+	+ Timers are not disabled when the program menu is shown.
 			
 ###	Removals: ###
-		-Fat arrow functions like => are not implemented yet.
-		-COM is not implemented yet.
-		-User definable properties are not implemented yet, and Map values will not be considered OwnProps until future work is done.
-		-VarSetStrCapacity() has been removed due to it being incompatible with the .NET memory model.
-		-ListLines() is omitted because C# doesn't support it.
-		-There is no such thing as dereferencing in C#, so the * dereferencing operator is not supported.		
-		-The R, Dn or Tn parameters in FormatDateTime() are not supported, except for 0x80000000 to disallow user overrides. If you want to specify a particular format or order, do it in the format argument. There is no need or reason to have one argument alter the other.
-			The C# style formatters are supported: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings
-		-Static text controls do not send the Windows API WM_CTLCOLORSTATIC (0x0138) message to their parent controls.
-		-IsAlpha(), IsUpper(), IsLower() do not accept a locale parameter because all strings are Unicode.
-		-Renaming Keysharp.exe to run a specific script by default will not work.
-		-ObjPtr() is not implemented because objects can be moved by the GC.
-		-ObjGet/SetCapacity() are not implemented because C# manages its own memory internally.
-		-Double click handlers for buttons are not supported.
-		-Spin boxes with paired `buddy` controls are not supported. Just use the regular spin box in C#.
-		-IL_Create() only takes one parameter: LargeIcons. InitialCount and GrowCount are no longer needed because memory is handled internally.
-		-For slider events, the second parameter passed to the event handler will always be 0 because it's not possible to retrieve the method by which the slider was moved in C#.
-		-PixelGetColor() does not accept a mode as its third parameter.
-		-Run() does not take a ref param for OutputVarPID, and instead returns it.
-		-RegExMatch() omits the third parameter &OutputVar because it's a ref param, which is not supported. Instead, it's returned as a member in the result object.
-		-SoundGetInterface() is not implemented because it's COM.
-		-The sound functions don't have the concept of a `component` because the underlying NAudio library does not group hardware into components. However, the component parameter of the sound functions is kept for backward compatibility. Just use device name or index instead.
-		-The 3 and 5 options for DirSelect() don't apply in C#.
-		-Only Tab3 is supported, no older tab functionality is present.
-		-VarRef and reference variables are not supported.
-			-Users will need to rework how they use MonitorGet(), MonitorGetWorkArea(), SplitPath(), FileGetShortcut(), StrReplace(), LoadPicture(), WinGetPos(), ImageSearch(), MouseGetPos().
-				-They instead return Map objects whose keys match the names of what would have been the reference parameters.
-			-Because reference variables are not supported, Run/RunWait() do not take &OutputVarPID as the last argument. Instead, Run returns OutputVarPID and RunWait() returns (ExitCode, OutputVarPID).
-		-OnMessage() doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
-			-The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
-			-A GUI object is required for OnMessage() to be used.
-		-Pausing a script is not supported because a Keysharp script is actually a running program.
-			-The pause menu item has been removed.
-		-ObjAddRef() and ObjPtrAddRef() are not supported. Instead, use the following:
-			newref := theobj ; adds 1 to the reference count
-			newref := "" ; subtracts 1 from the reference count
-		-#Warn to enable/disable compiler warnings is not supported yet.
-		-The /script option for compiled scripts does not apply and is therefore not implemented.
-		-The Help and Window Spy menu items are not implemented yet.
-		-Download() only supports the *0 option, and not any other numerical values.
-		-Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-		-Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { `y`, 42 }
-		-Nested classes are not supported.
-		-Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
-		-The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no .Prototype member.
-		-Properties other than __Item[] cannot take parameters. If you need to pass a parameter, use a method instead.
-			-Variadic property parameters are not supported.
-		-Static __Item[] properties are not allowed, only instance __Item[] properties. This is because C# does not support static indexers.
-		-The built in classes Array and Map do not have a property named __Item[] because in C#, the only properties which can have an index passed to them are the this[] properties.
-			-Just use the brackets directly. However, when overriding, using __Item[] will work if you derive from Array or Map.
+* Fat arrow functions like `=>` are not implemented yet.
+* COM is not implemented yet.
+* User definable properties are not implemented yet, and `Map` values will not be considered `OwnProps` until future work is done.
+* `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
+* `ListLines()` is omitted because C# doesn't support it.
+* `ObjPtr()` is not implemented because objects can be moved by the GC.
+* There is no such thing as dereferencing in C#, so the `*` dereferencing operator is not supported.		
+* The R, Dn or Tn parameters in `FormatDateTime()` are not supported, except for 0x80000000 to disallow user overrides.
+	+ If you want to specify a particular format or order, do it in the format argument. There is no need or reason to have one argument alter the other.
+	+ [here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings) is a list of the C# style DateTime formatters which are supported.
+* Static text controls do not send the Windows `API WM_CTLCOLORSTATIC (0x0138)` message to their parent controls like they do in AHK.
+* `IsAlpha()`, `IsUpper()`, `IsLower()` do not accept a locale parameter because all strings are Unicode.
+* Renaming Keysharp.exe to run a specific script by default will not work.
+* Double click handlers for buttons are not supported.
+* Spin boxes with paired `buddy` controls are not supported. Just use the regular spin box in C#.
+* `IL_Create()` only takes one parameter: `LargeIcons`. `InitialCount` and `GrowCount` are no longer needed because memory is handled internally.
+* For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
+* `PixelGetColor()` does not accept a mode as its third parameter.
+* `SoundGetInterface()` is not implemented because it's COM.
+* The sound functions don't have the concept of a `component` because the underlying NAudio library does not group hardware into components.
+	+ However, the component parameter of the sound functions is kept for backward compatibility. Just use device name or index instead.
+* The `3` and `5` options for `DirSelect()` don't apply in C#.
+* Only `Tab3` is supported, no older tab functionality is present.
+* When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
+* VarRef and reference variables are not supported.
+	+ Users will need to rework how they use `MonitorGet()`, `MonitorGetWorkArea()`, `SplitPath()`, `FileGetShortcut()`, StrReplace(), `RegExMatch()`, LoadPicture(), WinGetPos(), ImageSearch(), MouseGetPos().
+		+ They instead return Map objects whose keys match the names of what would have been the reference parameters.
+	+ Because reference variables are not supported, Run/RunWait() do not take &OutputVarPID as the last argument. Instead, Run returns OutputVarPID and RunWait() returns (ExitCode, OutputVarPID).
+* OnMessage() doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
+	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
+	+ A GUI object is required for OnMessage() to be used.
+* Pausing a script is not supported because a Keysharp script is actually a running program.
+	+ The pause menu item has been removed.
+* ObjAddRef() and ObjPtrAddRef() are not supported. Instead, use the following:
+	+ newref := theobj ; adds 1 to the reference count
+	+ newref := "" ; subtracts 1 from the reference count
+* #Warn to enable/disable compiler warnings is not supported yet.
+* The /script option for compiled scripts does not apply and is therefore not implemented.
+* The Help and Window Spy menu items are not implemented yet.
+* Download() only supports the *0 option, and not any other numerical values.
+* Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
+* Static class member variable initializers like static x.y := z are not supported. Instead, just initialize in one step like static x := { `y`, 42 }
+* Nested classes are not supported.
+* Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
+* The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no .Prototype member.
+* Properties other than __Item[] cannot take parameters. If you need to pass a parameter, use a method instead.
+	+ Variadic property parameters are not supported.
+* Static __Item[] properties are not allowed, only instance __Item[] properties. This is because C# does not support static indexers.
+* The built in classes Array and Map do not have a property named __Item[] because in C#, the only properties which can have an index passed to them are the this[] properties.
+	+ Just use the brackets directly. However, when overriding, using __Item[] will work if you derive from Array or Map.
 			
 ## How do I get set up? ##
 
