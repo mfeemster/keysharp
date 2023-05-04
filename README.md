@@ -23,13 +23,13 @@
 	
 ## Overview ##
 
-Keysharp is a fork and improvement of the abandoned IronAHK project, which itself was a C# re-write of the C++ AutoHotKey project.
+Keysharp is a fork and improvement of the abandoned IronAHK project, which itself was a C# re-write of the C++ AutoHotkey project.
 
 The intent is for Keysharp to run on Windows, Linux and eventually Mac. For now, only Windows is supported.
 
 This project is in an extremely early state and should not be used on production systems by anyone.
 
-Some general notes about Keysharp's implementation of the [AutoHotKey V2 specification](https://www.autohotkey.com/docs/v2/):
+Some general notes about Keysharp's implementation of the [AutoHotkey V2 specification](https://www.autohotkey.com/docs/v2/):
 
 * The syntax is V2 style. While some remnants of V1 will work, it's unintentional and only V2 is supported.
 
