@@ -1,4 +1,27 @@
-# README #
+# Keysharp #
+
+## How do I get set up? ##
+
+### Installing on Windows ###
+* If .NET 7 is not installed on your machine, you need to download and run the ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/7.0).
+* Download and run the Keysharp installer from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
+	+ The install path can be optionally added to the $PATH varible, so you can run it from the command line from anywhere.
+	+ It also registeres Keysharp.exe as the default program to open .ks files. So after installing, double click any .ks file to run it.
+	
+### Portable Run on Windows ###
+* Download and unzip the zip file from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
+	+ CD to the unzipped folder.
+	+ Run `.\Keysharp.exe yourfilename.ahk"
+	
+### Building From Source on Windows ###
+* Download Visual Studio 2022
+	+ This should install .NET 7. If it doesn't, you need to install it manually from the link above.
+* Open Keysharp.sln
+* Build all (building the installer is not necessary)
+* CD to bin\release\net7.0-windows
+* Run .\Keysharp.exe yourtestfile.ahk
+	
+## Overview ##
 
 Keysharp is a fork and improvement of the abandoned IronAHK project, which itself was a C# re-write of the C++ AutoHotKey project.
 
@@ -14,11 +37,11 @@ Some general notes about Keysharp's implementation of the [AutoHotKey V2 specifi
 
 * The process for reading and running a script is:
 	+ Pass the script to Keysharp.exe which parses it and generates a DOM tree.
-	+ Have the DOM generate C# code for a single program.
-	+ Compile the C# program into an in-memory executable.
-	+ Run the executable in memory as a new process.
+	+ The DOM generates C# code for a single program.
+	+ The C# program code is compiled into an in-memory executable.
+	+ The executable is ran in memory as a new process.
 	+ Optionally output the generated C# code to a .cs file for debugging purposes.
-	+ Optionally output the generated executable to a file to a .exe file for running standalone in the future.
+	+ Optionally output the generated executable to an .exe file for running standalone in the future.
 
 * Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
 	+ The following are not implemented yet:
@@ -26,8 +49,10 @@ Some general notes about Keysharp's implementation of the [AutoHotKey V2 specifi
 		+ COM.
 		+ Threads.
 
-* In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated for the script code.
+* In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
 	+ It gives real-time feedback so you can see immediately when you have a syntax error.
+	+ It is recommended that you use this to write code.
+	+ The editor is very primitive at the moment, and help improving it would be greatly appreciated.
 
 Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. There are also slight syntax changes.
 
@@ -96,7 +121,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Do not use `str` if the function will modify it.
 	+ Also use `ptr` and StringBuffer for double pointer parameters such as `LPTSTR*`.
 * A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
-* AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with IsSet().
+* AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with `IsSet()`.
 * Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++var := x` is evaluated as `++(var := x)`
 	+ Use `var := x, ++var` instead.
 * Implicit comparison to empty string is not supported:
@@ -260,7 +285,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The Help and Window Spy menu items are not implemented yet.
 * `Download()` only supports the `*0` option, and not any other numerical values.
 * Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-* Static class member variable initializers like static `x.y := z` are not supported. Instead, just initialize in one step like static x := { `y`, 42 }
+* Static class member variable initializers like static `x.y := 42` are not supported. Instead, just initialize in one step like static 'x := { "y", 42 }
 * Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 * The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
@@ -268,19 +293,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
-			
-## How do I get set up? ##
-
-### Windows ###
-	Download Visual Studio 2022
-	Open Keysharp.sln
-	Build all (building the installer is not necessary)
-	CD to bin\release\net7.0-windows
-	Run .\Keysharp.exe yourtestfile.ahk
-	
-	If you run the installer, the install path can be optionally added to the $PATH varible, so you can run it from the command line from anywhere.
-	It also registeres Keysharp.exe as the default program to open .ks files. So after installing, double click any .ks file to run it.
 
 ## Who do I talk to? ##
 
-	Please make an account here and post a ticket.
+Please make an account here and post a ticket.
