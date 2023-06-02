@@ -12,15 +12,15 @@ namespace Keysharp.Core
 {
 	public static class Reflections
 	{
-		internal static readonly Dictionary<string, Dictionary<Type, MethodPropertyHolder>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, MethodPropertyHolder>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static readonly Dictionary<string, Dictionary<Type, MethodPropertyHolder>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, MethodPropertyHolder>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-		internal static readonly Dictionary<string, Dictionary<Type, MethodPropertyHolder>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, MethodPropertyHolder>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static readonly Dictionary<string, Dictionary<Type, MethodPropertyHolder>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, MethodPropertyHolder>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static readonly int sttcap = 1000;
-		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 10);
-		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 10);
-		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringMethods = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 5);
-		internal static readonly Dictionary<Type, Dictionary<string, MethodPropertyHolder>> typeToStringProperties = new Dictionary<Type, Dictionary<string, MethodPropertyHolder>>(sttcap / 5);
+		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
+		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
+		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
 
 		//private static Dictionary<Guid, Dictionary<string, MethodPropertyHolder>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodPropertyHolder>>(sttcap / 20);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
@@ -53,21 +53,24 @@ namespace Keysharp.Core
 
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
 				assemblies = loadedAssembliesList.ToList();
-			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,"))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
-				assemblies = loadedAssembliesList.Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.")).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
+			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,", StringComparison.OrdinalIgnoreCase))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
+				assemblies = loadedAssembliesList.Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase)).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
 			else//Running as a standalone executable.
-				assemblies = loadedAssembliesList.Where(assy => assy.FullName.StartsWith("Keysharp.") ||
+				assemblies = loadedAssembliesList.Where(assy => assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) ||
 														(assy.EntryPoint != null &&
 																assy.EntryPoint.DeclaringType != null &&
-																assy.EntryPoint.DeclaringType.Namespace == "Keysharp.CompiledMain"
+																assy.EntryPoint.DeclaringType.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
 														)).ToList();
 
 			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
 
 			foreach (var asm in assemblies)
 				foreach (var type in asm.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null && (type.Namespace.StartsWith("Keysharp.Core") || type.Namespace.StartsWith("Keysharp.CompiledMain") || type.Namespace.StartsWith("Keysharp.Tests")))//Allow tests so we can use function objects inside of unit tests.
-						_ = FindAndCacheMethod(type, "");
+					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
+							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
+							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
+						_ = FindAndCacheMethod(type, "", -1);
 
 			foreach (var typekv in typeToStringMethods)
 			{
@@ -78,12 +81,12 @@ namespace Keysharp.Core
 					if (typekv.Key.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
 					{
 						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, MethodPropertyHolder>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
+						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
 					}
 					else
 					{
 						_ = stringToTypeBuiltInMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-						_ = typeToStringBuiltInMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, MethodPropertyHolder>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
+						_ = typeToStringBuiltInMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
 					}
 				}
 			}
@@ -94,17 +97,19 @@ namespace Keysharp.Core
 			typeToStringProperties.Clear();
 			stringToTypeProperties.Clear();
 
-			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
+			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp")))
 				foreach (var type in item.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null && type.Namespace.StartsWith("Keysharp.Core"))
-						_ = FindAndCacheProperty(type, "");
+					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
+							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
+						_ = FindAndCacheProperty(type, "", 0);
 
 			foreach (var typekv in typeToStringProperties)
 				foreach (var propkv in typekv.Value)
 					_ = stringToTypeProperties.GetOrAdd(propkv.Key).GetOrAdd(typekv.Key, propkv.Value);
 		}
 
-		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name)
+		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount)
 		{
 			do
 			{
@@ -113,16 +118,18 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					var meths = (MethodInfo[])t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+					var meths = t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
 					if (meths.Length > 0)
 					{
 						foreach (var meth in meths)
-							typeToStringMethods.GetOrAdd(meth.DeclaringType, () => new Dictionary<string, MethodPropertyHolder>(meths.Length, StringComparer.OrdinalIgnoreCase)).Add(meth.Name, new MethodPropertyHolder(meth, null));
+							typeToStringMethods.GetOrAdd(meth.DeclaringType,
+														 () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
+							.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
 					}
 					else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 					{
-						typeToStringMethods[t] = dkt = new Dictionary<string, MethodPropertyHolder>(StringComparer.OrdinalIgnoreCase);
+						typeToStringMethods[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
 						t = t.BaseType;
 						continue;
 					}
@@ -134,16 +141,21 @@ namespace Keysharp.Core
 					continue;
 				}
 
-				if (dkt.TryGetValue(name, out var mi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
-					return mi;
+				if (dkt.TryGetValue(name, out var methDkt))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
+				{
+					if (paramCount < 0 || methDkt.Count == 1)
+						return methDkt.First().Value;
+					else if (methDkt.TryGetValue(paramCount, out var mph))
+						return mph;
+				}
 
 				t = t.BaseType;
-			} while (t.Assembly == typeof(Any).Assembly || t.Namespace == "Keysharp.CompiledMain");//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
+			} while (t.Assembly == typeof(Any).Assembly || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase));//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
 
 			return null;
 		}
 
-		internal static MethodPropertyHolder FindAndCacheProperty(Type t, string name)
+		internal static MethodPropertyHolder FindAndCacheProperty(Type t, string name, int paramCount)
 		{
 			try
 			{
@@ -159,11 +171,13 @@ namespace Keysharp.Core
 						if (props.Length > 0)
 						{
 							foreach (var prop in props)
-								typeToStringProperties.GetOrAdd(prop.DeclaringType, () => new Dictionary<string, MethodPropertyHolder>(props.Length, StringComparer.OrdinalIgnoreCase)).Add(prop.Name, new MethodPropertyHolder(null, prop));
+								typeToStringProperties.GetOrAdd(prop.DeclaringType,
+																() => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
+								.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
 						}
 						else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 						{
-							typeToStringProperties[t] = dkt = new Dictionary<string, MethodPropertyHolder>(StringComparer.OrdinalIgnoreCase);
+							typeToStringProperties[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
 							t = t.BaseType;
 							continue;
 						}
@@ -175,11 +189,16 @@ namespace Keysharp.Core
 						continue;
 					}
 
-					if (dkt.TryGetValue(name, out var pi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
-						return pi;
+					if (dkt.TryGetValue(name, out var propDkt))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
+					{
+						if (paramCount < 0 || propDkt.Count == 1)
+							return propDkt.First().Value;
+						else if (propDkt.TryGetValue(paramCount, out var mph))
+							return mph;
+					}
 
 					t = t.BaseType;
-				} while (t.Assembly == typeof(Any).Assembly || t.Namespace == "Keysharp.CompiledMain");
+				} while (t.Assembly == typeof(Any).Assembly || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase));
 			}
 			catch (Exception)// e)
 			{
@@ -189,45 +208,32 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		internal static MethodPropertyHolder FindBuiltInMethod(string name)
+		private static MethodPropertyHolder FindMethod(Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> dkt, string name, int paramCount)
 		{
-			//foreach (var item in AppDomain.CurrentDomain.GetAssemblies().Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
-			//  foreach (var type in item.GetTypes())
-			//      if (type.IsClass && type.IsPublic && type.Namespace.StartsWith("Keysharp.Core"))
-			//          if (FindMethod(type, name) is MethodInfo mi)
-			//              return mi;
-			if (stringToTypeBuiltInMethods.TryGetValue(name, out var meths))
+			if (dkt.TryGetValue(name, out var meths))
 				if (meths.Count > 0)
-					return meths.Values.First();
+				{
+					var first = meths.First().Value;
+
+					if (paramCount < 0 || first.Count == 1)
+						return first.First().Value;
+					else if (first.TryGetValue(paramCount, out var mph))
+						return mph;
+				}
 
 			return null;
 		}
 
-		internal static MethodPropertyHolder FindLocalMethod(string name)
-		{
-			if (stringToTypeLocalMethods.TryGetValue(name, out var meths))
-				if (meths.Count > 0)
-					return meths.Values.First();
+		internal static MethodPropertyHolder FindBuiltInMethod(string name, int paramCount) =>
+		FindMethod(stringToTypeBuiltInMethods, name, paramCount);
 
-			//var stack = new StackTrace(false).GetFrames();
-			//for (var i = 0; i < stack.Length; i++)
-			//{
-			//  var type = stack[i].GetMethod().DeclaringType;
-			//  if (type.FullName.StartsWith("Keysharp.Main", StringComparison.OrdinalIgnoreCase))
-			//      return FindMethod(type, name);
-			//}
-			return null;
-		}
 
-		internal static MethodPropertyHolder FindLocalRoutine(string name) => FindLocalMethod(Keysharp.Scripting.Parser.LabelMethodName(name));
+		internal static MethodPropertyHolder FindLocalMethod(string name, int paramCount) =>
+		FindMethod(stringToTypeLocalMethods, name, paramCount);
 
-		internal static MethodPropertyHolder FindMethod(string name)
-		{
-			if (FindLocalMethod(name) is MethodPropertyHolder mph)
-				return mph;
+		internal static MethodPropertyHolder FindLocalRoutine(string name, int paramCount) => FindLocalMethod(Keysharp.Scripting.Parser.LabelMethodName(name), paramCount);
 
-			return FindBuiltInMethod(name);
-		}
+		internal static MethodPropertyHolder FindMethod(string name, int paramCount) => FindLocalMethod(name, paramCount) is MethodPropertyHolder mph ? mph : FindBuiltInMethod(name, paramCount);
 
 		internal static string GetVariableInfo()
 		{
@@ -241,7 +247,7 @@ namespace Keysharp.Core
 						stack[i].GetMethod().DeclaringType.Attributes.HasFlag(TypeAttributes.Public))//Public is the script, everything else should be hidden.
 				{
 					if (stack[i].GetMethod().DeclaringType.Namespace != null &&
-							stack[i].GetMethod().DeclaringType.Namespace.StartsWith("Keysharp"))
+							stack[i].GetMethod().DeclaringType.Namespace.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase))
 					{
 						var meth = stack[i].GetMethod();
 						_ = sb.AppendLine($"Class: {meth.ReflectedType.Name}");

@@ -51,6 +51,7 @@ namespace Keysharp.Scripting
 		public static readonly string UsingStr =
 			@"using static Keysharp.Core.Accessors;
 using static Keysharp.Core.Core;
+using static Keysharp.Core.COM.Com;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
@@ -374,7 +375,7 @@ using static Keysharp.Scripting.Script.Operator;
 			{
 				_ = sbe.Insert(0, "The following errors occurred: ");
 				_ = sbe.AppendLine();
-				return $"{desc} failed:\n\n{sbe}\n\n\n{sbw}{(message != "" ? "\n\n" + message : "")}";
+				return $"{desc} failed:\n\n{sbe}\n\n\n{sbw}" + (message != "" ? "\n\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
 			}
 
 			return "";

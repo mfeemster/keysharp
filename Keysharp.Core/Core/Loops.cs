@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms.VisualStyles;
 using Keysharp.Core.Windows;
@@ -433,6 +434,8 @@ namespace Keysharp.Core
 				return ie1;
 			else if (obj is object[] oa)
 				return new Array(oa).GetEnumerator();
+			else if (obj is IEnumerable ie)
+				return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
 			else if (obj is null)
 				throw new Error($"Object was null and could not be converted to an IEnumerator<object, objecT>.");
 			else

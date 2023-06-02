@@ -44,10 +44,9 @@ namespace Keysharp.Scripting
 			}
 
 			var mis = (MethodInfo)source;
-
-			if (mis.IsStatic && !source.TargetObject.FullName.StartsWith("System."))//Standard types should still be qualified, because things like Operator.Concat collide with String.Concat().
-				method.TargetObject = null;//This cuts down on the extreme namespace and type qualification verbosity.
-
+			//Always include qualification for methods because there can easily be name collisions, such as the Pop() used for loops, and Array.Pop().
+			//if (mis.IsStatic && !source.TargetObject.FullName.StartsWith("System."))//Standard types should still be qualified, because things like Operator.Concat collide with String.Concat().
+			//  method.TargetObject = null;//This cuts down on the extreme namespace and type qualification verbosity.
 			method.UserData.Add("MethodInfo", mis);
 			return method;
 		}

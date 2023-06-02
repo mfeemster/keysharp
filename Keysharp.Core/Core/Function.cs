@@ -29,33 +29,39 @@ namespace Keysharp.Core
 		{
 			var val = obj0;
 			var name = obj1.As();
-			//var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
-			var mph = Reflections.FindAndCacheMethod(val.GetType(), name);
+			var paramCount = obj2.Ai(-1);
+			var mph = Reflections.FindAndCacheMethod(val.GetType(), name.Length > 0 ? name : "Call", paramCount);
 			return mph != null && mph.mi != null ? new FuncObj(mph.mi, val)
-				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()}.");
+				   : throw new MethodError($"Unable to retrieve method {name} from object of type {val.GetType()} with parameter count {paramCount}.");
 		}
 
 		public static long HasMethod(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var val = obj0;
 			var name = obj1.As();
-			//var paramcount = (int)obj2.Al();//Need to find how to use this.//TODO
-			var mi = Reflections.FindAndCacheMethod(val.GetType(), name);
-			return mi != null ? 1L : 0L;
+			var paramCount = obj2.Ai(-1);
+			var mph = Reflections.FindAndCacheMethod(val.GetType(), name.Length > 0 ? name : "Call", paramCount);
+			return mph != null && mph.mi != null ? 1L : 0L;
 		}
 
-		public static BoundFunc ObjBindMethod(params object[] obj)
+		public static long HasProp(object obj0, object obj1, object obj2 = null)
 		{
-			var (o, name) = obj.Os();
-			object[] args = null;
+			var val = obj0;
+			var name = obj1.As();
+			var paramCount = obj2.Ai(-1);
+			var mph = Reflections.FindAndCacheProperty(val.GetType(), name, paramCount);
+			return mph != null && mph.pi != null ? 1L : 0L;
+		}
 
-			if (Reflections.FindAndCacheMethod(o.GetType(), name) is MethodPropertyHolder mph && mph.mi != null)
-			{
-				if (obj.Length > 2)
-					args = obj.Skip(2).ToArray();
+		public static BoundFunc ObjBindMethod(object obj0, object obj1, object obj2 = null, params object[] obj)
+		{
+			var o = obj0;
+			var paramCount = obj1.Ai(-1);
+			var name = obj2.As();
+			object[] args = obj;
 
+			if (Reflections.FindAndCacheMethod(o.GetType(), name, paramCount) is MethodPropertyHolder mph && mph.mi != null)
 				return new BoundFunc(mph.mi, args, o);
-			}
 
 			return null;
 		}
@@ -293,8 +299,8 @@ namespace Keysharp.Core
 
 		public string Name => mi != null ? mi.Name : "";
 
-		public FuncObj(string s, object o = null)
-			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s) : Reflections.FindMethod(s), o)
+		public FuncObj(string s, object o = null, object paramCount = null)
+			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)
 		{
 		}
 

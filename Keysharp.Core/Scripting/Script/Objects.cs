@@ -12,7 +12,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name) => Reflections.FindAndCacheMethod(typeof(T), name.ToString()) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
+		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount) => Reflections.FindAndCacheMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
 		? (null, mph)
 		: throw new MethodError($"Attempting to get method {name} failed.");
 
@@ -21,55 +21,42 @@ namespace Keysharp.Scripting
 		public static object SetObject(object value, object item, params object[] index)
 		{
 			var key = index[0];
+			Type typetouse;
 
-			if (item is Map map2)//This function has been redesigned to handle assigning a map key/value pair, or assigning a value to an array index. It is NOT for setting properties.
+			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
 			{
-				map2[key] = value;
+				typetouse = t;
+				item = o;
+			}
+			else
+				typetouse = item.GetType();
+
+			if (index.Length == 1)
+			{
+				var position = (int)ForceLong(key);
+
+				if (item is object[] objarr)
+				{
+					var actualindex = position < 0 ? objarr.Length + position : position - 1;
+					objarr[actualindex] = value;
+					return value;
+				}
+				else if (item is System.Array array)
+				{
+					var actualindex = position < 0 ? array.Length + position : position - 1;
+					array.SetValue(value, actualindex);
+					return value;
+				}
+				else if (item == null)
+				{
+					return null;
+				}
+			}
+
+			if (Reflections.FindAndCacheMethod(typetouse, "set_Item", index.Length + 1) is MethodPropertyHolder mph1)
+			{
+				mph1.callFunc(item, index.Concat(new object[] { value }));
 				return value;
-			}
-
-			var position = (int)ForceLong(key);
-
-			if (item is Core.Array al)
-			{
-				al[position] = value;
-				return value;
-			}
-			else if (item is Core.Buffer buf)
-			{
-				throw new IndexError("Cannot call SetObject() on a Buffer object.");
-			}
-			else if (item == null)
-			{
-				return null;
-			}
-
-			foreach (var mi in item.GetType().GetMethods().Where(m => m.Name == "set_Item"))//Try to see if this is the indexer property __Item.
-			{
-				var parameters = mi.GetParameters();
-
-				if (parameters.Length > 1)
-					return mi.Invoke(item, index.Concat(new object[] { value }));// new object[] { index, value });
-				var p = parameters[0];
-
-				if (p.ParameterType == typeof(object))
-					return mi.Invoke(item, new object[] { key, value });
-				else if (key is long l && p.ParameterType == typeof(long))//Subtract one because arrays are 1-indexed, negative numbers are reverse indexed.
-					return mi.Invoke(item, new object[] { l - 1, value });
-				else if (key is int i && p.ParameterType == typeof(int))
-					return mi.Invoke(item, new object[] { i - 1, value });
-			}
-
-			//These are probably never used.
-			if (item is object[] objarr)
-			{
-				var actualindex = position < 0 ? objarr.Length + position : position - 1;
-				return objarr[actualindex];
-			}
-			else if (item is System.Array array)
-			{
-				var actualindex = position < 0 ? array.Length + position : position - 1;
-				return array.GetValue(actualindex);
 			}
 
 			throw new MemberError($"Attempting to set index {key} of object {item} to value {value} failed.");
@@ -77,75 +64,80 @@ namespace Keysharp.Scripting
 
 		private static object IndexAt(object item, params object[] index)
 		{
-			var key = index == null || index.Length == 0 ? 0 : index[0];
+			int len;
+			object key = null;
 
-			if (item is Map table)
-				return table[key];
-
-			var position = (int)ForceLong(key);
-
-			//The most common is going to be a string, array, map or buffer.
-			if (item is string s)
+			if (index != null && index.Length > 0)
 			{
-				var actualindex = position < 0 ? s.Length + position : position - 1;
-				return s[actualindex];
+				len = index.Length;
+				key = index[0];
 			}
-			else if (item is Core.Array al)
-				return al[position];
-			else if (item is object[] objarr)//Used for indexing into variadic function params.
+			else
+				len = 1;
+
+			Type typetouse;
+
+			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
 			{
-				var actualindex = position < 0 ? objarr.Length + position : position - 1;
-				return objarr[actualindex];
+				typetouse = t;
+				item = o;
 			}
-			else if (item is Core.Buffer buf)
-				return buf[position];
+			else
+				typetouse = item.GetType();
 
-			foreach (var mi in item.GetType().GetMethods().Where(m => m.Name == "get_Item"))
+			if (len == 1)
 			{
-				var parameters = mi.GetParameters();
+				var position = (int)ForceLong(key);
 
-				if (parameters.Length > 1)
-					return mi.Invoke(item, index);
-
-				var p = parameters[0];
-
-				if (p.ParameterType == typeof(object))
-					return mi.Invoke(item, new object[] { key });
-				else if (key is long l && p.ParameterType == typeof(long))//Subtract one because arrays are 1-indexed, negative numbers are reverse indexed.
-					return mi.Invoke(item, new object[] { l - 1 });
-				else if (key is int i && p.ParameterType == typeof(int))
-					return mi.Invoke(item, new object[] { i - 1 });
-			}
-
-			//These are probably never used.
-			if (item is System.Array array)
-			{
-				var actualindex = position < 0 ? array.Length + position : position - 1;
-				return array.GetValue(actualindex);
-			}
-			else if (typeof(IEnumerable).IsAssignableFrom(item.GetType()))
-			{
-				var ienum = (IEnumerable)item;
-				var enumerator = ienum.GetEnumerator();
-				var i = 0;
-				var len = 0;
-				var tempenum = ienum.GetEnumerator();
-
-				while (tempenum.MoveNext())
-					len++;
-
-				var actualindex = position < 0 ? len + position : position - 1;
-
-				while (enumerator.MoveNext())
+				//The most common is going to be a string, array, map or buffer.
+				if (item is string s)
 				{
-					if (i == actualindex)
-						return enumerator.Current;
-
-					i++;
+					var actualindex = position < 0 ? s.Length + position : position - 1;
+					return s[actualindex];
+				}
+				else if (item is object[] objarr)//Used for indexing into variadic function params.
+				{
+					var actualindex = position < 0 ? objarr.Length + position : position - 1;
+					return objarr[actualindex];
+				}
+				else if (item is Core.Buffer buf)
+				{
+					return buf[position];
+				}
+				else if (item is System.Array array)
+				{
+					var actualindex = position < 0 ? array.Length + position : position - 1;
+					return array.GetValue(actualindex);
 				}
 
-				return null;
+				//These are probably never used.
+				/*  else if (typeof(IEnumerable).IsAssignableFrom(item.GetType()))
+				    {
+				    var ienum = (IEnumerable)item;
+				    var enumerator = ienum.GetEnumerator();
+				    var i = 0;
+				    var len = 0;
+				    var tempenum = ienum.GetEnumerator();
+
+				    while (tempenum.MoveNext())
+				        len++;
+
+				    var actualindex = position < 0 ? len + position : position - 1;
+
+				    while (enumerator.MoveNext())
+				    {
+				        if (i == actualindex)
+				            return enumerator.Current;
+
+				        i++;
+				    }
+
+				    return null;
+				    }*/
 			}
+
+			if (Reflections.FindAndCacheMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph1)
+				return mph1.callFunc(item, index);
 
 			throw new IndexError($"Attempting to get index of {key} on item {item} failed.");
 		}

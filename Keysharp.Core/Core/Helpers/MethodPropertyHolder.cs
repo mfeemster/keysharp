@@ -40,17 +40,34 @@ namespace Keysharp.Core
 		}
 	}
 
+	public class ComMethodPropertyHolder : MethodPropertyHolder
+	{
+		public string Name { get; private set; }
+
+		public ComMethodPropertyHolder(string name)
+			: base(null, null)
+		{
+			Name = name;
+			callFunc = (inst, obj) =>
+			{
+				return inst.GetType().InvokeMember(Name, BindingFlags.InvokeMethod, null, inst, obj);
+			};
+		}
+	}
+
 	public class MethodPropertyHolder
 	{
-		internal readonly Func<object, object[], object> callFunc;
+		internal Func<object, object[], object> callFunc;
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
 		internal readonly Action<object, object> setPropFunc;
 		protected readonly ConcurrentStackPool<object> paramsPool;
 		private readonly bool isGuiType;
-		private readonly bool isVariadic;
 		private int paramLength;
+		private int startVarIndex = -1;
+		private int stopVarIndexDistanceFromEnd;
+
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
 
@@ -61,12 +78,18 @@ namespace Keysharp.Core
 
 			if (mi != null)
 			{
-				//if (mi.Name == "classvarfuncstatic")
-				//  Console.WriteLine(mi.Name);
 				parameters = mi.GetParameters();
 				paramLength = parameters.Length;
 				isGuiType = Keysharp.Core.Gui.IsGuiType(mi.DeclaringType);
-				isVariadic = paramLength > 0 && parameters[parameters.Length - 1].ParameterType == typeof(object[]);
+
+				for (var i = 0; i < parameters.Length; i++)
+				{
+					if (parameters[i].ParameterType == typeof(object[]))
+						startVarIndex = i;
+					else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
+						stopVarIndexDistanceFromEnd = parameters.Length - i;
+				}
+
 				IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
 
 				if (typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType) && mi.Name == "Call")
@@ -94,7 +117,7 @@ namespace Keysharp.Core
 				{
 					paramsPool = new ConcurrentStackPool<object>(paramLength);
 
-					if (isVariadic)
+					if (startVarIndex != -1)//Variadic.
 					{
 						callFunc = (inst, obj) =>
 						{
@@ -107,25 +130,28 @@ namespace Keysharp.Core
 							}
 							else
 							{
-								var i = 0;//The slowest case: a function is trying to be called with a different number of parameters than it actually has, or it's variadic, so manually create an array of parameters that matches the required size.
+								//The slowest case: a function is trying to be called with a different number of parameters than it actually has, or it's variadic, so manually create an array of parameters that matches the required size.
+								var oi = 0;
 								var objLength = obj.Length;
 								newobj = paramsPool.Rent();
 
-								for (; i < objLength && i < paramLength; i++)
+								for (var pi = 0; oi < objLength && pi < paramLength; pi++)
 								{
-									if (i == paramLength - 1)//For variadic functions, the last param is variadic, put all remaining params there.
+									if (pi == startVarIndex)
 									{
-										var newi = i;
-										lastArr = new object[objLength - i];//Can't really use a pool here because we don't know the exact size ahead of time.
+										var om1 = (objLength - startVarIndex) - stopVarIndexDistanceFromEnd;
+										lastArr = new object[om1];//Can't really use a pool here because we don't know the exact size ahead of time.
 
-										for (; i < objLength; i++)
-											lastArr[i - newi] = obj[i];
+										for (var i = 0; i < om1; i++)
+										{
+											lastArr[i] = obj[pi + i];
+											oi++;
+										}
 
-										newobj[newi] = lastArr;
-										break;
+										newobj[pi] = lastArr;
 									}
 									else
-										newobj[i] = obj[i];
+										newobj[pi] = obj[oi++];
 								}
 							}
 

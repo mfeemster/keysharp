@@ -583,6 +583,7 @@ namespace Keysharp.Scripting
 					string basetype;
 					var classparts = parts[1].Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 					var classtype = AddType(classparts[0].ToLower());
+					var blockOpen = parts.Length > 1 && parts[1].AsSpan().Trim().EndsWith("{");
 					var block = new CodeBlock(line, Scope, null, CodeBlock.BlockKind.Class, blocks.PeekOrNull(), InternalID, InternalID)
 					{
 						Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect

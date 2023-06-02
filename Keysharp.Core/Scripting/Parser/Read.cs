@@ -637,7 +637,8 @@ namespace Keysharp.Scripting
 										 !code.StartsWith("try", StringComparison.OrdinalIgnoreCase) &&
 										 !code.StartsWith("catch", StringComparison.OrdinalIgnoreCase) &&
 										 !code.StartsWith("switch", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("loop", StringComparison.OrdinalIgnoreCase)
+										 !code.StartsWith("loop", StringComparison.OrdinalIgnoreCase) &&
+										 !code.StartsWith("class", StringComparison.OrdinalIgnoreCase)
 										)
 									   )))
 					{

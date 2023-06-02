@@ -373,3 +373,222 @@ if (testsubclassobj.a == 1212)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+class myarrayclass1 extends Array
+{
+	__item[k1]
+	{
+		get
+		{
+			return 1
+		}
+		
+	}
+}
+
+mac := myarrayclass1()
+mac.Push(123)
+val := mac[1]
+
+If (val == 1)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+mac[1] := 999
+val := mac[1]
+
+If (val == 1)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class myarrayclass2 extends Array
+{
+	__item[p1]
+	{
+		set
+		{
+			super[p1] := value
+		}
+	}
+}
+
+mac := myarrayclass2()
+mac.Push(123)
+val := mac[1]
+
+If (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+mac[1] := 999
+val := mac[1]
+
+If (val == 999)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class mymapclass1 extends map
+{
+	__item[a]
+	{
+		get
+		{
+			return super[a]
+		}
+
+		set
+		{
+			super[a] := value
+		}
+	}
+
+	__item[a, b]
+	{
+		get
+		{
+			return super[a + b]
+		}
+
+		set
+		{
+			super[a + b] := a + b
+		}
+	}
+
+
+	__item[a, b, c]
+	{
+		get
+		{
+			return super[a + b + c]
+		}
+
+		set
+		{
+			super[a + b + c] := a + b + c
+		}
+	}
+}
+
+mmp := mymapclass1()
+
+mmp["asdf"] := 123
+val := mmp["asdf"]
+
+If (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+mmp[1, 2] := 123
+val := mmp[1, 2]
+
+If (val == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+mmp[1, 2, 3] := 123
+val := mmp[1, 2, 3]
+
+If (val == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+class myarrayclass3 extends Array
+{
+	__item[p1*]
+	{
+		set
+		{
+			temp := 0
+
+			for n in p1
+			{
+				temp += n
+			}
+
+			super[p1[1]] := temp + value
+		}
+	}
+}
+
+mac := myarrayclass3()
+mac.Push(1)
+mac[1, 2, 3, 4] := 100
+val := mac[1]
+
+if (val == 110)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class myarrayclass4 extends Array
+{
+	__item[p1*]
+	{
+		get
+		{
+			temp := 0
+
+			for n in p1
+			{
+				temp += n
+			}
+
+			return temp
+		}
+	}
+}
+
+mac := myarrayclass4()
+val := mac[1, 2, 3, 4]
+
+if (val == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class myarrayclass5 extends Array
+{
+	__item[p1, p2, p3*]
+	{
+		get
+		{
+			temp := p1 + p2
+
+			for n in p3
+			{
+				temp += n
+			}
+
+			return temp
+		}
+	}
+}
+
+mac := myarrayclass5()
+val := mac[1, 2, 3, 4]
+
+if (val == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class myinitclass
+{
+	p1 := 123
+}
+
+mic := myinitclass()
+val := mic.p1
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

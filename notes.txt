@@ -35,7 +35,6 @@ TODO/ENSURE THESE WORK:
 		-Support that, but also "Keysharp" in its place?
 	A_IsPaused
 	ListLines, A_ListLines
-	Function objects will need to be created to be used, not all created on script load like the documentation says.
 	Custom iterator objects won't be implemented.
 	Ownprops
 	threading interaction with timers
@@ -88,7 +87,8 @@ TODO/ENSURE THESE WORK:
 		PictureBox derivation: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
 		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
 		The program icon is a derivative of work by Bamicon: https://thenounproject.com/bamicon/
-
+		Microsoft PowerShell code used for COM: https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/engine/COM/
+		
 	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
 	
@@ -284,6 +284,16 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Another COM	solution which Burque has gotten to mostly work:
 	https://www.codeproject.com/Articles/523417/Reflection-with-IDispatch-based-COM-objects
 	How Powershell implements it: https://github.com/PowerShell/PowerShell/tree/master/src/System.Management.Automation/engine/COM
+		https://github.com/PowerShell/PowerShell/tree/master/src/System.Management.Automation/engine/ComInterop
+		https://www.codeproject.com/Articles/10838/How-To-Get-Properties-and-Methods-in-Late-Binding
+		https://www.codeproject.com/Articles/990/Understanding-Classic-COM-Interoperability-With-NE
+			Testing COM:
+				https://github.com/G33kDude/Chrome.ahk/blob/master/Chrome.ahk
+				https://github.com/Xeo786/Rufaydium-Webdriver/blob/main/Rufaydium.ahk
+		Differences:
+			Using a custom enumerator returned from `_NewEnum()` called on the results of WMI `ExecQuery()` is not supported.
+				Just iterate over the results returned by `ExecQuery()`.
+				
 	An apparently cross platform desktop automation library: https://github.com/lucassklp/Desktop.Robot
 	An event hook example library: https://github.com/Hema2-official/accprez/tree/main/Accprez
 	-Maybe do reference variables just for static function calls:

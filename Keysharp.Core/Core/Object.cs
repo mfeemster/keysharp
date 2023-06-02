@@ -19,15 +19,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public virtual FuncObj GetMethod(object obj0, object obj1 = null)
-		{
-			var name = obj0.As();
-			//var paramcount = obj1.Al();
-			return Reflections.FindAndCacheMethod(GetType(), name) is MethodPropertyHolder mph &&  mph.mi != null
-				   ? new FuncObj(mph.mi, this)
-				   : throw new MethodError($"Unable to retrieve method {name} from object of type {GetType()}.");
-		}
-
+		public virtual FuncObj GetMethod(object obj0 = null, object obj1 = null) => Function.GetMethod(this, obj0, obj1);
 		//public bool DefineProp(object obj0, object obj1)
 		//{
 		//  var name obj0.As();
@@ -36,18 +28,9 @@ namespace Keysharp.Core
 
 		public bool HasBase(object obj) => obj.GetType().IsAssignableFrom(GetType());
 
-		public long HasMethod(object obj) => Reflections.FindAndCacheMethod(GetType(), obj.As()) is MethodPropertyHolder mph&& mph.mi != null ? 1L : 0L;
+		public long HasMethod(object obj0 = null, object obj1 = null) => Function.HasMethod(this, obj0, obj1);
 
-		public long HasProp(object obj)
-		{
-			var name = obj.As();
-
-			if (Reflections.FindAndCacheProperty(GetType(), name) is MethodPropertyHolder mph && mph.pi != null)
-				return 1L;
-
-			//Figure out ownprops.//TODO
-			return 0L;
-		}
+		public long HasProp(object obj) => Function.HasProp(this, obj);
 
 		//public virtual string tostring() => ToString();
 	}

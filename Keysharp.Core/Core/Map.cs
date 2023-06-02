@@ -286,7 +286,7 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public virtual object this[object key]
+		public object this[object key]
 		{
 			get
 			{

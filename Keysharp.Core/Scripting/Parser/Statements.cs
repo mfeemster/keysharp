@@ -25,8 +25,10 @@ namespace Keysharp.Scripting
 		{
 			var scope = Scope.TrimEndOf(blockKind == CodeBlock.BlockKind.PropGet ? "_get" : "_set");
 
-			if (properties[typeStack.Peek()].TryGetValue(scope, out var cmp))
+			if (properties[typeStack.Peek()].TryGetValue(scope, out var propList))
 			{
+				var cmp = propList.Last();
+
 				if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
 				{
 					foreach (var kv in dkt)
@@ -173,7 +175,9 @@ namespace Keysharp.Scripting
 							}
 							else if (parentBlock.Kind == CodeBlock.BlockKind.Class)
 							{
-								_ = typeStack.PopOrNull();
+								if (typeStack.PopOrNull() is CodeTypeDeclaration ctd)
+								{
+								}
 							}
 							else if (parentBlock.Kind == CodeBlock.BlockKind.Prop)
 							{
@@ -299,7 +303,31 @@ namespace Keysharp.Scripting
 										prop.Attributes |= MemberAttributes.Final;
 
 										foreach (var p in indexParams)
-											_ = prop.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(object)), p));
+										{
+											var variadic = false;
+											var pstr = p;
+
+											if (p == "*")
+											{
+												variadic = true;
+												pstr = "args";//Parameter is variadic, but the name is unspecified, so use "args" as a default (because "params" is a reserved word).
+											}
+											else if (p.EndsWith('*'))
+											{
+												variadic = true;
+												pstr = p.TrimEnd('*');
+											}
+
+											var pdecl = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(object)), pstr);
+
+											if (variadic)
+											{
+												pdecl.Type = new CodeTypeReference(typeof(object[]));
+												_ = pdecl.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+											}
+
+											_ = prop.Parameters.Add(pdecl);
+										}
 									}
 								}
 
@@ -307,7 +335,7 @@ namespace Keysharp.Scripting
 									prop.Attributes |= MemberAttributes.Static;
 
 								var lower = prop.Name.ToLower();
-								properties[typeStack.Peek()][lower] = prop;
+								properties[typeStack.Peek()].GetOrAdd(lower).Add(prop);
 								var blockType = CodeBlock.BlockType.Expect;
 								var propblock = new CodeBlock(codeline, lower, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
 								{
@@ -325,7 +353,7 @@ namespace Keysharp.Scripting
 							StartNewFunction();
 							var propName = blocks.Peek().Method;
 							var funcParams = currentFuncParams.Peek();
-							var prop = properties[typeStack.Peek()][propName];
+							var prop = properties[typeStack.Peek()][propName].Last();
 
 							foreach (CodeParameterDeclarationExpression p in prop.Parameters)
 								funcParams.Add(p.Name);
@@ -358,22 +386,39 @@ namespace Keysharp.Scripting
 										continue;
 									else
 										statements[n] = new CodeExpressionStatement(expr);
+								}
 
-									//This is checking for the declaration and initialization of class member variables. Only record here after the parsing and optimization above have been done.
-									if (typeStack.Peek().Name != mainClassName && Scope.Length == 0 && expr is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign
-											&& cboe.Left is CodeVariableReferenceExpression cvre)//We are in a type that is not the main class, and also not inside of a function. Static or instance properties can be initialized with a string.
+								for (n = 0; n < statements.Length; n++)
+								{
+									if (statements[n] is CodeExpressionStatement ces)
 									{
-										allVars[typeStack.Peek()].GetOrAdd(Scope)[cvre.VariableName] = cboe.Right;
+										var expr = ces.Expression;
 
-										if (memberVarsStatic)
-											cboe.Right.UserData["isstatic"] = true;
+										//This is checking for the declaration and initialization of class member variables. Only record here after the parsing and optimization above have been done.
+										if (typeStack.Peek().Name != mainClassName && Scope.Length == 0 && expr is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign
+												&& cboe.Left is CodeVariableReferenceExpression cvre)//We are in a type that is not the main class, and also not inside of a function. Static or instance properties can be initialized with a string.
+										{
+											allVars[typeStack.Peek()].GetOrAdd(Scope)[cvre.VariableName] = cboe.Right;
+
+											if (memberVarsStatic)
+												cboe.Right.UserData["isstatic"] = true;
+
+											if (statements.Length > 1)//If it was a multi statement, then consider it to be part of the initialization of a class member.
+											{
+												for (n++; n < statements.Length; n++)
+													if (statements[n] is CodeExpressionStatement ces2)
+														cboe.Right.UserData[ces2] = ces2;
+
+												break;
+											}
+										}
+
+										//statements[n].LinePragma = lines[n];
+										//if (parentBlock != null && parentBlock.Kind == CodeBlock.BlockKind.Try && parentBlock.Statements.Count > 0)
+										//  parentBlock.Statements.Insert(parentBlock.Statements.Count - 1, statements[n]);
+										//else
+										_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
 									}
-
-									//statements[n].LinePragma = lines[n];
-									//if (parentBlock != null && parentBlock.Kind == CodeBlock.BlockKind.Try && parentBlock.Statements.Count > 0)
-									//  parentBlock.Statements.Insert(parentBlock.Statements.Count - 1, statements[n]);
-									//else
-									_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
 								}
 							}
 						}

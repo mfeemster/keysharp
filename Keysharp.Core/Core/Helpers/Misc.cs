@@ -121,12 +121,7 @@ namespace Keysharp.Core
 			return val.HasValue ? 1 : 0;
 		}
 
-		/// <summary>
-		/// Checks if a function is defined.
-		/// </summary>
-		/// <param name="name">The name of a function.</param>
-		/// <returns><c>true</c> if the specified function exists in the current scope, <c>false</c> otherwise.</returns>
-		public static long IsFunc(object name) => Reflections.FindMethod(name.ToString()) is MethodPropertyHolder mph&& mph.mi != null ? 1L : 0L;
+		public static long IsFunc(object obj0, object obj1 = null) => Reflections.FindMethod(obj0.ToString(), obj1.Ai(-1)) is MethodPropertyHolder mph && mph.mi != null ? 1L : 0L;
 
 		public static long IsInteger(object obj)
 		{

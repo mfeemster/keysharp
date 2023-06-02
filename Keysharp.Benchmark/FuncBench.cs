@@ -224,7 +224,7 @@ namespace Keysharp.Benchmark
 			for (System.Collections.IEnumerator e8 = Loop(FuncBench.Size).GetEnumerator(); IsTrueAndRunning(e8.MoveNext());
 				)
 			{
-				Invoke(GetMethodOrProperty(this, "ClassInc"));
+				Invoke(GetMethodOrProperty(this, "ClassInc", 0));
 				e9:
 				;
 			}

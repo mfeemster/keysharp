@@ -101,8 +101,10 @@ namespace Keysharp.Scripting
 
 		private CodeFieldReferenceExpression OperatorAsFieldReference(Script.Operator op)
 		{
-			var field = new CodeFieldReferenceExpression(null, op.ToString());//Not passing a type cuts down on the extreme namespace and type qualification verbosity.
-			//field.TargetObject = new CodeTypeReferenceExpression(typeof(Script.Operator), op.ToString());
+			//Despite the extreme namespace and type qualification verbosity it causes,
+			//we must pass the type so the generated code is not ambiguous with methods whose names are the same as these operators.
+			//For example, Add and Add().
+			var field = new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(Script.Operator)), op.ToString());
 			field.UserData.Add(RawData, op);
 			return field;
 		}

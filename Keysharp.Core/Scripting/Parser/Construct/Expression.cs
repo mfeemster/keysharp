@@ -39,11 +39,12 @@ namespace Keysharp.Scripting
 						if (call)
 						{
 							var invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
+							CodeMethodInvokeExpression tempinvoke = null;
 
 							//Distinguish between Index which is an array or dictionary lookup and GetMethodOrProperty which is getting a method or property to be called.
 							if (parts[n] is CodeMethodInvokeExpression indexcmie)
 							{
-								var tempinvoke = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
+								tempinvoke = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
 								tempinvoke.Parameters.Clear();
 								tempinvoke.Parameters.AddRange(indexcmie.Parameters);
 								parts[n] = tempinvoke;//Replace Index with MethodIndex.
@@ -57,6 +58,9 @@ namespace Keysharp.Scripting
 								var passed = ParseMultiExpression(paren.ToArray(), create);
 								invoke.Parameters.AddRange(passed);
 							}
+
+							if (tempinvoke != null)
+								tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
 
 							parts[i] = invoke;
 							parts.RemoveAt(n);
@@ -207,7 +211,7 @@ namespace Keysharp.Scripting
 								var index = ParseMultiExpression(paren.ToArray(), create);
 
 								if (index.Length == 0)
-									_ = invoke.Parameters.Add(new CodeSnippetExpression("null"));
+									_ = invoke.Parameters.Add(new CodeSnippetExpression("new object[] { }"));
 								else if (index[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(index[0], "ParseObject"));
 								else
@@ -293,8 +297,7 @@ namespace Keysharp.Scripting
 							}
 
 							if (paren.Count != 0)
-								passed = ParseMultiExpression(paren.ToArray(), /*create*/
-															  false);//override the value of create with false because the arguments passed into a function should never be created automatically.
+								passed = ParseMultiExpression(paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
 
 							if (dynamic)
 							{
@@ -320,7 +323,9 @@ namespace Keysharp.Scripting
 							else
 								invoke = LocalMethodInvoke(name);
 
-							if (passed?.Length > 0)
+							var passedLen = passed != null ? passed.Length : 0;
+
+							if (passedLen > 0)
 							{
 								if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 								{
@@ -347,6 +352,12 @@ namespace Keysharp.Scripting
 									//  }
 									//}
 								}
+							}
+
+							if (dynamic)
+							{
+								if (invoke.Parameters[0] is CodeMethodInvokeExpression cmie)
+									cmie.Parameters.Add(new CodePrimitiveExpression(passedLen));
 							}
 
 							allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);

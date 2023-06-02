@@ -1,6 +1,7 @@
 using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -36,7 +37,7 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
 		private string name = string.Empty;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberProperty>>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
 		private StringBuilder sbld = new StringBuilder();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private CodeTypeDeclaration targetClass;
@@ -302,7 +303,7 @@ namespace Keysharp.Scripting
 						//Handle proper casing for all method calls.
 						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
 							cmie.Method.MethodName = cmm.Name;
-						else if (Keysharp.Core.Reflections.FindBuiltInMethod(cmie.Method.MethodName) is MethodPropertyHolder mph && mph.mi != null)//This will find the first built in method with this name, but they are all cased the same, so it should be ok.
+						else if (Keysharp.Core.Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
 							cmie.Method.MethodName = mph.mi.Name;
 					}
 				}
@@ -317,22 +318,31 @@ namespace Keysharp.Scripting
 					foreach (var method in typeMethods.Value.Values)
 					{
 						if (newmeth == null && string.Compare(method.Name, "__New", true) == 0)//__New() and Call() have already been added.
+						{
+							method.Name = "__New";//Ensure it's properly cased.
 							newmeth = method;
+						}
 						else if (callmeth == null && string.Compare(method.Name, "Call", true) == 0)
+						{
+							method.Name = "Call";
 							callmeth = method;
+						}
 						else if (string.Compare(method.Name, "__Init", true) == 0)
 						{
+							method.Name = "__Init";
 						}
 						else
 							_ = typeMethods.Key.Members.Add(method);
 
 						if (string.Compare(method.Name, "__Delete", true) == 0)
 						{
+							method.Name = "__Delete";
 							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}"));
 						}
 						else if (string.Compare(method.Name, "__Enum", true) == 0)
 						{
 							var getEnumMeth = new CodeMemberMethod();
+							method.Name = "__Enum";
 							getEnumMeth.Name = "IEnumerable.GetEnumerator";
 							getEnumMeth.Attributes = MemberAttributes.Final;
 							getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
@@ -400,8 +410,12 @@ namespace Keysharp.Scripting
 
 					if (baseType != "KeysharpObject" && thisconstructor != null)
 					{
+						var rawBaseTypeName = "";
+
 						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)//There is a severe problem here: they can derive from non-user defined types. How to find them?//TODO
 						{
+							rawBaseTypeName = ctdbase.Name;
+
 							if (ctdbase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
 							{
 								var i = 0;
@@ -420,6 +434,7 @@ namespace Keysharp.Scripting
 							{
 								if (string.Compare(typekv.Key.Name, baseType, true) == 0)
 								{
+									rawBaseTypeName = typekv.Key.Name;
 									var ctors = typekv.Key.GetConstructors();
 
 									foreach (var ctor in ctors)
@@ -445,6 +460,9 @@ namespace Keysharp.Scripting
 								}
 							}
 						}
+
+						if (rawBaseTypeName.Length != 0)
+							typeMethods.Key.BaseTypes[0].BaseType = rawBaseTypeName;//Make sure it's properly cased, so we can, for example, derive from map or Map.
 					}
 				}
 				else
@@ -454,7 +472,7 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			//Must explicitly mark all index operators as override if they exist in a base.
+			//Must explicitly mark all index operators as override if they exist in a base, and the parameter count matches.
 			//This is because in the function IndexAt(), Array[] and Map[] are called directly, after doing a cast check.
 			//First go through all user defined properties and change the name __Item to Item.
 			foreach (var typeProperties in properties)
@@ -463,14 +481,17 @@ namespace Keysharp.Scripting
 				{
 					foreach (var propkv in typeProperties.Value.ToArray())
 					{
-						var prop = propkv.Value;
+						var propList = propkv.Value;
 
-						if (string.Compare(prop.Name, "__Item", true) == 0)
+						foreach (var prop in propList)
 						{
-							prop.Name = "Item";
-							prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
-							typeProperties.Value.Remove("__item");//Was stored as lowercase.
-							typeProperties.Value["Item"] = prop;
+							if (string.Compare(prop.Name, "__Item", true) == 0)
+							{
+								prop.Name = "Item";
+								//prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
+								typeProperties.Value.Remove("__item");//Was stored as lowercase.
+								typeProperties.Value.GetOrAdd("Item").Add(prop);
+							}
 						}
 					}
 				}
@@ -483,13 +504,15 @@ namespace Keysharp.Scripting
 				{
 					foreach (var propkv in typeProperties.Value)
 					{
-						var prop = propkv.Value;
+						var propList = propkv.Value;
 
-						if (typeProperties.Key.BaseTypes.Count > 0)
-							if (PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item"))
-								prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
-
-						_ = typeProperties.Key.Members.Add(prop);
+						foreach (var prop in propList)
+						{
+							//if (typeProperties.Key.BaseTypes.Count > 0)
+							//  if (PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item", prop.Parameters.Count))
+							//      prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+							_ = typeProperties.Key.Members.Add(prop);
+						}
 					}
 				}
 			}
@@ -600,7 +623,13 @@ namespace Keysharp.Scripting
 								}
 
 								if (initcmm != null)
+								{
 									_ = initcmm.Statements.Add(new CodeSnippetExpression($"{name} = {init}"));
+
+									foreach (DictionaryEntry kv in globalvar.Value.UserData)
+										if (kv.Key is CodeExpressionStatement ces2)
+											_ = initcmm.Statements.Add(ces2);
+								}
 							}
 						}
 					}
@@ -682,7 +711,7 @@ namespace Keysharp.Scripting
 				_ = targetClass.Members.Add(ctd);
 
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
-			properties[ctd] = new Dictionary<string, CodeMemberProperty>();
+			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>();
 			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
@@ -743,7 +772,7 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
-		private bool PropExistsInBuiltInClass(string baseType, string p)
+		private bool PropExistsInBuiltInClass(string baseType, string p, int paramCount)
 		{
 			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
 			{
@@ -751,17 +780,19 @@ namespace Keysharp.Scripting
 				foreach (var typekv in props)
 				{
 					if (string.Compare(typekv.Key.Name, baseType, true) == 0)
-						if (PropExistsInTypeOrBase(typekv.Key, p))
+					{
+						if (PropExistsInTypeOrBase(typekv.Key, p, paramCount))
 							return true;
 						else
-							return false;
+							break;
+					}
 				}
 			}
 
 			return false;
 		}
 
-		private bool PropExistsInTypeOrBase(string t, string p)
+		private bool PropExistsInTypeOrBase(string t, string p, int paramCount)
 		{
 			if (properties.Count > 0)
 			{
@@ -775,8 +806,10 @@ namespace Keysharp.Scripting
 						{
 							anyFound = true;
 
-							if (typekv.Value.TryGetValue(p, out var _))//If the property existed in the type, return.
-								return true;
+							if (typekv.Value.TryGetValue(p, out var tempList))//If the property existed in the type, return.
+								foreach (var prop in tempList)
+									if (prop.Parameters.Count == paramCount)
+										return true;
 
 							//Wasn't found in this type, so check its base.
 							if (typekv.Key.BaseTypes.Count > 0)
@@ -785,7 +818,7 @@ namespace Keysharp.Scripting
 
 								//The base might have been a user defined type, or a built in type. Check built in type first.
 								//Ex: subclass : theclass : Array
-								if (PropExistsInBuiltInClass(t, p))
+								if (PropExistsInBuiltInClass(t, p, paramCount))
 									return true;
 
 								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
@@ -799,7 +832,7 @@ namespace Keysharp.Scripting
 					//Ex: theclass : Array
 					if (!anyFound)
 					{
-						if (PropExistsInBuiltInClass(t, p))
+						if (PropExistsInBuiltInClass(t, p, paramCount))
 							return true;
 						else
 							break;
@@ -810,15 +843,16 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool PropExistsInTypeOrBase(Type t, string p)
+		private bool PropExistsInTypeOrBase(Type t, string p, int paramCount)
 		{
 			while (t != null)
 			{
 				var props = t.GetProperties();
 
 				foreach (var prop in props)
-					if (string.Compare(prop.Name, p, true) == 0)
-						return true;
+					if (prop.GetIndexParameters().Length == paramCount)
+						if (string.Compare(prop.Name, p, true) == 0)
+							return true;
 
 				t = t.BaseType;
 			}
