@@ -65,7 +65,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
-	+ This is done by calling `Func("FunctionName")`
+	+ This is done by calling `Func("FunctionName"[, object, paramCount])`
 * Exception classes aren't, and can't be, derived from KeysharpObject.
 	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
@@ -136,7 +136,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * `Enumerator.Call()` is not supported because it takes ref variables.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
-	+ `Func()` is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string.
+	+ `Func()` or `FuncObj()` is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
 ```
 	myfunc(a, b, c?, d?)
@@ -289,7 +289,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 * The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
-	+ Variadic property parameters are not supported.
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
