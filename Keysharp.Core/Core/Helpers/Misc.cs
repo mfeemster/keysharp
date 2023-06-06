@@ -72,7 +72,7 @@ namespace Keysharp.Core
 			return true;
 		}
 
-		public static FuncObj FuncObj(object obj0, object obj1 = null) => new FuncObj(obj0.As(), obj1);
+		public static FuncObj FuncObj(object obj0, object obj1 = null, object obj2 = null) => new FuncObj(obj0.As(), obj1, obj2);
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new (obj0, obj1, obj2);
 

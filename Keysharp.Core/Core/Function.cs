@@ -17,10 +17,10 @@ namespace Keysharp.Core
 
 	public static class Function
 	{
-		public static FuncObj Func(object obj)
+		public static FuncObj Func(object obj, object obj1 = null, object obj2 = null)
 		{
 			var name = obj.As();
-			var fo = new FuncObj(name);
+			var fo = new FuncObj(name, obj1, obj2);
 			return fo.Name != "" ? fo
 				   : throw new MethodError($"Unable to retrieve method {name}.");
 		}
