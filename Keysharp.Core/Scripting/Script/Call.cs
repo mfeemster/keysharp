@@ -25,6 +25,16 @@ namespace Keysharp.Scripting
 			if (ReferenceEquals(item, lastItem) && ReferenceEquals(key, lastKey) && paramCount == lastParamCount)
 				return lastMph;
 
+			Type typetouse = null;
+
+			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+			{
+				typetouse = t;
+				item = o;
+			}
+			else if (item != null)
+				typetouse = item.GetType();
+
 			if (item == null)
 			{
 				if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
@@ -35,14 +45,14 @@ namespace Keysharp.Scripting
 					return lastMph = (item, mph0);
 				}
 			}
-			else if (Reflections.FindAndCacheMethod(item.GetType(), key, paramCount) is MethodPropertyHolder mph1)
+			else if (Reflections.FindAndCacheMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
 			{
 				lastItem = item;
 				lastKey = key;
 				lastParamCount = paramCount;
 				return lastMph = (item, mph1);
 			}
-			else if (Reflections.FindAndCacheProperty(item.GetType(), key, paramCount) is MethodPropertyHolder mph2)
+			else if (Reflections.FindAndCacheProperty(typetouse, key, paramCount) is MethodPropertyHolder mph2)
 			{
 				lastItem = item;
 				lastKey = key;
@@ -59,14 +69,14 @@ namespace Keysharp.Scripting
 
 		public static object GetPropertyValue(object item, object name)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
-			Type typetouse;
+			Type typetouse = null;
 
 			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
 			{
 				typetouse = t;
 				item = o;
 			}
-			else
+			else if (item != null)
 				typetouse = item.GetType();
 
 			var namestr = name.ToString();
@@ -134,14 +144,14 @@ namespace Keysharp.Scripting
 
 		public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
-			Type typetouse;
+			Type typetouse = null;
 
 			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
 			{
 				typetouse = t;
 				item = o;
 			}
-			else
+			else if (item != null)
 				typetouse = item.GetType();
 
 			var namestr = name.ToString();

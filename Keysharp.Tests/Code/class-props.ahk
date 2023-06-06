@@ -77,3 +77,27 @@ If (val == 100)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+class PropTestOTB
+{
+	x := 0
+	__Item[name] {
+        get {
+		global
+		return x
+        }
+        set {
+		global
+		x := value
+        }
+    }
+}
+
+otb := PropTestOTB()
+otb[999] := 123
+val := otb[777]
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

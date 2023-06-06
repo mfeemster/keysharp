@@ -242,7 +242,7 @@ namespace Keysharp.Scripting
 							break;
 
 						case Token.Label:
-							//Labels in AHK scrip behave exactly as labels in C# do.
+							//Labels in an AHK script behave exactly as labels in C# do.
 							_ = parent.Add(new CodeLabeledStatement(code.Trim(HotkeyBound), new CodeSnippetStatement(";")));//End labels seem to need a semicolon.
 							break;
 
@@ -336,7 +336,8 @@ namespace Keysharp.Scripting
 
 								var lower = prop.Name.ToLower();
 								properties[typeStack.Peek()].GetOrAdd(lower).Add(prop);
-								var blockType = CodeBlock.BlockType.Expect;
+								var blockOpen = codeline.Code.AsSpan().Trim().EndsWith("{");
+								var blockType = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 								var propblock = new CodeBlock(codeline, lower, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
 								{
 									Type = blockType
@@ -358,7 +359,8 @@ namespace Keysharp.Scripting
 							foreach (CodeParameterDeclarationExpression p in prop.Parameters)
 								funcParams.Add(p.Name);
 
-							var blockType = CodeBlock.BlockType.Expect;
+							var blockOpen = codeline.Code.AsSpan().Trim().EndsWith("{");
+							var blockType = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull())
 							{
 								Type = blockType

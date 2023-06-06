@@ -592,3 +592,59 @@ if (val == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+return123func()
+{
+	return 123
+}
+
+class myfuncinitclass
+{
+	p1 := return123func()
+}
+
+mic := myfuncinitclass()
+val := mic.p1
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+class mybaseclass
+{
+	x := 100
+
+	basefunc()
+	{
+		global x := 123
+	}
+}
+
+class mysubclass extends mybaseclass
+{
+	basefunc()
+	{
+		global
+		super.basefunc()
+		x++
+	}
+}
+
+msc := mysubclass()
+msc.basefunc()
+val := msc.x
+
+if (val == 124)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+msc := mysubclass()
+msc.super.basefunc()
+val := msc.x
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

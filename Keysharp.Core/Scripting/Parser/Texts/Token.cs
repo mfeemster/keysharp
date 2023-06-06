@@ -228,7 +228,8 @@ namespace Keysharp.Scripting
 		}
 
 		private bool IsGetOrSet(string code, string name)
-		=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
+		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
+		//=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
 
 		private bool IsHotkeyLabel(string code)
 		{
@@ -320,6 +321,9 @@ namespace Keysharp.Scripting
 			{
 				if (code.Contains(":="))
 					return false;
+
+				if (code.EndsWith('{'))
+					code = code.TrimEnd(SpaceOpenBrace);
 
 				var copy = code;
 				var isstatic = false;

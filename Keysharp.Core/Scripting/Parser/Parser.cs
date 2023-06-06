@@ -741,18 +741,20 @@ namespace Keysharp.Scripting
 			return "";
 		}
 
-		//  return false;
-		//}
 		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
 		{
 			if (methods.Count > 0)
 			{
 				while (!string.IsNullOrEmpty(t))
 				{
+					var typematched = false;
+
 					foreach (var typekv in methods)
 					{
 						if (string.Compare(typekv.Key.Name, t, true) == 0)//Find the matching type.
 						{
+							typematched = true;
+
 							if (typekv.Value.TryGetValue(m, out var cmm))//If the method existed in the type, return.
 								return cmm;
 
@@ -766,6 +768,9 @@ namespace Keysharp.Scripting
 								return null;
 						}
 					}
+
+					if (!typematched)
+						return null;
 				}
 			}
 

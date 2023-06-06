@@ -630,15 +630,18 @@ namespace Keysharp.Scripting
 					if (cont || (ll && (!code.EndsWith('{') ||//Don't treat non-flow statements that end in {, such as constructing a map, as the start of a multiline statement.
 										(code.Length > 1 &&
 										 !code.Contains('(') && !code.Contains(')') &&
-										 !code.StartsWith("if", StringComparison.OrdinalIgnoreCase) &&//Don't treat flow statements as the start of a multiline statement.
-										 !code.StartsWith("while", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("else", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("for", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("try", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("catch", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("switch", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("loop", StringComparison.OrdinalIgnoreCase) &&
-										 !code.StartsWith("class", StringComparison.OrdinalIgnoreCase)
+										 code[code.Length - 2] != ' '
+										 //!code.StartsWith("if", StringComparison.OrdinalIgnoreCase) &&//Don't treat flow statements as the start of a multiline statement.
+										 //!code.StartsWith("while", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("else", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("for", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("try", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("catch", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("switch", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("loop", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("get", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("set", StringComparison.OrdinalIgnoreCase) &&
+										 //!code.StartsWith("class", StringComparison.OrdinalIgnoreCase)
 										)
 									   )))
 					{
