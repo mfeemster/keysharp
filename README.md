@@ -241,7 +241,9 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
 	+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
 	+ Timers are not disabled when the program menu is shown.
-			
+* Using an underscore `_` to discard the result of an expression is supported the same way it is in C#.
+	+ `_ := myfunc()`
+
 ###	Removals: ###
 * Fat arrow functions like `=>` are not implemented yet.
 * COM is not implemented yet.
