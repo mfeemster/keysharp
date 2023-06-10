@@ -819,7 +819,7 @@ namespace Keysharp.Scripting
 							var evalstr = Ch.CodeToString(eval);
 							var tbs = Ch.CodeToString(ternary.TrueBranch);
 							var fbs = Ch.CodeToString(ternary.FalseBranch);
-							parts[x] = new CodeSnippetExpression($"{evalstr} ? {tbs} : {fbs}");
+							parts[x] = new CodeSnippetExpression($"(_ = {evalstr} ? {tbs} : {fbs})");
 							parts.RemoveRange(start, parts.Count - start);
 							//i++;//Tried, but not needed.
 							//continue;
