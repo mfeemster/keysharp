@@ -588,7 +588,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keysharp.Core, Version=0.0.0.1, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keysharp.Core, Version=0.0.0.2, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_19C840CB9D36D89E7A1255E443323006"
@@ -896,7 +896,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keyview, Version=0.0.0.1, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keyview, Version=0.0.0.2, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_5EF7E4429AD94C069A1DCA8950D96F73"
@@ -1337,7 +1337,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keysharp, Version=0.0.0.1, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keysharp, Version=0.0.0.2, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_C5EDF82FA7FC464798EAC591B6F2D418"
@@ -1671,15 +1671,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Keysharp"
-        "ProductCode" = "8:{CECF2EA6-0350-415D-B39E-B0CCD4C4C9E8}"
-        "PackageCode" = "8:{0CB8CF84-18A5-4AA6-8718-229441D40BFE}"
+        "ProductCode" = "8:{9CC62044-C376-4329-8EE3-C5335A32C8FD}"
+        "PackageCode" = "8:{B497079D-0962-425A-A907-98C4AE66E116}"
         "UpgradeCode" = "8:{E99D4BE3-7101-4C11-8719-A75ED137BD66}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.0.2"
+        "ProductVersion" = "8:0.0.3"
         "Manufacturer" = "8:Keysharp"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
