@@ -1,18 +1,6 @@
 If (FileExist(A_Desktop "\MyScreenClip.png"))
     FileDelete(A_Desktop "\MyScreenClip.png")
 
-temp :=
-(
-"""
--Make a new button which pops up a new gui window with some controls on it.
--Add a button to the new window which toggles some windows styles after its creation, such as being borderless.
--Add another button that uses the Gui iterator to get a count of all of the controls on the window which we've added. Verify this matches the number of controls you've created.
--Add another button that finds controls on the window using their hwnd, title, text or classNN.
-    -Can do this by caching variables on creation which store the handles, then searching for them and verifying they match.
-    -The purpose of this test is to verify all of our methods of searching for controls work.
-"""
-)
-
 GuiBGColor := "BackgroundFF9A9A"
 ;BGColor2 := "0xFFFFAA"
 
@@ -891,8 +879,15 @@ SecondGuiButton := MyGui.Add("Button", "x10 y+35", "Control Tests Redux")
 SecondGuiButton.OnEvent("Click", "SecondGUI")
 FindEdit := MyGui.Add("Button", "x10 y+10", "Get Edit Hwnd")
 FindEdit.OnEvent("Click", "FindSecondGuiEdit")
-;MyColorButton := MyGui.Add("Button", "h25 w160 x10 y+10", "Don't click, press 'Enter'")
-;MyColorButton.OnEvent("Click", "GetPix")
+
+
+
+ThirdGuiButton := MyGui.Add("Button", "x10 y+10", "'Find By' Tests")
+ThirdGuiButton.OnEvent("Click", "ThirdGUI")
+
+
+MouseMoveButton := MyGui.Add("Button", "x10 y+10", "Mouse-moving tests")
+MouseMoveButton.OnEvent("Click", "MoveTheMouse")
 
 ^!9:: {
     GetPix()
@@ -910,7 +905,10 @@ Gui2GetControlsButton.OnEvent("Click", "GetTheControls")
 Gui2FindCtrlsButton := Gui2.Add("Button", "x180 yp", "Enum Ctrls")
 Gui2FindCtrlsButton.OnEvent("Click", "EnumCtrls")
 
-Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w400 +Multiline")
+Gui2CtrlIndexButton := Gui2.Add("Button", "x260 yp", "Find by _Item")
+Gui2CtrlIndexButton.OnEvent("Click", "FindByItem")
+
+Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w500 +Multiline")
 ;MsgBox(Gui2Edit.Hwnd, "Hwnd of Edit")
 
 
@@ -950,13 +948,11 @@ FindSecondGuiEdit() {
 }
 
 EnumCtrls() {
-    For Hwnd, GuiCtrlObj in MyGui {
-        theMsg .= "Control #" A_Index " is " GuiCtrlObj.ClassNN "`n"
+    For GuiCtrlObj in MyGui {
+        theNN := ControlGetClassNN(GuiCtrlObj, MyGui)
+        theMsg.= "Control #" A_Index " is " theNN "`n"
     }
     Gui2Edit.Value := theMsg
-    ;MsgBox(theMsg, "Enumerating GUI Control")
-    ;Controls := WinGetControls(Gui2.Hwnd)
-    ;MsgBox("Found " . Controls.Length . " controls:`n`n" . Controls, "Enumerate controls")
 }
 
 StyleTest()  {
@@ -967,7 +963,87 @@ StyleTest()  {
     WinSetStyle("+0xC00000", "A")
 }
 
+FindByItem() {
+    EditObj := Gui2Edit
+    MsgBox(EditObj.Text)
+}
 
+; GUI3
+
+Gui3 := Gui(, "KEYSHARP TESTS")
+Gui3.Name := "Howard"
+ButtonOne := Gui3.Add("Button", "w200", "Find by Text")
+ButtonOne.OnEvent("Click", "FindByText")
+ButtonTwo := Gui3.Add("Button", "w200", "Find by Hwnd")
+ButtonTwo.OnEvent("Click", "FindByHwnd")
+;ButtonThree := Gui3.Add("Button", "w200", "Find by ClassNN")
+;ButtonThree.OnEvent("Click", "FindByClassNN")
+ButtonFour := Gui3.Add("Button", "w200", "Find by NetClassNN")
+ButtonFour.OnEvent("Click", "FindByNetClassNN")
+ButtonFive := Gui3.Add("Button", "w200", "Find by Name")
+ButtonFive.OnEvent("Click", "FindByName")
+
+ButtonDummy := Gui3.Add("Button", "w200", "Test Dummy")
+ButtonDummy.Name := "I am a dummy button"
+MyEdit3 := Gui3.Add("Edit", "x10 h200 w200")
+
+HwndText := ButtonDummy.Hwnd
+MyEdit3.Value := HwndText
+
+;Gui3.Show()
+
+FindByText() {
+    theItem := Gui3["Find by Name"]
+    MsgBox("I found a button. Text:`n" theItem.Text, "Find by Text")
+}
+
+FindByHwnd() {
+    theItem := Gui3[ButtonTwo.Hwnd]
+    MsgBox("I found a button by its HWND. Text:`n" theItem.Text, "Find by HWND")
+}
+
+;FindByClassNN() {
+;    theItem := Gui3["WindowsForms10.Button.app.0.5dbcd3_r3_ad11"]
+;    MsgBox(theItem.Text, "Find by ClassNN")
+;}
+
+FindByNetClassNN() {
+    theItem := Gui3["KeysharpButton5"]
+    MsgBox("I found a button by its .NET classname. Text:`n" theItem.Text, "Find by NetClassNN")
+}
+
+FindByName() {
+    theItem := Gui3[ButtonDummy.Name]
+    MsgBox("I found a renamed button by Name.`nIt was renamed to:`n" theItem, "Find by Name")
+}
+
+ThirdGUI() {
+    Gui3.Show()
+}
+
+
+;MouseMoveTests() {
+;    MsgBox("Dead monkey")
+;}
+
+
+MoveTheMouse() {
+    CoordMode("Mouse", "Screen")
+    Prev := MouseGetPos()
+    SendMode("Event")
+    MouseMove(100,500,90)
+    ToolTip("I'm at X:100, Y:500")
+    Sleep(2000)
+    MouseMove(1500,500,50)
+    ToolTip("I'm here!")
+    Sleep(2000)
+    ToolTip()
+    MouseMove(Prev["X"], Prev["Y"], 90)
+    ToolTip("I'm back!")
+    Sleep(2000)
+    ToolTip()
+    
+}
 ;ReloaderBtn := MyGui.Add("Button", "w200 h25 x10 y+5", "Reload").OnEvent("Click", "Reload")
 
 ;ReloadMe() {
