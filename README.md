@@ -45,8 +45,8 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 
 * Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
 	+ The following are not implemented yet:
-		+ Fat arrow functions.
 		+ COM.
+		+ OwnProps.
 		+ Threads.
 
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
@@ -200,7 +200,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * A new function `Atan2(y, x)` while AHK only supports `Atan()`.
 * Hyperbolic versions of the trigonometric functions: `Sinh()`, `Cosh()`, `Tanh()`.
 * A new property `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
-* Process.Run/RunWait() can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
+* `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(Target[, WorkingDir, Options, Args])`.
 * `ListView` supports a new method `DeleteCol()` to remove a column.
 * `TabControl` supports a new method `SetTabIcon()` to relieve the caller of having to use `SendMessage()`.
@@ -245,9 +245,9 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `_ := myfunc()`
 
 ###	Removals: ###
-* Fat arrow functions like `=>` are not implemented yet.
 * COM is not implemented yet.
 * User definable properties are not implemented yet, and `Map` values will not be considered `OwnProps` until future work is done.
+* Threads are not implemented yet.
 * Nested classes are not supported.
 * `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
 * `ListLines()` is omitted because C# doesn't support it.
