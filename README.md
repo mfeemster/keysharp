@@ -243,6 +243,11 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Timers are not disabled when the program menu is shown.
 * Using an underscore `_` to discard the result of an expression is supported the same way it is in C# like:
 	+ `_ := myfunc()`
+* `super` is not restricted to being used within a class's code. It can be accessed outside of the class like so:
+```
+	classobj := myclass()
+	classobj.super.a := 123
+```
 
 ###	Removals: ###
 * COM is not implemented yet.
