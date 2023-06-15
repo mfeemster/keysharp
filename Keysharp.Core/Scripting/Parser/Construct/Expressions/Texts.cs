@@ -255,6 +255,12 @@ namespace Keysharp.Scripting
 								break;
 							}
 						}
+						else if (sym == Equal && symNext == Greater)
+						{
+							_ = op.Append(sym);
+							_ = op.Append(symNext);
+							i++;
+						}
 						else if ((sym == Less && symNext == Greater) || (sym == TernaryA && symNext == TernaryA))
 						{
 							_ = op.Append(sym);

@@ -21,7 +21,7 @@ namespace Keysharp.Scripting
 		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
 		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
 
-		public string ParseFunction(CodeLine line)
+		public string ParseFunction(CodeLine line, List<CodeLine> lines, int n)
 		{
 			StartNewFunction();
 			var code = line.Code;
@@ -94,6 +94,7 @@ namespace Keysharp.Scripting
 			if (!stop)
 				throw new ParseException("Expected closing parenthesis");
 
+			var isFatArrow = false;
 			var param = buf.ToString().ToLower();//All variables, including function parameters, are lowercase.
 			buf.Length = 0;
 			i++;
@@ -107,6 +108,12 @@ namespace Keysharp.Scripting
 					blockType = CodeBlock.BlockType.Within;
 					break;
 				}
+				else if (i < code.Length - 2 && sym == '=' && code[i + 1] == '>')
+				{
+					isFatArrow = true;
+					blockType = CodeBlock.BlockType.Expect;
+					break;
+				}
 				else if (IsCommentAt(code, i))
 					break;
 				else if (!IsSpace(sym))
@@ -117,6 +124,14 @@ namespace Keysharp.Scripting
 
 			if (isStatic)
 				method.Attributes |= MemberAttributes.Static;
+
+			if (isFatArrow)
+			{
+				var theRest = code.AsSpan(i).TrimStart(FatArrow).Trim().ToString();
+				lines.Insert(n, new CodeLine(line.FileName, line.LineNumber, "{"));
+				lines.Insert(n + 1, new CodeLine(line.FileName, line.LineNumber, $"return {theRest}"));
+				lines.Insert(n + 2, new CodeLine(line.FileName, line.LineNumber, "}"));
+			}
 
 			var block = new CodeBlock(line, method.Name, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 			block.Type = blockType;

@@ -198,6 +198,8 @@ namespace Keysharp.Scripting
 					case 2:
 						if (sym == BlockOpen)
 							return true;
+						else if (i < code.Length - 2 && sym == '=' && code[i + 1] == '>')
+							return true;
 						else if (IsCommentAt(code, i))
 							goto donext;
 						else if (!IsSpace(sym))

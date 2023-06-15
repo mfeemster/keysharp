@@ -131,7 +131,15 @@ namespace Keysharp.Scripting
 		{
 			try
 			{
-				return mitup.Item2.callFunc(mitup.Item1, parameters);
+				var ret = mitup.Item2.callFunc(mitup.Item1, parameters);
+
+				//The following check is done when accessing a class property that is a function object. The user intended to call it.
+				//Catching this during compilation is very hard when calling it from outside of the class definition.
+				//So catch it here instead.
+				if (ret is IFuncObj fo && mitup.Item2.pi != null)
+					return fo.Call(parameters);
+
+				return ret;
 			}
 			catch (Exception e)
 			{

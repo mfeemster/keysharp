@@ -464,6 +464,7 @@ namespace Keysharp.Core
 		public static readonly char[] BothBraces = "{}".ToCharArray();
 
 		public static readonly char[] BothParens = "()".ToCharArray();
+		public static readonly char[] FatArrow = "=>".ToCharArray();
 
 		internal const string RawData = "raw";
 

@@ -3,8 +3,11 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Keysharp.Core;
+using static System.Net.Mime.MediaTypeNames;
 using static Keysharp.Core.Core;
+using static Keysharp.Scripting.CodeBlock;
 
 namespace Keysharp.Scripting
 {
@@ -288,7 +291,7 @@ namespace Keysharp.Scripting
 
 								var prop = new CodeMemberProperty
 								{
-									Attributes = MemberAttributes.Public,
+									Attributes = MemberAttributes.Public | MemberAttributes.Final,
 									Type = new CodeTypeReference(typeof(object)),
 									Name = copy//No need to check here for whether it's a valid identifier, because that was done by IsProperty() in GetToken().
 								};
@@ -300,7 +303,6 @@ namespace Keysharp.Scripting
 										openBracket = code.IndexOf('[');
 										var closeBracket = code.IndexOf(']');
 										var indexParams = code.Substring(openBracket + 1, closeBracket - openBracket - 1).Split(Comma, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-										prop.Attributes |= MemberAttributes.Final;
 
 										foreach (var p in indexParams)
 										{
@@ -359,12 +361,25 @@ namespace Keysharp.Scripting
 							foreach (CodeParameterDeclarationExpression p in prop.Parameters)
 								funcParams.Add(p.Name);
 
-							var blockOpen = codeline.Code.AsSpan().Trim().EndsWith("{");
-							var blockType = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull())
+							var span1 = codeline.Code.AsSpan();
+							var span2 = span1.TrimStart("get").TrimStart("set").TrimStart(Spaces);
+							var isFatArrow = span2.StartsWith("=>");
+							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
+
+							if (isFatArrow)
 							{
-								Type = blockType
-							};
+								var theRest = span2.TrimStart("=>").Trim().ToString();
+								lines.Insert(i + 1, new CodeLine(codeline.FileName, codeline.LineNumber, "{"));
+								lines.Insert(i + 2, new CodeLine(codeline.FileName, codeline.LineNumber, token == Token.PropGet ? $"return {theRest}" : theRest));
+								lines.Insert(i + 3, new CodeLine(codeline.FileName, codeline.LineNumber, "}"));
+								propblock.Type = CodeBlock.BlockType.Expect;
+							}
+							else
+							{
+								var blockOpen = span1.Trim().EndsWith("{");
+								propblock.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
+							}
+
 							_ = CloseTopSingleBlock();
 							blocks.Push(propblock);
 							break;
@@ -375,7 +390,7 @@ namespace Keysharp.Scripting
 							var n = i + 1;
 
 							if (IsFunction(code, n < lines.Count ? lines[n].Code : string.Empty))
-								_ = ParseFunction(codeline);
+								_ = ParseFunction(codeline, lines, n);
 							else
 							{
 								var statements = ParseMultiExpression(code, true);

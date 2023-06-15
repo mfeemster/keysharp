@@ -68,8 +68,14 @@ namespace Keysharp.Scripting
 						}
 						else
 						{
-							if (paren.Count == 0)
+							if (i < parts.Count - 1 && parts[i + 1] as string == "=>")
+							{
+								parts[i] = paren;
+							}
+							else if (paren.Count == 0)
+							{
 								parts.RemoveAt(i);
+							}
 							else
 								parts[i] = ParseExpression(paren, create);
 						}
@@ -443,7 +449,101 @@ namespace Keysharp.Scripting
 						parts.Add(Script.Operator.Add);
 						parts.Add(invoke);
 					}
-					else
+					else if (part == "=>")
+					{
+						var assignIndex = parts.FindIndex(0, parts.Count, o => o is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign);
+						var cmieIndex = parts.FindIndex(0, parts.Count, o => o is CodeMethodInvokeExpression cmie);
+						var cmd = new CodeMemberMethod()
+						{
+							Attributes = MemberAttributes.Public | MemberAttributes.Static,
+							ReturnType = new CodeTypeReference(typeof(object))
+						};
+						void AddParts(CodeMemberMethod cmd)
+						{
+							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);
+							parts.Add("FuncObj(");
+							parts.Add("\"" + cmd.Name + "\"");
+							parts.Add(",");
+							parts.Add(typeStack.Peek().Name != mainClassName ? new CodeSnippetExpression("this") : "null");
+							parts.Add(",");
+							parts.Add($"{cmd.Parameters.Count}");
+							parts.Add(")");
+							i = assignIndex;//Move i back to force parsing of the tokens we just added.
+						}
+
+						if (cmieIndex != -1 && cmieIndex <  i)
+						{
+							var cmie = parts[cmieIndex] as CodeMethodInvokeExpression;
+							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToList();
+							cmd.Name = cmie.Method.MethodName;
+
+							foreach (var p in cmie.Parameters)
+							{
+								if (p is CodeVariableReferenceExpression cvre)
+								{
+									_ = cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
+								}
+								//If a * was included, it will have been parsed above as a function argument, rather than a function parameter
+								//and such arguments are passed as a call to FlattenParam(). So catch that here and create the appropriate variadic parameter.
+								else if (p is CodeMethodInvokeExpression cmie2 && cmie2.Method.MethodName == "FlattenParam")
+								{
+									foreach (var p2 in cmie2.Parameters)
+										if (p2 is CodeVariableReferenceExpression cvre2)
+										{
+											var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre2.VariableName);
+											_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+											_ = cmd.Parameters.Add(cpde);
+										}
+								}
+							}
+
+							_ = cmd.Statements.Add(new CodeMethodReturnStatement(ParseExpression(bodyParts, false)));
+							methods[typeStack.Peek()][cmd.Name] = cmd;
+
+							//Now need to handle creating a function object and assigning.
+							if (assignIndex != -1 && assignIndex < i)
+								AddParts(cmd);
+						}
+						else if (assignIndex != -1 && assignIndex < i)
+						{
+							//var paramParts = parts.Take(new Range(assignIndex + 1, i)).ToArray();
+							if (parts[assignIndex + 1] is List<object> lo)
+							{
+								var funcParams = ParseFunctionParameters(string.Join("", lo));
+								cmd.Name = $"anonfunc_{labelct++:X}";
+
+								if (funcParams != null)
+									foreach (var fp in funcParams)
+										cmd.Parameters.Add(fp);
+
+								var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToList();
+								_ = cmd.Statements.Add(new CodeMethodReturnStatement(ParseExpression(bodyParts, false)));
+								methods[typeStack.Peek()][cmd.Name] = cmd;
+								AddParts(cmd);
+							}
+							else if (parts[assignIndex + 1] is CodeVariableReferenceExpression cvre)
+							{
+								cmd.Name = $"anonfunc_{labelct++:X}";
+
+								if (parts[assignIndex + 2] as string == "*")
+								{
+									var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre.VariableName);
+									_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+									cmd.Parameters.Add(cpde);
+								}
+								else
+									cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
+
+								var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToList();
+								_ = cmd.Statements.Add(new CodeMethodReturnStatement(ParseExpression(bodyParts, false)));
+								methods[typeStack.Peek()][cmd.Name] = cmd;
+								AddParts(cmd);
+							}
+						}
+						else
+							throw new Exception("Unsupported tokens surrounding a fat arrow function definition =>");
+					}
+					else if (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] as string != "=>"))//Allow for a single no parentheses fat arrow function variadic parameter declaration: x := a* => 123.
 					{
 						var ops = OperatorFromString(part);
 

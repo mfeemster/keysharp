@@ -46,5 +46,9 @@ namespace Keysharp.Tests
 		[NonParallelizable]
 		[Test, Category("Function")]
 		public void LabelInFunc() => Assert.IsTrue(TestScript("func-label", true));
+
+		[NonParallelizable]
+		[Test, Category("Function")]
+		public void FatArrowFunc() => Assert.IsTrue(TestScript("func-fat-arrow", false));
 	}
 }

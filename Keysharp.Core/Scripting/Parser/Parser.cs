@@ -337,7 +337,7 @@ namespace Keysharp.Scripting
 						if (string.Compare(method.Name, "__Delete", true) == 0)
 						{
 							method.Name = "__Delete";
-							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}"));
+							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}") { Name = typeMethods.Key.Name });
 						}
 						else if (string.Compare(method.Name, "__Enum", true) == 0)
 						{
@@ -370,10 +370,12 @@ namespace Keysharp.Scripting
 							var returnCtr = new CodeTypeReference(returnTypeStr);
 							typeMethods.Key.BaseTypes.Add(baseCtr);
 							//
-							getEnumMeth = new CodeMemberMethod();
-							getEnumMeth.Name = "GetEnumerator";
-							getEnumMeth.Attributes = MemberAttributes.Public | MemberAttributes.Final;
-							getEnumMeth.ReturnType = returnCtr;
+							getEnumMeth = new CodeMemberMethod
+							{
+								Name = "GetEnumerator",
+								Attributes = MemberAttributes.Public | MemberAttributes.Final,
+								ReturnType = returnCtr
+							};
 							getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
 							typeMethods.Key.Members.Add(getEnumMeth);
 						}
@@ -586,6 +588,7 @@ namespace Keysharp.Scripting
 							var name = globalvar.Key.Replace(ScopeVar[0], '_');
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
+								Name = name,
 								Text = $"\t\tpublic static object {name} {{ get; set; }}"
 							});
 						}
@@ -604,6 +607,7 @@ namespace Keysharp.Scripting
 							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
+								Name = name,
 								Text = isstatic ? $"\t\t\tpublic static object {name} {{ get; set; }} = {init};"
 									   : $"\t\t\tpublic object {name} {{ get; set; }}"
 							});
@@ -885,7 +889,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (CodeTypeMember typemember in currentType.Members)//First, see if the type contains the variable.
 				{
-					if (typemember is CodeSnippetTypeMember ctsm && ctsm.Name == varName)
+					if (typemember is CodeSnippetTypeMember cstm && cstm.Name == varName)
 						return true;
 				}
 
