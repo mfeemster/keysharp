@@ -50,6 +50,10 @@ namespace Keysharp.Scripting
 					else if (!islocal)
 						create &= !allglobal;
 
+					//Don't ever declare a local variable named value if we're inside of a property.
+					if (blocks.PeekOrNull() is CodeBlock block && block.Kind == CodeBlock.BlockKind.PropSet && string.Compare(toplevelvar, "value", true) == 0)
+						create = false;
+
 					if (!dyn)
 					{
 						if (create)

@@ -6,7 +6,7 @@ using static Keysharp.Core.Drive;
 using static Keysharp.Core.Dir;
 using static Keysharp.Core.DllHelper;
 using static Keysharp.Core.Env;
-using static Keysharp.Core.File;
+using static Keysharp.Core.KeysharpFile;
 using static Keysharp.Core.Flow;
 using static Keysharp.Core.Function;
 using static Keysharp.Core.GuiHelper;

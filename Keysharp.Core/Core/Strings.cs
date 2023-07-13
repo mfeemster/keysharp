@@ -685,7 +685,7 @@ namespace Keysharp.Core
 		public static string StrGet(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var len = obj1.Al(long.MinValue);
-			var encoding = obj2 is string s ? File.GetEncoding(s) : Encoding.Unicode;
+			var encoding = obj2 is string s ? KeysharpFile.GetEncoding(s) : Encoding.Unicode;
 			var ptr = IntPtr.Zero;
 			var buf = obj0 as Buffer;
 
@@ -776,7 +776,7 @@ namespace Keysharp.Core
 					len = Math.Abs(obj.Al(2));
 
 				if (obj.Length > 3)
-					encoding = File.GetEncoding(obj[3]);
+					encoding = KeysharpFile.GetEncoding(obj[3]);
 
 				var bytes = encoding.GetBytes(s);
 

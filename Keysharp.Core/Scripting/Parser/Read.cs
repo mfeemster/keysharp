@@ -630,7 +630,8 @@ namespace Keysharp.Scripting
 					if (cont || (ll && (!code.EndsWith('{') ||//Don't treat non-flow statements that end in {, such as constructing a map, as the start of a multiline statement.
 										(code.Length > 1 &&
 										 !code.Contains('(') && !code.Contains(')') &&
-										 code[code.Length - 2] != ' '
+										 code[code.Length - 2] != ' ' &&
+										 code[code.Length - 2] != '\t'
 										 //!code.StartsWith("if", StringComparison.OrdinalIgnoreCase) &&//Don't treat flow statements as the start of a multiline statement.
 										 //!code.StartsWith("while", StringComparison.OrdinalIgnoreCase) &&
 										 //!code.StartsWith("else", StringComparison.OrdinalIgnoreCase) &&

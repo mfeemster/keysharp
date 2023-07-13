@@ -101,3 +101,26 @@ if (val == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+class PropTestThis
+{
+	x := 0
+	xprop {
+        get {
+		global
+		return x
+        }
+        set {
+		this.x := value
+        }
+    }
+}
+
+ptt := PropTestThis()
+ptt.xprop := 123
+val := ptt.xprop
+
+if (val == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

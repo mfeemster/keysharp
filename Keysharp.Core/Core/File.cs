@@ -12,7 +12,7 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace Keysharp.Core
 {
-	public class File : IDisposable
+	public class KeysharpFile : IDisposable
 	{
 		internal Encoding enc;
 
@@ -72,7 +72,7 @@ namespace Keysharp.Core
 			set => Seek(value);
 		}
 
-		internal File(string filename, FileMode mode, FileAccess access, FileShare share, System.Text.Encoding encoding, long eol)
+		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, System.Text.Encoding encoding, long eol)
 		{
 			var m = mode;
 			var a = access;
@@ -153,7 +153,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		~File() => Dispose(false);
+		~KeysharpFile() => Dispose(false);
 
 		/// <summary>
 		/// Writes text to the end of a file, creating it first if necessary.
@@ -171,7 +171,7 @@ namespace Keysharp.Core
 			{
 				var text = obj0;
 				var filename = obj1.As();
-				var enc = File.GetEncoding(Accessors.A_FileEncoding);
+				var enc = KeysharpFile.GetEncoding(Accessors.A_FileEncoding);
 				var raw = false;
 				var crlf = false;
 				TextWriter tw = null;
@@ -648,7 +648,7 @@ namespace Keysharp.Core
 			FileCopyMove(source, dest, flag, true);
 		}
 
-		public static File FileOpen(object obj0, object obj1, object obj2 = null)
+		public static KeysharpFile FileOpen(object obj0, object obj1, object obj2 = null)
 		{
 			var filename = obj0.As();
 			var flags = obj1.As();
@@ -659,7 +659,7 @@ namespace Keysharp.Core
 			if (ienc.HasValue)
 				encoding = System.Text.Encoding.GetEncoding(ienc.Value);
 			else if (enc != "")
-				encoding = File.GetEncoding(enc);
+				encoding = KeysharpFile.GetEncoding(enc);
 
 			var mode = FileMode.Open;
 			var access = FileAccess.ReadWrite;
@@ -763,7 +763,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				return new File(filename, mode, access, share, encoding, eolconv);
+				return new KeysharpFile(filename, mode, access, share, encoding, eolconv);
 			}
 			catch (Exception ex)
 			{
@@ -815,7 +815,7 @@ namespace Keysharp.Core
 							break;
 
 						default:
-							enc = File.GetEncoding(lower);
+							enc = KeysharpFile.GetEncoding(lower);
 							break;
 					}
 				}

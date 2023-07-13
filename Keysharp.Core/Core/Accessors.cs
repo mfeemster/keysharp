@@ -581,7 +581,7 @@ namespace Keysharp.Core
 			}
 			set
 			{
-				fileEncoding = File.GetEncoding(value.ToString());
+				fileEncoding = KeysharpFile.GetEncoding(value.ToString());
 
 				if (!Keysharp.Scripting.Script.isReadyToExecute)
 					fileEncodingDef = fileEncoding;

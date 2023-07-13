@@ -276,6 +276,9 @@ namespace Keysharp.Scripting
 								var copy = code;
 								var isstatic = false;
 
+								if (copy.EndsWith('{'))
+									copy = copy.TrimEnd(SpaceTabOpenBrace);
+
 								if (copy.StartsWith("static "))
 								{
 									copy = copy.Substring(7, copy.Length - 7);

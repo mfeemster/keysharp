@@ -325,7 +325,7 @@ namespace Keysharp.Scripting
 					return false;
 
 				if (code.EndsWith('{'))
-					code = code.TrimEnd(SpaceOpenBrace);
+					code = code.TrimEnd(SpaceTabOpenBrace);
 
 				var copy = code;
 				var isstatic = false;

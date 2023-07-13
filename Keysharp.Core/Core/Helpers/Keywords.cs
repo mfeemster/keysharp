@@ -455,7 +455,7 @@ namespace Keysharp.Core
 		internal static readonly char[] Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
 		internal static readonly char[] SpaceTab = " \t".ToCharArray();
 		internal static readonly char[] SpaceColon = " :".ToCharArray();
-		internal static readonly char[] SpaceOpenBrace = " {".ToCharArray();
+		internal static readonly char[] SpaceTabOpenBrace = " \t{".ToCharArray();
 		internal static readonly char[] SpaceTabComma = " \t,".ToCharArray();
 		internal static readonly char[] SpacesQuotes = { CR, LF, SingleSpace, '\t', '\xA0', '"' };
 

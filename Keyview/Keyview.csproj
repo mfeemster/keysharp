@@ -27,10 +27,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Program.cs~RF1f716d5.TMP" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
   </ItemGroup>
 
