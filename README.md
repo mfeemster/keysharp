@@ -107,6 +107,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
+* The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
