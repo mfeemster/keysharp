@@ -7,7 +7,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private CodeAssignStatement ParseAssign(string code)
+		private CodeAssignStatement ParseAssign(CodeLine line, string code)
 		{
 			string name, value;
 			var buf = new StringBuilder(code.Length);
@@ -60,7 +60,7 @@ namespace Keysharp.Scripting
 			left = libProperties.TryGetValue(nameLow, out var pi)
 				   ? new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(bcl), pi.Name)
 				   : VarId(name, true);
-			var result = value == null ? new CodePrimitiveExpression(null) : IsExpressionParameter(value) ? ParseSingleExpression(value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(value);
+			var result = value == null ? new CodePrimitiveExpression(null) : IsExpressionParameter(value) ? ParseSingleExpression(line, value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(value);
 			return new CodeAssignStatement(left, result);
 		}
 	}

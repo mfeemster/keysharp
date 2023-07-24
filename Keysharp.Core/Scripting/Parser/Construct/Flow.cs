@@ -259,12 +259,12 @@ namespace Keysharp.Scripting
 
 				case FlowLoop:
 				{
+					var skip = true;
 					var trimmed = StripComment(parts.Last());
 					var blockOpen = trimmed.EndsWith(BlockOpen);
 
 					if (blockOpen)
 						parts[parts.Length - 1] = trimmed.Trim(new char[] { BlockOpen, ' ' });
-					var skip = true;
 					//var checkBrace = true;
 					CodeMethodInvokeExpression iterator;
 
@@ -300,49 +300,23 @@ namespace Keysharp.Scripting
 								break;
 
 							default:
-							{
-								//var file = false;
-								//if (parts[1].IndexOf(Multicast) != -1)
-								//  file = true;
-								//// TODO: check file/iteration loop types
 								skip = false;
-								sub = sub.Select(x => x.Trim(SpacesQuotes)).ToArray();
-								//iterator = (CodeMethodInvokeExpression)(file ? InternalMethods.LoopFile : InternalMethods.Loop);
 								iterator = (CodeMethodInvokeExpression)InternalMethods.Loop;
-							}
-							break;
+								break;
 						}
-
-						//if (skip)
-						//parts[1] = sub[1];
-
-						//if (checkBrace)
-						//{
-						//  // TODO: check expression parameters before stripping comments
-						//  //var x = parts.Length == 1 ? 0 : 1;
-						//  //var part = StripComment(parts[x]).TrimEnd(Spaces);
-						//  //var l = part.Length - 1;
-						//  //if (part.Length > 0 && part[l] == BlockOpen)
-						//  //{
-						//  //  blockOpen = true;
-						//  //  parts[x] = part.Substring(0, l);
-						//  //}
-						//  var nocomm = StripComment(sub.Last());
-						//
-						//  if (nocomm.EndsWith(BlockOpen))
-						//  {
-						//      //blockOpen = true;
-						//      sub[sub.Length - 1] = nocomm.Trim(new char[] { BlockOpen, ' ' });
-						//  }
-						//}
 
 						if (skip && parts[1].Length == 0)
 							throw new ParseException("Loop type must have an argument", line);
 
-						sub = skip ? sub.Skip(1).ToArray() : sub;
+						if (skip)
+						{
+							sub = sub.Skip(1).ToArray();
 
-						foreach (var s in sub)
-							_ = iterator.Parameters.Add(ParseCommandParameter(s.Trim(), false, true));
+							foreach (var s in sub)
+								_ = iterator.Parameters.Add(ParseCommandParameter(line, s.Trim(), false, true));
+						}
+						else
+							_ = iterator.Parameters.Add(ParseCommandParameter(line, parts[1], false, true));
 					}
 					else
 					{
@@ -398,7 +372,7 @@ namespace Keysharp.Scripting
 							parts[parts.Length - 1] = trimmed.Trim(BlockOpenSpaceAndParens);
 						}
 
-						var expr = ParseSingleExpression(temp.Last(), false);
+						var expr = ParseSingleExpression(line, temp.Last(), false);
 						var col = Ch.CodeToString(expr);
 						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
 
@@ -417,7 +391,7 @@ namespace Keysharp.Scripting
 
 							if (split != "")
 							{
-								var loopvarexpr = ParseSingleExpression(split, true);//We do want to create the iteration loop vars as local function vars.
+								var loopvarexpr = ParseSingleExpression(line, split, true);//We do want to create the iteration loop vars as local function vars.
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
 								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
 							}
@@ -485,7 +459,7 @@ namespace Keysharp.Scripting
 					{
 						var ccs = new CodeConditionStatement();
 						var token = StripCommentSingle(parts[1]);
-						var expr = ParseSingleExpression(token, false);
+						var expr = ParseSingleExpression(line, token, false);
 						var iftest = (CodeMethodInvokeExpression)InternalMethods.IfElse;
 						_ = iftest.Parameters.Add(expr);
 						ccs.Condition = iftest;
@@ -573,7 +547,7 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
-						var result = parts.Length > 1 ? ParseSingleExpression(parts[1], false) : new CodePrimitiveExpression("");
+						var result = parts.Length > 1 ? ParseSingleExpression(line, parts[1], false) : new CodePrimitiveExpression("");
 						return new CodeStatement[] { new CodeMethodReturnStatement(result) };
 					}
 				}
@@ -661,7 +635,7 @@ namespace Keysharp.Scripting
 
 							//Now that we know the variable names, reparse, but pass true to create them.
 							//Unlike global, we do want to create any variable we encounter here as local ones.
-							foreach (var expr in ParseMultiExpression(parts[1], true))
+							foreach (var expr in ParseMultiExpression(line, parts[1], true))
 								if (expr is CodeExpressionStatement ces &&
 										ces.Expression is CodeBinaryOperatorExpression cboe &&
 										cboe.Left is CodeVariableReferenceExpression cvre)
@@ -680,7 +654,7 @@ namespace Keysharp.Scripting
 				{
 					if (parts.Length > 1)
 					{
-						var mutltiexprs = ParseMultiExpression(parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
+						var mutltiexprs = ParseMultiExpression(line, parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
 
 						if (globalFuncVars.PeekOrNull() is List<string> gflist)
 						{
@@ -739,7 +713,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							var mutltiexprs = ParseMultiExpression(parts[1], true);//Do not create any variables based on what is parsed from the static variable initialization statements.
+							var mutltiexprs = ParseMultiExpression(line, parts[1], true);//Do not create any variables based on what is parsed from the static variable initialization statements.
 
 							foreach (var expr in mutltiexprs)
 							{
@@ -775,7 +749,7 @@ namespace Keysharp.Scripting
 						if (IsPrimitiveObject(token, out var obj))
 							ctes.ToThrow = new CodeSnippetExpression($"Error({obj})");
 						else
-							ctes.ToThrow = ParseSingleExpression(token, false);
+							ctes.ToThrow = ParseSingleExpression(line, token, false);
 					}
 
 					return new CodeStatement[] { ctes };
@@ -799,7 +773,7 @@ namespace Keysharp.Scripting
 						}
 						else//Any other control flow statements aren't supported on a singel line, such as try if, try while etc...
 						{
-							var result = ParseSingleExpression(parts[1], true);//Allow a single line try statement to create vars.
+							var result = ParseSingleExpression(line, parts[1], true);//Allow a single line try statement to create vars.
 							_ = tcf.TryStatements.Add(result);
 						}
 					}
@@ -928,7 +902,7 @@ namespace Keysharp.Scripting
 				return new CodePrimitiveExpression(false);
 
 			if (LaxExpressions && IsLegacyIf(code))
-				return ParseLegacyIf(code);
+				return ParseLegacyIf(line, code);
 			else if (expr || IsExpressionIf(code))
 			{
 				code = StripComment(code).TrimEnd(Spaces);
@@ -941,7 +915,7 @@ namespace Keysharp.Scripting
 				}
 
 				this.blockOpen = false;
-				var result = ParseSingleExpression(code, false);
+				var result = ParseSingleExpression(line, code, false);
 				blockOpen = blockOpen || this.blockOpen;
 				var trimparens = code.Trim(BothParens);
 
@@ -1020,12 +994,12 @@ namespace Keysharp.Scripting
 			}
 
 			var iftest = (CodeMethodInvokeExpression)InternalMethods.IfElse;
-			var expr = ParseSingleExpression(buf.ToString(), false);
+			var expr = ParseSingleExpression(line, buf.ToString(), false);
 			_ = iftest.Parameters.Add(expr);
 			return iftest;
 		}
 
-		private CodeExpression ParseLegacyIf(string code)
+		private CodeExpression ParseLegacyIf(CodeLine line, string code)
 		{
 			var parts = code.TrimStart(Spaces).Split(Spaces, 3);
 
@@ -1062,7 +1036,7 @@ namespace Keysharp.Scripting
 					throw new ArgumentOutOfRangeException();
 			}
 
-			_ = invoke.Parameters.Add(ParseCommandParameter(parts[2]));
+			_ = invoke.Parameters.Add(ParseCommandParameter(line, parts[2]));
 
 			if (not)//Easiest way to do not since CodeDOM does not support unary ! operators.
 				_ = invoke.Parameters.Add(new CodePrimitiveExpression(true));

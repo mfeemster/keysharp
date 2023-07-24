@@ -583,7 +583,7 @@ namespace Keysharp.Scripting
 					{
 						funcname = LabelMethodName(hotName);
 						var method = LocalMethod(funcname);
-						var expr = ParseMultiExpression(replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+						var expr = ParseMultiExpression(codeLine, replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 						method.Statements.AddRange(expr);
 						methods[targetClass].Add(method.Name, method);
 						ClearParserHotstringState();
@@ -721,7 +721,7 @@ namespace Keysharp.Scripting
 								}
 								else
 								{
-									var expr = ParseMultiExpression(replacement, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+									var expr = ParseMultiExpression(codeLine, replacement, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 									method.Statements.AddRange(expr);
 								}
 							}

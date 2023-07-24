@@ -1453,10 +1453,23 @@ namespace Keysharp.Core.Windows
 
 		internal const long ERROR_ALREADY_EXISTS = 183L;
 
-		private const string dwmapi = "dwmapi.dll", kernel32 = "kernel32.dll", shell32 = "shell32.dll", user32 = "user32.dll", gdi32 = "gdi32.dll", version = "version.dll", winmm = "winmm.dll", advapi = "advapi32.dll";
+		private const string dwmapi = "dwmapi.dll",
+							 kernel32 = "kernel32.dll",
+							 shell32 = "shell32.dll",
+							 user32 = "user32.dll",
+							 gdi32 = "gdi32.dll",
+							 version = "version.dll",
+							 winmm = "winmm.dll",
+							 advapi = "advapi32.dll",
+							 oleacc = "oleac.dll",
+							 oleaut = "oleaut32.dll";
 
-		[DllImport("oleacc.dll")]
+		[DllImport(oleacc)]
 		internal static extern int AccessibleObjectFromWindow(IntPtr hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
+
+		//[DllImport(oleaut)]
+		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] System.Array arr);
+		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] IntPtr arr);
 
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/29392625/check-if-a-winform-checkbox-is-checked-through-winapi-only

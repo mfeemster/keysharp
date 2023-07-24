@@ -270,3 +270,15 @@ if (clrs.Count == 0)
 	FileAppend, pass, *
 else
   	FileAppend, fail, *
+
+funcretexpr()
+{
+	return mylocal := 999
+}
+
+x := funcretexpr()
+
+if (x == 999)
+	FileAppend, pass, *
+else
+  	FileAppend, fail, *

@@ -7,6 +7,7 @@ using System.Management;
 using Keysharp.Core;
 using static System.Formats.Asn1.AsnWriter;
 using static Keysharp.Core.Core;
+using static Keysharp.Scripting.CodeBlock;
 
 namespace Keysharp.Scripting
 {
@@ -14,7 +15,7 @@ namespace Keysharp.Scripting
 	{
 		private bool memberVarsStatic = false;
 
-		private CodeExpression ParseExpression(List<object> parts, bool create)
+		private CodeExpression ParseExpression(CodeLine line, List<object> parts, bool create)
 		{
 			RemoveExcessParentheses(parts);
 			var rescanned = false;
@@ -55,7 +56,7 @@ namespace Keysharp.Scripting
 
 							if (paren.Count != 0)
 							{
-								var passed = ParseMultiExpression(paren.ToArray(), create);
+								var passed = ParseMultiExpression(line, paren.ToArray(), create);
 								invoke.Parameters.AddRange(passed);
 							}
 
@@ -77,7 +78,7 @@ namespace Keysharp.Scripting
 								parts.RemoveAt(i);
 							}
 							else
-								parts[i] = ParseExpression(paren, create);
+								parts[i] = ParseExpression(line, paren, create);
 						}
 					}
 					else if (part[0] == ParenClose)
@@ -102,17 +103,27 @@ namespace Keysharp.Scripting
 					else if (IsIdentifier(part, true) && !IsKeyword(part))
 					{
 						var low = part.ToLowerInvariant();
+						var s = i < parts.Count - 1 && parts[i + 1] is string s1 ? s1 : "";
 						parts[i] = libProperties.TryGetValue(low, out var pi)
 								   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 								   //Check for function or property calls on an object, which only count as read operations.
-								   : VarIdOrConstant(part, i == 0 && create && (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("["))), false);
+								   : VarIdOrConstant(part,
+													 i == 0 &&
+													 (!s.StartsWith("[") || parts.Count == 1) &&
+													 (create ||
+													  (s == ":="))
+													 //i == 0//Create if assignment, such as x := 123.
+													 //&& parts.Count > 1//Make sure the expression isn't just a single token, as would be the case in a fat arrow function: => x.
+													 //&& create//The caller specified the variable should be created.
+													 //&& (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] is string s && !s.StartsWith("[")))//Something about the last token being an array indexing operation, unsure.
+													 , false);
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{
 						var n = i + 1;
 						var paren = ExtractRange(parts, n, Set(parts, i));
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.Dictionary;
-						ParseObject(paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
+						ParseObject(line, paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), keys));
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), values));
 						parts[i] = invoke;
@@ -140,7 +151,7 @@ namespace Keysharp.Scripting
 									if (n + 1 < parts.Count && parts[n].ToString() == ":=")//Detect if this was a property assignment by searching for a := then a token after it, which is the value to assign.
 									{
 										var valtokens = ExtractRange(parts, n + 1, parts.Count);
-										var val = ParseMultiExpression(valtokens.ToArray(), create);
+										var val = ParseMultiExpression(line, valtokens.ToArray(), create);
 										invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
 										n = i - 1;
 
@@ -153,7 +164,7 @@ namespace Keysharp.Scripting
 										else
 											_ = invoke.Parameters.Add((CodeExpression)parts[n]);
 
-										var index = ParseMultiExpression(proptokens.ToArray(), create);
+										var index = ParseMultiExpression(line, proptokens.ToArray(), create);
 
 										if (index.Length > 1)
 											throw new ParseException("Cannot have multipart expression in a property name.");
@@ -182,7 +193,7 @@ namespace Keysharp.Scripting
 										else
 											_ = invoke.Parameters.Add((CodeExpression)parts[n]);
 
-										var index = ParseMultiExpression(proptokens.ToArray(), create);
+										var index = ParseMultiExpression(line, proptokens.ToArray(), create);
 
 										if (index.Length > 1)
 											throw new ParseException("Cannot have multipart expression in a property name.");
@@ -214,7 +225,7 @@ namespace Keysharp.Scripting
 								var invoke = (CodeMethodInvokeExpression)InternalMethods.Index;
 								n = i - 1;
 								_ = invoke.Parameters.Add((CodeExpression)parts[n]);
-								var index = ParseMultiExpression(paren.ToArray(), create);
+								var index = ParseMultiExpression(line, paren.ToArray(), create);
 
 								if (index.Length == 0)
 									_ = invoke.Parameters.Add(new CodeSnippetExpression("new object[] { }"));
@@ -229,7 +240,7 @@ namespace Keysharp.Scripting
 								i--;
 							}
 							else
-								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(paren.ToArray(), create)));
+								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(line, paren.ToArray(), create)));
 						}
 					}
 					else if (part.Length > 1 && part[part.Length - 1] == ParenOpen)
@@ -257,7 +268,7 @@ namespace Keysharp.Scripting
 						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
 						{
 							var hotiffuncname = $"HotIf_{hotifcount++}";
-							var hotifexpr = ParseExpression(paren, false);
+							var hotifexpr = ParseExpression(line, paren, false);
 							var hotifmethod = LocalMethod(hotiffuncname);
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
 							methods[targetClass].Add(hotiffuncname, hotifmethod);
@@ -303,7 +314,7 @@ namespace Keysharp.Scripting
 							}
 
 							if (paren.Count != 0)
-								passed = ParseMultiExpression(paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
+								passed = ParseMultiExpression(line, paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
 
 							if (dynamic)
 							{
@@ -423,7 +434,7 @@ namespace Keysharp.Scripting
 								_ = invoke.Parameters.Add(propobj);
 								_ = invoke.Parameters.Add(propname);
 								var extract = ExtractRange(parts, 2, parts.Count);
-								var val = ParseMultiExpression(extract.ToArray(), create);
+								var val = ParseMultiExpression(line, extract.ToArray(), create);
 								_ = invoke.Parameters.Add(val[0]);
 								parts[0] = invoke;
 								setPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
@@ -445,7 +456,7 @@ namespace Keysharp.Scripting
 
 						parts.RemoveRange(i, parts.Count - i);
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.OperateZero;
-						_ = invoke.Parameters.Add(ParseExpression(sub, create));
+						_ = invoke.Parameters.Add(ParseExpression(line, sub, create));
 						parts.Add(Script.Operator.Add);
 						parts.Add(invoke);
 					}
@@ -453,6 +464,8 @@ namespace Keysharp.Scripting
 					{
 						var assignIndex = parts.FindIndex(0, parts.Count, o => o is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign);
 						var cmieIndex = parts.FindIndex(0, parts.Count, o => o is CodeMethodInvokeExpression cmie);
+						var ctrpaa = new CodeTypeReference(typeof(System.ParamArrayAttribute));
+						var cad = new CodeAttributeDeclaration(ctrpaa);
 						var cmd = new CodeMemberMethod()
 						{
 							Attributes = MemberAttributes.Public | MemberAttributes.Static,
@@ -470,11 +483,52 @@ namespace Keysharp.Scripting
 							parts.Add(")");
 							i = assignIndex;//Move i back to force parsing of the tokens we just added.
 						}
+						void MakeMethod(CodeMemberMethod cmd)
+						{
+							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).Select(p => p.ToString()).ToList();
+							var groupByCommas = new List<List<string>>(bodyParts.Count);
+
+							for (var bpindex = 0; bpindex < bodyParts.Count; bpindex++)
+							{
+								if (bpindex == 0)
+								{
+									groupByCommas.Add(new List<string>());
+								}
+								else if (bodyParts[bpindex].ToString() == ",")
+								{
+									groupByCommas.Add(new List<string>());
+									continue;
+								}
+
+								groupByCommas.Last().Add(bodyParts[bpindex].ToString());
+							}
+
+							AddParts(cmd);
+							var lineNumber = codeLines.IndexOf(line) + 1;
+							//Inefficient to recompose the parameters into a string, but unsure what else to do here.
+							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
+							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "{"));
+							var gbcc = groupByCommas.Count;
+
+							for (var gindex = 0; gindex < gbcc - 1; gindex++)
+							{
+								var g = groupByCommas.ElementAt(gindex);
+								codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, string.Join(' ', g.Select(gg => gg))));
+							}
+
+							var gret = groupByCommas.ElementAt(groupByCommas.Count - 1);
+							var retstr = string.Join(' ', gret.Select(gg => gg));
+
+							if (!retstr.StartsWith("return", StringComparison.OrdinalIgnoreCase))
+								retstr = "return " + retstr;
+
+							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, retstr));
+							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "}"));
+						}
 
 						if (cmieIndex != -1 && cmieIndex <  i)
 						{
 							var cmie = parts[cmieIndex] as CodeMethodInvokeExpression;
-							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToList();
 							cmd.Name = cmie.Method.MethodName;
 
 							foreach (var p in cmie.Parameters)
@@ -491,14 +545,13 @@ namespace Keysharp.Scripting
 										if (p2 is CodeVariableReferenceExpression cvre2)
 										{
 											var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre2.VariableName);
-											_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+											_ = cpde.CustomAttributes.Add(cad);
 											_ = cmd.Parameters.Add(cpde);
 										}
 								}
 							}
 
-							_ = cmd.Statements.Add(new CodeMethodReturnStatement(ParseExpression(bodyParts, false)));
-							methods[typeStack.Peek()][cmd.Name] = cmd;
+							MakeMethod(cmd);
 
 							//Now need to handle creating a function object and assigning.
 							if (assignIndex != -1 && assignIndex < i)
@@ -506,7 +559,6 @@ namespace Keysharp.Scripting
 						}
 						else if (assignIndex != -1 && assignIndex < i)
 						{
-							//var paramParts = parts.Take(new Range(assignIndex + 1, i)).ToArray();
 							if (parts[assignIndex + 1] is List<object> lo)
 							{
 								var funcParams = ParseFunctionParameters(string.Join("", lo));
@@ -516,10 +568,7 @@ namespace Keysharp.Scripting
 									foreach (var fp in funcParams)
 										cmd.Parameters.Add(fp);
 
-								var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToList();
-								_ = cmd.Statements.Add(new CodeMethodReturnStatement(ParseExpression(bodyParts, false)));
-								methods[typeStack.Peek()][cmd.Name] = cmd;
-								AddParts(cmd);
+								MakeMethod(cmd);
 							}
 							else if (parts[assignIndex + 1] is CodeVariableReferenceExpression cvre)
 							{
@@ -528,16 +577,13 @@ namespace Keysharp.Scripting
 								if (parts[assignIndex + 2] as string == "*")
 								{
 									var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre.VariableName);
-									_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+									_ = cpde.CustomAttributes.Add(cad);
 									cmd.Parameters.Add(cpde);
 								}
 								else
 									cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
 
-								var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToList();
-								_ = cmd.Statements.Add(new CodeMethodReturnStatement(ParseExpression(bodyParts, false)));
-								methods[typeStack.Peek()][cmd.Name] = cmd;
-								AddParts(cmd);
+								MakeMethod(cmd);
 							}
 						}
 						else
@@ -564,7 +610,7 @@ namespace Keysharp.Scripting
 										  d
 								};
 								parts.RemoveAt(i);
-								parts[x] = ParseExpression(sub, create);
+								parts[x] = ParseExpression(line, sub, create);
 								i = x;
 								continue;
 							}
@@ -676,7 +722,7 @@ namespace Keysharp.Scripting
 										sub.Add(parts[wx]);
 
 									shadow = (CodeMethodInvokeExpression)InternalMethods.OperateZero;
-									_ = shadow.Parameters.Add(ParseExpression(sub, create));
+									_ = shadow.Parameters.Add(ParseExpression(line, sub, create));
 									parts.RemoveRange(w, l);
 								}
 							}
@@ -704,7 +750,7 @@ namespace Keysharp.Scripting
 
 							x = Math.Min(i, z);
 							y = Math.Max(i, z);
-							parts[x] = ParseExpression(list, create);
+							parts[x] = ParseExpression(line, list, create);
 							parts.RemoveAt(y);
 							i = x;
 						}
@@ -786,7 +832,7 @@ namespace Keysharp.Scripting
 							sub.Add(parts[x]);
 
 						parts.RemoveRange(n, u - n);
-						parts.Insert(n, ParseExpression(sub, create));
+						parts.Insert(n, ParseExpression(line, sub, create));
 					}
 
 					if (m + 1 < parts.Count && IsVarReference(parts[n]) && IsVarAssignment(parts[m]))
@@ -912,8 +958,8 @@ namespace Keysharp.Scripting
 							if (branch[1].Count == 0)
 								branch[1].Add(new CodePrimitiveExpression(null));
 
-							ternary.TrueBranch = ParseExpression(branch[0], create);
-							ternary.FalseBranch = ParseExpression(branch[1], create);
+							ternary.TrueBranch = ParseExpression(line, branch[0], create);
+							ternary.FalseBranch = ParseExpression(line, branch[1], create);
 							//CodeDOM does not have built in support for ternary operators. So we must manually create the code string for the ternary,
 							//then use a code snippet to hold the string. This is not ideal, but there is no other way.
 							var evalstr = Ch.CodeToString(eval);
@@ -944,7 +990,7 @@ namespace Keysharp.Scripting
 							while (n < parts.Count)
 								right.Add(parts[n++]);
 
-							ternary.FalseBranch = ParseExpression(right, create);
+							ternary.FalseBranch = ParseExpression(line, right, create);
 							parts[x] = ternary;
 							parts.RemoveRange(i, parts.Count - i);
 						}
@@ -1090,7 +1136,7 @@ namespace Keysharp.Scripting
 						parts.Insert(i, Script.Operator.Concat);
 				}
 
-				var concat = ParseExpression(parts, create);
+				var concat = ParseExpression(line, parts, create);
 				parts.Clear();
 				parts.Add(concat);
 			}
@@ -1101,7 +1147,7 @@ namespace Keysharp.Scripting
 			return IsVarAssignment(parts[0]) ? (CodeBinaryOperatorExpression)parts[0] : (CodeExpression)parts[0];
 		}
 
-		private CodeExpressionStatement[] ParseMultiExpression(string code, bool create)
+		private CodeExpressionStatement[] ParseMultiExpression(CodeLine line, string code, bool create)
 		{
 			var tokens = SplitTokens(code);
 			var n = tokens.Count - 2;
@@ -1132,7 +1178,7 @@ namespace Keysharp.Scripting
 			//  {
 			//  }
 			//}
-			var result = ParseMultiExpression(tokens.ToArray(), create);
+			var result = ParseMultiExpression(line, tokens.ToArray(), create);
 			var statements = new CodeExpressionStatement[result.Length];
 
 			for (var i = 0; i < result.Length; i++)
@@ -1141,8 +1187,9 @@ namespace Keysharp.Scripting
 			return statements;
 		}
 
-		private CodeExpression[] ParseMultiExpression(object[] parts, bool create)
+		private CodeExpression[] ParseMultiExpression(CodeLine line, object[] parts, bool create)
 		{
+			var fatArrow = false;
 			var sub = new List<object>();
 			var expr = new List<CodeExpression>();
 			memberVarsStatic = false;
@@ -1176,15 +1223,18 @@ namespace Keysharp.Scripting
 
 				var check = s;
 
+				if (check == "=>")
+					fatArrow = true;
+
 				//This will properly handle inserting null when passing arguments like a,,c or ,b,c or a,b,
 				//When not parsing arguments and instead just parsing regular expressions, it will cause
 				//a compiler error because just saying "null" in the wrong place is a syntax error.
 				//This is a good way to help catch syntax bugs in a script.
-				if (check == ",")
+				if (check == "," && !fatArrow)
 				{
 					if (sub.Count != 0)
 					{
-						expr.Add(ParseExpression(sub, create));
+						expr.Add(ParseExpression(line, sub, create));
 						sub.Clear();
 					}
 					else
@@ -1204,7 +1254,7 @@ namespace Keysharp.Scripting
 			}
 
 			if (sub.Count != 0)
-				expr.Add(ParseExpression(sub, create));
+				expr.Add(ParseExpression(line, sub, create));
 
 			return expr.ToArray();
 		}
@@ -1250,10 +1300,10 @@ namespace Keysharp.Scripting
 		    return templist;
 		    }*/
 
-		private CodeExpression ParseSingleExpression(string code, bool create)
+		private CodeExpression ParseSingleExpression(CodeLine line, string code, bool create)
 		{
 			var tokens = SplitTokens(code);
-			return ParseExpression(tokens, create);
+			return ParseExpression(line, tokens, create);
 		}
 	}
 }

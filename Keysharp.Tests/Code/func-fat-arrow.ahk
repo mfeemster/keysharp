@@ -7,6 +7,7 @@ class myclass
 	member3 := a => a * 2
 	member4 := a* => (a[1] + a[2]) * 2
 	member5 := () => 123
+	member6 := (*) => (args[1] + args[2]) * 2
 
 	myprop
 	{
@@ -79,6 +80,13 @@ else
 x := myclassobj.member5()
 
 If (x == 123)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := myclassobj.member6(3, 4)
+
+If (x == 14)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -165,6 +173,28 @@ myfunc6 := a => a * 2
 x := myfunc6(4)
 
 If (x == 8)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+myfunc7 := (*) =>  args[1] * args[2] * 2
+x := myfunc7(1, 2)
+
+If (x == 4)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 0
+myfunc8 := () => x := 123
+y := myfunc8()
+
+If (x == 0)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+If (y == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

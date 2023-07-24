@@ -14,6 +14,7 @@ namespace Keysharp.Core
 	public static class Strings
 	{
 		internal static RegexEntry regdkt = new ();
+		private static object[] nullPlaceholder = new object[] { null };
 
 		/// <summary>
 		/// Decodes a base 64 character string to binary data.
@@ -44,7 +45,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public static string Format(object obj0, params object[] obj) => string.Format(obj0.As(), new object[] { null }.Concat(obj));
+		public static string Format(object obj0, params object[] obj) => string.Format(obj0.As(), nullPlaceholder.Concat(obj));
 
 		/// <summary>
 		/// Transforms a YYYYMMDDHH24MISS timestamp into the specified date/time format.

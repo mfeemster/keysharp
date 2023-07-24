@@ -59,4 +59,15 @@ namespace Keysharp.Core.COM
 		//int GetClassInfo(out IntPtr typeInfo);
 		int GetClassInfo(out System.Runtime.InteropServices.ComTypes.ITypeInfo typeInfo);
 	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct VARIANT
+	{
+		public ushort vt;
+		public ushort r0;
+		public ushort r1;
+		public ushort r2;
+		public IntPtr ptr0;
+		public IntPtr ptr1;
+	}
 }

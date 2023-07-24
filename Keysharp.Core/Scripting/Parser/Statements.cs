@@ -72,11 +72,11 @@ namespace Keysharp.Scripting
 			EndFunction();
 		}
 
-		private void Statements(List<CodeLine> lines)
+		private void Statements()
 		{
-			for (var i = 0; i < lines.Count; i++)
+			for (var i = 0; i < codeLines.Count; i++)
 			{
-				var codeline = lines[i];
+				var codeline = codeLines[i];
 				var code = codeline.Code;
 
 				if (string.IsNullOrEmpty(code))
@@ -229,13 +229,13 @@ namespace Keysharp.Scripting
 					switch (token)
 					{
 						case Token.Assign:
-							var assign = ParseAssign(code);
+							var assign = ParseAssign(codeline, code);
 							//assign.LinePragma = codeline;
 							_ = parent.Add(assign);
 							break;
 
 						case Token.Command:
-							var command = new CodeExpressionStatement(OptimizeExpression(ParseCommand(code)));
+							var command = new CodeExpressionStatement(OptimizeExpression(ParseCommand(codeline, code)));
 
 							if (command.Expression == null)
 								continue;
@@ -250,14 +250,14 @@ namespace Keysharp.Scripting
 							break;
 
 						case Token.Hotkey:
-							var hotkey = ParseHotkey(lines, i);
+							var hotkey = ParseHotkey(codeLines, i);
 							//hotkey.LinePragma = codeline;
 							_ = parent.Add(hotkey);
 							break;
 
 						case Token.Flow:
 						{
-							var result = ParseFlow(lines, i);
+							var result = ParseFlow(codeLines, i);
 
 							if (result != null)
 							{
@@ -372,9 +372,9 @@ namespace Keysharp.Scripting
 							if (isFatArrow)
 							{
 								var theRest = span2.TrimStart("=>").Trim().ToString();
-								lines.Insert(i + 1, new CodeLine(codeline.FileName, codeline.LineNumber, "{"));
-								lines.Insert(i + 2, new CodeLine(codeline.FileName, codeline.LineNumber, token == Token.PropGet ? $"return {theRest}" : theRest));
-								lines.Insert(i + 3, new CodeLine(codeline.FileName, codeline.LineNumber, "}"));
+								codeLines.Insert(i + 1, new CodeLine(codeline.FileName, codeline.LineNumber, "{"));
+								codeLines.Insert(i + 2, new CodeLine(codeline.FileName, codeline.LineNumber, token == Token.PropGet ? $"return {theRest}" : theRest));
+								codeLines.Insert(i + 3, new CodeLine(codeline.FileName, codeline.LineNumber, "}"));
 								propblock.Type = CodeBlock.BlockType.Expect;
 							}
 							else
@@ -392,11 +392,11 @@ namespace Keysharp.Scripting
 						{
 							var n = i + 1;
 
-							if (IsFunction(code, n < lines.Count ? lines[n].Code : string.Empty))
-								_ = ParseFunction(codeline, lines, n);
+							if (IsFunction(code, n < codeLines.Count ? codeLines[n].Code : string.Empty))
+								_ = ParseFunction(codeline, n);
 							else
 							{
-								var statements = ParseMultiExpression(code, true);
+								var statements = ParseMultiExpression(codeline, code, true);
 
 								for (n = 0; n < statements.Length; n++)
 								{
@@ -457,6 +457,10 @@ namespace Keysharp.Scripting
 				{
 					throw new ParseException(e.Message, codeline);
 				}
+				//catch (Exception ex)
+				//{
+				//  throw new ParseException(ex.Message, codeline);
+				//}
 				finally { }
 
 				if (blocks.Count == blocksCount && blocks.Peek().IsSingle)

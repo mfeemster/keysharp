@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
+using Keysharp.Core.COM;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Patterns;
 using Keysharp.Core.Windows;
@@ -203,6 +205,12 @@ namespace Keysharp.Core
 									args[n] = del;
 									types[n] = del.GetType();
 								}
+								else if (parameters[i] is System.Array arr)
+									//else if (parameters[i] is ComObjArray arr)
+								{
+									args[n] = arr;
+									types[n] = arr.GetType();
+								}
 								else
 									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 							}
@@ -317,6 +325,21 @@ namespace Keysharp.Core
 								 cdecl ? CallingConvention.Cdecl : CallingConvention.Winapi,
 								 CharSet.Auto);
 				invoke.SetImplementationFlags(invoke.GetMethodImplementationFlags() | MethodImplAttributes.PreserveSig);
+
+				for (var i = 0; i < args.Length; i++)
+				{
+					if (args[i] is System.Array array)
+					{
+						var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
+						pb.SetCustomAttribute(new CustomAttributeBuilder(
+												  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
+												  new object[] { System.Runtime.InteropServices.UnmanagedType.SafeArray },
+												  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
+												  new object[] { System.Runtime.InteropServices.VarEnum.VT_VARIANT }
+											  ));
+					}
+				}
+
 				var created = container.CreateType();
 
 				try

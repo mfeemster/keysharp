@@ -18,3 +18,5 @@
 /Keysharp.Benchmark/bin
 /Keysharp.Benchmark/obj
 /.vs/ProjectEvaluation
+/Keysharp.Install/Debug
+/Keysharp.Install/Release

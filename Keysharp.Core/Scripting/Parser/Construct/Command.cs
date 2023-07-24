@@ -6,7 +6,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private CodeMethodInvokeExpression ParseCommand(string code)
+		private CodeMethodInvokeExpression ParseCommand(CodeLine line, string code)
 		{
 			var parts = SplitCommandStatement(code);
 			var invoke = new CodeMethodInvokeExpression();
@@ -41,7 +41,7 @@ namespace Keysharp.Scripting
 						expr = exp[i];
 					}
 
-					_ = invoke.Parameters.Add(ParseCommandParameter(split[i], byref, expr));
+					_ = invoke.Parameters.Add(ParseCommandParameter(line, split[i], byref, expr));
 				}
 
 				if (meth != null && !meth.IsStatic)//This cuts down on the extreme namespace and type qualification verbosity.
@@ -53,7 +53,7 @@ namespace Keysharp.Scripting
 			return invoke;
 		}
 
-		private CodeExpression ParseCommandParameter(string code, bool byref = false, bool expr = false)
+		private CodeExpression ParseCommandParameter(CodeLine line, string code, bool byref = false, bool expr = false)
 		{
 			code = code.Trim(Spaces);
 
@@ -76,7 +76,7 @@ namespace Keysharp.Scripting
 			{
 				try
 				{
-					return ParseSingleExpression(code, false);
+					return ParseSingleExpression(line, code, false);
 				}
 				catch (Keysharp.Core.ParseException)
 				{

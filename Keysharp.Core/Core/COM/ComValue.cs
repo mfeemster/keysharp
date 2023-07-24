@@ -9,8 +9,4 @@ namespace Keysharp.Core.COM
 	public class ComValue : KeysharpObject
 	{
 	}
-
-	public class ComObject : ComValue
-	{
-	}
 }

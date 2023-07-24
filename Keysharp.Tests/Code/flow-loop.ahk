@@ -344,3 +344,57 @@ If (b == true)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+		
+x := 0
+y := 5
+
+Loop y + 1 {
+	x++
+}
+
+If (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+x := 0
+
+Loop (y + 1) {
+	x++
+}
+
+If (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 0
+
+Loop (y + 1)
+	x++
+
+If (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 0
+
+Loop y + 1
+	x++
+
+If (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := 0
+
+Loop 1 * 2 * 3
+	x++
+
+If (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

@@ -2333,6 +2333,12 @@ namespace Keysharp.Core.Common.Keyboard
 			// with cleanup and exit.  Such reporting might cause an infinite loop, leading to
 			// a stack overflow if the reporting itself encounters an error and tries to exit,
 			// which in turn would call us again:
+			if (Keysharp.Scripting.Script.mainWindow.IsDisposed)
+			{
+				isRegistered = false;
+				return ResultType.Ok;
+			}
+
 			if (isRegistered = !WindowsAPI.UnregisterHotKey(Keysharp.Scripting.Script.mainWindow.Handle, id))  // I've see it fail in one rare case.
 				return ResultType.Fail;
 

@@ -42,6 +42,7 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private CodeTypeDeclaration targetClass;
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+		private List<CodeLine> codeLines = new List<CodeLine>();
 		private CompilerParameters CompilerParameters { get; set; }
 
 		static Parser()
@@ -540,8 +541,8 @@ namespace Keysharp.Scripting
 			sbld = new StringBuilder();
 			name = nm;
 			Init();//Init here every time because this may be reused within a single program run, such as in Keyview.
-			var lines = Read(codeStream, nm);
-			Statements(lines);
+			codeLines = Read(codeStream, nm);
+			Statements();
 
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));

@@ -21,7 +21,7 @@ namespace Keysharp.Scripting
 		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
 		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
 
-		public string ParseFunction(CodeLine line, List<CodeLine> lines, int n)
+		public string ParseFunction(CodeLine line, int n)
 		{
 			StartNewFunction();
 			var code = line.Code;
@@ -128,9 +128,9 @@ namespace Keysharp.Scripting
 			if (isFatArrow)
 			{
 				var theRest = code.AsSpan(i).TrimStart(FatArrow).Trim().ToString();
-				lines.Insert(n, new CodeLine(line.FileName, line.LineNumber, "{"));
-				lines.Insert(n + 1, new CodeLine(line.FileName, line.LineNumber, $"return {theRest}"));
-				lines.Insert(n + 2, new CodeLine(line.FileName, line.LineNumber, "}"));
+				codeLines.Insert(n, new CodeLine(line.FileName, line.LineNumber, "{"));
+				codeLines.Insert(n + 1, new CodeLine(line.FileName, line.LineNumber + 1, $"return {theRest}"));
+				codeLines.Insert(n + 2, new CodeLine(line.FileName, line.LineNumber + 2, "}"));
 			}
 
 			var block = new CodeBlock(line, method.Name, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
