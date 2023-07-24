@@ -198,3 +198,11 @@ If (y == 123)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+myfunc9 := () => a := 123, b := 456, c := 789
+x := myfunc9()
+
+If (x == 789)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
