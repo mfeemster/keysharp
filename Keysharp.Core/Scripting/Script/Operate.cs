@@ -268,6 +268,12 @@ namespace Keysharp.Scripting
 					if (left is long l && right is long r)
 						return l + r;
 
+					if (left is IntPtr ipl)
+						return new IntPtr(ipl + ForceLong(right));
+
+					if (right is IntPtr ipr)
+						return new IntPtr(ipr + ForceLong(left));
+
 					return ForceDouble(left) + ForceDouble(right);
 				}
 

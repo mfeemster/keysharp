@@ -18,7 +18,7 @@ namespace Keysharp.Core.COM
 			{
 				try
 				{
-					return ((long)position + 1, arr.GetValue(position));
+					return ((long)position, arr.GetValue(position));
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -48,9 +48,14 @@ namespace Keysharp.Core.COM
 
 	}
 
-	public class ComObjArray : ComValue, IEnumerable<(object, object)>, ICollection, IList
+	public class ComObjArray : ComObject, IEnumerable<(object, object)>, ICollection, IList
 	{
 		public System.Array array;
+
+		public ComObjArray(System.Array arr) : base(Com.vt_array, arr, 1)
+		{
+			array = arr;
+		}
 
 		public int Count => ((ICollection)array).Count;
 

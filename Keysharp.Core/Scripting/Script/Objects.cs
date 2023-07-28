@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using Keysharp.Core;
+using Keysharp.Core.COM;
 
 namespace Keysharp.Scripting
 {
@@ -20,7 +21,7 @@ namespace Keysharp.Scripting
 
 		public static object SetObject(object value, object item, params object[] index)
 		{
-			var key = index[0];
+			object key = null;
 			Type typetouse;
 
 			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
@@ -33,6 +34,7 @@ namespace Keysharp.Scripting
 
 			if (index.Length == 1)
 			{
+				key = index[0];
 				var position = (int)ForceLong(key);
 
 				if (item is object[] objarr)
@@ -45,6 +47,12 @@ namespace Keysharp.Scripting
 				{
 					var actualindex = position < 0 ? array.Length + position : position - 1;
 					array.SetValue(value, actualindex);
+					return value;
+				}
+				else if (item is ComObjArray coa)
+				{
+					var actualindex = position < 0 ? coa.array.Length + position : position;
+					coa.array.SetValue(value, actualindex);
 					return value;
 				}
 				else if (item == null)
@@ -108,6 +116,11 @@ namespace Keysharp.Scripting
 				{
 					var actualindex = position < 0 ? array.Length + position : position - 1;
 					return array.GetValue(actualindex);
+				}
+				else if (item is ComObjArray coa)
+				{
+					var actualindex = position < 0 ? coa.array.Length + position : position;
+					return coa.array.GetValue(actualindex);
 				}
 
 				//These are probably never used.

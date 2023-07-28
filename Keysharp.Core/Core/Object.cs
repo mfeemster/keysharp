@@ -6,7 +6,7 @@ namespace Keysharp.Core
 {
 	public class Any
 	{
-		public static string BaseExc = "Base property cannot be implemented in C#.";
+		public static string BaseExc = "Changing a class base property at runtime cannot be implemented in C#.";
 		internal Dictionary<object, object> props = new Dictionary<object, object>();
 
 		public object Base => GetType().BaseType;//Documentation says this can be set, but C# doesn't support changing a base at runtime.
@@ -37,6 +37,7 @@ namespace Keysharp.Core
 
 	public class KeysharpObject : Any
 	{
+		//internal object indexOverride;
 		public static KeysharpObject Object() => new KeysharpObject();
 
 		public virtual object Clone(params object[] obj)
@@ -67,5 +68,15 @@ namespace Keysharp.Core
 		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
 		public long SetCapacity(params object[] obj) => 1L;
+
+		//internal object IndexGetOverride(object item, params object[] index)
+		//{
+		//  return Keysharp.Scripting.Script.Index(indexOverride, index);
+		//}
+
+		//internal void IndexSetOverride(object value, object item, params object[] index)
+		//{
+		//  Keysharp.Scripting.Script.SetObject(value, item, index);
+		//}
 	}
 }

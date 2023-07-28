@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Keysharp.Core;
+using Keysharp.Core.COM;
 
 namespace Keysharp.Core
 {
@@ -18,6 +19,8 @@ namespace Keysharp.Core
 		}
 
 		public static Keysharp.Core.Buffer Buffer(object obj0, object obj1 = null) => new (obj0, obj1);
+
+		public static ComObject ComValue(object obj0, object obj1, object obj2 = null) => new ComObject(obj0, obj1, obj2);
 
 		public static void Collect() => GC.Collect();
 

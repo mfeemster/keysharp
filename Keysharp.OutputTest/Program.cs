@@ -1,6 +1,6 @@
-﻿
-using static Keysharp.Core.Accessors;
+﻿using static Keysharp.Core.Accessors;
 using static Keysharp.Core.Core;
+using static Keysharp.Core.COM.Com;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
@@ -9,7 +9,6 @@ using static Keysharp.Core.Dir;
 using static Keysharp.Core.Drive;
 using static Keysharp.Core.DllHelper;
 using static Keysharp.Core.Env;
-using static Keysharp.Core.File;
 using static Keysharp.Core.Flow;
 using static Keysharp.Core.Function;
 using static Keysharp.Core.GuiHelper;
@@ -18,6 +17,7 @@ using static Keysharp.Core.ImageLists;
 using static Keysharp.Core.Ini;
 using static Keysharp.Core.Input;
 using static Keysharp.Core.Keyboard;
+using static Keysharp.Core.KeysharpFile;
 using static Keysharp.Core.KeysharpObject;
 using static Keysharp.Core.Loops;
 using static Keysharp.Core.Maths;
@@ -48,7 +48,7 @@ using static Keysharp.Scripting.Script.Operator;
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.1")]
+[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.3")]
 
 namespace Keysharp.CompiledMain
 {
@@ -67,7 +67,6 @@ namespace Keysharp.CompiledMain
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
-
 	public class program
 	{
 
@@ -76,15 +75,15 @@ namespace Keysharp.CompiledMain
 		{
 			try
 			{
-				string name = @"*";
+				string name = "*";
 				Keysharp.Scripting.Script.Variables.InitGlobalVars();
 				Keysharp.Scripting.Script.SetName(name);
-				HandleSingleInstance(name, eScriptInstance.Off);
+				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
 				HandleCommandLineParams(args);
-				CreateTrayMenu();
+				Keysharp.Scripting.Script.CreateTrayMenu();
 				UserMainCode();
 				Keysharp.Core.Flow.Sleep(-2);
-				ExitApp(0);
+				Keysharp.Core.Flow.ExitApp(0);
 				return 0;
 			}
 			catch (Keysharp.Core.Error kserr)
@@ -94,7 +93,7 @@ namespace Keysharp.CompiledMain
 					MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
 				}
 
-				ExitApp(1);
+				Keysharp.Core.Flow.ExitApp(1);
 				return 1;
 			}
 			catch (System.Exception mainex)
@@ -115,7 +114,7 @@ namespace Keysharp.CompiledMain
 
 				;
 
-				ExitApp(1);
+				Keysharp.Core.Flow.ExitApp(1);
 
 				return 1;
 			}

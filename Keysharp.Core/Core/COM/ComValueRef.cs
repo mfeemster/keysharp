@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Keysharp.Core.COM
 {
-	internal class ComValueRef : ComValue
-	{
-	}
+	//internal class ComValueRef : ComObject
+	//{
+	//}
 }

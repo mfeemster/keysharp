@@ -21,11 +21,11 @@ namespace Keysharp.Core.COM
 		//public static IntPtr ComObjValue(object obj0)
 		public static object ComObjValue(object obj0)
 		{
-			if (obj0 is ComObjArray coa)
+			if (obj0 is ComObject co)
 			{
-				return coa.array;
+				return co.Value;
 			}
-			else
+			else//Unsure if this logic event makes sense.
 			{
 				var gch = GCHandle.Alloc(obj0, GCHandleType.Pinned);
 				var val = gch.AddrOfPinnedObject();
@@ -136,12 +136,7 @@ namespace Keysharp.Core.COM
 					throw new KeysharpException($"The supplied COM type of {varType} is not supported.");
 			}
 
-			var ar = System.Array.CreateInstance(t, lengths);
-			//return ar;
-			return new ComObjArray()
-			{
-				array = ar
-			};
+			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
 		//public static int MaxIndex(this System.Array arr, int index)

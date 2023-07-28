@@ -228,7 +228,7 @@ namespace Keysharp.Scripting
 								var index = ParseMultiExpression(line, paren.ToArray(), create);
 
 								if (index.Length == 0)
-									_ = invoke.Parameters.Add(new CodeSnippetExpression("new object[] { }"));
+									_ = invoke.Parameters.Add(new CodeSnippetExpression("System.Array.Empty<object>()"));
 								else if (index[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(index[0], "ParseObject"));
 								else
