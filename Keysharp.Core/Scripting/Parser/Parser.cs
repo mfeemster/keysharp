@@ -569,11 +569,13 @@ namespace Keysharp.Scripting
 			var userMainMethod = new CodeMemberMethod()
 			{
 				Attributes = MemberAttributes.Public | MemberAttributes.Static,
-				Name = "UserMainCode"
+				Name = "UserMainCode",
+				ReturnType = new CodeTypeReference(typeof(object))
 			};
 			userMainMethod.Statements.AddRange(main.Statements);
 			main.Statements.Clear();
-			_ = targetClass.Members.Add(userMainMethod);
+			//_ = targetClass.Members.Add(userMainMethod);
+			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 
 			foreach (CodeStatement stmt in initial)
 				main.Statements.Insert(0, stmt);

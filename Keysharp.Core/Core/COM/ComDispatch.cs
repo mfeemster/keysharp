@@ -12,6 +12,19 @@ using System.Xml.Linq;
 
 namespace Keysharp.Core.COM
 {
+	[Guid("6D5140C1-7436-11CE-8034-00AA006009FA")]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	[ComImport]
+	public interface IServiceProvider
+	{
+		[return: MarshalAs(UnmanagedType.I4)]
+		[PreserveSig]
+		int QueryService(
+			[In] ref Guid guidService,
+			[In] ref Guid riid,
+			[Out] out IntPtr ppvObject);
+	}
+
 	/// <summary>
 	/// The IDispatch interface.
 	/// This was taken loosely from https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/engine/COM/

@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -56,6 +57,7 @@ namespace Keysharp.Core.COM
 		public const int vt_byref = 0x4000; //Pointer to another type of value
 		public const int vt_typemask = 0xfff;
 		internal static Guid IID_IDispatch = new Guid(0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+		internal static Guid IID_IServiceProvider = new Guid("6d5140c1-7436-11ce-8034-00aa006009fa");
 		internal const int CLSCTX_INPROC_SERVER = 0x1;
 		internal const int CLSCTX_INPROC_HANDLER = 0x2;
 		internal const int CLSCTX_LOCAL_SERVER = 0x4;
@@ -64,128 +66,12 @@ namespace Keysharp.Core.COM
 		internal const int CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER; //16;
 		internal static HashSet<ComEvent> comEvents = new HashSet<ComEvent>();
 
-		public static object ObjAddRef(object obj0)
-		{
-			if (obj0 is ComObject co)
-				obj0 = co.Ptr;
-
-			var unk = Marshal.GetIUnknownForObject(obj0);
-			return (long)Marshal.AddRef(unk);
-		}
-
-		public static object ObjRelease(object obj0)
-		{
-			if (obj0 is ComObject co)
-				obj0 = co.Ptr;
-
-			var unk = Marshal.GetIUnknownForObject(obj0);
-			return (long)Marshal.Release(unk);
-		}
-
-		public static void ComObjConnect(object obj0, object obj1 = null, object obj2 = null)
-		{
-			if (obj0 is ComObject co)
-			{
-				if ((co.VarType != vt_dispatch && co.VarType != vt_unknown) || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
-				{
-					throw new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.");
-				}
-
-				//If it existed, whether obj1 was null or not, remove it.
-				if (comEvents.FirstOrDefault(ce => ReferenceEquals(ce.dispatcher.Co, co)) is ComEvent ev)
-				{
-					_ = comEvents.Remove(ev);
-					ev.Unwire();
-					ev.dispatcher.Dispose();
-				}
-
-				if (obj1 != null)//obj1 not being null means add it.
-					_ = comEvents.Add(new ComEvent(new Dispatcher(co), obj1, obj2 != null ? obj2.Ab() : false));
-			}
-		}
-
-		//[System.Security.SecurityCritical]  // auto-generated_required
-		//[ResourceExposure(ResourceScope.None)]
-		//[MethodImplAttribute(MethodImplOptions.InternalCall)]
-		//public static extern MemberInfo GetMethodInfoForComSlot(Type t, int slot, ref ComMemberType memberType);
-
-		/// <summary>
-		/// Gotten loosely from https://social.msdn.microsoft.com/Forums/vstudio/en-US/cbb92470-979c-4d9e-9555-f4de7befb42e/how-to-directly-access-the-virtual-method-table-of-a-com-interface-pointer?forum=csharpgeneral
-		/// </summary>
-		//public static object ComCall(object obj0, object obj1, params object[] parameters)
-		//{
-		//  var index = obj0.Ai();
-		//  var indexPlus1 = index + 1;
-
-		//  if (index < 0)
-		//      throw new ValueError($"Index value of {index} was less than zero.");
-
-		//  if (obj1 is ComObject co)
-		//      obj1 = co.Ptr;
-
-		//  var pUnk = Marshal.GetIUnknownForObject(obj1);
-		//  var pVtbl = Marshal.ReadIntPtr(pUnk);
-		//  var vtbl = new IntPtr[indexPlus1];//Index is zero based.
-		//  Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
-		//  var helper = new DllArgumentHelper(parameters);
-		//  //Marshal.GetMethodInfoForComSlot();
-		//  var memberType = ComMemberType.Method;
-		//  var mi = GetMethodInfoForComSlot(obj1.GetType(), index, ref memberType);
-		//  object val;
-
-		//  //Marshal.GetDelegateForFunctionPointer(
-		//  if (mi is MethodInfo method)
-		//  {
-		//      val = method.Invoke(obj1, helper.args);
-		//  }
-		//  else
-		//  {
-		//      _ = Marshal.Release(pUnk); //For GetIUnknownForObject().
-		//      throw new Error($"Method info for COM slot {index} was not of type MethodInfo and was instead of type {mi.GetType()}.");
-		//  }
-
-		//  //method.CreateDelegate(Expression.GetDelegateType(helper.types.Concat(new[] { helper.returnType})));
-		//  _ = Marshal.Release(pUnk); //For GetIUnknownForObject().
-		//  return val;
-		//}
-
-		public static ComObject ComValue(object obj0, object obj1, object obj2 = null) => new ComObject(obj0, obj1, obj2);
-
-		public static ComObject ComObjFromPtr(object obj0)
-		{
-			if (obj0 is IDispatch id)
-			{
-				//AHK did something here with trying to query an interface, but I hope that the above IDispatch cast does the same thing.
-				return new ComObject(vt_dispatch, id);
-			}
-
-			throw new ValueError($"Passed in value {obj0} of type {obj0.GetType()} was not of type IDispatch.");
-		}
-
-		public static object ComObjFlags(object obj0, object obj1 = null, object obj2 = null)
-		{
-			if (obj0 is ComObject co)
-			{
-				var flags = obj1 != null ? obj1.Al() : 0L;
-				var mask = obj2 != null ? obj2.Al() : 0L;
-
-				if (obj1 == null && obj2 == null)
-				{
-					if (flags < 0)
-					{
-						flags = 0;
-						mask = -flags;
-					}
-					else
-						mask = flags;
-				}
-
-				co.Flags = (co.Flags & ~mask) | (flags & mask);
-				return co.Flags;
-			}
-
-			return 0L;
-		}
+		[DllImport(WindowsAPI.ole32)]
+		public static extern int CoCreateInstance(ref Guid clsid,
+				[MarshalAs(UnmanagedType.IUnknown)] object inner,
+				uint context,
+				ref Guid uuid,
+				[MarshalAs(UnmanagedType.IUnknown)] out object rReturnedComObject);
 
 		public static object ComObjActive(object progId) => GetActiveObject(progId.As());
 
@@ -257,6 +143,28 @@ namespace Keysharp.Core.COM
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
+		public static void ComObjConnect(object obj0, object obj1 = null, object obj2 = null)
+		{
+			if (obj0 is ComObject co)
+			{
+				if ((co.VarType != vt_dispatch && co.VarType != vt_unknown))// || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
+				{
+					throw new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.");
+				}
+
+				//If it existed, whether obj1 was null or not, remove it.
+				if (comEvents.FirstOrDefault(ce => ReferenceEquals(ce.dispatcher.Co, co)) is ComEvent ev)
+				{
+					_ = comEvents.Remove(ev);
+					ev.Unwire();
+					ev.dispatcher.Dispose();
+				}
+
+				if (obj1 != null)//obj1 not being null means add it.
+					_ = comEvents.Add(new ComEvent(new Dispatcher(co), obj1, obj2 != null ? obj2.Ab() : false));
+			}
+		}
+
 		public static object ComObject(object obj0, object obj1 = null)//progId, string iid)
 		{
 			var cls = obj0.As();
@@ -307,7 +215,97 @@ namespace Keysharp.Core.COM
 			return null;//Should be a call to ComError() here.//TODO
 		}
 
+		public static object ComObjFlags(object obj0, object obj1 = null, object obj2 = null)
+		{
+			if (obj0 is ComObject co)
+			{
+				var flags = obj1 != null ? obj1.Al() : 0L;
+				var mask = obj2 != null ? obj2.Al() : 0L;
+
+				if (obj1 == null && obj2 == null)
+				{
+					if (flags < 0)
+					{
+						flags = 0;
+						mask = -flags;
+					}
+					else
+						mask = flags;
+				}
+
+				co.Flags = (co.Flags & ~mask) | (flags & mask);
+				return co.Flags;
+			}
+
+			return 0L;
+		}
+
+		public static ComObject ComObjFromPtr(object obj0)
+		{
+			if (obj0 is IDispatch id)
+			{
+				//AHK did something here with trying to query an interface, but I hope that the above IDispatch cast does the same thing.
+				return new ComObject(vt_dispatch, id);
+			}
+
+			throw new ValueError($"Passed in value {obj0} of type {obj0.GetType()} was not of type IDispatch.");
+		}
+
 		public static object ComObjGet(object progId) => Marshal.BindToMoniker(progId.As());
+
+		public static object ComObjQuery(object obj0, object obj1 = null, object obj2 = null)
+		{
+			object ptr;
+
+			if (obj0 is ComObject co)
+				ptr = co.Ptr;
+			else if (Marshal.IsComObject(obj0))
+				ptr = obj0;
+			else
+				throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
+
+			if (obj1 != null && obj2 != null)
+			{
+				var sidstr = obj1.As();
+				var iidstr = obj2.As();
+
+				if (CLSIDFromString(sidstr, out var sid) >= 0 && CLSIDFromString(iidstr, out var iid) >= 0)
+				{
+					if (ptr is IServiceProvider isp)
+					{
+						_ = isp.QueryService(ref sid, ref iid, out var ppv);
+
+						if (ppv != IntPtr.Zero)
+						{
+							var ob = Marshal.GetObjectForIUnknown(ppv);
+							return new ComObject(iid == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
+						}
+					}
+				}
+			}
+			else if (obj1 != null)
+			{
+				var iidstr = obj1.As();
+
+				if (CLSIDFromString(iidstr, out var iid) >= 0)
+				{
+					var iptr = Marshal.GetIUnknownForObject(ptr);
+
+					if (Marshal.QueryInterface(iptr, ref iid, out var ppv) >= 0)
+					{
+						_ = Marshal.Release(iptr);
+
+						if (ppv != IntPtr.Zero)
+						{
+							var ob = Marshal.GetObjectForIUnknown(ppv);
+							return new ComObject(iid == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
+						}
+					}
+				}
+			}
+
+			throw new Error($"Unable to get COM interface with arguments {obj1}, {obj2}.");
+		}
 
 		public static object ComObjType(object obj, object name = null)
 		{
@@ -365,10 +363,6 @@ namespace Keysharp.Core.COM
 			return null;
 		}
 
-		//public static object ComValue(object obj0, object obj1, object obj2 = null)
-		//{
-		//}
-
 		public static object ComObjValue(object obj0)
 		{
 			if (obj0 is ComObject co)
@@ -384,6 +378,73 @@ namespace Keysharp.Core.COM
 			}
 		}
 
+		public static ComObject ComValue(object obj0, object obj1, object obj2 = null) => new ComObject(obj0, obj1, obj2);
+
+		public static object ObjAddRef(object obj0)
+		{
+			if (obj0 is ComObject co)
+				obj0 = co.Ptr;
+
+			var unk = Marshal.GetIUnknownForObject(obj0);
+			_ = Marshal.Release(unk);//Need this or else it will add 2.
+			return (long)Marshal.AddRef(unk);
+		}
+
+		public static object ObjRelease(object obj0)
+		{
+			if (obj0 is ComObject co)
+				obj0 = co.Ptr;
+
+			return (long)Marshal.ReleaseComObject(obj0);
+		}
+
+		//[System.Security.SecurityCritical]  // auto-generated_required
+		//[ResourceExposure(ResourceScope.None)]
+		//[MethodImplAttribute(MethodImplOptions.InternalCall)]
+		//public static extern MemberInfo GetMethodInfoForComSlot(Type t, int slot, ref ComMemberType memberType);
+
+		/// <summary>
+		/// Gotten loosely from https://social.msdn.microsoft.com/Forums/vstudio/en-US/cbb92470-979c-4d9e-9555-f4de7befb42e/how-to-directly-access-the-virtual-method-table-of-a-com-interface-pointer?forum=csharpgeneral
+		/// </summary>
+		//public static object ComCall(object obj0, object obj1, params object[] parameters)
+		//{
+		//  var index = obj0.Ai();
+		//  var indexPlus1 = index + 1;
+
+		//  if (index < 0)
+		//      throw new ValueError($"Index value of {index} was less than zero.");
+
+		//  if (obj1 is ComObject co)
+		//      obj1 = co.Ptr;
+
+		//  var pUnk = Marshal.GetIUnknownForObject(obj1);
+		//  var pVtbl = Marshal.ReadIntPtr(pUnk);
+		//  var vtbl = new IntPtr[indexPlus1];//Index is zero based.
+		//  Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
+		//  var helper = new DllArgumentHelper(parameters);
+		//  //Marshal.GetMethodInfoForComSlot();
+		//  var memberType = ComMemberType.Method;
+		//  var mi = GetMethodInfoForComSlot(obj1.GetType(), index, ref memberType);
+		//  object val;
+
+		//  //Marshal.GetDelegateForFunctionPointer(
+		//  if (mi is MethodInfo method)
+		//  {
+		//      val = method.Invoke(obj1, helper.args);
+		//  }
+		//  else
+		//  {
+		//      _ = Marshal.Release(pUnk); //For GetIUnknownForObject().
+		//      throw new Error($"Method info for COM slot {index} was not of type MethodInfo and was instead of type {mi.GetType()}.");
+		//  }
+
+		//  //method.CreateDelegate(Expression.GetDelegateType(helper.types.Concat(new[] { helper.returnType})));
+		//  _ = Marshal.Release(pUnk); //For GetIUnknownForObject().
+		//  return val;
+		//}
+		//public static object ComValue(object obj0, object obj1, object obj2 = null)
+		//{
+		//}
 		[DllImport(WindowsAPI.oleaut)]
 		internal static extern int VariantChangeTypeEx([MarshalAs(UnmanagedType.Struct)] out object pvargDest,
 				[In, MarshalAs(UnmanagedType.Struct)] ref object pvarSrc, int lcid, short wFlags, [MarshalAs(UnmanagedType.I2)] short vt);
@@ -392,7 +453,7 @@ namespace Keysharp.Core.COM
 		private static extern int CLSIDFromProgIDEx([MarshalAs(UnmanagedType.LPWStr)] string lpszProgID, out Guid clsid);
 
 		[DllImport(WindowsAPI.ole32, CharSet = CharSet.Unicode)]
-		static extern int CLSIDFromString(string lpsz, out Guid guid);
+		private static extern int CLSIDFromString(string lpsz, out Guid guid);
 
 		/// <summary>
 		/// This used to be a built in function in earlier versions of .NET but now needs to be added manually.
@@ -413,13 +474,5 @@ namespace Keysharp.Core.COM
 
 		[DllImport(WindowsAPI.oleaut, PreserveSig = false)]
 		private static extern void GetActiveObject(ref Guid rclsid, IntPtr pvReserved, [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
-
-		[DllImport(WindowsAPI.ole32)]
-		static public extern int CoCreateInstance(ref Guid clsid,
-				[MarshalAs(UnmanagedType.IUnknown)] object inner,
-				uint context,
-				ref Guid uuid,
-				[MarshalAs(UnmanagedType.IUnknown)] out object rReturnedComObject);
 	}
-
 }
