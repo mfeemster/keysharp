@@ -379,7 +379,7 @@ namespace Keysharp.Core
 			return r.NextDouble(lower, upper);
 		}
 
-		public static void RandomSeed(object obj) => randomGenerator = new Random((int)obj.Al());
+		public static void RandomSeed(object obj) => randomGenerator = new Random(obj.Ai());
 
 		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.

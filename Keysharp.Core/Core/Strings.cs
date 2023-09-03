@@ -204,8 +204,8 @@ namespace Keysharp.Core
 			var input = obj0.As();
 			var needle = obj1.As();
 			var comp = obj2.As();
-			var index = (int)obj3.Al(1);
-			var occurrence = (int)obj4.Al(1);
+			var index = obj3.Ai(1);
+			var occurrence = obj4.Ai(1);
 
 			if (input != "")
 			{
@@ -282,7 +282,7 @@ namespace Keysharp.Core
 		{
 			var input = obj0.As();
 			var needle = obj1.As();
-			var index = (int)obj2.Al(1);
+			var index = obj2.Ai(1);
 			var reverse = index < 1;
 			var str = needle + reverse;
 			RegexWithTag exp = null;
@@ -345,8 +345,8 @@ namespace Keysharp.Core
 			var input = obj0.As();
 			var needle = obj1.As();
 			var replace = obj2.As();
-			var limit = (int)obj3.Al(-1);
-			var index = (int)obj4.Al(1);
+			var limit = obj3.Ai(-1);
+			var index = obj4.Ai(1);
 			var n = 0;
 			var reverse = index < 1;
 			var str = needle + reverse;
@@ -865,7 +865,7 @@ namespace Keysharp.Core
 
 			if (obj0 is string input)
 			{
-				var count = (int)obj3.Al(-1L);
+				var count = obj3.Ai(-1);
 
 				if (obj1 is string d)
 					delimiters = d;
@@ -953,8 +953,8 @@ namespace Keysharp.Core
 		public static string SubStr(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var input = obj0.As();
-			var index = (int)obj1.Al(1L);
-			var length = obj2.Al(long.MaxValue);
+			var index = obj1.Ai(1);
+			var length = obj2.Ai(int.MaxValue);
 
 			if (string.IsNullOrEmpty(input) || length == 0 || index == 0 || index > input.Length)
 				return string.Empty;
@@ -978,7 +978,7 @@ namespace Keysharp.Core
 				length += d;
 
 			length = Math.Max(0, Math.Min(length, d));
-			return input.Substring(index, (int)length);
+			return input.Substring(index, length);
 		}
 
 		/// <summary>

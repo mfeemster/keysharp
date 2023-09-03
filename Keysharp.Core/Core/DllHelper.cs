@@ -4,7 +4,10 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using System.Security.Cryptography;
 using System.Text;
 using Keysharp.Core.COM;
 using Keysharp.Core.Common.Keyboard;
@@ -15,83 +18,31 @@ using Microsoft.CodeAnalysis.Operations;
 
 namespace Keysharp.Core
 {
-	public static class DllHelper
+	internal class DllArgumentHelper
 	{
-		//public static object DllCall(object function, string t1, ref object p1, string t2, ref object p2)
-		//{
-		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2 });
-		//}
+		const string Cdecl = "cdecl";
+		internal bool cdecl = false;
+		internal string returnName = "";
+		internal object[] args;
+		internal Type[] types;
+		internal bool hasreturn;
+		internal Type returnType = typeof(int);
+		private HashSet<GCHandle> gcHandles = new HashSet<GCHandle>();
+		private ScopeHelper gcHandlesScope;
 
-		//public static object DllCall(object function, string t1, ref IntPtr p1, string t2, ref object p2)
-		//{
-		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2 });
-		//}
-		//
-		//public static object DllCall(object function, string t1, ref object p1, string t2, ref object p2, string ret)
-		//{
-		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2, ret });
-		//}
-
-		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
+		internal DllArgumentHelper(object[] parameters)
 		{
-			var options = obj1.As();
-			//obj2/paramcount is unused.
-			return new DelegateHolder(obj0, options.Contains("f", StringComparison.OrdinalIgnoreCase), options.Contains("&"));
-		}
-
-		public static void CallbackFree(object obj0)
-		{
-			if (obj0 is DelegateHolder dh)
-				dh.Clear();
-		}
-
-		/// <summary>
-		/// Calls an unmanaged function in a DLL.
-		/// </summary>
-		/// <param name="function">
-		/// <para>The path to the function, e.g. <c>C:\path\to\my.dll</c>. The ".dll" file extension can be omitted.</para>
-		/// <para>If an absolute path is not specified on Windows the function will search the following system libraries (in order):
-		/// User32.dll, Kernel32.dll, ComCtl32.dll, or Gdi32.dll.</para>
-		/// </param>
-		/// <param name="parameters">The type and argument list.</param>
-		/// <returns>The value returned by the function.</returns>
-		/// <remarks>
-		/// <para><see cref="ErrorLevel"/> will be set to one of the following:</para>
-		/// <list type="bullet">
-		/// <item><term>0</term>: <description>success</description></item>
-		/// <item><term>-3</term>: <description>file could not be accessed</description></item>
-		/// <item><term>-4</term>: <description>function could not be found</description></item>
-		/// </list>
-		/// <para>The following types can be used:</para>
-		/// <list type="bullet">
-		/// <item><term><c>str</c></term>: <description>a string</description></item>
-		/// <item><term><c>int64</c></term>: <description>a 64-bit integer</description></item>
-		/// <item><term><c>int</c></term>: <description>a 32-bit integer</description></item>
-		/// <item><term><c>short</c></term>: <description>a 16-bit integer</description></item>
-		/// <item><term><c>char</c></term>: <description>an 8-bit integer</description></item>
-		/// <item><term><c>float</c></term>: <description>a 32-bit floating point number</description></item>
-		/// <item><term><c>double</c></term>: <description>a 64-bit floating point number</description></item>
-		/// <item><term><c>*</c> or <c>P</c> suffix</term>: <description>pass the specified type by address</description></item>
-		/// <item><term><c>U</c> prefix</term>: <description>use unsigned values for numeric types</description></item>
-		/// </list>
-		/// </remarks>
-		public static object DllCall(object function, params object[] parameters)
-		{
-			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
-			var types = new Type[parameters.Length / 2];
-			var args = new object[types.Length];
-			var returnType = typeof(int);
-			var returnName = "";
-			var cdecl = false;
-			const string Cdecl = "cdecl";
-			var hasreturn = (parameters.Length & 1) == 1;
-			var gcHandles = new HashSet<GCHandle>();
-			var gcHandlesScope = new ScopeHelper(gcHandles);
+			gcHandlesScope = new ScopeHelper(gcHandles);
 			gcHandlesScope.eh += (sender, o) =>
 			{
 				if (o is HashSet<GCHandle> hs)
-					foreach (var gch in hs) gch.Free();
+					foreach (var gch in hs)
+						gch.Free();
 			};
+			ConvertKeysharpParametersToDllParameters(parameters);
+		}
+		private void ConvertKeysharpParametersToDllParameters(object[] parameters)
+		{
 			void SetupPointerArg(int i, int n, object obj = null)
 			{
 				var gch = GCHandle.Alloc(obj != null ? obj : parameters[i], GCHandleType.Pinned);
@@ -99,10 +50,12 @@ namespace Keysharp.Core
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
 			}
+			types = new Type[parameters.Length / 2];
+			args = new object[types.Length];
+			hasreturn = (parameters.Length & 1) == 1;
 
 			for (var i = 0; i < parameters.Length; i++)
 			{
-				Type type = null;
 				var name = parameters[i].ToString().ToLowerInvariant().Trim();
 				var isreturn = hasreturn && i == parameters.Length - 1;
 
@@ -118,6 +71,8 @@ namespace Keysharp.Core
 							continue;
 					}
 				}
+
+				Type type;
 
 				switch (name[name.Length - 1])
 				{
@@ -260,6 +215,73 @@ namespace Keysharp.Core
 					}
 				}
 			}
+		}
+	}
+
+	public static class DllHelper
+	{
+		//public static object DllCall(object function, string t1, ref object p1, string t2, ref object p2)
+		//{
+		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2 });
+		//}
+
+		//public static object DllCall(object function, string t1, ref IntPtr p1, string t2, ref object p2)
+		//{
+		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2 });
+		//}
+		//
+		//public static object DllCall(object function, string t1, ref object p1, string t2, ref object p2, string ret)
+		//{
+		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2, ret });
+		//}
+
+		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
+		{
+			var options = obj1.As();
+			//obj2/paramcount is unused.
+			return new DelegateHolder(obj0, options.Contains("f", StringComparison.OrdinalIgnoreCase), options.Contains("&"));
+		}
+
+		public static void CallbackFree(object obj0)
+		{
+			if (obj0 is DelegateHolder dh)
+				dh.Clear();
+		}
+
+		/// <summary>
+		/// Calls an unmanaged function in a DLL.
+		/// </summary>
+		/// <param name="function">
+		/// <para>The path to the function, e.g. <c>C:\path\to\my.dll</c>. The ".dll" file extension can be omitted.</para>
+		/// <para>If an absolute path is not specified on Windows the function will search the following system libraries (in order):
+		/// User32.dll, Kernel32.dll, ComCtl32.dll, or Gdi32.dll.</para>
+		/// </param>
+		/// <param name="parameters">The type and argument list.</param>
+		/// <returns>The value returned by the function.</returns>
+		/// <remarks>
+		/// <para><see cref="ErrorLevel"/> will be set to one of the following:</para>
+		/// <list type="bullet">
+		/// <item><term>0</term>: <description>success</description></item>
+		/// <item><term>-3</term>: <description>file could not be accessed</description></item>
+		/// <item><term>-4</term>: <description>function could not be found</description></item>
+		/// </list>
+		/// <para>The following types can be used:</para>
+		/// <list type="bullet">
+		/// <item><term><c>str</c></term>: <description>a string</description></item>
+		/// <item><term><c>int64</c></term>: <description>a 64-bit integer</description></item>
+		/// <item><term><c>int</c></term>: <description>a 32-bit integer</description></item>
+		/// <item><term><c>short</c></term>: <description>a 16-bit integer</description></item>
+		/// <item><term><c>char</c></term>: <description>an 8-bit integer</description></item>
+		/// <item><term><c>float</c></term>: <description>a 32-bit floating point number</description></item>
+		/// <item><term><c>double</c></term>: <description>a 64-bit floating point number</description></item>
+		/// <item><term><c>*</c> or <c>P</c> suffix</term>: <description>pass the specified type by address</description></item>
+		/// <item><term><c>U</c> prefix</term>: <description>use unsigned values for numeric types</description></item>
+		/// </list>
+		/// </remarks>
+		public static object DllCall(object function, params object[] parameters)
+		{
+			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
+			var helper = new DllArgumentHelper(parameters);
 
 			if (function is string path)
 			{
@@ -320,15 +342,15 @@ namespace Keysharp.Core
 								 path,
 								 MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.PinvokeImpl,
 								 CallingConventions.Standard,
-								 returnType,
-								 types,
-								 cdecl ? CallingConvention.Cdecl : CallingConvention.Winapi,
+								 helper.returnType,
+								 helper.types,
+								 helper.cdecl ? CallingConvention.Cdecl : CallingConvention.Winapi,
 								 CharSet.Auto);
 				invoke.SetImplementationFlags(invoke.GetMethodImplementationFlags() | MethodImplAttributes.PreserveSig);
 
-				for (var i = 0; i < args.Length; i++)
+				for (var i = 0; i < helper.args.Length; i++)
 				{
-					if (args[i] is System.Array array)
+					if (helper.args[i] is System.Array array)
 					{
 						var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 						pb.SetCustomAttribute(new CustomAttributeBuilder(
@@ -349,9 +371,9 @@ namespace Keysharp.Core
 					if (method == null)
 						throw new Error($"Method {name} could not be found.");
 
-					var value = method.Invoke(null, args);
+					var value = method.Invoke(null, helper.args);
 
-					if (returnName == "HRESULT" && value is int retval && retval < 0)
+					if (helper.returnName == "HRESULT" && value is int retval && retval < 0)
 					{
 						var ose = new OSError($"DllCall with return type of HRESULT returned {retval}.");
 						ose.Extra = "0x" + ose.Number.ToString("X");
@@ -379,66 +401,66 @@ namespace Keysharp.Core
 				{
 					//fixed (object* pin = args)
 					{
-						for (var i = 0; i < args.Length && i < longs.Length; i++)
+						for (var i = 0; i < helper.args.Length && i < longs.Length; i++)
 						{
-							if (types[i] == typeof(float))
+							if (helper.types[i] == typeof(float))
 							{
-								var f = (float)args[i];
+								var f = (float)helper.args[i];
 								int* iref = (int*)&f;
 								longs[i] = new IntPtr(*iref);
 							}
-							else if (types[i] == typeof(double))
+							else if (helper.types[i] == typeof(double))
 							{
-								var d = (double)args[i];
+								var d = (double)helper.args[i];
 								long* lref = (long*)&d;
 								longs[i] = new IntPtr(*lref);
 							}
-							else if (types[i] == typeof(long))
+							else if (helper.types[i] == typeof(long))
 							{
-								var l = (long)args[i];
+								var l = (long)helper.args[i];
 								longs[i] = new IntPtr(l);
 							}
-							else if (types[i] == typeof(IntPtr))
+							else if (helper.types[i] == typeof(IntPtr))
 							{
-								longs[i] = (IntPtr)args[i];
+								longs[i] = (IntPtr)helper.args[i];
 							}
-							else if (types[i] == typeof(string))
+							else if (helper.types[i] == typeof(string))
 							{
-								var str = args[i] as string;
+								var str = helper.args[i] as string;
 
 								fixed (char* p = str)//If the string moves after this is assigned, the program will likely crash. Unsure what else to do.
 								{
 									longs[i] = new IntPtr(p);
 								}
 							}
-							else if (types[i] == typeof(ulong))
+							else if (helper.types[i] == typeof(ulong))
 							{
-								var ul = (ulong)args[i];
+								var ul = (ulong)helper.args[i];
 								longs[i] = new IntPtr((long)ul);
 							}
-							else if (types[i] == typeof(int))
+							else if (helper.types[i] == typeof(int))
 							{
-								var ii = (int)args[i];
+								var ii = (int)helper.args[i];
 								longs[i] = new IntPtr((long)ii);
 							}
-							else if (types[i] == typeof(uint))
+							else if (helper.types[i] == typeof(uint))
 							{
-								var ui = (uint)args[i];
+								var ui = (uint)helper.args[i];
 								longs[i] = new IntPtr(ui);
 							}
-							else if (types[i] == typeof(short))
+							else if (helper.types[i] == typeof(short))
 							{
-								var s = (short)args[i];
+								var s = (short)helper.args[i];
 								longs[i] = new IntPtr(s);
 							}
-							else if (types[i] == typeof(ushort))
+							else if (helper.types[i] == typeof(ushort))
 							{
-								var us = (ushort)args[i];
+								var us = (ushort)helper.args[i];
 								longs[i] = new IntPtr(us);
 							}
-							else if (types[i] == typeof(char))
+							else if (helper.types[i] == typeof(char))
 							{
-								var c = (char)args[i];
+								var c = (char)helper.args[i];
 								longs[i] = new IntPtr(c);
 							}
 						}
@@ -448,18 +470,23 @@ namespace Keysharp.Core
 			}
 			else if (function is Delegate del)
 			{
-				return del.DynamicInvoke(args);
+				return del.DynamicInvoke(helper.args);
 			}
 			else if (function is int || function is long)
 			{
-				var address = (int)function;
+				var address = function.Al();
 
 				if (address < 0)
 					throw new ValueError($"Function argument of type {function.GetType()} was treated as an address and had a negative value of {address}. It must greater than 0.");
 
 				try
 				{
-					var value = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate)).Method.Invoke(null, args);
+					var value = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate)).Method.Invoke(null, helper.args);
+					//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate));
+					//System.Linq.Expressions.Compiler.DelegateHelpers.MakeNewCustomDelegate
+					//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Action));
+					//var value = ptrdel.DynamicInvoke(args);
+					//var value = ptrdel.Method.Invoke(null, args);
 					return value;
 				}
 				catch (Exception e)
@@ -469,6 +496,10 @@ namespace Keysharp.Core
 					throw error;
 				}
 			}
+			//else if (function is IntPtr ip)//It came from ComCall().
+			//{
+			//  //GetMethodInfoForComSlot(typeof(IDispatch),
+			//}
 			else if (function is float || function is double || function is decimal)
 			{
 				throw new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.");

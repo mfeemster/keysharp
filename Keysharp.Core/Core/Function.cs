@@ -325,7 +325,7 @@ namespace Keysharp.Core
 
 		public bool IsByRef(params object[] obj)//Ref args are not supported, so this should always return false.
 		{
-			var index = (int)obj.Al();
+			var index = obj.Ai();
 			var funcParams = mi.GetParameters();
 
 			if (index > 0)
@@ -347,7 +347,7 @@ namespace Keysharp.Core
 
 		public bool IsOptional(object obj)
 		{
-			var index = (int)obj.Al();
+			var index = obj.Ai();
 			var funcParams = mi.GetParameters();
 
 			if (index > 0)

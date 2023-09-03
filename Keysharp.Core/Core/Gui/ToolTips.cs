@@ -17,9 +17,9 @@ namespace Keysharp.Core
 		public static object ToolTip(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
 			var text = obj0.As();
-			var x = (int)obj1.Al(int.MinValue);
-			var y = (int)obj2.Al(int.MinValue);
-			var id = (int)obj3.Al(1);
+			var x = obj1.Ai(int.MinValue);
+			var y = obj2.Ai(int.MinValue);
+			var id = obj3.Ai(1);
 			id--;
 
 			if (text != "")

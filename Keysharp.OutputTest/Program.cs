@@ -67,6 +67,7 @@ namespace Keysharp.CompiledMain
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
+
 	public class program
 	{
 
@@ -81,8 +82,7 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
 				HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
-				UserMainCode();
-				Keysharp.Core.Flow.Sleep(-2);
+				Keysharp.Scripting.Script.RunMainWindow(name, UserMainCode);
 				Keysharp.Core.Flow.ExitApp(0);
 				return 0;
 			}

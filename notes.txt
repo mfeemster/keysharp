@@ -297,9 +297,9 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 				
 	An apparently cross platform desktop automation library: https://github.com/lucassklp/Desktop.Robot
 	An event hook example library: https://github.com/Hema2-official/accprez/tree/main/Accprez
-	-Maybe do reference variables just for static function calls:
+	Maybe do reference variables just for static function calls:
 		-Might be possible: https://stackoverflow.com/questions/8779731/how-to-pass-a-parameter-as-a-reference-with-methodinfo-invoke
-		
+	A program called Voice Macro for automation.
 	
 Closed development links to revisit:
 	https://docs.microsoft.com/en-us/dotnet/framework/tools/signtool-exe?redirectedfrom=MSDN
@@ -318,23 +318,7 @@ Closed development links to revisit:
 	https://www.codeproject.com/tips/715891/compiling-csharp-code-at-runtime
 	https://www.automatetheplanet.com/optimize-csharp-reflection-using-delegates/
 	https://www.youtube.com/watch?v=EgwnFhptwxI
-
-	
-	A program called Voice Macro for automation.
-	
-	
-	todo:
-
-	Try:
-	
-	#Include <print>
-
-`a`:=`"a`"`,b`:`=`"b`"`,`c`:`=`"`c`"`,`d`:`=`"`d`"`,`e`:`=`"`e`"`,f`:`=`"f`"`,`g`:`=`"`g`"
-,`h`:`=`"`h`"`,`i`:`=`"`i`"`,`j`:`=`"`j`"`,`k`:`=`"`k`"`,`l`:`=`"`l`"`,`m`:`=`"`m`"`,n`:`=`"n`"
-,`o`:`=`"`o`"`,`p`:`=`"`p`"`,`q`:`=`"`q`"`,r`:`=`"r`"`,`s`:`=`"`s`"`,t`:`=`"t`"`,`u`:`=`"`u`"
-,v`:`=`"v`"`,`w`:`=`"`w`"`,`x`:`=`"`x`"`,`y`:`=`"`y`"`,`z`:`=`"`z`"
-
-%`p%%r%%`i%%n%%t%(%`h% %`e% %`l% %`l% %`o%)
+	https://www.autohotkey.com/boards/viewtopic.php?f=83&t=74028&p=521376
 
 ///////Code storage
 

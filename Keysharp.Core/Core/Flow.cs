@@ -76,7 +76,7 @@ namespace Keysharp.Core
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
 		public static void Exit(object obj = null)
 		{
-			var exitCode = (int)obj.Al();
+			var exitCode = obj.Ai();
 			Environment.ExitCode = exitCode;
 			Application.ExitThread();
 		}
@@ -362,8 +362,8 @@ namespace Keysharp.Core
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
-			var exitReason = (int)obj0.Al();
-			var exitCode = (int)obj1.Al();
+			var exitReason = obj0.Ai();
+			var exitCode = obj1.Ai();
 			Accessors.A_ExitReason = exitReason;
 			var result = Script.OnExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
 

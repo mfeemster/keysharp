@@ -12,10 +12,10 @@ namespace Keysharp.Core
 	{
 		public static Bitmap GetScreenClip(object obj0, object obj1, object obj2, object obj3, object obj4 = null)
 		{
-			var x = (int)obj0.Al();
-			var y = (int)obj1.Al();
-			var width = (int)obj2.Al();
-			var height = (int)obj3.Al();
+			var x = obj0.Ai();
+			var y = obj1.Ai();
+			var width = obj2.Ai();
+			var height = obj3.Ai();
 			var filename = obj4.As();
 			PixelFormat format;
 
@@ -75,10 +75,10 @@ namespace Keysharp.Core
 		/// </param>
 		public static Keysharp.Core.Map ImageSearch(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
 		{
-			var x1 = (int)obj0.Al();
-			var y1 = (int)obj1.Al();
-			var x2 = (int)obj2.Al();
-			var y2 = (int)obj3.Al();
+			var x1 = obj0.Ai();
+			var y1 = obj1.Ai();
+			var x2 = obj2.Ai();
+			var y2 = obj3.Ai();
 			var filename = obj4.As();
 			var options = obj5.As();
 			var optsItems = new Dictionary<string, Regex>
@@ -176,8 +176,8 @@ namespace Keysharp.Core
 		/// <returns>The color as a hexadecimal string in red-green-blue (RGB) format. For example, the color purple is defined 0x800080 because it has an intensity of 80 for its blue and red components but an intensity of 00 for its green component.</returns>
 		public static string PixelGetColor(object obj0, object obj1)
 		{
-			var x = (int)obj0.Al();
-			var y = (int)obj1.Al();
+			var x = obj0.Ai ();
+			var y = obj1.Ai();
 			PixelFormat format;
 			int pixel;
 
@@ -227,10 +227,10 @@ namespace Keysharp.Core
 		/// <returns>The coordinates of the first pixel that matches ColorID (if no match is found, a dictionary with empty values is returned). Coordinates are relative to the active window unless CoordMode was used to change that. If an exception is thrown, null is returned.</returns>
 		public static Keysharp.Core.Map PixelSearch(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
 		{
-			var x1 = (int)obj0.Al();
-			var y1 = (int)obj1.Al();
-			var x2 = (int)obj2.Al();
-			var y2 = (int)obj3.Al();
+			var x1 = obj0.Ai();
+			var y1 = obj1.Ai();
+			var x2 = obj2.Ai();
+			var y2 = obj3.Ai();
 			var colorID = obj4.Al();
 			var variation = obj5.Al();
 			variation = Math.Clamp(variation, byte.MinValue, byte.MaxValue);

@@ -83,7 +83,8 @@ namespace Keysharp.Core
 			_ = sb.AppendLine($"Extra: {Extra}\n");
 			_ = sb.AppendLine($"File: {File}\n");
 			_ = sb.AppendLine($"Line: {Line}\n");
-			_ = sb.AppendLine($"Stack: {Stack}");
+			_ = sb.AppendLine($"Local stack: {Stack}");
+			_ = sb.AppendLine($"Full stack: {StackTrace}");
 			return sb.ToString();
 		}
 	}

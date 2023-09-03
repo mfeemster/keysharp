@@ -2,7 +2,9 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using Keysharp.Core;
+using Keysharp.Core.COM;
 
 namespace Keysharp.Scripting
 {
@@ -59,6 +61,11 @@ namespace Keysharp.Scripting
 				lastParamCount = paramCount;
 				return lastMph = (item, mph2);
 			}
+			else if (item is ComObject co)
+			{
+				//return (co.Ptr, new ComMethodPropertyHolder(key));//Unwrap.
+				return GetMethodOrProperty(co.Ptr, key, paramCount);
+			}
 			else if (Marshal.IsComObject(item))
 			{
 				return (item, new ComMethodPropertyHolder(key));
@@ -95,9 +102,16 @@ namespace Keysharp.Scripting
 						throw;
 				}
 			}
-			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1)
+			//This is for the case where a Map accesses a key within the Map as if it were a property, so we try to get the indexer property, then pass the name of the passed in property as the key/index.
+			//We check for a param length of 1 so we don't accidentally grab properties named Item which have no parameters, such as is the case with ComObject.
+			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
 			{
-				return mph1.callFunc(item, new object[] { name });
+				return mph1.callFunc(item, new object[] { namestr });
+			}
+			else if (item is ComObject co)
+			{
+				//return co.Ptr.GetType().InvokeMember(namestr, BindingFlags.GetProperty, null, item, null);//Unwrap.
+				return GetPropertyValue(co.Ptr, namestr);
 			}
 			else if (Marshal.IsComObject(item))
 			{
@@ -179,22 +193,29 @@ namespace Keysharp.Scripting
 						throw;
 				}
 			}
-			else if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1)
+			else if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
 			{
-				return mph1.callFunc(item, new object[] { name, value });
+				return mph1.callFunc(item, new object[] { namestr, value });
+			}
+			else if (item is ComObject co)
+			{
+				//_ = co.Ptr.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });//Unwrap.
+				return SetPropertyValue(co.Ptr, namestr, value);
 			}
 			else if (Marshal.IsComObject(item))
 			{
 				_ = item.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });
 				return value;
 			}
-			else
-				throw new PropertyError($"Attempting to set property {name} on object {item} to value {value} failed.");
+
+			throw new PropertyError($"Attempting to set property {namestr} on object {item} to value {value} failed.");
 		}
 
 		public static void SetStaticMemberValueT<T>(object name, object value)
 		{
-			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString(), 0) is MethodPropertyHolder mph && mph.IsStaticProp)
+			var namestr = name.ToString();
+
+			if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 			{
 				try
 				{
@@ -209,7 +230,7 @@ namespace Keysharp.Scripting
 				}
 			}
 			else
-				throw new PropertyError($"Attempting to set property {name} to value {value} failed.");
+				throw new PropertyError($"Attempting to set property {namestr} to value {value} failed.");
 		}
 	}
 }

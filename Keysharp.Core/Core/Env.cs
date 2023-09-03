@@ -238,7 +238,7 @@ namespace Keysharp.Core
 			if (obj is Keysharp.Core.Windows.SystemMetric en)
 				return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics(en);
 
-			return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics((SystemMetric)(int)obj.Al());
+			return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics((SystemMetric)obj.Ai());
 		}
 
 		internal static int ClipFormatStringToInt(string fmt) => DataFormats.GetFormat(fmt) is DataFormats.Format d ? d.Id : 0;

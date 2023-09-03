@@ -15,6 +15,21 @@ using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core
 {
+	public class ComMethodPropertyHolder : MethodPropertyHolder
+	{
+		public string Name { get; private set; }
+
+		public ComMethodPropertyHolder(string name)
+			: base(null, null)
+		{
+			Name = name;
+			callFunc = (inst, obj) =>
+			{
+				return inst.GetType().InvokeMember(Name, BindingFlags.InvokeMethod, null, inst, obj);
+			};
+		}
+	}
+
 	public class ConcurrentStackPool<T>
 	{
 		private readonly SlimStack<T[]> collection = new (16); //Unlikely there would ever be more than 16 threads calling a given function at the same time before any of the others returned.
@@ -40,36 +55,22 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class ComMethodPropertyHolder : MethodPropertyHolder
-	{
-		public string Name { get; private set; }
-
-		public ComMethodPropertyHolder(string name)
-			: base(null, null)
-		{
-			Name = name;
-			callFunc = (inst, obj) =>
-			{
-				return inst.GetType().InvokeMember(Name, BindingFlags.InvokeMethod, null, inst, obj);
-			};
-		}
-	}
-
 	public class MethodPropertyHolder
 	{
-		internal Func<object, object[], object> callFunc;
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
 		internal readonly Action<object, object> setPropFunc;
+		internal Func<object, object[], object> callFunc;
 		protected readonly ConcurrentStackPool<object> paramsPool;
 		private readonly bool isGuiType;
-		private int paramLength;
 		private int startVarIndex = -1;
 		private int stopVarIndexDistanceFromEnd;
 
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
+		internal bool IsVariadic => startVarIndex != -1;
+		internal int ParamLength { get; }
 
 		public MethodPropertyHolder(MethodInfo m, PropertyInfo p)
 		{
@@ -79,7 +80,7 @@ namespace Keysharp.Core
 			if (mi != null)
 			{
 				parameters = mi.GetParameters();
-				paramLength = parameters.Length;
+				ParamLength = parameters.Length;
 				isGuiType = Keysharp.Core.Gui.IsGuiType(mi.DeclaringType);
 
 				for (var i = 0; i < parameters.Length; i++)
@@ -96,7 +97,7 @@ namespace Keysharp.Core
 				{
 					callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
 				}
-				else if (paramLength == 0)
+				else if (ParamLength == 0)
 				{
 					if (isGuiType)
 					{
@@ -115,7 +116,7 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					paramsPool = new ConcurrentStackPool<object>(paramLength);
+					paramsPool = new ConcurrentStackPool<object>(ParamLength);
 
 					if (startVarIndex != -1)//Variadic.
 					{
@@ -124,7 +125,7 @@ namespace Keysharp.Core
 							object[] newobj = null;
 							object[] lastArr = null;
 
-							if (paramLength == 1)
+							if (ParamLength == 1)
 							{
 								newobj = new object[] { obj };
 							}
@@ -135,7 +136,7 @@ namespace Keysharp.Core
 								var objLength = obj.Length;
 								newobj = paramsPool.Rent();
 
-								for (var pi = 0; oi < objLength && pi < paramLength; pi++)
+								for (var pi = 0; oi < objLength && pi < ParamLength; pi++)
 								{
 									if (pi == startVarIndex)
 									{
@@ -163,7 +164,7 @@ namespace Keysharp.Core
 							else if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
 								_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, newobj), false);
 
-							if (paramLength > 1)
+							if (ParamLength > 1)
 								paramsPool.Return(newobj, true);
 
 							return ret;
@@ -176,7 +177,7 @@ namespace Keysharp.Core
 							object ret = null;
 							var objLength = obj.Length;
 
-							if (paramLength == objLength)
+							if (ParamLength == objLength)
 							{
 								if (!isGuiType)
 									ret = mi.Invoke(inst, obj);
@@ -189,7 +190,7 @@ namespace Keysharp.Core
 								//var newobj = new object[paramLength];
 								var newobj = paramsPool.Rent();//Using the memory pool in this function seems to help a lot.
 
-								for (; i < objLength && i < paramLength; i++)
+								for (; i < objLength && i < ParamLength; i++)
 									newobj[i] = obj[i];
 
 								//Any remaining items in newobj are null by default.

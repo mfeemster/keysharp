@@ -29,367 +29,351 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.txtStack = new System.Windows.Forms.TextBox();
-			this.mainMenu = new System.Windows.Forms.MenuStrip();
-			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.reloadScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.editScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.windowSpyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-			this.suspendHotkeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.variablesAndTheirContentsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.hotkeysAndTheirMethodsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.keyHistoryAndScriptInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-			this.refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.userManualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.websiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.tcMain = new System.Windows.Forms.TabControl();
-			this.tpStack = new System.Windows.Forms.TabPage();
-			this.tpDebug = new System.Windows.Forms.TabPage();
-			this.txtDebug = new System.Windows.Forms.TextBox();
-			this.tpVars = new System.Windows.Forms.TabPage();
-			this.txtVars = new System.Windows.Forms.TextBox();
-			this.tpHotkeys = new System.Windows.Forms.TabPage();
-			this.txtHotkeys = new System.Windows.Forms.TextBox();
-			this.tpHistory = new System.Windows.Forms.TabPage();
-			this.txtHistory = new System.Windows.Forms.TextBox();
-			this.mainMenu.SuspendLayout();
-			this.tcMain.SuspendLayout();
-			this.tpStack.SuspendLayout();
-			this.tpDebug.SuspendLayout();
-			this.tpVars.SuspendLayout();
-			this.tpHotkeys.SuspendLayout();
-			this.tpHistory.SuspendLayout();
-			this.SuspendLayout();
+			txtStack = new System.Windows.Forms.TextBox();
+			mainMenu = new System.Windows.Forms.MenuStrip();
+			fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			reloadScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			editScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			windowSpyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+			suspendHotkeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			variablesAndTheirContentsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			hotkeysAndTheirMethodsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			keyHistoryAndScriptInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+			refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			userManualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			websiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			tcMain = new System.Windows.Forms.TabControl();
+			tpStack = new System.Windows.Forms.TabPage();
+			tpDebug = new System.Windows.Forms.TabPage();
+			txtDebug = new System.Windows.Forms.TextBox();
+			tpVars = new System.Windows.Forms.TabPage();
+			txtVars = new System.Windows.Forms.TextBox();
+			tpHotkeys = new System.Windows.Forms.TabPage();
+			txtHotkeys = new System.Windows.Forms.TextBox();
+			tpHistory = new System.Windows.Forms.TabPage();
+			txtHistory = new System.Windows.Forms.TextBox();
+			clearDebugLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			mainMenu.SuspendLayout();
+			tcMain.SuspendLayout();
+			tpStack.SuspendLayout();
+			tpDebug.SuspendLayout();
+			tpVars.SuspendLayout();
+			tpHotkeys.SuspendLayout();
+			tpHistory.SuspendLayout();
+			SuspendLayout();
 			//
 			// txtStack
 			//
-			this.txtStack.BackColor = System.Drawing.SystemColors.MenuBar;
-			this.txtStack.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.txtStack.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.txtStack.Location = new System.Drawing.Point(2, 2);
-			this.txtStack.Margin = new System.Windows.Forms.Padding(2);
-			this.txtStack.Multiline = true;
-			this.txtStack.Name = "txtStack";
-			this.txtStack.ReadOnly = true;
-			this.txtStack.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtStack.Size = new System.Drawing.Size(831, 479);
-			this.txtStack.TabIndex = 0;
+			txtStack.BackColor = System.Drawing.SystemColors.MenuBar;
+			txtStack.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtStack.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtStack.Location = new System.Drawing.Point(2, 2);
+			txtStack.Margin = new System.Windows.Forms.Padding(2);
+			txtStack.Multiline = true;
+			txtStack.Name = "txtStack";
+			txtStack.ReadOnly = true;
+			txtStack.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+			txtStack.Size = new System.Drawing.Size(831, 479);
+			txtStack.TabIndex = 0;
 			//
 			// mainMenu
 			//
-			this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[]
-			{
-				this.fileToolStripMenuItem,
-				this.viewToolStripMenuItem,
-				this.helpToolStripMenuItem
-			});
-			this.mainMenu.Location = new System.Drawing.Point(0, 0);
-			this.mainMenu.Name = "mainMenu";
-			this.mainMenu.Padding = new System.Windows.Forms.Padding(3, 1, 0, 1);
-			this.mainMenu.Size = new System.Drawing.Size(843, 24);
-			this.mainMenu.TabIndex = 2;
-			this.mainMenu.Text = "MainMenu";
+			mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, viewToolStripMenuItem, helpToolStripMenuItem });
+			mainMenu.Location = new System.Drawing.Point(0, 0);
+			mainMenu.Name = "mainMenu";
+			mainMenu.Padding = new System.Windows.Forms.Padding(3, 1, 0, 1);
+			mainMenu.Size = new System.Drawing.Size(843, 24);
+			mainMenu.TabIndex = 2;
+			mainMenu.Text = "MainMenu";
 			//
 			// fileToolStripMenuItem
 			//
-			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[]
-			{
-				this.reloadScriptToolStripMenuItem,
-				this.editScriptToolStripMenuItem,
-				this.windowSpyToolStripMenuItem,
-				this.toolStripSeparator1,
-				this.suspendHotkeysToolStripMenuItem,
-				this.exitToolStripMenuItem
-			});
-			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-			this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 22);
-			this.fileToolStripMenuItem.Text = "&File";
+			fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { reloadScriptToolStripMenuItem, editScriptToolStripMenuItem, windowSpyToolStripMenuItem, toolStripSeparator1, suspendHotkeysToolStripMenuItem, exitToolStripMenuItem });
+			fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+			fileToolStripMenuItem.Size = new System.Drawing.Size(37, 22);
+			fileToolStripMenuItem.Text = "&File";
 			//
 			// reloadScriptToolStripMenuItem
 			//
-			this.reloadScriptToolStripMenuItem.Name = "reloadScriptToolStripMenuItem";
-			this.reloadScriptToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
-			this.reloadScriptToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-			this.reloadScriptToolStripMenuItem.Text = "&Reload Script";
-			this.reloadScriptToolStripMenuItem.Click += new System.EventHandler(this.reloadScriptToolStripMenuItem_Click);
+			reloadScriptToolStripMenuItem.Name = "reloadScriptToolStripMenuItem";
+			reloadScriptToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R;
+			reloadScriptToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+			reloadScriptToolStripMenuItem.Text = "&Reload Script";
+			reloadScriptToolStripMenuItem.Click += reloadScriptToolStripMenuItem_Click;
 			//
 			// editScriptToolStripMenuItem
 			//
-			this.editScriptToolStripMenuItem.Name = "editScriptToolStripMenuItem";
-			this.editScriptToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-			this.editScriptToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-			this.editScriptToolStripMenuItem.Text = "&Edit Script";
-			this.editScriptToolStripMenuItem.Click += new System.EventHandler(this.editScriptToolStripMenuItem_Click);
+			editScriptToolStripMenuItem.Name = "editScriptToolStripMenuItem";
+			editScriptToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E;
+			editScriptToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+			editScriptToolStripMenuItem.Text = "&Edit Script";
+			editScriptToolStripMenuItem.Click += editScriptToolStripMenuItem_Click;
 			//
 			// windowSpyToolStripMenuItem
 			//
-			this.windowSpyToolStripMenuItem.Name = "windowSpyToolStripMenuItem";
-			this.windowSpyToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-			this.windowSpyToolStripMenuItem.Text = "&Window Spy";
-			this.windowSpyToolStripMenuItem.Click += new System.EventHandler(this.windowSpyToolStripMenuItem_Click);
+			windowSpyToolStripMenuItem.Name = "windowSpyToolStripMenuItem";
+			windowSpyToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+			windowSpyToolStripMenuItem.Text = "&Window Spy";
+			windowSpyToolStripMenuItem.Click += windowSpyToolStripMenuItem_Click;
 			//
 			// toolStripSeparator1
 			//
-			this.toolStripSeparator1.Name = "toolStripSeparator1";
-			this.toolStripSeparator1.Size = new System.Drawing.Size(181, 6);
+			toolStripSeparator1.Name = "toolStripSeparator1";
+			toolStripSeparator1.Size = new System.Drawing.Size(181, 6);
 			//
 			// suspendHotkeysToolStripMenuItem
 			//
-			this.suspendHotkeysToolStripMenuItem.Name = "suspendHotkeysToolStripMenuItem";
-			this.suspendHotkeysToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-			this.suspendHotkeysToolStripMenuItem.Text = "&Suspend Hotkeys";
-			this.suspendHotkeysToolStripMenuItem.Click += new System.EventHandler(this.suspendHotkeysToolStripMenuItem_Click);
+			suspendHotkeysToolStripMenuItem.Name = "suspendHotkeysToolStripMenuItem";
+			suspendHotkeysToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+			suspendHotkeysToolStripMenuItem.Text = "&Suspend Hotkeys";
+			suspendHotkeysToolStripMenuItem.Click += suspendHotkeysToolStripMenuItem_Click;
 			//
 			// exitToolStripMenuItem
 			//
-			this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-			this.exitToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-			this.exitToolStripMenuItem.Text = "E&xit";
-			this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+			exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+			exitToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+			exitToolStripMenuItem.Text = "E&xit";
+			exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
 			//
 			// viewToolStripMenuItem
 			//
-			this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[]
-			{
-				this.variablesAndTheirContentsToolStripMenuItem,
-				this.hotkeysAndTheirMethodsToolStripMenuItem,
-				this.keyHistoryAndScriptInfoToolStripMenuItem,
-				this.toolStripSeparator2,
-				this.refreshToolStripMenuItem
-			});
-			this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-			this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 22);
-			this.viewToolStripMenuItem.Text = "&View";
+			viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { variablesAndTheirContentsToolStripMenuItem, hotkeysAndTheirMethodsToolStripMenuItem, keyHistoryAndScriptInfoToolStripMenuItem, clearDebugLogToolStripMenuItem, toolStripSeparator2, refreshToolStripMenuItem });
+			viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+			viewToolStripMenuItem.Size = new System.Drawing.Size(44, 22);
+			viewToolStripMenuItem.Text = "&View";
 			//
 			// variablesAndTheirContentsToolStripMenuItem
 			//
-			this.variablesAndTheirContentsToolStripMenuItem.Name = "variablesAndTheirContentsToolStripMenuItem";
-			this.variablesAndTheirContentsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V)));
-			this.variablesAndTheirContentsToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
-			this.variablesAndTheirContentsToolStripMenuItem.Text = "&Variables and their contents";
-			this.variablesAndTheirContentsToolStripMenuItem.Click += new System.EventHandler(this.variablesAndTheirContentsToolStripMenuItem_Click);
+			variablesAndTheirContentsToolStripMenuItem.Name = "variablesAndTheirContentsToolStripMenuItem";
+			variablesAndTheirContentsToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V;
+			variablesAndTheirContentsToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
+			variablesAndTheirContentsToolStripMenuItem.Text = "&Variables and their contents";
+			variablesAndTheirContentsToolStripMenuItem.Click += variablesAndTheirContentsToolStripMenuItem_Click;
 			//
 			// hotkeysAndTheirMethodsToolStripMenuItem
 			//
-			this.hotkeysAndTheirMethodsToolStripMenuItem.Name = "hotkeysAndTheirMethodsToolStripMenuItem";
-			this.hotkeysAndTheirMethodsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.H)));
-			this.hotkeysAndTheirMethodsToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
-			this.hotkeysAndTheirMethodsToolStripMenuItem.Text = "&Hotkeys and their methods";
-			this.hotkeysAndTheirMethodsToolStripMenuItem.Click += new System.EventHandler(this.hotkeysAndTheirMethodsToolStripMenuItem_Click);
+			hotkeysAndTheirMethodsToolStripMenuItem.Name = "hotkeysAndTheirMethodsToolStripMenuItem";
+			hotkeysAndTheirMethodsToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.H;
+			hotkeysAndTheirMethodsToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
+			hotkeysAndTheirMethodsToolStripMenuItem.Text = "&Hotkeys and their methods";
+			hotkeysAndTheirMethodsToolStripMenuItem.Click += hotkeysAndTheirMethodsToolStripMenuItem_Click;
 			//
 			// keyHistoryAndScriptInfoToolStripMenuItem
 			//
-			this.keyHistoryAndScriptInfoToolStripMenuItem.Name = "keyHistoryAndScriptInfoToolStripMenuItem";
-			this.keyHistoryAndScriptInfoToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.K)));
-			this.keyHistoryAndScriptInfoToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
-			this.keyHistoryAndScriptInfoToolStripMenuItem.Text = "&Key history and script info";
-			this.keyHistoryAndScriptInfoToolStripMenuItem.Click += new System.EventHandler(this.keyHistoryAndScriptInfoToolStripMenuItem_Click);
+			keyHistoryAndScriptInfoToolStripMenuItem.Name = "keyHistoryAndScriptInfoToolStripMenuItem";
+			keyHistoryAndScriptInfoToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.K;
+			keyHistoryAndScriptInfoToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
+			keyHistoryAndScriptInfoToolStripMenuItem.Text = "&Key history and script info";
+			keyHistoryAndScriptInfoToolStripMenuItem.Click += keyHistoryAndScriptInfoToolStripMenuItem_Click;
 			//
 			// toolStripSeparator2
 			//
-			this.toolStripSeparator2.Name = "toolStripSeparator2";
-			this.toolStripSeparator2.Size = new System.Drawing.Size(257, 6);
+			toolStripSeparator2.Name = "toolStripSeparator2";
+			toolStripSeparator2.Size = new System.Drawing.Size(257, 6);
 			//
 			// refreshToolStripMenuItem
 			//
-			this.refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
-			this.refreshToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F5;
-			this.refreshToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
-			this.refreshToolStripMenuItem.Text = "&Refresh";
-			this.refreshToolStripMenuItem.Click += new System.EventHandler(this.refreshToolStripMenuItem_Click);
+			refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
+			refreshToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F5;
+			refreshToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
+			refreshToolStripMenuItem.Text = "&Refresh";
+			refreshToolStripMenuItem.Click += refreshToolStripMenuItem_Click;
 			//
 			// helpToolStripMenuItem
 			//
-			this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[]
-			{
-				this.userManualToolStripMenuItem,
-				this.websiteToolStripMenuItem
-			});
-			this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-			this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 22);
-			this.helpToolStripMenuItem.Text = "&Help";
+			helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { userManualToolStripMenuItem, websiteToolStripMenuItem });
+			helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+			helpToolStripMenuItem.Size = new System.Drawing.Size(44, 22);
+			helpToolStripMenuItem.Text = "&Help";
 			//
 			// userManualToolStripMenuItem
 			//
-			this.userManualToolStripMenuItem.Name = "userManualToolStripMenuItem";
-			this.userManualToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F1;
-			this.userManualToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
-			this.userManualToolStripMenuItem.Text = "&User Manual";
-			this.userManualToolStripMenuItem.Click += new System.EventHandler(this.userManualToolStripMenuItem_Click);
+			userManualToolStripMenuItem.Name = "userManualToolStripMenuItem";
+			userManualToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F1;
+			userManualToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
+			userManualToolStripMenuItem.Text = "&User Manual";
+			userManualToolStripMenuItem.Click += userManualToolStripMenuItem_Click;
 			//
 			// websiteToolStripMenuItem
 			//
-			this.websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-			this.websiteToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
-			this.websiteToolStripMenuItem.Text = "&Website";
-			this.websiteToolStripMenuItem.Click += new System.EventHandler(this.websiteToolStripMenuItem_Click);
+			websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
+			websiteToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
+			websiteToolStripMenuItem.Text = "&Website";
+			websiteToolStripMenuItem.Click += websiteToolStripMenuItem_Click;
 			//
 			// tcMain
 			//
-			this.tcMain.Controls.Add(this.tpStack);
-			this.tcMain.Controls.Add(this.tpDebug);
-			this.tcMain.Controls.Add(this.tpVars);
-			this.tcMain.Controls.Add(this.tpHotkeys);
-			this.tcMain.Controls.Add(this.tpHistory);
-			this.tcMain.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.tcMain.Location = new System.Drawing.Point(0, 24);
-			this.tcMain.Margin = new System.Windows.Forms.Padding(2);
-			this.tcMain.Name = "tcMain";
-			this.tcMain.SelectedIndex = 0;
-			this.tcMain.Size = new System.Drawing.Size(843, 511);
-			this.tcMain.TabIndex = 3;
+			tcMain.Controls.Add(tpStack);
+			tcMain.Controls.Add(tpDebug);
+			tcMain.Controls.Add(tpVars);
+			tcMain.Controls.Add(tpHotkeys);
+			tcMain.Controls.Add(tpHistory);
+			tcMain.Dock = System.Windows.Forms.DockStyle.Fill;
+			tcMain.Location = new System.Drawing.Point(0, 24);
+			tcMain.Margin = new System.Windows.Forms.Padding(2);
+			tcMain.Name = "tcMain";
+			tcMain.SelectedIndex = 0;
+			tcMain.Size = new System.Drawing.Size(843, 511);
+			tcMain.TabIndex = 3;
 			//
 			// tpStack
 			//
-			this.tpStack.Controls.Add(this.txtStack);
-			this.tpStack.Location = new System.Drawing.Point(4, 24);
-			this.tpStack.Margin = new System.Windows.Forms.Padding(2);
-			this.tpStack.Name = "tpStack";
-			this.tpStack.Padding = new System.Windows.Forms.Padding(2);
-			this.tpStack.Size = new System.Drawing.Size(835, 483);
-			this.tpStack.TabIndex = 0;
-			this.tpStack.Text = "Stack";
-			this.tpStack.UseVisualStyleBackColor = true;
+			tpStack.Controls.Add(txtStack);
+			tpStack.Location = new System.Drawing.Point(4, 24);
+			tpStack.Margin = new System.Windows.Forms.Padding(2);
+			tpStack.Name = "tpStack";
+			tpStack.Padding = new System.Windows.Forms.Padding(2);
+			tpStack.Size = new System.Drawing.Size(835, 483);
+			tpStack.TabIndex = 0;
+			tpStack.Text = "Stack";
+			tpStack.UseVisualStyleBackColor = true;
 			//
 			// tpDebug
 			//
-			this.tpDebug.Controls.Add(this.txtDebug);
-			this.tpDebug.Location = new System.Drawing.Point(4, 24);
-			this.tpDebug.Margin = new System.Windows.Forms.Padding(2);
-			this.tpDebug.Name = "tpDebug";
-			this.tpDebug.Padding = new System.Windows.Forms.Padding(2);
-			this.tpDebug.Size = new System.Drawing.Size(835, 483);
-			this.tpDebug.TabIndex = 1;
-			this.tpDebug.Text = "Debug";
-			this.tpDebug.UseVisualStyleBackColor = true;
+			tpDebug.Controls.Add(txtDebug);
+			tpDebug.Location = new System.Drawing.Point(4, 24);
+			tpDebug.Margin = new System.Windows.Forms.Padding(2);
+			tpDebug.Name = "tpDebug";
+			tpDebug.Padding = new System.Windows.Forms.Padding(2);
+			tpDebug.Size = new System.Drawing.Size(835, 483);
+			tpDebug.TabIndex = 1;
+			tpDebug.Text = "Debug";
+			tpDebug.UseVisualStyleBackColor = true;
 			//
 			// txtDebug
 			//
-			this.txtDebug.BackColor = System.Drawing.SystemColors.MenuBar;
-			this.txtDebug.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.txtDebug.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.txtDebug.Location = new System.Drawing.Point(2, 2);
-			this.txtDebug.Margin = new System.Windows.Forms.Padding(2);
-			this.txtDebug.Multiline = true;
-			this.txtDebug.Name = "txtDebug";
-			this.txtDebug.ReadOnly = true;
-			this.txtDebug.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtDebug.Size = new System.Drawing.Size(831, 479);
-			this.txtDebug.TabIndex = 1;
+			txtDebug.BackColor = System.Drawing.SystemColors.MenuBar;
+			txtDebug.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtDebug.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtDebug.Location = new System.Drawing.Point(2, 2);
+			txtDebug.Margin = new System.Windows.Forms.Padding(2);
+			txtDebug.Multiline = true;
+			txtDebug.Name = "txtDebug";
+			txtDebug.ReadOnly = true;
+			txtDebug.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+			txtDebug.Size = new System.Drawing.Size(831, 479);
+			txtDebug.TabIndex = 1;
 			//
 			// tpVars
 			//
-			this.tpVars.Controls.Add(this.txtVars);
-			this.tpVars.Location = new System.Drawing.Point(4, 24);
-			this.tpVars.Margin = new System.Windows.Forms.Padding(2);
-			this.tpVars.Name = "tpVars";
-			this.tpVars.Padding = new System.Windows.Forms.Padding(2);
-			this.tpVars.Size = new System.Drawing.Size(835, 483);
-			this.tpVars.TabIndex = 2;
-			this.tpVars.Text = "Vars";
-			this.tpVars.UseVisualStyleBackColor = true;
+			tpVars.Controls.Add(txtVars);
+			tpVars.Location = new System.Drawing.Point(4, 24);
+			tpVars.Margin = new System.Windows.Forms.Padding(2);
+			tpVars.Name = "tpVars";
+			tpVars.Padding = new System.Windows.Forms.Padding(2);
+			tpVars.Size = new System.Drawing.Size(835, 483);
+			tpVars.TabIndex = 2;
+			tpVars.Text = "Vars";
+			tpVars.UseVisualStyleBackColor = true;
 			//
 			// txtVars
 			//
-			this.txtVars.BackColor = System.Drawing.SystemColors.MenuBar;
-			this.txtVars.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.txtVars.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.txtVars.Location = new System.Drawing.Point(2, 2);
-			this.txtVars.Margin = new System.Windows.Forms.Padding(2);
-			this.txtVars.Multiline = true;
-			this.txtVars.Name = "txtVars";
-			this.txtVars.ReadOnly = true;
-			this.txtVars.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtVars.Size = new System.Drawing.Size(831, 479);
-			this.txtVars.TabIndex = 2;
+			txtVars.BackColor = System.Drawing.SystemColors.MenuBar;
+			txtVars.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtVars.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtVars.Location = new System.Drawing.Point(2, 2);
+			txtVars.Margin = new System.Windows.Forms.Padding(2);
+			txtVars.Multiline = true;
+			txtVars.Name = "txtVars";
+			txtVars.ReadOnly = true;
+			txtVars.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+			txtVars.Size = new System.Drawing.Size(831, 479);
+			txtVars.TabIndex = 2;
 			//
 			// tpHotkeys
 			//
-			this.tpHotkeys.Controls.Add(this.txtHotkeys);
-			this.tpHotkeys.Location = new System.Drawing.Point(4, 24);
-			this.tpHotkeys.Name = "tpHotkeys";
-			this.tpHotkeys.Padding = new System.Windows.Forms.Padding(3);
-			this.tpHotkeys.Size = new System.Drawing.Size(835, 483);
-			this.tpHotkeys.TabIndex = 3;
-			this.tpHotkeys.Text = "Hotkeys";
-			this.tpHotkeys.UseVisualStyleBackColor = true;
+			tpHotkeys.Controls.Add(txtHotkeys);
+			tpHotkeys.Location = new System.Drawing.Point(4, 24);
+			tpHotkeys.Name = "tpHotkeys";
+			tpHotkeys.Padding = new System.Windows.Forms.Padding(3);
+			tpHotkeys.Size = new System.Drawing.Size(835, 483);
+			tpHotkeys.TabIndex = 3;
+			tpHotkeys.Text = "Hotkeys";
+			tpHotkeys.UseVisualStyleBackColor = true;
 			//
 			// txtHotkeys
 			//
-			this.txtHotkeys.BackColor = System.Drawing.SystemColors.MenuBar;
-			this.txtHotkeys.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.txtHotkeys.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.txtHotkeys.Location = new System.Drawing.Point(3, 3);
-			this.txtHotkeys.Margin = new System.Windows.Forms.Padding(2);
-			this.txtHotkeys.Multiline = true;
-			this.txtHotkeys.Name = "txtHotkeys";
-			this.txtHotkeys.ReadOnly = true;
-			this.txtHotkeys.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtHotkeys.Size = new System.Drawing.Size(829, 477);
-			this.txtHotkeys.TabIndex = 3;
+			txtHotkeys.BackColor = System.Drawing.SystemColors.MenuBar;
+			txtHotkeys.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtHotkeys.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtHotkeys.Location = new System.Drawing.Point(3, 3);
+			txtHotkeys.Margin = new System.Windows.Forms.Padding(2);
+			txtHotkeys.Multiline = true;
+			txtHotkeys.Name = "txtHotkeys";
+			txtHotkeys.ReadOnly = true;
+			txtHotkeys.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+			txtHotkeys.Size = new System.Drawing.Size(829, 477);
+			txtHotkeys.TabIndex = 3;
 			//
 			// tpHistory
 			//
-			this.tpHistory.Controls.Add(this.txtHistory);
-			this.tpHistory.Location = new System.Drawing.Point(4, 24);
-			this.tpHistory.Margin = new System.Windows.Forms.Padding(2);
-			this.tpHistory.Name = "tpHistory";
-			this.tpHistory.Padding = new System.Windows.Forms.Padding(2);
-			this.tpHistory.Size = new System.Drawing.Size(835, 483);
-			this.tpHistory.TabIndex = 4;
-			this.tpHistory.Text = "History";
-			this.tpHistory.UseVisualStyleBackColor = true;
+			tpHistory.Controls.Add(txtHistory);
+			tpHistory.Location = new System.Drawing.Point(4, 24);
+			tpHistory.Margin = new System.Windows.Forms.Padding(2);
+			tpHistory.Name = "tpHistory";
+			tpHistory.Padding = new System.Windows.Forms.Padding(2);
+			tpHistory.Size = new System.Drawing.Size(835, 483);
+			tpHistory.TabIndex = 4;
+			tpHistory.Text = "History";
+			tpHistory.UseVisualStyleBackColor = true;
 			//
 			// txtHistory
 			//
-			this.txtHistory.BackColor = System.Drawing.SystemColors.MenuBar;
-			this.txtHistory.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.txtHistory.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.txtHistory.Location = new System.Drawing.Point(2, 2);
-			this.txtHistory.Margin = new System.Windows.Forms.Padding(2);
-			this.txtHistory.Multiline = true;
-			this.txtHistory.Name = "txtHistory";
-			this.txtHistory.ReadOnly = true;
-			this.txtHistory.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.txtHistory.Size = new System.Drawing.Size(831, 479);
-			this.txtHistory.TabIndex = 3;
+			txtHistory.BackColor = System.Drawing.SystemColors.MenuBar;
+			txtHistory.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtHistory.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtHistory.Location = new System.Drawing.Point(2, 2);
+			txtHistory.Margin = new System.Windows.Forms.Padding(2);
+			txtHistory.Multiline = true;
+			txtHistory.Name = "txtHistory";
+			txtHistory.ReadOnly = true;
+			txtHistory.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+			txtHistory.Size = new System.Drawing.Size(831, 479);
+			txtHistory.TabIndex = 3;
+			//
+			// clearDebugLogToolStripMenuItem
+			//
+			clearDebugLogToolStripMenuItem.Name = "clearDebugLogToolStripMenuItem";
+			clearDebugLogToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
+			clearDebugLogToolStripMenuItem.Text = "&Clear debug log";
+			clearDebugLogToolStripMenuItem.Click += clearDebugLogToolStripMenuItem_Click;
 			//
 			// MainWindow
 			//
-			this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-			this.ClientSize = new System.Drawing.Size(843, 535);
-			this.Controls.Add(this.tcMain);
-			this.Controls.Add(this.mainMenu);
-			this.MainMenuStrip = this.mainMenu;
-			this.Margin = new System.Windows.Forms.Padding(2);
-			this.Name = "MainWindow";
-			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			this.Text = "Keysharp";
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
-			this.Load += new System.EventHandler(this.MainWindow_Load);
-			this.Shown += new System.EventHandler(this.MainWindow_Shown);
-			this.SizeChanged += new System.EventHandler(this.MainWindow_SizeChanged);
-			this.mainMenu.ResumeLayout(false);
-			this.mainMenu.PerformLayout();
-			this.tcMain.ResumeLayout(false);
-			this.tpStack.ResumeLayout(false);
-			this.tpStack.PerformLayout();
-			this.tpDebug.ResumeLayout(false);
-			this.tpDebug.PerformLayout();
-			this.tpVars.ResumeLayout(false);
-			this.tpVars.PerformLayout();
-			this.tpHotkeys.ResumeLayout(false);
-			this.tpHotkeys.PerformLayout();
-			this.tpHistory.ResumeLayout(false);
-			this.tpHistory.PerformLayout();
-			this.ResumeLayout(false);
-			this.PerformLayout();
+			AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			ClientSize = new System.Drawing.Size(843, 535);
+			Controls.Add(tcMain);
+			Controls.Add(mainMenu);
+			MainMenuStrip = mainMenu;
+			Margin = new System.Windows.Forms.Padding(2);
+			Name = "MainWindow";
+			StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			Text = "Keysharp";
+			FormClosing += MainWindow_FormClosing;
+			Load += MainWindow_Load;
+			Shown += MainWindow_Shown;
+			SizeChanged += MainWindow_SizeChanged;
+			mainMenu.ResumeLayout(false);
+			mainMenu.PerformLayout();
+			tcMain.ResumeLayout(false);
+			tpStack.ResumeLayout(false);
+			tpStack.PerformLayout();
+			tpDebug.ResumeLayout(false);
+			tpDebug.PerformLayout();
+			tpVars.ResumeLayout(false);
+			tpVars.PerformLayout();
+			tpHotkeys.ResumeLayout(false);
+			tpHotkeys.PerformLayout();
+			tpHistory.ResumeLayout(false);
+			tpHistory.PerformLayout();
+			ResumeLayout(false);
+			PerformLayout();
 		}
 
 		#endregion
@@ -422,5 +406,6 @@
 		private System.Windows.Forms.TextBox txtHotkeys;
 		private System.Windows.Forms.TabPage tpHistory;
 		private System.Windows.Forms.TextBox txtHistory;
+		private System.Windows.Forms.ToolStripMenuItem clearDebugLogToolStripMenuItem;
 	}
 }

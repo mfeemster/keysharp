@@ -1491,10 +1491,10 @@ namespace Keysharp.Core
 
 		public void Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var x = (int)obj0.Al();
-			var y = (int)obj1.Al();
-			var width = (int)obj2.Al();
-			var height = (int)obj3.Al();
+			var x = obj0.Ai();
+			var y = obj1.Ai();
+			var width = obj2.Ai();
+			var height = obj3.Ai();
 			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 			form.Top = (int)Math.Round(y * scale);
 			form.Left = (int)Math.Round(x * scale);

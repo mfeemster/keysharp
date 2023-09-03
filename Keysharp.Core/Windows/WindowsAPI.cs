@@ -1453,16 +1453,17 @@ namespace Keysharp.Core.Windows
 
 		internal const long ERROR_ALREADY_EXISTS = 183L;
 
-		private const string dwmapi = "dwmapi.dll",
-							 kernel32 = "kernel32.dll",
-							 shell32 = "shell32.dll",
-							 user32 = "user32.dll",
-							 gdi32 = "gdi32.dll",
-							 version = "version.dll",
-							 winmm = "winmm.dll",
-							 advapi = "advapi32.dll",
-							 oleacc = "oleac.dll",
-							 oleaut = "oleaut32.dll";
+		internal const string dwmapi = "dwmapi.dll",
+							  kernel32 = "kernel32.dll",
+							  shell32 = "shell32.dll",
+							  user32 = "user32.dll",
+							  gdi32 = "gdi32.dll",
+							  version = "version.dll",
+							  winmm = "winmm.dll",
+							  advapi = "advapi32.dll",
+							  ole32 = "ole32.dll",
+							  oleacc = "oleac.dll",
+							  oleaut = "oleaut32.dll";
 
 		[DllImport(oleacc)]
 		internal static extern int AccessibleObjectFromWindow(IntPtr hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);

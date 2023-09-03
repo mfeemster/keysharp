@@ -109,6 +109,8 @@ namespace Keysharp.Scripting
 				m.Result = new IntPtr(1);
 		}
 
+		private void clearDebugLogToolStripMenuItem_Click(object sender, EventArgs e) => txtDebug.Text = "";
+
 		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.Edit();
 
 		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Exit);

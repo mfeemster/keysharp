@@ -21,9 +21,9 @@ DllCall("EnumWindows", "Ptr", EnumAddress, "Ptr", 0)
 
 EnumWindowsProc(hwnd, lParam)
 {
-    global ct
-    win_title := WinGetTitle(hwnd)
-    win_class := WinGetClass(hwnd)
+	global ct
+	win_title := WinGetTitle(hwnd)
+	win_class := WinGetClass(hwnd)
 	ct++
 
 	if (ct < 5) ; go through the first give windows

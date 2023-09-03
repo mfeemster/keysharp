@@ -60,10 +60,18 @@ namespace Keysharp.Scripting
 					return null;
 				}
 			}
-
-			if (Reflections.FindAndCacheMethod(typetouse, "set_Item", index.Length + 1) is MethodPropertyHolder mph1)
+			else if (index.Length == 0)//Access brackets with no index like item.prop[] := 123.
 			{
-				mph1.callFunc(item, index.Concat(new object[] { value }));
+				if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 0) is MethodPropertyHolder mph1)
+				{
+					mph1.callFunc(item, index.Concat(new object[] { value }));
+					return value;
+				}
+			}
+
+			if (Reflections.FindAndCacheMethod(typetouse, "set_Item", index.Length + 1) is MethodPropertyHolder mph2)
+			{
+				mph2.callFunc(item, index.Concat(new object[] { value }));
 				return value;
 			}
 

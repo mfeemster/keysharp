@@ -1319,7 +1319,7 @@ namespace Keysharp.Core
 		{
 			if (bw != null)
 			{
-				bw.Write((int)obj.Al());
+				bw.Write(obj.Ai());
 				return 4L;
 			}
 			else

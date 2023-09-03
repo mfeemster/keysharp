@@ -190,7 +190,7 @@ namespace Keysharp.Core
 			var name = obj0.As();
 			var filename = obj1.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(obj2);
-			var width = (int)obj3.Al();
+			var width = obj3.Ai();
 
 			if (GetMenuItem(name) is ToolStripItem tsmi)
 			{
@@ -201,8 +201,8 @@ namespace Keysharp.Core
 
 		public void Show(object obj0 = null, object obj1 = null)
 		{
-			var x = (int)obj0.Al(Cursor.Position.X);
-			var y = (int)obj1.Al(Cursor.Position.Y);
+			var x = obj0.Ai(Cursor.Position.X);
+			var y = obj1.Ai(Cursor.Position.Y);
 			var pt = new Point(x, y);
 
 			if (Mouse.Coords.Menu == CoordModeType.Screen)

@@ -98,8 +98,8 @@ namespace Keysharp.Core
 		public static void MouseClick(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null, object obj4 = null, object obj5 = null, object obj6 = null)
 		{
 			var whichButton = obj0.As();
-			var x = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
-			var y = (int)obj2.Al(KeyboardMouseSender.CoordUnspecified);
+			var x = obj1.Ai(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
+			var y = obj2.Ai(KeyboardMouseSender.CoordUnspecified);
 			var repeatCount = obj3.Al(1);
 			var speed = (int)obj4.Al((long)Accessors.A_DefaultMouseSpeed);
 			var downOrUp = obj5.As();
@@ -112,10 +112,10 @@ namespace Keysharp.Core
 		public static void MouseClickDrag(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null, object obj6 = null)
 		{
 			var whichButton = obj0.As();
-			var x1 = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);//If no starting coords are specified, mark it as "use the current mouse position".
-			var y1 = (int)obj2.Al(KeyboardMouseSender.CoordUnspecified);
-			var x2 = (int)obj3.Al(KeyboardMouseSender.CoordUnspecified);
-			var y2 = (int)obj4.Al(KeyboardMouseSender.CoordUnspecified);
+			var x1 = obj1.Ai(KeyboardMouseSender.CoordUnspecified);//If no starting coords are specified, mark it as "use the current mouse position".
+			var y1 = obj2.Ai(KeyboardMouseSender.CoordUnspecified);
+			var x2 = obj3.Ai(KeyboardMouseSender.CoordUnspecified);
+			var y2 = obj4.Ai(KeyboardMouseSender.CoordUnspecified);
 			var speed = (int)obj5.Al((long)Accessors.A_DefaultMouseSpeed);
 			var relative = obj6.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
@@ -173,8 +173,8 @@ namespace Keysharp.Core
 
 		public static void MouseMove(object obj0, object obj1, object obj2 = null, object obj3 = null)
 		{
-			var x = (int)obj0.Al(KeyboardMouseSender.CoordUnspecified);
-			var y = (int)obj1.Al(KeyboardMouseSender.CoordUnspecified);
+			var x = obj0.Ai(KeyboardMouseSender.CoordUnspecified);
+			var y = obj1.Ai(KeyboardMouseSender.CoordUnspecified);
 			var speed = (int)obj2.Al((long)Accessors.A_DefaultMouseSpeed);
 			var relative = obj3.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>

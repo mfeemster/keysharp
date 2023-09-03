@@ -96,7 +96,7 @@ namespace Keysharp.Core
 
 		public object Delete(object obj)
 		{
-			var index = (int)obj.Al() - 1;
+			var index = obj.Ai() - 1;
 
 			if (index < array.Count)
 			{
@@ -114,7 +114,7 @@ namespace Keysharp.Core
 
 		public bool Has(object obj)
 		{
-			var index = (int)obj.Al() - 1;
+			var index = obj.Ai() - 1;
 			return index < array.Count ? array[index] != null : false;
 		}
 

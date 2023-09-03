@@ -506,7 +506,7 @@ namespace Keysharp.Core
 			//The documentation says "Unlike ControlChooseIndex, this method does not raise a Change or DoubleClick event."
 			//But we don't raise click events anyway here, so it shouldn't matter.
 			var s = obj as string;
-			var i = (int)obj.Al() - 1;
+			var i = obj.Ai() - 1;
 
 			if (_control is TabControl tc)
 			{
@@ -549,7 +549,7 @@ namespace Keysharp.Core
 		/// <param name="obj"></param>
 		public long Delete(object obj)
 		{
-			var index = (int)obj.Al() - 1;
+			var index = obj.Ai() - 1;
 
 			switch (_control)
 			{
@@ -628,7 +628,7 @@ namespace Keysharp.Core
 		{
 			if (_control is ListView lv)
 			{
-				var index = (int)obj.Al() - 1;
+				var index = obj.Ai() - 1;
 
 				if (index >= 0 && index < lv.Columns.Count)
 				{
@@ -809,8 +809,8 @@ namespace Keysharp.Core
 			}
 			else if (_control is ListView lv)
 			{
-				var row = (int)obj0.Al();
-				var col = (int)obj1.Al(1);
+				var row = obj0.Ai();
+				var col = obj1.Ai(1);
 				row--;
 				col = Math.Max(col - 1, 0);
 
@@ -838,7 +838,7 @@ namespace Keysharp.Core
 		{
 			if (_control is ListView lv)
 			{
-				var index = (int)obj0.Al();
+				var index = obj0.Ai();
 				var options = obj1.As();
 				var title = obj2.As();
 				index--;
@@ -943,7 +943,7 @@ namespace Keysharp.Core
 		{
 			if (_control is ListView lv)
 			{
-				var colnumber = (int)obj0.Al();
+				var colnumber = obj0.Ai();
 				var opts = obj1.As();
 				var coltitle = obj2.As();
 
@@ -1448,7 +1448,7 @@ namespace Keysharp.Core
 			{
 				var filename = obj0.As();
 				var iconnumber = ImageHelper.PrepareIconNumber(obj1);
-				var part = (int)obj2.Al(1L);
+				var part = obj2.Ai(1);
 				part--;
 
 				if (part < ss.Items.Count && ImageHelper.LoadImage(filename, 0, 0, iconnumber) is Bitmap bmp)
@@ -1570,8 +1570,8 @@ namespace Keysharp.Core
 		{
 			if (_control is TabControl tc)
 			{
-				var tabindex = (int)obj0.Al();
-				var imageindex = (int)obj1.Al();
+				var tabindex = obj0.Ai();
+				var imageindex = obj1.Ai();
 
 				if (tabindex < tc.TabCount && tc.ImageList != null && imageindex < tc.ImageList.Images.Count)
 					tc.TabPages[tabindex].ImageIndex = imageindex;
@@ -1585,7 +1585,7 @@ namespace Keysharp.Core
 			if (_control is StatusStrip ss)
 			{
 				var text = obj0.As();
-				var part = (int)obj1.Al(1L);
+				var part = obj1.Ai(1);
 				var style = obj2.Al();
 				part--;
 

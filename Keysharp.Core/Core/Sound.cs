@@ -18,7 +18,7 @@ namespace Keysharp.Core
 		/// <param name="frequency">The frequency of the sound which should be between 37 and 32767.
 		/// If omitted, the frequency will be 523.</param>
 		/// <param name="duration">The duration of the sound in ms. If omitted, the duration will be 150.</param>
-		public static void SoundBeep(object obj0 = null, object obj1 = null) => Console.Beep((int)obj0.Al(523), (int)obj1.Al(150));
+		public static void SoundBeep(object obj0 = null, object obj1 = null) => Console.Beep(obj0.Ai(523), obj1.Ai(150));
 
 		/// <summary>
 		/// Not implemented. COM will never be cross platform anyway.//TODO
