@@ -414,33 +414,28 @@ namespace Keysharp.Core.COM
 		//  if (index < 0)
 		//      throw new ValueError($"Index value of {index} was less than zero.");
 
-		//  if (obj1 is ComObject co)
-		//      obj1 = co.Ptr;
+		//  object ptr;
 
-		//  var pUnk = Marshal.GetIUnknownForObject(obj1);
+		//  if (obj1 is ComObject co)
+		//      ptr = co.Ptr;
+		//  else if (Marshal.IsComObject(obj1))
+		//      ptr = obj1;
+		//  else
+		//      throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
+
+		//  var pUnk = Marshal.GetIUnknownForObject(ptr);
 		//  var pVtbl = Marshal.ReadIntPtr(pUnk);
 		//  var vtbl = new IntPtr[indexPlus1];//Index is zero based.
 		//  Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
 		//  var helper = new DllArgumentHelper(parameters);
-		//  //Marshal.GetMethodInfoForComSlot();
 		//  var memberType = ComMemberType.Method;
-		//  var mi = GetMethodInfoForComSlot(obj1.GetType(), index, ref memberType);
+		//  //var mi = GetMethodInfoForComSlot(ptr.GetType(), index, ref memberType);
 		//  object val;
-
-		//  //Marshal.GetDelegateForFunctionPointer(
-		//  if (mi is MethodInfo method)
-		//  {
-		//      val = method.Invoke(obj1, helper.args);
-		//  }
-		//  else
-		//  {
-		//      _ = Marshal.Release(pUnk); //For GetIUnknownForObject().
-		//      throw new Error($"Method info for COM slot {index} was not of type MethodInfo and was instead of type {mi.GetType()}.");
-		//  }
-
-		//  //method.CreateDelegate(Expression.GetDelegateType(helper.types.Concat(new[] { helper.returnType})));
-		//  _ = Marshal.Release(pUnk); //For GetIUnknownForObject().
-		//  return val;
+		//  var delType = Expression.GetFuncType(helper.types.Concat(new[] { helper.returnType}));
+		//  var vtableTel = Marshal.GetDelegateForFunctionPointer(vtbl[index], delType);
+		//  var ret = vtableTel.DynamicInvoke(helper.types.Length == 0 ? null : helper.types);
+		//  _ = Marshal.Release(pUnk);
+		//  return null;//val;
 		//}
 		//public static object ComValue(object obj0, object obj1, object obj2 = null)
 		//{

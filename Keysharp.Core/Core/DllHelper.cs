@@ -26,7 +26,7 @@ namespace Keysharp.Core
 		internal object[] args;
 		internal Type[] types;
 		internal bool hasreturn;
-		internal Type returnType = typeof(int);
+		internal Type returnType = typeof(void);
 		private HashSet<GCHandle> gcHandles = new HashSet<GCHandle>();
 		private ScopeHelper gcHandlesScope;
 

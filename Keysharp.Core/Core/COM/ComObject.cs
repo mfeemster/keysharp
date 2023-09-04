@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -72,6 +73,14 @@ namespace Keysharp.Core.COM
 
 		internal ComObject()
 		{
+		}
+
+		~ComObject()
+		{
+			if (Marshal.IsComObject(Ptr))
+				Marshal.ReleaseComObject(Ptr);
+			else if (Ptr is IntPtr ip)
+				Marshal.Release(ip);
 		}
 
 		public void Clear()
