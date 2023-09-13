@@ -262,20 +262,22 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ For an argument to be passed as a reference, the function parameter in that position must be declared as a reference:
 		+ `func(&p1) { }`
 	+ When passing a class member variable as a dynamic reference to a function from within another function of that same class, the `this` prefix must be used:
-		+ ```class myclass
-			{
-				x := 11
-				y11 := 0
+```
+	class myclass
+	{
+		x := 11
+		y11 := 0
 				
-				myclassreffunc(&val)
-				{
-				}
+		myclassreffunc(&val)
+		{
+		}
 				
-				callmyclassreffunc()
-				{
-					myclassreffunc(&this.y%x%) ; Use this.
-				}
-			}```
+		callmyclassreffunc()
+		{
+			myclassreffunc(&this.y%x%) ; Use this.
+		}
+	}
+```
 
 ###	Removals: ###
 * COM is not implemented yet.
