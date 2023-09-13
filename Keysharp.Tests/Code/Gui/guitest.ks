@@ -1,5 +1,5 @@
 If (FileExist(A_Desktop "\MyScreenClip.png"))
-    FileDelete(A_Desktop "\MyScreenClip.png")
+	FileDelete(A_Desktop "\MyScreenClip.png")
 
 GuiBGColor := "BackgroundFF9A9A"
 ;BGColor2 := "0xFFFFAA"
@@ -44,7 +44,7 @@ MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
 
 CloseApp() {
-    ExitApp
+	ExitApp
 }
 
 ; ┌───────────────────┐
@@ -193,13 +193,13 @@ iniText := MyGui.Add("Text", "w100 x150 yp", "")
 iniEdit := MyGui.Add("Edit", "x10 y+10 w300 h180")
 
 ReadINI() {
-    Val := IniRead(".\kstests.ini", "section2", "PRIMATE2")
-    iniText.SetFont("s10 cBlue")
-    IniFileText := FileRead(".\kstests.ini")
-    ControlSetText(Val, iniText)
-    ;ControlSetText("Testing", iniText)
-    ControlSetText(IniFileText, iniEdit)
-    ;ControlSetText("Still Testing", iniEdit)
+	Val := IniRead(".\kstests.ini", "section2", "PRIMATE2")
+	iniText.SetFont("s10 cBlue")
+	IniFileText := FileRead(".\kstests.ini")
+	ControlSetText(Val, iniText)
+	;ControlSetText("Testing", iniText)
+	ControlSetText(IniFileText, iniEdit)
+	;ControlSetText("Still Testing", iniEdit)
 }
 
 iniWriteBtn := MyGui.Add("Button", "x10 y+10", "Write INI")
@@ -210,13 +210,13 @@ writeLabel := MyGui.Add("Text", "x100 yp cGreen", "Write and Re-Write`nChange ca
 iniWriteEdit := MyGui.Add("Edit", "x10 y+10 w300 h180")
 
 WriteINI() {
-    IniWrite("BonoboBozo has been captured", ".\kstests.ini", "SECTION42", "PRIMATEZ_ON_LOOSE")
-    IniFileText2 := FileRead(".\kstests.ini")
-    ControlSetText(IniFileText2, iniWriteEdit)
-    Sleep(2000)
-    IniWrite("BONOBOBOZO has escaped", ".\kstests.ini", "SECTION42", "PRIMATEZ_ON_LOOSE")
-    IniFileText2 := FileRead(".\kstests.ini")
-    ControlSetText(IniFileText2, iniWriteEdit)
+	IniWrite("BonoboBozo has been captured", ".\kstests.ini", "SECTION42", "PRIMATEZ_ON_LOOSE")
+	IniFileText2 := FileRead(".\kstests.ini")
+	ControlSetText(IniFileText2, iniWriteEdit)
+	Sleep(2000)
+	IniWrite("BONOBOBOZO has escaped", ".\kstests.ini", "SECTION42", "PRIMATEZ_ON_LOOSE")
+	IniFileText2 := FileRead(".\kstests.ini")
+	ControlSetText(IniFileText2, iniWriteEdit)
 }
 
 
@@ -313,8 +313,8 @@ e3Btn := MyGui.Add("Button", "xp y+10", "Toggle ControlSetStyle Edit")
 e3Btn.OnEvent("Click", "ShowE3Hwnd")
 
 ShowE3Hwnd() {
-    ControlSetStyle("^0x8", e3)
-    ControlFocus(e3.Hwnd)
+	ControlSetStyle("^0x8", e3)
+	ControlFocus(e3.Hwnd)
 }
 
 ; ┌────────────┐
@@ -329,13 +329,13 @@ MoveButtonBack.OnEvent("Focus", "ChangeMoveBtnBackColor")
 MoveButtonBack.OnEvent("Click", "MoveGuiBack")
 
 ChangeMoveBtnColor() {
-    MoveButton.SetFont("cRed")
-    MoveButtonBack.SetFont("cBlack")
+	MoveButton.SetFont("cRed")
+	MoveButtonBack.SetFont("cBlack")
 }
 
 ChangeMoveBtnBackColor() {
-    MoveButton.SetFont("cBlack")
-    MoveButtonBack.SetFont("cRed")
+	MoveButton.SetFont("cBlack")
+	MoveButtonBack.SetFont("cRed")
 }
 
 ; ┌───────────────────────┐
@@ -351,13 +351,13 @@ SendBtn2.OnEvent("Click", "RestoreTitle")
 
 
 ChangeTitle() {
-    Title := "KEYSHARP'S BRAND SPANKING NEW TITLE"
-    SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
+	Title := "KEYSHARP'S BRAND SPANKING NEW TITLE"
+	SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
 }
 
 RestoreTitle() {
-    Title := "KEYSHARP TESTS"
-    SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
+	Title := "KEYSHARP TESTS"
+	SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
 }
 
 
@@ -371,12 +371,12 @@ PostBtn1 := MyGui.Add("Button", "x10 y+10", "Show Notepad 'About'")
 PostBtn1.OnEvent("Click", "AboutNotepad")
 
 AboutNotepad() {
-    SetTitleMatchMode(2)
-    Run("Notepad.exe")
-    Sleep(1000)
-    PostMessage(0x0111, 65, 0, , "Untitled - Notepad")
-    Sleep(2000)
-    WinKill("ahk_exe Notepad.exe")
+	SetTitleMatchMode(2)
+	Run("Notepad.exe")
+	Sleep(1000)
+	PostMessage(0x0111, 65, 0, , "Untitled - Notepad")
+	Sleep(2000)
+	WinKill("ahk_exe Notepad.exe")
 }
 
 
@@ -404,7 +404,7 @@ Tab.UseTab("Third")
 
 gb1_TabThree := MyGui.Add("GroupBox", "x10 y10 w325 h875", "Tab Three - Group One")
 
-    ;Placeholder ThirdText1
+	;Placeholder ThirdText1
 ThirdText1 := MyGui.Add("Text", "cBlue s10", "ListBox Test")
 ; ┌────────────────┐
 ; │  ListBox test  │
@@ -418,21 +418,21 @@ MyLbBtn2.OnEvent("Click", "AddWhite")
 
 DeleteWhite() {
 
-    Try 
-    {
-        WhiteIndex := ControlFindItem("White", MyListBox)
-    }
-    Catch as e  ; Handles the first error thrown by the block above.
-    {
-        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
-        Return
-    }
-    
-    ControlDeleteItem(WhiteIndex, MyListBox)
+	Try 
+	{
+		WhiteIndex := ControlFindItem("White", MyListBox)
+	}
+	Catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+		Return
+	}
+	
+	ControlDeleteItem(WhiteIndex, MyListBox)
 }
 
 AddWhite() {
-    ControlAddItem("White", MyListBox)
+	ControlAddItem("White", MyListBox)
 }
 
 ; ┌────────────────┐
@@ -460,22 +460,22 @@ CB_DeleteBtn := MyGui.Add("Button", "h25 w80 x170 yp ", "Del Yellow")
 CB_DeleteBtn.OnEvent("Click", "DeleteYellow")
 
 AddYellow() {
-    ControlAddItem("Yellow", MyCB)
+	ControlAddItem("Yellow", MyCB)
 }
 
 DeleteYellow() {
 
-    Try 
-    {
-        YellowIndex := ControlFindItem("Yellow", MyCB)
-    }
-    Catch as e  ; Handles the first error thrown by the block above.
-    {
-        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
-        Return
-    }
-    
-    ControlDeleteItem(YellowIndex, MyCb)
+	Try 
+	{
+		YellowIndex := ControlFindItem("Yellow", MyCB)
+	}
+	Catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+		Return
+	}
+	
+	ControlDeleteItem(YellowIndex, MyCb)
 }
 
 
@@ -494,7 +494,7 @@ MySliderPos := MyGui.Add("Text", "x10 y+5","")
 ; └───────────────────┘
 
 SliderPos() {
-    ControlSetText("Slider value is " MySlider.Value, MySliderPos.Hwnd)
+	ControlSetText("Slider value is " MySlider.Value, MySliderPos.Hwnd)
 }
 
 ; ┌────────────────┐
@@ -551,19 +551,19 @@ FakeSep.SetFont("cTeal Bold")
 
 
 STest() {
-    Loop(MySlider2.Value) {
-        padding := A_Index
-        s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
-        ControlSetText(s, HwndMyText)
-        Sleep(5) ; Need time to update Text
+	Loop(MySlider2.Value) {
+		padding := A_Index
+		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
+		ControlSetText(s, HwndMyText)
+		Sleep(5) ; Need time to update Text
 
-    }
-        Loop(MySlider2.Value) {
-        padding := MySlider2.Value-A_Index
-        s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
-        ControlSetText(s, HwndMyText)
-        Sleep(5)
-    }
+	}
+		Loop(MySlider2.Value) {
+		padding := MySlider2.Value-A_Index
+		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
+		ControlSetText(s, HwndMyText)
+		Sleep(5)
+	}
 }
 
 MyLinkText := MyGui.Add("Text", "x10 y+5", "Link test")
@@ -578,7 +578,7 @@ MyHkText := MyGui.Add("Text", "x10 y+5 w200" , MyHotkey.Value)
 ;MyHkText2 := MyGui.Add("Text", "x10 y+5 w200 cRed", "NOTE: Combos w/Win not working.")
 
 UpdateHK() {
-    ControlSetText( MyHotkey.Value, MyHkText)
+	ControlSetText( MyHotkey.Value, MyHkText)
 }
 
 
@@ -605,13 +605,13 @@ CpText := MyGui.Add("Text", , "gb1 - Image copying tests")
 CpText.SetFont("s8 cBlue")
 MyRE := MyGui.Add("RichEdit", "x10 y+10 w300 h100")
 MySecondPic := LoadPicture(A_ScriptDir "\Robin.png")
-CopyImageToClipboard("HBITMAP:" MySecondPic["Handle"])
+CopyImageToClipboard("HBITMAP:" MySecondPic)
 ShowBtn := MyGui.Add("Button", "x10 y+10", "Paste Pic")
 ShowBtn.OnEvent("Click", "PastePic")
 
 PastePic() {
-    ControlFocus(MyRE)
-    Send("^v")
+	ControlFocus(MyRE)
+	Send("^v")
 }
 
 ; ┌──────────────────────────────┐
@@ -625,11 +625,11 @@ ShowBtn2 := MyGui.Add("Button", "x10 y+10", "Paste from file")
 ShowBtn2.OnEvent("Click", "CopyPicFromFile")
 
 CopyPicFromFile() {
-    SelectedFile := FileSelect("3", "C:\Users\" A_UserName "\Pictures\Keysharp")
-    CopyImageToClipboard(SelectedFile)
-    Sleep(100)
-    ControlFocus(MyRE2)
-    Send("^v")
+	SelectedFile := FileSelect("3", "C:\Users\" A_UserName "\Pictures\Keysharp")
+	CopyImageToClipboard(SelectedFile)
+	Sleep(100)
+	ControlFocus(MyRE2)
+	Send("^v")
 }
 
 
@@ -648,36 +648,36 @@ gb2Btn2.OnEvent("Click", "SendToGui")
 ;MyGui.Add("Text", , "Testing placement")
 
 SendToApp() {
-    Run("Notepad.exe")
-    WinWaitActive("ahk_exe Notepad.exe")
-    SendInput("Sincerely,{enter}John Smith")
-    Send("`n")
-    Send("Another line.`n")
-    Send("{Raw}``100`%`n")
-    Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
-    ; Line above produces [You should see '' after the ellipses ...] 
-    Send("{Blind}You should see nothing after the ellipses ... '{Blind}'")
-    Send("`n")
-    Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
-    Sleep(500)
-    MsgBox("End of Notepad test", "Test finished", "T2")
-    Send("{Alt}Fx")
-    Sleep(100)
-    Send("{Tab}{Enter}")
+	Run("Notepad.exe")
+	WinWaitActive("ahk_exe Notepad.exe")
+	SendInput("Sincerely,{enter}John Smith")
+	Send("`n")
+	Send("Another line.`n")
+	Send("{Raw}``100`%`n")
+	Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
+	; Line above produces [You should see '' after the ellipses ...] 
+	Send("{Blind}You should see nothing after the ellipses ... '{Blind}'")
+	Send("`n")
+	Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+	Sleep(500)
+	MsgBox("End of Notepad test", "Test finished", "T2")
+	Send("{Alt}Fx")
+	Sleep(100)
+	Send("{Tab}{Enter}")
 
 }
 
 SendToGui() {
-    WinActivate(MyGui)
-    ControlFocus(gb2Edit)
-    SendInput("Sincerely,{enter}John Smith")
-    Send("`n")
-    Send("Another line.`n")
-    Send("{Raw}``100`%`n")
-    Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
-    Send("{Blind}You should see nothing after the ellipses ... {Blind}")
-    Send("`n")
-    Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+	WinActivate(MyGui)
+	ControlFocus(gb2Edit)
+	SendInput("Sincerely,{enter}John Smith")
+	Send("`n")
+	Send("Another line.`n")
+	Send("{Raw}``100`%`n")
+	Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
+	Send("{Blind}You should see nothing after the ellipses ... {Blind}")
+	Send("`n")
+	Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
 }
 
 MyGui.UseGroup()
@@ -728,7 +728,7 @@ MyMenu.Add()  ; Add a separator line below the submenu.
 MyMenu.Add("Item 3", "MenuHandler")  ; Add another menu item beneath the submenu.
 
 MenuHandler(Item, *) {
-    MsgBox("You selected " Item, "ITEM SELECTED")
+	MsgBox("You selected " Item, "ITEM SELECTED")
 }
 
 
@@ -752,8 +752,8 @@ CZ_Text2a := MyGui.Add("Text", "x10 y+5", "ListBox control testing")
 CZ_Text2a.SetFont("s8 CBlue")
 
 CZ_ListBox := MyGui.Add("ListBox", "x10 h300 w160", ["Red","Green","Blue","Black","White", "Maroon"
-    , "Purple", "Color de gos com fuig", "Weiß", "Amarillo", "красный"
-    , "朱红"])
+	, "Purple", "Color de gos com fuig", "Weiß", "Amarillo", "красный"
+	, "朱红"])
 
 CZ_Text3 := MyGui.Add("Text", "x10 y+5", "Edit control testing")
 CZ_Text3.SetFont("s8 CBlue")
@@ -890,7 +890,7 @@ MouseMoveButton := MyGui.Add("Button", "x10 y+10", "Mouse-moving tests")
 MouseMoveButton.OnEvent("Click", "MoveTheMouse")
 
 ^!9:: {
-    GetPix()
+	GetPix()
 }
 
 Gui2 := Gui(,"Testing Child GUI")
@@ -915,57 +915,57 @@ Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w500 +Multiline")
 
 
 SecondGUI() {
-    Gui2.Show()
-    EditPos := ControlGetPos(Gui2Edit.Hwnd)
-    ;MsgBox("Edit position: " . EditPos["X"] . " " EditPos["Y"])
+	Gui2.Show()
+	EditPos := ControlGetPos(Gui2Edit.Hwnd)
+	;MsgBox("Edit position: " . EditPos["X"] . " " EditPos["Y"])
 }
 
 GetTheControls() {
-    MyWords := Gui2Edit.Hwnd
-    MyBtn1 := ControlGetClassNN(Gui2StyleButton.Hwnd)
-    TheMsg := "The Style Button's ClassNN is " . MyBtn1 . "`n"
-    TheMsg := TheMsg . "`nSecond button's Hwnd is " . Gui2GetControlsButton.Hwnd . "`n"
+	MyWords := Gui2Edit.Hwnd
+	MyBtn1 := ControlGetClassNN(Gui2StyleButton.Hwnd)
+	TheMsg := "The Style Button's ClassNN is " . MyBtn1 . "`n"
+	TheMsg := TheMsg . "`nSecond button's Hwnd is " . Gui2GetControlsButton.Hwnd . "`n"
 
-    TheMsg := TheMsg . "`nThe Main GUI's hwnd is " . MyGui.Hwnd
+	TheMsg := TheMsg . "`nThe Main GUI's hwnd is " . MyGui.Hwnd
 
-    MsgBox(TheMsg, "Testing different methods of finding controls")
-    Sleep(2000)
-    ThePos := ControlGetPos(Gui2FindCtrlsButton.Hwnd)
+	MsgBox(TheMsg, "Testing different methods of finding controls")
+	Sleep(2000)
+	ThePos := ControlGetPos(Gui2FindCtrlsButton.Hwnd)
 
 
 
 }
 
 FindSecondGuiEdit() {
-    ; Called by button "Get Edit Hwnd"
-    MyWords := Gui2Edit.Hwnd
-    StyleBtn := ControlGetClassNN(Gui2StyleButton.Hwnd)
-    TheOtherMsg := "The Style Button's ClassNN is " . StyleBtn
-    TheOtherMsg := TheOtherMsg . "`nChild GUI Edit's hwnd is " . MyWords
+	; Called by button "Get Edit Hwnd"
+	MyWords := Gui2Edit.Hwnd
+	StyleBtn := ControlGetClassNN(Gui2StyleButton.Hwnd)
+	TheOtherMsg := "The Style Button's ClassNN is " . StyleBtn
+	TheOtherMsg := TheOtherMsg . "`nChild GUI Edit's hwnd is " . MyWords
 
-    MsgBox(TheOtherMsg, "More testing of different methods to find controls")
+	MsgBox(TheOtherMsg, "More testing of different methods to find controls")
 
 }
 
 EnumCtrls() {
-    For GuiCtrlObj in MyGui {
-        theNN := ControlGetClassNN(GuiCtrlObj, MyGui)
-        theMsg.= "Control #" A_Index " is " theNN "`n"
-    }
-    Gui2Edit.Value := theMsg
+	For GuiCtrlObj in MyGui {
+		theNN := ControlGetClassNN(GuiCtrlObj, MyGui)
+		theMsg.= "Control #" A_Index " is " theNN "`n"
+	}
+	Gui2Edit.Value := theMsg
 }
 
 StyleTest()  {
-    ToolTip("Setting style to -0xC00000`n(Will revert in two seconds to`n+0xC00000)")
-    WinSetStyle("-0xC00000", "A")
-    Sleep(2000)
-    ToolTip
-    WinSetStyle("+0xC00000", "A")
+	ToolTip("Setting style to -0xC00000`n(Will revert in two seconds to`n+0xC00000)")
+	WinSetStyle("-0xC00000", "A")
+	Sleep(2000)
+	ToolTip
+	WinSetStyle("+0xC00000", "A")
 }
 
 FindByItem() {
-    EditObj := Gui2Edit
-    MsgBox(EditObj.Text)
+	EditObj := Gui2Edit
+	MsgBox(EditObj.Text)
 }
 
 ; GUI3
@@ -993,13 +993,13 @@ MyEdit3.Value := HwndText
 ;Gui3.Show()
 
 FindByText() {
-    theItem := Gui3["Find by Name"]
-    MsgBox("I found a button. Text:`n" theItem.Text, "Find by Text")
+	theItem := Gui3["Find by Name"]
+	MsgBox("I found a button. Text:`n" theItem.Text, "Find by Text")
 }
 
 FindByHwnd() {
-    theItem := Gui3[ButtonTwo.Hwnd]
-    MsgBox("I found a button by its HWND. Text:`n" theItem.Text, "Find by HWND")
+	theItem := Gui3[ButtonTwo.Hwnd]
+	MsgBox("I found a button by its HWND. Text:`n" theItem.Text, "Find by HWND")
 }
 
 ;FindByClassNN() {
@@ -1008,17 +1008,17 @@ FindByHwnd() {
 ;}
 
 FindByNetClassNN() {
-    theItem := Gui3["KeysharpButton5"]
-    MsgBox("I found a button by its .NET classname. Text:`n" theItem.Text, "Find by NetClassNN")
+	theItem := Gui3["KeysharpButton5"]
+	MsgBox("I found a button by its .NET classname. Text:`n" theItem.Text, "Find by NetClassNN")
 }
 
 FindByName() {
-    theItem := Gui3[ButtonDummy.Name]
-    MsgBox("I found a renamed button by Name.`nIt was renamed to:`n" theItem, "Find by Name")
+	theItem := Gui3[ButtonDummy.Name]
+	MsgBox("I found a renamed button by Name.`nIt was renamed to:`n" theItem, "Find by Name")
 }
 
 ThirdGUI() {
-    Gui3.Show()
+	Gui3.Show()
 }
 
 
@@ -1028,21 +1028,23 @@ ThirdGUI() {
 
 
 MoveTheMouse() {
-    CoordMode("Mouse", "Screen")
-    Prev := MouseGetPos()
-    SendMode("Event")
-    MouseMove(100,500,90)
-    ToolTip("I'm at X:100, Y:500")
-    Sleep(2000)
-    MouseMove(1500,500,50)
-    ToolTip("I'm here!")
-    Sleep(2000)
-    ToolTip()
-    MouseMove(Prev["X"], Prev["Y"], 90)
-    ToolTip("I'm back!")
-    Sleep(2000)
-    ToolTip()
-    
+	mx :=
+	my :=
+	CoordMode("Mouse", "Screen")
+	MouseGetPos(&mx, &my)
+	SendMode("Event")
+	MouseMove(100,500,90)
+	ToolTip("I'm at X:100, Y:500")
+	Sleep(2000)
+	MouseMove(1500,500,50)
+	ToolTip("I'm here!")
+	Sleep(2000)
+	ToolTip()
+	MouseMove(mx, my, 90)
+	ToolTip("I'm back!")
+	Sleep(2000)
+	ToolTip()
+	
 }
 ;ReloaderBtn := MyGui.Add("Button", "w200 h25 x10 y+5", "Reload").OnEvent("Click", "Reload")
 
@@ -1055,222 +1057,224 @@ MoveTheMouse() {
 ; └────────────────────────┘
 
 AddFuchsia() {
-    ControlAddItem("Fuchsia", CZ_ListBox)
+	ControlAddItem("Fuchsia", CZ_ListBox)
 }
 
 AddWhite2() {
-    ControlAddItem("White", gb2_CZ_CB)
+	ControlAddItem("White", gb2_CZ_CB)
 }
 
 DeleteFuchsia() {
-    Try 
-    {
-        FuchsiaIndex := ControlFindItem("Fuchsia", CZ_ListBox)
-    }
-    Catch as e  ; Handles the first error thrown by the block above.
-    {
-        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
-        Return
-    }
-    
-    ;MsgBox(FuchsiaIndex)
-    ControlDeleteItem(FuchsiaIndex, CZ_ListBox)
+	Try 
+	{
+		FuchsiaIndex := ControlFindItem("Fuchsia", CZ_ListBox)
+	}
+	Catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+		Return
+	}
+	
+	;MsgBox(FuchsiaIndex)
+	ControlDeleteItem(FuchsiaIndex, CZ_ListBox)
 }
 
 DeleteWhite2() {
-    Try 
-    {
-        WhiteIndex := ControlFindItem("White", gb2_CZ_CB)
-    }
-    Catch as e  ; Handles the first error thrown by the block above.
-    {
-        MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
-        Return
-    }
-    
-    ControlDeleteItem(WhiteIndex, gb2_CZ_CB)
+	Try 
+	{
+		WhiteIndex := ControlFindItem("White", gb2_CZ_CB)
+	}
+	Catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("An error was thrown!`nSpecifically: " e.Message, "ERROR!")
+		Return
+	}
+	
+	ControlDeleteItem(WhiteIndex, gb2_CZ_CB)
 }
 
 FuchsiaDeleteTrayTip() {
-    TrayTip("Also tests ControlFindItem")
+	TrayTip("Also tests ControlFindItem")
 }
 
 ChooseIndex() {
-    ControlChooseIndex(7, CZ_ListBox)
+	ControlChooseIndex(7, CZ_ListBox)
 }
 
 ChooseString() {
-    ControlChooseString("красный", CZ_ListBox)
+	ControlChooseString("красный", CZ_ListBox)
 }
 
 ChooseString_CB() {
-    ControlChooseString("Purple", gb2_CZ_CB)
+	ControlChooseString("Purple", gb2_CZ_CB)
 }
 
 GetChoice() {
-    Try
-    {
-    Choice := ControlGetChoice(CZ_ListBox, MyGui)
-    MsgBox(Choice, "Choice")
-    }
-        Catch as e  ; Handles the first error thrown by the block above.
-    {
-        MsgBox("You must select an item first.", "ERROR!")
-        Return
-    }
+	Try
+	{
+	Choice := ControlGetChoice(CZ_ListBox, MyGui)
+	MsgBox(Choice, "Choice")
+	}
+		Catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("You must select an item first.", "ERROR!")
+		Return
+	}
 }
 
 GetClassNN() {
-    ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
-    MsgBox(ClassNN, "ClassNN")
+	ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
+	MsgBox(ClassNN, "ClassNN")
 }
 
 GetEnabled() {
-    Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
-    MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
-    Result2 := ControlGetEnabled(CZ_LbBtn6, MyGui)
-    MsgBox(Result2, "ClassNN Button State (1: enabled 0: disabled)")
+	Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
+	MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
+	Result2 := ControlGetEnabled(CZ_LbBtn6, MyGui)
+	MsgBox(Result2, "ClassNN Button State (1: enabled 0: disabled)")
 }
 
 GetHwnd() {
-    Result := ControlGetHwnd(CZ_ListBox, MyGui)
-    MsgBox(Result, "Hwnd of ListBox")
+	Result := ControlGetHwnd(CZ_ListBox, MyGui)
+	MsgBox(Result, "Hwnd of ListBox")
 }
 
 GetText() {
-    Result := ControlGetText(CZ_LbBtn8, MyGui)
-    MsgBox(Result, "Text of Target Button")
+	Result := ControlGetText(CZ_LbBtn8, MyGui)
+	MsgBox(Result, "Text of Target Button")
 }
 
 HideButton() {
-    ControlHide(CZ_LbBtn8, MyGui)
+	ControlHide(CZ_LbBtn8, MyGui)
 }
 
 ShowButton() {
-    ControlShow(CZ_LbBtn8, MyGui)
+	ControlShow(CZ_LbBtn8, MyGui)
 }
 
 IsItHidden() {
-    Result := ControlGetVisible(Cz_LbBtn8, MyGui)
-    If (Result != 0) {
-        Result := "Visible"
-    } Else {
-        Result := "Hidden"
-    }
-    MsgBox(Result, "Visible or Not?")
+	Result := ControlGetVisible(Cz_LbBtn8, MyGui)
+	If (Result != 0) {
+		Result := "Visible"
+	} Else {
+		Result := "Hidden"
+	}
+	MsgBox(Result, "Visible or Not?")
 }
 
 GetCol() {
-    CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
-    MsgBox(CurrentCol, "Current Colum No.")
-    CurrentCol := ""
+	CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
+	MsgBox(CurrentCol, "Current Colum No.")
+	CurrentCol := ""
 }
 
 GetLine() {
-    CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
-    MsgBox(CurrentLine, "Current Line No.")
-    CurrentLine := ""
+	CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
+	MsgBox(CurrentLine, "Current Line No.")
+	CurrentLine := ""
 }
 
 GetLineText() {
-    CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
-    CurrentLineText := EditGetLine(CurrentLine, CZ_Edit1, MyGui)
-    MsgBox(CurrentLineText, "Current Line Text")
-    CurrentLineText := "" ; Reset variable
+	CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
+	CurrentLineText := EditGetLine(CurrentLine, CZ_Edit1, MyGui)
+	MsgBox(CurrentLineText, "Current Line Text")
+	CurrentLineText := "" ; Reset variable
 }
 
 GetSelectedText() {
-    SelectedText := EditGetSelectedText(CZ_Edit1, MyGui)
-    MsgBox(SelectedText, "Selected text in Edit")
-    SelectedText := "" ; Reset variable
+	SelectedText := EditGetSelectedText(CZ_Edit1, MyGui)
+	MsgBox(SelectedText, "Selected text in Edit")
+	SelectedText := "" ; Reset variable
 }
 
 EditPaster() {
-    EditPasted := "How now brown cow"
-    EditPaste(EditPasted, CZ_Edit1, MyGui)
+	EditPasted := "How now brown cow"
+	EditPaste(EditPasted, CZ_Edit1, MyGui)
 }
 
 LV_Selected() {
-    List := ListViewGetContent("Selected", LV2, MyGui)
-    MsgBox(List, "LV Selected")
-    List := ""
+	List := ListViewGetContent("Selected", LV2, MyGui)
+	MsgBox(List, "LV Selected")
+	List := ""
 }
 
 LV_Focused() {
-    List := ListViewGetContent("Focused", LV2, MyGui)
-    MsgBox(List, "LV Focused")
-    List := ""
+	List := ListViewGetContent("Focused", LV2, MyGui)
+	MsgBox(List, "LV Focused")
+	List := ""
 }
 
 LV_Col1() {
-    List := ListViewGetContent("Col1", LV2, MyGui)
-    MsgBox(List, "LV Column 1")
-    List := ""
+	List := ListViewGetContent("Col1", LV2, MyGui)
+	MsgBox(List, "LV Column 1")
+	List := ""
 }
 
 LV_Count() {
-    List := ListViewGetContent("Count", LV2, MyGui)
-    MsgBox(List, "LV Row Count")
-    List := ""
+	List := ListViewGetContent("Count", LV2, MyGui)
+	MsgBox(List, "LV Row Count")
+	List := ""
 }
 
 LV_CountSelected() {
-    List := ListViewGetContent("Count Selected", LV2, MyGui)
-    MsgBox(List, "LV Count Selected")
-    List := ""
+	List := ListViewGetContent("Count Selected", LV2, MyGui)
+	MsgBox(List, "LV Count Selected")
+	List := ""
 }
 
 LV_CountFocused() {
-    List := ListViewGetContent("Count Focused", LV2, MyGui)
-    MsgBox(List, "LV Count Focused")
-    List := ""
+	List := ListViewGetContent("Count Focused", LV2, MyGui)
+	MsgBox(List, "LV Count Focused")
+	List := ""
 }
 
 LV_CountCol() {
-    List := ListViewGetContent("Count Col", LV2, MyGui)
-    MsgBox(List, "LV Column Count")
-    List := ""
+	List := ListViewGetContent("Count Col", LV2, MyGui)
+	MsgBox(List, "LV Column Count")
+	List := ""
 }
 
 Click_CB() {
-    Send("#r")  ; Open the Run dialog.
-    WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
-    ControlShowDropDown("ComboBox1")  ; Show the drop-down list. The second parameter is omitted so that the last found window is used.
-    Sleep(2000)
-    ControlHideDropDown("ComboBox1")  ; Hide the drop-down list.
-    Sleep(1000)
-    Send("{Esc}")  ; Close the Run dialog.
+	Send("#r")  ; Open the Run dialog.
+	WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
+	ControlShowDropDown("ComboBox1")  ; Show the drop-down list. The second parameter is omitted so that the last found window is used.
+	Sleep(2000)
+	ControlHideDropDown("ComboBox1")  ; Hide the drop-down list.
+	Sleep(1000)
+	Send("{Esc}")  ; Close the Run dialog.
 }
 
 
 GetPix() {
-    posMouse := MouseGetPos()
-    MyColorText.Text := PixelGetColor(posMouse["X"], posMouse["Y"])
-    ColorString := "Bold s12 c" MyColorText.Text
-    ColorString := StrReplace(ColorString, "0x", "")
-    MyColorText.SetFont(ColorString)
+	mx :=
+	my :=
+	MouseGetPos(&mx, &my)
+	MyColorText.Text := PixelGetColor(mx, my)
+	ColorString := "Bold s12 c" MyColorText.Text
+	ColorString := StrReplace(ColorString, "0x", "")
+	MyColorText.SetFont(ColorString)
 }
 
 
 LoadSC() {
-    ;MyGui.UseGroup()
-    ;Tab.UseTab("ControlZoo")
-    ;MyGui.UseGroup(gb2_CZ)
-    If !(FileExist(A_Desktop "\MyScreenClip.png")) {
-        GetScreenClip(100, 100, 200, 200, A_Desktop "\MyScreenClip.png")
-        Sleep(100)
-    }
-    MyThirdPic := LoadPicture(A_Desktop "\MyScreenClip.png")
+	;MyGui.UseGroup()
+	;Tab.UseTab("ControlZoo")
+	;MyGui.UseGroup(gb2_CZ)
+	If !(FileExist(A_Desktop "\MyScreenClip.png")) {
+		GetScreenClip(100, 100, 200, 200, A_Desktop "\MyScreenClip.png")
+		Sleep(100)
+	}
+	MyThirdPic := LoadPicture(A_Desktop "\MyScreenClip.png")
 
-    MyLoadedPic := MyGui.Add("Picture", "x450 y700 w170 h170", "HBITMAP:" MyThirdPic["Handle"])
-    Sleep(2000)
+	MyLoadedPic := MyGui.Add("Picture", "x450 y700 w170 h170", "HBITMAP:" MyThirdPic)
+	Sleep(2000)
 
-    DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
-    ;Tab.UseTab()
-    FileDelete(A_Desktop "\MyScreenClip.png")
-    MyThirdPic["Handle"] := ""
-    MyLoadedPic := ""
-    MyThirdPic := ""
+	DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
+	;Tab.UseTab()
+	FileDelete(A_Desktop "\MyScreenClip.png")
+	MyThirdPic := ""
+	MyLoadedPic := ""
+	MyThirdPic := ""
 }
 
 ; ┌───────────────────────┐
@@ -1307,28 +1311,28 @@ BtnSendEvent.OnEvent("Click", "BtnSendEventFunc")
 ; └────────────────────────────────────┘
 
 BtnSendFunc(){   
-    TheSendMsg := "
+	TheSendMsg := "
 (
 From the AHK docs:
 
 "Sends simulated keystrokes and mouse clicks to the active window."
-        
+		
 When you dismiss this button,
 Keysharp will send 'Sincerely, John Smith'
 (no quotes) to the Edit, then add a newline.
 )"
 
-    MsgBox(TheSendMsg, "Send")
-    WinActivate(MyGui)
-    ControlFocus(MySendEdit)
-    Send("{Ctrl}{End}{Enter}")
-    Send("Sincerely, John Smith`n")
+	MsgBox(TheSendMsg, "Send")
+	WinActivate(MyGui)
+	ControlFocus(MySendEdit)
+	Send("{Ctrl}{End}{Enter}")
+	Send("Sincerely, John Smith`n")
 }
 
 
 BtnSendTextFunc(){
 
-    TheSendTextMsg := "
+	TheSendTextMsg := "
 (
 From the AHK docs:
 
@@ -1345,9 +1349,9 @@ For SendEvent, SendInput and ControlSend, this improves reliability
 because the characters are much less dependent on correct modifier state.
 
 This mode can be combined with the Blind mode to avoid releasing any modifier keys:
-        
-        Send "{Blind}{Text}your text". 
-        
+		
+		Send "{Blind}{Text}your text". 
+		
 However, some applications require that the modifier keys be released.
 
 ``n, ``r and ``r``n are all translated to a single Enter, unlike the default behavior and Raw mode,
@@ -1358,10 +1362,10 @@ Like the Blind mode, the Text mode ignores SetStoreCapsLockMode (that is, the st
 and does not wait for Win to be released. This is because the Text mode
 typically does not depend on the state of CapsLock and cannot trigger the system Win+L hotkey.
 However, this only applies when Keys begins with {Text} or {Blind}{Text}.
-        
-        When you dismiss this button,
-        Keysharp will open Notepad, wait a bit and
-        then send some text. You should see this:
+		
+		When you dismiss this button,
+		Keysharp will open Notepad, wait a bit and
+		then send some text. You should see this:
 
 I want to send some {Blind}{Text} with SendText followed by a newline.
 
@@ -1371,9 +1375,9 @@ Then, you should see:
 
 You should see the Blind mode syntax after the ellipses ... '{Blind}'
 )"
-    
-    
-    MsgBox(TheSendTextMsg, "SendText")
+	
+	
+	MsgBox(TheSendTextMsg, "SendText")
 
 TheSendText := "I want to send some {Blind}{Text} with SendText followed by a newline.`r`n"
 Run("Notepad.exe")
@@ -1388,7 +1392,7 @@ Send("{Alt}fx{Tab}{Enter}")
 
 BtnSendInputFunc(){
 
-    TheSendInputMsg := "
+	TheSendInputMsg := "
 (
 From the AHK docs:
 
@@ -1401,10 +1405,10 @@ Unlike the other sending modes, the operating system limits SendInput to about 5
 (this may vary depending on the operating system's version and performance settings). 
 Characters and events beyond this limit are not sent.
 
-    Note: SendInput ignores SetKeyDelay because the operating system does not support a delay in this mode. 
-    However, when SendInput reverts to SendEvent under the conditions described below, it uses SetKeyDelay -1, 0
-    (unless SendEvent's KeyDelay is -1,-1, in which case -1,-1 is used). 
-    When SendInput reverts to SendPlay, it uses SendPlay's KeyDelay.
+	Note: SendInput ignores SetKeyDelay because the operating system does not support a delay in this mode. 
+	However, when SendInput reverts to SendEvent under the conditions described below, it uses SetKeyDelay -1, 0
+	(unless SendEvent's KeyDelay is -1,-1, in which case -1,-1 is used). 
+	When SendInput reverts to SendPlay, it uses SendPlay's KeyDelay.
 
 If a script other than the one executing SendInput has a low-level keyboard hook installed, SendInput automatically reverts
 to SendEvent (or SendPlay if SendMode "InputThenPlay" is in effect). 
@@ -1418,10 +1422,10 @@ or CoordMode "Mouse", "Client" is in effect, every click will be relative to the
 that was active at the start of the send. Therefore, if SendInput intentionally activates another window
 (by means such as alt-tab), the coordinates of subsequent clicks within the same function
 will be wrong if they were intended to be relative to the new window rather than the old one.
-        
-        When you dismiss this button,
-        Keysharp will open Notepad, wait a bit and
-        then send some text. You should see this:
+		
+		When you dismiss this button,
+		Keysharp will open Notepad, wait a bit and
+		then send some text. You should see this:
 
 Now how did this get up here???
 The buttons below this Edit will use various Send() variants.
@@ -1434,23 +1438,23 @@ Testing newlines with braces syntax
 
 )"
 
-    MsgBox(TheSendInputMsg, "SendInput")
-    WinActivate(MyGui)
-    ControlFocus(MySendEdit)
-    SendInput("{End}{Enter}")
-    SendInput("Really, Cheeta, you shouldn't have!{End}{Enter}Lord Greystoke`n")
-    Sleep(1000)
-    ControlFocus(MySendEdit)
-    SendInput("^{Home}")
-    SendInput("Now how did this get up here???`n")
-    SendInput("^{End}{Enter}")
-    SendInput("^{End}{Enter}")
-    SendInput("Testing newlines with braces syntax")
+	MsgBox(TheSendInputMsg, "SendInput")
+	WinActivate(MyGui)
+	ControlFocus(MySendEdit)
+	SendInput("{End}{Enter}")
+	SendInput("Really, Cheeta, you shouldn't have!{End}{Enter}Lord Greystoke`n")
+	Sleep(1000)
+	ControlFocus(MySendEdit)
+	SendInput("^{Home}")
+	SendInput("Now how did this get up here???`n")
+	SendInput("^{End}{Enter}")
+	SendInput("^{End}{Enter}")
+	SendInput("Testing newlines with braces syntax")
 
 }
 
 BtnSendPlayFunc(){
-    TheSendPlayMsg := "
+	TheSendPlayMsg := "
 (
 Warning: SendPlay may have no effect at all if UAC is enabled, even if the script is running as an administrator. For more information, refer to the FAQ.
 
@@ -1475,16 +1479,16 @@ Unlike SendInput and SendEvent, the user may interrupt a SendPlay by pressing Ct
 
 Although SendPlay can send LWin and RWin events, they are sent directly to the active window rather than performing their native operating system function. To work around this, use SendEvent. For example, SendEvent "#r" would show the Start Menu's Run dialog.
 )"
-    MsgBox(TheSendPlayMsg, "SendPlay")
-    SendPlay("#r")
-    MsgBox("Just sent '#r' with SendPlay, which should not work.`nNow I'll use SendEvent(), which should.`nI'll wait five seconds, then send Alt-F4 to kill the run dialog.", "SendPlay Testing", "T5")
-    SendEvent("#r")
-    Sleep(5000)
-    SendEvent("!{F4}")
+	MsgBox(TheSendPlayMsg, "SendPlay")
+	SendPlay("#r")
+	MsgBox("Just sent '#r' with SendPlay, which should not work.`nNow I'll use SendEvent(), which should.`nI'll wait five seconds, then send Alt-F4 to kill the run dialog.", "SendPlay Testing", "T5")
+	SendEvent("#r")
+	Sleep(5000)
+	SendEvent("!{F4}")
 }
 
 BtnSendEventFunc(){
-    TheSendEventMsg := "
+	TheSendEventMsg := "
 (
 From the AHK docs:
 
@@ -1492,13 +1496,13 @@ From the AHK docs:
 (search MSDN for details)
 The rate at which keystrokes are sent is determined by SetKeyDelay. 
 SendMode can be used to make Send synonymous with SendEvent or SendPlay."
-        
+		
 When you dismiss this button,
 Keysharp will send Win-R.
 The 'Run' dialog will open.
 )"
-    MsgBox(TheSendEventMsg, "SendEvent button")
-    SendEvent("#r")
+	MsgBox(TheSendEventMsg, "SendEvent button")
+	SendEvent("#r")
 }
 
 ; ┌─────────────────────────┐
@@ -1534,75 +1538,75 @@ FuncBtnSeven.OnEvent("Click", "ToggleFromIni")
 ; └────────────────────┘
 
 DoTricks() {
-    RealFn := FuncObj("RealFn")
+	RealFn := FuncObj("RealFn")
 
-    fn := RealFn.Bind(1)  ; Bind first parameter only
-    fn(2)      ; Shows "1, 2"
-    fn.Call(3) ; Shows "1, 3"
+	fn := RealFn.Bind(1)  ; Bind first parameter only
+	fn(2)      ; Shows "1, 2"
+	fn.Call(3) ; Shows "1, 3"
 
-    fn := RealFn.Bind( , 1)  ; Bind second parameter only
-    fn(2)      ; Shows "2, 1"
-    fn.Call(3) ; Shows "3, 1"
-    ;fn(, 4)    ; Error: 'a' was omitted
+	fn := RealFn.Bind( , 1)  ; Bind second parameter only
+	fn(2)      ; Shows "2, 1"
+	fn.Call(3) ; Shows "3, 1"
+	;fn(, 4)    ; Error: 'a' was omitted
 
-    RealFn(a, b, c:="c") {
-        MsgBox(a ", " b, "A bound function test")
-    }
+	RealFn(a, b, c:="c") {
+		MsgBox(a ", " b, "A bound function test")
+	}
 }
 
 StupidTrickTwo() {
-    Hotkey("RCtrl & RShift", "AltTab")
+	Hotkey("RCtrl & RShift", "AltTab")
 }
 
 StupidTrickThree() {
-    Try 
-    {
-            Hotkey("RCtrl & RShift", "Off")
-            MsgBox("Hotkey RCtrl & RShift -> AltTab is Off", "Hotkey Off", "T2")
-    }
-    Catch 
-    {
-        MsgBox("Set the Hotkey first!")
-    }
+	Try 
+	{
+			Hotkey("RCtrl & RShift", "Off")
+			MsgBox("Hotkey RCtrl & RShift -> AltTab is Off", "Hotkey Off", "T2")
+	}
+	Catch 
+	{
+		MsgBox("Set the Hotkey first!")
+	}
 }
 
 FuncObjTest() {
-    RealFn2 := FuncObj("RealFn2")
-    fn2 := RealFn2.Bind("AltTab")
-    fn2()
+	RealFn2 := FuncObj("RealFn2")
+	fn2 := RealFn2.Bind("AltTab")
+	fn2()
 
-    RealFn2(TheMessage) {
-        Hotkey("RCtrl & RShift", TheMessage)
-        MsgBox(TheMessage)
-    }
+	RealFn2(TheMessage) {
+		Hotkey("RCtrl & RShift", TheMessage)
+		MsgBox(TheMessage)
+	}
 }
 
 ToggleHotkey() {
-    Try 
-    {
-        Hotkey("RCtrl & RShift", "Toggle")
-    }
-    Catch
-    {
-        MsgBox("Set the AltTab hotkeyfirst!", "ERROR", "T2")
-    }
+	Try 
+	{
+		Hotkey("RCtrl & RShift", "Toggle")
+	}
+	Catch
+	{
+		MsgBox("Set the AltTab hotkeyfirst!", "ERROR", "T2")
+	}
 
 }
 
 GrabFromIni() {
-    HotkeyVal := IniRead("hotkeyini_1.ini", "HotkeyToRead", "Key")
-    Hotkey(HotkeyVal, "AltTab")
+	HotkeyVal := IniRead("hotkeyini_1.ini", "HotkeyToRead", "Key")
+	Hotkey(HotkeyVal, "AltTab")
 }
 
 ToggleFromIni() {
-    Try 
-    {
-        Hotkey("RCtrl & LShift", "Toggle")
-    }
-    Catch
-    {
-        MsgBox("Set the .INI hotkeyfirst!", "ERROR", "T2")
-    }
+	Try 
+	{
+		Hotkey("RCtrl & LShift", "Toggle")
+	}
+	Catch
+	{
+		MsgBox("Set the .INI hotkeyfirst!", "ERROR", "T2")
+	}
 }
 
 
@@ -1612,9 +1616,9 @@ ToggleFromIni() {
 
 LV_DoubleClick(LV, RowNumber)
 {
-    RowText := LV.GetText(RowNumber, 1)  ; Get the text from the row's first field.
-    ColumnText := LV.GetText(RowNumber, 2)
-    ToolTip("You double-clicked row number " RowNumber ". File '" RowText "' has size " ColumnText "kb.")
+	RowText := LV.GetText(RowNumber, 1)  ; Get the text from the row's first field.
+	ColumnText := LV.GetText(RowNumber, 2)
+	ToolTip("You double-clicked row number " RowNumber ". File '" RowText "' has size " ColumnText "kb.")
 }
 ; ┌──────────────────────┐
 ; │  Change header font  │
@@ -1653,15 +1657,15 @@ MyGui.BackColor := 0xF0F0F0
 ; │  Input test function  │
 ; └───────────────────────┘
 InputTest() {
-    OutputVar := InputBox("What is your first name?", "Question 1").Value
-    if (OutputVar = "Bill")
-        MsgBox("That's an awesome name, " OutputVar ".", "What a great name ...")
+	OutputVar := InputBox("What is your first name?", "Question 1").Value
+	if (OutputVar = "Bill")
+		MsgBox("That's an awesome name, " OutputVar ".", "What a great name ...")
 
-    OutputVar2 := InputBox("Do you like AutoHotkey?", "Question 2").Value
-    if (OutputVar2 = "yes")
-        MsgBox("Thank you for answering " OutputVar2 ", " OutputVar "! We will become great friends.", "You are in good company")
-    else
-        MsgBox(OutputVar ", That makes me sad.", "Sorry to hear it")
+	OutputVar2 := InputBox("Do you like AutoHotkey?", "Question 2").Value
+	if (OutputVar2 = "yes")
+		MsgBox("Thank you for answering " OutputVar2 ", " OutputVar "! We will become great friends.", "You are in good company")
+	else
+		MsgBox(OutputVar ", That makes me sad.", "Sorry to hear it")
 }
 
 ; ┌───────────────────────┐
@@ -1688,9 +1692,9 @@ HideTrayTip()
 ; │  TreeView Edit  │
 ; └─────────────────┘
 MyTreeView_Edit(TV, Item) {
-    ;MsgBox("Sort Not Implemented", "Men at Work")
-    TV.Modify(TV.GetParent(Item), "Sort")  ; This works even if the item has no parent.
-    ;return
+	;MsgBox("Sort Not Implemented", "Men at Work")
+	TV.Modify(TV.GetParent(Item), "Sort")  ; This works even if the item has no parent.
+	;return
 }
 
 
@@ -1704,12 +1708,12 @@ MyTreeView_Edit(TV, Item) {
 
 ; Copy this function into your script to use it.
 HideTrayTip() {  
-    TrayTip()  ; Attempt to hide it the normal way.
-    if SubStr(A_OSVersion,1,3) = "10." {
-        A_IconHidden := True
-        Sleep(200) ; It may be necessary to adjust this sleep.
-        A_IconHidden := False
-    }
+	TrayTip()  ; Attempt to hide it the normal way.
+	if SubStr(A_OSVersion,1,3) = "10." {
+		A_IconHidden := True
+		Sleep(200) ; It may be necessary to adjust this sleep.
+		A_IconHidden := False
+	}
 }
 
 
@@ -1725,14 +1729,14 @@ By default, the hard carriage return (Enter) between the previous line and this 
 	This line is indented with a tab; by default, that tab will also be stored.
 "Quote marks" are now automatically escaped when appropriate - not yet implemented.
 )"
-    ;MsgBox(EditVar)
-    ControlSetText(EditVar, SecondEdit)
+	;MsgBox(EditVar)
+	ControlSetText(EditVar, SecondEdit)
 }
 ; ┌───────────────────────┐
 ; │  Clear Edit Callback  │
 ; └───────────────────────┘
 ClearEdit() {
-    ControlSetText(, SecondEdit)
+	ControlSetText(, SecondEdit)
 }
 
 ; ┌──────────────────────┐
@@ -1747,14 +1751,14 @@ By default, the hard carriage return (Enter) between the previous line and this 
 	This line is indented with a tab; by default, that tab will also be stored.
 "Quote marks" are now automatically escaped when appropriate.
 )"
-    ;MsgBox(EditVar)
-    ControlSetText(RichEditVar, SecondRichEdit)
+	;MsgBox(EditVar)
+	ControlSetText(RichEditVar, SecondRichEdit)
 }
 ; ┌───────────────────────┐
 ; │  Clear Edit Callback  │
 ; └───────────────────────┘
 ClearRichEdit() {
-    ControlSetText(, SecondRichEdit)
+	ControlSetText(, SecondRichEdit)
 }
 
 ; ┌───────────┐
@@ -1763,14 +1767,14 @@ ClearRichEdit() {
 
 
 LoadPic() {
-    Tab.UseTab("Second")
-    MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir "\monkey.ico")
-    Sleep(2000)
-    DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
-    MyFirstPic := ""
-    Tab.UseTab()
+	Tab.UseTab("Second")
+	MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir "\monkey.ico")
+	Sleep(2000)
+	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
+	MyFirstPic := ""
+	Tab.UseTab()
 
-    ; MyGui.Opts("+Redraw")
+	; MyGui.Opts("+Redraw")
 }
 
 ; ┌────────────────────┐
@@ -1778,31 +1782,31 @@ LoadPic() {
 ; └────────────────────┘
 
 ListBoxClicked() {
-    MsgBox(MyListBox.Text, "ListBox")
-    ;MySB.SetIcon("Shell32.dll", 2)
-    MySB.SetIcon(A_KeysharpCorePath, "Keysharp.ico")
-    MySB.SetText(MyListBox.Text . " selected in ListBox")
+	MsgBox(MyListBox.Text, "ListBox")
+	;MySB.SetIcon("Shell32.dll", 2)
+	MySB.SetIcon(A_KeysharpCorePath, "Keysharp.ico")
+	MySB.SetText(MyListBox.Text . " selected in ListBox")
 }
 ; ┌─────────────────────┐
 ; │  Multi LB Callback  │
 ; └─────────────────────┘
 MultiLBClicked() {
-    For Index, Field in MyMultiLB.Text
-        {
-            MsgBox("Selection number " Index " is " Field, "Multi ListBox")
-        }
+	For Index, Field in MyMultiLB.Text
+		{
+			MsgBox("Selection number " Index " is " Field, "Multi ListBox")
+		}
 }
 ; ┌─────────────────────┐
 ; │  DropDown Callback  │
 ; └─────────────────────┘
 DDLClicked() {
-    MsgBox(MyDDL.Text, "Drop Down List")
+	MsgBox(MyDDL.Text, "Drop Down List")
 }
 ; ┌─────────────────────┐
 ; │  ComboBox Callback  │
 ; └─────────────────────┘
 CB_ButtonClicked() {
-    MsgBox(MyCB.Text, "CB Selection")
+	MsgBox(MyCB.Text, "CB Selection")
 }
 
 ; ┌─────────────────────────────┐
@@ -1810,16 +1814,16 @@ CB_ButtonClicked() {
 ; └─────────────────────────────┘
 
 Pbtn1Clicked() {
-    ;MsgBox(MyProgress.Value)
-    MyProgress.Value -= 10
+	;MsgBox(MyProgress.Value)
+	MyProgress.Value -= 10
 }
 
 Pbtn2Clicked() {
-    MyProgress.Value += 10
+	MyProgress.Value += 10
 }
 
 MC_Colors() {
-    MsgBox("Not implemented.", "Future feature")
+	MsgBox("Not implemented.", "Future feature")
 }
 
 ; ┌─────────────────────┐
@@ -1827,7 +1831,7 @@ MC_Colors() {
 ; └─────────────────────┘
 
 ShowEditHwnd() {
-    MsgBox(HwndSecondEdit, "Test 'GuiCtrl.Hwnd'")
+	MsgBox(HwndSecondEdit, "Test 'GuiCtrl.Hwnd'")
 }
 
 ; ┌──────────────┐
@@ -1838,9 +1842,11 @@ ShowEditHwnd() {
 ; Not used, as SetTimer is causing crashes.
 UpdateOSD()
 {
-    Result := MouseGetPos()
-    CoordText.SetFont("bold s20")
-    CoordText.Text := ("X: " Result["X"] " Y: " Result["Y"])
+	mx :=
+	my :=
+	MouseGetPos(&mx, &my)
+	CoordText.SetFont("bold s20")
+	CoordText.Text := ("X: " mx " Y: " my)
 }
 
 ; ┌────────────────────────────┐
@@ -1857,15 +1863,15 @@ The second message box shows '1' (True) if GuiCtrlFromHwnd created an
 object from the Hwnd.
 Finally, ControlSetText operates on the Object created from the Hwnd.
 )"
-    MsgBox(gb3Hwnd, "Hwnd of Groupbox 3 Edit")
-    obj := GuiCtrlFromHwnd(gb3Hwnd)
-    Result := IsObject(obj)
-    MsgBox(Result, "If '1', is Object")
-    ControlSetText(GB3Text, obj)
+	MsgBox(gb3Hwnd, "Hwnd of Groupbox 3 Edit")
+	obj := GuiCtrlFromHwnd(gb3Hwnd)
+	Result := IsObject(obj)
+	MsgBox(Result, "If '1', is Object")
+	ControlSetText(GB3Text, obj)
 }
 
 ClearGB3() {
-    ControlSetText(, gb3Edit)
+	ControlSetText(, gb3Edit)
 }
 
 StartEditToolTip() {
@@ -1877,40 +1883,40 @@ The second message box shows '1' (True) if GuiCtrlFromHwnd created an
 object from the Hwnd.
 Finally, ControlSetText operates on the Object created from the Hwnd.
 )"
-    ToolTip(ToolTipText)
+	ToolTip(ToolTipText)
 }
 
 StopToolTip() {
-    ToolTip()
+	ToolTip()
 }
 
 ; ┌───────────────────────────────┐
 ; │  Tab One Group Two functions  │
 ; └───────────────────────────────┘
 Set_Style() {
-    WinSetStyle("-0xC00000", "A")
+	WinSetStyle("-0xC00000", "A")
 }
 
 Reset_Style() {
-    WinSetStyle("+0xC00000", "A")
+	WinSetStyle("+0xC00000", "A")
 }
 
 Set_Edit_Style() 
 {
-    ;MsgBox(HwndMyEdit, "This is the ID")
-    ControlSetStyle("+0x8", HwndMyEdit)
-    ControlFocus(HwndMyEdit)
+	;MsgBox(HwndMyEdit, "This is the ID")
+	ControlSetStyle("+0x8", HwndMyEdit)
+	ControlFocus(HwndMyEdit)
 }
 
 Reset_Edit_Style() {
-    Str := ControlGetStyle(HwndMyEdit)
-    MsgBox(Format("0x{1:x}", Str), "Style of Edit1 Before Reset")
+	Str := ControlGetStyle(HwndMyEdit)
+	MsgBox(Format("0x{1:x}", Str), "Style of Edit1 Before Reset")
 
-    ControlSetStyle("-0x8", HwndMyEdit)
-    ControlFocus(HwndMyEdit)
-    
-    Str := ControlGetStyle(HwndMyEdit)
-    MsgBox(Format("0x{1:x}", Str), "Style of Edit1 After Reset")
+	ControlSetStyle("-0x8", HwndMyEdit)
+	ControlFocus(HwndMyEdit)
+	
+	Str := ControlGetStyle(HwndMyEdit)
+	MsgBox(Format("0x{1:x}", Str), "Style of Edit1 After Reset")
 }
 
 ; ┌──────────────────────┐
@@ -1918,18 +1924,18 @@ Reset_Edit_Style() {
 ; └──────────────────────┘
 
 MoveGui() {
-    Tab.UseTab("Second")
-    MyGui.UseGroup(gb2_TabTwo)
-    global winpos
-    winpos := WinGetPos(MyGui)
-    MyGui.Move(100, 100, 200, 200)
+	Tab.UseTab("Second")
+	MyGui.UseGroup(gb2_TabTwo)
+	global winpos
+	winpos := WinGetPos(MyGui)
+	MyGui.Move(100, 100, 200, 200)
 
 }
 
 MoveGuiBack() {
-    Tab.UseTab("Second")
-    MyGui.UseGroup(gb2_TabTwo)
-    MyGui.Move(winpos["X"], winpos["Y"], winpos["Width"], winpos["Height"])
+	Tab.UseTab("Second")
+	MyGui.UseGroup(gb2_TabTwo)
+	MyGui.Move(winpos["X"], winpos["Y"], winpos["Width"], winpos["Height"])
 }
 
 ; ┌──────────────────────────┐
@@ -1939,19 +1945,21 @@ MoveGuiBack() {
 ImgSrch() {
 CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the screen rather than the active window.
 
-    try 
-    {
-    result := ImageSearch(0, 0, A_ScreenWidth, A_ScreenHeight, "killbill.png")
+	try 
+	{
+	resultX :=
+	resultY :=
+	ImageSearch(&resultX, &resultY, 0, 0, A_ScreenWidth, A_ScreenHeight, "killbill.png")
 
-    If (result["X"] != "")
-        MsgBox("Found at x: " result["X"] " y: " result["Y"], "Image Search")
-    Else
-        MsgBox("Image not found!", "FAILURE")
-    }
+	If (resultX != "")
+		MsgBox("Found at x: " resultX " y: " resultY, "Image Search")
+	Else
+		MsgBox("Image not found!", "FAILURE")
+	}
 
-    catch as e  ; Handles the first error thrown by the block above.
-    {
-        MsgBox("An error was thrown!`nSpecifically: " e.Message)
-        Exit
-    }
+	catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("An error was thrown!`nSpecifically: " e.Message)
+		Exit
+	}
 }
