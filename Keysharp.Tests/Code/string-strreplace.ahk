@@ -1,9 +1,10 @@
 ;#Include %A_ScriptDir%/header.ahk
 
 x := "a,b,c,d,e,f"
-y := StrReplace(x, ",")
-z := "abcdef"
 varct := ""
+z := "abcdef"
+y := StrReplace(x, ",")
+
 
 if (y = z)
 	FileAppend, pass, *
@@ -31,26 +32,26 @@ if (y = "a.b.c.d.e.f")
 else
 	FileAppend, fail, *
 
-y := StrReplace(x, ",", ".", null)
+y := StrReplace(x, ",", ".", null, &varct)
 
 if (y = "a.b.c.d.e.f")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-if (y.OutputVarCount = 5)
+if (varct = 5)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-y := StrReplace(x, ",", ".", null, 3)
+y := StrReplace(x, ",", ".", , &varct, 3)
 
 if (y = "a.b.c.d,e,f")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-if (y.OutputVarCount = 3)
+if (varct = 3)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
@@ -69,14 +70,14 @@ if (y = "A,b,c,d,e,f")
 else
 	FileAppend, fail, *
 
-y := StrReplace(x, "a", "A", "On", 9)
+y := StrReplace(x, "a", "A", "On", &varct, 9)
 		
 if (y = "A,b,c,d,e,f")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-if (y.OutputVarCount = 1)
+if (varct = 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

@@ -23,9 +23,10 @@ namespace Keysharp.Tests
 			CoordMode("Mouse", "Screen");
 			var screen = System.Windows.Forms.Screen.PrimaryScreen;
 			_ = GetScreenClip(1000, 1000, 100, 100, "./imagesearch.bmp");
-			var found = Keysharp.Core.Screen.ImageSearch(0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");
+			object x = null, y = null;
+			Keysharp.Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");
 
-			if (found["X"] is long lx && lx == 1000 && found["Y"] is long ly && ly == 1000)
+			if (x is long lx && lx == 1000 && y is long ly && ly == 1000)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);

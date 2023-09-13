@@ -148,6 +148,46 @@ namespace Keysharp.Core
 		/// <param name="DirName">The name of the new working directory, which is assumed to be a subfolder of the current %A_WorkingDir% if an absolute path isn't specified.</param>
 		public static void SetWorkingDir(object obj) => Accessors.A_WorkingDir = obj.As();
 
+		public static void SplitPath(object obj)
+		{
+			object outFileName = null;
+			object outDir = null;
+			object outExtension = null;
+			object outNameNoExt = null;
+			object outDrive = null;
+			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+		}
+
+		public static void SplitPath(object obj, ref object outFileName)
+		{
+			object outDir = null;
+			object outExtension = null;
+			object outNameNoExt = null;
+			object outDrive = null;
+			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+		}
+
+		public static void SplitPath(object obj, ref object outFileName, ref object outDir)
+		{
+			object outExtension = null;
+			object outNameNoExt = null;
+			object outDrive = null;
+			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+		}
+
+		public static void SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension)
+		{
+			object outNameNoExt = null;
+			object outDrive = null;
+			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+		}
+
+		public static void SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt)
+		{
+			object outDrive = null;
+			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+		}
+
 		/// <summary>
 		/// Separates a file name or URL into its name, directory, extension, and drive.
 		/// </summary>
@@ -159,18 +199,15 @@ namespace Keysharp.Core
 		/// OutNameNoExt: The file name without its path, dot and extension.
 		/// OutDrive: The drive letter or server name of the file. If the file is on a local or mapped drive, the variable will be set to the drive letter followed by a colon (no backslash). If the file is on a network path (UNC), the variable will be set to the share name, e.g. \\Workstation01
 		/// </returns>
-		public static PathOutput SplitPath(object obj)
+		public static void SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt, ref object outDrive)
 		{
 			var path = obj.As();
 			var input = Path.GetFullPath(path);
-			return new PathOutput()
-			{
-				OutFileName = Path.GetFileName(input),
-				OutDir = Path.GetDirectoryName(input),
-				OutExtension = Path.GetExtension(input).Trim('.'),
-				OutNameNoExt = Path.GetFileNameWithoutExtension(input),
-				OutDrive = Path.GetPathRoot(input)
-			};
+			outFileName = Path.GetFileName(input);
+			outDir = Path.GetDirectoryName(input);
+			outExtension = Path.GetExtension(input).Trim('.');
+			outNameNoExt = Path.GetFileNameWithoutExtension(input);
+			outDrive = Path.GetPathRoot(input);
 		}
 
 		internal static string PathHead(string path)

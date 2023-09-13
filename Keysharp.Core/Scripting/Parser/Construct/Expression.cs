@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Management;
 using Keysharp.Core;
 using static System.Formats.Asn1.AsnWriter;
@@ -14,6 +15,141 @@ namespace Keysharp.Scripting
 	public partial class Parser
 	{
 		private bool memberVarsStatic = false;
+
+		private static List<int> ParseArguments(List<object> paren)
+		{
+			var inparenct = 0;
+			var paramIndex = 0;
+			var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
+			List<int> refIndexes = new List<int>(paren.Count);//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
+
+			for (var i1 = 0; i1 < paren.Count; i1++)
+			{
+				var p = paren[i1].ToString();
+
+				if (p.Contains('(') && !p.StartsWith('"'))//Indicates the start of a new expression as a parameter, so don't count it, because it'll be handled recursively on its own.
+					inparenct++;
+				else if (p.Contains(')') && !p.StartsWith('"'))
+					inparenct--;
+				else if (inparenct == 0)
+				{
+					if (p == ",")//Reached the end of a parameter, so increment parameter index.
+					{
+						paramIndex++;
+					}
+					else if (lastisstar && p == "*")//p can be * if the param is just a variable reference, or if it's a function call whose result is to be expanded. Ex: func(func2(val)*)
+					{
+						paren.RemoveAt(i1);
+						i1--;
+					}
+					else if (p == "&" && (i1 == 0 || paren[i1 - 1].ToString() == ","))
+					{
+						refIndexes.Add(paramIndex);
+						paren.RemoveAt(i1);
+					}
+				}
+			}
+
+			return refIndexes;
+		}
+
+		private static List<int> ParseArguments(CodeExpressionCollection parameters)
+		{
+			var refIndexes = new List<int>(parameters.Count);//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
+
+			for (var i = 0; i < parameters.Count; i++)
+			{
+				var p = parameters[i];
+
+				if (p is CodeDirectionExpression cde && cde.Direction == FieldDirection.Ref)
+					refIndexes.Add(i);
+				else if (p is CodeParameterDeclarationExpression cdpe && cdpe.Direction == FieldDirection.Ref)
+					refIndexes.Add(i);
+			}
+
+			return refIndexes;
+		}
+
+		private CodeExpressionCollection ConvertDirectParamsToInvoke(CodeExpressionCollection parameters)
+		{
+			var newParams = new CodeExpressionCollection();
+
+			for (int i1 = 0; i1 < parameters.Count; i1++)
+			{
+				var p = parameters[i1];
+
+				if (p is CodeDirectionExpression cde)
+				{
+					var c2s = Ch.CodeToString(cde.Expression);
+
+					if (cde.Expression is CodeMethodInvokeExpression cmie2)
+					{
+						if (cmie2.Method.MethodName == "Index")//It was an array access.
+						{
+							var p1s = Ch.CodeToString(cmie2.Parameters[0]);
+							var p2s = string.Join(", ", cmie2.Parameters.Cast<CodeExpression>().Skip(1).Select(Ch.CodeToString));
+							newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => SetObject(v, {p1s}, {p2s}))"));
+							continue;
+						}
+						else if (cmie2.Method.MethodName == "GetPropertyValue")
+						{
+							var p1s = Ch.CodeToString(cmie2.Parameters[0]);
+							var p2s = Ch.CodeToString(cmie2.Parameters[1]);
+							newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => SetPropertyValue({p1s}, {p2s}, v))"));
+							continue;
+						}
+						else
+							throw new Error("Cannot create a reference to a value returned from a function call.");
+					}
+
+					newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
+				}
+				else
+					newParams.Add(p);
+			}
+
+			return newParams;
+		}
+
+		private void HandleInvokeParams(List<int> refIndexes, CodeExpression[] passed, CodeMethodInvokeExpression invoke, bool lastisstar, bool dynamic)
+		{
+			var passedLen = passed != null ? passed.Length : 0;
+
+			if (passedLen > 0)
+			{
+				if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+				{
+					_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(passed[0], "ParseObject"));
+				}
+				else
+				{
+					if (lastisstar)
+					{
+						invoke.Parameters.AddRange(passed.Take(passed.Length - 1).ToArray());
+						var combineExpr = LocalMethodInvoke("FlattenParam");
+						_ = combineExpr.Parameters.Add(passed[passed.Length - 1]);
+						_ = invoke.Parameters.Add(combineExpr);
+					}
+					else
+						invoke.Parameters.AddRange(passed);
+
+					for (var i1 = 0; i1 < invoke.Parameters.Count; i1++)
+					{
+						if (refIndexes.Contains(i1))
+						{
+							var p = invoke.Parameters[i1];
+							invoke.Parameters[i1] = new CodeDirectionExpression(FieldDirection.Ref, p);
+						}
+					}
+				}
+			}
+
+			if (dynamic)
+			{
+				if (invoke.Parameters[0] is CodeMethodInvokeExpression cmie)
+					cmie.Parameters.Add(new CodePrimitiveExpression(passedLen));
+			}
+		}
 
 		private CodeExpression ParseExpression(CodeLine line, List<object> parts, bool create)
 		{
@@ -52,13 +188,60 @@ namespace Keysharp.Scripting
 								getMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(tempinvoke);
 							}
 
-							_ = invoke.Parameters.Add((CodeExpression)parts[n]);
-
-							if (paren.Count != 0)
+							if (paren.Count > 0)
 							{
-								var passed = ParseMultiExpression(line, paren.ToArray(), create);
-								invoke.Parameters.AddRange(passed);
+								var lastisstar = paren.Last().ToString() == "*";
+								var refIndexes = ParseArguments(paren);
+
+								if (paren.Count != 0)
+								{
+									var passed = ParseMultiExpression(line, paren.ToArray(), create);
+									HandleInvokeParams(refIndexes, passed, invoke, lastisstar, false);
+
+									if (refIndexes.Count > 0)
+									{
+										IList list = invoke.Parameters;
+
+										//This code is to handle passing by reference to a class method call.
+										//It's a gruesome, grisly hack, but there is no other way to do this in C#.
+										for (int i1 = 0; i1 < refIndexes.Count; i1++)
+										{
+											var ri = refIndexes[i1];
+
+											if (list[ri] is CodeDirectionExpression cde)
+											{
+												var c2s = Ch.CodeToString(cde.Expression);
+
+												if (cde.Expression is CodeMethodInvokeExpression cmie2)
+												{
+													if (cmie2.Method.MethodName == "Index")//It was an array access.
+													{
+														var p1s = Ch.CodeToString(cmie2.Parameters[0]);
+														var p2s = string.Join(", ", cmie2.Parameters.Cast<CodeExpression>().Skip(1).Select(Ch.CodeToString));
+														invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => SetObject(v, {p1s}, {p2s}))");
+														continue;
+													}
+													else if (cmie2.Method.MethodName == "GetPropertyValue")
+													{
+														var p1s = Ch.CodeToString(cmie2.Parameters[0]);
+														var p2s = Ch.CodeToString(cmie2.Parameters[1]);
+														invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => SetPropertyValue({p1s}, {p2s}, v))");
+														continue;
+													}
+													else
+														throw new Error("Cannot create a reference to a value returned from a function call.");
+												}
+
+												invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
+											}
+										}
+
+										invoke.Method.MethodName = "InvokeWithRefs";//Change method name to handle refs. This is much less efficient.
+									}
+								}
 							}
+
+							invoke.Parameters.Insert(0, (CodeExpression)parts[n]);//Must come after HandleInvokeParams() due to the indexing there assuming param count is 0.
 
 							if (tempinvoke != null)
 								tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
@@ -278,40 +461,8 @@ namespace Keysharp.Scripting
 						else//Any other function call aside from HotIf().
 						{
 							CodeExpression[] passed = null;
-							var inparenct = 0;
 							var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
-							//List<int> refIndexes = null;//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
-							var paramIndex = 0;
-							inparenct = 0;
-							//refIndexes = new List<int>(paren.Count);//Refs can't be done in C# with variadic params, which we use for most calls.
-
-							for (var i1 = 0; i1 < paren.Count; i1++)
-							{
-								var p = paren[i1].ToString();
-
-								if (p.Contains('('))//Indicates the start of a new expression as a parameter, so don't count it, because it'll be handled recursively on its own.
-									inparenct++;
-								else if (p.Contains(')'))
-									inparenct--;
-								else if (inparenct == 0)
-								{
-									if (p == ",")//Reached the end of a parameter, so increment parameter index.
-									{
-										paramIndex++;
-									}
-									else if (lastisstar && p == "*")//p can be * if the param is just a variable reference, or if it's a function call whose result is to be expanded. Ex: func(func2(val)*)
-									{
-										paren.RemoveAt(i1);
-										i1--;
-									}
-
-									//else if (p == "&" && (i1 == 0 || paren[i1 - 1].ToString() == ","))
-									//{
-									//  refIndexes.Add(paramIndex);
-									//  paren.RemoveAt(i1);
-									//}
-								}
-							}
+							var refIndexes = ParseArguments(paren);
 
 							if (paren.Count != 0)
 								passed = ParseMultiExpression(line, paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
@@ -340,41 +491,36 @@ namespace Keysharp.Scripting
 							else
 								invoke = LocalMethodInvoke(name);
 
-							var passedLen = passed != null ? passed.Length : 0;
+							HandleInvokeParams(refIndexes, passed, invoke, lastisstar, dynamic);
+							var needInvoke = false;
 
-							if (passedLen > 0)
+							//If a variable by the same name as the function exists at the current or parent scope,
+							//assume it's a lambda. In that case, don't convert it to an invoke here.
+							//Instead, do it in Parser.GeneratecompileUnit().
+							if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), Scope, name))
 							{
-								if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+								foreach (var ri in refIndexes)
 								{
-									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(passed[0], "ParseObject"));
-								}
-								else
-								{
-									if (lastisstar)
+									if (invoke.Parameters[ri] is CodeDirectionExpression cde && (cde.Expression is CodeMethodInvokeExpression cmie || cde.Expression is CodeArrayIndexerExpression))
 									{
-										invoke.Parameters.AddRange(passed.Take(passed.Length - 1).ToArray());
-										var combineExpr = LocalMethodInvoke("FlattenParam");
-										_ = combineExpr.Parameters.Add(passed[passed.Length - 1]);
-										_ = invoke.Parameters.Add(combineExpr);
+										needInvoke = true;
+										break;
 									}
-									else
-										invoke.Parameters.AddRange(passed);
-
-									//for (var i1 = 0; i1 < invoke.Parameters.Count; i1++)
-									//{
-									//  if (refIndexes.Contains(i1))
-									//  {
-									//      var p = invoke.Parameters[i1];
-									//      invoke.Parameters[i1] = new CodeDirectionExpression(FieldDirection.Ref, p);
-									//  }
-									//}
 								}
 							}
 
-							if (dynamic)
+							//Due to references to method call results, this method cannot be called directly and instead invoke must be used.
+							if (needInvoke)
 							{
-								if (invoke.Parameters[0] is CodeMethodInvokeExpression cmie)
-									cmie.Parameters.Add(new CodePrimitiveExpression(passedLen));
+								var oldInvoke = invoke;
+								invoke = (CodeMethodInvokeExpression)InternalMethods.InvokeWithRefs;
+								var objExpr = typeStack.Peek().Name == mainClassName ? new CodeSnippetExpression("null") : new CodeSnippetExpression("FindObjectForMethod(this, \"" + oldInvoke.Method.MethodName + $"\", {oldInvoke.Parameters.Count})");
+								var gmop = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
+								gmop.Parameters.Add(objExpr);
+								gmop.Parameters.Add(new CodePrimitiveExpression(oldInvoke.Method.MethodName));
+								gmop.Parameters.Add(new CodePrimitiveExpression((long)oldInvoke.Parameters.Count));
+								_ = invoke.Parameters.Add(gmop);
+								invoke.Parameters.AddRange(ConvertDirectParamsToInvoke(oldInvoke.Parameters));
 							}
 
 							allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
@@ -506,7 +652,7 @@ namespace Keysharp.Scripting
 							AddParts(cmd);
 							var lineNumber = codeLines.IndexOf(line) + 1;
 							//Inefficient to recompose the parameters into a string, but unsure what else to do here.
-							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
+							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => (p.Direction == FieldDirection.Ref ? "&" : "") + p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "{"));
 							var gbcc = groupByCommas.Count;
 
@@ -536,6 +682,11 @@ namespace Keysharp.Scripting
 								if (p is CodeVariableReferenceExpression cvre)
 								{
 									_ = cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
+								}
+								else if (p is CodeDirectionExpression cde)
+								{
+									var c2s = Ch.CodeToString(cde.Expression);
+									_ = cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), c2s) { Direction = FieldDirection.Ref });
 								}
 								//If a * was included, it will have been parsed above as a function argument, rather than a function parameter
 								//and such arguments are passed as a call to FlattenParam(). So catch that here and create the appropriate variadic parameter.
@@ -753,6 +904,17 @@ namespace Keysharp.Scripting
 							parts[x] = ParseExpression(line, list, create);
 							parts.RemoveAt(y);
 							i = x;
+						}
+						else if (part == "&" && i > 0 && parts[i - 1] is CodeBinaryOperatorType op && op == CodeBinaryOperatorType.Assign &&
+								 i < parts.Count - 1 && parts[i + 1] is string s2)
+						{
+							//There was a lambda declared with no parens and the only parameter was a ref.
+							//m := &a => a := (a * 2)
+							//So hack it by surrounding the parameter with parens, and reparsing because that will parse correctly.
+							parts[i] = "(";
+							parts.Insert(i + 1, "&");
+							parts.Insert(i + 3, ")");
+							i--;
 						}
 						else
 						{
@@ -1258,47 +1420,6 @@ namespace Keysharp.Scripting
 
 			return expr.ToArray();
 		}
-
-		/*  private List<string> ParseArguments(List<object> paren)
-		    {
-		    var templist = new List<string>(paren.Count);
-
-		    //When a comma is followed by another comma, it means it's an empty argument.
-		    for (var p = 0; p < paren.Count; p++)
-		    {
-		        var pstr = paren[p].ToString();
-
-		        if (pstr == ",")
-		        {
-		            if (p == 0)//First element was a comma
-		            {
-		                templist.Add("null");
-		                templist.Add(",");
-		            }
-
-		            if (p == paren.Count - 1)//Last element was a comma
-		            {
-		                if (templist[templist.Count - 1] != ",")
-		                    templist.Add(",");
-
-		                templist.Add("null");
-		            }
-		            else if (p < paren.Count - 1 && (paren[p + 1].ToString() == ","))//This element and the previous one were commas.
-		            {
-		                if (templist[templist.Count - 1] != ",")
-		                    templist.Add(",");
-
-		                templist.Add("null");
-		            }
-		            else if (p != 0)
-		                templist.Add(pstr);//Just add the comma.
-		        }
-		        else
-		            templist.Add(pstr);
-		    }
-
-		    return templist;
-		    }*/
 
 		private CodeExpression ParseSingleExpression(CodeLine line, string code, bool create)
 		{

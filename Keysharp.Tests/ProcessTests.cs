@@ -16,7 +16,8 @@ namespace Keysharp.Tests
 		[Test, Category("Process")]
 		public void ProcessRunWaitClose()
 		{
-			var pid = Run("notepad.exe", "", "max");
+			object pid = null;
+			_ = Run("notepad.exe", "", "max", ref pid);
 			_ = ProcessWait(pid);
 			_ = ProcessSetPriority("H", pid);
 

@@ -58,7 +58,7 @@ namespace Keysharp.Scripting
 			buf.Length = 0;
 
 			if (IsLocalMethodReference(name))
-				throw new ParseException($"Duplicate function {name}");
+				throw new ParseException($"Duplicate function {name}.");
 
 			var blockType = CodeBlock.BlockType.Expect;
 			var str = false;
@@ -207,7 +207,7 @@ namespace Keysharp.Scripting
 
 				x = i;// name
 
-				while (i < code.Length && (/*code[i] == '&' || */code[i] == '*' || IsIdentifier(code[i]))) i++;
+				while (i < code.Length && (code[i] == '&' || code[i] == '*' || IsIdentifier(code[i]))) i++;
 
 				if (x == i)
 				{
@@ -216,14 +216,15 @@ namespace Keysharp.Scripting
 				else
 				{
 					var part = code.Substring(x, i - x);
-					//var byref = false;
+					var byref = false;
 					var opt = false;
 					var variadic = false;
-					//if (part.StartsWith('&'))
-					//{
-					//  byref = true;
-					//  part = part.Substring(1);
-					//}
+
+					if (part.StartsWith('&'))
+					{
+						byref = true;
+						part = part.Substring(1);
+					}
 
 					if (part == "*")
 					{
@@ -248,8 +249,11 @@ namespace Keysharp.Scripting
 						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
 						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
 					}
-					//if (byref)
-					//  cpde.Direction = FieldDirection.Ref;
+
+					if (byref)
+					{
+						cpde.Direction = FieldDirection.Ref;
+					}
 					else if (variadic)
 					{
 						cpde.Type = new CodeTypeReference(typeof(object[]));

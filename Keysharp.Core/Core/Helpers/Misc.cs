@@ -242,6 +242,8 @@ namespace Keysharp.Core
 
 		public static MethodError MethodError(params object[] obj) => new (obj);
 
+		public static RefHolder Mrh(int i, object o, Action<object> r) => new RefHolder(i, o, r);//Make RefHolder.
+
 		public static void OnError(object obj0, object obj1 = null)
 		{
 			var e = obj0;

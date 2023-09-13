@@ -1,10 +1,12 @@
 ;#Include %A_ScriptDir%/header.ahk
 
-monget := MonitorGet()
+l :=
+t :=
+r :=
+b :=
+monget := MonitorGet(, &l, &t, &r, &b)
 
-; Need to eventually make this work with ownprops like monget.Left
-
-if (monget["Left"] >= 0 && monget["Right"] >= 0 && monget["Top"] >= 0 && monget["Bottom"] >= 0 && monget["N"] > 0)
+if (l >= 0 && r >= 0 && t >= 0 && b >= 0 && monget > 0)
 	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *

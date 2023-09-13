@@ -14,46 +14,60 @@ fullpath := FileDirName("./FileGetShortcut/file1.txt")
 FileCreateShortcut("./FileGetShortcut/file1.txt", "./testshortcut.lnk", fullpath, "", "TestDescription", "../../../Keysharp.ico", "")
 
 if (FileExist("./testshortcut.lnk"))
- 	FileAppend, pass, *
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-shortcut := FileGetShortcut("./testshortcut.lnk")
+outTarget :=
+outDir :=
+outArgs :=
+outDescription :=
+outIcon :=
+outIconNum :=
+outRunState :=
+FileGetShortcut("./testshortcut.lnk",
+	&outTarget,
+	&outDir,
+	&outArgs,
+	&outDescription,
+	&outIcon,
+	&outIconNum,
+	&outRunState)
 
-if (StrLower(FileFullPath("./FileGetShortcut/file1.txt")) == StrLower(shortcut.OutTarget))
- 	FileAppend, pass, *
+if (StrLower(FileFullPath("./FileGetShortcut/file1.txt")) == StrLower(outTarget))
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-if (fullpath == shortcut.OutDir)
- 	FileAppend, pass, *
+if (fullpath == outDir)
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-if ("TestDescription" == shortcut.OutDescription)
- 	FileAppend, pass, *
+if ("TestDescription" == outDescription)
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-if ("" == shortcut.OutArgs)
- 	FileAppend, pass, *
+if ("" == outArgs)
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-if (FileFullPath("../../../Keysharp.ico") == shortcut.OutIcon)
- 	FileAppend, pass, *
+if (FileFullPath("../../../Keysharp.ico") == outIcon)
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-if ("0" == shortcut.OutIconNum)
- 	FileAppend, pass, *
+if ("0" == outIconNum)
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
-if ("1" == shortcut.OutRunState)
- 	FileAppend, pass, *
+if ("1" == outRunState)
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 
 if (DirExist("./FileGetShortcut"))
 	DirDelete("./FileGetShortcut", true)

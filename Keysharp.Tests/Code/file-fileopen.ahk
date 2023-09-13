@@ -268,4 +268,73 @@ else
 			
 f.Close()
 
-; NEED EXCEPTION TESTS HERE
+b := false
+
+try
+{
+	FileOpen(path, "r -r")
+	FileOpen(path, "r")
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+b := false
+
+try
+{
+	FileOpen(path, "rw -w")
+	FileOpen(path, "rw")
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+b := false
+
+try
+{
+	f := FileOpen(path, "r -r")
+	handle = f.Handle;
+	FileOpen(handle, "r h")
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+if (FileExist(path) != "")
+	FileDelete(path)
+
+b := false
+
+try
+{
+	FileOpen(path, "r")
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

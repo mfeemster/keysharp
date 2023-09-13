@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -270,15 +271,24 @@ namespace Keysharp.Core
 			return string.IsNullOrEmpty(str) ? 0L : str[0];
 		}
 
+		public static long RegExMatch(object obj0, object obj1)
+		{
+			object outvar = null;
+			return RegExMatch(obj0, obj1, ref outvar, null);
+		}
+
+		public static long RegExMatch(object obj0, object obj1, ref object outvar) => RegExMatch(obj0, obj1, ref outvar, null);
+
 		/// <summary>
 		/// Determines whether a string contains a pattern (regular expression).
 		/// </summary>
 		/// <param name="input">The input string.</param>
 		/// <param name="needle">The pattern to search for, which is a regular expression.</param>
+		/// <param name="outputvar">The RegEx object to store the results in.</param>
 		/// <param name="index">The one-based starting character position.
 		/// If this is less than one it is considered an offset from the end of the string.</param>
 		/// <returns>The RegExResults object which contains the matches, if any.</returns>
-		public static RegExResults RegExMatch(object obj0, object obj1, object obj2 = null)
+		public static long RegExMatch(object obj0, object obj1, ref object outvar, object obj2)
 		{
 			var input = obj0.As();
 			var needle = obj1.As();
@@ -320,13 +330,25 @@ namespace Keysharp.Core
 
 			try
 			{
-				return new RegExResults(exp.Match(input, index));
+				var res = new RegExResults(exp.Match(input, index));
+				outvar = res;
+				return res.Pos();
 			}
 			catch (Exception ex)
 			{
 				throw new Error("Regular expression execution error", "", ex.Message);
 			}
 		}
+
+		public static string RegExReplace(object obj0, object obj1, object obj2 = null)
+		{
+			object outputVarCount = null;
+			return RegExReplace(obj0, obj1, obj2, ref outputVarCount);
+		}
+
+		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount) => RegExReplace(obj0, obj1, obj2, ref outputVarCount, null, null);
+
+		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount, object obj3) => RegExReplace(obj0, obj1, obj2, ref outputVarCount, obj3, null);
 
 		/// <summary>
 		/// Replaces occurrences of a pattern (regular expression) inside a string.
@@ -339,8 +361,8 @@ namespace Keysharp.Core
 		/// If this is below one all matches will be replaced.</param>
 		/// <param name="index">The one-based starting character position.
 		/// If this is less than one it is considered an offset from the end of the string.</param>
-		/// <returns>The result object which contains a string and the number of replacements</returns>
-		public static ReplaceResults RegExReplace(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null)
+		/// <returns>A version of Haystack whose contents have been replaced by the operation. If no replacements are needed, Haystack is returned unaltered.</returns>
+		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount, object obj3, object obj4)
 		{
 			var input = obj0.As();
 			var needle = obj1.As();
@@ -395,7 +417,8 @@ namespace Keysharp.Core
 			try
 			{
 				var result = exp.Replace(input, match, limit, index);
-				return new ReplaceResults(result, n);
+				outputVarCount = (long)n;
+				return result;
 			}
 			catch (Exception ex)
 			{
@@ -806,6 +829,19 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
+		public static string StrReplace(object obj0, object obj1, object obj2 = null, object obj3 = null)
+		{
+			object obj4 = null;
+			object outputVarCount = null;
+			return StrReplace(obj0, obj1, obj2, obj3, ref outputVarCount, obj4);
+		}
+
+		public static string StrReplace(object obj0, object obj1, object obj2, object obj3, ref object outputVarCount)
+		{
+			object obj4 = null;
+			return StrReplace(obj0, obj1, obj2, obj3, ref outputVarCount, obj4);
+		}
+
 		/// <summary>
 		/// Replaces the specified substring with a new string.
 		/// </summary>
@@ -815,7 +851,7 @@ namespace Keysharp.Core
 		/// <param name="outvarcount">The variable name to store the number of replacements in, if not empty.</param>
 		/// <param name="limit">The maximum number of replacements to make.</param>
 		/// <returns>The modified string.</returns>
-		public static ReplaceResults StrReplace(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null)
+		public static string StrReplace(object obj0, object obj1, object obj2, object obj3, ref object outputVarCount, object obj4)
 		{
 			var input = obj0.As();
 			var search = obj1.As();
@@ -824,7 +860,10 @@ namespace Keysharp.Core
 			var limit = obj4.Al(-1);
 
 			if (Options.IsAnyBlank(input, search))
-				return new ReplaceResults("", 0L);
+			{
+				outputVarCount = 0L;
+				return "";
+			}
 
 			var compare = Keysharp.Core.Conversions.ParseComparisonOption(comp);
 			var ct = 0L;
@@ -847,7 +886,8 @@ namespace Keysharp.Core
 			if (n < input.Length)
 				_ = buf.Append(input, n, input.Length - n);
 
-			return new ReplaceResults(buf.ToString(), ct);
+			outputVarCount = ct;
+			return buf.ToString();
 		}
 
 		/// <summary>
@@ -1278,23 +1318,6 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class ReplaceResults : KeysharpObject
-	{
-		private string str;
-
-		public long OutputVarCount { get; }
-
-		public ReplaceResults(string s, long c)
-		{
-			str = s;
-			OutputVarCount = c;
-		}
-
-		public static implicit operator string(ReplaceResults r) => r.str;
-
-		public override string ToString() => str;
-	}
-
 	/// <summary>
 	/// Human readable sorting from https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 	/// and slightly modified.
@@ -1398,15 +1421,4 @@ namespace Keysharp.Core
 		{
 		}
 	}
-
-	//public class RegExMatchInfo
-	//{
-	//  public long Pos { get; set; }
-	//
-	//  public long Pos(long n)
-	//  {
-	//      return 1;
-	//  }
-	//  //public long Pos { get; set; }
-	//}
 }

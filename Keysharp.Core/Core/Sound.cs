@@ -142,7 +142,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// The AHK documentation says this should take a component and device. Nowever, NAudio doesn't support the concept of a component
+		/// The AHK documentation says this should take a component and device. However, NAudio doesn't support the concept of a component
 		/// so it's only possible to retrieve a device by its name or index.
 		/// </summary>
 		/// <param name="obj0"></param>

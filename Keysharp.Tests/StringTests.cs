@@ -37,10 +37,10 @@ namespace Keysharp.Tests
 		public void CompareCase() => Assert.IsTrue(TestScript("string-compare-case", true));
 
 		[Test, Category("String")]
-		public void Continuation() => Assert.IsTrue(TestScript("string-continuation", false));//False because WrapInFunc() adds tabs to the lines.
+		public void Concat() => Assert.IsTrue(TestScript("string-concat", true));
 
 		[Test, Category("String")]
-		public void Concat() => Assert.IsTrue(TestScript("string-concat", true));
+		public void Continuation() => Assert.IsTrue(TestScript("string-continuation", false));//False because WrapInFunc() adds tabs to the lines.
 
 		[Test, Category("String")]
 		public void Escape() => Assert.IsTrue(TestScript("string-escape", true));
@@ -248,62 +248,64 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void RegExMatch()
 		{
-			var match = Strings.RegExMatch("abc123abc456", "abc\\d+", 1);
-			Assert.AreEqual(match[0], "abc123");
-			Assert.AreEqual(match.Pos(), 1);
-			match = Strings.RegExMatch("abc123abc456", "456", -1);
-			Assert.AreEqual(match[0], "456");
-			Assert.AreEqual(match.Pos(), 10);
-			match = Strings.RegExMatch("abc123abc456", "abc", -1);
-			Assert.AreEqual(match[0], "abc");
-			Assert.AreEqual(match.Pos(), 7);
-			match = Strings.RegExMatch("abc123abc456", "abc", -15);
-			Assert.AreEqual(match[0], "abc");
-			Assert.AreEqual(match.Pos(), 7);
-			match = Strings.RegExMatch("abc123abc456", "abc", -5);
-			Assert.AreEqual(match[0], "abc");
-			Assert.AreEqual(match.Pos(), 1);
-			match = Strings.RegExMatch("abc123abc456", "abc\\d+", 2);
-			Assert.AreEqual(match[0], "abc456");
-			Assert.AreEqual(match.Pos(), 7);
-			match = Strings.RegExMatch("abc123123", "123$", 1);
-			Assert.AreEqual(match.Pos(), 7);
-			match = Strings.RegExMatch("xxxabc123xyz", "abc.*xyz", 1);
-			Assert.AreEqual(match.Pos(), 4);
-			match = Strings.RegExMatch("abc123123", "123$");
-			Assert.AreEqual(match.Pos(), 7);
-			match = Strings.RegExMatch("abc123", "i)^ABC");
-			Assert.AreEqual(match.Pos(), 1);
-			match = Strings.RegExMatch("abcXYZ123", "abc(.*)123");
-			Assert.AreEqual(match[1], "XYZ");
-			Assert.AreEqual(match.Pos(1), 4);
-			match = Strings.RegExMatch("abcXYZ123", "abc(?<testname>.*)123");
-			Assert.AreEqual(match["testname"], "XYZ");
-			Assert.AreEqual(match.Pos("testname"), 4);
-			Assert.AreEqual(match.Name("testname"), "testname");
-			match = Strings.RegExMatch(@"C:\Foo\Bar\Baz.txt", @"\w+$");
-			Assert.AreEqual(match[0], "txt");
-			Assert.AreEqual(match.Pos(), 16);
-			match = Strings.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)");
-			Assert.AreEqual(match.Count, 2);
-			Assert.AreEqual(match[1], "Michiganroad");
-			Assert.AreEqual(match.Name(2), "nr");
-			Assert.AreEqual(match[2], "72");
+			object match = null;
+			Strings.RegExMatch("abc123abc456", "abc\\d+", ref match, 1);
+			Assert.AreEqual(((RegExResults)match)[0], "abc123");
+			Assert.AreEqual(((RegExResults)match).Pos(), 1);
+			_ = Strings.RegExMatch("abc123abc456", "456", ref match, -1);
+			Assert.AreEqual(((RegExResults)match)[0], "456");
+			Assert.AreEqual(((RegExResults)match).Pos(), 10);
+			_ = Strings.RegExMatch("abc123abc456", "abc", ref match, -1);
+			Assert.AreEqual(((RegExResults)match)[0], "abc");
+			Assert.AreEqual(((RegExResults)match).Pos(), 7);
+			_ = Strings.RegExMatch("abc123abc456", "abc", ref match, -15);
+			Assert.AreEqual(((RegExResults)match)[0], "abc");
+			Assert.AreEqual(((RegExResults)match).Pos(), 7);
+			_ = Strings.RegExMatch("abc123abc456", "abc", ref match, -5);
+			Assert.AreEqual(((RegExResults)match)[0], "abc");
+			Assert.AreEqual(((RegExResults)match).Pos(), 1);
+			_ = Strings.RegExMatch("abc123abc456", "abc\\d+", ref match, 2);
+			Assert.AreEqual(((RegExResults)match)[0], "abc456");
+			Assert.AreEqual(((RegExResults)match).Pos(), 7);
+			_ = Strings.RegExMatch("abc123123", "123$", ref match, 1);
+			Assert.AreEqual(((RegExResults)match).Pos(), 7);
+			_ = Strings.RegExMatch("xxxabc123xyz", "abc.*xyz", ref match, 1);
+			Assert.AreEqual(((RegExResults)match).Pos(), 4);
+			_ = Strings.RegExMatch("abc123123", "123$", ref match);
+			Assert.AreEqual(((RegExResults)match).Pos(), 7);
+			_ = Strings.RegExMatch("abc123", "i)^ABC", ref match);
+			Assert.AreEqual(((RegExResults)match).Pos(), 1);
+			_ = Strings.RegExMatch("abcXYZ123", "abc(.*)123", ref match);
+			Assert.AreEqual(((RegExResults)match)[1], "XYZ");
+			Assert.AreEqual(((RegExResults)match).Pos(1), 4);
+			_ = Strings.RegExMatch("abcXYZ123", "abc(?<testname>.*)123", ref match);
+			Assert.AreEqual(((RegExResults)match)["testname"], "XYZ");
+			Assert.AreEqual(((RegExResults)match).Pos("testname"), 4);
+			Assert.AreEqual(((RegExResults)match).Name("testname"), "testname");
+			_ = Strings.RegExMatch(@"C:\Foo\Bar\Baz.txt", @"\w+$", ref match);
+			Assert.AreEqual(((RegExResults)match)[0], "txt");
+			Assert.AreEqual(((RegExResults)match).Pos(), 16);
+			_ = Strings.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
+			Assert.AreEqual(((RegExResults)match).Count, 2);
+			Assert.AreEqual(((RegExResults)match)[1], "Michiganroad");
+			Assert.AreEqual(((RegExResults)match).Name(2), "nr");
+			Assert.AreEqual(((RegExResults)match)[2], "72");
 			Assert.IsTrue(TestScript("string-regexmatch", true));
 		}
 
 		[Test, Category("String")]
 		public void RegExReplace()
 		{
+			object outputVarCount = null;
 			var match = Strings.RegExReplace("abc123123", "123$", "xyz");
-			Assert.AreEqual(match.ToString(), "abc123xyz");
+			Assert.AreEqual(match, "abc123xyz");
 			match = Strings.RegExReplace("abc123", "i)^ABC");
-			Assert.AreEqual(match.ToString(), "123");
+			Assert.AreEqual(match, "123");
 			match = Strings.RegExReplace("abcXYZ123", "abc(.*)123", "aaa$1zzz");
-			Assert.AreEqual(match.ToString(), "aaaXYZzzz");
-			match = Strings.RegExReplace("abc123abc456", "abc\\d+", "");
-			Assert.AreEqual(match.ToString(), "");
-			Assert.AreEqual(match.OutputVarCount, 2L);
+			Assert.AreEqual(match, "aaaXYZzzz");
+			match = Strings.RegExReplace("abc123abc456", "abc\\d+", "", ref outputVarCount);
+			Assert.AreEqual(match, "");
+			Assert.AreEqual(outputVarCount, 2L);
 			Assert.IsTrue(TestScript("string-regexreplace", true));
 		}
 
@@ -522,26 +524,27 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d,e,f";//Can't test the ref var which holds the count here because those must be global. However it is tested in the script.
 			var y = Strings.StrReplace(x, ",");
-			Assert.AreEqual("abcdef", y.ToString());
+			object outputVarCount = 0L;
+			Assert.AreEqual("abcdef", y);
 			y = Strings.StrReplace(x, ",", "");
-			Assert.AreEqual("abcdef", y.ToString());
+			Assert.AreEqual("abcdef", y);
 			y = Strings.StrReplace(x, ",", ".");
-			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
+			Assert.AreEqual("a.b.c.d.e.f", y);
 			y = Strings.StrReplace(x, ",", ".", "On");
-			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
-			y = Strings.StrReplace(x, ",", ".");
-			Assert.AreEqual("a.b.c.d.e.f", y.ToString());
-			Assert.AreEqual(5L, y.OutputVarCount);
-			y = Strings.StrReplace(x, ",", ".", null, 3);
-			Assert.AreEqual("a.b.c.d,e,f", y.ToString());
-			Assert.AreEqual(3L, y.OutputVarCount);
+			Assert.AreEqual("a.b.c.d.e.f", y);
+			y = Strings.StrReplace(x, ",", ".", null, ref outputVarCount);
+			Assert.AreEqual("a.b.c.d.e.f", y);
+			Assert.AreEqual(5L, outputVarCount);
+			y = Strings.StrReplace(x, ",", ".", null, ref outputVarCount, 3);
+			Assert.AreEqual("a.b.c.d,e,f", y);
+			Assert.AreEqual(3L, outputVarCount);
 			y = Strings.StrReplace(x, "");
-			Assert.AreEqual("", y.ToString());
+			Assert.AreEqual("", y);
 			y = Strings.StrReplace(x, "a", "A", "On");
-			Assert.AreEqual("A,b,c,d,e,f", y.ToString());
-			y = Strings.StrReplace(x, "a", "A", "On", 9);
-			Assert.AreEqual("A,b,c,d,e,f", y.ToString());
-			Assert.AreEqual(1L, y.OutputVarCount);
+			Assert.AreEqual("A,b,c,d,e,f", y);
+			y = Strings.StrReplace(x, "a", "A", "On", ref outputVarCount, 9);
+			Assert.AreEqual("A,b,c,d,e,f", y);
+			Assert.AreEqual(1L, outputVarCount);
 			Assert.IsTrue(TestScript("string-strreplace", false));//Don't test func version because the ref var must be global.
 		}
 

@@ -16,10 +16,13 @@ namespace Keysharp.Tests
 	public partial class Scripting
 	{
 		[Test, Category("Flow")]
-		public void FlowIf() => Assert.IsTrue(TestScript("flow-if", true));
+		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", true));
 
 		[Test, Category("Flow")]
+		public void FlowIf() => Assert.IsTrue(TestScript("flow-if", true));
+
 		[NonParallelizable]
+		[Test, Category("Flow")]
 		public void FlowLoop()
 		{
 			Keysharp.Core.Flow.Init();
@@ -53,43 +56,10 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Flow")]
-		[NonParallelizable]
-		public void FlowWhile()
-		{
-			Keysharp.Core.Flow.Init();
-			const long n = 10L;
-			var x = 0L;
-			Assert.AreEqual(0L, Accessors.A_Index);
-
-			foreach (long i in Loop(n))
-			{
-				Assert.AreEqual(++x, i);
-				Assert.AreEqual(i, Accessors.A_Index);
-			}
-
-			_ = Pop();//Caller is always required to do this.
-			Assert.AreEqual(x, n);
-			Assert.AreEqual(0L, Accessors.A_Index);
-			Assert.IsTrue(TestScript("flow-while", true));
-		}
-
-		[Test, Category("Flow")]
-		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", true));//Collections tests already test foreach in C#, so just test the script here.
-
-		[Test, Category("Flow")]
 		public void FlowLoopParse() => Assert.IsTrue(TestScript("flow-loop-parse", true));
 
 		[Test, Category("Flow")]
-		public void FlowUntil() => Assert.IsTrue(TestScript("flow-until", true));
-
-		[Test, Category("Flow")]
 		public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
-
-		[Test, Category("Flow")]
-		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", true));
-
-		[Test, Category("Flow")]
-		public void FlowLoopSwitchBreakGoto() => Assert.IsTrue(TestScript("flow-loop-switch-break-goto", true));
 
 		[Test, Category("Flow")]
 		public void FlowLoopReg()
@@ -216,6 +186,37 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Flow")]
+		public void FlowLoopSwitchBreakGoto() => Assert.IsTrue(TestScript("flow-loop-switch-break-goto", true));
+
+		[Test, Category("Flow")]
+		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", true));
+
+		[Test, Category("Flow")]
 		public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", true));
+
+		//Collections tests already test foreach in C#, so just test the script here.
+		[Test, Category("Flow")]
+		public void FlowUntil() => Assert.IsTrue(TestScript("flow-until", true));
+
+		[NonParallelizable]
+		[Test, Category("Flow")]
+		public void FlowWhile()
+		{
+			Keysharp.Core.Flow.Init();
+			const long n = 10L;
+			var x = 0L;
+			Assert.AreEqual(0L, Accessors.A_Index);
+
+			foreach (long i in Loop(n))
+			{
+				Assert.AreEqual(++x, i);
+				Assert.AreEqual(i, Accessors.A_Index);
+			}
+
+			_ = Pop();//Caller is always required to do this.
+			Assert.AreEqual(x, n);
+			Assert.AreEqual(0L, Accessors.A_Index);
+			Assert.IsTrue(TestScript("flow-while", true));
+		}
 	}
 }

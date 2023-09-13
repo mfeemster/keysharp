@@ -1,6 +1,7 @@
 ; #Include %A_ScriptDir%/header.ahk
 
-pid := Run("notepad.exe", "", "max")
+pid :=
+Run("notepad.exe", "", "max", &pid)
 ProcessWait(pid)
 ProcessSetPriority("H", pid)
 exists := ProcessExist(pid)

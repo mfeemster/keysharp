@@ -384,7 +384,11 @@ namespace Keysharp.Scripting
 					return string.Concat(ForceString(left), ForceString(right));
 
 				case Operator.RegEx:
-					return Strings.RegExMatch(ForceString(left), ForceString(right), 1);
+				{
+					object outvar = null;
+					Strings.RegExMatch(ForceString(left), ForceString(right), ref outvar, 1);
+					return outvar;
+				}
 
 				case Operator.FloorDivide:
 				{

@@ -13,6 +13,8 @@ namespace Keysharp.Core
 		public string Name { get; }
 
 		public object Call(params object[] obj);
+
+		public object CallWithRefs(params object[] obj);
 	}
 
 	public static class Function
@@ -103,40 +105,69 @@ namespace Keysharp.Core
 			boundargs = ba;
 		}
 
-		public override object Call(params object[] args)
+		public override object Call(params object[] obj) => base.Call(CreateArgs(obj).ToArray());
+
+		public override object CallWithRefs(params object[] obj)
+		{
+			var argsList = CreateArgs(obj);
+			var refs = new List<RefHolder>(obj.Length);
+
+			for (var i = 0; i < argsList.Count; i++)
+			{
+				if (argsList[i] is RefHolder rh)
+				{
+					rh.index = i;//Must change the index since the array has changed.
+					refs.Add(rh);
+					argsList[i] = rh.val;
+				}
+			}
+
+			var argsArray = argsList.ToArray();
+			var val = base.Call(argsArray);
+
+			for (var i = 0; i < refs.Count; i++)
+			{
+				var rh = refs[i];
+				rh.reassign(argsArray[rh.index]);//Use value from new array.
+			}
+
+			return val;
+		}
+
+		private List<object> CreateArgs(params object[] obj)
 		{
 			int i = 0, argsused = 0;
-			var argslist = new List<object>(mph.parameters.Length);
+			var argsList = new List<object>(mph.parameters.Length);
 
 			for (; i < boundargs.Length; i++)
 			{
 				if (boundargs[i] != null)
 				{
-					argslist.Add(boundargs[i]);
+					argsList.Add(boundargs[i]);
 				}
-				else if (argsused < args.Length)
+				else if (argsused < obj.Length)
 				{
-					argslist.Add(args[argsused]);
+					argsList.Add(obj[argsused]);
 					argsused++;
 				}
 				else
-					argslist.Add(null);
+					argsList.Add(null);
 			}
 
-			for (; argsused < args.Length && argsused < mph.parameters.Length; argsused++)
-				argslist.Add(args[argsused]);
+			for (; argsused < obj.Length && argsused < mph.parameters.Length; argsused++)
+				argsList.Add(obj[argsused]);
 
-			while (argslist.Count < mph.parameters.Length)
+			while (argsList.Count < mph.parameters.Length)
 			{
-				var param = mph.parameters[argslist.Count];
+				var param = mph.parameters[argsList.Count];
 
 				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
-					argslist.Add(param.DefaultValue);
+					argsList.Add(param.DefaultValue);
 				else
-					argslist.Add(null);
+					argsList.Add(null);
 			}
 
-			return base.Call(argslist.ToArray());
+			return argsList;
 		}
 	}
 
@@ -323,7 +354,33 @@ namespace Keysharp.Core
 
 		public virtual object Call(params object[] obj) => mph.callFunc(inst, obj);
 
-		public bool IsByRef(params object[] obj)//Ref args are not supported, so this should always return false.
+		public virtual object CallWithRefs(params object[] obj)
+		{
+			var refs = new List<RefHolder>(obj.Length);
+
+			for (var i = 0; i < obj.Length; i++)
+			{
+				object p = obj[i];
+
+				if (p is RefHolder rh)
+				{
+					refs.Add(rh);
+					obj[i] = rh.val;
+				}
+			}
+
+			var val = mph.callFunc(inst, obj);
+
+			for (var i = 0; i < refs.Count; i++)
+			{
+				var rh = refs[i];
+				rh.reassign(obj[rh.index]);
+			}
+
+			return val;
+		}
+
+		public bool IsByRef(object obj = null)
 		{
 			var index = obj.Ai();
 			var funcParams = mi.GetParameters();
@@ -345,7 +402,7 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public bool IsOptional(object obj)
+		public bool IsOptional(object obj = null)
 		{
 			var index = obj.Ai();
 			var funcParams = mi.GetParameters();

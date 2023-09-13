@@ -425,19 +425,33 @@ namespace Keysharp.Tests
 				"../../../Keysharp.ico",
 				""
 			);
-			var shortcut = Keysharp.Core.KeysharpFile.FileGetShortcut("./testshortcut.lnk");
-			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), shortcut.OutTarget.ToString().ToLower());
-			Assert.AreEqual(patharg, shortcut.OutDir.ToString());
-			Assert.AreEqual("TestDescription", shortcut.OutDescription.ToString());
-			Assert.AreEqual("", shortcut.OutArgs.ToString());
-			Assert.AreEqual(Path.GetFullPath("../../../Keysharp.ico"), shortcut.OutIcon.ToString());
-			Assert.AreEqual("0", shortcut.OutIconNum.ToString());
-			Assert.AreEqual("1", shortcut.OutRunState.ToString());
+			object outTarget = null;
+			object outDir = null;
+			object outArgs = null;
+			object outDescription = null;
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+			Keysharp.Core.KeysharpFile.FileGetShortcut("./testshortcut.lnk",
+					ref outTarget,
+					ref outDir,
+					ref outArgs,
+					ref outDescription,
+					ref outIcon,
+					ref outIconNum,
+					ref outRunState);
+			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), outTarget.ToString().ToLower());
+			Assert.AreEqual(patharg, outDir.ToString());
+			Assert.AreEqual("TestDescription", outDescription.ToString());
+			Assert.AreEqual("", outArgs.ToString());
+			Assert.AreEqual(Path.GetFullPath("../../../Keysharp.ico"), outIcon.ToString());
+			Assert.AreEqual("0", outIconNum.ToString());
+			Assert.AreEqual("1", outRunState.ToString());
 
 			if (System.IO.File.Exists("./testshortcut.lnk"))
 				System.IO.File.Delete("./testshortcut.lnk");
 
-			Assert.IsTrue(TestScript("file-filegetshortcut", true));
+			Assert.IsTrue(TestScript("file-filegetshortcut", false));
 		}
 
 		[Test, Category("FileAndDir")]
@@ -512,6 +526,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("file-filemove", true));
 		}
 
+		[NonParallelizable]
 		[Test, Category("FileAndDir")]
 		public void FileOpen()
 		{
@@ -963,14 +978,14 @@ groupkey13=groupval13
 		public void SplitPath()
 		{
 			var fullpath = string.Concat(path, "DirCopy/file1.txt");
-			var splitpath = Dir.SplitPath(fullpath);
-			var filename = splitpath.OutFileName;
-			var dir = splitpath.OutDir;
-			var ext = splitpath.OutExtension;
-			var namenoext = splitpath.OutNameNoExt;
-			var drive = splitpath.OutDrive;
+			object filename = null;
+			object dir = null;
+			object ext = null;
+			object namenoext = null;
+			object drive = null;
+			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
 			Assert.AreEqual("file1.txt", filename);
-			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToLower());//This will be different on non-windows or on other dev machines.
+			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToString().ToLower());//This will be different on non-windows or on other dev machines.
 			Assert.AreEqual("txt", ext);
 			Assert.AreEqual("file1", namenoext);
 			Assert.AreEqual("D:\\", drive);

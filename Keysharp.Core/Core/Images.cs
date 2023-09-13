@@ -40,12 +40,23 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static Map LoadPicture(object obj0, object obj1 = null)
+		public static object LoadPicture(object obj0)
+		{
+			object obj = null;
+			return LoadPicture(obj0, null, ref obj);
+		}
+
+		public static object LoadPicture(object obj0, object obj1)
+		{
+			object obj = null;
+			return LoadPicture(obj0, obj1, ref obj);
+		}
+
+		public static object LoadPicture(object obj0, object obj1, ref object obj2)
 		{
 			var filename = obj0.As();
 			var options = obj1.As();
 			var handle = IntPtr.Zero;
-			long imageType = -1;
 			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
@@ -66,7 +77,7 @@ namespace Keysharp.Core
 			{
 				var cur = new Cursor(filename);
 				handle = cur.Handle;
-				imageType = 2;
+				obj2 = 2L;
 			}
 			else if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
 			{
@@ -75,21 +86,17 @@ namespace Keysharp.Core
 				{
 					handle = bmp.GetHicon();
 					disposeHandle = true;
-					imageType = 1;
+					obj2 = 1L;
 				}
 				else
 				{
 					handle = bmp.GetHbitmap();
 					disposeHandle = true;
-					imageType = 0;
+					obj2 = 0L;
 				}
 			}
 
-			return new Keysharp.Core.Map(new Dictionary<object, object>()
-			{
-				{ "Handle", new GdiHandleHolder(handle, disposeHandle) },
-				{ "ImageType", imageType }
-			});
+			return new GdiHandleHolder(handle, disposeHandle);
 		}
 	}
 }

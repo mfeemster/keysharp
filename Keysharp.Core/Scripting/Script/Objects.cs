@@ -69,10 +69,19 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			if (Reflections.FindAndCacheMethod(typetouse, "set_Item", index.Length + 1) is MethodPropertyHolder mph2)
+			var il1 = index.Length + 1;
+
+			if (Reflections.FindAndCacheMethod(typetouse, "set_Item", il1) is MethodPropertyHolder mph2)
 			{
-				mph2.callFunc(item, index.Concat(new object[] { value }));
-				return value;
+				if (il1 == mph2.ParamLength || mph2.IsVariadic)
+				{
+					mph2.callFunc(item, index.Concat(new object[] { value }));
+					return value;
+				}
+				else
+				{
+					throw new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.");
+				}
 			}
 
 			throw new MemberError($"Attempting to set index {key} of object {item} to value {value} failed.");
@@ -157,8 +166,13 @@ namespace Keysharp.Scripting
 				    }*/
 			}
 
-			if (Reflections.FindAndCacheMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph1)
-				return mph1.callFunc(item, index);
+			if (Reflections.FindAndCacheMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)
+			{
+				if (len == mph.ParamLength || mph.IsVariadic)
+					return mph.callFunc(item, index);
+				else
+					throw new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.");
+			}
 
 			throw new IndexError($"Attempting to get index of {key} on item {item} failed.");
 		}

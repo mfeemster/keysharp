@@ -1,24 +1,24 @@
 ; #Include %A_ScriptDir%/header.ahk
 
 path := "../../../Keysharp.Tests/Code/DirCopy/file1.txt"
-splitpath := SplitPath(path)
-filename := splitpath.OutFileName
-ext := splitpath.OutExtension
-namenoext := splitpath.OutNameNoExt
+filename := 
+ext := 
+namenoext := 
+SplitPath(path, &filename, , &ext, &namenoext)
 
 ; Can't really to drive or path, because it differs by OS.
 
 if (filename == "file1.txt")
- 	FileAppend, pass, *
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 	
 if (ext == "txt")
- 	FileAppend, pass, *
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *
 	
 if (namenoext == "file1")
- 	FileAppend, pass, *
+	FileAppend, pass, *
 else
-  	FileAppend, fail, *
+	FileAppend, fail, *

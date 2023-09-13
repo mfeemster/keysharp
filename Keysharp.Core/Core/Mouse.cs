@@ -123,6 +123,36 @@ namespace Keysharp.Core
 						 speed, relative, 1, "");//, true, true);
 		}
 
+		public static void MouseGetPos()
+		{
+			object x = null, y = null, w = null, c = null, obj = null;
+			MouseGetPos(ref x, ref y, ref w, ref c, obj);
+		}
+
+		public static void MouseGetPos(ref object x)
+		{
+			object y = null, w = null, c = null, obj = null;
+			MouseGetPos(ref x, ref y, ref w, ref c, obj);
+		}
+
+		public static void MouseGetPos(ref object x, ref object y)
+		{
+			object w = null, c = null, obj = null;
+			MouseGetPos(ref x, ref y, ref w, ref c, obj);
+		}
+
+		public static void MouseGetPos(ref object x, ref object y, ref object w)
+		{
+			object c = null, obj = null;
+			MouseGetPos(ref x, ref y, ref w, ref c, obj);
+		}
+
+		public static void MouseGetPos(ref object x, ref object y, ref object w, ref object c)
+		{
+			object obj = null;
+			MouseGetPos(ref x, ref y, ref w, ref c, obj);
+		}
+
 		/// <summary>
 		/// Retrieves the current position of the mouse cursor, and optionally which window and control it is hovering over.
 		/// </summary>
@@ -135,14 +165,14 @@ namespace Keysharp.Core
 		/// <item><term>2</term>: retrieve the <paramref name="control"/> ID rather than its class name.</item>
 		/// </list>
 		/// </param>
-		public static Keysharp.Core.Map MouseGetPos(object obj = null)
+		public static void MouseGetPos(ref object x, ref object y, ref object w, ref object c, object obj)
 		{
 			var mode = obj.Al();
 			var pos = Cursor.Position;
 			var found = Window.WindowManager.WindowFromPoint(pos);
 			var win = found.Handle.ToInt64();
-			var x = (long)pos.X;
-			var y = (long)pos.Y;
+			var lx = (long)pos.X;
+			var ly = (long)pos.Y;
 
 			if ((mode & 0x01) == 0)
 			{
@@ -158,17 +188,14 @@ namespace Keysharp.Core
 			if (Coords.Mouse == CoordModeType.Window)
 			{
 				var location = Window.WindowManager.GetForeGroundWindow().Location;
-				x -= location.X;
-				y -= location.Y;
+				lx -= location.X;
+				ly -= location.Y;
 			}
 
-			return new Keysharp.Core.Map(new Dictionary<object, object>()
-			{
-				{ "X", x },
-				{ "Y", y },
-				{ "Win", win },
-				{ "Control", control }
-			});
+			x = lx;
+			y = ly;
+			w = win;
+			c = control;
 		}
 
 		public static void MouseMove(object obj0, object obj1, object obj2 = null, object obj3 = null)

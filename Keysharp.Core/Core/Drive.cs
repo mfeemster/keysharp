@@ -228,15 +228,6 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class PathOutput
-	{
-		public string OutDir { get; set; }
-		public string OutDrive { get; set; }
-		public string OutExtension { get; set; }
-		public string OutFileName { get; set; }
-		public string OutNameNoExt { get; set; }
-	}
-
 	public class ShortcutOutput
 	{
 		public string OutArgs { get; set; }

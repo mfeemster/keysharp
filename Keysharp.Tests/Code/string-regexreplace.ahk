@@ -1,4 +1,5 @@
 ;#Include %A_ScriptDir%/header.ahk
+outputVarCount :=
 match := RegExReplace("abc123123", "123$", "xyz")
 
 if (match == "abc123xyz")
@@ -20,14 +21,14 @@ if (match == "aaaXYZzzz")
 else
 	FileAppend, fail, *
 
-match := RegExReplace("abc123abc456", "abc\d+", "")
+match := RegExReplace("abc123abc456", "abc\d+", "", &outputVarCount)
 
 if (match == "")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 	
-if (match.OutputVarCount == 2)
+if (outputVarCount == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

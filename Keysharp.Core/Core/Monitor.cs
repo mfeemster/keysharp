@@ -4,7 +4,37 @@ namespace Keysharp.Core
 {
 	public static class Monitor
 	{
-		public static Keysharp.Core.Map MonitorGet(object obj = null)
+		public static object MonitorGet()
+		{
+			object l = null, t = null, r = null, b = null;
+			return MonitorGet(null, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGet(object obj)
+		{
+			object l = null, t = null, r = null, b = null;
+			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGet(object obj, ref object l)
+		{
+			object t = null, r = null, b = null;
+			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGet(object obj, ref object l, ref object t)
+		{
+			object r = null, b = null;
+			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGet(object obj, ref object l, ref object t, ref object r)
+		{
+			object b = null;
+			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGet(object obj, ref object l, ref object t, ref object r, ref object b)
 		{
 			var n = obj.Al(-1L);
 			System.Windows.Forms.Screen screen;
@@ -14,14 +44,11 @@ namespace Keysharp.Core
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			return new Keysharp.Core.Map(new Dictionary<object, object>()
-			{
-				{ "Left", screen.Bounds.Left },
-				{ "Top", screen.Bounds.Top },
-				{ "Right", screen.Bounds.Right },
-				{ "Bottom", screen.Bounds.Bottom },
-				{ "N", n > 0L ? n : 1L }
-			});
+			l  = screen.Bounds.Left;
+			t  = screen.Bounds.Top;
+			r  = screen.Bounds.Right;
+			b  = screen.Bounds.Bottom;
+			return n > 0L ? n : 1L;
 		}
 
 		public static long MonitorGetCount() => System.Windows.Forms.Screen.AllScreens.Length;
@@ -49,7 +76,37 @@ namespace Keysharp.Core
 			return i + 1L;
 		}
 
-		public static Keysharp.Core.Map MonitorGetWorkArea(object obj = null)
+		public static object MonitorGetWorkArea()
+		{
+			object l = null, t = null, r = null, b = null;
+			return MonitorGetWorkArea(null, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGetWorkArea(object obj)
+		{
+			object l = null, t = null, r = null, b = null;
+			return MonitorGetWorkArea(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGetWorkArea(object obj, ref object l)
+		{
+			object t = null, r = null, b = null;
+			return MonitorGetWorkArea(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGetWorkArea(object obj, ref object l, ref object t)
+		{
+			object r = null, b = null;
+			return MonitorGetWorkArea(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGetWorkArea(object obj, ref object l, ref object t, ref object r)
+		{
+			object b = null;
+			return MonitorGetWorkArea(obj, ref l, ref t, ref r, ref b);
+		}
+
+		public static object MonitorGetWorkArea(object obj, ref object l, ref object t, ref object r, ref object b)
 		{
 			var n = obj.Al(-1L);
 			System.Windows.Forms.Screen screen;
@@ -59,14 +116,11 @@ namespace Keysharp.Core
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			return new Keysharp.Core.Map(new Dictionary<object, object>()
-			{
-				{ "Left", screen.WorkingArea.Left },
-				{ "Top", screen.WorkingArea.Top },
-				{ "Right", screen.WorkingArea.Right },
-				{ "Bottom", screen.WorkingArea.Bottom },
-				{ "N", n > 0L ? n : 1L }
-			});
+			l = screen.WorkingArea.Left;
+			t = screen.WorkingArea.Top;
+			r = screen.WorkingArea.Right;
+			b = screen.WorkingArea.Bottom;
+			return n > 0L ? n : 1L;
 		}
 	}
 }

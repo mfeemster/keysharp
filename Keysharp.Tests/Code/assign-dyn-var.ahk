@@ -201,7 +201,7 @@ MyArray3 := 30
 x := 0
 
 Loop 3
-    x += MyArray%A_Index%
+	x += MyArray%A_Index%
 
 If (x == 60)
 	FileAppend, pass, *

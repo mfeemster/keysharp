@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
@@ -211,7 +212,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception e)
 					{
-						throw new TypeError($"Argument type conversion failed: {e.Message}.");
+						throw new TypeError($"Argument type conversion failed: {e.Message}");
 					}
 				}
 			}
@@ -334,7 +335,7 @@ namespace Keysharp.Core
 				if (Environment.OSVersion.Platform == PlatformID.Win32NT && path.Length != 0 && !Path.HasExtension(path))
 					path += ".dll";
 
-				var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.Run);
+				var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.RunAndCollect);
 				var module = assembly.DefineDynamicModule("module");
 				var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
 				var invoke = container.DefinePInvokeMethod(
@@ -472,45 +473,112 @@ namespace Keysharp.Core
 			{
 				return del.DynamicInvoke(helper.args);
 			}
-			else if (function is int || function is long)
-			{
-				var address = function.Al();
-
-				if (address < 0)
-					throw new ValueError($"Function argument of type {function.GetType()} was treated as an address and had a negative value of {address}. It must greater than 0.");
-
-				try
-				{
-					var value = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate)).Method.Invoke(null, helper.args);
-					//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate));
-					//System.Linq.Expressions.Compiler.DelegateHelpers.MakeNewCustomDelegate
-					//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Action));
-					//var value = ptrdel.DynamicInvoke(args);
-					//var value = ptrdel.Method.Invoke(null, args);
-					return value;
-				}
-				catch (Exception e)
-				{
-					var error = new Error($"An error occurred when calling {function}: {e.Message}.");
-					error.Extra = "0x" + Accessors.A_LastError.ToString("X");
-					throw error;
-				}
-			}
-			//else if (function is IntPtr ip)//It came from ComCall().
-			//{
-			//  //GetMethodInfoForComSlot(typeof(IDispatch),
-			//}
-			else if (function is float || function is double || function is decimal)
-			{
-				throw new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.");
-			}
 			else
 			{
-				var val = Keysharp.Core.Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
-				return val == IntPtr.Zero
-					   ? throw new PropertyError($"Passed in object of type {function.GetType()} did not contain a property named Ptr.")
-					   : val;
+				var address = 0L;
+
+				if (function is IntPtr ip)
+					address = ip.ToInt64();
+				else if (function is int || function is long)
+					address = function.Al();
+
+				if (address > 0)//Nothing in this block works and the code below is the remnants of various attempts.
+				{
+					try
+					{
+						//var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("KeysharpDynamicMethods"), AssemblyBuilderAccess.RunAndCollect);
+						//var module = assembly.DefineDynamicModule("KeysharpDynamicModule");
+						//var container = module.DefineType("KeysharpDynamicContainer", TypeAttributes.Public | TypeAttributes.UnicodeClass);
+						//var typeBuilder = module.DefineType("KeysharpDynamicType", TypeAttributes.Public);
+						//var methodBuilder = typeBuilder.DefineMethod(
+						//                      "mymethodname",
+						//                      MethodAttributes.Public | MethodAttributes.Static,
+						//                      helper.returnType,
+						//                      helper.types);
+						//var tp = typeBuilder.CreateType();
+						//var definition = methodBuilder.GetGenericMethodDefinition();
+						//var methodInfo = tp.GetMethod("mymethodname");
+						//MsgBox("Your Dynamic Method: {0};", methodInfo.ToString());
+						//var value = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate)).Method.Invoke(null, helper.args);
+						//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate));
+						//var delType = Expression.GetFuncType(helper.types.Concat(new[] { helper.returnType}));
+						var delType = Expression.GetDelegateType(helper.types.Concat(new[] { helper.returnType}));
+						var ptrdel = GetDelegateForFunctionPointerFix(new IntPtr(address), delType);
+						//System.Runtime.CompilerServices.
+						//System.Linq.Expressions.Compiler.DelegateHelpers.MakeNewCustomDelegate
+						//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Action));
+						var value = ptrdel.DynamicInvoke(helper.args.Length == 0 ? null : helper.args);
+						//var value = ptrdel.Method.Invoke(null, args);
+						return value;
+					}
+					catch (Exception e)
+					{
+						var error = new Error($"An error occurred when calling {function}: {e.Message}");
+						error.Extra = "0x" + Accessors.A_LastError.ToString("X");
+						throw error;
+					}
+				}
+				else if (address < 0)
+				{
+					throw new ValueError($"Function argument of type {function.GetType()} was treated as an address and had a negative value of {address}. It must greater than 0.");
+				}
+				else if (function is float || function is double || function is decimal)
+				{
+					throw new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.");
+				}
+				else
+				{
+					var val = Keysharp.Core.Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
+					return val == IntPtr.Zero
+						   ? throw new PropertyError($"Passed in object of type {function.GetType()} did not contain a property named Ptr.")
+						   : val;
+				}
 			}
+		}
+
+		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
+
+		/// <summary>
+		/// https://github.com/dotnet/runtime/issues/13578
+		/// </summary>
+		/// <param name="ptr"></param>
+		/// <param name="t"></param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentNullException"></exception>
+		/// <exception cref="ArgumentException"></exception>
+		public static Delegate GetDelegateForFunctionPointerFix(IntPtr ptr, Type t)
+		{
+			//Validate the parameters (modified from https://referencesource.microsoft.com/#mscorlib/system/runtime/interopservices/marshal.cs)
+			if (ptr == IntPtr.Zero)
+			{
+				throw new ArgumentNullException(nameof(ptr));
+			}
+
+			if (t is null)
+			{
+				throw new ArgumentNullException(nameof(t));
+			}
+
+			//skip the IsRuntimeImplemented check as IsRuntimeImplemented is not visible and I cannot be bothered
+
+			if (t.IsGenericType && !t.IsConstructedGenericType)
+			{
+				throw new ArgumentException("The specified Type must not be an open generic type definition.", nameof(t));
+			}
+
+			Type? c = t.BaseType;
+
+			if (c != typeof(Delegate) && c != typeof(MulticastDelegate))
+			{
+				throw new ArgumentException("Type must derive from Delegate or MulticastDelegate.", nameof(t));
+			}
+
+			if (GetDelegateForFunctionPointerInternalPointer is null)
+			{
+				GetDelegateForFunctionPointerInternalPointer = typeof(Marshal).GetMethod("GetDelegateForFunctionPointerInternal", BindingFlags.Static | BindingFlags.NonPublic).CreateDelegate<Func<IntPtr, Type, Delegate>>();
+			}
+
+			return GetDelegateForFunctionPointerInternalPointer(ptr, t);
 		}
 
 		/// <summary>
@@ -617,7 +685,6 @@ namespace Keysharp.Core
 					return Marshal.ReadIntPtr(addr, off).ToInt64();
 			}
 		}
-
 		public static long NumPut(params object[] obj)
 		{
 			Buffer buf;
@@ -713,7 +780,6 @@ namespace Keysharp.Core
 
 			return buf.Ptr.ToInt64() + offset;
 		}
-
 		/// <summary>
 		/// Converts a local function to a native function pointer.
 		/// </summary>

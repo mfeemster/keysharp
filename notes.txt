@@ -266,7 +266,8 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	There is something called TVX, check it out sometime at www.autohotkey.com/forum/topic19021.html
 	Middle click scroll script for Notepad++: https://www.autohotkey.com/boards/viewtopic.php?p=34722&sid=9b2b27116d94f0552a149430d9ab623f#p34722
 	Another automation library: https://github.com/qgindi/LibreAutomate
-	
+	An assembler in AHK: https://github.com/CloakerSmoker/Relax-Language/blob/master/src/
+
 	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
 		In AHK, you can write to stdout using FileAppend by specifying * for the file name. 

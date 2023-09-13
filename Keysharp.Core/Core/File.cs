@@ -2,11 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Microsoft.VisualBasic.FileIO;
 
@@ -443,6 +446,139 @@ namespace Keysharp.Core
 			return string.Empty;
 		}
 
+		public static void FileGetShortcut(object obj)
+		{
+			object outTarget = null;
+			object outDir = null;
+			object outArgs = null;
+			object outDescription = null;
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget)
+		{
+			object outDir = null;
+			object outArgs = null;
+			object outDescription = null;
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget,
+										   ref object outDir)
+		{
+			object outArgs = null;
+			object outDescription = null;
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget,
+										   ref object outDir,
+										   ref object outArgs)
+		{
+			object outDescription = null;
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget,
+										   ref object outDir,
+										   ref object outArgs,
+										   ref object outDescription)
+		{
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget,
+										   ref object outDir,
+										   ref object outArgs,
+										   ref object outDescription,
+										   ref object outIcon)
+		{
+			object outIconNum = null;
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget,
+										   ref object outDir,
+										   ref object outArgs,
+										   ref object outDescription,
+										   ref object outIcon,
+										   ref object outIconNum)
+		{
+			object outRunState = null;
+			FileGetShortcut(obj,
+							ref outTarget,
+							ref outDir,
+							ref outArgs,
+							ref outDescription,
+							ref outIcon,
+							ref outIconNum,
+							ref outRunState);
+		}
+
 		/// <summary>
 		/// Retrieves information about a shortcut file.
 		/// </summary>
@@ -454,7 +590,14 @@ namespace Keysharp.Core
 		/// <param name="icon"></param>
 		/// <param name="iconNumber"></param>
 		/// <param name="runState"></param>
-		public static ShortcutOutput FileGetShortcut(object obj)
+		public static void FileGetShortcut(object obj,
+										   ref object outTarget,
+										   ref object outDir,
+										   ref object outArgs,
+										   ref object outDescription,
+										   ref object outIcon,
+										   ref object outIconNum,
+										   ref object outRunState)
 		{
 			var link = obj.As();
 
@@ -472,16 +615,13 @@ namespace Keysharp.Core
 					iconno = shortcut.IconLocation.Substring(commaindex + 1).Trim();
 				}
 
-				return new ShortcutOutput()
-				{
-					OutTarget = shortcut.TargetPath,
-					OutDir = shortcut.WorkingDirectory,
-					OutArgs = shortcut.Arguments,
-					OutDescription = shortcut.Description,
-					OutIcon = iconstr,
-					OutIconNum = iconno,//How to get this?
-					OutRunState = shortcut.WindowStyle//How to get this?
-				};
+				outTarget = shortcut.TargetPath;
+				outDir = shortcut.WorkingDirectory;
+				outArgs = shortcut.Arguments;
+				outDescription = shortcut.Description;
+				outIcon = iconstr;
+				outIconNum = iconno;//How to get this?
+				outRunState = shortcut.WindowStyle;//How to get this?
 			}
 			catch (Exception ex)
 			{

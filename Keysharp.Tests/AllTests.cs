@@ -25,17 +25,6 @@ namespace Keysharp.Tests
 
 	public partial class Scripting
 	{
-		[SetUp]
-		public void Setup()
-		{
-		}
-
-		[Test, Category("BuiltInVars")]
-		public void PropsSpecialChars() => Assert.IsTrue(TestScript("props-special-chars", true));
-
-		[Test, Category("BuiltInVars")]
-		public void PropsScriptProperties() => Assert.IsTrue(TestScript("props-script-properties", false));
-
 		[Test, Category("BuiltInVars")]
 		public void PropsDateTime()
 		{
@@ -82,15 +71,29 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("BuiltInVars")]
+		public void PropsScriptProperties() => Assert.IsTrue(TestScript("props-script-properties", false));
+
 		[NonParallelizable]
+		[Test, Category("BuiltInVars")]
 		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", false));
+
+		[Test, Category("BuiltInVars")]
+		public void PropsSpecialChars() => Assert.IsTrue(TestScript("props-special-chars", true));
 
 		[Test, Category("BuiltInVars")]
 		public void ReflectionsInit() => Reflections.Initialize();
 
-		[Test, Category("BuiltInVars")]
+		[SetUp]
+		public void Setup()
+		{
+			Reflections.Clear();
+			Reflections.Initialize();
+		}
+
 		[NonParallelizable]
+		[Test, Category("BuiltInVars")]
 		public void Suspend() => Assert.IsTrue(TestScript("suspend", true));
+
 		/*
 		            [Test]
 		            public void Functions()

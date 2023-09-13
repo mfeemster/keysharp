@@ -25,6 +25,8 @@ namespace Keysharp.Core
 			Name = name;
 			callFunc = (inst, obj) =>
 			{
+				var t = inst.GetType();
+				var m = t.GetMember(Name);
 				return inst.GetType().InvokeMember(Name, BindingFlags.InvokeMethod, null, inst, obj);
 			};
 		}
@@ -57,11 +59,11 @@ namespace Keysharp.Core
 
 	public class MethodPropertyHolder
 	{
+		public Func<object, object[], object> callFunc;
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
 		internal readonly Action<object, object> setPropFunc;
-		internal Func<object, object[], object> callFunc;
 		protected readonly ConcurrentStackPool<object> paramsPool;
 		private readonly bool isGuiType;
 		private int startVarIndex = -1;
@@ -165,7 +167,10 @@ namespace Keysharp.Core
 								_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, newobj), false);
 
 							if (ParamLength > 1)
+							{
+								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, obj.Length));//In case any params were references.
 								paramsPool.Return(newobj, true);
+							}
 
 							return ret;
 						};
@@ -199,6 +204,7 @@ namespace Keysharp.Core
 								else if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
 									_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, newobj), false);
 
+								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, objLength));//In case any params were references.
 								paramsPool.Return(newobj, true);
 							}
 
@@ -298,6 +304,20 @@ namespace Keysharp.Core
 					}
 				}
 			}
+		}
+	}
+
+	public class RefHolder
+	{
+		internal int index;
+		internal Action<object> reassign;
+		internal object val;
+
+		public RefHolder(int i, object o, Action<object> r)
+		{
+			index = i;
+			val = o;
+			reassign = r;
 		}
 	}
 

@@ -71,7 +71,7 @@ namespace Semver
 		/// <paramref name="allowLeadingZeros"/> is <see langword="true"/>. Any leading zeros will
 		/// be removed.</remarks>
 		public PrereleaseIdentifier(string value, bool allowLeadingZeros = false)
-			: this(value, allowLeadingZeros, nameof(value))
+		: this(value, allowLeadingZeros, nameof(value))
 		{
 		}
 

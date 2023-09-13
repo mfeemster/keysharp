@@ -12,20 +12,38 @@ namespace Keysharp.Core
 {
 	public static class Reflections
 	{
-		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static readonly Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static readonly int sttcap = 1000;
-		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
-		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
-		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
-		internal static readonly Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
-
 		//private static Dictionary<Guid, Dictionary<string, MethodPropertyHolder>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodPropertyHolder>>(sttcap / 20);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 
+		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
+		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static int sttcap = 1000;
+		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
+		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
+		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+
 		static Reflections() => Initialize();
+
+		/// <summary>
+		/// This should only ever be called from the unit tests.
+		/// </summary>
+		public static void Clear()
+		{
+			staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
+			stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+			stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
+			stringToTypeMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+			stringToTypeProperties = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+			typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
+			typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
+			typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+			typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+			loadedAssemblies = new Dictionary<string, Assembly>();
+		}
 
 		/// <summary>
 		/// This must be manually called before any program is run.
@@ -39,7 +57,7 @@ namespace Keysharp.Core
 		{
 			loadedAssemblies = GetLoadedAssemblies();
 			CacheAllMethods();
-			CacheAllProperties();
+			CacheAllPropertiesAndFields();
 		}
 
 		internal static void CacheAllMethods()
@@ -92,7 +110,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static void CacheAllProperties()
+		internal static void CacheAllPropertiesAndFields()
 		{
 			typeToStringProperties.Clear();
 			stringToTypeProperties.Clear();
@@ -102,11 +120,62 @@ namespace Keysharp.Core
 					if (type.IsClass && type.IsPublic && type.Namespace != null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
+					{
 						_ = FindAndCacheProperty(type, "", 0);
+						_ = FindAndCacheField(type, "");
+					}
 
 			foreach (var typekv in typeToStringProperties)
 				foreach (var propkv in typekv.Value)
 					_ = stringToTypeProperties.GetOrAdd(propkv.Key).GetOrAdd(typekv.Key, propkv.Value);
+		}
+
+		internal static FieldInfo FindAndCacheField(Type t, string name)
+		{
+			try
+			{
+				do
+				{
+					if (staticFields.TryGetValue(t, out var dkt))
+					{
+					}
+					else//Field on this type has not been used yet, so get all properties and cache.
+					{
+						var fields = t.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+
+						if (fields.Length > 0)
+						{
+							foreach (var field in fields)
+								staticFields.GetOrAdd(field.DeclaringType,
+													  () => new Dictionary<string, FieldInfo>(fields.Length, StringComparer.OrdinalIgnoreCase))
+								[field.Name] = field;
+						}
+						else//Make a dummy entry because this type has no fields. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+						{
+							staticFields[t] = dkt = new Dictionary<string, FieldInfo>(StringComparer.OrdinalIgnoreCase);
+							t = t.BaseType;
+							continue;
+						}
+					}
+
+					if (dkt == null && !staticFields.TryGetValue(t, out dkt))
+					{
+						t = t.BaseType;
+						continue;
+					}
+
+					if (dkt.TryGetValue(name, out var fi))//Since the Dictionary was created above with StringComparer.OrdinalIgnoreCase, this will be a case insensitive match.
+						return fi;
+
+					t = t.BaseType;
+				} while (t.Assembly == typeof(Any).Assembly || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase));
+			}
+			catch (Exception)// e)
+			{
+				throw;
+			}
+
+			return null;
 		}
 
 		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount)
@@ -208,25 +277,8 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		private static MethodPropertyHolder FindMethod(Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> dkt, string name, int paramCount)
-		{
-			if (dkt.TryGetValue(name, out var meths))
-				if (meths.Count > 0)
-				{
-					var first = meths.First().Value;
-
-					if (paramCount < 0 || first.Count == 1)
-						return first.First().Value;
-					else if (first.TryGetValue(paramCount, out var mph))
-						return mph;
-				}
-
-			return null;
-		}
-
 		internal static MethodPropertyHolder FindBuiltInMethod(string name, int paramCount) =>
 		FindMethod(stringToTypeBuiltInMethods, name, paramCount);
-
 
 		internal static MethodPropertyHolder FindLocalMethod(string name, int paramCount) =>
 		FindMethod(stringToTypeLocalMethods, name, paramCount);
@@ -322,6 +374,22 @@ namespace Keysharp.Core
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
+
+		private static MethodPropertyHolder FindMethod(Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> dkt, string name, int paramCount)
+		{
+			if (dkt.TryGetValue(name, out var meths))
+				if (meths.Count > 0)
+				{
+					var first = meths.First().Value;
+
+					if (paramCount < 0 || first.Count == 1)
+						return first.First().Value;
+					else if (first.TryGetValue(paramCount, out var mph))
+						return mph;
+				}
+
+			return null;
+		}
 
 		/// <summary>
 		/// This Method extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.

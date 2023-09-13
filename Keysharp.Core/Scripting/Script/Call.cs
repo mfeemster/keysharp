@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -17,10 +18,21 @@ namespace Keysharp.Scripting
 		private static string lastKey = null;
 
 		[ThreadStatic]
-		private static int lastParamCount = 0;
+		private static (object, MethodPropertyHolder) lastMph = (null, null);
 
 		[ThreadStatic]
-		private static (object, MethodPropertyHolder) lastMph = (null, null);
+		private static int lastParamCount = 0;
+
+		public static object FindObjectForMethod(object obj, string name, int paramCount)
+		{
+			if (Reflections.FindAndCacheMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
+				return obj;
+
+			if (Reflections.FindMethod(name, paramCount) is MethodPropertyHolder mph2)
+				return null;
+
+			throw new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.");
+		}
 
 		public static (object, MethodPropertyHolder) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
 		{
@@ -123,7 +135,23 @@ namespace Keysharp.Scripting
 
 		public static object GetStaticMemberValueT<T>(object name)
 		{
-			if (Reflections.FindAndCacheProperty(typeof(T), name.ToString(), 0) is MethodPropertyHolder mph && mph.IsStaticProp)
+			var namestr = name.ToString();
+
+			if (Reflections.FindAndCacheField(typeof(T), namestr) is FieldInfo fi && fi.IsStatic)
+			{
+				try
+				{
+					return fi.GetValue(null);
+				}
+				catch (Exception e)
+				{
+					if (e.InnerException is KeysharpException ke)
+						throw ke;
+					else
+						throw;
+				}
+			}
+			else if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 			{
 				try
 				{
@@ -137,8 +165,8 @@ namespace Keysharp.Scripting
 						throw;
 				}
 			}
-
-			throw new PropertyError($"Attempting to get property {name} failed.");
+			else
+				throw new PropertyError($"Attempting to get property or field {name} failed.");
 		}
 
 		public static object Invoke((object, MethodPropertyHolder) mitup, params object[] parameters)
@@ -152,6 +180,46 @@ namespace Keysharp.Scripting
 				//So catch it here instead.
 				if (ret is IFuncObj fo && mitup.Item2.pi != null)
 					return fo.Call(parameters);
+
+				return ret;
+			}
+			catch (Exception e)
+			{
+				if (e.InnerException is KeysharpException ke)
+					throw ke;
+				else
+					throw;
+			}
+		}
+
+		public static object InvokeWithRefs((object, MethodPropertyHolder) mitup, params object[] parameters)
+		{
+			try
+			{
+				var refs = new List<RefHolder>(parameters.Length);
+
+				for (var i = 0; i < parameters.Length; i++)
+				{
+					if (parameters[i] is RefHolder rh)
+					{
+						refs.Add(rh);
+						parameters[i] = rh.val;
+					}
+				}
+
+				var ret = mitup.Item2.callFunc(mitup.Item1, parameters);
+
+				//The following check is done when accessing a class property that is a function object. The user intended to call it.
+				//Catching this during compilation is very hard when calling it from outside of the class definition.
+				//So catch it here instead.
+				if (ret is IFuncObj fo && mitup.Item2.pi != null)
+					ret = fo.Call(parameters);
+
+				for (var i = 0; i < refs.Count; i++)
+				{
+					var rh = refs[i];
+					rh.reassign(parameters[rh.index]);
+				}
 
 				return ret;
 			}
@@ -215,7 +283,21 @@ namespace Keysharp.Scripting
 		{
 			var namestr = name.ToString();
 
-			if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
+			if (Reflections.FindAndCacheField(typeof(T), namestr) is FieldInfo fi && fi.IsStatic)
+			{
+				try
+				{
+					fi.SetValue(null, value);
+				}
+				catch (Exception e)
+				{
+					if (e.InnerException is KeysharpException ke)
+						throw ke;
+					else
+						throw;
+				}
+			}
+			else if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 			{
 				try
 				{
@@ -230,7 +312,7 @@ namespace Keysharp.Scripting
 				}
 			}
 			else
-				throw new PropertyError($"Attempting to set property {namestr} to value {value} failed.");
+				throw new PropertyError($"Attempting to set property or field {namestr} to value {value} failed.");
 		}
 	}
 }

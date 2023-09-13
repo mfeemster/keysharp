@@ -137,13 +137,21 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static long Run(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
+		public static long Run(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var target = obj0.As();
 			var workingDir = obj1.As();
 			var options = obj2.As();
-			var arg = obj3.As();
-			return RunInternal(target, workingDir, options, arg).Item1;
+			object pid = null;
+			return Run(target, workingDir, options, ref pid, null);
+		}
+
+		public static long Run(object obj0, object obj1, object obj2, ref object obj3, object obj4 = null)
+		{
+			var target = obj0.As();
+			var workingDir = obj1.As();
+			var options = obj2.As();
+			return RunInternal(target, workingDir, options, ref obj3, obj4);
 		}
 
 		/// <summary>
@@ -176,14 +184,21 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static RunResults RunWait(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
+		public static long RunWait(object obj0, object obj1, object obj2)
 		{
 			var target = obj0.As();
 			var workingDir = obj1.As();
 			var options = obj2.As();
-			var arg = obj3.As();
-			var res = RunInternal(target, workingDir, options, arg, true);
-			return new RunResults(res.Item1, res.Item2);
+			object obj3 = null;
+			return RunWait(target, workingDir, options, ref obj3, null);
+		}
+
+		public static long RunWait(object obj0, object obj1, object obj2, ref object obj3, object obj4)
+		{
+			var target = obj0.As();
+			var workingDir = obj1.As();
+			var options = obj2.As();
+			return RunInternal(target, workingDir, options, ref obj3, obj4, true);
 		}
 
 		/// <summary>
@@ -240,10 +255,11 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static (long, long) RunInternal(string target, string workingDir, string showMode, string arg, bool wait = false)
+		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, object arg, bool wait = false)
 		{
 			var pid = 0;
 			var isadmin = false;
+			var args = arg.As();
 
 			try
 			{
@@ -291,8 +307,8 @@ namespace Keysharp.Core
 					}
 				};
 
-				if (!string.IsNullOrEmpty(arg))
-					prc.StartInfo.Arguments = arg.Trim();
+				if (!string.IsNullOrEmpty(args))
+					prc.StartInfo.Arguments = args.Trim();
 				else if (parsedArgs.Length > 0)
 					prc.StartInfo.Arguments = parsedArgs;
 
@@ -325,7 +341,8 @@ namespace Keysharp.Core
 					if (wait)
 					{
 						prc.WaitForExit();
-						return (pid, prc.ExitCode);
+						outputVarPID = pid;
+						return prc.ExitCode;
 					}
 				}
 			}
@@ -334,23 +351,8 @@ namespace Keysharp.Core
 				throw new Error(ex.Message);
 			}
 
-			return (pid, 0L);
+			outputVarPID = pid;
+			return 0L;
 		}
-	}
-
-	public class RunResults : KeysharpObject
-	{
-		public long ExitCode { get; }
-		public long OutputVarPID { get; }
-
-		public RunResults(long p, long c)
-		{
-			OutputVarPID = p;
-			ExitCode = c;
-		}
-
-		public static implicit operator long(RunResults r) => r.ExitCode;
-
-		public override string ToString() => ExitCode.ToString();
 	}
 }

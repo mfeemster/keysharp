@@ -25,6 +25,7 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> allMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
 		private CompilerHelper Ch;
+		private List<CodeLine> codeLines = new List<CodeLine>();
 		private string fileName;
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
@@ -42,7 +43,6 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private CodeTypeDeclaration targetClass;
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
-		private List<CodeLine> codeLines = new List<CodeLine>();
 		private CompilerParameters CompilerParameters { get; set; }
 
 		static Parser()
@@ -143,7 +143,7 @@ namespace Keysharp.Scripting
 			mainNs.Imports.Add(new CodeNamespaceImport("Array = Keysharp.Core.Array"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Buffer = Keysharp.Core.Buffer"));
 			_ = unit.Namespaces.Add(mainNs);
-			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Keysharp.Core.Accessors.A_AhkVersion);
+			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Accessors.A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
 
@@ -290,6 +290,12 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			var createDummyRef = false;
+			var tsVar = DateTime.Now.ToString("_MMddyyyyHHmmssfffffff");
+
+			while (targetClass.Members.Cast<CodeTypeMember>().Any(ctm => ctm.Name == tsVar))
+				tsVar = "_" + tsVar;
+
 			foreach (var cmietype in allMethodCalls)
 			{
 				foreach (var cmietypefunc in cmietype.Value)
@@ -298,16 +304,85 @@ namespace Keysharp.Scripting
 					{
 						//Handle changing myfuncobj() to myfuncobj.Call().
 						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), "Call");
+						{
+							var refIndexes = ParseArguments(cmie.Parameters);
+
+							if (refIndexes.Count > 0)
+							{
+								var newParams = ConvertDirectParamsToInvoke(cmie.Parameters);
+								cmie.Parameters.Clear();
+								cmie.Parameters.AddRange(newParams);
+								cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), "CallWithRefs");
+							}
+							else
+								cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), "Call");
+						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is string s && s.Length > 0)//Convert myclass() to myclass.Call().
 							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
 						//Handle proper casing for all method calls.
 						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
+						{
+							var methParams = cmm.Parameters;
 							cmie.Method.MethodName = cmm.Name;
-						else if (Keysharp.Core.Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
+
+							for (var i = 0; i < cmie.Parameters.Count; i++)
+							{
+								var cp = cmie.Parameters[i];
+
+								if (i < methParams.Count)
+								{
+									if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
+									{
+										var mp = methParams[i];
+
+										if (mp.Direction == FieldDirection.Ref)
+										{
+											cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
+											createDummyRef = true;
+										}
+									}
+								}
+							}
+						}
+						else if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
+						{
 							cmie.Method.MethodName = mph.mi.Name;
+
+							if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, cmie.Parameters.Count) is MethodPropertyHolder mph2 && mph2.mi != null)//We know the method exists, so try to find the exact match for the number of parameters specified.
+							{
+								var methParams = mph2.mi.GetParameters();
+
+								for (var i = 0; i < cmie.Parameters.Count; i++)
+								{
+									var cp = cmie.Parameters[i];
+
+									if (i < methParams.Length)
+									{
+										if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
+										{
+											var mp = methParams[i];
+
+											if (mp.ParameterType.IsByRef && !mp.IsOut)
+											{
+												cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
+												createDummyRef = true;
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				}
+			}
+
+			if (createDummyRef)
+			{
+				targetClass.Members.Add(new CodeSnippetTypeMember()
+				{
+					Name = name,
+					Text = $"\t\tpublic static object {tsVar};"
+				});
 			}
 
 			foreach (var typeMethods in methods)
@@ -582,7 +657,7 @@ namespace Keysharp.Scripting
 
 			foreach (var typekv in allVars)
 			{
-				if (typekv.Key == targetClass)
+				if (typekv.Key == targetClass)//Global vars part of main program class.
 				{
 					foreach (var scopekv in typekv.Value.Where(kv => kv.Key.Length == 0))
 					{
@@ -592,8 +667,8 @@ namespace Keysharp.Scripting
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
 								Name = name,
-								Text = $"\t\tpublic static object {name} {{ get; set; }}"
-							});
+								Text = $"\t\tpublic static object {name};"// {{ get; set; }}"
+							}); ;
 						}
 					}
 				}
@@ -665,7 +740,7 @@ namespace Keysharp.Scripting
 			Accessors.A_ClipboardTimeout = 1000;
 			Accessors.A_SendLevel = 0;
 			HotstringDefinition.DefaultHotstringSuspendExempt = false;
-			Keysharp.Scripting.Script.ForceKeybdHook = false;
+			Script.ForceKeybdHook = false;
 			//LTrimForced = false;
 			IfWinActive_WinTitle = string.Empty;
 			IfWinActive_WinText = string.Empty;

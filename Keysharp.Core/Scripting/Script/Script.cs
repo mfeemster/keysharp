@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -162,14 +163,16 @@ namespace Keysharp.Scripting
 				{
 				}
 
+				object pid = null;
+
 				if (!string.IsNullOrEmpty(ed))
 				{
 					var splits = ed.Split('%');
 					ed = splits.Length > 0 ? splits[0] : ed;
-					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", Accessors.A_ScriptFullPath);
+					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
 				}
 				else
-					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", Accessors.A_ScriptFullPath);
+					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
 			}
 			else
 			{

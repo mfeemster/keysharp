@@ -64,6 +64,7 @@ namespace Keysharp.Benchmark
 		private object[] nativearray = System.Array.Empty<object>();
 		private double[] nativedoublearray = System.Array.Empty<double>();
 		private Array keysharparray = Keysharp.Core.Misc.Array();
+		private dynamic? dynamickeysharparray;
 		private double totalSum;
 
 		[Params(1000000)]
@@ -94,7 +95,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public unsafe void NativeUnsafeArray()
+		public unsafe void NativeUnsafeDoubleArray()
 		{
 			var total = 0.0;
 
@@ -103,6 +104,18 @@ namespace Keysharp.Benchmark
 				for (var i = 0; i < Size; i++)
 					total += ptr[i];
 			}
+
+			if (!total.IsAlmostEqual(totalSum))
+				throw new Exception($"{total} was not equal to {totalSum}.");
+		}
+
+		[Benchmark]
+		public void KeysharpDynamicArray()
+		{
+			var total = 0.0;
+
+			for (var i = 1; i <= Size; i++)
+				total += (double)dynamickeysharparray[i];
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
@@ -167,6 +180,7 @@ namespace Keysharp.Benchmark
 			nativearray = new object[Size];
 			nativedoublearray = new double[Size];
 			keysharparray = new Array(Size);
+			dynamickeysharparray = new Array(Size);
 
 			for (var i = 0; i < Size; i++)
 			{
@@ -175,6 +189,7 @@ namespace Keysharp.Benchmark
 				nativearray[i] = d;
 				nativedoublearray[i] = d;
 				_ = keysharparray.Add(d);
+				_ = dynamickeysharparray.Add(d);
 				totalSum += d;
 			}
 		}
