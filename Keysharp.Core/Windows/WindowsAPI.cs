@@ -1462,7 +1462,7 @@ namespace Keysharp.Core.Windows
 							  winmm = "winmm.dll",
 							  advapi = "advapi32.dll",
 							  ole32 = "ole32.dll",
-							  oleacc = "oleac.dll",
+							  oleacc = "oleacc.dll",
 							  oleaut = "oleaut32.dll";
 
 		[DllImport(oleacc)]
