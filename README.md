@@ -6,7 +6,8 @@
 * If .NET 7 is not installed on your machine, you need to download and run the ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/7.0).
 * Download and run the Keysharp installer from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
 	+ The install path can be optionally added to the $PATH varible, so you can run it from the command line from anywhere.
-	+ It also registeres Keysharp.exe as the default program to open .ks files. So after installing, double click any .ks file to run it.
+		+ The path entry will be removed upon uninstall.
+	+ It also registers Keysharp.exe as the default program to open .ks files. So after installing, double click any .ks file to run it.
 	
 ### Portable Run on Windows ###
 * Download and unzip the zip file from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
@@ -165,6 +166,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
 * Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in `StrGet()` like:
 	+ `StrGet(DllCall("GetCommandLine", "ptr"))`
+* `WinGetPos()` does not take reference parameters. Instead, it takes 4 optional arguments and returns a `Map` with the following entries: `OutX`, `OutY`, `OutWidth`, `OutHeight`.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 	+ The following options are different:
 		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
@@ -249,6 +251,16 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	classobj := myclass()
 	classobj.super.a := 123
 ```
+* Reference parameters for functions using `&` are supported with the following improvements and caveats:
+	+ Passing class members, array indexes and map values by reference is supported.
+		+ func(&classobj.classprop)
+		+ func(&myarray[5])
+		+ func(&mymap["mykey"])
+	+ Reference parameters in functions work for class methods, global functions, built in functions, lambdas and function objects.
+		+ Lambdas with a single reference parameter can be declared with no parentheses:
+			+ lam := &a => a := (a * 2)
+	+ For an argument to be passed as a reference, the function parameter in that position must be declared as a reference:
+		+ func(&p1) { }
 
 ###	Removals: ###
 * COM is not implemented yet.
@@ -276,16 +288,13 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The `3` and `5` options for `DirSelect()` don't apply in C#.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
-* VarRef and reference variables are not supported.
-	+ Users will need to rework how they use `FileGetShortcut()`, `ImageSearch()`, `LoadPicture()`, `MonitorGet()`, `MonitorGetWorkArea()`, `MouseGetPos()`, `RegExMatch()`, `Run()`, `RunWait()`, `SplitPath()`, `StrReplace()`, `WinGetPos()`.
-		+ They instead return Map objects whose keys match the names of what would have been the reference parameters. For example:
-		+ `Run/RunWait()` do not take `&OutputVarPID` as the last argument. Instead, `Run()` returns `OutputVarPID` and `RunWait()` returns `(ExitCode, OutputVarPID)`.
+* VarRef is not supported.
 * `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
 	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
 	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
 	+ The pause menu item has been removed.
-* `ObjAddRef()` and `ObjPtrAddRef()` are not supported. Instead, use the following:
+* `ObjAddRef()` and `ObjPtrAddRef()` do not have an effect for non-COM objects. Instead, use the following:
 	+ `newref := theobj` ; adds 1 to the reference count
 	+ `newref := ""` ; subtracts 1 from the reference count
 * `#Warn` to enable/disable compiler warnings is not supported yet.
