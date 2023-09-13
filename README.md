@@ -253,14 +253,14 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 ```
 * Reference parameters for functions using `&` are supported with the following improvements and caveats:
 	+ Passing class members, array indexes and map values by reference is supported.
-		+ func(&classobj.classprop)
-		+ func(&myarray[5])
-		+ func(&mymap["mykey"])
+		+ `func(&classobj.classprop)`
+		+ `func(&myarray[5])`
+		+ `func(&mymap["mykey"])`
 	+ Reference parameters in functions work for class methods, global functions, built in functions, lambdas and function objects.
 		+ Lambdas with a single reference parameter can be declared with no parentheses:
-			+ lam := &a => a := (a * 2)
+			+ `lam := &a => a := (a * 2)`
 	+ For an argument to be passed as a reference, the function parameter in that position must be declared as a reference:
-		+ func(&p1) { }
+		+ `func(&p1) { }`
 
 ###	Removals: ###
 * COM is not implemented yet.
