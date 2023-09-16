@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Window;
 
 namespace Keysharp.Core
 {
@@ -108,7 +109,18 @@ namespace Keysharp.Core
 							object ret = null;
 
 							if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-								_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, null), false);
+							{
+								ctrl.CheckedInvoke(() =>
+								{
+									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+									if (ctrl.FindForm() is Form form)
+										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+									ret = mi.Invoke(inst, null);
+									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+								}, false);
+							}
 
 							return ret;
 						};
@@ -162,9 +174,22 @@ namespace Keysharp.Core
 							object ret = null;
 
 							if (!isGuiType)
+							{
 								ret = mi.Invoke(inst, newobj);
+							}
 							else if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-								_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, newobj), false);
+							{
+								ctrl.CheckedInvoke(() =>
+								{
+									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+									if (ctrl.FindForm() is Form form)
+										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+									ret = mi.Invoke(inst, newobj);
+									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+								}, false);
+							}
 
 							if (ParamLength > 1)
 							{
@@ -185,9 +210,22 @@ namespace Keysharp.Core
 							if (ParamLength == objLength)
 							{
 								if (!isGuiType)
+								{
 									ret = mi.Invoke(inst, obj);
+								}
 								else if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-									_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, obj), false);
+								{
+									ctrl.CheckedInvoke(() =>
+									{
+										var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+										if (ctrl.FindForm() is Form form)
+											Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+										ret = mi.Invoke(inst, obj);
+										Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									}, false);
+								}
 							}
 							else
 							{
@@ -200,9 +238,22 @@ namespace Keysharp.Core
 
 								//Any remaining items in newobj are null by default.
 								if (!isGuiType)
+								{
 									ret = mi.Invoke(inst, newobj);
+								}
 								else if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-									_ = ctrl.CheckedInvoke(() => ret = mi.Invoke(inst, newobj), false);
+								{
+									ctrl.CheckedInvoke(() =>
+									{
+										var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+										if (ctrl.FindForm() is Form form)
+											Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+										ret = mi.Invoke(inst, newobj);
+										Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									}, false);
+								}
 
 								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, objLength));//In case any params were references.
 								paramsPool.Return(newobj, true);
@@ -228,7 +279,18 @@ namespace Keysharp.Core
 							object ret = null;
 
 							if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-								_ = ctrl.CheckedInvoke(() => ret = pi.GetValue(null), false);
+							{
+								ctrl.CheckedInvoke(() =>
+								{
+									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+									if (ctrl.FindForm() is Form form)
+										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+									ret = pi.GetValue(null);
+									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+								}, false);
+							}
 
 							if (ret is int i)
 								ret = (long)i;//Try to keep everything as long.
@@ -238,7 +300,18 @@ namespace Keysharp.Core
 						setPropFunc = (inst, obj) =>
 						{
 							if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-								ctrl.CheckedInvoke(() => pi.SetValue(null, obj), false);
+							{
+								ctrl.CheckedInvoke(() =>
+								{
+									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+									if (ctrl.FindForm() is Form form)
+										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+									pi.SetValue(null, obj);
+									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+								}, false);
+							}
 						};
 					}
 					else
@@ -270,7 +343,18 @@ namespace Keysharp.Core
 							object ret = null;
 
 							if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-								ctrl.CheckedInvoke(() => ret = pi.GetValue(inst), false);
+							{
+								ctrl.CheckedInvoke(() =>
+								{
+									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+									if (ctrl.FindForm() is Form form)
+										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+									ret = pi.GetValue(inst);
+									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+								}, false);
+							}
 
 							if (ret is int i)
 								ret = (long)i;//Try to keep everything as long.
@@ -280,7 +364,18 @@ namespace Keysharp.Core
 						setPropFunc = (inst, obj) =>
 						{
 							if (inst.GetControl() is Control ctrl)//If it's a gui control, then invoke on the gui thread.
-								ctrl.CheckedInvoke(() => pi.SetValue(inst, obj), false);
+							{
+								ctrl.CheckedInvoke(() =>
+								{
+									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+									if (ctrl.FindForm() is Form form)
+										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+
+									pi.SetValue(inst, obj);
+									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+								}, false);
+							}
 						};
 					}
 					else
