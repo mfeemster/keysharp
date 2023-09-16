@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Windows.Forms;
 using Keysharp.Core;
 
 namespace System.Collections
@@ -417,6 +418,11 @@ namespace System.Collections.Generic
 		public static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
 			object result = null;
+			var inst = obj.Length > 0 ? obj[0].GetControl() : null;
+			var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+
+			if (inst is Control ctrl && ctrl.FindForm() is Form form)
+				Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
 
 			foreach (var handler in handlers)
 			{
@@ -432,6 +438,7 @@ namespace System.Collections.Generic
 				}
 			}
 
+			Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
 			return result;
 		}
 
