@@ -45,10 +45,10 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 	+ Optionally output the generated executable to an .exe file for running standalone in the future.
 
 * Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
-	+ The following are not implemented yet:
-		+ COM.
-		+ OwnProps.
-		+ Threads.
+	+ The following features are not implemented yet:
+		+ COM
+		+ OwnProps
+		+ Threads
 
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
 	+ It gives real-time feedback so you can see immediately when you have a syntax error.
