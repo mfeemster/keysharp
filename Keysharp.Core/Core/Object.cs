@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Reflection;
 
 namespace Keysharp.Core
@@ -69,14 +70,6 @@ namespace Keysharp.Core
 
 		public long SetCapacity(params object[] obj) => 1L;
 
-		//internal object IndexGetOverride(object item, params object[] index)
-		//{
-		//  return Keysharp.Scripting.Script.Index(indexOverride, index);
-		//}
-
-		//internal void IndexSetOverride(object value, object item, params object[] index)
-		//{
-		//  Keysharp.Scripting.Script.SetObject(value, item, index);
-		//}
+		//public ExpandoObject op = new ExpandoObject();
 	}
 }

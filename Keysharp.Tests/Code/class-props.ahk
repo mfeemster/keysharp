@@ -82,15 +82,15 @@ class PropTestOTB
 {
 	x := 0
 	__Item[name] {
-        get {
+		get {
 		global
 		return x
-        }
-        set {
+		}
+		set {
 		global
 		x := value
-        }
-    }
+		}
+	}
 }
 
 otb := PropTestOTB()
@@ -106,14 +106,14 @@ class PropTestThis
 {
 	x := 0
 	xprop {
-        get {
+		get {
 		global
 		return x
-        }
-        set {
+		}
+		set {
 		this.x := value
-        }
-    }
+		}
+	}
 }
 
 ptt := PropTestThis()

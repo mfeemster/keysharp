@@ -206,3 +206,120 @@ If (x == 789)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+m := { two : () => 2 }
+x := m.two()
+
+If (x == 2)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m := { two : (a) => a * 2 }
+x := m.two(5)
+
+If (x == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+MultFunc(a, b)
+{
+	return a * b
+}
+
+m := { two : () => MultFunc(3, 4) }
+x := m.two()
+
+If (x == 12)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m := { two : (a) => a * MultFunc(3, 4) }
+x := m.two(2)
+
+If (x == 24)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x :=
+m := { one : 1, two : (a) => a * MultFunc(3, 4) }
+x := m.two(2)
+
+If (x == 24)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m := {
+one : 1,
+two : (a) => a * MultFunc(3, 4),
+three : (a) => a * 2
+}
+
+x := m.two(2) * m.three(3)
+
+If (x == 144)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+arr := [
+() => 1
+, () => 2
+, () => 3
+]
+
+x := arr[1]() * arr[2]() * arr[3]()
+
+If (x == 6)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+b :=
+
+AssignFunc(xx)
+{
+	global b := xx
+}
+
+AssignFunc(() => 1)
+x := b()
+
+If (x == 1)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+m := { one : { oneone : 11, onef : (a) => a * 2 }, two : { twotwo : 22 }, three : { threethree : 33, threethreearr : [10, 20, 30 ] } }
+
+x := m.one.onef(5)
+
+If (x == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := m.one.onef(5) * m.two.twotwo
+
+If (x == 220)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := m.one.onef(5) * m.two.twotwo * m.three.threethree
+
+If (x == 7260)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+x := m.one.onef(5) * m.two.twotwo * m.three.threethree * m.three.threethreearr[3]
+
+If (x == 217800)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

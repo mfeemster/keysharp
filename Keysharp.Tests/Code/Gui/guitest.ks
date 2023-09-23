@@ -1537,6 +1537,10 @@ FuncBtnSeven.OnEvent("Click", "ToggleFromIni")
 ; │  Hotkey functions  │
 ; └────────────────────┘
 
+RealFn(a, b, c:="c") {
+	MsgBox(a ", " b, "A bound function test")
+}
+	
 DoTricks() {
 	RealFn := FuncObj("RealFn")
 
@@ -1548,10 +1552,6 @@ DoTricks() {
 	fn(2)      ; Shows "2, 1"
 	fn.Call(3) ; Shows "3, 1"
 	;fn(, 4)    ; Error: 'a' was omitted
-
-	RealFn(a, b, c:="c") {
-		MsgBox(a ", " b, "A bound function test")
-	}
 }
 
 StupidTrickTwo() {

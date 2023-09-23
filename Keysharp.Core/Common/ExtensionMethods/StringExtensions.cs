@@ -15,11 +15,52 @@ namespace System//Extension methods should be in the same namespace of the objec
 		}
 
 		internal static bool IsIdentifierChar(this char c) => (uint)c > 0x7F || char.IsAsciiLetterOrDigit(c) || c == '_';
+
 		internal static bool IsLeadingIdentifierChar(this char c) => (uint)c > 0x7F || char.IsLetter(c) || c == '_';
 	}
 
 	public static class StringExtensions
 	{
+		/// <summary>
+		/// Provide an easy way to iterate through the lines of a string without using as much memory as string.Split().
+		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper
+		/// </summary>
+		/// <param name="input">The string whose lines will be traversed</param>
+		/// <returns>Each line one at a time as an element in an enumerable</returns>
+		public static IEnumerable<string> SplitLines(this string input)
+		{
+			if (string.IsNullOrEmpty(input))
+			{
+				yield break;
+			}
+
+			using (var reader = new StringReader(input))
+			{
+				string line;
+
+				while ((line = reader.ReadLine()) != null)
+				{
+					yield return line;
+				}
+			}
+		}
+
+		public static string TrimNofAny(this string str, string any, int n)
+		{
+			var i = 0;
+			var chars = any.ToCharArray();
+
+			for (; i < n && i < str.Length; i++)
+			{
+				var pos = str.IndexOfAny(chars, i);
+
+				if (pos != i)
+					break;
+			}
+
+			return str.Substring(i);
+		}
+
 		internal static bool AllHex(this string source)
 		{
 			foreach (var ch in source)
@@ -55,17 +96,6 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return source.Length;// -1;
 		}
 
-		internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0)
-		{
-			for (var i = offset; i < source.Length; i++)
-				if (func(source[i]))
-					return i;
-
-			return -1;
-		}
-
-		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();
-
 		/// <summary>
 		/// Returns the remainder of the string, starting at the character which is not valid in an identifier (var, func, or obj.key name).
 		/// </summary>
@@ -81,6 +111,86 @@ namespace System//Extension methods should be in the same namespace of the objec
 
 			return i;
 		}
+
+		internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0)
+		{
+			for (var i = offset; i < source.Length; i++)
+				if (func(source[i]))
+					return i;
+
+			return -1;
+		}
+
+		internal static bool IsBalanced(this string source, char ch1, char ch2)
+		{
+			int ct1 = 0, ct2 = 0;
+
+			foreach (var ch in source)
+				if (ch == ch1)
+					ct1++;
+				else if (ch == ch2)
+					ct2++;
+
+			return ct1 == ct2;
+		}
+
+		internal static bool OcurredInBalance(this string source, string s1, char ch1, char ch2)
+		{
+			var b = 0;
+			var index = source.IndexOf(s1);
+
+			if (index == -1)
+				return false;
+
+			for (int i = 0; i < source.Length; i++)
+			{
+				char ch = source[i];
+
+				if (ch == ch1)
+					b++;
+				else if (ch == ch2)
+					b--;
+
+				if (i == index)
+					return b == 0;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Gotten from https://stackoverflow.com/questions/186653/get-the-index-of-the-nth-occurrence-of-a-string
+		/// </summary>
+		/// <param name="str"></param>
+		/// <param name="substr"></param>
+		/// <param name="n"></param>
+		/// <param name="comp"></param>
+		/// <returns></returns>
+		internal static int NthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
+		{
+			pos--;
+
+			do
+			{
+				pos = str.IndexOf(substr, pos + 1, comp);
+			} while (--n > 0 && pos != -1);
+
+			return pos;
+		}
+
+		internal static int NthIndexOfAny(this string str, char[] substr, int pos, int n)
+		{
+			pos--;
+
+			do
+			{
+				pos = str.IndexOfAny(substr, pos + 1);
+			} while (--n > 0 && pos != -1);
+
+			return pos;
+		}
+
+		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();
 
 		internal static string RemoveAfter(this string input, string token)
 		{
@@ -113,27 +223,16 @@ namespace System//Extension methods should be in the same namespace of the objec
 		}
 
 		/// <summary>
-		/// Provide an easy way to iterate through the lines of a string without using as much memory as string.Split().
-		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper
+		/// Gotten from https://stackoverflow.com/questions/141045/how-do-i-replace-the-first-instance-of-a-string-in-net
 		/// </summary>
-		/// <param name="input">The string whose lines will be traversed</param>
-		/// <returns>Each line one at a time as an element in an enumerable</returns>
-		public static IEnumerable<string> SplitLines(this string input)
+		/// <param name="text"></param>
+		/// <param name="search"></param>
+		/// <param name="replace"></param>
+		/// <returns></returns>
+		internal static string ReplaceFirst(this string text, string search, string replace, StringComparison comparison = StringComparison.Ordinal)
 		{
-			if (string.IsNullOrEmpty(input))
-			{
-				yield break;
-			}
-
-			using (var reader = new StringReader(input))
-			{
-				string line;
-
-				while ((line = reader.ReadLine()) != null)
-				{
-					yield return line;
-				}
-			}
+			var pos = text.IndexOf(search, comparison);
+			return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
 		}
 
 		internal static List<string> SplitWithDelimiter(this string aMatchList, char[] delims, bool append)
@@ -201,66 +300,5 @@ namespace System//Extension methods should be in the same namespace of the objec
 		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		? str.Substring(0, str.LastIndexOf(trim))
 		: str;
-
-		public static string TrimNofAny(this string str, string any, int n)
-		{
-			var i = 0;
-			var chars = any.ToCharArray();
-
-			for (; i < n && i < str.Length; i++)
-			{
-				var pos = str.IndexOfAny(chars, i);
-
-				if (pos != i)
-					break;
-			}
-
-			return str.Substring(i);
-		}
-
-		/// <summary>
-		/// Gotten from https://stackoverflow.com/questions/186653/get-the-index-of-the-nth-occurrence-of-a-string
-		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="substr"></param>
-		/// <param name="n"></param>
-		/// <param name="comp"></param>
-		/// <returns></returns>
-		internal static int NthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
-		{
-			pos--;
-
-			do
-			{
-				pos = str.IndexOf(substr, pos + 1, comp);
-			} while (--n > 0 && pos != -1);
-
-			return pos;
-		}
-
-		internal static int NthIndexOfAny(this string str, char[] substr, int pos, int n)
-		{
-			pos--;
-
-			do
-			{
-				pos = str.IndexOfAny(substr, pos + 1);
-			} while (--n > 0 && pos != -1);
-
-			return pos;
-		}
-
-		/// <summary>
-		/// Gotten from https://stackoverflow.com/questions/141045/how-do-i-replace-the-first-instance-of-a-string-in-net
-		/// </summary>
-		/// <param name="text"></param>
-		/// <param name="search"></param>
-		/// <param name="replace"></param>
-		/// <returns></returns>
-		internal static string ReplaceFirst(this string text, string search, string replace, StringComparison comparison = StringComparison.Ordinal)
-		{
-			var pos = text.IndexOf(search, comparison);
-			return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
-		}
 	}
 }

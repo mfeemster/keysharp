@@ -23,7 +23,7 @@ namespace Keysharp.Core
 		private static Dictionary<string, Form> guis;
 
 		[ThreadStatic]
-		private static long lastFoundForm = 0;
+		private static long lastFoundForm = 0;//This is probably not what we want and won't work anyway.
 
 		internal static Form DefaultGui
 		{
@@ -49,7 +49,7 @@ namespace Keysharp.Core
 			set => dialogOwner = value;
 		}
 
-		internal static long LastFoundForm
+		internal static long LastFoundForm//This is probably not what we want and won't work anyway.
 		{
 			get => lastFoundForm;
 			set => lastFoundForm = value;

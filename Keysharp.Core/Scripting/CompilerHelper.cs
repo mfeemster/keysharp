@@ -342,8 +342,8 @@ using static Keysharp.Scripting.Script.Operator;
 			{
 				var file = string.IsNullOrEmpty(error.FileName) ? filename : error.FileName;
 				_ = !error.IsWarning
-					? sbe.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}.")
-					: sbw.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}.");
+					? sbe.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}")
+					: sbw.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}");
 			}
 
 			return (sbe.ToString(), sbw.ToString());

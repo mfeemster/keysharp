@@ -82,7 +82,8 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
 				HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
-				Keysharp.Scripting.Script.RunMainWindow(name, UserMainCode);
+				UserMainCode();
+				Keysharp.Core.Flow.Sleep(-2);
 				Keysharp.Core.Flow.ExitApp(0);
 				return 0;
 			}
@@ -120,8 +121,9 @@ namespace Keysharp.CompiledMain
 			}
 		}
 
-		public static void UserMainCode()
+		public static object UserMainCode()
 		{
+			return "";
 		}
 	}
 }

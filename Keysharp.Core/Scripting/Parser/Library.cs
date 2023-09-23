@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 		internal static Dictionary<string, MethodInfo> libMethods;
 		internal static Dictionary<string, PropertyInfo> libProperties;
 
-		private static void ScanLibrary()
+		private static void ScanLibrary()//Possibly no longer even needed because this has been replaced by the functionality in the Reflections class.//TODO
 		{
 			if (libMethods == null)
 				libMethods = new Dictionary<string, MethodInfo>();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -34,7 +35,7 @@ namespace Keysharp.Scripting
 			throw new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.");
 		}
 
-		public static (object, MethodPropertyHolder) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
+		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
 		{
 			if (ReferenceEquals(item, lastItem) && ReferenceEquals(key, lastKey) && paramCount == lastParamCount)
 				return lastMph;
@@ -72,6 +73,11 @@ namespace Keysharp.Scripting
 				lastKey = key;
 				lastParamCount = paramCount;
 				return lastMph = (item, mph2);
+			}
+			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
+			{
+				var val = mph.callFunc(item, new object[] { key });
+				return (item, val);
 			}
 			else if (item is ComObject co)
 			{
@@ -169,17 +175,25 @@ namespace Keysharp.Scripting
 				throw new PropertyError($"Attempting to get property or field {name} failed.");
 		}
 
-		public static object Invoke((object, MethodPropertyHolder) mitup, params object[] parameters)
+		public static object Invoke((object, object) mitup, params object[] parameters)
 		{
 			try
 			{
-				var ret = mitup.Item2.callFunc(mitup.Item1, parameters);
+				object ret = null;
+				MethodPropertyHolder mph = null;
 
-				//The following check is done when accessing a class property that is a function object. The user intended to call it.
-				//Catching this during compilation is very hard when calling it from outside of the class definition.
-				//So catch it here instead.
-				if (ret is IFuncObj fo && mitup.Item2.pi != null)
-					return fo.Call(parameters);
+				if ((mph = mitup.Item2 as MethodPropertyHolder) != null)
+				{
+					ret = mph.callFunc(mitup.Item1, parameters);
+
+					//The following check is done when accessing a class property that is a function object. The user intended to call it.
+					//Catching this during compilation is very hard when calling it from outside of the class definition.
+					//So catch it here instead.
+					if (ret is IFuncObj fo1 && mph != null && mph.pi != null)
+						return fo1.Call(parameters);
+				}
+				else if (mitup.Item2 is IFuncObj fo2)
+					return fo2.Call(parameters);
 
 				return ret;
 			}
@@ -192,7 +206,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		public static object InvokeWithRefs((object, MethodPropertyHolder) mitup, params object[] parameters)
+		public static object InvokeWithRefs((object, object) mitup, params object[] parameters)
 		{
 			try
 			{
@@ -207,13 +221,21 @@ namespace Keysharp.Scripting
 					}
 				}
 
-				var ret = mitup.Item2.callFunc(mitup.Item1, parameters);
+				object ret = null;
+				MethodPropertyHolder mph = null;
 
-				//The following check is done when accessing a class property that is a function object. The user intended to call it.
-				//Catching this during compilation is very hard when calling it from outside of the class definition.
-				//So catch it here instead.
-				if (ret is IFuncObj fo && mitup.Item2.pi != null)
-					ret = fo.Call(parameters);
+				if ((mph = mitup.Item2 as MethodPropertyHolder) != null)
+				{
+					ret = mph.callFunc(mitup.Item1, parameters);
+
+					//The following check is done when accessing a class property that is a function object. The user intended to call it.
+					//Catching this during compilation is very hard when calling it from outside of the class definition.
+					//So catch it here instead.
+					if (ret is IFuncObj fo1 && mph.pi != null)
+						ret = fo1.Call(parameters);
+				}
+				else if (mitup.Item2 is IFuncObj fo2)
+					ret = fo2.Call(parameters);
 
 				for (var i = 0; i < refs.Count; i++)
 				{
@@ -314,5 +336,7 @@ namespace Keysharp.Scripting
 			else
 				throw new PropertyError($"Attempting to set property or field {namestr} to value {value} failed.");
 		}
+
+		public static (object, object) MakeObjectTuple(object obj1, object obj2) => (obj1, obj2);
 	}
 }

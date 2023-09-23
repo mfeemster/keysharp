@@ -393,7 +393,9 @@ namespace Keysharp.Scripting
 							var n = i + 1;
 
 							if (IsFunction(code, n < codeLines.Count ? codeLines[n].Code : string.Empty))
+							{
 								_ = ParseFunction(codeline, n);
+							}
 							else
 							{
 								var statements = ParseMultiExpression(codeline, code, true);

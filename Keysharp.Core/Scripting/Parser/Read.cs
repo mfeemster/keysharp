@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
+using Semver.Utility;
 using static Keysharp.Core.Core;
 
 namespace Keysharp.Scripting
@@ -112,7 +113,7 @@ namespace Keysharp.Scripting
 
 				if (code.Length > 0)
 				{
-					if (code[0] == ParenOpen)//There can be multiline strings within continuation sections.
+					if (code[0] == ParenOpen && bracketlevels == 0)//There can be multiline strings within continuation sections. Ignore for array creation, because a lambda like () => 1 might be an element, in which case it'd match the check for ParenOpen.
 					{
 						_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 						var buf = new StringBuilder(256);
@@ -150,7 +151,9 @@ namespace Keysharp.Scripting
 							break;
 					}
 					else
+					{
 						_ = sb.Append(code);
+					}
 
 					var cont = IsContinuationLine(code, true);
 
@@ -163,13 +166,13 @@ namespace Keysharp.Scripting
 			}
 
 			if (parenlevels != 0)
-				throw new ParseException(ExUnbalancedParens);
+				throw new ParseException($"{ExUnbalancedParens} around line {sb}");
 
 			if (bracelevels != 0)
-				throw new ParseException(ExUnbalancedBraces);
+				throw new ParseException($"{ExUnbalancedBraces} around line {sb}");
 
 			if (bracketlevels != 0)
-				throw new ParseException(ExUnbalancedBrackets);
+				throw new ParseException($"{ExUnbalancedBrackets} around line {sb}");
 
 			return sb.ToString();
 		}
@@ -255,7 +258,7 @@ namespace Keysharp.Scripting
 				if (code.Length > 1 && code[0] == Directive)
 				{
 					if (code.Length < 2)
-						throw new ParseException(ExUnknownDirv, line);
+						throw new ParseException($"{ExUnknownDirv} at line {code}", line);
 
 					var delim = new char[Spaces.Length + 1];
 					delim[0] = Multicast;
@@ -561,7 +564,7 @@ namespace Keysharp.Scripting
 				if (code.Length > 0 && code[0] == ParenOpen)
 				{
 					if (list.Count == 0)
-						throw new ParseException(ExUnexpected, line);
+						throw new ParseException($"{ExUnexpected} at line {code}", line);
 
 					var buf = new StringBuilder(256);
 					//_ = buf.Append(options[0]);// code);
@@ -627,24 +630,16 @@ namespace Keysharp.Scripting
 					//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
 					var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 
-					if (cont || (ll && (!code.EndsWith('{') ||//Don't treat non-flow statements that end in {, such as constructing a map, as the start of a multiline statement.
+					if (cont || (ll && (((code.EndsWith('{') || code.EndsWith('[')) && ((code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
+										//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
 										(code.Length > 1 &&
 										 !code.Contains('(') && !code.Contains(')') &&
 										 code[code.Length - 2] != ' ' &&
 										 code[code.Length - 2] != '\t'
-										 //!code.StartsWith("if", StringComparison.OrdinalIgnoreCase) &&//Don't treat flow statements as the start of a multiline statement.
-										 //!code.StartsWith("while", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("else", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("for", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("try", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("catch", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("switch", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("loop", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("get", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("set", StringComparison.OrdinalIgnoreCase) &&
-										 //!code.StartsWith("class", StringComparison.OrdinalIgnoreCase)
 										)
-									   )))
+									   )
+								)
+					   )
 					{
 						if (cont)
 							code += SingleSpace;
@@ -656,7 +651,7 @@ namespace Keysharp.Scripting
 				if (IsContinuationLine(code, false))
 				{
 					if (list.Count == 0)
-						throw new ParseException(ExUnexpected, line);
+						throw new ParseException($"{ExUnexpected} at line {code}", line);
 
 					var i = list.Count - 1;
 					var buf = new StringBuilder(list[i].Code, list[i].Code.Length + /*newlineToUse.Length*/1 + code.Length);//Was originally using newline, but probably want space instead.
@@ -681,6 +676,9 @@ namespace Keysharp.Scripting
 				list.Add(extraline);
 			}
 
+#if DEBUG
+			File.WriteAllLines("./finalscriptcode.txt", list.Select((cl) => $"{cl.LineNumber}: {cl.Code}").ToList());
+#endif
 			return list;
 		}
 	}

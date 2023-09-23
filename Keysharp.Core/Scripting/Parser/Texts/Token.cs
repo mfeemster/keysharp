@@ -189,9 +189,16 @@ namespace Keysharp.Scripting
 
 					case 1:
 						if (sym == StringBound)
+						{
 							str = !str;
-						else if (!str && sym == ParenClose)
-							stage++;
+						}
+						else if (!str)
+						{
+							if (sym == ParenClose)
+								stage++;
+							else if (sym == ParenOpen)
+								stage--;
+						}
 
 						break;
 

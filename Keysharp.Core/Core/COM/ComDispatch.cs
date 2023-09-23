@@ -9,9 +9,128 @@ using ct = System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.ComponentModel;
 using System.Xml.Linq;
+using System.Management;
 
 namespace Keysharp.Core.COM
 {
+	/*
+	    namespace ManagedWinapi
+	    {
+	    /// <summary>
+	    /// This class contains methods to identify type name, functions and variables
+	    /// of a wrapped COM object (that appears as System.__COMObject in the debugger).
+	    /// </summary>
+	    public class COMTypeInformation
+	    {
+	        IDispatch dispatch;
+	        ct.ITypeInfo typeInfo;
+	        private const int LCID_US_ENGLISH = 0x409;
+
+	        /// <summary>
+	        /// Create a new COMTypeInformation object for the given COM Object.
+	        /// </summary>
+	        public COMTypeInformation(object comObject)
+	        {
+	            dispatch = comObject as IDispatch;
+
+	            if (dispatch == null) throw new Exception("Object is not a COM Object");
+
+	            int typeInfoCount;
+	            int hr = dispatch.GetTypeInfoCount(out typeInfoCount);
+
+	            if (hr < 0) throw new COMException("GetTypeInfoCount failed", hr);
+
+	            if (typeInfoCount != 1) throw new Exception("No TypeInfo present");
+
+	            hr = dispatch.GetTypeInfo(0, LCID_US_ENGLISH, out typeInfo);
+
+	            if (hr < 0) throw new COMException("GetTypeInfo failed", hr);
+	        }
+
+	        /// <summary>
+	        /// The type name of the COM object.
+	        /// </summary>
+	        public string TypeName
+	        {
+	            get
+	            {
+	                string name, dummy1, dummy3;
+	                int dummy2;
+	                typeInfo.GetDocumentation(-1, out name, out dummy1, out dummy2, out dummy3);
+	                return name;
+	            }
+	        }
+
+	        /// <summary>
+	        /// The names of the exported functions of this COM object.
+	        /// </summary>
+	        public IList<string> FunctionNames
+	        {
+	            get
+	            {
+	                List<string> result = new List<String>();
+
+	                for (int jj = 0; ; jj++)
+	                {
+	                    IntPtr fncdesc;
+
+	                    try
+	                    {
+	                        typeInfo.GetFuncDesc(jj, out fncdesc);
+	                    }
+	                    catch (COMException) { break; }
+
+	                    ct.FUNCDESC fd = (ct.FUNCDESC)Marshal.PtrToStructure(fncdesc, typeof(ct.FUNCDESC));
+	                    string[] tmp = new string[1];
+	                    int cnt;
+	                    typeInfo.GetNames(fd.memid, tmp, tmp.Length, out cnt);
+
+	                    if (cnt == 1)
+	                        result.Add(tmp[0]);
+
+	                    typeInfo.ReleaseFuncDesc(fncdesc);
+	                }
+
+	                return result;
+	            }
+	        }
+
+	        /// <summary>
+	        /// The names of the exported variables of this COM object.
+	        /// </summary>
+	        public IList<string> VariableNames
+	        {
+	            get
+	            {
+	                List<string> result = new List<String>();
+
+	                for (int jj = 0; ; jj++)
+	                {
+	                    IntPtr vardesc;
+
+	                    try
+	                    {
+	                        typeInfo.GetVarDesc(jj, out vardesc);
+	                    }
+	                    catch (COMException) { break; }
+
+	                    ct.VARDESC vd = (ct.VARDESC)Marshal.PtrToStructure(vardesc, typeof(ct.VARDESC));
+	                    string[] tmp = new string[1];
+	                    int cnt;
+	                    typeInfo.GetNames(vd.memid, tmp, tmp.Length, out cnt);
+
+	                    if (cnt == 1)
+	                        result.Add(tmp[0]);
+
+	                    typeInfo.ReleaseFuncDesc(vardesc);
+	                }
+
+	                return result;
+	            }
+	        }
+	    }
+	    }
+	*/
 	[Guid("6D5140C1-7436-11CE-8034-00AA006009FA")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	[ComImport]
@@ -33,7 +152,7 @@ namespace Keysharp.Core.COM
 	[Guid("00020400-0000-0000-c000-000000000046")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	[ComImport]
-	internal interface IDispatch
+	public interface IDispatch
 	{
 		[PreserveSig]
 		int GetTypeInfoCount(out int info);
@@ -59,7 +178,7 @@ namespace Keysharp.Core.COM
 	[ComImport]
 	[Guid("B196B283-BAB4-101A-B69C-00AA00341D07")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IProvideClassInfo
+	public interface IProvideClassInfo
 	{
 		[PreserveSig]
 		int GetClassInfo(out ct.ITypeInfo typeInfo);

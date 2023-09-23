@@ -181,11 +181,24 @@ namespace Keysharp.Scripting
 							//Distinguish between Index which is an array or dictionary lookup and GetMethodOrProperty which is getting a method or property to be called.
 							if (parts[n] is CodeMethodInvokeExpression indexcmie)
 							{
-								tempinvoke = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
-								tempinvoke.Parameters.Clear();
-								tempinvoke.Parameters.AddRange(indexcmie.Parameters);
-								parts[n] = tempinvoke;//Replace Index with MethodIndex.
-								getMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(tempinvoke);
+								if (indexcmie.Method.MethodName == "Index")
+								{
+									var tupleInvoke = (CodeMethodInvokeExpression)InternalMethods.MakeObjectTuple;
+									tupleInvoke.Parameters.Clear();
+									tupleInvoke.Parameters.Add(new CodePrimitiveExpression(null));
+									tupleInvoke.Parameters.Add(indexcmie);
+									parts[n] = tupleInvoke;//Replace Index() with MakeObjectTuple(null, Index()).
+								}
+								else
+								{
+									//var tupleExpr = new CodeSnippetExpression($"(null, {Ch.CodeToString(indexcmie)})");
+									//parts[n] = tupleExpr;
+									tempinvoke = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
+									tempinvoke.Parameters.Clear();
+									tempinvoke.Parameters.AddRange(indexcmie.Parameters);
+									parts[n] = tempinvoke;//Replace GetPropertyValue() with GetMethodOrProperty().
+									getMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(tempinvoke);
+								}
 							}
 
 							if (paren.Count > 0)
@@ -400,7 +413,8 @@ namespace Keysharp.Scripting
 						}
 						else
 						{
-							var paren = ExtractRange(parts, n, Set(parts, i));
+							var span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(parts);
+							var paren = ExtractRange(parts, n, n + ParseBalancedArray(span.Slice(i)));
 							parts.RemoveAt(n);
 
 							if (i > 0 && parts[i - 1] is CodeExpression)
@@ -423,7 +437,30 @@ namespace Keysharp.Scripting
 								i--;
 							}
 							else
-								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), ParseMultiExpression(line, paren.ToArray(), create)));
+							{
+								var argi = 0;
+								var paramExprs = new List<CodeExpression>();
+								var parenspan = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(paren);
+
+								while (argi < paren.Count)
+								{
+									var tempi = ParseBalanced(parenspan.Slice(argi), ",");
+									var temprange = parenspan.Slice(argi, tempi);
+
+									if (temprange.Length > 0)
+									{
+										var tempexpr = ParseMultiExpression(line, temprange.ToArray(), create);
+										paramExprs.AddRange(tempexpr);
+									}
+
+									argi += tempi + 1;//Account for the comma.
+								}
+
+								if (paren[paren.Count - 1].ToString() == ",")
+									paramExprs.Add(new CodePrimitiveExpression(null));
+
+								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), paramExprs.ToArray()));
+							}
 						}
 					}
 					else if (part.Length > 1 && part[part.Length - 1] == ParenOpen)
@@ -619,7 +656,7 @@ namespace Keysharp.Scripting
 						};
 						void AddParts(CodeMemberMethod cmd)
 						{
-							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);
+							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);//This works even when assignIndex is -1.
 							parts.Add("FuncObj(");
 							parts.Add("\"" + cmd.Name + "\"");
 							parts.Add(",");
@@ -631,39 +668,23 @@ namespace Keysharp.Scripting
 						}
 						void MakeMethod(CodeMemberMethod cmd)
 						{
-							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).Select(p => p.ToString()).ToList();
-							var groupByCommas = new List<List<string>>(bodyParts.Count);
-
-							for (var bpindex = 0; bpindex < bodyParts.Count; bpindex++)
-							{
-								if (bpindex == 0)
-								{
-									groupByCommas.Add(new List<string>());
-								}
-								else if (bodyParts[bpindex].ToString() == ",")
-								{
-									groupByCommas.Add(new List<string>());
-									continue;
-								}
-
-								groupByCommas.Last().Add(bodyParts[bpindex].ToString());
-							}
-
+							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToArray();
+							var subs = new List<List<object>>();
+							var expressions = ParseMultiExpression(line, bodyParts, false, subs);
 							AddParts(cmd);
 							var lineNumber = codeLines.IndexOf(line) + 1;
 							//Inefficient to recompose the parameters into a string, but unsure what else to do here.
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => (p.Direction == FieldDirection.Ref ? "&" : "") + p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "{"));
-							var gbcc = groupByCommas.Count;
 
-							for (var gindex = 0; gindex < gbcc - 1; gindex++)
+							for (var sindex = 0; sindex < subs.Count - 1; sindex++)
 							{
-								var g = groupByCommas.ElementAt(gindex);
-								codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, string.Join(' ', g.Select(gg => gg))));
+								var s = subs[sindex];
+								codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, string.Join(' ', s.Select(ss => ss))));
 							}
 
-							var gret = groupByCommas.ElementAt(groupByCommas.Count - 1);
-							var retstr = string.Join(' ', gret.Select(gg => gg));
+							var ret = subs[subs.Count - 1];
+							var retstr = string.Join(' ', ret.Select(ss => ss));
 
 							if (!retstr.StartsWith("return", StringComparison.OrdinalIgnoreCase))
 								retstr = "return " + retstr;
@@ -672,7 +693,7 @@ namespace Keysharp.Scripting
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "}"));
 						}
 
-						if (cmieIndex != -1 && cmieIndex <  i)
+						if (cmieIndex != -1 && cmieIndex <  i)//Named func member := memberfunc(a) => a * 2
 						{
 							var cmie = parts[cmieIndex] as CodeMethodInvokeExpression;
 							cmd.Name = cmie.Method.MethodName;
@@ -710,7 +731,7 @@ namespace Keysharp.Scripting
 						}
 						else if (assignIndex != -1 && assignIndex < i)
 						{
-							if (parts[assignIndex + 1] is List<object> lo)
+							if (parts[assignIndex + 1] is List<object> lo)//Parens like member := (a) => a * 2
 							{
 								var funcParams = ParseFunctionParameters(string.Join("", lo));
 								cmd.Name = $"anonfunc_{labelct++:X}";
@@ -721,7 +742,7 @@ namespace Keysharp.Scripting
 
 								MakeMethod(cmd);
 							}
-							else if (parts[assignIndex + 1] is CodeVariableReferenceExpression cvre)
+							else if (parts[assignIndex + 1] is CodeVariableReferenceExpression cvre)//No parens like member := a => a * 2
 							{
 								cmd.Name = $"anonfunc_{labelct++:X}";
 
@@ -737,8 +758,22 @@ namespace Keysharp.Scripting
 								MakeMethod(cmd);
 							}
 						}
+						else if (assignIndex == -1 && cmieIndex == -1)//Defined on the fly.
+						{
+							if (parts[0] is List<object> lo)
+							{
+								var funcParams = ParseFunctionParameters(string.Join("", lo));
+								cmd.Name = $"anonfunc_{labelct++:X}";
+
+								if (funcParams != null)
+									foreach (var fp in funcParams)
+										cmd.Parameters.Add(fp);
+
+								MakeMethod(cmd);
+							}
+						}
 						else
-							throw new Exception("Unsupported tokens surrounding a fat arrow function definition =>");
+							throw new Exception($"Unsupported tokens surrounding a fat arrow function definition at line {line}");
 					}
 					else if (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] as string != "=>"))//Allow for a single no parentheses fat arrow function variadic parameter declaration: x := a* => 123.
 					{
@@ -1309,7 +1344,7 @@ namespace Keysharp.Scripting
 			return IsVarAssignment(parts[0]) ? (CodeBinaryOperatorExpression)parts[0] : (CodeExpression)parts[0];
 		}
 
-		private CodeExpressionStatement[] ParseMultiExpression(CodeLine line, string code, bool create)
+		private CodeExpressionStatement[] ParseMultiExpression(CodeLine line, string code, bool create, List<List<object>> subs = null)
 		{
 			var tokens = SplitTokens(code);
 			var n = tokens.Count - 2;
@@ -1340,7 +1375,7 @@ namespace Keysharp.Scripting
 			//  {
 			//  }
 			//}
-			var result = ParseMultiExpression(line, tokens.ToArray(), create);
+			var result = ParseMultiExpression(line, tokens.ToArray(), create, subs);
 			var statements = new CodeExpressionStatement[result.Length];
 
 			for (var i = 0; i < result.Length; i++)
@@ -1349,7 +1384,7 @@ namespace Keysharp.Scripting
 			return statements;
 		}
 
-		private CodeExpression[] ParseMultiExpression(CodeLine line, object[] parts, bool create)
+		private CodeExpression[] ParseMultiExpression(CodeLine line, object[] parts, bool create, List<List<object>> subs = null)
 		{
 			var fatArrow = false;
 			var sub = new List<object>();
@@ -1364,7 +1399,7 @@ namespace Keysharp.Scripting
 					continue;
 				}
 
-				var part = parts[i] as string;
+				var part = s;
 
 				if (i == 0 && part == FunctionStatic)
 				{
@@ -1383,19 +1418,18 @@ namespace Keysharp.Scripting
 					continue;
 				}
 
-				var check = s;
-
-				if (check == "=>")
+				if (s == "=>")
 					fatArrow = true;
 
 				//This will properly handle inserting null when passing arguments like a,,c or ,b,c or a,b,
 				//When not parsing arguments and instead just parsing regular expressions, it will cause
 				//a compiler error because just saying "null" in the wrong place is a syntax error.
 				//This is a good way to help catch syntax bugs in a script.
-				if (check == "," && !fatArrow)
+				if (s == "," && !fatArrow)
 				{
 					if (sub.Count != 0)
 					{
+						subs?.Add(sub.ToList());
 						expr.Add(ParseExpression(line, sub, create));
 						sub.Clear();
 					}
@@ -1416,7 +1450,10 @@ namespace Keysharp.Scripting
 			}
 
 			if (sub.Count != 0)
+			{
+				subs?.Add(sub.ToList());
 				expr.Add(ParseExpression(line, sub, create));
+			}
 
 			return expr.ToArray();
 		}

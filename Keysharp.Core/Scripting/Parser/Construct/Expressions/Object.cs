@@ -1,6 +1,8 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Keysharp.Core;
 using static Keysharp.Core.Core;
 
@@ -12,6 +14,94 @@ namespace Keysharp.Scripting
 
 		private bool IsJsonObject(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.Index.MethodName;
 
+		private int ParseBalancedArray(Span<object> parts)
+		{
+			var bracketLevel = 0;
+			var i = 0;
+
+			for (; i < parts.Length; i++)
+			{
+				if (parts[i] is string s)
+				{
+					if (s == "[")
+					{
+						bracketLevel++;
+					}
+					else if (s == "]")
+					{
+						bracketLevel--;
+					}
+
+					if (bracketLevel == 0)
+					{
+						break;
+					}
+				}
+			}
+
+			return i - 1;
+		}
+
+		private int ParseBalanced(Span<object> parts, string delim)
+		{
+			var parenLevel = 0;
+			var braceLevel = 0;
+			var bracketLevel = 0;
+			var i = 0;
+
+			for (; i < parts.Length; i++)
+			{
+				if (parts[i] is string s)
+				{
+					if (s.EndsWith('('))//Either it's a ( or a function call which will end with a (.
+					{
+						parenLevel++;
+					}
+					else if (s == ")")
+					{
+						parenLevel--;
+					}
+					else if (s == "{")
+					{
+						braceLevel++;
+					}
+					else if (s == "}")
+					{
+						braceLevel--;
+					}
+					else if (s == "[")
+					{
+						bracketLevel++;
+					}
+					else if (s == "]")
+					{
+						bracketLevel--;
+					}
+					else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && s == delim)
+					{
+						return i;
+					}
+				}
+			}
+
+			return i;
+		}
+
+		private object[] ParseObjectValue(Span<object> parts)
+		{
+			var i = ParseBalanced(parts, ":");
+
+			if (i < parts.Length)//If we hit the end, just return it.
+			{
+				i--;
+
+				while (i > 0 && ((parts[i] as string) != ","))
+					i--;
+			}
+
+			return parts.Slice(0, i).ToArray();
+		}
+
 		private void ParseObject(CodeLine line, List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
 		{
 			var names = new List<CodeExpression>();
@@ -19,54 +109,59 @@ namespace Keysharp.Scripting
 
 			for (var i = 0; i < parts.Count; i++)
 			{
+				var hadResolve = false;
 				CodeExpression value = null;
-				var hadQuotes = false;
 
 				if (!(parts[i] is string name))//Each token shouldn't be anything else other than a string.
-					throw new ParseException(ExUnexpected);
+					throw new ParseException($"{ExUnexpected} at line {line}");
 
-				//If enclosed in quotes, extract the enclosed string.
-				if (name.Length > 2 && name[0] == StringBound && name[name.Length - 1] == StringBound)
+				if (name.Length > 2)
 				{
-					hadQuotes = true;
-					name = name.Substring(1, name.Length - 2);
+					if (name[0] == StringBound && name[name.Length - 1] == StringBound)
+						name = name.Substring(1, name.Length - 2).ToLower();//If enclosed in quotes, just use as is, which will be a string in quotes.
+					else if (name[0] == DefaultResolve)
+						hadResolve = true;//If enclosed in percent signs, remove them and parse the expression.
 				}
 
-				var paren = name.StartsWith(ParenOpen);//If it starts with a paren, then it's a varible reference, so take special action.
-
-				//Ensure the token is not empty and is a valid identifier.
-				//if (name.Length == 0 || !IsIdentifier(name))
-				//if (name.Length == 0 || !(IsIdentifier(name) || paren))
-				//throw new ParseException(ExInvalidVarName);
-
-				if (paren)//V1 style, use parens to signify an object.
+				if (hadResolve)//Remove percent signs and reparse.
 				{
-					var varname = parts[i + 1] as string;
-					names.Add(VarId(varname, false));
-					i += 2;
+					var startPos = i;
+					name = "";
+
+					while (i < parts.Count)
+					{
+						var str = parts[i].ToString();
+
+						if (str.Length > 0 && str[0] == AssignPre)
+							break;
+
+						if (str.StartsWith(DefaultResolve) || str.EndsWith(DefaultResolve))
+							parts[i] = str = str.Trim(DefaultResolve);
+
+						if (parts[i].ToString() == "")
+						{
+							parts.RemoveAt(i);
+							i--;
+						}
+
+						if (str == "[*")
+							name += '.';
+						else if (str != "*]")
+							name += str;
+
+						i++;
+					}
+
+					//Need to reparse so that something like map.one can be properly interpreted.
+					//This is because it would have been incorrectly parsed earlier because it was enclosed with %%.
+					var tokens = SplitTokens(name);
+					_ = ExtractRange(parts, startPos, i);
+					i = startPos - 1; //i++ below will reset back to zero.
+					var expr = ParseExpression(line, tokens, false);
+					names.Add(expr);
 				}
-				else if (hadQuotes)
-					names.Add(new CodePrimitiveExpression(name));
-				else if (IsIdentifier(name))//V2 style, no parens needed.
-					names.Add(VarId(parts[i] as string, false));
 				else
-				{
-					var l = parts[i].ParseLong(false);
-
-					if (l.HasValue)
-					{
-						names.Add(new CodeSnippetExpression($"{l.Value}L"));
-					}
-					else
-					{
-						var d = parts[i].ParseDouble(false);
-
-						if (d.HasValue)
-							names.Add(new CodePrimitiveExpression(d.Value));
-						else
-							throw new ParseException(ExInvalidVarName);
-					}
-				}
+					names.Add(new CodePrimitiveExpression(name.ToLower()));//Add as a quoted lowercase string.
 
 				i++;//Ensure the next token is a : char.
 
@@ -74,13 +169,13 @@ namespace Keysharp.Scripting
 					goto collect;
 
 				if (!(parts[i] is string assign))
-					throw new ParseException(ExUnexpected);
+					throw new ParseException($"{ExUnexpected} at line {line}");
 
 				if (assign.Length == 1 && assign[0] == Multicast)
 					goto collect;
 
 				if (!(assign.Length == 1 && (assign[0] == Equal || assign[0] == HotkeyBound)))//Should be an = or : char.
-					throw new ParseException(ExUnexpected);
+					throw new ParseException($"{ExUnexpected} at line {line}");
 
 				i++;
 
@@ -88,35 +183,25 @@ namespace Keysharp.Scripting
 					goto collect;
 
 				//Now get the value portion, which comes after the : char.
-				var sub = new List<object>();
-				var next = Set(parts, i);
+				var subs = new List<List<object>>();
+				var span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(parts);
+				var tempparts = ParseObjectValue(span.Slice(i));
+				var exprs = ParseMultiExpression(line, tempparts, create, subs);
 
-				if (next == 0) // no enclosing set (...){...}[...] so scan until next boundary.
+				if (exprs.Length > 0)
 				{
-					for (next = i; next < parts.Count; next++)
-					{
-						if (parts[next] is string pn && pn[0] == Multicast)
-							break;
-					}
+					value = exprs[0];
+					i += subs[0].Count;
 				}
-				else
-					next++; // set function returns n-1 index
-
-				for (; i < next; i++)
-					sub.Add(parts[i]);
-
-				i--;
-				value = ParseExpression(line, sub, create);
-				i++;
 
 				if (i == parts.Count)
 					goto collect;
 
 				if (!(parts[i] is string delim))
-					throw new ParseException(ExUnexpected);
+					throw new ParseException($"{ExUnexpected} at line {line}");
 
 				if (!(delim.Length == 1 && delim[0] == Multicast))
-					throw new ParseException(ExUnexpected);
+					throw new ParseException($"{ExUnexpected} at line {line}");
 
 				collect:
 				entries.Add(value ?? new CodePrimitiveExpression(null));
