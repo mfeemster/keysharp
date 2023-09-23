@@ -12,7 +12,7 @@
 ### Portable Run on Windows ###
 * Download and unzip the zip file from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
 	+ CD to the unzipped folder.
-	+ Run `.\Keysharp.exe yourfilename.ahk"
+	+ Run `.\Keysharp.exe yourfilename.ahk`
 	
 ### Building From Source on Windows ###
 * Download Visual Studio 2022
@@ -20,7 +20,7 @@
 * Open Keysharp.sln
 * Build all (building the installer is not necessary)
 * CD to bin\release\net7.0-windows
-* Run .\Keysharp.exe yourtestfile.ahk
+* Run `.\Keysharp.exe yourtestfile.ahk`
 	
 ## Overview ##
 
@@ -45,10 +45,10 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 	+ Optionally output the generated executable to an .exe file for running standalone in the future.
 
 * Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
-	+ The following are not implemented yet:
-		+ COM.
-		+ OwnProps.
-		+ Threads.
+	+ The following features are not implemented yet:
+		+ COM
+		+ OwnProps
+		+ Threads
 
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
 	+ It gives real-time feedback so you can see immediately when you have a syntax error.
@@ -90,7 +90,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ If there is no focused form, it will attempt to show it relative to the last form which was created. If none are found, it will use the main form shown when double clicking the tray icon.
 	+ If the form is minimized, then it will attempt to use the RestoreBounds property of the form. This may not work sometimes, so the ToolTip may never show in that case.
 	+ Tooltips cannot be used if the script is not persistent (meaning, it has no main window). This is because C# tooltips require a parent control or form.
-* `TrayTip()` function slightly differently.
+* `TrayTip()` functions slightly differently.
 	+ Muting the sound played by the tip is not supported with the `Mute` option. The sound will be whatever the user has configured in their system settings.
 	+ The option `4` to use the program's tray icon is not supported. It is always shown in the title of the tip.
 	+ The option `32` to use the large version of the program's tray icon is not supported. Windows will always show the small version.
