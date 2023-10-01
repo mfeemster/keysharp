@@ -20,7 +20,7 @@ namespace Keysharp.Tests
 			var fo = a.GetMethod("Clear");
 			_ = fo.Call();
 			Assert.AreEqual(0L, a.Length);
-			Assert.IsTrue((new KeysharpObject()).HasBase(new Any()));
+			Assert.IsTrue(new KeysharpObject().HasBase(new Any()) == 1L);
 			Assert.IsTrue(TestScript("misc-object", true));
 		}
 

@@ -8,6 +8,8 @@ class myclass
 	member4 := a* => (a[1] + a[2]) * 2
 	member5 := () => 123
 	member6 := (*) => (args[1] + args[2]) * 2
+	member7 := (a) => a * this.x
+	member8 := (a) => this.x := 100, a * this.x
 
 	myprop
 	{
@@ -90,7 +92,23 @@ If (x == 14)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+myclassobj.x := 123
+x := myclassobj.member7(2)
 
+If (x == 246)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+myclassobj.x := 123
+x := myclassobj.member8(2)
+
+If (x == 200)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
 myfunc() => 123
 x := myfunc()
 

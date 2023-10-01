@@ -27,7 +27,7 @@ namespace Keysharp.Core
 
 		//}
 
-		public bool HasBase(object obj) => obj.GetType().IsAssignableFrom(GetType());
+		public long HasBase(object obj) => obj.GetType().IsAssignableFrom(GetType()) ? 1L : 0L;
 
 		public long HasMethod(object obj0 = null, object obj1 = null) => Function.HasMethod(this, obj0, obj1);
 
@@ -41,35 +41,44 @@ namespace Keysharp.Core
 		//internal object indexOverride;
 		public static KeysharpObject Object() => new KeysharpObject();
 
-		public virtual object Clone(params object[] obj)
+		public virtual object Clone()
 		{
 			return MemberwiseClone();
 			//If ownprops are implemented, might need to add extra code for those.
 		}
 
-		public void DefineProp(params object[] obj)
+		public KeysharpObject DefineProp(object obj0, object obj1)
 		{
+			var name = obj0.As();
+
+			if (obj1 is Keysharp.Core.Map map)
+			{
+				if (op == null)
+					op = new Dictionary<string, Keysharp.Core.Map>(new CaseEqualityComp(eCaseSense.Off));
+
+				op[name] = map;
+			}
+
+			return this;
 		}
 
-		public void DeleteProp(params object[] obj)
-		{
-		}
+		public object DeleteProp(object obj) => op != null && op.Remove(obj.As(), out var map) ? map : "";
 
-		public long GetCapacity(params object[] obj) => throw new Keysharp.Core.Error("GetCapacity() is not supported for dictionaries in C#");
+		public long GetCapacity() => throw new Keysharp.Core.Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
 
 		public object GetOwnPropDesc(params object[] obj) => null;
 
-		public object HasOwnProp(params object[] obj) => 1L;
+		public long HasOwnProp(object obj) => op != null && op.ContainsKey(obj.As()) ? 1L : 0L;
 
-		public long OwnPropCount(params object[] obj) => 1L;
+		public long OwnPropCount(params object[] obj) => obj != null ? op.Count : 0L;
 
 		public object OwnProps(params object[] obj)//Need yield enum here.
 		=> true;
 
 		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
-		public long SetCapacity(params object[] obj) => 1L;
+		public long SetCapacity(object obj) => throw new Keysharp.Core.Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
 
-		//public ExpandoObject op = new ExpandoObject();
+		protected internal Dictionary<string, Keysharp.Core.Map> op;
 	}
 }

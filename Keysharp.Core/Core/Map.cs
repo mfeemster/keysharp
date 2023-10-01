@@ -91,7 +91,7 @@ namespace Keysharp.Core
 
 		public void Clear() => map.Clear();
 
-		public override object Clone(params object[] values)
+		public override object Clone()
 
 		{
 			var newmap = new Map()

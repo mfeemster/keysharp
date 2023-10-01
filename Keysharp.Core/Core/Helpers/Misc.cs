@@ -276,17 +276,17 @@ namespace Keysharp.Core
 
 		public static ZeroDivisionError ZeroDivisionError(params object[] obj) => new (obj);
 
-		public object ObjGetCapacity(params object[] obj) => throw new Keysharp.Core.Error("ObjGetCapacity() is not supported for dictionaries in C#");
+		public object ObjGetCapacity(object obj) => obj is KeysharpObject kso ? kso.GetCapacity() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
 
-		public long ObjHasOwnProp(params object[] obj) => 1L;
+		public long ObjHasOwnProp(object obj) => obj is KeysharpObject kso ? kso.HasOwnProp(obj) : 0L;
 
-		public long ObjOwnPropCount(params object[] obj) => 1L;
+		public long ObjOwnPropCount(object obj) => obj is KeysharpObject kso ? kso.OwnPropCount() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
 
 		public object ObjOwnProps(params object[] obj) => true;
 
 		public void ObjSetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
-		public object ObjSetCapacity(params object[] obj) => throw new Keysharp.Core.Error("ObjSetCapacity() not implemented.");
+		public object ObjSetCapacity(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.SetCapacity(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
 
 		private static Map Object(params object[] obj)
 		{

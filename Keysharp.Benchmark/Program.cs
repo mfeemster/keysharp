@@ -84,7 +84,8 @@ namespace Keysharp.Benchmark
 			config.UnionRule = ConfigUnionRule.AlwaysUseGlobal; // Overriding the default
 			//var summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
 			//var summary = BenchmarkRunner.Run<MathBench>(config);
-			var summary = BenchmarkRunner.Run<IndexBench>(config);
+			//var summary = BenchmarkRunner.Run<IndexBench>(config);
+			var summary = BenchmarkRunner.Run<ListAddBench>(config);
 			//var summary = BenchmarkRunner.Run<IndexBench>();
 			//var summary = BenchmarkRunner.Run<FuncBench>(config);
 			var logger = ConsoleLogger.Default;

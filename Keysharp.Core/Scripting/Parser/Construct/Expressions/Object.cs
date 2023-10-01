@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using Keysharp.Core;
 using static Keysharp.Core.Core;
 
@@ -13,34 +14,6 @@ namespace Keysharp.Scripting
 		private bool IsArrayExtension(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.ExtendArray.MethodName;
 
 		private bool IsJsonObject(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.Index.MethodName;
-
-		private int ParseBalancedArray(Span<object> parts)
-		{
-			var bracketLevel = 0;
-			var i = 0;
-
-			for (; i < parts.Length; i++)
-			{
-				if (parts[i] is string s)
-				{
-					if (s == "[")
-					{
-						bracketLevel++;
-					}
-					else if (s == "]")
-					{
-						bracketLevel--;
-					}
-
-					if (bracketLevel == 0)
-					{
-						break;
-					}
-				}
-			}
-
-			return i - 1;
-		}
 
 		private int ParseBalanced(Span<object> parts, string delim)
 		{
@@ -87,22 +60,35 @@ namespace Keysharp.Scripting
 			return i;
 		}
 
-		private object[] ParseObjectValue(Span<object> parts)
+		private int ParseBalancedArray(Span<object> parts)
 		{
-			var i = ParseBalanced(parts, ":");
+			var bracketLevel = 0;
+			var i = 0;
 
-			if (i < parts.Length)//If we hit the end, just return it.
+			for (; i < parts.Length; i++)
 			{
-				i--;
+				if (parts[i] is string s)
+				{
+					if (s == "[")
+					{
+						bracketLevel++;
+					}
+					else if (s == "]")
+					{
+						bracketLevel--;
+					}
 
-				while (i > 0 && ((parts[i] as string) != ","))
-					i--;
+					if (bracketLevel == 0)
+					{
+						break;
+					}
+				}
 			}
 
-			return parts.Slice(0, i).ToArray();
+			return i - 1;
 		}
 
-		private void ParseObject(CodeLine line, List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
+		private void ParseObject(CodeLine line, string code, List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
 		{
 			var names = new List<CodeExpression>();
 			var entries = new List<CodeExpression>();
@@ -157,7 +143,7 @@ namespace Keysharp.Scripting
 					var tokens = SplitTokens(name);
 					_ = ExtractRange(parts, startPos, i);
 					i = startPos - 1; //i++ below will reset back to zero.
-					var expr = ParseExpression(line, tokens, false);
+					var expr = ParseExpression(line, code, tokens, false);
 					names.Add(expr);
 				}
 				else
@@ -186,7 +172,8 @@ namespace Keysharp.Scripting
 				var subs = new List<List<object>>();
 				var span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(parts);
 				var tempparts = ParseObjectValue(span.Slice(i));
-				var exprs = ParseMultiExpression(line, tempparts, create, subs);
+				var valcode = string.Join("", tempparts.Select((p) => p.ToString()));
+				var exprs = ParseMultiExpression(line, valcode, tempparts, create, subs);
 
 				if (exprs.Length > 0)
 				{
@@ -209,6 +196,85 @@ namespace Keysharp.Scripting
 
 			keys = names.ToArray();
 			values = entries.ToArray();
+		}
+
+		private object[] ParseObjectValue(Span<object> parts)
+		{
+			var i = ParseBalanced(parts, ":");
+
+			if (i < parts.Length)//If we hit the end, just return it.
+			{
+				i--;
+
+				while (i > 0 && ((parts[i] as string) != ","))
+					i--;
+			}
+
+			return parts.Slice(0, i).ToArray();
+		}
+
+		private List<string> SplitStringBalanced(string s, char delim)
+		{
+			var parenLevel = 0;
+			var braceLevel = 0;
+			var bracketLevel = 0;
+			var i = 0;
+			var parts = new List<string>();
+			var sb = new StringBuilder();
+
+			foreach (var ch in s)
+			{
+				if (ch == '(')//Either it's a ( or a function call which will end with a (.
+				{
+					parenLevel++;
+					_ = sb.Append(ch);
+				}
+				else if (ch == ')')
+				{
+					if (parenLevel > 0)
+						_ = sb.Append(ch);
+
+					parenLevel--;
+				}
+				else if (ch == '{')
+				{
+					braceLevel++;
+					_ = sb.Append(ch);
+				}
+				else if (ch == '}')
+				{
+					if (braceLevel > 0)
+						_ = sb.Append(ch);
+
+					braceLevel--;
+				}
+				else if (ch == '[')
+				{
+					_ = sb.Append(ch);
+					bracketLevel++;
+				}
+				else if (ch == ']')
+				{
+					if (bracketLevel > 0)
+						_ = sb.Append(ch);
+
+					bracketLevel--;
+				}
+				else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && ch == delim)//Assuming delim is != to any of the above characters.
+				{
+					parts.Add(sb.ToString());
+					_ = sb.Clear();
+				}
+				else
+					_ = sb.Append(ch);
+			}
+
+			if (sb.Length > 0)
+			{
+				parts.Add(sb.ToString());
+			}
+
+			return parts;
 		}
 	}
 }

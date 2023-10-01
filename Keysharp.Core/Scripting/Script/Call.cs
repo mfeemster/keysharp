@@ -106,6 +106,15 @@ namespace Keysharp.Scripting
 
 			var namestr = name.ToString();
 
+			if (item is KeysharpObject kso && kso.op != null)
+			{
+				if (kso.op.TryGetValue(namestr, out var val) && val is Keysharp.Core.Map map)
+				{
+					if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo)
+						return ifo.Call(kso);
+				}
+			}
+
 			if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph)
 			{
 				try
@@ -337,6 +346,6 @@ namespace Keysharp.Scripting
 				throw new PropertyError($"Attempting to set property or field {namestr} to value {value} failed.");
 		}
 
-		public static (object, object) MakeObjectTuple(object obj1, object obj2) => (obj1, obj2);
+		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 	}
 }

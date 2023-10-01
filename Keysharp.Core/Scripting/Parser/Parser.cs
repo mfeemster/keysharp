@@ -721,6 +721,8 @@ namespace Keysharp.Scripting
 			return GenerateCompileUnit();
 		}
 
+		internal bool InClassDefinition() => typeStack.Count > 0 && typeStack.Peek().Name != mainClassName;
+
 		internal void Init()
 		{
 			//This is a collection of various variables which can be set by #directives and other methods, so reset them all to a default state here.

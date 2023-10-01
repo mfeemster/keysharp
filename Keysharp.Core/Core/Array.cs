@@ -87,7 +87,7 @@ namespace Keysharp.Core
 
 		public void Clear() => ((IList)array).Clear();
 
-		public override object Clone(params object[] values) => new Array(array.ToArray());
+		public override object Clone() => new Array(array.ToArray());
 
 		public bool Contains(object value) => ((IList)array).Contains(value);
 
