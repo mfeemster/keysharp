@@ -356,31 +356,41 @@ namespace Keysharp.Scripting
 					//Call() method is called each time the enumerator is incremented (like MoveNext() would be calling it under the hood).
 					//The class Enumerator has one method, which is Call (you can think of it inheriting from Func, which also has that method).
 					//However, we've not implemented that here yet, and probably won't.//TODO
-					var trimmed = StripCommentSingle(parts[1]).Trim(Parens);
-					var temp = trimmed.Split(" in ");
+					var blockOpen = parts[1].EndsWith(BlockOpen);
+					parts[1] = StripCommentSingle(parts[1]).TrimEnd(BlockOpen).Trim(Spaces);
+					var trimmed = StripEnclosing(parts[1], '(', ')');
+					var temp = trimmed.Split("in");
 
 					if (temp.Length == 2)
 					{
 						var coldeclid = InternalID;
 						var testid = InternalID;
 						var id = InternalID;
-						var blockOpen = trimmed.EndsWith(BlockOpen);
-
-						if (blockOpen)
-						{
-							temp[1] = temp[1].Trim(BlockOpenSpaceAndParens);
-							parts[parts.Length - 1] = trimmed.Trim(BlockOpenSpaceAndParens);
-						}
-
 						var expr = ParseSingleExpression(line, temp.Last(), false);
-						var col = Ch.CodeToString(expr);
 						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
 
-						if (varsplits.Count == 1)//If only one present, use second because it's the value, instead of the index/key.
-							varsplits.Insert(0, "");
+						//Extreme hack to tell the enumerator whether to return 1 or 2 values which changes
+						//the beavior when dealing with OwnProps().
+						if (expr is CodeMethodInvokeExpression cmieInvoke
+								&& cmieInvoke.Method.MethodName == "Invoke"
+								&& cmieInvoke.Parameters.Count == 1
+								&& cmieInvoke.Parameters[0] is CodeMethodInvokeExpression cmieGetMeth
+								&& cmieGetMeth.Method.MethodName == "GetMethodOrProperty"
+								&& cmieGetMeth.Parameters.Count > 2
+								&& cmieGetMeth.Parameters[1] is CodePrimitiveExpression cpe
+								&& cpe.Value.ToString() == "OwnProps")
+						{
+							if (varsplits.Count == 2 && varsplits[1] != "_")
+								_ = cmieInvoke.Parameters.Add(new CodePrimitiveExpression(true));
+							else if (varsplits.Count == 1)
+								varsplits.Add("_");
+						}
 
 						var varlist = new List<string>(varsplits.Count);
 						var enumlist = new List<string>(varsplits.Count);
+
+						if (varsplits.Count == 1)//If only one present, use second because it's the value, instead of the index/key.
+							varsplits.Insert(0, "");
 
 						//If only one is present, it actually means discard the first one, and use the second.
 						//So in the case of a map, it would mean get the values, not the key.
@@ -399,6 +409,7 @@ namespace Keysharp.Scripting
 								varlist.Add(split?.Length == 0 ? "_" : split);
 						}
 
+						var col = Ch.CodeToString(expr);
 						var vars = string.Join(',', varlist);
 						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
@@ -604,7 +615,7 @@ namespace Keysharp.Scripting
 						Type = new CodeTypeReference(typeof(string)),
 						Attributes = MemberAttributes.Public | MemberAttributes.Static
 					};
-					nameprop.GetStatements.Add(new CodeSnippetExpression("return \"" + classtype.Name + "\""));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+					_ = nameprop.GetStatements.Add(new CodeSnippetExpression("return \"" + classtype.Name + "\"")); //Can't use interpolated string here because the AStyle formatter misinterprets it.
 					_ = classtype.Members.Add(nameprop);
 					return null;
 				}
@@ -761,6 +772,7 @@ namespace Keysharp.Scripting
 					var tcf = new CodeTryCatchFinallyStatement();
 					var ctch = new CodeCatchClause($"ex{excount++}", new CodeTypeReference("Keysharp.Core.Error"));
 					_ = tcf.CatchClauses.Add(ctch);
+					var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 
 					if (parts.Length > 1 && parts[1] != "{")
 					{
@@ -781,7 +793,7 @@ namespace Keysharp.Scripting
 					{
 						var block = new CodeBlock(line, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
 						{
-							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
+							Type = type
 						};
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
@@ -801,13 +813,15 @@ namespace Keysharp.Scripting
 
 						if (parts.Length > 1)
 						{
-							var rest = StripCommentSingle(parts[1]).Trim(Parens).Split(Spaces);
+							var rest = StripCommentSingle(parts[1]).RemoveAll(Parens).Split(Spaces);
 
-							if (rest.Length > 0 && rest[0] != "as")
+							if (rest.Length > 0 && rest[0] != "as" && rest[0] != "{")
 								exctypename = "Keysharp.Core." + rest[0];
 
-							if (rest.Length >= 2 && rest[rest.Length - 2] == "as")
-								excname = rest[rest.Length - 1];
+							var subtract = rest[rest.Length - 1] == "{" ? 3 : 2;
+
+							if (rest.Length >= subtract && rest[rest.Length - subtract] == "as")
+								excname = rest[rest.Length - (subtract - 1)];
 						}
 
 						CodeCatchClause ctch;
@@ -833,7 +847,7 @@ namespace Keysharp.Scripting
 						var catchVars = new HashSet<string>();
 						_ = catchVars.Add(excname);
 						excCatchVars.Push(catchVars);
-						var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
+						var type = parts.Length > 1 && parts[1].EndsWith(BlockOpen) ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 						var block = new CodeBlock(line, Scope, ctch.Statements, CodeBlock.BlockKind.Catch, blocks.PeekOrNull()) { Type = type };
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);

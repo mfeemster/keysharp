@@ -42,6 +42,22 @@ namespace Keysharp.Scripting
 			return code;
 		}
 
+		private string StripEnclosing(string code, char chopen, char chclose)
+		{
+			var i = 0;
+
+			for (; i < code.Length; i++)
+			{
+				if (code[i] == chopen && code[code.Length - (i + 1)] == chclose)
+				{
+				}
+				else
+					break;
+			}
+
+			return code.Substring(i, code.Length - (i * 2));
+		}
+
 		private bool IsCommentAt(string code, int offset)
 		{
 			var spaced = offset == 0 || IsSpace(code[offset - 1]);

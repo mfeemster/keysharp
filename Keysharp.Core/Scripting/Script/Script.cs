@@ -342,7 +342,7 @@ namespace Keysharp.Scripting
 
 		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
 
-		internal static bool AnyPeristent()
+		internal static bool AnyPersistent()
 		{
 			if (Keysharp.Core.Gui.AnyExistingVisibleWindows())
 				return true;
@@ -379,7 +379,7 @@ namespace Keysharp.Scripting
 
 		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
 		{
-			if (!AnyPeristent())
+			if (!AnyPersistent())
 				_ = Flow.ExitApp((int)exitReason);
 		}
 

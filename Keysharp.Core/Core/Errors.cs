@@ -135,19 +135,20 @@ namespace Keysharp.Core
 	public class ParseException : Error
 	{
 		public ParseException(string message)
-			: this(message, default(int)) { }
+			: this(message, default, "") { }
 
 		public ParseException(string message, CodeLine line)
-			: this(message, line.LineNumber, line.FileName) { }
+			: this(message, line.LineNumber, line.Code, line.FileName) { }
 
-		public ParseException(string message, int line)
-			: this(message, line, "") { }
+		public ParseException(string message, int line, string code)
+			: this(message, line, code, "") { }
 
-		public ParseException(string message, int line, string file)
+		public ParseException(string message, int line, string code, string file)
 			: base(message)
 		{
 			Line = line;
 			File = file;
+			Extra = code;
 		}
 	}
 

@@ -239,3 +239,45 @@ if (arr1 == arr2)
 	FileAppend, fail, *
 else
 	FileAppend, pass, *
+
+o :=
+pcount :=
+varfunc5(p1, pvar*)
+{
+	pcount := pvar.Length
+}
+
+func5 := FuncObj("varfunc5")
+boundfunc5 := func5.Bind(o)
+
+pcount := 123
+boundfunc5()
+
+if (pcount == 0)
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+
+pcount := 0
+boundfunc5(1)
+
+if (pcount == 1)
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+
+pcount := 0
+boundfunc5(1, 2)
+
+if (pcount == 2)
+	FileAppend, fail, *
+else
+	FileAppend, pass, *
+
+pcount := 0
+boundfunc5(1, 2, 3)
+
+if (pcount == 3)
+	FileAppend, fail, *
+else
+	FileAppend, pass, *

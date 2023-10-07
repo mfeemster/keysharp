@@ -2339,10 +2339,11 @@ namespace Keysharp.Core.Common.Keyboard
 				return ResultType.Ok;
 			}
 
-			if (isRegistered = !WindowsAPI.UnregisterHotKey(Keysharp.Scripting.Script.mainWindow.Handle, id))  // I've see it fail in one rare case.
-				return ResultType.Fail;
-
-			return ResultType.Ok;
+			Keysharp.Scripting.Script.mainWindow.Invoke(() =>
+			{
+				isRegistered = !WindowsAPI.UnregisterHotKey(Keysharp.Scripting.Script.mainWindow.Handle, id);
+			});
+			return isRegistered ? ResultType.Fail : ResultType.Ok;//I've see it fail in one rare case.
 		}
 
 		private static IFuncObj FindHotkeyIf(IFuncObj fo, List<IFuncObj> list)

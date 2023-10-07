@@ -2144,7 +2144,7 @@ namespace Keysharp.Core
 			}
 
 			//If there is nothing else keeping the program alive, and the program is not already exiting, close it.
-			if (!Keysharp.Scripting.Script.IsMainWindowClosing && !Keysharp.Scripting.Script.AnyPeristent())
+			if (!Keysharp.Scripting.Script.IsMainWindowClosing && !Keysharp.Scripting.Script.AnyPersistent())
 				Script.mainWindow?.Close();
 		}
 

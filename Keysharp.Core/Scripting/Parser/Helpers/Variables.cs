@@ -112,7 +112,7 @@ namespace Keysharp.Scripting
 					if (id)
 					{
 						if (sub.Length == 0)
-							throw new ParseException(ExEmptyVarRef, i);
+							throw new ParseException(ExEmptyVarRef, i, code);
 
 						var str = sub.ToString();
 
@@ -134,7 +134,7 @@ namespace Keysharp.Scripting
 					}
 				}
 				else if (id && !IsIdentifier(sym))
-					throw new ParseException(ExInvalidVarToken, i);
+					throw new ParseException(ExInvalidVarToken, i, code);
 				else
 					_ = sub.Append(sym);
 			}

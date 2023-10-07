@@ -51,6 +51,17 @@ namespace Keysharp.Core
 			var val = obj0;
 			var name = obj1.As();
 			var paramCount = obj2.Ai(-1);
+
+			if (obj0 is KeysharpObject kso)
+			{
+				if (kso.op != null && kso.op.ContainsKey(name))
+					return 1L;
+
+				if (obj0 is Keysharp.Core.Map map)
+					if (map.map.ContainsKey(name))
+						return 1L;
+			}
+
 			var mph = Reflections.FindAndCacheProperty(val.GetType(), name, paramCount);
 			return mph != null && mph.pi != null ? 1L : 0L;
 		}
@@ -154,8 +165,16 @@ namespace Keysharp.Core
 					argsList.Add(null);
 			}
 
-			for (; argsused < obj.Length && argsused < mph.parameters.Length; argsused++)
-				argsList.Add(obj[argsused]);
+			if (mph.IsVariadic)
+			{
+				for (; argsused < obj.Length; argsused++)
+					argsList.Add(obj[argsused]);
+			}
+			else
+			{
+				for (; argsused < obj.Length && argsused < mph.parameters.Length; argsused++)
+					argsList.Add(obj[argsused]);
+			}
 
 			while (argsList.Count < mph.parameters.Length)
 			{
@@ -329,6 +348,8 @@ namespace Keysharp.Core
 		public long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 
 		public string Name => mi != null ? mi.Name : "";
+
+		internal MethodPropertyHolder Mph => mph;
 
 		public FuncObj(string s, object o = null, object paramCount = null)
 			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)

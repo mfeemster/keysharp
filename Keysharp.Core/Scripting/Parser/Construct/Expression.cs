@@ -358,16 +358,14 @@ namespace Keysharp.Scripting
 										var val = ParseMultiExpression(line, code, valtokens.ToArray(), create);
 										invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
 										n = i - 1;
-
-										if (parts[n] is CodeVariableReferenceExpression cvre && string.Compare(cvre.VariableName, "this", true) == 0)
-										{
-											var cse = new CodeSnippetExpression("this");//Required because otherwise it will be @this, which fails to compile.
-											parts[n] = cse;
-											_ = invoke.Parameters.Add(cse);
-										}
-										else
-											_ = invoke.Parameters.Add((CodeExpression)parts[n]);
-
+										//if (parts[n] is CodeVariableReferenceExpression cvre && string.Compare(cvre.VariableName, "this", true) == 0)
+										//{
+										//  var cse = new CodeSnippetExpression("this");//Required because otherwise it will be @this, which fails to compile.
+										//  parts[n] = cse;
+										//  _ = invoke.Parameters.Add(cse);
+										//}
+										//else
+										_ = invoke.Parameters.Add((CodeExpression)parts[n]);
 										var index = ParseMultiExpression(line, code, proptokens.ToArray(), create);
 
 										if (index.Length > 1)

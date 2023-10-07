@@ -225,7 +225,7 @@ If (x == 789)
 else
 	FileAppend, fail, *
 
-m := { two : () => 2 }
+m := { two : (this) => 2 }
 x := m.two()
 
 If (x == 2)
@@ -233,7 +233,7 @@ If (x == 2)
 else
 	FileAppend, fail, *
 
-m := { two : (a) => a * 2 }
+m := { two : (this, a) => a * 2 }
 x := m.two(5)
 
 If (x == 10)
@@ -246,7 +246,7 @@ MultFunc(a, b)
 	return a * b
 }
 
-m := { two : () => MultFunc(3, 4) }
+m := { two : (this) => MultFunc(3, 4) }
 x := m.two()
 
 If (x == 12)
@@ -254,7 +254,7 @@ If (x == 12)
 else
 	FileAppend, fail, *
 
-m := { two : (a) => a * MultFunc(3, 4) }
+m := { two : (this, a) => a * MultFunc(3, 4) }
 x := m.two(2)
 
 If (x == 24)
@@ -263,18 +263,18 @@ else
 	FileAppend, fail, *
 
 x :=
-m := { one : 1, two : (a) => a * MultFunc(3, 4) }
+m := { one : 1, two : (this, a) => a * MultFunc(3, 4) }
 x := m.two(2)
 
 If (x == 24)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+		
 m := {
 one : 1,
-two : (a) => a * MultFunc(3, 4),
-three : (a) => a * 2
+two : (this, a) => a * MultFunc(3, 4),
+three : (this, a) => a * 2
 }
 
 x := m.two(2) * m.three(3)
@@ -312,7 +312,7 @@ If (x == 1)
 else
 	FileAppend, fail, *
 
-m := { one : { oneone : 11, onef : (a) => a * 2 }, two : { twotwo : 22 }, three : { threethree : 33, threethreearr : [10, 20, 30 ] } }
+m := { one : { oneone : 11, onef : (this, a) => a * 2 }, two : { twotwo : 22 }, three : { threethree : 33, threethreearr : [10, 20, 30 ] } }
 
 x := m.one.onef(5)
 
@@ -338,6 +338,20 @@ else
 x := m.one.onef(5) * m.two.twotwo * m.three.threethree * m.three.threethreearr[3]
 
 If (x == 217800)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+val := 5
+m := { one : (this, &a) => a := a * 2 }
+x := m.one(&val)
+
+If (x == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+	
+If (val == 10)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

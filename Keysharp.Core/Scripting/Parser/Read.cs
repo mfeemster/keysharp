@@ -225,7 +225,7 @@ namespace Keysharp.Scripting
 					}
 				}
 				else
-					throw new ParseException($"Command line include file {cmdinc} specified with -/include not found", line);
+					throw new ParseException($"Command line include file {cmdinc} specified with -/include not found", line, "");
 			}
 
 			while ((code = source.ReadLine()) != null)
@@ -258,7 +258,7 @@ namespace Keysharp.Scripting
 				if (code.Length > 1 && code[0] == Directive)
 				{
 					if (code.Length < 2)
-						throw new ParseException($"{ExUnknownDirv} at line {code}", line);
+						throw new ParseException($"{ExUnknownDirv} at line {code}", line, code);
 
 					var delim = new char[Spaces.Length + 1];
 					delim[0] = Multicast;
@@ -360,7 +360,7 @@ namespace Keysharp.Scripting
 								}
 
 								if (!found && !silent)
-									throw new ParseException($"Include file {p1} not found at any of the locations: {string.Join(Environment.NewLine, paths)}", line);
+									throw new ParseException($"Include file {p1} not found at any of the locations: {string.Join(Environment.NewLine, paths)}", line, code);
 							}
 							else
 							{
@@ -391,7 +391,7 @@ namespace Keysharp.Scripting
 								else
 								{
 									if (!silent)
-										throw new ParseException($"Include file {p1} not found at location {path}", line);
+										throw new ParseException($"Include file {p1} not found at location {path}", line, code);
 
 									break;
 								}
@@ -564,7 +564,7 @@ namespace Keysharp.Scripting
 				if (code.Length > 0 && code[0] == ParenOpen)
 				{
 					if (list.Count == 0)
-						throw new ParseException($"{ExUnexpected} at line {code}", line);
+						throw new ParseException($"{ExUnexpected} at line {code}", line, code);
 
 					var buf = new StringBuilder(256);
 					//_ = buf.Append(options[0]);// code);
@@ -651,7 +651,7 @@ namespace Keysharp.Scripting
 				if (IsContinuationLine(code, false))
 				{
 					if (list.Count == 0)
-						throw new ParseException($"{ExUnexpected} at line {code}", line);
+						throw new ParseException(ExUnexpected, line, code);
 
 					var i = list.Count - 1;
 					var buf = new StringBuilder(list[i].Code, list[i].Code.Length + /*newlineToUse.Length*/1 + code.Length);//Was originally using newline, but probably want space instead.

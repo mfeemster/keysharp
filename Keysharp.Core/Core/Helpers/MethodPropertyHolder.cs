@@ -132,7 +132,7 @@ namespace Keysharp.Core
 				{
 					paramsPool = new ConcurrentStackPool<object>(ParamLength);
 
-					if (startVarIndex != -1)//Variadic.
+					if (IsVariadic)
 					{
 						callFunc = (inst, obj) =>
 						{
@@ -154,7 +154,7 @@ namespace Keysharp.Core
 								{
 									if (pi == startVarIndex)
 									{
-										var om1 = (objLength - startVarIndex) - stopVarIndexDistanceFromEnd;
+										var om1 = obj[pi] == null ? 0 : (objLength - startVarIndex) - stopVarIndexDistanceFromEnd;//obj[pi] == null means null was passed for the variadic parameter.
 										lastArr = new object[om1];//Can't really use a pool here because we don't know the exact size ahead of time.
 
 										for (var i = 0; i < om1; i++)

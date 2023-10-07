@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Windows;

@@ -26,7 +26,12 @@ namespace Keysharp.Core.Common.Threading
 						return ifo.Call(o);
 					else
 						return "";
-				});
+				},
+				//This is needed to make a variety of functionality work inside of hotkey/string handlers.
+				//Such as clipboard and window functions.
+				//Unsure if this is exactly how we'll do threading, vs doing it some other way such as async.
+				CancellationToken.None, TaskCreationOptions.None,
+				SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current);
 				_ = await tsk;
 			}
 			//catch (AggregateException aex)

@@ -383,7 +383,7 @@ namespace Keysharp.Core
 			foreach (var kv in timers)
 				kv.Value.Stop();
 
-			while (Keysharp.Scripting.Script.totalExistingThreads > 0)
+			while (Keysharp.Scripting.Script.totalExistingThreads > 1)//Check against 1 instead of 0, because this may be launched in a thread as a result of a hotkey.
 				Sleep(200);
 
 			if (!Script.IsMainWindowClosing)

@@ -275,8 +275,7 @@ else
 
 b := false
 
-try
-{
+try {
 	throw TypeError("tester")
 }
 catch TypeError as errex
@@ -291,12 +290,10 @@ else
 
 b := false
 
-try
-{
+try {
 	throw ValueError("tester")
 }
-catch ValueError as errex
-{
+catch ValueError as errex {
 	b := true
 }
 
@@ -311,20 +308,17 @@ try ; this is a comment
 {
 	throw ZeroDivisionError("tester")
 }
-catch ZeroDivisionError as errex ; another comment
-{
+catch ZeroDivisionError as errex { ; another comment
 	b := true
 }
 catch(KeysharpException) ; last comment
 {
 	b := false
 }
-catch(OSError)
-{
+catch(OSError) {
 	b := false
 }
-catch(IndexError)
-{
+catch(IndexError) {
 	b := false
 }
 catch(PropertyError)
@@ -339,12 +333,10 @@ catch(MemberError)
 {
 	b := false
 }
-catch(MemoryError)
-{
+catch(MemoryError) {
 	b := false
 }
-catch(MethodError)
-{
+catch(MethodError) {
 	b := false
 }
 catch(TargetError)

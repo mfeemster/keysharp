@@ -47,7 +47,6 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 * Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
 	+ The following features are not implemented yet:
 		+ COM
-		+ OwnProps
 		+ Threads
 
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
@@ -109,7 +108,10 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
-
+* If a reference to an enumerator created by a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
+	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
+	+ `ObjOwnProps()` takes an optional second argument which is a boolean. Passing `True` means return name and value, passing `False` or empty means return name only.
+	
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
@@ -166,6 +168,19 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
 * Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in `StrGet()` like:
 	+ `StrGet(DllCall("GetCommandLine", "ptr"))`
+* The `catch` clause of a `try/catch` statement must be on its own line. So the following will not work:
+```
+	try {
+	} catch {
+	}
+```
+	+ Instead, use this format (with or without OTB):
+```
+	try {
+	}
+	catch {
+	}
+```	
 * `WinGetPos()` does not take reference parameters. Instead, it takes 4 optional arguments and returns a `Map` with the following entries: `OutX`, `OutY`, `OutWidth`, `OutHeight`.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 	+ The following options are different:
@@ -280,17 +295,17 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 ```
 
 ###	Removals: ###
-* COM is not implemented yet.
-* User definable properties are not implemented yet, and `Map` values will not be considered `OwnProps` until future work is done.
+* COM is only partially implemented.
 * Threads are not implemented yet.
 * Nested classes are not supported.
+* Nested functions are not supported.
 * `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
 * `ListLines()` is omitted because C# doesn't support it.
 * `ObjPtr()` is not implemented because objects can be moved by the GC.
 * There is no such thing as dereferencing in C#, so the `*` dereferencing operator is not supported.		
 * The `R`, `Dn` or `Tn` parameters in `FormatDateTime()` are not supported, except for 0x80000000 to disallow user overrides.
 	+ If you want to specify a particular format or order, do it in the format argument. There is no need or reason to have one argument alter the other.
-	+ [here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings) is a list of the C# style DateTime formatters which are supported.
+	+ [Here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings) is a list of the C# style DateTime formatters which are supported.
 * Static text controls do not send the Windows `API WM_CTLCOLORSTATIC (0x0138)` message to their parent controls like they do in AHK.
 * `IsAlpha()`, `IsUpper()`, `IsLower()` do not accept a locale parameter because all strings are Unicode.
 * Renaming Keysharp.exe to run a specific script by default will not work.
@@ -305,7 +320,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The `3` and `5` options for `DirSelect()` don't apply in C#.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
-* VarRef is not supported.
+* Function references are supported, but the VarRef object is not supported.
 * `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
 	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
 	+ A GUI object is required for `OnMessage()` to be used.
@@ -323,6 +338,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 * The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
+	+ This also applies to properties which have been dynamically defined with `DefineProp()`.
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.

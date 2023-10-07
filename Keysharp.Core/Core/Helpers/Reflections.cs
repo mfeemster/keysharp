@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Text;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace Keysharp.Core
 {
@@ -90,6 +91,9 @@ namespace Keysharp.Core
 							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
 						_ = FindAndCacheMethod(type, "", -1);
 
+			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
+			_ = FindAndCacheMethod(typeof(object[]), "", -1, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+
 			foreach (var typekv in typeToStringMethods)
 			{
 				foreach (var methkv in typekv.Value)
@@ -125,12 +129,17 @@ namespace Keysharp.Core
 						_ = FindAndCacheField(type, "");
 					}
 
+			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
+			FindAndCacheProperty(typeof(object[]), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+			FindAndCacheProperty(typeof(System.Exception), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+
 			foreach (var typekv in typeToStringProperties)
 				foreach (var propkv in typekv.Value)
 					_ = stringToTypeProperties.GetOrAdd(propkv.Key).GetOrAdd(typekv.Key, propkv.Value);
 		}
 
-		internal static FieldInfo FindAndCacheField(Type t, string name)
+		internal static FieldInfo FindAndCacheField(Type t, string name, BindingFlags propType =
+					BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly)
 		{
 			try
 			{
@@ -141,12 +150,12 @@ namespace Keysharp.Core
 					}
 					else//Field on this type has not been used yet, so get all properties and cache.
 					{
-						var fields = t.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+						var fields = t.GetFields(propType);
 
 						if (fields.Length > 0)
 						{
 							foreach (var field in fields)
-								staticFields.GetOrAdd(field.DeclaringType,
+								staticFields.GetOrAdd(field.ReflectedType,
 													  () => new Dictionary<string, FieldInfo>(fields.Length, StringComparer.OrdinalIgnoreCase))
 								[field.Name] = field;
 						}
@@ -170,7 +179,7 @@ namespace Keysharp.Core
 					t = t.BaseType;
 				} while (t.Assembly == typeof(Any).Assembly || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase));
 			}
-			catch (Exception)// e)
+			catch (Exception)
 			{
 				throw;
 			}
@@ -178,7 +187,8 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount)
+		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount, BindingFlags propType =
+					BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly, bool isSystem = false)
 		{
 			do
 			{
@@ -187,12 +197,12 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					var meths = t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+					var meths = t.GetMethods(propType);
 
 					if (meths.Length > 0)
 					{
 						foreach (var meth in meths)
-							typeToStringMethods.GetOrAdd(meth.DeclaringType,
+							typeToStringMethods.GetOrAdd(meth.ReflectedType,
 														 () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
 							.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
 					}
@@ -219,12 +229,16 @@ namespace Keysharp.Core
 				}
 
 				t = t.BaseType;
-			} while (t.Assembly == typeof(Any).Assembly || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase));//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
+			} while (t.Assembly == typeof(Any).Assembly
+
+					 || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
+					 || isSystem);//Traverse down to the base, but only do it for types that are part of this library. Once a base crosses the library boundary, the loop stops.
 
 			return null;
 		}
 
-		internal static MethodPropertyHolder FindAndCacheProperty(Type t, string name, int paramCount)
+		internal static MethodPropertyHolder FindAndCacheProperty(Type t, string name, int paramCount, BindingFlags propType =
+					BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly, bool isSystem = false)
 		{
 			try
 			{
@@ -235,12 +249,12 @@ namespace Keysharp.Core
 					}
 					else//Property on this type has not been used yet, so get all properties and cache.
 					{
-						var props = t.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+						var props = t.GetProperties(propType);
 
 						if (props.Length > 0)
 						{
 							foreach (var prop in props)
-								typeToStringProperties.GetOrAdd(prop.DeclaringType,
+								typeToStringProperties.GetOrAdd(prop.ReflectedType,
 																() => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
 								.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
 						}
@@ -267,14 +281,102 @@ namespace Keysharp.Core
 					}
 
 					t = t.BaseType;
-				} while (t.Assembly == typeof(Any).Assembly || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase));
+				} while (t.Assembly == typeof(Any).Assembly
+
+						 || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
+						 || isSystem);
 			}
-			catch (Exception)// e)
+			catch (Exception)
 			{
 				throw;
 			}
 
 			return null;
+		}
+
+		internal static long OwnPropCount(Type t, bool onlyTop = false)
+		{
+			var ct = 0L;
+
+			try
+			{
+				while (t.Assembly != typeof(Any).Assembly)
+				{
+					if (typeToStringProperties.TryGetValue(t, out var dkt))
+					{
+						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
+
+						if (onlyTop)
+							break;
+					}
+					else
+						break;
+
+					t = t.BaseType;
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+
+			return ct;
+		}
+
+		internal static bool FindOwnProp(Type t, string name, bool onlyTop = false)
+		{
+			var ct = 0L;
+			name = name.ToLower();
+
+			try
+			{
+				while (t.Assembly != typeof(Any).Assembly)
+				{
+					if (typeToStringProperties.TryGetValue(t, out var dkt))
+					{
+						if (dkt.TryGetValue(name, out var prop))
+							return true;
+					}
+					else
+						break;
+
+					t = t.BaseType;
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+
+			return false;
+		}
+
+		internal static List<MethodPropertyHolder> GetOwnProps(Type t, bool onlyTop = false)
+		{
+			var props = new List<MethodPropertyHolder>();
+
+			try
+			{
+				while (t.Assembly != typeof(Any).Assembly)
+				{
+					if (typeToStringProperties.TryGetValue(t, out var dkt))
+					{
+						foreach (var kv in dkt)
+							if (kv.Key != "__Class" && kv.Value.Count > 0)
+								props.Add(kv.Value.First().Value);
+					}
+					else
+						break;
+
+					t = t.BaseType;
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+
+			return props;
 		}
 
 		internal static MethodPropertyHolder FindBuiltInMethod(string name, int paramCount) =>

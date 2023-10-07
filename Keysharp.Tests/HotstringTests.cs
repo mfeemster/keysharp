@@ -3,6 +3,8 @@ using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using NUnit.Framework;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Keysharp.Tests
 {
@@ -226,6 +228,7 @@ namespace Keysharp.Tests
 		public void CreateHotstring()
 		{
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
+			btwtyped = false;
 			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
 			_ = Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", new FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();

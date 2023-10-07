@@ -92,6 +92,9 @@ namespace Keysharp.Scripting
 		{
 			var names = new List<CodeExpression>();
 			var entries = new List<CodeExpression>();
+			var firstBrace = code.IndexOf('{') + 1;
+			var lastBrace = code.LastIndexOf('}');
+			var splits = SplitStringBalanced(code.Substring(firstBrace, lastBrace - firstBrace), ',');
 
 			for (var i = 0; i < parts.Count; i++)
 			{
@@ -172,13 +175,16 @@ namespace Keysharp.Scripting
 				var subs = new List<List<object>>();
 				var span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(parts);
 				var tempparts = ParseObjectValue(span.Slice(i));
-				var valcode = string.Join("", tempparts.Select((p) => p.ToString()));
-				var exprs = ParseMultiExpression(line, valcode, tempparts, create, subs);
 
-				if (exprs.Length > 0)
+				if (splits.Count > 0)
 				{
-					value = exprs[0];
-					i += subs[0].Count;
+					var exprs = ParseMultiExpression(line, splits[entries.Count], tempparts, create, subs);
+
+					if (exprs.Length > 0)
+					{
+						value = exprs[0];
+						i += subs[0].Count;
+					}
 				}
 
 				if (i == parts.Count)
@@ -218,7 +224,6 @@ namespace Keysharp.Scripting
 			var parenLevel = 0;
 			var braceLevel = 0;
 			var bracketLevel = 0;
-			var i = 0;
 			var parts = new List<string>();
 			var sb = new StringBuilder();
 
