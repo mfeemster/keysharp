@@ -294,34 +294,15 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		internal static long OwnPropCount(Type t, bool onlyTop = false)
-		{
-			var ct = 0L;
+		internal static MethodPropertyHolder FindBuiltInMethod(string name, int paramCount) =>
+		FindMethod(stringToTypeBuiltInMethods, name, paramCount);
 
-			try
-			{
-				while (t.Assembly != typeof(Any).Assembly)
-				{
-					if (typeToStringProperties.TryGetValue(t, out var dkt))
-					{
-						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
+		internal static MethodPropertyHolder FindLocalMethod(string name, int paramCount) =>
+		FindMethod(stringToTypeLocalMethods, name, paramCount);
 
-						if (onlyTop)
-							break;
-					}
-					else
-						break;
+		internal static MethodPropertyHolder FindLocalRoutine(string name, int paramCount) => FindLocalMethod(Keysharp.Scripting.Parser.LabelMethodName(name), paramCount);
 
-					t = t.BaseType;
-				}
-			}
-			catch (Exception)
-			{
-				throw;
-			}
-
-			return ct;
-		}
+		internal static MethodPropertyHolder FindMethod(string name, int paramCount) => FindLocalMethod(name, paramCount) is MethodPropertyHolder mph ? mph : FindBuiltInMethod(name, paramCount);
 
 		internal static bool FindOwnProp(Type t, string name, bool onlyTop = false)
 		{
@@ -378,16 +359,6 @@ namespace Keysharp.Core
 
 			return props;
 		}
-
-		internal static MethodPropertyHolder FindBuiltInMethod(string name, int paramCount) =>
-		FindMethod(stringToTypeBuiltInMethods, name, paramCount);
-
-		internal static MethodPropertyHolder FindLocalMethod(string name, int paramCount) =>
-		FindMethod(stringToTypeLocalMethods, name, paramCount);
-
-		internal static MethodPropertyHolder FindLocalRoutine(string name, int paramCount) => FindLocalMethod(Keysharp.Scripting.Parser.LabelMethodName(name), paramCount);
-
-		internal static MethodPropertyHolder FindMethod(string name, int paramCount) => FindLocalMethod(name, paramCount) is MethodPropertyHolder mph ? mph : FindBuiltInMethod(name, paramCount);
 
 		internal static string GetVariableInfo()
 		{
@@ -471,6 +442,35 @@ namespace Keysharp.Core
 			}
 
 			return sb.ToString();
+		}
+
+		internal static long OwnPropCount(Type t, bool onlyTop = false)
+		{
+			var ct = 0L;
+
+			try
+			{
+				while (t.Assembly != typeof(Any).Assembly)
+				{
+					if (typeToStringProperties.TryGetValue(t, out var dkt))
+					{
+						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
+
+						if (onlyTop)
+							break;
+					}
+					else
+						break;
+
+					t = t.BaseType;
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+
+			return ct;
 		}
 
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);

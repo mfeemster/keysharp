@@ -14,6 +14,7 @@ namespace Keysharp.Core.Common.Keyboard
 {
 	public class HotkeyDefinition
 	{
+		internal const uint AT_LEAST_ONE_COMBO_HAS_TILDE = 0x10;
 		internal const uint AT_LEAST_ONE_VARIANT_HAS_TILDE = 0x02;
 		internal const uint AT_LEAST_ONE_VARIANT_LACKS_TILDE = 0x04;
 		internal const uint HOTKEY_ID_ALT_TAB = 0x7FFE;
@@ -29,7 +30,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const uint HOTKEY_ID_TOGGLE = 0x03;
 		internal const uint HOTKEY_KEY_UP = 0x8000;
 		internal const uint NO_SUPPRESS_NEXT_UP_EVENT = 0x08;
-		internal const uint AT_LEAST_ONE_COMBO_HAS_TILDE = 0x10;
 		internal const uint NO_SUPPRESS_PREFIX = 0x01;
 		internal const uint NO_SUPPRESS_STATES = NO_SUPPRESS_NEXT_UP_EVENT;
 		internal const uint NO_SUPPRESS_SUFFIX_VARIES = AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE;
@@ -2559,8 +2559,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool isKeyUp;
 		internal uint modifiers;
 		internal uint modifiersLR;
-		internal string prefixText = "";
 		internal bool prefixHasTilde;
+		internal string prefixText = "";
 		internal bool suffixHasTilde;//As opposed to "prefix has tilde".
 		internal string suffixText = "";
 

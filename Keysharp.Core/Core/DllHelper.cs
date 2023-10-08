@@ -19,206 +19,6 @@ using Microsoft.CodeAnalysis.Operations;
 
 namespace Keysharp.Core
 {
-	internal class DllArgumentHelper
-	{
-		const string Cdecl = "cdecl";
-		internal bool cdecl = false;
-		internal string returnName = "";
-		internal object[] args;
-		internal Type[] types;
-		internal bool hasreturn;
-		internal Type returnType = typeof(void);
-		private HashSet<GCHandle> gcHandles = new HashSet<GCHandle>();
-		private ScopeHelper gcHandlesScope;
-
-		internal DllArgumentHelper(object[] parameters)
-		{
-			gcHandlesScope = new ScopeHelper(gcHandles);
-			gcHandlesScope.eh += (sender, o) =>
-			{
-				if (o is HashSet<GCHandle> hs)
-					foreach (var gch in hs)
-						gch.Free();
-			};
-			ConvertKeysharpParametersToDllParameters(parameters);
-		}
-		private void ConvertKeysharpParametersToDllParameters(object[] parameters)
-		{
-			void SetupPointerArg(int i, int n, object obj = null)
-			{
-				var gch = GCHandle.Alloc(obj != null ? obj : parameters[i], GCHandleType.Pinned);
-				_ = gcHandles.Add(gch);
-				var intptr = gch.AddrOfPinnedObject();
-				args[n] = intptr;
-			}
-			types = new Type[parameters.Length / 2];
-			args = new object[types.Length];
-			hasreturn = (parameters.Length & 1) == 1;
-
-			for (var i = 0; i < parameters.Length; i++)
-			{
-				var name = parameters[i].ToString().ToLowerInvariant().Trim();
-				var isreturn = hasreturn && i == parameters.Length - 1;
-
-				if (isreturn)
-				{
-					if (name.StartsWith(Cdecl, StringComparison.OrdinalIgnoreCase))
-					{
-						name = name.Substring(Cdecl.Length).Trim();
-						cdecl = true;
-						returnName = name;
-
-						if (name?.Length == 0)
-							continue;
-					}
-				}
-
-				Type type;
-
-				switch (name[name.Length - 1])
-				{
-					case '*':
-					case 'P':
-					case 'p':
-						name = name.Substring(0, name.Length - 1).Trim();
-						type = typeof(IntPtr);
-						goto TypeDetermined;
-						//break;
-				}
-
-				switch (name)
-				{
-					case "wstr":
-					case "str": type = typeof(string); break;
-
-					case "astr": type = typeof(IntPtr); break;
-
-					case "int64": type = typeof(long); break;
-
-					case "uint64": type = typeof(ulong); break;
-
-					case "hresult":
-					case "int": type = typeof(int); break;
-
-					case "uint": type = typeof(uint); break;
-
-					case "short": type = typeof(short); break;
-
-					case "ushort": type = typeof(ushort); break;
-
-					case "char": type = typeof(char); break;
-
-					case "uchar": type = typeof(char); break;
-
-					case "float": type = typeof(float); break;
-
-					case "double": type = typeof(double); break;
-
-					case "ptr": type = typeof(IntPtr); break;
-
-					default:
-						throw new ValueError($"Arg or return type of {name} is invalid.");
-				}
-
-				TypeDetermined:
-				i++;
-
-				if (isreturn)
-				{
-					returnType = type;
-				}
-				else if (!isreturn && i < parameters.Length)
-				{
-					var n = i / 2;
-					types[n] = type;
-
-					try
-					{
-						if (type == typeof(IntPtr))
-						{
-							if (name == "ptr")
-							{
-								if (parameters[i] is null)
-									args[n] = IntPtr.Zero;
-								else if (parameters[i] is IntPtr)
-									args[n] = parameters[i];
-								else if (parameters[i] is int || parameters[i] is long || parameters[i] is uint)
-									args[n] = new IntPtr((long)Convert.ChangeType(parameters[i], typeof(long)));
-								else if (parameters[i] is Buffer buf)
-									args[n] = buf.Ptr;
-								else if (parameters[i] is DelegateHolder delholder)
-								{
-									args[n] = delholder.delRef;
-									types[n] = delholder.delRef.GetType();
-								}
-								else if (parameters[i] is StringBuffer sb)
-								{
-									args[n] = sb.sb;
-									types[n] = typeof(StringBuilder);
-								}
-								else if (parameters[i] is Delegate del)
-								{
-									args[n] = del;
-									types[n] = del.GetType();
-								}
-								else if (parameters[i] is System.Array arr)
-									//else if (parameters[i] is ComObjArray arr)
-								{
-									args[n] = arr;
-									types[n] = arr.GetType();
-								}
-								else
-									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
-							}
-							else if (name == "uint" || name == "int")
-							{
-								if (parameters[i] is null)
-									args[n] = 0;
-								else if (parameters[i] is IntPtr ip)
-									args[n] = ip.ToInt64();
-								else
-									args[n] = (int)parameters[i].Al();
-							}
-							else if (name == "astr")
-							{
-								if (parameters[i] is string s)
-									SetupPointerArg(i, n, ASCIIEncoding.ASCII.GetBytes(s));
-								else
-									throw new TypeError($"Argument had type astr but was not a string.");
-							}
-							else
-								SetupPointerArg(i, n);
-						}
-						else if (type == typeof(int))
-						{
-							if (parameters[i] is null)
-								args[n] = 0;
-							else if (parameters[i] is IntPtr ip)
-								args[n] = (int)ip.ToInt32();
-							else
-								args[n] = (int)parameters[i].Al();
-						}
-						else if (type == typeof(uint))
-						{
-							if (parameters[i] is null)
-								args[n] = 0u;
-							else if (parameters[i] is IntPtr ip)
-								args[n] = (uint)ip.ToInt64();
-							else
-								args[n] = (uint)parameters[i].Al();
-						}
-						else
-							args[n] = Convert.ChangeType(parameters[i], type);
-					}
-					catch (Exception e)
-					{
-						throw new TypeError($"Argument type conversion failed: {e.Message}");
-					}
-				}
-			}
-		}
-	}
-
 	public static class DllHelper
 	{
 		//public static object DllCall(object function, string t1, ref object p1, string t2, ref object p2)
@@ -235,6 +35,8 @@ namespace Keysharp.Core
 		//{
 		//  return DllCallInternal(function, new object[] { t1, p1, t2, p2, ret });
 		//}
+
+		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
 
 		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
 		{
@@ -502,7 +304,7 @@ namespace Keysharp.Core
 						//var value = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate)).Method.Invoke(null, helper.args);
 						//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate));
 						//var delType = Expression.GetFuncType(helper.types.Concat(new[] { helper.returnType}));
-						var delType = Expression.GetDelegateType(helper.types.Concat(new[] { helper.returnType}));
+						var delType = Expression.GetDelegateType(helper.types.Concat(new[] { helper.returnType }));
 						var ptrdel = GetDelegateForFunctionPointerFix(new IntPtr(address), delType);
 						//System.Runtime.CompilerServices.
 						//System.Linq.Expressions.Compiler.DelegateHelpers.MakeNewCustomDelegate
@@ -535,8 +337,6 @@ namespace Keysharp.Core
 				}
 			}
 		}
-
-		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
 
 		/// <summary>
 		/// https://github.com/dotnet/runtime/issues/13578
@@ -685,6 +485,7 @@ namespace Keysharp.Core
 					return Marshal.ReadIntPtr(addr, off).ToInt64();
 			}
 		}
+
 		public static long NumPut(params object[] obj)
 		{
 			Buffer buf;
@@ -780,11 +581,213 @@ namespace Keysharp.Core
 
 			return buf.Ptr.ToInt64() + offset;
 		}
+
 		/// <summary>
 		/// Converts a local function to a native function pointer.
 		/// </summary>
 		/// <param name="function">The name of the function.</param>
 		/// <param name="args">Unused legacy parameters.</param>
 		/// <returns>An integer address to the function callable by unmanaged code.</returns>
+	}
+
+	internal class DllArgumentHelper
+	{
+		internal object[] args;
+		internal bool cdecl = false;
+		internal bool hasreturn;
+		internal string returnName = "";
+		internal Type returnType = typeof(void);
+		internal Type[] types;
+		private const string Cdecl = "cdecl";
+		private HashSet<GCHandle> gcHandles = new HashSet<GCHandle>();
+		private ScopeHelper gcHandlesScope;
+
+		internal DllArgumentHelper(object[] parameters)
+		{
+			gcHandlesScope = new ScopeHelper(gcHandles);
+			gcHandlesScope.eh += (sender, o) =>
+			{
+				if (o is HashSet<GCHandle> hs)
+					foreach (var gch in hs)
+						gch.Free();
+			};
+			ConvertKeysharpParametersToDllParameters(parameters);
+		}
+
+		private void ConvertKeysharpParametersToDllParameters(object[] parameters)
+		{
+			void SetupPointerArg(int i, int n, object obj = null)
+			{
+				var gch = GCHandle.Alloc(obj != null ? obj : parameters[i], GCHandleType.Pinned);
+				_ = gcHandles.Add(gch);
+				var intptr = gch.AddrOfPinnedObject();
+				args[n] = intptr;
+			}
+			types = new Type[parameters.Length / 2];
+			args = new object[types.Length];
+			hasreturn = (parameters.Length & 1) == 1;
+
+			for (var i = 0; i < parameters.Length; i++)
+			{
+				var name = parameters[i].ToString().ToLowerInvariant().Trim();
+				var isreturn = hasreturn && i == parameters.Length - 1;
+
+				if (isreturn)
+				{
+					if (name.StartsWith(Cdecl, StringComparison.OrdinalIgnoreCase))
+					{
+						name = name.Substring(Cdecl.Length).Trim();
+						cdecl = true;
+						returnName = name;
+
+						if (name?.Length == 0)
+							continue;
+					}
+				}
+
+				Type type;
+
+				switch (name[name.Length - 1])
+				{
+					case '*':
+					case 'P':
+					case 'p':
+						name = name.Substring(0, name.Length - 1).Trim();
+						type = typeof(IntPtr);
+						goto TypeDetermined;
+						//break;
+				}
+
+				switch (name)
+				{
+					case "wstr":
+					case "str": type = typeof(string); break;
+
+					case "astr": type = typeof(IntPtr); break;
+
+					case "int64": type = typeof(long); break;
+
+					case "uint64": type = typeof(ulong); break;
+
+					case "hresult":
+					case "int": type = typeof(int); break;
+
+					case "uint": type = typeof(uint); break;
+
+					case "short": type = typeof(short); break;
+
+					case "ushort": type = typeof(ushort); break;
+
+					case "char": type = typeof(char); break;
+
+					case "uchar": type = typeof(char); break;
+
+					case "float": type = typeof(float); break;
+
+					case "double": type = typeof(double); break;
+
+					case "ptr": type = typeof(IntPtr); break;
+
+					default:
+						throw new ValueError($"Arg or return type of {name} is invalid.");
+				}
+
+				TypeDetermined:
+				i++;
+
+				if (isreturn)
+				{
+					returnType = type;
+				}
+				else if (!isreturn && i < parameters.Length)
+				{
+					var n = i / 2;
+					types[n] = type;
+
+					try
+					{
+						if (type == typeof(IntPtr))
+						{
+							if (name == "ptr")
+							{
+								if (parameters[i] is null)
+									args[n] = IntPtr.Zero;
+								else if (parameters[i] is IntPtr)
+									args[n] = parameters[i];
+								else if (parameters[i] is int || parameters[i] is long || parameters[i] is uint)
+									args[n] = new IntPtr((long)Convert.ChangeType(parameters[i], typeof(long)));
+								else if (parameters[i] is Buffer buf)
+									args[n] = buf.Ptr;
+								else if (parameters[i] is DelegateHolder delholder)
+								{
+									args[n] = delholder.delRef;
+									types[n] = delholder.delRef.GetType();
+								}
+								else if (parameters[i] is StringBuffer sb)
+								{
+									args[n] = sb.sb;
+									types[n] = typeof(StringBuilder);
+								}
+								else if (parameters[i] is Delegate del)
+								{
+									args[n] = del;
+									types[n] = del.GetType();
+								}
+								else if (parameters[i] is System.Array arr)
+									//else if (parameters[i] is ComObjArray arr)
+								{
+									args[n] = arr;
+									types[n] = arr.GetType();
+								}
+								else
+									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
+							}
+							else if (name == "uint" || name == "int")
+							{
+								if (parameters[i] is null)
+									args[n] = 0;
+								else if (parameters[i] is IntPtr ip)
+									args[n] = ip.ToInt64();
+								else
+									args[n] = (int)parameters[i].Al();
+							}
+							else if (name == "astr")
+							{
+								if (parameters[i] is string s)
+									SetupPointerArg(i, n, ASCIIEncoding.ASCII.GetBytes(s));
+								else
+									throw new TypeError($"Argument had type astr but was not a string.");
+							}
+							else
+								SetupPointerArg(i, n);
+						}
+						else if (type == typeof(int))
+						{
+							if (parameters[i] is null)
+								args[n] = 0;
+							else if (parameters[i] is IntPtr ip)
+								args[n] = (int)ip.ToInt32();
+							else
+								args[n] = (int)parameters[i].Al();
+						}
+						else if (type == typeof(uint))
+						{
+							if (parameters[i] is null)
+								args[n] = 0u;
+							else if (parameters[i] is IntPtr ip)
+								args[n] = (uint)ip.ToInt64();
+							else
+								args[n] = (uint)parameters[i].Al();
+						}
+						else
+							args[n] = Convert.ChangeType(parameters[i], type);
+					}
+					catch (Exception e)
+					{
+						throw new TypeError($"Argument type conversion failed: {e.Message}");
+					}
+				}
+			}
+		}
 	}
 }

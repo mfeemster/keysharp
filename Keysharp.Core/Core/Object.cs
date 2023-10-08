@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+using System.Transactions;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskBand;
@@ -25,6 +26,7 @@ namespace Keysharp.Core
 		}
 
 		public virtual FuncObj GetMethod(object obj0 = null, object obj1 = null) => Function.GetMethod(this, obj0, obj1);
+
 		//public bool DefineProp(object obj0, object obj1)
 		//{
 		//  var name obj0.As();
@@ -40,29 +42,10 @@ namespace Keysharp.Core
 		//public virtual string tostring() => ToString();
 	}
 
-	public class OwnpropsMap : Keysharp.Core.Map
-	{
-		public KeysharpObject Parent { get; private set; }
-
-		public OwnpropsMap(KeysharpObject kso, Keysharp.Core.Map map)
-		{
-			Parent = kso;
-			Default = map.Default;
-			Capacity = map.Capacity;
-			CaseSense = "Off";
-
-			foreach (var kv in map.map)
-				this[kv.Key] = kv.Value;
-		}
-
-		public override object Clone()
-		{
-			return new OwnpropsMap(Parent, this);
-		}
-	}
-
 	public class KeysharpObject : Any
 	{
+		protected internal Dictionary<string, OwnpropsMap> op;
+
 		public static KeysharpObject Object() => new KeysharpObject();
 
 		public virtual object Clone()
@@ -203,16 +186,14 @@ namespace Keysharp.Core
 		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
 		public long SetCapacity(object obj) => throw new Keysharp.Core.Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
-
-		protected internal Dictionary<string, OwnpropsMap> op;
 	}
 
 	public class OwnPropsIterator : IEnumerator<(object, object)>
 	{
 		private bool getVal;
-		private KeysharpObject obj;
-		private Dictionary<object, object> map;
 		private IEnumerator<KeyValuePair<object, object>> iter;
+		private Dictionary<object, object> map;
+		private KeysharpObject obj;
 
 		public (object, object) Current
 		{
@@ -244,6 +225,10 @@ namespace Keysharp.Core
 			iter = map.GetEnumerator();
 		}
 
+		public void Call(ref object obj0) => (obj0, _) = Current;
+
+		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
+
 		public void Dispose() => Reset();
 
 		public bool MoveNext() => iter.MoveNext();
@@ -251,5 +236,26 @@ namespace Keysharp.Core
 		public void Reset() => iter = map.GetEnumerator();
 
 		private IEnumerator<(object, object)> GetEnumerator() => this;
+	}
+
+	public class OwnpropsMap : Keysharp.Core.Map
+	{
+		public KeysharpObject Parent { get; private set; }
+
+		public OwnpropsMap(KeysharpObject kso, Keysharp.Core.Map map)
+		{
+			Parent = kso;
+			Default = map.Default;
+			Capacity = map.Capacity;
+			CaseSense = "Off";
+
+			foreach (var kv in map.map)
+				this[kv.Key] = kv.Value;
+		}
+
+		public override object Clone()
+		{
+			return new OwnpropsMap(Parent, this);
+		}
 	}
 }

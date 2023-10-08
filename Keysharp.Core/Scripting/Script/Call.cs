@@ -352,6 +352,8 @@ namespace Keysharp.Scripting
 			}
 		}
 
+		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
+
 		public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
 			Type typetouse = null;
@@ -454,7 +456,5 @@ namespace Keysharp.Scripting
 			else
 				throw new PropertyError($"Attempting to set static property or field {namestr} to value {value} failed.");
 		}
-
-		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 	}
 }

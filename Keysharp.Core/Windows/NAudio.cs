@@ -32,63 +32,45 @@ using System.Runtime.InteropServices;
 /// </summary>
 namespace Keysharp.Core.Windows
 {
-	/// <summary>
-	/// IMMNotificationClient
-	/// </summary>
-	[Guid("7991EEC9-7E89-4D85-8390-6C703CEC60C0"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IMMNotificationClient
-	{
-		/// <summary>
-		/// Device State Changed
-		/// </summary>
-		void OnDeviceStateChanged([MarshalAs(UnmanagedType.LPWStr)] string deviceId, [MarshalAs(UnmanagedType.I4)] DeviceState newState);
-
-		/// <summary>
-		/// Device Added
-		/// </summary>
-		void OnDeviceAdded([MarshalAs(UnmanagedType.LPWStr)] string pwstrDeviceId);
-
-		/// <summary>
-		/// Device Removed
-		/// </summary>
-		void OnDeviceRemoved([MarshalAs(UnmanagedType.LPWStr)] string deviceId);
-
-		/// <summary>
-		/// Default Device Changed
-		/// </summary>
-		void OnDefaultDeviceChanged(DataFlow flow, Role role, [MarshalAs(UnmanagedType.LPWStr)] string defaultDeviceId);
-
-		/// <summary>
-		/// Property Value Changed
-		/// </summary>
-		/// <param name="pwstrDeviceId"></param>
-		/// <param name="key"></param>
-		void OnPropertyValueChanged([MarshalAs(UnmanagedType.LPWStr)] string pwstrDeviceId, PropertyKey key);
-	}
-
 	[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"),
 	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	internal interface IAudioEndpointVolume
 	{
-		int RegisterControlChangeNotify(IAudioEndpointVolumeCallback pNotify);
-		int UnregisterControlChangeNotify(IAudioEndpointVolumeCallback pNotify);
 		int GetChannelCount(out int pnChannelCount);
-		int SetMasterVolumeLevel(float fLevelDB, ref Guid pguidEventContext);
-		int SetMasterVolumeLevelScalar(float fLevel, ref Guid pguidEventContext);
-		int GetMasterVolumeLevel(out float pfLevelDB);
-		int GetMasterVolumeLevelScalar(out float pfLevel);
-		int SetChannelVolumeLevel(uint nChannel, float fLevelDB, ref Guid pguidEventContext);
-		int SetChannelVolumeLevelScalar(uint nChannel, float fLevel, ref Guid pguidEventContext);
+
 		int GetChannelVolumeLevel(uint nChannel, out float pfLevelDB);
+
 		int GetChannelVolumeLevelScalar(uint nChannel, out float pfLevel);
-		int SetMute([MarshalAs(UnmanagedType.Bool)] bool bMute, ref Guid pguidEventContext);
+
+		int GetMasterVolumeLevel(out float pfLevelDB);
+
+		int GetMasterVolumeLevelScalar(out float pfLevel);
+
 		int GetMute(out bool pbMute);
-		int GetVolumeStepInfo(out uint pnStep, out uint pnStepCount);
-		int VolumeStepUp(ref Guid pguidEventContext);
-		int VolumeStepDown(ref Guid pguidEventContext);
-		int QueryHardwareSupport(out uint pdwHardwareSupportMask);
+
 		int GetVolumeRange(out float pflVolumeMindB, out float pflVolumeMaxdB, out float pflVolumeIncrementdB);
+
+		int GetVolumeStepInfo(out uint pnStep, out uint pnStepCount);
+
+		int QueryHardwareSupport(out uint pdwHardwareSupportMask);
+
+		int RegisterControlChangeNotify(IAudioEndpointVolumeCallback pNotify);
+
+		int SetChannelVolumeLevel(uint nChannel, float fLevelDB, ref Guid pguidEventContext);
+
+		int SetChannelVolumeLevelScalar(uint nChannel, float fLevel, ref Guid pguidEventContext);
+
+		int SetMasterVolumeLevel(float fLevelDB, ref Guid pguidEventContext);
+
+		int SetMasterVolumeLevelScalar(float fLevel, ref Guid pguidEventContext);
+
+		int SetMute([MarshalAs(UnmanagedType.Bool)] bool bMute, ref Guid pguidEventContext);
+
+		int UnregisterControlChangeNotify(IAudioEndpointVolumeCallback pNotify);
+
+		int VolumeStepDown(ref Guid pguidEventContext);
+
+		int VolumeStepUp(ref Guid pguidEventContext);
 	}
 
 	[Guid("657804FA-D6AD-4496-8A60-352752AF4F89"),
@@ -106,11 +88,11 @@ namespace Keysharp.Core.Windows
 		int Activate(ref Guid id, ClsCtx clsCtx, IntPtr activationParams,
 					 [MarshalAs(UnmanagedType.IUnknown)] out object interfacePointer);
 
-		int OpenPropertyStore(StorageAccessMode stgmAccess, out IPropertyStore properties);
-
 		int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id);
 
 		int GetState(out DeviceState state);
+
+		int OpenPropertyStore(StorageAccessMode stgmAccess, out IPropertyStore properties);
 	}
 
 	[Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"),
@@ -118,6 +100,7 @@ namespace Keysharp.Core.Windows
 	internal interface IMMDeviceCollection
 	{
 		int GetCount(out int numDevices);
+
 		int Item(int deviceNumber, out IMMDevice device);
 	}
 
@@ -138,24 +121,397 @@ namespace Keysharp.Core.Windows
 		int UnregisterEndpointNotificationCallback(IMMNotificationClient client);
 	}
 
+	/// <summary>
+	/// IMMNotificationClient
+	/// </summary>
+	[Guid("7991EEC9-7E89-4D85-8390-6C703CEC60C0"),
+	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	internal interface IMMNotificationClient
+	{
+		/// <summary>
+		/// Default Device Changed
+		/// </summary>
+		void OnDefaultDeviceChanged(DataFlow flow, Role role, [MarshalAs(UnmanagedType.LPWStr)] string defaultDeviceId);
+
+		/// <summary>
+		/// Device Added
+		/// </summary>
+		void OnDeviceAdded([MarshalAs(UnmanagedType.LPWStr)] string pwstrDeviceId);
+
+		/// <summary>
+		/// Device Removed
+		/// </summary>
+		void OnDeviceRemoved([MarshalAs(UnmanagedType.LPWStr)] string deviceId);
+
+		/// <summary>
+		/// Device State Changed
+		/// </summary>
+		void OnDeviceStateChanged([MarshalAs(UnmanagedType.LPWStr)] string deviceId, [MarshalAs(UnmanagedType.I4)] DeviceState newState);
+
+		/// <summary>
+		/// Property Value Changed
+		/// </summary>
+		/// <param name="pwstrDeviceId"></param>
+		/// <param name="key"></param>
+		void OnPropertyValueChanged([MarshalAs(UnmanagedType.LPWStr)] string pwstrDeviceId, PropertyKey key);
+	}
+
 	[Guid("886d8eeb-8cf2-4446-8d02-cdba1dbdcf99"),
 	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	internal interface IPropertyStore
 	{
-		int GetCount(out int propCount);
-		int GetAt(int property, out PropertyKey key);
-		int GetValue(ref PropertyKey key, out PropVariant value);
-		int SetValue(ref PropertyKey key, ref PropVariant value);
 		int Commit();
+
+		int GetAt(int property, out PropertyKey key);
+
+		int GetCount(out int propCount);
+
+		int GetValue(ref PropertyKey key, out PropVariant value);
+
+		int SetValue(ref PropertyKey key, ref PropVariant value);
 	}
 
 	internal struct AudioVolumeNotificationDataStruct
 	{
-		internal Guid guidEventContext;
 		internal bool bMuted;
-		internal float fMasterVolume;
-		internal uint nChannels;
 		internal float ChannelVolume;
+		internal float fMasterVolume;
+		internal Guid guidEventContext;
+		internal uint nChannels;
+	}
+
+	/// <summary>
+	/// Representation of binary large object container.
+	/// </summary>
+	internal struct Blob
+	{
+		/// <summary>
+		/// Pointer to buffer storing data.
+		/// </summary>
+		internal IntPtr Data;
+
+		/// <summary>
+		/// Length of binary object.
+		/// </summary>
+		internal int Length;
+	}
+
+	/// <summary>
+	/// PROPERTYKEY is defined in wtypes.h
+	/// </summary>
+	internal struct PropertyKey
+	{
+		/// <summary>
+		/// Format ID
+		/// </summary>
+		internal Guid formatId;
+
+		/// <summary>
+		/// Property ID
+		/// </summary>
+		internal int propertyId;
+
+		/// <summary>
+		/// <param name="formatId"></param>
+		/// <param name="propertyId"></param>
+		/// </summary>
+		internal PropertyKey(Guid formatId, int propertyId)
+		{
+			this.formatId = formatId;
+			this.propertyId = propertyId;
+		}
+	}
+
+	// <summary>
+	/// from Propidl.h.
+	/// http://msdn.microsoft.com/en-us/library/aa380072(VS.85).aspx
+	/// contains a union so we have to do an explicit layout
+	/// </summary>
+	[StructLayout(LayoutKind.Explicit)]
+	internal struct PropVariant
+	{
+		/// <summary>
+		/// Value type tag.
+		/// </summary>
+		[FieldOffset(0)] public short vt;
+
+		/// <summary>
+		/// Reserved1.
+		/// </summary>
+		[FieldOffset(2)] public short wReserved1;
+
+		/// <summary>
+		/// Reserved2.
+		/// </summary>
+		[FieldOffset(4)] public short wReserved2;
+
+		/// <summary>
+		/// Reserved3.
+		/// </summary>
+		[FieldOffset(6)] public short wReserved3;
+
+		/// <summary>
+		/// cVal.
+		/// </summary>
+		[FieldOffset(8)] public sbyte cVal;
+
+		/// <summary>
+		/// bVal.
+		/// </summary>
+		[FieldOffset(8)] public byte bVal;
+
+		/// <summary>
+		/// iVal.
+		/// </summary>
+		[FieldOffset(8)] public short iVal;
+
+		/// <summary>
+		/// uiVal.
+		/// </summary>
+		[FieldOffset(8)] public ushort uiVal;
+
+		/// <summary>
+		/// lVal.
+		/// </summary>
+		[FieldOffset(8)] public int lVal;
+
+		/// <summary>
+		/// ulVal.
+		/// </summary>
+		[FieldOffset(8)] public uint ulVal;
+
+		/// <summary>
+		/// intVal.
+		/// </summary>
+		[FieldOffset(8)] public int intVal;
+
+		/// <summary>
+		/// uintVal.
+		/// </summary>
+		[FieldOffset(8)] public uint uintVal;
+
+		/// <summary>
+		/// hVal.
+		/// </summary>
+		[FieldOffset(8)] public long hVal;
+
+		/// <summary>
+		/// uhVal.
+		/// </summary>
+		[FieldOffset(8)] public long uhVal;
+
+		/// <summary>
+		/// fltVal.
+		/// </summary>
+		[FieldOffset(8)] public float fltVal;
+
+		/// <summary>
+		/// dblVal.
+		/// </summary>
+		[FieldOffset(8)] public double dblVal;
+
+		//VARIANT_BOOL boolVal;
+		/// <summary>
+		/// boolVal.
+		/// </summary>
+		[FieldOffset(8)] public short boolVal;
+
+		/// <summary>
+		/// scode.
+		/// </summary>
+		[FieldOffset(8)] public int scode;
+
+		//CY cyVal;
+		//[FieldOffset(8)] private DateTime date; - can cause issues with invalid value
+		/// <summary>
+		/// Date time.
+		/// </summary>
+		[FieldOffset(8)] public System.Runtime.InteropServices.ComTypes.FILETIME filetime;
+
+		//CLSID* puuid;
+		//CLIPDATA* pclipdata;
+		//BSTR bstrVal;
+		//BSTRBLOB bstrblobVal;
+		/// <summary>
+		/// Binary large object.
+		/// </summary>
+		[FieldOffset(8)] public Blob blobVal;
+
+		//LPSTR pszVal;
+		/// <summary>
+		/// Pointer value.
+		/// </summary>
+		[FieldOffset(8)] public IntPtr pointerValue; //LPWSTR
+
+		//IUnknown* punkVal;
+		/*  IDispatch* pdispVal;
+		    IStream* pStream;
+		    IStorage* pStorage;
+		    LPVERSIONEDSTREAM pVersionedStream;
+		    LPSAFEARRAY parray;
+		    CAC cac;
+		    CAUB caub;
+		    CAI cai;
+		    CAUI caui;
+		    CAL cal;
+		    CAUL caul;
+		    CAH cah;
+		    CAUH cauh;
+		    CAFLT caflt;
+		    CADBL cadbl;
+		    CABOOL cabool;
+		    CASCODE cascode;
+		    CACY cacy;
+		    CADATE cadate;
+		    CAFILETIME cafiletime;
+		    CACLSID cauuid;
+		    CACLIPDATA caclipdata;
+		    CABSTR cabstr;
+		    CABSTRBLOB cabstrblob;
+		    CALPSTR calpstr;
+		    CALPWSTR calpwstr;
+		    CAPROPVARIANT capropvar;
+		    CHAR* pcVal;
+		    UCHAR* pbVal;
+		    SHORT* piVal;
+		    USHORT* puiVal;
+		    LONG* plVal;
+		    ULONG* pulVal;
+		    INT* pintVal;
+		    UINT* puintVal;
+		    FLOAT* pfltVal;
+		    DOUBLE* pdblVal;
+		    VARIANT_BOOL* pboolVal;
+		    DECIMAL* pdecVal;
+		    SCODE* pscode;
+		    CY* pcyVal;
+		    DATE* pdate;
+		    BSTR* pbstrVal;
+		    IUnknown** ppunkVal;
+		    IDispatch** ppdispVal;
+		    LPSAFEARRAY* pparray;
+		    PROPVARIANT* pvarVal;
+		*/
+
+		/// <summary>
+		/// Creates a new PropVariant containing a long value
+		/// </summary>
+		internal static PropVariant FromLong(long value) => new PropVariant() { vt = (short)VarEnum.VT_I8, hVal = value };
+
+		/// <summary>
+		/// Helper method to gets blob data
+		/// </summary>
+		private byte[] GetBlob()
+		{
+			var blob = new byte[blobVal.Length];
+			Marshal.Copy(blobVal.Data, blob, 0, blob.Length);
+			return blob;
+		}
+
+		/// <summary>
+		/// Interprets a blob as an array of structs
+		/// </summary>
+		internal T[] GetBlobAsArrayOf<T>()
+		{
+			var blobByteLength = blobVal.Length;
+			var singleInstance = (T)Activator.CreateInstance(typeof(T));
+			var structSize = Marshal.SizeOf(singleInstance);
+
+			if (blobByteLength % structSize != 0)
+			{
+				throw new InvalidDataException(string.Format("Blob size {0} not a multiple of struct size {1}", blobByteLength, structSize));
+			}
+
+			var items = blobByteLength / structSize;
+			var array = new T[items];
+
+			for (var n = 0; n < items; n++)
+			{
+				array[n] = (T)Activator.CreateInstance(typeof(T));
+				Marshal.PtrToStructure(new IntPtr((long)blobVal.Data + n * structSize), array[n]);
+			}
+
+			return array;
+		}
+
+		/// <summary>
+		/// Gets the type of data in this PropVariant
+		/// </summary>
+		internal VarEnum DataType => (VarEnum)vt;
+
+		/// <summary>
+		/// Property value
+		/// </summary>
+		internal object Value
+		{
+			get
+			{
+				var ve = DataType;
+
+				switch (ve)
+				{
+					case VarEnum.VT_I1:
+						return bVal;
+
+					case VarEnum.VT_I2:
+						return iVal;
+
+					case VarEnum.VT_I4:
+						return lVal;
+
+					case VarEnum.VT_I8:
+						return hVal;
+
+					case VarEnum.VT_INT:
+						return iVal;
+
+					case VarEnum.VT_UI4:
+						return ulVal;
+
+					case VarEnum.VT_UI8:
+						return uhVal;
+
+					case VarEnum.VT_LPWSTR:
+						return Marshal.PtrToStringUni(pointerValue);
+
+					case VarEnum.VT_BLOB:
+					case VarEnum.VT_VECTOR | VarEnum.VT_UI1:
+						return GetBlob();
+
+					case VarEnum.VT_CLSID:
+						return Marshal.PtrToStructure<Guid>(pointerValue);
+
+					case VarEnum.VT_BOOL:
+						switch (boolVal)
+						{
+							case -1:
+								return true;
+
+							case 0:
+								return false;
+
+							default:
+								throw new NotSupportedException("PropVariant VT_BOOL must be either -1 or 0");
+						}
+
+					case VarEnum.VT_FILETIME:
+						return DateTime.FromFileTime((((long)filetime.dwHighDateTime) << 32) + filetime.dwLowDateTime);
+				}
+
+				throw new NotImplementedException("PropVariant " + ve);
+			}
+		}
+
+		/// <summary>
+		/// allows freeing up memory, might turn this into a Dispose method?
+		/// </summary>
+		[Obsolete("Call with pointer instead")]
+		internal void Clear() => PropVariantNative.PropVariantClear(ref this);
+
+		/// <summary>
+		/// Clears with a known pointer
+		/// </summary>
+		internal static void Clear(IntPtr ptr) => PropVariantNative.PropVariantClear(ptr);
 	}
 
 	/// <summary>
@@ -374,6 +730,8 @@ namespace Keysharp.Core.Windows
 			GC.SuppressFinalize(this);
 		}
 
+		internal void FireNotification(AudioVolumeNotificationData notificationData) => OnVolumeNotification?.Invoke(notificationData);
+
 		/// <summary>
 		/// Volume Step Down
 		/// </summary>
@@ -384,12 +742,47 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		internal void VolumeStepUp() => Marshal.ThrowExceptionForHR(audioEndPointVolume.VolumeStepUp(ref notificationGuid));
 
-		internal void FireNotification(AudioVolumeNotificationData notificationData) => OnVolumeNotification?.Invoke(notificationData);
-
 		/// <summary>
 		/// On Volume Notification
 		/// </summary>
 		internal event AudioEndpointVolumeNotificationDelegate OnVolumeNotification;
+	}
+
+	// This class implements the IAudioEndpointVolumeCallback interface,
+	// it is implemented in this class because implementing it on AudioEndpointVolume
+	// (where the functionality is really wanted, would cause the OnNotify function
+	// to show up in the internal API.
+	internal class AudioEndpointVolumeCallback : IAudioEndpointVolumeCallback
+	{
+		private readonly AudioEndpointVolume parent;
+
+		internal AudioEndpointVolumeCallback(AudioEndpointVolume parent) => this.parent = parent;
+
+		public void OnNotify(IntPtr notifyData)
+		{
+			//Since AUDIO_VOLUME_NOTIFICATION_DATA is dynamic in length based on the
+			//number of audio channels available we cannot just call PtrToStructure
+			//to get all data, thats why it is split up into two steps, first the static
+			//data is marshalled into the data structure, then with some IntPtr math the
+			//remaining floats are read from memory.
+			//
+			var data = Marshal.PtrToStructure<AudioVolumeNotificationDataStruct>(notifyData);
+			//Determine offset in structure of the first float
+			var offset = Marshal.OffsetOf<AudioVolumeNotificationDataStruct>("ChannelVolume");
+			//Determine offset in memory of the first float
+			var firstFloatPtr = (IntPtr)((long)notifyData + (long)offset);
+			var voldata = new float[data.nChannels];
+
+			//Read all floats from memory.
+			for (var i = 0; i < data.nChannels; i++)
+			{
+				voldata[i] = Marshal.PtrToStructure<float>(firstFloatPtr);
+			}
+
+			//Create combined structure and Fire Event in parent class.
+			var notificationData = new AudioVolumeNotificationData(data.guidEventContext, data.bMuted, data.fMasterVolume, voldata, data.guidEventContext);
+			parent.FireNotification(notificationData);
+		}
 	}
 
 	/// <summary>
@@ -686,6 +1079,11 @@ namespace Keysharp.Core.Windows
 		}
 
 		/// <summary>
+		/// To string
+		/// </summary>
+		public override string ToString() => FriendlyName;
+
+		/// <summary>
 		/// Initializes the device's property store.
 		/// </summary>
 		/// <param name="stgmAccess">The storage-access mode to open store for.</param>
@@ -709,11 +1107,6 @@ namespace Keysharp.Core.Windows
 		    audioMeterInformation = new AudioMeterInformation(result as IAudioMeterInformation);
 		    }
 		*/
-
-		/// <summary>
-		/// To string
-		/// </summary>
-		public override string ToString() => FriendlyName;
 
 		private void GetAudioEndpointVolume()
 		{
@@ -1056,6 +1449,14 @@ namespace Keysharp.Core.Windows
 	}
 
 	/// <summary>
+	/// implements IMMDeviceEnumerator
+	/// </summary>
+	[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+	internal class MMDeviceEnumeratorComObject
+	{
+	}
+
+	/// <summary>
 	/// Property Store class, only supports reading properties at the moment.
 	/// </summary>
 	internal class PropertyStore
@@ -1202,51 +1603,6 @@ namespace Keysharp.Core.Windows
 		}
 	}
 
-	// This class implements the IAudioEndpointVolumeCallback interface,
-	// it is implemented in this class because implementing it on AudioEndpointVolume
-	// (where the functionality is really wanted, would cause the OnNotify function
-	// to show up in the internal API.
-	internal class AudioEndpointVolumeCallback : IAudioEndpointVolumeCallback
-	{
-		private readonly AudioEndpointVolume parent;
-
-		internal AudioEndpointVolumeCallback(AudioEndpointVolume parent) => this.parent = parent;
-
-		public void OnNotify(IntPtr notifyData)
-		{
-			//Since AUDIO_VOLUME_NOTIFICATION_DATA is dynamic in length based on the
-			//number of audio channels available we cannot just call PtrToStructure
-			//to get all data, thats why it is split up into two steps, first the static
-			//data is marshalled into the data structure, then with some IntPtr math the
-			//remaining floats are read from memory.
-			//
-			var data = Marshal.PtrToStructure<AudioVolumeNotificationDataStruct>(notifyData);
-			//Determine offset in structure of the first float
-			var offset = Marshal.OffsetOf<AudioVolumeNotificationDataStruct>("ChannelVolume");
-			//Determine offset in memory of the first float
-			var firstFloatPtr = (IntPtr)((long)notifyData + (long)offset);
-			var voldata = new float[data.nChannels];
-
-			//Read all floats from memory.
-			for (var i = 0; i < data.nChannels; i++)
-			{
-				voldata[i] = Marshal.PtrToStructure<float>(firstFloatPtr);
-			}
-
-			//Create combined structure and Fire Event in parent class.
-			var notificationData = new AudioVolumeNotificationData(data.guidEventContext, data.bMuted, data.fMasterVolume, voldata, data.guidEventContext);
-			parent.FireNotification(notificationData);
-		}
-	}
-
-	/// <summary>
-	/// implements IMMDeviceEnumerator
-	/// </summary>
-	[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-	internal class MMDeviceEnumeratorComObject
-	{
-	}
-
 	internal class PropVariantNative
 	{
 		[DllImport("ole32.dll")]
@@ -1254,6 +1610,99 @@ namespace Keysharp.Core.Windows
 
 		[DllImport("ole32.dll")]
 		internal static extern int PropVariantClear(IntPtr pvar);
+	}
+
+	/// <summary>
+	/// is defined in WTypes.h
+	/// </summary>
+	[Flags]
+	internal enum ClsCtx
+	{
+		INPROC_SERVER = 0x1,
+		INPROC_HANDLER = 0x2,
+		LOCAL_SERVER = 0x4,
+		INPROC_SERVER16 = 0x8,
+		REMOTE_SERVER = 0x10,
+		INPROC_HANDLER16 = 0x20,
+
+		//RESERVED1 = 0x40,
+		//RESERVED2 = 0x80,
+		//RESERVED3 = 0x100,
+		//RESERVED4 = 0x200,
+		NO_CODE_DOWNLOAD = 0x400,
+
+		//RESERVED5 = 0x800,
+		NO_CUSTOM_MARSHAL = 0x1000,
+
+		ENABLE_CODE_DOWNLOAD = 0x2000,
+		NO_FAILURE_LOG = 0x4000,
+		DISABLE_AAA = 0x8000,
+		ENABLE_AAA = 0x10000,
+		FROM_DEFAULT_CONTEXT = 0x20000,
+		ACTIVATE_32_BIT_SERVER = 0x40000,
+		ACTIVATE_64_BIT_SERVER = 0x80000,
+		ENABLE_CLOAKING = 0x100000,
+		PS_DLL = unchecked((int)0x80000000),
+		INPROC = INPROC_SERVER | INPROC_HANDLER,
+		SERVER = INPROC_SERVER | LOCAL_SERVER | REMOTE_SERVER,
+		ALL = SERVER | INPROC_HANDLER
+	}
+
+	/// <summary>
+	/// The EDataFlow enumeration defines constants that indicate the direction
+	/// in which audio data flows between an audio endpoint device and an application
+	/// </summary>
+	internal enum DataFlow
+	{
+		/// <summary>
+		/// Audio rendering stream.
+		/// Audio data flows from the application to the audio endpoint device, which renders the stream.
+		/// </summary>
+		Render,
+
+		/// <summary>
+		/// Audio capture stream. Audio data flows from the audio endpoint device that captures the stream,
+		/// to the application
+		/// </summary>
+		Capture,
+
+		/// <summary>
+		/// Audio rendering or capture stream. Audio data can flow either from the application to the audio
+		/// endpoint device, or from the audio endpoint device to the application.
+		/// </summary>
+		All
+	}
+
+	/// <summary>
+	/// Device State
+	/// </summary>
+	[Flags]
+	internal enum DeviceState
+	{
+		/// <summary>
+		/// DEVICE_STATE_ACTIVE
+		/// </summary>
+		Active = 0x00000001,
+
+		/// <summary>
+		/// DEVICE_STATE_DISABLED
+		/// </summary>
+		Disabled = 0x00000002,
+
+		/// <summary>
+		/// DEVICE_STATE_NOTPRESENT
+		/// </summary>
+		NotPresent = 0x00000004,
+
+		/// <summary>
+		/// DEVICE_STATE_UNPLUGGED
+		/// </summary>
+		Unplugged = 0x00000008,
+
+		/// <summary>
+		/// DEVICE_STATEMASK_ALL
+		/// </summary>
+		All = 0x0000000F
 	}
 
 	/// <summary>
@@ -1279,109 +1728,6 @@ namespace Keysharp.Core.Windows
 	}
 
 	/// <summary>
-	/// The EDataFlow enumeration defines constants that indicate the direction
-	/// in which audio data flows between an audio endpoint device and an application
-	/// </summary>
-	internal enum DataFlow
-	{
-		/// <summary>
-		/// Audio rendering stream.
-		/// Audio data flows from the application to the audio endpoint device, which renders the stream.
-		/// </summary>
-		Render,
-		/// <summary>
-		/// Audio capture stream. Audio data flows from the audio endpoint device that captures the stream,
-		/// to the application
-		/// </summary>
-		Capture,
-		/// <summary>
-		/// Audio rendering or capture stream. Audio data can flow either from the application to the audio
-		/// endpoint device, or from the audio endpoint device to the application.
-		/// </summary>
-		All
-	}
-
-	/// <summary>
-	/// Device State
-	/// </summary>
-	[Flags]
-	internal enum DeviceState
-	{
-		/// <summary>
-		/// DEVICE_STATE_ACTIVE
-		/// </summary>
-		Active = 0x00000001,
-		/// <summary>
-		/// DEVICE_STATE_DISABLED
-		/// </summary>
-		Disabled = 0x00000002,
-		/// <summary>
-		/// DEVICE_STATE_NOTPRESENT
-		/// </summary>
-		NotPresent = 0x00000004,
-		/// <summary>
-		/// DEVICE_STATE_UNPLUGGED
-		/// </summary>
-		Unplugged = 0x00000008,
-		/// <summary>
-		/// DEVICE_STATEMASK_ALL
-		/// </summary>
-		All = 0x0000000F
-	}
-
-	/// <summary>
-	/// MMDevice STGM enumeration
-	/// </summary>
-	internal enum StorageAccessMode
-	{
-		/// <summary>
-		/// Read-only access mode.
-		/// </summary>
-		Read,
-		/// <summary>
-		/// Write-only access mode.
-		/// </summary>
-		Write,
-		/// <summary>
-		/// Read-write access mode.
-		/// </summary>
-		ReadWrite
-	}
-
-	/// <summary>
-	/// is defined in WTypes.h
-	/// </summary>
-	[Flags]
-	internal enum ClsCtx
-	{
-		INPROC_SERVER = 0x1,
-		INPROC_HANDLER = 0x2,
-		LOCAL_SERVER = 0x4,
-		INPROC_SERVER16 = 0x8,
-		REMOTE_SERVER = 0x10,
-		INPROC_HANDLER16 = 0x20,
-		//RESERVED1 = 0x40,
-		//RESERVED2 = 0x80,
-		//RESERVED3 = 0x100,
-		//RESERVED4 = 0x200,
-		NO_CODE_DOWNLOAD = 0x400,
-		//RESERVED5 = 0x800,
-		NO_CUSTOM_MARSHAL = 0x1000,
-		ENABLE_CODE_DOWNLOAD = 0x2000,
-		NO_FAILURE_LOG = 0x4000,
-		DISABLE_AAA = 0x8000,
-		ENABLE_AAA = 0x10000,
-		FROM_DEFAULT_CONTEXT = 0x20000,
-		ACTIVATE_32_BIT_SERVER = 0x40000,
-		ACTIVATE_64_BIT_SERVER = 0x80000,
-		ENABLE_CLOAKING = 0x100000,
-		PS_DLL = unchecked((int)0x80000000),
-		INPROC = INPROC_SERVER | INPROC_HANDLER,
-		SERVER = INPROC_SERVER | LOCAL_SERVER | REMOTE_SERVER,
-		ALL = SERVER | INPROC_HANDLER
-	}
-
-	/// <summary>
 	/// The ERole enumeration defines constants that indicate the role
 	/// that the system has assigned to an audio endpoint device
 	/// </summary>
@@ -1404,313 +1750,24 @@ namespace Keysharp.Core.Windows
 	}
 
 	/// <summary>
-	/// Representation of binary large object container.
+	/// MMDevice STGM enumeration
 	/// </summary>
-	internal struct Blob
+	internal enum StorageAccessMode
 	{
 		/// <summary>
-		/// Length of binary object.
+		/// Read-only access mode.
 		/// </summary>
-		internal int Length;
-		/// <summary>
-		/// Pointer to buffer storing data.
-		/// </summary>
-		internal IntPtr Data;
-	}
-
-	/// <summary>
-	/// PROPERTYKEY is defined in wtypes.h
-	/// </summary>
-	internal struct PropertyKey
-	{
-		/// <summary>
-		/// Format ID
-		/// </summary>
-		internal Guid formatId;
-		/// <summary>
-		/// Property ID
-		/// </summary>
-		internal int propertyId;
-		/// <summary>
-		/// <param name="formatId"></param>
-		/// <param name="propertyId"></param>
-		/// </summary>
-		internal PropertyKey(Guid formatId, int propertyId)
-		{
-			this.formatId = formatId;
-			this.propertyId = propertyId;
-		}
-	}
-
-	// <summary>
-	/// from Propidl.h.
-	/// http://msdn.microsoft.com/en-us/library/aa380072(VS.85).aspx
-	/// contains a union so we have to do an explicit layout
-	/// </summary>
-	[StructLayout(LayoutKind.Explicit)]
-	internal struct PropVariant
-	{
-		/// <summary>
-		/// Value type tag.
-		/// </summary>
-		[FieldOffset(0)] public short vt;
-		/// <summary>
-		/// Reserved1.
-		/// </summary>
-		[FieldOffset(2)] public short wReserved1;
-		/// <summary>
-		/// Reserved2.
-		/// </summary>
-		[FieldOffset(4)] public short wReserved2;
-		/// <summary>
-		/// Reserved3.
-		/// </summary>
-		[FieldOffset(6)] public short wReserved3;
-		/// <summary>
-		/// cVal.
-		/// </summary>
-		[FieldOffset(8)] public sbyte cVal;
-		/// <summary>
-		/// bVal.
-		/// </summary>
-		[FieldOffset(8)] public byte bVal;
-		/// <summary>
-		/// iVal.
-		/// </summary>
-		[FieldOffset(8)] public short iVal;
-		/// <summary>
-		/// uiVal.
-		/// </summary>
-		[FieldOffset(8)] public ushort uiVal;
-		/// <summary>
-		/// lVal.
-		/// </summary>
-		[FieldOffset(8)] public int lVal;
-		/// <summary>
-		/// ulVal.
-		/// </summary>
-		[FieldOffset(8)] public uint ulVal;
-		/// <summary>
-		/// intVal.
-		/// </summary>
-		[FieldOffset(8)] public int intVal;
-		/// <summary>
-		/// uintVal.
-		/// </summary>
-		[FieldOffset(8)] public uint uintVal;
-		/// <summary>
-		/// hVal.
-		/// </summary>
-		[FieldOffset(8)] public long hVal;
-		/// <summary>
-		/// uhVal.
-		/// </summary>
-		[FieldOffset(8)] public long uhVal;
-		/// <summary>
-		/// fltVal.
-		/// </summary>
-		[FieldOffset(8)] public float fltVal;
-		/// <summary>
-		/// dblVal.
-		/// </summary>
-		[FieldOffset(8)] public double dblVal;
-		//VARIANT_BOOL boolVal;
-		/// <summary>
-		/// boolVal.
-		/// </summary>
-		[FieldOffset(8)] public short boolVal;
-		/// <summary>
-		/// scode.
-		/// </summary>
-		[FieldOffset(8)] public int scode;
-		//CY cyVal;
-		//[FieldOffset(8)] private DateTime date; - can cause issues with invalid value
-		/// <summary>
-		/// Date time.
-		/// </summary>
-		[FieldOffset(8)] public System.Runtime.InteropServices.ComTypes.FILETIME filetime;
-		//CLSID* puuid;
-		//CLIPDATA* pclipdata;
-		//BSTR bstrVal;
-		//BSTRBLOB bstrblobVal;
-		/// <summary>
-		/// Binary large object.
-		/// </summary>
-		[FieldOffset(8)] public Blob blobVal;
-		//LPSTR pszVal;
-		/// <summary>
-		/// Pointer value.
-		/// </summary>
-		[FieldOffset(8)] public IntPtr pointerValue; //LPWSTR
-		//IUnknown* punkVal;
-		/*  IDispatch* pdispVal;
-		    IStream* pStream;
-		    IStorage* pStorage;
-		    LPVERSIONEDSTREAM pVersionedStream;
-		    LPSAFEARRAY parray;
-		    CAC cac;
-		    CAUB caub;
-		    CAI cai;
-		    CAUI caui;
-		    CAL cal;
-		    CAUL caul;
-		    CAH cah;
-		    CAUH cauh;
-		    CAFLT caflt;
-		    CADBL cadbl;
-		    CABOOL cabool;
-		    CASCODE cascode;
-		    CACY cacy;
-		    CADATE cadate;
-		    CAFILETIME cafiletime;
-		    CACLSID cauuid;
-		    CACLIPDATA caclipdata;
-		    CABSTR cabstr;
-		    CABSTRBLOB cabstrblob;
-		    CALPSTR calpstr;
-		    CALPWSTR calpwstr;
-		    CAPROPVARIANT capropvar;
-		    CHAR* pcVal;
-		    UCHAR* pbVal;
-		    SHORT* piVal;
-		    USHORT* puiVal;
-		    LONG* plVal;
-		    ULONG* pulVal;
-		    INT* pintVal;
-		    UINT* puintVal;
-		    FLOAT* pfltVal;
-		    DOUBLE* pdblVal;
-		    VARIANT_BOOL* pboolVal;
-		    DECIMAL* pdecVal;
-		    SCODE* pscode;
-		    CY* pcyVal;
-		    DATE* pdate;
-		    BSTR* pbstrVal;
-		    IUnknown** ppunkVal;
-		    IDispatch** ppdispVal;
-		    LPSAFEARRAY* pparray;
-		    PROPVARIANT* pvarVal;
-		*/
+		Read,
 
 		/// <summary>
-		/// Creates a new PropVariant containing a long value
+		/// Write-only access mode.
 		/// </summary>
-		internal static PropVariant FromLong(long value) => new PropVariant() { vt = (short)VarEnum.VT_I8, hVal = value };
+		Write,
 
 		/// <summary>
-		/// Helper method to gets blob data
+		/// Read-write access mode.
 		/// </summary>
-		private byte[] GetBlob()
-		{
-			var blob = new byte[blobVal.Length];
-			Marshal.Copy(blobVal.Data, blob, 0, blob.Length);
-			return blob;
-		}
-
-		/// <summary>
-		/// Interprets a blob as an array of structs
-		/// </summary>
-		internal T[] GetBlobAsArrayOf<T>()
-		{
-			var blobByteLength = blobVal.Length;
-			var singleInstance = (T)Activator.CreateInstance(typeof(T));
-			var structSize = Marshal.SizeOf(singleInstance);
-
-			if (blobByteLength % structSize != 0)
-			{
-				throw new InvalidDataException(string.Format("Blob size {0} not a multiple of struct size {1}", blobByteLength, structSize));
-			}
-
-			var items = blobByteLength / structSize;
-			var array = new T[items];
-
-			for (var n = 0; n < items; n++)
-			{
-				array[n] = (T)Activator.CreateInstance(typeof(T));
-				Marshal.PtrToStructure(new IntPtr((long)blobVal.Data + n * structSize), array[n]);
-			}
-
-			return array;
-		}
-
-		/// <summary>
-		/// Gets the type of data in this PropVariant
-		/// </summary>
-		internal VarEnum DataType => (VarEnum)vt;
-
-		/// <summary>
-		/// Property value
-		/// </summary>
-		internal object Value
-		{
-			get
-			{
-				var ve = DataType;
-
-				switch (ve)
-				{
-					case VarEnum.VT_I1:
-						return bVal;
-
-					case VarEnum.VT_I2:
-						return iVal;
-
-					case VarEnum.VT_I4:
-						return lVal;
-
-					case VarEnum.VT_I8:
-						return hVal;
-
-					case VarEnum.VT_INT:
-						return iVal;
-
-					case VarEnum.VT_UI4:
-						return ulVal;
-
-					case VarEnum.VT_UI8:
-						return uhVal;
-
-					case VarEnum.VT_LPWSTR:
-						return Marshal.PtrToStringUni(pointerValue);
-
-					case VarEnum.VT_BLOB:
-					case VarEnum.VT_VECTOR | VarEnum.VT_UI1:
-						return GetBlob();
-
-					case VarEnum.VT_CLSID:
-						return Marshal.PtrToStructure<Guid>(pointerValue);
-
-					case VarEnum.VT_BOOL:
-						switch (boolVal)
-						{
-							case -1:
-								return true;
-
-							case 0:
-								return false;
-
-							default:
-								throw new NotSupportedException("PropVariant VT_BOOL must be either -1 or 0");
-						}
-
-					case VarEnum.VT_FILETIME:
-						return DateTime.FromFileTime((((long)filetime.dwHighDateTime) << 32) + filetime.dwLowDateTime);
-				}
-
-				throw new NotImplementedException("PropVariant " + ve);
-			}
-		}
-
-		/// <summary>
-		/// allows freeing up memory, might turn this into a Dispose method?
-		/// </summary>
-		[Obsolete("Call with pointer instead")]
-		internal void Clear() => PropVariantNative.PropVariantClear(ref this);
-
-		/// <summary>
-		/// Clears with a known pointer
-		/// </summary>
-		internal static void Clear(IntPtr ptr) => PropVariantNative.PropVariantClear(ptr);
+		ReadWrite
 	}
 
 	/// <summary>

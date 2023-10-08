@@ -138,7 +138,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 * `Goto` statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
-* `Enumerator.Call()` is not supported because it takes ref variables.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ `Func()` or `FuncObj()` is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
@@ -293,6 +292,9 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		}
 	}
 ```
+* New function to encrypt or decrypt an object using the AES algorithm: `AES()`.
+* New functions to generate has values using various algorithms: `MD5()`, `SHA1()`, `SHA256()`, `SHA384()`, `SHA512()`.
+* New function to calculate the C2C32 polynomial of an object: `CRC32()`.
 
 ###	Removals: ###
 * COM is only partially implemented.

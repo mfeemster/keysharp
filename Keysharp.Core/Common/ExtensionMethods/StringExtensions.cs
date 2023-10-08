@@ -134,30 +134,6 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return ct1 == ct2;
 		}
 
-		internal static bool OcurredInBalance(this string source, string s1, char ch1, char ch2)
-		{
-			var b = 0;
-			var index = source.IndexOf(s1);
-
-			if (index == -1)
-				return false;
-
-			for (int i = 0; i < source.Length; i++)
-			{
-				char ch = source[i];
-
-				if (ch == ch1)
-					b++;
-				else if (ch == ch2)
-					b--;
-
-				if (i == index)
-					return b == 0;
-			}
-
-			return false;
-		}
-
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/186653/get-the-index-of-the-nth-occurrence-of-a-string
 		/// </summary>
@@ -188,6 +164,30 @@ namespace System//Extension methods should be in the same namespace of the objec
 			} while (--n > 0 && pos != -1);
 
 			return pos;
+		}
+
+		internal static bool OcurredInBalance(this string source, string s1, char ch1, char ch2)
+		{
+			var b = 0;
+			var index = source.IndexOf(s1);
+
+			if (index == -1)
+				return false;
+
+			for (int i = 0; i < source.Length; i++)
+			{
+				char ch = source[i];
+
+				if (ch == ch1)
+					b++;
+				else if (ch == ch2)
+					b--;
+
+				if (i == index)
+					return b == 0;
+			}
+
+			return false;
 		}
 
 		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();

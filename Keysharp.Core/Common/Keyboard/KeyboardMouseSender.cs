@@ -439,9 +439,9 @@ namespace Keysharp.Core.Common.Keyboard
 
 	internal class KeyType
 	{
+		internal const int AS_PASSTHROUGH_PREFIX = -1;
 		internal const int AS_PREFIX = 1;
 		internal const int AS_PREFIX_FOR_HOTKEY = 2;
-		internal const int AS_PASSTHROUGH_PREFIX = -1;
 		internal const int PREFIX_ACTUAL = 1; // Values for used_as_prefix below, for places that need to distinguish between type of prefix.
 		internal const int PREFIX_FORCED = 2; // v1.0.44: Added so that a neutral hotkey like Control can be forced to fire on key-up even though it isn't actually a prefix key.
 		internal uint asModifiersLR;// If this key is a modifier, this will have the corresponding bit(s) for that key.
@@ -459,14 +459,16 @@ namespace Keysharp.Core.Common.Keyboard
 		internal byte usedAsPrefix; // Whether a given virtual key or scan code is even used by a hotkey.
 		internal bool usedAsSuffix;// The first hotkey using this key as a suffix.
 
-		internal uint Pos { get; }
-
 		// Whether this suffix also has an enabled key-up hotkey.
 		// Contains bitwise flags such as NO_SUPPRESS_PREFIX.
 		// this key resulted in SHIFT being pushed down (due to shift-alt-tab).
 		// Whether the down-event for a key was suppressed (thus its up-event should be too).
 		// The values for "was_just_used" (zero is the initialized default, meaning it wasn't just used):
-		internal int wasJustUsed; // a non-modifier key of any kind was pressed while this prefix key was down.
+		internal int wasJustUsed;
+
+		internal uint Pos { get; }
+
+		// a non-modifier key of any kind was pressed while this prefix key was down.
 
 		internal KeyType(uint p)
 		{

@@ -588,7 +588,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keysharp.Core, Version=0.0.0.2, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keysharp.Core, Version=0.0.0.4, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_19C840CB9D36D89E7A1255E443323006"
@@ -639,7 +639,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Microsoft.CodeAnalysis.CSharp, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Microsoft.CodeAnalysis.CSharp, Version=4.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_252479732F5CCC39C2AD36FD8FB3FB4D"
@@ -825,7 +825,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Microsoft.CodeAnalysis, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Microsoft.CodeAnalysis, Version=4.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_4B315524DEC46F982580E7B83FABF604"
@@ -896,7 +896,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keyview, Version=0.0.0.2, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keyview, Version=0.0.0.4, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_5EF7E4429AD94C069A1DCA8950D96F73"
@@ -1306,7 +1306,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:System.Management, Version=7.0.0.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:System.Management, Version=7.0.0.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_C30C178A38F14ACBA162F3192A611450"
@@ -1337,7 +1337,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keysharp, Version=0.0.0.2, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keysharp, Version=0.0.0.4, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_C5EDF82FA7FC464798EAC591B6F2D418"
@@ -1532,7 +1532,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=3.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_FF82958DDABB4078814427576A39286E"
@@ -1671,15 +1671,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Keysharp"
-        "ProductCode" = "8:{9CC62044-C376-4329-8EE3-C5335A32C8FD}"
-        "PackageCode" = "8:{B497079D-0962-425A-A907-98C4AE66E116}"
+        "ProductCode" = "8:{C3BAEEF0-E633-4E5D-9182-2BD72C6CF402}"
+        "PackageCode" = "8:{1472CFEB-ED89-4A9F-90FA-66970C02A962}"
         "UpgradeCode" = "8:{E99D4BE3-7101-4C11-8719-A75ED137BD66}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.0.3"
+        "ProductVersion" = "8:0.0.4"
         "Manufacturer" = "8:Keysharp"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -1687,7 +1687,7 @@
         "Subject" = "8:"
         "ARPCONTACT" = "8:Matt Feemster et al"
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:A cross platform C# port of AutoHotkey"
+        "ARPCOMMENTS" = "8:A cross platform C# port of AutoHotkey V2"
         "ARPURLINFOABOUT" = "8:"
         "ARPPRODUCTICON" = "8:_A2B8B6CA171941E695B72CE361F45304"
         "ARPIconIndex" = "3:0"

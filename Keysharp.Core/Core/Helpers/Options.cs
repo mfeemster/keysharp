@@ -239,7 +239,6 @@ namespace Keysharp.Core
 			return false;
 		}
 
-
 		internal static string[] ParseOptions(string options) => options.Split(Core.Keyword_Spaces, StringSplitOptions.RemoveEmptyEntries);
 
 		internal static Dictionary<string, string> ParseOptionsRegex(ref string options, Dictionary<string, Regex> items, bool remove = true)

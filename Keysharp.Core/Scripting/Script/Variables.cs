@@ -14,8 +14,10 @@ namespace Keysharp.Scripting
 		public class Variables
 		{
 			internal static DateTime startTime = DateTime.Now;
+
 			//private static Dictionary<string, FieldInfo> globalVars = new Dictionary<string, FieldInfo>(StringComparer.OrdinalIgnoreCase);
 			private static Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
+
 			private Stack<string> collect = new Stack<string>();
 			private Dictionary<string, object> table = new Dictionary<string, object>();
 			public bool AutoMark { get; set; }

@@ -244,6 +244,18 @@ namespace Keysharp.Core
 
 		public static RefHolder Mrh(int i, object o, Action<object> r) => new RefHolder(i, o, r);//Make RefHolder.
 
+		public static object ObjGetCapacity(object obj) => obj is KeysharpObject kso ? kso.GetCapacity() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
+
+		public static long ObjHasOwnProp(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.HasOwnProp(obj1) : 0L;
+
+		public static long ObjOwnPropCount(object obj) => obj is KeysharpObject kso ? kso.OwnPropCount() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
+
+		public static object ObjOwnProps(object obj0, object obj1 = null) => obj0 is KeysharpObject kso ? kso.OwnProps(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
+
+		public static void ObjSetBase(params object[] obj) => throw new Exception(Any.BaseExc);
+
+		public static object ObjSetCapacity(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.SetCapacity(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
+
 		public static void OnError(object obj0, object obj1 = null)
 		{
 			var e = obj0;
@@ -275,18 +287,6 @@ namespace Keysharp.Core
 		public static ValueError ValueError(params object[] obj) => new (obj);
 
 		public static ZeroDivisionError ZeroDivisionError(params object[] obj) => new (obj);
-
-		public static object ObjGetCapacity(object obj) => obj is KeysharpObject kso ? kso.GetCapacity() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
-
-		public static long ObjHasOwnProp(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.HasOwnProp(obj1) : 0L;
-
-		public static long ObjOwnPropCount(object obj) => obj is KeysharpObject kso ? kso.OwnPropCount() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
-
-		public static object ObjOwnProps(object obj0, object obj1 = null) => obj0 is KeysharpObject kso ? kso.OwnProps(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
-
-		public static void ObjSetBase(params object[] obj) => throw new Exception(Any.BaseExc);
-
-		public static object ObjSetCapacity(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.SetCapacity(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
 
 		private static Map Object(params object[] obj)
 		{

@@ -36,7 +36,6 @@ TODO/ENSURE THESE WORK:
 	A_IsPaused
 	ListLines, A_ListLines
 	Custom iterator objects won't be implemented.
-	Ownprops
 	threading interaction with timers
 	Items under COM section
 	Thread functionality, where things can be pre-empted/suspended/resumed etc...
@@ -100,28 +99,6 @@ TODO/ENSURE THESE WORK:
 
 	The command line you were using for Keysharp.OutputTest is: /force /restart /ErrorStdOut /Debug /include "IncFile.ahk"
 	
-	For when you implement classes/objects, here are how get/set properties are defined.
-	
-	x := Gui() ; this can be any object, built-in or not
-
-	x.defineProp("SomethingUseless", {value: 123}
-	x.defineProp("BitLessUseless", {get: (obj) => obj.SomethingUseless + 1}
-	x.defineProp("EvenLessUseless", {
-		get: (obj) => obj.SomethingUseless * 2,
-		set: (obj, value) => obj.SomethingUseless := value / 2.0
-	}
-	x.defineProp("IncreaseUselessness", {call: (obj) => ++obj.EvenLessUseless}
-
-	x.SomethingUseless ; 123
-	x.SomethingUseless := 5 ; 5
-	x.BitLessUseless ; 6
-	x.BitLessUseless := 7 ; ERROR, property is read-only
-	x.EvenLessUseless ; 10
-	x.EvenLessUseless := 25 ; 25 (I think)
-	x.IncreaseUsefullness() ; 26 (I think)
-	x.SomethingUseless ; 13
-
-
 	msgbox Hello World
 	GoTo, Label2
 	label1:
@@ -301,6 +278,29 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Maybe do reference variables just for static function calls:
 		-Might be possible: https://stackoverflow.com/questions/8779731/how-to-pass-a-parameter-as-a-reference-with-methodinfo-invoke
 	A program called Voice Macro for automation.
+	
+Linux ideas/research:
+	In order to send events to another control, such as a button click, the protocol ias at-spi, which is also used for screen readers. You'd need to port this to C#:
+		https://github.com/phil294/AHK_X11/blob/master/src/run/display/at-spi.cr
+			See if you can use this to listen to keystrokes globally.
+		https://github.com/phil294/AHK_X11/blob/evdev-wayland/src/run/display/evdev.cr
+		Can possibly reuse some of his code.
+	Wayland:
+		Can't move mouse to absolute coordinates, only relative.
+		Can't do pixel search.
+		You'll need to run as admin/root or input.
+		AHK X11 build that works somewhat with Wayland:
+			https://github.com/phil294/AHK_X11/releases/tag/0.5.99-next
+			https://github.com/phil294/AHK_X11/tree/evdev-wayland#wayland-evdev
+			https://github.com/phil294/AHK_X11/blob/master/src/build/parser.cr#L50
+		https://python-evdev.readthedocs.io/en/latest/tutorial.html
+		Start with evdev and ignore X.
+		To swallow events the way AHK does, you need to listen to the devices and either swallow events or allow them to pass through. If you pass through, you need to reinsert it into the device.
+	Old automation libraries that worked on X, but no longer do on Wayland:
+		Autokey and x duo tool.
+	Linux has a system wide hotkey reigstry which can usually be found in some settings gui.
+	
+	
 	
 Closed development links to revisit:
 	https://docs.microsoft.com/en-us/dotnet/framework/tools/signtool-exe?redirectedfrom=MSDN

@@ -72,11 +72,11 @@ namespace Keysharp.Scripting
 		private bool IsCommentLine(string code) =>
 #if LEGACY
 		code.Length >= Comment.Length&& MemoryExtensions.Equals(code.AsSpan(0, Comment.Length), Comment, StringComparison.Ordinal);
+
 #endif
 #if !LEGACY
 		return code.Length > 0 && code[0] == Comment;
 #endif
-
 
 		private bool IsEmptyStatement(string code)
 		{

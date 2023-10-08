@@ -1376,17 +1376,6 @@ namespace Keysharp.Scripting
 			return ParseMultiExpressionWithoutTokenizing(line, code, tokens.ToArray(), create, subs);
 		}
 
-		private CodeExpressionStatement[] ParseMultiExpressionWithoutTokenizing(CodeLine line, string code, object[] parts, bool create, List<List<object>> subs = null)
-		{
-			var result = ParseMultiExpression(line, code, parts, create, subs);
-			var statements = new CodeExpressionStatement[result.Length];
-
-			for (var i = 0; i < result.Length; i++)
-				statements[i] = new CodeExpressionStatement(result[i]);
-
-			return statements;
-		}
-
 		private CodeExpression[] ParseMultiExpression(CodeLine line, string code, object[] parts, bool create, List<List<object>> subs = null)
 		{
 			var fatArrow = false;
@@ -1459,6 +1448,17 @@ namespace Keysharp.Scripting
 			}
 
 			return expr.ToArray();
+		}
+
+		private CodeExpressionStatement[] ParseMultiExpressionWithoutTokenizing(CodeLine line, string code, object[] parts, bool create, List<List<object>> subs = null)
+		{
+			var result = ParseMultiExpression(line, code, parts, create, subs);
+			var statements = new CodeExpressionStatement[result.Length];
+
+			for (var i = 0; i < result.Length; i++)
+				statements[i] = new CodeExpressionStatement(result[i]);
+
+			return statements;
 		}
 
 		private CodeExpression ParseSingleExpression(CodeLine line, string code, bool create)

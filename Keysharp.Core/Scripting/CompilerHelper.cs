@@ -13,8 +13,6 @@ using System.Collections.Immutable;
 using Keysharp.Core;
 using System.Windows.Forms;
 
-
-
 #if WINDOWS
 
 	using Microsoft.CodeAnalysis.CSharp;
@@ -121,9 +119,11 @@ using static Keysharp.Scripting.Script.Operator;
 				return Encoding.UTF8.GetString(stream.ToArray());
 			}
 		}
+
 #if !WINDOWS
 		CodeDomProvider provider = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider();
 #else
+
 		private CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
 		{
 			{
@@ -136,7 +136,9 @@ using static Keysharp.Scripting.Script.Operator;
 													 )
 			}
 		});
+
 #endif
+
 		private CodeGeneratorOptions cgo = new CodeGeneratorOptions
 		{
 			IndentString = "\t",
@@ -156,6 +158,7 @@ using static Keysharp.Scripting.Script.Operator;
 #if !WINDOWS
 		public (CompilerResults, Exception) Compile(string code, string outputname)
 #else
+
 		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir)
 #endif
 		{

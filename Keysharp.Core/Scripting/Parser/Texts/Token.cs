@@ -238,6 +238,7 @@ namespace Keysharp.Scripting
 
 		private bool IsGetOrSet(string code, string name)
 		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && InClassDefinition() && Scope.Length > 0;
+
 		//=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
 
 		private bool IsHotkeyLabel(string code)

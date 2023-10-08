@@ -13,11 +13,6 @@ namespace Keysharp.Core.COM
 	{
 		internal static long F_OWNVALUE = 1;
 		internal List<IFuncObj> handlers;
-		public void CallEvents()
-		{
-			var result = handlers?.InvokeEventHandlers(this);
-		}
-
 		public long Flags { get; set; }
 
 		public object Item
@@ -81,6 +76,11 @@ namespace Keysharp.Core.COM
 				Marshal.ReleaseComObject(Ptr);
 			else if (Ptr is IntPtr ip)
 				Marshal.Release(ip);
+		}
+
+		public void CallEvents()
+		{
+			var result = handlers?.InvokeEventHandlers(this);
 		}
 
 		public void Clear()

@@ -24,6 +24,7 @@ namespace Keysharp.Core
 		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
 		internal static bool hasExited;
 		internal static bool persistentValueSetByUser;
+
 		[ThreadStatic]
 		private static System.Windows.Forms.Timer currentTimer;
 

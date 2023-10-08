@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <StartupObject>Keysharp.CompiledMain.program</StartupObject>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <Version>0.0.0.3</Version>
+    <Version>0.0.0.4</Version>
     <Authors>Matt Feemster</Authors>
     <Company>Keysharp</Company>
     <Description>A simple test program to paste generated code into for debugging</Description>

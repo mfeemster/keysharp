@@ -12,5 +12,4 @@ namespace Keysharp.Core
 #endif
 			;
 	}
-
 }

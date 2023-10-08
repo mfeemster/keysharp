@@ -318,6 +318,10 @@ namespace Keysharp.Core
 			arr = a;
 		}
 
+		public void Call(ref object obj0) => (obj0, _) = Current;
+
+		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
+
 		public void Dispose() => Reset();
 
 		public bool MoveNext()
