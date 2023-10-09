@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace Keysharp.Core
@@ -60,6 +61,8 @@ namespace Keysharp.Core
 				array = new List<object>();
 			else if (obj is Array arr)
 				array = arr.array;
+			else if (obj is List<object> list)
+				array = list;
 			else if (obj is ICollection c)
 				array = new List<object>(c.Cast<object>().ToList());
 			else
@@ -85,11 +88,11 @@ namespace Keysharp.Core
 
 		public void AddRange(ICollection c) => array.AddRange(c.Cast<object>());
 
-		public void Clear() => ((IList)array).Clear();
+		public void Clear() => array.Clear();
 
 		public override object Clone() => new Array(array.ToArray());
 
-		public bool Contains(object value) => ((IList)array).Contains(value);
+		public bool Contains(object value) => array.Contains(value);
 
 		//public long Count(params object[] values) => array.Count;
 		public void CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
@@ -108,6 +111,64 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		public Array Filter(object obj, object index = null)
+		{
+			var startIndex = index.Ai(1);
+
+			if (obj is IFuncObj ifo)
+			{
+				List<object> list;
+
+				if (startIndex <  0)
+				{
+					var i = array.Count + startIndex + 1;
+					list = ((IEnumerable<object>)array).Reverse().Skip(Math.Abs(startIndex + 1)).Where(x => Keysharp.Scripting.Script.ForceBool(ifo.Call(x, i--))).ToList();
+				}
+				else
+				{
+					var i = startIndex - 1;
+					list = array.Skip(i).Where(x => Keysharp.Scripting.Script.ForceBool(ifo.Call(x, ++i))).ToList();
+				}
+
+				return new Keysharp.Core.Array(list);
+			}
+
+			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
+		}
+
+		public long FindIndex(object obj, object index = null)
+		{
+			var startIndex = index.Ai(1);
+
+			if (obj is IFuncObj ifo)
+			{
+				if (startIndex <  0)
+				{
+					startIndex = array.Count + startIndex;
+
+					while (startIndex >= 0)
+					{
+						var startIndexPlus1 = startIndex + 1L;
+
+						if (Keysharp.Scripting.Script.ForceBool(ifo.Call(array[startIndex], startIndexPlus1)))
+							return startIndexPlus1;
+
+						startIndex--;
+					}
+
+					return -1L;
+				}
+				else
+				{
+					var i = startIndex - 1;
+					var found = array.FindIndex(i, x => Keysharp.Scripting.Script.ForceBool(ifo.Call(x, (long)++i)));
+					return found != -1L ? found + 1L : 0L;
+				}
+			}
+
+			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
+		}
+
 		public object Get(long index) => this[Scripting.Script.ForceInt(index)];
 
 		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
@@ -118,7 +179,13 @@ namespace Keysharp.Core
 			return index < array.Count ? array[index] != null : false;
 		}
 
-		public int IndexOf(object value) => ((IList)array).IndexOf(value);
+		public int IndexOf(object value) => array.IndexOf(value) + 1;
+
+		public long IndexOf(object value, object index)
+		{
+			var i = index.Ai(1);
+			return i < 0 ? array.LastIndexOf(value, array.Count + i) + 1 : array.IndexOf(value, i - 1) + 1;
+		}
 
 		public void Insert(int index, object value) => ((IList)array).Insert(index, value);
 
@@ -143,6 +210,23 @@ namespace Keysharp.Core
 					}
 				}
 			}
+		}
+
+		public string Join(object obj = null) => string.Join(obj.As(","), array);
+
+		public Array Map(object obj, object index = null)
+		{
+			var startIndex = index.Ai(1);
+
+			if (obj is IFuncObj ifo)
+			{
+				List<object> list;
+				var i = startIndex - 1;
+				list = array.Skip(i).Select(x => ifo.Call(x, ++i)).ToList();
+				return new Keysharp.Core.Array(list);
+			}
+
+			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
 		}
 
 		public object MaxIndex()
@@ -188,7 +272,7 @@ namespace Keysharp.Core
 
 		public void Push(params object[] values) => array.AddRange(values);
 
-		public void Remove(object value) => ((IList)array).Remove(value);
+		public void Remove(object value) => array.Remove(value);
 
 		public object RemoveAt(params object[] values)//This must be variadic to properly resolve ahead of the interface method RemoveAt().
 		{
@@ -216,6 +300,17 @@ namespace Keysharp.Core
 			}
 
 			return null;
+		}
+
+		public Array Sort(object obj)
+		{
+			if (obj is IFuncObj ifo)
+			{
+				array.Sort(new FuncObjComparer(ifo));
+				return this;
+			}
+			else
+				throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
 		}
 
 		public override string ToString()
@@ -333,5 +428,14 @@ namespace Keysharp.Core
 		public void Reset() => position = -1;
 
 		private IEnumerator<(object, object)> GetEnumerator() => this;
+	}
+
+	internal class FuncObjComparer : IComparer<object>
+	{
+		private readonly IFuncObj ifo;
+
+		public FuncObjComparer(IFuncObj f) => ifo = f;
+
+		public int Compare(object left, object right) => ifo.Call(left, right).Ai();
 	}
 }

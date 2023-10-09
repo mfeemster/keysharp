@@ -65,7 +65,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
-	+ This is done by calling `Func("FunctionName"[, object, paramCount])`
+	+ This is done by calling `Func("FunctionName" [, object, paramCount])`
 * Exception classes aren't, and can't be, derived from KeysharpObject.
 	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
@@ -213,33 +213,47 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 				
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
-* A new method to `Array` called `Add()` which should be more efficient than `Push()` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
-* A new function `Atan2(y, x)` while AHK only supports `Atan()`.
-* Hyperbolic versions of the trigonometric functions: `Sinh()`, `Cosh()`, `Tanh()`.
+* Add new methods to `Array`:
+	+ `Add(value) => Integer` which should be more efficient than `Push(values*)` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
+	+ `Filter(callback: (value [, index]) => Boolean) => Array
+	+ `FindIndex(callback: (value [, index]) => Boolean, start_index := 1) => Integer
+		+ If start_index is less than 0 then do a reverse lookup.
+	+ `IndexOf(val_to_find, start_index := 1) => Integer
+	+ `Join(separator := ',') => String
+	+ `Map(callback: (value [, index]) => Any) => Array
+	+ `Sort(callback?: (a, b) => Integer) => $this, sort in place and return and the default is random sort
+* A new function `Atan2(y, x) => Double` while AHK only supports `Atan()`.
+* Hyperbolic versions of the trigonometric functions:
+	+ `Sinh(value) => Double`
+	+ `Cosh(value) => Double`
+	+ `Tanh(value) => Double`
 * A new property `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
-	+ The new signature is: `Run/RunWait(Target[, WorkingDir, Options, Args])`.
-* `ListView` supports a new method `DeleteCol()` to remove a column.
-* `TabControl` supports a new method `SetTabIcon()` to relieve the caller of having to use `SendMessage()`.
+	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, Args])`.
+* `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
+* `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `Menu` supports several new methods:
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
 	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
-* `TreeView` supports a new method `GetNode()` which retrieves a raw winforms TreeNode object based on a passed in ID.
+* `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
 * `SubStr()` uses a default of 1 for the second parameter, `StartingPos`, to relieve the user of always having to specify it.
-* A new string function `NormalizeEol(str, eol)` used to take in a string and make all line endings match the value passed in, or the default for the current environment.
-* Two new string functions: `StartsWith()` and `EndsWith()` to examine the beginning and end of a string.
+* New string functions:
+	+ `NormalizeEol(str, eol) => String` to take in a string and make all line endings match the value passed in, or the default for the current environment.
+	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
+	+ 'Join(separator, params*) => String` to join each parameter together as a string, separated by `separator`.
+		+ Pass params as `params*` if it's a collection.
 * The v1 `Map` methods `MaxIndex()` and `MinIndex()` are still supported. They are also supported for `Array`.
-* New function `GetScreenClip(x, y, width, height, filename)` can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
+* New function `GetScreenClip(x, y, width, height [, filename]) => Bitmap` can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
 * Rich text boxes are supported by passing `RichEdit` to `Gui.Add()`. The same options from `Edit` are supported with the following caveats:
 	+ `Multiline` is true by default.
 	+ `WantReturn` and `Password` are not supported.
 	+ `Uppercase` and `Lowercase` are supported, but only for key presses, not for pasting.
 * Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
 * A new accessor `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
-* A new function `CopyImageToClipboard()` is supported which copies an image to the clipboard.
+* A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
 	+ Uses the same arguments as `LoadPicture()`.
 	+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
 * When sending a string through `SendMessage()` using the `WM_COPYDATA` message type, the caller is no longer responsible for creating the special `COPYDATA` struct.
@@ -253,7 +267,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * A new accessor named `A_CommandLine` which returns the command line string.
 	+ This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
 * The defaults for hotstring creation can be retrieved by the global static `DefaultHotstring*` properties.
-* `Log(number, base)` is by default base 10, but you can pass a double as the second parameter to specify a custom base.
+* `Log(number, base := 10)` is by default base 10, but you can pass a double as the second parameter to specify a custom base.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
 	+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
@@ -292,9 +306,10 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		}
 	}
 ```
-* New function to encrypt or decrypt an object using the AES algorithm: `AES()`.
-* New functions to generate has values using various algorithms: `MD5()`, `SHA1()`, `SHA256()`, `SHA384()`, `SHA512()`.
-* New function to calculate the C2C32 polynomial of an object: `CRC32()`.
+* New function to encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
+* New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
+* New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
+* New function to generate a secure cryptographic random number: SecureRandom(min, max) => Decimal
 
 ###	Removals: ###
 * COM is only partially implemented.

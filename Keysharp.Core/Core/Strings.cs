@@ -224,17 +224,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static string Join(params object[] obj)
-		{
-			if (obj.Length > 1)
-			{
-				var s1 = obj[0].Str();
-				var vals = obj.Skip(1);
-				return string.Join(s1, vals);
-			}
-
-			return "";
-		}
+		public static string Join(object sep, params object[] obj) => string.Join(sep.ToString(), obj);
 
 		public static string LTrim(object obj0, object obj1 = null) => obj0.As().TrimStart(obj1.As(" \t").ToCharArray());
 

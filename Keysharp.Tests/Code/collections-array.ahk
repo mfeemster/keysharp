@@ -274,3 +274,158 @@ if (x == "helloworld")
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+arr := [10, 20, 30, 40]
+i := arr.IndexOf(30)
+
+if (i == 3)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+i := arr.IndexOf(20, 3)
+
+if (i == 0)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+i := arr.IndexOf(40, -1)
+
+if (i == 4)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+i := arr.IndexOf(40, -2)
+
+if (i == 0)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+lam := (x) => Mod(x, 5) == 0
+arr := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+filtered := arr.Filter(lam)
+
+if (filtered.Length == 2 && filtered[1] == 5 && filtered[2] == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+filtered := arr.Filter(lam, 6)
+
+if (filtered.Length == 1 && filtered[1] == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+lam := (x) => Mod(x, 5) == 0
+arr := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+filtered := arr.Filter(lam, -2)
+
+if (filtered.Length == 1 && filtered[1] == 5)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+lam := (x, i) => Mod(x, 5) == 0 && i == x
+arr := [10, 20, 30, 40, 5, 60, 70, 80, 90, 10]
+filtered := arr.Filter(lam)
+
+if (filtered.Length == 2 && filtered[1] == 5 && filtered[2] == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+filtered := arr.Filter(lam, 6)
+
+if (filtered.Length == 1 && filtered[1] == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+filtered := arr.Filter(lam, -1)
+
+if (filtered.Length == 2 && filtered[1] == 10 && filtered[2] == 5)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+filtered := arr.Filter(lam, -6)
+
+if (filtered.Length == 1 && filtered[1] == 5)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+lam := (x, i) => Mod(x, 5) == 0 && i == x
+arr := [10, 20, 30, 40, 5, 60, 70, 80, 90, 10]
+index := arr.FindIndex(lam)
+
+if (index == 5)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+arr := [10, 20, 30, 40, 5, 60, 70, 80, 90, 10]
+index := arr.FindIndex(lam, 6)
+
+if (index == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+index := arr.FindIndex(lam, -1)
+
+if (index == 10)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+index := arr.FindIndex(lam, -2)
+
+if (index == 5)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+str := arr.Join()
+
+if (str == "10,20,30,40,5,60,70,80,90,10")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+str := arr.Join("-")
+
+if (str == "10-20-30-40-5-60-70-80-90-10")
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+lam := (x, i) => x * i
+arr := [10, 20, 30]
+arr2 := arr.Map(lam)
+
+if (arr2.Length == 3 && arr2[1] == 10 && arr2[2] == 40 && arr2[3] == 90)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+arr2 := arr.Map(lam, 2)
+
+if (arr2.Length == 2 && arr2[1] == 40 && arr2[2] == 90)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+lam := (l, r) => l < r ? -1 : (l > r ? 1 : 0)
+arr := [99, 3, 100, -5, -5, 0]
+arr.Sort(lam)
+sorted := [-5, -5, 0, 3, 99, 100]
+
+if (arr = sorted)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

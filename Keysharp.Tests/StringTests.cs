@@ -37,6 +37,9 @@ namespace Keysharp.Tests
 		public void CompareCase() => Assert.IsTrue(TestScript("string-compare-case", true));
 
 		[Test, Category("String")]
+		public void Join() => Assert.IsTrue(TestScript("string-join", true));
+
+		[Test, Category("String")]
 		public void Concat() => Assert.IsTrue(TestScript("string-concat", true));
 
 		[Test, Category("String")]
