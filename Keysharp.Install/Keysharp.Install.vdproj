@@ -1672,7 +1672,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Keysharp"
         "ProductCode" = "8:{C3BAEEF0-E633-4E5D-9182-2BD72C6CF402}"
-        "PackageCode" = "8:{3A6A9055-D2DD-40E4-B026-31A641DD8605}"
+        "PackageCode" = "8:{622B6A2E-9837-455F-9753-8B8DB225ECB9}"
         "UpgradeCode" = "8:{E99D4BE3-7101-4C11-8719-A75ED137BD66}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"

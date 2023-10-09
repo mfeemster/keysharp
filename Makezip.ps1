@@ -3,6 +3,7 @@ $DLLBytes = [System.IO.File]::ReadAllBytes($FullPath)
 $Assembly = [System.Reflection.Assembly]::Load($DLLBytes)
 $AssemblyVersion = $Assembly.GetName().Version.ToString()
 
+Copy-Item ".\Keysharp.Install\Release\Keysharp.msi" -Destination ".\Keysharp_$AssemblyVersion.msi" -Force
 Compress-Archive -LiteralPath `
  ".\bin\release\net7.0-windows\Keysharp.Core.dll" `
 ,".\bin\release\net7.0-windows\Keysharp.exe" `
