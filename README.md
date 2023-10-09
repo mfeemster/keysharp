@@ -64,7 +64,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line".
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
-* Function objects will need to be created using the name of the function as a string to be used. They are not all created automatically on script load like the documentation says.
+* Function objects will need to be created passing the name of the function as a string to `Func()`. They are not all created automatically on script startup.
 	+ This is done by calling `Func("FunctionName" [, object, paramCount])`
 * Exception classes aren't, and can't be, derived from KeysharpObject.
 	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
@@ -108,7 +108,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
-* If a reference to an enumerator created by a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
+* When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
 	+ `ObjOwnProps()` takes an optional second argument which is a boolean. Passing `True` means return name and value, passing `False` or empty means return name only.
 	
@@ -217,7 +217,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `Add(value) => Integer` which should be more efficient than `Push(values*)` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
 	+ `Filter(callback: (value [, index]) => Boolean) => Array`
 	+ `FindIndex(callback: (value [, index]) => Boolean, start_index := 1) => Integer`
-		+ If start_index is less than 0 then do a reverse lookup.
+		+ If `start_index` is less than 0 then do a reverse lookup.
 	+ `IndexOf(val_to_find, start_index := 1) => Integer`
 	+ `Join(separator := ',') => String`
 	+ `Map(callback: (value [, index]) => Any) => Array`
