@@ -221,7 +221,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `IndexOf(val_to_find, start_index := 1) => Integer
 	+ `Join(separator := ',') => String
 	+ `Map(callback: (value [, index]) => Any) => Array
-	+ `Sort(callback?: (a, b) => Integer) => $this, sort in place and return and the default is random sort
+	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when a < b, 0 when a == b and 1 when a > b.
 * A new function `Atan2(y, x) => Double` while AHK only supports `Atan()`.
 * Hyperbolic versions of the trigonometric functions:
 	+ `Sinh(value) => Double`
