@@ -215,14 +215,14 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
 * Add new methods to `Array`:
 	+ `Add(value) => Integer` which should be more efficient than `Push(values*)` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
-	+ `Filter(callback: (value [, index]) => Boolean) => Array
-	+ `FindIndex(callback: (value [, index]) => Boolean, start_index := 1) => Integer
+	+ `Filter(callback: (value [, index]) => Boolean) => Array`
+	+ `FindIndex(callback: (value [, index]) => Boolean, start_index := 1) => Integer`
 		+ If start_index is less than 0 then do a reverse lookup.
-	+ `IndexOf(val_to_find, start_index := 1) => Integer
-	+ `Join(separator := ',') => String
-	+ `Map(callback: (value [, index]) => Any) => Array
-	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when a < b, 0 when a == b and 1 when a > b.
-* A new function `Atan2(y, x) => Double` while AHK only supports `Atan()`.
+	+ `IndexOf(val_to_find, start_index := 1) => Integer`
+	+ `Join(separator := ',') => String`
+	+ `Map(callback: (value [, index]) => Any) => Array`
+	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 when `a > b`.
+* A new function `Atan2(y, x) => Double` while AHK only supports `Atan(value)`.
 * Hyperbolic versions of the trigonometric functions:
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
@@ -309,7 +309,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * New function to encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
 * New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
 * New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
-* New function to generate a secure cryptographic random number: SecureRandom(min, max) => Decimal
+* New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`
 
 ###	Removals: ###
 * COM is only partially implemented.
