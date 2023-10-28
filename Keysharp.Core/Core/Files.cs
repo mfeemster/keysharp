@@ -31,7 +31,7 @@ namespace Keysharp.Core
 			{
 				var text = obj0;
 				var filename = obj1.As();
-				var enc = Files.GetEncoding(ThreadAccessors.A_FileEncoding);
+				var enc = ThreadAccessors.A_FileEncoding;
 				var raw = false;
 				var crlf = false;
 				TextWriter tw = null;

@@ -132,7 +132,7 @@ namespace Keysharp.Core.Common.Threading
 		internal bool detectHiddenWindows;
 		internal Form dialogOwner;
 		internal object eventInfo;
-		internal Encoding fileEncoding;
+		internal Encoding fileEncoding = Encoding.Default;
 		internal string formatNumeric;
 		internal IFuncObj hotCriterion;
 		internal IntPtr hwndLastUsed = IntPtr.Zero;
@@ -181,7 +181,7 @@ namespace Keysharp.Core.Common.Threading
 			detectHiddenWindows = false;
 			dialogOwner = null;
 			eventInfo = null;
-			fileEncoding = null;
+			fileEncoding = Encoding.Default;
 			formatNumeric = null;
 			hotCriterion = null;
 			hwndLastUsed = IntPtr.Zero;
@@ -225,7 +225,7 @@ namespace Keysharp.Core.Common.Threading
 			detectHiddenWindows = Accessors.A_DetectHiddenWindows.Ab();
 			dialogOwner = null;
 			eventInfo = null;
-			fileEncoding = null;
+			fileEncoding = Files.GetEncoding(Accessors.A_FileEncoding.ToString());
 			formatNumeric = null;
 			hotCriterion = null;
 			hwndLastUsed = IntPtr.Zero;

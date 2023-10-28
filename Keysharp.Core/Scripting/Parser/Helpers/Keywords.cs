@@ -598,11 +598,11 @@ namespace Keysharp.Scripting
 		internal const string VarExt = "#_@$?";
 		internal static readonly char[] BlockOpenAndSpace = { BlockOpen, SingleSpace };
 		internal static readonly char[] BlockOpenParenOpen = { BlockOpen, ParenOpen };
+		internal static readonly char[] Parens = { ParenOpen, ParenClose };
 		internal static readonly char[] BlockOpenSpaceAndParens = BlockOpenAndSpace.Concat(Parens);
 		internal static readonly char[] CrLf = "\r\n".ToCharArray();
 		internal static readonly object[] EmptyVariadicArgs = new object[] { System.Array.Empty<object>() };
 		internal static readonly char[] Keyword_Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
-		internal static readonly char[] Parens = { ParenOpen, ParenClose };
 		internal static readonly char[] SpaceColon = " :".ToCharArray();
 		internal static readonly char[] Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
 		internal static readonly char[] SpacesQuotes = { CR, LF, SingleSpace, '\t', '\xA0', '"' };

@@ -51,16 +51,19 @@ namespace Keysharp.Core
 			callingCritical = true;
 			var tv = Threads.GetThreadVariables();
 			var on = obj == null;
-			var freq = 0L;
+			long freq = obj.ParseLong(false) ?? 0L;
 
 			if (!on)
 			{
 				var b = Options.OnOff(obj.As());
 
 				if (b != null)
+				{
 					on = b.Value;
-				else
-					freq = obj.Al(16);
+
+					if (on)
+						freq = 16L;
+				}
 			}
 
 			var ret = tv.isCritical ? tv.peekFrequency : 0L;
@@ -81,7 +84,7 @@ namespace Keysharp.Core
 			// doesn't start with a non-zero number, and zero itself.
 			tv.isCritical = obj == null // i.e. omitted or blank is the same as "ON". See comments above.
 							|| on
-							|| freq > 0; // Non-zero integer also turns it on. Relies on short-circuit boolean order.
+							|| freq > 0L; // Non-zero integer also turns it on. Relies on short-circuit boolean order.
 
 			if (tv.isCritical) // Critical has been turned on. (For simplicity even if it was already on, the following is done.)
 			{

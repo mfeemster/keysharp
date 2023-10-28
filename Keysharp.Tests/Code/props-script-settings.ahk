@@ -4,29 +4,29 @@ if (A_IsSuspended == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 Suspend, On
 
 if (A_IsSuspended == 1) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+		
 Suspend, Off
 
 if (A_IsCritical == 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+		
 Critical, On
 x := A_IsCritical
 
-if (x == 1) 
+if (x > 0) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 Critical, Off
 x := A_IsCritical
 
@@ -34,12 +34,12 @@ if (x == 0)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 if (A_TitleMatchMode == 2) 
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-	
+
 SetTitleMatchMode, 1
 
 if (A_TitleMatchMode == 1) 

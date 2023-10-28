@@ -442,7 +442,7 @@ namespace Keysharp.Core
 			set => Threads.GetThreadVariables().eventInfo = value;
 		}
 
-		public static object A_FileEncoding//Needs a thread specific *Cur version.//TODO
+		public static object A_FileEncoding
 		{
 			get
 			{
