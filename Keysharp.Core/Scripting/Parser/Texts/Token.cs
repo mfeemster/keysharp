@@ -1,42 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Keysharp.Core;
-using static Keysharp.Core.Core;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private Token GetToken(CodeLine line)
-		{
-			var code = line.Code;
-			code = code.TrimStart(Spaces);
-
-			if (code.Length == 0)
-				return Token.Unknown;
-
-			if (IsGetOrSet(code, "get"))
-				return Token.PropGet;
-			else if (IsGetOrSet(code, "set"))
-				return Token.PropSet;
-			else if (IsProperty(line))
-				return Token.Prop;
-			else if (IsFlowOperator(code))
-				return Token.Flow;
-			else if (IsLabel(code))
-				return Token.Label;
-			else if (IsHotkeyLabel(code) || IsHotstringLabel(code))
-				return Token.Hotkey;
-			else if (IsAssignment(code))
-				return Token.Assign;
-			else if (IsDirective(code))
-				return Token.Directive;
-			else return IsCommand(code) ? Token.Command : Token.Expression;
-		}
-
-		private bool IsAssignment(string code, bool checkexprassign = false)
+		internal static bool IsAssignment(string code, bool checkexprassign = false)
 		{
 			var i = 0;
 
@@ -59,7 +34,65 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool IsCommand(string code)
+		internal static bool IsAssignOp(string code)
+		{
+			if (!(code.Length >= 2 && code.Length <= 4))
+				return false;
+
+			if (code[0] == Equal || code[code.Length - 1] != Equal)
+				return false;
+
+			if (code.Length == 3)
+			{
+				if (code[0] == code[1])
+				{
+					switch (code[0])
+					{
+						case Greater:
+						case Less:
+						case Divide:
+							return true;
+
+						default:
+							return false;
+					}
+				}
+				else
+					return false;
+			}
+			else if (code.Length == 4)
+			{
+				if (code[0] == code[1] && code[1] == code[2])
+				{
+					switch (code[0])
+					{
+						case Greater:
+							return true;
+
+						default:
+							return false;
+					}
+				}
+				else
+					return false;
+			}
+			else
+			{
+				switch (code[0])
+				{
+					case Greater:
+					case Less:
+					case Not:
+					case BitNOT:
+						return false;
+
+					default:
+						return true;
+				}
+			}
+		}
+
+		internal static bool IsCommand(string code)
 		{
 			var i = 0;
 
@@ -111,58 +144,70 @@ namespace Keysharp.Scripting
 				return false;
 		}
 
-		private bool IsDirective(string code) => code.Length > 2 && code[0] == Directive;
-
-		private bool IsFlowOperator(string code)
+		internal static bool IsDynamicReference(string code)
 		{
-			const int offset = 4;
-			var delimiters = new char[Spaces.Length + offset];
-			delimiters[0] = Multicast;
-			delimiters[1] = BlockOpen;
-			delimiters[2] = ParenOpen;
-			delimiters[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
-			Spaces.CopyTo(delimiters, offset);
-			var word = code.Split(delimiters, 2)[0].ToLowerInvariant();
+			var d = false;
 
-			if (Scope.Length > 0)
+			for (var i = 0; i < code.Length; i++)
 			{
-				switch (word)
+				var sym = code[i];
+
+				if (sym == Resolve)
 				{
-					case FunctionStatic:
-						return true;
+					if (d)
+						if (code[i - 1] == Resolve)
+							return false;
+
+					d = !d;
 				}
+				else if (!IsIdentifier(sym))
+					return false;
 			}
 
-			switch (word)
-			{
-				case FlowBreak:
-				case FlowContinue:
-				case FlowCase:
-				case FlowClass:
-				case FlowDefault:
-				case FlowFor:
-				case FlowElse:
-				case FlowGosub:
-				case FlowGoto:
-				case FlowIf:
-				case FlowLoop:
-				case FlowReturn:
-				case FlowWhile:
-				case FunctionLocal:
-				case FunctionGlobal:
-				case FlowTry:
-				case FlowCatch:
-				case FlowFinally:
-				case FlowUntil:
-				case FlowSwitch:
-				case Throw:
-					return true;
-			}
-
-			return false;
+			return code.Length != 0;
 		}
 
-		private bool IsFunction(string code, string next)
+		internal static bool IsExpressionIf(string code)
+		{
+			code = code.TrimStart(Spaces);
+			var i = 0;
+
+			if (code.Length == 0)
+				return true;
+
+			if (code[0] == ParenOpen)
+				return true;
+
+			while (i < code.Length && IsIdentifier(code[i])) i++;
+
+			if (i == 0 || IsKeyword(code.Substring(0, i)))
+				return true;
+
+			while (i < code.Length && IsSpace(code[i])) i++;
+
+			if (i == 0 || i == code.Length)
+				return false;
+
+			switch (code[i])
+			{
+				case Equal:
+				case Not:
+				case Greater:
+				case Less:
+					return false;
+			}
+
+			return true;
+		}
+
+		internal static bool IsExpressionParameter(string code)
+		{
+			code = code.TrimStart(Spaces);
+			var z = code.IndexOf(Resolve);
+			return z == 0 && (code.Length == 1 || IsSpace(code[1]));
+		}
+
+		internal static bool IsFunction(string code, string next)
 		{
 			if (code.Length == 0 || code[0] == ParenOpen)
 				return false;
@@ -236,12 +281,7 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool IsGetOrSet(string code, string name)
-		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && InClassDefinition() && Scope.Length > 0;
-
-		//=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
-
-		private bool IsHotkeyLabel(string code)
+		internal static bool IsHotkeyLabel(string code)
 		{
 			var z = code.IndexOf(HotkeySignal);
 
@@ -287,9 +327,95 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		private bool IsHotstringLabel(string code) => code.Length > 0 && code[0] == HotkeyBound&& code.Contains(HotkeySignal)&& code.Count(ch => ch == HotkeyBound) >= 4;
+		//=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
+		internal static bool IsHotstringLabel(string code) => code.Length > 0 && code[0] == HotkeyBound&& code.Contains(HotkeySignal)&& code.Count(ch => ch == HotkeyBound) >= 4;
 
-		private bool IsLabel(string code)
+		internal static bool IsIdentifier(char symbol) => char.IsLetterOrDigit(symbol) || VarExt.IndexOf(symbol) != -1;
+
+		internal static bool IsIdentifier(string token) => IsIdentifier(token, false);
+
+		internal static bool IsIdentifier(string token, bool dynamic)
+		{
+			if (string.IsNullOrEmpty(token))
+				return false;
+
+			if (token[0] == TernaryA && (token.Length == 1 || token.Length == 2 && token[1] == TernaryA))
+				return false;
+
+			foreach (var sym in token)
+			{
+				if (!IsIdentifier(sym))
+				{
+					if (dynamic && sym == Resolve)
+						continue;
+
+					return false;
+				}
+			}
+
+			if (double.TryParse(token, out var _))//Need to ensure it's not a number, because identifiers can't be numbers.
+				return false;
+
+			if (token.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
+					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
+				return false;
+
+			return true;
+		}
+
+		internal static bool IsKeyword(string code)
+		{
+			switch (code.ToLowerInvariant())
+			{
+				case AndTxt:
+				case OrTxt:
+				case NotTxt:
+				case TrueTxt:
+				case FalseTxt:
+				case NullTxt:
+				case IsTxt:
+				case FlowBreak:
+				case FlowContinue:
+				case FlowCase:
+				case FlowClass:
+				case FlowDefault:
+				case FlowFor:
+				case FlowElse:
+				case FlowGosub:
+				case FlowGoto:
+				case FlowIf:
+				case FlowLoop:
+				case FlowReturn:
+				case FlowWhile:
+				case FunctionLocal:
+				case FunctionGlobal:
+				case FunctionStatic:
+				case FlowTry:
+				case FlowCatch:
+				case FlowFinally:
+				case FlowUntil:
+				case FlowSwitch:
+				case Throw:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
+		internal static bool IsKeyword(char symbol)
+		{
+			switch (symbol)
+			{
+				case TernaryA:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
+		internal static bool IsLabel(string code)
 		{
 			for (var i = 0; i < code.Length; i++)
 			{
@@ -322,6 +448,239 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
+
+		internal static bool IsLegacyIf(string code)
+		{
+			var part = code.TrimStart(Spaces).Split(Spaces, 3);
+
+			if (part.Length < 2 || !IsIdentifier(part[0]))
+				return false;
+
+			switch (part[1].ToLowerInvariant())
+			{
+				case NotTxt:
+				case BetweenTxt:
+				case InTxt:
+				case ContainsTxt:
+				case IsTxt:
+					return true;
+			}
+
+			return false;
+		}
+
+		internal static bool IsOperator(string code)
+		{
+			try
+			{
+				if (!IsAssignOp(code))
+					_ = OperatorFromString(code);
+			}
+			catch (ArgumentOutOfRangeException) { return false; }
+
+			return true;
+		}
+
+		internal static bool IsPrimitiveObject(string code, out object result)
+		{
+			result = null;
+
+			if (string.IsNullOrEmpty(code))
+				return true;
+
+			switch (code.ToLowerInvariant())
+			{
+				case TrueTxt:
+					//result = 1L;
+					result = true;//Althought the AHK documentation says true/false are really just 1/0 under the hood, that causes problems here.
+					return true;//Particularly with the Force[type]() functions used in Operate(). Having them be a bool type makes it much easier to determine the caller's intent when comparing values.
+
+				case FalseTxt:
+					//result = 0L;
+					result = false;
+					return true;
+
+				case NullTxt:
+					result = null;
+					return true;
+			}
+
+			//Mono incorrectly determines "." as a numeric value.
+			if (code.Length == 1 && code[0] == Concatenate)
+				return false;
+
+			var codeTrim = code.Trim(Spaces);
+			var longresult = codeTrim.ParseLong(false, false);//Also supports hex, but do not consider raw hex, because then a variable name like a would be returned as 10.
+
+			if (longresult.HasValue)
+			{
+				result = longresult.Value;
+				goto exp;
+			}
+
+			if (double.TryParse(codeTrim, NumberStyles.Any, culture, out var d))//This will make any number be a double internally. Not sure if this is what AHK does.
+			{
+				result = d;
+				goto exp;
+			}
+
+			result = null;
+			return false;
+			exp:
+			return true;
+		}
+
+		internal static bool IsPrimitiveObject(string code) => IsPrimitiveObject(code, out var result);
+
+		internal static bool IsRemap(string code)//This is totally wrong and has nothing to do with how remaps are done in v2.//TODO
+		{
+			code = code.Trim(Spaces);
+
+			if (code.Length == 0)
+				return false;
+
+			if (IsSpace(code[0]))
+				return false;
+
+			for (var i = 1; i < code.Length; i++)
+			{
+				if (IsCommentAt(code, i))
+					return true;
+				else if (!IsSpace(code[i]))
+					return false;
+			}
+
+			return true;
+		}
+
+		internal static bool IsSpace(char sym) => System.Array.IndexOf(Spaces, sym) != -1;
+
+		internal static bool IsSpace(string code)
+		{
+			foreach (var sym in code)
+				if (!IsSpace(sym))
+					return false;
+
+			return true;
+		}
+
+		internal static bool IsUnaryOperator(Script.Operator op)
+		{
+			switch (op)
+			{
+				case Script.Operator.Subtract://Minus doesn't seem to be needed here.
+				case Script.Operator.LogicalNot:
+				case Script.Operator.LogicalNotEx:
+				case Script.Operator.BitwiseNot:
+				case Script.Operator.BitwiseAnd:
+				case Script.Operator.Dereference:
+					return true;
+
+				//TODO
+				//This messes up the postfix operator when used in an assignment like y := x++
+				//case Script.Operator.Add:
+				//return true;
+
+				default:
+					return false;
+			}
+		}
+
+		internal static bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
+
+		internal bool IsFlowOperator(string code)
+		{
+			const int offset = 4;
+			var delimiters = new char[Spaces.Length + offset];
+			delimiters[0] = Multicast;
+			delimiters[1] = BlockOpen;
+			delimiters[2] = ParenOpen;
+			delimiters[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
+			Spaces.CopyTo(delimiters, offset);
+			var word = code.Split(delimiters, 2)[0].ToLowerInvariant();
+
+			if (Scope.Length > 0)
+			{
+				switch (word)
+				{
+					case FunctionStatic:
+						return true;
+				}
+			}
+
+			switch (word)
+			{
+				case FlowBreak:
+				case FlowContinue:
+				case FlowCase:
+				case FlowClass:
+				case FlowDefault:
+				case FlowFor:
+				case FlowElse:
+				case FlowGosub:
+				case FlowGoto:
+				case FlowIf:
+				case FlowLoop:
+				case FlowReturn:
+				case FlowWhile:
+				case FunctionLocal:
+				case FunctionGlobal:
+				case FlowTry:
+				case FlowCatch:
+				case FlowFinally:
+				case FlowUntil:
+				case FlowSwitch:
+				case Throw:
+					return true;
+			}
+
+			return false;
+		}
+
+		private List<object> ExtractRange(List<object> parts, int start, int end)
+		{
+			var extracted = new List<object>(end - start);
+
+			for (var i = start; i < end; i++)
+			{
+				extracted.Add(parts[start]);
+				parts.RemoveAt(start);
+			}
+
+			return extracted;
+		}
+
+		private Token GetToken(CodeLine line)
+		{
+			var code = line.Code;
+			code = code.TrimStart(Spaces);
+
+			if (code.Length == 0)
+				return Token.Unknown;
+
+			if (IsGetOrSet(code, "get"))
+				return Token.PropGet;
+			else if (IsGetOrSet(code, "set"))
+				return Token.PropSet;
+			else if (IsProperty(line))
+				return Token.Prop;
+			else if (IsFlowOperator(code))
+				return Token.Flow;
+			else if (IsLabel(code))
+				return Token.Label;
+			else if (IsHotkeyLabel(code) || IsHotstringLabel(code))
+				return Token.Hotkey;
+			else if (IsAssignment(code))
+				return Token.Assign;
+			else if (IsDirective(code))
+				return Token.Directive;
+			else return IsCommand(code) ? Token.Command : Token.Expression;
+		}
+
+		private bool IsDirective(string code) => code.Length > 2 && code[0] == Directive;
+
+		private bool IsGetOrSet(string code, string name)
+		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && InClassDefinition() && Scope.Length > 0;
 
 		private bool IsProperty(CodeLine line)
 		{
@@ -379,15 +738,305 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private bool IsSpace(char sym) => System.Array.IndexOf(Spaces, sym) != -1;
-
-		private bool IsSpace(string code)
+		private List<object> SplitTokens(string code)
 		{
-			foreach (var sym in code)
-				if (!IsSpace(sym))
-					return false;
+			var json = false;
+			var list = new List<object>();
 
-			return true;
+			for (var i = 0; i < code.Length; i++)
+			{
+				var sym = code[i];
+
+				if (IsSpace(sym))
+					continue;
+				else if (IsCommentAt(code, i))
+					MoveToEOL(code, ref i);
+				else if (IsIdentifier(sym) || sym == Resolve || (sym == Concatenate && i + 1 < code.Length && IsIdentifier(code[i + 1])))
+				{
+					var id = new StringBuilder(code.Length);
+					_ = id.Append(sym);
+					i++;
+
+					for (; i < code.Length; i++)
+					{
+						sym = code[i];
+
+						if ((sym == 'e' || sym == 'E') && IsPrimitiveObject(id.ToString()) && id.ToString().IndexOf("0x") != 0 && i + 1 < code.Length)
+						{
+							_ = id.Append(sym);
+							sym = code[++i];
+
+							if (!(sym == '+' || sym == '-' || char.IsDigit(sym)))
+								throw new ParseException(ExInvalidExponent);
+
+							_ = id.Append(sym);
+						}
+						else if (IsIdentifier(sym) || sym == Resolve || (sym == Concatenate && (i + 1 < code.Length ? code[i + 1] != Equal : true)))
+							_ = id.Append(sym);
+						else
+						{
+							if (sym == ParenOpen && !IsKeyword(id.ToString()) && !id.ToString().Contains(Concatenate.ToString()))
+								_ = id.Append(ParenOpen);
+							else
+								i--;
+
+							break;
+						}
+					}
+
+					var seq = id.ToString();
+					var parts = IsPrimitiveObject(seq) ? new[] { seq } : seq.Split(Concatenate);
+
+					if (parts[0].Length != 0)
+						list.Add(parts[0]);
+
+					for (var n = 1; n < parts.Length; n++)
+					{
+						list.Add("[*");//Special signifier [**] that this is a property lookup and not a map[var] lookup. Without distinguishing the two, a map could never have a key that had the same name as a property, such as "Default".
+
+						if (parts[n].Contains("%"))//If it was a dynamic variable, don't enclose in quotes.
+							list.Add($"{parts[n]}");
+						else
+							list.Add("\"" + parts[n] + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+
+						list.Add("*]");
+						//list.Add(ArrayOpen.ToString());
+						//var str = StringBound.ToString();
+						//list.Add(string.Concat(str, parts[n], str));
+						//list.Add(ArrayClose.ToString());
+					}
+				}
+				else if (sym == StringBound || sym == StringBoundVerbatim)
+				{
+					var escape = false;
+					var verbatim = sym == StringBoundVerbatim;
+					var str = new StringBuilder(code.Length);
+					_ = str.Append(StringBound);
+					i++;
+
+					if (i == code.Length)
+						throw new ParseException(ExUntermStr);
+
+					for (; i < code.Length; i++)
+					{
+						sym = code[i];
+
+						if (verbatim)
+						{
+							var isbound = sym == StringBoundVerbatim;
+
+							if (!escape && isbound)
+							{
+								_ = str.Append(StringBound);
+								break;
+							}
+
+							_ = str.Append(sym);
+
+							if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
+								throw new ParseException(ExUntermStr);
+						}
+						else
+						{
+							var isbound = sym == StringBound;
+							_ = str.Append(sym);
+
+							if (!escape && isbound)
+								break;
+
+							if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
+								throw new ParseException(ExUntermStr);
+						}
+
+						escape = sym == Escape ? !escape : false;
+					}
+
+					list.Add(str.ToString());
+				}
+				else
+				{
+					var op = new StringBuilder(3);
+					var n = i + 1;
+					var symNext = n < code.Length ? code[n] : Reserved;
+					var tri = false;
+
+					if (sym == symNext)
+					{
+						var peekAssign = false;
+
+						switch (sym)
+						{
+							case Divide:
+							case Greater:
+							case Less:
+								peekAssign = true;
+
+							goto case Add;
+
+							case Add:
+							case Minus:
+							case Multiply:
+							case BitOR:
+							case BitAND:
+								_ = op.Append(sym);
+								_ = op.Append(symNext);
+								i++;
+								tri = true;
+
+								if (peekAssign)
+								{
+									n = i + 1;
+
+									if (n < code.Length)
+									{
+										if (n + 2 < code.Length && sym == Greater && symNext == Greater && code[n] == Greater && code[n + 1] == Equal)
+										{
+											_ = op.Append(code[n]);
+											_ = op.Append(code[n + 1]);
+											i = n + 1;
+										}
+										else if ((sym == Greater && code[n] == Greater) || (code[n] == Equal))
+										{
+											_ = op.Append(code[n]);
+											i = n;
+										}
+									}
+								}
+
+								break;
+						}
+					}
+
+					if (!tri)
+					{
+						if (symNext == Equal)
+						{
+							switch (sym)
+							{
+								case AssignPre:
+								case Add:
+								case Minus:
+								case Multiply:
+								case Divide:
+								case Concatenate:
+								case BitAND:
+								case BitXOR:
+								case BitOR:
+								case BitNOT:
+								case Not:
+								case Equal:
+								case Greater:
+								case Less:
+								{
+									_ = op.Append(sym);
+									_ = op.Append(symNext);
+									i++;
+									n++;
+									symNext = n < code.Length ? code[n] : Reserved;
+
+									if (symNext == Equal)
+									{
+										_ = op.Append(symNext);
+										i++;
+									}
+								}
+								break;
+							}
+						}
+						else if (sym == Equal && symNext == Greater)
+						{
+							_ = op.Append(sym);
+							_ = op.Append(symNext);
+							i++;
+						}
+						else if ((sym == Less && symNext == Greater) || (sym == TernaryA && symNext == TernaryA))
+						{
+							_ = op.Append(sym);
+							_ = op.Append(symNext);
+							i++;
+						}
+						else
+						{
+							switch (sym)
+							{
+								case Add:
+								case Minus:
+								case Multiply:
+								case Not:
+								case BitNOT:
+								case BitAND:
+								case Greater:
+								case Less:
+								case BitXOR:
+								case BitOR:
+								case ParenOpen:
+								case ParenClose:
+								case Equal:
+								case Concatenate:
+								case TernaryB:
+								case Divide:
+								case ArrayOpen:
+								case ArrayClose:
+									_ = op.Append(sym);
+									break;
+
+								case BlockOpen:
+									if (json)
+									{
+										_ = op.Append(sym);
+										break;
+									}
+
+									blockOpen = true;
+									var j = i + 2;
+
+									if (j < code.Length && !IsCommentAt(code, j))
+									{
+										blockOpen = false;
+										json = true;
+
+									goto case BlockOpen;
+									}
+
+									j--;
+
+									if (j < code.Length)
+									{
+										if (code[j] == BlockClose)
+										{
+											json = true;
+
+										goto case BlockClose;
+										}
+										else if (!IsSpace(code[j]))
+											throw new ParseException(ExUnexpected);
+									}
+
+									return list;
+
+								case BlockClose:
+									if (!json)
+										goto default;
+
+									_ = op.Append(sym);
+									break;
+
+								default:
+									if (sym == Resolve || sym == Multicast)
+									goto case Add;
+									throw new ParseException(ExUnexpected);
+							}
+						}
+					}
+
+					if (op.Length == 0)
+						_ = op.Append(sym);
+
+					list.Add(op.ToString());
+				}
+			}
+
+			return list;
 		}
 
 		private enum Token

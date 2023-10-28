@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using Keysharp.Core;
 
 namespace Keysharp.Scripting

@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Windows.Forms;
 using Keysharp.Core;
+using Keysharp.Core.Common.Threading;
 
 namespace System.Collections
 {
@@ -126,6 +127,14 @@ namespace System.Collections.Generic
 		public static long Al(this IList obj, int index, long def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseLong().Value : def;
 
 		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index] : def;
+
+		public static Dictionary<T, T2> Append<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
+		{
+			foreach (var kv in dkt2)
+				dkt1.TryAdd(kv.Key, kv.Value);
+
+			return dkt1;
+		}
 
 		public static string As(this object obj, string def = "") => obj != null ? obj.ToString() : def;
 
@@ -418,27 +427,34 @@ namespace System.Collections.Generic
 		public static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
 			object result = null;
-			var inst = obj.Length > 0 ? obj[0].GetControl() : null;
-			var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
 
-			if (inst is Control ctrl && ctrl.FindForm() is Form form)
-				Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
-
-			foreach (var handler in handlers)
+			if (handlers.Count() > 0)
 			{
-				if (handler != null)
+				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
+				var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+				Threads.BeginThread();
+
+				if (inst is Control ctrl && ctrl.FindForm() is Form form)
+					Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+
+				foreach (var handler in handlers)
 				{
-					result = handler.Call(obj);
+					if (handler != null)
+					{
+						result = handler.Call(obj);
 
-					if (result == null)
-						continue;
+						if (result == null)
+							continue;
 
-					if (result.IsCallbackResultNonEmpty())
-						break;
+						if (result.IsCallbackResultNonEmpty())
+							break;
+					}
 				}
+
+				Threads.EndThread();
+				Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 			}
 
-			Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
 			return result;
 		}
 
@@ -507,6 +523,19 @@ namespace System.Collections.Generic
 			var r2 = obj.As(1, def2);
 			var r3 = obj.As(2, def3);
 			return (r1, r2, r3);
+		}
+
+		public static Dictionary<T, T2> Merge<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
+		{
+			var merged = new Dictionary<T, T2>();
+
+			foreach (var kv in dkt1)
+				merged.Add(kv.Key, kv.Value);
+
+			foreach (var kv in dkt2)
+				merged.TryAdd(kv.Key, kv.Value);
+
+			return merged;
 		}
 
 		public static void ModifyEventHandlers(this List<IFuncObj> handlers, IFuncObj fo, long i)

@@ -1,18 +1,7 @@
 ﻿using System;
-using System.Buffers;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Security.Policy;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Window;
 
 namespace Keysharp.Core
 {
@@ -33,31 +22,6 @@ namespace Keysharp.Core
 		}
 	}
 
-	public class ConcurrentStackPool<T>
-	{
-		private readonly SlimStack<T[]> collection = new (16); //Unlikely there would ever be more than 16 threads calling a given function at the same time before any of the others returned.
-		private readonly int exactSize;
-		private readonly object sync = new object();
-
-		public ConcurrentStackPool(int size)
-		{
-			exactSize = size;
-		}
-
-		public T[] Rent()
-		{
-			return collection.TryPop(out var obj) ? obj : (new T[exactSize]);
-		}
-
-		public void Return(T[] array, bool clearArray = false)
-		{
-			if (clearArray)
-				System.Array.Clear(array);
-
-			collection.Push(array);
-		}
-	}
-
 	public class MethodPropertyHolder
 	{
 		public Func<object, object[], object> callFunc;
@@ -65,7 +29,7 @@ namespace Keysharp.Core
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
 		internal readonly Action<object, object> setPropFunc;
-		protected readonly ConcurrentStackPool<object> paramsPool;
+		protected readonly ConcurrentStackArrayPool<object> paramsPool;
 		private readonly bool isGuiType;
 		private int startVarIndex = -1;
 		private int stopVarIndexDistanceFromEnd;
@@ -112,13 +76,13 @@ namespace Keysharp.Core
 							{
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 									if (ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 									ret = mi.Invoke(inst, null);
-									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 								}, false);
 							}
 
@@ -130,7 +94,7 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					paramsPool = new ConcurrentStackPool<object>(ParamLength);
+					paramsPool = new ConcurrentStackArrayPool<object>(ParamLength);
 
 					if (IsVariadic)
 					{
@@ -181,13 +145,13 @@ namespace Keysharp.Core
 							{
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 									if (ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 									ret = mi.Invoke(inst, newobj);
-									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 								}, false);
 							}
 
@@ -217,13 +181,13 @@ namespace Keysharp.Core
 								{
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+										var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 										if (ctrl.FindForm() is Form form)
-											Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+											Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 										ret = mi.Invoke(inst, obj);
-										Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+										Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 									}, false);
 								}
 							}
@@ -245,13 +209,13 @@ namespace Keysharp.Core
 								{
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+										var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 										if (ctrl.FindForm() is Form form)
-											Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+											Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 										ret = mi.Invoke(inst, newobj);
-										Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+										Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 									}, false);
 								}
 
@@ -267,6 +231,8 @@ namespace Keysharp.Core
 			else if (pi != null)
 			{
 				isGuiType = Keysharp.Core.Gui.IsGuiType(pi.DeclaringType);
+				parameters = pi.GetIndexParameters();
+				ParamLength = parameters.Length;
 
 				if (pi.GetAccessors().Any(x => x.IsStatic))
 				{
@@ -282,13 +248,13 @@ namespace Keysharp.Core
 							{
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 									if (ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 									ret = pi.GetValue(null);
-									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 								}, false);
 							}
 
@@ -303,13 +269,13 @@ namespace Keysharp.Core
 							{
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 									if (ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 									pi.SetValue(null, obj);
-									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 								}, false);
 							}
 						};
@@ -346,13 +312,13 @@ namespace Keysharp.Core
 							{
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 									if (ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 									ret = pi.GetValue(inst);
-									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 								}, false);
 							}
 
@@ -367,13 +333,13 @@ namespace Keysharp.Core
 							{
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.hwndLastUsed;
+									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 
 									if (ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.hwndLastUsed = form.Handle;
+										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
 
 									pi.SetValue(inst, obj);
-									Keysharp.Scripting.Script.hwndLastUsed = oldHandle;
+									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 								}, false);
 							}
 						};
@@ -399,72 +365,6 @@ namespace Keysharp.Core
 					}
 				}
 			}
-		}
-	}
-
-	public class RefHolder
-	{
-		internal int index;
-		internal Action<object> reassign;
-		internal object val;
-
-		public RefHolder(int i, object o, Action<object> r)
-		{
-			index = i;
-			val = o;
-			reassign = r;
-		}
-	}
-
-	/// <summary>
-	/// This class is means to be a highly optimized and stripped down version of the built in Stack collection type.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public class SlimStack<T>
-	{
-		private readonly List<T> list;
-		private readonly int size;
-		private int index;
-
-		public SlimStack(int s)
-		{
-			index = 0;
-			size = s;
-			list = new List<T>(size);
-
-			for (var i = 0; i < size; i++)
-				list.Add(default);
-		}
-
-		public bool Push(T obj)
-		{
-			var next = Interlocked.Increment(ref index);
-
-			if (next > 0 && next <= size)
-			{
-				list[next - 1] = obj;
-				return true;
-			}
-			else
-				_ = Interlocked.Decrement(ref index);//Went too far up, so bump back down.
-
-			return false;//No room, so just don't return the object and let the GC handle it.
-		}
-
-		public bool TryPop(out T obj)
-		{
-			var next = Interlocked.Decrement(ref index);
-
-			if (next >= 0 && next < size)
-			{
-				obj = list[next];
-				return true;
-			}
-			else
-				_ = Interlocked.Increment(ref index);//Went too far down, so bump back up.
-
-			obj = default;
-			return false;
 		}
 	}
 }

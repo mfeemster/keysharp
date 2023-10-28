@@ -18,9 +18,10 @@ namespace Keysharp.Core.Windows
 			get
 			{
 				var windows = new List<WindowItemBase>(64);
+				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
 				_ = WindowsAPI.EnumWindows(delegate (IntPtr hwnd, int lParam)
 				{
-					if ((bool)Accessors.A_DetectHiddenWindows || Windows.WindowsAPI.IsWindowVisible(hwnd))
+					if (doHidden || Windows.WindowsAPI.IsWindowVisible(hwnd))
 						windows.Add(new WindowItem(hwnd));
 
 					return true;
@@ -31,8 +32,8 @@ namespace Keysharp.Core.Windows
 
 		internal override WindowItemBase LastFound
 		{
-			get => CreateWindow(Keysharp.Scripting.Script.hwndLastUsed);
-			set => Keysharp.Scripting.Script.hwndLastUsed = value.Handle;
+			get => CreateWindow(Keysharp.Scripting.Script.HwndLastUsed);
+			set => Keysharp.Scripting.Script.HwndLastUsed = value.Handle;
 		}
 
 		internal WindowManager() => Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();

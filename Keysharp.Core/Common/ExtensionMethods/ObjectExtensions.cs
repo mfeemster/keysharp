@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using Keysharp.Scripting;
 
 namespace System
 {
@@ -60,7 +61,7 @@ namespace System
 
 		public static bool IsKeysharpGui(this object obj) => obj is Keysharp.Core.Gui || obj is Keysharp.Core.GuiControl || obj is Keysharp.Core.Menu;
 
-		public static bool IsNotNullOrEmpty(this object ob) => ob != null&& !(ob is string s&& s?.Length == 0);
+		public static bool IsNotNullOrEmpty(this object obj) => obj != null&& !(obj is string s&& s?.Length == 0);
 
 		public static bool IsNullOrEmpty(this object obj) => obj == null ? true : obj is string s ? s?.Length == 0 : false;
 
@@ -179,7 +180,7 @@ namespace System
 
 			var neg = false;
 
-			if (s[0] == Keysharp.Core.Core.Minus)
+			if (s[0] == Keywords.Minus)
 			{
 				neg = true;
 				s = s.Slice(1);
@@ -218,7 +219,7 @@ namespace System
 
 			var neg = false;
 
-			if (s[0] == Keysharp.Core.Core.Minus)
+			if (s[0] == Keywords.Minus)
 			{
 				neg = true;
 				s = s.Slice(1);

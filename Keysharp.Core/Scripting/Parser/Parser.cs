@@ -7,54 +7,89 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.AccessControl;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Keysharp.Core;
-using Keysharp.Core.Common.Keyboard;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser : ICodeParser
 	{
 		public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+
+		internal const string scopeChar = "_";
+		internal const string varsPropertyName = "Vars";
+		internal bool ErrorStdOut;
+		internal CodeStatementCollection initial = new CodeStatementCollection();
+		internal string name = string.Empty;
+		internal bool NoTrayIcon;
+		internal bool Persistent;
+		private const string args = "args";
+		private const string initParams = "initparams";
 		private const string mainClassName = "program";
 		private const string mainScope = "";
-		private readonly Type bcl = typeof(Script).BaseType;
+		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
+		private Stack<bool> allGlobalVars = new Stack<bool>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> allMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private Stack<bool> allStaticVars = new Stack<bool>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
 		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
+		private bool blockOpen;
+		private Stack<CodeBlock> blocks = new ();
+		private uint caseCount;
 		private CompilerHelper Ch;
 		private List<CodeLine> codeLines = new List<CodeLine>();
+		private Dictionary<string, string> conditionIds;
+		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
+		private Stack<CodeStatementCollection> elses = new ();
+		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
+		private uint exCount;
 		private string fileName;
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private Stack<List<string>> globalFuncVars = new Stack<List<string>>();
 		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
-		private CodeStatementCollection initial = new CodeStatementCollection();
+		private int internalID;
 		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
+		private int labelCount;
+		private string lastHotkeyFunc = "";
+		private string lastHotstringFunc = "";
 		private long line;
-		private CodeMemberMethod main = new CodeMemberMethod();
+		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
+
+		private CodeMemberMethod main = new CodeMemberMethod()
+		{
+			Attributes = MemberAttributes.Public | MemberAttributes.Static,
+			Name = "Main"
+		};
+
 		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
+		private bool memberVarsStatic = false;
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
-		private string name = string.Empty;
+		private CodeStatementCollection parent;
+		private CodeBlock parentBlock;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
-		private StringBuilder sbld = new StringBuilder();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private Stack<CodeBlock> singleLoops = new ();
+		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
+		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
+		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
+		private uint switchCount;
+		private Stack<CodeSwitchStatement> switches = new ();
 		private CodeTypeDeclaration targetClass;
+		private uint tryCount;
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
-		private CompilerParameters CompilerParameters { get; set; }
 
-		static Parser()
-		{
-			ScanLibrary();
-		}
-
-		public Parser(CompilerHelper ch, CompilerParameters options)
+		public Parser(CompilerHelper ch)
 		{
 			Ch = ch;
-			CompilerParameters = options;
-			Init();
+			main.ReturnType = new CodeTypeReference(typeof(int));
+			_ = main.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string[]), "args"));
+			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
+			targetClass = AddType(mainClassName);
+			_ = targetClass.Members.Add(main);
+			//Keysharp.Core.Common.Threading.Threads.PushThreadVariables(0, false, false, true);//This shouldn't be here.//TODO
 		}
 
 		public static bool IsTypeOrBase(Type t1, string t2)
@@ -613,10 +648,10 @@ namespace Keysharp.Scripting
 
 		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
-			sbld = new StringBuilder();
 			name = nm;
-			Init();//Init here every time because this may be reused within a single program run, such as in Keyview.
-			codeLines = Read(codeStream, nm);
+			//Init();//Init here every time because this may be reused within a single program run, such as in Keyview.
+			var reader = new PreReader(this);
+			codeLines = reader.Read(codeStream, name);
 			Statements();
 
 			if (!NoTrayIcon)
@@ -626,14 +661,14 @@ namespace Keysharp.Scripting
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
 			//_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));
-			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{SingleInstance}"));
+			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{reader.SingleInstance}"));
 			_ = initial.Add(new CodeExpressionStatement(inst));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.SetName(name)"));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.Variables.InitGlobalVars()"));
 
-			foreach (var (p, s) in preloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
+			foreach (var (p, s) in reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
 			{
-				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Parser"), "AddPreLoadedDll");
+				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
 				initial.Add(new CodeExpressionStatement(cmie));
@@ -647,7 +682,9 @@ namespace Keysharp.Scripting
 				Name = "UserMainCode",
 				ReturnType = new CodeTypeReference(typeof(object))
 			};
+			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads"), "BeginThread", new CodePrimitiveExpression(true)));
 			userMainMethod.Statements.AddRange(main.Statements);
+			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads"), "EndThread"));
 			main.Statements.Clear();
 			//_ = targetClass.Members.Add(userMainMethod);
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
@@ -663,7 +700,7 @@ namespace Keysharp.Scripting
 					{
 						foreach (var globalvar in scopekv.Value)
 						{
-							var name = globalvar.Key.Replace(ScopeVar[0], '_');
+							var name = globalvar.Key.Replace(scopeChar[0], '_');
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
 								Name = name,
@@ -680,7 +717,7 @@ namespace Keysharp.Scripting
 
 						foreach (var globalvar in scopekv.Value)
 						{
-							var name = globalvar.Key.Replace(ScopeVar[0], '_');
+							var name = globalvar.Key.Replace(scopeChar[0], '_');
 							var isstatic = globalvar.Value.UserData.Contains("isstatic");
 							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
@@ -722,62 +759,6 @@ namespace Keysharp.Scripting
 		}
 
 		internal bool InClassDefinition() => typeStack.Count > 0 && typeStack.Peek().Name != mainClassName;
-
-		internal void Init()
-		{
-			//This is a collection of various variables which can be set by #directives and other methods, so reset them all to a default state here.
-			labelct = 0;
-			ErrorStdOut = false;
-			MaxThreadsPerHotkey = 1u;
-			MaxThreadsTotal = 10u;
-			MaxThreadsBuffer = false;
-			HotExprTimeout = 1000;
-			NoTrayIcon = NoTrayIconDefault;
-			Persistent = PersistentDefault;
-			SingleInstance = eScriptInstance.Force;
-			WinActivateForce = false;
-			HotstringNoMouse = false;
-			HotstringNewOptions = string.Empty;
-			DynamicVars = LaxExpressions;
-			Accessors.A_ClipboardTimeout = 1000;
-			Accessors.A_SendLevel = 0;
-			HotstringDefinition.DefaultHotstringSuspendExempt = false;
-			Script.ForceKeybdHook = false;
-			//LTrimForced = false;
-			IfWinActive_WinTitle = string.Empty;
-			IfWinActive_WinText = string.Empty;
-			IfWinExist_WinTitle = string.Empty;
-			IfWinExist_WinText = string.Empty;
-			IfWinNotActive_WinTitle = string.Empty;
-			IfWinNotActive_WinText = string.Empty;
-			IfWinNotExist_WinTitle = string.Empty;
-			IfWinNotExist_WinText = string.Empty;
-			preloadedDlls.Clear();
-			includes.Clear();
-			allVars.Clear();
-			methods.Clear();
-			properties.Clear();
-			typeStack.Clear();
-			staticFuncVars.Clear();
-			setPropertyValueCalls.Clear();
-			getPropertyValueCalls.Clear();
-			getMethodCalls.Clear();
-			allMethodCalls.Clear();
-			assemblyAttributes.Clear();
-			initial = new CodeStatementCollection();
-			prepend = new CodeStatementCollection();
-			mainNs = new CodeNamespace("Keysharp.CompiledMain");
-			main = new CodeMemberMethod()
-			{
-				Attributes = MemberAttributes.Public | MemberAttributes.Static,
-				Name = "Main"
-			};
-			main.ReturnType = new CodeTypeReference(typeof(int));
-			_ = main.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string[]), "args"));
-			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
-			targetClass = AddType(mainClassName);
-			_ = targetClass.Members.Add(main);
-		}
 
 		private CodeTypeDeclaration AddType(string typename)
 		{
@@ -982,36 +963,5 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
-
-		//private bool MethodExistsInTypeOrBase(Type t, string m)
-		//{
-		//  while (t != null)
-		//  {
-		//      var meths = t.GetMethods();
-
-		//      foreach (var meth in meths)
-		//          if (string.Compare(meth.Name, m, true) == 0)
-		//              return true;
-
-		//      t = t.BaseType;
-		//  }
-
-		//  return false;
-		//}
-
-		//private bool MethodExistsInBuiltInClass(string baseType, string m)
-		//{
-		//  if (Reflections.stringToTypeBuiltInMethods.TryGetValue(m, out var meths))
-		//  {
-		//      //Must iterate rather than look up because we only have the string name, not the type.
-		//      foreach (var typekv in meths)
-		//      {
-		//          if (string.Compare(typekv.Key.Name, baseType, true) == 0)
-		//              if (MethodExistsInTypeOrBase(typekv.Key, m))
-		//                  return true;
-		//              else
-		//                  return false;
-		//      }
-		//  }
 	}
 }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
+using Keysharp.Scripting;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {
@@ -82,9 +84,10 @@ namespace Keysharp.Core.Windows
 
 				if (IsSpecified)
 				{
+					var detectHiddenText = Accessors.A_DetectHiddenTextCur;
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
-						if ((bool)Accessors.A_DetectHiddenText || Windows.WindowsAPI.IsWindowVisible(hwnd))
+						if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
 							_ = childs.Add(hwnd);
 
 						return true;
@@ -295,10 +298,10 @@ namespace Keysharp.Core.Windows
 					return new string[0];
 
 				var items = new List<string>();
-				var doFast = (string)Accessors.A_TitleMatchModeSpeed == Core.Keyword_Fast;
+				var tv = Threads.GetThreadVariables();
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
-					var text = doFast ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
+					var text = tv.titleMatchModeSpeed ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
 					items.Add(text);
 					return true;
 				}, 0);
@@ -359,7 +362,7 @@ namespace Keysharp.Core.Windows
 			}
 			set
 			{
-				var splits = value.As().Split(Keysharp.Core.Core.SpaceTab, StringSplitOptions.RemoveEmptyEntries);
+				var splits = value.As().Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 				var colorstr = splits[0];
 				var exstyle = WindowsAPI.GetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE);
 
@@ -373,7 +376,7 @@ namespace Keysharp.Core.Windows
 					var val = 0L;
 					var flags = WindowsAPI.LWA_COLORKEY;
 
-					if (Keysharp.Core.Conversions.TryParseColor(colorstr, out var color))
+					if (Conversions.TryParseColor(colorstr, out var color))
 					{
 						if (splits.Length > 1)
 						{
@@ -449,7 +452,7 @@ namespace Keysharp.Core.Windows
 				return IntPtr.Zero;
 
 			var orig_foreground_wnd = WindowsAPI.GetForegroundWindow();
-			var sender = Keysharp.Scripting.Script.HookThread.kbdMsSender;
+			var sender = Script.HookThread.kbdMsSender;
 
 			//Restore the window *before* checking if it is already active.
 			if (WindowsAPI.IsIconic(targetWindow))
@@ -469,7 +472,7 @@ namespace Keysharp.Core.Windows
 			var new_foreground_wnd = IntPtr.Zero;
 
 			//Try a simple approach first.
-			if (!Keysharp.Scripting.Parser.WinActivateForce)
+			if (!Script.WinActivateForce)
 			{
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
 
@@ -514,7 +517,7 @@ namespace Keysharp.Core.Windows
 			// The log showed that it never seemed to need more than two tries.  But there's
 			// not much harm in trying a few extra times.  The number of tries needed might
 			// vary depending on how fast the CPU is:
-			var activateforce = Keysharp.Scripting.Parser.WinActivateForce ? 1 : 0;
+			var activateforce = Script.WinActivateForce ? 1 : 0;
 
 			for (var i = 0; i < 5; ++i)
 			{
@@ -844,7 +847,7 @@ namespace Keysharp.Core.Windows
 		{
 			_ = WindowsAPI.SetForegroundWindow(targetWindow);
 			//Need to be able to set interrupt disable here which prevents both timers and hotkeys from firing while this sleep is happening.//TODO
-			Keysharp.Core.Flow.Sleep(10);//The MsgSleep() function in AHK is massive. Unsure how to duplicate here, so just use regular thread sleep.
+			Flow.Sleep(10);//The MsgSleep() function in AHK is massive. Unsure how to duplicate here, so just use regular thread sleep.
 			var new_fore_window = WindowsAPI.GetForegroundWindow();
 
 			if (new_fore_window == targetWindow)

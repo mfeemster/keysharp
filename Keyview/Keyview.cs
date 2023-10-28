@@ -12,7 +12,7 @@ namespace Keyview
 {
 	public partial class Keyview : Form
 	{
-		private readonly CompilerHelper ch = new CompilerHelper();
+		private CompilerHelper ch = new CompilerHelper();
 		private readonly CheckBox chkFullCode = new CheckBox();
 		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 		private readonly System.Windows.Forms.Timer timer = new Timer();
@@ -103,70 +103,79 @@ namespace Keyview
 		{
 			if ((force || ((DateTime.Now - lastKeyTime).TotalSeconds >= updateFreqSeconds && lastKeyTime > lastCompileTime)) && txtIn.Text != "")
 			{
-				lastCompileTime = DateTime.Now;
-				var oldIndex = txtOut.GetCharIndexFromPosition(new Point(0, 0)) + 4;//Magic number, it scrolls backward on each update with smaller numbers.
-				SetStart();
-				tslCodeStatus.Text = "Creating DOM from script...";
-				Refresh();
-				var (domunits, domerrs) = ch.CreateDomFromFile(new string[] { txtIn.Text });
+				timer.Enabled = false;
 
-				if (domerrs.HasErrors)
+				try
 				{
-					var (errors, warnings) = CompilerHelper.GetCompilerErrors(domerrs);
-					SetFailure();
-					txtOut.Text = $"Error creating DOM from script:\n\n{errors}\n\n\n{warnings}";
-					goto theend;
+					lastCompileTime = DateTime.Now;
+					var oldIndex = txtOut.GetCharIndexFromPosition(new Point(0, 0)) + 4;//Magic number, it scrolls backward on each update with smaller numbers.
+					SetStart();
+					tslCodeStatus.Text = "Creating DOM from script...";
+					Refresh();
+					var (domunits, domerrs) = ch.CreateDomFromFile(new string[] { txtIn.Text });
+
+					if (domerrs.HasErrors)
+					{
+						var (errors, warnings) = CompilerHelper.GetCompilerErrors(domerrs);
+						SetFailure();
+						txtOut.Text = $"Error creating DOM from script:\n\n{errors}\n\n\n{warnings}";
+						goto theend;
+					}
+
+					tslCodeStatus.Text = "Creating C# code from DOM...";
+					Refresh();
+					var (code, exc) = ch.CreateCodeFromDom(domunits);
+
+					if (exc is Exception ex)
+					{
+						SetFailure();
+						txtOut.Text = $"Error creating C# code from DOM:\n{ex.Message}";
+						goto theend;
+					}
+
+					tslCodeStatus.Text = "Trimming parents from C# code...";
+					Refresh();
+					code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
+					tslCodeStatus.Text = "Compiling C# code...";
+					var asm = Assembly.GetExecutingAssembly();
+					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+
+					if (results == null)
+					{
+						SetFailure();
+						txtOut.Text = $"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}";
+					}
+					else if (results.Success)
+					{
+						SetSuccess((DateTime.Now - lastCompileTime).TotalSeconds);
+						fullCode = code;
+						var token = "[System.STAThreadAttribute()]";
+						var start = code.IndexOf(token);
+						code = code.AsSpan(start + token.Length + 2).TrimEnd(trimend).ToString();
+						var sb = new StringBuilder(code.Length);
+
+						foreach (var line in code.SplitLines())
+							_ = sb.AppendLine(line.TrimNofAny(trimstr, 2));
+
+						trimmedCode = sb.ToString().TrimEnd(trimend);
+						txtOut.Text = chkFullCode.Checked ? fullCode : trimmedCode;
+						txtOut.Select(oldIndex, 0);
+						txtOut.ScrollToCaret();
+						System.IO.File.WriteAllText(lastrun, txtIn.Text);
+					}
+					else
+					{
+						SetFailure();
+						txtOut.Text = CompilerHelper.HandleCompilerErrors(results.Diagnostics, "Keyview", "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n\n" + code;
+					}
+				}
+				catch
+				{
 				}
 
-				tslCodeStatus.Text = "Creating C# code from DOM...";
-				Refresh();
-				var (code, exc) = ch.CreateCodeFromDom(domunits);
-
-				if (exc is Exception ex)
-				{
-					SetFailure();
-					txtOut.Text = $"Error creating C# code from DOM:\n{ex.Message}";
-					goto theend;
-				}
-
-				tslCodeStatus.Text = "Trimming parents from C# code...";
-				Refresh();
-				code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
-				tslCodeStatus.Text = "Compiling C# code...";
-				var asm = Assembly.GetExecutingAssembly();
-				var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
-
-				if (results == null)
-				{
-					SetFailure();
-					txtOut.Text = $"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}";
-				}
-				else if (results.Success)
-				{
-					SetSuccess((DateTime.Now - lastCompileTime).TotalSeconds);
-					fullCode = code;
-					var token = "[System.STAThreadAttribute()]";
-					var start = code.IndexOf(token);
-					code = code.AsSpan(start + token.Length + 2).TrimEnd(trimend).ToString();
-					var sb = new StringBuilder(code.Length);
-
-					foreach (var line in code.SplitLines())
-						_ = sb.AppendLine(line.TrimNofAny(trimstr, 2));
-
-					trimmedCode = sb.ToString().TrimEnd(trimend);
-					txtOut.Text = chkFullCode.Checked ? fullCode : trimmedCode;
-					txtOut.Select(oldIndex, 0);
-					txtOut.ScrollToCaret();
-					System.IO.File.WriteAllText(lastrun, txtIn.Text);
-				}
-				else
-				{
-					SetFailure();
-					txtOut.Text = CompilerHelper.HandleCompilerErrors(results.Diagnostics, "Keyview", "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n\n" + code;
-				}
+				theend:
+				timer.Enabled = true;
 			}
-
-			theend:
 
 			if (force)
 				force = false;

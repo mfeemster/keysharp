@@ -1,15 +1,17 @@
 using System;
+using System.CodeDom;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Keysharp.Core;
-using static Keysharp.Core.Core;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private string EscapedString(string code, bool resolve)
+		internal static string EscapedString(string code, bool resolve)
 		{
 			if (code.Length == 0)
 				return string.Empty;
@@ -69,7 +71,7 @@ namespace Keysharp.Scripting
 			return buffer.ToString();
 		}
 
-		private string MultilineString(string code)
+		internal static string MultilineString(string code)
 		{
 			var reader = new StringReader(code);
 			var line = reader.ReadLine().Trim(Spaces);
@@ -181,6 +183,136 @@ namespace Keysharp.Scripting
 
 			_ = str.Remove(str.Length - join.Length, join.Length);
 			return str.ToString();
+		}
+
+		private void RemoveExcessParentheses(List<object> parts)
+		{
+			while (parts.Count > 1)
+			{
+				var level = 0;
+				var last = parts.Count - 1;
+
+				if (!(--last > 1 &&
+						parts[0] is string s0 && s0.Length == 1 && s0[0] == ParenOpen &&
+						parts[last] is string sl && sl.Length == 1 && sl[0] == ParenClose))
+					return;
+
+				for (var i = 0; i < last; i++)
+				{
+					var check = parts[i] as string;
+
+					if (string.IsNullOrEmpty(check))
+						continue;
+
+					switch (check[check.Length - 1])
+					{
+						case ParenOpen:
+							level++;
+							break;
+
+						case ParenClose:
+							if (check.Length != 1)
+								break;
+							else if (--level < 0)
+								throw new ParseException(ExUnbalancedParens);
+
+							break;
+					}
+				}
+
+				if (level != 0)
+					return;
+
+				parts.RemoveAt(last);
+				parts.RemoveAt(0);
+			}
+		}
+
+		private List<string> SplitStringBalanced(string s, char delim)
+		{
+			var parenLevel = 0;
+			var braceLevel = 0;
+			var bracketLevel = 0;
+			var parts = new List<string>();
+			var sb = new StringBuilder();
+
+			foreach (var ch in s)
+			{
+				if (ch == '(')//Either it's a ( or a function call which will end with a (.
+				{
+					parenLevel++;
+					_ = sb.Append(ch);
+				}
+				else if (ch == ')')
+				{
+					if (parenLevel > 0)
+						_ = sb.Append(ch);
+
+					parenLevel--;
+				}
+				else if (ch == '{')
+				{
+					braceLevel++;
+					_ = sb.Append(ch);
+				}
+				else if (ch == '}')
+				{
+					if (braceLevel > 0)
+						_ = sb.Append(ch);
+
+					braceLevel--;
+				}
+				else if (ch == '[')
+				{
+					_ = sb.Append(ch);
+					bracketLevel++;
+				}
+				else if (ch == ']')
+				{
+					if (bracketLevel > 0)
+						_ = sb.Append(ch);
+
+					bracketLevel--;
+				}
+				else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && ch == delim)//Assuming delim is != to any of the above characters.
+				{
+					parts.Add(sb.ToString());
+					_ = sb.Clear();
+				}
+				else
+					_ = sb.Append(ch);
+			}
+
+			if (sb.Length > 0)
+			{
+				parts.Add(sb.ToString());
+			}
+
+			return parts;
+		}
+
+		private CodeExpression StringConcat(params CodeExpression[] parts)
+		{
+			var list = new List<CodeExpression>(parts.Length);
+
+			foreach (var part in parts)
+			{
+				if (part is CodePrimitiveExpression cpe && cpe.Value is string s)
+				{
+					if (string.IsNullOrEmpty(s))
+						continue;
+				}
+
+				list.Add(part);
+			}
+
+			if (list.Count == 1)
+				return list[0];
+
+			var str = typeof(object);// typeof(string);
+			var method = (CodeMethodReferenceExpression)InternalMethods.StringConcat;
+			var all = new CodeArrayCreateExpression(str, list.ToArray());
+			return new CodeMethodInvokeExpression(method, all);
 		}
 
 		//private string Replace(string input, string search, string replace)

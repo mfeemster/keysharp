@@ -1,4 +1,3 @@
-; need to test adding, removing, calling ownprops with both ref and non-ref on actual classes as well as maps.
 class testclass
 {
 	a := 0
@@ -223,7 +222,7 @@ if (o1.OwnPropCount(o1) == 2)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 if (ObjHasOwnProp(o1, "one") && o1.HasOwnProp("d"))
 	FileAppend, pass, *
 else
@@ -317,7 +316,7 @@ If (b && i == 3 && o1.a == 0) ; Ensure the last prop didn't get called.
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
-
+	
 testfunc(testclassobj)
 {
 	testclassobj.DefineProp("prop", {

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Globalization;
 using System.Text.RegularExpressions;
 using Keysharp.Core.Common;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -83,9 +83,9 @@ namespace Keysharp.Core
 			var options = obj5.As();
 			var optsItems = new Dictionary<string, Regex>
 			{
-				{ Core.Keyword_Icon, new Regex(@"\*Icon([0-9a-zA-Z]*)") },
-				{ Core.Keyword_Trans, new Regex(@"\*Trans([0-9a-zA-Z]*)") },
-				{ Core.Keyword_Variation, new Regex(@"\*([0-9]*)") },
+				{ Keyword_Icon, new Regex(@"\*Icon([0-9a-zA-Z]*)") },
+				{ Keyword_Trans, new Regex(@"\*Trans([0-9a-zA-Z]*)") },
+				{ Keyword_Variation, new Regex(@"\*([0-9]*)") },
 				{ "w", new Regex(@"\*w([-0-9]*)") },
 				{ "h", new Regex(@"\*h([-0-9]*)") }
 			};
@@ -98,13 +98,13 @@ namespace Keysharp.Core
 			long trans = -1;
 			byte variation = 0;
 
-			if (opts.TryGetValue(Core.Keyword_Icon, out var iconopt) && iconopt != "")
+			if (opts.TryGetValue(Keyword_Icon, out var iconopt) && iconopt != "")
 				iconnumber = ImageHelper.PrepareIconNumber(iconopt);
 
-			if (opts.TryGetValue(Core.Keyword_Variation, out var varopt) && varopt != "")
+			if (opts.TryGetValue(Keyword_Variation, out var varopt) && varopt != "")
 				_ = byte.TryParse(varopt, out variation);
 
-			if (opts.TryGetValue(Core.Keyword_Trans, out var vartrans) && vartrans != "")
+			if (opts.TryGetValue(Keyword_Trans, out var vartrans) && vartrans != "")
 			{
 				var temp = vartrans.ParseInt(false);
 

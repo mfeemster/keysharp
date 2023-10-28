@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -31,7 +32,7 @@ namespace Keysharp.Core
 
 		public void AppendShowHideTo(IComplexDialog complexDlg)
 		{
-			if (Param1.ToLowerInvariant() == Core.Keyword_Off)
+			if (Param1.ToLowerInvariant() == Keyword_Off)
 			{
 				complexDlg.Close();
 				complexDlg.Dispose();
@@ -48,7 +49,7 @@ namespace Keysharp.Core
 				return;
 			}
 
-			if (Param1.ToLowerInvariant() == Core.Keyword_Show)
+			if (Param1.ToLowerInvariant() == Keyword_Show)
 			{
 				if (!complexDlg.Visible)
 					complexDlg.Show();
@@ -86,66 +87,66 @@ namespace Keysharp.Core
 		public void ParseComplexOptions(string options)
 		{
 			var optsItems = new Dictionary<string, Regex>();
-			optsItems.Add(Core.Keyword_NotAlwaysOnTop, new Regex("(" + Core.Keyword_NotAlwaysOnTop + ")"));
-			optsItems.Add(Core.Keyword_Borderless, new Regex("(" + Core.Keyword_Borderless + ")"));
-			optsItems.Add(Core.Keyword_ProgressStartPos, new Regex(Core.Keyword_ProgressStartPos + @"(\d*)"));
-			optsItems.Add(Core.Keyword_ProgressRange, new Regex(Core.Keyword_ProgressRange + @"(\d*-\d*)"));
-			optsItems.Add(Core.Keyword_ShowInTaskbar, new Regex("(" + Core.Keyword_ShowInTaskbar + ")"));
-			optsItems.Add(Core.Keyword_X, new Regex(Core.Keyword_X + @"(\d*)"));
-			optsItems.Add(Core.Keyword_Y, new Regex(Core.Keyword_Y + @"(\d*)"));
-			optsItems.Add(Core.Keyword_W, new Regex(Core.Keyword_W + @"(\d*)"));
-			optsItems.Add(Core.Keyword_H, new Regex(Core.Keyword_H + @"(\d*)"));
-			optsItems.Add(Core.Keyword_Hide, new Regex("(" + Core.Keyword_Hide + ")"));
-			optsItems.Add(Core.Keyword_Centered, new Regex(Core.Keyword_Centered + @"([0,1]{2})"));
-			optsItems.Add(Core.Keyword_ZH, new Regex(Core.Keyword_ZH + @"([-,\d]*)"));
-			optsItems.Add(Core.Keyword_ZW, new Regex(Core.Keyword_ZW + @"([-,\d]*)"));
-			optsItems.Add(Core.Keyword_ZX, new Regex(Core.Keyword_ZX + @"(\d*)"));
-			optsItems.Add(Core.Keyword_ZY, new Regex(Core.Keyword_ZY + @"(\d*)"));
+			optsItems.Add(Keyword_NotAlwaysOnTop, new Regex("(" + Keyword_NotAlwaysOnTop + ")"));
+			optsItems.Add(Keyword_Borderless, new Regex("(" + Keyword_Borderless + ")"));
+			optsItems.Add(Keyword_ProgressStartPos, new Regex(Keyword_ProgressStartPos + @"(\d*)"));
+			optsItems.Add(Keyword_ProgressRange, new Regex(Keyword_ProgressRange + @"(\d*-\d*)"));
+			optsItems.Add(Keyword_ShowInTaskbar, new Regex("(" + Keyword_ShowInTaskbar + ")"));
+			optsItems.Add(Keyword_X, new Regex(Keyword_X + @"(\d*)"));
+			optsItems.Add(Keyword_Y, new Regex(Keyword_Y + @"(\d*)"));
+			optsItems.Add(Keyword_W, new Regex(Keyword_W + @"(\d*)"));
+			optsItems.Add(Keyword_H, new Regex(Keyword_H + @"(\d*)"));
+			optsItems.Add(Keyword_Hide, new Regex("(" + Keyword_Hide + ")"));
+			optsItems.Add(Keyword_Centered, new Regex(Keyword_Centered + @"([0,1]{2})"));
+			optsItems.Add(Keyword_ZH, new Regex(Keyword_ZH + @"([-,\d]*)"));
+			optsItems.Add(Keyword_ZW, new Regex(Keyword_ZW + @"([-,\d]*)"));
+			optsItems.Add(Keyword_ZX, new Regex(Keyword_ZX + @"(\d*)"));
+			optsItems.Add(Keyword_ZY, new Regex(Keyword_ZY + @"(\d*)"));
 			var dktOptions = Options.ParseOptionsRegex(ref options, optsItems, true);
-			AlwaysOnTop = (dktOptions[Core.Keyword_NotAlwaysOnTop]?.Length == 0);
-			Borderless = (dktOptions[Core.Keyword_Borderless] != "");
-			ShowInTaskBar = dktOptions[Core.Keyword_ShowInTaskbar] != "";
+			AlwaysOnTop = (dktOptions[Keyword_NotAlwaysOnTop]?.Length == 0);
+			Borderless = (dktOptions[Keyword_Borderless] != "");
+			ShowInTaskBar = dktOptions[Keyword_ShowInTaskbar] != "";
 
 			try
 			{
-				if (dktOptions[Core.Keyword_X] != "")
-					WindowGeometry.X = int.Parse(dktOptions[Core.Keyword_X]);
+				if (dktOptions[Keyword_X] != "")
+					WindowGeometry.X = int.Parse(dktOptions[Keyword_X]);
 
-				if (dktOptions[Core.Keyword_Y] != "")
-					WindowGeometry.Y = int.Parse(dktOptions[Core.Keyword_Y]);
+				if (dktOptions[Keyword_Y] != "")
+					WindowGeometry.Y = int.Parse(dktOptions[Keyword_Y]);
 
-				if (dktOptions[Core.Keyword_W] != "")
-					WindowGeometry.Width = int.Parse(dktOptions[Core.Keyword_W]);
+				if (dktOptions[Keyword_W] != "")
+					WindowGeometry.Width = int.Parse(dktOptions[Keyword_W]);
 
-				if (dktOptions[Core.Keyword_H] != "")
-					WindowGeometry.Height = int.Parse(dktOptions[Core.Keyword_H]);
+				if (dktOptions[Keyword_H] != "")
+					WindowGeometry.Height = int.Parse(dktOptions[Keyword_H]);
 			}
 			catch (FormatException)
 			{
 				WindowGeometry = new Rectangle(0, 0, 0, 0);
 			}
 
-			Hide = dktOptions[Core.Keyword_Hide] != "";
+			Hide = dktOptions[Keyword_Hide] != "";
 
-			if (dktOptions[Core.Keyword_Centered] != "")
+			if (dktOptions[Keyword_Centered] != "")
 			{
-				CenterMainText = MemoryExtensions.Equals(dktOptions[Core.Keyword_Centered].AsSpan(0, 1), "1", StringComparison.Ordinal);
-				CenterSubText  = MemoryExtensions.Equals(dktOptions[Core.Keyword_Centered].AsSpan(1, 1), "1", StringComparison.Ordinal);
+				CenterMainText = MemoryExtensions.Equals(dktOptions[Keyword_Centered].AsSpan(0, 1), "1", StringComparison.Ordinal);
+				CenterSubText  = MemoryExtensions.Equals(dktOptions[Keyword_Centered].AsSpan(1, 1), "1", StringComparison.Ordinal);
 			}
 
 			try
 			{
-				if (dktOptions[Core.Keyword_ZX] != "")
-					ObjectGeometry.X = int.Parse(dktOptions[Core.Keyword_ZX]);
+				if (dktOptions[Keyword_ZX] != "")
+					ObjectGeometry.X = int.Parse(dktOptions[Keyword_ZX]);
 
-				if (dktOptions[Core.Keyword_ZY] != "")
-					ObjectGeometry.Y = int.Parse(dktOptions[Core.Keyword_ZY]);
+				if (dktOptions[Keyword_ZY] != "")
+					ObjectGeometry.Y = int.Parse(dktOptions[Keyword_ZY]);
 
-				if (dktOptions[Core.Keyword_ZW] != "")
-					ObjectGeometry.Width = int.Parse(dktOptions[Core.Keyword_ZW]);
+				if (dktOptions[Keyword_ZW] != "")
+					ObjectGeometry.Width = int.Parse(dktOptions[Keyword_ZW]);
 
-				if (dktOptions[Core.Keyword_ZH] != "")
-					ObjectGeometry.Height = int.Parse(dktOptions[Core.Keyword_ZH]);
+				if (dktOptions[Keyword_ZH] != "")
+					ObjectGeometry.Height = int.Parse(dktOptions[Keyword_ZH]);
 			}
 			catch (FormatException)
 			{

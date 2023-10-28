@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Common.Window
 {
@@ -107,10 +108,10 @@ namespace Keysharp.Core.Common.Window
 
 		public override string ToString() => $"{Handle.ToInt64()}";
 
-		internal static void DoControlDelay() => DoDelay((long)Accessors.A_ControlDelay);
+		internal static void DoControlDelay() => DoDelay(ThreadAccessors.A_ControlDelay);
 
 		//public override string ToString() => IsSpecified ? Title : "not specified window";
-		internal static void DoWinDelay() => DoDelay((long)Accessors.A_WinDelay);
+		internal static void DoWinDelay() => DoDelay(ThreadAccessors.A_WinDelay);
 
 		internal abstract void ChildFindPoint(PointAndHwnd pah);
 
@@ -177,7 +178,7 @@ namespace Keysharp.Core.Common.Window
 				if (!TitleCompare(Title, criteria.Title))
 					return false;
 
-				if (!(bool)Keysharp.Core.Accessors.A_DetectHiddenWindows && !WindowsAPI.IsWindowVisible(Handle))
+				if (!ThreadAccessors.A_DetectHiddenWindows && !WindowsAPI.IsWindowVisible(Handle))
 					return false;
 			}
 
@@ -277,7 +278,7 @@ namespace Keysharp.Core.Common.Window
 			if (string.IsNullOrEmpty(a))
 				return false;
 
-			switch (Accessors.A_TitleMatchMode.ToString().ToLowerInvariant())
+			switch (Threads.GetThreadVariables().titleMatchMode.ToString().ToLowerInvariant())
 			{
 				case "1":
 					return a.StartsWith(b, comp);
@@ -288,7 +289,7 @@ namespace Keysharp.Core.Common.Window
 				case "3":
 					return a.Equals(b, comp);
 
-				case Core.Keyword_RegEx:
+				case Keyword_RegEx:
 				{
 					object outvar = null;
 					Strings.RegExMatch(a, b, ref outvar, 1);

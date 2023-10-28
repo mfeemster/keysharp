@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using Keysharp.Core.Common;
 using Keysharp.Core.Common.Window;
 using Keysharp.Core.Windows;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -651,11 +649,11 @@ namespace Keysharp.Core
 
 				if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
-					if (Options.OptionContains(attr, Core.Keyword_Expand, Core.Keyword_Expanded, Core.Keyword_Expand[0].ToString()) && node.IsExpanded)
+					if (Options.OptionContains(attr, Keyword_Expand, Keyword_Expanded, Keyword_Expand[0].ToString()) && node.IsExpanded)
 						return node.Handle.ToInt64();
-					else if (Options.OptionContains(attr, Core.Keyword_Check, Core.Keyword_Checked, Core.Keyword_Checked[0].ToString()) && node.Checked)
+					else if (Options.OptionContains(attr, Keyword_Check, Keyword_Checked, Keyword_Checked[0].ToString()) && node.Checked)
 						return node.Handle.ToInt64();
-					else if (Options.OptionContains(attr, Core.Keyword_Bold, Core.Keyword_Bold[0].ToString()) && node.NodeFont.Bold)
+					else if (Options.OptionContains(attr, Keyword_Bold, Keyword_Bold[0].ToString()) && node.NodeFont.Bold)
 						return node.Handle.ToInt64();
 				}
 			}
@@ -683,9 +681,9 @@ namespace Keysharp.Core
 
 				if (mode?.Length == 0)
 					return lv.Items.Count;
-				else if (mode.StartsWith("s", System.StringComparison.OrdinalIgnoreCase))
+				else if (mode.StartsWith("s", StringComparison.OrdinalIgnoreCase))
 					return lv.SelectedItems.Count;
-				else if (mode.StartsWith("c", System.StringComparison.OrdinalIgnoreCase))
+				else if (mode.StartsWith("c", StringComparison.OrdinalIgnoreCase))
 					return lv.Columns.Count;
 			}
 			else if (_control is TreeView tv)
@@ -712,8 +710,8 @@ namespace Keysharp.Core
 					return node == null || node.NextNode == null ? 0L : node.NextNode.Handle.ToInt64();
 				}
 
-				var check = Options.OptionContains(mode, Core.Keyword_Check, Core.Keyword_Checked, Core.Keyword_Checked[0].ToString());
-				var full = check || Options.OptionContains(mode, Core.Keyword_Full, Core.Keyword_Full[0].ToString());
+				var check = Options.OptionContains(mode, Keyword_Check, Keyword_Checked, Keyword_Checked[0].ToString());
+				var full = check || Options.OptionContains(mode, Keyword_Full, Keyword_Full[0].ToString());
 
 				if (!full)
 				{
@@ -732,8 +730,8 @@ namespace Keysharp.Core
 			else if (_control is ListView lv)
 			{
 				var startrow = (int)(id <= 1 ? 0 : id);//Do not subtract 1 here, because the documentation says to start at the next row, if not zero.
-				var c = mode.StartsWith("c", System.StringComparison.OrdinalIgnoreCase);
-				var f = mode.StartsWith("f", System.StringComparison.OrdinalIgnoreCase);
+				var c = mode.StartsWith("c", StringComparison.OrdinalIgnoreCase);
+				var f = mode.StartsWith("f", StringComparison.OrdinalIgnoreCase);
 
 				if (c)
 				{
@@ -1197,7 +1195,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				if (typename != Core.Keyword_DropDownList && opts.cmbsimple.HasValue)
+				if (typename != Keyword_DropDownList && opts.cmbsimple.HasValue)
 				{
 					cb.DropDownStyle = opts.cmbsimple.IsTrue() ? ComboBoxStyle.Simple : ComboBoxStyle.DropDown;
 				}
@@ -1372,13 +1370,13 @@ namespace Keysharp.Core
 					tc.Multiline = opts.wordwrap.IsTrue();
 
 				if (opts.leftj.IsTrue())
-					tc.Alignment = System.Windows.Forms.TabAlignment.Left;
+					tc.Alignment = TabAlignment.Left;
 				else if (opts.rightj.IsTrue())
-					tc.Alignment = System.Windows.Forms.TabAlignment.Right;
+					tc.Alignment = TabAlignment.Right;
 				else if (opts.bottom)
-					tc.Alignment = System.Windows.Forms.TabAlignment.Bottom;
+					tc.Alignment = TabAlignment.Bottom;
 				else if (opts.top)
-					tc.Alignment = System.Windows.Forms.TabAlignment.Top;
+					tc.Alignment = TabAlignment.Top;
 
 				if (opts.bgtrans)
 					tc.SetColor(Color.Transparent);
@@ -1505,7 +1503,7 @@ namespace Keysharp.Core
 
 							default:
 							{
-								if (il.ImageSize.Width > Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics(SystemMetric.SM_CXSMICON))//Need a cross platform way to do this.//TODO
+								if (il.ImageSize.Width > WindowsAPI.GetSystemMetrics(SystemMetric.SM_CXSMICON))//Need a cross platform way to do this.//TODO
 								{
 									oldil = ImageLists.IL_GetId(lv.LargeImageList);
 									lv.LargeImageList = newil;
@@ -1671,7 +1669,7 @@ namespace Keysharp.Core
 					if (notifyHandlers.TryGetValue((int)nmhdr.code, out var handler))
 					{
 						var ret = handler?.InvokeEventHandlers(this, nmhdr);
-						m.Result = (IntPtr)(ret.IsCallbackResultNonEmpty() ? 1 : 0);
+						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
 						return true;
 					}
 				}
@@ -1685,7 +1683,7 @@ namespace Keysharp.Core
 					if (commandHandlers.TryGetValue(val, out var handler))
 					{
 						var ret = handler?.InvokeEventHandlers(this);
-						m.Result = (IntPtr)(ret.IsCallbackResultNonEmpty() ? 1 : 0);
+						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
 						return true;
 					}
 				}
@@ -1754,7 +1752,7 @@ namespace Keysharp.Core
 		private void _control_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
-				CallContextMenuChangeHandlers(true, System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+				CallContextMenuChangeHandlers(true, Cursor.Position.X, Cursor.Position.Y);
 		}
 
 		private void _control_LostFocus(object sender, EventArgs e) => lostFocusHandlers?.InvokeEventHandlers(this, 0L);

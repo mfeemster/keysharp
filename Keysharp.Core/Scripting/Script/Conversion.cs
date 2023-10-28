@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {

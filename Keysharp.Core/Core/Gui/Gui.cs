@@ -7,10 +7,10 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
+
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static System.Net.Mime.MediaTypeNames;
+using static Keysharp.Core.Flow;
 
 namespace Keysharp.Core
 {
@@ -71,7 +71,7 @@ namespace Keysharp.Core
 					if (o is bool b)
 					{
 						f.lastfound = b;
-						Keysharp.Scripting.Script.hwndLastUsed = f.Hwnd;
+						Keysharp.Scripting.Script.HwndLastUsed = f.Hwnd;
 					}
 				}
 			},
@@ -388,7 +388,7 @@ namespace Keysharp.Core
 			allGuiHwnds[form.Handle.ToInt64()] = this;
 
 			if (lastfound)
-				Keysharp.Scripting.Script.hwndLastUsed = Hwnd;
+				Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
 		}
 
 		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
@@ -428,7 +428,7 @@ namespace Keysharp.Core
 
 			switch (type)
 			{
-				case Core.Keyword_Text:
+				case Keywords.Keyword_Text:
 				{
 					//var lbl = new KeysharpLabel(0x20)
 					var lbl = new KeysharpLabel
@@ -439,7 +439,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Edit:
+				case Keywords.Keyword_Edit:
 				{
 					var ml = opts.multiline.IsTrue() || opts.rows > 1 || opts.height != int.MinValue;
 
@@ -495,7 +495,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Rich_Edit:
+				case Keywords.Keyword_Rich_Edit:
 				{
 					var ml = !opts.multiline.IsFalse();
 
@@ -542,7 +542,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_UpDown:
+				case Keywords.Keyword_UpDown:
 				{
 					//TODO
 					//This is done differently than how the documentation says.
@@ -577,8 +577,8 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Pic:
-				case Core.Keyword_Picture://No special support for GDI+, instead we just use whatever C# uses under the hood for its PictureBox control. Also, animated gifs do animate.
+				case Keywords.Keyword_Pic:
+				case Keywords.Keyword_Picture://No special support for GDI+, instead we just use whatever C# uses under the hood for its PictureBox control. Also, animated gifs do animate.
 				{
 					var pic = new KeysharpPictureBox(text, 0x20);//Attempt to support transparency.
 
@@ -602,7 +602,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Button:
+				case Keywords.Keyword_Button:
 				{
 					opts.addstyle &= WindowsAPI.BS_NOTIFY;//Documentation says BS_NOTIFY will be automatically added in OnEvent(), which is the only time clicks are handled, so add regardless.
 					ctrl = new KeysharpButton(opts.addstyle, opts.remstyle)
@@ -615,7 +615,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_CheckBox:
+				case Keywords.Keyword_CheckBox:
 				{
 					var chk = new KeysharpCheckBox(opts.addstyle, opts.remstyle)
 					{
@@ -636,7 +636,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Radio:
+				case Keywords.Keyword_Radio:
 				{
 					var rad = new KeysharpRadioButton(opts.addstyle, opts.remstyle)
 					{
@@ -647,12 +647,12 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_ComboBox:
-				case Core.Keyword_DropDownList:
+				case Keywords.Keyword_ComboBox:
+				case Keywords.Keyword_DropDownList:
 				{
 					KeysharpComboBox ddl;
 
-					if (type == Core.Keyword_DropDownList)
+					if (type == Keywords.Keyword_DropDownList)
 					{
 						ddl = new KeysharpComboBox();
 						ddl.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -667,7 +667,7 @@ namespace Keysharp.Core
 					{
 						ddl.Sorted = true;
 
-						if (type == Core.Keyword_ComboBox)
+						if (type == Keywords.Keyword_ComboBox)
 						{
 							ddl.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
 							ddl.AutoCompleteSource = AutoCompleteSource.ListItems;
@@ -690,7 +690,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_ListBox:
+				case Keywords.Keyword_ListBox:
 				{
 					if (opts.rdonly.IsTrue())
 						opts.addstyle |= WindowsAPI.LBS_NOSEL;
@@ -735,7 +735,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_ListView:
+				case Keywords.Keyword_ListView:
 				{
 					//There is no way to preallocate memory with the "Count" option, so that is ignored.
 					var lv = new KeysharpListView();
@@ -779,7 +779,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_TreeView:
+				case Keywords.Keyword_TreeView:
 				{
 					var tv = new KeysharpTreeView(!opts.hscroll ? WindowsAPI.TVS_NOHSCROLL : 0, 0);
 
@@ -800,14 +800,14 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Link:
+				case Keywords.Keyword_Link:
 				{
 					var linklabel = new KeysharpLinkLabel(text);
 					ctrl = linklabel;
 				}
 				break;
 
-				case Core.Keyword_Hotkey:
+				case Keywords.Keyword_Hotkey:
 				{
 					var hk = new HotkeyBox();
 
@@ -821,7 +821,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_DateTime:
+				case Keywords.Keyword_DateTime:
 				{
 					var dtp = new KeysharpDateTimePicker();
 					dtp.SetFormat(text);
@@ -867,7 +867,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_MonthCal:
+				case Keywords.Keyword_MonthCal:
 				{
 					var cal = new KeysharpMonthCalendar();
 
@@ -895,7 +895,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Slider://Buddy controls are not supported.
+				case Keywords.Keyword_Slider://Buddy controls are not supported.
 				{
 					var style = 0;
 
@@ -950,7 +950,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Progress:
+				case Keywords.Keyword_Progress:
 				{
 					var prg = new KeysharpProgressBar(opts.vertical ? 0x04 : 0);
 					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
@@ -971,15 +971,15 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_GroupBox:
+				case Keywords.Keyword_GroupBox:
 				{
 					ctrl = new KeysharpGroupBox() { };
 				}
 				break;
 
-				case Core.Keyword_Tab:
-				case Core.Keyword_Tab2:
-				case Core.Keyword_Tab3:
+				case Keywords.Keyword_Tab:
+				case Keywords.Keyword_Tab2:
+				case Keywords.Keyword_Tab3:
 				{
 					var kstc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
@@ -1006,7 +1006,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_StatusBar:
+				case Keywords.Keyword_StatusBar:
 				{
 					var ss = new KeysharpStatusStrip();
 					StatusBar = ss;
@@ -1033,12 +1033,12 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_ActiveX:
+				case Keywords.Keyword_ActiveX:
 				{
 				}
 				break;
 
-				case Core.Keyword_WebBrowser:
+				case Keywords.Keyword_WebBrowser:
 				{
 					var web = new WebBrowser();
 					web.Navigate(text);
@@ -1046,7 +1046,7 @@ namespace Keysharp.Core
 				}
 				break;
 
-				case Core.Keyword_Custom:
+				case Keywords.Keyword_Custom:
 				{
 				}
 				break;
@@ -1415,53 +1415,53 @@ namespace Keysharp.Core
 			return holder;
 		}
 
-		public GuiControl AddActiveX(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ActiveX, obj0, obj1);
+		public GuiControl AddActiveX(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_ActiveX, obj0, obj1);
 
-		public GuiControl AddButton(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Button, obj0, obj1);
+		public GuiControl AddButton(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Button, obj0, obj1);
 
-		public GuiControl AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_CheckBox, obj0, obj1);
+		public GuiControl AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_CheckBox, obj0, obj1);
 
-		public GuiControl AddComboBox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ComboBox, obj0, obj1);
+		public GuiControl AddComboBox(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_ComboBox, obj0, obj1);
 
-		public GuiControl AddCustom(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Custom, obj0, obj1);
+		public GuiControl AddCustom(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Custom, obj0, obj1);
 
-		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_DateTime, obj0, obj1);
+		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_DateTime, obj0, obj1);
 
-		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_DropDownList, obj0, obj1);
+		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_DropDownList, obj0, obj1);
 
-		public GuiControl AddEdit(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Edit, obj0, obj1);
+		public GuiControl AddEdit(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Edit, obj0, obj1);
 
-		public GuiControl AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_GroupBox, obj0, obj1);
+		public GuiControl AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_GroupBox, obj0, obj1);
 
-		public GuiControl AddHotKey(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Hotkey, obj0, obj1);
+		public GuiControl AddHotKey(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Hotkey, obj0, obj1);
 
-		public GuiControl AddLink(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Link, obj0, obj1);
+		public GuiControl AddLink(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Link, obj0, obj1);
 
-		public GuiControl AddListBox(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ListBox, obj0, obj1);
+		public GuiControl AddListBox(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_ListBox, obj0, obj1);
 
-		public GuiControl AddListView(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_ListView, obj0, obj1);
+		public GuiControl AddListView(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_ListView, obj0, obj1);
 
-		public GuiControl AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_MonthCal, obj0, obj1);
+		public GuiControl AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_MonthCal, obj0, obj1);
 
-		public GuiControl AddPicture(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Picture, obj0, obj1);
+		public GuiControl AddPicture(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Picture, obj0, obj1);
 
-		public GuiControl AddProgress(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Progress, obj0, obj1);
+		public GuiControl AddProgress(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Progress, obj0, obj1);
 
-		public GuiControl AddRadio(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Radio, obj0, obj1);
+		public GuiControl AddRadio(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Radio, obj0, obj1);
 
-		public GuiControl AddSlider(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Slider, obj0, obj1);
+		public GuiControl AddSlider(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Slider, obj0, obj1);
 
-		public GuiControl AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_StatusBar, obj0, obj1);
+		public GuiControl AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_StatusBar, obj0, obj1);
 
-		public GuiControl AddTab(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Tab, obj0, obj1);
+		public GuiControl AddTab(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Tab, obj0, obj1);
 
-		public GuiControl AddText(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_Text, obj0, obj1);
+		public GuiControl AddText(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_Text, obj0, obj1);
 
-		public GuiControl AddTreeView(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_TreeView, obj0, obj1);
+		public GuiControl AddTreeView(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_TreeView, obj0, obj1);
 
-		public GuiControl AddUpDown(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_UpDown, obj0, obj1);
+		public GuiControl AddUpDown(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_UpDown, obj0, obj1);
 
-		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keysharp.Core.Core.Keyword_WebBrowser, obj0, obj1);
+		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keywords.Keyword_WebBrowser, obj0, obj1);
 
 		public void Destroy()
 		{
@@ -1664,31 +1664,31 @@ namespace Keysharp.Core
 					switch (mode)
 					{
 						//case Core.Keyword_Center: center = true; break;
-						case Core.Keyword_AutoSize: auto = true; break;
+						case Keywords.Keyword_AutoSize: auto = true; break;
 
-						case Core.Keyword_Maximize: max = true; break;
+						case Keywords.Keyword_Maximize: max = true; break;
 
-						case Core.Keyword_Minimize: min = true; break;
+						case Keywords.Keyword_Minimize: min = true; break;
 
-						case Core.Keyword_Restore:
+						case Keywords.Keyword_Restore:
 							form.showWithoutActivation = false;
 							restore = true;
 							break;
 
-						case Core.Keyword_NoActivate:
-						case Core.Keyword_NA:
+						case Keywords.Keyword_NoActivate:
+						case Keywords.Keyword_NA:
 							form.showWithoutActivation = true;
 							restore = true;
 							break;
 
-						case Core.Keyword_Hide: hide = true; break;
+						case Keywords.Keyword_Hide: hide = true; break;
 					}
 				}
 				else
 				{
 					var modeval = mode.AsSpan(1);
 
-					if (modeval.Equals(Core.Keyword_Center, StringComparison.OrdinalIgnoreCase))
+					if (modeval.Equals(Keywords.Keyword_Center, StringComparison.OrdinalIgnoreCase))
 					{
 						//if (select == 2)
 						//  cX = true;
@@ -2145,7 +2145,10 @@ namespace Keysharp.Core
 
 			//If there is nothing else keeping the program alive, and the program is not already exiting, close it.
 			if (!Keysharp.Scripting.Script.IsMainWindowClosing && !Keysharp.Scripting.Script.AnyPersistent())
+			{
+				Accessors.A_ExitReason = ExitReasons.Exit.ToString();
 				Script.mainWindow?.Close();
+			}
 		}
 
 		internal void Form_KeyDown(object sender, KeyEventArgs e)

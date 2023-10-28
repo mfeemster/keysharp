@@ -4,7 +4,8 @@ using System.Drawing;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using Keysharp.Core.Common.Keyboard;
+using Keysharp.Scripting;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -17,12 +18,12 @@ namespace Keysharp.Core
 
 			switch (mode.ToString().ToLowerInvariant())
 			{
-				case Core.Keyword_On:
+				case Keyword_On:
 				case "1":
 				case "true":
 					return true;
 
-				case Core.Keyword_Off:
+				case Keyword_Off:
 				case "0":
 				case "false":
 					return false;
@@ -30,80 +31,6 @@ namespace Keysharp.Core
 				default:
 					return null;
 			}
-		}
-
-		public static void VerifyVersion(string ver, bool plus, int line, string source)
-		{
-			var ahkver = Accessors.A_AhkVersion;
-			var reqvers = ParseVersionToInts(ver);
-			var thisvers = ParseVersionToInts(ahkver);
-
-			for (var i = 0; i < 4; i++)
-			{
-				if (plus)
-				{
-					if (reqvers[i] > thisvers[i])
-						throw new ParseException($"This script requires Keysharp >= v{ver}, but you have v{ahkver}", line, source);
-				}
-				else if (reqvers[i] != thisvers[i])
-					throw new ParseException($"This script requires Keysharp == v{ver}, but you have v{ahkver}", line, source);
-
-				if (thisvers[i] > reqvers[i])
-					break;
-			}
-		}
-
-		internal static ToggleValueType ConvertOnOff(object mode, ToggleValueType def = ToggleValueType.Invalid)
-		{
-			if (mode == null)
-				return ToggleValueType.Neutral;
-
-			var str = mode.ToString();
-
-			if (str?.Length == 0)
-				return ToggleValueType.Neutral;
-
-			if (string.Compare(str, "true", true) == 0 || string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
-
-			if (string.Compare(str, "false", true) == 0 || string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
-
-			return def;
-		}
-
-		internal static ToggleValueType ConvertOnOffAlways(string buf, ToggleValueType def = ToggleValueType.Invalid)
-		{
-			var toggle = ConvertOnOff(buf);
-
-			if (toggle != ToggleValueType.Invalid)
-				return toggle;
-
-			if (string.Compare(buf, "AlwaysOn", true) == 0)
-				return ToggleValueType.AlwaysOn;
-
-			if (string.Compare(buf, "AlwaysOff", true) == 0)
-				return ToggleValueType.AlwaysOff;
-
-			return def;
-		}
-
-		internal static ToggleValueType ConvertOnOffToggle(object mode, ToggleValueType def = ToggleValueType.Default)
-		{
-			var toggle = ConvertOnOff(mode);
-
-			if (toggle != ToggleValueType.Invalid)
-				return toggle;
-
-			var str = mode.ToString();
-			return string.Compare(str, "Toggle", true) == 0 || str == "-1" ? ToggleValueType.Toggle : def;
-		}
-
-		internal static bool IsAnyBlank(params string[] args)
-		{
-			foreach (var str in args)
-				if (string.IsNullOrEmpty(str))
-					return true;
-
-			return false;
 		}
 
 		internal static bool IsOption(string options, string search)
@@ -179,32 +106,6 @@ namespace Keysharp.Core
 			return table;
 		}
 
-		/// <summary>
-		/// Merges two Dictionarys in generic way
-		/// </summary>
-		/// <typeparam name="T">any</typeparam>
-		/// <typeparam name="T2">any</typeparam>
-		/// <param name="dict1">Dictionary 1</param>
-		/// <param name="dict2">Dictionary 2</param>
-		/// <returns>Merged Dictionary</returns>
-		internal static Dictionary<T, T2> MergeDictionarys<T, T2>(Dictionary<T, T2> dict1, Dictionary<T, T2> dict2)
-		{
-			var merged = new Dictionary<T, T2>();
-
-			foreach (var key in dict1.Keys)
-			{
-				merged.Add(key, dict1[key]);
-			}
-
-			foreach (var key in dict2.Keys)
-			{
-				if (!merged.ContainsKey(key))
-					merged.Add(key, dict2[key]);
-			}
-
-			return merged;
-		}
-
 		internal static bool OptionContains(string options, params string[] keys)
 		{
 			foreach (var key in keys)
@@ -239,7 +140,7 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		internal static string[] ParseOptions(string options) => options.Split(Core.Keyword_Spaces, StringSplitOptions.RemoveEmptyEntries);
+		internal static string[] ParseOptions(string options) => options.Split(Keywords.Keyword_Spaces, StringSplitOptions.RemoveEmptyEntries);
 
 		internal static Dictionary<string, string> ParseOptionsRegex(ref string options, Dictionary<string, Regex> items, bool remove = true)
 		{
@@ -262,24 +163,6 @@ namespace Keysharp.Core
 			}
 
 			return results;
-		}
-
-		internal static int[] ParseVersionToInts(string ver)
-		{
-			var vers = new int[] { 0, 0, 0, 0 };
-			var versplits = ver.Split('.', StringSplitOptions.RemoveEmptyEntries);
-
-			if (versplits.Length > 0)
-			{
-				for (var i = 0; i < 4; i++)
-				{
-					if (versplits.Length > i)
-						if (versplits[i].ParseInt(false) is int v)
-							vers[i] = v;
-				}
-			}
-
-			return vers;
 		}
 
 		internal static bool TryParse(string opt, string prefix, ref int result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, int def = default) =>

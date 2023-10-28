@@ -5,7 +5,8 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
-using static Keysharp.Core.Core;
+using Keysharp.Scripting;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -31,7 +32,7 @@ namespace Keysharp.Core
 				return;
 
 			if (section != "")
-				section = string.Format(Core.Keyword_IniSectionOpen + "{0}]", section);
+				section = string.Format(Keywords.Keyword_IniSectionOpen + "{0}]", section);
 
 			try
 			{
@@ -71,7 +72,7 @@ namespace Keysharp.Core
 				if (System.IO.File.Exists(file))
 					System.IO.File.Delete(file);
 
-				KeysharpFile.FileAppend("", file, "unicode");
+				Files.FileAppend("", file, "unicode");
 				System.IO.File.WriteAllText(file, text);
 			}
 			catch (Exception ex)
@@ -217,7 +218,7 @@ namespace Keysharp.Core
 				if (System.IO.File.Exists(file))
 					System.IO.File.Delete(file);
 
-				KeysharpFile.FileAppend("", file, "unicode");
+				Files.FileAppend("", file, "unicode");
 				System.IO.File.WriteAllText(file, text);
 			}
 			catch (Exception ex)

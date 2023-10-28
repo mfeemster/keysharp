@@ -204,6 +204,6 @@ namespace Keysharp.Core
 
 		public static void SetRegView(object obj) => Accessors.A_RegView = obj;
 
-		internal static RegistryView GetRegView() => (long)Accessors.A_RegView == 32L ? RegistryView.Registry32 : RegistryView.Registry64;
+		internal static RegistryView GetRegView() => ThreadAccessors.A_RegView.Al() == 32L ? RegistryView.Registry32 : RegistryView.Registry64;
 	}
 }

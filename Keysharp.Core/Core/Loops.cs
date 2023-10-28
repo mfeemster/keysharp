@@ -3,24 +3,24 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Forms.VisualStyles;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
+using Keysharp.Scripting;
 using Microsoft.Win32;
 
 namespace Keysharp.Core
 {
 	public static class Loops
 	{
-		[ThreadStatic]
-		private static Stack<LoopInfo> loops = new Stack<LoopInfo>();
-
-		[ThreadStatic]
-		private static StringBuilder regsb = new StringBuilder(1024);
-
-		internal static Stack<LoopInfo> LoopStack => loops ?? (loops = new Stack<LoopInfo>());
+		internal static Stack<LoopInfo> LoopStack
+		{
+			get
+			{
+				var tv = Threads.GetThreadVariables();
+				return tv.loops ?? (tv.loops = new Stack<LoopInfo>());
+			}
+		}
 
 		public static long Inc()
 		{
@@ -179,7 +179,7 @@ namespace Keysharp.Core
 			var omit = obj2.As();
 			var info = Push(LoopType.Parse);
 
-			if (delimiters.ToLowerInvariant() == Core.Keyword_CSV)
+			if (delimiters.ToLowerInvariant() == Keywords.Keyword_CSV)
 			{
 				var reader = new StringReader(input);
 				var part = new StringBuilder();
@@ -350,7 +350,7 @@ namespace Keysharp.Core
 				info.regVal = string.Empty;
 				info.regName = reg.Name;
 				info.regKeyName = keyname;
-				info.regType = Core.Keyword_Key;
+				info.regType = Keywords.Keyword_Key;
 				var subkey = reg.OpenSubKey(key, false);
 				var l = QueryInfoKey(subkey);
 				var dt = DateTime.FromFileTimeUtc(l);
@@ -400,7 +400,7 @@ namespace Keysharp.Core
 								info.regVal = string.Empty;
 								info.regName = subKeyName.Substring(subKeyName.LastIndexOf('\\') + 1);
 								info.regKeyName = tempKey.Name;//The full key path.
-								info.regType = Core.Keyword_Key;
+								info.regType = Keywords.Keyword_Key;
 								l = QueryInfoKey(tempKey);
 								dt = DateTime.FromFileTimeUtc(l);
 								info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
@@ -632,7 +632,7 @@ namespace Keysharp.Core
 									info.regVal = string.Empty;
 									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
 									info.regKeyName = key2.Name;//The full key path.
-									info.regType = Core.Keyword_Key;
+									info.regType = Keywords.Keyword_Key;
 									var l = QueryInfoKey(key2);
 									var dt = DateTime.FromFileTimeUtc(l);
 									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
@@ -681,10 +681,17 @@ namespace Keysharp.Core
 
 		private static long QueryInfoKey(RegistryKey regkey)
 		{
-			var classSize = (uint)(regsb.Capacity + 1);
+			var tv = Threads.GetThreadVariables();
+
+			if (tv.regsb == null)
+				tv.regsb = new StringBuilder(1024);
+			else
+				tv.regsb.Clear();
+
+			var classSize = (uint)(tv.regsb.Capacity + 1);
 			_ = WindowsAPI.RegQueryInfoKey(
 					regkey.Handle,
-					regsb,
+					tv.regsb,
 					ref classSize,
 					IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
 					out var l);

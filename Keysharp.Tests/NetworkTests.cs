@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using Keysharp.Core;
 using static Keysharp.Core.Network;
 
 namespace Keysharp.Tests
@@ -15,19 +14,19 @@ namespace Keysharp.Tests
 			var filename = @"./asciiart.txt";
 
 			if (System.IO.File.Exists(filename))
-				Keysharp.Core.KeysharpFile.FileDelete(filename);
+				Keysharp.Core.Files.FileDelete(filename);
 
 			Download("http://textfiles.com/art/asciiart.txt", filename);
 			Assert.IsTrue(System.IO.File.Exists(filename));
-			Assert.AreEqual(16048L, Keysharp.Core.KeysharpFile.FileGetSize(filename));
+			Assert.AreEqual(16048L, Keysharp.Core.Files.FileGetSize(filename));
 			System.Threading.Thread.Sleep(1000);
 
 			if (System.IO.File.Exists(filename))
-				Keysharp.Core.KeysharpFile.FileDelete(filename);
+				Keysharp.Core.Files.FileDelete(filename);
 
 			Download("*0 http://textfiles.com/art/asciiart.txt", filename);
 			Assert.IsTrue(System.IO.File.Exists(filename));
-			Assert.AreEqual(16048L, Keysharp.Core.KeysharpFile.FileGetSize(filename));
+			Assert.AreEqual(16048L, Keysharp.Core.Files.FileGetSize(filename));
 			Assert.IsTrue(TestScript("network-download", false));
 		}
 	}

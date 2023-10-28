@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
+
 using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
@@ -123,7 +125,7 @@ namespace Keysharp.Core
 				if (windows.Count == 1 && windows[0].Handle.ToInt64() == WindowManager.ActiveWindow.Handle.ToInt64())
 					return 0L;
 
-				if (!mode.Equals(Core.Keyword_R, System.StringComparison.OrdinalIgnoreCase) && !windows.Any(w => w.Active))
+				if (!mode.Equals(Keywords.Keyword_R, System.StringComparison.OrdinalIgnoreCase) && !windows.Any(w => w.Active))
 					windows.Reverse();
 
 				foreach (var win in windows)
@@ -177,14 +179,14 @@ namespace Keysharp.Core
 
 				switch (mode.ToLowerInvariant())
 				{
-					case Core.Keyword_A:
+					case Keywords.Keyword_A:
 						while (stack.Count != 0)
 							_ = new WindowItem(new IntPtr(stack.Pop())).Close();
 
 						_ = windowGroups.Remove(name);
 						break;
 
-					case Core.Keyword_R:
+					case Keywords.Keyword_R:
 						if (stack.Count > 0)
 							_ = new WindowItem(new IntPtr(stack.Pop())).Close();
 
@@ -224,7 +226,7 @@ namespace Keysharp.Core
 				if (allwindows.Count == 1 && allwindows[0].Handle.ToInt64() == WindowManager.ActiveWindow.Handle.ToInt64())
 					return;
 
-				if (!mode.Equals(Core.Keyword_R, System.StringComparison.OrdinalIgnoreCase) && windows.Any(w => w.Active))
+				if (!mode.Equals(Keywords.Keyword_R, System.StringComparison.OrdinalIgnoreCase) && windows.Any(w => w.Active))
 					allwindows.Reverse();
 
 				foreach (var win in allwindows)
@@ -249,6 +251,8 @@ namespace Keysharp.Core
 		public static void PostMessage(params object[] obj) => obj.I3O2S3().Splat(ControlManager.PostMessage);
 
 		public static long SendMessage(params object[] obj) => obj.I1O4S3I1(0, 0, 0, null, "", "", "", "", 5000).Splat(ControlManager.SendMessage);
+
+		public static void SetControlDelay(object obj) => Accessors.A_ControlDelay = obj;
 
 		public static void SetProcessDPIAware()
 		{
@@ -282,6 +286,8 @@ namespace Keysharp.Core
 			else
 				Accessors.A_TitleMatchMode = val;
 		}
+
+		public static void SetWinDelay(object obj) => Accessors.A_WinDelay = obj;
 
 		/// <summary>
 		/// Retrieves the text from a standard status bar control.
@@ -551,7 +557,7 @@ namespace Keysharp.Core
 
 		public static long WinGetStyle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Style : 0L);
 
-		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Core.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : ""));
+		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : ""));
 
 		public static string WinGetTitle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Title : "");
 
@@ -771,10 +777,11 @@ namespace Keysharp.Core
 
 		public static void WinShow(params object[] obj)
 		{
-			var prev = Accessors.A_DetectHiddenWindows;
-			Accessors.A_DetectHiddenWindows = true;
+			var tv = Threads.GetThreadVariables();
+			var prev = tv.detectHiddenWindows;
+			tv.detectHiddenWindows = true;
 			SearchWindows(obj).ForEach(win => win.Show());
-			Accessors.A_DetectHiddenWindows = prev;
+			tv.detectHiddenWindows = prev;
 			WindowItemBase.DoWinDelay();
 		}
 

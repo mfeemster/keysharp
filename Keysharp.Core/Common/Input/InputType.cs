@@ -45,7 +45,7 @@ namespace Keysharp.Core.Common.Input
 			ScriptObject = io;
 			ParseOptions(aOptions);
 			SetKeyFlags(aEndKeys);
-			match = aMatchList.SplitWithDelimiter(Core.Comma, true);
+			match = aMatchList.SplitWithDelimiter(Keywords.Comma, true);
 		}
 
 		internal void CollectChar(string ch, int charCount)

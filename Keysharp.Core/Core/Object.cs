@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Reflection;
-using System.Transactions;
-using System.Windows.Forms;
-using System.Xml.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskBand;
 
 namespace Keysharp.Core
 {
@@ -153,17 +146,20 @@ namespace Keysharp.Core
 			return ct;
 		}
 
-		public object OwnProps(object obj = null)
+		public object OwnProps(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var getVals = obj.Ab();
+			var getVals = obj0.Ab();
+			var userOnly = obj1.Ab(true);
+			var skipMap = obj2.Ab(false);
 			var props = new Dictionary<object, object>();
 
-			if (this is Keysharp.Core.Map map && map.map.Count > 0)
-				foreach (var kv in map.map)
-					if (!getVals
-							|| kv.Value is not FuncObj fo
-							|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
-						props[kv.Key] = kv.Value;
+			if (!skipMap)
+				if (this is Keysharp.Core.Map map && map.map.Count > 0)
+					foreach (var kv in map.map)
+						if (!getVals
+								|| kv.Value is not FuncObj fo
+								|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
+							props[kv.Key] = kv.Value;
 
 			if (op != null)
 				foreach (var kv in op)
@@ -174,13 +170,54 @@ namespace Keysharp.Core
 							props[kv.Key] = dynprop;
 
 			_ = Reflections.FindAndCacheProperty(GetType(), "", -1);
-			var valProps = Reflections.GetOwnProps(GetType());
+			var valProps = Reflections.GetOwnProps(GetType(), userOnly);
 
 			foreach (var mph in valProps)
 				if (!getVals || (mph.pi != null && mph.ParamLength == 0))
 					props[mph.pi.Name] = mph;
 
 			return new OwnPropsIterator(this, props, getVals);
+		}
+
+		public virtual void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		{
+			var sb = sbuf.sb;
+			var fieldType = GetType().Name;
+			var opi = (OwnPropsIterator)OwnProps(true, false);
+			var indent = new string('\t', tabLevel);
+
+			if (name.Length == 0)
+				_ = sb.AppendLine($"{indent} ({fieldType})");
+			else
+				_ = sb.AppendLine($"{indent}{name}: ({fieldType})");
+
+			tabLevel++;
+			indent = new string('\t', tabLevel);
+
+			while (opi.MoveNext())
+			{
+				var (propName, val) = opi.Current;
+				fieldType = val != null ? val.GetType().Name : "";
+
+				if (val is KeysharpObject kso2)
+				{
+					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+				}
+				else if (val != null)
+				{
+					if (val is string vs)
+					{
+						var str = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+						_ = sb.AppendLine($"{indent}{propName}: {str} ({fieldType})");
+					}
+					else
+						_ = sb.AppendLine($"{indent}{propName}: {val} ({fieldType})");
+				}
+				else
+					_ = sb.AppendLine($"{indent}{propName}: null");
+			}
+
+			tabLevel--;
 		}
 
 		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);

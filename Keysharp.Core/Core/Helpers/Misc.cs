@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Keysharp.Core;
-using Keysharp.Core.COM;
+using Keysharp.Scripting;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -49,20 +49,20 @@ namespace Keysharp.Core
 		{
 			object result = null;
 
-			if (Keysharp.Scripting.Script.OnErrorHandlers != null)
+			if (Script.OnErrorHandlers != null)
 			{
-				foreach (var handler in Keysharp.Scripting.Script.OnErrorHandlers)
+				foreach (var handler in Script.OnErrorHandlers)
 				{
 					result = handler.Call(err, err.ExcType);
 
-					if (err.ExcType == Keysharp.Core.Core.Keyword_Return)
+					if (err.ExcType == Keyword_Return)
 					{
 						if (result.ParseLong() != -1)
 							Flow.Exit(0);
 					}
-					else if (err.ExcType == Keysharp.Core.Core.Keyword_Exit)
+					else if (err.ExcType == Keyword_Exit)
 						Flow.Exit(0);
-					else if (err.ExcType == Keysharp.Core.Core.Keyword_ExitApp)
+					else if (err.ExcType == Keyword_ExitApp)
 						_ = Flow.ExitAppInternal(Flow.ExitReasons.Error);
 
 					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1L)
@@ -155,12 +155,12 @@ namespace Keysharp.Core
 
 		public static long IsObject(object obj) => obj is KeysharpObject ? 1 : 0;
 
-		public static long IsSet(object obj) => obj != Keysharp.Scripting.UnsetArg.Default&& obj != null ? 1 : 0;
+		public static long IsSet(object obj) => obj != UnsetArg.Default&& obj != null ? 1 : 0;
 
 		public static long IsSpace(object obj)
 		{
 			foreach (var ch in obj.As())
-				if (!Keysharp.Core.Core.Keyword_Spaces.Any(ch2 => ch2 == ch))
+				if (!Keyword_Spaces.Any(ch2 => ch2 == ch))
 					return 0L;
 
 			return 1L;
@@ -204,7 +204,7 @@ namespace Keysharp.Core
 			var s = obj.As();
 			var sp = s.AsSpan();
 
-			if (sp.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase))
+			if (sp.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
 				sp = sp.Slice(2);
 
 			foreach (var ch in sp)
@@ -229,12 +229,12 @@ namespace Keysharp.Core
 		public static object MenuFromHandle(object obj)
 		{
 			var handle = new IntPtr(obj.Al());
-			var menu = System.Windows.Forms.MenuStrip.FromHandle(handle);
+			var menu = System.Windows.Forms.Control.FromHandle(handle);
 
 			if (menu != null)
 				return menu;
 
-			if ((menu = System.Windows.Forms.ContextMenuStrip.FromHandle(handle)) != null)
+			if ((menu = System.Windows.Forms.Control.FromHandle(handle)) != null)
 				return menu;
 
 			return "";
@@ -242,10 +242,11 @@ namespace Keysharp.Core
 
 		public static MethodError MethodError(params object[] obj) => new (obj);
 
-		public static RefHolder Mrh(int i, object o, Action<object> r) => new RefHolder(i, o, r);//Make RefHolder.
+		public static RefHolder Mrh(int i, object o, Action<object> r) => new RefHolder(i, o, r);
 
 		public static object ObjGetCapacity(object obj) => obj is KeysharpObject kso ? kso.GetCapacity() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
 
+		//Make RefHolder.
 		public static long ObjHasOwnProp(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.HasOwnProp(obj1) : 0L;
 
 		public static long ObjOwnPropCount(object obj) => obj is KeysharpObject kso ? kso.OwnPropCount() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
@@ -262,10 +263,10 @@ namespace Keysharp.Core
 			var i = obj1.Al(1L);
 			var del = Function.GetFuncObj(e, null, true);
 
-			if (Keysharp.Scripting.Script.OnErrorHandlers == null)
-				Keysharp.Scripting.Script.OnErrorHandlers = new List<IFuncObj>();
+			if (Script.OnErrorHandlers == null)
+				Script.OnErrorHandlers = new List<IFuncObj>();
 
-			Keysharp.Scripting.Script.OnErrorHandlers.ModifyEventHandlers(del, i);
+			Script.OnErrorHandlers.ModifyEventHandlers(del, i);
 		}
 
 		public static OSError OSError(params object[] obj) => new (obj);
@@ -287,6 +288,32 @@ namespace Keysharp.Core
 		public static ValueError ValueError(params object[] obj) => new (obj);
 
 		public static ZeroDivisionError ZeroDivisionError(params object[] obj) => new (obj);
+
+		internal static string PrintProps(object obj, string name, StringBuffer sbuf, ref int tabLevel)
+		{
+			var sb = sbuf.sb;
+			var indent = new string('\t', tabLevel);
+			var fieldType = obj != null ? obj.GetType().Name : "";
+
+			if (obj is KeysharpObject kso)
+			{
+				kso.PrintProps(name, sbuf, ref tabLevel);
+			}
+			else if (obj != null)
+			{
+				if (obj is string vs)
+				{
+					var str = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+					_ = sb.AppendLine($"{indent}{name}: {str} ({fieldType})");
+				}
+				else
+					_ = sb.AppendLine($"{indent}{name}: {obj} ({fieldType})");
+			}
+			else
+				_ = sb.AppendLine($"{indent}{name}: null");
+
+			return sb.ToString();
+		}
 
 		private static Map Object(params object[] obj)
 		{

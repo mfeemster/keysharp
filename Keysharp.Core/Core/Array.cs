@@ -1,12 +1,10 @@
-﻿using Keysharp.Core.COM;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
+using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
@@ -268,6 +266,87 @@ namespace Keysharp.Core
 			var val = array[index];
 			array.RemoveAt(index);
 			return val;
+		}
+
+		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		{
+			var sb = sbuf.sb;
+			var indent = new string('\t', tabLevel);
+
+			if (array.Count > 0)
+			{
+				if (name.Length == 0)
+					_ = sb.Append($"{indent} [");
+				else
+					_ = sb.Append($"{indent}{name}: [");
+
+				for (var i = 0; i < array.Count; i++)
+				{
+					string str;
+					var val = array[i];
+
+					if (val is string vs)
+					{
+						str = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+					}
+					else if (val is KeysharpObject kso)
+					{
+						var tempsb = new StringBuffer();
+						tabLevel++;
+						sb.AppendLine();
+						kso.PrintProps("", tempsb, ref tabLevel);
+						str = tempsb.ToString().TrimEnd(Keywords.CrLf);
+						tabLevel--;
+					}
+					else if (val is null)
+						str = "null";
+					else
+						str = val.ToString();
+
+					if (i < array.Count - 1)
+						_ = sb.Append($"{str}, ");
+					else
+						_ = sb.Append($"{str}");
+				}
+
+				_ = sb.AppendLine($"] ({GetType().Name})");
+			}
+			else
+			{
+				if (name.Length == 0)
+					_ = sb.Append($"{indent} [] ({GetType().Name})");
+				else
+					_ = sb.AppendLine($"{indent}{name}: [] ({GetType().Name})");
+			}
+
+			var opi = (OwnPropsIterator)OwnProps(true, false);
+			tabLevel++;
+			indent = new string('\t', tabLevel);
+
+			while (opi.MoveNext())
+			{
+				var (propName, val) = opi.Current;
+				var fieldType = val != null ? val.GetType().Name : "";
+
+				if (val is KeysharpObject kso2)
+				{
+					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+				}
+				else if (val != null)
+				{
+					if (val is string vs)
+					{
+						var str = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+						_ = sb.AppendLine($"{indent}{propName}: {str} ({fieldType})");
+					}
+					else
+						_ = sb.AppendLine($"{indent}{propName}: {val} ({fieldType})");
+				}
+				else
+					_ = sb.AppendLine($"{indent}{propName}: null");
+			}
+
+			tabLevel--;
 		}
 
 		public void Push(params object[] values) => array.AddRange(values);

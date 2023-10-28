@@ -1,221 +1,22 @@
-﻿using static Keysharp.Core.Accessors;
-using static Keysharp.Core.Core;
-using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
-using static Keysharp.Core.Dialogs;
-using static Keysharp.Core.Dir;
-using static Keysharp.Core.Drive;
-using static Keysharp.Core.DllHelper;
-using static Keysharp.Core.Env;
-using static Keysharp.Core.KeysharpFile;
-using static Keysharp.Core.Flow;
-using static Keysharp.Core.Function;
-using static Keysharp.Core.GuiHelper;
-using static Keysharp.Core.Images;
-using static Keysharp.Core.ImageLists;
-using static Keysharp.Core.Ini;
-using static Keysharp.Core.Keyboard;
-using static Keysharp.Core.KeysharpObject;
+﻿using BenchmarkDotNet.Attributes;
+using Keysharp.Core;
 using static Keysharp.Core.Loops;
-using static Keysharp.Core.Maths;
-using static Keysharp.Core.Menu;
-using static Keysharp.Core.Misc;
-using static Keysharp.Core.Monitor;
-using static Keysharp.Core.Mouse;
-using static Keysharp.Core.Network;
-using static Keysharp.Core.Options;
-using static Keysharp.Core.Processes;
-using static Keysharp.Core.Registrys;
-using static Keysharp.Core.Screen;
-using static Keysharp.Core.Security;
-using static Keysharp.Core.SimpleJson;
-using static Keysharp.Core.Sound;
-using static Keysharp.Core.Strings;
-using static Keysharp.Core.ToolTips;
-using static Keysharp.Core.Window;
-using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Script;
-using static Keysharp.Scripting.Script.Operator;
+using Array = Keysharp.Core.Array;
 
 namespace Keysharp.Benchmark
 {
-	using System;
-	using System.Collections;
-	using System.Collections.Generic;
-	using System.Data;
-	using System.IO;
-	using System.Reflection;
-	using System.Runtime.InteropServices;
-	using System.Text;
-	using System.Windows.Forms;
-	using BenchmarkDotNet.Analysers;
-	using BenchmarkDotNet.Attributes;
-	using BenchmarkDotNet.Configs;
-	using BenchmarkDotNet.Exporters;
-	using BenchmarkDotNet.Loggers;
-	using BenchmarkDotNet.Running;
-	using Keysharp.Core;
-	using Keysharp.Scripting;
-	using Array = Keysharp.Core.Array;
-	using Buffer = Keysharp.Core.Buffer;
-
-	[MemoryDiagnoser]
-	public class ListAddBench
-	{
-		private List<object> nativelist = new List<object>();
-		private Keysharp.Core.Array keysharparray = Keysharp.Core.Misc.Array();
-		private object o = 123L;
-
-		[Params(1000000)]
-		public int Size { get; set; }
-
-		[GlobalSetup]
-		public void Setup()
-		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
-			Size = 1000000;
-			nativelist = new List<object>();
-			keysharparray = Keysharp.Core.Misc.Array();
-		}
-
-		[Benchmark(Baseline = true)]
-		public void NativeListAdd()
-		{
-			nativelist.Clear();
-
-			for (var i = 0; i < Size; i++)
-				nativelist.Add(o);
-
-			if (nativelist.Count != Size)
-				throw new Exception($"Native list size of {nativelist.Count} was not equal to Size {Size}.");
-		}
-
-		[Benchmark]
-		public void KeysharpArrayDirectAdd()
-		{
-			keysharparray.Clear();
-
-			for (var i = 0; i < Size; i++)
-				_ = keysharparray.Add(o);
-
-			if (keysharparray.Count != Size)
-				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
-		}
-
-		[Benchmark]
-		public void KeysharpArrayScriptAdd()
-		{
-			keysharparray.Clear();
-
-			for (var i = 0; i < Size; i++)
-				_ = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(keysharparray, "Add", 1), o);
-
-			if (keysharparray.Count != Size)
-				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
-		}
-
-
-		[Benchmark]
-		public void NativeListAddWithPrealloc()
-		{
-			nativelist.Clear();
-			nativelist.Capacity = Size;
-
-			for (var i = 0; i < Size; i++)
-				nativelist.Add(o);
-
-			if (nativelist.Count != Size)
-				throw new Exception($"Native list size of {nativelist.Count} was not equal to Size {Size}.");
-		}
-
-		[Benchmark]
-		public void KeysharpArrayDirectAddWithPrealloc()
-		{
-			keysharparray.Clear();
-			keysharparray.Capacity = Size;
-
-			for (var i = 0; i < Size; i++)
-				_ = keysharparray.Add(o);
-
-			if (keysharparray.Count != Size)
-				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
-		}
-
-		[Benchmark]
-		public void KeysharpArrayScriptAddWithPrealloc()
-		{
-			keysharparray.Clear();
-			keysharparray.Capacity = Size;
-
-			for (var i = 0; i < Size; i++)
-				_ = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(keysharparray, "Add", 1), o);
-
-			if (keysharparray.Count != Size)
-				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
-		}
-	}
-
 	[MemoryDiagnoser]
 	public class IndexBench
 	{
+		private dynamic? dynamickeysharparray;
+		private Array keysharparray = Keysharp.Core.Misc.Array();
 		private object[] nativearray = System.Array.Empty<object>();
 		private double[] nativedoublearray = System.Array.Empty<double>();
-		private Array keysharparray = Keysharp.Core.Misc.Array();
-		private dynamic? dynamickeysharparray;
 		private double totalSum;
 
 		[Params(1000000)]
 		public int Size { get; set; }
-
-		[Benchmark(Baseline = true)]
-		public void NativeObjectArray()
-		{
-			var total = 0.0;
-
-			for (var i = 0; i < Size; i++)
-				total += (double)nativearray[i];
-
-			if (!total.IsAlmostEqual(totalSum))
-				throw new Exception($"{total} was not equal to {totalSum}.");
-		}
-
-		[Benchmark]
-		public void NativeDoubleArray()
-		{
-			var total = 0.0;
-
-			for (var i = 0; i < Size; i++)
-				total += nativedoublearray[i];
-
-			if (!total.IsAlmostEqual(totalSum))
-				throw new Exception($"{total} was not equal to {totalSum}.");
-		}
-
-		[Benchmark]
-		public unsafe void NativeUnsafeDoubleArray()
-		{
-			var total = 0.0;
-
-			fixed (double* ptr = nativedoublearray)
-			{
-				for (var i = 0; i < Size; i++)
-					total += ptr[i];
-			}
-
-			if (!total.IsAlmostEqual(totalSum))
-				throw new Exception($"{total} was not equal to {totalSum}.");
-		}
-
-		[Benchmark]
-		public void KeysharpDynamicArray()
-		{
-			var total = 0.0;
-
-			for (var i = 1; i <= Size; i++)
-				total += (double)dynamickeysharparray[i];
-
-			if (!total.IsAlmostEqual(totalSum))
-				throw new Exception($"{total} was not equal to {totalSum}.");
-		}
 
 		[Benchmark]
 		public void KeysharpArray()
@@ -224,18 +25,6 @@ namespace Keysharp.Benchmark
 
 			for (var i = 1; i <= Size; i++)
 				total += (double)keysharparray[i];
-
-			if (!total.IsAlmostEqual(totalSum))
-				throw new Exception($"{total} was not equal to {totalSum}.");
-		}
-
-		[Benchmark]
-		public void KeysharpArrayIndexMethod()
-		{
-			var total = 0.0;
-
-			for (long i = 1; i <= Size; i++)
-				total += (double)Index(keysharparray, i);
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
@@ -267,6 +56,69 @@ namespace Keysharp.Benchmark
 				throw new Exception($"{total} was not equal to {totalSum}.");
 		}
 
+		[Benchmark]
+		public void KeysharpArrayIndexMethod()
+		{
+			var total = 0.0;
+
+			for (long i = 1; i <= Size; i++)
+				total += (double)Index(keysharparray, i);
+
+			if (!total.IsAlmostEqual(totalSum))
+				throw new Exception($"{total} was not equal to {totalSum}.");
+		}
+
+		[Benchmark]
+		public void KeysharpDynamicArray()
+		{
+			var total = 0.0;
+
+			for (var i = 1; i <= Size; i++)
+				total += (double)dynamickeysharparray[i];
+
+			if (!total.IsAlmostEqual(totalSum))
+				throw new Exception($"{total} was not equal to {totalSum}.");
+		}
+
+		[Benchmark]
+		public void NativeDoubleArray()
+		{
+			var total = 0.0;
+
+			for (var i = 0; i < Size; i++)
+				total += nativedoublearray[i];
+
+			if (!total.IsAlmostEqual(totalSum))
+				throw new Exception($"{total} was not equal to {totalSum}.");
+		}
+
+		[Benchmark(Baseline = true)]
+		public void NativeObjectArray()
+		{
+			var total = 0.0;
+
+			for (var i = 0; i < Size; i++)
+				total += (double)nativearray[i];
+
+			if (!total.IsAlmostEqual(totalSum))
+				throw new Exception($"{total} was not equal to {totalSum}.");
+		}
+
+		[Benchmark]
+		public unsafe void NativeUnsafeDoubleArray()
+		{
+			var total = 0.0;
+
+			fixed (double* ptr = nativedoublearray)
+			{
+				for (var i = 0; i < Size; i++)
+					total += ptr[i];
+			}
+
+			if (!total.IsAlmostEqual(totalSum))
+				throw new Exception($"{total} was not equal to {totalSum}.");
+		}
+
 		[GlobalSetup]
 		public void Setup()
 		{
@@ -288,6 +140,101 @@ namespace Keysharp.Benchmark
 				_ = dynamickeysharparray.Add(d);
 				totalSum += d;
 			}
+		}
+	}
+
+	[MemoryDiagnoser]
+	public class ListAddBench
+	{
+		private Keysharp.Core.Array keysharparray = Keysharp.Core.Misc.Array();
+		private List<object> nativelist = new List<object>();
+		private object o = 123L;
+
+		[Params(1000000)]
+		public int Size { get; set; }
+
+		[Benchmark]
+		public void KeysharpArrayDirectAdd()
+		{
+			keysharparray.Clear();
+
+			for (var i = 0; i < Size; i++)
+				_ = keysharparray.Add(o);
+
+			if (keysharparray.Count != Size)
+				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
+		}
+
+		[Benchmark]
+		public void KeysharpArrayDirectAddWithPrealloc()
+		{
+			keysharparray.Clear();
+			keysharparray.Capacity = Size;
+
+			for (var i = 0; i < Size; i++)
+				_ = keysharparray.Add(o);
+
+			if (keysharparray.Count != Size)
+				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
+		}
+
+		[Benchmark]
+		public void KeysharpArrayScriptAdd()
+		{
+			keysharparray.Clear();
+
+			for (var i = 0; i < Size; i++)
+				_ = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(keysharparray, "Add", 1), o);
+
+			if (keysharparray.Count != Size)
+				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
+		}
+
+		[Benchmark]
+		public void KeysharpArrayScriptAddWithPrealloc()
+		{
+			keysharparray.Clear();
+			keysharparray.Capacity = Size;
+
+			for (var i = 0; i < Size; i++)
+				_ = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(keysharparray, "Add", 1), o);
+
+			if (keysharparray.Count != Size)
+				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
+		}
+
+		[Benchmark(Baseline = true)]
+		public void NativeListAdd()
+		{
+			nativelist.Clear();
+
+			for (var i = 0; i < Size; i++)
+				nativelist.Add(o);
+
+			if (nativelist.Count != Size)
+				throw new Exception($"Native list size of {nativelist.Count} was not equal to Size {Size}.");
+		}
+
+		[Benchmark]
+		public void NativeListAddWithPrealloc()
+		{
+			nativelist.Clear();
+			nativelist.Capacity = Size;
+
+			for (var i = 0; i < Size; i++)
+				nativelist.Add(o);
+
+			if (nativelist.Count != Size)
+				throw new Exception($"Native list size of {nativelist.Count} was not equal to Size {Size}.");
+		}
+
+		[GlobalSetup]
+		public void Setup()
+		{
+			Keysharp.Scripting.Script.Variables.InitGlobalVars();
+			Size = 1000000;
+			nativelist = new List<object>();
+			keysharparray = Keysharp.Core.Misc.Array();
 		}
 	}
 }

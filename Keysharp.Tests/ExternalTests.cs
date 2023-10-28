@@ -1,9 +1,7 @@
 ﻿using Keysharp.Core;
 using Keysharp.Core.Windows;
-using Keysharp.Scripting;
 using NUnit.Framework;
 using static Keysharp.Core.DllHelper;
-using static Keysharp.Core.Strings;
 
 namespace Keysharp.Tests
 {

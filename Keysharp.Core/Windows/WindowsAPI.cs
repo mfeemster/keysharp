@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Accessibility;
+using Keysharp.Scripting;
 using Microsoft.Win32.SafeHandles;
 
 namespace Keysharp.Core.Windows
@@ -583,7 +584,7 @@ namespace Keysharp.Core.Windows
 		SOUND = 0xFFFFFFF5,
 	}
 
-	public class WindowsAPI
+	public static class WindowsAPI
 	{
 		// File / Device IO
 		internal const uint GENERICREAD = 0x80000000;
@@ -1671,7 +1672,8 @@ namespace Keysharp.Core.Windows
 		internal static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
 
 		[DllImport(user32)]
-		public static extern IntPtr FindWindow(string className, string windowName);//Only public for testing purposes.
+		[PublicForTestOnly]
+		public static extern IntPtr FindWindow(string className, string windowName);
 
 		[DllImport(user32)]
 		internal static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string className, string windowTitle);
@@ -1755,7 +1757,8 @@ namespace Keysharp.Core.Windows
 		internal static extern bool GetCursorPos(out Point lpPoint);
 
 		[DllImport(user32)]
-		public static extern IntPtr GetDesktopWindow();//Only public for testing purposes.
+		[PublicForTestOnly]
+		public static extern IntPtr GetDesktopWindow();
 
 		[DllImport(version)]
 		internal static extern bool GetFileVersionInfo(string sFileName, int handle, int size, byte[] infoBuffer);
@@ -1864,7 +1867,8 @@ namespace Keysharp.Core.Windows
 		internal static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
 
 		[DllImport(user32)]
-		public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);//Only public for testing purposes.
+		[PublicForTestOnly]
+		public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
 		[DllImport(user32)]
 		internal static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
@@ -2223,7 +2227,8 @@ namespace Keysharp.Core.Windows
 		internal static extern IntPtr SetFocus(IntPtr hWnd);
 
 		[DllImport(user32)]
-		public static extern bool SetForegroundWindow(IntPtr hWnd);//Only public for testing purposes.
+		[PublicForTestOnly]
+		public static extern bool SetForegroundWindow(IntPtr hWnd);
 
 		[DllImport(user32)]
 		internal static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);

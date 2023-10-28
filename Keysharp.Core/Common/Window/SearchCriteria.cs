@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Keysharp.Scripting;
 
 namespace Keysharp.Core.Common.Window
@@ -62,18 +63,18 @@ namespace Keysharp.Core.Common.Window
 
 			var mixed = obj as string;
 
-			if (mixed.IndexOf(Core.Keyword_ahk, StringComparison.OrdinalIgnoreCase) == -1)
+			if (mixed.IndexOf(Keywords.Keyword_ahk, StringComparison.OrdinalIgnoreCase) == -1)
 				return new SearchCriteria { Title = mixed };
 
 			var i = 0;
 
 			var t = false;
 
-			while ((i = mixed.IndexOf(Core.Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
+			while ((i = mixed.IndexOf(Keywords.Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
 			{
 				if (!t)
 				{
-					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Core.Keyword_Spaces);
+					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Keywords.Keyword_Spaces);
 
 					if (pre.Length != 0)
 						criteria.Title = pre;
@@ -81,37 +82,37 @@ namespace Keysharp.Core.Common.Window
 					t = true;
 				}
 
-				var z = mixed.IndexOfAny(Core.Keyword_Spaces, i);
+				var z = mixed.IndexOfAny(Keywords.Keyword_Spaces, i);
 
 				if (z == -1)
 					break;
 
 				var word = mixed.Substring(i, z - i);
-				var e = mixed.IndexOf(Core.Keyword_ahk, ++i, StringComparison.OrdinalIgnoreCase);
+				var e = mixed.IndexOf(Keywords.Keyword_ahk, ++i, StringComparison.OrdinalIgnoreCase);
 				var arg = (e == -1 ? mixed.Substring(z) : mixed.Substring(z, e - z)).Trim();
 				long n;
 
 				switch (word.ToLowerInvariant())
 				{
-					case Core.Keyword_ahk_class: criteria.ClassName = arg; break;
+					case Keywords.Keyword_ahk_class: criteria.ClassName = arg; break;
 
-					case Core.Keyword_ahk_group: criteria.Group = arg; break;
+					case Keywords.Keyword_ahk_group: criteria.Group = arg; break;
 
-					case Core.Keyword_ahk_id:
+					case Keywords.Keyword_ahk_id:
 						if (long.TryParse(arg, out n))
 							criteria.ID = new IntPtr(n);
 
 						break;
 
-					case Core.Keyword_ahk_exe:
+					case Keywords.Keyword_ahk_exe:
 						criteria.Path = arg;
 						break;
 
-					case Core.Keyword_A:
+					case Keywords.Keyword_A:
 						criteria.Active = true;
 						break;
 
-					case Core.Keyword_ahk_pid:
+					case Keywords.Keyword_ahk_pid:
 						if (long.TryParse(arg, out n))
 							criteria.PID = new IntPtr(n);
 

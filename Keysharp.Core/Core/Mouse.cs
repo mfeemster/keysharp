@@ -1,20 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
+using Keysharp.Scripting;
 using static Keysharp.Core.Windows.WindowsAPI;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
 	public static class Mouse
 	{
-		[ThreadStatic]
-		private static CoordModes coords = new CoordModes();
-
-		internal static CoordModes Coords => coords ?? (coords = new CoordModes());//All thread static members need to be initialized like this.//TOOD
+		internal static CoordModes Coords
+		{
+			get
+			{
+				var tv = Threads.GetThreadVariables();
+				return tv.coords ?? (tv.coords = new CoordModes());
+			}
+		}
 
 		/// <summary>
 		/// Clicks a mouse button at the specified coordinates. It can also hold down a mouse button, turn the mouse wheel, or move the mouse.
@@ -34,14 +40,14 @@ namespace Keysharp.Core
 			var options = obj.As();
 			int x = 0, y = 0;
 			var vk = 0u;
-			var event_type = Keysharp.Core.Common.Keyboard.KeyEventTypes.KeyDown;
+			var event_type = KeyEventTypes.KeyDown;
 			var repeat_count = 0L;
 			var move_offset = false;
-			var ht = Keysharp.Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
-											  , vk, x, y, 0, 0, repeat_count, event_type, (long)Accessors.A_DefaultMouseSpeed, move_offset);//, true, true);
+											  , vk, x, y, 0, 0, repeat_count, event_type, ThreadAccessors.A_DefaultMouseSpeed, move_offset);//, true, true);
 		}
 
 		/// <summary>
@@ -67,31 +73,31 @@ namespace Keysharp.Core
 		public static void CoordMode(object obj0, object obj1 = null)
 		{
 			var target = obj0.As();
-			var mode = obj1.As(Core.Keyword_Screen);
+			var mode = obj1.As(Keyword_Screen);
 			CoordModeType rel;
 
-			if (Options.IsOption(mode, Core.Keyword_Relative))
+			if (Options.IsOption(mode, Keyword_Relative))
 				rel = CoordModeType.Window;
-			else if (Options.IsOption(mode, Core.Keyword_Client))
+			else if (Options.IsOption(mode, Keyword_Client))
 				rel = CoordModeType.Client;
-			else if (Options.IsOption(mode, Core.Keyword_Window))
+			else if (Options.IsOption(mode, Keyword_Window))
 				rel = CoordModeType.Window;
-			else if (Options.IsOption(mode, Core.Keyword_Screen))
+			else if (Options.IsOption(mode, Keyword_Screen))
 				rel = CoordModeType.Screen;
 			else
 				throw new ValueError("Invalid value.");
 
 			switch (target.ToLowerInvariant())
 			{
-				case Core.Keyword_ToolTip: Coords.Tooltip = rel; break;
+				case Keyword_ToolTip: Coords.Tooltip = rel; break;
 
-				case Core.Keyword_Pixel: Coords.Pixel = rel; break;
+				case Keyword_Pixel: Coords.Pixel = rel; break;
 
-				case Core.Keyword_Mouse: Coords.Mouse = rel; break;
+				case Keyword_Mouse: Coords.Mouse = rel; break;
 
-				case Core.Keyword_Caret: Coords.Caret = rel; break;
+				case Keyword_Caret: Coords.Caret = rel; break;
 
-				case Core.Keyword_Menu: Coords.Menu = rel; break;
+				case Keyword_Menu: Coords.Menu = rel; break;
 			}
 		}
 
@@ -101,7 +107,7 @@ namespace Keysharp.Core
 			var x = obj1.Ai(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
 			var y = obj2.Ai(KeyboardMouseSender.CoordUnspecified);
 			var repeatCount = obj3.Al(1);
-			var speed = (int)obj4.Al((long)Accessors.A_DefaultMouseSpeed);
+			var speed = (int)obj4.Al(ThreadAccessors.A_DefaultMouseSpeed);
 			var downOrUp = obj5.As();
 			var relative = obj6.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
@@ -116,7 +122,7 @@ namespace Keysharp.Core
 			var y1 = obj2.Ai(KeyboardMouseSender.CoordUnspecified);
 			var x2 = obj3.Ai(KeyboardMouseSender.CoordUnspecified);
 			var y2 = obj4.Ai(KeyboardMouseSender.CoordUnspecified);
-			var speed = (int)obj5.Al((long)Accessors.A_DefaultMouseSpeed);
+			var speed = (int)obj5.Al(ThreadAccessors.A_DefaultMouseSpeed);
 			var relative = obj6.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSECLICKDRAG, whichButton, x1, y1, x2, y2,
@@ -180,7 +186,7 @@ namespace Keysharp.Core
 				found.ChildFindPoint(pah);
 
 				if (pah.hwndFound != IntPtr.Zero)
-					found = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.CreateWindow(pah.hwndFound);
+					found = Common.Window.WindowManagerProvider.Instance.CreateWindow(pah.hwndFound);
 			}
 
 			var control = (mode & 2) == 2 ? found.Handle.ToInt64().ToString() : found.ClassNN;
@@ -202,7 +208,7 @@ namespace Keysharp.Core
 		{
 			var x = obj0.Ai(KeyboardMouseSender.CoordUnspecified);
 			var y = obj1.Ai(KeyboardMouseSender.CoordUnspecified);
-			var speed = (int)obj2.Al((long)Accessors.A_DefaultMouseSpeed);
+			var speed = (int)obj2.Al(ThreadAccessors.A_DefaultMouseSpeed);
 			var relative = obj3.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSEMOVE, "", x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
@@ -231,7 +237,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
+				_ = GetWindowRect(GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
 				x += rect.Left;
 				y += rect.Top;
 			}
@@ -241,7 +247,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
+				_ = GetWindowRect(GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
 				x1 += rect.Left;
 				y1 += rect.Top;
 				x2 += rect.Left;
@@ -254,7 +260,7 @@ namespace Keysharp.Core
 			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
 			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//TODO
 			{
-				_ = WindowsAPI.GetWindowRect(WindowsAPI.GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
+				_ = GetWindowRect(GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
 				return new Point(p.X - rect.Left, p.Y - rect.Top);
 			}
 
@@ -265,7 +271,7 @@ namespace Keysharp.Core
 										 , int speed, string relative, long repeatCount, string downUp)
 		{
 			uint vk;
-			var ht = Keysharp.Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 
 			if (actionType == Actions.ACT_MOUSEMOVE)
 			{

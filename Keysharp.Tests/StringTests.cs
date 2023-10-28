@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Text;
 using Keysharp.Core;
-using Keysharp.Scripting;
 using NUnit.Framework;
 using static Keysharp.Core.Strings;
 

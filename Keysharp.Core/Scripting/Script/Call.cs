@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.COM;
 
@@ -13,18 +10,17 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		[ThreadStatic]
-		private static object lastItem = null;
+		//[ThreadStatic]
+		//private static object lastItem = null;
 
-		[ThreadStatic]
-		private static string lastKey = null;
+		//[ThreadStatic]
+		//private static string lastKey = null;
 
-		[ThreadStatic]
-		private static (object, object) lastMph = (null, null);
+		//[ThreadStatic]
+		//private static (object, object) lastMph = (null, null);
 
-		[ThreadStatic]
-		private static int lastParamCount = 0;
-
+		//[ThreadStatic]
+		//private static int lastParamCount = 0;
 		public static object FindObjectForMethod(object obj, string name, int paramCount)
 		{
 			if (Reflections.FindAndCacheMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
@@ -38,9 +34,8 @@ namespace Keysharp.Scripting
 
 		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
 		{
-			if (ReferenceEquals(item, lastItem) && ReferenceEquals(key, lastKey) && paramCount == lastParamCount)
-				return lastMph;
-
+			//if (ReferenceEquals(item, lastItem) && ReferenceEquals(key, lastKey) && paramCount == lastParamCount)
+			//  return lastMph;
 			Type typetouse = null;
 
 			if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
@@ -55,10 +50,10 @@ namespace Keysharp.Scripting
 			{
 				if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
 				{
-					lastItem = item;
-					lastKey = key;
-					lastParamCount = paramCount;
-					return lastMph = (item, mph0);
+					//lastItem = item;
+					//lastKey = key;
+					//lastParamCount = paramCount;
+					return /*lastMph = */ (item, mph0);
 				}
 			}
 			else if (item is KeysharpObject kso && kso.op != null)
@@ -68,25 +63,25 @@ namespace Keysharp.Scripting
 					//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
 					if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifo1)//Call must come first.
 					{
-						lastItem = item;
-						lastKey = key;
-						lastParamCount = paramCount;
-						return lastMph = (map, ifo1);
+						//lastItem = item;
+						//lastKey = key;
+						//lastParamCount = paramCount;
+						return /*lastMph = */ (map, ifo1);
 					}
 					else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo3)
 					{
-						lastItem = item;
-						lastKey = key;
-						lastParamCount = paramCount;
+						//lastItem = item;
+						//lastKey = key;
+						//lastParamCount = paramCount;
 						var getret = ifo3.Call();//No params passed in, just call as is.
-						return lastMph = (map, getret);
+						return /*lastMph =*/ (map, getret);
 					}
 					else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifo2)
 					{
-						lastItem = item;
-						lastKey = key;
-						lastParamCount = paramCount;
-						return lastMph = (map, ifo2);
+						//lastItem = item;
+						//lastKey = key;
+						//lastParamCount = paramCount;
+						return /*lastMph = */ (map, ifo2);
 					}
 
 					throw new MemberError($"Attempting to get method or property {key} on object {map} failed.");
@@ -95,17 +90,17 @@ namespace Keysharp.Scripting
 
 			if (Reflections.FindAndCacheMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
 			{
-				lastItem = item;
-				lastKey = key;
-				lastParamCount = paramCount;
-				return lastMph = (item, mph1);
+				//lastItem = item;
+				//lastKey = key;
+				//lastParamCount = paramCount;
+				return /*lastMph = */ (item, mph1);
 			}
 			else if (Reflections.FindAndCacheProperty(typetouse, key, paramCount) is MethodPropertyHolder mph2)
 			{
-				lastItem = item;
-				lastKey = key;
-				lastParamCount = paramCount;
-				return lastMph = (item, mph2);
+				//lastItem = item;
+				//lastKey = key;
+				//lastParamCount = paramCount;
+				return /*lastMph = */ (item, mph2);
 			}
 			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
 			{
@@ -381,7 +376,7 @@ namespace Keysharp.Scripting
 					if (opm.map.TryGetValue("set", out var setval) && setval is IFuncObj ifo)
 					{
 						var arr = new object[2];
-						arr[0] = item;//Special logic here: this was called on an OwnProps map, so uses its parent as the object.
+						arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
 						arr[1] = value;
 						return ifo.Call(arr);
 					}

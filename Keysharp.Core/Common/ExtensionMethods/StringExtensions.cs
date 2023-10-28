@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using Keysharp.Scripting;
 
 namespace System//Extension methods should be in the same namespace of the objec they extend to make their use easy.
 {
@@ -190,7 +191,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return false;
 		}
 
-		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keysharp.Core.Core.SpaceTab).ToString();
+		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keywords.SpaceTab).ToString();
 
 		internal static string RemoveAfter(this string input, string token)
 		{

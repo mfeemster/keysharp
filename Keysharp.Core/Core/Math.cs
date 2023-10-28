@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
@@ -12,17 +12,16 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Maths
 	{
-		[ThreadStatic]
-		private static Random randomGenerator;
-
 		private static Random RandomGenerator
 		{
 			get
 			{
-				if (randomGenerator == null)
-					randomGenerator = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
+				var tv = Threads.GetThreadVariables();
 
-				return randomGenerator;
+				if (tv.randomGenerator == null)
+					tv.randomGenerator = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
+
+				return tv.randomGenerator;
 			}
 		}
 
@@ -379,7 +378,7 @@ namespace Keysharp.Core
 			return r.NextDouble(lower, upper);
 		}
 
-		public static void RandomSeed(object obj) => randomGenerator = new Random(obj.Ai());
+		public static void RandomSeed(object obj) => Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
 
 		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.

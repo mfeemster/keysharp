@@ -2,13 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -67,7 +67,7 @@ namespace Keysharp.Core
 			DateTime time;
 			var output = string.Empty;
 			var splits = stamp.Split(' ');
-			var ci = System.Globalization.CultureInfo.CurrentCulture;
+			var ci = CultureInfo.CurrentCulture;
 
 			if (stamp?.Length == 0)
 			{
@@ -122,35 +122,35 @@ namespace Keysharp.Core
 
 				switch (fl)
 				{
-					case Core.Keyword_Time:
+					case Keyword_Time:
 						format = "h:mm tt";
 						break;
 
-					case Core.Keyword_ShortDate:
+					case Keyword_ShortDate:
 						format = "d";
 						break;
 
-					case Core.Keyword_LongDate:
+					case Keyword_LongDate:
 						format = "D";
 						break;
 
-					case Core.Keyword_YearMonth:
+					case Keyword_YearMonth:
 						format = "Y";
 						break;
 
-					case Core.Keyword_YDay:
+					case Keyword_YDay:
 						output = ci.Calendar.GetDayOfYear(time).ToString();
 						return output;
 
-					case Core.Keyword_YDay0:
+					case Keyword_YDay0:
 						output = ci.Calendar.GetDayOfYear(time).ToString().PadLeft(3, '0');
 						return output;
 
-					case Core.Keyword_WDay:
+					case Keyword_WDay:
 						output = ((int)ci.Calendar.GetDayOfWeek(time) + 1).ToString();
 						return output;
 
-					case Core.Keyword_YWeek:
+					case Keyword_YWeek:
 					{
 						var week = ci.Calendar.GetWeekOfYear(time, CalendarWeekRule.FirstFourDayWeek, ci.DateTimeFormat.FirstDayOfWeek);
 						output = ci.Calendar.GetYear(time).ToString() + week;
@@ -213,7 +213,7 @@ namespace Keysharp.Core
 				if (string.IsNullOrEmpty(needle))
 					throw new Exception("Search string was empty");
 
-				var cs = comp != "" ? Keysharp.Core.Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
+				var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
 				const int offset = 1;//Everything is 1-based indexing.
 				return index < 0
 					   ? offset + input.LastNthIndexOf(needle, index, occurrence, cs)
@@ -538,7 +538,7 @@ namespace Keysharp.Core
 
 			sortAt = Math.Max(0, sortAt - 1);
 			var reverse = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("r", StringComparison.OrdinalIgnoreCase)) ?? "");
-			var random = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals(Core.Keyword_Random, StringComparison.OrdinalIgnoreCase)) ?? "");
+			var random = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals(Keyword_Random, StringComparison.OrdinalIgnoreCase)) ?? "");
 			var unique = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("u", StringComparison.OrdinalIgnoreCase)) ?? "");
 			var slashopt = splits.FirstOrDefault(s => s.Equals("\\", StringComparison.OrdinalIgnoreCase) || s.Equals("/", StringComparison.OrdinalIgnoreCase)) ?? "";
 			var slash = false;
@@ -687,7 +687,7 @@ namespace Keysharp.Core
 					if (string.Compare(s3, "logical", true) == 0)
 						return NaturalComparer.NaturalCompare(s1, s2);
 
-					cs = Keysharp.Core.Conversions.ParseComparisonOption(s3);
+					cs = Conversions.ParseComparisonOption(s3);
 				}
 
 				return string.Compare(s1, s2, cs);
@@ -699,7 +699,7 @@ namespace Keysharp.Core
 		public static string StrGet(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var len = obj1.Al(long.MinValue);
-			var encoding = obj2 is string s ? KeysharpFile.GetEncoding(s) : Encoding.Unicode;
+			var encoding = obj2 is string s ? Files.GetEncoding(s) : Encoding.Unicode;
 			var ptr = IntPtr.Zero;
 			var buf = obj0 as Buffer;
 
@@ -790,7 +790,7 @@ namespace Keysharp.Core
 					len = Math.Abs(obj.Al(2));
 
 				if (obj.Length > 3)
-					encoding = KeysharpFile.GetEncoding(obj[3]);
+					encoding = Files.GetEncoding(obj[3]);
 
 				var bytes = encoding.GetBytes(s);
 
@@ -849,13 +849,13 @@ namespace Keysharp.Core
 			var comp = obj3.As("Off");
 			var limit = obj4.Al(-1);
 
-			if (Options.IsAnyBlank(input, search))
+			if (Strings.IsAnyBlank(input, search))
 			{
 				outputVarCount = 0L;
 				return "";
 			}
 
-			var compare = Keysharp.Core.Conversions.ParseComparisonOption(comp);
+			var compare = Conversions.ParseComparisonOption(comp);
 			var ct = 0L;
 			var buf = new StringBuilder(input.Length);
 			int z = 0, n = 0, l = search.Length;
@@ -1041,19 +1041,19 @@ namespace Keysharp.Core
 
 			switch (Cmd.Trim().ToLowerInvariant())
 			{
-				case Core.Keyword_Unicode:
+				case Keyword_Unicode:
 					OutputVar = Value1 ?? Clipboard.GetText();
 					break;
 
-				case Core.Keyword_Asc:
+				case Keyword_Asc:
 					OutputVar = char.GetNumericValue(Value1, 0).ToString();
 					break;
 
-				case Core.Keyword_Chr:
+				case Keyword_Chr:
 					OutputVar = char.ConvertFromUtf32(int.Parse(Value1));
 					break;
 
-				case Core.Keyword_Deref:
+				case Keyword_Deref:
 					// TODO: dereference transform
 					break;
 
@@ -1066,93 +1066,93 @@ namespace Keysharp.Core
 								.Replace("\n", "<br/>\n");
 					break;
 
-				case Core.Keyword_Mod:
+				case Keyword_Mod:
 					OutputVar = (double.Parse(Value1) % double.Parse(Value2)).ToString();
 					break;
 
-				case Core.Keyword_Pow:
+				case Keyword_Pow:
 					OutputVar = Math.Pow(double.Parse(Value1), double.Parse(Value2)).ToString();
 					break;
 
-				case Core.Keyword_Exp:
+				case Keyword_Exp:
 					OutputVar = Math.Pow(double.Parse(Value1), Math.E).ToString();
 					break;
 
-				case Core.Keyword_Sqrt:
+				case Keyword_Sqrt:
 					OutputVar = Math.Sqrt(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Log:
+				case Keyword_Log:
 					OutputVar = Math.Log10(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Ln:
+				case Keyword_Ln:
 					OutputVar = Math.Log(double.Parse(Value1), Math.E).ToString();
 					break;
 
-				case Core.Keyword_Round:
+				case Keyword_Round:
 					var p = int.Parse(Value2);
 					OutputVar = Math.Round(double.Parse(Value1), p == 0 ? 1 : p).ToString();
 					break;
 
-				case Core.Keyword_Ceil:
+				case Keyword_Ceil:
 					OutputVar = Math.Ceiling(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Floor:
+				case Keyword_Floor:
 					OutputVar = Math.Floor(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Abs:
+				case Keyword_Abs:
 					var d = double.Parse(Value1);
 					OutputVar = (d < 0 ? d * -1 : d).ToString();
 					break;
 
-				case Core.Keyword_Sin:
+				case Keyword_Sin:
 					OutputVar = Math.Sin(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Cos:
+				case Keyword_Cos:
 					OutputVar = Math.Cos(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Tan:
+				case Keyword_Tan:
 					OutputVar = Math.Tan(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Asin:
+				case Keyword_Asin:
 					OutputVar = Math.Asin(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Acos:
+				case Keyword_Acos:
 					OutputVar = Math.Acos(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_Atan:
+				case Keyword_Atan:
 					OutputVar = Math.Atan(double.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_BitNot:
+				case Keyword_BitNot:
 					OutputVar = (~int.Parse(Value1)).ToString();
 					break;
 
-				case Core.Keyword_BitAnd:
+				case Keyword_BitAnd:
 					OutputVar = (int.Parse(Value1) & int.Parse(Value2)).ToString();
 					break;
 
-				case Core.Keyword_BitOr:
+				case Keyword_BitOr:
 					OutputVar = (int.Parse(Value1) | int.Parse(Value2)).ToString();
 					break;
 
-				case Core.Keyword_BitXor:
+				case Keyword_BitXor:
 					OutputVar = (int.Parse(Value1) ^ int.Parse(Value2)).ToString();
 					break;
 
-				case Core.Keyword_BitShiftLeft:
+				case Keyword_BitShiftLeft:
 					OutputVar = (int.Parse(Value1) << int.Parse(Value2)).ToString();
 					break;
 
-				case Core.Keyword_BitShiftRight:
+				case Keyword_BitShiftRight:
 					OutputVar = (int.Parse(Value1) >> int.Parse(Value2)).ToString();
 					break;
 			}
@@ -1208,6 +1208,15 @@ namespace Keysharp.Core
 		internal static bool Cisupper(char c) => (c & 0x80) == 0 && char.IsUpper(c);
 
 		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
+
+		internal static bool IsAnyBlank(params string[] args)
+		{
+			foreach (var str in args)
+				if (string.IsNullOrEmpty(str))
+					return true;
+
+			return false;
+		}
 
 		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
 

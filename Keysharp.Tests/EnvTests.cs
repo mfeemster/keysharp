@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core;
 using NUnit.Framework;
-using static Keysharp.Core.Core;
-using static Keysharp.Core.Env;
 
 namespace Keysharp.Tests
 {
@@ -25,6 +23,9 @@ namespace Keysharp.Tests
 			Assert.AreEqual("Asdf", clip);
 		}
 
+		/// <summary>
+		/// This can fail periodically, but mostly works.
+		/// </summary>
 		[Test, Category("Env")]
 		[Apartment(ApartmentState.STA)]
 		public void ClipWait()
@@ -93,7 +94,7 @@ namespace Keysharp.Tests
 			ms = (dt2 - dt).TotalMilliseconds;
 			tcs.Task.Wait();
 			Assert.AreEqual(false, b);//Will have timed out, so ErrorLevel will be 1.
-			Assert.IsTrue(TestScript("clipwait", true));//For this to work, the bitmap from above must be on the clipboard.
+			Assert.IsTrue(TestScript("env-clipwait", true));//For this to work, the bitmap from above must be on the clipboard.
 		}
 
 		[Test, Category("Env")]
@@ -103,7 +104,7 @@ namespace Keysharp.Tests
 			Assert.AreNotEqual(path, string.Empty);
 			path = Env.EnvGet("dummynothing123");
 			Assert.AreEqual(path, string.Empty);
-			Assert.IsTrue(TestScript("envget", true));
+			Assert.IsTrue(TestScript("env-envget", true));
 		}
 
 		[Test, Category("Env")]
@@ -117,14 +118,32 @@ namespace Keysharp.Tests
 			Env.EnvSet(key, null);//Delete the variable.
 			val = Env.EnvGet(key);//Ensure it's deleted.
 			Assert.AreEqual(val, string.Empty);
-			Assert.IsTrue(TestScript("envset", true));
+			Assert.IsTrue(TestScript("env-envset", true));
 		}
 
 		[Test, Category("Env")]
 		public void EnvUpdate()
 		{
 			Env.EnvUpdate();
-			Assert.IsTrue(TestScript("envupdate", true));
+			Assert.IsTrue(TestScript("env-envupdate", true));
+		}
+
+		[Test, Category("Env")]
+		public void SysGet()
+		{
+			//Monitors
+			var val = Env.SysGet(80);
+			Assert.IsTrue(val.Ai() > 0);
+			//Mouse buttons
+			val = Env.SysGet(43);
+			Assert.IsTrue(val.Ai() > 0);
+			//Mouse present
+			val = Env.SysGet(19);
+			Assert.IsTrue(val.Ai() > 0);
+			//Mouse wheel present
+			val = Env.SysGet(75);
+			Assert.IsTrue(val.Ai() > 0);
+			Assert.IsTrue(TestScript("env-sysget", true));
 		}
 	}
 }

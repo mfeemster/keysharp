@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Keysharp.Scripting;
 using NUnit.Framework;
 
@@ -35,7 +34,7 @@ namespace Keysharp.Tests
 			var ct = Keysharp.Core.Monitor.MonitorGetCount();
 
 			for (var i = 1; i <= ct; i++)
-				names += Keysharp.Core.Monitor.MonitorGetName(i) + Parser.newlineToUse;
+				names += Keysharp.Core.Monitor.MonitorGetName(i) + Keywords.newlineToUse;
 
 			Assert.IsTrue(names != "");
 			Assert.IsTrue(TestScript("monitor-monitorgetname", true));

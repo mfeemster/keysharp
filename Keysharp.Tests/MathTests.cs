@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using Keysharp.Core;
 using NUnit.Framework;
 

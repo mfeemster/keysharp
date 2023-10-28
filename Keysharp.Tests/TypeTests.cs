@@ -1,6 +1,4 @@
-﻿using System;
-using Keysharp.Scripting;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Keysharp.Tests
 {

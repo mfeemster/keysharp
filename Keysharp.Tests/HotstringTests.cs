@@ -1,10 +1,8 @@
-﻿using Keysharp.Core;
+﻿using System.Collections.Generic;
+using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using NUnit.Framework;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Keysharp.Tests
 {
@@ -27,179 +25,179 @@ namespace Keysharp.Tests
 		{
 			//End char required.
 			var newVal = false;
-			var origVal = HotstringDefinition.DefaultHotstringEndCharRequired;
+			var origVal = Accessors.A_DefaultHotstringEndCharRequired;
 			Assert.AreEqual(origVal, !newVal);
 			var oldVal = Keysharp.Core.Keyboard.Hotstring("*:");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringEndCharRequired);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringEndCharRequired, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringEndCharRequired);
+			Assert.AreEqual(Accessors.A_DefaultHotstringEndCharRequired, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Case sensitivity.
 			newVal = true;
-			origVal = HotstringDefinition.DefaultHotstringCaseSensitive;
+			origVal = Accessors.A_DefaultHotstringCaseSensitive;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("C");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringCaseSensitive);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringCaseSensitive, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringCaseSensitive);
+			Assert.AreEqual(Accessors.A_DefaultHotstringCaseSensitive, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Case sensitivity restore to default.
 			newVal = false;
-			origVal = HotstringDefinition.DefaultHotstringCaseSensitive;
+			origVal = Accessors.A_DefaultHotstringCaseSensitive;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("C0");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringCaseSensitive);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringCaseSensitive, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringCaseSensitive);
+			Assert.AreEqual(Accessors.A_DefaultHotstringCaseSensitive, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Inside word.
 			newVal = true;
-			origVal = HotstringDefinition.DefaultHotstringDetectWhenInsideWord;
+			origVal = Accessors.A_DefaultHotstringDetectWhenInsideWord;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("?");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringDetectWhenInsideWord);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringDetectWhenInsideWord, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringDetectWhenInsideWord);
+			Assert.AreEqual(Accessors.A_DefaultHotstringDetectWhenInsideWord, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Automatic backspacing off.
 			newVal = false;
-			origVal = HotstringDefinition.DefaultHotstringDoBackspace;
+			origVal = Accessors.A_DefaultHotstringDoBackspace;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("B0");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringDoBackspace);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringDoBackspace, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringDoBackspace);
+			Assert.AreEqual(Accessors.A_DefaultHotstringDoBackspace, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Automatic backspacing back on.
 			newVal = true;
-			origVal = HotstringDefinition.DefaultHotstringDoBackspace;
+			origVal = Accessors.A_DefaultHotstringDoBackspace;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("B");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringDoBackspace);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringDoBackspace, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringDoBackspace);
+			Assert.AreEqual(Accessors.A_DefaultHotstringDoBackspace, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Do not conform to typed case.
 			newVal = false;
-			origVal = HotstringDefinition.DefaultHotstringConformToCase;
+			origVal = Accessors.A_DefaultHotstringConformToCase;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("C1");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringConformToCase);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringConformToCase, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringConformToCase);
+			Assert.AreEqual(Accessors.A_DefaultHotstringConformToCase, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Omit ending character.
 			newVal = true;
-			origVal = HotstringDefinition.DefaultHotstringOmitEndChar;
+			origVal = Accessors.A_DefaultHotstringOmitEndChar;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("O");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringOmitEndChar);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringOmitEndChar, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringOmitEndChar);
+			Assert.AreEqual(Accessors.A_DefaultHotstringOmitEndChar, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Restore ending character.
 			newVal = false;
-			origVal = HotstringDefinition.DefaultHotstringOmitEndChar;
+			origVal = Accessors.A_DefaultHotstringOmitEndChar;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("O0");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringOmitEndChar);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringOmitEndChar, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringOmitEndChar);
+			Assert.AreEqual(Accessors.A_DefaultHotstringOmitEndChar, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Exempt from suspend.
 			newVal = true;
-			origVal = HotstringDefinition.DefaultHotstringSuspendExempt;
+			origVal = Accessors.A_SuspendExempt.Ab();
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("S");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringSuspendExempt);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSuspendExempt, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_SuspendExempt.Ab());
+			Assert.AreEqual(Accessors.A_SuspendExempt.Ab(), newVal);
 			Assert.AreEqual(null, oldVal);
 			//Remove suspend exempt.
 			newVal = false;
-			origVal = HotstringDefinition.DefaultHotstringSuspendExempt;
+			origVal = Accessors.A_SuspendExempt.Ab();
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("S0");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringSuspendExempt);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSuspendExempt, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_SuspendExempt.Ab());
+			Assert.AreEqual(Accessors.A_SuspendExempt.Ab(), newVal);
 			Assert.AreEqual(null, oldVal);
 			//Reset on trigger.
 			newVal = true;
-			origVal = HotstringDefinition.DefaultHotstringDoReset;
+			origVal = Accessors.A_DefaultHotstringDoReset;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("Z");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringDoReset);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringDoReset, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringDoReset);
+			Assert.AreEqual(Accessors.A_DefaultHotstringDoReset, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Restore reset on trigger.
 			newVal = false;
-			origVal = HotstringDefinition.DefaultHotstringDoReset;
+			origVal = Accessors.A_DefaultHotstringDoReset;
 			Assert.AreEqual(origVal, !newVal);
 			oldVal = Keysharp.Core.Keyboard.Hotstring("Z0");
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringDoReset);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringDoReset, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringDoReset);
+			Assert.AreEqual(Accessors.A_DefaultHotstringDoReset, newVal);
 			Assert.AreEqual(null, oldVal);
 			//Send replacement text raw.
-			var newMode = SendRawModes.Raw;
-			var origMode = HotstringDefinition.DefaultHotstringSendRaw;
-			Assert.AreEqual(origMode, SendRawModes.NotRaw);
+			var newMode = SendRawModes.Raw.ToString();
+			var origMode = Accessors.A_DefaultHotstringSendRaw;
+			Assert.AreEqual(origMode, SendRawModes.NotRaw.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("R");
-			Assert.AreNotEqual(origMode, HotstringDefinition.DefaultHotstringSendRaw);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendRaw, newMode);
+			Assert.AreNotEqual(origMode, Accessors.A_DefaultHotstringSendRaw);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendRaw, newMode);
 			Assert.AreEqual(null, oldVal);
 			//Restore replacement text mode.
-			newMode = SendRawModes.NotRaw;
-			origMode = HotstringDefinition.DefaultHotstringSendRaw;
-			Assert.AreEqual(origMode, SendRawModes.Raw);
+			newMode = SendRawModes.NotRaw.ToString();
+			origMode = Accessors.A_DefaultHotstringSendRaw;
+			Assert.AreEqual(origMode, SendRawModes.Raw.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("R0");
-			Assert.AreNotEqual(origMode, HotstringDefinition.DefaultHotstringSendRaw);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendRaw, newMode);
+			Assert.AreNotEqual(origMode, Accessors.A_DefaultHotstringSendRaw);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendRaw, newMode);
 			Assert.AreEqual(null, oldVal);
 			//Send replacement text mode.
-			newMode = SendRawModes.RawText;
-			origMode = HotstringDefinition.DefaultHotstringSendRaw;
-			Assert.AreEqual(origMode, SendRawModes.NotRaw);
+			newMode = SendRawModes.RawText.ToString();
+			origMode = Accessors.A_DefaultHotstringSendRaw;
+			Assert.AreEqual(origMode, SendRawModes.NotRaw.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("T");
-			Assert.AreNotEqual(origMode, HotstringDefinition.DefaultHotstringSendRaw);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendRaw, newMode);
+			Assert.AreNotEqual(origMode, Accessors.A_DefaultHotstringSendRaw);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendRaw, newMode);
 			Assert.AreEqual(null, oldVal);
 			//Restore replacement text mode.
-			newMode = SendRawModes.NotRaw;
-			origMode = HotstringDefinition.DefaultHotstringSendRaw;
-			Assert.AreEqual(origMode, SendRawModes.RawText);
+			newMode = SendRawModes.NotRaw.ToString();
+			origMode = Accessors.A_DefaultHotstringSendRaw;
+			Assert.AreEqual(origMode, SendRawModes.RawText.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("T0");
-			Assert.AreNotEqual(origMode, HotstringDefinition.DefaultHotstringSendRaw);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendRaw, newMode);
+			Assert.AreNotEqual(origMode, Accessors.A_DefaultHotstringSendRaw);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendRaw, newMode);
 			Assert.AreEqual(null, oldVal);
 			//Key delay.
 			var newInt = 42;
-			var origInt = HotstringDefinition.DefaultHotstringKeyDelay;
+			var origInt = Accessors.A_DefaultHotstringKeyDelay;
 			Assert.AreEqual(origInt, 0);
 			oldVal = Keysharp.Core.Keyboard.Hotstring($"K{newInt}");
-			Assert.AreNotEqual(origInt, HotstringDefinition.DefaultHotstringKeyDelay);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringKeyDelay, newInt);
+			Assert.AreNotEqual(origInt, Accessors.A_DefaultHotstringKeyDelay);
+			Assert.AreEqual(Accessors.A_DefaultHotstringKeyDelay, newInt);
 			Assert.AreEqual(null, oldVal);
 			//Priority.
 			newInt = 42;
-			origInt = HotstringDefinition.DefaultHotstringPriority;
+			origInt = Accessors.A_DefaultHotstringPriority;
 			Assert.AreEqual(origInt, 0);
 			oldVal = Keysharp.Core.Keyboard.Hotstring($"P{newInt}");
-			Assert.AreNotEqual(origInt, HotstringDefinition.DefaultHotstringPriority);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringPriority, newInt);
+			Assert.AreNotEqual(origInt, Accessors.A_DefaultHotstringPriority);
+			Assert.AreEqual(Accessors.A_DefaultHotstringPriority, newInt);
 			Assert.AreEqual(null, oldVal);
 			//Send mode Event.
-			var newSendMode = SendModes.Event;
-			var origSendMode = HotstringDefinition.DefaultHotstringSendMode;
-			Assert.AreEqual(origSendMode, SendModes.Input);
+			var newSendMode = SendModes.Event.ToString();
+			var origSendMode = Accessors.A_DefaultHotstringSendMode;
+			Assert.AreEqual(origSendMode, SendModes.Input.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("SE");
-			Assert.AreNotEqual(origSendMode, HotstringDefinition.DefaultHotstringSendMode);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendMode, newSendMode);
+			Assert.AreNotEqual(origSendMode, Accessors.A_DefaultHotstringSendMode);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendMode, newSendMode);
 			Assert.AreEqual(null, oldVal);
 			//Send mode Play.
-			newSendMode = SendModes.Play;
-			origSendMode = HotstringDefinition.DefaultHotstringSendMode;
-			Assert.AreEqual(origSendMode, SendModes.Event);
+			newSendMode = SendModes.Play.ToString();
+			origSendMode = Accessors.A_DefaultHotstringSendMode;
+			Assert.AreEqual(origSendMode, SendModes.Event.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("SP");
-			Assert.AreNotEqual(origSendMode, HotstringDefinition.DefaultHotstringSendMode);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendMode, newSendMode);
+			Assert.AreNotEqual(origSendMode, Accessors.A_DefaultHotstringSendMode);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendMode, newSendMode);
 			Assert.AreEqual(null, oldVal);
 			//Send mode Input.
-			newSendMode = SendModes.Input;
-			origSendMode = HotstringDefinition.DefaultHotstringSendMode;
-			Assert.AreEqual(origSendMode, SendModes.Play);
+			newSendMode = SendModes.Input.ToString();
+			origSendMode = Accessors.A_DefaultHotstringSendMode;
+			Assert.AreEqual(origSendMode, SendModes.Play.ToString());
 			oldVal = Keysharp.Core.Keyboard.Hotstring("SI");
-			Assert.AreNotEqual(origSendMode, HotstringDefinition.DefaultHotstringSendMode);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringSendMode, SendModes.InputThenPlay);//InputThenPlay gets used when Input is specified. See HotstringDefinition.ParseOptions().
+			Assert.AreNotEqual(origSendMode, Accessors.A_DefaultHotstringSendMode);
+			Assert.AreEqual(Accessors.A_DefaultHotstringSendMode, SendModes.InputThenPlay.ToString());//InputThenPlay gets used when Input is specified. See HotstringDefinition.ParseOptions().
 			Assert.AreEqual(null, oldVal);
 		}
 
@@ -208,12 +206,19 @@ namespace Keysharp.Tests
 		public void ChangeEndChars()
 		{
 			var newVal = "newendchars";
-			var origVal = HotstringDefinition.DefaultHotstringEndChars;
+			var origVal = Accessors.A_DefaultHotstringEndChars;
 			Assert.AreEqual(origVal, "-()[]{}:;'\"/\\,.?!\r\n \t");
 			var oldVal = Keysharp.Core.Keyboard.Hotstring("EndChars", newVal);
-			Assert.AreNotEqual(origVal, HotstringDefinition.DefaultHotstringEndChars);
-			Assert.AreEqual(HotstringDefinition.DefaultHotstringEndChars, newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringEndChars);
+			Assert.AreEqual(Accessors.A_DefaultHotstringEndChars, newVal);
 			Assert.AreEqual(origVal, oldVal);
+		}
+
+		[NonParallelizable]
+		[Test, Category("Hotstring")]
+		public void HotstringDirectives()
+		{
+			Assert.IsTrue(TestScript("hotstring-directives", false));
 		}
 
 		[NonParallelizable]

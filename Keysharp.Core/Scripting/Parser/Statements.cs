@@ -1,28 +1,14 @@
 ﻿using System;
 using System.CodeDom;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using Keysharp.Core;
-using static System.Net.Mime.MediaTypeNames;
-using static Keysharp.Core.Core;
-using static Keysharp.Scripting.CodeBlock;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		//private void AddMainVar(string tp, string name)
-		//{
-		//  var cmf = new CodeMemberField(tp, name);
-
-		//  if (!targetClass.Members.Contains(cmf))
-		//      targetClass.Members.Add(cmf);
-		//}
-
-		private CodeStatementCollection parent;
-		private CodeBlock parentBlock;
 
 		private void AddPropStatements(CodeBlock.BlockKind blockKind)
 		{

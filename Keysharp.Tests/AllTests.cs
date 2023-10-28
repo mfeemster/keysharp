@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Globalization;
-using System.Threading;
-using System.Windows.Forms;
 using Keysharp.Core;
-using Keysharp.Core.Windows;
 using NUnit.Framework;
-using Buffer = Keysharp.Core.Buffer;
 
 namespace Keysharp.Tests
 {
@@ -21,6 +17,7 @@ namespace Keysharp.Tests
 			//Directory.SetCurrentDirectory(dir);
 			Keysharp.Core.Window.SetProcessDPIAware();
 			//Reflections.Initialize();
+			//Keysharp.Core.Common.Threading.Threads.PushThreadVariables(0, false, false, true);
 		}
 	}
 
@@ -71,6 +68,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("props-date-time", true));
 		}
 
+		[NonParallelizable]
 		[Test, Category("BuiltInVars")]
 		public void PropsScriptProperties() => Assert.IsTrue(TestScript("props-script-properties", false));
 
@@ -90,10 +88,6 @@ namespace Keysharp.Tests
 			Reflections.Clear();
 			Reflections.Initialize();
 		}
-
-		[NonParallelizable]
-		[Test, Category("BuiltInVars")]
-		public void Suspend() => Assert.IsTrue(TestScript("suspend", true));
 
 		/*
 		            [Test]

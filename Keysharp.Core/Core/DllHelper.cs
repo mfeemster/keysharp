@@ -4,18 +4,10 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Security.Cryptography;
 using System.Text;
-using Keysharp.Core.COM;
-using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Patterns;
 using Keysharp.Core.Windows;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace Keysharp.Core
 {

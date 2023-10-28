@@ -14,9 +14,10 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Threading;
+
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keysharp.Core
 {
@@ -25,121 +26,26 @@ namespace Keysharp.Core
 		internal static long hotkeyModifierTimeout = 50L;
 		internal static long hotkeyThrottleInterval = 2000L;
 		internal static long maxHotkeysPerInterval = 2000L;
-		internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
+
+		//internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
 		private static bool allowMainWindow = true;
 
-		[ThreadStatic]
-		private static bool? allowTimers;
-
 		private static long clipboardTimeout = 1000L;
-
-		[ThreadStatic]
-		private static long? controlDelay;
-
-		[ThreadStatic]
-		private static long? defaultMouseSpeed;
-
-		private static long defaultMouseSpeedDef = 2;
-
-		[ThreadStatic]
-		private static bool? detectHiddenText;
-
-		private static bool detectHiddenTextDef = true;
-
-		[ThreadStatic]
-		private static bool? detectHiddenWindows;
-
-		private static bool detectHiddenWindowsDef = false;
-
-		[ThreadStatic]
-		private static object eventInfo;
-
-		[ThreadStatic]
-		private static Encoding fileEncoding;
-
-		private static Encoding fileEncodingDef = Encoding.Default;
-
-		[ThreadStatic]
-		private static string formatNumeric;
-
+		private static object detectHiddenText = true;
+		private static object detectHiddenWindows = false;
+		private static Encoding fileEncoding = Encoding.Default;
 		private static bool? iconFrozen;
-
 		private static bool iconHidden;
-
 		private static string initialWorkingDir = Environment.CurrentDirectory;
-
 		private static uint inputLevel;
-
-		[ThreadStatic]
-		private static long? keyDelay;
-
-		private static long keyDelayDef = 10L;
-
-		[ThreadStatic]
-		private static long? keyDelayPlay;
-
-		private static long keyDelayPlayDef = -1L;
-
-		[ThreadStatic]
-		private static long? keyDuration;
-
-		[ThreadStatic]
-		private static long? keyDurationPlay;
-
 		private static string menuMaskKey = "";
-
-		[ThreadStatic]
-		private static long? mouseDelay;
-
-		private static long mouseDelayDef = 10L;
-
-		[ThreadStatic]
-		private static long? mouseDelayPlay;
-
-		private static long mouseDelayPlayDef = -1L;
-
-		[ThreadStatic]
-		private static long? peekFrequency;
-
 		private static Icon prevTrayIcon;
-
-		[ThreadStatic]
-		private static long? priority;
-
-		[ThreadStatic]
-		private static long? regView;
-
-		private static long regViewDef = 64;
-
-		[ThreadStatic]
-		private static uint? sendLevel;
-
-		private static uint sendLevelDef;
-
-		[ThreadStatic]
-		private static SendModes? sendMode;
-
-		private static SendModes sendModeDef = SendModes.Input;
-
-		[ThreadStatic]
-		private static bool? storeCapsLockMode;
-
-		private static bool storeCapsLockModeDef = true;
-
-		[ThreadStatic]
-		private static long? titleMatchMode;
-
-		private static long titleMatchModeDef = 2L;
-
-		[ThreadStatic]
-		private static bool? titleMatchModeSpeed;
-
-		private static bool titleMatchModeSpeedDef = true;
-
-		[ThreadStatic]
-		private static long? winDelay;
-
-		private static long winDelayDef = 100L;
+		private static object regView = 64L;
+		private static object sendLevel = 0L;
+		private static SendModes sendMode = SendModes.Input;
+		private static object storeCapsLockMode = true;
+		private static object titleMatchMode = 2L;
+		private static object titleMatchModeSpeed = true;
 
 		/// <summary>
 		/// The version of the assembly that was used to compile the script that is currently running.
@@ -194,11 +100,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static object A_AllowTimers
-		{
-			get => allowTimers ?? (allowTimers = true).Value;
-			set => allowTimers = value.Ab();
-		}
+		public static object A_AllowTimers { get; set; } = true;
 
 		/// <summary>
 		/// The full path and name of the folder containing the current user's application-specific data. For example: <code>C:\Documents and Settings\Username\Application Data</code>
@@ -372,11 +274,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static object A_ClipboardTimeout
-		{
-			get => clipboardTimeout;
-			set => clipboardTimeout = value.Al();
-		}
+		public static object A_ClipboardTimeout { get; set; } = 1000L;
 
 		public static string A_CommandLine
 		{
@@ -425,20 +323,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The delay in milliseconds that will occur after each control-modifying command.
 		/// </summary>
-		public static object A_ControlDelay
-		{
-			get => controlDelay ?? (controlDelay = 20).Value;
-			set => controlDelay = value.Al();
-		}
+		public static object A_ControlDelay { get; set; } = 20L;
 
-		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();//Mouse.Coords is marked [ThreadStatic].
-
+		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
 		public static string A_CoordModeMenu => Mouse.Coords.Menu.ToString();
-
 		public static string A_CoordModeMouse => Mouse.Coords.Mouse.ToString();
-
 		public static string A_CoordModePixel => Mouse.Coords.Pixel.ToString();
-
 		public static string A_CoordModeToolTip => Mouse.Coords.Tooltip.ToString();
 
 		/// <summary>
@@ -464,21 +354,23 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_DDDD => DateTime.Now.ToString("dddd");
 
+		public static bool A_DefaultHotstringCaseSensitive => HotstringDefinition.hsCaseSensitive;
+		public static bool A_DefaultHotstringConformToCase => HotstringDefinition.hsConformToCase;
+		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringDefinition.hsDetectWhenInsideWord;
+		public static bool A_DefaultHotstringDoBackspace => HotstringDefinition.hsDoBackspace;
+		public static bool A_DefaultHotstringDoReset => HotstringDefinition.hsDoReset;
+		public static bool A_DefaultHotstringEndCharRequired => HotstringDefinition.hsEndCharRequired;
+		public static string A_DefaultHotstringEndChars => HotstringDefinition.defEndChars;
+		public static long A_DefaultHotstringKeyDelay => HotstringDefinition.hsKeyDelay;
+		public static bool A_DefaultHotstringOmitEndChar => HotstringDefinition.hsOmitEndChar;
+		public static long A_DefaultHotstringPriority => HotstringDefinition.hsPriority;
+		public static string A_DefaultHotstringSendMode => HotstringDefinition.hsSendMode.ToString();
+		public static string A_DefaultHotstringSendRaw => HotstringDefinition.hsSendRaw.ToString();
+
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
 		/// </summary>
-		public static object A_DefaultMouseSpeed
-		{
-			get => defaultMouseSpeed ?? (defaultMouseSpeed = defaultMouseSpeedDef).Value;
-
-			set
-			{
-				defaultMouseSpeed = value.Al();
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					defaultMouseSpeedDef = defaultMouseSpeed.Value;
-			}
-		}
+		public static object A_DefaultMouseSpeed { get; set; } = 2L;
 
 		/// <summary>
 		/// The full path and name of the folder containing the current user's desktop files.
@@ -495,19 +387,14 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_DetectHiddenText
 		{
-			get => detectHiddenText ?? (detectHiddenText = detectHiddenTextDef).Value;
+			get => detectHiddenText;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
-				{
-					detectHiddenText = val.Value ? true : false;
-
-					if (!Keysharp.Scripting.Script.isReadyToExecute)
-						detectHiddenTextDef = detectHiddenText.Value;
-				}
+					detectHiddenText = val.Value;
 			}
 		}
 
@@ -516,19 +403,14 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_DetectHiddenWindows
 		{
-			get => detectHiddenWindows ?? (detectHiddenWindows = detectHiddenWindowsDef).Value;
+			get => detectHiddenWindows;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
-				{
-					detectHiddenWindows = val.Value ? true : false;
-
-					if (!Keysharp.Scripting.Script.isReadyToExecute)
-						detectHiddenWindowsDef = detectHiddenWindows.Value;
-				}
+					detectHiddenWindows = val.Value;
 			}
 		}
 
@@ -556,15 +438,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_EventInfo
 		{
-			get => eventInfo;
-			set => eventInfo = value;
+			get => Threads.GetThreadVariables().eventInfo;
+			set => Threads.GetThreadVariables().eventInfo = value;
 		}
 
-		public static object A_FileEncoding
+		public static object A_FileEncoding//Needs a thread specific *Cur version.//TODO
 		{
 			get
 			{
-				var val = FileEncoding.BodyName;
+				var val = fileEncoding.BodyName;
 
 				if (fileEncoding is UnicodeEncoding ue)
 				{
@@ -581,10 +463,7 @@ namespace Keysharp.Core
 			}
 			set
 			{
-				fileEncoding = KeysharpFile.GetEncoding(value.ToString());
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					fileEncodingDef = fileEncoding;
+				fileEncoding = Files.GetEncoding(value.ToString());
 			}
 		}
 
@@ -595,15 +474,19 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (formatNumeric != null)
-					return formatNumeric;
+				var tv = Threads.GetThreadVariables();
 
-				SetInitialFloatFormat();
-				return formatNumeric = "f";
+				if (tv.formatNumeric != null)
+					return tv.formatNumeric;
+
+				Script.SetInitialFloatFormat();
+				return tv.formatNumeric = "f";
 			}
 
-			set => formatNumeric = value.ToString();
+			set => Threads.GetThreadVariables().formatNumeric = value.ToString();
 		}
+
+		public static object A_HotIfTimeout { get; set; } = 1000L;
 
 		public static object A_HotkeyInterval
 		{
@@ -616,6 +499,8 @@ namespace Keysharp.Core
 			get => hotkeyModifierTimeout;
 			set => hotkeyModifierTimeout = value.Al();
 		}
+
+		public static object A_HotstringNoMouse => Script.HotstringNoMouse;
 
 		/// <summary>
 		/// Current 2-digit hour (00-23) in 24-hour time (for example, 17 is 5pm).
@@ -636,7 +521,7 @@ namespace Keysharp.Core
 
 			set
 			{
-				if (Parser.NoTrayIcon)
+				if (Script.NoTrayIcon)
 					return;
 
 				var val = Options.OnOff(value);
@@ -751,13 +636,21 @@ namespace Keysharp.Core
 		/// <summary>
 		/// <c>1</c> if the current thread is marked as critical, <c>0</c> otherwise.
 		/// </summary>
-		public static bool A_IsCritical => Thread.CurrentThread.Priority == ThreadPriority.Highest;
+		public static long A_IsCritical
+		{
+			get
+			{
+				var tv = Threads.GetThreadVariables();
+				return tv.isCritical ? tv.peekFrequency : 0L;
+			}
+		}
 
 		/// <summary>
 		/// <code>true</code> if the script is suspended, <code>false</code> otherwise;
 		/// </summary>
 		public static bool A_IsSuspended => Flow.Suspended;
 
+		//Need to make this work with threading model.//TODO
 		/// <summary>
 		/// Only for compatibility with AHK, C# programs are always unicode.
 		/// </summary>
@@ -766,52 +659,22 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The delay that will occur after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
-		public static object A_KeyDelay
-		{
-			get => keyDelay ?? (keyDelay = keyDelayDef).Value;
-
-			set
-			{
-				keyDelay = value.Al();
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					keyDelayDef = keyDelay.Value;
-			}
-		}
+		public static object A_KeyDelay { get; set; } = 10L;
 
 		/// <summary>
 		/// The delay that will occur in SendPlay mode after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
-		public static object A_KeyDelayPlay
-		{
-			get => keyDelayPlay ?? (keyDelayPlay = keyDelayPlayDef).Value;
-
-			set
-			{
-				keyDelayPlay = value.Al();
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					keyDelayPlayDef = keyDelayPlay.Value;
-			}
-		}
+		public static object A_KeyDelayPlay { get; set; } = -1L;
 
 		/// <summary>
 		/// The delay between the press of a key and before its release, used with <see cref="A_KeyDelay"/>.
 		/// </summary>
-		public static object A_KeyDuration
-		{
-			get => keyDuration ?? (keyDuration = -1L).Value;
-			set => keyDuration = value.Al();
-		}
+		public static object A_KeyDuration { get; set; } = -1L;
 
 		/// <summary>
 		/// The delay in SendPlay mode between the press of a key and before its release, used with <see cref="A_KeyDelayPlay"/>.
 		/// </summary>
-		public static object A_KeyDurationPlay
-		{
-			get => keyDurationPlay ?? (keyDurationPlay = -1L).Value;
-			set => keyDurationPlay = value.Al();
-		}
+		public static object A_KeyDurationPlay { get; set; } = -1L;
 
 		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Keysharp.Core.Accessors)).Location;
 		public static string A_KeysharpPath => A_AhkPath;
@@ -1245,6 +1108,10 @@ namespace Keysharp.Core
 			set => maxHotkeysPerInterval = value.Al();
 		}
 
+		public static object A_MaxThreads => Script.MaxThreadsTotal;
+		public static object A_MaxThreadsBuffer { get; set; }
+		public static object A_MaxThreadsPerHotkey { get; set; } = 1L;
+
 		/// <summary>
 		/// Current 2-digit day of the month (01-31).
 		/// </summary>
@@ -1284,34 +1151,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Sets the delay that will occur after each mouse movement or click.
 		/// </summary>
-		public static object A_MouseDelay
-		{
-			get => mouseDelay ?? (mouseDelay = mouseDelayDef).Value;
-
-			set
-			{
-				mouseDelay = value.Al();
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					mouseDelayDef = mouseDelay.Value;
-			}
-		}
+		public static object A_MouseDelay { get; set; } = 10L;
 
 		/// <summary>
 		/// Sets the delay that will occur in SendPlay mode after each mouse movement or click.
 		/// </summary>
-		public static object A_MouseDelayPlay
-		{
-			get => mouseDelayPlay ?? (mouseDelayPlay = mouseDelayPlayDef).Value;
-
-			set
-			{
-				mouseDelayPlay = value.Al();
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					mouseDelayPlayDef = mouseDelayPlay.Value;
-			}
-		}
+		public static object A_MouseDelayPlay { get; set; } = -1L;
 
 		/// <summary>
 		/// Current 3-digit millisecond (000-999).
@@ -1323,6 +1168,8 @@ namespace Keysharp.Core
 		/// Need a cross platform way to do this.//TODO
 		/// </summary>
 		public static string A_MyDocuments => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+		public static bool A_NoTrayIcon => Script.NoTrayIcon;
 
 		/// <summary>
 		/// The current local time in YYYYMMDDHH24MISS format.
@@ -1344,11 +1191,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_OSVersion => Environment.OSVersion.VersionString;
 
-		public static object A_PeekFrequency
-		{
-			get => peekFrequency ?? (peekFrequency = 5L).Value;
-			set => peekFrequency = value.Al();
-		}
+		public static object A_PeekFrequency { get; set; } = 5L;
 
 		/// <summary>
 		/// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, π.
@@ -1360,18 +1203,8 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_PriorHotkey => Keysharp.Scripting.Script.priorHotkeyName;
 
-		public static object A_Priority
-		{
-			get => priority ?? (priority = 0).Value;
-			set => priority = value.Al();
-		}
-
+		public static object A_Priority { get; set; } = 0L;
 		public static string A_PriorKey => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht ? ht.keyHistory.PriorKey() : "";
-		//internal static IntPtr A_HwndLastUsed
-		//{
-		//  get => hwndLastUsed;
-		//  set => hwndLastUsed = value;
-		//}
 
 		/// <summary>
 		/// The Program Files directory (e.g. <code>C:\Program Files</code>).
@@ -1392,15 +1225,8 @@ namespace Keysharp.Core
 
 		public static object A_RegView
 		{
-			get => regView ?? (regView = regViewDef).Value;
-
-			set
-			{
-				regView = value is string s && s.ToLower() == "default" ? 64L : value.Al() == 32L ? 32L : 64L;
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					regViewDef = regView.Value;
-			}
+			get => regView;
+			set => regView = value is string s && s.ToLower() == "default" ? 64L : value.Al() == 32L ? 32L : 64L;
 		}
 
 		/// <summary>
@@ -1422,7 +1248,6 @@ namespace Keysharp.Core
 		}
 
 		public static long A_ScreenHeight => System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
-
 		public static long A_ScreenWidth => System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
 
 		public static string A_ScriptDir
@@ -1443,7 +1268,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The unique ID (HWND/handle) of the script's hidden main window.
 		/// </summary>
-		public static long A_ScriptHwnd => Script.mainWindow != null ? Script.mainWindow.Handle.ToInt64() : 0L;
+		public static long A_ScriptHwnd => Script.MainWindowHandle.ToInt64();
 
 		public static string A_ScriptName => Path.GetFileName(Script.scriptName);
 
@@ -1452,33 +1277,24 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_Sec => DateTime.Now.ToString("ss");
 
-		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
 		public static object A_SendLevel
 		{
-			get => sendLevel ?? (sendLevel = sendLevelDef).Value;
+			get => sendLevel;
 
 			set
 			{
 				sendLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					sendLevelDef = sendLevel.Value;
 			}
 		}
 
 		public static object A_SendMode
 		{
-			get => SendMode.ToString();
+			get => sendMode.ToString();
 
 			set
 			{
 				if (Enum.TryParse<SendModes>(value.As(), out var temp))
-				{
 					sendMode = temp;
-
-					if (!Keysharp.Scripting.Script.isReadyToExecute)
-						sendModeDef = sendMode.Value;
-				}
 			}
 		}
 
@@ -1509,20 +1325,21 @@ namespace Keysharp.Core
 
 		public static object A_StoreCapsLockMode
 		{
-			get => storeCapsLockMode ?? (storeCapsLockMode = storeCapsLockModeDef).Value;
+			get => storeCapsLockMode;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
-				{
 					storeCapsLockMode = val.Value;
-
-					if (!Keysharp.Scripting.Script.isReadyToExecute)
-						storeCapsLockModeDef = storeCapsLockMode.Value;
-				}
 			}
+		}
+
+		public static object A_SuspendExempt
+		{
+			get => HotstringDefinition.hsSuspendExempt;
+			set => HotstringDefinition.hsSuspendExempt = value.Ab();
 		}
 
 		/// <summary>
@@ -1629,10 +1446,8 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (titleMatchMode == null)
-					titleMatchMode = titleMatchModeDef;
-
-				return titleMatchMode.Value == 4L ? Core.Keyword_RegEx : titleMatchMode.Value;
+				var l = titleMatchMode.Al();
+				return l == 4L ? Keywords.Keyword_RegEx : l;
 			}
 			set
 			{
@@ -1644,11 +1459,8 @@ namespace Keysharp.Core
 
 					case "3": titleMatchMode = 3L; break;
 
-					case Core.Keyword_RegEx: titleMatchMode = 4L; break;
+					case Keywords.Keyword_RegEx: titleMatchMode = 4L; break;
 				}
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					titleMatchModeDef = titleMatchMode.Value;
 			}
 		}
 
@@ -1657,32 +1469,23 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object A_TitleMatchModeSpeed
 		{
-			get
-			{
-				if (titleMatchModeSpeed == null)
-					titleMatchModeSpeed = titleMatchModeSpeedDef;
+			get => titleMatchModeSpeed.Ab() ? Keywords.Keyword_Fast : Keywords.Keyword_Slow;
 
-				return titleMatchModeSpeed.Value ? Core.Keyword_Fast : Core.Keyword_Slow;
-			}
 			set
 			{
 				switch (value.ToString().ToLowerInvariant())
 				{
-					case Core.Keyword_Fast: titleMatchModeSpeed = true; break;
+					case Keywords.Keyword_Fast: titleMatchModeSpeed = true; break;
 
-					case Core.Keyword_Slow: titleMatchModeSpeed = false; break;
+					case Keywords.Keyword_Slow: titleMatchModeSpeed = false; break;
 				}
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					titleMatchModeSpeedDef = titleMatchModeSpeed.Value;
 			}
 		}
 
 		public static long A_TotalScreenHeight => SystemInformation.VirtualScreen.Height;
-
 		public static long A_TotalScreenWidth => SystemInformation.VirtualScreen.Width;
-
 		public static Menu A_TrayMenu => Script.trayMenu;
+		public static object A_UseHook { get; set; }
 
 		/// <summary>
 		/// The logon name of the current user.
@@ -1694,21 +1497,12 @@ namespace Keysharp.Core
 		/// </summary>
 		public static long A_WDay => (int)DateTime.Now.DayOfWeek + 1;
 
+		public static object A_WinActivateForce => Keysharp.Scripting.Script.WinActivateForce;
+
 		/// <summary>
 		/// The current delay set by <code>SetWinDelay</code>.
 		/// </summary>
-		public static object A_WinDelay
-		{
-			get => winDelay ?? (winDelay = winDelayDef).Value;
-
-			set
-			{
-				winDelay = value.Al();
-
-				if (!Keysharp.Scripting.Script.isReadyToExecute)
-					winDelayDef = winDelay.Value;
-			}
-		}
+		public static object A_WinDelay { get; set; } = 100L;
 
 		/// <summary>
 		/// The Windows directory. For example: <code>C:\Windows</code>.
@@ -1716,7 +1510,6 @@ namespace Keysharp.Core
 		public static string A_WinDir => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 
 		public static long A_WorkAreaHeight => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height;
-
 		public static long A_WorkAreaWidth => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width;
 
 		/// <summary>
@@ -1765,8 +1558,12 @@ namespace Keysharp.Core
 		public static long A_YYYY => A_Year;
 
 		public static long False => 0L;
-
 		public static long True => 1L;
+
+		internal static bool A_DetectHiddenTextCur
+		{
+			get => Threads.GetThreadVariables().detectHiddenText;
+		}
 
 		/// <summary>
 		/// The most recent reason the script was asked to terminate. This variable is blank unless the script has an OnExit subroutine and that subroutine is currently running or has been called at least once by an exit attempt. See OnExit for details.
@@ -1788,32 +1585,81 @@ namespace Keysharp.Core
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
 
-		internal static Encoding FileEncoding => fileEncoding ?? (fileEncoding = fileEncodingDef);
+		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
 
-		internal static SendModes SendMode
+		private static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+	}
+
+	internal static class ThreadAccessors
+	{
+		internal static long A_ControlDelay => Threads.GetThreadVariables().controlDelay;
+
+		internal static long A_DefaultMouseSpeed => Threads.GetThreadVariables().defaultMouseSpeed;
+
+		internal static bool A_DetectHiddenWindows => Threads.GetThreadVariables().detectHiddenWindows;
+
+		internal static Encoding A_FileEncoding
 		{
-			get => sendMode ?? (sendMode = sendModeDef).Value;
-			set => sendMode = value;
+			get => Threads.GetThreadVariables().fileEncoding;
 		}
 
-		public static void SetControlDelay(object obj) => A_ControlDelay = obj;
-
-		public static void SetWinDelay(object obj) => A_WinDelay = obj;
-
-		internal static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
-
-		internal static void SetInitialFloatFormat()
+		internal static long A_KeyDelay
 		{
-			var t = Thread.CurrentThread;
-			var ci = new CultureInfo(t.CurrentCulture.LCID);
-			ci.NumberFormat.NumberDecimalDigits = 6;
-			t.CurrentCulture = ci;
+			get => Threads.GetThreadVariables().keyDelay;
+			set => Threads.GetThreadVariables().keyDelay = value;
 		}
 
-		private static string GetIpFromIndex(int index)
+		internal static long A_KeyDelayPlay
 		{
-			var addr = A_IPAddress;
-			return (long)addr.Length > index - 1 ? addr[index] as string : "";
+			get => Threads.GetThreadVariables().keyDelayPlay;
+			set => Threads.GetThreadVariables().keyDelayPlay = value;
 		}
+
+		internal static long A_KeyDuration
+		{
+			get => Threads.GetThreadVariables().keyDuration;
+			set => Threads.GetThreadVariables().keyDuration = value;
+		}
+
+		internal static long A_KeyDurationPlay
+		{
+			get => Threads.GetThreadVariables().keyDurationPlay;
+			set => Threads.GetThreadVariables().keyDurationPlay = value;
+		}
+
+		internal static long A_MouseDelay
+		{
+			get => Threads.GetThreadVariables().mouseDelay;
+		}
+
+		internal static long A_MouseDelayPlay
+		{
+			get => Threads.GetThreadVariables().mouseDelayPlay;
+		}
+
+		internal static long A_PeekFrequency
+		{
+			get => Threads.GetThreadVariables().peekFrequency;
+		}
+
+		internal static long A_RegView
+		{
+			get => Threads.GetThreadVariables().regView;
+		}
+
+		internal static uint A_SendLevel
+		{
+			get => Threads.GetThreadVariables().sendLevel;
+			set => Threads.GetThreadVariables().sendLevel = value;
+		}
+
+		internal static SendModes A_SendMode
+		{
+			get => Threads.GetThreadVariables().sendMode;
+			set => Threads.GetThreadVariables().sendMode = value;
+		}
+
+		internal static bool A_StoreCapsLockMode => Threads.GetThreadVariables().storeCapsLockMode;
+		internal static long A_WinDelay => Threads.GetThreadVariables().winDelay;
 	}
 }

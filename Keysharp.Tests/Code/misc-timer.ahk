@@ -40,4 +40,4 @@ if (x == 1)
 else
 	FileAppend, fail, *
 
-MsgBox("Please show the window from the system tray by double clicking the icon, then closing the main window for the misc-timer unit test to complete.")
+ExitApp()

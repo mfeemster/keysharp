@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core;
@@ -23,7 +22,7 @@ namespace Keysharp.Scripting
 			if (Environment.OSVersion.Platform != PlatformID.Win32NT)//Hopefully this is possible on non-windows OSes.//TODO
 				return;
 
-			if (Parser.NoTrayIcon)
+			if (NoTrayIcon)
 				return;
 
 			trayMenu = new Menu(Tray.ContextMenuStrip);

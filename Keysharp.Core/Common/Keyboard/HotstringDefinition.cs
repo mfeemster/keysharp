@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Keysharp.Core.Common.Threading;
+using Keysharp.Scripting;
 using static Keysharp.Core.Misc;
 
 namespace Keysharp.Core.Common.Keyboard
 {
 	public class HotstringDefinition
 	{
-		public static bool DefaultHotstringSuspendExempt;
 		internal const int HOTSTRING_BLOCK_SIZE = 1024;
 		internal const int HS_BUF_DELETE_COUNT = HS_BUF_SIZE / 2;
 		internal const int HS_BUF_SIZE = (MAX_HOTSTRING_LENGTH * 2) + 10;
@@ -32,6 +32,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static int hsPriority;
 		internal static SendModes hsSendMode = SendModes.Input;
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
+		internal static bool hsSuspendExempt;
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
 
 		//internal static Dictionary<string, List<HotstringDefinition>> shsDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);     //Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
@@ -48,23 +49,23 @@ namespace Keysharp.Core.Common.Keyboard
 		internal string str, replacement;
 		internal int suspended;
 		protected internal static List<char> hsBuf = new List<char>(256);
+
+		[PublicForTestOnly]
 		public static string CurrentInputBuffer => new string(hsBuf.ToArray());
-		public static bool DefaultHotstringCaseSensitive => hsCaseSensitive;
-		public static bool DefaultHotstringConformToCase => hsConformToCase;
-		public static bool DefaultHotstringDetectWhenInsideWord => hsDetectWhenInsideWord;
-		public static bool DefaultHotstringDoBackspace => hsDoBackspace;
-		public static bool DefaultHotstringDoReset => hsDoReset;
-		public static bool DefaultHotstringEndCharRequired => hsEndCharRequired;
-		public static string DefaultHotstringEndChars => defEndChars;
-		public static int DefaultHotstringKeyDelay => hsKeyDelay;
-		public static bool DefaultHotstringOmitEndChar => hsOmitEndChar;
-		public static int DefaultHotstringPriority => hsPriority;
-		public static SendModes DefaultHotstringSendMode => hsSendMode;
-		public static SendRawModes DefaultHotstringSendRaw => hsSendRaw;
+
+		[PublicForTestOnly]
 		public bool Enabled { get; set; }
+
+		[PublicForTestOnly]
 		public Options EnabledOptions { get; set; }
+
+		[PublicForTestOnly]
 		public string Name { get; set; }
+
+		[PublicForTestOnly]
 		public string Replacement { get; set; } = string.Empty;
+
+		[PublicForTestOnly]
 		public string Sequence { get; }
 
 		public HotstringDefinition(string sequence, string replacement)
@@ -74,14 +75,14 @@ namespace Keysharp.Core.Common.Keyboard
 			//EndChars = defEndChars;
 		}
 
-		internal HotstringDefinition(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring, string _replacement
+		internal HotstringDefinition(string _name, IFuncObj _funcObj, string _options, string _hotstring, string _replacement
 									 , bool _hasContinuationSection, int _suspend)
 
 		{
 			funcObj = _funcObj;
-			hotCriterion = Keysharp.Scripting.Script.hotCriterion;
+			hotCriterion = Threads.GetThreadVariables().hotCriterion;
 			suspended = _suspend;
-			maxThreads = Keysharp.Scripting.Parser.MaxThreadsPerHotkey;  // The value of g_MaxThreadsPerHotkey can vary during load-time.
+			maxThreads = Accessors.A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
 			priority = hsPriority;
 			keyDelay = hsKeyDelay;
 			sendMode = hsSendMode;  // And all these can vary too.
@@ -94,7 +95,7 @@ namespace Keysharp.Core.Common.Keyboard
 			detectWhenInsideWord = hsDetectWhenInsideWord;
 			doReset = hsDoReset;
 			inputLevel = (uint)Accessors.A_InputLevel;
-			suspendExempt = DefaultHotstringSuspendExempt;
+			suspendExempt = Accessors.A_SuspendExempt.Ab();
 			constructedOK = false;
 			var unusedX = false; // do not assign  mReplacement if execute_action is true.
 			ParseOptions(_options, ref priority, ref keyDelay, ref sendMode, ref caseSensitive, ref conformToCase, ref doBackspace
@@ -118,7 +119,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
-		public static ResultType AddHotstring(string _name, /*Core.HotFunction*/IFuncObj _funcObj, string _options, string _hotstring
+		public static ResultType AddHotstring(string _name, IFuncObj _funcObj, string _options, string _hotstring
 											  , string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
@@ -139,15 +140,6 @@ namespace Keysharp.Core.Common.Keyboard
 			hsBuf.Clear();
 			shs.Clear();
 		}
-
-		//public void DefaultHotFunction(object[] o)
-		//{
-		//  if (o.Length > 1 && o[0] is string typed && o[1] is string replace)
-		//  {
-		//      Console.WriteLine($"typed: \"{typed}\" sending: \"{replace}\"");
-		//      Keysharp.Core.Keyboard.Send(replace);
-		//  }
-		//}
 
 		public override string ToString() => Name;
 
@@ -423,19 +415,20 @@ namespace Keysharp.Core.Common.Keyboard
 
 			// For the following, mSendMode isn't checked because the backup/restore is needed to varying extents
 			// by every mode.
-			var oldDelay = Accessors.A_KeyDelay;
-			var oldPressDuration = Accessors.A_KeyDuration;
-			var oldDelayPlay = Accessors.A_KeyDelayPlay;
-			var oldPressDurationPlay = Accessors.A_KeyDurationPlay;
-			var oldSendLevel = Accessors.A_SendLevel;
-			Accessors.A_KeyDelay = keyDelay; // This is relatively safe since SendKeys() normally can't be interrupted by a new thread.
-			Accessors.A_KeyDuration = -1;   // Always -1, since Send command can be used in body of hotstring to have a custom press duration.
-			Accessors.A_KeyDelayPlay = -1;
-			Accessors.A_KeyDurationPlay = keyDelay; // Seems likely to be more useful (such as in games) to apply mKeyDelay to press duration rather than above.
+			var tv = Threads.GetThreadVariables();
+			var oldDelay = tv.keyDelay;
+			var oldPressDuration = tv.keyDuration;
+			var oldDelayPlay = tv.keyDelayPlay;
+			var oldPressDurationPlay = tv.keyDurationPlay;
+			var oldSendLevel = tv.sendLevel;
+			tv.keyDelay = keyDelay; // This is relatively safe since SendKeys() normally can't be interrupted by a new thread.
+			tv.keyDuration = -1L;   // Always -1, since Send command can be used in body of hotstring to have a custom press duration.
+			tv.keyDelayPlay = -1L;
+			tv.keyDurationPlay = keyDelay; // Seems likely to be more useful (such as in games) to apply mKeyDelay to press duration rather than above.
 			// Setting the SendLevel to 0 rather than this->mInputLevel since auto-replace hotstrings are used for text replacement rather than
 			// key remapping, which means the user almost always won't want the generated input to trigger other hotkeys or hotstrings.
 			// Action hotstrings (not using auto-replace) do get their thread's SendLevel initialized to the hotstring's InputLevel.
-			Accessors.A_SendLevel = 0u;
+			tv.sendLevel = 0u;
 
 			// v1.0.43: The following section gives time for the hook to pass the final keystroke of the hotstring to the
 			// system.  This is necessary only for modes other than the original/SendEvent mode because that one takes
@@ -449,11 +442,11 @@ namespace Keysharp.Core.Common.Keyboard
 
 			kbdMouseSender.SendKeys(sendBuf, sendRaw, sendMode, IntPtr.Zero); // Send the backspaces and/or replacement.
 			// Restore original values.
-			Accessors.A_KeyDelay = oldDelay;
-			Accessors.A_KeyDuration = oldPressDuration;
-			Accessors.A_KeyDelayPlay = oldDelayPlay;
-			Accessors.A_KeyDurationPlay = oldPressDurationPlay;
-			Accessors.A_SendLevel = oldSendLevel;
+			tv.keyDelay = oldDelay;
+			tv.keyDuration = oldPressDuration;
+			tv.keyDelayPlay = oldDelayPlay;
+			tv.keyDurationPlay = oldPressDurationPlay;
+			tv.sendLevel = oldSendLevel;
 		}
 
 		internal void ParseOptions(string aOptions)
@@ -480,16 +473,16 @@ namespace Keysharp.Core.Common.Keyboard
 			++existingThreads;  // This is the thread count for this particular hotstring only.
 			VariadicFunction vf = (o) =>
 			{
-				Accessors.A_SendLevel = inputLevel;
-				Keysharp.Scripting.Script.hwndLastUsed = hwndCritFound;
-				Keysharp.Scripting.Script.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
+				var tv = Threads.GetThreadVariables();
+				tv.sendLevel = inputLevel;
+				tv.hwndLastUsed = hwndCritFound;
+				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
 				return funcObj.Call(o);
 			};
 
 			try
 			{
-				//var tsk = await Threads.LaunchInThread(funcObj, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
-				var tsk = await Threads.LaunchInThread(vf, new object[] { /*Keysharp.Scripting.Script.thisHotkeyName, */Name });//Only need to pass Name. thisHotkeyName was passed by the original just for debugging.
+				var tsk = await Threads.LaunchInThread(priority, false, false, vf, new object[] { Name });
 			}
 			catch (Error ex)
 			{
@@ -503,7 +496,6 @@ namespace Keysharp.Core.Common.Keyboard
 			return ResultType.Ok;
 		}
 
-		//Need key delay, text, priority, send style, execute (X), and make sure raw actually works.
 		[Flags]
 		public enum Options
 		{ None = 0, AutoTrigger = 1, Nested = 2, Backspace = 4, CaseSensitive = 8, OmitEnding = 16, Raw = 32, Reset = 64 }

@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
@@ -157,13 +157,13 @@ namespace Keysharp.Core
 #if WINDOWS
 						|| x.StartsWith('/')
 #endif
-																			) && x.Trim(Keysharp.Core.Core.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+																			) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
 				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
 #if WINDOWS
 						|| x.StartsWith('/')
 #endif
-																			) && x.Trim(Keysharp.Core.Core.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+																			) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
 		public static string FindCommandLineArgVal(string arg, bool startswith = true)

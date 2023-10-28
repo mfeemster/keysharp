@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using Keysharp.Core;
+﻿using Keysharp.Core;
 using NUnit.Framework;
-using static Keysharp.Scripting.Script;
 using static Keysharp.Core.Misc;
 
 namespace Keysharp.Tests

@@ -1,24 +1,16 @@
 ﻿using System;
 using System.CodeDom.Compiler;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
-using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Runtime.Loader;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
-using System.Linq;
-using Microsoft.VisualBasic;
-using Keysharp.Core;
-using System.Threading.Tasks;
-using System.Security.AccessControl;
 
 namespace Keysharp.Main
 {
@@ -74,7 +66,7 @@ namespace Keysharp.Main
 					}
 
 #if WINDOWS
-					var option = args[i].TrimStart(Keysharp.Core.Core.DashSlash);
+					var option = args[i].TrimStart(Keywords.DashSlash);
 #else
 					var option = args[i].TrimStart('-');
 #endif

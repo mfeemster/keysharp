@@ -1,97 +1,68 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Keysharp.Core;
-using Keysharp.Core.Common;
+﻿using Keysharp.Core;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Windows.Forms;
+using static Keysharp.Scripting.MainWindow;
 
 namespace Keysharp.Scripting
 {
-	public partial class Script : Core.Core
+	public partial class Script
 	{
 		public static bool ForceKeybdHook;
+		public static bool HotstringNoMouse = false;
+		//public static bool MaxThreadsBuffer = false;
+		public static uint MaxThreadsPerHotkey = 1u;
+		public static uint MaxThreadsTotal = 12u;
+		public static bool NoTrayIcon = false;
+		public static bool WinActivateForce = false;
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
-
 		internal const int SLEEP_INTERVAL = 10;
-
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
-
 		internal static bool calledByIsDialogMessageOrDispatch;
-
 		internal static uint calledByIsDialogMessageOrDispatchMsg;
-
 		internal static List<IFuncObj> ClipFunctions = new List<IFuncObj>();
-
 		internal static bool deferMessagesForUnderlyingPump;
-
-		[ThreadStatic]
-		internal static IFuncObj hotCriterion;
-
 		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
-		internal static bool hsResetUponMouseClick = Parser.HotstringNoMouse;
-
+		internal static bool hsResetUponMouseClick = HotstringNoMouse;
 		internal static bool hsSameLineAction;
-
-		[ThreadStatic]
-		internal static IntPtr hwndLastUsed = IntPtr.Zero;
-
 		internal static InputType input;
-
-		// Last Found Window of last #HotIf expression.
 		internal static DateTime inputTimeoutAt = DateTime.Now;
-
 		internal static bool inputTimerExists;
-
 		internal static bool isReadyToExecute;
-
 		internal static IFuncObj lastHotFunc;
-
 		internal static MainWindow mainWindow;
-
 		internal static Gui mainWindowGui;
-
 		internal static int MAX_THREADS_LIMIT = 0xFF;
-
 		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = MenuType.None;
-
 		internal static int nLayersNeedingTimer;
-
 		internal static List<IFuncObj> OnErrorHandlers;
 		internal static List<IFuncObj> OnExitHandlers = new List<IFuncObj>();
 		internal static Icon PausedIcon;
-
+		internal static bool Persistent;
 		internal static IntPtr playbackHook = IntPtr.Zero;
-
 		internal static DateTime priorHotkeyStartTime = DateTime.Now;
-
 		internal static string scriptName = "";
-
 		internal static Icon SuspendedIcon;
-
 		internal static string thisHotkeyName, priorHotkeyName;
-
 		internal static DateTime thisHotkeyStartTime = DateTime.Now;
-
 		internal static DateTime timeLastInputKeyboard = timeLastInputPhysical;
-
 		internal static DateTime timeLastInputMouse = timeLastInputPhysical;
-
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
-
 		internal static int totalExistingThreads;
-
+		internal static int uninterruptibleTime = 17;
 		internal static bool validateThenExit;
-
 		private static IntPtr mainWindowHandle;
 
 		public static bool ResetUponMouseClick => hsResetUponMouseClick;
@@ -100,12 +71,23 @@ namespace Keysharp.Scripting
 
 		internal static Keysharp.Core.Common.Threading.HookThread HookThread { get; private set; }
 
+		//[ThreadStatic]
+		//internal static IntPtr hwndLastUsed = IntPtr.Zero;
+		internal static IntPtr HwndLastUsed
+		{
+			get => Threads.GetThreadVariables().hwndLastUsed;
+			set => Threads.GetThreadVariables().hwndLastUsed = value;
+		}
+
 		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
 
 		internal static IntPtr MainWindowHandle
 		{
 			get
 			{
+				if (mainWindow == null)
+					return IntPtr.Zero;
+
 				if (mainWindowHandle == IntPtr.Zero)
 					_ = mainWindow.Invoke(() => mainWindowHandle = mainWindow.Handle);
 
@@ -132,10 +114,11 @@ namespace Keysharp.Scripting
 			}
 
 			var title = mainWindow != null ? mainWindow.Text : "";
-			var mm = Accessors.A_TitleMatchMode;
-			Accessors.A_TitleMatchMode = 2;//Match anywhere.
+			var tv = Threads.GetThreadVariables();
+			var mm = tv.titleMatchMode;
+			tv.titleMatchMode = 2L;//Match anywhere.
 			var hwnd = Window.WinExist(Accessors.A_ScriptName, "", title, "");
-			Accessors.A_TitleMatchMode = mm;
+			tv.titleMatchMode = mm;
 			var wi = new WindowItem(new IntPtr(hwnd));
 			var classname = wi.ClassName;//Logic taken from AHK.
 
@@ -201,7 +184,7 @@ namespace Keysharp.Scripting
 
 				case eScriptInstance.Ignore:
 					if (Window.WinExist(name) != 0)
-						_ = Flow.ExitApp(Flow.ExitReasons.SingleInstance);
+						_ = Flow.ExitApp(Flow.ExitReasons.Single);
 
 					break;
 
@@ -217,7 +200,7 @@ namespace Keysharp.Scripting
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
 							Window.WinClose(hwnd, "", 2);
 						else
-							_ = Flow.ExitApp(Flow.ExitReasons.SingleInstance);
+							_ = Flow.ExitApp(Flow.ExitReasons.Single);
 					}
 
 					break;
@@ -284,7 +267,144 @@ namespace Keysharp.Scripting
 
 		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
 
-		public static void ListVars() => mainWindow?.SetText(Reflections.GetVariableInfo(), MainWindow.MainFocusedTab.Stack);
+		public static void ListVars() => mainWindow?.ShowInternalVars();
+
+		public static string GetVars(object obj = null)
+		{
+			var tabLevel = 0;
+			var doInternal = obj.Ab(true);
+			var sbuf = new StringBuffer();
+			var sb = sbuf.sb;
+			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
+			_ = sb.AppendLine($"**User defined**\r\n");
+
+			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
+				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
+				{
+					var val = fieldKv.Value.GetValue(null);
+					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
+					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
+				}
+
+			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
+
+			if (doInternal)
+			{
+				foreach (var propKv in Reflections.flatPublicStaticProperties)
+				{
+					var list = typesToProps.GetOrAdd(propKv.Value.DeclaringType.Name);
+
+					if (list.Count == 0)
+						list.Capacity = 200;
+
+					list.Add(propKv.Value);
+				}
+
+				foreach (var t2pKv in typesToProps)
+				{
+					var typeName = t2pKv.Key;
+					_ = sb.AppendLine($"{typeName}:");
+
+					foreach (var prop in t2pKv.Value.OrderBy(p => p.Name))
+					{
+						var val = prop.GetValue(null);
+						var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
+						_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
+					}
+
+					_ = sb.AppendLine("--------------------------------------------------");
+					_ = sb.AppendLine();
+				}
+			}
+
+			return sbuf.sb.ToString();
+		}
+
+		/*
+		    internal static string GetVariableInfo()
+		    {
+		    var sb = new StringBuilder(2048);
+		    var stack = new StackTrace(false).GetFrames();
+
+		    for (var i = stack.Length - 1; i >= 0; i--)
+		    {
+		        if (stack[i] != null &&
+		                stack[i].GetMethod() != null &&
+		                stack[i].GetMethod().DeclaringType.Attributes.HasFlag(TypeAttributes.Public))//Public is the script, everything else should be hidden.
+		        {
+		            if (stack[i].GetMethod().DeclaringType.Namespace != null &&
+		                    stack[i].GetMethod().DeclaringType.Namespace.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase))
+		            {
+		                var meth = stack[i].GetMethod();
+		                _ = sb.AppendLine($"Class: {meth.ReflectedType.Name}");
+		                _ = sb.AppendLine();
+
+		                foreach (var v in meth.ReflectedType.GetProperties(BindingFlags.Public | BindingFlags.Static))
+		                {
+		                    var val = v.GetValue(null);
+		                    var varstr = $"\t{val?.GetType()} {v.Name}: ";
+
+		                    if (val is string s)
+		                        varstr += $"[{s.Length}] {s.Substring(0, Math.Min(s.Length, 60))}";
+		                    else if (val is Keysharp.Core.Array arr)
+		                    {
+		                        var ct = Math.Min(100, arr.Count);
+		                        var tempsb = new StringBuilder(ct * 100);
+
+		                        for (var a = 1; a <= ct; a++)
+		                        {
+		                            var tempstr = arr[a].ToString();
+		                            _ = tempsb.Append(tempstr.Substring(0, Math.Min(tempstr.Length, 60)));
+
+		                            if (a < ct)
+		                                _ = tempsb.Append(", ");
+		                        }
+
+		                        varstr += tempsb.ToString();
+		                    }
+		                    else if (val is Keysharp.Core.Map map)
+		                    {
+		                        var ct = Math.Min(100, map.Count);
+		                        var a = 0;
+		                        var tempsb = new StringBuilder(ct * 100);
+		                        _ = tempsb.Append('{');
+
+		                        foreach (var kv in map.map)
+		                        {
+		                            var tempstr = kv.Value.ToString();
+		                            _ = tempsb.Append($"{kv.Key} : {tempstr.Substring(0, Math.Min(tempstr.Length, 60))}");
+
+		                            if (++a < ct)
+		                                _ = tempsb.Append(", ");
+		                        }
+
+		                        _ = tempsb.Append('}');
+		                        varstr += tempsb.ToString();
+		                    }
+		                    else if (val == null)
+		                        varstr += "null";
+		                    else
+		                        varstr += val.ToString();
+
+		                    _ = sb.AppendLine(varstr);
+		                }
+
+		                _ = sb.AppendLine("");
+		                _ = sb.AppendLine($"Method: {meth.Name}");
+		                var mb = stack[i].GetMethod().GetMethodBody();
+
+		                foreach (var lvi in mb.LocalVariables)
+		                    _ = sb.AppendLine($"\t{lvi}");
+
+		                _ = sb.AppendLine("--------------------------------------------------");
+		                _ = sb.AppendLine();
+		            }
+		        }
+		    }
+
+		    return sb.ToString();
+		    }
+		*/
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.
@@ -321,13 +441,13 @@ namespace Keysharp.Scripting
 				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
-			mainWindow.WindowState = FormWindowState.Minimized;
-			//mainWindow.WindowState = FormWindowState.Maximized;
-			//mainWindow.ShowInTaskbar = false;//The main window is a system tray window only.
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-			Parser.Persistent = true;
+			//Parser.Persistent = true;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
-			mainWindow.Show();
+			//This combo of using Activate, the minimize, then making extra sure in the Load event handler seems to work well enough.
+			//Sometimes the form will show in the bottom left corner very quickly, but it should barely be visible to users.
+			mainWindow.WindowState = FormWindowState.Minimized;
+			mainWindow.Activate();
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				_ = userInit();
@@ -341,6 +461,27 @@ namespace Keysharp.Scripting
 		public static void SetName(string s) => scriptName = s;
 
 		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
+
+		public static void VerifyVersion(string ver, bool plus, int line, string source)
+		{
+			var ahkver = Accessors.A_AhkVersion;
+			var reqvers = ParseVersionToInts(ver);
+			var thisvers = ParseVersionToInts(ahkver);
+
+			for (var i = 0; i < 4; i++)
+			{
+				if (plus)
+				{
+					if (reqvers[i] > thisvers[i])
+						throw new ParseException($"This script requires Keysharp >= v{ver}, but you have v{ahkver}", line, source);
+				}
+				else if (reqvers[i] != thisvers[i])
+					throw new ParseException($"This script requires Keysharp == v{ver}, but you have v{ahkver}", line, source);
+
+				if (thisvers[i] > reqvers[i])
+					break;
+			}
+		}
 
 		internal static bool AnyPersistent()
 		{
@@ -430,6 +571,24 @@ namespace Keysharp.Scripting
 			return ResultType.Ok;
 		}
 
+		internal static int[] ParseVersionToInts(string ver)
+		{
+			var vers = new int[] { 0, 0, 0, 0 };
+			var versplits = ver.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+			if (versplits.Length > 0)
+			{
+				for (var i = 0; i < 4; i++)
+				{
+					if (versplits.Length > i)
+						if (versplits[i].ParseInt(false) is int v)
+							vers[i] = v;
+				}
+			}
+
+			return vers;
+		}
+
 		internal static void SetHotNamesAndTimes(string name)
 		{
 			// Just prior to launching the hotkey, update these values to support built-in
@@ -441,6 +600,14 @@ namespace Keysharp.Scripting
 			// the options that distinguish between (for example) :c:ahk:: and ::ahk::
 			thisHotkeyName = name;
 			thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
+		}
+
+		internal static void SetInitialFloatFormat()
+		{
+			var t = Thread.CurrentThread;
+			var ci = new CultureInfo(t.CurrentCulture.LCID);
+			ci.NumberFormat.NumberDecimalDigits = 6;
+			t.CurrentCulture = ci;
 		}
 
 		private static void PrivateClipboardUpdate(params object[] o)

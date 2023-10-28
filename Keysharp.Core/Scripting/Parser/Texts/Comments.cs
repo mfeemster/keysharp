@@ -1,13 +1,44 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using static Keysharp.Core.Core;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private string StripComment(string code)
+		internal static bool IsCommentAt(string code, int offset)
+		{
+			var spaced = offset == 0 || IsSpace(code[offset - 1]);
+#if LEGACY
+			return code.Length - offset >= Comment.Length && MemoryExtensions.Equals(code.AsSpan(offset, Comment.Length), Comment, StringComparison.Ordinal) && spaced;
+#else
+			return code[offset] == Comment && spaced;
+#endif
+		}
+
+		internal static bool IsCommentLine(string code) =>
+#if LEGACY
+		code.Length >= Comment.Length&& MemoryExtensions.Equals(code.AsSpan(0, Comment.Length), Comment, StringComparison.Ordinal);
+
+#else
+		return code.Length > 0 && code[0] == Comment;
+#endif
+
+		internal static bool IsEmptyStatement(string code)
+		{
+			for (var i = 0; i < code.Length; i++)
+			{
+				if (IsCommentAt(code, i))
+					return true;
+				else if (!IsSpace(code[i]))
+					return false;
+			}
+
+			return true;
+		}
+
+		internal static string StripComment(string code)
 		{
 			if (string.IsNullOrEmpty(code))
 				return code;
@@ -27,7 +58,7 @@ namespace Keysharp.Scripting
 			return buf.ToString();
 		}
 
-		private string StripCommentSingle(string code)
+		internal static string StripCommentSingle(string code)
 		{
 			var spaced = false;
 
@@ -42,7 +73,7 @@ namespace Keysharp.Scripting
 			return code;
 		}
 
-		private string StripEnclosing(string code, char chopen, char chclose)
+		internal static string StripEnclosing(string code, char chopen, char chclose)
 		{
 			var i = 0;
 
@@ -56,39 +87,6 @@ namespace Keysharp.Scripting
 			}
 
 			return code.Substring(i, code.Length - (i * 2));
-		}
-
-		private bool IsCommentAt(string code, int offset)
-		{
-			var spaced = offset == 0 || IsSpace(code[offset - 1]);
-#if LEGACY
-			return code.Length - offset >= Comment.Length && MemoryExtensions.Equals(code.AsSpan(offset, Comment.Length), Comment, StringComparison.Ordinal) && spaced;
-#endif
-#if !LEGACY
-			return code[offset] == Comment && spaced;
-#endif
-		}
-
-		private bool IsCommentLine(string code) =>
-#if LEGACY
-		code.Length >= Comment.Length&& MemoryExtensions.Equals(code.AsSpan(0, Comment.Length), Comment, StringComparison.Ordinal);
-
-#endif
-#if !LEGACY
-		return code.Length > 0 && code[0] == Comment;
-#endif
-
-		private bool IsEmptyStatement(string code)
-		{
-			for (var i = 0; i < code.Length; i++)
-			{
-				if (IsCommentAt(code, i))
-					return true;
-				else if (!IsSpace(code[i]))
-					return false;
-			}
-
-			return true;
 		}
 	}
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Windows.Forms;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -53,13 +54,13 @@ namespace Keysharp.Core
 			var str = "";
 
 			if ((mod & Keys.Control) == Keys.Control)
-				str += Core.Keyword_ModifierCtrl;
+				str += Keyword_ModifierCtrl;
 
 			if ((mod & Keys.Shift) == Keys.Shift)
-				str += Core.Keyword_ModifierShift;
+				str += Keyword_ModifierShift;
 
 			if ((mod & Keys.Alt) == Keys.Alt)
-				str += Core.Keyword_ModifierAlt;
+				str += Keyword_ModifierAlt;
 
 			return str + key.ToString();
 		}
@@ -72,11 +73,11 @@ namespace Keysharp.Core
 			{
 				switch (ch)
 				{
-					case Core.Keyword_ModifierAlt: mods |= Keys.Alt; break;
+					case Keyword_ModifierAlt: mods |= Keys.Alt; break;
 
-					case Core.Keyword_ModifierCtrl: mods |= Keys.Control; break;
+					case Keyword_ModifierCtrl: mods |= Keys.Control; break;
 
-					case Core.Keyword_ModifierShift: mods |= Keys.Shift; break;
+					case Keyword_ModifierShift: mods |= Keys.Shift; break;
 
 					default:
 					{

@@ -105,7 +105,7 @@ f.Close()
 
 if (FileExist(path) != "")
 	FileDelete(path)
-	
+
 f := FileOpen(path, "rw", "Unicode") ; Test text encoding.
 w := "testing"
 count := f.Write(w)
@@ -148,6 +148,7 @@ f.Close()
 if (FileExist(path) != "")
 	FileDelete(path)
 			
+A_FileEncoding := "utf-8-raw"
 f := FileOpen(path, "rw") ; Test position.
 w := "testing"
 count := f.Write(w)

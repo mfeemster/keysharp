@@ -589,3 +589,10 @@ if (A_IconNumber == 1)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+
+Suspend, On
+
+if (A_IsSuspended == true) 
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

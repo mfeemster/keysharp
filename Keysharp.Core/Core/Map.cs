@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
@@ -175,6 +176,103 @@ namespace Keysharp.Core
 			return val != long.MaxValue ? val : string.Empty;
 		}
 
+		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		{
+			var sb = sbuf.sb;
+			var indent = new string('\t', tabLevel);
+
+			if (map.Count > 0)
+			{
+				var i = 0;
+
+				if (name.Length == 0)
+					_ = sb.Append($"{indent}\t{{");
+				else
+					_ = sb.Append(indent + name + ": " + "\t {");//Need to put this in multiple steps because the AStyle formatter misinterprets it.
+
+				foreach (var kv in map)
+				{
+					string key;
+
+					if (kv.Key is string ks)
+						key = "\"" + ks + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+					else if (kv.Key is KeysharpObject kso)
+					{
+						var tempsb = new StringBuffer();
+						tabLevel++;
+						sb.AppendLine();
+						kso.PrintProps("", tempsb, ref tabLevel);
+						key = tempsb.ToString().TrimEnd(Keywords.CrLf);
+						tabLevel--;
+					}
+					else
+						key = kv.Key.ToString();
+
+					string val;
+
+					if (kv.Value is string vs)
+						val = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+					else if (kv.Value is KeysharpObject kso)
+					{
+						var tempsb = new StringBuffer();
+						tabLevel++;
+						indent = new string('\t', tabLevel);
+						key = indent + key;//Indent the line if it's an object.
+						sb.AppendLine();
+						kso.PrintProps("", tempsb, ref tabLevel);
+						val = tempsb.ToString().TrimEnd(Keywords.CrLf);
+						tabLevel--;
+					}
+					else if (kv.Value is null)
+						val = "null";
+					else
+						val = kv.Value.ToString();
+
+					if (i < map.Count - 1)
+						_ = sb.Append($"{key}: {val}, ");
+					else
+						_ = sb.Append($"{key}: {val}");
+
+					i++;
+				}
+				_ = sb.AppendLine($"}} ({GetType().Name})");
+			}
+			else
+			{
+				if (name.Length == 0)
+					_ = sb.Append($"{indent} {{}} ({GetType().Name})");
+				else
+					_ = sb.AppendLine($"{indent}{name}: {{}} ({GetType().Name})");
+			}
+			var opi = (OwnPropsIterator)OwnProps(true, false, true);
+			tabLevel++;
+			indent = new string('\t', tabLevel);
+
+			while (opi.MoveNext())
+			{
+				var (propName, val) = opi.Current;
+				var fieldType = val != null ? val.GetType().Name : "";
+
+				if (val is KeysharpObject kso2)
+				{
+					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+				}
+				else if (val != null)
+				{
+					if (val is string vs)
+					{
+						var str = "\"" + vs + "\"";//Can't use interpolated string here because the AStyle formatter misinterprets it.
+						_ = sb.AppendLine($"{indent}{propName}: {str} ({fieldType})");
+					}
+					else
+						_ = sb.AppendLine($"{indent}{propName}: {val} ({fieldType})");
+				}
+				else
+					_ = sb.AppendLine($"{indent}{propName}: null");
+			}
+			tabLevel--;
+		}
+
 		public void Set(params object[] values)
 		{
 			if (values.Length == 1)
@@ -205,7 +303,6 @@ namespace Keysharp.Core
 					Insert(values[i], values[i + 1]);
 			}
 		}
-
 		public override string ToString()
 		{
 			if (map.Count > 0)
@@ -244,9 +341,7 @@ namespace Keysharp.Core
 			else
 				return "{}";
 		}
-
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
-
 		private void Insert(object key, object value)
 		{
 			if (caseSense != eCaseSense.On && key is string s)
@@ -254,7 +349,6 @@ namespace Keysharp.Core
 			else
 				map[key] = value;
 		}
-
 		private bool TryGetValue(object key, out object value)
 		{
 			if (caseSense != eCaseSense.On && key is string s)
@@ -285,7 +379,6 @@ namespace Keysharp.Core
 			value = null;
 			return false;
 		}
-
 		public object this[object key]
 		{
 			get

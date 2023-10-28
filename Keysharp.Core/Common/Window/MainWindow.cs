@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
@@ -22,11 +18,11 @@ namespace Keysharp.Scripting
 		public bool IsClosing { get; private set; }
 
 		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
-		//public uint ThreadId { get; private set; }
 
 		public MainWindow()
 		{
 			InitializeComponent();
+			//FormBorderStyle = FormBorderStyle.SizableToolWindow;
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
@@ -61,9 +57,11 @@ namespace Keysharp.Scripting
 			});
 		}
 
-		internal void ListHotkeys() => SetText(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys);
+		internal void ListHotkeys() => SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys);
 
-		internal void ShowHistory() => SetText(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History);
+		internal void ShowHistory() => SetTextInternal(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History, txtHistory);
+
+		internal void ShowInternalVars() => SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars);
 
 		protected override void WndProc(ref Message m)
 		{
@@ -82,8 +80,8 @@ namespace Keysharp.Scripting
 				{
 					if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))//Needs to be handled here instead of MessageFilter because that one doesn't seem to intercept it.
 					{
-						var mystr = (WindowsAPI.COPYDATASTRUCT)m.GetLParam(typeof(WindowsAPI.COPYDATASTRUCT));
-						_ = handlers.InvokeEventHandlers(m.WParam.ToInt64(), mystr.lpData, m.Msg, m.HWnd.ToInt64());
+						var copyStruct = (WindowsAPI.COPYDATASTRUCT)m.GetLParam(typeof(WindowsAPI.COPYDATASTRUCT));
+						_ = handlers.InvokeEventHandlers(m.WParam.ToInt64(), copyStruct.lpData, m.Msg, m.HWnd.ToInt64());
 						handled = true;
 					}
 				}
@@ -119,9 +117,6 @@ namespace Keysharp.Scripting
 		{
 			switch (tab)
 			{
-				case MainFocusedTab.Stack:
-					return tpStack;
-
 				case MainFocusedTab.Debug:
 					return tpDebug;
 
@@ -135,17 +130,14 @@ namespace Keysharp.Scripting
 					return tpHistory;
 
 				default:
-					return tpStack;
+					return tpDebug;
 			}
 		}
 
-		private TextBox GetText(MainFocusedTab tab)
+		private System.Windows.Forms.TextBox GetText(MainFocusedTab tab)
 		{
 			switch (tab)
 			{
-				case MainFocusedTab.Stack:
-					return txtStack;
-
 				case MainFocusedTab.Debug:
 					return txtDebug;
 
@@ -159,7 +151,7 @@ namespace Keysharp.Scripting
 					return txtHistory;
 
 				default:
-					return txtStack;
+					return txtDebug;
 			}
 		}
 
@@ -175,6 +167,13 @@ namespace Keysharp.Scripting
 		/// <param name="e"></param>
 		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			if (string.IsNullOrEmpty(Accessors.A_ExitReason as string) && e.CloseReason == CloseReason.UserClosing)
+			{
+				e.Cancel = true;
+				Hide();
+				return;
+			}
+
 			IsClosing = true;
 
 			if (Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Close))
@@ -192,6 +191,8 @@ namespace Keysharp.Scripting
 
 		private void MainWindow_Load(object sender, EventArgs e)
 		{
+			Visible = false;
+			WindowState = FormWindowState.Minimized;
 		}
 
 		private void MainWindow_Shown(object sender, EventArgs e)
@@ -200,15 +201,12 @@ namespace Keysharp.Scripting
 
 		private void MainWindow_SizeChanged(object sender, EventArgs e)
 		{
+			//Cannot call ShowInTaskbar at all here because it causes a full re-creation of the window.
+			//So anything that previously used the window handle, including hotkeys, will no longer work.
 			if (WindowState == FormWindowState.Minimized)
-			{
-				ShowInTaskbar = false;
-			}
+				this.Hide();
 			else
-			{
 				lastWindowState = WindowState;
-				ShowInTaskbar = true;
-			}
 		}
 
 		private void refreshToolStripMenuItem_Click(object sender, System.EventArgs e)
@@ -223,82 +221,16 @@ namespace Keysharp.Scripting
 
 		private void reloadScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.Reload();
 
-		private void ShowInternalVars()
+		private void SetTextInternal(string text, MainFocusedTab tab, System.Windows.Forms.TextBox txt)
 		{
-			var sb = new StringBuilder();
 			var lineHeight = TextRenderer.MeasureText("X", txtVars.Font).Height;
 			var linesPerPage = 1.0 * txtVars.ClientSize.Height / lineHeight;
 			var oldCharIndex = txtVars.GetCharIndexFromPosition(new Point(0, 0));//Magic number, it scrolls backward on each update with smaller numbers.
 			var oldLineIndex = txtVars.GetLineFromCharIndex(oldCharIndex);//Magic number, it scrolls backward on each update with smaller numbers.
-
-			foreach (var item in Reflections.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp.Core,")))
-			{
-				foreach (var type in item.GetTypes().Where(t => t.IsPublic && t.IsClass && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")))
-				{
-					var props = type.GetProperties(BindingFlags.Public | BindingFlags.Static);
-
-					if (props.Length <= 0)
-						continue;
-
-					var list = new SortedDictionary<string, PropertyInfo>();
-
-					foreach (var p in props)
-						list[p.Name] = p;
-
-					_ = sb.AppendLine($"{type.Name}:");
-					_ = sb.AppendLine();
-
-					foreach (var prop in list.Values)
-					{
-						var val = prop.GetValue(null);
-						//var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
-
-						if (val is Keysharp.Core.Array arr)
-						{
-							var tempsb = new StringBuilder(arr.Count * 100);
-
-							for (var a = 1; a <= arr.Count; a++)
-							{
-								var tempstr = arr[a].ToString();
-								_ = tempsb.Append(tempstr);
-
-								if (a < arr.Count)
-									_ = tempsb.Append(", ");
-							}
-
-							_ = sb.AppendLine($"\t{prop.Name}: {(tempsb.Length > 0 ? tempsb.ToString() : "Empty")}");
-						}
-						else if (val is Keysharp.Core.Map map)
-						{
-							var a = 0;
-							var tempsb = new StringBuilder(map.Count * 100);
-							_ = tempsb.Append('{');
-
-							foreach (var kv in map.map)
-							{
-								var tempstr = kv.Value.ToString();
-								_ = tempsb.Append($"{kv.Key} : {tempstr}");
-
-								if (++a < map.Count)
-									_ = tempsb.Append(", ");
-							}
-
-							_ = tempsb.Append('}');
-							_ = sb.AppendLine($"\t{prop.Name}: {(tempsb.Length > 0 ? tempsb.ToString() : "Empty")}");
-						}
-						else
-							_ = sb.AppendLine($"\t{prop.Name}: {val}");
-					}
-
-					_ = sb.AppendLine("--------------------------------------------------");
-					_ = sb.AppendLine();
-				}
-			}
-
-			SetText(sb.ToString(), MainFocusedTab.Vars);
-			var newCharIndex = txtVars.GetFirstCharIndexFromLine(Math.Max(0, oldLineIndex + (int)linesPerPage));
-			txtVars.Select(Math.Max(0, newCharIndex), 0);
-			txtVars.ScrollToCaret();
+			SetText(text, tab);
+			var newCharIndex = oldLineIndex == 0 ? 0 : txtVars.GetFirstCharIndexFromLine(Math.Max(0, oldLineIndex + (int)linesPerPage));
+			txt.Select(Math.Max(0, newCharIndex), 0);
+			txt.ScrollToCaret();
 		}
 
 		private void suspendHotkeysToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Scripting.Script.SuspendHotkeys();
@@ -309,7 +241,7 @@ namespace Keysharp.Scripting
 		{
 		}
 
-		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.ListVars();
+		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowInternalVars();
 
 		private void websiteToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
@@ -321,7 +253,6 @@ namespace Keysharp.Scripting
 
 		public enum MainFocusedTab
 		{
-			Stack,
 			Debug,
 			Vars,
 			Hotkeys,

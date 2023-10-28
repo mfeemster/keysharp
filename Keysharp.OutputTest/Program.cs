@@ -1,5 +1,4 @@
 ﻿using static Keysharp.Core.Accessors;
-using static Keysharp.Core.Core;
 using static Keysharp.Core.COM.Com;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
@@ -9,6 +8,7 @@ using static Keysharp.Core.Dir;
 using static Keysharp.Core.Drive;
 using static Keysharp.Core.DllHelper;
 using static Keysharp.Core.Env;
+using static Keysharp.Core.Files;
 using static Keysharp.Core.Flow;
 using static Keysharp.Core.Function;
 using static Keysharp.Core.GuiHelper;
@@ -17,7 +17,6 @@ using static Keysharp.Core.ImageLists;
 using static Keysharp.Core.Ini;
 using static Keysharp.Core.Input;
 using static Keysharp.Core.Keyboard;
-using static Keysharp.Core.KeysharpFile;
 using static Keysharp.Core.KeysharpObject;
 using static Keysharp.Core.Loops;
 using static Keysharp.Core.Maths;
@@ -48,7 +47,7 @@ using static Keysharp.Scripting.Script.Operator;
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.3")]
+[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.4")]
 
 namespace Keysharp.CompiledMain
 {
@@ -63,6 +62,7 @@ namespace Keysharp.CompiledMain
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
 	using Keysharp.Core;
+	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
@@ -82,8 +82,7 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
 				HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
-				UserMainCode();
-				Keysharp.Core.Flow.Sleep(-2);
+				Keysharp.Scripting.Script.RunMainWindow(name, UserMainCode);
 				Keysharp.Core.Flow.ExitApp(0);
 				return 0;
 			}

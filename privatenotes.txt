@@ -1,4 +1,0 @@
-
-Possible work for Cutler:	
-	some sort of ahk that understands AT GUI and CD would actually be incredible if it allowed traders to script cretain things. For example, I had an ahk script that would look at call delta, if its <.05 or >.95 sert FitPrc to 0. That would help improve the fit in something like SPY where our model can't handle those wings (we have no concept of option microprice). But it had the very roundabout process of AT GUI->Excel->VBA->ini->ahk. That would cover any need for developing hotkeys if people could just script whatever hotkeys they care about.
-	3:21:32 PM Itay Bavly I assume it would be really hard to add AT support for something like that

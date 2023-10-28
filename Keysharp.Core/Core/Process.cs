@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
-using System.Threading.Tasks;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -15,21 +16,13 @@ namespace Keysharp.Core
 		internal static uint CurrentThreadID;
 
 		internal static uint MainThreadID;
+		internal static int ManagedMainThreadID;
 		private const int LoopFrequency = 50;
-
-		[ThreadStatic]
-		private static string runDomain;
-
-		[ThreadStatic]
-		private static SecureString runPassword;
-
-		[ThreadStatic]
-		private static string runUser;
 
 		public static long ProcessClose(object obj)
 		{
 			var name = obj.As();
-			var proc = string.IsNullOrEmpty(name) ? System.Diagnostics.Process.GetCurrentProcess() : FindProcess(name);//Will handle name string or pid int.
+			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);//Will handle name string or pid int.
 
 			if (proc == null)
 				return 0L;
@@ -47,7 +40,7 @@ namespace Keysharp.Core
 		public static long ProcessExist(object obj = null)
 		{
 			var name = obj.As();
-			var proc = string.IsNullOrEmpty(name) ? System.Diagnostics.Process.GetCurrentProcess() : FindProcess(name);
+			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);
 			return proc != null ? proc.Id : 0L;
 		}
 
@@ -56,13 +49,13 @@ namespace Keysharp.Core
 			var level = obj0.As();
 			var name = obj1.As();
 			var arg = level.ToLowerInvariant();
-			var proc = string.IsNullOrEmpty(name) ? System.Diagnostics.Process.GetCurrentProcess() : FindProcess(name);
+			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);
 
 			if (proc != null)
 			{
 				if (arg.Length == 1)
 				{
-					foreach (var mode in new[] { Core.Keyword_Low, Core.Keyword_BelowNormal, Core.Keyword_Normal, Core.Keyword_AboveNormal, Core.Keyword_High, Core.Keyword_Realtime })
+					foreach (var mode in new[] { Keyword_Low, Keyword_BelowNormal, Keyword_Normal, Keyword_AboveNormal, Keyword_High, Keyword_Realtime })
 					{
 						if (mode[0] == arg[0])
 						{
@@ -74,17 +67,17 @@ namespace Keysharp.Core
 
 				switch (arg)
 				{
-					case Core.Keyword_Low: proc.PriorityClass = ProcessPriorityClass.Idle; break;
+					case Keyword_Low: proc.PriorityClass = ProcessPriorityClass.Idle; break;
 
-					case Core.Keyword_BelowNormal: proc.PriorityClass = ProcessPriorityClass.BelowNormal; break;
+					case Keyword_BelowNormal: proc.PriorityClass = ProcessPriorityClass.BelowNormal; break;
 
-					case Core.Keyword_Normal: proc.PriorityClass = ProcessPriorityClass.Normal; break;
+					case Keyword_Normal: proc.PriorityClass = ProcessPriorityClass.Normal; break;
 
-					case Core.Keyword_AboveNormal: proc.PriorityClass = ProcessPriorityClass.AboveNormal; break;
+					case Keyword_AboveNormal: proc.PriorityClass = ProcessPriorityClass.AboveNormal; break;
 
-					case Core.Keyword_High: proc.PriorityClass = ProcessPriorityClass.High; break;
+					case Keyword_High: proc.PriorityClass = ProcessPriorityClass.High; break;
 
-					case Core.Keyword_Realtime: proc.PriorityClass = ProcessPriorityClass.RealTime; break;
+					case Keyword_Realtime: proc.PriorityClass = ProcessPriorityClass.RealTime; break;
 				}
 
 				return proc.Id;
@@ -107,7 +100,7 @@ namespace Keysharp.Core
 
 			while ((proc = FindProcess(name)) == null)
 			{
-				Keysharp.Core.Flow.Sleep(LoopFrequency);
+				Flow.Sleep(LoopFrequency);
 
 				if (t >= 0.0 && (DateTime.Now - start).TotalMilliseconds > t)
 					break;
@@ -166,21 +159,22 @@ namespace Keysharp.Core
 			var user = obj0.As();
 			var password = obj1.As();
 			var domain = obj2.As();
-			runUser = user;
-			runDomain = domain;
+			var tv = Threads.GetThreadVariables();
+			tv.runUser = user;
+			tv.runDomain = domain;
 
 			if (string.IsNullOrEmpty(password))
 			{
-				runPassword = null;
+				tv.runPassword = null;
 			}
 			else
 			{
-				runPassword = new SecureString();
+				tv.runPassword = new SecureString();
 
 				foreach (var sym in password)
-					runPassword.AppendChar(sym);
+					tv.runPassword.AppendChar(sym);
 
-				runPassword.MakeReadOnly();
+				tv.runPassword.MakeReadOnly();
 			}
 		}
 
@@ -221,9 +215,7 @@ namespace Keysharp.Core
 			_ = WindowsAPI.ExitWindowsEx((uint)obj.Al(), 0);
 		}
 
-		internal static bool IsInterruptible() => true;
-
-		internal static int MsgFilterMax() => IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;
+		internal static int MsgFilterMax() => Threads.IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;
 
 		private static Process FindProcess(string name)
 		{
@@ -231,7 +223,7 @@ namespace Keysharp.Core
 			{
 				try
 				{
-					return System.Diagnostics.Process.GetProcessById(id);
+					return Process.GetProcessById(id);
 				}
 				catch
 				{
@@ -246,7 +238,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				var prc = System.Diagnostics.Process.GetProcessesByName(name);
+				var prc = Process.GetProcessesByName(name);
 				return prc.Length > 0 ? prc[0] : null;
 			}
 			catch
@@ -294,6 +286,7 @@ namespace Keysharp.Core
 					}
 				}
 
+				var tv = Threads.GetThreadVariables();
 				var prc = new Process
 				{
 					StartInfo = new ProcessStartInfo
@@ -301,9 +294,9 @@ namespace Keysharp.Core
 						UseShellExecute = true,
 						FileName = target,
 						WorkingDirectory = string.IsNullOrEmpty(workingDir) ? null : workingDir.Trim(),
-						UserName = string.IsNullOrEmpty(runUser) ? null : runUser,
-						Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain,
-						Password = (runPassword == null || runPassword.Length == 0) ? null : runPassword
+						UserName = string.IsNullOrEmpty(tv.runUser) ? null : tv.runUser,
+						Domain = string.IsNullOrEmpty(tv.runDomain) ? null : tv.runDomain,
+						Password = (tv.runPassword == null || tv.runPassword.Length == 0) ? null : tv.runPassword
 					}
 				};
 
@@ -316,11 +309,11 @@ namespace Keysharp.Core
 				{
 					switch (showMode.ToLowerInvariant())
 					{
-						case Core.Keyword_Max: prc.StartInfo.WindowStyle = ProcessWindowStyle.Maximized; break;
+						case Keyword_Max: prc.StartInfo.WindowStyle = ProcessWindowStyle.Maximized; break;
 
-						case Core.Keyword_Min: prc.StartInfo.WindowStyle = ProcessWindowStyle.Minimized; break;
+						case Keyword_Min: prc.StartInfo.WindowStyle = ProcessWindowStyle.Minimized; break;
 
-						case Core.Keyword_Hide: prc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden; break;
+						case Keyword_Hide: prc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden; break;
 					}
 				}
 				else if (prc.StartInfo.UserName != null || prc.StartInfo.Domain != null)

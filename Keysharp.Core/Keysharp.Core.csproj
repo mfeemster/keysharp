@@ -16,13 +16,16 @@
     <DefineConstants>DEBUG;LEGACY,WINDOWS</DefineConstants>
     <NoWarn>1701;1702;3003;3008;0169;0649;3001;3002;0164</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>7</WarningLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>..\bin\release\</OutputPath>
     <DefineConstants>LEGACY,WINDOWS</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>7</WarningLevel>
   </PropertyGroup>
+
 
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary.dll">

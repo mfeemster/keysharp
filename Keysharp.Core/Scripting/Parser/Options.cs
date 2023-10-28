@@ -2,9 +2,9 @@
 {
 	public partial class Parser
 	{
-		private const string Legacy = "LEGACY";
+		internal const string Legacy = "LEGACY";
 
-		private const bool LaxExpressions =
+		internal const bool LaxExpressions =
 #if LEGACY
 			true
 #else
@@ -12,10 +12,10 @@
 #endif
 			;
 
-		private const bool LegacyIf = LaxExpressions;
+		internal const bool LegacyIf = LaxExpressions;
 
-		private const bool LegacyLoop = LaxExpressions;
+		internal const bool LegacyLoop = LaxExpressions;
 
-		private bool DynamicVars = LaxExpressions;
+		internal bool DynamicVars = LaxExpressions;
 	}
 }

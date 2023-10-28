@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Core
 {
@@ -194,7 +193,7 @@ namespace Keysharp.Core
 	{
 		public PlaceholderFunction delRef;
 		internal IFuncObj funcObj;
-		protected readonly ConcurrentStackPool<IntPtr> paramsPool = new ConcurrentStackPool<IntPtr>(31);
+		protected readonly ConcurrentStackArrayPool<IntPtr> paramsPool = new ConcurrentStackArrayPool<IntPtr>(31);
 		private readonly bool fast;
 		private readonly bool reference;
 
@@ -214,9 +213,11 @@ namespace Keysharp.Core
 		{
 			object val = null;
 
-			//Need to figure out how fast/slow works with threads here.//TODO
 			if (delRef != null)
 			{
+				if (!fast)
+					Threads.BeginThread();
+
 				if (reference)
 				{
 					var arr = paramsPool.Rent();
@@ -259,6 +260,9 @@ namespace Keysharp.Core
 									   p9, p10, p11, p12, p13, p14, p15, p16,
 									   p17, p18, p19, p20, p21, p22, p23, p24,
 									   p25, p26, p27, p28, p29, p30, p31);
+
+				if (!fast)
+					Threads.EndThread();
 			}
 
 			if (val is int i)

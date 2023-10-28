@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
-using System.Text;
-using System.Windows.Forms;
-using System.Xml.Linq;
+using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
 	public static class Reflections
 	{
+		internal static Dictionary<string, MethodInfo> flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
+
+		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
+
 		//private static Dictionary<Guid, Dictionary<string, MethodPropertyHolder>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodPropertyHolder>>(sttcap / 20);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 
@@ -32,6 +32,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// This should only ever be called from the unit tests.
 		/// </summary>
+		[PublicForTestOnly]
 		public static void Clear()
 		{
 			staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
@@ -44,6 +45,8 @@ namespace Keysharp.Core
 			typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
 			typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
 			loadedAssemblies = new Dictionary<string, Assembly>();
+			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
+			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 		}
 
 		/// <summary>
@@ -54,88 +57,36 @@ namespace Keysharp.Core
 		/// Also note that when running a script from Keysharp.exe, this will get called once when the parser starts in Keysharp, then again
 		/// when the script actually runs. On the second time, there will be an extra assembly loaded, which is the compiled script itself. More system assemblies will also be loaded.
 		/// </summary>
+		[PublicForTestOnly]
 		public static void Initialize()
 		{
 			loadedAssemblies = GetLoadedAssemblies();
 			CacheAllMethods();
 			CacheAllPropertiesAndFields();
-		}
+			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
+						.SelectMany(t => t.GetTypes())
+						.Where(t => t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
+							   && t.Namespace != "Keysharp.Core.Properties" && t.IsClass && t.IsPublic && t.IsSealed && t.IsAbstract);
 
-		internal static void CacheAllMethods()
-		{
-			List<Assembly> assemblies;
-			var loadedAssembliesList = loadedAssemblies.Values;
-			stringToTypeLocalMethods.Clear();
-			typeToStringLocalMethods.Clear();
-			stringToTypeBuiltInMethods.Clear();
-			typeToStringBuiltInMethods.Clear();
+			foreach (var method in types
+					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+					 .Where(m => !m.IsSpecialName && m.GetCustomAttribute<PublicForTestOnly>() == null))
+				flatPublicStaticMethods.TryAdd(method.Name, method);
 
-			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
-				assemblies = loadedAssembliesList.ToList();
-			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,", StringComparison.OrdinalIgnoreCase))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
-				assemblies = loadedAssembliesList.Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase)).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
-			else//Running as a standalone executable.
-				assemblies = loadedAssembliesList.Where(assy => assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) ||
-														(assy.EntryPoint != null &&
-																assy.EntryPoint.DeclaringType != null &&
-																assy.EntryPoint.DeclaringType.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
-														)).ToList();
+			foreach (var property in types
+					 .SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Static))
+					 .Where(p => p.GetCustomAttribute<PublicForTestOnly>() == null))
+				flatPublicStaticProperties.TryAdd(property.Name, property);
 
-			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
-
-			foreach (var asm in assemblies)
-				foreach (var type in asm.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null &&
-							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
-						_ = FindAndCacheMethod(type, "", -1);
-
-			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
-			_ = FindAndCacheMethod(typeof(object[]), "", -1, propType);//Needs to be done manually because many of the properties are decalred in a base class.
-
-			foreach (var typekv in typeToStringMethods)
-			{
-				foreach (var methkv in typekv.Value)
-				{
-					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-
-					if (typekv.Key.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
-					{
-						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
-					}
-					else
-					{
-						_ = stringToTypeBuiltInMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-						_ = typeToStringBuiltInMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
-					}
-				}
-			}
-		}
-
-		internal static void CacheAllPropertiesAndFields()
-		{
-			typeToStringProperties.Clear();
-			stringToTypeProperties.Clear();
-
-			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp")))
-				foreach (var type in item.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null &&
-							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
-					{
-						_ = FindAndCacheProperty(type, "", 0);
-						_ = FindAndCacheField(type, "");
-					}
-
-			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
-			FindAndCacheProperty(typeof(object[]), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
-			FindAndCacheProperty(typeof(System.Exception), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
-
-			foreach (var typekv in typeToStringProperties)
-				foreach (var propkv in typekv.Value)
-					_ = stringToTypeProperties.GetOrAdd(propkv.Key).GetOrAdd(typekv.Key, propkv.Value);
+#if DEBUG
+			var mlist = flatPublicStaticMethods.Keys.ToList();
+			mlist.Sort();
+			var plist = flatPublicStaticProperties.Keys.ToList();
+			plist.Sort();
+			System.IO.File.WriteAllText("methpropskeysharp.txt", string.Join("\n", mlist.Select(m => $"{flatPublicStaticMethods[m].DeclaringType}.{m}()").OrderBy(s => s))
+										+ "\n"
+										+ string.Join("\n", plist.Select(p => $"{flatPublicStaticProperties[p].DeclaringType}.{p}").OrderBy(s => s)));
+#endif
 		}
 
 		internal static FieldInfo FindAndCacheField(Type t, string name, BindingFlags propType =
@@ -300,26 +251,24 @@ namespace Keysharp.Core
 		internal static MethodPropertyHolder FindLocalMethod(string name, int paramCount) =>
 		FindMethod(stringToTypeLocalMethods, name, paramCount);
 
-		internal static MethodPropertyHolder FindLocalRoutine(string name, int paramCount) => FindLocalMethod(Keysharp.Scripting.Parser.LabelMethodName(name), paramCount);
-
 		internal static MethodPropertyHolder FindMethod(string name, int paramCount) => FindLocalMethod(name, paramCount) is MethodPropertyHolder mph ? mph : FindBuiltInMethod(name, paramCount);
 
-		internal static bool FindOwnProp(Type t, string name, bool onlyTop = false)
+		internal static bool FindOwnProp(Type t, string name, bool userOnly = true)
 		{
-			var ct = 0L;
 			name = name.ToLower();
 
 			try
 			{
-				while (t.Assembly != typeof(Any).Assembly)
+				while (t != typeof(KeysharpObject))
 				{
+					if (userOnly && t.Assembly == typeof(Any).Assembly)
+						break;
+
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						if (dkt.TryGetValue(name, out var prop))
 							return true;
 					}
-					else
-						break;
 
 					t = t.BaseType;
 				}
@@ -332,22 +281,28 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		internal static List<MethodPropertyHolder> GetOwnProps(Type t, bool onlyTop = false)
+		internal static List<MethodPropertyHolder> GetOwnProps(Type t, bool userOnly = true)
 		{
 			var props = new List<MethodPropertyHolder>();
 
 			try
 			{
-				while (t.Assembly != typeof(Any).Assembly)
+				while (t != typeof(KeysharpObject))
 				{
+					if (userOnly && t.Assembly == typeof(Any).Assembly)
+						break;
+
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						foreach (var kv in dkt)
 							if (kv.Key != "__Class" && kv.Value.Count > 0)
-								props.Add(kv.Value.First().Value);
+							{
+								var mph = kv.Value.First().Value;
+
+								if (mph.ParamLength == 0)//Do not add Index[] properties.
+									props.Add(mph);
+							}
 					}
-					else
-						break;
 
 					t = t.BaseType;
 				}
@@ -360,107 +315,19 @@ namespace Keysharp.Core
 			return props;
 		}
 
-		internal static string GetVariableInfo()
-		{
-			var sb = new StringBuilder(2048);
-			var stack = new StackTrace(false).GetFrames();
-
-			for (var i = stack.Length - 1; i >= 0; i--)
-			{
-				if (stack[i] != null &&
-						stack[i].GetMethod() != null &&
-						stack[i].GetMethod().DeclaringType.Attributes.HasFlag(TypeAttributes.Public))//Public is the script, everything else should be hidden.
-				{
-					if (stack[i].GetMethod().DeclaringType.Namespace != null &&
-							stack[i].GetMethod().DeclaringType.Namespace.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase))
-					{
-						var meth = stack[i].GetMethod();
-						_ = sb.AppendLine($"Class: {meth.ReflectedType.Name}");
-						_ = sb.AppendLine();
-
-						foreach (var v in meth.ReflectedType.GetProperties(BindingFlags.Public | BindingFlags.Static))
-						{
-							var val = v.GetValue(null);
-							var varstr = $"\t{val?.GetType()} {v.Name}: ";
-
-							if (val is string s)
-								varstr += $"[{s.Length}] {s.Substring(0, Math.Min(s.Length, 60))}";
-							else if (val is Keysharp.Core.Array arr)
-							{
-								var ct = Math.Min(100, arr.Count);
-								var tempsb = new StringBuilder(ct * 100);
-
-								for (var a = 1; a <= ct; a++)
-								{
-									var tempstr = arr[a].ToString();
-									_ = tempsb.Append(tempstr.Substring(0, Math.Min(tempstr.Length, 60)));
-
-									if (a < ct)
-										_ = tempsb.Append(", ");
-								}
-
-								varstr += tempsb.ToString();
-							}
-							else if (val is Keysharp.Core.Map map)
-							{
-								var ct = Math.Min(100, map.Count);
-								var a = 0;
-								var tempsb = new StringBuilder(ct * 100);
-								_ = tempsb.Append('{');
-
-								foreach (var kv in map.map)
-								{
-									var tempstr = kv.Value.ToString();
-									_ = tempsb.Append($"{kv.Key} : {tempstr.Substring(0, Math.Min(tempstr.Length, 60))}");
-
-									if (++a < ct)
-										_ = tempsb.Append(", ");
-								}
-
-								_ = tempsb.Append('}');
-								varstr += tempsb.ToString();
-							}
-							else if (val == null)
-								varstr += "null";
-							else
-								varstr += val.ToString();
-
-							_ = sb.AppendLine(varstr);
-						}
-
-						_ = sb.AppendLine("");
-						_ = sb.AppendLine($"Method: {meth.Name}");
-						var mb = stack[i].GetMethod().GetMethodBody();
-
-						foreach (var lvi in mb.LocalVariables)
-							_ = sb.AppendLine($"\t{lvi.LocalType}");
-
-						_ = sb.AppendLine("--------------------------------------------------");
-						_ = sb.AppendLine();
-					}
-				}
-			}
-
-			return sb.ToString();
-		}
-
-		internal static long OwnPropCount(Type t, bool onlyTop = false)
+		internal static long OwnPropCount(Type t, bool userOnly = true)
 		{
 			var ct = 0L;
 
 			try
 			{
-				while (t.Assembly != typeof(Any).Assembly)
+				while (t != typeof(KeysharpObject))
 				{
-					if (typeToStringProperties.TryGetValue(t, out var dkt))
-					{
-						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
-
-						if (onlyTop)
-							break;
-					}
-					else
+					if (userOnly && t.Assembly == typeof(Any).Assembly)
 						break;
+
+					if (typeToStringProperties.TryGetValue(t, out var dkt))
+						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
 
 					t = t.BaseType;
 				}
@@ -477,6 +344,83 @@ namespace Keysharp.Core
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 
+		private static void CacheAllMethods()
+		{
+			List<Assembly> assemblies;
+			var loadedAssembliesList = loadedAssemblies.Values;
+			stringToTypeLocalMethods.Clear();
+			typeToStringLocalMethods.Clear();
+			stringToTypeBuiltInMethods.Clear();
+			typeToStringBuiltInMethods.Clear();
+
+			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
+				assemblies = loadedAssembliesList.ToList();
+			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,", StringComparison.OrdinalIgnoreCase))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
+				assemblies = loadedAssembliesList.Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase)).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
+			else//Running as a standalone executable.
+				assemblies = loadedAssembliesList.Where(assy => assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) ||
+														(assy.EntryPoint != null &&
+																assy.EntryPoint.DeclaringType != null &&
+																assy.EntryPoint.DeclaringType.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
+														)).ToList();
+
+			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
+
+			foreach (var asm in assemblies)
+				foreach (var type in asm.GetTypes())
+					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
+							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
+							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
+						_ = FindAndCacheMethod(type, "", -1);
+
+			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
+			_ = FindAndCacheMethod(typeof(object[]), "", -1, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+
+			foreach (var typekv in typeToStringMethods)
+			{
+				foreach (var methkv in typekv.Value)
+				{
+					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
+
+					if (typekv.Key.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
+					{
+						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
+						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
+					}
+					else
+					{
+						_ = stringToTypeBuiltInMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
+						_ = typeToStringBuiltInMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
+					}
+				}
+			}
+		}
+
+		private static void CacheAllPropertiesAndFields()
+		{
+			typeToStringProperties.Clear();
+			stringToTypeProperties.Clear();
+
+			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp")))
+				foreach (var type in item.GetTypes())
+					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
+							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
+					{
+						_ = FindAndCacheProperty(type, "", 0);
+						_ = FindAndCacheField(type, "");
+					}
+
+			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
+			FindAndCacheProperty(typeof(object[]), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+			FindAndCacheProperty(typeof(System.Exception), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+
+			foreach (var typekv in typeToStringProperties)
+				foreach (var propkv in typekv.Value)
+					_ = stringToTypeProperties.GetOrAdd(propkv.Key).GetOrAdd(typekv.Key, propkv.Value);
+		}
+
 		private static MethodPropertyHolder FindMethod(Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> dkt, string name, int paramCount)
 		{
 			if (dkt.TryGetValue(name, out var meths))
@@ -491,24 +435,6 @@ namespace Keysharp.Core
 				}
 
 			return null;
-		}
-
-		/// <summary>
-		/// This Method extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.
-		/// </summary>
-		/// <remarks>
-		/// Insired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
-		/// </remarks>
-		/// <returns>returns MethodInfo[] with the extended Method</returns>
-		private static List<MethodInfo> GetExtensionMethods(this Type t, List<Type> types)
-		{
-			var query = from type in types
-						where type.IsSealed && /*!type.IsGenericType &&*/ !type.IsNested
-						from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-						where method.IsDefined(typeof(ExtensionAttribute), false)
-						where method.GetParameters().Length > 0 && method.GetParameters()[0].ParameterType.Name == t.Name
-						select method;
-			return query.Select(m => m.IsGenericMethod ? m.MakeGenericMethod(t.GenericTypeArguments) : m).ToList();
 		}
 
 		private static Dictionary<string, Assembly> GetLoadedAssemblies()
@@ -532,50 +458,23 @@ namespace Keysharp.Core
 			return dkt;
 		}
 
-		/*
-		        internal static MethodInfo FindExtensionMethod(Type t, string meth)
-		        {
-		            //if (typeof(IDictionary).IsAssignableFrom(t))
-		            //  if (ExtensionMethods.TryGetValue(typeof(IDictionary).GUID, out var idkt))
-		            //      if (idkt.TryGetValue(meth, out var mi))
-		            //          return mi;
-		            if (ExtensionMethods.TryGetValue(t.GUID, out var dkt))
-		                if (dkt.TryGetValue(meth, out var mi))
-		                    return mi;
-
-		            return null;
-		        }
-		*/
-		/*
-		    public MethodInfo BestMatch(string name, int length)
-		    {
-		    MethodInfo result = null;
-		    var last = int.MaxValue;
-
-		    foreach (var writer in this)
-		    {
-		        // find method with same name (case insensitive)
-		        if (!name.Equals(writer.Name, StringComparison.OrdinalIgnoreCase))
-		            continue;
-
-		        var param = writer.GetParameters().Length;
-
-		        if (param == length) // perfect match when parameter count is the same
-		        {
-		            return writer;
-		        }
-		        else if (param > length && param < last) // otherwise find a method with the next highest number of parameters
-		        {
-		            result = writer;
-		            last = param;
-		        }
-		        else if (result == null) // return the first method with excess parameters as a last resort
-		            result = writer;
-		    }
-
-		    return result;
-		    }
-		*/
+		/// <summary>
+		/// This Method extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.
+		/// </summary>
+		/// <remarks>
+		/// Insired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
+		/// </remarks>
+		/// <returns>returns MethodInfo[] with the extended Method</returns>
+		//private static List<MethodInfo> GetExtensionMethods(this Type t, List<Type> types)
+		//{
+		//  var query = from type in types
+		//              where type.IsSealed && /*!type.IsGenericType &&*/ !type.IsNested
+		//              from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+		//              where method.IsDefined(typeof(ExtensionAttribute), false)
+		//              where method.GetParameters().Length > 0 && method.GetParameters()[0].ParameterType.Name == t.Name
+		//              select method;
+		//  return query.Select(m => m.IsGenericMethod ? m.MakeGenericMethod(t.GenericTypeArguments) : m).ToList();
+		//}
 	}
 
 	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext

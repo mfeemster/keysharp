@@ -1,11 +1,11 @@
+using Keysharp.Core;
+using Keysharp.Core.Windows;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
-using Keysharp.Core;
-using Keysharp.Core.Windows;
 
 namespace Keysharp.Scripting
 {
@@ -13,14 +13,18 @@ namespace Keysharp.Scripting
 	{
 		public class Variables
 		{
+			internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
 			internal static DateTime startTime = DateTime.Now;
-
-			//private static Dictionary<string, FieldInfo> globalVars = new Dictionary<string, FieldInfo>(StringComparer.OrdinalIgnoreCase);
 			private static Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
 
-			private Stack<string> collect = new Stack<string>();
-			private Dictionary<string, object> table = new Dictionary<string, object>();
 			public bool AutoMark { get; set; }
+
+			/// <summary>
+			/// Will be a generated call within Main which calls into this class to add DLLs.
+			/// </summary>
+			/// <param name="p"></param>
+			/// <param name="s"></param>
+			public static void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
 
 			public static void InitGlobalVars()
 			{
@@ -31,6 +35,7 @@ namespace Keysharp.Scripting
 #else
 				Keysharp.Core.Processes.MainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 #endif
+				Keysharp.Core.Processes.ManagedMainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 				var stack = new StackTrace(false).GetFrames();
 
 				for (var i = stack.Length - 1; i >= 0; i--)
@@ -57,7 +62,7 @@ namespace Keysharp.Scripting
 					}
 				}
 
-				foreach (var dll in Keysharp.Scripting.Parser.preloadedDlls)//Need to figure out a cross platform way to do DLL work.//TODO
+				foreach (var dll in preloadedDlls)//Need to figure out a cross platform way to do DLL work.//TODO
 				{
 					if (dll.Item1.Length == 0)
 					{
@@ -93,24 +98,21 @@ namespace Keysharp.Scripting
 				}
 
 				Reflections.Initialize();//For some reason, the program will crash if these are delay initialized, so do them now.
-				Accessors.SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
+				SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 				Application.AddMessageFilter(new Keysharp.Core.MessageFilter());
 			}
 
 			public object GetVariable(string key)
 			{
-				lock (table)
+				if (globalVars.TryGetValue(key, out var field))
 				{
-					if (globalVars.TryGetValue(key, out var field))
-					{
-						if (field is PropertyInfo pi)
-							return pi.GetValue(null);
-						else if (field is FieldInfo fi)
-							return fi.GetValue(null);
-					}
-
-					return GetReservedVariable(key);//Last, try reserved variable.
+					if (field is PropertyInfo pi)
+						return pi.GetValue(null);
+					else if (field is FieldInfo fi)
+						return fi.GetValue(null);
 				}
+
+				return GetReservedVariable(key);//Last, try reserved variable.
 			}
 
 			public object SetVariable(string key, object value)
@@ -130,14 +132,14 @@ namespace Keysharp.Scripting
 
 			private static PropertyInfo FindReservedVariable(string name)
 			{
-				_ = Parser.libProperties.TryGetValue(name.ToLowerInvariant(), out var prop);
+				_ = Reflections.flatPublicStaticProperties.TryGetValue(name, out var prop);
 				return prop;
 			}
 
 			private static object GetReservedVariable(string name)
 			{
 				var prop = FindReservedVariable(name);
-				return prop == null || !prop.CanRead ? null : prop.GetValue(null, null);
+				return prop == null || !prop.CanRead ? null : prop.GetValue(null);
 			}
 
 			private static bool SetReservedVariable(string name, object value)
@@ -148,7 +150,7 @@ namespace Keysharp.Scripting
 				if (set)
 				{
 					value = ForceType(prop.PropertyType, value);
-					prop.SetValue(null, value, null);
+					prop.SetValue(null, value);
 				}
 
 				return set;

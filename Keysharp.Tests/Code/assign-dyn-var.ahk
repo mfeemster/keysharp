@@ -207,3 +207,19 @@ If (x == 60)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
+	
+a_clipboardTimeout := 1000
+to := "Timeout"
+val := a_clipboard%to%
+
+If (val == 1000)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *
+
+a_clipboard%to% := 2000
+
+If (a_clipboardTimeout == 2000)
+	FileAppend, pass, *
+else
+	FileAppend, fail, *

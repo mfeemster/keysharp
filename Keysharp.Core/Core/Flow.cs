@@ -3,11 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
-using ThreadState = System.Threading.ThreadState;
+using static Keysharp.Core.Misc;
 using Timer = System.Timers.Timer;
 
 namespace Keysharp.Core
@@ -24,16 +23,14 @@ namespace Keysharp.Core
 		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
 		internal static bool hasExited;
 		internal static bool persistentValueSetByUser;
-
-		[ThreadStatic]
-		private static System.Windows.Forms.Timer currentTimer;
+		internal static bool callingCritical;
 
 		/// <summary>
 		/// Is the Script currently suspended?
 		/// </summary>
-		public static bool Suspended { get; internal set; }
+		internal static bool Suspended { get; set; }
 
-		internal static bool AllowInterruption { get; set; }
+		internal static bool AllowInterruption { get; set; } = true;
 
 		public static void Init()
 		{
@@ -49,15 +46,68 @@ namespace Keysharp.Core
 		/// <item><term>Off</term>: <description>resets the current thread priority to normal.</description></item>
 		/// </list>
 		/// </param>
-		public static void Critical(object obj = null)
+		public static object Critical(object obj = null)
 		{
-			var on = obj == null || (Options.OnOff(obj.As()) ?? true);
-			var p = on ? ThreadPriority.Highest : ThreadPriority.Normal;
+			callingCritical = true;
+			var tv = Threads.GetThreadVariables();
+			var on = obj == null;
+			var freq = 0L;
 
-			if (!Keysharp.Scripting.Script.isReadyToExecute)
-				Accessors.threadPriorityDef = p;
+			if (!on)
+			{
+				var b = Options.OnOff(obj.As());
 
-			System.Threading.Thread.CurrentThread.Priority = p;
+				if (b != null)
+					on = b.Value;
+				else
+					freq = obj.Al(16);
+			}
+
+			var ret = tv.isCritical ? tv.peekFrequency : 0L;
+			// v1.0.46: When the current thread is critical, have the script check messages less often to
+			// reduce situations where an OnMessage or GUI message must be discarded due to "thread already
+			// running".  Using 16 rather than the default of 5 solves reliability problems in a custom-menu-draw
+			// script and probably many similar scripts -- even when the system is under load (though 16 might not
+			// be enough during an extreme load depending on the exact preemption/timeslice dynamics involved).
+			// DON'T GO TOO HIGH because this setting reduces response time for ALL messages, even those that
+			// don't launch script threads (especially painting/drawing and other screen-update events).
+			// Some hardware has a tickcount granularity of 15 instead of 10, so this covers more variations.
+			// v1.0.48: Below supports "Critical 0" as meaning "Off" to improve compatibility with A_IsCritical.
+			// In fact, for performance, only the following are no recognized as turning on Critical:
+			//     - "On"
+			//     - ""
+			//     - Integer other than 0.
+			// Everything else is considered to be "Off", including "Off", any non-blank string that
+			// doesn't start with a non-zero number, and zero itself.
+			tv.isCritical = obj == null // i.e. omitted or blank is the same as "ON". See comments above.
+							|| on
+							|| freq > 0; // Non-zero integer also turns it on. Relies on short-circuit boolean order.
+
+			if (tv.isCritical) // Critical has been turned on. (For simplicity even if it was already on, the following is done.)
+			{
+				tv.peekFrequency = freq;
+				tv.allowThreadToBeInterrupted = false;
+				// Ensure uninterruptibility never times out.  IsInterruptible() relies on this to avoid the
+				// need to check g->ThreadIsCritical, which in turn allows global_maximize_interruptibility()
+				// and DialogPrep() to avoid resetting g->ThreadIsCritical, which allows it to reliably be
+				// used as the default setting for new threads, even when the auto-execute thread itself
+				// (or the idle thread) needs to be interruptible, such as while displaying a dialog->
+				// In other words, g->ThreadIsCritical only represents the desired setting as set by the
+				// script, and isn't the actual mechanism used to make the thread uninterruptible.
+				tv.uninterruptibleDuration = -1;
+			}
+			else // Critical has been turned off.
+			{
+				// Since Critical is being turned off, allow thread to be immediately interrupted regardless of
+				// any "Thread Interrupt" settings.
+				tv.peekFrequency = 5;
+				tv.allowThreadToBeInterrupted = true;
+			}
+
+			// The thread's interruptibility has been explicitly set; so the script is now in charge of
+			// managing this thread's interruptibility.
+			callingCritical = false;
+			return ret;
 		}
 
 		public static long EnabledTimerCount()
@@ -65,7 +115,7 @@ namespace Keysharp.Core
 			var ct = 0L;
 
 			foreach (var kv in timers)
-				if (kv.Value.Enabled)
+				if (kv.Value.Enabled)//This won't work if we're enabling and disabling timers in the tick event.//TODO
 					ct++;
 
 			return ct;
@@ -153,8 +203,8 @@ namespace Keysharp.Core
 		public static object Persistent(object obj = null)
 		{
 			var b = obj.Ab(true);
-			var old = Parser.Persistent;
-			Parser.Persistent = persistentValueSetByUser = b;
+			var old = Script.Persistent;
+			Script.Persistent = persistentValueSetByUser = b;
 			return old;
 		}
 
@@ -172,8 +222,9 @@ namespace Keysharp.Core
 			var function = obj0;
 			var period = obj1.Al(long.MaxValue);
 			var priority = obj2.Al();
-			FuncObj func = null;
 			var once = period < 0;
+			FuncObj func = null;
+			System.Windows.Forms.Timer timer = null;
 
 			if (once)
 				period = -period;
@@ -192,30 +243,25 @@ namespace Keysharp.Core
 					   fo : throw new TypeError($"Parameter {function} of type {function.GetType()} was not a string or a function object.");
 			}
 
-			//func can now only ever be accessed by the caller from within the timer event, as the first argument.
-			System.Windows.Forms.Timer timer = null;
-
 			if (func != null && timers.TryGetValue(func, out timer))
 			{
 			}
 			else if (function == null)
-				timer = currentTimer;//Not thread safe;
+				timer = Threads.GetThreadVariables().currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
 
 			if (timer != null)
 			{
 				if (period == 0)
 				{
-					if (func != null)
-						_ = timers.TryRemove(func, out _);
-					else
+					if (func == null)
 					{
 						var temptimer = timers.Where((kv) => kv.Value == timer).FirstOrDefault();
 
 						if (temptimer.Key != null)
-						{
 							_ = timers.TryRemove(temptimer.Key, out var _);
-						}
 					}
+					else
+						_ = timers.TryRemove(func, out _);
 
 					timer.Stop();
 					timer.Dispose();
@@ -225,8 +271,15 @@ namespace Keysharp.Core
 				{
 					if (period == long.MaxValue)
 					{
-						timer.Stop();
-						timer.Start();
+						if (priority != timer.Tag.Al())//Period omitted and timer existed, but priority was specified, so just update the priority.
+						{
+							timer.Tag = priority;
+						}
+						else//Period omitted, timer did exist, and priority was omitted so reset it at its current interval.
+						{
+							timer.Stop();
+							timer.Start();
+						}
 					}
 					else
 						timer.Interval = (int)period;
@@ -236,55 +289,62 @@ namespace Keysharp.Core
 			}
 			else if (period != 0)
 			{
-				if (period == long.MaxValue)
+				if (period == long.MaxValue)//Period omitted and timer didn't exist, so create one with a 250ms interval.
 					period = 250;
 
 				_ = timers.TryAdd(func, timer = new System.Windows.Forms.Timer());
+				timer.Tag = (int)priority;
 				timer.Interval = (int)period;
 			}
 			else//They tried to stop a timer that didn't exist
 				return;
 
-			var level = ThreadPriority.Normal;
-
-			if (priority > -1 && priority < 5)
-				level = (ThreadPriority)priority;
-
-			timer.Tick += (ss, ee) =>
-						  //timer.Elapsed += (ss, ee) =>
+			timer.Tick += async (ss, ee) =>
 			{
+				if ((!Accessors.A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
+						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
+					return;
+
 				if (ss is System.Windows.Forms.Timer t)
 				{
-					t.Enabled = false;
+					if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
+						return;
 
-					var remove = false;
+					var pri = t.Tag.Ai();
+					var tv = Threads.GetThreadVariables();
 
-					System.Threading.Thread.CurrentThread.Priority = level;
-
-					//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented, specifically the Thread() function.//TODO
-					try
+					if (pri >= tv.priority)
 					{
-						//_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(ee.SignalTime));
-						currentTimer = t;//Not thread safe;
-						_ = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
+						t.Enabled = false;
 
-						if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
-							existing.Enabled = true;
-					}
-					catch (Exception)
-					{
-						remove = true;
-					}
-					finally
-					{
-						currentTimer = null;
-					}
+						var remove = false;
 
-					if (once || remove)
-					{
-						_ = timers.TryRemove(func, out _);
-						t.Stop();
-						t.Dispose();
+						VariadicFunction vf = (thetimer) =>
+						{
+							Threads.GetThreadVariables().currentTimer = thetimer[0] as System.Windows.Forms.Timer;
+							return func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
+						};
+
+						//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented, specifically the Thread() function.//TODO
+						try
+						{
+							_ = await Threads.LaunchInThread(pri, false, false, vf, new object[] { t });
+						}
+						catch (Exception)
+						{
+							remove = true;
+						}
+						finally
+						{
+							if (once || remove)
+							{
+								_ = timers.TryRemove(func, out _);
+								t.Stop();
+								t.Dispose();
+							}
+							else if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
+								existing.Enabled = true;
+						}
 					}
 				}
 			};
@@ -343,19 +403,29 @@ namespace Keysharp.Core
 		/// </param>
 		public static void Suspend(object obj)
 		{
-			var state = Options.ConvertOnOffToggle(obj.As());
+			var state = Conversions.ConvertOnOffToggle(obj.As());
 			Suspended = state == Common.Keyboard.ToggleValueType.Toggle ? !Suspended : (state == Common.Keyboard.ToggleValueType.On);
 
-			if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
+			if (!(bool)Accessors.A_IconFrozen && !Script.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s_ico : Keysharp.Core.Properties.Resources.Keysharp_ico;
 		}
 
-		/// <summary>
-		/// This method is obsolete, use <see cref="Critical"/>.
-		/// </summary>
-		[Obsolete]
-		public static void Thread()
+		public static void Thread(object obj0, object obj1 = null, object obj2 = null)
 		{
+			var subFunc = obj0.As();
+
+			if (string.Compare(subFunc, "notimers", true) == 0)
+			{
+				Accessors.A_AllowTimers = !(Options.OnOff(obj1.As()) ?? false);
+			}
+			else if (string.Compare(subFunc, "priority", true) == 0)
+			{
+				Threads.GetThreadVariables().priority = obj1.Al();
+			}
+			else if (string.Compare(subFunc, "interrupt", true) == 0)
+			{
+				Keysharp.Scripting.Script.uninterruptibleTime = obj1.Ai(Keysharp.Scripting.Script.uninterruptibleTime);
+			}
 		}
 
 		internal static bool ExitAppInternal(ExitReasons obj0, object obj1 = null)
@@ -363,17 +433,23 @@ namespace Keysharp.Core
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
-			var exitReason = obj0.Ai();
 			var exitCode = obj1.Ai();
-			Accessors.A_ExitReason = exitReason;
+			Accessors.A_ExitReason = obj0.ToString();
+			var allowInterruption_prev = AllowInterruption;//Save current setting.
+			AllowInterruption = false;
 			var result = Script.OnExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
 
 			if (result.IsCallbackResultNonEmpty())//If any exit handlers returned a non empty value, abort the exit.
+			{
+				Accessors.A_ExitReason = "";
+				AllowInterruption = allowInterruption_prev;
 				return true;
+			}
 			else
 				Keysharp.Scripting.Script.OnExitHandlers.Clear();
 
 			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			AllowInterruption = allowInterruption_prev;
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.AllDestruct();
 
 			if (Script.HookThread is Common.Threading.HookThread ht)
@@ -442,7 +518,7 @@ namespace Keysharp.Core
 
 		internal enum ExitReasons
 		{
-			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, SingleInstance
+			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, Single
 		}
 	}
 }

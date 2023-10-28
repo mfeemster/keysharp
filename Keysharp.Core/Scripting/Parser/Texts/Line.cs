@@ -1,11 +1,11 @@
 ﻿using System;
-using static Keysharp.Core.Core;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private bool IsContinuationLine(string code, bool next)
+		internal static bool IsContinuationLine(string code, bool next)
 		{
 			if (code.Length == 0)
 				return false;
@@ -13,6 +13,10 @@ namespace Keysharp.Scripting
 			//This is needed so that ordinary lines that end in an operator, like FileAppend, pass, *, are not considered continuations.
 			//Checking for a comma appears to be enough, but it might need further checks if some corner case throws it off in the future.
 			if (next && code.Contains(','))
+				return false;
+
+			//Also don't treat directives that end in * as continuations, such as #Hotstring *
+			if (code.StartsWith('#'))
 				return false;
 
 			var index = next ? code.Length - 1 : 0;

@@ -1,16 +1,13 @@
-using Keysharp.Core.Windows;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Mail;
 using System.Threading.Tasks;
-using System.Windows.Forms.VisualStyles;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -33,7 +30,7 @@ namespace Keysharp.Core
 
 			if (address.StartsWith('*'))
 			{
-				var splits = address.Split(Keysharp.Core.Core.SpaceTab);
+				var splits = address.Split(SpaceTab);
 
 				if (splits.Length == 2)
 				{
@@ -164,37 +161,37 @@ namespace Keysharp.Core
 
 				switch (item.ToLowerInvariant())
 				{
-					case Core.Keyword_Attachments:
+					case Keyword_Attachments:
 						foreach (var entry in value)
-							if (System.IO.File.Exists(entry))
+							if (File.Exists(entry))
 								msg.Attachments.Add(new Attachment(entry));
 
 						break;
 
-					case Core.Keyword_Bcc:
+					case Keyword_Bcc:
 						foreach (var entry in value)
 							msg.Bcc.Add(entry);
 
 						break;
 
-					case Core.Keyword_CC:
+					case Keyword_CC:
 						foreach (var entry in value)
 							msg.CC.Add(entry);
 
 						break;
 
-					case Core.Keyword_From:
+					case Keyword_From:
 						msg.From = new MailAddress(value[0]);
 						break;
 
-					case Core.Keyword_ReplyTo:
+					case Keyword_ReplyTo:
 						msg.ReplyToList.Add(new MailAddress(value[0]));
 						break;
 
-					case Core.Keyword_Host:
+					case Keyword_Host:
 					{
 						smtpHost = value[0];
-						var z = smtpHost.LastIndexOf(Core.Keyword_Port);
+						var z = smtpHost.LastIndexOf(Keyword_Port);
 
 						if (z != -1)
 						{

@@ -123,11 +123,23 @@ namespace Keysharp.Core
 
 	public class StringBuffer : KeysharpObject
 	{
-		public StringBuilder sb;
+		internal StringBuilder sb;
 
 		public StringBuffer(string str = "", int capacity = 256) => sb = new StringBuilder(str, capacity);
 
 		public static implicit operator string(StringBuffer s) => s.sb.ToString();
+
+		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		{
+			var indent = new string('\t', tabLevel);
+			var fieldType = GetType().Name;
+			var str = sb.ToString();
+
+			if (name.Length == 0)
+				_ = sbuf.sb.AppendLine($"{indent}{str} ({fieldType})");
+			else
+				_ = sbuf.sb.AppendLine($"{indent}{name}: {str} ({fieldType})");
+		}
 
 		public override string ToString() => (string)this;
 	}

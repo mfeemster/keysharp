@@ -148,7 +148,7 @@ namespace Keysharp.Core
 			var filename = obj0.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(obj1);
 
-			if (Parser.NoTrayIcon)
+			if (Script.NoTrayIcon)
 				return;
 
 			if (obj2 != null)
@@ -190,7 +190,7 @@ namespace Keysharp.Core
 			var title = obj1.As();
 			var options = obj2;
 
-			if (Parser.NoTrayIcon)
+			if (Script.NoTrayIcon)
 				return;
 
 			if ((bool)Accessors.A_IconHidden)

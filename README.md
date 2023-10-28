@@ -69,7 +69,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Exception classes aren't, and can't be, derived from KeysharpObject.
 	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
-	+ The `Fast/F` option is enabled by default because threads are not implemented yet.
 	+ The `ParamCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
 	+ Passing string pointers to `DllCall()` when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
 	+ Usage of the created callback will be extremely inefficient, so usage of `CallbackCreate()` is discouraged.
@@ -111,8 +110,10 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
 	+ `ObjOwnProps()` takes an optional second argument which is a boolean. Passing `True` means return name and value, passing `False` or empty means return name only.
-	
+* Menu items, whether shown or not, have no impact on threading.
+
 ###	Syntax: ###
+* `Peristent` is a function and therefore must be called like either a function `Persistent()` or as a directive like `#Persistent`.
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
@@ -264,9 +265,27 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * AHK does not support reloading a compiled script, however Keysharp does.
 * `A_EventInfo` is not limited to positive values when reporting the mouse wheel scroll amount.
 	+ When scrolling up, the value will be positive, and negative when scrolling down.
-* A new accessor named `A_CommandLine` which returns the command line string.
-	+ This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
-* The defaults for hotstring creation can be retrieved by the global static `DefaultHotstring*` properties.
+* New accessors:
+	+ `A_AllowTimers` returns whether timers are allowed or not. It's also easier to set this value rather than call `Thread("NoTimers")`.
+	+ `A_CommandLine` returns the command line string. This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
+	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
+	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
+	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
+	+ `A_UseHook` returns the value `n` specified with `#UseHook n`.
+	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
+	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
+	+ `A_DefaultHotstringCaseSensitive` returns the default hotstring case sensitivity mode.
+	+ `A_DefaultHotstringConformToCase` returns the default hotstring case conformity mode.
+	+ `A_DefaultHotstringDetectWhenInsideWord` returns the default hotstring word detection mode.
+	+ `A_DefaultHotstringDoBackspace` returns the default hotstring backspacing mode.
+	+ `A_DefaultHotstringDoReset` returns the default hotstring resetting mode.
+	+ `A_DefaultHotstringEndCharRequired` returns the default hotstring ending character mode.
+	+ `A_DefaultHotstringEndChars` returns the default hotstring ending characters.
+	+ `A_DefaultHotstringKeyDelay` returns the default hotstring key delay length in milliseconds.
+	+ `A_DefaultHotstringOmitEndChar` returns the default hotstring ending character replacement mode.
+	+ `A_DefaultHotstringPriority` returns the default hotstring priority.
+	+ `A_DefaultHotstringSendMode` returns the default hotstring sending mode.
+	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
 * `Log(number, base := 10)` is by default base 10, but you can pass a double as the second parameter to specify a custom base.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
@@ -359,6 +378,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
+* When passing `"Interrupt"` as the second argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
 
 ## Who do I talk to? ##
 

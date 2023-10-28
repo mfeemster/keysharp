@@ -13,6 +13,7 @@ using System.Collections.Immutable;
 using Keysharp.Core;
 using System.Windows.Forms;
 
+
 #if WINDOWS
 
 	using Microsoft.CodeAnalysis.CSharp;
@@ -48,7 +49,6 @@ namespace Keysharp.Scripting
 		//Need to manually add the using static statements.
 		public static readonly string UsingStr =
 			@"using static Keysharp.Core.Accessors;
-using static Keysharp.Core.Core;
 using static Keysharp.Core.COM.Com;
 //using static Keysharp.Core.Common.Window.WindowItemBase;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
@@ -58,6 +58,7 @@ using static Keysharp.Core.Dir;
 using static Keysharp.Core.Drive;
 using static Keysharp.Core.DllHelper;
 using static Keysharp.Core.Env;
+using static Keysharp.Core.Files;
 using static Keysharp.Core.Flow;
 using static Keysharp.Core.Function;
 using static Keysharp.Core.GuiHelper;
@@ -66,7 +67,6 @@ using static Keysharp.Core.ImageLists;
 using static Keysharp.Core.Ini;
 using static Keysharp.Core.Input;
 using static Keysharp.Core.Keyboard;
-using static Keysharp.Core.KeysharpFile;
 using static Keysharp.Core.KeysharpObject;
 using static Keysharp.Core.Loops;
 using static Keysharp.Core.Maths;
@@ -92,7 +92,7 @@ using static Keysharp.Scripting.Script.Operator;
 
 		public CompilerHelper()
 		{
-			parser = new Parser(this, new CompilerParameters());//Needed just so error printing can be done if needed before compilation starts.
+			parser = new Parser(this);
 		}
 
 		public static string GenerateRuntimeConfig()
@@ -277,17 +277,17 @@ using static Keysharp.Scripting.Script.Operator;
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
 			var x = Keysharp.Core.Env.FindCommandLineArg("cp");
-			parser = new Parser(this, new CompilerParameters());
+			parser = new Parser(this);
 
 			if (x != null)
 			{
-				x = x.Trim(Keysharp.Core.Core.DashSlash);
+				x = x.Trim(Keywords.DashSlash);
 
 				if (x.Length > 2 && int.TryParse(x.AsSpan().Slice(2), out var codepage))
 					enc = Encoding.GetEncoding(codepage);
 			}
 
-			for (var i = 0; i < fileNames.Length; i++)
+			for (var i = 0; i < fileNames.Length; i++)//This has likely never been tested with more than one file at a time. Need to figure that out.//TODO
 			{
 				try
 				{
@@ -318,7 +318,7 @@ using static Keysharp.Scripting.Script.Operator;
 
 		public void PrintCompilerErrors(string s)
 		{
-			if (Keysharp.Scripting.Parser.ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)
+			if (parser.ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)
 				Keysharp.Scripting.Script.OutputDebug(s);//For this to show on the command line, they need to pipe to more like: | more
 			else
 				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);

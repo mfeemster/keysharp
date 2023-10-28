@@ -29,7 +29,6 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			txtStack = new System.Windows.Forms.TextBox();
 			mainMenu = new System.Windows.Forms.MenuStrip();
 			fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			reloadScriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,13 +41,13 @@
 			variablesAndTheirContentsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			hotkeysAndTheirMethodsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			keyHistoryAndScriptInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			clearDebugLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
 			refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			userManualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			websiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			tcMain = new System.Windows.Forms.TabControl();
-			tpStack = new System.Windows.Forms.TabPage();
 			tpDebug = new System.Windows.Forms.TabPage();
 			txtDebug = new System.Windows.Forms.TextBox();
 			tpVars = new System.Windows.Forms.TabPage();
@@ -57,29 +56,13 @@
 			txtHotkeys = new System.Windows.Forms.TextBox();
 			tpHistory = new System.Windows.Forms.TabPage();
 			txtHistory = new System.Windows.Forms.TextBox();
-			clearDebugLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			mainMenu.SuspendLayout();
 			tcMain.SuspendLayout();
-			tpStack.SuspendLayout();
 			tpDebug.SuspendLayout();
 			tpVars.SuspendLayout();
 			tpHotkeys.SuspendLayout();
 			tpHistory.SuspendLayout();
 			SuspendLayout();
-			//
-			// txtStack
-			//
-			txtStack.BackColor = System.Drawing.SystemColors.MenuBar;
-			txtStack.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtStack.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			txtStack.Location = new System.Drawing.Point(2, 2);
-			txtStack.Margin = new System.Windows.Forms.Padding(2);
-			txtStack.Multiline = true;
-			txtStack.Name = "txtStack";
-			txtStack.ReadOnly = true;
-			txtStack.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			txtStack.Size = new System.Drawing.Size(831, 479);
-			txtStack.TabIndex = 0;
 			//
 			// mainMenu
 			//
@@ -171,6 +154,13 @@
 			keyHistoryAndScriptInfoToolStripMenuItem.Text = "&Key history and script info";
 			keyHistoryAndScriptInfoToolStripMenuItem.Click += keyHistoryAndScriptInfoToolStripMenuItem_Click;
 			//
+			// clearDebugLogToolStripMenuItem
+			//
+			clearDebugLogToolStripMenuItem.Name = "clearDebugLogToolStripMenuItem";
+			clearDebugLogToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
+			clearDebugLogToolStripMenuItem.Text = "&Clear debug log";
+			clearDebugLogToolStripMenuItem.Click += clearDebugLogToolStripMenuItem_Click;
+			//
 			// toolStripSeparator2
 			//
 			toolStripSeparator2.Name = "toolStripSeparator2";
@@ -208,7 +198,6 @@
 			//
 			// tcMain
 			//
-			tcMain.Controls.Add(tpStack);
 			tcMain.Controls.Add(tpDebug);
 			tcMain.Controls.Add(tpVars);
 			tcMain.Controls.Add(tpHotkeys);
@@ -220,18 +209,6 @@
 			tcMain.SelectedIndex = 0;
 			tcMain.Size = new System.Drawing.Size(843, 511);
 			tcMain.TabIndex = 3;
-			//
-			// tpStack
-			//
-			tpStack.Controls.Add(txtStack);
-			tpStack.Location = new System.Drawing.Point(4, 24);
-			tpStack.Margin = new System.Windows.Forms.Padding(2);
-			tpStack.Name = "tpStack";
-			tpStack.Padding = new System.Windows.Forms.Padding(2);
-			tpStack.Size = new System.Drawing.Size(835, 483);
-			tpStack.TabIndex = 0;
-			tpStack.Text = "Stack";
-			tpStack.UseVisualStyleBackColor = true;
 			//
 			// tpDebug
 			//
@@ -336,13 +313,6 @@
 			txtHistory.Size = new System.Drawing.Size(831, 479);
 			txtHistory.TabIndex = 3;
 			//
-			// clearDebugLogToolStripMenuItem
-			//
-			clearDebugLogToolStripMenuItem.Name = "clearDebugLogToolStripMenuItem";
-			clearDebugLogToolStripMenuItem.Size = new System.Drawing.Size(260, 22);
-			clearDebugLogToolStripMenuItem.Text = "&Clear debug log";
-			clearDebugLogToolStripMenuItem.Click += clearDebugLogToolStripMenuItem_Click;
-			//
 			// MainWindow
 			//
 			AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -353,6 +323,7 @@
 			MainMenuStrip = mainMenu;
 			Margin = new System.Windows.Forms.Padding(2);
 			Name = "MainWindow";
+			ShowInTaskbar = false;
 			StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			Text = "Keysharp";
 			FormClosing += MainWindow_FormClosing;
@@ -362,8 +333,6 @@
 			mainMenu.ResumeLayout(false);
 			mainMenu.PerformLayout();
 			tcMain.ResumeLayout(false);
-			tpStack.ResumeLayout(false);
-			tpStack.PerformLayout();
 			tpDebug.ResumeLayout(false);
 			tpDebug.PerformLayout();
 			tpVars.ResumeLayout(false);
@@ -377,8 +346,6 @@
 		}
 
 		#endregion
-
-		private System.Windows.Forms.TextBox txtStack;
 		private System.Windows.Forms.MenuStrip mainMenu;
 		private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
@@ -397,7 +364,6 @@
 		private System.Windows.Forms.ToolStripMenuItem userManualToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem websiteToolStripMenuItem;
 		private System.Windows.Forms.TabControl tcMain;
-		private System.Windows.Forms.TabPage tpStack;
 		private System.Windows.Forms.TabPage tpDebug;
 		private System.Windows.Forms.TabPage tpVars;
 		private System.Windows.Forms.TextBox txtDebug;

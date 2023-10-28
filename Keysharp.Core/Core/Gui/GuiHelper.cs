@@ -6,7 +6,10 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
+using Keysharp.Scripting;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -14,16 +17,7 @@ namespace Keysharp.Core
 	{
 		internal static ConcurrentDictionary<long, List<IFuncObj>> onMessageHandlers = new ();
 
-		[ThreadStatic]
-		private static string defaultGui;
-
-		[ThreadStatic]
-		private static Form dialogOwner;
-
 		private static Dictionary<string, Form> guis;
-
-		[ThreadStatic]
-		private static long lastFoundForm = 0;//This is probably not what we want and won't work anyway.
 
 		internal static Form DefaultGui
 		{
@@ -39,20 +33,20 @@ namespace Keysharp.Core
 
 		internal static string DefaultGuiId
 		{
-			get => defaultGui ?? "1";
-			set => defaultGui = value;
+			get => Threads.GetThreadVariables().defaultGui ?? "1";
+			set => Threads.GetThreadVariables().defaultGui = value;
 		}
 
 		internal static Form DialogOwner
 		{
-			get => dialogOwner;
-			set => dialogOwner = value;
+			get => Threads.GetThreadVariables().dialogOwner;
+			set => Threads.GetThreadVariables().dialogOwner = value;
 		}
 
 		internal static long LastFoundForm//This is probably not what we want and won't work anyway.
 		{
-			get => lastFoundForm;
-			set => lastFoundForm = value;
+			get => Threads.GetThreadVariables().lastFoundForm;
+			set => Threads.GetThreadVariables().lastFoundForm = value;
 		}
 
 		public static Icon GetIcon(string source, int n)
@@ -289,22 +283,22 @@ namespace Keysharp.Core
 
 				switch (mode)
 				{
-					case Core.Keyword_Check: row.Checked = enable; break;
+					case Keyword_Check: row.Checked = enable; break;
 
-					case Core.Keyword_Focus: row.Focused = enable; break;
+					case Keyword_Focus: row.Focused = enable; break;
 
-					case Core.Keyword_Icon: row.ImageIndex = int.Parse(mode.AsSpan(4)); break;
+					case Keyword_Icon: row.ImageIndex = int.Parse(mode.AsSpan(4)); break;
 
-					case Core.Keyword_Select: row.Selected = enable; break;
+					case Keyword_Select: row.Selected = enable; break;
 
-					case Core.Keyword_Vis: row.EnsureVisible(); break;
+					case Keyword_Vis: row.EnsureVisible(); break;
 				}
 			}
 		}
 
 		internal static void ParseAndApplyListViewColumnOptions(ColumnHeader col, string options)
 		{
-			var lvco = GuiHelper.ParseListViewColumnOptions(options);
+			var lvco = ParseListViewColumnOptions(options);
 			var lv = col.ListView as KeysharpListView;
 
 			if (lvco.width.HasValue)
@@ -764,10 +758,10 @@ namespace Keysharp.Core
 		{
 			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
 			{
-				Keysharp.Scripting.Script.hwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
+				Script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
 				var now = DateTime.Now;
 
-				if (Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&
+				if (Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&
 						ht.kbdMsSender is Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbd)
 				{
 					kbd.lastPeekTime = now;

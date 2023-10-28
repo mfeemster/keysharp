@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Keyboard;
 using Microsoft.Win32;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
@@ -39,43 +41,87 @@ namespace Keysharp.Core
 			switch (time.Length)
 			{
 				case 14:
-					if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
+					if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
 						return dt;
 
 					break;
 
 				case 12:
-					if (DateTime.TryParseExact(time, "yyyyMMddHHmm", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+					if (DateTime.TryParseExact(time, "yyyyMMddHHmm", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
 						return dt;
 
 					break;
 
 				case 10:
-					if (DateTime.TryParseExact(time, "yyyyMMddHH", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+					if (DateTime.TryParseExact(time, "yyyyMMddHH", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
 						return dt;
 
 					break;
 
 				case 8:
-					if (DateTime.TryParseExact(time, "yyyyMMdd", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+					if (DateTime.TryParseExact(time, "yyyyMMdd", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
 						return dt;
 
 					break;
 
 				case 6:
-					if (DateTime.TryParseExact(time, "yyyyMM", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+					if (DateTime.TryParseExact(time, "yyyyMM", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
 						return dt;
 
 					break;
 
 				case 4:
-					if (DateTime.TryParseExact(time, "yyyy", System.Globalization.CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
+					if (DateTime.TryParseExact(time, "yyyy", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
 						return dt;
 
 					break;
 			}
 
 			return DateTime.MinValue;
+		}
+
+		internal static ToggleValueType ConvertOnOff(object mode, ToggleValueType def = ToggleValueType.Invalid)
+		{
+			if (mode == null)
+				return ToggleValueType.Neutral;
+
+			var str = mode.ToString();
+
+			if (str?.Length == 0)
+				return ToggleValueType.Neutral;
+
+			if (string.Compare(str, "true", true) == 0 || string.Compare(str, "on", true) == 0 || str == "1") return ToggleValueType.On;
+
+			if (string.Compare(str, "false", true) == 0 || string.Compare(str, "off", true) == 0 || str == "0") return ToggleValueType.Off;
+
+			return def;
+		}
+
+		internal static ToggleValueType ConvertOnOffAlways(string buf, ToggleValueType def = ToggleValueType.Invalid)
+		{
+			var toggle = ConvertOnOff(buf);
+
+			if (toggle != ToggleValueType.Invalid)
+				return toggle;
+
+			if (string.Compare(buf, "AlwaysOn", true) == 0)
+				return ToggleValueType.AlwaysOn;
+
+			if (string.Compare(buf, "AlwaysOff", true) == 0)
+				return ToggleValueType.AlwaysOff;
+
+			return def;
+		}
+
+		internal static ToggleValueType ConvertOnOffToggle(object mode, ToggleValueType def = ToggleValueType.Default)
+		{
+			var toggle = ConvertOnOff(mode);
+
+			if (toggle != ToggleValueType.Invalid)
+				return toggle;
+
+			var str = mode.ToString();
+			return string.Compare(str, "Toggle", true) == 0 || str == "-1" ? ToggleValueType.Toggle : def;
 		}
 
 		internal static string FromFileAttribs(FileAttributes attribs)
@@ -210,13 +256,13 @@ namespace Keysharp.Core
 			switch (option.ToString().ToLowerInvariant())
 			{
 				case "1":
-				case Core.Keyword_On: return System.StringComparison.Ordinal;
+				case Keyword_On: return StringComparison.Ordinal;
 
-				case Core.Keyword_Locale: return System.StringComparison.CurrentCulture;
+				case Keyword_Locale: return StringComparison.CurrentCulture;
 
 				case "0":
-				case Core.Keyword_Off:
-				default: return System.StringComparison.OrdinalIgnoreCase;
+				case Keyword_Off:
+				default: return StringComparison.OrdinalIgnoreCase;
 			}
 		}
 
@@ -244,15 +290,15 @@ namespace Keysharp.Core
 
 				switch (mode)
 				{
-					case Core.Keyword_Bold: display |= FontStyle.Bold; break;
+					case Keyword_Bold: display |= FontStyle.Bold; break;
 
-					case Core.Keyword_Italic: display |= FontStyle.Italic; break;
+					case Keyword_Italic: display |= FontStyle.Italic; break;
 
-					case Core.Keyword_Strike: display |= FontStyle.Strikeout; break;
+					case Keyword_Strike: display |= FontStyle.Strikeout; break;
 
-					case Core.Keyword_Underline: display |= FontStyle.Underline; break;
+					case Keyword_Underline: display |= FontStyle.Underline; break;
 
-					case Core.Keyword_Norm: display = FontStyle.Regular; break;
+					case Keyword_Norm: display = FontStyle.Regular; break;
 				}
 			}
 
@@ -351,7 +397,7 @@ namespace Keysharp.Core
 			var bytes = new byte[len / 2];
 
 			for (var i = 0; i < len; i += 2)
-				bytes[i / 2] = byte.Parse(hex.AsSpan(i, 2), System.Globalization.NumberStyles.AllowHexSpecifier);
+				bytes[i / 2] = byte.Parse(hex.AsSpan(i, 2), NumberStyles.AllowHexSpecifier);
 
 			return bytes;
 		}
@@ -578,29 +624,29 @@ namespace Keysharp.Core
 
 			switch (root.ToLowerInvariant())
 			{
-				case Core.Keyword_HKey_Local_Machine:
-				case Core.Keyword_HKLM:
-					return (RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Registrys.GetRegView()), computername, key);
+				case Keyword_HKey_Local_Machine:
+				case Keyword_HKLM:
+					return (RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, Registrys.GetRegView()), computername, key);
 
-				case Core.Keyword_HKey_Users:
-				case Core.Keyword_HKU:
-					return (RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.Users, Registrys.GetRegView()), computername, key);
+				case Keyword_HKey_Users:
+				case Keyword_HKU:
+					return (RegistryKey.OpenBaseKey(RegistryHive.Users, Registrys.GetRegView()), computername, key);
 
-				case Core.Keyword_HKey_Current_User:
-				case Core.Keyword_HKCU:
-					return (RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.CurrentUser, Registrys.GetRegView()), computername, key);
+				case Keyword_HKey_Current_User:
+				case Keyword_HKCU:
+					return (RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, Registrys.GetRegView()), computername, key);
 
-				case Core.Keyword_HKey_Classes_Root:
-				case Core.Keyword_HKCR:
-					return (RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key);
+				case Keyword_HKey_Classes_Root:
+				case Keyword_HKCR:
+					return (RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key);
 
-				case Core.Keyword_HKey_Current_Config:
-				case Core.Keyword_HKCC:
-					return (RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key);
+				case Keyword_HKey_Current_Config:
+				case Keyword_HKCC:
+					return (RegistryKey.OpenBaseKey(RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key);
 
-				case Core.Keyword_HKey_Performance_Data:
-				case Core.Keyword_HKPD:
-					return (RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key);
+				case Keyword_HKey_Performance_Data:
+				case Keyword_HKPD:
+					return (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key);
 
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -611,13 +657,13 @@ namespace Keysharp.Core
 		{
 			switch (type)
 			{
-				case StringComparison.CurrentCultureIgnoreCase: return Core.Keyword_Locale;
+				case StringComparison.CurrentCultureIgnoreCase: return Keyword_Locale;
 
-				case StringComparison.Ordinal: return Core.Keyword_On;
+				case StringComparison.Ordinal: return Keyword_On;
 
-				case StringComparison.OrdinalIgnoreCase: return Core.Keyword_Off;
+				case StringComparison.OrdinalIgnoreCase: return Keyword_Off;
 
-				default: return Core.Keyword_Off;
+				default: return Keyword_Off;
 			}
 		}
 
@@ -643,7 +689,7 @@ namespace Keysharp.Core
 
 			if (isnum)
 			{
-				if (uint.TryParse(name, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var val))
+				if (uint.TryParse(name, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var val))
 				{
 					if (name.Length <= 6)
 						val |= 0xFF000000;
@@ -655,7 +701,7 @@ namespace Keysharp.Core
 
 			if (string.Compare(name, "default", true) == 0)
 			{
-				c = Form.DefaultForeColor;
+				c = Control.DefaultForeColor;
 				return true;
 			}
 

@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Keysharp.Core;
 using NUnit.Framework;
 
 namespace Keysharp.Tests
@@ -51,5 +50,8 @@ namespace Keysharp.Tests
 
 		[Test, Category("Directives")]
 		public void IncludeAsmInfo() => Assert.IsTrue(TestScript("directive-include-asminfo", false));
+
+		[Test, Category("Directives")]
+		public void Misc() => Assert.IsTrue(TestScript("directive-misc", false));
 	}
 }

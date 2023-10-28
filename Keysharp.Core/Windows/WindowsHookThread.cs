@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,9 +9,11 @@ using System.Windows.Forms;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Linux.X11;
+using Keysharp.Scripting;
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
+using static Keysharp.Core.Misc;
 using static Keysharp.Core.Windows.WindowsAPI;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {
@@ -447,11 +448,11 @@ namespace Keysharp.Core.Windows
 				// to avoid the possibility that the script will continue to call this function recursively, resulting
 				// in an infinite stack of MsgBoxes. This approach is similar to that used in Hotkey::Perform()
 				// for the A_MaxHotkeysPerInterval warning dialog:
-				Keysharp.Core.Flow.AllowInterruption = false;
+				Flow.AllowInterruption = false;
 				// Below is a generic message to reduce code size.  Failure is rare, but has been known to happen when
 				// certain types of games are running).
 				_ = MessageBox.Show("Warning: The keyboard and/or mouse hook could not be activated; some parts of the script will not function.");//AHK has its own MsgBox() function which does things differently. Will need to see if we need to do all of that.
-				Keysharp.Core.Flow.AllowInterruption = true;
+				Flow.AllowInterruption = true;
 			}
 		}
 
@@ -528,7 +529,7 @@ namespace Keysharp.Core.Windows
 							return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant);
 				}
 
-				if ((HotstringDefinition.enabledCount > 0 && !isIgnored) || Keysharp.Scripting.Script.input != null)
+				if ((HotstringDefinition.enabledCount > 0 && !isIgnored) || Script.input != null)
 					if (!CollectInput(ref kbd, vk, sc, keyUp, isIgnored, keyHistoryCurr, ref hsOut, ref caseConformMode, ref endChar)) // Key should be invisible (suppressed).
 						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hsOut, caseConformMode, endChar);
 
@@ -1291,7 +1292,7 @@ namespace Keysharp.Core.Windows
 				return VK_RETURN;
 
 			// Otherwise:
-			var modPlusVk = WindowsAPI.VkKeyScanEx(ch, keybdLayout); // v1.0.44.03: Benchmark shows that VkKeyScanEx() is the same speed as VkKeyScan() when the layout has been pre-fetched.
+			var modPlusVk = VkKeyScanEx(ch, keybdLayout); // v1.0.44.03: Benchmark shows that VkKeyScanEx() is the same speed as VkKeyScan() when the layout has been pre-fetched.
 			var vk = (uint)(modPlusVk & 0xFF);
 			var keyscanModifiers = (char)((modPlusVk >> 8) & 0xFF);
 
@@ -1650,7 +1651,7 @@ namespace Keysharp.Core.Windows
 			// Transcription is done only once for all layers, so do this if any layer requests it:
 			var transcribeModifiedKeys = false;
 
-			for (var input = Keysharp.Scripting.Script.input; input != null; input = input.Prev)
+			for (var input = Script.input; input != null; input = input.Prev)
 			{
 				if (input.InProgress() && input.IsInteresting(ref ev))
 				{
@@ -1731,7 +1732,7 @@ namespace Keysharp.Core.Windows
 			// See Get_active_window_keybd_layout macro definition for related comments.
 			var activeWindow = GetForegroundWindow(); // Set default in case there's no focused control.
 			var tempzero = IntPtr.Zero;
-			var activeWindowKeybdLayout = GetKeyboardLayout(Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, activeWindow));
+			var activeWindowKeybdLayout = GetKeyboardLayout(Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, activeWindow));
 
 			// Univeral Windows Platform apps apparently have their own handling for dead keys:
 			//  - Dead key followed by Esc produces Chr(27), unlike non-UWP apps.
@@ -1744,7 +1745,7 @@ namespace Keysharp.Core.Windows
 			{
 				uwpHwndChecked = activeWindow;
 				var class_name = new StringBuilder(32);
-				_ = WindowsAPI.GetClassName(activeWindow, class_name, 32);
+				_ = GetClassName(activeWindow, class_name, 32);
 				uwpAppFocused = string.Compare(class_name.ToString(), "ApplicationFrameWindow", true) == 0;
 			}
 
@@ -1786,7 +1787,7 @@ namespace Keysharp.Core.Windows
 			else if (transcribeKey)
 			{
 				charCount = ToUnicodeOrAsciiEx(vk, ev.scanCode  // Uses the original scan code, not the adjusted "sc" one.
-											   , keyState, sb, Keysharp.Scripting.Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
+											   , keyState, sb, Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
 				ch = sb.ToString().ToCharArray();
 
 				if ((kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0) // i.e. must not replace '\r' with '\n' if it is the result of Ctrl+M.
@@ -1899,7 +1900,7 @@ namespace Keysharp.Core.Windows
 				//
 				// The other half of this workaround can be found by searching for "if (dead_key_sequence_complete)".
 				//
-				_ = ToUnicodeOrAsciiEx(vk, ev.scanCode, keyState, sb, Keysharp.Scripting.Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
+				_ = ToUnicodeOrAsciiEx(vk, ev.scanCode, keyState, sb, Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
 				return true; // Visible.
 			}
 
@@ -2004,7 +2005,7 @@ namespace Keysharp.Core.Windows
 
 		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, char[] ch, int charCount, bool isIgnored)
 		{
-			var input = Keysharp.Scripting.Script.input;
+			var input = Script.input;
 
 			for (; input != null; input = input.Prev)
 			{
@@ -2175,11 +2176,11 @@ namespace Keysharp.Core.Windows
 			return false;
 		}
 
-		internal override bool IsKeyDown(uint vk) => (WindowsAPI.GetKeyState((int)vk) & 0x8000) != 0;
+		internal override bool IsKeyDown(uint vk) => (GetKeyState((int)vk) & 0x8000) != 0;
 
-		internal override bool IsKeyDownAsync(uint vk) => (WindowsAPI.GetAsyncKeyState((int)vk) & 0x8000) != 0;
+		internal override bool IsKeyDownAsync(uint vk) => (GetAsyncKeyState((int)vk) & 0x8000) != 0;
 
-		internal override bool IsKeyToggledOn(uint vk) => (WindowsAPI.GetKeyState((int)vk) & 0x01) != 0;
+		internal override bool IsKeyToggledOn(uint vk) => (GetKeyState((int)vk) & 0x01) != 0;
 
 		internal override bool IsMouseVK(uint vk)
 		{
@@ -2232,7 +2233,7 @@ namespace Keysharp.Core.Windows
 			// the LControl event received here is marked as physical by the OS or keyboard driver.  This is undesirable
 			// primarily because it makes g_TimeLastInputPhysical inaccurate, but also because falsely marked physical
 			// events can impact the script's calls to GetKeyState("LControl", "P"), etc.
-			Keysharp.Scripting.Script.timeLastInputPhysical = Keysharp.Scripting.Script.timeLastInputKeyboard = DateTime.Now;
+			Script.timeLastInputPhysical = Script.timeLastInputKeyboard = DateTime.Now;
 			return true;
 		}
 
@@ -2339,7 +2340,7 @@ namespace Keysharp.Core.Windows
 		internal IntPtr LowLevelCommon(IntPtr hook, int code, long wParam, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc, bool keyUp, ulong extraInfo, uint eventFlags)
 		{
 			var hotkeyIdToPost = (uint)HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
-			var isIgnored = KeyboardMouseSender.IsIgnored(extraInfo);
+			var isIgnored = IsIgnored(extraInfo);
 			// The following is done for more than just convenience.  It solves problems that would otherwise arise
 			// due to the value of a global var such as KeyHistoryNext changing due to the reentrancy of
 			// this procedure.  For example, a call to KeyEvent() in here would alter the value of
@@ -2367,7 +2368,7 @@ namespace Keysharp.Core.Windows
 						// The following line is commented out in favor of the one beneath it (seem below comment):
 						//GetWindowText(fore_win, pKeyHistoryCurr.target_window, sizeof(pKeyHistoryCurr.target_window));
 						//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_GETWINDOWTEXT, keyHistoryCurr.targetWindow, fore_win);
-						var wnd = Form.FromHandle(fore_win) is Control ctrl ? ctrl : Keysharp.Scripting.Script.mainWindow;
+						var wnd = Control.FromHandle(fore_win) is Control ctrl ? ctrl : Script.mainWindow;
 
 						if (wnd != null)
 						{
@@ -2435,7 +2436,7 @@ namespace Keysharp.Core.Windows
 			// Keep the following flush with the above to indicate that they're related.
 			// The following is done even if key history is disabled because firing a wheel hotkey via PostMessage gets
 			// the notch count from pKeyHistoryCurr.sc.
-			if (vk == (uint)System.Windows.Forms.Keys.Packet) // Win2k/XP: VK_PACKET is used to send Unicode characters as if they were keystrokes.  sc is a 16-bit character code in that case.
+			if (vk == (uint)Keys.Packet) // Win2k/XP: VK_PACKET is used to send Unicode characters as if they were keystrokes.  sc is a 16-bit character code in that case.
 			{
 				sc = 0; // This held a truncated character code, not to be mistaken for a real scan code.
 				keyHistoryCurr.sc = kbd.scanCode; // Get the full character code.
@@ -2625,9 +2626,9 @@ namespace Keysharp.Core.Windows
 				var menuHwnd = IntPtr.Zero;
 
 				if ((vk == VK_LBUTTON || vk == VK_RBUTTON)
-						&& (Keysharp.Scripting.Script.menuIsVisible != MenuType.None // Ordered for short-circuit performance.
+						&& (Script.menuIsVisible != MenuType.None // Ordered for short-circuit performance.
 							|| ((menuHwnd = FindWindow("#32768", null)) != IntPtr.Zero
-								&& GetWindowThreadProcessId(menuHwnd, out _) == Keysharp.Core.Processes.MainThreadID))) // Don't call GetCurrentThreadId() because our thread is different than main's.
+								&& GetWindowThreadProcessId(menuHwnd, out _) == Processes.MainThreadID))) // Don't call GetCurrentThreadId() because our thread is different than main's.
 				{
 					// Bug-fix for v1.0.22: If "LControl & LButton::" (and perhaps similar combinations)
 					// is a hotkey, the foreground window would think that the mouse is stuck down, at least
@@ -4040,7 +4041,7 @@ namespace Keysharp.Core.Windows
 					// the ALT key is physically down even though it is not logically down:
 					// RAlt::Send f  ; Actually triggers !f, which activates the FILE menu if the active window has one.
 					// RAlt::Send {PgDn}  ; Fails to work because ALT-PgDn usually does nothing.
-					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyboardMouseSender.KeyBlockThis);
+					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyBlockThis);
 				}
 			}
 
@@ -4064,7 +4065,7 @@ namespace Keysharp.Core.Windows
 			//event.flags &= ~LLMHF_INJECTED;
 
 			if ((lParam.flags & LLMHF_INJECTED) == 0) // Physical mouse movement or button action (uses LLMHF vs. LLKHF).
-				Keysharp.Scripting.Script.timeLastInputPhysical = Keysharp.Scripting.Script.timeLastInputMouse = DateTime.Now;
+				Script.timeLastInputPhysical = Script.timeLastInputMouse = DateTime.Now;
 
 			// Above: Don't use event.time, mostly because SendInput can produce invalid timestamps on such events
 			// (though in truth, that concern isn't valid because SendInput's input isn't marked as physical).
@@ -4240,7 +4241,7 @@ namespace Keysharp.Core.Windows
 			if (sc != 0) // Above found a match.
 				return returnSecondary ? 0 : sc; // Callers rely on zero being returned for VKs that don't have secondary SCs.
 
-			if ((sc = WindowsAPI.MapVirtualKey(vk, WindowsAPI.MAPVK_VK_TO_VSC_EX)) == 0u)
+			if ((sc = MapVirtualKey(vk, MAPVK_VK_TO_VSC_EX)) == 0u)
 				return 0; // Indicate "no mapping".
 
 			if ((sc & 0xE000) != 0u) // Prefix byte E0 or E1 (but E1 should only be possible for Pause/Break, which was already handled above).
@@ -4301,12 +4302,12 @@ namespace Keysharp.Core.Windows
 			moveOffset = false;
 			uint temp_vk;
 
-			foreach (var opt in options.Split(Core.SpaceTabComma, StringSplitOptions.RemoveEmptyEntries))
+			foreach (var opt in options.Split(SpaceTabComma, StringSplitOptions.RemoveEmptyEntries))
 			{
 				// Parameters can occur in almost any order to enhance usability (at the cost of
 				// slightly diminishing the ability unambiguously add more parameters in the future).
 				// Seems okay to support floats because ATOI() will just omit the decimal portion.
-				if (Keysharp.Core.Misc.IsNumber(opt) != 0)
+				if (IsNumber(opt) != 0)
 				{
 					// Any numbers present must appear in the order: X, Y, RepeatCount
 					// (optionally with other options between them).
@@ -4553,7 +4554,7 @@ namespace Keysharp.Core.Windows
 			// might be caused due to the keybd events sent below.
 			if (hook == kbdHook)
 			{
-				var nl = (uint)System.Windows.Forms.Keys.NumLock;
+				var nl = (uint)Keys.NumLock;
 
 				if (vk == nl && !keyUp && !IsIgnored(lParam.dwExtraInfo))
 				{
@@ -4585,7 +4586,7 @@ namespace Keysharp.Core.Windows
 			// system settings of the same ilk as "favor background processes").
 			if (hotkeyIDToPost != HotkeyDefinition.HOTKEY_ID_INVALID)
 			{
-				var inputLevel = KeyboardMouseSender.InputLevelFromInfo(extraInfo);
+				var inputLevel = InputLevelFromInfo(extraInfo);
 				_ = channel.Writer.TryWrite(new KeysharpMsg()
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
@@ -4649,7 +4650,7 @@ namespace Keysharp.Core.Windows
 					if (ch.IsHex())
 						digits++;
 
-				var ok = uint.TryParse(s, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii);
+				var ok = uint.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii);
 
 				if (!ok || (2 + digits < text.Length))
 					return 0; // Fixed for v1.1.27: Disallow any invalid suffix so that hotkeys like a::scb() are not misinterpreted as remappings.
@@ -4813,7 +4814,7 @@ namespace Keysharp.Core.Windows
 					if (ch.IsHex())
 						digits++;
 
-				var ok = uint.TryParse(s, NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii);
+				var ok = uint.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii);
 				return !ok || (2 + digits < text.Length) ? 0 : ii; // Fixed for v1.1.27: Disallow any invalid suffix so that hotkeys like a::vkb() are not misinterpreted as remappings.
 			}
 
@@ -4851,8 +4852,8 @@ namespace Keysharp.Core.Windows
 
 				if (splits.Length >= 2)//C# doesn't really have the facilities to detect an invalid suffix, so just assume it's not there.
 				{
-					if (uint.TryParse(splits[0], NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var t1) &&
-							uint.TryParse(splits[1], NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var t2))
+					if (uint.TryParse(splits[0], NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var t1) &&
+							uint.TryParse(splits[1], NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var t2))
 					{
 						vk = t1;
 						sc = t2;
@@ -4998,12 +4999,12 @@ namespace Keysharp.Core.Windows
 		internal override char VKtoChar(uint vk, IntPtr keybdLayout)
 		{
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = WindowsAPI.GetKeyboardLayout(0);
+				keybdLayout = GetKeyboardLayout(0);
 
 			// MapVirtualKeyEx() always produces 'A'-'Z' for those keys regardless of keyboard layout,
 			// but for any other keys it produces the correct results, so we'll use it:
 			if (vk > 'Z' || vk < 'A')
-				return (char)WindowsAPI.MapVirtualKeyEx(vk, MAPVK_VK_TO_CHAR, keybdLayout);
+				return (char)MapVirtualKeyEx(vk, MAPVK_VK_TO_CHAR, keybdLayout);
 
 			// For any other keys,
 			var ch = new StringBuilder();
@@ -5056,7 +5057,7 @@ namespace Keysharp.Core.Windows
 		// that it was in the middle of, though it could start something new immediately after).
 		{
 			//Make sure this is not called within the channel thread because it would deadlock if so.
-			if (channelThreadID != WindowsAPI.GetCurrentThreadId() && IsReadThreadRunning())
+			if (channelThreadID != GetCurrentThreadId() && IsReadThreadRunning())
 			{
 				hookSynced = false;
 
@@ -5066,7 +5067,7 @@ namespace Keysharp.Core.Windows
 				}))
 				{
 					while (!hookSynced)
-						Keysharp.Core.Flow.SleepWithoutInterruption();
+						Flow.SleepWithoutInterruption();
 				}
 			}
 		}
@@ -5100,24 +5101,23 @@ namespace Keysharp.Core.Windows
 			//This is a consolidation of the main windows proc, message sleep and the thread which they keyboard hook is created on.
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
 			//If Start() is called while this thread is already running, the foreach will exit, and thus the previous thread will exit.
-			channelReadThread = System.Threading.Tasks.Task.Factory.StartNew(async () =>
+			channelReadThread = Task.Factory.StartNew(async () =>
 			{
 				try
 				{
 					Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;//AHK Sets this to critical which seems extreme.
 					var reader = channel.Reader;
-					channelThreadID = WindowsAPI.GetCurrentThreadId();
+					channelThreadID = GetCurrentThreadId();
 					//WindowsAPI.GetMessage(out var _, IntPtr.Zero, 0, 0);
 
 					await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manner of obscure meaning into bits and bytes of wparam and lparam.
 					{
-						var priority = 0;
 						var criterion_found_hwnd = IntPtr.Zero;
-						channelThreadID = WindowsAPI.GetCurrentThreadId();
+						channelThreadID = GetCurrentThreadId();
 
 						if (item is KeysharpMsg msg)
 						{
-							if (msg.message == WindowsAPI.WM_QUIT)//Needed to be pulled out of the case statement because it uses fallthrough logic which isn't allowed in C#.
+							if (msg.message == WM_QUIT)//Needed to be pulled out of the case statement because it uses fallthrough logic which isn't allowed in C#.
 								// After this message, fall through to the next case below so that the hooks will be removed before
 								// exiting this thread.
 								msg.wParam = IntPtr.Zero; // Indicate to AHK_CHANGE_HOOK_STATE that both hooks should be deactivated.
@@ -5127,6 +5127,7 @@ namespace Keysharp.Core.Windows
 							// ********
 							// NO BREAK IN ABOVE, FALL INTO NEXT CASE:
 							// ********
+							var tv = Threads.GetThreadVariables();//May need to be pushed here.
 
 							switch (msg.message)//Almost none of this is going to work until we figure out how threads are going to work.
 							{
@@ -5241,25 +5242,34 @@ namespace Keysharp.Core.Windows
 										// even if it can't launch due to MaxThreads, MaxThreadsPerHotkey, or some other reason:
 										//Any key sending must be on the main thread else keys will come in out of order.
 										//Does only the backspacing if it's not an auto-replace hotstring.
-										Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => hs.DoReplace(hmsg.caseMode, hmsg.endChar), true);
+										Script.mainWindow.CheckedInvoke(() => hs.DoReplace(hmsg.caseMode, hmsg.endChar), true);
 
-										if (string.IsNullOrEmpty(hs.replacement))
+										if (string.IsNullOrEmpty(hs.replacement) && (hs.priority >= tv.priority) && Threads.AnyThreadsAvailable())
 										{
 											// Otherwise, continue on and let a new thread be created to handle this hotstring.
 											// Since this isn't an auto-replace hotstring, set this value to support
 											// the built-in variable A_EndChar:
 											Accessors.A_EndChar = hs.endCharRequired ? hmsg.endChar.ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
-											priority = hs.priority;
-											Keysharp.Scripting.Script.SetHotNamesAndTimes(hs.Name);
+											Script.SetHotNamesAndTimes(hs.Name);
 											_ = await hs.PerformInNewThreadMadeByCaller(criterion_found_hwnd);
 										}
+										else
+											continue;
 									}
 
 									break;
 
 								case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
-									_ = await Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, msg.obj as HotkeyVariant, (uint)UserMessages.AHK_HOOK_HOTKEY);
+								{
+									if (msg.obj is HotkeyVariant variant && (variant.priority >= tv.priority) && Threads.AnyThreadsAvailable())
+									{
+										_ = await Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, variant, (uint)UserMessages.AHK_HOOK_HOTKEY);
+									}
+									else
+										continue;
+
 									break;
+								}
 
 								//case (uint)UserMessages.AHK_HOTSTRING: // Added for v1.0.36.02 so that hotstrings work even while an InputBox or other non-standard msg pump is running.
 								//case (uint)UserMessages.AHK_CLIPBOARD_CHANGE: //Probably not needed because we handle OnClipboardChange() differently. Added for v1.0.44 so that clipboard notifications aren't lost while the script is displaying a MsgBox or other dialog.
@@ -5298,21 +5308,26 @@ namespace Keysharp.Core.Windows
 									// (see comments above for why the message is posted even when it is 90% certain it will be discarded
 									// in all cases where MsgSleep isn't done).
 									//return 0;
-									if (msg.obj is Keysharp.Core.Common.Input.InputType it && it.InputRelease() is InputType inputHook && inputHook.ScriptObject is InputObject so)
+									if (tv.priority == 0 && Threads.AnyThreadsAvailable())
 									{
-										priority = 0;
-
-										if (so.OnEnd is IFuncObj ifo)
+										if (msg.obj is Keysharp.Core.Common.Input.InputType it
+												&& it.InputRelease() is InputType inputHook
+												&& inputHook.ScriptObject is InputObject so)
 										{
-											try
+											if (so.OnEnd is IFuncObj ifo)
 											{
-												var tsk = await Threads.LaunchInThread(ifo, new object[] { so });
-											}
-											catch (Error ex)
-											{
-												_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+												try
+												{
+													var tsk = await Threads.LaunchInThread(0, false, false, ifo, new object[] { so });
+												}
+												catch (Error ex)
+												{
+													_ = Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+												}
 											}
 										}
+										else
+											continue;
 									}
 									else
 										continue;
@@ -5326,7 +5341,7 @@ namespace Keysharp.Core.Windows
 									InputType input_hook;
 									var inputHookParam = msg.obj as InputType;
 
-									for (input_hook = Keysharp.Scripting.Script.input; input_hook != null && input_hook != inputHookParam; input_hook = input_hook.Prev)
+									for (input_hook = Script.input; input_hook != null && input_hook != inputHookParam; input_hook = input_hook.Prev)
 									{
 									}
 
@@ -5335,21 +5350,20 @@ namespace Keysharp.Core.Windows
 
 									if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.ScriptObject.OnKeyDown
 											: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.ScriptObject.OnKeyUp
-											: input_hook.ScriptObject.OnChar) is IFuncObj ifo)
+											: input_hook.ScriptObject.OnChar) is IFuncObj ifo
+											&& Threads.AnyThreadsAvailable())
 									{
 										try
 										{
 											var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
 													   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
 													   : new object[] { input_hook.ScriptObject, lParamVal, wParamVal };
-											var tsk = await Threads.LaunchInThread(ifo, args);
+											var tsk = await Threads.LaunchInThread(0, false, false, ifo, args);
 										}
 										catch (Error ex)
 										{
-											_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
+											_ = Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
 										}
-
-										priority = 0;
 									}
 									else
 										continue;
@@ -5363,9 +5377,8 @@ namespace Keysharp.Core.Windows
 							//This is not going to work. It's always going to comapre against this queue thread's priority, not the priority of whichever hotkey/string is currently executing.
 							//None of this will work until we implement real threads.
 							//TODO
-							if (priority < (long)Accessors.A_Priority)
-								continue;
-
+							//if (priority < (long)Accessors.A_Priority)
+							//  continue;
 							//Original tries to do some type of thread init here.//TOOD
 							kbdMsSender.lastPeekTime = DateTime.Now;
 						}
@@ -5375,16 +5388,20 @@ namespace Keysharp.Core.Windows
 				}
 				catch (Exception ex)
 				{
-					Keysharp.Scripting.Script.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
+					Script.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
 				}
 				finally
 				{
 					Thread.CurrentThread.Priority = ThreadPriority.Normal;
 				}
-			});
+			}
+			//Unsure if this will work or is needed here.
+			//,CancellationToken.None, TaskCreationOptions.None,
+			//SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current
+													 );
 
 			while (channelThreadID == 0)//Give it some time to startup before proceeding.
-				System.Threading.Thread.Sleep(10);
+				Thread.Sleep(10);
 		}
 
 		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
@@ -5431,7 +5448,7 @@ namespace Keysharp.Core.Windows
 				}
 				else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
 					if (mouseHook != IntPtr.Zero)
-						if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
+						if (UnhookWindowsHookEx(mouseHook))
 							mouseHook = IntPtr.Zero;
 			};
 
@@ -5440,8 +5457,8 @@ namespace Keysharp.Core.Windows
 			//before Application.Run().
 			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
 			//which are not persistent, and thus no main window will be present.
-			if (Keysharp.Core.Processes.mainContext != null)//Will be null during unit tests.
-				Keysharp.Core.Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
+			if (Processes.mainContext != null)//Will be null during unit tests.
+				Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
 			else
 				func();
 
@@ -5455,8 +5472,8 @@ namespace Keysharp.Core.Windows
 		//}
 		private IntPtr LowLevelKeybdHandler(int code, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)
 		{
-			if (code != WindowsAPI.HC_ACTION)  // MSDN docs specify that both LL keybd & mouse hook should return in this case.
-				return WindowsAPI.CallNextHookEx(kbdHook, code, wParam, ref lParam);
+			if (code != HC_ACTION)  // MSDN docs specify that both LL keybd & mouse hook should return in this case.
+				return CallNextHookEx(kbdHook, code, wParam, ref lParam);
 
 			var wParamVal = wParam.ToInt64();
 
@@ -5465,7 +5482,7 @@ namespace Keysharp.Core.Windows
 			// it wants to inform the others that this event should be considered physical for the
 			// purpose of updating modifier and key states:
 			if (lParam.dwExtraInfo == KeyPhysIgnore)
-				lParam.flags &= ~WindowsAPI.LLKHF_INJECTED;
+				lParam.flags &= ~LLKHF_INJECTED;
 			else if (lParam.dwExtraInfo == KeyBlockThis)
 				return new IntPtr(1);
 
@@ -5476,7 +5493,7 @@ namespace Keysharp.Core.Windows
 			// Note: Some scan codes are shared by more than one key (e.g. Numpad7 and NumpadHome).  This is why
 			// the keyboard hook must be able to handle hotkeys by either their virtual key or their scan code.
 			// i.e. if sc were always used in preference to vk, we wouldn't be able to distinguish between such keys.
-			var keyUp = (wParamVal == WindowsAPI.WM_KEYUP || wParamVal == WindowsAPI.WM_SYSKEYUP);
+			var keyUp = (wParamVal == WM_KEYUP || wParamVal == WM_SYSKEYUP);
 			var vk = lParam.vkCode;
 			var sc = lParam.scanCode;
 
@@ -5552,7 +5569,7 @@ namespace Keysharp.Core.Windows
 				existingMutex.Close(); // But don't set it to NULL because we need its value below as a flag.
 
 			var mutex = new System.Threading.Mutex(false, name, out var _); // Create() vs. Open() has enough access to open the mutex if it exists.
-			var last_error = WindowsAPI.GetLastError();
+			var last_error = GetLastError();
 
 			// Don't check g_KeybdHook because in the case of aChangeIsTemporary, it might be NULL even though
 			// we want a handle to the mutex maintained here.
@@ -5561,7 +5578,7 @@ namespace Keysharp.Core.Windows
 			else if (mutex != null) // Keep it closed because the system tracks how many handles there are, deleting the mutex when zero.
 				mutex.Close();  // This facilitates other instances of the program getting the proper last_error value.
 
-			return last_error == WindowsAPI.ERROR_ALREADY_EXISTS;
+			return last_error == ERROR_ALREADY_EXISTS;
 		}
 	}
 
@@ -5593,11 +5610,11 @@ namespace Keysharp.Core.Windows
 	// for possible future use by the program, so don't use a message above 0x1000 without good reason.
 	internal enum UserMessages : uint
 	{
-		AHK_HOOK_HOTKEY = WindowsAPI.WM_USER, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON
+		AHK_HOOK_HOTKEY = WM_USER, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON
 		, AHK_UNUSED_MSG, AHK_EXIT_BY_RELOAD, AHK_EXIT_BY_SINGLEINSTANCE, AHK_CHECK_DEBUGGER
 
 		// Allow some room here in between for more "exit" type msgs to be added in the future (see below comment).
-		, AHK_GUI_ACTION = WindowsAPI.WM_USER + 20 // Avoid WM_USER+100/101 and vicinity.  See below comment.
+		, AHK_GUI_ACTION = WM_USER + 20 // Avoid WM_USER+100/101 and vicinity.  See below comment.
 
 		// v1.0.43.05: On second thought, it seems better to stay close to WM_USER because the OnMessage page
 		// documents, "it is best to choose a number greater than 4096 (0x1000) to the extent you have a choice.

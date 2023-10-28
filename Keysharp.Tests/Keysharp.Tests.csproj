@@ -30,6 +30,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Code\directive-misc.ahk~RF2dcacf00.TMP" />
+    <None Remove="Code\env-sysget.ahk~RF43e6cd1.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
   </ItemGroup>
 

@@ -1,11 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Windows.Forms;
-using System.Xml.Linq;
 using Keysharp.Core;
 using Keysharp.Core.COM;
 

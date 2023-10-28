@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Drawing;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Keysharp.Core;
-using static Keysharp.Core.Core;
-using static Keysharp.Core.Env;
 using static Keysharp.Core.Loops;
-using Keysharp.Scripting;
 
 namespace Keysharp.Tests
 {

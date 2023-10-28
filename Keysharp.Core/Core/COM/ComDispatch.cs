@@ -1,15 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
-using Microsoft.VisualBasic;
 using ct = System.Runtime.InteropServices.ComTypes;
 using System.Threading;
-using System.ComponentModel;
-using System.Xml.Linq;
-using System.Management;
 
 namespace Keysharp.Core.COM
 {

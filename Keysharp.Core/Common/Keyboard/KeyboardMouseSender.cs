@@ -258,7 +258,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
 			const int MAX_PERFORM_MOUSE_EVENTS = 10;
 			var ht = Keysharp.Scripting.Script.HookThread;
-			sendMode = Accessors.SendMode;
+			sendMode = ThreadAccessors.A_SendMode;
 
 			if (sendMode == Common.Keyboard.SendModes.Input || sendMode == Common.Keyboard.SendModes.InputThenPlay)
 			{
@@ -317,7 +317,6 @@ namespace Keysharp.Core.Common.Keyboard
 
 			if (hkId < HotkeyDefinition.shk.Count)//Ensure hotkey ID is valid.
 			{
-				var ht = Keysharp.Scripting.Script.HookThread;
 				var hk = HotkeyDefinition.shk[hkId];
 				// Check if criterion allows firing.
 				// For maintainability, this is done here rather than a little further down
@@ -365,9 +364,9 @@ namespace Keysharp.Core.Common.Keyboard
 				//   used too.
 				//
 				char? dummy = null;
-				var criterion_found_hwnd = IntPtr.Zero;
+				var criterion_found_hwnd = 0L;
 
-				if (!(variant != null || (variant = hk.CriterionAllowsFiring(msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
+				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
 					return ""; // No criterion is eligible, so ignore this hotkey event (see other comments).
 
 				// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
@@ -388,18 +387,9 @@ namespace Keysharp.Core.Common.Keyboard
 				}
 
 				// Now that above has ensured variant is non-NULL:
-				var hc = variant.hotCriterion;
-				var priority = variant.priority;
 				Keysharp.Scripting.Script.SetHotNamesAndTimes(hk.Name);
-
-				if (ht.IsWheelVK(hk.vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
-					Accessors.A_EventInfo = (long)Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
-
 				// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
-				//Keysharp.Scripting.Script.hWndLastUsed = criterion_found_hwnd; // v1.0.42. Even if the window is invalid for some reason, IsWindow() and such are called whenever the script accesses it (GetValidLastUsedWindow()).
-				//Accessors.A_SendLevel = variant.inputLevel;
-				//Keysharp.Scripting.Script.hotCriterion = variant.hotCriterion; // v2: Let the Hotkey command use the criterion of this hotkey variant by default.
-				return await hk.PerformInNewThreadMadeByCallerAsync(variant, criterion_found_hwnd);
+				return await hk.PerformInNewThreadMadeByCallerAsync(variant, criterion_found_hwnd, lParamVal);
 			}
 
 			return "";

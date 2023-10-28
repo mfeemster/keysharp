@@ -1,29 +1,9 @@
 ﻿using Keysharp.Core.Windows;
-using Keysharp.Scripting;
 using Microsoft.CodeAnalysis;
-using Microsoft.VisualBasic.ApplicationServices;
 using System;
-using System.CodeDom;
-using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Drawing;
-using System.Globalization;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Resources;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Security.Permissions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Keysharp.Core.COM
 {

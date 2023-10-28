@@ -7,6 +7,8 @@ using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Window;
+using Keysharp.Scripting;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {
@@ -196,7 +198,7 @@ namespace Keysharp.Core.Windows
 			var vk = ConvertMouseButton(whichButton);
 			var posoverride = options.Contains("pos", StringComparison.OrdinalIgnoreCase);
 			bool d = false, u = false, na = false;
-			var optsplits = options.Split(Keysharp.Core.Core.Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			var optsplits = options.Split(Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			for (var i = 0; i < optsplits.Length; i++)
 			{
@@ -220,7 +222,7 @@ namespace Keysharp.Core.Windows
 
 			if (ctrlorpos is string s && s.StartsWith("x", StringComparison.OrdinalIgnoreCase) && s.Contains(' ') && s.Contains('y', StringComparison.OrdinalIgnoreCase))
 			{
-				var possplits = s.Split(Keysharp.Core.Core.Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+				var possplits = s.Split(Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 				for (var i = 0; i < possplits.Length; i++)
 				{
@@ -681,7 +683,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var ht = Keysharp.Scripting.Script.HookThread;
+				var ht = Script.HookThread;
 				var kbdMouseSender = ht.kbdMsSender;
 				kbdMouseSender.SendKeys(str, mode, SendModes.Event, item.Handle);
 			}
@@ -693,7 +695,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var onoff = Options.ConvertOnOffToggle(val);
+				var onoff = Conversions.ConvertOnOffToggle(val);
 				var ctrl2 = Control.FromHandle(item.Handle);
 
 				if (ctrl2 is CheckBox cb)
@@ -728,7 +730,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var onoff = Options.ConvertOnOffToggle(val);
+				var onoff = Conversions.ConvertOnOffToggle(val);
 
 				if (Control.FromHandle(item.Handle) is Control ctrl2)
 					ctrl2.Enabled = onoff == ToggleValueType.Toggle ? !ctrl2.Enabled : onoff == ToggleValueType.On;
@@ -1171,7 +1173,7 @@ namespace Keysharp.Core.Windows
 								// to point to the new text, rather than place it in the buffer."
 								if (WindowsAPI.ReadProcessMemory(prochandle, remotetext, localTextBuffer, length * 2, out var bytesread))
 								{
-									var itemtext = System.Text.Encoding.Unicode.GetString(localTextBuffer.AsSpan().Slice(0, (int)bytesread));
+									var itemtext = Encoding.Unicode.GetString(localTextBuffer.AsSpan().Slice(0, (int)bytesread));
 									_ = sb.Append(itemtext);
 									total_length += length; // Recalculate length in case its different than the estimate (for any reason).
 								}
@@ -1273,7 +1275,7 @@ namespace Keysharp.Core.Windows
 
 				if (msg == WindowsAPI.WM_COPYDATA)
 				{
-					var sarr = System.Text.Encoding.Unicode.GetBytes(s);
+					var sarr = Encoding.Unicode.GetBytes(s);
 					var len = sarr.Length;
 					WindowsAPI.COPYDATASTRUCT cds;
 					cds.dwData = (IntPtr)1;

@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using Keysharp.Core;
-using Microsoft.VisualBasic.CompilerServices;
+﻿using Keysharp.Core;
 using NUnit.Framework;
-using static Keysharp.Core.Core;
-using static Keysharp.Core.Drive;
 
 namespace Keysharp.Tests
 {
