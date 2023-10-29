@@ -44,7 +44,7 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 	+ Optionally output the generated C# code to a .cs file for debugging purposes.
 	+ Optionally output the generated executable to an .exe file for running standalone in the future.
 
-* Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, .ks.
+* Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, `.ks`.
 	+ The following features are not implemented yet:
 		+ COM
 		+ Threads
@@ -79,7 +79,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to `CreatWindowEx()`.
 	+ These long names may change from machine to machine, and may change for the same GUI if you edit its code.
 	+ There is an new `NetClassNN` property alongside `ClassNN`.
-	+ All GUI controls created in Keysharp are prefixed with the string "Keysharp", eg: KeysharpButton, KeysharpEdit etc...
+	+ All GUI controls created in Keysharp are prefixed with the string "Keysharp", eg: `KeysharpButton`, `KeysharpEdit` etc...
 	+ `NetClassNN` will give values like 'KeysharpButton6' (note that the final digit is the same for the `ClassNN` and the `NetClassNN`).
 	+ Due to the added simplicity, `NetClassNN` is preferred over `ClassNN` for WinForms controls created with Keysharp.
 	+ This is used internally in the index operator for the Gui class, where if a control with a matching `ClassNN` is not found, then controls are searched for their `NetClassNN` values.
@@ -100,8 +100,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Then set the `.Parent` property of the transparent control to the one it's laid over.
 	+ This makes the x and y coordinates of the control be relative to its parent, which may be different than the overall form if it's a nested control.
 * The `#ErrorStdOut` directive will not print to the console unless piping is used. For example:
-	+ .\Keysharp.exe .\test.ahk | more
-	+ .\Keysharp.exe .\test.ahk | more > out.txt
+	+ `.\Keysharp.exe .\test.ahk | more`
+	+ `.\Keysharp.exe .\test.ahk | more > out.txt`
 * `AddStandard()` detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
@@ -370,7 +370,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The Help and Window Spy menu items are not implemented yet.
 * `Download()` only supports the `*0` option, and not any other numerical values.
 * Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-* Static class member variable initializers like static `x.y := 42` are not supported. Instead, just initialize in one step like static 'x := { "y", 42 }
+* Static class member variable initializers like static `x.y := 42` are not supported. Instead, just initialize in one step like static `x := { y, 42 }`.
 * Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 * The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
