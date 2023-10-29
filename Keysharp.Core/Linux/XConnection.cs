@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Keysharp.Core.Linux.X11;
 using Keysharp.Core.Linux.X11.Events;
 

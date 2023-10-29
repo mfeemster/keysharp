@@ -1,12 +1,12 @@
 ;#Include %A_ScriptDir%/header.ahk
 
+x :=
+y := 
 CoordMode("Mouse", "Screen")
-GetScreenClip(1000, 900, 100, 100, "./imagesearch.bmp")
-found := ImageSearch(0, 0, 1500, 1080, "./imagesearch.bmp")
+GetScreenClip(1000, 1000, 100, 100, "./imagesearch.bmp")
+ImageSearch(&x, &y, 0, 0, 1500, 1500, "./imagesearch.bmp")
 
-; Need to eventually make this work with ownprops like monget.Left
-
-if (found["X"] == 1000 && found["Y"] == 900)
+if (x == 1000 && y == 1000)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *

@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using Keysharp.Core.Common.Window;
+﻿using Keysharp.Core.Common.Window;
 
 namespace Keysharp.Core.Linux
 {

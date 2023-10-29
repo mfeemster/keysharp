@@ -23,7 +23,7 @@ namespace Keysharp.Tests
 			else
 				Assert.IsTrue(false);
 
-			Assert.IsTrue(TestScript("screen-imagesearch", true));
+			Assert.IsTrue(TestScript("screen-imagesearch", false));
 		}
 
 		[Test, Category("Screen")]
