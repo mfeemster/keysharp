@@ -151,12 +151,9 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		h := d
 	}
 ```
-* Assignment statements inside of control statements, such as `if ((x := Func()))` must be enclosed in parentheses. This statement, `if (x := Func())` will not work.
-* Variables used in assignments inside of control flow statements inside of functions must first be declared. For example:
-	+ if `((x := myfunc())` will not work without declaring x first above.
 * The `#Requires` directive differs in the following ways:
 	+ In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
-	+ Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of 0.0.0.0 are supported.	
+	+ Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of `0.0.0.0` are supported.	
 * Global variables can be accessed from within class methods by using the `program.` prefix.
 * Accessing class member variables within member functions does not require the `this.` prefix.
 	+ Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name.
