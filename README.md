@@ -156,8 +156,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of `0.0.0.0` are supported.	
 * Global variables can be accessed from within class methods by using the `program.` prefix.
 * Accessing class member variables within member functions does not require the `this.` prefix.
-	+ Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name.
-	+ Using this is still supported, but is slower, so avoid using it.
+	+ Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name: `this.a := 123`.
+	+ Using `this.` is still supported, but is slower, so avoid using it if possible.
 * If a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
 	+ `global propname` refers to the property defined in the base class.
 	+ `this.propname` refers to the property in the most derived subclass.
