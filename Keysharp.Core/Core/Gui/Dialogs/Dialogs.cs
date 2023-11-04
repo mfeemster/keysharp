@@ -361,49 +361,49 @@ namespace Keysharp.Core
 			{
 				switch (itemp & 0xf0000)
 				{
-					case 524288: mbopts |= MessageBoxOptions.RightAlign; return;
+					case 524288: mbopts |= MessageBoxOptions.RightAlign; break;
 
-					case 1048576: mbopts |= MessageBoxOptions.RtlReading; return;
+					case 1048576: mbopts |= MessageBoxOptions.RtlReading; break;
 				}
 
 				//switch (itemp & 0xf000)
 				//{
-				//  case 16384: help = true; return;
+				//  case 16384: help = true; break;
 				//}
 
 				switch (itemp & 0xf00)
 				{
-					case 256: defaultbutton = MessageBoxDefaultButton.Button2; return;
+					case 256: defaultbutton = MessageBoxDefaultButton.Button2; break;
 
-					case 512: defaultbutton = MessageBoxDefaultButton.Button3; return;
+					case 512: defaultbutton = MessageBoxDefaultButton.Button3; break;
 				}
 
 				switch (itemp & 0xf0)
 				{
-					case 16: icon = MessageBoxIcon.Hand; return;
+					case 16: icon = MessageBoxIcon.Hand; break;
 
-					case 32: icon = MessageBoxIcon.Question; return;
+					case 32: icon = MessageBoxIcon.Question; break;
 
-					case 48: icon = MessageBoxIcon.Exclamation; return;
+					case 48: icon = MessageBoxIcon.Exclamation; break;
 
-					case 64: icon = MessageBoxIcon.Asterisk; return;
+					case 64: icon = MessageBoxIcon.Asterisk; break;
 				}
 
 				switch (itemp & 0xf)
 				{
-					case 0: buttons = MessageBoxButtons.OK; return;
+					case 0: buttons = MessageBoxButtons.OK; break;
 
-					case 1: buttons = MessageBoxButtons.OKCancel; return;
+					case 1: buttons = MessageBoxButtons.OKCancel; break;
 
-					case 2: buttons = MessageBoxButtons.AbortRetryIgnore; return;
+					case 2: buttons = MessageBoxButtons.AbortRetryIgnore; break;
 
-					case 3: buttons = MessageBoxButtons.YesNoCancel; return;
+					case 3: buttons = MessageBoxButtons.YesNoCancel; break;
 
-					case 4: buttons = MessageBoxButtons.YesNo; return;
+					case 4: buttons = MessageBoxButtons.YesNo; break;
 
-					case 5: buttons = MessageBoxButtons.RetryCancel; return;
+					case 5: buttons = MessageBoxButtons.RetryCancel; break;
 
-					case 6: buttons = MessageBoxButtons.CancelTryContinue; return;
+					case 6: buttons = MessageBoxButtons.CancelTryContinue; break;
 				}
 
 				//System modal dialogs are no longer supported in Windows.
@@ -416,17 +416,21 @@ namespace Keysharp.Core
 			else
 			{
 				var options = obj2.As();
+				var iopt = 0;
+				var hadNumeric = false;
 
 				foreach (var opt in Options.ParseOptions(options))
 				{
 					long hwnd = 0;
-					double temp = 0;
-					var itemp = 0;
+					double dtemp = 0;
 
 					if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
-					else if (Options.TryParse(opt, "T", ref temp)) { timeout = temp; }
-					else if (int.TryParse(opt, out itemp))
-						HandleNumericOptions(itemp);
+					else if (Options.TryParse(opt, "T", ref timeout)) { }
+					else if (int.TryParse(opt, out var itemp))
+					{
+						hadNumeric = true;
+						iopt |= itemp;
+					}
 					else
 					{
 						switch (opt.ToLower())
@@ -479,6 +483,9 @@ namespace Keysharp.Core
 						}
 					}
 				}
+
+				if (hadNumeric)
+					HandleNumericOptions(iopt);
 			}
 
 			if (timeout != 0)
