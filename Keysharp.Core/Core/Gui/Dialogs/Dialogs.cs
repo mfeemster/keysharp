@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
@@ -340,7 +341,6 @@ namespace Keysharp.Core
 		{
 			var text = obj0.As();
 			var title = obj1.As();
-			var options = obj2.As();
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
@@ -353,118 +353,130 @@ namespace Keysharp.Core
 			{
 				title = Accessors.A_ScriptName;
 
-				if (text?.Length == 0 && options?.Length == 0)
+				if (text?.Length == 0 && obj2 == null)
 					text = "Press OK to continue.";
 			}
 
-			foreach (var opt in Options.ParseOptions(options))
+			void HandleNumericOptions(int itemp)
 			{
-				long hwnd = 0;
-				double temp = 0;
-				var itemp = 0;
-
-				if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
-				else if (Options.TryParse(opt, "T", ref temp)) { timeout = temp; }
-				else if (int.TryParse(opt, out itemp))
+				switch (itemp & 0xf0000)
 				{
-					switch (itemp & 0xf0000)
-					{
-						case 524288: mbopts |= MessageBoxOptions.RightAlign; continue;
+					case 524288: mbopts |= MessageBoxOptions.RightAlign; return;
 
-						case 1048576: mbopts |= MessageBoxOptions.RtlReading; continue;
-					}
-
-					//switch (itemp & 0xf000)
-					//{
-					//  case 16384: help = true; continue;
-					//}
-
-					switch (itemp & 0xf00)
-					{
-						case 256: defaultbutton = MessageBoxDefaultButton.Button2; continue;
-
-						case 512: defaultbutton = MessageBoxDefaultButton.Button3; continue;
-					}
-
-					switch (itemp & 0xf0)
-					{
-						case 16: icon = MessageBoxIcon.Hand; continue;
-
-						case 32: icon = MessageBoxIcon.Question; continue;
-
-						case 48: icon = MessageBoxIcon.Exclamation; continue;
-
-						case 64: icon = MessageBoxIcon.Asterisk; continue;
-					}
-
-					switch (itemp & 0xf)
-					{
-						case 0: buttons = MessageBoxButtons.OK; continue;
-
-						case 1: buttons = MessageBoxButtons.OKCancel; continue;
-
-						case 2: buttons = MessageBoxButtons.AbortRetryIgnore; continue;
-
-						case 3: buttons = MessageBoxButtons.YesNoCancel; continue;
-
-						case 4: buttons = MessageBoxButtons.YesNo; continue;
-
-						case 5: buttons = MessageBoxButtons.RetryCancel; continue;
-
-						case 6: buttons = MessageBoxButtons.CancelTryContinue; continue;
-					}
-
-					//System modal dialogs are no longer supported in Windows.
+					case 1048576: mbopts |= MessageBoxOptions.RtlReading; return;
 				}
-				else
+
+				//switch (itemp & 0xf000)
+				//{
+				//  case 16384: help = true; return;
+				//}
+
+				switch (itemp & 0xf00)
 				{
-					switch (opt.ToLower())
+					case 256: defaultbutton = MessageBoxDefaultButton.Button2; return;
+
+					case 512: defaultbutton = MessageBoxDefaultButton.Button3; return;
+				}
+
+				switch (itemp & 0xf0)
+				{
+					case 16: icon = MessageBoxIcon.Hand; return;
+
+					case 32: icon = MessageBoxIcon.Question; return;
+
+					case 48: icon = MessageBoxIcon.Exclamation; return;
+
+					case 64: icon = MessageBoxIcon.Asterisk; return;
+				}
+
+				switch (itemp & 0xf)
+				{
+					case 0: buttons = MessageBoxButtons.OK; return;
+
+					case 1: buttons = MessageBoxButtons.OKCancel; return;
+
+					case 2: buttons = MessageBoxButtons.AbortRetryIgnore; return;
+
+					case 3: buttons = MessageBoxButtons.YesNoCancel; return;
+
+					case 4: buttons = MessageBoxButtons.YesNo; return;
+
+					case 5: buttons = MessageBoxButtons.RetryCancel; return;
+
+					case 6: buttons = MessageBoxButtons.CancelTryContinue; return;
+				}
+
+				//System modal dialogs are no longer supported in Windows.
+			}
+
+			if (Scripting.Script.IsNumeric(obj2))
+			{
+				HandleNumericOptions(obj2.Ai());
+			}
+			else
+			{
+				var options = obj2.As();
+
+				foreach (var opt in Options.ParseOptions(options))
+				{
+					long hwnd = 0;
+					double temp = 0;
+					var itemp = 0;
+
+					if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
+					else if (Options.TryParse(opt, "T", ref temp)) { timeout = temp; }
+					else if (int.TryParse(opt, out itemp))
+						HandleNumericOptions(itemp);
+					else
 					{
-						case "ok": buttons = MessageBoxButtons.OK; break;
+						switch (opt.ToLower())
+						{
+							case "ok": buttons = MessageBoxButtons.OK; break;
 
-						case "okcancel":
-						case "o/c":
-						case "oc":
-							buttons = MessageBoxButtons.OKCancel; break;
+							case "okcancel":
+							case "o/c":
+							case "oc":
+								buttons = MessageBoxButtons.OKCancel; break;
 
-						case "abortretryignore":
-						case "a/r/i":
-						case "ari":
-							buttons = MessageBoxButtons.AbortRetryIgnore; break;
+							case "abortretryignore":
+							case "a/r/i":
+							case "ari":
+								buttons = MessageBoxButtons.AbortRetryIgnore; break;
 
-						case "yesnocancel":
-						case "y/n/c":
-						case "ync":
-							buttons = MessageBoxButtons.YesNoCancel; break;
+							case "yesnocancel":
+							case "y/n/c":
+							case "ync":
+								buttons = MessageBoxButtons.YesNoCancel; break;
 
-						case "yesno":
-						case "y/n":
-						case "yn":
-							buttons = MessageBoxButtons.YesNo; break;
+							case "yesno":
+							case "y/n":
+							case "yn":
+								buttons = MessageBoxButtons.YesNo; break;
 
-						case "retrycancel":
-						case "r/c":
-						case "rc":
-							buttons = MessageBoxButtons.RetryCancel; break;
+							case "retrycancel":
+							case "r/c":
+							case "rc":
+								buttons = MessageBoxButtons.RetryCancel; break;
 
-						case "canceltryagaincontinue":
-						case "c/t/c":
-						case "ctc":
-							buttons = MessageBoxButtons.CancelTryContinue; break;
+							case "canceltryagaincontinue":
+							case "c/t/c":
+							case "ctc":
+								buttons = MessageBoxButtons.CancelTryContinue; break;
 
-						case "iconx": icon = MessageBoxIcon.Hand; break;
+							case "iconx": icon = MessageBoxIcon.Hand; break;
 
-						case "icon?": icon = MessageBoxIcon.Question; break;
+							case "icon?": icon = MessageBoxIcon.Question; break;
 
-						case "icon!": icon = MessageBoxIcon.Exclamation; break;
+							case "icon!": icon = MessageBoxIcon.Exclamation; break;
 
-						case "iconi": icon = MessageBoxIcon.Asterisk; break;
+							case "iconi": icon = MessageBoxIcon.Asterisk; break;
 
-						case "default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
+							case "default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
 
-						case "default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
+							case "default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
 
-						case "default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
+							case "default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
+						}
 					}
 				}
 			}

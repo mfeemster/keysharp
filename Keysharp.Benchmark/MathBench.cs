@@ -44,17 +44,17 @@ namespace Keysharp.Benchmark
 				throw new Exception($"{total} was not equal to {totalCos}.");
 		}
 
-		[Benchmark]
-		public void KeysharpCosFunc()
-		{
-			var total = 0.0;
+		//[Benchmark]
+		//public void KeysharpCosFunc()
+		//{
+		//  var total = 0.0;
 
-			for (var i = 0; i < Size; i++)
-				total += (double)fo.Call(vals[i]);
+		//  for (var i = 0; i < Size; i++)
+		//      total += (double)fo.Call(vals[i]);
 
-			if (!total.IsAlmostEqual(totalCos))
-				throw new Exception($"{total} was not equal to {totalCos}.");
-		}
+		//  if (!total.IsAlmostEqual(totalCos))
+		//      throw new Exception($"{total} was not equal to {totalCos}.");
+		//}
 
 		[Benchmark]
 		public void KeysharpCosObj()

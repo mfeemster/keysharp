@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using static Keysharp.Core.Misc;
@@ -314,6 +315,8 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 		}
 
+		internal bool AnyThreadsAvailable() => existingThreads < maxThreads;
+
 		internal bool CompareHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
 		{
 			// hs.mEndCharRequired is not checked because although it affects the conditions for activating
@@ -461,36 +464,55 @@ namespace Keysharp.Core.Common.Keyboard
 		/// has been done.  Caller must have already created a new thread for us, and must close the thread when
 		/// we return.
 		/// </summary>
-		internal async Task<ResultType> PerformInNewThreadMadeByCaller(IntPtr hwndCritFound)
+		internal ResultType PerformInNewThreadMadeByCaller(IntPtr hwndCritFound, string endChar)
 		{
-			if (existingThreads >= maxThreads)
+			if (!Threads.AnyThreadsAvailable())//First test global thread count.
 				return ResultType.Fail;
 
-			// See Hotkey::Perform() for details about this.  For hot strings -- which also use the
-			// g_script.mThisHotkeyStartTime value to determine whether g_script.mThisHotkeyModifiersLR
-			// is still timely/accurate -- it seems best to set to "no modifiers":
-			KeyboardMouseSender.thisHotkeyModifiersLR = 0;
-			++existingThreads;  // This is the thread count for this particular hotstring only.
+			if (!AnyThreadsAvailable())//Then test local thread count.
+				return ResultType.Fail;
+
+			var tv = Threads.GetThreadVariables();
+
+			if (priority < tv.priority)//Finally, test priority.
+				return ResultType.Fail;
+
 			VariadicFunction vf = (o) =>
 			{
+				object ret = null;
 				var tv = Threads.GetThreadVariables();
 				tv.sendLevel = inputLevel;
 				tv.hwndLastUsed = hwndCritFound;
 				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
-				return funcObj.Call(o);
+
+				try
+				{
+					ret = funcObj.Call(o);
+				}
+				catch (Error ex)
+				{
+					_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
+				}
+
+				_ = Interlocked.Decrement(ref existingThreads);
+				return ret;
 			};
 
 			try
 			{
-				var tsk = await Threads.LaunchInThread(priority, false, false, vf, new object[] { Name });
+				//var tsk = await Threads.LaunchInThread(priority, false, false, vf, new object[] { Name });
+				// See Hotkey::Perform() for details about this.  For hot strings -- which also use the
+				// g_script.mThisHotkeyStartTime value to determine whether g_script.mThisHotkeyModifiersLR
+				// is still timely/accurate -- it seems best to set to "no modifiers":
+				KeyboardMouseSender.thisHotkeyModifiersLR = 0;
+				Accessors.A_EndChar = endCharRequired ? endChar : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
+				Script.SetHotNamesAndTimes(Name);
+				_ = Interlocked.Increment(ref existingThreads);//This is the thread count for this particular hotstring only.
+				Threads.LaunchInThread(priority, false, false, vf, new object[] { Name });
 			}
 			catch (Error ex)
 			{
-				_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}");
-			}
-			finally
-			{
-				--existingThreads;
+				_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
 			}
 
 			return ResultType.Ok;

@@ -1424,8 +1424,7 @@ that was active at the start of the send. Therefore, if SendInput intentionally 
 will be wrong if they were intended to be relative to the new window rather than the old one.
 		
 		When you dismiss this button,
-		Keysharp will open Notepad, wait a bit and
-		then send some text. You should see this:
+		Keysharp will send some text to the Edit. You should see this:
 
 Now how did this get up here???
 The buttons below this Edit will use various Send() variants.
@@ -1839,7 +1838,6 @@ ShowEditHwnd() {
 ; └──────────────┘
 
 
-; Not used, as SetTimer is causing crashes.
 UpdateOSD()
 {
 	mx :=

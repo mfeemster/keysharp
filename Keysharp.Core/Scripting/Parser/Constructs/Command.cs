@@ -113,13 +113,13 @@ namespace Keysharp.Scripting
 		{
 			var parts = SplitCommandStatement(code);
 			var invoke = new CodeMethodInvokeExpression();
-			invoke.Method = new CodeMethodReferenceExpression(null, parts[0]);
-			CheckPersistent(parts[0]);
+			var name = parts[0];
+			CheckPersistent(name);
+			_ = Reflections.flatPublicStaticMethods.TryGetValue(name, out var meth);
+			invoke.Method = new CodeMethodReferenceExpression(null, meth != null ? meth.Name : name);
 
-			if (parts.Length > 1 && parts[1].Length != 0)
+			if (parts.Length > 1 && parts[1].Length != 0 && meth != null)
 			{
-				var low = parts[0].ToLowerInvariant();
-				_ = Reflections.flatPublicStaticMethods.TryGetValue(low, out var meth);
 				var info = meth?.GetParameters();
 				var exp = info == null ? new bool[] { } : new bool[info.Length];
 
@@ -128,9 +128,9 @@ namespace Keysharp.Scripting
 
 				var split = SplitCommandParameters(parts[1], exp);
 
-				if (parts[0].Equals(MsgBox, System.StringComparison.OrdinalIgnoreCase) && split.Length > 1)
+				if (name.Equals(MsgBox, System.StringComparison.OrdinalIgnoreCase) && split.Length > 1)
 				{
-					if (split[0].Length != 0 && !int.TryParse(split[0], out var n))
+					if (split[0].Length != 0 && !int.TryParse(split[0], out _))
 						split = new[] { parts[1] };
 				}
 
@@ -147,7 +147,6 @@ namespace Keysharp.Scripting
 					_ = invoke.Parameters.Add(ParseCommandParameter(line, split[i], byref, expr));
 				}
 
-				//if (meth != null && !meth.IsStatic)//This cuts down on the extreme namespace and type qualification verbosity.
 				invoke.Method.TargetObject = new CodeTypeReferenceExpression(meth.DeclaringType);
 			}
 

@@ -14,9 +14,12 @@ namespace Keysharp.Core
 
 		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
 		internal static uint CurrentThreadID;
-
 		internal static uint MainThreadID;
 		internal static int ManagedMainThreadID;
+		internal static string runDomain;
+		internal static SecureString runPassword;
+		internal static string runUser;
+
 		private const int LoopFrequency = 50;
 
 		public static long ProcessClose(object obj)
@@ -159,22 +162,21 @@ namespace Keysharp.Core
 			var user = obj0.As();
 			var password = obj1.As();
 			var domain = obj2.As();
-			var tv = Threads.GetThreadVariables();
-			tv.runUser = user;
-			tv.runDomain = domain;
+			runUser = user;
+			runDomain = domain;
 
 			if (string.IsNullOrEmpty(password))
 			{
-				tv.runPassword = null;
+				runPassword = null;
 			}
 			else
 			{
-				tv.runPassword = new SecureString();
+				runPassword = new SecureString();
 
 				foreach (var sym in password)
-					tv.runPassword.AppendChar(sym);
+					runPassword.AppendChar(sym);
 
-				tv.runPassword.MakeReadOnly();
+				runPassword.MakeReadOnly();
 			}
 		}
 
@@ -215,7 +217,7 @@ namespace Keysharp.Core
 			_ = WindowsAPI.ExitWindowsEx((uint)obj.Al(), 0);
 		}
 
-		internal static int MsgFilterMax() => Threads.IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;
+		//internal static int MsgFilterMax() => Threads.IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;
 
 		private static Process FindProcess(string name)
 		{
@@ -294,9 +296,9 @@ namespace Keysharp.Core
 						UseShellExecute = true,
 						FileName = target,
 						WorkingDirectory = string.IsNullOrEmpty(workingDir) ? null : workingDir.Trim(),
-						UserName = string.IsNullOrEmpty(tv.runUser) ? null : tv.runUser,
-						Domain = string.IsNullOrEmpty(tv.runDomain) ? null : tv.runDomain,
-						Password = (tv.runPassword == null || tv.runPassword.Length == 0) ? null : tv.runPassword
+						UserName = string.IsNullOrEmpty(runUser) ? null : runUser,
+						Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain,
+						Password = (runPassword == null || runPassword.Length == 0) ? null : runPassword
 					}
 				};
 

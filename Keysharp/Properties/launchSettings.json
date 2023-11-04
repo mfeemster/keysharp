@@ -2,7 +2,7 @@
   "profiles": {
     "Keysharp": {
       "commandName": "Project",
-      "commandLineArgs": "-codeout -exeout .\\test.ks",
+      "commandLineArgs": "-exeout ..\\..\\..\\Keysharp.Tests\\Code\\Gui\\guitest.ks",
       "workingDirectory": "$(OutputDir)"
     }
   }

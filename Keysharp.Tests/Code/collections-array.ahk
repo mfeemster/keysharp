@@ -406,14 +406,14 @@ else
 
 lam := (x, i) => x * i
 arr := [10, 20, 30]
-arr2 := arr.Map(lam)
+arr2 := arr.MapTo(lam)
 
 if (arr2.Length == 3 && arr2[1] == 10 && arr2[2] == 40 && arr2[3] == 90)
 	FileAppend, pass, *
 else
 	FileAppend, fail, *
 
-arr2 := arr.Map(lam, 2)
+arr2 := arr.MapTo(lam, 2)
 
 if (arr2.Length == 2 && arr2[1] == 40 && arr2[2] == 90)
 	FileAppend, pass, *

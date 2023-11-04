@@ -24,7 +24,8 @@ namespace Keysharp.Main
 		[STAThread]
 		public static int Main(string[] args)
 		{
-			Task writeTask = null;
+			Task writeExeTask = null;
+			Task writeCodeTask = null;
 
 			try
 			{
@@ -175,10 +176,13 @@ namespace Keysharp.Main
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
 				if (codeout)
 				{
-					using (var sourceWriter = new StreamWriter(path + ".cs"))
+					writeCodeTask = Task.Run(() =>
 					{
-						sourceWriter.WriteLine(code);
-					}
+						using (var sourceWriter = new StreamWriter(path + ".cs"))
+						{
+							sourceWriter.WriteLine(code);
+						}
+					});
 				}
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
@@ -210,7 +214,7 @@ namespace Keysharp.Main
 
 					if (exeout)
 					{
-						writeTask = Task.Factory.StartNew(() =>
+						writeExeTask = Task.Run(() =>
 						{
 							try
 							{
@@ -293,13 +297,15 @@ namespace Keysharp.Main
 				}
 				finally
 				{
-					writeTask?.Wait();
+					writeExeTask?.Wait();
+					writeCodeTask?.Wait();
 				}
 
 				return Message(msg, true);
 			}
 
-			writeTask?.Wait();
+			writeExeTask?.Wait();
+			writeCodeTask?.Wait();
 			return 0;
 		}
 

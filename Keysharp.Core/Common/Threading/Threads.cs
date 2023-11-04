@@ -15,17 +15,16 @@ namespace Keysharp.Core.Common.Threading
 	{
 		private static ThreadVariableManager tvm = new ThreadVariableManager();
 
-		public static void BeginThread(bool onlyIfEmpty = false)
+		public static ThreadVariables BeginThread(bool onlyIfEmpty = false)
 		{
 			var skip = Flow.AllowInterruption == false;//This will be false when exiting the program.
 			_ = Interlocked.Increment(ref Script.totalExistingThreads);
-			_ = CreateIfNeeded(0, skip, false);
-			_ = PushThreadVariables(0, skip, false, onlyIfEmpty);
+			return PushThreadVariables(0, skip, false, onlyIfEmpty);
 		}
 
-		public static void EndThread()
+		public static void EndThread(bool checkThread = false)
 		{
-			PopThreadVariables();
+			PopThreadVariables(checkThread);
 			_ = Interlocked.Decrement(ref Script.totalExistingThreads);
 		}
 
@@ -35,10 +34,6 @@ namespace Keysharp.Core.Common.Threading
 
 		internal static bool AnyThreadsAvailable() => Script.totalExistingThreads < Script.MaxThreadsTotal;
 
-		internal static ThreadVariables CreateIfNeeded(int priority = 0
-				, bool skipUninterruptible = false
-				, bool isCritical = false) => tvm.CreateIfNeeded(priority, skipUninterruptible, isCritical);
-
 		internal static ThreadVariables GetThreadVariables() => tvm.GetThreadVariables();
 
 		internal static bool IsInterruptible()
@@ -46,12 +41,13 @@ namespace Keysharp.Core.Common.Threading
 			if (!Flow.AllowInterruption)
 				return false;
 
-			if (Script.totalExistingThreads == 0)
+			if (Script.totalExistingThreads == 0)//Before UserMainCode() starts to run.
 				return true;
 
 			var tv = GetThreadVariables();
 
-			if (!tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
+			if (!tv.isCritical//Added this whereas AHK doesn't check it. We should never make a critical thread interruptible.
+					&& !tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
 					&& tv.uninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mUninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
 					&& (DateTime.Now - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
 					&& !Flow.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
@@ -64,198 +60,66 @@ namespace Keysharp.Core.Common.Threading
 			return tv.allowThreadToBeInterrupted;
 		}
 
-		internal static async Task<object> LaunchInThread(int priority, bool skipUninterruptible,
-				bool isCritical, object func, object[] o)//Determine later the optimal threading model.//TODO
+		internal static void LaunchInThread(int priority, bool skipUninterruptible,
+											bool isCritical, object func, object[] o)//Determine later the optimal threading model.//TODO
 		{
 			Task<object> tsk = null;
-			SlimStack<ThreadVariables> threadStackVars = null;
-			_ = Interlocked.Increment(ref Script.totalExistingThreads);
 
 			try
 			{
-				tsk = Task.Factory.StartNew<object>(() =>
-													//tsk = Task.Run<object>(() =>
+				var existingTv = GetThreadVariables();
+				existingTv.WaitForCriticalToFinish();//Cannot launch a new task while a critical one is running.
+				ThreadVariables tv = null;
+				void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
+				tsk = Task.Factory.StartNew(() =>
+											//var t2 = Task.Run(() =>
 				{
-					//throw new System.Exception("ASDf");
-					//throw new Error("ASDf");
-					object ret;
-					_ = tvm.CreateIfNeeded(priority, skipUninterruptible, isCritical);
-					_ = PushThreadVariables(priority, skipUninterruptible, isCritical); //Always start each thread with one entry.
-					threadStackVars = ThreadVariableManager.threadVars;//Get a reference to the object for this thread.
+					object ret = null;
 
-					if (func is VariadicFunction vf)
-						ret = vf(o);
-					else if (func is IFuncObj ifo)
-						ret = ifo.Call(o);
-					else
-						ret = "";
+					try
+					{
+						//throw new System.Exception("ASDf");
+						//throw new Error("ASDf");
+						_ = Interlocked.Increment(ref Script.totalExistingThreads);
+						tv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
+						AssignTask(tv);
 
-					tvm.PopThreadVariables();
+						if (func is VariadicFunction vf)
+							ret = vf(o);
+						else if (func is IFuncObj ifo)
+							ret = ifo.Call(o);
+						else
+							ret = "";
+					}
+					catch (Exception ex)
+					{
+					}
+					finally
+					{
+						EndThread();
+					}
+
 					return ret;
 				},
 				//This is needed to make a variety of functionality work inside of hotkey/string handlers.
 				//Such as clipboard and window functions.
 				CancellationToken.None, TaskCreationOptions.None,
 				SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current);
-				_ = await tsk;
 			}
 			//catch (AggregateException aex)
 			catch (Exception ex)
 			{
-				tvm.PopThreadVariablesFromOtherThread(threadStackVars);
-
+				//tvm.PopThreadVariables(false);
 				if (ex.InnerException != null)
 					throw ex.InnerException;
 				else
 					throw;//Do not pass ex because it will reset the stack information.
 			}
-			finally
-			{
-				_ = Interlocked.Decrement(ref Script.totalExistingThreads);
-			}
 
-			return tsk;
+			//return tsk;
 		}
 
-		internal static void PopThreadVariables() => tvm.PopThreadVariables();
-	}
-
-	public class ThreadVariables : IClearable
-	{
-		internal bool allowThreadToBeInterrupted = true;
-		internal long controlDelay = 20L;
-		internal CoordModes coords;
-		internal System.Windows.Forms.Timer currentTimer;
-		internal string defaultGui;
-		internal long defaultMouseSpeed = 2L;
-		internal bool detectHiddenText = true;
-		internal bool detectHiddenWindows;
-		internal Form dialogOwner;
-		internal object eventInfo;
-		internal Encoding fileEncoding = Encoding.Default;
-		internal string formatNumeric;
-		internal IFuncObj hotCriterion;
-		internal IntPtr hwndLastUsed = IntPtr.Zero;
-		internal bool isCritical = false;
-		internal long keyDelay = 10L;
-		internal long keyDelayPlay = -1L;
-		internal long keyDuration = -1L;
-		internal long keyDurationPlay = -1L;
-		internal long lastFoundForm = 0L;
-		internal Stack<LoopInfo> loops;
-		internal long mouseDelay = 10L;
-		internal long mouseDelayPlay = -1L;
-		internal long peekFrequency = 5L;
-		internal long priority;
-		internal Random randomGenerator;
-		internal StringBuilder regsb;
-		internal long regView = 64L;
-		internal string runDomain;
-		internal SecureString runPassword;
-		internal string runUser;
-		internal uint sendLevel;
-		internal SendModes sendMode = SendModes.Input;
-		internal bool storeCapsLockMode = true;
-		internal int threadId;
-		internal DateTime threadStartTime = DateTime.MinValue;
-		internal object titleMatchMode = 2L;
-		internal bool titleMatchModeSpeed = true;
-		internal int uninterruptibleDuration = 17;
-		internal long winDelay = 100L;
-
-		/// <summary>
-		/// The fields in this function must be kept in sync with the fields declared above.
-		/// </summary>
-		public void Clear()
-		{
-			isCritical = false;
-			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = 17;
-			threadStartTime = DateTime.MinValue;
-			controlDelay = 20L;
-			coords = null;
-			currentTimer = null;
-			defaultGui = null;
-			defaultMouseSpeed = 2L;
-			detectHiddenText = true;
-			detectHiddenWindows = false;
-			dialogOwner = null;
-			eventInfo = null;
-			fileEncoding = Encoding.Default;
-			formatNumeric = null;
-			hotCriterion = null;
-			hwndLastUsed = IntPtr.Zero;
-			keyDelay = 10L;
-			keyDelayPlay = -1L;
-			keyDuration = -1L;
-			keyDurationPlay = -1L;
-			lastFoundForm = 0L;
-			loops?.Clear();
-			mouseDelay = 10L;
-			mouseDelayPlay = -1L;
-			peekFrequency = 5L;
-			priority = 0L;
-			randomGenerator = null;
-			_ = (regsb?.Clear());
-			regView = 64L;
-			runDomain = null;
-			runPassword = null;
-			runUser = null;
-			sendLevel = 0;
-			sendMode = SendModes.Input;
-			storeCapsLockMode = true;
-			threadId = 0;
-			titleMatchMode = 2L;
-			titleMatchModeSpeed = true;
-			winDelay = 100L;
-		}
-
-		public void Init()
-		{
-			isCritical = false;
-			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = Keysharp.Scripting.Script.uninterruptibleTime;
-			threadStartTime = DateTime.MinValue;
-			controlDelay = Accessors.A_ControlDelay.Al();
-			coords = null;
-			currentTimer = null;
-			defaultGui = null;
-			defaultMouseSpeed = Accessors.A_DefaultMouseSpeed.Al();
-			detectHiddenText = Accessors.A_DetectHiddenText.Ab();
-			detectHiddenWindows = Accessors.A_DetectHiddenWindows.Ab();
-			dialogOwner = null;
-			eventInfo = null;
-			fileEncoding = Files.GetEncoding(Accessors.A_FileEncoding.ToString());
-			formatNumeric = null;
-			hotCriterion = null;
-			hwndLastUsed = IntPtr.Zero;
-			keyDelay = Accessors.A_KeyDelay.Al();
-			keyDelayPlay = Accessors.A_KeyDelayPlay.Al();
-			keyDuration = Accessors.A_KeyDuration.Al();
-			keyDurationPlay = Accessors.A_KeyDurationPlay.Al();
-			lastFoundForm = IntPtr.Zero;
-			loops = null;
-			mouseDelay = Accessors.A_MouseDelay.Al();
-			mouseDelayPlay = Accessors.A_MouseDelayPlay.Al();
-			peekFrequency = Accessors.A_PeekFrequency.Al();
-			priority = Accessors.A_Priority.Al();
-			randomGenerator = null;
-			_ = (regsb?.Clear());
-			regView = Accessors.A_RegView.Al();
-			runDomain = null;
-			runPassword = null;
-			runUser = null;
-			sendLevel = Accessors.A_SendLevel.Aui();
-
-			if (Enum.TryParse<SendModes>(Accessors.A_SendMode.As(), out var temp))
-				sendMode = temp;
-
-			storeCapsLockMode = Accessors.A_StoreCapsLockMode.Ab();
-			threadId = 0;
-			titleMatchMode = Accessors.A_TitleMatchMode;
-			titleMatchModeSpeed = Accessors.A_TitleMatchModeSpeed.ToString() == Keywords.Keyword_Fast;
-			winDelay = Accessors.A_WinDelay.Al();
-		}
+		internal static void PopThreadVariables(bool checkThread = false) => tvm.PopThreadVariables(checkThread);
 	}
 
 	internal class ThreadVariableManager
@@ -270,22 +134,11 @@ namespace Keysharp.Core.Common.Threading
 		/// When the thread finishes, the object is popped from the thread's stack in threadVars, and returned to the object pool threadVarsPool.
 		/// </summary>
 		//internal static readonly int initialCapacity = 16;
-		//[ThreadStatic]
-		internal static SlimStack<ThreadVariables> threadVars;
+		internal static SlimStack<ThreadVariables> threadVars = new SlimStack<ThreadVariables>((int)Script.MaxThreadsTotal);
 
 		internal ConcurrentStackPool<ThreadVariables> threadVarsPool = new ConcurrentStackPool<ThreadVariables>((int)Script.MaxThreadsTotal);//Will start off with this many fully created/initialized objects.
 
-		internal ThreadVariables CreateIfNeeded(int priority = 0
-												, bool skipUninterruptible = false
-												, bool isCritical = false)
-		{
-			if (threadVars == null)
-				threadVars = new SlimStack<ThreadVariables>((int)Script.MaxThreadsTotal);
-
-			return PushThreadVariables(priority, skipUninterruptible, isCritical, true); //Always start each thread with one entry.
-		}
-
-		internal ThreadVariables GetThreadVariables() => CreateIfNeeded();
+		internal ThreadVariables GetThreadVariables() => threadVars.TryPeek() ?? throw new Error("Tried to get an existing thread variable object but there were none. This should never happen.");
 
 		internal void PopThreadVariables(bool checkThread = true)
 		{
@@ -305,13 +158,6 @@ namespace Keysharp.Core.Common.Threading
 			}
 		}
 
-		internal void PopThreadVariablesFromOtherThread(SlimStack<ThreadVariables> otherThreadVars)
-		{
-			if (otherThreadVars.Index > 0)//Never pop the last object on the main thread.
-				if (otherThreadVars.TryPop(out var tv))
-					threadVarsPool.Return(tv);
-		}
-
 		internal ThreadVariables PushThreadVariables(int priority, bool skipUninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false)
 		{
@@ -328,7 +174,8 @@ namespace Keysharp.Core.Common.Threading
 
 					if (Script.uninterruptibleTime != 0 || tv.isCritical) // v1.0.38.04.
 					{
-						tv.allowThreadToBeInterrupted = false;
+						//tv.allowThreadToBeInterrupted = false;//This is really only for the line count feature, which is not supported.//TODO
+						tv.allowThreadToBeInterrupted = !tv.isCritical;
 
 						if (!tv.isCritical)
 						{

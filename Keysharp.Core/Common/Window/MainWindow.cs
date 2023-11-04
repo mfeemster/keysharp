@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using static Keysharp.Core.Misc;
 
@@ -94,9 +95,9 @@ namespace Keysharp.Scripting
 
 				case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
 					//Sadly, we cannot make this method async, so this will just be fire and forget.
-					_ = Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
-					//var t = Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
-					//t.Wait();
+					var tv = Threads.GetThreadVariables();
+					tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
+					Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
 					handled = true;
 					break;
 			}

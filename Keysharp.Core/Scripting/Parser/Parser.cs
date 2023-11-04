@@ -10,7 +10,8 @@ using System.Reflection;
 using System.Text;
 using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
-
+using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
+using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 namespace Keysharp.Scripting
 {
 	public partial class Parser : ICodeParser
@@ -30,7 +31,7 @@ namespace Keysharp.Scripting
 		private const string mainScope = "";
 		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
 		private Stack<bool> allGlobalVars = new Stack<bool>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> allMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private tsmd allMethodCalls = new tsmd();
 		private Stack<bool> allStaticVars = new Stack<bool>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
 		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
@@ -45,8 +46,8 @@ namespace Keysharp.Scripting
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private uint exCount;
 		private string fileName;
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getMethodCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> getPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private tsmd getMethodCalls = new tsmd();
+		private tsmd getPropertyValueCalls = new tsmd();
 		private Stack<List<string>> globalFuncVars = new Stack<List<string>>();
 		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
 		private int internalID;
@@ -70,7 +71,7 @@ namespace Keysharp.Scripting
 		private CodeBlock parentBlock;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>> setPropertyValueCalls = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMethodInvokeExpression>>>();
+		private tsmd setPropertyValueCalls = new tsmd();
 		private Stack<CodeBlock> singleLoops = new ();
 		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
 		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
@@ -353,7 +354,9 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), "Call");
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is string s && s.Length > 0)//Convert myclass() to myclass.Call().
+						{
 							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
+						}
 						//Handle proper casing for all method calls.
 						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
 						{
@@ -382,6 +385,9 @@ namespace Keysharp.Scripting
 						else if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
 						{
 							cmie.Method.MethodName = mph.mi.Name;
+
+							if (mph.mi.IsStatic)
+								cmie.Method.TargetObject = new CodeTypeReferenceExpression(mph.mi.DeclaringType);
 
 							if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, cmie.Parameters.Count) is MethodPropertyHolder mph2 && mph2.mi != null)//We know the method exists, so try to find the exact match for the number of parameters specified.
 							{
@@ -682,9 +688,10 @@ namespace Keysharp.Scripting
 				Name = "UserMainCode",
 				ReturnType = new CodeTypeReference(typeof(object))
 			};
-			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads"), "BeginThread", new CodePrimitiveExpression(true)));
+			var threads = new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads");
+			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(threads, "BeginThread"));
 			userMainMethod.Statements.AddRange(main.Statements);
-			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads"), "EndThread"));
+			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(threads, "EndThread"));
 			main.Statements.Clear();
 			//_ = targetClass.Members.Add(userMainMethod);
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
@@ -779,10 +786,10 @@ namespace Keysharp.Scripting
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>();
 			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
-			setPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			getPropertyValueCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			getMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
-			allMethodCalls[ctd] = new Dictionary<string, List<CodeMethodInvokeExpression>>();
+			setPropertyValueCalls[ctd] = new slmd();
+			getPropertyValueCalls[ctd] = new slmd();
+			getMethodCalls[ctd] = new slmd();
+			allMethodCalls[ctd] = new slmd();
 			return ctd;
 		}
 

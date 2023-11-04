@@ -866,8 +866,8 @@ namespace Keysharp.Core.Windows
 					ksc[kv.Value].scTakesPrecedence = true;
 
 			// These have to be initialized with element value INVALID.
-			System.Array.Fill(kvkm, (uint)HotkeyDefinition.HOTKEY_ID_INVALID);
-			System.Array.Fill(kscm, (uint)HotkeyDefinition.HOTKEY_ID_INVALID);
+			System.Array.Fill(kvkm, HotkeyDefinition.HOTKEY_ID_INVALID);
+			System.Array.Fill(kscm, HotkeyDefinition.HOTKEY_ID_INVALID);
 
 			for (var i = 0; i < hotkeyUp.Count; i++)
 				hotkeyUp[i] = HotkeyDefinition.HOTKEY_ID_INVALID;
@@ -2339,7 +2339,7 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		internal IntPtr LowLevelCommon(IntPtr hook, int code, long wParam, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc, bool keyUp, ulong extraInfo, uint eventFlags)
 		{
-			var hotkeyIdToPost = (uint)HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
+			var hotkeyIdToPost = HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
 			var isIgnored = IsIgnored(extraInfo);
 			// The following is done for more than just convenience.  It solves problems that would otherwise arise
 			// due to the value of a global var such as KeyHistoryNext changing due to the reentrancy of
@@ -2682,7 +2682,7 @@ namespace Keysharp.Core.Windows
 				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
-			var hotkeyIdWithFlags = (uint)HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
+			var hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
 			HotkeyVariant firingIsCertain = null;
 			uint hotkeyIdTemp; // For informal/temp storage of the ID-without-flags.
 			bool fireWithNoSuppress = false; // Set default.
@@ -4594,6 +4594,7 @@ namespace Keysharp.Core.Windows
 					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
 					obj = variant
 				});
+
 				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyIDToPost, KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)); // v1.0.43.03: sc is posted currently only to support the number of wheel turns (to store in A_EventInfo).
 
 				if (keyUp && hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK] != HotkeyDefinition.HOTKEY_ID_INVALID)
@@ -5108,10 +5109,17 @@ namespace Keysharp.Core.Windows
 					Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;//AHK Sets this to critical which seems extreme.
 					var reader = channel.Reader;
 					channelThreadID = GetCurrentThreadId();
-					//WindowsAPI.GetMessage(out var _, IntPtr.Zero, 0, 0);
 
 					await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manner of obscure meaning into bits and bytes of wparam and lparam.
+						//while (true)
 					{
+						//if (!reader.TryRead(out var item))
+						//{
+						//  Flow.Sleep(10L);
+						//  continue;
+						//}
+						//var item = await reader.ReadAsync();
+						//var theasyncfunc = async () =>
 						var criterion_found_hwnd = IntPtr.Zero;
 						channelThreadID = GetCurrentThreadId();
 
@@ -5127,7 +5135,8 @@ namespace Keysharp.Core.Windows
 							// ********
 							// NO BREAK IN ABOVE, FALL INTO NEXT CASE:
 							// ********
-							var tv = Threads.GetThreadVariables();//May need to be pushed here.
+							var tv = Threads.GetThreadVariables();
+							tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
 
 							switch (msg.message)//Almost none of this is going to work until we figure out how threads are going to work.
 							{
@@ -5244,14 +5253,12 @@ namespace Keysharp.Core.Windows
 										//Does only the backspacing if it's not an auto-replace hotstring.
 										Script.mainWindow.CheckedInvoke(() => hs.DoReplace(hmsg.caseMode, hmsg.endChar), true);
 
-										if (string.IsNullOrEmpty(hs.replacement) && (hs.priority >= tv.priority) && Threads.AnyThreadsAvailable())
+										if (string.IsNullOrEmpty(hs.replacement))
 										{
 											// Otherwise, continue on and let a new thread be created to handle this hotstring.
 											// Since this isn't an auto-replace hotstring, set this value to support
 											// the built-in variable A_EndChar:
-											Accessors.A_EndChar = hs.endCharRequired ? hmsg.endChar.ToString() : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
-											Script.SetHotNamesAndTimes(hs.Name);
-											_ = await hs.PerformInNewThreadMadeByCaller(criterion_found_hwnd);
+											_ = hs.PerformInNewThreadMadeByCaller(criterion_found_hwnd, hmsg.endChar.ToString());
 										}
 										else
 											continue;
@@ -5259,15 +5266,10 @@ namespace Keysharp.Core.Windows
 
 									break;
 
+								case (uint)WindowsAPI.WM_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								{
-									if (msg.obj is HotkeyVariant variant && (variant.priority >= tv.priority) && Threads.AnyThreadsAvailable())
-									{
-										_ = await Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, variant, (uint)UserMessages.AHK_HOOK_HOTKEY);
-									}
-									else
-										continue;
-
+									Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, msg.obj as HotkeyVariant, msg.message);
 									break;
 								}
 
@@ -5275,7 +5277,7 @@ namespace Keysharp.Core.Windows
 								//case (uint)UserMessages.AHK_CLIPBOARD_CHANGE: //Probably not needed because we handle OnClipboardChange() differently. Added for v1.0.44 so that clipboard notifications aren't lost while the script is displaying a MsgBox or other dialog.
 								case (uint)UserMessages.AHK_INPUT_END:
 
-									// If the followinFhwndg facts are ever confirmed, there would be no need to post the message in cases where
+									// If the following facts are ever confirmed, there would be no need to post the message in cases where
 									// the MsgSleep() won't be done:
 									// 1) The mere fact that any of the above messages has been received here in MainWindowProc means that a
 									//    message pump other than our own main one is running (i.e. it is the closest pump on the call stack).
@@ -5318,7 +5320,7 @@ namespace Keysharp.Core.Windows
 											{
 												try
 												{
-													var tsk = await Threads.LaunchInThread(0, false, false, ifo, new object[] { so });
+													Threads.LaunchInThread(0, false, false, ifo, new object[] { so });
 												}
 												catch (Error ex)
 												{
@@ -5330,6 +5332,7 @@ namespace Keysharp.Core.Windows
 											continue;
 									}
 									else
+										//continue;
 										continue;
 
 									break;
@@ -5358,7 +5361,7 @@ namespace Keysharp.Core.Windows
 											var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
 													   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
 													   : new object[] { input_hook.ScriptObject, lParamVal, wParamVal };
-											var tsk = await Threads.LaunchInThread(0, false, false, ifo, args);
+											Threads.LaunchInThread(0, false, false, ifo, args);
 										}
 										catch (Error ex)
 										{

@@ -43,12 +43,6 @@ namespace Keysharp.Core
 			set => Threads.GetThreadVariables().dialogOwner = value;
 		}
 
-		internal static long LastFoundForm//This is probably not what we want and won't work anyway.
-		{
-			get => Threads.GetThreadVariables().lastFoundForm;
-			set => Threads.GetThreadVariables().lastFoundForm = value;
-		}
-
 		public static Icon GetIcon(string source, int n)
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)

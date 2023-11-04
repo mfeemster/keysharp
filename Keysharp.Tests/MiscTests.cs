@@ -21,7 +21,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("misc-object", true));
 		}
 
-		[Test, Category("Misc")]
+		[Test, Category("Misc"), NonParallelizable]
 		public void MiscTimer() => Assert.IsTrue(TestScript("misc-timer", false));
 
 		[Test, Category("Misc")]

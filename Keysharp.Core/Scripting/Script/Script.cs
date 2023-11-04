@@ -71,8 +71,6 @@ namespace Keysharp.Scripting
 
 		internal static Keysharp.Core.Common.Threading.HookThread HookThread { get; private set; }
 
-		//[ThreadStatic]
-		//internal static IntPtr hwndLastUsed = IntPtr.Zero;
 		internal static IntPtr HwndLastUsed
 		{
 			get => Threads.GetThreadVariables().hwndLastUsed;

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using Keysharp.Scripting;
+using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.MethodPropertyHolder>>>;
+using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.MethodPropertyHolder>>>;
 
 namespace Keysharp.Core
 {
@@ -17,15 +19,15 @@ namespace Keysharp.Core
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 
 		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
-		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> stringToTypeProperties = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static int sttcap = 1000;
-		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
-		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
-		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
-		internal static Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>> typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+		internal static ttsd typeToStringBuiltInMethods = new ttsd(sttcap / 10);
+		internal static ttsd typeToStringLocalMethods = new ttsd(sttcap / 10);
+		internal static ttsd typeToStringMethods = new ttsd(sttcap / 5);
+		internal static ttsd typeToStringProperties = new ttsd(sttcap / 5);
 
 		static Reflections() => Initialize();
 
@@ -36,14 +38,14 @@ namespace Keysharp.Core
 		public static void Clear()
 		{
 			staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
-			stringToTypeBuiltInMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-			stringToTypeLocalMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-			stringToTypeMethods = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-			stringToTypeProperties = new Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>>(sttcap, StringComparer.OrdinalIgnoreCase);
-			typeToStringBuiltInMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
-			typeToStringLocalMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 10);
-			typeToStringMethods = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
-			typeToStringProperties = new Dictionary<Type, Dictionary<string, Dictionary<int, MethodPropertyHolder>>>(sttcap / 5);
+			stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+			stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
+			stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+			stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+			typeToStringBuiltInMethods = new ttsd(sttcap / 10);
+			typeToStringLocalMethods = new ttsd(sttcap / 10);
+			typeToStringMethods = new ttsd(sttcap / 5);
+			typeToStringProperties = new ttsd(sttcap / 5);
 			loadedAssemblies = new Dictionary<string, Assembly>();
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
@@ -414,14 +416,14 @@ namespace Keysharp.Core
 
 			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
 			FindAndCacheProperty(typeof(object[]), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
-			FindAndCacheProperty(typeof(System.Exception), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+			FindAndCacheProperty(typeof(Exception), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
 
 			foreach (var typekv in typeToStringProperties)
 				foreach (var propkv in typekv.Value)
 					_ = stringToTypeProperties.GetOrAdd(propkv.Key).GetOrAdd(typekv.Key, propkv.Value);
 		}
 
-		private static MethodPropertyHolder FindMethod(Dictionary<string, Dictionary<Type, Dictionary<int, MethodPropertyHolder>>> dkt, string name, int paramCount)
+		private static MethodPropertyHolder FindMethod(sttd dkt, string name, int paramCount)
 		{
 			if (dkt.TryGetValue(name, out var meths))
 				if (meths.Count > 0)

@@ -113,7 +113,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Menu items, whether shown or not, have no impact on threading.
 
 ###	Syntax: ###
-* `Peristent` is a function and therefore must be called like either a function `Persistent()` or as a directive like `#Persistent`.
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
@@ -140,14 +139,14 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * `Goto` statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
-	+ `Func()` or `FuncObj()` is still used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
+	+ `Func()` or `FuncObj()` can still be used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
 ```
 	myfunc(a, b, c?, d?)
 	{
 		e := a
 		f := b
-		g := c
+		g := c ; No question mark needed for c or d.
 		h := d
 	}
 ```
@@ -156,7 +155,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Sub versions such as -alpha and -beta are not supported, only the four numerical values values contained in the assembly version in the form of `0.0.0.0` are supported.	
 * Global variables can be accessed from within class methods by using the `program.` prefix: `program.a := 123`.
 * Accessing class member variables within member functions does not require the `this.` prefix.
-	+ Instead, just reference the member variable using global, and that will distinguish it between a local function variable of the same name.
+	+ Instead, just reference the member variable using `global`, and that will distinguish it between a local function variable of the same name.
 	+ Using `this.` is still supported, but is slower, so avoid using it if possible.
 * If a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
 	+ `global propname` refers to the property defined in the base class.
@@ -218,7 +217,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		+ If `start_index` is less than 0 then do a reverse lookup.
 	+ `IndexOf(val_to_find, start_index := 1) => Integer`
 	+ `Join(separator := ',') => String`
-	+ `Map(callback: (value [, index]) => Any) => Array`
+	+ `MapTo(callback: (value [, index]) => Any) => Array`
 	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 when `a > b`.
 * A new function `Atan2(y, x) => Double` while AHK only supports `Atan(value)`.
 * Hyperbolic versions of the trigonometric functions:

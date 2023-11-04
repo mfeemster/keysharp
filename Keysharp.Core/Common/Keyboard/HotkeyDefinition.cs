@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
@@ -957,8 +958,8 @@ namespace Keysharp.Core.Common.Keyboard
 
 					if (hookAction == HOTKEY_ID_TOGGLE)
 						hookAction = hk.hookAction != 0
-									 ? (uint)(hk.parentEnabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON) // Enable/disable parent hotkey (due to alt-tab being a global hotkey).
-									 : (uint)(variant.enabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON); // Enable/disable individual variant.
+									 ? hk.parentEnabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON // Enable/disable parent hotkey (due to alt-tab being a global hotkey).
+									 : variant.enabled ? HOTKEY_ID_OFF : HOTKEY_ID_ON; // Enable/disable individual variant.
 
 					if (hookAction == HOTKEY_ID_ON)
 					{
@@ -1914,7 +1915,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// those that aren't kept queued due to the message filter) prior to returning to its caller.
 					// But for maintainability, it seems best to change this to g_hWnd vs. NULL to make joystick
 					// hotkeys behave more like standard hotkeys.
-					_ = WindowsAPI.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, (IntPtr)i, IntPtr.Zero);
+					_ = WindowsAPI.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, i, IntPtr.Zero);
 				}
 
 				//else continue the loop in case the user has newly pressed more than one joystick button.
@@ -1983,14 +1984,14 @@ namespace Keysharp.Core.Common.Keyboard
 			return vp;  // Indicate success by returning the new object.
 		}
 
-		internal bool Condition()
-		{
-			if (Precondition == null)
-				return true;
+		//internal bool Condition()
+		//{
+		//  if (Precondition == null)
+		//      return true;
 
-			var result = Precondition.Call(new object[] { });
-			return result is bool b ? b : result != null;
-		}
+		//  var result = Precondition.Call(new object[] { });
+		//  return result is bool b ? b : result != null;
+		//}
 
 		/// <summary>
 		/// Caller must not call this for AltTab hotkeys IDs because this will always return NULL in such cases.
@@ -2083,12 +2084,17 @@ namespace Keysharp.Core.Common.Keyboard
 			return false;
 		}
 
-		internal async Task<object> PerformInNewThreadMadeByCallerAsync(HotkeyVariant variant, long critFoundHwnd, int lParamVal)
-		// Caller is responsible for having called PerformIsAllowed() before calling us.
-		// Caller must have already created a new thread for us, and must close the thread when we return.
+		/// <summary>
+		/// Caller is responsible for having called PerformIsAllowed() before calling us.
+		/// Caller must have already created a new thread for us, and must close the thread when we return.
+		/// </summary>
+		/// <param name="variant"></param>
+		/// <param name="critFoundHwnd"></param>
+		/// <param name="lParamVal"></param>
+		internal void PerformInNewThreadMadeByCallerAsync(HotkeyVariant variant, long critFoundHwnd, int lParamVal)
 		{
 			if (dialogIsDisplayed) // Another recursion layer is already displaying the warning dialog below.
-				return ""; // Don't allow new hotkeys to fire during that time.
+				return;
 
 			TimeSpan timeUntilNow;
 			bool displayWarning;
@@ -2122,7 +2128,7 @@ namespace Keysharp.Core.Common.Keyboard
 				dialogIsDisplayed = true;
 				Flow.AllowInterruption = false;
 
-				if (Dialogs.MsgBox(error_text, "", "YesNo") == DialogResult.No.ToString())
+				if (Dialogs.MsgBox(error_text, null, "YesNo") == DialogResult.No.ToString())
 					_ = Flow.ExitAppInternal(Flow.ExitReasons.Close);// Might not actually Exit if there's an OnExit function.
 
 				Flow.AllowInterruption = true;
@@ -2144,18 +2150,8 @@ namespace Keysharp.Core.Common.Keyboard
 			// other command that would have unpredictable results due to the displaying
 			// of the dialog itself.
 			if (displayWarning)
-				return "";
+				return;
 
-			// This is stored as an attribute of the script (semi-globally) rather than passed
-			// as a parameter to ExecUntil (and from their on to any calls to SendKeys() that it
-			// makes) because it's possible for SendKeys to be called asynchronously, namely
-			// by a timed subroutine, while A_HotkeyModifierTimeout is still in effect,
-			// in which case we would want SendKeys() to take note of these modifiers even
-			// if it was called from an ExecUntil() other than ours here:
-			KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
-			// LAUNCH HOTKEY SUBROUTINE:
-			++variant.existingThreads;  // This is the thread count for this particular hotkey only.
-			Task<object> tsk = null;
 			VariadicFunction vf = (o) =>
 			{
 				if (ht.IsWheelVK(vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
@@ -2165,65 +2161,67 @@ namespace Keysharp.Core.Common.Keyboard
 				var tv = Threads.GetThreadVariables();
 				tv.hwndLastUsed = new IntPtr(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
-				return variant.callback.Call(o);
+				object ret = null;
+
+				try
+				{
+					ret = variant.callback.Call(o);
+				}
+				catch (Exception ex)
+				{
+					_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
+					variant.runAgainAfterFinished = false;  // Ensure this is reset due to the error.
+				}
+
+				_ = Interlocked.Decrement(ref variant.existingThreads);
+
+				if (variant.runAgainAfterFinished)
+				{
+					// But MsgSleep() can change it back to true again, when called by the above call
+					// to ExecUntil(), to keep it auto-repeating:
+					variant.runAgainAfterFinished = false;  // i.e. this "run again" ticket has now been used up.
+
+					if ((DateTime.Now - variant.runAgainTime).TotalMilliseconds <= 1000)
+					{
+						// v1.0.44.14: Post a message rather than directly running the above ExecUntil again.
+						// This fixes unreported bugs in previous versions where the thread isn't reinitialized before
+						// the launch of one of these buffered hotkeys, which caused settings such as SetKeyDelay
+						// not to start off at their defaults.  Also, there are quite a few other things that the main
+						// event loop does to prep for the launch of a hotkey.  Rather than copying them here or
+						// trying to put them into a shared function (which would be difficult due to their nature),
+						// it's much more maintainable to post a message, and in most cases, it shouldn't measurably
+						// affect response time (this feature is rarely used anyway).
+						//Some hotkeys will be using the hook and others will be using the built in Windows hotkey handler.
+						//Sending a message will work for both cases.
+						_ = WindowsAPI.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, id, 0);
+					}
+
+					//else it was posted too long ago, so don't do it.  This is because most users wouldn't
+					// want a buffered hotkey to stay pending for a long time after it was pressed, because
+					// that might lead to unexpected behavior.
+				}
+
+				return ret;
 			};
 
 			try
 			{
-				tsk = Threads.LaunchInThread(variant.priority, false, false, vf, new object[] { Name });
-				_ = await tsk;
+				// This is stored as an attribute of the script (semi-globally) rather than passed
+				// as a parameter to ExecUntil (and from their on to any calls to SendKeys() that it
+				// makes) because it's possible for SendKeys to be called asynchronously, namely
+				// by a timed subroutine, while A_HotkeyModifierTimeout is still in effect,
+				// in which case we would want SendKeys() to take note of these modifiers even
+				// if it was called from an ExecUntil() other than ours here:
+				KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
+				Keysharp.Scripting.Script.SetHotNamesAndTimes(Name);
+				_ = Interlocked.Increment(ref variant.existingThreads);//This is the thread count for this particular hotkey only and must come before the thread is actually launched.
+				Threads.LaunchInThread(variant.priority, false, false, vf, new object[] { Name });
 			}
 			catch (Error ex)
 			{
-				_ = Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}");
+				_ = Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
 			}
-
-			--variant.existingThreads;
-
-			if (tsk.IsFaulted)//Original checked for result == FAIL, unsure if this accomplishes the same thing.//TODO
-			{
-				variant.runAgainAfterFinished = false;  // Ensure this is reset due to the error.
-			}
-			else if (variant.runAgainAfterFinished)
-			{
-				// But MsgSleep() can change it back to true again, when called by the above call
-				// to ExecUntil(), to keep it auto-repeating:
-				variant.runAgainAfterFinished = false;  // i.e. this "run again" ticket has now been used up.
-
-				if ((DateTime.Now - variant.runAgainTime).TotalMilliseconds <= 1000)
-				{
-					// v1.0.44.14: Post a message rather than directly running the above ExecUntil again.
-					// This fixes unreported bugs in previous versions where the thread isn't reinitialized before
-					// the launch of one of these buffered hotkeys, which caused settings such as SetKeyDelay
-					// not to start off at their defaults.  Also, there are quite a few other things that the main
-					// event loop does to prep for the launch of a hotkey.  Rather than copying them here or
-					// trying to put them into a shared function (which would be difficult due to their nature),
-					// it's much more maintainable to post a message, and in most cases, it shouldn't measurably
-					// affect response time (this feature is rarely used anyway).
-					_ = WindowsAPI.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, id, 0);//Again need to figure out how to do this in a cross platform manner.//TODO
-				}
-
-				//else it was posted too long ago, so don't do it.  This is because most users wouldn't
-				// want a buffered hotkey to stay pending for a long time after it was pressed, because
-				// that might lead to unexpected behavior.
-			}
-
-			return tsk;//.Result;
 		}
-
-		/// <summary>
-		/// For now, attempts to launch another simultaneous instance of this subroutine
-		/// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
-		/// In the future, it might be better to have this user-configurable, i.e. to devise
-		/// some way for the hotkeys to be kept queued up so that they take effect only when
-		/// the number of currently active threads drops below the max.  But doing such
-		/// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
-		/// would be slowed down to prevent the subroutines from running concurrently:
-		/// </summary>
-		/// <param name="variant"></param>
-		/// <returns></returns>
-		internal bool PerformIsAllowed(HotkeyVariant variant) =>
-		variant.existingThreads < variant.maxThreads;
 
 		internal ResultType Register()
 		{
@@ -2611,6 +2609,19 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool runAgainAfterFinished;
 		internal DateTime runAgainTime;
 		internal bool suspendExempt;
+
+		/// <summary>
+		/// For now, attempts to launch another simultaneous instance of this subroutine
+		/// are ignored if MaxThreadsPerHotkey (for this particular hotkey) has been reached.
+		/// In the future, it might be better to have this user-configurable, i.e. to devise
+		/// some way for the hotkeys to be kept queued up so that they take effect only when
+		/// the number of currently active threads drops below the max.  But doing such
+		/// might make "infinite key loops" harder to catch because the rate of incoming hotkeys
+		/// would be slowed down to prevent the subroutines from running concurrently:
+		/// </summary>
+		/// <param name="variant"></param>
+		/// <returns></returns>
+		internal bool AnyThreadsAvailable() => existingThreads < maxThreads;
 
 		internal void RunAgainAfterFinished()
 		{

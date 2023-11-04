@@ -1,4 +1,5 @@
 using Keysharp.Core;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,13 @@ namespace Keysharp.Scripting
 				Keysharp.Core.Processes.MainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 #endif
 				Keysharp.Core.Processes.ManagedMainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
+				_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 				var stack = new StackTrace(false).GetFrames();
+				//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
+				var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
+
+				if (path != "testhost.exe" && !Accessors.A_IsCompiled)
+					Dir.SetWorkingDir(Accessors.A_ScriptDir);
 
 				for (var i = stack.Length - 1; i >= 0; i--)
 				{

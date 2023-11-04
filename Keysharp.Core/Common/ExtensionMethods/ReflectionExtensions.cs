@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace System.Reflection
 {
@@ -14,6 +15,16 @@ namespace System.Reflection
 				ret = mi.Invoke(inst, parameters);
 
 			return ret;
+		}
+
+		public static async Task<object> InvokeAsync(this MethodInfo mi, object inst, params object[] parameters)
+		{
+			var tsk = mi.Invoke(inst, parameters);
+
+			if (tsk is Task<object> to)
+				return await to;
+
+			return tsk;
 		}
 	}
 }

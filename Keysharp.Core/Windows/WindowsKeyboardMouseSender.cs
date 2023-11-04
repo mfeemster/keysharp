@@ -2883,6 +2883,7 @@ namespace Keysharp.Core.Windows
 			if (doSelectiveBlockInput && !blockinputPrev) // Turn it back off only if it was off before we started.
 				_ = Keyboard.ScriptBlockInput(false);
 
+			//THIS IS PROBABLY NOT NEEDED, SINCE WE PROCESS HOTKEYS ON A DIFFERENT THREAD ANYWAY, SO THERE SHOULDN'T BE ANY NON-CRITICAL BUFFERING.//TODO
 			// The following MsgSleep(-1) solves unwanted buffering of hotkey activations while SendKeys is in progress
 			// in a non-Critical thread.  Because SLEEP_WITHOUT_INTERRUPTION is used to perform key delays, any incoming
 			// hotkey messages would be left in the queue.  It is not until the next interruptible sleep that hotkey

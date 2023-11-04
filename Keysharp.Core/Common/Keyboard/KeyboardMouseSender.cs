@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common.Keyboard
@@ -311,7 +311,7 @@ namespace Keysharp.Core.Common.Keyboard
 				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
 		}
 
-		internal async Task<object> ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)
+		internal void ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)
 		{
 			var hkId = wParamVal & HotkeyDefinition.HOTKEY_ID_MASK;
 
@@ -367,14 +367,17 @@ namespace Keysharp.Core.Common.Keyboard
 				var criterion_found_hwnd = 0L;
 
 				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
-					return ""; // No criterion is eligible, so ignore this hotkey event (see other comments).
+					return;
+
+				if (!Threads.AnyThreadsAvailable())//First test global thread count.
+					return;
 
 				// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
 				// but not now.  Seems best to abort (see other comments).
 				// Due to the key-repeat feature and the fact that most scripts use a value of 1
 				// for their #MaxThreadsPerHotkey, this check will often help average performance
 				// by avoiding a lot of unnecessary overhead that would otherwise occur:
-				if (!hk.PerformIsAllowed(variant))
+				if (!variant.AnyThreadsAvailable())//Then test local thread count.
 				{
 					// The key is buffered in this case to boost the responsiveness of hotkeys
 					// that are being held down by the user to activate the keyboard's key-repeat
@@ -383,16 +386,18 @@ namespace Keysharp.Core.Common.Keyboard
 					// finishes (this above description applies only when MaxThreadsPerHotkey is 1,
 					// which it usually is).
 					variant.RunAgainAfterFinished(); // Wheel notch count (g->EventInfo below) should be okay because subsequent launches reuse the same thread attributes to do the repeats.
-					return "";
+					return;
 				}
 
-				// Now that above has ensured variant is non-NULL:
-				Keysharp.Scripting.Script.SetHotNamesAndTimes(hk.Name);
-				// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
-				return await hk.PerformInNewThreadMadeByCallerAsync(variant, criterion_found_hwnd, lParamVal);
-			}
+				var tv = Threads.GetThreadVariables();
 
-			return "";
+				// Now that above has ensured variant is non-NULL:
+				if (variant.priority >= tv.priority)//Finally, test priority.
+				{
+					// Above also works for RunAgainAfterFinished since that feature reuses the same thread attributes set above.
+					hk.PerformInNewThreadMadeByCallerAsync(variant, criterion_found_hwnd, lParamVal);
+				}
+			}
 		}
 
 		internal void Remove(HotkeyDefinition hotkey) => _ = hotkeys.Remove(hotkey);

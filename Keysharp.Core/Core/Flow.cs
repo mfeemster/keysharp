@@ -3,9 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Keysharp.Core.Misc;
 using Timer = System.Timers.Timer;
 
@@ -51,7 +53,7 @@ namespace Keysharp.Core
 			callingCritical = true;
 			var tv = Threads.GetThreadVariables();
 			var on = obj == null;
-			long freq = obj.ParseLong(false) ?? 0L;
+			long freq = !on ? (obj.ParseLong(false) ?? 0L) : 0L;
 
 			if (!on)
 			{
@@ -302,7 +304,7 @@ namespace Keysharp.Core
 			else//They tried to stop a timer that didn't exist
 				return;
 
-			timer.Tick += async (ss, ee) =>
+			timer.Tick += (ss, ee) =>
 			{
 				if ((!Accessors.A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
 						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
@@ -322,16 +324,13 @@ namespace Keysharp.Core
 
 						var remove = false;
 
-						VariadicFunction vf = (thetimer) =>
-						{
-							Threads.GetThreadVariables().currentTimer = thetimer[0] as System.Windows.Forms.Timer;
-							return func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
-						};
-
 						//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented, specifically the Thread() function.//TODO
 						try
 						{
-							_ = await Threads.LaunchInThread(pri, false, false, vf, new object[] { t });
+							_ = Interlocked.Increment(ref Script.totalExistingThreads);
+							tv = Threads.PushThreadVariables(pri, true, false);
+							tv.currentTimer = timer;
+							var ret = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
 						}
 						catch (Exception)
 						{
@@ -339,6 +338,8 @@ namespace Keysharp.Core
 						}
 						finally
 						{
+							Threads.EndThread();
+
 							if (once || remove)
 							{
 								_ = timers.TryRemove(func, out _);

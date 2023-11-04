@@ -212,7 +212,7 @@ namespace Keysharp.Core
 
 		public string Join(object obj = null) => string.Join(obj.As(","), array);
 
-		public Array Map(object obj, object index = null)
+		public Array MapTo(object obj, object index = null)
 		{
 			var startIndex = index.Ai(1);
 

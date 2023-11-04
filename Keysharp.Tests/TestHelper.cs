@@ -3,6 +3,7 @@ using System.CodeDom.Compiler;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using Keysharp.Core;
 using Keysharp.Scripting;
 using NUnit.Framework;
 
@@ -15,29 +16,14 @@ namespace Keysharp.Tests
 
 		internal bool TestScript(string source, bool testfunc, bool exeout = false)
 		{
-			var b1 = false;
 			var b2 = true;
-			//Task[] taskArray = { Task.Factory.StartNew(() => b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true))),
-			//                   Task.Factory.StartNew(() =>
-			//{
-			//  if (testfunc)
-			//      b2 = HasPassed(RunScript(string.Concat(path, source, ext), source + "_func", true, true));
-			//})
-			//                 };
-			//Task.WaitAll(taskArray);
-			b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true, exeout));
+			var b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true, exeout));
 
 			if (testfunc && b1)
 				b2 = HasPassed(RunScript(string.Concat(path, source, ext), source + "_func", true, true, exeout));
 
 			return b1 && b2;
 		}
-
-		//internal bool ValidateScript(string source, string name)
-		//{
-		//  RunScript(string.Concat(path, source, ext), name, false);
-		//  return true;
-		//}
 
 		internal bool HasPassed(string output)
 		{
