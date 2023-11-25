@@ -4,34 +4,34 @@ x := 2
 y := x >> 1
 
 if (y == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := -1
 y := x >> 1
 
 if (y == 0xffffffffffffffff)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := -1
 y := x >>> 1
 
 if (y == 0x7fffffffffffffff)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 y := 1
 z := x >> y
 
 if (z == 0)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -46,9 +46,9 @@ catch (TypeError as exc)
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -63,9 +63,9 @@ catch (TypeError as exc)
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -81,9 +81,9 @@ catch (TypeError as exc)
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -99,9 +99,9 @@ catch (Error as exc)
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -117,6 +117,6 @@ catch (Error as exc)
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

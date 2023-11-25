@@ -40,9 +40,9 @@ if (found == true)
 	outy := loc["Y"]
 	
 	if (outx == x && outy == y)
-		FileAppend, pass, *
+		FileAppend, "pass", "*"
 	else
-		FileAppend, fail, *
+		FileAppend, "fail", "*"
 }
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

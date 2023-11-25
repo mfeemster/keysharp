@@ -1,6 +1,8 @@
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
-using Keysharp.Core;
+using Keysharp.Core.Windows;
+using Microsoft.CodeAnalysis.Text;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -109,50 +111,19 @@ namespace Keysharp.Scripting
 			return parts;
 		}
 
-		private CodeMethodInvokeExpression ParseCommand(CodeLine line, string code)
+		private bool ParseCommand(CodeLine line, string code)
 		{
-			var parts = SplitCommandStatement(code);
-			var invoke = new CodeMethodInvokeExpression();
-			var name = parts[0];
-			CheckPersistent(name);
-			_ = Reflections.flatPublicStaticMethods.TryGetValue(name, out var meth);
-			invoke.Method = new CodeMethodReferenceExpression(null, meth != null ? meth.Name : name);
+			var firstSpace = code.IndexOf(' ');
+			var lineNumber = codeLines.IndexOf(line);
 
-			if (parts.Length > 1 && parts[1].Length != 0 && meth != null)
+			if (firstSpace != -1)
 			{
-				var info = meth?.GetParameters();
-				var exp = info == null ? new bool[] { } : new bool[info.Length];
-
-				for (var i = 0; info != null && i < info.Length; i++)
-					exp[i] = Script.IsNumeric(info[i].ParameterType);
-
-				var split = SplitCommandParameters(parts[1], exp);
-
-				if (name.Equals(MsgBox, System.StringComparison.OrdinalIgnoreCase) && split.Length > 1)
-				{
-					if (split[0].Length != 0 && !int.TryParse(split[0], out _))
-						split = new[] { parts[1] };
-				}
-
-				for (var i = 0; i < split.Length; i++)
-				{
-					bool byref = false, expr = false;
-
-					if (info != null && i < info.Length)
-					{
-						byref = info[i].IsOut || info[i].ParameterType.IsByRef;
-						expr = exp[i];
-					}
-
-					_ = invoke.Parameters.Add(ParseCommandParameter(line, split[i], byref, expr));
-				}
-
-				invoke.Method.TargetObject = new CodeTypeReferenceExpression(meth.DeclaringType);
+				var newCode = string.Concat(code.AsSpan(0, firstSpace).TrimEnd(','), "(", code.AsSpan(firstSpace + 1), ")");
+				codeLines[lineNumber] = new CodeLine(line.FileName, line.LineNumber, newCode);
+				return true;
 			}
 
-			invoke.UserData.Add(invokeCommand, true);
-			invokes.Add(invoke);
-			return invoke;
+			return false;
 		}
 
 		private CodeExpression ParseCommandParameter(CodeLine line, string code, bool byref = false, bool expr = false)

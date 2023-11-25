@@ -56,7 +56,7 @@ using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;
 using static Keysharp.Core.Drive;
-using static Keysharp.Core.DllHelper;
+using static Keysharp.Core.Dll;
 using static Keysharp.Core.Env;
 using static Keysharp.Core.Files;
 using static Keysharp.Core.Flow;

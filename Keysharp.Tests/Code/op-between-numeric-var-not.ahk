@@ -18,66 +18,66 @@ l = -0.5
 m = -0.8
 
 If x not between %y% and %z%
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If x not between %z% and %y%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If x not between %a% and %b%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If x not between %c% and %d%
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If x not between %d% and %c%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If x not between %e% and %f%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If x not between %g% and %h%
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If x not between %h% and %g%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If x not between %i% and %j%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If x not between %j% and %i%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If x not between %k% and %d%
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If x not between %d% and %k%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If x not between %l% and %m%
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

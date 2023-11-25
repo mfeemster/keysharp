@@ -4,54 +4,54 @@ FileEncoding("utf-8")
 fe := A_FileEncoding
 
 if (fe == "utf-8")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileEncoding("utf-8-raw")
 fe := A_FileEncoding
 
 if (fe == "utf-8-raw")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileEncoding("utf-16")
 fe := A_FileEncoding
 
 if (fe == "utf-16")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileEncoding("unicode")
 fe := A_FileEncoding
 
 if (fe == "utf-16")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileEncoding("utf-16-raw")
 fe := A_FileEncoding
 
 if (fe == "utf-16-raw")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileEncoding("ascii")
 fe := A_FileEncoding
 
 if (fe == "us-ascii")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileEncoding("us-ascii")
 fe := A_FileEncoding
 
 if (fe == "us-ascii")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

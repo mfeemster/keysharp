@@ -8,43 +8,43 @@ dir := "./DirExist/SubDir1/SubDir2/SubDir3"
 DirCreate(dir)
 
 if (DirExist("./DirExist"))
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 if (DirExist("./DirExist/SubDir1"))
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 if (DirExist("./DirExist/SubDir1/SubDir2"))
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 if (DirExist("./DirExist/SubDir1/SubDir2/SubDir3"))
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 val := DirExist(dir)
 
 if (val == "D")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 dir := path . "DirCopy/file1.txt"
 
 if (FileExist(dir))
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (DirExist(dir) == "A")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 ; val = Disk.DirExist(dir);
 ; Assert.AreEqual(val, "A");

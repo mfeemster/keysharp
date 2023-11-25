@@ -9,9 +9,9 @@ TheFunc(args)
 }
 
 if (val == 52.5)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 CallbackFree(callback)
 EnumAddress := CallbackCreate("EnumWindowsProc")
@@ -26,15 +26,15 @@ EnumWindowsProc(hwnd, lParam)
 	win_class := WinGetClass(hwnd)
 	ct++
 
-	if (ct < 5) ; go through the first give windows
+	if (ct < 5) ; go through the first five windows
 		return true
 	else
 		return false
 }
 
 if (ct == 5)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 CallbackFree(EnumAddress)

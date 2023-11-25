@@ -71,6 +71,77 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return true;
 		}
 
+		/// <summary>
+		/// Taken loosely from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
+		/// </summary>
+		/// <param name="source"></param>
+		/// <param name="ch1"></param>
+		/// <param name="ch2"></param>
+		/// <returns></returns>
+		internal static int FindFirstImbalanced(this string source, char ch1, char ch2)
+		{
+			int temp;
+			var stack = new Stack<int>();
+			var escape = false;
+			var inquote = false;
+
+			for (var i = 0; i < source.Length; i++)
+			{
+				var ch = source[i];
+
+				if (ch == '\'')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || source[i - 1] != '`')
+							inquote = true;
+					}
+				}
+				else if (ch == '\"')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || source[i - 1] != '`')
+							inquote = true;
+					}
+					else
+					{
+						if (i == 0 || source[i - 1] != '`' || !escape)//Checking escape accounts for ``.
+							inquote = false;
+					}
+				}
+
+				if (ch == Keywords.Escape)
+					escape = !escape;
+				else
+					escape = false;
+
+				if (!inquote)
+				{
+					if (ch == ch1)
+					{
+						stack.Push(i);
+					}
+					else if (ch == ch2)
+					{
+						if (!stack.TryPop(out _))
+						{
+							return i;
+						}
+					}
+				}
+			}
+
+			var ret = -1;
+
+			while (stack.TryPop(out temp))
+			{
+				ret = temp;
+			}
+
+			return ret;
+		}
+
 		internal static int FindFirstNotOf(this string source, string chars, int offset = 0)
 		{
 			if (source.Length == 0) return -1;

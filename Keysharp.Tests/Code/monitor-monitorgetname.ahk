@@ -7,6 +7,6 @@ loop ct
 	names .= MonitorGetName(A_Index)
 	
 if (names != "")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

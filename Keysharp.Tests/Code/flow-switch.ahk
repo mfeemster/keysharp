@@ -14,9 +14,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 z := ""
 
@@ -31,9 +31,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 z := ""
 
@@ -46,9 +46,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 z := ""
 
@@ -59,9 +59,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := "Tester"
 z := ""
@@ -77,9 +77,9 @@ switch x, 0
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := "Tester"
 z := ""
@@ -97,9 +97,9 @@ switch x, 1
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := "Tester"
 z := ""
@@ -113,9 +113,9 @@ switch x, 1
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 z := ""
@@ -131,9 +131,9 @@ switch
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 z := ""
@@ -149,9 +149,9 @@ switch
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 z := ""
@@ -168,9 +168,9 @@ switch
 }
 
 if (z == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 123
 z := ""
@@ -189,6 +189,25 @@ switch x, 1 ; this is a comment
 }
 
 if (z == 3)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
+
+x := 0
+z := 0
+
+switch z
+{
+	case 10:
+		x += 100
+	case 20:
+		x += 100
+	case 30:
+		x += 100
+}
+
+if (x == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	

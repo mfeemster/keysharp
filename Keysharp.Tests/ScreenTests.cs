@@ -16,11 +16,11 @@ namespace Keysharp.Tests
 			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			CoordMode("Mouse", "Screen");
 			var screen = System.Windows.Forms.Screen.PrimaryScreen;
-			_ = GetScreenClip(1000, 1000, 100, 100, "./imagesearch.bmp");
+			_ = GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp");
 			object x = null, y = null;
-			Keysharp.Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");
+			Keysharp.Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");//This implies this pattern won't be present before 1000,1000.
 
-			if (x is long lx && lx == 1000 && y is long ly && ly == 1000)
+			if (x is long lx && lx == 10 && y is long ly && ly == 10)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);

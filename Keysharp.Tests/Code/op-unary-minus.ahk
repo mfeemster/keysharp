@@ -4,83 +4,83 @@ x := 2
 y := -2
 
 If (y = -2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != -2)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 y := -y
 
 If (y = 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != 2)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 y := -(x * y)
 
 If (y = -4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != -4)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 y := y * -1
 
 If (y = 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != 4)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 y := y / -1
 
 If (y = -4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != -4)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 y := -(y / -2)
 
 If (y = -2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != -2)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 	
 y := -4 + 5 * -10
 
 If (y = -54)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y != -54)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"

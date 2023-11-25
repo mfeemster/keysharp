@@ -2,11 +2,11 @@
 x := ""
 
 If (x != "")
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If (x = "")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

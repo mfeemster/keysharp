@@ -8,72 +8,72 @@ DirCreate("./FileSetAttrib")
 DirCopy(dir, "./FileSetAttrib")
 
 if (DirExist("./FileSetAttrib"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileSetAttrib/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileSetAttrib/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileSetAttrib/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 dir := "./FileSetAttrib"
 attr := FileGetAttrib(dir)
 
 if (attr == "D")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 dir := "./FileSetAttrib/file1.txt"
 attr := FileGetAttrib(dir)
 
 if (attr == "A")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileSetAttrib("r", dir)
 attr := FileGetAttrib(dir)
 
 if (attr == "RA")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileSetAttrib("-r", dir)
 attr := FileGetAttrib(dir)
 
 if (attr == "A")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileSetAttrib("^r", dir)
 attr := FileGetAttrib(dir)
 
 if (attr == "RA")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileSetAttrib("^r", dir)
 attr := FileGetAttrib(dir)
 
 if (attr == "A")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (DirExist("./FileSetAttrib"))
 	DirDelete("./FileSetAttrib", true)

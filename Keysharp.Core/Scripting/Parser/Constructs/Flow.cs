@@ -55,7 +55,7 @@ namespace Keysharp.Scripting
 
 			var lower = parts[0].ToLowerInvariant();
 
-			//This is needed becauses elses is popped when an else is encountered, but if and if statement
+			//This is needed becauses elses is popped when an else is encountered, but if an if statement
 			//has no else, then the elses will remain and can sometimes affect later code which thinks it's
 			//still in an if/else block, even though the block has long since terminated.
 			if (parentBlock == null || parentBlock.Kind != CodeBlock.BlockKind.IfElse)
@@ -702,6 +702,7 @@ namespace Keysharp.Scripting
 						if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
 						{
 							var parencount = 0;
+							var bracketcount = 0;
 							var temptoks = SplitTokens(parts[1]);//Find the variable names because they needed to be added to the static vars before ParseMultiExpression() is called so they get properly added.
 
 							for (var ti = 0; ti < temptoks.Count; ti++)
@@ -712,9 +713,13 @@ namespace Keysharp.Scripting
 										parencount++;
 									else if (tok[0] == ')')
 										parencount--;
+									else if (tok[0] == '[')
+										bracketcount++;
+									else if (tok[0] == ']')
+										bracketcount--;
 
-									if (parencount == 0 && (ti == 0 || (temptoks[ti - 1] as string)[0] == ','))
-										dkt[Scope + scopeChar + tok] = null;//Must add as scoped for it to work.
+									if ((parencount == 0 && bracketcount == 0) && (ti == 0 || (temptoks[ti - 1] as string)[0] == ','))
+										dkt[Scope + scopeChar + tok.ToLower()] = null;//Must add as scoped for it to work.
 								}
 							}
 
@@ -810,7 +815,14 @@ namespace Keysharp.Scripting
 							var rest = StripCommentSingle(parts[1]).RemoveAll(Parens).Split(Spaces);
 
 							if (rest.Length > 0 && rest[0] != "as" && rest[0] != "{")
-								exctypename = "Keysharp.Core." + rest[0];
+							{
+								var exctype = rest[0];
+
+								if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+									exctypename = t.FullName;
+								else//This should never happen, but keep in case.
+									exctypename = "Keysharp.Core." + exctype;
+							}
 
 							var subtract = rest[rest.Length - 1] == "{" ? 3 : 2;
 
@@ -963,8 +975,8 @@ namespace Keysharp.Scripting
 
 		private CodeExpression ParseInequality(CodeLine line, string code)
 		{
-			var buf = new StringBuilder(code.Length);
 			var i = 0;
+			var buf = new StringBuilder(code.Length);
 
 			while (i < code.Length && IsSpace(code[i])) i++;
 
@@ -975,30 +987,20 @@ namespace Keysharp.Scripting
 
 			if (i != code.Length) // if test argument is not a lone identifier then it is an expression
 			{
-				var op = new[] { Equal, Not, Greater, Less };
-
-				if (System.Array.IndexOf(op, code[i]) == -1)
+				if (System.Array.IndexOf(ops, code[i]) == -1)
 					throw new ParseException(ExUnexpected, line);
 
 				_ = buf.Append(code[i++]);
 
-				if (i < code.Length && System.Array.IndexOf(op, code[i]) != -1)
+				if (i < code.Length && System.Array.IndexOf(ops, code[i]) != -1)
 					_ = buf.Append(code[i++]);
-
-				_ = buf.Append(StringBound);
 
 				while (i < code.Length && IsSpace(code[i])) i++;
 
 				if (i < code.Length)
-				{
-					var str = code.Substring(i);
-					str = str.Replace(StringBound.ToString(), new string(StringBound, 2));
-					_ = buf.Append(str);
-				}
+					_ = buf.Append(code.Substring(i));
 
 				while (i < code.Length && IsSpace(code[i])) i++;
-
-				_ = buf.Append(StringBound);
 			}
 
 			var iftest = (CodeMethodInvokeExpression)InternalMethods.IfElse;

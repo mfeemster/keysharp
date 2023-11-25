@@ -155,6 +155,41 @@ namespace System
 			return new double? ();
 		}
 
+		public static float? ParseFloat(this object obj, bool doconvert = true, bool requiredot = false)
+		{
+			if (obj is float d)
+				return d;
+
+			if (obj is long l)
+				return l;
+
+			if (obj is Keysharp.Scripting.BoolResult br)
+				return br.o.ParseFloat(doconvert, requiredot);
+
+			if (obj is int i)//int is seldom used in Keysharp, so check last.
+				return i;
+
+			var s = obj.ToString().AsSpan();
+
+			if (s.Length == 0)
+				return new float? ();
+
+			if (requiredot && !s.Contains('.'))
+				return new float? ();
+
+			if (float.TryParse(s, out d))
+				return d;
+
+			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a double like "123.0D".
+				if (float.TryParse(s.Slice(0, s.Length - 1), out d))
+					return d;
+
+			if (doconvert)
+				return (float)Convert.ToDouble(obj);
+
+			return new float? ();
+		}
+
 		public static int? ParseInt(this object obj, bool doconvert = true, bool donoprefixhex = true)
 		{
 			if (obj is int i)

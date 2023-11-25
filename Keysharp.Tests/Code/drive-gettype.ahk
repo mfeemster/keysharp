@@ -3,6 +3,6 @@
 val := DriveGetType("C:\")
 			
 if (val == "Fixed")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

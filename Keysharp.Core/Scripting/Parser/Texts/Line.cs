@@ -10,7 +10,7 @@ namespace Keysharp.Scripting
 			if (code.Length == 0)
 				return false;
 
-			//This is needed so that ordinary lines that end in an operator, like FileAppend, pass, *, are not considered continuations.
+			//This is needed so that ordinary lines that end in an operator, like FileAppend, "pass", "*", are not considered continuations.
 			//Checking for a comma appears to be enough, but it might need further checks if some corner case throws it off in the future.
 			if (next && code.Contains(','))
 				return false;

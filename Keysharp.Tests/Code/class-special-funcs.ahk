@@ -24,9 +24,9 @@ while (gval != 999)
 }
 
 If (gval == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 class enumclass
 {
@@ -47,9 +47,9 @@ for i,v in testclassobj
 }
 
 If (gval == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 class subenumclass extends enumclass
 {
@@ -70,9 +70,9 @@ for i,v in testclassobj
 }
 
 If (gval == 15)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 class testclass2
 {
@@ -85,16 +85,16 @@ testclassobj := testclass2()
 cloneobj := testclassobj.Clone()
 
 If (cloneobj.a == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (cloneobj.b == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (cloneobj.c == 3)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

@@ -3,42 +3,42 @@
 x := "HeLlO WoRlD"
 
 If (x == "HeLlO WoRlD")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (x == "hello world")
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If (x = "HeLlO WoRlD")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (x = "hello world")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 
 If (!(x == "HeLlO WoRlD"))
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 
 If (!(x == "hello world"))
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (!(x = "HeLlO WoRlD"))
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 	
 If (!(x = "hello world"))
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"

@@ -12,63 +12,63 @@ dir := path . "DirCopy"
 FileCopy(dir . "/*", "./FileMove/")
 	
 if (DirExist("./FileMove"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileMove/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileMove/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileMove/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 DirCreate("./FileMove2")
 
 if (DirExist("./FileMove2"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileMove("./FileMove/*", "./FileMove2")
 
 if (!FileExist("./FileMove/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (!FileExist("./FileMove/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (!FileExist("./FileMove/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileMove2/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileMove2/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileMove2/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (DirExist("./FileMove"))
 	DirDelete("./FileMove", true)

@@ -10,9 +10,9 @@ reffunc1(&a)
 reffunc1(&x)
 
 If (x == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
@@ -20,9 +20,9 @@ y11 := 123
 reffunc1(&y%x%)
 
 If (y11 == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 y := 2
@@ -36,14 +36,14 @@ reffunc2(a, &b)
 reffunc2(x, &y)
 
 If (x == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y == 200)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
@@ -51,32 +51,32 @@ y11 := 123
 reffunc2(x, &y%x%)
 
 If (x == 11)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y11 == 200)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 arr := [1, 2, 3]
 
 reffunc1(&arr[2])
 
 If (arr[2] == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
 
 reffunc1(&m["one"])
 
 If (m["one"] == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 class myrefclass
 {
@@ -104,83 +104,83 @@ myclassobj := myrefclass()
 reffunc1(&myclassobj.x)
 
 If (myclassobj.x == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 myclassobj.myclassreffunc()
 
 If (myclassobj.classarr[3] == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 myclassobj.x := 999
 myclassobj.myclassreffunc2(&x)
 
 If (x == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 arr[1] := 1
 myclassobj.myclassreffunc2(&arr[1])
 
 If (arr[1] == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 m["one"] := 1
 myclassobj.myclassreffunc2(&m["one"])
 
 If (m["one"] == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
 myclassobj.myclassreffunc2(&y%x%)
 
 If (y11 == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 myclassobj.myclassreffunc3(&x)
 
 If (x == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 arr[1] := 1
 myclassobj.myclassreffunc3(&arr[1])
 
 If (arr[1] == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 m["one"] := 1
 myclassobj.myclassreffunc3(&m["one"])
 
 If (m["one"] == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
 myclassobj.myclassreffunc3(&y%x%)
 
 If (y11 == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 reffunc3(a, &b, &c, theparams*)
 {
@@ -189,41 +189,41 @@ reffunc3(a, &b, &c, theparams*)
 reffuncobj := FuncObj("reffunc3")
 
 If (reffuncobj.IsByRef(1) == false)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (reffuncobj.IsByRef(2) == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (reffuncobj.IsByRef(3) == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (reffuncobj.IsByRef(4) == false)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 myreffunc := (a, &b, &c) => b := 1111, c := 888
 	
 If (myreffunc.IsByRef(1) == false)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (myreffunc.IsByRef(2) == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (myreffunc.IsByRef(3) == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 		
 x :=
 y :=
@@ -231,44 +231,44 @@ z :=
 val := myreffunc(x, &y, &z)
 
 If (val == 888)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (y == 1111)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (z == 888)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 arr := [1, 2, 3]
 val := myreffunc(x, &y, &arr[2])
 
 If (arr[2] == 888)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 m["one"] := 1
 myreffunc(x, &y, &m["one"])
 
 If (m["one"] == 888)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
 myreffunc(x, &y, &y%x%)
 
 If (y11 == 888)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 class myrefclass2
 {
@@ -283,201 +283,201 @@ myclassobj := myrefclass2()
 val := myclassobj.member1(x, &y)
 
 If (val == 40000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (x == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y == 40000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 arr := [1, 2, 3]
 val := myclassobj.member1(arr[1], &arr[2])
 
 If (val == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (arr[1] == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (arr[2] == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
 val := myclassobj.member1(m["one"], &m["two"])
 
 If (val == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (m["one"] == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (m["two"] == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
 val := myclassobj.member1(x, &y%x%)
 
 If (val == 2706)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (x == 11)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y11 == 2706)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 100
 y := 200
 val := myclassobj.member2(&x, y)
 
 If (val == 40000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (x == 40000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y == 200)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 arr := [1, 2, 3]
 val := myclassobj.member2(&arr[1], arr[2])
 
 If (val == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (arr[1] == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (arr[2] == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
 val := myclassobj.member2(&m["one"], m["two"])
 
 If (val == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (m["one"] == 4)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (m["two"] == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
 val := myclassobj.member2(&x, y%x%)
 
 If (val == 2706)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (x == 2706)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y11 == 123)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 100
 val := myclassobj.member3(&x)
 
 If (val == 200)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (x == 200)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 arr := [1, 2, 3]
 val := myclassobj.member3(&arr[1])
 
 If (val == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (arr[1] == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 m := { "one" : 1, "two" : 2, "three" : 3 }
 val := myclassobj.member3(&m["one"])
 
 If (val == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (m["one"] == 2)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 11
 y11 := 123
 val := myclassobj.member3(&y%x%)
 
 If (val == 246)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If (y11 == 246)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 0
@@ -495,16 +495,16 @@ bf := fo.Bind(5, ,7)
 bf(&y)
 
 If (x == 5)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (y == 123)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 If (z == 7)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

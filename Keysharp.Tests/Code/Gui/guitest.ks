@@ -57,7 +57,7 @@ MyGui.MenuBar := MyMenuBar
 ; │  Start TAB  │
 ; └─────────────┘
 
-Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey"])
+Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey", "Dll & COM"])
 
 Tab.UseTab("First")
 
@@ -1509,7 +1509,7 @@ The 'Run' dialog will open.
 ; └─────────────────────────┘
 
 MyGui.Add("Text", "x0 y+20 w700", "_____________________________________________________________________________________________________________")
-HotkeySectionTopText := MyGui.Add("Text", "x10 y+5 w600", "HOTKEY TESTS")
+HotkeySectionTopText := MyGui.Add("Text", "x10 y+5 w600", "HOTKEY TESTS`nHold F1 to slow mouse, release to restore.")
 HotkeySectionTopText.SetFont("cBlue s14")
 FuncBtnOne := MyGui.Add("Button", "x10 y+5", "FuncObj")
 FuncBtnOne.OnEvent("Click", "DoTricks")
@@ -1960,4 +1960,215 @@ CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the scre
 		MsgBox("An error was thrown!`nSpecifically: " e.Message)
 		Exit
 	}
+}
+
+; ┌──────────────────────────┐
+; │  Hotkeys with DllCall()  │
+; └──────────────────────────┘
+
+F1::
+F1 up::
+{
+	static SPI_GETMOUSESPEED := 0x70
+	static SPI_SETMOUSESPEED := 0x71
+	static OrigMouseSpeed := 0
+
+    switch ThisHotkey
+    {
+    case "F1":
+        ; Retrieve the current speed so that it can be restored later:
+        DllCall("SystemParametersInfo", "UInt", SPI_GETMOUSESPEED, "UInt", 0, "Ptr*", &OrigMouseSpeed, "UInt", 0)
+        ; Now set the mouse to the slower speed specified in the next-to-last parameter (the range is 1-20, 10 is default):
+        DllCall("SystemParametersInfo", "UInt", SPI_SETMOUSESPEED, "UInt", 0, "Ptr", 3, "UInt", 0)
+        KeyWait("F1") ; This prevents keyboard auto-repeat from doing the DllCall repeatedly.
+        
+    case "F1 up":
+        DllCall("SystemParametersInfo", "UInt", SPI_SETMOUSESPEED, "UInt", 0, "Ptr", OrigMouseSpeed, "UInt", 0)  ; Restore the original speed.
+    }
+}
+
+
+; ┌──────────────────┐
+; │  Dll & COM Tab   │
+; └──────────────────┘
+
+MyGui.UseGroup()
+Tab.UseTab("Dll & COM")
+
+hideCursorDllLabel := MyGui.Add("Text", "w400 x10 y+10 cBlue S10","Press Win+C to hide the cursor, and press again to restore it.")
+
+dllMsgBoxBtn := MyGui.Add("Button", "x10 y+10", "Dll MsgBox()")
+dllMsgBoxBtn.OnEvent("Click", "DllMsgBox")
+
+dllMsgBoxBtn := MyGui.Add("Button", "x10 y+10", "Dll IsWindowVisible() (run notepad then click this)")
+dllMsgBoxBtn.OnEvent("Click", "DllIsWindowVisible")
+
+dllWsprintfBtn := MyGui.Add("Button", "x10 y+10", "Dll wsprintf()")
+dllWsprintfBtn.OnEvent("Click", "DllWsprintf")
+
+dllPerformanceCounterBtn := MyGui.Add("Button", "x10 y+10", "Dll QueryPerformanceCounter()")
+dllPerformanceCounterBtn.OnEvent("Click", "DllPerformanceCounter")
+
+dllDllGetWindowRectBtn := MyGui.Add("Button", "x10 y+10", "Dll GetWindowRect()")
+dllDllGetWindowRectBtn.OnEvent("Click", "DllGetWindowRect")
+
+dllDllFillRectBtn := MyGui.Add("Button", "x10 y+10", "Dll FillRect()")
+dllDllFillRectBtn.OnEvent("Click", "DllFillRect")
+
+dllDllRemoveFromTaskbarBtn := MyGui.Add("Button", "x10 y+10", "Dll DeleteFromTaskbar() (clear for 3 seconds, then re-add)")
+dllDllRemoveFromTaskbarBtn.OnEvent("Click", "DllDeleteFromTaskbar")
+
+comDllRemoveFromTaskbarBtn := MyGui.Add("Button", "x10 y+10", "COM DeleteFromTaskbar() (clear for 3 seconds, then re-add)")
+comDllRemoveFromTaskbarBtn.OnEvent("Click", "ComDeleteFromTaskbar")
+
+DllMsgBox()
+{
+	WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
+	MsgBox "You pressed button #" WhichButton
+}
+
+DllIsWindowVisible()
+{
+	DetectHiddenWindows True
+	if not DllCall("IsWindowVisible", "Ptr", WinExist("Untitled - Notepad"))  ; WinExist returns an HWND.
+		MsgBox "Notepad is not visible."
+	else
+		MsgBox "Notepad is visible."
+	DetectHiddenWindows False
+}
+
+DllWsprintf()
+{
+	ZeroPaddedNumber := Buffer(20)  ; Ensure the buffer is large enough to accept the new string.
+	DllCall("wsprintf", "Ptr", ZeroPaddedNumber, "Str", "%010d", "Int", 432, "Cdecl")  ; Requires the Cdecl calling convention.
+	strfmt := Format("{1:0000000000}", 432)
+	str := "Value from wsprintf(): " . StrGet(ZeroPaddedNumber) . "`n" . "Value from Format(): " . strfmt . "`n" . "Reference value: 0000000432"
+	MsgBox(str)
+}
+
+DllPerformanceCounter()
+{
+	freq := 0
+	CounterBefore := 0
+	CounterAfter := 0
+
+	DllCall("QueryPerformanceFrequency", "Int64*", freq)
+	DllCall("QueryPerformanceCounter", "Int64*", &CounterBefore)
+	Sleep(1000)
+	DllCall("QueryPerformanceCounter", "Int64*", &CounterAfter)
+	elapsed := (CounterAfter - CounterBefore) / freq * 1000
+	MsgBox("This value should be near 1000ms: " . elapsed)
+}
+
+DllGetWindowRect()
+{
+	Run "Notepad"
+	WinWait "Untitled - Notepad"  ; This also sets the "last found window" for use with WinExist below.
+	Rect := Buffer(16)  ; A RECT is a struct consisting of four 32-bit integers (i.e. 4*4=16).
+	win := WinExist()
+	DllCall("GetWindowRect", "Ptr", win, "Ptr", Rect)  ; WinExist returns an HWND.
+	L := NumGet(Rect, 0, "Int"), T := NumGet(Rect, 4, "Int")
+	R := NumGet(Rect, 8, "Int"), B := NumGet(Rect, 12, "Int")
+	MsgBox Format("Left: {1} Top: {2} Right: {3} Bottom: {4}", L, T, R, B)
+	WinClose(win)
+}
+
+vtable(ptr, n) {
+    ; NumGet(ptr, "ptr") returns the address of the object's virtual function
+    ; table (vtable for short). The remainder of the expression retrieves
+    ; the address of the nth function's address from the vtable.
+    return NumGet(NumGet(ptr, "ptr"), n*A_PtrSize, "ptr")
+}
+
+DllFillRect()
+{
+	Rect := Buffer(16)  ; Set capacity to hold four 4-byte integers.
+	NumPut( "Int", 0                  ; left
+		  , "Int", 0                  ; top
+		  , "Int", A_ScreenWidth//2   ; right
+		  , "Int", A_ScreenHeight//2  ; bottom
+		  , Rect)
+	hDC := DllCall("GetDC", "Ptr", 0, "Ptr")  ; Pass zero to get the desktop's device context.
+	hBrush := DllCall("CreateSolidBrush", "UInt", 0x0000FF, "Ptr")  ; Create a red brush (0x0000FF is in BGR format).
+	DllCall("FillRect", "Ptr", hDC, "Ptr", Rect, "Ptr", hBrush)  ; Fill the specified rectangle using the brush above.
+	DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)  ; Clean-up.
+	DllCall("DeleteObject", "Ptr", hBrush)  ; Clean-up.
+}
+
+DllDeleteFromTaskbar()
+{
+	IID_ITaskbarList  := "{56FDF342-FD6D-11d0-958A-006097C9A090}"
+	CLSID_TaskbarList := "{56FDF344-FD6D-11d0-958A-006097C9A090}"
+
+	; Create the TaskbarList object.
+	tbl := ComObject(CLSID_TaskbarList, IID_ITaskbarList)
+
+	activeHwnd := WinExist("A")
+
+	DllCall(vtable(tbl.ptr,3), "ptr", tbl)                     ; tbl.HrInit()
+	DllCall(vtable(tbl.ptr,5), "ptr", tbl, "ptr", activeHwnd)  ; tbl.DeleteTab(activeHwnd)
+	Sleep 3000
+	DllCall(vtable(tbl.ptr,4), "ptr", tbl, "ptr", activeHwnd)  ; tbl.AddTab(activeHwnd)
+
+	; Non-wrapped interface pointers must be manually freed.
+	ObjRelease(tbl.ptr)
+}
+
+ComDeleteFromTaskbar()
+{
+	IID_ITaskbarList  := "{56FDF342-FD6D-11d0-958A-006097C9A090}"
+	CLSID_TaskbarList := "{56FDF344-FD6D-11d0-958A-006097C9A090}"
+
+	; Create the TaskbarList object.
+	tbl := ComObject(CLSID_TaskbarList, IID_ITaskbarList)
+
+	activeHwnd := WinExist("A")
+
+	ComCall(3, tbl)                     ; tbl.HrInit()
+	ComCall(5, tbl, "ptr", activeHwnd)  ; tbl.DeleteTab(activeHwnd)
+	Sleep 3000
+	ComCall(4, tbl, "ptr", activeHwnd)  ; tbl.AddTab(activeHwnd)
+
+	; When finished with the object, simply replace any references with
+	; some other value (or if its a local variable, just return):
+	tbl := ""
+}
+
+OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.
+
+#c::SystemCursor("Toggle")  ; Win+C hotkey to toggle the cursor on and off.
+
+SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
+{
+    static visible := true, c := Map()
+    static sys_cursors := [32512, 32513, 32514, 32515, 32516, 32642
+                         , 32643, 32644, 32645, 32646, 32648, 32649, 32650]
+    if (cmd = "Reload" or !c.Count)  ; Reload when requested or at first call.
+    {
+        for i, id in sys_cursors
+        {
+            h_cursor  := DllCall("LoadCursor", "Ptr", 0, "Ptr", id)
+            h_default := DllCall("CopyImage", "Ptr", h_cursor, "UInt", 2
+                , "Int", 0, "Int", 0, "UInt", 0)
+            h_blank   := DllCall("CreateCursor", "Ptr", 0, "Int", 0, "Int", 0
+                , "Int", 32, "Int", 32
+                , "Ptr", Buffer(32*4, 0xFF)
+                , "Ptr", Buffer(32*4, 0))
+            c[id] := {def: h_default, blank: h_blank}
+        }
+    }
+    switch cmd
+    {
+    case "Show": visible := true
+    case "Hide": visible := false
+    case "Toggle": visible := !visible
+    default: return
+    }
+    for id, handles in c
+    {
+        h_cursor := DllCall("CopyImage"
+            , "Ptr", visible ? handles.def : handles.blank
+            , "UInt", 2, "Int", 0, "Int", 0, "UInt", 0)
+        DllCall("SetSystemCursor", "Ptr", h_cursor, "UInt", id)
+    }
 }

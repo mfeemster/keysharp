@@ -11,7 +11,7 @@ x++
 
 labelc:
 If x = 3
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 Return
 
 labelA:

@@ -28,7 +28,7 @@ namespace Keysharp.Core
 		internal static ttsd typeToStringLocalMethods = new ttsd(sttcap / 10);
 		internal static ttsd typeToStringMethods = new ttsd(sttcap / 5);
 		internal static ttsd typeToStringProperties = new ttsd(sttcap / 5);
-
+		internal static Dictionary<string, Type> stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		static Reflections() => Initialize();
 
 		/// <summary>
@@ -49,6 +49,7 @@ namespace Keysharp.Core
 			loadedAssemblies = new Dictionary<string, Assembly>();
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
+			stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		}
 
 		/// <summary>
@@ -68,7 +69,14 @@ namespace Keysharp.Core
 			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
 						.Where(t => t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
-							   && t.Namespace != "Keysharp.Core.Properties" && t.IsClass && t.IsPublic && t.IsSealed && t.IsAbstract);
+							   && t.Namespace != "Keysharp.Core.Properties"
+							   && t.IsClass && t.IsPublic);
+			var tl = types;
+
+			foreach (var t in tl)
+				stringToTypes[t.Name] = t;
+
+			types = types.Where(t => t.IsSealed && t.IsAbstract);
 
 			foreach (var method in types
 					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
@@ -416,7 +424,7 @@ namespace Keysharp.Core
 
 			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
 			FindAndCacheProperty(typeof(object[]), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
-			FindAndCacheProperty(typeof(Exception), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+			FindAndCacheProperty(typeof(Exception), "", 0, propType);//Same.
 
 			foreach (var typekv in typeToStringProperties)
 				foreach (var propkv in typekv.Value)

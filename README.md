@@ -45,9 +45,6 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 	+ Optionally output the generated executable to an .exe file for running standalone in the future.
 
 * Keysharp supports files with the .ahk extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, `.ks`.
-	+ The following features are not implemented yet:
-		+ COM
-		+ Threads
 
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
 	+ It gives real-time feedback so you can see immediately when you have a syntax error.
@@ -74,6 +71,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Usage of the created callback will be extremely inefficient, so usage of `CallbackCreate()` is discouraged.
 * Deleting a tab via `GuiCtrl.Delete()` does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 * The size and positioning of some GUI components will be slightly different than AHK because WinForms uses different defaults.
+* Never place a key in a `Map` with the name of `"default"` because it will get confused with the Map's property named `Default`.
+	+ This applies to any other properties of `Map` as well.
 * The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
 * Using the class name with `ClassNN` on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
 	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to `CreatWindowEx()`.
@@ -103,6 +102,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `.\Keysharp.exe .\test.ahk | more`
 	+ `.\Keysharp.exe .\test.ahk | more > out.txt`
 * `AddStandard()` detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
+* Static function variables are initialized on program startup, rather than the first time the function is called. This is because C# does not support static function variables.
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
@@ -111,31 +111,42 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
 	+ `ObjOwnProps()` takes an optional second argument which is a boolean. Passing `True` means return name and value, passing `False` or empty means return name only.
 * Menu items, whether shown or not, have no impact on threading.
+* If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
 
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
+* The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
+* `DllCall()` has the following caveats:
+	+ An alternative to passing a `Buffer` object with type `Ptr` to a function which will allocate and place string data into the buffer, the caller can instead use a `StringBuffer` object to hold the new string. `wsprintf()` is one such example.
+		+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.
+		+ This relieves the caller of having to call `StrGet()` on the new string data.
+	+ Also use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
+	+ When using type `Str` for string data the function will modify, but not reallocate, the passed in string argument must be passed by `&` reference. `msvcrt.dll\_wcsrev()` is one such example.
+		+ This is also supported for strings passed as `AStr`.
+	* Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
+	+ `StrGet(DllCall("GetCommandLine", "ptr"))`
+		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
 	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 	+ To negate the result of a power operation, use parentheses: `-(x**y)`.
-	+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.
-* The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
-* `DllCall()` requires the user to use a `StringBuffer` object when specifying type `ptr` to hold a string that the function will modify, such as `wsprintf`.
-	+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.
-	+ Do not use `str` if the function will modify it.
-	+ Also use `ptr` and StringBuffer for double pointer parameters such as `LPTSTR*`.
+	+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.	
 * A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
 * AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with `IsSet()`.
 * Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++var := x` is evaluated as `++(var := x)`
 	+ Use `var := x, ++var` instead.
-* Implicit comparison to empty string is not supported:
-	+ `If (x != )` is not supported
-	+ `If (x != "")` is supported
+* Variables used as function call reference arguments cannot be defined and initialized inline like:
+	+ `DllCall("QueryPerformanceFrequency", "Int64*", &freq := 0)`
+	+ Instead do:
+```
+		freq := 0
+		DllCall("QueryPerformanceFrequency", "Int64*", &freq)
+```
 * Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless `RTrim` is specified.
 * In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if `LTrim` is specified.
 * Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
 * Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
-* Dynamic variables references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
+* Dynamic variable references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 * `Goto` statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
@@ -162,21 +173,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `this.propname` refers to the property in the most derived subclass.
 	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
-* Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `ptr` and the result must be wrapped in `StrGet()` like:
-	+ `StrGet(DllCall("GetCommandLine", "ptr"))`
-* The `catch` clause of a `try/catch` statement must be on its own line. So the following will not work:
-```
-	try {
-	} catch {
-	}
-```
-	+ Instead, use this format (with or without OTB):
-```
-	try {
-	}
-	catch {
-	}
-```	
 * `WinGetPos()` does not take reference parameters. Instead, it takes 4 optional arguments and returns a `Map` with the following entries: `OutX`, `OutY`, `OutWidth`, `OutHeight`.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 	+ The following options are different:
@@ -328,7 +324,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 
 ###	Removals: ###
 * COM is only partially implemented.
-* Threads are not implemented yet.
 * Nested classes are not supported.
 * Nested functions are not supported.
 * `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
@@ -353,6 +348,9 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
 * Function references are supported, but the VarRef object is not supported.
+* The address of a variable cannot be taken using the reference operator except when passing an argument to a function.
+	+ `x := &var ; not supported`
+	+ `functhattakesref(&x) ; supported`
 * `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
 	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
 	+ A GUI object is required for `OnMessage()` to be used.

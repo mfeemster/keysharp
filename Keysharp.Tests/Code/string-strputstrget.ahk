@@ -8,37 +8,37 @@ testlen := StrPut(s)
 lenwritten := StrPut(s, buf)
 
 if (testlen == lenwritten)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 gotten := StrGet(buf, -StrLen(s))
 
 if (s == gotten)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 ; ASCII test.
 testlen := StrPut(s, null, null, "ASCII")
 lenwritten := StrPut(s, buf, null, "ASCII")
 
 if (testlen == lenwritten)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 gotten := StrGet(buf, StrLen(s), "ASCII")
 
 if (s == gotten)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 ; Substring test.
 gotten := StrGet(buf, StrLen(s) - 2, "ASCII")
 
 if (SubStr(s, 1, StrLen(s) - 2) == gotten)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

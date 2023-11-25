@@ -10,12 +10,12 @@ Loop Read "../../../Keysharp.Tests/Code/test-text-file.txt"
 }
 
 If (x == "this is line 1another lineline 3")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := ""
-FileDelete ../../../Keysharp.Tests/Code/test-text-file-out.txt
+FileDelete "../../../Keysharp.Tests/Code/test-text-file-out.txt"
 
 Loop Read "../../../Keysharp.Tests/Code/test-text-file.txt", "../../../Keysharp.Tests/Code/test-text-file-out.txt" ; this is a comment
 {
@@ -35,6 +35,6 @@ Loop Read  "../../../Keysharp.Tests/Code/test-text-file-out.txt" ; another comme
 }
 
 If (x == z)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

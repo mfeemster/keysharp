@@ -9,16 +9,16 @@ SplitPath(path, &filename, , &ext, &namenoext)
 ; Can't really to drive or path, because it differs by OS.
 
 if (filename == "file1.txt")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 if (ext == "txt")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 if (namenoext == "file1")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

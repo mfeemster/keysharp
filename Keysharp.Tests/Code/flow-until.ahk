@@ -7,9 +7,9 @@ Loop
 Until x > y
 
 if (x == 32)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 y := 20
@@ -18,9 +18,9 @@ Loop
 Until (x > y)
 
 if (x == 32)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 y := 20
@@ -34,9 +34,9 @@ Loop
 Until (x > y)
 
 if (x == 32)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 Loop
@@ -46,9 +46,9 @@ Loop
 Until (A_Index == 5)
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 
@@ -59,9 +59,9 @@ while true
 Until (A_Index == 5)
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 y := 5
@@ -76,9 +76,9 @@ Loop %y%
 Until (A_Index == 5)
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 1
 y := 5
@@ -93,9 +93,27 @@ Loop %y%
 Until (A_Index == 10)
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
+
+x := 1
+y := 5
+str :=
+
+Loop %y%
+{
+	x++
+
+	If A_Index = 5
+		break
+}
+Until (str !=)
+
+if (x == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 x := 1
 y := 20
@@ -112,11 +130,11 @@ Loop ; this is a comment
 Until x > y ; last comment
 
 if (x == 32)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (z == 33)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

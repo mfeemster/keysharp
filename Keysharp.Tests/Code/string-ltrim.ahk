@@ -4,30 +4,30 @@ x := " test`t"
 y := LTrim(x)
 
 if (y = "test`t")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := "test"
 y := LTrim(x)
 
 if (y = "test")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := "`ttest "
 y := LTrim(x)
 
 if (y = "test ")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := "`ttest`t "
 y := LTrim(x)
 
 if (y = "test`t ")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

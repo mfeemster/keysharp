@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Keysharp.Core.COM
 {
-	public static class Com
+	unsafe public static class Com
 	{
 		public const int vt_empty = 0; //No value
 		public const int vt_null = 1; //SQL-style Null
@@ -45,6 +45,8 @@ namespace Keysharp.Core.COM
 		internal const int CLSCTX_REMOTE_SERVER = 0x10;
 		internal const int CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER; //16;
 		internal static HashSet<ComEvent> comEvents = new HashSet<ComEvent>();
+
+		//private static Dictionary<int,
 
 		[DllImport(WindowsAPI.ole32)]
 		public static extern int CoCreateInstance(ref Guid clsid,
@@ -127,7 +129,7 @@ namespace Keysharp.Core.COM
 		{
 			if (obj0 is ComObject co)
 			{
-				if ((co.VarType != vt_dispatch && co.VarType != vt_unknown))// || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
+				if (co.VarType != vt_dispatch && co.VarType != vt_unknown)// || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
 				{
 					throw new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.");
 				}
@@ -378,48 +380,114 @@ namespace Keysharp.Core.COM
 			return (long)Marshal.ReleaseComObject(obj0);
 		}
 
-		//[System.Security.SecurityCritical]  // auto-generated_required
-		//[ResourceExposure(ResourceScope.None)]
-		//[MethodImplAttribute(MethodImplOptions.InternalCall)]
-		//public static extern MemberInfo GetMethodInfoForComSlot(Type t, int slot, ref ComMemberType memberType);
-
 		/// <summary>
 		/// Gotten loosely from https://social.msdn.microsoft.com/Forums/vstudio/en-US/cbb92470-979c-4d9e-9555-f4de7befb42e/how-to-directly-access-the-virtual-method-table-of-a-com-interface-pointer?forum=csharpgeneral
 		/// </summary>
-		//public static object ComCall(object obj0, object obj1, params object[] parameters)
-		//{
-		//  var index = obj0.Ai();
-		//  var indexPlus1 = index + 1;
+		public static object ComCall(object obj0, object obj1, params object[] parameters)
+		{
+			var index = obj0.Ai();
+			var indexPlus1 = index + 1;//Index is zero based, so add 1.
 
-		//  if (index < 0)
-		//      throw new ValueError($"Index value of {index} was less than zero.");
+			if (index < 0)
+				throw new ValueError($"Index value of {index} was less than zero.");
 
-		//  object ptr;
+			object ptr;
 
-		//  if (obj1 is ComObject co)
-		//      ptr = co.Ptr;
-		//  else if (Marshal.IsComObject(obj1))
-		//      ptr = obj1;
-		//  else
-		//      throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
+			if (obj1 is ComObject co)
+				ptr = co.Ptr;
+			else if (Marshal.IsComObject(obj1))
+				ptr = obj1;
+			else
+				throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
 
-		//  var pUnk = Marshal.GetIUnknownForObject(ptr);
-		//  var pVtbl = Marshal.ReadIntPtr(pUnk);
-		//  var vtbl = new IntPtr[indexPlus1];//Index is zero based.
-		//  Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
-		//  var helper = new DllArgumentHelper(parameters);
-		//  var memberType = ComMemberType.Method;
-		//  //var mi = GetMethodInfoForComSlot(ptr.GetType(), index, ref memberType);
-		//  object val;
-		//  var delType = Expression.GetFuncType(helper.types.Concat(new[] { helper.returnType}));
-		//  var vtableTel = Marshal.GetDelegateForFunctionPointer(vtbl[index], delType);
-		//  var ret = vtableTel.DynamicInvoke(helper.types.Length == 0 ? null : helper.types);
-		//  _ = Marshal.Release(pUnk);
-		//  return null;//val;
-		//}
-		//public static object ComValue(object obj0, object obj1, object obj2 = null)
-		//{
-		//}
+			var vtbl = new IntPtr[indexPlus1];
+			var pUnk = Marshal.GetIUnknownForObject(ptr);
+			var pVtbl = Marshal.ReadIntPtr(pUnk);
+			Marshal.Release(pUnk);
+			Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
+			var helper = new ComArgumentHelper(parameters);
+			var ret = CallDel(pUnk, vtbl[index], helper.args);
+			//Need to check here to see if any data after the call needs to be copied back
+			return ret.ToInt64();
+		}
+
+		internal static IntPtr CallDel(IntPtr objPtr, IntPtr vtbl, IntPtr[] args)
+		{
+			switch (args.Length)
+			{
+				case 0:
+					var del0 = (Del0)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del0));
+					return del0(objPtr);
+
+				case 1:
+					var del1 = (Del1)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del1));
+					return del1(objPtr, args[0]);
+
+				case 2:
+					var del2 = (Del2)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del2));
+					return del2(objPtr, args[0], args[1]);
+
+				case 3:
+					var del3 = (Del3)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del3));
+					return del3(objPtr, args[0], args[1], args[2]);
+
+				case 4:
+					var del4 = (Del4)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del4));
+					return del4(objPtr, args[0], args[1], args[2], args[3]);
+
+				case 5:
+					var del5 = (Del5)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del5));
+					return del5(objPtr, args[0], args[1], args[2], args[3], args[4]);
+
+				case 6:
+					var del6 = (Del6)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del6));
+					return del6(objPtr, args[0], args[1], args[2], args[3], args[4], args[5]);
+
+				case 7:
+					var del7 = (Del7)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del7));
+					return del7(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+
+				case 8:
+					var del8 = (Del8)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del8));
+					return del8(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+
+				case 9:
+					var del9 = (Del9)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del9));
+					return del9(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+
+				case 10:
+					var del10 = (Del10)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del10));
+					return del10(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
+
+				case 11:
+					var del11 = (Del11)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del11));
+					return del11(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
+
+				case 12:
+					var del12 = (Del12)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del12));
+					return del12(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
+
+				case 13:
+					var del13 = (Del13)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del13));
+					return del13(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
+
+				case 14:
+					var del14 = (Del14)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del14));
+					return del14(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
+
+				case 15:
+					var del15 = (Del15)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del15));
+					return del15(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
+
+				case 16:
+					var del16 = (Del16)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del16));
+					return del16(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
+			}
+
+			return IntPtr.Zero;
+		}
+
+
 		[DllImport(WindowsAPI.oleaut)]
 		internal static extern int VariantChangeTypeEx([MarshalAs(UnmanagedType.Struct)] out object pvargDest,
 				[In, MarshalAs(UnmanagedType.Struct)] ref object pvarSrc, int lcid, short wFlags, [MarshalAs(UnmanagedType.I2)] short vt);

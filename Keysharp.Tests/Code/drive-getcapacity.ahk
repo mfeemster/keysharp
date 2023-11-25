@@ -3,6 +3,6 @@
 val := DriveGetCapacity("C:\")
 			
 if (val > 1000)
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

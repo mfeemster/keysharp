@@ -591,7 +591,10 @@ namespace Keysharp.Scripting
 							{
 								foreach (var ri in refIndexes)
 								{
-									if (invoke.Parameters[ri] is CodeDirectionExpression cde && (cde.Expression is CodeMethodInvokeExpression cmie || cde.Expression is CodeArrayIndexerExpression))
+									if (invoke.Parameters[ri] is CodeDirectionExpression cde && (
+												string.Compare(name, "dllcall", true) == 0 ||//These two are hacks, but they are special functions which take variadic arguments that can be refs.
+												string.Compare(name, "comcall", true) == 0 ||
+												cde.Expression is CodeMethodInvokeExpression cmie || cde.Expression is CodeArrayIndexerExpression))
 									{
 										needInvoke = true;
 										break;
@@ -1136,6 +1139,13 @@ namespace Keysharp.Scripting
 
 			var scan = true;
 			var level = -1;
+
+			//Support implicit comparison to empty string statements such as if (x !=)
+			//by detecting that the last token was an operator with nothing following it.
+			if (parts[parts.Count - 1] is Script.Operator opend)
+			{
+				parts.Add(new CodePrimitiveExpression(""));
+			}
 
 			//Unsure what this final loop actually does.
 			while (scan)

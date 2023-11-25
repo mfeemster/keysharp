@@ -3,10 +3,10 @@
 x :=
 y := 
 CoordMode("Mouse", "Screen")
-GetScreenClip(1000, 1000, 100, 100, "./imagesearch.bmp")
-ImageSearch(&x, &y, 0, 0, 1500, 1500, "./imagesearch.bmp")
+GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp")
+ImageSearch(&x, &y, 0, 0, 1920, 1080, "./imagesearch.bmp")
 
-if (x == 1000 && y == 1000)
-	FileAppend, pass, *
+if (x == 10 && y == 10)
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

@@ -17,9 +17,9 @@ global
 Sleep(1000)
 
 if (x == 5)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 fo1 := FuncObj("TimerHandler2")
@@ -36,8 +36,8 @@ global x
 Sleep(2000)
 
 if (x == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 ExitApp()

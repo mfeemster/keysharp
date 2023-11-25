@@ -1,14 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Reflection.Metadata;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core.COM
 {
-	public class ComObject : KeysharpObject//ComValue
+	internal delegate IntPtr DelNone ();
+	internal delegate IntPtr Del0 (IntPtr a);
+	internal delegate IntPtr Del1 (IntPtr a, IntPtr a0);
+	internal delegate IntPtr Del2 (IntPtr a, IntPtr a0, IntPtr a1);
+	internal delegate IntPtr Del3 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2);
+	internal delegate IntPtr Del4 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3);
+	internal delegate IntPtr Del5 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4);
+	internal delegate IntPtr Del6 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5);
+	internal delegate IntPtr Del7 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6);
+	internal delegate IntPtr Del8 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7);
+	internal delegate IntPtr Del9 (IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8);
+	internal delegate IntPtr Del10(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9);
+	internal delegate IntPtr Del11(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10);
+	internal delegate IntPtr Del12(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11);
+	internal delegate IntPtr Del13(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12);
+	internal delegate IntPtr Del14(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13);
+	internal delegate IntPtr Del15(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14);
+	internal delegate IntPtr Del16(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14, IntPtr a15);
+
+	unsafe public class ComObject : KeysharpObject//ComValue
 	{
 		internal static long F_OWNVALUE = 1;
+		internal static int MaxVtableLen = 16;
 		internal List<IFuncObj> handlers;
+		internal object item;
+
 		public long Flags { get; set; }
 
 		public object Item
@@ -17,9 +43,48 @@ namespace Keysharp.Core.COM
 			set => Ptr = value;
 		}
 
-		public object Ptr { get; set; }
+		public object Ptr
+		{
+			get
+			{
+				if (item is IntPtr ip)
+					return ip;//.ToInt64();
+				//else if (VarType == COM.Com.vt_unknown ||
+				//       ((Flags & Com.vt_byref) == Com.vt_byref) ||
+				//       ((Flags & Com.vt_array) == Com.vt_array))
+				//{
+				//  var pUnk = Marshal.GetIUnknownForObject(item);
+				//  //var vtbl = new IntPtr[1];
+				//  //var pUnk = Marshal.GetIUnknownForObject(ptr);
+				//  //var pVtbl = Marshal.ReadIntPtr(pUnk);
+				//  //Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
+				//  //TypedReference tr = __makeref(pUnk);
+				//  //IntPtr ptr = **(IntPtr**)(&tr);
+				//  //var gch = GCHandle.Alloc(pUnk, GCHandleType.Pinned);
+				//  //var intptr = gch.AddrOfPinnedObject();
+				//  //var intptr2 = GCHandle.ToIntPtr(gch);
+				//  //var pVtbl = Marshal.ReadIntPtr(intptr);
+				//  //gch.Free();
+				//  var pVtbl = pUnk;// Marshal.ReadIntPtr(pUnk);
+				//  Marshal.Release(pUnk);
+				//  return pVtbl;
+				//}
+				else
+					return item;
+			}
+			set
+			{
+				//if ((VarType == COM.Com.vt_unknown ||
+				//  VarType == COM.Com.vt_dispatch) && item == null)
+				//{
+				//  item = value;
+				//}
+				item = value;
+			}
+		}
 
 		public int VarType { get; set; }
+
 
 		public ComObject(object varType, object val, object flags = null)
 		{
@@ -31,6 +96,17 @@ namespace Keysharp.Core.COM
 				Flags |= F_OWNVALUE;
 
 			Ptr = val;
+			//vtbl = new IntPtr[MaxVtableLen];
+			//if (Marshal.IsComObject(Ptr))
+			//{
+			//  pUnk = Marshal.GetIUnknownForObject(Ptr);
+			//}
+			//else if (Ptr is IntPtr ip)
+			//{
+			//  pUnk = ip;
+			//}
+			//pVtbl = Marshal.ReadIntPtr(pUnk);
+			//Marshal.Copy(pVtbl, vtbl, 0, MaxVtableLen);
 			//switch (VarType)
 			//{
 			//  case Com.vt_empty: break;

@@ -43,22 +43,25 @@ namespace Keysharp.Core.Common.Window
 
 			try
 			{
-				hwnd = Script.GetPropertyValue(obj, "Hwnd");
+				hwnd = Script.GetPropertyValue(obj, "Hwnd", false);
 			}
 			catch
 			{
 			}
 
-			if (hwnd is long ll)
+			if (hwnd != null)
 			{
-				criteria.ID = new IntPtr(ll);
-				return criteria;
-			}
+				if (hwnd is long ll)
+				{
+					criteria.ID = new IntPtr(ll);
+					return criteria;
+				}
 
-			if (hwnd is IntPtr ptr2)
-			{
-				criteria.ID = ptr2;
-				return criteria;
+				if (hwnd is IntPtr ptr2)
+				{
+					criteria.ID = ptr2;
+					return criteria;
+				}
 			}
 
 			var mixed = obj as string;

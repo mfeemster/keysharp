@@ -190,7 +190,7 @@ namespace Keysharp.Scripting
 			allStaticVars.Push(false);
 			globalFuncVars.Push(new List<string>());
 			localFuncVars.Push(new List<string>());
-			staticFuncVars[typeStack.Peek()].Push(new Dictionary<string, CodeExpression>());
+			staticFuncVars[typeStack.Peek()].Push(new Dictionary<string, CodeExpression>(StringComparer.OrdinalIgnoreCase));
 			currentFuncParams.Push(new List<string>());
 		}
 

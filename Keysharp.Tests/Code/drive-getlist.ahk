@@ -3,6 +3,6 @@
 val := DriveGetList()
 			
 if (SubStr(val, 1, 1) == "C")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

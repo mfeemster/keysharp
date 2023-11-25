@@ -75,6 +75,8 @@ namespace Keysharp.Scripting
 							foreach (CodeStatement def in css.DefaultStatements)
 								_ = origlocalparent.Add(def);
 						}
+						else
+							_ = localparent.Add(new CodeGotoStatement(css.FinalLabelStatement.Label));
 
 						_ = origlocalparent.Add(css.FinalLabelStatement);
 						_ = origlocalparent.Add(new CodeSnippetStatement(";"));//End labels seem to need a semicolon.

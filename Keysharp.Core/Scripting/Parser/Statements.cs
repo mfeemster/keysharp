@@ -73,7 +73,7 @@ namespace Keysharp.Scripting
 				parentBlock = blocks.Count > 0 ? blocks.Peek() : null;
 				parent = parentBlock != null ? parentBlock.Statements : main.Statements;
 				var blocksCount = -1;
-				CodeBlock block;
+				CodeBlock block = null;
 				var sym = code[0];
 				var skip = false;
 
@@ -98,6 +98,18 @@ namespace Keysharp.Scripting
 					case BlockClose:
 						if (blocks.Count == 0)
 							throw new ParseException(ExUnexpected, codeline);
+
+						var ifCount = blocks.Where(b => b.Kind == CodeBlock.BlockKind.IfElse).Count();
+
+						//Pop previous undeclared else blocks, such as:
+						//if ()
+						//{
+						//  if ()
+						//  {
+						//  }
+						//}//When the parser gets here, it needs to pop the previous else which was never declared.
+						while (elses.Count > ifCount)
+							_ = elses.Pop();
 
 						//Case statements don't need to be enclosed in braces.
 						//But different action needs to be taken based on whether it was opened with a brace.
@@ -221,13 +233,15 @@ namespace Keysharp.Scripting
 							break;
 
 						case Token.Command:
-							var command = new CodeExpressionStatement(OptimizeExpression(ParseCommand(codeline, code)));
+							if (ParseCommand(codeline, code))
+							{
+								if (block != null)//Reset the block state and reparse this line as a function call.
+									block.Type = CodeBlock.BlockType.Expect;
 
-							if (command.Expression == null)
+								i--;
 								continue;
+							}
 
-							//command.LinePragma = codeline;
-							_ = parent.Add(command);
 							break;
 
 						case Token.Label:
@@ -259,13 +273,13 @@ namespace Keysharp.Scripting
 						{
 							if (InClassDefinition() && Scope.Length == 0)
 							{
-								var copy = code;
+								var copy = code.ToLower();
 								var isstatic = false;
 
 								if (copy.EndsWith('{'))
 									copy = copy.TrimEnd(SpaceTabOpenBrace);
 
-								if (copy.StartsWith("static "))
+								if (copy.StartsWith("static", StringComparison.OrdinalIgnoreCase) && (copy.Length > 6 && copy[6] == ' ' || copy[6] == '\t'))
 								{
 									copy = copy.Substring(7, copy.Length - 7);
 									isstatic = true;
@@ -325,11 +339,10 @@ namespace Keysharp.Scripting
 								if (isstatic)
 									prop.Attributes |= MemberAttributes.Static;
 
-								var lower = prop.Name.ToLower();
-								properties[typeStack.Peek()].GetOrAdd(lower).Add(prop);
+								properties[typeStack.Peek()].GetOrAdd(prop.Name).Add(prop);
 								var blockOpen = codeline.Code.AsSpan().Trim().EndsWith("{");
 								var blockType = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-								var propblock = new CodeBlock(codeline, lower, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
+								var propblock = new CodeBlock(codeline, prop.Name, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
 								{
 									Type = blockType
 								};
@@ -350,7 +363,7 @@ namespace Keysharp.Scripting
 							foreach (CodeParameterDeclarationExpression p in prop.Parameters)
 								funcParams.Add(p.Name);
 
-							var span1 = codeline.Code.AsSpan();
+							var span1 = codeline.Code.ToLower().AsSpan();
 							var span2 = span1.TrimStart("get").TrimStart("set").TrimStart(Spaces);
 							var isFatArrow = span2.StartsWith("=>");
 							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());

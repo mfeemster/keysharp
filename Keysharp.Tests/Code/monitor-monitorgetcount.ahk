@@ -3,6 +3,6 @@
 monget := MonitorGetCount()
 
 if (monget >= 0)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

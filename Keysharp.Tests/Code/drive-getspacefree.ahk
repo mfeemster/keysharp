@@ -3,6 +3,6 @@
 val := DriveGetSpaceFree("C:\")
 			
 if (val > 10)
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

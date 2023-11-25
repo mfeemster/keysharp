@@ -3,4 +3,4 @@
 DriveLock("C:\")
 DriveUnlock("C:\")
 
-FileAppend, pass, *
+FileAppend, "pass", "*"

@@ -363,45 +363,7 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		internal static bool IsKeyword(string code)
-		{
-			switch (code.ToLowerInvariant())
-			{
-				case AndTxt:
-				case OrTxt:
-				case NotTxt:
-				case TrueTxt:
-				case FalseTxt:
-				case NullTxt:
-				case IsTxt:
-				case FlowBreak:
-				case FlowContinue:
-				case FlowCase:
-				case FlowClass:
-				case FlowDefault:
-				case FlowFor:
-				case FlowElse:
-				case FlowGosub:
-				case FlowGoto:
-				case FlowIf:
-				case FlowLoop:
-				case FlowReturn:
-				case FlowWhile:
-				case FunctionLocal:
-				case FunctionGlobal:
-				case FunctionStatic:
-				case FlowTry:
-				case FlowCatch:
-				case FlowFinally:
-				case FlowUntil:
-				case FlowSwitch:
-				case Throw:
-					return true;
-
-				default:
-					return false;
-			}
-		}
+		internal static bool IsKeyword(string code) => keywords.Contains(code);
 
 		internal static bool IsKeyword(char symbol)
 		{
@@ -608,33 +570,7 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			switch (word)
-			{
-				case FlowBreak:
-				case FlowContinue:
-				case FlowCase:
-				case FlowClass:
-				case FlowDefault:
-				case FlowFor:
-				case FlowElse:
-				case FlowGosub:
-				case FlowGoto:
-				case FlowIf:
-				case FlowLoop:
-				case FlowReturn:
-				case FlowWhile:
-				case FunctionLocal:
-				case FunctionGlobal:
-				case FlowTry:
-				case FlowCatch:
-				case FlowFinally:
-				case FlowUntil:
-				case FlowSwitch:
-				case Throw:
-					return true;
-			}
-
-			return false;
+			return flowOperators.Contains(word);
 		}
 
 		private List<object> ExtractRange(List<object> parts, int start, int end)

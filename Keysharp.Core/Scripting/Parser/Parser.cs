@@ -57,7 +57,7 @@ namespace Keysharp.Scripting
 		private string lastHotstringFunc = "";
 		private long line;
 		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
-
+		private char[] ops = new char[] { Equal, Not, Greater, Less };
 		private CodeMemberMethod main = new CodeMemberMethod()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
@@ -81,7 +81,62 @@ namespace Keysharp.Scripting
 		private CodeTypeDeclaration targetClass;
 		private uint tryCount;
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
-
+		private static HashSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		{
+			FlowBreak,
+			FlowContinue,
+			FlowCase,
+			FlowClass,
+			FlowDefault,
+			FlowFor,
+			FlowElse,
+			FlowGosub,
+			FlowGoto,
+			FlowIf,
+			FlowLoop,
+			FlowReturn,
+			FlowWhile,
+			FunctionLocal,
+			FunctionGlobal,
+			FlowTry,
+			FlowCatch,
+			FlowFinally,
+			FlowUntil,
+			FlowSwitch,
+			Throw
+		};
+		private static HashSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		{
+			AndTxt,
+			OrTxt,
+			NotTxt,
+			TrueTxt,
+			FalseTxt,
+			NullTxt,
+			IsTxt,
+			FlowBreak,
+			FlowContinue,
+			FlowCase,
+			FlowClass,
+			FlowDefault,
+			FlowFor,
+			FlowElse,
+			FlowGosub,
+			FlowGoto,
+			FlowIf,
+			FlowLoop,
+			FlowReturn,
+			FlowWhile,
+			FunctionLocal,
+			FunctionGlobal,
+			FunctionStatic,
+			FlowTry,
+			FlowCatch,
+			FlowFinally,
+			FlowUntil,
+			FlowSwitch,
+			Throw
+		};
 		public Parser(CompilerHelper ch)
 		{
 			Ch = ch;
@@ -658,6 +713,12 @@ namespace Keysharp.Scripting
 			//Init();//Init here every time because this may be reused within a single program run, such as in Keyview.
 			var reader = new PreReader(this);
 			codeLines = reader.Read(codeStream, name);
+			//var lineIndex = 0;
+			//foreach (var line in codeLines)
+			//  line.LineNumber = lineIndex++;
+#if DEBUG
+			File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
+#endif
 			Statements();
 
 			if (!NoTrayIcon)
@@ -783,8 +844,8 @@ namespace Keysharp.Scripting
 				_ = targetClass.Members.Add(ctd);
 
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
-			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>();
-			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>();
+			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
+			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = new slmd();
 			getPropertyValueCalls[ctd] = new slmd();

@@ -4,6 +4,6 @@ x := 1
 y := &x
 
 if (x = y)
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"

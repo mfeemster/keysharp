@@ -13,9 +13,9 @@ Loop, %y%
 }
 
 If x =8
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 y := ""
@@ -26,9 +26,9 @@ Loop, %y%
 }
 
 If x = 0
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 y = 0
@@ -39,6 +39,6 @@ Loop, %y% ; this is a comment
 }
 
 If x = 0
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

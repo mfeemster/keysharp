@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Keysharp.Core;
 using static Keysharp.Core.Loops;
+using Keysharp.Core.Common.Threading;
 
 namespace Keysharp.Tests
 {
@@ -194,6 +195,7 @@ namespace Keysharp.Tests
 		public void FlowWhile()
 		{
 			Keysharp.Core.Flow.Init();
+			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);

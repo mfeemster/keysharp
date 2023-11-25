@@ -1835,7 +1835,13 @@ namespace Keysharp.Core.Windows
 		[DllImport(kernel32)]
 		internal static extern uint GetPrivateProfileSectionNames(StringBuilder lpszReturnBuffer, uint nSize, string lpFileName);
 
-		[DllImport(kernel32)]
+		/// <summary>
+		/// Set this to use ExactSpelling since GetProcAddress() only is available in ANSI.
+		/// </summary>
+		/// <param name="hModule"></param>
+		/// <param name="procName"></param>
+		/// <returns></returns>
+		[DllImport(kernel32, CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
 		internal static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
 		[DllImport(user32)]

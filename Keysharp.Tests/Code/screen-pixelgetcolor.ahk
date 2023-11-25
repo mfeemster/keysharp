@@ -32,6 +32,6 @@ Loop 100
 }
 
 if (found == true)
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

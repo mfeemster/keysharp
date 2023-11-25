@@ -6,29 +6,29 @@ if (DirExist("./DirCopy2"))
 DirCopy("../../../Keysharp.Tests/Code/DirCopy", "./DirCopy2")
 	
 if (DirExist("./DirCopy2"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./DirCopy2/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./DirCopy2/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./DirCopy2/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (DirExist("./DirCopy2"))
 	DirDelete("./DirCopy2", true)
 
 if (DirExist("./DirCopy2"))
- 	FileAppend, fail, *
+ 	FileAppend, "fail", "*"
 else
-  	FileAppend, pass, *
+  	FileAppend, "pass", "*"

@@ -3,13 +3,13 @@
 s := Format("{1}", 123)
 
 if (s == "123")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 s := Format("{1}", 123.456)
 
 if (s == "123.456")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

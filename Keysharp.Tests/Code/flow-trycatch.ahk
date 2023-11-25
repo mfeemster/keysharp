@@ -10,9 +10,9 @@ catch
 	b := true
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -26,9 +26,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -42,9 +42,9 @@ catch Error
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 str := ""
@@ -60,14 +60,14 @@ catch Error as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (str == "tester")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -84,9 +84,9 @@ finally
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 str := ""
@@ -104,14 +104,14 @@ else
 }
 
 if (b == false)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (str == "")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -125,9 +125,9 @@ catch IndexError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -141,9 +141,9 @@ catch IndexError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -157,9 +157,9 @@ catch KeyError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -173,9 +173,9 @@ catch MemberError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -189,9 +189,9 @@ catch MemoryError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -205,9 +205,9 @@ catch MethodError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -221,9 +221,9 @@ catch OSError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -237,9 +237,9 @@ catch PropertyError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -253,9 +253,9 @@ catch TargetError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -269,9 +269,9 @@ catch TimeoutError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -284,9 +284,9 @@ catch TypeError as errex
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
@@ -298,17 +298,16 @@ catch ValueError as errex {
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
 try ; this is a comment
 {
 	throw ZeroDivisionError("tester")
-}
-catch ZeroDivisionError as errex { ; another comment
+} catch ZeroDivisionError as errex { ; another comment
 	b := true
 }
 catch(KeysharpException) ; last comment
@@ -317,11 +316,10 @@ catch(KeysharpException) ; last comment
 }
 catch(OSError) {
 	b := false
-}
-catch(IndexError) {
+} catch(IndexError) {
 	b := false
 }
-catch(PropertyError)
+catch(propertyerror)
 {
 	b := false
 }
@@ -329,7 +327,7 @@ catch(KeyError())
 {
 	b := false
 }
-catch(MemberError)
+catch(membererror)
 {
 	b := false
 }
@@ -339,31 +337,31 @@ catch(MemoryError) {
 catch(MethodError) {
 	b := false
 }
-catch(TargetError)
+catch(targeterror)
 {
 	b := false
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 
 try b := true
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 try bb := true
 
 if (bb == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 b := false
 try throw Error("test")
@@ -373,6 +371,6 @@ catch
 }
 
 if (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

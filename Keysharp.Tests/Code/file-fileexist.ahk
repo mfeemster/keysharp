@@ -6,6 +6,6 @@ dir := path . "DirCopy/*.txt"
 attr := FileExist(dir)
 
 if ("A" == attr)
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

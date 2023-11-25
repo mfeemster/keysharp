@@ -5,28 +5,28 @@ dir := path . "DirCopy/file1.txt"
 text := FileRead(dir)
 
 if (text == "this is file 1")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 text := FileRead(dir, "m4")
 
 if (text == "this")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 text := FileRead(dir, "m4 utf-8")
 
 if (text == "this")
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 buf := FileRead(dir, "m4 raw")
 buf2 := Buffer([ 116, 104, 105, 115 ])
 
 if (buf = buf2)
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

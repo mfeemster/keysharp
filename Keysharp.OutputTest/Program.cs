@@ -6,7 +6,7 @@ using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;
 using static Keysharp.Core.Drive;
-using static Keysharp.Core.DllHelper;
+using static Keysharp.Core.Dll;
 using static Keysharp.Core.Env;
 using static Keysharp.Core.Files;
 using static Keysharp.Core.Flow;
@@ -62,11 +62,9 @@ namespace Keysharp.CompiledMain
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
 	using Keysharp.Core;
-	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
-
 
 	public class program
 	{
@@ -122,6 +120,8 @@ namespace Keysharp.CompiledMain
 
 		public static object UserMainCode()
 		{
+			Keysharp.Core.Common.Threading.Threads.BeginThread();
+			Keysharp.Core.Common.Threading.Threads.EndThread();
 			return "";
 		}
 	}

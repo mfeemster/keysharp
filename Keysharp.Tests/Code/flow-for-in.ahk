@@ -5,9 +5,9 @@ for ( in arr)
 	x++
 
 if (x == 3)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := 0
 
@@ -15,9 +15,9 @@ for (i in arr)
 	x += i
 	
 if (x == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 0
@@ -29,14 +29,14 @@ for (i,v in arr)
 }
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 0
@@ -47,14 +47,14 @@ for (i,v in arr) {
 }
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 
@@ -62,9 +62,9 @@ for (,v in arr)
 	x += v
 	
 if (x == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 
@@ -72,9 +72,9 @@ for (i, in arr)
 	x += i
 	
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 
@@ -82,9 +82,9 @@ for (, in arr)
 	x++
 
 if (x == 3)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 0
@@ -102,14 +102,14 @@ for (i1,v1 in arr)
 }
 
 if (x == 54)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 540)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 0
@@ -124,14 +124,14 @@ for (i1,v1 in arr) {
 }
 
 if (x == 54)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 540)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 arr2 := [arr, arr, arr]
 x := 0
@@ -146,14 +146,14 @@ for (i1,v1 in arr2) ; Test double nested arrays.
 }
 
 if (x == 18)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 180)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 ; Same tests, but for map.
 
@@ -164,9 +164,9 @@ for ( in m)
 	x++
 
 if (x == 3)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := 0
 
@@ -174,9 +174,9 @@ for (i in m)
 	x += i
 	
 if (x == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 		
 x := 0
 y := 0
@@ -188,14 +188,14 @@ for (i,v in m)
 }
 
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := 0
 
@@ -203,9 +203,9 @@ for (,v in m)
 	x += v
 	
 if (x == 60)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := 0
 
@@ -213,9 +213,9 @@ for (i, in m)
 	x += i
 	
 if (x == 6)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 
@@ -223,9 +223,9 @@ for (, in m)
 	x++
 
 if (x == 3)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 0
@@ -243,14 +243,14 @@ for (i1,v1 in m)
 }
 
 if (x == 54)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 540)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 m2 := Map(1, m, 2, m, 3, m)
 
@@ -266,11 +266,11 @@ for (i1,v1 in m2) ; Test double nested maps.
 }
 
 if (x == 18)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (y == 180)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

@@ -10,6 +10,8 @@ namespace Keysharp.Core
 {
 	public static class Screen
 	{
+		private static Size size1 = new Size(1, 1);
+
 		public static Bitmap GetScreenClip(object obj0, object obj1, object obj2, object obj3, object obj4 = null)
 		{
 			var x = obj0.Ai();
@@ -201,7 +203,7 @@ namespace Keysharp.Core
 
 				using (var g = Graphics.FromImage(bmp))
 				{
-					g.CopyFromScreen(x, y, 0, 0, new Size(1, 1), CopyPixelOperation.SourceCopy);
+					g.CopyFromScreen(x, y, 0, 0, size1, CopyPixelOperation.SourceCopy);
 					pixel = bmp.GetPixel(0, 0).ToArgb() & 0xffffff;
 				}
 			}

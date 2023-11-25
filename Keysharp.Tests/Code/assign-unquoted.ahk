@@ -1,12 +1,12 @@
 ;#Include %A_ScriptDir%/header.ahk
 x = hello
 
-If x != hello
-	FileAppend, fail, *
+If x != "hello"
+	FileAppend, "fail", "*"
 else
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 	
-if x = hello
-	FileAppend, pass, *
+if x = "hello"
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

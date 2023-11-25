@@ -120,7 +120,7 @@ namespace Keysharp.Scripting
 			throw new MemberError($"Attempting to get method or property {key} on object {item} failed.");
 		}
 
-		public static object GetPropertyValue(object item, object name)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
+		public static object GetPropertyValue(object item, object name, bool throwOnError = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
 			Type typetouse = null;
 
@@ -176,7 +176,10 @@ namespace Keysharp.Scripting
 				return item.GetType().InvokeMember(namestr, BindingFlags.GetProperty, null, item, null);
 			}
 
-			throw new PropertyError($"Attempting to get property {name} on object {item} failed.");
+			if (throwOnError)
+				throw new PropertyError($"Attempting to get property {name} on object {item} failed.");
+			else
+				return null;
 		}
 
 		public static object GetStaticMemberValueT<T>(object name)

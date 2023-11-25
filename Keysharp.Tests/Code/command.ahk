@@ -1,6 +1,6 @@
 #Include %A_ScriptDir%/header.ahk
 
-FileAppend, pass, *
+FileAppend, "pass", "*"
 fileappend		 pass, *
 
 FileAPPEND

@@ -11,9 +11,9 @@ while true
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 
 x = 0
@@ -26,9 +26,9 @@ while true {
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -41,9 +41,9 @@ while (true)
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -55,9 +55,9 @@ while (true) {
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -70,9 +70,9 @@ while 1
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -84,10 +84,25 @@ while 1 {
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
+x = 0
+str :=
+
+while (str =) {
+	x++
+	
+	if (x > 4)
+		break
+}
+
+If x = 5
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
 x = 0
 
 while (x < 5)
@@ -96,9 +111,9 @@ while (x < 5)
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -107,9 +122,9 @@ while (x < 5) {
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -119,9 +134,9 @@ while x < 5
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x = 0
 
@@ -130,9 +145,9 @@ while x < 5 {
 }
 
 If x = 5
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 5
@@ -147,14 +162,14 @@ while z%y% ; this is a comment
 }
 
 If x = 25
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If A_Index = 0
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 5
@@ -168,14 +183,14 @@ while z%y% { ; another comment
 }
 
 If x = 25
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If A_Index = 0
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := 0
 y := 5
@@ -189,14 +204,14 @@ while (z%y%) {
 }
 
 If x = 25
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 If A_Index = 0
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := 1
 b := false
@@ -210,9 +225,9 @@ else
 }
 
 If (b == false)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 x := 1
 b := false
@@ -225,6 +240,7 @@ else
 }
 
 If (b == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
+	

@@ -17,15 +17,15 @@ Sleep(1000)
 exists := ProcessExist("notepad.exe")
 
 if (exists == 0)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 pid := RunWait("notepad.exe", "", "max")
 Sleep(1000)
 exists := ProcessExist("notepad.exe")
 
 if (exists == 0)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

@@ -8,36 +8,36 @@ DirCreate("./FileRecycleEmpty")
 FileCopy(dir . "/*", "./FileRecycleEmpty/")
 
 if (FileExist("./FileRecycleEmpty/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileRecycleEmpty/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileRecycleEmpty/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileRecycle("./FileRecycleEmpty/*")
 
 if (!FileExist("./FileRecycleEmpty/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (!FileExist("./FileRecycleEmpty/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (!FileExist("./FileRecycleEmpty/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileRecycleEmpty()
 
@@ -48,36 +48,36 @@ DirCreate("./FileRecycleEmpty")
 FileCopy(dir . "/*", "./FileRecycleEmpty/")
 
 if (FileExist("./FileRecycleEmpty/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileRecycleEmpty/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (FileExist("./FileRecycleEmpty/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileRecycle("./FileRecycleEmpty/*")
 
 if (!FileExist("./FileRecycleEmpty/file1.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (!FileExist("./FileRecycleEmpty/file2.txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 if (!FileExist("./FileRecycleEmpty/file3txt"))
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"
 
 FileRecycleEmpty("C:\")
 

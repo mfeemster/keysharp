@@ -3,6 +3,6 @@
 val := DriveGetSerial("C:\")
 			
 if (val > 1)
- 	FileAppend, pass, *
+ 	FileAppend, "pass", "*"
 else
-  	FileAppend, fail, *
+  	FileAppend, "fail", "*"

@@ -4,6 +4,7 @@ using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,21 @@ namespace Keysharp.Scripting
 		private static string multiLineComments = new string(new[] { MultiComB, MultiComA });
 		private readonly List<string> includes = new List<string>();
 		private string includePath = "./";
+		private static HashSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		{
+			FlowCatch,
+			FlowClass,
+			FlowElse,
+			FlowFinally,
+			FlowGosub,
+			FlowIf,
+			FlowLoop,
+			FlowReturn,
+			FlowSwitch,
+			FlowTry,
+			//FlowUntil,//Could  until { one : 1 } == x ever be done?
+			//FlowWhile//Same: while { one : 1 } == x
+		};
 		private Parser parser;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
@@ -482,7 +498,7 @@ namespace Keysharp.Scripting
 					//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
 					var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 
-					if (cont || (ll && (((code.EndsWith('{') || code.EndsWith('[')) && ((code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
+					if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']')) && ((code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
 										//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
 										(code.Length > 1 &&
 										 !code.Contains('(') && !code.Contains(')') &&
@@ -516,7 +532,45 @@ namespace Keysharp.Scripting
 					Parser.Translate(ref code);
 
 					if (code.Length != 0)
-						list.Add(new CodeLine(name, line, code));
+					{
+						//var tempLine = line;
+						var rest = code.Trim(Spaces);
+						var firstImbalanced = 0;
+
+						while (rest.Length > 0)
+						{
+							if (rest.StartsWith('{') || rest.StartsWith('}'))
+							{
+								list.Add(new CodeLine(name, line, rest[0].ToString()));
+								rest = rest.Substring(1).Trim(Spaces);
+							}
+							else if ((firstImbalanced = rest.FindFirstImbalanced('{', '}')) != -1)
+							{
+								var cur = rest.Substring(0, firstImbalanced).Trim(Spaces);
+								list.Add(new CodeLine(name, line, cur));
+								rest = rest.Substring(firstImbalanced).Trim(Spaces);
+							}
+							else
+							{
+								var splits = rest.Split(Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+								//Only split if it's an OTB flow statement like if {
+								//Do not split if it's a command statement like FileAppend {one, 1}, "*"
+								if (splits.Length > 1 && splits[1][0] == '{' && otbFlowKeywords.Contains(splits[0]))
+								{
+									var firstOpen = rest.IndexOf('{');
+									var cur = rest.Substring(0, firstOpen).Trim(Spaces);
+									list.Add(new CodeLine(name, line, cur));
+									rest = rest.Substring(firstOpen).Trim(Spaces);
+								}
+								else
+								{
+									list.Add(new CodeLine(name, line, rest));
+									break;
+								}
+							}
+						}
+					}
 				}
 			}
 
@@ -528,9 +582,6 @@ namespace Keysharp.Scripting
 				list.Add(extraline);
 			}
 
-#if DEBUG
-			File.WriteAllLines("./finalscriptcode.txt", list.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
-#endif
 			return list;
 		}
 
@@ -614,7 +665,6 @@ namespace Keysharp.Scripting
 
 			return parenlevels != 0 || bracelevels != 0 || bracketlevels != 0;
 		}
-
 		private string ParseContinuations(TextReader source, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
 		{
 			string code;

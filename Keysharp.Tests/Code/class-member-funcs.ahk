@@ -144,136 +144,136 @@ classobj := myclass()
 val := classobj.classfunc()
 
 If (val == 123)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := myclass.classfuncstatic()
 
 If (val == 10)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := classobj.classfuncusesstatic()
 
 If (val == 1230)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 myclass.s1 := 1
 
 val := classobj.classfuncusesstatic()
 
 If (val == 123)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := classobj.classfuncwithlocalvars()
 
 If (val == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := classobj.classfuncwithreadmembervars()
 
 If (val == 15129)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 classobj.classfuncwithwritelocalmembervars()
 
 if (classobj.x == 123)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (classobj.y == 123)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 classobj.classfuncwithwritemembervars()
 
 if (classobj.x == 88)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (classobj.y == 99)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := classobj.classfuncwithlocalstaticvars()
 
 if (val == 1000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 classobj.classfuncwriteglobalvars()
 
 if (classobj.a == 0)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (program.a == 1)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := myclass.classfuncstaticwithparams(150, 2)
 
 if (val == 300)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := classobj.classfuncwithparams(500, 2)
 
 if (val == 1000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := myclass.classvarfuncstatic(1, 2, 3)
 
 If (val == 12)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 	
 val := classobj.classvarfunc(1, 2, 3)
 
 If (val == 12)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 val := classobj.classfuncwiththis()
 
 If (val == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 classobj.ClassFuncCaseSensitive()
 
 if (classobj.a == 1000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (classobj.b == 2000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 classobj.a := ""
 classobj.b := ""
@@ -281,55 +281,55 @@ classobj.b := ""
 classobj.classfunccasesensitive()
 
 if (classobj.a == 1000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 if (classobj.b == 2000)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 myclass.s1 := ""
 myclass.ClassFuncCaseSensitiveStatic()
 
 if (myclass.s1 == 999)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 funcadd := FuncObj("classfuncwithparams", classobj)
 
 val := funcadd(10, 20)
 
 if (val == 200)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 funcadd := FuncObj("classfuncstaticwithparams", classobj)
 
 val := funcadd(10, 10)
 
 if (val == 100)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 funcadd := FuncObj("classvarfunc", classobj)
 
 val := funcadd(1, 2, 3)
 
 if (val == 12)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 funcadd := FuncObj("classvarfuncstatic", classobj)
 
 val := funcadd(1, 2, 3)
 
 if (val == 12)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

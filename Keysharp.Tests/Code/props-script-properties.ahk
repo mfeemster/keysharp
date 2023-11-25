@@ -5,81 +5,81 @@
 x := A_WorkingDir
 
 if (x != "")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := A_ScriptName
 
 if (x == "props-script-properties.ahk")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 x := A_ScriptFullPath
 
 if (x != "")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
-
+	FileAppend, "fail", "*"
+		
 x := A_ScriptDir
 
 if (x != "")
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := A_ScriptHwnd
 
 if (x = 0) ; No window in this test, so HWND will be 0.
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 
 x := A_LineNumber ; This line must start at 40 for the test to pass, so nothing above it can ever be moved.
 
 if (x = 40)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := A_LineNumber
 
 if (x = 47)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 x := A_LineNumber
 
 if (x = 54)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 ; End line tests. Anything after this can be moved.
 
 x := A_LineFile
 
 if (x = A_ScriptFullPath) ; These two are always the same except for when the latter is in an include file.
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"
 
 myfunc()
 {
 	y := A_ThisFunc
 
 	if (y == "myfunc")
-		FileAppend, pass, *
+		FileAppend, "pass", "*"
 	else
-		FileAppend, fail, *
+		FileAppend, "fail", "*"
 }
 
 myfunc()
 
 if (A_IsUnicode == true)
-	FileAppend, pass, *
+	FileAppend, "pass", "*"
 else
-	FileAppend, fail, *
+	FileAppend, "fail", "*"

@@ -77,4 +77,4 @@ GroupAdd("AltTabWindow", "ahk_class MultitaskingViewFrame")  ; Windows 10
 #HotIf
 
 MsgBox("Please show the window from the system tray by double clicking the icon, then closing the main window for the hotkey-hotstring parsing unit test to complete.")
-FileAppend, pass, *
+FileAppend, "pass", "*"
