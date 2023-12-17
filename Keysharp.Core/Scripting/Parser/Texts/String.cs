@@ -77,7 +77,7 @@ namespace Keysharp.Scripting
 			var line = reader.ReadLine().Trim(Spaces);
 
 			if (line.Length < 1 || line[0] != ParenOpen)
-				throw new ArgumentException();
+				throw new ParseException($"Multiline string length of {line.Length} is not < 1 or the first character of {line[0]} is not '('.");
 
 			var join = newlineToUse;
 			bool ltrim = false, rtrim = false, stripComments = false, percentResolve = true, literalEscape = false;

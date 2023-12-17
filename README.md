@@ -321,6 +321,11 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
 * New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
 * New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`
+* New functions for launching real threads which are not related to green threads which are used for the rest of the project.
+	+ `StartRealThread(funcobj [, params*])` ; Call `funcobj` in a real thread, optionally passing `params` to it, and return a thread object.
+	+ `WaitRealThread(thread [, timeoutms])` ; Wait until the passed in thread object (returned from a call to `StartRealThread()`).
+	+ `LockObject(lockobj, funcobj [, params*])` ; Call `funcobj` inside of a lock on `lockobj`, optionally passing `params` to it.
+		+ `lockobj` must be initialized to some value, such as an empty string.
 
 ###	Removals: ###
 * COM is only partially implemented.

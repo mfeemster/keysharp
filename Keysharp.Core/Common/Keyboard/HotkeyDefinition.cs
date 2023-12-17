@@ -606,14 +606,14 @@ namespace Keysharp.Core.Common.Keyboard
 			// But do this part outside of the above block because these values may have changed since
 			// this function was first called.  By design, the Num/Scroll/CapsLock AlwaysOn/Off setting
 			// stays in effect even when Suspend in ON.
-			var ts = Core.Keyboard.toggleStates;
+			var ts = Keysharp.Core.Keyboard.toggleStates;
 
 			if (HotstringDefinition.enabledCount != 0
 					|| Script.input != null // v1.0.91: Hook is needed for collecting input.
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringDefinition.enabledCount != 0))
+			if (Keysharp.Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringDefinition.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
@@ -2405,9 +2405,9 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;
 		}
 
-		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Active;
+		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Active;
 
-		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Exists;
+		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Exists;
 
 		private static bool HotIfWinNotActivePrivate(object title, object text, object hotkey) => !HotIfWinActivePrivate(title, text, hotkey);
 

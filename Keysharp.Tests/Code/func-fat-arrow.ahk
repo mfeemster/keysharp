@@ -355,3 +355,50 @@ If (val == 10)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+tot := 0
+
+func2__(x) ; This can't be named func2 because it'll conflict with another function of the same name elsewhere in our tests.
+{
+	global tot += x
+}
+
+f := FuncObj("func2__")
+
+func(a, b, c)
+{
+	a(1)
+	b(2)
+	c(3)
+	f(10)
+}
+
+func((o) => tot += o * 1, (o) => tot += o * 2, (o) => tot += o * 3)
+; MsgBox(tot)
+
+If (tot == 24)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+tot := 0
+
+class myclass2
+{
+	func(a, b, c)
+	{
+		a(1)
+		b(2)
+		c(3)
+		f(20)
+	}
+}
+
+tot := 0
+class2obj := myclass2()
+class2obj.func((o) => tot += o * 1, (o) => tot += o * 2, (o) => tot += o * 3)
+
+If (tot == 34)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

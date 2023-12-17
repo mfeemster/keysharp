@@ -42,6 +42,7 @@ namespace Keysharp.Scripting
 		private List<CodeLine> codeLines = new List<CodeLine>();
 		private Dictionary<string, string> conditionIds;
 		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
+		private Stack<string> currentFuncCall = new Stack<string>();
 		private Stack<CodeStatementCollection> elses = new ();
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private uint exCount;
@@ -1016,15 +1017,33 @@ namespace Keysharp.Scripting
 		{
 			if (allVars.TryGetValue(currentType, out var typeFuncs))
 			{
-				foreach (CodeTypeMember typemember in currentType.Members)//First, see if the type contains the variable.
+				foreach (CodeTypeMember typemember in currentType.Members)//First, check if the type contains the variable.
 				{
-					if (typemember is CodeSnippetTypeMember cstm && cstm.Name == varName)
+					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
 						return true;
 				}
 
-				if (typeFuncs.TryGetValue(currentScope, out var scopeVars))//The type didn't contain the variable, so see if the local function scope contains it.
+				if (typeFuncs.TryGetValue(currentScope, out var scopeVars))//The type didn't contain the variable, so check if the local function scope contains it.
 				{
 					if (scopeVars.ContainsKey(varName))
+						return true;
+				}
+			}
+
+			if (methods.TryGetValue(currentType, out var t))//Check if the variable was a parameter in the current function.
+			{
+				if (t.TryGetValue(currentScope, out var method))
+				{
+					if (method.Parameters.Cast<CodeParameterDeclarationExpression>().Any(p => string.Compare(p.Name, varName, true) == 0))
+						return true;
+				}
+			}
+
+			if (currentType != targetClass)//Last attempt, check if it's a global variable.
+			{
+				foreach (CodeTypeMember typemember in targetClass.Members)
+				{
+					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
 						return true;
 				}
 			}

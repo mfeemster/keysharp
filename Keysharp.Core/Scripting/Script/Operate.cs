@@ -547,7 +547,7 @@ namespace Keysharp.Scripting
 					return IfLegacy(left, "is", ForceString(right));
 
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ValueError($"Operator {op} cannot be applied to: {left} and {right}");
 			}
 		}
 
@@ -597,7 +597,7 @@ namespace Keysharp.Scripting
 				//return GCHandle.Alloc(right, GCHandleType.Pinned).AddrOfPinnedObject().ToInt64();//This seems almost certainly wrong, and would need to be freed elsewhere.
 
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ValueError($"Operator {op} cannot be applied to: {right}");
 			}
 		}
 

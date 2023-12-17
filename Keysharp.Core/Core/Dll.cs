@@ -441,40 +441,40 @@ namespace Keysharp.Core
 		/// <returns></returns>
 		/// <exception cref="ArgumentNullException"></exception>
 		/// <exception cref="ArgumentException"></exception>
-		public static Delegate GetDelegateForFunctionPointerFix(IntPtr ptr, Type t)
-		{
-			//Validate the parameters (modified from https://referencesource.microsoft.com/#mscorlib/system/runtime/interopservices/marshal.cs)
-			if (ptr == IntPtr.Zero)
-			{
-				throw new ArgumentNullException(nameof(ptr));
-			}
+		//public static Delegate GetDelegateForFunctionPointerFix(IntPtr ptr, Type t)
+		//{
+		//  //Validate the parameters (modified from https://referencesource.microsoft.com/#mscorlib/system/runtime/interopservices/marshal.cs)
+		//  if (ptr == IntPtr.Zero)
+		//  {
+		//      throw new ArgumentNullException(nameof(ptr));
+		//  }
 
-			if (t is null)
-			{
-				throw new ArgumentNullException(nameof(t));
-			}
+		//  if (t is null)
+		//  {
+		//      throw new ArgumentNullException(nameof(t));
+		//  }
 
-			//skip the IsRuntimeImplemented check as IsRuntimeImplemented is not visible and I cannot be bothered
+		//  //skip the IsRuntimeImplemented check as IsRuntimeImplemented is not visible and I cannot be bothered
 
-			if (t.IsGenericType && !t.IsConstructedGenericType)
-			{
-				throw new ArgumentException("The specified Type must not be an open generic type definition.", nameof(t));
-			}
+		//  if (t.IsGenericType && !t.IsConstructedGenericType)
+		//  {
+		//      throw new ArgumentException("The specified Type must not be an open generic type definition.", nameof(t));
+		//  }
 
-			Type? c = t.BaseType;
+		//  Type? c = t.BaseType;
 
-			if (c != typeof(Delegate) && c != typeof(MulticastDelegate))
-			{
-				throw new ArgumentException("Type must derive from Delegate or MulticastDelegate.", nameof(t));
-			}
+		//  if (c != typeof(Delegate) && c != typeof(MulticastDelegate))
+		//  {
+		//      throw new ArgumentException("Type must derive from Delegate or MulticastDelegate.", nameof(t));
+		//  }
 
-			if (GetDelegateForFunctionPointerInternalPointer is null)
-			{
-				GetDelegateForFunctionPointerInternalPointer = typeof(Marshal).GetMethod("GetDelegateForFunctionPointerInternal", BindingFlags.Static | BindingFlags.NonPublic).CreateDelegate<Func<IntPtr, Type, Delegate>>();
-			}
+		//  if (GetDelegateForFunctionPointerInternalPointer is null)
+		//  {
+		//      GetDelegateForFunctionPointerInternalPointer = typeof(Marshal).GetMethod("GetDelegateForFunctionPointerInternal", BindingFlags.Static | BindingFlags.NonPublic).CreateDelegate<Func<IntPtr, Type, Delegate>>();
+		//  }
 
-			return GetDelegateForFunctionPointerInternalPointer(ptr, t);
-		}
+		//  return GetDelegateForFunctionPointerInternalPointer(ptr, t);
+		//}
 
 		/// <summary>
 		/// Returns a binary number stored at the specified address in memory.

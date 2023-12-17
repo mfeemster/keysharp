@@ -248,7 +248,7 @@ namespace Keysharp.Scripting
 				return cvre;
 
 			if (!IsVarReference(var))
-				throw new ArgumentException();
+				throw new ParseException($"{var} is not a variable reference.");
 
 			return (CodeArrayIndexerExpression)var;
 		}

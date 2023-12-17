@@ -1014,10 +1014,10 @@ namespace Keysharp.Scripting
 			var parts = code.TrimStart(Spaces).Split(Spaces, 3);
 
 			if (parts.Length != 3)
-				throw new ArgumentOutOfRangeException();
+				throw new ParseException($"Legacy if requires 3 parts, but {parts.Length} were supplied.");
 
 			if (!IsIdentifier(parts[0]))
-				throw new ArgumentException();
+				throw new ParseException($"First legacy if token of {parts[0]} was not an identifier.");
 
 			var not = false;
 
@@ -1043,7 +1043,7 @@ namespace Keysharp.Scripting
 					break;
 
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ParseException($"Second legacy if token of {code} was not any of: between, in, contains, is.");
 			}
 
 			_ = invoke.Parameters.Add(ParseCommandParameter(line, parts[2]));

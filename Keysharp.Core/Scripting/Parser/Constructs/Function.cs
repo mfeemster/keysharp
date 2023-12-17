@@ -46,8 +46,8 @@ namespace Keysharp.Scripting
 			name = buf.ToString();
 			buf.Length = 0;
 
-			if (IsLocalMethodReference(name))
-				throw new ParseException($"Duplicate function {name}.");
+			if (!InClassDefinition() && IsLocalMethodReference(name))
+				throw new ParseException("Duplicate function: \"" + name + "\".");
 
 			var blockType = CodeBlock.BlockType.Expect;
 			var str = false;

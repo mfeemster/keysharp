@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
@@ -226,6 +227,7 @@ namespace Keysharp.Scripting
 
 						if (call)
 						{
+							currentFuncCall.Push("Call");
 							var invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
 							CodeMethodInvokeExpression tempinvoke = null;
 
@@ -310,6 +312,7 @@ namespace Keysharp.Scripting
 							if (tempinvoke != null)
 								tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
 
+							currentFuncCall.Pop();
 							parts[i] = invoke;
 							parts.RemoveAt(n);
 							i--;//Do this to ensure we don't miss a token, particularly in the case of chained method calls such as: MyGui.Add("Button",, "Click Me").OnEvent("Click", "MenuHandler").
@@ -369,12 +372,20 @@ namespace Keysharp.Scripting
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{
+						//This will prevent proper parsing of fat arrow functions when defining
+						//them inside of a map passed to a function like DefineProp().
+						//So temporarily remove it here and restore it below.
+						var any = currentFuncCall.TryPop(out var funcCall);
 						var n = i + 1;
 						var paren = ExtractRange(parts, n, Set(parts, i));
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.Dictionary;
 						ParseObject(line, code, paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), keys));
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), values));
+
+						if (any)
+							currentFuncCall.Push(funcCall);
+
 						parts[i] = invoke;
 						parts.RemoveAt(n);
 						i--;
@@ -399,6 +410,7 @@ namespace Keysharp.Scripting
 
 									if (n + 1 < parts.Count && parts[n].ToString() == ":=")//Detect if this was a property assignment by searching for a := then a token after it, which is the value to assign.
 									{
+										currentFuncCall.Push("SetPropertyValue");
 										var valtokens = ExtractRange(parts, n + 1, parts.Count);
 										var val = ParseMultiExpression(line, code, valtokens.ToArray(), create);
 										invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
@@ -428,6 +440,7 @@ namespace Keysharp.Scripting
 									}
 									else
 									{
+										currentFuncCall.Push("GetPropertyValue");
 										invoke = (CodeMethodInvokeExpression)InternalMethods.GetPropertyValue;
 										n = i - 1;
 
@@ -454,6 +467,7 @@ namespace Keysharp.Scripting
 										getPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 									}
 
+									currentFuncCall.Pop();
 									parts[i] = invoke;
 									parts.RemoveAt(n);
 									i--;
@@ -520,6 +534,7 @@ namespace Keysharp.Scripting
 					{
 						var dynamic = false;
 						var name = part.Substring(0, part.Length - 1);
+						currentFuncCall.Push(name);
 
 						if (!IsIdentifier(name))
 						{
@@ -619,6 +634,7 @@ namespace Keysharp.Scripting
 							allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 						}
 
+						_ = currentFuncCall.Pop();
 						parts[i] = invoke;
 						invokes.Add(invoke);
 						specialaddcall:
@@ -724,19 +740,34 @@ namespace Keysharp.Scripting
 						}
 						void MakeMethod(CodeMemberMethod cmd)
 						{
+							string retstr;
 							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToArray();
 							var arrowIndex = code.IndexOf("=>");
-							var subs = SplitStringBalanced(code.Substring(arrowIndex + 2), ',');
 							AddParts(cmd);
 							var lineNumber = codeLines.IndexOf(line) + 1;
 							//Inefficient to recompose the parameters into a string, but unsure what else to do here.
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => (p.Direction == FieldDirection.Ref ? "&" : "") + p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "{"));
 
-							for (var sindex = 0; sindex < subs.Count - 1; sindex++)
-								codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, subs[sindex]));
+							//If this is a fat arrow being passed as a function argument, special care must be taken not to
+							//count tokens after the next comma as part of a multistatement in the fat arrow definition.
+							//Instead, they are the next arguments being passed to the function.
+							if (currentFuncCall.Count > 0 && !bodyParts.Contains("[*"))//Can't recompose if it's been altered by the parser. This is *incredibly* hacky and needs to be reworked at some point.//TODO
+							{
+								//Somewhat risky to recompose the body parts all back together with no spaces, but there appears to be no other way to do it.
+								//This is because we don't have the index in the code string where we currently are.
+								retstr = string.Join("", bodyParts);
+							}
+							else
+							{
+								var subs = SplitStringBalanced(code.Substring(arrowIndex + 2), ',');
+								var ct = subs.Count - 1;
 
-							var retstr = subs[subs.Count - 1];
+								for (var sindex = 0; sindex < ct; sindex++)
+									codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, subs[sindex]));
+
+								retstr = subs[ct];
+							}
 
 							if (!retstr.StartsWith("return", StringComparison.OrdinalIgnoreCase))
 								retstr = "return " + retstr;
@@ -1112,13 +1143,13 @@ namespace Keysharp.Scripting
 						else if (parent.Value is decimal mm)
 							parent.Value = -mm;
 						else
-							throw new ArgumentOutOfRangeException();
+							throw new ParseException($"Value of {parent.Value} of type {parent.Value.GetType()} was not a type that can be used with the subtraction operator.");
 
 						parts.RemoveAt(i);
 					}
 					else if (parts[n] is CodeSnippetExpression cseparent && op == Script.Operator.Subtract)//Long requires snippet, since CodePrimitiveExpression does not append L.
 					{
-						cseparent.Value = cseparent.Value is string cses ? string.Concat(Minus.ToString(), cses) : throw new ArgumentOutOfRangeException();
+						cseparent.Value = cseparent.Value is string cses ? string.Concat(Minus.ToString(), cses) : throw new ParseException($"Value of {cseparent.Value} of type {cseparent.Value.GetType()} was not of type string.");
 						parts.RemoveAt(i);
 					}
 					else if (op == Script.Operator.Add)
@@ -1386,7 +1417,7 @@ namespace Keysharp.Scripting
 							|| parts[i] is CodeTernaryOperatorExpression
 							|| parts[i] is CodeBinaryOperatorExpression
 							|| parts[i] is CodePropertyReferenceExpression))
-						throw new ArgumentOutOfRangeException();
+						throw new ParseException($"Value of {parts[i]} of type {parts[i].GetType()} was not a type that can be used with the concatenation operator.");
 
 					if (i % 2 == 1)
 						parts.Insert(i, Script.Operator.Concat);
@@ -1398,7 +1429,7 @@ namespace Keysharp.Scripting
 			}
 
 			if (parts.Count != 1)
-				throw new ArgumentOutOfRangeException();
+				throw new ParseException($"parts count of {parts.Count} was not 1.");
 
 			return IsVarAssignment(parts[0]) ? (CodeBinaryOperatorExpression)parts[0] : (CodeExpression)parts[0];
 		}
@@ -1447,7 +1478,7 @@ namespace Keysharp.Scripting
 				//When not parsing arguments and instead just parsing regular expressions, it will cause
 				//a compiler error because just saying "null" in the wrong place is a syntax error.
 				//This is a good way to help catch syntax bugs in a script.
-				if (s == "," && !fatArrow)
+				if (s == "," && (!fatArrow || currentFuncCall.Count > 0))
 				{
 					if (sub.Count != 0)
 					{

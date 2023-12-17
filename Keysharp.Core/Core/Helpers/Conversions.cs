@@ -619,10 +619,10 @@ namespace Keysharp.Core
 			}
 
 			var index2 = name.IndexOf("\\");
-			var root = name.Substring(0, index2);
+			var root = name.Substring(0, index2).ToLowerInvariant();
 			var key = name.Substring(index2 + 1);
 
-			switch (root.ToLowerInvariant())
+			switch (root)
 			{
 				case Keyword_HKey_Local_Machine:
 				case Keyword_HKLM:
@@ -649,7 +649,7 @@ namespace Keysharp.Core
 					return (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key);
 
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ValueError($"{root} was not a valid registry type.");
 			}
 		}
 

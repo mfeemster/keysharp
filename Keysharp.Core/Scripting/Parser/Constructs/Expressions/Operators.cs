@@ -222,7 +222,7 @@ namespace Keysharp.Scripting
 							return Script.Operator.Is;
 					}
 
-					throw new ArgumentOutOfRangeException();
+					throw new ParseException($"Value of {code} was not any of: not, and, or, is.");
 			}
 		}
 
@@ -296,7 +296,7 @@ namespace Keysharp.Scripting
 					return -15;
 
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ParseException($"Operator {op} was not a value which can be used when determining precedence.");
 			}
 		}
 	}
