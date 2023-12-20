@@ -28,7 +28,7 @@ namespace Keysharp.Benchmark
 		public void KeysharpClassFuncLoopIncrement()
 		{
 			cl.x = 0;
-			cl.ClassIncTestFunc();
+			_ = cl.ClassIncTestFunc();
 
 			if ((long)cl.x != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
@@ -42,13 +42,13 @@ namespace Keysharp.Benchmark
 			for (System.Collections.IEnumerator e3 = Loop(Size).GetEnumerator(); IsTrueAndRunning(e3.MoveNext());
 				)
 			{
-				IncFunc();
+				_ = IncFunc();
 				e4:
 				;
 			}
 
 			e5:
-			Pop();
+			_ = Pop();
 
 			if ((long)x != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
@@ -68,7 +68,7 @@ namespace Keysharp.Benchmark
 			}
 
 			e2:
-			Pop();
+			_ = Pop();
 
 			if ((long)x != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
@@ -88,7 +88,7 @@ namespace Keysharp.Benchmark
 			}
 
 			e5:
-			Pop();
+			_ = Pop();
 
 			if (total != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
@@ -108,7 +108,7 @@ namespace Keysharp.Benchmark
 			}
 
 			e5:
-			Pop();
+			_ = Pop();
 
 			if ((long)x != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
@@ -172,13 +172,13 @@ namespace Keysharp.Benchmark
 			for (System.Collections.IEnumerator e8 = Loop(FuncBench.Size).GetEnumerator(); IsTrueAndRunning(e8.MoveNext());
 				)
 			{
-				Invoke(GetMethodOrProperty(this, "ClassInc", 0));
+				_ = Invoke(GetMethodOrProperty(this, "ClassInc", 0));
 				e9:
 				;
 			}
 
 			e10:
-			Pop();
+			_ = Pop();
 			return "";
 		}
 

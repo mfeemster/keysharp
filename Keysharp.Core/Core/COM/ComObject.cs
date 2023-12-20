@@ -145,9 +145,9 @@ namespace Keysharp.Core.COM
 		~ComObject()
 		{
 			if (Marshal.IsComObject(Ptr))
-				Marshal.ReleaseComObject(Ptr);
+				_ = Marshal.ReleaseComObject(Ptr);
 			else if (Ptr is IntPtr ip)
-				Marshal.Release(ip);
+				_ = Marshal.Release(ip);
 		}
 
 		public void CallEvents()

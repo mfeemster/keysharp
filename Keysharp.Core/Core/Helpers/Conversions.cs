@@ -511,7 +511,7 @@ namespace Keysharp.Core
 				var dirlist = new HashSet<string>();
 
 				foreach (var file in filelist)
-					dirlist.Add(Path.GetDirectoryName(file));
+					_ = dirlist.Add(Path.GetDirectoryName(file));
 
 				if (files)
 				{

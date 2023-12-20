@@ -686,7 +686,7 @@ namespace Keysharp.Core
 			if (tv.regsb == null)
 				tv.regsb = new StringBuilder(1024);
 			else
-				tv.regsb.Clear();
+				_ = tv.regsb.Clear();
 
 			var classSize = (uint)(tv.regsb.Capacity + 1);
 			_ = WindowsAPI.RegQueryInfoKey(

@@ -133,7 +133,7 @@ namespace System.Collections.Generic
 		public static Dictionary<T, T2> Append<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
 		{
 			foreach (var kv in dkt2)
-				dkt1.TryAdd(kv.Key, kv.Value);
+				_ = dkt1.TryAdd(kv.Key, kv.Value);
 
 			return dkt1;
 		}
@@ -425,6 +425,7 @@ namespace System.Collections.Generic
 			var r2 = obj.Ab(1, def2);
 			return (r1, r2);
 		}
+		//static object ehLock = "";
 
 		public static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
@@ -433,28 +434,31 @@ namespace System.Collections.Generic
 			if (handlers.Count() > 0)
 			{
 				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
-				var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
-				Threads.BeginThread();
-
-				if (inst is Control ctrl && ctrl.FindForm() is Form form)
-					Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
-
-				foreach (var handler in handlers)
+				//lock (ehLock)
 				{
-					if (handler != null)
+					var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+					_ = Threads.BeginThread();
+
+					if (inst is Control ctrl && ctrl.FindForm() is Form form)
+						Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+
+					foreach (var handler in handlers)
 					{
-						result = handler.Call(obj);
+						if (handler != null)
+						{
+							result = handler.Call(obj);
 
-						if (result == null)
-							continue;
+							if (result == null)
+								continue;
 
-						if (result.IsCallbackResultNonEmpty())
-							break;
+							if (result.IsCallbackResultNonEmpty())
+								break;
+						}
 					}
-				}
 
-				Threads.EndThread();
-				Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+					Threads.EndThread();
+					Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+				}
 			}
 
 			return result;
@@ -535,7 +539,7 @@ namespace System.Collections.Generic
 				merged.Add(kv.Key, kv.Value);
 
 			foreach (var kv in dkt2)
-				merged.TryAdd(kv.Key, kv.Value);
+				_ = merged.TryAdd(kv.Key, kv.Value);
 
 			return merged;
 		}

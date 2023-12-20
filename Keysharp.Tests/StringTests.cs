@@ -250,7 +250,7 @@ namespace Keysharp.Tests
 		public void RegExMatch()
 		{
 			object match = null;
-			Strings.RegExMatch("abc123abc456", "abc\\d+", ref match, 1);
+			_ = Strings.RegExMatch("abc123abc456", "abc\\d+", ref match, 1);
 			Assert.AreEqual(((RegExResults)match)[0], "abc123");
 			Assert.AreEqual(((RegExResults)match).Pos(), 1);
 			_ = Strings.RegExMatch("abc123abc456", "456", ref match, -1);

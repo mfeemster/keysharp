@@ -108,10 +108,10 @@ namespace Keysharp.Core.Common.Window
 
 		public override string ToString() => $"{Handle.ToInt64()}";
 
-		internal static void DoControlDelay() => DoDelay(ThreadAccessors.A_ControlDelay);
+		internal static void DoControlDelay() { }// => DoDelay(ThreadAccessors.A_ControlDelay);//These cause out of order execution bugs with threads and are not needed anyway.
 
 		//public override string ToString() => IsSpecified ? Title : "not specified window";
-		internal static void DoWinDelay() => DoDelay(ThreadAccessors.A_WinDelay);
+		internal static void DoWinDelay() { }// => DoDelay(ThreadAccessors.A_WinDelay);
 
 		internal abstract void ChildFindPoint(PointAndHwnd pah);
 
@@ -292,7 +292,7 @@ namespace Keysharp.Core.Common.Window
 				case Keyword_RegEx:
 				{
 					object outvar = null;
-					Strings.RegExMatch(a, b, ref outvar, 1);
+					_ = Strings.RegExMatch(a, b, ref outvar, 1);
 					RegExResults output = (RegExResults)outvar;
 					return output.Count > 0 && !string.IsNullOrEmpty(output[0]);
 				}

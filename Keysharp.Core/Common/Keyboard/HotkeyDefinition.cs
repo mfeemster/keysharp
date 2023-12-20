@@ -727,7 +727,7 @@ namespace Keysharp.Core.Common.Keyboard
 				_ = WindowsAPI.UnhookWindowsHookEx(Script.playbackHook);
 
 			foreach (var hk in shk)
-				hk.Unregister();//Hotkeys will unregister as they go out of scope, but force them to do it now.
+				_ = hk.Unregister(); //Hotkeys will unregister as they go out of scope, but force them to do it now.
 
 			shk.Clear();
 		}

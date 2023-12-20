@@ -7,9 +7,9 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>0.0.0.4</AssemblyVersion>
-    <FileVersion>0.0.0.4</FileVersion>
-    <Version>0.0.0.4</Version>
+    <AssemblyVersion>0.0.0.5</AssemblyVersion>
+    <FileVersion>0.0.0.5</FileVersion>
+    <Version>0.0.0.5</Version>
     <Authors>Matt Feemster</Authors>
     <Description>A suite of unit tests to verify Keysharp functionality</Description>
     <Company>Keysharp</Company>
@@ -29,11 +29,6 @@
     <DefineConstants>TRACE;LEGACY,WINDOWS</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Code\directive-misc.ahk~RF2dcacf00.TMP" />
-    <None Remove="Code\env-sysget.ahk~RF43e6cd1.TMP" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />

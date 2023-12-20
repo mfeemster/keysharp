@@ -200,7 +200,7 @@ namespace Keysharp.Core
 					{
 						var tempsb = new StringBuffer();
 						tabLevel++;
-						sb.AppendLine();
+						_ = sb.AppendLine();
 						kso.PrintProps("", tempsb, ref tabLevel);
 						key = tempsb.ToString().TrimEnd(Keywords.CrLf);
 						tabLevel--;
@@ -218,7 +218,7 @@ namespace Keysharp.Core
 						tabLevel++;
 						indent = new string('\t', tabLevel);
 						key = indent + key;//Indent the line if it's an object.
-						sb.AppendLine();
+						_ = sb.AppendLine();
 						kso.PrintProps("", tempsb, ref tabLevel);
 						val = tempsb.ToString().TrimEnd(Keywords.CrLf);
 						tabLevel--;

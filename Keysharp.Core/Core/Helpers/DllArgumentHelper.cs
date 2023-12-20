@@ -166,13 +166,13 @@ namespace Keysharp.Core
 								{
 									var pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
 									args[n] = pUnk;
-									Marshal.Release(pUnk);
+									_ = Marshal.Release(pUnk);
 								}
 								else if (Marshal.IsComObject(p))
 								{
 									var pUnk = Marshal.GetIUnknownForObject(p);
 									args[n] = pUnk;
-									Marshal.Release(pUnk);
+									_ = Marshal.Release(pUnk);
 								}
 								else if (p is Keysharp.Core.Array array)
 									SetupPointerArg(i, n, array.array);

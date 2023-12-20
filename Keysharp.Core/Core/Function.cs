@@ -216,7 +216,7 @@ namespace Keysharp.Core
 			if (delRef != null)
 			{
 				if (!fast)
-					Threads.BeginThread();
+					_ = Threads.BeginThread();
 
 				if (reference)
 				{

@@ -7,9 +7,9 @@
     <StartupObject>Keysharp.Main.Program</StartupObject>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <AssemblyVersion>0.0.0.4</AssemblyVersion>
-    <FileVersion>0.0.0.4</FileVersion>
-    <Version>0.0.0.4</Version>
+    <AssemblyVersion>0.0.0.5</AssemblyVersion>
+    <FileVersion>0.0.0.5</FileVersion>
+    <Version>0.0.0.5</Version>
     <Authors>Matt Feemster + legacy IronAHK developers</Authors>
     <Description>A C# port and enhancement of the Autohotkey program</Description>
     <Company>Keysharp</Company>

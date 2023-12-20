@@ -102,10 +102,11 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `.\Keysharp.exe .\test.ahk | more`
 	+ `.\Keysharp.exe .\test.ahk | more > out.txt`
 * `AddStandard()` detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
++ Delays are not inserted after every window and control related call. Due to the design of Keysharp, this is not needed and causes out of order message processing bugs.
+	+ `SetWinDelay()`, `A_WinDelay`, `SetControlDelay` and `A_ControlDelay` exist but have no effect.
 * Static function variables are initialized on program startup, rather than the first time the function is called. This is because C# does not support static function variables.
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
-* Internally, all vk and sc related variables are treated as int, unlike AHK where some are byte and others are ushort. Continually casting back and forth is probably bad for performance, so everything relating to keys is made to be int across the board.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.

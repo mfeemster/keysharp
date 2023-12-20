@@ -5,9 +5,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <Version>0.0.0.4</Version>
-    <AssemblyVersion>0.0.0.4</AssemblyVersion>
-    <FileVersion>0.0.0.4</FileVersion>
+    <Version>0.0.0.5</Version>
+    <AssemblyVersion>0.0.0.5</AssemblyVersion>
+    <FileVersion>0.0.0.5</FileVersion>
     <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
@@ -27,11 +27,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Scripting\Parser\Texts\Persistent.cs~RF1431327.TMP" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary.dll">
       <Guid>f935dc20-1cf0-11d0-adb9-00c04fd58a0b</Guid>
       <VersionMajor>1</VersionMajor>
@@ -43,10 +38,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
     <PackageReference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" />
-    <PackageReference Include="System.Management" Version="7.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

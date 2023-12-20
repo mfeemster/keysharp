@@ -134,24 +134,24 @@ namespace Keysharp.Scripting
 						{
 							var p1s = Ch.CodeToString(cmie2.Parameters[0]);
 							var p2s = string.Join(", ", cmie2.Parameters.Cast<CodeExpression>().Skip(1).Select(Ch.CodeToString));
-							newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => SetObject(v, {p1s}, {p2s}))"));
+							_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => SetObject(v, {p1s}, {p2s}))"));
 							continue;
 						}
 						else if (cmie2.Method.MethodName == "GetPropertyValue")
 						{
 							var p1s = Ch.CodeToString(cmie2.Parameters[0]);
 							var p2s = Ch.CodeToString(cmie2.Parameters[1]);
-							newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => SetPropertyValue({p1s}, {p2s}, v))"));
+							_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => SetPropertyValue({p1s}, {p2s}, v))"));
 							continue;
 						}
 						else
 							throw new Error("Cannot create a reference to a value returned from a function call.");
 					}
 
-					newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
+					_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
 				}
 				else
-					newParams.Add(p);
+					_ = newParams.Add(p);
 			}
 
 			return newParams;
@@ -193,7 +193,7 @@ namespace Keysharp.Scripting
 			if (dynamic)
 			{
 				if (invoke.Parameters[0] is CodeMethodInvokeExpression cmie)
-					cmie.Parameters.Add(new CodePrimitiveExpression(passedLen));
+					_ = cmie.Parameters.Add(new CodePrimitiveExpression(passedLen));
 			}
 		}
 
@@ -287,8 +287,8 @@ namespace Keysharp.Scripting
 								{
 									var tupleInvoke = (CodeMethodInvokeExpression)InternalMethods.MakeObjectTuple;
 									tupleInvoke.Parameters.Clear();
-									tupleInvoke.Parameters.Add(new CodePrimitiveExpression(null));
-									tupleInvoke.Parameters.Add(indexcmie);
+									_ = tupleInvoke.Parameters.Add(new CodePrimitiveExpression(null));
+									_ = tupleInvoke.Parameters.Add(indexcmie);
 									parts[n] = tupleInvoke;//Replace Index() with MakeObjectTuple(null, Index()).
 								}
 								else
@@ -376,7 +376,7 @@ namespace Keysharp.Scripting
 							invoke.Parameters.Insert(0, (CodeExpression)parts[n]);//Must come after HandleInvokeParams() due to the indexing there assuming param count is 0.
 
 							if (tempinvoke != null)
-								tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
+								_ = tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
 
 							parts[i] = invoke;
 							parts.RemoveAt(n);
@@ -693,9 +693,9 @@ namespace Keysharp.Scripting
 								invoke = (CodeMethodInvokeExpression)InternalMethods.InvokeWithRefs;
 								var objExpr = typeStack.Peek().Name == mainClassName ? new CodeSnippetExpression("null") : new CodeSnippetExpression("FindObjectForMethod(this, \"" + oldInvoke.Method.MethodName + $"\", {oldInvoke.Parameters.Count})");
 								var gmop = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
-								gmop.Parameters.Add(objExpr);
-								gmop.Parameters.Add(new CodePrimitiveExpression(oldInvoke.Method.MethodName));
-								gmop.Parameters.Add(new CodePrimitiveExpression((long)oldInvoke.Parameters.Count));
+								_ = gmop.Parameters.Add(objExpr);
+								_ = gmop.Parameters.Add(new CodePrimitiveExpression(oldInvoke.Method.MethodName));
+								_ = gmop.Parameters.Add(new CodePrimitiveExpression((long)oldInvoke.Parameters.Count));
 								_ = invoke.Parameters.Add(gmop);
 								invoke.Parameters.AddRange(ConvertDirectParamsToInvoke(oldInvoke.Parameters));
 							}
@@ -877,7 +877,7 @@ namespace Keysharp.Scripting
 
 								if (funcParams != null)
 									foreach (var fp in funcParams)
-										cmd.Parameters.Add(fp);
+										_ = cmd.Parameters.Add(fp);
 
 								MakeMethod(cmd);
 							}
@@ -889,10 +889,10 @@ namespace Keysharp.Scripting
 								{
 									var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre.VariableName);
 									_ = cpde.CustomAttributes.Add(cad);
-									cmd.Parameters.Add(cpde);
+									_ = cmd.Parameters.Add(cpde);
 								}
 								else
-									cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
+									_ = cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
 
 								MakeMethod(cmd);
 							}
@@ -906,7 +906,7 @@ namespace Keysharp.Scripting
 
 								if (funcParams != null)
 									foreach (var fp in funcParams)
-										cmd.Parameters.Add(fp);
+										_ = cmd.Parameters.Add(fp);
 
 								MakeMethod(cmd);
 							}

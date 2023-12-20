@@ -519,13 +519,13 @@ namespace Keysharp.Core
 			{
 				var pUnk = Marshal.GetIUnknownForObject(co.Ptr);
 				addr = pUnk;//Don't dererference here, it'll be done below.
-				Marshal.Release(pUnk);
+				_ = Marshal.Release(pUnk);
 			}
 			else if (type == "ptr" && Marshal.IsComObject(address))
 			{
 				var pUnk = Marshal.GetIUnknownForObject(address);
 				addr = pUnk;//Ditto.
-				Marshal.Release(pUnk);
+				_ = Marshal.Release(pUnk);
 			}
 			else
 				throw new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be int, long, ComObject or Buffer.");

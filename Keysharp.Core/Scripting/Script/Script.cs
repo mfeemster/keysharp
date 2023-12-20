@@ -241,7 +241,7 @@ namespace Keysharp.Scripting
 			var mod = "";
 			var hookstatus = "";
 			var cont = "Key History has been disabled via KeyHistory(0).";
-			sb.Clear();
+			_ = sb.Clear();
 
 			if (HookThread != null)
 			{

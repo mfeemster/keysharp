@@ -1,24 +1,25 @@
-$FullPath = [System.IO.Path]::GetFullPath("$PWD\bin\release\net7.0-windows\Keysharp.dll")
+$net = "net8.0-windows"
+$FullPath = [System.IO.Path]::GetFullPath("$PWD\bin\release\$net\Keysharp.dll")
 $DLLBytes = [System.IO.File]::ReadAllBytes($FullPath)
 $Assembly = [System.Reflection.Assembly]::Load($DLLBytes)
 $AssemblyVersion = $Assembly.GetName().Version.ToString()
 
 Copy-Item ".\Keysharp.Install\Release\Keysharp.msi" -Destination ".\Keysharp_$AssemblyVersion.msi" -Force
 Compress-Archive -LiteralPath `
- ".\bin\release\net7.0-windows\Keysharp.Core.dll" `
-,".\bin\release\net7.0-windows\Keysharp.exe" `
-,".\bin\release\net7.0-windows\Keysharp.dll" `
-,".\bin\release\net7.0-windows\Keyview.exe" `
-,".\bin\release\net7.0-windows\Keyview.dll" `
-,".\bin\release\net7.0-windows\Interop.IWshRuntimeLibrary.dll" `
-,".\bin\release\net7.0-windows\Microsoft.CodeAnalysis.CSharp.dll" `
-,".\bin\release\net7.0-windows\Microsoft.CodeAnalysis.dll" `
-,".\bin\release\net7.0-windows\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll" `
-,".\bin\release\net7.0-windows\Microsoft.Extensions.DependencyModel.dll" `
-,".\bin\release\net7.0-windows\Microsoft.NET.HostModel.dll" `
-,".\bin\release\net7.0-windows\System.Management.dll" `
-,".\bin\release\net7.0-windows\Keysharp.Core.deps.json" `
-,".\bin\release\net7.0-windows\Keysharp.deps.json" `
-,".\bin\release\net7.0-windows\Keysharp.runtimeconfig.json" `
-,".\bin\release\net7.0-windows\Keyview.runtimeconfig.json" `
--DestinationPath ".\Keysharp_$AssemblyVersion.zip" -Force `
+ ".\bin\release\$net\Keysharp.Core.dll" `
+,".\bin\release\$net\Keysharp.exe" `
+,".\bin\release\$net\Keysharp.dll" `
+,".\bin\release\$net\Keyview.exe" `
+,".\bin\release\$net\Keyview.dll" `
+,".\bin\release\$net\Interop.IWshRuntimeLibrary.dll" `
+,".\bin\release\$net\Microsoft.CodeAnalysis.CSharp.dll" `
+,".\bin\release\$net\Microsoft.CodeAnalysis.dll" `
+,".\bin\release\$net\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll" `
+,".\bin\release\$net\Microsoft.Extensions.DependencyModel.dll" `
+,".\bin\release\$net\Microsoft.NET.HostModel.dll" `
+,".\bin\release\$net\System.Management.dll" `
+,".\bin\release\$net\Keysharp.Core.deps.json" `
+,".\bin\release\$net\Keysharp.deps.json" `
+,".\bin\release\$net\Keysharp.runtimeconfig.json" `
+,".\bin\release\$net\Keyview.runtimeconfig.json" `
+-DestinationPath ".\Keysharp_$AssemblyVersion.zip" -Force

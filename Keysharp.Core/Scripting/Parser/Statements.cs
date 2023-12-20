@@ -47,7 +47,7 @@ namespace Keysharp.Scripting
 						if (gfv == null || !gfv.Contains(v.Key))
 						{
 							var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));
-							statements.Add(dec);
+							_ = statements.Add(dec);
 						}
 					}
 				}

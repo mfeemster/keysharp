@@ -148,6 +148,8 @@ namespace Keysharp.Core.Common.Threading
 			if (ctid != Processes.ManagedMainThreadID
 					|| threadVars.Index > 0)//Never pop the last object on the main thread.
 			{
+				//Script.OutputDebug($"About to pop with {threadVars.Index} existing threads");
+
 				if (threadVars.TryPop(out var tv))
 				{
 					if (checkThread && ctid != tv.threadId)
@@ -199,11 +201,15 @@ namespace Keysharp.Core.Common.Threading
 					}
 				}
 
+				//Script.OutputDebug($"About to push with {threadVars.Index} existing threads");
 				_ = threadVars.Push(tv);//Push it onto the stack for this thread.
 				return tv;
 			}
 			else
+			{
+				//Script.OutputDebug($"Wanted push, but only peeking with {threadVars.Index} existing threads");
 				return threadVars.TryPeek();
+			}
 		}
 	}
 }

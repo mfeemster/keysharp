@@ -403,7 +403,7 @@ namespace Keysharp.Core.COM
 			var vtbl = new IntPtr[indexPlus1];
 			var pUnk = Marshal.GetIUnknownForObject(ptr);
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
-			Marshal.Release(pUnk);
+			_ = Marshal.Release(pUnk);
 			Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
 			var helper = new ComArgumentHelper(parameters);
 			var ret = CallDel(pUnk, vtbl[index], helper.args);

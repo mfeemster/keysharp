@@ -1605,27 +1605,27 @@ namespace Keysharp.Core
 
 						if (Options.TryParse(split, "+E", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
+							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
 						}
 						else if (Options.TryParse(split, "E", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
+							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
 						}
 						else if (Options.TryParse(split, "-E", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, dwNewLong: new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() & ~temp));
+							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, dwNewLong: new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() & ~temp));
 						}
 						else if (Options.TryParse(split, "-", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() & ~temp));
+							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() & ~temp));
 						}
 						else if (Options.TryParse(split, "+", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
+							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
 						}
 						else if (Options.TryParse(split, "", ref temp))
 						{
-							WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
+							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
 						}
 					}
 				}

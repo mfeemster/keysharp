@@ -293,7 +293,7 @@ namespace Keysharp.Core
 					{
 						var tempsb = new StringBuffer();
 						tabLevel++;
-						sb.AppendLine();
+						_ = sb.AppendLine();
 						kso.PrintProps("", tempsb, ref tabLevel);
 						str = tempsb.ToString().TrimEnd(Keywords.CrLf);
 						tabLevel--;

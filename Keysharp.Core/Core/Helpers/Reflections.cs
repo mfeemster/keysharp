@@ -415,8 +415,8 @@ namespace Keysharp.Core
 					}
 
 			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
-			FindAndCacheProperty(typeof(object[]), "", 0, propType);//Needs to be done manually because many of the properties are decalred in a base class.
-			FindAndCacheProperty(typeof(Exception), "", 0, propType);//Same.
+			_ = FindAndCacheProperty(typeof(object[]), "", 0, propType); //Needs to be done manually because many of the properties are decalred in a base class.
+			_ = FindAndCacheProperty(typeof(Exception), "", 0, propType); //Same.
 
 			foreach (var typekv in typeToStringProperties)
 				foreach (var propkv in typekv.Value)

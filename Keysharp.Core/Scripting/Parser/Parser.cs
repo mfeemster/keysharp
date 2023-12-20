@@ -492,7 +492,7 @@ namespace Keysharp.Scripting
 
 			if (createDummyRef)
 			{
-				targetClass.Members.Add(new CodeSnippetTypeMember()
+				_ = targetClass.Members.Add(new CodeSnippetTypeMember()
 				{
 					Name = name,
 					Text = $"\t\tpublic static object {tsVar};"
@@ -536,8 +536,8 @@ namespace Keysharp.Scripting
 							getEnumMeth.Name = "IEnumerable.GetEnumerator";
 							getEnumMeth.Attributes = MemberAttributes.Final;
 							getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
-							getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
-							typeMethods.Key.Members.Add(getEnumMeth);
+							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
+							_ = typeMethods.Key.Members.Add(getEnumMeth);
 							var paramVal = 1;
 
 							if (method.Parameters.Count > 0)
@@ -558,7 +558,7 @@ namespace Keysharp.Scripting
 							var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
 							var baseCtr = new CodeTypeReference(baseTypeStr);
 							var returnCtr = new CodeTypeReference(returnTypeStr);
-							typeMethods.Key.BaseTypes.Add(baseCtr);
+							_ = typeMethods.Key.BaseTypes.Add(baseCtr);
 							//
 							getEnumMeth = new CodeMemberMethod
 							{
@@ -566,8 +566,8 @@ namespace Keysharp.Scripting
 								Attributes = MemberAttributes.Public | MemberAttributes.Final,
 								ReturnType = returnCtr
 							};
-							getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
-							typeMethods.Key.Members.Add(getEnumMeth);
+							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
+							_ = typeMethods.Key.Members.Add(getEnumMeth);
 						}
 					}
 
@@ -681,7 +681,7 @@ namespace Keysharp.Scripting
 							{
 								prop.Name = "Item";
 								//prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
-								typeProperties.Value.Remove("__item");//Was stored as lowercase.
+								_ = typeProperties.Value.Remove("__item"); //Was stored as lowercase.
 								typeProperties.Value.GetOrAdd("Item").Add(prop);
 							}
 						}
