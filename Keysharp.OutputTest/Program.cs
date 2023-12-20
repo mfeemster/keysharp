@@ -53,9 +53,12 @@ using static Keysharp.Scripting.Script.Operator;
 namespace Keysharp.CompiledMain
 {
 	using System;
+	using System.Buffers;
 	using System.Collections;
+	using System.Collections.Frozen;
 	using System.Collections.Generic;
 	using System.Data;
+	using System.Diagnostics;
 	using System.IO;
 	using System.Reflection;
 	using System.Runtime.InteropServices;

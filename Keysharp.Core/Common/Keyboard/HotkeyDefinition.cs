@@ -1548,7 +1548,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 			var keynameEnd = text.AsSpan(keynameEndIndex);
 
-			if (!isModifier && keynameEnd.IndexOfAny(SpaceTab) == 0 && keynameEnd.TrimStart(SpaceTab).StartsWith("Up", StringComparison.OrdinalIgnoreCase))
+			if (!isModifier && keynameEnd.IndexOfAny(SpaceTabSv) == 0 && keynameEnd.TrimStart(SpaceTab).StartsWith("Up", StringComparison.OrdinalIgnoreCase))
 			{
 				if (syntaxCheckOnly)
 					return ResultType.Ok; // It's a word or single character followed by " up" -- looks valid.

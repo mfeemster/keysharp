@@ -2,6 +2,7 @@ using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -10,8 +11,9 @@ using System.Reflection;
 using System.Text;
 using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
-using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
 using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
+using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
+
 namespace Keysharp.Scripting
 {
 	public partial class Parser : ICodeParser
@@ -30,58 +32,8 @@ namespace Keysharp.Scripting
 		private const string mainClassName = "program";
 		private const string mainScope = "";
 		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
-		private Stack<bool> allGlobalVars = new Stack<bool>();
-		private tsmd allMethodCalls = new tsmd();
-		private Stack<bool> allStaticVars = new Stack<bool>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
-		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
-		private bool blockOpen;
-		private Stack<CodeBlock> blocks = new ();
-		private uint caseCount;
-		private CompilerHelper Ch;
-		private List<CodeLine> codeLines = new List<CodeLine>();
-		private Dictionary<string, string> conditionIds;
-		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
-		private Stack<CodeStatementCollection> elses = new ();
-		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
-		private uint exCount;
-		private string fileName;
-		private tsmd getMethodCalls = new tsmd();
-		private tsmd getPropertyValueCalls = new tsmd();
-		private Stack<List<string>> globalFuncVars = new Stack<List<string>>();
-		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
-		private int internalID;
-		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
-		private int labelCount;
-		private string lastHotkeyFunc = "";
-		private string lastHotstringFunc = "";
-		private long line;
-		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
-		private char[] ops = new char[] { Equal, Not, Greater, Less };
-		private CodeMemberMethod main = new CodeMemberMethod()
-		{
-			Attributes = MemberAttributes.Public | MemberAttributes.Static,
-			Name = "Main"
-		};
 
-		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
-		private bool memberVarsStatic = false;
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
-		private CodeStatementCollection parent;
-		private CodeBlock parentBlock;
-		private CodeStatementCollection prepend = new CodeStatementCollection();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
-		private tsmd setPropertyValueCalls = new tsmd();
-		private Stack<CodeBlock> singleLoops = new ();
-		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
-		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
-		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
-		private uint switchCount;
-		private Stack<CodeSwitchStatement> switches = new ();
-		private CodeTypeDeclaration targetClass;
-		private uint tryCount;
-		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
-		private static HashSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		private static FrozenSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowBreak,
 			FlowContinue,
@@ -104,8 +56,9 @@ namespace Keysharp.Scripting
 			FlowUntil,
 			FlowSwitch,
 			Throw
-		};
-		private static HashSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+		private static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			AndTxt,
 			OrTxt,
@@ -136,7 +89,73 @@ namespace Keysharp.Scripting
 			FlowUntil,
 			FlowSwitch,
 			Throw
+		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+		private static FrozenSet<string> persistentTerms = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+		{
+			"settimer",
+			"menu",
+			"hotkey",
+			"hotstring",
+			"onmessage",
+			"onclipboardchange",
+			"gui",
+			"persistent"
+		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+
+		private Stack<bool> allGlobalVars = new Stack<bool>();
+		private tsmd allMethodCalls = new tsmd();
+		private Stack<bool> allStaticVars = new Stack<bool>();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
+		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
+		private bool blockOpen;
+		private Stack<CodeBlock> blocks = new ();
+		private uint caseCount;
+		private CompilerHelper Ch;
+		private List<CodeLine> codeLines = new List<CodeLine>();
+		private Dictionary<string, string> conditionIds;
+		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
+		private Stack<CodeStatementCollection> elses = new ();
+		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
+		private uint exCount;
+		private string fileName;
+		private tsmd getMethodCalls = new tsmd();
+		private tsmd getPropertyValueCalls = new tsmd();
+		private Stack<List<string>> globalFuncVars = new Stack<List<string>>();
+		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
+		private int internalID;
+		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
+		private int labelCount;
+		private string lastHotkeyFunc = "";
+		private string lastHotstringFunc = "";
+		private long line;
+		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
+
+		private CodeMemberMethod main = new CodeMemberMethod()
+		{
+			Attributes = MemberAttributes.Public | MemberAttributes.Static,
+			Name = "Main"
 		};
+
+		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
+		private bool memberVarsStatic = false;
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
+		private char[] ops = new char[] { Equal, Not, Greater, Less };
+		private CodeStatementCollection parent;
+		private CodeBlock parentBlock;
+		private CodeStatementCollection prepend = new CodeStatementCollection();
+		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
+		private tsmd setPropertyValueCalls = new tsmd();
+		private Stack<CodeBlock> singleLoops = new ();
+		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
+		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
+		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
+		private uint switchCount;
+		private Stack<CodeSwitchStatement> switches = new ();
+		private CodeTypeDeclaration targetClass;
+		private uint tryCount;
+		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+
 		public Parser(CompilerHelper ch)
 		{
 			Ch = ch;
@@ -145,7 +164,6 @@ namespace Keysharp.Scripting
 			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
 			targetClass = AddType(mainClassName);
 			_ = targetClass.Members.Add(main);
-			//Keysharp.Core.Common.Threading.Threads.PushThreadVariables(0, false, false, true);//This shouldn't be here.//TODO
 		}
 
 		public static bool IsTypeOrBase(Type t1, string t2)
@@ -852,6 +870,15 @@ namespace Keysharp.Scripting
 			getMethodCalls[ctd] = new slmd();
 			allMethodCalls[ctd] = new slmd();
 			return ctd;
+		}
+
+		private void CheckPersistent(string name)
+		{
+			if (Persistent)
+				return;
+
+			if (persistentTerms.Contains(name))
+				Persistent = true;
 		}
 
 		private CodeTypeDeclaration FindUserDefinedType(string typeName)

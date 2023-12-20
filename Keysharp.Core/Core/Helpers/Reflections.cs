@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,11 +12,11 @@ namespace Keysharp.Core
 {
 	public static class Reflections
 	{
+#if DEBUG
 		internal static Dictionary<string, MethodInfo> flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
-
+#endif
 		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 
-		//private static Dictionary<Guid, Dictionary<string, MethodPropertyHolder>> ExtensionMethods = new Dictionary<Guid, Dictionary<string, MethodPropertyHolder>>(sttcap / 20);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 
 		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
@@ -24,8 +25,6 @@ namespace Keysharp.Core
 		internal static sttd stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static int sttcap = 1000;
-		internal static ttsd typeToStringBuiltInMethods = new ttsd(sttcap / 10);
-		internal static ttsd typeToStringLocalMethods = new ttsd(sttcap / 10);
 		internal static ttsd typeToStringMethods = new ttsd(sttcap / 5);
 		internal static ttsd typeToStringProperties = new ttsd(sttcap / 5);
 		internal static Dictionary<string, Type> stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
@@ -42,12 +41,12 @@ namespace Keysharp.Core
 			stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
 			stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-			typeToStringBuiltInMethods = new ttsd(sttcap / 10);
-			typeToStringLocalMethods = new ttsd(sttcap / 10);
 			typeToStringMethods = new ttsd(sttcap / 5);
 			typeToStringProperties = new ttsd(sttcap / 5);
 			loadedAssemblies = new Dictionary<string, Assembly>();
+#if DEBUG
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
+#endif
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 			stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		}
@@ -78,17 +77,18 @@ namespace Keysharp.Core
 
 			types = types.Where(t => t.IsSealed && t.IsAbstract);
 
-			foreach (var method in types
-					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
-					 .Where(m => !m.IsSpecialName && m.GetCustomAttribute<PublicForTestOnly>() == null))
-				flatPublicStaticMethods.TryAdd(method.Name, method);
-
 			foreach (var property in types
 					 .SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Static))
 					 .Where(p => p.GetCustomAttribute<PublicForTestOnly>() == null))
 				flatPublicStaticProperties.TryAdd(property.Name, property);
 
 #if DEBUG
+
+			foreach (var method in types
+					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+					 .Where(m => !m.IsSpecialName && m.GetCustomAttribute<PublicForTestOnly>() == null))
+				flatPublicStaticMethods.TryAdd(method.Name, method);
+
 			var mlist = flatPublicStaticMethods.Keys.ToList();
 			mlist.Sort();
 			var plist = flatPublicStaticProperties.Keys.ToList();
@@ -359,9 +359,7 @@ namespace Keysharp.Core
 			List<Assembly> assemblies;
 			var loadedAssembliesList = loadedAssemblies.Values;
 			stringToTypeLocalMethods.Clear();
-			typeToStringLocalMethods.Clear();
 			stringToTypeBuiltInMethods.Clear();
-			typeToStringBuiltInMethods.Clear();
 
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
 				assemblies = loadedAssembliesList.ToList();
@@ -394,15 +392,9 @@ namespace Keysharp.Core
 					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 
 					if (typekv.Key.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
-					{
 						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-						_ = typeToStringLocalMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
-					}
 					else
-					{
 						_ = stringToTypeBuiltInMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
-						_ = typeToStringBuiltInMethods.GetOrAdd(typekv.Key, () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(typekv.Value.Count, StringComparer.OrdinalIgnoreCase)).GetOrAdd(methkv.Key, methkv.Value);
-					}
 				}
 			}
 		}
@@ -467,24 +459,6 @@ namespace Keysharp.Core
 
 			return dkt;
 		}
-
-		/// <summary>
-		/// This Method extends the System.Type-type to get all extended methods. It searches hereby in all assemblies which are known by the current AppDomain.
-		/// </summary>
-		/// <remarks>
-		/// Insired by Jon Skeet from his answer on http://stackoverflow.com/questions/299515/c-sharp-reflection-to-identify-extension-methods
-		/// </remarks>
-		/// <returns>returns MethodInfo[] with the extended Method</returns>
-		//private static List<MethodInfo> GetExtensionMethods(this Type t, List<Type> types)
-		//{
-		//  var query = from type in types
-		//              where type.IsSealed && /*!type.IsGenericType &&*/ !type.IsNested
-		//              from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-		//              where method.IsDefined(typeof(ExtensionAttribute), false)
-		//              where method.GetParameters().Length > 0 && method.GetParameters()[0].ParameterType.Name == t.Name
-		//              select method;
-		//  return query.Select(m => m.IsGenericMethod ? m.MakeGenericMethod(t.GenericTypeArguments) : m).ToList();
-		//}
 	}
 
 	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext

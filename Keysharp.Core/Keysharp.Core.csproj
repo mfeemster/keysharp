@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
@@ -25,6 +25,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>7</WarningLevel>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Scripting\Parser\Texts\Persistent.cs~RF1431327.TMP" />
+  </ItemGroup>
 
 
   <ItemGroup>

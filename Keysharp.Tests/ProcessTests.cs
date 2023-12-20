@@ -10,7 +10,6 @@ namespace Keysharp.Tests
 		public void ProcessRunWaitClose()
 		{
 			object pid = null;
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			_ = Run("notepad.exe", "", "max", ref pid);
 			_ = ProcessWait(pid);
 			_ = ProcessSetPriority("H", pid);

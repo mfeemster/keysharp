@@ -160,6 +160,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(IsSpace("abc") == 0);
 			Assert.IsTrue(IsSpace("AbC123") == 0);
 			Assert.IsTrue(IsSpace(".") == 0);
+			Assert.IsTrue(IsSpace(" 123") == 0);
 			Assert.IsTrue(IsSpace(" \t\n\r\v\f") == 1);
 			Assert.IsTrue(IsSpace(o) == 0);
 			Assert.IsTrue(IsSpace(m) == 0);

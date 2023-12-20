@@ -15,7 +15,6 @@ namespace Keysharp.Tests
 		[Test, Category("External")]
 		public void DllCall_()
 		{
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var desktop = WindowsAPI.GetDesktopWindow();
 			var rect = new RECT();
 			var buf = Keysharp.Core.Misc.Buffer(16, 0);

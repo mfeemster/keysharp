@@ -64,7 +64,7 @@ namespace Keysharp.Core.Common.Window
 				}
 			}
 
-			var mixed = obj as string;
+			var mixed = obj.ToString();
 
 			if (mixed.IndexOf(Keywords.Keyword_ahk, StringComparison.OrdinalIgnoreCase) == -1)
 				return new SearchCriteria { Title = mixed };
@@ -77,7 +77,7 @@ namespace Keysharp.Core.Common.Window
 			{
 				if (!t)
 				{
-					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Keywords.Keyword_Spaces);
+					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Keywords.Spaces);
 
 					if (pre.Length != 0)
 						criteria.Title = pre;
@@ -85,7 +85,7 @@ namespace Keysharp.Core.Common.Window
 					t = true;
 				}
 
-				var z = mixed.IndexOfAny(Keywords.Keyword_Spaces, i);
+				var z = mixed.IndexOfAny(Keywords.Spaces, i);
 
 				if (z == -1)
 					break;

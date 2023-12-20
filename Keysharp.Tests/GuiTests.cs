@@ -16,7 +16,6 @@ namespace Keysharp.Tests
 		[Apartment(ApartmentState.STA)]
 		public void FileSelect()
 		{
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/file1.txt"));
 			var files = Dialogs.FileSelect();
 			//MsgBox(files);
@@ -43,7 +42,6 @@ namespace Keysharp.Tests
 		{
 			var run = true;
 			var title = "this is a sample title";
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var task = Task.Factory.StartNew(() =>
 			{
 				while (run)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using Keysharp.Core;
+using Keysharp.Core.Common.Threading;
 using NUnit.Framework;
 
 namespace Keysharp.Tests
@@ -17,7 +18,7 @@ namespace Keysharp.Tests
 			//Directory.SetCurrentDirectory(dir);
 			Keysharp.Core.Window.SetProcessDPIAware();
 			//Reflections.Initialize();
-			//Keysharp.Core.Common.Threading.Threads.PushThreadVariables(0, false, false, true);
+			_ = Keysharp.Core.Common.Threading.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 		}
 	}
 

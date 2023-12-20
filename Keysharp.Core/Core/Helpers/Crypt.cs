@@ -68,16 +68,20 @@ namespace Keysharp.Core
 			if (value == null)
 				return new byte[] { };
 
-			var formatter = new BinaryFormatter();
+			throw new TypeError("Cannot serialize an object that was not either a string or byte[].");
 
-			var writer = new MemoryStream();
+			/*
+			    var formatter = new BinaryFormatter();
 
-			//For some reason this is obsolete, but no replacement has been provided, so we still use it.
-#pragma warning disable SYSLIB0011
-			formatter.Serialize(writer, value);
+			    var writer = new MemoryStream();
 
-#pragma warning restore SYSLIB0001
-			return writer.ToArray();
+			    //For some reason this is obsolete, but no replacement has been provided, so we still use it.
+			    #pragma warning disable SYSLIB0011
+			    formatter.Serialize(writer, value);
+
+			    #pragma warning restore SYSLIB0001
+			    return writer.ToArray();
+			*/
 		}
 	}
 }

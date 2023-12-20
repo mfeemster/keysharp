@@ -157,14 +157,7 @@ namespace Keysharp.Core
 
 		public static long IsSet(object obj) => obj != UnsetArg.Default&& obj != null ? 1 : 0;
 
-		public static long IsSpace(object obj)
-		{
-			foreach (var ch in obj.As())
-				if (!Keyword_Spaces.Any(ch2 => ch2 == ch))
-					return 0L;
-
-			return 1L;
-		}
+		public static long IsSpace(object obj) => obj.ToString().AsSpan().IndexOfAnyExcept(SpacesSv) != -1 ? 0L : 1L;
 
 		public static long IsTime(object obj)
 		{

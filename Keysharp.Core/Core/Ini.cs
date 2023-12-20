@@ -112,7 +112,7 @@ namespace Keysharp.Core
 			if (!haskey && !hassec)
 			{
 				foreach (DictionaryEntry kv in inidkt)
-					_ = sb.AppendLine(((string)kv.Key).Trim(trimsec));
+					_ = sb.AppendLine(((string)kv.Key).Trim(TrimSec));
 			}
 			else if (haskey && hassec)
 			{
@@ -186,11 +186,11 @@ namespace Keysharp.Core
 						else
 						{
 							kvdkt.Clear();//Documentation seems to suggest it should overwrite all in the specified section.
-							var pairsplits = value.Split(trimline, StringSplitOptions.RemoveEmptyEntries);
+							var pairsplits = value.Split(TrimLine, StringSplitOptions.RemoveEmptyEntries);
 
 							foreach (var pair in pairsplits)
 							{
-								var split = pair.Split('=').Select(l => l.Trim(trimline)).ToArray();
+								var split = pair.Split('=').Select(l => l.Trim(TrimLine)).ToArray();
 
 								if (split.Length == 2 && kvdkt != null)
 									kvdkt[split[0]] = split[1];
@@ -233,9 +233,9 @@ namespace Keysharp.Core
 			OrderedDictionary kvdkt = null;
 			var inidkt = new OrderedDictionary(StringComparer.CurrentCultureIgnoreCase);
 
-			foreach (var ln in System.IO.File.ReadAllLines(filename).Select(l => l.Trim(trimline)).Where(x => x != ""))
+			foreach (var ln in System.IO.File.ReadAllLines(filename).Select(l => l.Trim(TrimLine)).Where(x => x != ""))
 			{
-				var split = ln.Split('=').Select(l => l.Trim(trimline)).ToArray();
+				var split = ln.Split('=').Select(l => l.Trim(TrimLine)).ToArray();
 
 				if (ln[0] == '#')
 				{

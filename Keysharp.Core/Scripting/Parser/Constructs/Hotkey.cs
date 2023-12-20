@@ -630,7 +630,7 @@ namespace Keysharp.Scripting
 					}
 
 					Persistent = true;
-					var hasContinuationSection = replacement.IndexOfAny(CrLf) != -1;//Not a perfect detection, but will be correct most of the time.
+					var hasContinuationSection = replacement.AsSpan().IndexOfAny(CrLfSv) != -1;//Not a perfect detection, but will be correct most of the time.
 					var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotstring;
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotName));
 					_ = invoke.Parameters.Add(funcname != "" ? new CodeSnippetExpression("new FuncObj(\"" + funcname + "\", null)") : new CodePrimitiveExpression(null));//Can't use interpolated string here because the AStyle formatter misinterprets it.

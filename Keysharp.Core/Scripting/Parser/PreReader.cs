@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.CodeDom;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
@@ -19,7 +20,7 @@ namespace Keysharp.Scripting
 		private static string multiLineComments = new string(new[] { MultiComB, MultiComA });
 		private readonly List<string> includes = new List<string>();
 		private string includePath = "./";
-		private static HashSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		private static FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowCatch,
 			FlowClass,
@@ -33,7 +34,7 @@ namespace Keysharp.Scripting
 			FlowTry,
 			//FlowUntil,//Could  until { one : 1 } == x ever be done?
 			//FlowWhile//Same: while { one : 1 } == x
-		};
+		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 		private Parser parser;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();

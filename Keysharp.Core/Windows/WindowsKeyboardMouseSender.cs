@@ -1975,11 +1975,11 @@ namespace Keysharp.Core.Windows
 				// letters because avoiding that adds flexibility that couldn't be achieved otherwise.
 				// Thus, ^c::Send {Blind}c produces the same result when ^c is substituted for the final c.
 				// But Send {Blind}{LControl down} will generate the extra events even if ctrl already down.
-				sub = keys.Substring(6);
+				var keySpan = keys.AsSpan(6);
 
-				for (i = 0; i < sub.Length && sub[i] != '}'; ++i)
+				for (i = 0; i < keySpan.Length && keySpan[i] != '}'; ++i)
 				{
-					switch (sub[i])
+					switch (keySpan[i])
 					{
 						case '^': modsExcludedFromBlind |= MOD_LCONTROL | MOD_RCONTROL; break;
 
@@ -1993,7 +1993,7 @@ namespace Keysharp.Core.Windows
 					}
 				}
 
-				sub = sub.Substring(i);
+				sub = keySpan.Slice(i).ToString();
 			}
 
 			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}"))

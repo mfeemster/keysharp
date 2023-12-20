@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 
 namespace Keysharp.Scripting
 {
@@ -598,20 +599,28 @@ namespace Keysharp.Scripting
 		internal const string VarExt = "#_@$?";
 		internal static readonly char[] BlockOpenAndSpace = { BlockOpen, SingleSpace };
 		internal static readonly char[] BlockOpenParenOpen = { BlockOpen, ParenOpen };
+		internal static SearchValues<char> BlockOpenParenOpenSv = SearchValues.Create(BlockOpenParenOpen);
 		internal static readonly char[] Parens = { ParenOpen, ParenClose };
 		internal static readonly char[] BlockOpenSpaceAndParens = BlockOpenAndSpace.Concat(Parens);
 		internal static readonly char[] CrLf = "\r\n".ToCharArray();
+		internal static SearchValues<char> CrLfSv = SearchValues.Create(CrLf);
 		internal static readonly object[] EmptyVariadicArgs = new object[] { System.Array.Empty<object>() };
-		internal static readonly char[] Keyword_Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
-		public static readonly char[] BothBracesSpaces = BothBraces.Concat(Keyword_Spaces);
 		internal static readonly char[] SpaceColon = " :".ToCharArray();
 		internal static readonly char[] Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
+		internal static SearchValues<char> SpacesSv = SearchValues.Create(Spaces);
+		public static readonly char[] BothBracesSpaces = BothBraces.Concat(Spaces);
 		internal static readonly char[] SpacesQuotes = { CR, LF, SingleSpace, '\t', '\xA0', '"' };
 		internal static readonly char[] SpaceTab = " \t".ToCharArray();
+		internal static SearchValues<char> SpaceTabSv = SearchValues.Create(SpaceTab);
 		internal static readonly char[] SpaceTabComma = " \t,".ToCharArray();
 		internal static readonly char[] SpaceTabOpenBrace = " \t{".ToCharArray();
-		internal static readonly char[] trimline = "\t\r\n ".ToCharArray();
-		internal static readonly char[] trimsec = "[]".ToCharArray();
+		internal static readonly char[] TrimLine = "\t\r\n ".ToCharArray();
+		internal static readonly char[] TrimSec = "[]".ToCharArray();
+		internal static readonly char[] SpaceMultiDelim;
+		internal static SearchValues<char> SpaceMultiDelimSv;
+		internal static readonly char[] FlowDelimiters;
+		internal static SearchValues<char> FlowDelimitersSv;
+
 #if !LEGACY
 		internal const char LastVar = '$';
 #endif
@@ -645,5 +654,19 @@ namespace Keysharp.Scripting
 #else
 		internal const string VarExt = "#_$";
 #endif
+
+		static Keywords()
+		{
+			var offset = 2;
+			FlowDelimiters = new char[Spaces.Length + offset];
+			FlowDelimiters[0] = Multicast;
+			FlowDelimiters[1] = HotkeyBound;
+			Spaces.CopyTo(FlowDelimiters, offset);
+			FlowDelimitersSv = SearchValues.Create(FlowDelimiters);
+			SpaceMultiDelim = new char[Spaces.Length + 1];
+			SpaceMultiDelim[0] = Multicast;
+			Spaces.CopyTo(SpaceMultiDelim, 1);
+			SpaceMultiDelimSv = SearchValues.Create(SpaceMultiDelim);
+		}
 	}
 }

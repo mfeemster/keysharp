@@ -29,13 +29,9 @@ namespace Keysharp.Scripting
 		{
 			var line = lines[index];
 			var code = line.Code;
+			var cspan = code.AsSpan();
 			string[] parts = { string.Empty, string.Empty };
-			var offset = 2;
-			var delimiters = new char[Spaces.Length + offset];
-			delimiters[0] = Multicast;
-			delimiters[1] = HotkeyBound;
-			Spaces.CopyTo(delimiters, offset);
-			int[] d = { code.IndexOfAny(delimiters), code.IndexOfAny(BlockOpenParenOpen) };
+			int[] d = { cspan.IndexOfAny(FlowDelimitersSv), cspan.IndexOfAny(BlockOpenParenOpenSv) };
 
 			if (d[0] == -1 && d[1] == -1)
 				parts[0] = code;

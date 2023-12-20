@@ -530,7 +530,6 @@ namespace Keysharp.Tests
 		{
 			//Can't really test console in/out/err with * and ** here, but in manual testing it appears to work.
 			var filename = "./testfileobject1.txt";
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 
 			if (System.IO.File.Exists(filename))
 				System.IO.File.Delete(filename);

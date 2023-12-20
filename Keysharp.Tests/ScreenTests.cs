@@ -13,7 +13,6 @@ namespace Keysharp.Tests
 		[Test, Category("Screen")]
 		public void ImageSearch()
 		{
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			CoordMode("Mouse", "Screen");
 			var screen = System.Windows.Forms.Screen.PrimaryScreen;
 			_ = GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp");
@@ -32,7 +31,6 @@ namespace Keysharp.Tests
 		public void PixelGetColor()
 		{
 			int last = 0, white = 0xffffff, black = 0x000000;
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			CoordMode("Mouse", "Screen");
 
 			//There isn't really a sure way to tell whether this is working.
@@ -61,7 +59,6 @@ namespace Keysharp.Tests
 		public void PixelSearch()
 		{
 			int last = 0, white = 0xffffff, black = 0x000000;
-			_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			CoordMode("Mouse", "Screen");
 
 			//There isn't really a sure way to tell whether this is working.

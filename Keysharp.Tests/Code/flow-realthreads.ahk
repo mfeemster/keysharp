@@ -1,4 +1,3 @@
-thi := 0
 lockit := ""
 tharr := []
 tharr.Length := 100
@@ -21,8 +20,6 @@ Loop 100
 {
 	tharr[A_Index] := StartRealThread(fo, A_Index).ContinueWith(fo, 1)
 }
-
-thi := 0
 
 Loop 100
 {

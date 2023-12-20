@@ -32,11 +32,9 @@ namespace Keysharp.Scripting
 		[Conditional(Legacy)]
 		internal static void Translate(ref string code)
 		{
-			var delim = new char[Spaces.Length + 1];
-			delim[0] = Multicast;
-			Spaces.CopyTo(delim, 1);
-			var z = code.IndexOfAny(delim);
 			string cmd, param;
+			var cspan = code.AsSpan();
+			var z = cspan.IndexOfAny(SpaceMultiDelimSv);
 
 			if (z == -1)
 			{
@@ -46,7 +44,7 @@ namespace Keysharp.Scripting
 			else
 			{
 				cmd = code.Substring(0, z);
-				param = code.AsSpan(z).TrimStart(delim).ToString();
+				param = cspan.Slice(z).TrimStart(SpaceMultiDelim).ToString();
 			}
 
 			var replaced = new StringBuilder(code.Length);
