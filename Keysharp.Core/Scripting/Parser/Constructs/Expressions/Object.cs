@@ -147,7 +147,7 @@ namespace Keysharp.Scripting
 					names.Add(expr);
 				}
 				else
-					names.Add(new CodePrimitiveExpression(name.ToLower()));//Add as a quoted lowercase string.
+					names.Add(new CodePrimitiveExpression(EscapedString(name.ToLower(), false)));//Add as a quoted lowercase string.
 
 				i++;//Ensure the next token is a : char.
 

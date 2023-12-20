@@ -185,6 +185,51 @@ namespace Keysharp.Scripting
 			return str.ToString();
 		}
 
+		private int FindNextBalanced(string s, char ch1, char ch2)
+		{
+			var level = 0;
+			var escape = false;
+			var inquote = false;
+
+			for (int i = 0; i < s.Length; i++)
+			{
+				char ch = s[i];
+
+				if (ch == '\"')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || s[i - 1] != Escape)
+							inquote = true;
+					}
+					else
+					{
+						if (i == 0 || s[i - 1] != Escape || !escape)//Checking escape accounts for ``.
+							inquote = false;
+					}
+				}
+
+				escape = ch == Escape ? !escape : false;
+
+				if (!inquote)
+				{
+					if (ch == ch1)
+					{
+						level++;
+					}
+					else if (ch == ch2)
+					{
+						level--;
+
+						if (level == 0)
+							return i;
+					}
+				}
+			}
+
+			return -1;
+		}
+
 		private void RemoveExcessParentheses(List<object> parts)
 		{
 			while (parts.Count > 1)
@@ -228,54 +273,75 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private List<string> SplitStringBalanced(string s, char delim)
+		private List<string> SplitStringBalanced(string s, char delim, bool addEmpty = false)
 		{
+			var escape = false;
+			var inquote = false;
 			var parenLevel = 0;
 			var braceLevel = 0;
 			var bracketLevel = 0;
 			var parts = new List<string>();
 			var sb = new StringBuilder();
 
-			foreach (var ch in s)
+			for (int i = 0; i < s.Length; i++)
 			{
-				if (ch == '(')//Either it's a ( or a function call which will end with a (.
+				char ch = s[i];
+
+				if (ch == '\"')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || s[i - 1] != Escape)
+							inquote = true;
+					}
+					else
+					{
+						if (i == 0 || s[i - 1] != Escape || !escape)//Checking escape accounts for ``.
+							inquote = false;
+					}
+				}
+
+				escape = ch == Escape ? !escape : false;
+
+				if (ch == '(' && !inquote)//Either it's a ( or a function call which will end with a (.
 				{
 					parenLevel++;
 					_ = sb.Append(ch);
 				}
-				else if (ch == ')')
+				else if (ch == ')' && !inquote)
 				{
 					if (parenLevel > 0)
 						_ = sb.Append(ch);
 
 					parenLevel--;
 				}
-				else if (ch == '{')
+				else if (ch == '{' && !inquote)
 				{
 					braceLevel++;
 					_ = sb.Append(ch);
 				}
-				else if (ch == '}')
+				else if (ch == '}' && !inquote)
 				{
 					if (braceLevel > 0)
 						_ = sb.Append(ch);
 
 					braceLevel--;
 				}
-				else if (ch == '[')
+				else if (ch == '[' && !inquote)
 				{
 					_ = sb.Append(ch);
 					bracketLevel++;
 				}
-				else if (ch == ']')
+				else if (ch == ']' && !inquote)
 				{
 					if (bracketLevel > 0)
 						_ = sb.Append(ch);
 
 					bracketLevel--;
 				}
-				else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && ch == delim)//Assuming delim is != to any of the above characters.
+				else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && ch == delim && !inquote)//Assuming delim is != to any of the above characters.
 				{
+					//parts.Add(EscapedString(sb.ToString(), false));
 					parts.Add(sb.ToString());
 					_ = sb.Clear();
 				}
@@ -283,8 +349,9 @@ namespace Keysharp.Scripting
 					_ = sb.Append(ch);
 			}
 
-			if (sb.Length > 0)
+			if (sb.Length > 0 || (addEmpty && s.Length > 0 && s[s.Length - 1] == delim))
 			{
+				//parts.Add(EscapedString(sb.ToString(), false));
 				parts.Add(sb.ToString());
 			}
 

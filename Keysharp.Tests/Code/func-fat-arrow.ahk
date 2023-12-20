@@ -35,7 +35,7 @@ If (x == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+			
 myclassobj.myprop := 10
 
 If (myclassobj.x == 100)
@@ -152,7 +152,7 @@ If (x == 12)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-		
+	
 myfunc2 := () => 123
 x := myfunc2()
 
@@ -355,10 +355,24 @@ If (val == 10)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+gval := 0
+lam := () => gval += 123
+x := lam()
+
+If (x == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (gval == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 tot := 0
 
-func2__(x) ; This can't be named func2 because it'll conflict with another function of the same name elsewhere in our tests.
+func2__(x) ; This can't be named func2() because it'll conflict with another function of the same name elsewhere in our tests.
 {
 	global tot += x
 }
@@ -367,36 +381,36 @@ f := FuncObj("func2__")
 
 func(a, b, c)
 {
-	a(1)
-	b(2)
-	c(3)
+	global tot
+	tot += a(1)
+	tot += b(2)
+	tot += c(3)
 	f(10)
 }
 
-func((o) => tot += o * 1, (o) => tot += o * 2, (o) => tot += o * 3)
+func((o) => o * 1, (o) => o * 2, (o) => o * 3)
 ; MsgBox(tot)
 
 If (tot == 24)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
-tot := 0
 
 class myclass2
 {
 	func(a, b, c)
 	{
-		a(1)
-		b(2)
-		c(3)
+		global tot
+		tot += a(1)
+		tot += b(2)
+		tot += c(3)
 		f(20)
 	}
 }
 
 tot := 0
 class2obj := myclass2()
-class2obj.func((o) => tot += o * 1, (o) => tot += o * 2, (o) => tot += o * 3)
+class2obj.func((o) => o * 1, (o) => o * 2, (o) => o * 3)
 
 If (tot == 34)
 	FileAppend, "pass", "*"

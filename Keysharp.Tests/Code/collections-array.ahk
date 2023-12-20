@@ -131,21 +131,24 @@ if (arr[3] = 700)
 else
 	FileAppend, "fail", "*"
 
-; 
-; if (arr[3] = 602)
-; 	FileAppend, "pass", "*"
-; else
-; 	FileAppend, "fail", "*"
-; 	
-; if (arr[4] = 603)
-; 	FileAppend, "pass", "*"
-; else
-; 	FileAppend, "fail", "*"
-; 	
-; if (arr[3] = 700)
-; 	FileAppend, "pass", "*"
-; else
-; 	FileAppend, "fail", "*"
+arr := Array()
+
+arr.InsertAt(1, "6[00", ["){", 602, 603], "(`"")
+
+if (arr[1] = "6[00")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (arr[2] = ["){", 602, 603])
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (arr[3] = "(`"")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 arr := Array()
 

@@ -608,29 +608,22 @@ namespace Keysharp.Scripting
 						if (i == 0 || code[i - 1] != '`')
 							inquote = verbatim = false;
 					}
-
-					//continue;
 				}
 				else if (ch == '\"' && !verbatim)
 				{
 					if (!inquote)
 					{
-						if (i == 0 || code[i - 1] != '`')
+						if (i == 0 || code[i - 1] != Escape)
 							inquote = true;
 					}
 					else
 					{
-						if (i == 0 || code[i - 1] != '`' || !escape)//Checking escape accounts for ``.
+						if (i == 0 || code[i - 1] != Escape || !escape)//Checking escape accounts for ``.
 							inquote = false;
 					}
-
-					//continue;
 				}
 
-				if (ch == Escape)
-					escape = !escape;
-				else
-					escape = false;
+				escape = ch == Escape ? !escape : false;
 
 				if (!inquote)
 				{

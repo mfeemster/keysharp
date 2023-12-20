@@ -42,7 +42,6 @@ namespace Keysharp.Scripting
 		private List<CodeLine> codeLines = new List<CodeLine>();
 		private Dictionary<string, string> conditionIds;
 		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
-		private Stack<string> currentFuncCall = new Stack<string>();
 		private Stack<CodeStatementCollection> elses = new ();
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private uint exCount;

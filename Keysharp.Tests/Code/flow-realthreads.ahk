@@ -4,10 +4,15 @@ tharr := []
 tharr.Length := 100
 tot := 0
 
-func1(obj)
+AddTot(o)
 {
 	global tot
-	LockObject(lockit, (o) => tot += o, obj)
+	tot += o
+}
+
+func1(obj)
+{
+	LockObject(lockit, (o) => AddTot(o), obj)
 }
 
 Loop 100

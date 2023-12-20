@@ -27,6 +27,7 @@ using static Keysharp.Core.Mouse;
 using static Keysharp.Core.Network;
 using static Keysharp.Core.Options;
 using static Keysharp.Core.Processes;
+using static Keysharp.Core.RealThreads;
 using static Keysharp.Core.Registrys;
 using static Keysharp.Core.Screen;
 using static Keysharp.Core.Security;
@@ -66,6 +67,7 @@ namespace Keysharp.CompiledMain
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
+
 	public class program
 	{
 
@@ -80,7 +82,8 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
 				HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
-				Keysharp.Scripting.Script.RunMainWindow(name, UserMainCode);
+				UserMainCode();
+				Keysharp.Core.Flow.Sleep(-2);
 				Keysharp.Core.Flow.ExitApp(0);
 				return 0;
 			}

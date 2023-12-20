@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Keysharp.Core;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -438,7 +439,7 @@ namespace Keysharp.Scripting
 				if (!IsAssignOp(code))
 					_ = OperatorFromString(code);
 			}
-			catch (ArgumentOutOfRangeException) { return false; }
+			catch (ParseException) { return false; }
 
 			return true;
 		}
@@ -973,6 +974,43 @@ namespace Keysharp.Scripting
 			}
 
 			return list;
+		}
+
+		private string TokensToCode(List<object> tokens)
+		{
+			var last = "";
+			var sb = new StringBuilder();
+
+			foreach (var token in tokens)
+			{
+				var s = token.ToString();
+
+				if (s == "[*")
+				{
+					last = s;
+					s = ".";
+				}
+				else if (last == "[*")
+				{
+					last = s;
+
+					if (s.StartsWith('\"') && s.EndsWith('\"'))
+						s = s.Substring(1, s.Length - 2);
+				}
+				else if (s == "*]")
+				{
+					last = s;
+					continue;//Do nothing.
+				}
+				else if (s == "=>" || IsOperator(s))
+				{
+					s = $" {s} ";
+				}
+
+				_ = sb.Append(s);
+			}
+
+			return sb.ToString();
 		}
 
 		private enum Token

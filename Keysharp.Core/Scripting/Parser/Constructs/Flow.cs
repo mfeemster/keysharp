@@ -640,6 +640,7 @@ namespace Keysharp.Scripting
 
 							//Now that we know the variable names, reparse, but pass true to create them.
 							//Unlike global, we do want to create any variable we encounter here as local ones.
+
 							foreach (var expr in ParseMultiExpression(line, parts[1], true))
 								if (expr is CodeExpressionStatement ces &&
 										ces.Expression is CodeBinaryOperatorExpression cboe &&

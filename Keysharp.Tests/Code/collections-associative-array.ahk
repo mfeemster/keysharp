@@ -394,3 +394,20 @@ if (m.one.oneone == 11)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+m := { "{o]ne" : 1, "[t{w{0" : 2, "t{hr)e)]e" : 3 }
+
+if (m["{o]ne"] == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m["[t{w{0"] == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m["t{hr)e)]e"] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

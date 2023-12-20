@@ -3,7 +3,6 @@ using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
@@ -12,41 +11,92 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private static List<int> ParseArguments(List<object> paren)
+		private static (List<int>, List<List<object>>) ParseArguments(List<object> paren)
 		{
-			var inparenct = 0;
 			var paramIndex = 0;
+			var parenLevel = 0;
+			var braceLevel = 0;
+			var bracketLevel = 0;
 			var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
 			List<int> refIndexes = new List<int>(paren.Count);//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
+			List<object> arg = new List<object>();
+			List<List<object>> args = new List<List<object>>(paren.Count);
 
-			for (var i1 = 0; i1 < paren.Count; i1++)
+			for (var i = 0; i < paren.Count; i++)
 			{
-				var p = paren[i1].ToString();
+				var p = paren[i].ToString();
 
 				if (p.Contains('(') && !p.StartsWith('"'))//Indicates the start of a new expression as a parameter, so don't count it, because it'll be handled recursively on its own.
-					inparenct++;
+				{
+					arg.Add(p);
+					parenLevel++;
+				}
 				else if (p.Contains(')') && !p.StartsWith('"'))
-					inparenct--;
-				else if (inparenct == 0)
+				{
+					arg.Add(p);
+					parenLevel--;
+				}
+				else if (p == "[")
+				{
+					arg.Add(p);
+					bracketLevel++;
+				}
+				else if (p == "]")
+				{
+					arg.Add(p);
+					bracketLevel--;
+				}
+				else if (p == "{")
+				{
+					arg.Add(p);
+					braceLevel++;
+				}
+				else if (p == "}")
+				{
+					arg.Add(p);
+					braceLevel--;
+				}
+				else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0)
 				{
 					if (p == ",")//Reached the end of a parameter, so increment parameter index.
 					{
+						if (arg.Count == 0)
+							arg.Add("null");
+
+						args.Add(arg);
+						arg = new List<object>();
 						paramIndex++;
 					}
 					else if (lastisstar && p == "*")//p can be * if the param is just a variable reference, or if it's a function call whose result is to be expanded. Ex: func(func2(val)*)
 					{
-						paren.RemoveAt(i1);
-						i1--;
+						paren.RemoveAt(i);
+						i--;
 					}
-					else if (p == "&" && (i1 == 0 || paren[i1 - 1].ToString() == ","))
+					else if (p == "&" && (i == 0 || paren[i - 1].ToString() == ","))
 					{
 						refIndexes.Add(paramIndex);
-						paren.RemoveAt(i1);
+
+						if (i < paren.Count - 1)
+							arg.Add(paren[i + 1]);
+
+						paren.RemoveAt(i);
 					}
+					else
+						arg.Add(p);
 				}
+				else
+					arg.Add(p);
 			}
 
-			return refIndexes;
+			if (arg.Count > 0 || (paren.Count > 0 && paren[paren.Count - 1].ToString() == ","))
+			{
+				if (arg.Count == 0)
+					arg.Add("null");
+
+				args.Add(arg);
+			}
+
+			return (refIndexes, args);
 		}
 
 		private static List<int> ParseArguments(CodeExpressionCollection parameters)
@@ -227,7 +277,6 @@ namespace Keysharp.Scripting
 
 						if (call)
 						{
-							currentFuncCall.Push("Call");
 							var invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
 							CodeMethodInvokeExpression tempinvoke = null;
 
@@ -257,12 +306,29 @@ namespace Keysharp.Scripting
 							if (paren.Count > 0)
 							{
 								var lastisstar = paren.Last().ToString() == "*";
-								var refIndexes = ParseArguments(paren);
+								var (refIndexes, args) = ParseArguments(paren);
 
 								if (paren.Count != 0)
 								{
-									var passed = ParseMultiExpression(line, code, paren.ToArray(), create);
-									HandleInvokeParams(refIndexes, passed, invoke, lastisstar, false);
+									var passed = new List<CodeExpression>();
+									var tempCode = TokensToCode(paren);
+									var codeStrings = SplitStringBalanced(tempCode, ',');//Tricky here: we need the code, not the parsed tokens.
+
+									//Each argument must be parsed as a single expression.
+									//They cannot all be parsed together as a multi expression because the comma delimiter conflicts.
+									if (args.Count == codeStrings.Count)
+									{
+										for (int i1 = 0; i1 < args.Count; i1++)
+										{
+											var arg = args[i1];
+											var temp = codeStrings[i1].TrimStart('&');
+											passed.Add(ParseExpression(line, temp, arg, /*create*/false));//override the value of create with false because the arguments passed into a function should never be created automatically.
+										}
+									}
+									else
+										throw new ParseException($"Error parsing function call arguments in: {code}.");
+
+									HandleInvokeParams(refIndexes, passed.ToArray(), invoke, lastisstar, false);
 
 									if (refIndexes.Count > 0)
 									{
@@ -312,7 +378,6 @@ namespace Keysharp.Scripting
 							if (tempinvoke != null)
 								tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
 
-							currentFuncCall.Pop();
 							parts[i] = invoke;
 							parts.RemoveAt(n);
 							i--;//Do this to ensure we don't miss a token, particularly in the case of chained method calls such as: MyGui.Add("Button",, "Click Me").OnEvent("Click", "MenuHandler").
@@ -359,11 +424,10 @@ namespace Keysharp.Scripting
 									  : VarIdOrConstant(part,
 														i == 0 &&
 														(!s.StartsWith("[") || parts.Count == 1) &&
-														(create ||
-														 (s == ":="))
+														(create || s.EndsWith('='))//Covers :=, +=, -= etc...
 														, false);
 
-						if (varexpr is CodeVariableReferenceExpression cvre && string.Compare(cvre.VariableName, "this", true) == 0 && InClassDefinition())
+						if (varexpr is CodeVariableReferenceExpression cvre && (string.Compare(cvre.VariableName, "this", true) == 0 || string.Compare(cvre.VariableName, "@this", true) == 0) && InClassDefinition())
 						{
 							varexpr = new CodeThisReferenceExpression();
 						}
@@ -375,17 +439,12 @@ namespace Keysharp.Scripting
 						//This will prevent proper parsing of fat arrow functions when defining
 						//them inside of a map passed to a function like DefineProp().
 						//So temporarily remove it here and restore it below.
-						var any = currentFuncCall.TryPop(out var funcCall);
 						var n = i + 1;
 						var paren = ExtractRange(parts, n, Set(parts, i));
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.Dictionary;
 						ParseObject(line, code, paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), keys));
 						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), values));
-
-						if (any)
-							currentFuncCall.Push(funcCall);
-
 						parts[i] = invoke;
 						parts.RemoveAt(n);
 						i--;
@@ -410,7 +469,6 @@ namespace Keysharp.Scripting
 
 									if (n + 1 < parts.Count && parts[n].ToString() == ":=")//Detect if this was a property assignment by searching for a := then a token after it, which is the value to assign.
 									{
-										currentFuncCall.Push("SetPropertyValue");
 										var valtokens = ExtractRange(parts, n + 1, parts.Count);
 										var val = ParseMultiExpression(line, code, valtokens.ToArray(), create);
 										invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
@@ -440,7 +498,6 @@ namespace Keysharp.Scripting
 									}
 									else
 									{
-										currentFuncCall.Push("GetPropertyValue");
 										invoke = (CodeMethodInvokeExpression)InternalMethods.GetPropertyValue;
 										n = i - 1;
 
@@ -467,7 +524,6 @@ namespace Keysharp.Scripting
 										getPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 									}
 
-									currentFuncCall.Pop();
 									parts[i] = invoke;
 									parts.RemoveAt(n);
 									i--;
@@ -534,7 +590,6 @@ namespace Keysharp.Scripting
 					{
 						var dynamic = false;
 						var name = part.Substring(0, part.Length - 1);
-						currentFuncCall.Push(name);
 
 						if (!IsIdentifier(name))
 						{
@@ -565,12 +620,26 @@ namespace Keysharp.Scripting
 						}
 						else//Any other function call aside from HotIf().
 						{
-							CodeExpression[] passed = null;
+							var origCode = code;
+							var passed = new List<CodeExpression>();
 							var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
-							var refIndexes = ParseArguments(paren);
+							var (refIndexes, args) = ParseArguments(paren);
+							var tempCode = TokensToCode(paren);
+							var codeStrings = SplitStringBalanced(tempCode, ',', true);//Tricky here: we need the code, not the parsed tokens.
 
-							if (paren.Count != 0)
-								passed = ParseMultiExpression(line, code, paren.ToArray(), /*create*/false);//override the value of create with false because the arguments passed into a function should never be created automatically.
+							//Each argument must be parsed as a single expression.
+							//They cannot all be parsed together as a multi expression because the comma delimiter conflicts.
+							if (args.Count == codeStrings.Count)
+							{
+								for (int i1 = 0; i1 < args.Count; i1++)
+								{
+									var arg = args[i1];
+									tempCode = codeStrings[i1];
+									passed.Add(ParseExpression(line, tempCode, arg, /*create*/false));//override the value of create with false because the arguments passed into a function should never be created automatically.
+								}
+							}
+							else
+								throw new ParseException($"Error parsing function call arguments in: {origCode}.");
 
 							if (dynamic)
 							{
@@ -596,7 +665,7 @@ namespace Keysharp.Scripting
 							else
 								invoke = LocalMethodInvoke(name);
 
-							HandleInvokeParams(refIndexes, passed, invoke, lastisstar, dynamic);
+							HandleInvokeParams(refIndexes, passed.ToArray(), invoke, lastisstar, dynamic);
 							var needInvoke = false;
 
 							//If a variable by the same name as the function exists at the current or parent scope,
@@ -634,7 +703,6 @@ namespace Keysharp.Scripting
 							allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 						}
 
-						_ = currentFuncCall.Pop();
 						parts[i] = invoke;
 						invokes.Add(invoke);
 						specialaddcall:
@@ -732,7 +800,8 @@ namespace Keysharp.Scripting
 							parts.Add("FuncObj(");
 							parts.Add("\"" + cmd.Name + "\"");
 							parts.Add(",");
-							parts.Add(InClassDefinition() ? new CodeThisReferenceExpression() : "null");
+							//parts.Add(InClassDefinition() ? new CodeThisReferenceExpression() : "null");
+							parts.Add(InClassDefinition() ? "this" : "null");
 							parts.Add(",");
 							parts.Add($"{cmd.Parameters.Count}");
 							parts.Add(")");
@@ -748,26 +817,13 @@ namespace Keysharp.Scripting
 							//Inefficient to recompose the parameters into a string, but unsure what else to do here.
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => (p.Direction == FieldDirection.Ref ? "&" : "") + p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "{"));
+							var subs = SplitStringBalanced(code.Substring(arrowIndex + 2), ',');
+							var ct = subs.Count - 1;
 
-							//If this is a fat arrow being passed as a function argument, special care must be taken not to
-							//count tokens after the next comma as part of a multistatement in the fat arrow definition.
-							//Instead, they are the next arguments being passed to the function.
-							if (currentFuncCall.Count > 0 && !bodyParts.Contains("[*"))//Can't recompose if it's been altered by the parser. This is *incredibly* hacky and needs to be reworked at some point.//TODO
-							{
-								//Somewhat risky to recompose the body parts all back together with no spaces, but there appears to be no other way to do it.
-								//This is because we don't have the index in the code string where we currently are.
-								retstr = string.Join("", bodyParts);
-							}
-							else
-							{
-								var subs = SplitStringBalanced(code.Substring(arrowIndex + 2), ',');
-								var ct = subs.Count - 1;
+							for (var sindex = 0; sindex < ct; sindex++)
+								codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, subs[sindex]));
 
-								for (var sindex = 0; sindex < ct; sindex++)
-									codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, subs[sindex]));
-
-								retstr = subs[ct];
-							}
+							retstr = subs[ct];
 
 							if (!retstr.StartsWith("return", StringComparison.OrdinalIgnoreCase))
 								retstr = "return " + retstr;
@@ -1478,7 +1534,7 @@ namespace Keysharp.Scripting
 				//When not parsing arguments and instead just parsing regular expressions, it will cause
 				//a compiler error because just saying "null" in the wrong place is a syntax error.
 				//This is a good way to help catch syntax bugs in a script.
-				if (s == "," && (!fatArrow || currentFuncCall.Count > 0))
+				if (s == "," && !fatArrow)
 				{
 					if (sub.Count != 0)
 					{

@@ -127,9 +127,9 @@ TODO/ENSURE THESE WORK:
 
 		a::
 		b::
-		toolTip A_ThisHotkey " is being pressed"
-		keyWait A_ThisHotkey
-		toolTip
+		toolTip(A_ThisHotkey " is being pressed")
+		keyWait(A_ThisHotkey)
+		toolTip()
 		return
 
 	Another example, which actually has a use is modifying the buttons in a MsgBox:
@@ -245,6 +245,7 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Another automation library: https://github.com/qgindi/LibreAutomate
 	An assembler in AHK: https://github.com/CloakerSmoker/Relax-Language/blob/master/src/
 	Code demonstrating dynamic properties (already implemented): https://p.ahkscript.org/?p=0bce480c
+	A lexer for AHK: https://github.com/tinku99/ahklexers
 	
 	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
@@ -324,82 +325,7 @@ Closed development links to revisit:
 
 ///////Code storage
 
-
-//class stuff from chat
-
-DefineProp is really the same thing as just defining a member on a class, just that it does not call meta-functions (__get, __set, __call).
-Basically the syntax for DefineProp is obj.DefineProp(name, descriptor). descriptor decides what kind of member will be made: Either an instance/class variable, a property, or a method. These names are a little weird in AHK so let me show you an example:
-
-class X {
-    InstanceVar := 123
-    static ClassVar := 456
-    Property1 {
-        get {
-            return 123 ; this is the long way to define these
-        }
-        set {
-            return 456 ; if set is omitted, the property is read-only, like in C#
-        }
-    }
-
-    Property2 {
-        ; slightly shorter
-        get => 123
-        set => 123
-        ; set can be omitted again
-    }
-
-    ; the shortest way
-    Property3 => "test"
-    ; this is only specifying a getter, so it is read-only
-
-    Method() {
-        return 123456
-        ; there is no shorthand for these, unfortunately
-    }
-    static ClassMethod() {
-        return "whatever"
-    }
-}
-
-If I were to define the same class with DefineProp, I would write it like this:
-(Don't worry about what __init and static __new do for the moment, they just get called automatically)
-
-class X {
-    static __new() {
-        this.DefineProp("ClassVar", {value: 456})
-        this.DefineProp("ClassMethod", {
-            call: () => "whatever"
-        })
-    }
-
-    __init() {
-        this.DefineProp("InstanceVar", {value: 123})
-        this.DefineProp("Property1", {
-            get: () => 123
-            set: () => 456
-        })
-        this.DefineProp("Property2", {
-            get: () => 123
-            set: () => 123
-        }
-        this.DefineProp("Property3", {
-            get: () => "test"
-        })
-        this.DefineProp("Method", {
-            call: () => 123456
-        })
-    }
-}
-
-Note that this code might not run, because I don't remember if there are parameter requirements for the functions passed to get and set. There was definitely some magic there.
-
-
-yes, since DefineProp is defined on Object and Prototype (which is what class instances are) inherits from Object.
-so you can even do {}.defineProp(...), just on a plain object like that
-
 //////////////////////////////
-
 
 github post on creating standalone exe:
 https://github.com/dotnet/roslyn/issues/57347

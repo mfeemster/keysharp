@@ -35,7 +35,7 @@ namespace Keysharp.Core
 				return t.Result;
 			}
 			else
-				throw new Error($"Object of type {obj0.GetType()} was not of type Task<object>.");
+				throw new TypeError($"Object of type {obj0.GetType()} was not of type Task<object>.");
 		}
 	}
 }
