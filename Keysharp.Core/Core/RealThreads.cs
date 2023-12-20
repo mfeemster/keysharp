@@ -3,9 +3,38 @@ using System.Threading.Tasks;
 
 namespace Keysharp.Core
 {
+	public class RealThread : KeysharpObject
+	{
+		internal Task<object> task;
+
+		public RealThread(Task<object> t)
+		{
+			task = t;
+		}
+
+		public object ContinueWith(object obj, params object[] args)
+		{
+			var fo = Function.GetFuncObj(obj, null, true);
+			var rt = task.ContinueWith((to) => fo.Call(args));
+			return new RealThread(rt);
+		}
+
+		public object Wait(object obj = null)
+		{
+			var timeout = obj.Ai(-1);
+
+			if (timeout > 0)
+				_ = task.Wait(timeout);
+			else
+				task.Wait();
+
+			return task.Result;
+		}
+	}
+
 	public static class RealThreads
 	{
-		public static object LockObject(object obj0, object obj1, params object[] args)
+		public static object LockRun(object obj0, object obj1, params object[] args)
 		{
 			lock (obj0)
 			{
@@ -18,24 +47,7 @@ namespace Keysharp.Core
 		{
 			var funcObj = Function.GetFuncObj(obj, null, true);
 			var tsk = Task.Run(() => funcObj.Call(args));
-			return tsk;
-		}
-
-		public static object WaitRealThread(object obj0, object obj1 = null)
-		{
-			if (obj0 is Task<object> t)
-			{
-				var timeout = obj1.Ai(-1);
-
-				if (timeout > 0)
-					_ = t.Wait(timeout);
-				else
-					t.Wait();
-
-				return t.Result;
-			}
-			else
-				throw new TypeError($"Object of type {obj0.GetType()} was not of type Task<object>.");
+			return new RealThread(tsk);
 		}
 	}
 }

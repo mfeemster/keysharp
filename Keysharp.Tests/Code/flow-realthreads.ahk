@@ -12,7 +12,7 @@ AddTot(o)
 
 func1(obj)
 {
-	LockObject(lockit, (o) => AddTot(o), obj)
+	LockRun(lockit, (o) => AddTot(o), obj)
 }
 
 Loop 100
@@ -24,7 +24,7 @@ thi := 0
 
 Loop 100
 {
-	WaitRealThread(tharr[++thi])
+	tharr[++thi].Wait()
 }
 
 tharr.Clear()
