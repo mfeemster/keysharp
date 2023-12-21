@@ -1,0 +1,563 @@
+using static Keysharp.Core.Accessors;
+using static Keysharp.Core.Core;
+using static Keysharp.Core.Dialogs;
+using static Keysharp.Core.Disk;
+using static Keysharp.Core.DllHelper;
+using static Keysharp.Core.Env;
+using static Keysharp.Core.Flow;
+using static Keysharp.Core.Function;
+using static Keysharp.Core.Ini;
+using static Keysharp.Core.Keyboard;
+using static Keysharp.Core.Loops;
+using static Keysharp.Core.Maths;
+using static Keysharp.Core.Menu;
+using static Keysharp.Core.Misc;
+using static Keysharp.Core.Monitor;
+using static Keysharp.Core.Mouse;
+using static Keysharp.Core.Network;
+using static Keysharp.Core.Processes;
+using static Keysharp.Core.Registrys;
+using static Keysharp.Core.Screen;
+using static Keysharp.Core.Security;
+using static Keysharp.Core.SimpleJson;
+using static Keysharp.Core.Sound;
+using static Keysharp.Core.Strings;
+using static Keysharp.Core.Window;
+using static Keysharp.Core.Windows.WindowsAPI;
+using static Keysharp.Core.Windows.WindowsAPI.SystemMetric;
+using static Keysharp.Scripting.Script;
+using static Keysharp.Scripting.Script.Operator;
+using static Keysharp.Core.KeysharpObject;
+
+[assembly: System.CLSCompliantAttribute(true)]
+
+namespace Keysharp.Main
+{
+	using System;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.Data;
+	using System.Diagnostics;
+	using System.Drawing;
+	using System.IO;
+	using System.Reflection;
+	using System.Runtime.InteropServices;
+	using System.Text;
+	using System.Windows.Forms;
+	using Keysharp.Core;
+	using Keysharp.Scripting;
+	using Array = Keysharp.Core.Array;
+	using Buffer = Keysharp.Core.Buffer;
+
+	public class FuncObj
+	{
+		public object Call(params object[] obj)
+		{
+			Console.WriteLine("Call().");
+			var stack = new StackFrame(1);
+			var meth = stack.GetMethod();
+			var s = meth.DeclaringType.FullName + "." + meth.Name;
+			Console.WriteLine(s);
+			return 0;
+		}
+	}
+
+	public sealed class Program
+	{
+		public Program() => Accessors.MainProgram = this;
+
+		private static GuiControl btn, edit;
+		static Menu mnu, submnu;
+		static MenuBar mb;
+
+		public static Exception NewExc()
+		{
+			return new Exception("asdf");
+		}
+		[System.STAThreadAttribute()]
+		public static int Main(string[] args)
+		{
+			try
+			{
+				SetProcessDPIAware();
+				CreateTrayMenu();
+				OnError("OnErrorHandler");
+				var excs = new List<KeysharpException>()
+				{
+					new KeysharpException(),
+						new OSError(),
+						new IndexError(),
+						new PropertyError(),
+						new KeyError(),
+						new MemberError(),
+						new MemoryError(),
+						new MethodError(),
+						new TargetError()
+				};
+				excs.Sort((c1, c2) =>
+				{
+					var t1 = c1.GetType().BaseType;
+					var t2 = c2.GetType().BaseType;
+
+					if (t1 == t2)
+						return 0;
+					else return t1.IsSubclassOf(t2) ? 1 : -1;
+				});
+
+				foreach (var val in excs)
+					Compiler.Debug(val.GetType().ToString());
+
+				throw new Error("asdf");
+				return 1;
+				var funcobj2 = new FuncObj();
+				funcobj2.Call();
+				var ob1 = new KeysharpObject();
+				var ob2 = new BoundFunc(null);
+				var isbase = ob2.HasBase(ob1);
+				Console.WriteLine(isbase);
+				isbase = ob1.HasBase(ob2);
+				Console.WriteLine(isbase);
+				var thebase = ob2.GetType().BaseType.Name;
+				Console.WriteLine(thebase);
+				thebase = ob2.Base;
+				Console.WriteLine(thebase);
+				var hp = -1;
+				//Options.TryParse("hp100", "hp", ref hp);
+				//Options.TryParse("hp-100", "hp", ref hp);
+				//Options.TryParse("hp+100", "hp", ref hp);
+				var evt = new EventSink();
+				var funcobj = new FuncObj();
+				var wnd = new Gui("", "Test Caption", evt);
+				mnu = new Menu();
+				//mnu.Add("&Open", funcobj);
+				mnu.Add("&Open", "MyBtn_Click2");
+				mnu.Add("&Save");
+				mnu.Add("S&ave As");
+				mnu.Add();
+				mnu.Add("E&xit");
+				submnu = new Menu();
+				submnu.Add("Submenu item 1");
+				submnu.Add("Submenu item 2", "MyBtn_Click2", "P5 Radio +Right -Break -BarBreak");
+				submnu.Add("Submenu item 3");
+				submnu.Add();
+				submnu.Delete("4&");
+				mnu.Add("sub", submnu);
+				//mnu.SetColor("Gray");
+				//mnu.SetForeColor("Green");
+				mb = new MenuBar();
+				mb.Add("&File", mnu);
+				mb.Add("&Edit");
+				mb.Add("&Tools");
+				wnd.MenuBar = mb;
+				mnu.Default = "E&xit";
+				wnd.OnEvent("ContextMenu", "Form_ContextMenu");
+				mnu.Rename("Submenu item 2", "monkey");
+				//
+				//
+				var editmenu = new Menu();
+				editmenu.Add("Dummy edit 1");
+				editmenu.Add("Dummy edit 2");
+				editmenu.Add("Dummy edit 3");
+				mb.Add("&Edit", editmenu);
+				mb.SetForeColor("Green");
+				//mb.SetColor("Gray");
+				//
+				//
+				//mnu.Rename("4&", "not a sep");
+				//Mouse.Coords.Menu = CoordModeType.Screen;
+				//wnd.OnEvent("Close", "Form_Close");
+				//var txt = wnd.AddText("w600 h500 border ", "SOME text that\thas a tabstop\tortwo\nshown\there\tin it.");
+				//txt.SetFont("cBlue", "verdana");
+				//wnd.SetFont("underline cBlue verdana");
+				//btn = wnd.AddButton("w80 0x4000", "Abtn");
+				//btn.OnEvent("Click", "MyBtn_Click");
+				//var btn2 = wnd.AddButton("w90", "Abtn2");
+				//var btn3 = wnd.AddButton("w100", "Abtn3");
+				//edit.SetFont("cBlue", "verdana");
+				//var chk = wnd.Add("CheckBox", "vShipToBillingAddress", "Ship to billing address?\nsure thing!");
+				//chk.OnEvent("DoubleClick", "MyBtn_Click");
+				//wnd.AddPicture("w400 border", @"C:\D\Dev\Keysharp\Keysharp.png");
+				//var pic = wnd.AddPicture("w400 border", @"C:\D\Feem's Stuff\Pics & Vids\20190630_1100080.jpg");
+				//var pic = wnd.AddPicture("w400 border", @"C:\D\Feem's Stuff\Pics & Vids\Animated Strip Tease.gif");
+				//pic.OnEvent("DoubleClick", "MyBtn_Click");
+				//var ddl = wnd.Add("DropDownList", "vColorChoice", new ArrayList(new List<string> { "Black", "White", "Red", "Green", "Blue" }));
+				//var cmb2 = wnd.Add("DropDownList", "vColorChoice", new Array(new List<string> { "Black", "White", "Red", "Green", "Blue" }));
+				//var cmb3 = wnd.Add("DropDownList", "vColorChoice lowercase Choose3", new ArrayList(new List<string> { "Black", "White", "Red", "Green", "Blue" }));
+				//var lbx = wnd.Add("ListBox", "w600 h150 t64 t72 uppercase readonly multi vColorChoice choose1 choose3 choose5", new ArrayList(new List<string> { "Red\tHELLO\tWHAT", "Green\tHELLO\tWHAT", "Blue\tHELLO\tWHAT", "Black\tHELLO\tWHAT", "White\tHELLO\tWHAT" }));
+				//var cmb4 = wnd.Add("DropDownList", "vColorChoice uppercase", new ArrayList(new List<string> { "Black", "White", "Red", "Green", "Blue" }));
+				//var cmb5 = wnd.Add("ComboBox", "vColorChoice sort h50", new ArrayList(new List<string> { "Black", "White", "Red", "Green", "Blue" }));
+				//wnd.AddPicture("w400 border", @"C:\D\Feem's Stuff\Pics & Vids\20170203_215924.jpg");
+				//var prg = wnd.AddProgress("w200 h50 cRed Smooth Range0-100", 25L);
+				//var prg2 = wnd.AddProgress("w50 h200 x400 y20 cGreen Smooth Vertical Range0-100", 75L);
+				//var rad1 = wnd.AddRadio("vRad1 Checked", "radio 1");
+				//var rad2 = wnd.AddRadio("vRad2 Checked", "radio 2");
+				//var rad3 = wnd.AddRadio("vRad3 Checked", "radio 3");
+				//var rad4 = wnd.AddRadio("vRad4 Checked Group", "radio 4");
+				//var rad5 = wnd.AddRadio("vRad5 Checked", "radio 5");
+				//var rad6 = wnd.AddRadio("vRad6 Checked Group", "radio 6");
+				//var rad7 = wnd.AddRadio("vRad7 Checked", "radio 7");
+				//var rad8 = wnd.AddRadio("vRad8 Checked Group", "radio 8");
+				//var rad9 = wnd.AddRadio("vRad9 Checked", "radio 9");
+				//var dtp1 = wnd.AddDateTime("vMyDateTime choose20200704203040 cRed", "MM/dd/yyyy hh:mm:ss tt");
+				//var dtp2 = wnd.AddDateTime("vMyDateTime choosenone", "ShortDate");
+				//var dtp3 = wnd.AddDateTime("vMyDateTime choosenone", "Time");
+				//var dtp4 = wnd.AddDateTime("vMyDateTime choosenone", "M/d/yy HH:mm");
+				//var dtp2 = wnd.AddDateTime("vMyDateTime Range-20200101", "LongDate");
+				//var dtp3 = wnd.AddDateTime("vMyDateTime Range20201103", "LongDate");
+				//var cal = wnd.AddMonthCal("vMyMonthCal multi11 Range20200101-20200815 4 8 16", "20200704-20200707");//
+				//var cal = wnd.AddMonthCal("vMyMonthCal multi11 Range-20220101 4 8 16", "");//
+				//var hk = wnd.AddHotKey("vMyHotkey Limit16", "");
+				//btn = wnd.AddButton("w80", "Abtn");
+				//var link = wnd.AddLink("", "https://www.autohotkey.com");
+				//var link = wnd.AddLink("w500", "this is some <a href='www.duckduckgo.com\'>the link</a> and here is <a id=\"www.bing.com\">another link</a>");
+				//var slider = wnd.AddSlider("h100 vmyslider range1-100 line10 page25 ToolTip ToolTipLeft vertical", 25);
+				//var slider = wnd.AddSlider("h500 vmyslider range1-100 line10 page25 ToolTip", 25);
+				//var grp = wnd.AddGroupBox("r5 wrap", "Geographic Criteria");
+				//sbar.SetFont("cBlue", "wingdings");
+				//var strs = new List<string> { "T33", "T10", "Z1", "A55", "A6" };
+				//strs.Sort(new Keysharp.Core.NaturalComparer());
+				//foreach (var str in strs)
+				//  Console.WriteLine(str);
+				var sbar = wnd.AddStatusBar("cBlue", "this is test status text");
+				sbar.SetText("more dummy text", 1, 0);
+				sbar.OnEvent("doubleclick", "ToolStrip_DoubleClicked");
+				//var tab = wnd.AddTab("vmytabcontrol choose3", new ArrayList(new List<string> { "General", "View", "Settings" }));
+				//tab.Add("a", "few", "more", "tabs");
+				//var nud = wnd.AddUpDown("vmynud Increment100 range5-22222");
+				var lv = wnd.AddListView("vmylistview h200 cblue grid sort Hdr multi checked", new Keysharp.Core.Array(new List<string> { "Col1", "Col2", "Col3" }));
+				var thelv = lv.Control as ListView;
+				var rand = new Random(DateTime.Now.Second);
+				var total = 0;
+
+				for (var i = 0; i < 10; i++)
+				{
+					var list = new List<string>(thelv.Columns.Count);
+
+					for (var j = 0; j < thelv.Columns.Count; j++)
+					{
+						if (j < thelv.Columns.Count - 1)
+							list.Add(rand.NextDouble().ToString("F2"));
+						else
+							list.Add("T" + (++total).ToString());
+
+						//list.Add(((char)rand.Next('A', 'z')).ToString() + (++total).ToString());
+						//list.Add(rand.Next().ToString());
+					}
+
+					_ = lv.Add("", list);
+				}
+
+				//lv.Add("Col3", "adding", "this", "col");
+				//lv.Insert(2, "Col2", "ins1", "ins2", "ins3");
+				////thelv.Items.Insert(0, new ListViewItem("aaa"));//, "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("", "ins4", "ins5", "ins6");
+				//lv.Add("Vis", "ins4", "ins5", "ins6");
+				//lv.Modify(1, "Col1 check focus vis select", "mod1");
+				//_ = lv.ModifyCol(2, "200", "");
+				var btn1 = wnd.AddButton("", "Sort by col1");
+				var btn2 = wnd.AddButton("", "Sort by col2 float center");
+				var btn3 = wnd.AddButton("", "Sort by col3 right");
+				var link = wnd.AddLink("", "this is some <a id=\"testid\" href='www.duckduckgo.com\'>the link</a> and here is <a id=\"id2\" href=\"www.bing.com\">another link</a>");
+				link.OnEvent("Click", "Link_LinkClicked");
+				var lb = wnd.AddListBox("h100", new Keysharp.Core.Array(new List<string> { "Red", "Green", "Blue", "Black", "White" }));
+				var chk = wnd.Add("CheckBox", "vShipToBillingAddress", "Ship to billing address?\nsure thing!");
+				lb.OnEvent("doubleclick", "ListBox_DoubleClicked");
+				var cmb = wnd.Add("ComboBox", "vColorChoice Limit", new Array(new List<string> { "Black", "White", "Red", "Green", "Blue" }));
+				edit = wnd.AddEdit("vtesteditname w300 h300 multi");
+				//edit = wnd.AddEdit("w600 h500 multi t64 t144 section wanttab", "row1col1\trow1col2\tro1col3.\r\nrow2col1\trow2col2\trow2col3.");
+				//Keysharp.Core.Mouse.CoordMode("tooltip", "screen");
+				//Accessors.A_IconHidden = 1;
+				//btn1.OnEvent("Click", funcobj);
+				//btn1.OnEvent("Click", "MyBtn_Click1");
+				//btn1.OnEvent("Click", "MyBtn_Click2");
+				//btn1.OnEvent("DoubleClick", "MyBtn_DoubleClick");
+				//(btn1.Control as Button).Click += (oo, ee) =>
+				//{
+				//lv.ModifyCol(1, "", "mod1");
+				//lv.DeleteCol(1);
+				//Dialogs.DirSelect("C:\\windows\\system32", 1, "Please select a folder");
+				//Dialogs.DirSelect("::00021400-0000-0000-C000-000000000046", 1);
+				//Dialogs.DirSelect("::450D8FBA-AD25-11D0-98A8-0800361B1103", 1);
+				//Dialogs.DirSelect("::B4BFCC3A-DB2C-424C-B029-7FE99A87C641", 1);
+				//var ret = MsgBox("ok, hand, def: 1", "this is a sample title", "0 16");
+				//ret = MsgBox("ok-cancel, question, def: 2", "this is a sample title", "1 32 256");
+				//ret = MsgBox("abort-retry-ignore, exclamation, def: 3, just: right", "this is a sample title", "2 48 512 524288");
+				//ret = MsgBox("yes-no-cancel, asterisk/info, def: 1", "this is a sample title", "3 64");
+				//ret = MsgBox("yes-no, asterisk/info, def: 2", "this is a sample title", "4 64 256");
+				//ret = MsgBox("retry-cancel, asterisk/info, def: 2", "this is a sample title", "5 64 256");
+				//ret = MsgBox("justified sample text", "this is a sample title", "4 48 512");
+				//Console.WriteLine(ret);
+				//ret = MsgBox("justified sample text", "this is a sample title", "5 64 256 16384");
+				//Console.WriteLine(ret);
+				//ToolTips.ToolTip();
+				//ToolTips.TrayTip("this is the text", "this is the title", "3");
+				//ToolTips.TraySetIcon(@"C:\D\Dev\keysharp\Keysharp_s.ico");
+				//};
+				SetTitleMatchMode(2);
+				(btn1.Control as Button).Click += (oo, ee) =>
+				{
+					//mnu.Default = "&Open";
+					//mb.Disable("&Tools");
+					//var newdummymnu = new Menu();
+					//newdummymnu.Add("123");
+					//newdummymnu.Add("456");
+					//newdummymnu.Add("789");
+					//mb.Insert("&File", "asdfsadf", newdummymnu);
+					//mb.Rename("asdfsadf", "insertrename");
+					//mb.SetIcon("insertrename", $"HICON: {Core.Tray.Icon.Handle.ToInt64()}");
+					//mb.Check("&Edit");
+					//mb.ShowItem("&File");
+					//Accessors.A_AllowMainWindow = 1;
+					//ControlAddItem("new string", "ListBox", "Test Caption");
+					//var val = ControlFindItem("new string", "ListBox", "Test Caption");
+					//var val = ControlFindItem("Green", "ListBox", "Test Caption");
+					//ControlFocus("ListBox", "Test Caption");
+					//var val = ControlGetChecked("billing", "Test Caption");
+					//var val = ControlGetChoice("ListBox", "Test Caption");
+					//ControlSetText("the new text", "Edit.app", "Test Caption");
+					//ControlSetText("the new text", "col3", "Test Caption");
+					//ControlSetText("the new text", "billing", "Test Caption");
+					//ControlSetChecked(1, "billing", "Test Caption");
+					//ControlMove(200, 200, 200, 200, "col3", "Test Caption");
+					//ControlSetStyle("^0x800000", "Edit.app", "Test Caption");
+					//var ctrl2 = Control.FromHandle(edit.Hwnd);
+					//var val = EditGetLine(1, "Edit.app", "Test Caption");
+					//ControlClick("x102 y219", "Test Caption", "", "", 1);
+					//ControlClick(btn3.Hwnd, "Test Caption", "", "", 1);
+					//var lvvals = ListViewGetContent("count", lv.Hwnd);
+					//var lvvals = ListViewGetContent("count selected", lv.Hwnd);
+					//var lvvals = ListViewGetContent("count focused", lv.Hwnd);
+					//var lvvals = ListViewGetContent("selected", lv.Hwnd);
+					//var lvvals = ListViewGetContent("count col", lv.Hwnd);
+					//var lvvals = ListViewGetContent("", lv.Hwnd);
+					//var lvvals = ListViewGetContent("col3", lv.Hwnd);
+					//var lvvals = ListViewGetContent("selected col3", lv.Hwnd);
+					//edit.Text = lvvals.ToString();
+					//var track = SendMessage(274, 0xF020, 0, null, "- Notepad");
+					//var hwnd = SendMessage(0x0400, -1, 3029, null, "- Winamp");
+					//var track = SendMessage(0x0400, 112, -1, hwnd, "- Winamp");
+					//track++;
+					//MsgBox($"Track # {track} is active or playing.");
+					//MenuSelect("Notepad", "", "View", "Status Bar");
+					//MenuSelect("Notepad", "", "View", "Zoom", "Zoom In\tCtrl+Plus");
+					MenuSelect("Notepad", "", "4&", "1&", "1&");
+					//MenuSelect("Notepad", "", "View");
+					//var val = ControlGetText("the new text", "Test Caption");
+					//(btn3.Control as Button).Invalidate();
+					//wnd.form.Refresh();
+					//for (var i = 1; i <= val.Count; i++)
+					//  MsgBox(val[i]);
+					//MsgBox(val);
+					//var val2 = ControlGetEnabled("ListBox", "Test Caption");
+					//MsgBox(val2);
+					//val2 = ControlGetVisible("ListBox", "Test Caption");
+					//MsgBox(val2);
+					//val2 = ControlGetHwnd("ListBox", "Test Caption");
+					//MsgBox(val2);
+					//val2 = ControlGetFocus("Test Caption");
+					//MsgBox(val2);
+				};
+				var index = 0;
+				var doubleclickcount = 0;
+				var lbitems = new string[] { "Red", "Green", "Blue", "Black", "White" };
+				(btn2.Control as Button).DoubleClick += (oo, ee) =>
+				{
+					//Compiler.Debug($"double click {++doubleclickcount}");
+				};
+				(btn2.Control as Button).Click += (oo, ee) =>
+				{
+					//mnu.Default = "E&xit";
+					//mb.HideItem("&File");
+					//Accessors.A_AllowMainWindow = 0;
+					//mb.Enable("&Tools");
+					//lv.ModifyCol(2, "float center", "mod2");
+					//lv.ModifyCol(3, "logical sort", "mod3");
+					//var ret = Keysharp.Core.Dialogs.MsgBox("ok, hand, def: 1, timeout5", "this is a sample title", "0 16 t5");
+					//ToolTips.TrayTip();
+					//ToolTips.TraySetIcon(@"C:\D\Dev\keysharp\Keysharp_p.ico");
+					//var newmnu = new Menu();
+					//newmnu.Add("&Open new");
+					//newmnu.Add("&Save new");
+					//newmnu.Add("S&ave As new");
+					//newmnu.Add("E&xit new");
+					////newmnu.Check("&Save new");
+					//newmnu.Check("3&");
+					//var mb = wnd.MenuBar;
+					//mb.Add("&File", newmnu);
+					//newmnu.Rename("&Open new", "crapola");
+					//ControlChooseIndex(3, "ListBox", "Test Caption");
+					//Compiler.Debug($"Setting selection to {lbitems[index]}");
+					//ControlChooseString(lbitems[index], "ListBox", "Test Caption");
+					//ControlDeleteItem(1, "ListBox", "Test Caption");
+					//ControlSetEnabled(-1, "Combo", "Test Caption");
+					//EditPaste("this is a test", "Edit.app", "Test Caption");
+					//ControlClick("billing", "Test Caption", "", "", 1);
+					//index++;
+					//index %= lbitems.Length;
+					//MenuSelect("Notepad", "", "View", "Zoom", "Zoom Out\tCtrl+Minus");
+					MenuSelect("Notepad", "", "4&", "1&", "2&");
+				};
+				//btn3.OnEvent("Click", "MyBtn_Click3");
+				(btn3.Control as Button).Click += (oo, ee) =>
+				{
+					//var tempbtn = (btn3.Control as Button);
+					//var rect = tempbtn.ClientRectangle;
+					//var midw = tempbtn.Left + ((tempbtn.Right - tempbtn.Left) / 2);
+					//var midh = tempbtn.Top + ((tempbtn.Bottom - tempbtn.Top) / 2);
+					//MsgBox($"{midw} {midh}");
+					//MsgBox("btn3 clicked");
+					//MenuSelect("Notepad", "", "View", "Zoom", "Restore Default Zoom\tCtrl+0");
+					MenuSelect("Notepad", "", "4&", "1&", "3&");
+					MenuSelect("Notepad", "", "4&", "2&");
+					//ControlSetChecked(0, "billing", "Test Caption");
+					//Compiler.Debug($"btn3 double click {ee.Clicks}\n\n{System.Environment.StackTrace}");
+					//Accessors.A_IconHidden ^= 1;
+					//lv.ModifyCol(3, "logical autohdr desc", "mod3");
+					//ToolTips.ToolTip("some text\nthat is on\nmultiple lines");
+					//var tt = new ToolTip { AutomaticDelay = 0, InitialDelay = 0, ReshowDelay = 0, ShowAlways = true };
+					//persistentTooltips[id].
+					//var bounds = System.Windows.Forms.Screen.PrimaryScreen.WorkingArea;
+					//tt.Show("asdfasdf asdfasdf asdfasdf", wnd.form, new Point(0, 0));
+					//ToolTips.TraySetIcon("*");
+				};
+				//lv.InsertCol(1, "", "the new 1st");
+				//lv.Modify(1, "", "mod1", "mod2", "mod3");
+				//thelv.Items.Add(new ListViewItem(new string[] { "an", "item", "here" }));
+				//thelv.FullRowSelect = true;
+				//thelv.Items.Add(new ListViewItem(new string[] { "more", "items", "below" }));
+				//thelv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+				//Accessors.A_TrayMenu.Add("dummy tray", "DummyTray_Click");
+				//Accessors.A_TrayMenu.Default = "dummy tray";
+				//Accessors.A_TrayMenu.AddStandard();
+				wnd.Show("w1000 h1500");
+				//wnd.Opt("+OwnDialogs");
+				//var parent = GuiHelper.GuiFromHwnd(btn3.Control.Handle.ToInt64(), true);
+				//var inputresult1 = Dialogs.InputBox("Please enter a value", "This is a title", "w450 Password*", "def text");
+				//var inputresult2 = Dialogs.InputBox("Please enter a value\nbut will it grow?", "This is a title", "w450 Password*", "def text");
+				//var inputresult3 = Dialogs.InputBox("Please enter a value\nbut will it grow?\nline three", "This is a title", "w450 t5", "def text");
+				//var TV = wnd.AddTreeView("r6 vmytreeview -readonly wantf2 checked backgroundred");
+				//var P1 = TV.Add("First parent", 0);
+				//var P1C1 = TV.Add("Parent 1's first child", P1);
+				//var P2 = TV.Add("Second parent", 0, "Expand");
+				//var P2C1 = TV.Add("Parent 2's first child", P2);
+				//var P2C2 = TV.Add("Parent 2's second child", P2, "Expand");
+				//var P2C2C1 = TV.Add("Child 2's first child", P2C2);
+				//var lbx = wnd.Add("ListBox", "w60 r5 uppercase readonly vColorChoice ", new ArrayList(new List<string> { "Red", "Green", "Blue", "Black", "White" }));
+				//wnd.Show("");
+				RunMainWindow("C:\\D\\Dev\\Keysharp\\bin\\debug\\netcoreapp5.0\\assign.ahk");
+				Exit(0);
+				return 0;
+			}
+			catch (Keysharp.Core.Error err)
+			{
+				if (ErrorOccurred(err))
+					MsgBox($"Keysharp exception thrown:\r\n{err}");
+
+				Exit(1);
+				return 1;
+			}
+			catch (System.Exception mainex)
+			{
+				MsgBox("Uncaught exception: " + mainex.Message);
+				Exit(1);
+				return 1;
+			}
+		}
+
+		public class EventSink
+		{
+			public object MyBtn_Click1(params object[] obj)
+			{
+				Dialogs.MsgBox("MyBtn_Click1");
+				return null;
+			}
+
+			public object Form_Close(params object[] obj)
+			{
+				Dialogs.MsgBox("Form_Close");
+				return 0;
+			}
+		}
+
+		//public static object MyBtn_Click1(params object[] obj)
+		//{
+		//  Dialogs.MsgBox("MyBtn_Click1");
+		//  return null;
+		//}
+		public static object Form_ContextMenu(params object[] obj)
+		{
+			//Dialogs.MsgBox("Form_Click");
+			//mnu.Show(0, 0);
+			mnu.Show();
+			return null;
+		}
+		public static object DummyTray_Click(params object[] obj)
+		{
+			Dialogs.MsgBox("DummyTray_Click");
+			return null;
+		}
+		public static object MyBtn_Click2(params object[] obj)
+		{
+			Dialogs.MsgBox("MyBtn_Click2");
+			//mnu.Delete("sub");
+			//mnu.Delete("monkey");
+			//mnu.Delete("S&ave As");
+			return null;
+		}
+		public static object MyMenuItem_Click3(params object[] obj)
+		{
+			Dialogs.MsgBox("MyMenuItem_Click3");
+			return null;
+		}
+		public static object MyBtn_Click3(params object[] obj)
+		{
+			mnu.Default = "monkey";
+			//mnu.Insert("&Save", "asdfsadf", "MyMenuItem_Click3");
+			//mnu.SetIcon("monkey", $"HICON: {Core.Tray.Icon.Handle.ToInt64()}");
+			mb.ToggleItemVis("&File");
+			return null;
+		}
+
+		public static object OnErrorHandler(params object[] obj)
+		{
+			Dialogs.MsgBox("OnErrorHandler");
+			return "";
+		}
+
+		public static object MyBtn_DoubleClick(params object[] obj)
+		{
+			Dialogs.MsgBox("MyBtn_DoubleClick");
+			return 1;
+		}
+
+		public static object Link_LinkClicked(params object[] obj)
+		{
+			Dialogs.MsgBox($"Link_LinkClicked(): {obj[1]}, {obj[2]}");
+			return 1;
+		}
+
+		public static object ToolStrip_DoubleClicked(params object[] obj)
+		{
+			Dialogs.MsgBox("ToolStrip_DoubleClicked");
+			return 1;
+		}
+
+		public static object ListBox_DoubleClicked(params object[] obj)
+		{
+			Dialogs.MsgBox("ListBox_DoubleClicked");
+			return 1;
+		}
+
+		//public static object Form_Close(params object[] obj)
+		//{
+		//  Dialogs.MsgBox("Form_Close");
+		//  return 0;
+		//}
+	}
+}

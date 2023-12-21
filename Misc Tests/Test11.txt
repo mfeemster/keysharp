@@ -1,0 +1,74 @@
+this takes about 1.5us per iter. see if you can improve later. locking didn't seem to make a difference.
+
+SetProcessDPIAware();
+				CreateTrayMenu();
+				var sw = new Stopwatch();
+				Vars[".arr"] = new Keysharp.Core.Array(new object[]
+				{
+					10L,
+					20L,
+					30L
+				});
+				Vars[".x"] = 0L;//Warm up.
+				var x = 1_000;
+				sw.Start();
+
+				for (System.Collections.IEnumerator e0 = Loop(x).GetEnumerator(); e0.MoveNext();
+					)
+				{
+					Vars[".x"] = Operate(Add, Vars[".x"], Index(Vars[".arr"], 1L));
+					e1:
+					;
+				}
+
+				sw.Stop();
+				e2:
+				Pop();
+				//
+				Vars[".x"] = 0L;
+				x = 1_000_000;
+				sw.Start();
+
+				for (System.Collections.IEnumerator e0 = Loop(x).GetEnumerator(); e0.MoveNext();
+					)
+				{
+					Vars[".x"] = Operate(Add, Vars[".x"], Index(Vars[".arr"], 1L));
+					e3:
+					;
+				}
+
+				sw.Stop();
+				e4:
+				Pop();
+				MsgBox($"Took {sw.Elapsed.TotalSeconds} to do {x} iters, x = {Vars[".x"]}. {sw.ElapsedMilliseconds / (double)x}ms/iter");
+				long xx = 0;
+				sw.Restart();
+
+				for (var i = 0; i < x; i++)
+					xx++;
+
+				sw.Stop();
+				MsgBox($"Took {sw.Elapsed.TotalSeconds} to do {x} iters, xx = {xx}. {sw.ElapsedMilliseconds / (double)x}ms/iter");
+				Exit(0);
+				return 0;
+				
+				
+				
+				
+match := RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)")
+p1 := 1
+p2 := 2
+p3 := 3
+
+func(p1, p2, p3)
+
+func(a, b, c)
+{
+z1 := a
+z2 := b
+c := z1
+}
+
+
+
+

@@ -1,0 +1,118 @@
+
+namespace Keysharp.Main
+{
+	using System;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.Data;
+	using System.IO;
+	using System.Reflection;
+	using System.Runtime.InteropServices;
+	using System.Text;
+	using System.Windows.Forms;
+	using Keysharp.Core;
+	using Keysharp.Scripting;
+	using Array = Keysharp.Core.Array;
+	using Buffer = Keysharp.Core.Buffer;
+
+
+	public sealed class Program
+	{
+		[System.STAThreadAttribute()]
+		public static int Main(string[] args)
+		{
+			try
+			{
+				string name = @"*";
+				Keysharp.Scripting.Script.Variables.InitGlobalVars();
+				Keysharp.Scripting.Script.SetName(name);
+				HandleSingleInstance(name, eScriptInstance.Off);
+				HandleCommandLineParams(args);
+				SetProcessDPIAware();
+				CreateTrayMenu();
+				CoordMode("tooltip", "screen");
+				SendMode("Play");
+				//AddHotkey(new FuncObj("label_CF8005D1", null), 0u, "+s", false);
+				AddHotkey(new FuncObj("label_CF8005D1", null), 0u, "AppsKey & >", false);
+				//AddHotkey(new FuncObj("label_37DC2A9A", null), 0u, "AppsKey & <", false);
+				//AddHotkey(new FuncObj("label_3BBC3F12", null), 0u, "~AppsKey & <", false);
+				//AddHotkey(new FuncObj("label_932EC437", null), 0u, "~AppsKey & >", false);
+				RunMainWindow(name);
+				ExitApp(0);
+				return 0;
+			}
+			catch (Keysharp.Core.Error kserr)
+			{
+				if (ErrorOccurred(kserr))
+				{
+					MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
+				}
+
+				ExitApp(1);
+				return 1;
+			}
+			catch (System.Exception mainex)
+			{
+				MsgBox("Uncaught exception:\r\n" + "Message: " + mainex.Message + "\r\nStack: " + mainex.StackTrace);
+				ExitApp(1);
+				return 1;
+			}
+		}
+
+		public static object label_CF8005D1(object thishotkey)
+		{
+			//ToolTip("Press < or > to cycle through windows.");
+			//SendPlay("{End}+{Left 400}");
+			Send("{End}+{Left 400}");
+			/*
+			    Send("{{}");
+			    Send("{}}");
+			    Send("{!}");
+			    Send("^a");
+			    Send("{F1}");
+			    Send("+abC");
+			    Send("{Raw}{Tab}");
+			    Send("^{Home}");
+			    Send("{Ctrl}");
+			    Send("{Control}");
+			    Send("{LControl}");
+			    Send("{RControl}");
+			    Send("{Control down}");
+			    Send("{Control DownTemp}");
+			    Send("{vk41}");
+			    Send("{sc01E}");
+			    Send("{vk41sc01E}");
+			    Send("{       }");
+			    Send("{ASC 0191}");
+			    Send("{U+00BF}");
+			    Send("!{Esc}");
+			    Send("{ASC 0191}{Enter}{U+00BF}");
+			    Send("{Raw}`100%");
+			    Send("{Text}your text");
+			    Send("{Blind}abc");
+			    Send("+{s 4}");
+			    Send("{RButton}");
+			*/
+			return string.Empty;
+		}
+
+		public static object label_37DC2A9A(object thishotkey)
+		{
+			//ToolTip("");
+			Send("!+{Esc}");
+			return string.Empty;
+		}
+
+		public static object label_3BBC3F12(object thishotkey)
+		{
+			//Send("!+{Esc}");
+			return string.Empty;
+		}
+
+		public static object label_932EC437(object thishotkey)
+		{
+			//Send("!{Esc}");
+			return string.Empty;
+		}
+	}
+}

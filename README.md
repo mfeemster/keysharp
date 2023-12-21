@@ -337,7 +337,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		+ `lockobj` must be initialized to some value, such as an empty string.
 
 ###	Removals: ###
-* COM is only partially implemented.
 * Nested classes are not supported.
 * Nested functions are not supported.
 * `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.

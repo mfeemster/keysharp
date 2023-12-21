@@ -1,0 +1,191 @@
+#n::
+#b::
+{
+;     Run("notepad")
+	MsgBox(ThisHotkey)
+}
+/*
+::btw::by the way
+
+func(ThisHotkey)
+{
+	MsgBox(thishotkey)
+; a := ThisHotkey
+}
+
+
+::btw::
+::asdf::
+{
+    MsgBox("You typed `"btw`".")
+}
+; This example also demonstrates one way to implement case conformity in a script.
+:C:BTW::  ; Typed in all-caps.
+:C:Btw::  ; Typed with only the first letter upper-case.
+    case_conform_btw(hs) ; hs will hold the name of the hotstring which triggered the function.
+    {
+        if (hs == ":C:BTW")
+            Send "BY THE WAY"
+        else if (hs == ":C:Btw")
+            Send "By the way"
+        else
+            Send "by the way"
+    }
+
+*/
+
+
+/*
+:C:Ddd::
+:C:DdD::
+:C:DDD::
+{
+}
+
+; This example also demonstrates one way to implement case conformity in a script.
+:C:BTW::
+:C:Btw::
+::btw::  ; Typed in any other combination.
+case_conform_btw(hs) ; hs will hold the name of the hotstring which triggered the function.
+{
+
+        if (hs == ":C:BTW")
+            Send("BY THE WAY")
+        else if (hs == ":C:Btw")
+            Send("By the way")
+        else
+            Send("by the way")
+
+}
+*/
+
+#n::MsgBox("ddd")
+::btw::
+{
+}
+
+
+:X:xxx::MsgBox("asdf")
+^a::
+#b::
+func1()
+{
+c := 888
+}
+::rrr::
+::ppp::
+{
+y := 999
+}
+:C:BTW::  ; Typed in all-caps.
+:C:Btw::  ; Typed with only the first letter upper-case.
+: :btw::  ; Typed in any other combination.
+    case_conform_btw(hs) ; hs will hold the name of the hotstring which triggered the function.
+    {
+        if (hs == ":C:BTW")
+            Send "BY THE WAY"
+        else if (hs == ":C:Btw")
+            Send "By the way"
+        else
+            Send "by the way"
+    }
+
+
+
+<!a::
+{
+	MsgBox("left alt")
+return
+}
+
+>!a::
+{
+	MsgBox("right alt")
+return
+}
+
+::btw::by the way
+
+::ddd::
+{
+	x := 123
+}
+
+:X:xxx::MsgBox("asdf")
+
+::lala::
+	z := 777
+	return
+
+::1lala::
+::2lala::
+::3lala::
+	zz := 777
+	return
+
+::fff::
+::ggg::
+::ttt::
+{
+	q := 5
+}
+
+::1fff::
+::1ggg::
+::1ttt::
+afunc()
+{
+}
+
+#q::
+#F::
+	y := 444
+	return
+
+^X::MsgBox("jjj")
+
+::yt::
+(
+Any text between the top and bottom parentheses is treated literally.
+By default, the hard carriage return (Enter) between the previous line and this one is also preserved.
+    By default, the indentation (tab) to the left of this line is preserved.
+)
+
+immediate keysharp todo:
+
+need a stack based container/control system to keep track of what the last control was that was added.
+these need to be done as a pair, container/control
+when a gui is created, the container/control stack is empty, and a new pair is pushed with the container being the form (or null?) and the control also being null
+-when a control is added, it is assigned to the current container/control pair, so that control points to this new one
+-when a container, such as a panel or tab control, is added, a new pair is pushed. the container member of the pair is the new container, or in the case of a tab control, is the first tab
+--note that when use tab is called, another pair is pushed, however if the top of the stack is already a tab, it's just replaced with this one
+-when usetab is passed an empty argument, the current stack element is popped, and should return back to a scenario where the container is the form, and the last control is the tabcontrol
+-push only gets done when a container is added, else just assign the control to the current container (Default is form)
+
+-note, the tab control itself is conisdered a control, not a container. instead, the tab is the container, 
+form,null
+|-form,edit1
+|-form,edit2
+|--form,tabcontrol
+|----tab1,null
+|----tab1,edit3
+|----tab1,edit4
+UseTab()
+|--form,tabcontrol
+|--form,edit5
+
+form,null
+|-form,edit1
+|-form,edit2
+|--form,tabcontrol
+|----tab1,null
+UseTab(2)
+|----tab2,edit3
+UseTab(3)
+|----tab3,edit4
+UseTab(1)
+|----tab1,null
+
+UseTab()
+|--form,tabcontrol
+|--form,edit5

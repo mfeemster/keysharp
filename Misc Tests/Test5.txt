@@ -1,0 +1,76 @@
+AddHotstring(":*:btw", null, "*:btw", "btw", "by the way", false);
+
+Keysharp:
+buf:
+":*:btw::by the way"
+:*:btw::by the way
+
+hotstring_options:
+"*:btw::by the way"
+
+hotkey_start:
+"btw::by the way"
+
+hotkey_flag:
+"by the way"
+
+
+AHK:
+buf:
+":*:btw"
+
+hotstring_options:
+"*:btw"
+
+hotstring_start:
+"btw"
+
+hotkey_flag:
+"by the way"
+
+::btw::
+{
+    x := 123
+}
+
+y := 555
+
+::btw::
+{
+	global y
+    x := 123
+	x := y
+}
+
+
+y := 555
+
+func()
+{
+	global y
+    x := 123
+	x := y
+}
+
+y := 555
+x := 999
+
+::btw::
+func(hs)
+{
+	MsgBox(hs)
+}
+
+:*:d::
+{
+    SendInput(FormatTime(, "M/d/yyyy h:mm tt"))
+}
+
+func()
+{
+::btw::
+{
+x := 123
+}
+}
+
