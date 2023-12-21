@@ -741,9 +741,17 @@ namespace Keysharp.Scripting
 
 							if (part.Length > 1)
 							{
-								parts.Insert(++i, OperatorFromString(part.Substring(0, part.Length - 1)));
-								parts.Insert(++i, ParenOpen.ToString());
-								parts.Add(ParenClose.ToString());
+								var opStr = part.Substring(0, part.Length - 1);
+								var (opValid, op) = OperatorFromString(opStr);
+
+								if (opValid)
+								{
+									parts.Insert(++i, op);
+									parts.Insert(++i, ParenOpen.ToString());
+									parts.Add(ParenClose.ToString());
+								}
+								else
+									throw new ParseException($"Invalid operator: {opStr}");
 							}
 
 							parts.Add(ParenClose.ToString());
@@ -916,9 +924,9 @@ namespace Keysharp.Scripting
 					}
 					else if (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] as string != "=>"))//Allow for a single no parentheses fat arrow function variadic parameter declaration: x := a* => 123.
 					{
-						var ops = OperatorFromString(part);
+						var (opValid, ops) = OperatorFromString(part);
 
-						if (ops == Script.Operator.Increment || ops == Script.Operator.Decrement)
+						if (opValid && (ops == Script.Operator.Increment || ops == Script.Operator.Decrement))
 						{
 							int z = -1, x = i - 1, y = i + 1;
 							var d = 1L;
@@ -950,8 +958,12 @@ namespace Keysharp.Scripting
 										nextOps = so;
 									else if (parts[y] is string os)
 									{
-										try { nextOps = OperatorFromString(os); }
-										catch { break; }
+										var (nextOpValid, tempOp) = OperatorFromString(os);
+
+										if (nextOpValid)
+											nextOps = tempOp;
+										else
+											break;
 									}
 									else
 										break;

@@ -110,9 +110,8 @@ namespace Keysharp.Core
 				list[next - 1] = obj;
 				return true;
 			}
-			else
-				_ = Interlocked.Decrement(ref index);//Went too far up, so bump back down.
 
+			_ = Interlocked.Decrement(ref index);//Went too far up, so bump back down.
 			return false;//No room, so just don't return the object and let the GC handle it.
 		}
 

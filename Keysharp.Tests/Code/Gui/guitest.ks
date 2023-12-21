@@ -626,10 +626,14 @@ ShowBtn2.OnEvent("Click", "CopyPicFromFile")
 
 CopyPicFromFile() {
 	SelectedFile := FileSelect("3", "C:\Users\" A_UserName "\Pictures\Keysharp")
-	CopyImageToClipboard(SelectedFile)
-	Sleep(100)
-	ControlFocus(MyRE2)
-	Send("^v")
+	
+	if (SelectedFile != "")
+	{
+		CopyImageToClipboard(SelectedFile)
+		Sleep(100)
+		ControlFocus(MyRE2)
+		Send("^v")
+	}
 }
 
 
@@ -1257,10 +1261,9 @@ GetPix() {
 
 
 LoadSC() {
-	;MyGui.UseGroup()
-	;Tab.UseTab("ControlZoo")
-	;MyGui.UseGroup(gb2_CZ)
-	If !(FileExist(A_Desktop "\MyScreenClip.png")) {
+	Tab.UseTab("Send & Hotkey")
+
+	If (!FileExist(A_Desktop "\MyScreenClip.png")) {
 		GetScreenClip(100, 100, 200, 200, A_Desktop "\MyScreenClip.png")
 		Sleep(100)
 	}
@@ -1270,7 +1273,7 @@ LoadSC() {
 	Sleep(2000)
 
 	DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
-	;Tab.UseTab()
+	; Tab.UseTab()
 	FileDelete(A_Desktop "\MyScreenClip.png")
 	MyThirdPic := ""
 	MyLoadedPic := ""

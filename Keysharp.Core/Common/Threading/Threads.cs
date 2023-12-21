@@ -15,21 +15,21 @@ namespace Keysharp.Core.Common.Threading
 	{
 		private static ThreadVariableManager tvm = new ThreadVariableManager();
 
-		public static ThreadVariables BeginThread(bool onlyIfEmpty = false)
+		public static (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
 			var skip = Flow.AllowInterruption == false;//This will be false when exiting the program.
 			_ = Interlocked.Increment(ref Script.totalExistingThreads);
 			return PushThreadVariables(0, skip, false, onlyIfEmpty);
 		}
 
-		public static void EndThread(bool checkThread = false)
+		public static void EndThread(bool pushed, bool checkThread = false)
 		{
-			PopThreadVariables(checkThread);
+			PopThreadVariables(pushed, checkThread);
 			_ = Interlocked.Decrement(ref Script.totalExistingThreads);
 		}
 
 		[PublicForTestOnly]
-		public static ThreadVariables PushThreadVariables(int priority, bool skipUninterruptible,
+		public static (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false) => tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 
 		internal static bool AnyThreadsAvailable() => Script.totalExistingThreads < Script.MaxThreadsTotal;
@@ -69,20 +69,20 @@ namespace Keysharp.Core.Common.Threading
 			{
 				var existingTv = GetThreadVariables();
 				existingTv.WaitForCriticalToFinish();//Cannot launch a new task while a critical one is running.
-				ThreadVariables tv = null;
 				void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
 				tsk = Task.Factory.StartNew(() =>
 											//var t2 = Task.Run(() =>
 				{
 					object ret = null;
+					(bool, ThreadVariables) btv = (false, null);
 
 					try
 					{
 						//throw new System.Exception("ASDf");
 						//throw new Error("ASDf");
 						_ = Interlocked.Increment(ref Script.totalExistingThreads);
-						tv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
-						AssignTask(tv);
+						btv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
+						AssignTask(btv.Item2);
 
 						if (func is VariadicFunction vf)
 							ret = vf(o);
@@ -96,7 +96,7 @@ namespace Keysharp.Core.Common.Threading
 					}
 					finally
 					{
-						EndThread();
+						EndThread(btv.Item1);
 					}
 
 					return ret;
@@ -119,7 +119,7 @@ namespace Keysharp.Core.Common.Threading
 			//return tsk;
 		}
 
-		internal static void PopThreadVariables(bool checkThread = false) => tvm.PopThreadVariables(checkThread);
+		internal static void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.PopThreadVariables(pushed, checkThread);
 	}
 
 	internal class ThreadVariableManager
@@ -140,7 +140,7 @@ namespace Keysharp.Core.Common.Threading
 
 		internal ThreadVariables GetThreadVariables() => threadVars.TryPeek() ?? throw new Error("Tried to get an existing thread variable object but there were none. This should never happen.");
 
-		internal void PopThreadVariables(bool checkThread = true)
+		internal void PopThreadVariables(bool pushed, bool checkThread = true)
 		{
 			var ctid = Thread.CurrentThread.ManagedThreadId;
 
@@ -149,8 +149,7 @@ namespace Keysharp.Core.Common.Threading
 					|| threadVars.Index > 0)//Never pop the last object on the main thread.
 			{
 				//Script.OutputDebug($"About to pop with {threadVars.Index} existing threads");
-
-				if (threadVars.TryPop(out var tv))
+				if (pushed && threadVars.TryPop(out var tv))
 				{
 					if (checkThread && ctid != tv.threadId)
 						throw new Error($"Severe threading error. ThreadVariables.threadId {tv.threadId} did not match the current thread id {ctid}.");
@@ -160,7 +159,7 @@ namespace Keysharp.Core.Common.Threading
 			}
 		}
 
-		internal ThreadVariables PushThreadVariables(int priority, bool skipUninterruptible,
+		internal (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false)
 		{
 			if (!onlyIfEmpty || threadVars.Index == 0)
@@ -202,13 +201,13 @@ namespace Keysharp.Core.Common.Threading
 				}
 
 				//Script.OutputDebug($"About to push with {threadVars.Index} existing threads");
-				_ = threadVars.Push(tv);//Push it onto the stack for this thread.
-				return tv;
+				var pushed = threadVars.Push(tv);//Push it onto the stack for this thread.
+				return (pushed, tv);
 			}
 			else
 			{
 				//Script.OutputDebug($"Wanted push, but only peeking with {threadVars.Index} existing threads");
-				return threadVars.TryPeek();
+				return (false, threadVars.TryPeek());
 			}
 		}
 	}

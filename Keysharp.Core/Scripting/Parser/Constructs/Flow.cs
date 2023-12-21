@@ -904,7 +904,7 @@ namespace Keysharp.Scripting
 				break;
 
 				default:
-					throw new ParseException(ExUnexpected, line);
+					return null;
 			}
 
 			return null;

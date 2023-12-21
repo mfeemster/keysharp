@@ -17,7 +17,7 @@ namespace Keysharp.Scripting
 			return field;
 		}
 
-		internal static Script.Operator OperatorFromString(string code)
+		internal static (bool, Script.Operator) OperatorFromString(string code)
 		{
 			var op = code;
 
@@ -27,202 +27,202 @@ namespace Keysharp.Scripting
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.Add;
+							return (true, Script.Operator.Add);
 
 						case 2:
-							return Script.Operator.Increment;
+							return (true, Script.Operator.Increment);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Minus:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.Subtract;
+							return (true, Script.Operator.Subtract);
 
 						case 2:
-							return Script.Operator.Decrement;
+							return (true, Script.Operator.Decrement);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Multiply:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.Multiply;
+							return (true, Script.Operator.Multiply);
 
 						case 2:
-							return Script.Operator.Power;
+							return (true, Script.Operator.Power);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Divide:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.Divide;
+							return (true, Script.Operator.Divide);
 
 						case 2:
-							return Script.Operator.FloorDivide;
+							return (true, Script.Operator.FloorDivide);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Greater:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.GreaterThan;
+							return (true, Script.Operator.GreaterThan);
 
 						case 2:
 							if (op[0] == op[1])
-								return Script.Operator.BitShiftRight;
+								return (true, Script.Operator.BitShiftRight);
 							else if (op[1] == Equal)
-								return Script.Operator.GreaterThanOrEqual;
+								return (true, Script.Operator.GreaterThanOrEqual);
 							else
-								throw new ParseException(ExUnexpected);
+								return (false, Script.Operator.Add);
 
 						case 3:
-							return op[0] == op[1] && op[1] == op[2] ? Script.Operator.LogicalBitShiftRight : throw new ParseException(ExUnexpected);
+							return op[0] == op[1] && op[1] == op[2] ? (true, Script.Operator.LogicalBitShiftRight) : (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Less:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.LessThan;
+							return (true, Script.Operator.LessThan);
 
 						case 2:
 							if (op[1] == op[0])
-								return Script.Operator.BitShiftLeft;
+								return (true, Script.Operator.BitShiftLeft);
 							else if (op[1] == Equal)
-								return Script.Operator.LessThanOrEqual;
+								return (true, Script.Operator.LessThanOrEqual);
 							else if (op[1] == Greater)
-								return Script.Operator.ValueInequality;
+								return (true, Script.Operator.ValueInequality);
 							else
-								throw new ParseException(ExUnexpected);
+								return (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case BitAND:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.BitwiseAnd;
+							return (true, Script.Operator.BitwiseAnd);
 
 						case 2:
 							if (op[0] == op[1])
-								return Script.Operator.BooleanAnd;
+								return (true, Script.Operator.BooleanAnd);
 							else
-								throw new ParseException(ExUnexpected);
+								return (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case BitOR:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.BitwiseOr;
+							return (true, Script.Operator.BitwiseOr);
 
 						case 2:
-							return op[0] == op[1] ? Script.Operator.BooleanOr : throw new ParseException(ExUnexpected);
+							return op[0] == op[1] ? (true, Script.Operator.BooleanOr) : (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case BitXOR:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.BitwiseXor;
+							return (true, Script.Operator.BitwiseXor);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case BitNOT:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.BitwiseNot;
+							return (true, Script.Operator.BitwiseNot);
 
 						case 2:
-							return op[1] == Equal ? Script.Operator.RegEx : throw new ParseException(ExUnexpected);
+							return op[1] == Equal ? (true, Script.Operator.RegEx) : (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Equal:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.ValueEquality;
+							return (true, Script.Operator.ValueEquality);
 
 						case 2:
-							return op[1] == op[0] ? Script.Operator.IdentityEquality : throw new ParseException(ExUnexpected);
+							return op[1] == op[0] ? (true, Script.Operator.IdentityEquality) : (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case Not:
 					switch (op.Length)
 					{
 						case 1:
-							return Script.Operator.LogicalNot;
+							return (true, Script.Operator.LogicalNot);
 
 						case 2:
-							return op[1] == Equal ? Script.Operator.ValueInequality : throw new ParseException(ExUnexpected);
+							return op[1] == Equal ? (true, Script.Operator.ValueInequality) : (false, Script.Operator.Add);
 
 						case 3:
-							return op[1] == Equal && op[2] == Equal ? Script.Operator.IdentityInequality : throw new ParseException(ExUnexpected);
+							return op[1] == Equal && op[2] == Equal ? (true, Script.Operator.IdentityInequality) : (false, Script.Operator.Add);
 
 						default:
-							throw new ParseException(ExUnexpected);
+							return (false, Script.Operator.Add);
 					}
 
 				case AssignPre:
-					return op.Length > 1 && op[1] == Equal ? Script.Operator.Assign : Script.Operator.TernaryB;
+					return op.Length > 1 && op[1] == Equal ? (true, Script.Operator.Assign) : (true, Script.Operator.TernaryB);
 
 				case Concatenate:
-					return Script.Operator.Concat;
+					return (true, Script.Operator.Concat);
 
 				case TernaryA:
-					return op.Length > 1 && op[1] == TernaryA ? Script.Operator.NullAssign : Script.Operator.TernaryA;
+					return op.Length > 1 && op[1] == TernaryA ? (true, Script.Operator.NullAssign) : (true, Script.Operator.TernaryA);
 
 				default:
 					switch (code.ToLowerInvariant())
 					{
 						case NotTxt:
-							return Script.Operator.LogicalNotEx;
+							return (true, Script.Operator.LogicalNotEx);
 
 						case AndTxt:
-							return Script.Operator.BooleanAnd;
+							return (true, Script.Operator.BooleanAnd);
 
 						case OrTxt:
-							return Script.Operator.BooleanOr;
+							return (true, Script.Operator.BooleanOr);
 
 						case IsTxt:
-							return Script.Operator.Is;
+							return (true, Script.Operator.Is);
 					}
 
-					throw new ParseException($"Value of {code} was not any of: not, and, or, is.");
+					return (false, Script.Operator.Add);
 			}
 		}
 

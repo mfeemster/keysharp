@@ -434,12 +434,8 @@ namespace Keysharp.Scripting
 
 		internal static bool IsOperator(string code)
 		{
-			try
-			{
-				if (!IsAssignOp(code))
-					_ = OperatorFromString(code);
-			}
-			catch (ParseException) { return false; }
+			if (!IsAssignOp(code))
+				return OperatorFromString(code).Item1;
 
 			return true;
 		}

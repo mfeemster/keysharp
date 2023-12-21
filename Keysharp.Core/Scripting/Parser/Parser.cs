@@ -768,11 +768,13 @@ namespace Keysharp.Scripting
 				ReturnType = new CodeTypeReference(typeof(object))
 			};
 			var threads = new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads");
-			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(threads, "BeginThread"));
+			var btcmie = new CodeMethodInvokeExpression(threads, "BeginThread");
+			userMainMethod.Statements.Add(new CodeAssignStatement(new CodeSnippetExpression("var (__pushed, __btv)"), btcmie));
 			userMainMethod.Statements.AddRange(main.Statements);
-			userMainMethod.Statements.Add(new CodeMethodInvokeExpression(threads, "EndThread"));
+			var etcmie = new CodeMethodInvokeExpression(threads, "EndThread");
+			etcmie.Parameters.Add(new CodeSnippetExpression("__pushed"));
+			userMainMethod.Statements.Add(etcmie);
 			main.Statements.Clear();
-			//_ = targetClass.Members.Add(userMainMethod);
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 
 			foreach (CodeStatement stmt in initial)

@@ -324,11 +324,13 @@ namespace Keysharp.Core
 
 						var remove = false;
 
+						(bool, ThreadVariables) btv = (false, null);
+
 						//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented, specifically the Thread() function.//TODO
 						try
 						{
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
-							tv = Threads.PushThreadVariables(pri, true, false);
+							btv = Threads.PushThreadVariables(pri, true, false);
 							tv.currentTimer = timer;
 							var ret = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
 						}
@@ -338,7 +340,7 @@ namespace Keysharp.Core
 						}
 						finally
 						{
-							Threads.EndThread();
+							Threads.EndThread(btv.Item1);
 
 							if (once || remove)
 							{

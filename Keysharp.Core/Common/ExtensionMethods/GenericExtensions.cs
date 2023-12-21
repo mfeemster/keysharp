@@ -437,7 +437,7 @@ namespace System.Collections.Generic
 				//lock (ehLock)
 				{
 					var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
-					_ = Threads.BeginThread();
+					var (pushed, tv) = Threads.BeginThread();
 
 					if (inst is Control ctrl && ctrl.FindForm() is Form form)
 						Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
@@ -456,7 +456,7 @@ namespace System.Collections.Generic
 						}
 					}
 
-					Threads.EndThread();
+					Threads.EndThread(pushed);
 					Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 				}
 			}

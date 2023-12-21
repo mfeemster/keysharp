@@ -212,11 +212,12 @@ namespace Keysharp.Core
 
 		{
 			object val = null;
+			(bool, ThreadVariables) btv = (false, null);
 
 			if (delRef != null)
 			{
 				if (!fast)
-					_ = Threads.BeginThread();
+					btv = Threads.BeginThread();
 
 				if (reference)
 				{
@@ -262,7 +263,7 @@ namespace Keysharp.Core
 									   p25, p26, p27, p28, p29, p30, p31);
 
 				if (!fast)
-					Threads.EndThread();
+					Threads.EndThread(btv.Item1);
 			}
 
 			if (val is int i)

@@ -657,20 +657,11 @@ namespace Keysharp.Scripting
 
 					if (replacement.Length > 0)//For hotkeys, there is no 'X' for treating the replacement as an execute. Instead, if any replacement exists on the same line, it's an execute.
 					{
-						CodeStatement[] result = null;
-
 						if (hook_action == 0)
 						{
 							funcname = SetLastHotkeyFunc(hotName);
 							var method = LocalMethod(funcname);
-
-							try
-							{
-								result = ParseFlow(new List<CodeLine>() { new CodeLine(fileName, index, replacement) }, 0);//This is for handling ::return
-							}
-							catch (Exception)
-							{
-							}
+							var result = ParseFlow(new List<CodeLine>() { new CodeLine(fileName, index, replacement) }, 0);//This is for handling ::return
 
 							if (result != null)
 							{
