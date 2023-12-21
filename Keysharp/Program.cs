@@ -17,7 +17,7 @@ namespace Keysharp.Main
 	public static class Program
 	{
 		private static readonly CompilerHelper ch = new CompilerHelper();
-		private static readonly char dotNetMajorVersion = '7';
+		private static readonly char dotNetMajorVersion = '8';
 
 		internal static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
