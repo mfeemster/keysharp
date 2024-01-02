@@ -366,9 +366,6 @@ try ; Use this.
 * `IL_Create()` only takes one parameter: `LargeIcons`. `InitialCount` and `GrowCount` are no longer needed because memory is handled internally.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
 * `PixelGetColor()` does not accept a mode as its third parameter.
-* `SoundGetInterface()` is not implemented because it's COM.
-* The sound functions don't have the concept of a `component` because the underlying NAudio library does not group hardware into components.
-	+ However, the component parameter of the sound functions is kept for backward compatibility. Just use device name or index instead.
 * The `3` and `5` options for `DirSelect()` don't apply in C#.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
