@@ -63,7 +63,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects will need to be created passing the name of the function as a string to `Func()`. They are not all created automatically on script startup.
-	+ This is done by calling `Func("FunctionName" [, object, paramCount])`
+	+ This is done by calling `Func("FunctionName" [, object, paramCount])`.
 * Exception classes aren't, and can't be, derived from KeysharpObject.
 	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
@@ -185,7 +185,7 @@ try ; Use this.
 	+ `this.propname` refers to the property in the most derived subclass.
 	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
-* `WinGetPos()` does not take reference parameters. Instead, it takes 4 optional arguments and returns a `Map` with the following entries: `OutX`, `OutY`, `OutWidth`, `OutHeight`.
+* `WinGetPos()` and `WinGetClientPos()` do not take reference parameters. Instead, they take 4 optional arguments and return a `Map` with the following entries: `X`, `Y`, `Width`, `Height`.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 	+ The following options are different:
 		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
@@ -212,7 +212,7 @@ try ; Use this.
 		+ ``` `a `n `r ```: Causes specific characters to be recognized as newlines.
 			+ -This is not supported.
 
-		+ `\K` is not supported, instead, try using `(?<=abc)`
+		+ `\K` is not supported, instead, try using `(?<=abc)`.
 			
 	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
@@ -333,7 +333,7 @@ try ; Use this.
 * New function to encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
 * New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
 * New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
-* New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`
+* New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`.
 * New class and functions for managing real threads which are not related to the green threads that are used for the rest of the project.
 	+ A `RealThread` is created by calling `StartRealThread()`.
 ```
@@ -374,16 +374,16 @@ try ; Use this.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
 * Function references are supported, but the VarRef object is not supported.
 * The address of a variable cannot be taken using the reference operator except when passing an argument to a function.
-	+ `x := &var` not supported
-	+ `functhattakesref(&x)` supported
+	+ `x := &var ; not supported`
+	+ `functhattakesref(&x) ; supported`
 * `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
 	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
 	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
 	+ The pause menu item has been removed.
 * `ObjAddRef()` and `ObjPtrAddRef()` do not have an effect for non-COM objects. Instead, use the following:
-	+ `newref := theobj` adds 1 to the reference count
-	+ `newref := ""` subtracts 1 from the reference count
+	+ `newref := theobj ; adds 1 to the reference count`
+	+ `newref := "" ; subtracts 1 from the reference count`
 * `#Warn` to enable/disable compiler warnings is not supported yet.
 * The `/script` option for compiled scripts does not apply and is therefore not implemented.
 * The Help and Window Spy menu items are not implemented yet.
