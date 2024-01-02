@@ -2023,6 +2023,9 @@ dllDllRemoveFromTaskbarBtn.OnEvent("Click", "DllDeleteFromTaskbar")
 comDllRemoveFromTaskbarBtn := MyGui.Add("Button", "x10 y+10", "COM DeleteFromTaskbar() (clear for 3 seconds, then re-add)")
 comDllRemoveFromTaskbarBtn.OnEvent("Click", "ComDeleteFromTaskbar")
 
+comDllRunWordBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word")
+comDllRunWordBtn.OnEvent("Click", "ComRunWord")
+
 DllMsgBox()
 {
 	WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
@@ -2134,6 +2137,15 @@ ComDeleteFromTaskbar()
 	; When finished with the object, simply replace any references with
 	; some other value (or if its a local variable, just return):
 	tbl := ""
+}
+
+ComRunWord()
+{
+	wd := ComObject("Word.Application")
+	wd.Visible := "True"
+	WinMaximize("ahk_exe winword.exe")
+	doc := wd.Documents.Add()
+	wd.Selection.TypeText("Hi Keysharp!")
 }
 
 OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.

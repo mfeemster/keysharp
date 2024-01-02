@@ -238,7 +238,13 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	An assembler in AHK: https://github.com/CloakerSmoker/Relax-Language/blob/master/src/
 	Code demonstrating dynamic properties (already implemented): https://p.ahkscript.org/?p=0bce480c
 	A lexer for AHK: https://github.com/tinku99/ahklexers
-	
+	AutoIt interpreter in C#: https://github.com/Unknown6656/AutoIt-Interpreter
+	Scintilla editor for .NET: https://github.com/desjarlais/Scintilla.NET
+	CLR support in AHK:
+		https://github.com/Lexikos/CLR.ahk
+		https://www.autohotkey.com/boards/viewtopic.php?f=83&t=113543&p=505906&hilit=clr_loadlibrary#p505906
+		
+		
 	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
 		In AHK, you can write to stdout using FileAppend by specifying * for the file name. 
