@@ -456,17 +456,54 @@ namespace Keysharp.Core.COM
 
 			for (int p = 0, a = 0; p < parameters.Length; p += 2, a++)
 			{
-				if (parameters[p].ToString() == "float*")
+				var ps = parameters[p].ToString().ToLower();
+
+				if (ps == "float*")
 				{
 					var fptr = (float*)helper.args[a].ToPointer();
 					var f = *fptr;
 					var d = (double)f;
 					parameters[p + 1] = d;
 				}
-				else if (parameters[p].ToString() == "double*")
+				else if (ps == "double*")
 				{
 					var dptr = (double*)helper.args[a].ToPointer();
 					parameters[p + 1] = *dptr;
+				}
+				else if (ps == "int*")
+				{
+					var pp = (int*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
+				}
+				else if (ps == "uint*")
+				{
+					var pp = (uint*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
+				}
+				else if (ps == "short*")
+				{
+					var pp = (short*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
+				}
+				else if (ps == "ushort*")
+				{
+					var pp = (ushort*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
+				}
+				else if (ps == "char*")
+				{
+					var pp = (sbyte*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
+				}
+				else if (ps == "uchar*")
+				{
+					var pp = (byte*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
+				}
+				else if (ps.EndsWith('*') || ps.EndsWith("p"))
+				{
+					var pp = (long*)helper.args[a].ToPointer();
+					parameters[p + 1] = *pp;
 				}
 			}
 
