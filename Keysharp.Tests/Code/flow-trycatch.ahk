@@ -374,3 +374,49 @@ if (b == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+b := true
+xx := 0
+
+if b
+{
+	try
+	{
+		loop
+		{
+			xx++
+			if (xx == 5)
+				break
+		}
+	}
+}
+else
+	xx := 0
+	
+if (xx == 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+xx := 0
+
+if b
+{
+	try
+	{
+		loop
+		{
+			xx++
+			if (xx == 5)
+				break
+		}
+	}
+}
+else
+	xx := 123
+	
+if (xx == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

@@ -202,6 +202,10 @@ namespace Keysharp.Core.Common.Threading
 
 				//Script.OutputDebug($"About to push with {threadVars.Index} existing threads");
 				var pushed = threadVars.Push(tv);//Push it onto the stack for this thread.
+
+				if (!pushed)//Thread limit exceeded, so immediately return the rented ThreadVariables object. Caller should check pushed so as to not return twice.
+					threadVarsPool.Return(tv);
+
 				return (pushed, tv);
 			}
 			else

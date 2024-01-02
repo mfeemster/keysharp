@@ -75,7 +75,7 @@ namespace Keysharp.Core
 		public RefHolder(int i, object o, Action<object> r)
 		{
 			index = i;
-			val = o;
+			val = o ?? "";
 			reassign = r;
 		}
 	}

@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Media;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+using System.Runtime.InteropServices;
+using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Windows;
+using Microsoft.VisualBasic;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core
 {
-	/// <summary>
-	/// Various functions to get information about the sound devices on the system.
-	/// Most of these have variadic parameters because the parameter scheme is complex.
-	/// </summary>
 	public static class Sound
 	{
 		/// <summary>
@@ -20,29 +20,13 @@ namespace Keysharp.Core
 		/// <param name="duration">The duration of the sound in ms. If omitted, the duration will be 150.</param>
 		public static void SoundBeep(object obj0 = null, object obj1 = null) => Console.Beep(obj0.Ai(523), obj1.Ai(150));
 
-		/// <summary>
-		/// Not implemented. COM will never be cross platform anyway.//TODO
-		/// </summary>
-		/// <returns></returns>
-		public static string SoundGetInterface() => "";
+		public static object SoundGetInterface(object obj0, object obj1 = null, object obj2 = null) => DoSound(SoundCommands.SoundGetInterface, obj0, obj1, obj2);
 
-		public static object SoundGetMute(object obj0 = null, object obj1 = null)
-		{
-			var device = GetDevice(obj0, obj1);
-			return device != null ? device.AudioEndpointVolume.Mute : (object)false;
-		}
+		public static object SoundGetMute(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetMute, obj0, obj1);
 
-		public static string SoundGetName(object obj0 = null, object obj1 = null)
-		{
-			var device = GetDevice(obj0, obj1);
-			return device != null ? device.FriendlyName : "";
-		}
+		public static object SoundGetName(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetName, obj0, obj1);
 
-		public static double SoundGetVolume(object obj0 = null, object obj1 = null)
-		{
-			var device = GetDevice(obj0, obj1);
-			return device != null ? (double)(device.AudioEndpointVolume.MasterVolumeLevelScalar * 100) : 0;
-		}
+		public static object SoundGetVolume(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetVolume, obj0, obj1);
 
 		/// <summary>
 		/// Plays a sound, video, or other supported file type.
@@ -102,79 +86,462 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static void SoundSetMute(object obj0, object obj1 = null, object obj2 = null)
+		public static void SoundSetMute(object obj0, object obj1 = null, object obj2 = null) => _ = DoSound(SoundCommands.SoundSetMute, obj0, obj1, obj2);
+
+		public static void SoundSetVolume(object obj0, object obj1 = null, object obj2 = null) => _ = DoSound(SoundCommands.SoundSetVolume, obj0, obj1, obj2);
+
+		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
-			var device = GetDevice(obj1, obj2);
-
-			if (device != null)
-			{
-				var s = obj0.As();
-				var plus = s.StartsWith('+');
-				var minus = s.StartsWith('-');
-
-				if (plus || minus)
-					device.AudioEndpointVolume.Mute = !device.AudioEndpointVolume.Mute;
-				else
-					device.AudioEndpointVolume.Mute = obj0.Al() > 0;
-			}
-			else
-				throw new TargetError($"Component {obj1}, device {obj2} not found.");
-		}
-
-		public static void SoundSetVolume(object obj0, object obj1 = null, object obj2 = null)
-		{
-			var device = GetDevice(obj1, obj2);
-
-			if (device != null)
-			{
-				var s = obj0.As();
-				var vol = (float)obj0.Ad() * 0.01f;
-				var plus = s.StartsWith('+');
-				var minus = s.StartsWith('-');
-
-				if (plus || minus)
-					device.AudioEndpointVolume.MasterVolumeLevelScalar += vol;
-				else
-					device.AudioEndpointVolume.MasterVolumeLevelScalar = vol;
-			}
-			else
-				throw new TargetError($"Component {obj1}, device {obj2} not found.");
-		}
-
-		/// <summary>
-		/// The AHK documentation says this should take a component and device. However, NAudio doesn't support the concept of a component
-		/// so it's only possible to retrieve a device by its name or index.
-		/// </summary>
-		/// <param name="obj0"></param>
-		/// <param name="obj1"></param>
-		/// <returns></returns>
-		/// <exception cref="TargetError"></exception>
-		private static MMDevice GetDevice(object obj0 = null, object obj1 = null)
-		{
+			var soundSet = false;
+			var search = new SoundComponentSearch();
 			var component = obj0;
-			var dev = obj1;
-			var deviceEnum = new MMDeviceEnumerator();
-			var devices = deviceEnum.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active).ToList();
+			var device = obj1;
 
-			if (component == null && dev == null)
+			if (soundCmd >= SoundCommands.SoundSetVolume)
 			{
-				return deviceEnum.GetDefaultAudioEndpoint(DataFlow.Render, Role.Communications);
-			}
-			else if (dev is string s)
-			{
-				foreach (var device in devices)
-					if (device.FriendlyName.Contains(s))
-						return device;
+				soundSet = true;
+				search.targetControl = (SoundControlType)((int)soundCmd - (int)SoundCommands.SoundSetVolume);
+				component = obj1;
+				device = obj2;
 			}
 			else
 			{
-				var i = dev.Ai(1);
-
-				if (i >= 1 && i <= devices.Count)
-					return devices[i - 1];
+				search.targetControl = (SoundControlType)(int)soundCmd;
 			}
 
-			throw new TargetError("Audio device or endpoint not found.");
+			switch (search.targetControl)
+			{
+				case SoundControlType.Volume:
+					search.targetIid = new Guid("7FB7B48F-531D-44A2-BCB3-5AD5A134B3DC");
+					break;
+
+				case SoundControlType.Mute:
+					search.targetIid = new Guid("DF45AEEA-B74A-4B6B-AFAD-2366B6AA012E");
+					break;
+
+				case SoundControlType.IID:
+					search.targetIid = new Guid(obj0.As());
+					component = obj1;
+					device = obj2;
+					break;
+			}
+
+			float settingScalar = 0.0f;
+
+			if (soundSet)
+				settingScalar = Math.Clamp((float)(obj0.Ad() * 0.01), -1.0f, 1.0f);
+
+			var resultFloat = 0.0f;
+			var resultBool = false;
+			var valStr = obj0 == null ? "" : obj0.ToString();
+			var adjust = valStr.Length > 0 && (valStr[0] == '-' || valStr[0] == '+');
+			var mmDev = GetDevice(device);
+
+			if (mmDev == null)
+				throw new TargetError($"Component {component}, device {device} not found.");
+
+			if (component == null || component.ToString().Length == 0)//Component is Master (omitted).
+			{
+				if (search.targetControl == SoundControlType.IID)
+				{
+					_ = mmDev.deviceInterface.Activate(ref search.targetIid, ClsCtx.ALL, IntPtr.Zero, out var result);
+					//Need the specific interface pointer, else ComCall() will fail when using IAudioMeterInformation.
+					var iptr = Marshal.GetIUnknownForObject(result);
+
+					if (Marshal.QueryInterface(iptr, ref search.targetIid, out var ptr) >= 0)
+						result = ptr;
+
+					_ = Marshal.Release(iptr);
+					return result;
+				}
+				else if (search.targetControl == SoundControlType.Name)
+				{
+					return mmDev.FriendlyName;
+				}
+				else
+				{
+					var aev = mmDev.AudioEndpointVolume;
+
+					if (search.targetControl == SoundControlType.Volume)
+					{
+						if (!soundSet || adjust)
+						{
+							resultFloat = aev.MasterVolumeLevelScalar;
+						}
+
+						if (soundSet)
+						{
+							if (adjust)
+								settingScalar = Math.Clamp(settingScalar + resultFloat, 0.0f, 1.0f);
+
+							aev.MasterVolumeLevelScalar = settingScalar;
+						}
+						else
+						{
+							resultFloat *= 100;
+							return (double)resultFloat;
+						}
+					}
+					else//Mute.
+					{
+						if (!soundSet || adjust)
+							resultBool = aev.Mute;
+
+						if (soundSet)
+							aev.Mute = adjust ? !resultBool : settingScalar > 0;
+						else
+							return resultBool;
+					}
+				}
+			}
+			else
+			{
+				if (component is int i || component is long l)
+				{
+					search.targetName = "";
+					search.targetInstance = component.Ai();
+				}
+				else if (component is string cs && cs != "")
+				{
+					var splits = search.targetName.Split(':');
+
+					if (splits.Length > 1)
+					{
+						search.targetName = splits[0];
+						search.targetInstance = splits[1].Ai();
+					}
+					else
+					{
+						search.name = cs;
+						search.targetInstance = 1;
+					}
+				}
+
+				if (!FindComponent(mmDev, search))
+				{
+					throw new Error($"Component {component} not found.");
+				}
+				else if (search.targetControl == SoundControlType.IID)
+				{
+					return search.control;//The IntPtr.
+				}
+				else if (search.targetControl == SoundControlType.Name)
+				{
+					return search.name;
+				}
+				else if (search.control == null)
+				{
+					//Throw?
+				}
+				else if (search.targetControl == SoundControlType.Volume)
+				{
+					object comobj = search.control is IntPtr ip ? Marshal.GetObjectForIUnknown(ip) : search.control;
+
+					if (comobj is IAudioVolumeLevel avl)
+					{
+						if (avl.GetChannelCount(out var channelCount) < 0)
+							throw new Error("Could not get channel count.");
+
+						float[] level = new float[3 * channelCount];
+						float f, maxLevel = 0;
+
+						for (var ii = 0u; ii < 0; ++ii)
+						{
+							if (avl.GetLevel(ii, out var db) < 0 ||
+									avl.GetLevelRange(ii, out var minDb, out var maxDb, out f) < 0)
+								throw new Error("Could not get level or level range.");
+
+							//Convert dB to scalar.
+							var levelMin = 0 + ii;
+							var levelRange = levelMin + 0;
+							level[levelMin] = (float)Math.Pow(10.0, minDb / 20.0);
+							level[levelRange] = (float)Math.Pow(10.0, maxDb / 20.0) - level[levelMin];
+							//Compensate for differing level ranges. (No effect if range is -96..0 dB.)
+							level[ii] = ((float)Math.Pow(10.0, db / 20.0) - level[levelMin]) / level[levelRange];
+
+							// Windows reports the highest level as the overall volume.
+							if (maxLevel < level[ii])
+								maxLevel = level[ii];
+						}
+
+						if (soundSet)
+						{
+							if (adjust)
+								settingScalar = Math.Clamp(settingScalar + maxLevel, 0.0f, 1.0f);
+
+							for (var ii = 0; ii < (uint)0; ++ii)
+							{
+								var levelMin = (uint)0 + ii;
+								var levelRange = levelMin + 0;
+								f = settingScalar;
+
+								if (maxLevel != 0)
+									f *= level[ii] / maxLevel;//Preserve balance.
+
+								f = level[levelMin] + f * level[levelRange];//Compensate for differing level ranges.
+								level[ii] = 20 * (float)Math.Log(10.0, f);//Convert scalar to dB.
+							}
+
+							Guid guid = Guid.Empty;
+							_ = avl.SetLevelAllChannel(level, 0, ref guid);
+						}
+						else
+							resultFloat = maxLevel * 100;
+					}
+				}
+				else if (search.targetControl == SoundControlType.Mute)
+				{
+					object comobj = search.control is IntPtr ip ? Marshal.GetObjectForIUnknown(ip) : search.control;
+
+					if (comobj is IAudioMute am)
+					{
+						var res = 0;
+
+						if (!soundSet || adjust)
+							res = am.GetMute(out resultBool);
+
+						if (soundSet && res >= 0)
+						{
+							Guid guid = Guid.Empty;
+							_ = am.SetMute(adjust ? !resultBool : settingScalar > 0, ref guid);
+						}
+					}
+				}
+			}
+
+			switch (search.targetControl)
+			{
+				case SoundControlType.Volume:
+					return (double)resultFloat;
+
+				case SoundControlType.Mute:
+					return resultBool;
+			}
+
+			return null;
 		}
+
+		private static bool FindComponent(MMDevice mmDev, SoundComponentSearch search)
+		{
+			search.count = 0;
+			search.control = null;
+			search.name = null;
+			search.ignoreRemainingSubunits = false;
+			var top = mmDev.DeviceTopology;
+
+			if (top.GetConnector(0, out var conn) >= 0)
+			{
+				if (conn.GetDataFlow(out var flow) >= 0)
+				{
+					if (conn.GetConnectedTo(out var conTo) >= 0)
+					{
+						if (conTo is IPart part)
+							_ = FindComponent(part, search);
+					}
+				}
+			}
+
+			return search.count == search.targetInstance;
+		}
+
+		private static bool FindComponent(IPart root, SoundComponentSearch search)
+		{
+			IPartsList partsList;
+
+			if ((search.dataFlow == DataFlow.Render ?
+					root.EnumPartsIncoming(out partsList) :
+					root.EnumPartsOutgoing(out partsList)) < 0)
+				return false;
+
+			if (partsList.GetCount(out var partCount) < 0)
+				partCount = 0;
+
+			for (var i = 0u; i < partCount; i++)
+			{
+				if (partsList.GetPart(i, out var part) < 0)
+					continue;
+
+				if (root.GetPartType(out var partType) >= 0)
+				{
+					if (partType == PartTypeEnum.Connector)
+					{
+						if (partCount == 1//Ignore Connectors with no Subunits of their own.
+								&& (!string.IsNullOrEmpty(search.targetName) ||
+									(part.GetName(out var partName) >= 0 && partName.StartsWith(search.targetName, StringComparison.OrdinalIgnoreCase))
+								   )
+						   )
+						{
+							if (++search.count == search.targetInstance)
+							{
+								switch (search.targetControl)
+								{
+									case SoundControlType.Volume:
+										break;
+
+									case SoundControlType.Mute:
+										break;
+
+									case SoundControlType.Name:
+										_ = part.GetName(out search.name);
+										break;
+
+									case SoundControlType.IID:
+									{
+										//Permit retrieving the IPart or IConnector itself.  Since there may be
+										//multiple connected Subunits (and they can be enumerated or retrieved
+										//via the Connector IPart), this is only done for the Connector.
+										//Need the specific interface pointer, else ComCall() will fail when using IAudioMeterInformation.
+										var iptr = Marshal.GetIUnknownForObject(part);
+
+										if (Marshal.QueryInterface(iptr, ref search.targetIid, out var ptr) >= 0)
+										{
+											if (ptr != IntPtr.Zero)
+												search.control = ptr;
+										}
+
+										_ = Marshal.Release(iptr);
+										break;
+									}
+								}
+
+								return true;
+							}
+						}
+						else//Subunit.
+						{
+							//Recursively find the Connector nodes linked to this part.
+							if (FindComponent(part, search))
+							{
+								//A matching connector part has been found with this part as one of the nodes used
+								//to reach it.  Therefore, if this part supports the requested control interface,
+								//it can in theory be used to control the component.  An example path might be:
+								//   Output < Master Mute < Master Volume < Sum < Mute < Volume < CD Audio
+								//Parts are considered from right to left, as we return from recursion.
+								if (search.control == null && !search.ignoreRemainingSubunits)
+								{
+									//Query this part for the requested interface and let caller check the result.
+									_ = part.Activate(ClsCtx.ALL, ref search.targetIid, out search.control);
+									//Need the specific interface pointer, else ComCall() will fail when using IAudioMeterInformation.
+									var iptr = Marshal.GetIUnknownForObject(search.control);
+
+									if (Marshal.QueryInterface(iptr, ref search.targetIid, out var ptr) >= 0)
+									{
+										if (ptr != IntPtr.Zero)
+											search.control = ptr;
+									}
+
+									_ = Marshal.Release(iptr);
+
+									//If this subunit has siblings, ignore any controls further up the line
+									//as they're likely shared by other components (i.e. master controls).
+									if (partCount > 1)
+										search.ignoreRemainingSubunits = true;
+								}
+
+								return true;
+							}
+						}
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private static MMDevice GetDevice(object obj0)
+		{
+			var deviceEnum = new MMDeviceEnumerator();
+			MMDevice mmDev = null;
+
+			if (obj0 == null || obj0.ToString() == "")
+			{
+				mmDev = deviceEnum.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+			}
+			else
+			{
+				var targetIndex = 0;
+				var targetName = "";
+
+				if (obj0 is int || obj0 is long)
+				{
+					targetName = "";
+					targetIndex = obj0.Ai() - 1;
+				}
+				else if (obj0 is string ds && ds.Length > 0)
+				{
+					var splits = ds.Split(':');
+
+					if (splits.Length > 1)
+					{
+						targetName = splits[0];
+						targetIndex = splits[1].Ai() - 1;
+					}
+					else
+						targetName = ds;
+				}
+
+				var devices = deviceEnum.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active | DeviceState.Unplugged).ToList();
+
+				if (targetName.Length > 0)
+				{
+					foreach (var device in devices)
+					{
+						//Keysharp.Core.Dialogs.MsgBox(device.FriendlyName
+						//                           + "\r\n" + device.DeviceFriendlyName
+						//                           + "\r\n" + device.ID
+						//                           + "\r\n" + device.InstanceId);
+						if (device.FriendlyName.StartsWith(targetName, StringComparison.OrdinalIgnoreCase) && targetIndex-- == 0)
+						{
+							mmDev = device;
+							break;
+						}
+					}
+				}
+				else
+				{
+					if (targetIndex < devices.Count)
+						mmDev = devices[targetIndex];
+				}
+			}
+
+			return mmDev;
+		}
+
+		private class SoundComponentSearch
+		{
+			//Internal use/results:
+			internal object control;
+
+			internal int count;
+
+			//Internal use:
+			internal DataFlow dataFlow;
+
+			internal bool ignoreRemainingSubunits;
+
+			internal string name;
+
+			internal SoundControlType targetControl;
+
+			//Parameters of search:
+			internal Guid targetIid;
+
+			internal int targetInstance;
+			internal string targetName;
+			// Valid only when target_control == SoundControlType::Name.
+		};
+
+		private enum SoundCommands
+		{
+			SoundGetVolume = 0, SoundGetMute, SoundGetName, SoundGetInterface, SoundSetVolume, SoundSetMute
+		}
+
+		private enum SoundControlType
+		{
+			Volume,
+			Mute,
+			Name,
+			IID
+		};
 	}
 }

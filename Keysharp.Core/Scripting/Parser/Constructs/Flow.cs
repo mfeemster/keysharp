@@ -54,10 +54,9 @@ namespace Keysharp.Scripting
 			//This is needed becauses elses is popped when an else is encountered, but if an if statement
 			//has no else, then the elses will remain and can sometimes affect later code which thinks it's
 			//still in an if/else block, even though the block has long since terminated.
-			if (parentBlock == null || parentBlock.Kind != CodeBlock.BlockKind.IfElse)
-				if (lower != FlowElse && elses.Count > 0)
-					elses.Clear();
-
+			//if (parentBlock == null || parentBlock.Kind != CodeBlock.BlockKind.IfElse)
+			//  if (lower != FlowElse && elses.Count > 0)
+			//      elses.Clear();
 			switch (lower)
 			{
 				case FlowIf:

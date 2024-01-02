@@ -155,9 +155,29 @@ namespace Keysharp.Core
 								}, false);
 							}
 
+							//In case any params were references.
 							if (ParamLength > 1)
 							{
-								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, obj.Length));//In case any params were references.
+								var len = Math.Min(newobj.Length, obj.Length);
+
+								if (startVarIndex != -1)
+								{
+									for (var pi = 0; pi < len; pi++)
+									{
+										if (pi == startVarIndex)//Expand the variadic args back into the flat array.
+										{
+											var arr = newobj[pi] as object[];
+
+											for (var vi = 0; pi < obj.Length && vi < arr.Length; pi++, vi++)
+												obj[pi] = arr[vi];
+										}
+										else
+											obj[pi] = newobj[pi];
+									}
+								}
+								else
+									System.Array.Copy(newobj, obj, len);
+
 								paramsPool.Return(newobj, true);
 							}
 

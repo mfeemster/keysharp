@@ -5,133 +5,14 @@ using System.Threading;
 
 namespace Keysharp.Core.COM
 {
-	/*
-	    namespace ManagedWinapi
-	    {
-	    /// <summary>
-	    /// This class contains methods to identify type name, functions and variables
-	    /// of a wrapped COM object (that appears as System.__COMObject in the debugger).
-	    /// </summary>
-	    public class COMTypeInformation
-	    {
-	        IDispatch dispatch;
-	        ct.ITypeInfo typeInfo;
-	        private const int LCID_US_ENGLISH = 0x409;
-
-	        /// <summary>
-	        /// Create a new COMTypeInformation object for the given COM Object.
-	        /// </summary>
-	        public COMTypeInformation(object comObject)
-	        {
-	            dispatch = comObject as IDispatch;
-
-	            if (dispatch == null) throw new Exception("Object is not a COM Object");
-
-	            int typeInfoCount;
-	            int hr = dispatch.GetTypeInfoCount(out typeInfoCount);
-
-	            if (hr < 0) throw new COMException("GetTypeInfoCount failed", hr);
-
-	            if (typeInfoCount != 1) throw new Exception("No TypeInfo present");
-
-	            hr = dispatch.GetTypeInfo(0, LCID_US_ENGLISH, out typeInfo);
-
-	            if (hr < 0) throw new COMException("GetTypeInfo failed", hr);
-	        }
-
-	        /// <summary>
-	        /// The type name of the COM object.
-	        /// </summary>
-	        public string TypeName
-	        {
-	            get
-	            {
-	                string name, dummy1, dummy3;
-	                int dummy2;
-	                typeInfo.GetDocumentation(-1, out name, out dummy1, out dummy2, out dummy3);
-	                return name;
-	            }
-	        }
-
-	        /// <summary>
-	        /// The names of the exported functions of this COM object.
-	        /// </summary>
-	        public IList<string> FunctionNames
-	        {
-	            get
-	            {
-	                List<string> result = new List<String>();
-
-	                for (int jj = 0; ; jj++)
-	                {
-	                    IntPtr fncdesc;
-
-	                    try
-	                    {
-	                        typeInfo.GetFuncDesc(jj, out fncdesc);
-	                    }
-	                    catch (COMException) { break; }
-
-	                    ct.FUNCDESC fd = (ct.FUNCDESC)Marshal.PtrToStructure(fncdesc, typeof(ct.FUNCDESC));
-	                    string[] tmp = new string[1];
-	                    int cnt;
-	                    typeInfo.GetNames(fd.memid, tmp, tmp.Length, out cnt);
-
-	                    if (cnt == 1)
-	                        result.Add(tmp[0]);
-
-	                    typeInfo.ReleaseFuncDesc(fncdesc);
-	                }
-
-	                return result;
-	            }
-	        }
-
-	        /// <summary>
-	        /// The names of the exported variables of this COM object.
-	        /// </summary>
-	        public IList<string> VariableNames
-	        {
-	            get
-	            {
-	                List<string> result = new List<String>();
-
-	                for (int jj = 0; ; jj++)
-	                {
-	                    IntPtr vardesc;
-
-	                    try
-	                    {
-	                        typeInfo.GetVarDesc(jj, out vardesc);
-	                    }
-	                    catch (COMException) { break; }
-
-	                    ct.VARDESC vd = (ct.VARDESC)Marshal.PtrToStructure(vardesc, typeof(ct.VARDESC));
-	                    string[] tmp = new string[1];
-	                    int cnt;
-	                    typeInfo.GetNames(vd.memid, tmp, tmp.Length, out cnt);
-
-	                    if (cnt == 1)
-	                        result.Add(tmp[0]);
-
-	                    typeInfo.ReleaseFuncDesc(vardesc);
-	                }
-
-	                return result;
-	            }
-	        }
-	    }
-	    }
-	*/
-
 	/// <summary>
 	/// The IDispatch interface.
 	/// This was taken loosely from https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/engine/COM/
 	/// under the MIT license.
 	/// </summary>
+	[ComImport]
 	[Guid("00020400-0000-0000-c000-000000000046")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	[ComImport]
 	public interface IDispatch
 	{
 		[PreserveSig]
@@ -164,9 +45,9 @@ namespace Keysharp.Core.COM
 		int GetClassInfo(out ct.ITypeInfo typeInfo);
 	}
 
+	[ComImport]
 	[Guid("6D5140C1-7436-11CE-8034-00AA006009FA")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	[ComImport]
 	public interface IServiceProvider
 	{
 		[return: MarshalAs(UnmanagedType.I4)]
@@ -196,6 +77,7 @@ namespace Keysharp.Core.COM
 	{
 		private const int E_NOTIMPL = unchecked((int)0x80004001);
 		private static readonly Guid IID_IManagedObject = new ("{C3FCC19E-A970-11D2-8B5A-00A0C9B7C9C4}");
+		internal static readonly Guid IID_IDispatch = new ("{00020400-0000-0000-c000-000000000046}");
 		private ct.IConnectionPoint connection;
 		private int cookie;
 		private bool disposedValue;

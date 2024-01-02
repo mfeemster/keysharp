@@ -51,6 +51,8 @@ namespace Keysharp.Scripting
 				return ForceDouble(input) != 0;
 			else if (input is string s)
 				return !string.IsNullOrEmpty(s);
+			else if (input is IntPtr ip)
+				return ip != IntPtr.Zero;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)

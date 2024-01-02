@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -32,152 +34,17 @@ using System.Runtime.InteropServices;
 /// </summary>
 namespace Keysharp.Core.Windows
 {
-	[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IAudioEndpointVolume
-	{
-		int GetChannelCount(out int pnChannelCount);
-
-		int GetChannelVolumeLevel(uint nChannel, out float pfLevelDB);
-
-		int GetChannelVolumeLevelScalar(uint nChannel, out float pfLevel);
-
-		int GetMasterVolumeLevel(out float pfLevelDB);
-
-		int GetMasterVolumeLevelScalar(out float pfLevel);
-
-		int GetMute(out bool pbMute);
-
-		int GetVolumeRange(out float pflVolumeMindB, out float pflVolumeMaxdB, out float pflVolumeIncrementdB);
-
-		int GetVolumeStepInfo(out uint pnStep, out uint pnStepCount);
-
-		int QueryHardwareSupport(out uint pdwHardwareSupportMask);
-
-		int RegisterControlChangeNotify(IAudioEndpointVolumeCallback pNotify);
-
-		int SetChannelVolumeLevel(uint nChannel, float fLevelDB, ref Guid pguidEventContext);
-
-		int SetChannelVolumeLevelScalar(uint nChannel, float fLevel, ref Guid pguidEventContext);
-
-		int SetMasterVolumeLevel(float fLevelDB, ref Guid pguidEventContext);
-
-		int SetMasterVolumeLevelScalar(float fLevel, ref Guid pguidEventContext);
-
-		int SetMute([MarshalAs(UnmanagedType.Bool)] bool bMute, ref Guid pguidEventContext);
-
-		int UnregisterControlChangeNotify(IAudioEndpointVolumeCallback pNotify);
-
-		int VolumeStepDown(ref Guid pguidEventContext);
-
-		int VolumeStepUp(ref Guid pguidEventContext);
-	}
-
-	[Guid("657804FA-D6AD-4496-8A60-352752AF4F89"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IAudioEndpointVolumeCallback
-	{
-		void OnNotify(IntPtr notifyData);
-	};
-
-	[Guid("D666063F-1587-4E43-81F1-B948E807363F"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IMMDevice
-	{
-		// activationParams is a propvariant
-		int Activate(ref Guid id, ClsCtx clsCtx, IntPtr activationParams,
-					 [MarshalAs(UnmanagedType.IUnknown)] out object interfacePointer);
-
-		int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id);
-
-		int GetState(out DeviceState state);
-
-		int OpenPropertyStore(StorageAccessMode stgmAccess, out IPropertyStore properties);
-	}
-
-	[Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IMMDeviceCollection
-	{
-		int GetCount(out int numDevices);
-
-		int Item(int deviceNumber, out IMMDevice device);
-	}
-
-	[Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IMMDeviceEnumerator
-	{
-		int EnumAudioEndpoints(DataFlow dataFlow, DeviceState stateMask,
-							   out IMMDeviceCollection devices);
-
-		[PreserveSig]
-		int GetDefaultAudioEndpoint(DataFlow dataFlow, Role role, out IMMDevice endpoint);
-
-		int GetDevice(string id, out IMMDevice deviceName);
-
-		int RegisterEndpointNotificationCallback(IMMNotificationClient client);
-
-		int UnregisterEndpointNotificationCallback(IMMNotificationClient client);
-	}
-
-	/// <summary>
-	/// IMMNotificationClient
-	/// </summary>
-	[Guid("7991EEC9-7E89-4D85-8390-6C703CEC60C0"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IMMNotificationClient
-	{
-		/// <summary>
-		/// Default Device Changed
-		/// </summary>
-		void OnDefaultDeviceChanged(DataFlow flow, Role role, [MarshalAs(UnmanagedType.LPWStr)] string defaultDeviceId);
-
-		/// <summary>
-		/// Device Added
-		/// </summary>
-		void OnDeviceAdded([MarshalAs(UnmanagedType.LPWStr)] string pwstrDeviceId);
-
-		/// <summary>
-		/// Device Removed
-		/// </summary>
-		void OnDeviceRemoved([MarshalAs(UnmanagedType.LPWStr)] string deviceId);
-
-		/// <summary>
-		/// Device State Changed
-		/// </summary>
-		void OnDeviceStateChanged([MarshalAs(UnmanagedType.LPWStr)] string deviceId, [MarshalAs(UnmanagedType.I4)] DeviceState newState);
-
-		/// <summary>
-		/// Property Value Changed
-		/// </summary>
-		/// <param name="pwstrDeviceId"></param>
-		/// <param name="key"></param>
-		void OnPropertyValueChanged([MarshalAs(UnmanagedType.LPWStr)] string pwstrDeviceId, PropertyKey key);
-	}
-
-	[Guid("886d8eeb-8cf2-4446-8d02-cdba1dbdcf99"),
-	 InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-	internal interface IPropertyStore
-	{
-		int Commit();
-
-		int GetAt(int property, out PropertyKey key);
-
-		int GetCount(out int propCount);
-
-		int GetValue(ref PropertyKey key, out PropVariant value);
-
-		int SetValue(ref PropertyKey key, ref PropVariant value);
-	}
-
+	/*
+	    You can never use the code rearranger on this file because many of the types
+	    in it are for COM, and the order of declarations must match exactly.
+	*/
 	internal struct AudioVolumeNotificationDataStruct
 	{
-		internal bool bMuted;
-		internal float ChannelVolume;
-		internal float fMasterVolume;
 		internal Guid guidEventContext;
+		internal bool bMuted;
+		internal float fMasterVolume;
 		internal uint nChannels;
+		internal float ChannelVolume;
 	}
 
 	/// <summary>
@@ -186,14 +53,13 @@ namespace Keysharp.Core.Windows
 	internal struct Blob
 	{
 		/// <summary>
-		/// Pointer to buffer storing data.
-		/// </summary>
-		internal IntPtr Data;
-
-		/// <summary>
 		/// Length of binary object.
 		/// </summary>
 		internal int Length;
+		/// <summary>
+		/// Pointer to buffer storing data.
+		/// </summary>
+		internal IntPtr Data;
 	}
 
 	/// <summary>
@@ -205,12 +71,10 @@ namespace Keysharp.Core.Windows
 		/// Format ID
 		/// </summary>
 		internal Guid formatId;
-
 		/// <summary>
 		/// Property ID
 		/// </summary>
 		internal int propertyId;
-
 		/// <summary>
 		/// <param name="formatId"></param>
 		/// <param name="propertyId"></param>
@@ -233,100 +97,100 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Value type tag.
 		/// </summary>
-		[FieldOffset(0)] public short vt;
+		[FieldOffset(0)] internal short vt;
 
 		/// <summary>
 		/// Reserved1.
 		/// </summary>
-		[FieldOffset(2)] public short wReserved1;
+		[FieldOffset(2)] internal short wReserved1;
 
 		/// <summary>
 		/// Reserved2.
 		/// </summary>
-		[FieldOffset(4)] public short wReserved2;
+		[FieldOffset(4)] internal short wReserved2;
 
 		/// <summary>
 		/// Reserved3.
 		/// </summary>
-		[FieldOffset(6)] public short wReserved3;
+		[FieldOffset(6)] internal short wReserved3;
 
 		/// <summary>
 		/// cVal.
 		/// </summary>
-		[FieldOffset(8)] public sbyte cVal;
+		[FieldOffset(8)] internal sbyte cVal;
 
 		/// <summary>
 		/// bVal.
 		/// </summary>
-		[FieldOffset(8)] public byte bVal;
+		[FieldOffset(8)] internal byte bVal;
 
 		/// <summary>
 		/// iVal.
 		/// </summary>
-		[FieldOffset(8)] public short iVal;
+		[FieldOffset(8)] internal short iVal;
 
 		/// <summary>
 		/// uiVal.
 		/// </summary>
-		[FieldOffset(8)] public ushort uiVal;
+		[FieldOffset(8)] internal ushort uiVal;
 
 		/// <summary>
 		/// lVal.
 		/// </summary>
-		[FieldOffset(8)] public int lVal;
+		[FieldOffset(8)] internal int lVal;
 
 		/// <summary>
 		/// ulVal.
 		/// </summary>
-		[FieldOffset(8)] public uint ulVal;
+		[FieldOffset(8)] internal uint ulVal;
 
 		/// <summary>
 		/// intVal.
 		/// </summary>
-		[FieldOffset(8)] public int intVal;
+		[FieldOffset(8)] internal int intVal;
 
 		/// <summary>
 		/// uintVal.
 		/// </summary>
-		[FieldOffset(8)] public uint uintVal;
+		[FieldOffset(8)] internal uint uintVal;
 
 		/// <summary>
 		/// hVal.
 		/// </summary>
-		[FieldOffset(8)] public long hVal;
+		[FieldOffset(8)] internal long hVal;
 
 		/// <summary>
 		/// uhVal.
 		/// </summary>
-		[FieldOffset(8)] public long uhVal;
+		[FieldOffset(8)] internal long uhVal;
 
 		/// <summary>
 		/// fltVal.
 		/// </summary>
-		[FieldOffset(8)] public float fltVal;
+		[FieldOffset(8)] internal float fltVal;
 
 		/// <summary>
 		/// dblVal.
 		/// </summary>
-		[FieldOffset(8)] public double dblVal;
+		[FieldOffset(8)] internal double dblVal;
 
 		//VARIANT_BOOL boolVal;
 		/// <summary>
 		/// boolVal.
 		/// </summary>
-		[FieldOffset(8)] public short boolVal;
+		[FieldOffset(8)] internal short boolVal;
 
 		/// <summary>
 		/// scode.
 		/// </summary>
-		[FieldOffset(8)] public int scode;
+		[FieldOffset(8)] internal int scode;
 
 		//CY cyVal;
 		//[FieldOffset(8)] private DateTime date; - can cause issues with invalid value
 		/// <summary>
 		/// Date time.
 		/// </summary>
-		[FieldOffset(8)] public System.Runtime.InteropServices.ComTypes.FILETIME filetime;
+		[FieldOffset(8)] internal System.Runtime.InteropServices.ComTypes.FILETIME filetime;
 
 		//CLSID* puuid;
 		//CLIPDATA* pclipdata;
@@ -335,13 +199,13 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Binary large object.
 		/// </summary>
-		[FieldOffset(8)] public Blob blobVal;
+		[FieldOffset(8)] internal Blob blobVal;
 
 		//LPSTR pszVal;
 		/// <summary>
 		/// Pointer value.
 		/// </summary>
-		[FieldOffset(8)] public IntPtr pointerValue; //LPWSTR
+		[FieldOffset(8)] internal IntPtr pointerValue; //LPWSTR
 
 		//IUnknown* punkVal;
 		/*  IDispatch* pdispVal;
@@ -790,8 +654,9 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class AudioEndpointVolumeChannel
 	{
-		private readonly IAudioEndpointVolume audioEndpointVolume;
 		private readonly uint channel;
+		private readonly IAudioEndpointVolume audioEndpointVolume;
+
 		private Guid notificationGuid = Guid.Empty;
 
 		/// <summary>
@@ -801,6 +666,12 @@ namespace Keysharp.Core.Windows
 		{
 			get => notificationGuid;
 			set => notificationGuid = value;
+		}
+
+		internal AudioEndpointVolumeChannel(IAudioEndpointVolume parent, int channel)
+		{
+			this.channel = (uint)channel;
+			audioEndpointVolume = parent;
 		}
 
 		/// <summary>
@@ -813,8 +684,10 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndpointVolume.GetChannelVolumeLevel(channel, out var result));
 				return result;
 			}
-
-			set => Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevel(channel, value, ref notificationGuid));
+			set
+			{
+				Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevel(channel, value, ref notificationGuid));
+			}
 		}
 
 		/// <summary>
@@ -827,15 +700,12 @@ namespace Keysharp.Core.Windows
 				Marshal.ThrowExceptionForHR(audioEndpointVolume.GetChannelVolumeLevelScalar(channel, out var result));
 				return result;
 			}
-
-			set => Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevelScalar(channel, value, ref notificationGuid));
+			set
+			{
+				Marshal.ThrowExceptionForHR(audioEndpointVolume.SetChannelVolumeLevelScalar(channel, value, ref notificationGuid));
+			}
 		}
 
-		internal AudioEndpointVolumeChannel(IAudioEndpointVolume parent, int channel)
-		{
-			this.channel = (uint)channel;
-			audioEndpointVolume = parent;
-		}
 	}
 
 	/// <summary>
@@ -843,8 +713,8 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class AudioEndpointVolumeChannels
 	{
-		private readonly IAudioEndpointVolume audioEndPointVolume;
-		private readonly AudioEndpointVolumeChannel[] channels;
+		readonly IAudioEndpointVolume audioEndPointVolume;
+		readonly AudioEndpointVolumeChannel[] channels;
 
 		/// <summary>
 		/// Channel Count
@@ -858,22 +728,22 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
+		/// <summary>
+		/// Indexer - get a specific channel
+		/// </summary>
+		internal AudioEndpointVolumeChannel this[int index] => channels[index];
+
 		internal AudioEndpointVolumeChannels(IAudioEndpointVolume parent)
 		{
 			audioEndPointVolume = parent;
 			var channelCount = Count;
 			channels = new AudioEndpointVolumeChannel[channelCount];
 
-			for (var i = 0; i < channelCount; i++)
+			for (int i = 0; i < channelCount; i++)
 			{
 				channels[i] = new AudioEndpointVolumeChannel(audioEndPointVolume, i);
 			}
 		}
-
-		/// <summary>
-		/// Indexer - get a specific channel
-		/// </summary>
-		internal AudioEndpointVolumeChannel this[int index] => channels[index];
 	}
 
 	/// <summary>
@@ -884,6 +754,11 @@ namespace Keysharp.Core.Windows
 		private readonly uint step;
 		private readonly uint stepCount;
 
+		internal AudioEndpointVolumeStepInformation(IAudioEndpointVolume parent)
+		{
+			Marshal.ThrowExceptionForHR(parent.GetVolumeStepInfo(out step, out stepCount));
+		}
+
 		/// <summary>
 		/// Step
 		/// </summary>
@@ -893,8 +768,6 @@ namespace Keysharp.Core.Windows
 		/// StepCount
 		/// </summary>
 		internal uint StepCount => stepCount;
-
-		internal AudioEndpointVolumeStepInformation(IAudioEndpointVolume parent) => Marshal.ThrowExceptionForHR(parent.GetVolumeStepInfo(out step, out stepCount));
 	}
 
 	/// <summary>
@@ -902,14 +775,19 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class AudioEndpointVolumeVolumeRange
 	{
-		private readonly float volumeIncrementDecibels;
-		private readonly float volumeMaxDecibels;
-		private readonly float volumeMinDecibels;
+		readonly float volumeMinDecibels;
+		readonly float volumeMaxDecibels;
+		readonly float volumeIncrementDecibels;
+
+		internal AudioEndpointVolumeVolumeRange(IAudioEndpointVolume parent)
+		{
+			Marshal.ThrowExceptionForHR(parent.GetVolumeRange(out volumeMinDecibels, out volumeMaxDecibels, out volumeIncrementDecibels));
+		}
 
 		/// <summary>
-		/// Increment Decibels
+		/// Minimum Decibels
 		/// </summary>
-		internal float IncrementDecibels => volumeIncrementDecibels;
+		internal float MinDecibels => volumeMinDecibels;
 
 		/// <summary>
 		/// Maximum Decibels
@@ -917,11 +795,9 @@ namespace Keysharp.Core.Windows
 		internal float MaxDecibels => volumeMaxDecibels;
 
 		/// <summary>
-		/// Minimum Decibels
+		/// Increment Decibels
 		/// </summary>
-		internal float MinDecibels => volumeMinDecibels;
-
-		internal AudioEndpointVolumeVolumeRange(IAudioEndpointVolume parent) => Marshal.ThrowExceptionForHR(parent.GetVolumeRange(out volumeMinDecibels, out volumeMaxDecibels, out volumeIncrementDecibels));
+		internal float IncrementDecibels => volumeIncrementDecibels;
 	}
 
 	/// <summary>
@@ -930,19 +806,14 @@ namespace Keysharp.Core.Windows
 	internal class AudioVolumeNotificationData
 	{
 		/// <summary>
-		/// Channels
-		/// </summary>
-		internal int Channels { get; }
-
-		/// <summary>
-		/// Channel Volume
-		/// </summary>
-		internal float[] ChannelVolume { get; }
-
-		/// <summary>
 		/// Event Context
 		/// </summary>
 		internal Guid EventContext { get; }
+
+		/// <summary>
+		/// Muted
+		/// </summary>
+		internal bool Muted { get; }
 
 		/// <summary>
 		/// Guid that raised the event
@@ -955,9 +826,14 @@ namespace Keysharp.Core.Windows
 		internal float MasterVolume { get; }
 
 		/// <summary>
-		/// Muted
+		/// Channels
 		/// </summary>
-		internal bool Muted { get; }
+		internal int Channels { get; }
+
+		/// <summary>
+		/// Channel Volume
+		/// </summary>
+		internal float[] ChannelVolume { get; }
 
 		/// <summary>
 		/// Audio Volume Notification Data
@@ -983,22 +859,93 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class MMDevice : IDisposable
 	{
-		private static Guid IDD_IAudioSessionManager = new Guid("BFA971F1-4D5E-40BB-935E-967039BFBEE4");
-		private static Guid IDD_IDeviceTopology = new Guid("2A07407E-6497-4A18-9787-32F79BD0D98F");
-		private static Guid IID_IAudioClient = new Guid("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
-		private static Guid IID_IAudioEndpointVolume = new Guid("5CDF2C82-841E-4546-9722-0CF74078229A");
-		private static Guid IID_IAudioMeterInformation = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064");
-
-		private readonly IMMDevice deviceInterface;
-		private AudioEndpointVolume audioEndpointVolume;
+		#region Variables
+		internal readonly IMMDevice deviceInterface;
 		private PropertyStore propertyStore;
-		/*    private AudioMeterInformation audioMeterInformation;
-		 *    */
-		/*
-		    private AudioSessionManager audioSessionManager;
-		    private DeviceTopology deviceTopology;
-		*/
-		// ReSharper restore InconsistentNaming
+		private IAudioMeterInformation audioMeterInformation;
+		private AudioEndpointVolume audioEndpointVolume;
+		private IAudioSessionManager audioSessionManager;
+		private IDeviceTopology deviceTopology;
+		#endregion
+
+		#region Guids
+		internal static Guid IID_IAudioMeterInformation = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064");
+		internal static Guid IID_IAudioEndpointVolume = new Guid("5CDF2C82-841E-4546-9722-0CF74078229A");
+		internal static Guid IID_IAudioClient = new Guid("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
+		internal static Guid IDD_IAudioSessionManager = new Guid("BFA971F1-4D5E-40BB-935E-967039BFBEE4");
+		internal static Guid IDD_IDeviceTopology = new Guid("2A07407E-6497-4A18-9787-32F79BD0D98F");
+
+		#endregion
+
+		#region Init
+		/// <summary>
+		/// Initializes the device's property store.
+		/// </summary>
+		/// <param name="stgmAccess">The storage-access mode to open store for.</param>
+		/// <remarks>Administrative client is required for Write and ReadWrite modes.</remarks>
+		internal void GetPropertyInformation(StorageAccessMode stgmAccess = StorageAccessMode.Read)
+		{
+			Marshal.ThrowExceptionForHR(deviceInterface.OpenPropertyStore(stgmAccess, out var propstore));
+			propertyStore = new PropertyStore(propstore);
+		}
+
+		//internal IAudioClient GetAudioClient()
+		//{
+		//  Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioClient, ClsCtx.ALL, IntPtr.Zero, out var result));
+		//  //return new AudioClient(result as IAudioClient);
+		//  return result as IAudioClient;
+		//}
+
+		private void GetAudioMeterInformation()
+		{
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioMeterInformation, ClsCtx.ALL, IntPtr.Zero, out var result));
+			//audioMeterInformation = new AudioMeterInformation(result as IAudioMeterInformation);
+			audioMeterInformation = result as IAudioMeterInformation;
+		}
+
+		private void GetAudioEndpointVolume()
+		{
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioEndpointVolume, ClsCtx.ALL, IntPtr.Zero, out var result));
+			audioEndpointVolume = new AudioEndpointVolume(result as IAudioEndpointVolume);
+		}
+
+		private void GetAudioSessionManager()
+		{
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IAudioSessionManager, ClsCtx.ALL, IntPtr.Zero, out var result));
+			audioSessionManager = result as IAudioSessionManager;
+		}
+
+		private void GetDeviceTopology()
+		{
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IDeviceTopology, ClsCtx.ALL, IntPtr.Zero, out var result));
+			//deviceTopology = new DeviceTopology(result as IDeviceTopology);
+			deviceTopology = result as IDeviceTopology;
+		}
+
+		#endregion
+
+		#region Properties
+
+		/// <summary>
+		/// Audio Client
+		/// Makes a new one each call to allow caller to manage when to dispose
+		/// n.b. should probably not be a property anymore
+		/// </summary>
+		//internal AudioClient AudioClient => GetAudioClient();
+
+		/// <summary>
+		/// Audio Meter Information
+		/// </summary>
+		internal IAudioMeterInformation AudioMeterInformation
+		{
+			get
+			{
+				if (audioMeterInformation == null)
+					GetAudioMeterInformation();
+
+				return audioMeterInformation;
+			}
+		}
 
 		/// <summary>
 		/// Audio Endpoint Volume
@@ -1015,25 +962,44 @@ namespace Keysharp.Core.Windows
 		}
 
 		/// <summary>
-		/// Friendly name of device
+		/// AudioSessionManager instance
 		/// </summary>
-		internal string DeviceFriendlyName
+		internal IAudioSessionManager AudioSessionManager
+		{
+			get
+			{
+				if (audioSessionManager == null)
+					GetAudioSessionManager();
+
+				return audioSessionManager;
+			}
+		}
+
+		/// <summary>
+		/// DeviceTopology instance
+		/// </summary>
+		internal IDeviceTopology DeviceTopology
+		{
+			get
+			{
+				if (deviceTopology == null)
+					GetDeviceTopology();
+
+				return deviceTopology;
+			}
+		}
+
+		/// <summary>
+		/// Properties
+		/// </summary>
+		internal PropertyStore Properties
 		{
 			get
 			{
 				if (propertyStore == null)
-				{
 					GetPropertyInformation();
-				}
 
-				if (propertyStore.Contains(PropertyKeys.PKEY_DeviceInterface_FriendlyName))
-				{
-					return (string)propertyStore[PropertyKeys.PKEY_DeviceInterface_FriendlyName].Value;
-				}
-				else
-				{
-					return "Unknown";
-				}
+				return propertyStore;
 			}
 		}
 
@@ -1045,27 +1011,118 @@ namespace Keysharp.Core.Windows
 			get
 			{
 				if (propertyStore == null)
-				{
 					GetPropertyInformation();
-				}
 
 				if (propertyStore.Contains(PropertyKeys.PKEY_Device_FriendlyName))
-				{
 					return (string)propertyStore[PropertyKeys.PKEY_Device_FriendlyName].Value;
-				}
 				else
 					return "Unknown";
 			}
 		}
 
-		internal MMDevice(IMMDevice realDevice) => deviceInterface = realDevice;
+		/// <summary>
+		/// Friendly name of device
+		/// </summary>
+		internal string DeviceFriendlyName
+		{
+			get
+			{
+				if (propertyStore == null)
+					GetPropertyInformation();
+
+				if (propertyStore.Contains(PropertyKeys.PKEY_DeviceInterface_FriendlyName))
+					return (string)propertyStore[PropertyKeys.PKEY_DeviceInterface_FriendlyName].Value;
+				else
+					return "Unknown";
+			}
+		}
 
 		/// <summary>
-		/// Finalizer
+		/// Icon path of device
 		/// </summary>
-		~MMDevice()
+		internal string IconPath
 		{
-			Dispose();
+			get
+			{
+				if (propertyStore == null)
+					GetPropertyInformation();
+
+				if (propertyStore.Contains(PropertyKeys.PKEY_Device_IconPath))
+					return (string)propertyStore[PropertyKeys.PKEY_Device_IconPath].Value;
+
+				return "Unknown";
+			}
+		}
+
+		/// <summary>
+		/// Device Instance Id of Device
+		/// </summary>
+		internal string InstanceId
+		{
+			get
+			{
+				if (propertyStore == null)
+					GetPropertyInformation();
+
+				if (propertyStore.Contains(PropertyKeys.PKEY_Device_InstanceId))
+					return (string)propertyStore[PropertyKeys.PKEY_Device_InstanceId].Value;
+
+				return "Unknown";
+			}
+		}
+
+		/// <summary>
+		/// Device ID
+		/// </summary>
+		internal string ID
+		{
+			get
+			{
+				Marshal.ThrowExceptionForHR(deviceInterface.GetId(out var result));
+				return result;
+			}
+		}
+
+		/// <summary>
+		/// Data Flow
+		/// </summary>
+		internal DataFlow DataFlow
+		{
+			get
+			{
+				var ep = deviceInterface as IMMEndpoint;
+				_ = ep.GetDataFlow(out var result);
+				return result;
+			}
+		}
+
+		/// <summary>
+		/// Device State
+		/// </summary>
+		internal DeviceState State
+		{
+			get
+			{
+				Marshal.ThrowExceptionForHR(deviceInterface.GetState(out var result));
+				return result;
+			}
+		}
+
+		#endregion
+
+		#region Constructor
+		internal MMDevice(IMMDevice realDevice)
+		{
+			deviceInterface = realDevice;
+		}
+		#endregion
+
+		/// <summary>
+		/// To string
+		/// </summary>
+		public override string ToString()
+		{
+			return FriendlyName;
 		}
 
 		/// <summary>
@@ -1079,203 +1136,12 @@ namespace Keysharp.Core.Windows
 		}
 
 		/// <summary>
-		/// To string
+		/// Finalizer
 		/// </summary>
-		public override string ToString() => FriendlyName;
-
-		/// <summary>
-		/// Initializes the device's property store.
-		/// </summary>
-		/// <param name="stgmAccess">The storage-access mode to open store for.</param>
-		/// <remarks>Administrative client is required for Write and ReadWrite modes.</remarks>
-		internal void GetPropertyInformation(StorageAccessMode stgmAccess = StorageAccessMode.Read)
+		~MMDevice()
 		{
-			Marshal.ThrowExceptionForHR(deviceInterface.OpenPropertyStore(stgmAccess, out var propstore));
-			propertyStore = new PropertyStore(propstore);
+			Dispose();
 		}
-
-		/*
-		    private AudioClient GetAudioClient()
-		    {
-		    Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioClient, ClsCtx.ALL, IntPtr.Zero, out var result));
-		    return new AudioClient(result as IAudioClient);
-		    }
-
-		    private void GetAudioMeterInformation()
-		    {
-		    Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioMeterInformation, ClsCtx.ALL, IntPtr.Zero, out var result));
-		    audioMeterInformation = new AudioMeterInformation(result as IAudioMeterInformation);
-		    }
-		*/
-
-		private void GetAudioEndpointVolume()
-		{
-			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioEndpointVolume, ClsCtx.ALL, IntPtr.Zero, out var result));
-			audioEndpointVolume = new AudioEndpointVolume(result as IAudioEndpointVolume);
-		}
-
-		/*
-		    private void GetAudioSessionManager()
-		    {
-		    Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IAudioSessionManager, ClsCtx.ALL, IntPtr.Zero, out var result));
-		    audioSessionManager = new AudioSessionManager(result as IAudioSessionManager);
-		    }
-
-		    private void GetDeviceTopology()
-		    {
-		    Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IDeviceTopology, ClsCtx.ALL, IntPtr.Zero, out var result));
-		    deviceTopology = new DeviceTopology(result as IDeviceTopology);
-		    }
-
-		    /// <summary>
-		    /// Audio Client
-		    /// Makes a new one each call to allow caller to manage when to dispose
-		    /// n.b. should probably not be a property anymore
-		    /// </summary>
-		    internal AudioClient AudioClient => GetAudioClient();
-
-		    /// <summary>
-		    /// Audio Meter Information
-		    /// </summary>
-		    internal AudioMeterInformation AudioMeterInformation
-		    {
-		    get
-		    {
-		        if (audioMeterInformation == null)
-		            GetAudioMeterInformation();
-
-		        return audioMeterInformation;
-		    }
-		    }
-		*/
-		/*
-		    /// <summary>
-		    /// AudioSessionManager instance
-		    /// </summary>
-		    internal AudioSessionManager AudioSessionManager
-		    {
-		    get
-		    {
-		        if (audioSessionManager == null)
-		        {
-		            GetAudioSessionManager();
-		        }
-
-		        return audioSessionManager;
-		    }
-		    }
-
-		    /// <summary>
-		    /// DeviceTopology instance
-		    /// </summary>
-		    internal DeviceTopology DeviceTopology
-		    {
-		    get
-		    {
-		        if (deviceTopology == null)
-		        {
-		            GetDeviceTopology();
-		        }
-
-		        return deviceTopology;
-		    }
-		    }
-
-		    /// <summary>
-		    /// Properties
-		    /// </summary>
-		    internal PropertyStore Properties
-		    {
-		    get
-		    {
-		        if (propertyStore == null)
-		            GetPropertyInformation();
-
-		        return propertyStore;
-		    }
-		    }
-		*/
-		/*
-		    /// <summary>
-		    /// Icon path of device
-		    /// </summary>
-		    internal string IconPath
-		    {
-		    get
-		    {
-		        if (propertyStore == null)
-		        {
-		            GetPropertyInformation();
-		        }
-
-		        if (propertyStore.Contains(PropertyKeys.PKEY_Device_IconPath))
-		        {
-		            return (string)propertyStore[PropertyKeys.PKEY_Device_IconPath].Value;
-		        }
-
-		        return "Unknown";
-		    }
-		    }
-
-		    /// <summary>
-		    /// Device Instance Id of Device
-		    /// </summary>
-		    internal string InstanceId
-		    {
-		    get
-		    {
-		        if (propertyStore == null)
-		        {
-		            GetPropertyInformation();
-		        }
-
-		        if (propertyStore.Contains(PropertyKeys.PKEY_Device_InstanceId))
-		        {
-		            return (string)propertyStore[PropertyKeys.PKEY_Device_InstanceId].Value;
-		        }
-
-		        return "Unknown";
-		    }
-		    }
-
-		    /// <summary>
-		    /// Device ID
-		    /// </summary>
-		    internal string ID
-		    {
-		    get
-		    {
-		        Marshal.ThrowExceptionForHR(deviceInterface.GetId(out var result));
-		        return result;
-		    }
-		    }
-
-		    /// <summary>
-		    /// Data Flow
-		    /// </summary>
-		    internal DataFlow DataFlow
-		    {
-		    get
-		    {
-		        var ep = deviceInterface as IMMEndpoint;
-		        ep.GetDataFlow(out var result);
-		        return result;
-		    }
-		    }
-
-		    /// <summary>
-		    /// Device State
-		    /// </summary>
-		    internal DeviceState State
-		    {
-		    get
-		    {
-		        Marshal.ThrowExceptionForHR(deviceInterface.GetState(out var result));
-		        return result;
-		    }
-		    }
-
-		*/
 	}
 
 	/// <summary>
@@ -1297,22 +1163,6 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal MMDeviceCollection(IMMDeviceCollection parent) => mmDeviceCollection = parent;
-
-		/// <summary>
-		/// Get Enumerator
-		/// </summary>
-		/// <returns>Device enumerator</returns>
-		public IEnumerator<MMDevice> GetEnumerator()
-		{
-			for (var index = 0; index < Count; index++)
-			{
-				yield return this[index];
-			}
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-
 		/// <summary>
 		/// Get device by index
 		/// </summary>
@@ -1326,6 +1176,36 @@ namespace Keysharp.Core.Windows
 				return new MMDevice(result);
 			}
 		}
+
+		internal MMDeviceCollection(IMMDeviceCollection parent)
+		{
+			mmDeviceCollection = parent;
+		}
+
+		#region IEnumerable<MMDevice> Members
+
+		/// <summary>
+		/// Get Enumerator
+		/// </summary>
+		/// <returns>Device enumerator</returns>
+		public IEnumerator<MMDevice> GetEnumerator()
+		{
+			for (int index = 0; index < Count; index++)
+			{
+				yield return this[index];
+			}
+		}
+
+		#endregion
+
+		#region IEnumerable Members
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
+		#endregion
 	}
 
 	/// <summary>
@@ -1348,13 +1228,6 @@ namespace Keysharp.Core.Windows
 			realEnumerator = new MMDeviceEnumeratorComObject() as IMMDeviceEnumerator;
 		}
 
-		/// <inheritdoc/>
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
 		/// <summary>
 		/// Enumerate Audio Endpoints
 		/// </summary>
@@ -1375,18 +1248,7 @@ namespace Keysharp.Core.Windows
 		/// <returns>Device</returns>
 		internal MMDevice GetDefaultAudioEndpoint(DataFlow dataFlow, Role role)
 		{
-			Marshal.ThrowExceptionForHR(realEnumerator.GetDefaultAudioEndpoint(dataFlow, role, out var device));
-			return new MMDevice(device);
-		}
-
-		/// <summary>
-		/// Get device by ID
-		/// </summary>
-		/// <param name="id">Device ID</param>
-		/// <returns>Device</returns>
-		internal MMDevice GetDevice(string id)
-		{
-			Marshal.ThrowExceptionForHR(realEnumerator.GetDevice(id, out var device));
+			Marshal.ThrowExceptionForHR(((IMMDeviceEnumerator)realEnumerator).GetDefaultAudioEndpoint(dataFlow, role, out var device));
 			return new MMDevice(device);
 		}
 
@@ -1399,7 +1261,7 @@ namespace Keysharp.Core.Windows
 		internal bool HasDefaultAudioEndpoint(DataFlow dataFlow, Role role)
 		{
 			const int E_NOTFOUND = unchecked((int)0x80070490);
-			var hresult = realEnumerator.GetDefaultAudioEndpoint(dataFlow, role, out var device);
+			int hresult = ((IMMDeviceEnumerator)realEnumerator).GetDefaultAudioEndpoint(dataFlow, role, out var device);
 
 			if (hresult == 0x0)
 			{
@@ -1417,18 +1279,42 @@ namespace Keysharp.Core.Windows
 		}
 
 		/// <summary>
+		/// Get device by ID
+		/// </summary>
+		/// <param name="id">Device ID</param>
+		/// <returns>Device</returns>
+		internal MMDevice GetDevice(string id)
+		{
+			Marshal.ThrowExceptionForHR(((IMMDeviceEnumerator)realEnumerator).GetDevice(id, out var device));
+			return new MMDevice(device);
+		}
+
+		/// <summary>
 		/// Registers a call back for Device Events
 		/// </summary>
 		/// <param name="client">Object implementing IMMNotificationClient type casted as IMMNotificationClient interface</param>
 		/// <returns></returns>
-		internal int RegisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client) => realEnumerator.RegisterEndpointNotificationCallback(client);
+		internal int RegisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client)
+		{
+			return realEnumerator.RegisterEndpointNotificationCallback(client);
+		}
 
 		/// <summary>
 		/// Unregisters a call back for Device Events
 		/// </summary>
 		/// <param name="client">Object implementing IMMNotificationClient type casted as IMMNotificationClient interface </param>
 		/// <returns></returns>
-		internal int UnregisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client) => realEnumerator.UnregisterEndpointNotificationCallback(client);
+		internal int UnregisterEndpointNotificationCallback([In][MarshalAs(UnmanagedType.Interface)] IMMNotificationClient client)
+		{
+			return realEnumerator.UnregisterEndpointNotificationCallback(client);
+		}
+
+		/// <inheritdoc/>
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 
 		/// <summary>
 		/// Called to dispose/finalize contained objects.
@@ -1446,14 +1332,6 @@ namespace Keysharp.Core.Windows
 				}
 			}
 		}
-	}
-
-	/// <summary>
-	/// implements IMMDeviceEnumerator
-	/// </summary>
-	[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-	internal class MMDeviceEnumeratorComObject
-	{
 	}
 
 	/// <summary>
@@ -1768,6 +1646,111 @@ namespace Keysharp.Core.Windows
 		/// Read-write access mode.
 		/// </summary>
 		ReadWrite
+	}
+
+	/// <summary>
+	/// Defines constants that indicate the current state of an audio session.
+	/// </summary>
+	/// <remarks>
+	/// MSDN Reference: http://msdn.microsoft.com/en-us/library/dd370792.aspx
+	/// </remarks>
+	internal enum AudioSessionState
+	{
+		/// <summary>
+		/// The audio session is inactive.
+		/// </summary>
+		AudioSessionStateInactive = 0,
+
+		/// <summary>
+		/// The audio session is active.
+		/// </summary>
+		AudioSessionStateActive = 1,
+
+		/// <summary>
+		/// The audio session has expired.
+		/// </summary>
+		AudioSessionStateExpired = 2
+	}
+
+	/// <summary>
+	/// Defines constants that indicate a reason for an audio session being disconnected.
+	/// </summary>
+	/// <remarks>
+	/// MSDN Reference: Unknown
+	/// </remarks>
+	internal enum AudioSessionDisconnectReason
+	{
+		/// <summary>
+		/// The user removed the audio endpoint device.
+		/// </summary>
+		DisconnectReasonDeviceRemoval = 0,
+
+		/// <summary>
+		/// The Windows audio service has stopped.
+		/// </summary>
+		DisconnectReasonServerShutdown = 1,
+
+		/// <summary>
+		/// The stream format changed for the device that the audio session is connected to.
+		/// </summary>
+		DisconnectReasonFormatChanged = 2,
+
+		/// <summary>
+		/// The user logged off the WTS session that the audio session was running in.
+		/// </summary>
+		DisconnectReasonSessionLogoff = 3,
+
+		/// <summary>
+		/// The WTS session that the audio session was running in was disconnected.
+		/// </summary>
+		DisconnectReasonSessionDisconnected = 4,
+
+		/// <summary>
+		/// The (shared-mode) audio session was disconnected to make the audio endpoint device available for an exclusive-mode connection.
+		/// </summary>
+		DisconnectReasonExclusiveModeOverride = 5
+	}
+
+	/// <summary>
+	/// Connector Type
+	/// </summary>
+	internal enum ConnectorType
+	{
+		/// <summary>
+		/// The connector is part of a connection of unknown type.
+		/// </summary>
+		UnknownConnector,
+		/// <summary>
+		/// The connector is part of a physical connection to an auxiliary device that is installed inside the system chassis
+		/// </summary>
+		PhysicalInternal,
+		/// <summary>
+		/// The connector is part of a physical connection to an external device.
+		/// </summary>
+		PhysicalExternal,
+		/// <summary>
+		/// The connector is part of a software-configured I/O connection (typically a DMA channel) between system memory and an audio hardware device on an audio adapter.
+		/// </summary>
+		SoftwareIo,
+		/// <summary>
+		/// The connector is part of a permanent connection that is fixed and cannot be configured under software control.
+		/// </summary>
+		SoftwareFixed,
+		/// <summary>
+		/// The connector is part of a connection to a network.
+		/// </summary>
+		Network,
+	}
+
+	internal enum PartTypeEnum
+	{
+		Connector = 0,
+		Subunit = 1,
+		HardwarePeriphery = 2,
+		SoftwareDriver = 3,
+		Splitter = 4,
+		Category = 5,
+		Other = 6
 	}
 
 	/// <summary>

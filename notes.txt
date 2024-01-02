@@ -21,10 +21,7 @@ Code obsolescence/deprecation:
 		-Keysharp.Core.dll
 		
 TODO/ENSURE THESE WORK:
-	AHK uses a sort of pseudo-threading model so that one key can launch another, or a dialog can launch another. Figure out how to do this.
-		Ensure V2 H multithreading works
-		The function Thread() was never implemented, unsure how it will work with notimers and such.
-		implement A_AllowTimers
+	
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
@@ -33,12 +30,7 @@ TODO/ENSURE THESE WORK:
 		-Keep that with no change.
 		-No longer support it.
 		-Support that, but also "Keysharp" in its place?
-	A_IsPaused
-	ListLines, A_ListLines
 	Custom iterator objects won't be implemented.
-	threading interaction with timers
-	Items under COM section
-	Thread functionality, where things can be pre-empted/suspended/resumed etc...
 	a way to test if you've implemented all functions: https://lexikos.github.io/v2/docs/commands/index.htm
 	ensure you've properly captured all of these changes between 1.1 to 2.0: https://lexikos.github.io/v2/docs/v2-changes.htm
 	See how much some of the existing plugins work with Keysharp: https://lexikos.github.io/v2/docs/commands/Edit.htm
@@ -85,8 +77,9 @@ TODO/ENSURE THESE WORK:
 		Semver: https://github.com/maxhauser/semver
 		PictureBox derivation: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
 		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
-		The program icon is a derivative of work by Bamicon: https://thenounproject.com/bamicon/
+		The program icon is a derivative of work by Bamicon: https://thenounproject.com/bamicon/ https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/ Creative Commons 
 		Microsoft PowerShell code used for COM: https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/engine/COM/
+		NAudio: https://github.com/naudio/NAudio
 		
 	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
@@ -218,7 +211,6 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	https://www.autohotkey.com/boards/viewtopic.php?f=37&t=29689
 	https://www.alfredapp.com/
 	https://forum.keyboardmaestro.com/
-	give credit to: https://github.com/naudio/NAudio
 	https://autohotkey.com/board/topic/50354-ironahk-alpha-cross-platform-net-rewrite-of-autohotkey/
 	https://web.archive.org/web/20111026064713/http://www.ironahk.net/
 	https://www.autohotkey.com/boards/viewtopic.php?f=17&t=30931

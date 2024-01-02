@@ -1,8 +1,10 @@
 ﻿using Keysharp.Core.Windows;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Keysharp.Core.COM
@@ -187,6 +189,18 @@ namespace Keysharp.Core.COM
 				if (hr < 0)
 					break;
 
+				//If it was a specific interface, make sure we are pointing to that interface, otherwise the vtable
+				//will be off in ComCall() and the program will crash.
+				if (iid != Guid.Empty && iid != Dispatcher.IID_IDispatch)
+				{
+					var iptr = Marshal.GetIUnknownForObject(inst);
+
+					if (Marshal.QueryInterface(iptr, ref iid, out var ptr) >= 0)
+						inst = ptr;
+
+					_ = Marshal.Release(iptr);
+				}
+
 				return new ComObject()
 				{
 					Ptr = inst,
@@ -224,6 +238,11 @@ namespace Keysharp.Core.COM
 
 		public static ComObject ComObjFromPtr(object obj0)
 		{
+			if (obj0 is IntPtr ip)
+			{
+				obj0 = Marshal.GetObjectForIUnknown(ip);
+			}
+
 			if (obj0 is IDispatch id)
 			{
 				//AHK did something here with trying to query an interface, but I hope that the above IDispatch cast does the same thing.
@@ -283,6 +302,8 @@ namespace Keysharp.Core.COM
 							return new ComObject(iid == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
 						}
 					}
+
+					_ = Marshal.Release(iptr);
 				}
 			}
 
@@ -308,7 +329,7 @@ namespace Keysharp.Core.COM
 					//var vt = (long)attr.tdescAlias.vt;
 					//typeInfo.ReleaseTypeAttr(typeAttr);
 					//return vt;
-					return co.VarType;
+					return (long)co.VarType;
 				}
 
 				if (s.StartsWith('c'))
@@ -351,6 +372,10 @@ namespace Keysharp.Core.COM
 			{
 				return co.Ptr;
 			}
+			else if (obj0 is IntPtr ip)
+			{
+				return ip.ToInt64();
+			}
 			else//Unsure if this logic even makes sense.
 			{
 				var gch = GCHandle.Alloc(obj0, GCHandleType.Pinned);
@@ -364,11 +389,23 @@ namespace Keysharp.Core.COM
 
 		public static object ObjAddRef(object obj0)
 		{
+			var unk = IntPtr.Zero;
+
 			if (obj0 is ComObject co)
 				obj0 = co.Ptr;
+			else if (obj0 is IntPtr ip)
+				obj0 = ip;
 
-			var unk = Marshal.GetIUnknownForObject(obj0);
-			_ = Marshal.Release(unk);//Need this or else it will add 2.
+			if (obj0 is IntPtr ip2)
+			{
+				unk = ip2;
+			}
+			else
+			{
+				unk = Marshal.GetIUnknownForObject(obj0);
+				_ = Marshal.Release(unk);//Need this or else it will add 2.
+			}
+
 			return (long)Marshal.AddRef(unk);
 		}
 
@@ -376,6 +413,11 @@ namespace Keysharp.Core.COM
 		{
 			if (obj0 is ComObject co)
 				obj0 = co.Ptr;
+			else if (obj0 is IntPtr ip)
+				obj0 = ip;
+
+			if (obj0 is IntPtr ip2)
+				obj0 = Marshal.GetObjectForIUnknown(ip2);
 
 			return (long)Marshal.ReleaseComObject(obj0);
 		}
@@ -391,23 +433,43 @@ namespace Keysharp.Core.COM
 			if (index < 0)
 				throw new ValueError($"Index value of {index} was less than zero.");
 
-			object ptr;
+			object ptr = null;
+			var pUnk = IntPtr.Zero;
 
 			if (obj1 is ComObject co)
 				ptr = co.Ptr;
 			else if (Marshal.IsComObject(obj1))
 				ptr = obj1;
+			else if (obj1 is IntPtr ip)
+				ptr = ip;
 			else
 				throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
 
-			var vtbl = new IntPtr[indexPlus1];
-			var pUnk = Marshal.GetIUnknownForObject(ptr);
+			if (ptr is IntPtr ip2)
+				pUnk = ip2;
+			else
+				pUnk = Marshal.GetIUnknownForObject(ptr);
+
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
-			_ = Marshal.Release(pUnk);
-			Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
 			var helper = new ComArgumentHelper(parameters);
-			var ret = CallDel(pUnk, vtbl[index], helper.args);
-			//Need to check here to see if any data after the call needs to be copied back
+			var ret = CallDel(pUnk, Marshal.ReadIntPtr(IntPtr.Add(pVtbl, index * sizeof(IntPtr))), helper.args);
+
+			for (int p = 0, a = 0; p < parameters.Length; p += 2, a++)
+			{
+				if (parameters[p].ToString() == "float*")
+				{
+					var fptr = (float*)helper.args[a].ToPointer();
+					var f = *fptr;
+					var d = (double)f;
+					parameters[p + 1] = d;
+				}
+				else if (parameters[p].ToString() == "double*")
+				{
+					var dptr = (double*)helper.args[a].ToPointer();
+					parameters[p + 1] = *dptr;
+				}
+			}
+
 			return ret.ToInt64();
 		}
 
@@ -482,6 +544,14 @@ namespace Keysharp.Core.COM
 				case 16:
 					var del16 = (Del16)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del16));
 					return del16(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
+
+				case 17:
+					var del17 = (Del17)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del17));
+					return del17(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16]);
+
+				case 18:
+					var del18 = (Del18)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del18));
+					return del18(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16], args[17]);
 			}
 
 			return IntPtr.Zero;

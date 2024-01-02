@@ -57,7 +57,7 @@ MyGui.MenuBar := MyMenuBar
 ; │  Start TAB  │
 ; └─────────────┘
 
-Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey", "Dll & COM"])
+Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey", "Dll & COM", "Sound"])
 
 Tab.UseTab("First")
 
@@ -1990,7 +1990,6 @@ F1 up::
     }
 }
 
-
 ; ┌──────────────────┐
 ; │  Dll & COM Tab   │
 ; └──────────────────┘
@@ -2174,4 +2173,74 @@ SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
             , "UInt", 2, "Int", 0, "Int", 0, "UInt", 0)
         DllCall("SetSystemCursor", "Ptr", h_cursor, "UInt", id)
     }
+}
+
+; ┌──────────────────┐
+; │  Sound Tab       │
+; └──────────────────┘
+
+MyGui.UseGroup()
+Tab.UseTab("Sound")
+audioMeter := SoundGetInterface("{C02216F6-8C67-4B5B-9D00-D008E73E0064}")
+txtMasterName := MyGui.Add("Text", "xp y+10 w400", "Master: " . SoundGetName())
+txtMasterVol := MyGui.Add("Text", "xp y+10 w200", "Volume: " . SoundGetVolume())
+txtMasterMute := MyGui.Add("Text", "xp y+10 w200", "Muted: " . SoundGetMute())
+txtMasterPeak := MyGui.Add("Text", "xp y+10 w200", "Peak: " . MasterPeak())
+btnMasterMute := MyGui.Add("Button", "xp y+10", "Mute")
+btnMasterUnmute := MyGui.Add("Button", "xp y+10", "Unmute")
+btnMasterRefresh := MyGui.Add("Button", "xp y+10", "Refresh")
+
+btnMasterMute.OnEvent("Click", "MasterMute")
+MasterMute()
+{
+	SoundSetMute(true)
+}
+
+btnMasterUnmute.OnEvent("Click", "MasterUnmute")
+MasterUnmute()
+{
+	SoundSetMute(false)
+}
+
+btnMasterRefresh.OnEvent("Click", "RefreshSound")
+RefreshSound()
+{
+	txtMasterName.Text := "Master: " . SoundGetName()
+	txtMasterVol.Text := "Volume: " . SoundGetVolume()
+	txtMasterMute.Text := "Muted: " . SoundGetMute()
+	txtMasterPeak.Text := "Peak: " . MasterPeak()
+}
+
+txtMasterVolumeSlider := MyGui.Add("Text", "x10 cBlue s10", "Moving slider sets master volume")
+sldMasterVolume := MyGui.Add("Slider", "xp y+10 +AltSubmit Page10 ToolTip Range0-100", 100)
+sldMasterVolume.OnEvent("Change", "MasterVolumeSliderPos")
+
+MasterVolumeSliderPos()
+{
+	val := sldMasterVolume.Value
+	SoundSetVolume(val)
+	txtMasterVol.Text := "Volume: " . SoundGetVolume()
+}
+
+txtAdjMasterVolumeSlider := MyGui.Add("Text", "x10 cBlue s10", "Moving slider adjusts master volume")
+sldAdjMasterVolume := MyGui.Add("Slider", "xp y+10 +AltSubmit Page10 ToolTip Range-100-100", 100)
+sldAdjMasterVolume.OnEvent("Change", "AdjustMasterVolumeSliderPos")
+
+AdjustMasterVolumeSliderPos()
+{
+	val := sldAdjMasterVolume.Value
+	
+	if (val >= 0)
+		val := "+" . val
+
+	SoundSetVolume(val)
+	txtMasterVol.Text := "Volume: " . SoundGetVolume()
+}
+
+MasterPeak()
+{
+	global audioMeter
+	peak := 0
+	ComCall 3, audioMeter, "float*", &peak
+	return peak
 }

@@ -439,24 +439,28 @@ namespace System.Collections.Generic
 					var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
 					var (pushed, tv) = Threads.BeginThread();
 
-					if (inst is Control ctrl && ctrl.FindForm() is Form form)
-						Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
-
-					foreach (var handler in handlers)
+					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 					{
-						if (handler != null)
+						if (inst is Control ctrl && ctrl.FindForm() is Form form)
+							Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+
+						foreach (var handler in handlers)
 						{
-							result = handler.Call(obj);
+							if (handler != null)
+							{
+								result = handler.Call(obj);
 
-							if (result == null)
-								continue;
+								if (result == null)
+									continue;
 
-							if (result.IsCallbackResultNonEmpty())
-								break;
+								if (result.IsCallbackResultNonEmpty())
+									break;
+							}
 						}
+
+						Threads.EndThread(pushed);
 					}
 
-					Threads.EndThread(pushed);
 					Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
 				}
 			}

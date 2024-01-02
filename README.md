@@ -2,8 +2,9 @@
 
 ## How do I get set up? ##
 
+* If .NET 8 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+
 ### Installing on Windows ###
-* If .NET 7 is not installed on your machine, you need to download and run the ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/7.0).
 * Download and run the Keysharp installer from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
 	+ The install path can be optionally added to the $PATH varible, so you can run it from the command line from anywhere.
 		+ The path entry will be removed upon uninstall.
@@ -37,8 +38,8 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 * The operation of Keysharp is different than AHK. While AHK is an interpreted scripting language, Keysharp actually creates a compiled .NET executable and runs it.
 
 * The process for reading and running a script is:
-	+ Pass the script to Keysharp.exe which parses it and generates a DOM tree.
-	+ The DOM generates C# code for a single program.
+	+ Pass the script to Keysharp.exe which parses it and generates a Document Object Model (DOM) tree.
+	+ The DOM compiler generates C# code for a single program.
 	+ The C# program code is compiled into an in-memory executable.
 	+ The executable is ran in memory as a new process.
 	+ Optionally output the generated C# code to a .cs file for debugging purposes.
@@ -101,6 +102,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The `#ErrorStdOut` directive will not print to the console unless piping is used. For example:
 	+ `.\Keysharp.exe .\test.ahk | more`
 	+ `.\Keysharp.exe .\test.ahk | more > out.txt`
+* Menu items, whether shown or not, have no impact on threading.
 * `AddStandard()` detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
 + Delays are not inserted after every window and control related call. Due to the design of Keysharp, this is not needed and causes out of order message processing bugs.
 	+ `SetWinDelay()`, `A_WinDelay`, `SetControlDelay` and `A_ControlDelay` exist but have no effect.
@@ -111,7 +113,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
 	+ `ObjOwnProps()` takes an optional second argument which is a boolean. Passing `True` means return name and value, passing `False` or empty means return name only.
-* Menu items, whether shown or not, have no impact on threading.
+* In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
 
 ###	Syntax: ###
@@ -130,12 +132,10 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
 	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
-	+ To negate the result of a power operation, use parentheses: `-(x**y)`.
-	+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.	
+		+ To negate the result of a power operation, use parentheses: `-(x**y)`.
+		+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.	
 * A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
 * AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with `IsSet()`.
-* Most operator rules work, but statements like this one from the documentation will not due to the evaluation order of arguments: `++var := x` is evaluated as `++(var := x)`
-	+ Use `var := x, ++var` instead.
 * Variables used as function call reference arguments cannot be defined and initialized inline like:
 	+ `DllCall("QueryPerformanceFrequency", "Int64*", &freq := 0)`
 	+ Instead do:
@@ -148,7 +148,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
 * Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
 * Dynamic variable references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
-* `Goto` statements cannot use any type of variables. They must be labels known at compile time and function just like goto statements in C#.
+* `Goto` statements cannot use any type of variable. They must be labels known at compile time and function just like goto statements in C#.
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ `Func()` or `FuncObj()` can still be used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
@@ -160,6 +160,17 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		f := b
 		g := c ; No question mark needed for c or d.
 		h := d
+	}
+```
+* Try statements cannot have a control statement on the same line. Instead, put them on the next line:
+```
+try loop ; Not supported.
+	{
+	}
+	;
+try ; Use this.
+	loop
+	{
 	}
 ```
 * The `#Requires` directive differs in the following ways:
@@ -221,7 +232,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
 	+ `Tanh(value) => Double`
-* A new property `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, Args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
@@ -246,7 +256,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `WantReturn` and `Password` are not supported.
 	+ `Uppercase` and `Lowercase` are supported, but only for key presses, not for pasting.
 * Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
-* A new accessor `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 * A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
 	+ Uses the same arguments as `LoadPicture()`.
 	+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
@@ -261,12 +270,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * New accessors:
 	+ `A_AllowTimers` returns whether timers are allowed or not. It's also easier to set this value rather than call `Thread("NoTimers")`.
 	+ `A_CommandLine` returns the command line string. This is preferred over passing `GetCommandLine` to `DllCall()` as noted above.
-	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
-	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
-	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
-	+ `A_UseHook` returns the value `n` specified with `#UseHook n`.
-	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
-	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
 	+ `A_DefaultHotstringCaseSensitive` returns the default hotstring case sensitivity mode.
 	+ `A_DefaultHotstringConformToCase` returns the default hotstring case conformity mode.
 	+ `A_DefaultHotstringDetectWhenInsideWord` returns the default hotstring word detection mode.
@@ -279,8 +282,17 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `A_DefaultHotstringPriority` returns the default hotstring priority.
 	+ `A_DefaultHotstringSendMode` returns the default hotstring sending mode.
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
-* `Log(number, base := 10)` is by default base 10, but you can pass a double as the second parameter to specify a custom base.
-* In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
+	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
+	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
+	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
+	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
+	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
+	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
+	+ `A_UseHook` returns the value `n` specified with `#UseHook n`.
+	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
+
+* `Log(number, base := 10)` is by default base 10, but it can accept a double as the second parameter to specify a custom base.
+* In `SetTimer()`:
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
 	+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
 	+ Timers are not disabled when the program menu is shown.
@@ -322,22 +334,21 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
 * New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
 * New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`
-* New class and functions for managing real threads which are not related to green threads that are used for the rest of the project.
+* New class and functions for managing real threads which are not related to the green threads that are used for the rest of the project.
 	+ A `RealThread` is created by calling `StartRealThread()`.
 ```
 	class RealThread
 	{
 		RealThread(Task)
-		RealThread ContinueWith(funcobj[, params*]) ; Call `funcobj` after the task completes, optionally passing `params` to it and return a new `RealThread` object for the continuation thread.
+		RealThread ContinueWith(funcobj [, params*]) => RealThread ; Call `funcobj` after the task completes, optionally passing `params` to it and return a new `RealThread` object for the continuation thread.
 		Wait([timeout]) ; Wait until the thread object which was passed to the constructor completes. Optionally return after a specified timeout period in milliseconds elapses.
 	}
 ```
-	+ `StartRealThread(funcobj [, params*])` ; Call `funcobj` in a real thread, optionally passing `params` to it, and return a `RealThread` object.
-	+ `LockRun(lockobj, funcobj [, params*])` ; Call `funcobj` inside of a lock on `lockobj`, optionally passing `params` to it.
+	+ `StartRealThread(funcobj [, params*]) => RealThread` Call `funcobj` in a real thread, optionally passing `params` to it, and return a `RealThread` object.
+	+ `LockRun(lockobj, funcobj [, params*])` Call `funcobj` inside of a lock on `lockobj`, optionally passing `params` to it.
 		+ `lockobj` must be initialized to some value, such as an empty string.
 
 ###	Removals: ###
-* COM is only partially implemented.
 * Nested classes are not supported.
 * Nested functions are not supported.
 * `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
@@ -363,16 +374,16 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
 * Function references are supported, but the VarRef object is not supported.
 * The address of a variable cannot be taken using the reference operator except when passing an argument to a function.
-	+ `x := &var ; not supported`
-	+ `functhattakesref(&x) ; supported`
+	+ `x := &var` not supported
+	+ `functhattakesref(&x)` supported
 * `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
 	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
 	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
 	+ The pause menu item has been removed.
 * `ObjAddRef()` and `ObjPtrAddRef()` do not have an effect for non-COM objects. Instead, use the following:
-	+ `newref := theobj` ; adds 1 to the reference count
-	+ `newref := ""` ; subtracts 1 from the reference count
+	+ `newref := theobj` adds 1 to the reference count
+	+ `newref := ""` subtracts 1 from the reference count
 * `#Warn` to enable/disable compiler warnings is not supported yet.
 * The `/script` option for compiled scripts does not apply and is therefore not implemented.
 * The Help and Window Spy menu items are not implemented yet.

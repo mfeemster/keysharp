@@ -273,7 +273,13 @@ namespace Keysharp.Core
 							SetupPointerArg(i, n, array.array);
 						else if (p is ComObject co)
 						{
-							var pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
+							IntPtr pUnk;
+
+							if (co.Ptr is IntPtr ip2)
+								pUnk = ip2;
+							else
+								pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
+
 							args[n] = pUnk;
 							_ = Marshal.Release(pUnk);
 						}
