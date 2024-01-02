@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
+using Keysharp.Core.Common.Window;
 using Keysharp.Core.Windows;
 using static Keysharp.Core.Misc;
 
@@ -15,6 +16,7 @@ namespace Keysharp.Scripting
 		public static Font OurDefaultFont = new System.Drawing.Font("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool success;
+		private AboutBox about;
 
 		public bool IsClosing { get; private set; }
 
@@ -108,6 +110,20 @@ namespace Keysharp.Scripting
 				m.Result = new IntPtr(1);
 		}
 
+		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			if (about == null)
+			{
+				about = new AboutBox();
+				about.FormClosing += (ss, ee) =>
+				{
+					about = null;
+				};
+			}
+
+			about.Show();
+		}
+
 		private void clearDebugLogToolStripMenuItem_Click(object sender, EventArgs e) => txtDebug.Text = "";
 
 		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.Edit();
@@ -188,6 +204,7 @@ namespace Keysharp.Scripting
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
 			Keysharp.Core.Gui.DestroyAll();
+			about?.Close();
 		}
 
 		private void MainWindow_Load(object sender, EventArgs e)
@@ -240,16 +257,14 @@ namespace Keysharp.Scripting
 
 		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
+			Keysharp.Core.Dialogs.MsgBox("This feature is not implemented");
 		}
 
 		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowInternalVars();
 
-		private void websiteToolStripMenuItem_Click(object sender, System.EventArgs e)
-		{
-		}
-
 		private void windowSpyToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
+			Keysharp.Core.Dialogs.MsgBox("This feature is not implemented");
 		}
 
 		public enum MainFocusedTab

@@ -10,12 +10,12 @@
 		+ The path entry will be removed upon uninstall.
 	+ It also registers Keysharp.exe as the default program to open `.ks` files. So after installing, double click any `.ks` file to run it.
 	
-### Portable Run on Windows ###
+### Portable run on Windows ###
 * Download and unzip the zip file from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
 	+ CD to the unzipped folder.
 	+ Run `.\Keysharp.exe yourfilename.ahk`
 	
-### Building From Source on Windows ###
+### Building from source on Windows ###
 * Download the latest version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/).
 	+ This should install .NET 8. If it doesn't, you need to install it manually from the link above.
 * Open Keysharp.sln
@@ -395,6 +395,21 @@ try ; Use this.
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
 * When passing `"Interrupt"` as the second argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
+
+## Code acknowledgements ##
+
+The initial IronAHK developers 2010 - 2015.
+[Logical string comparison](https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer) [cddl 1.0](https://opensource.org/licenses/cddl1.php)
+[Cross platform INI file processor](https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class)
+[P/Invoke calls](https://www.pinvoke.net)
+[Tuple splatter](https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter)
+[Rich text box with line numbers in Keyview](https://www.codeproject.com/Articles/38858/Line-Numbers-for-RichText-Control-in-C)
+[Semver version parsing](https://github.com/maxhauser/semver)
+[PictureBox derivation](https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat)
+[Using SendMessage() with string](https://gist.github.com/BoyCook/5075907)
+[Program icon](https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/) is a derivative of work by [Bamicon](https://thenounproject.com/bamicon/)
+[NAudio] (https://github.com/naudio/NAudio)
+Various posts on [Stack Overflow](https://stackoverflow.com/)
 
 ## Who do I talk to? ##
 

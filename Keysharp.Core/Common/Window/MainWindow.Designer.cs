@@ -46,7 +46,7 @@
 			refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			userManualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			websiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			tcMain = new System.Windows.Forms.TabControl();
 			tpDebug = new System.Windows.Forms.TabPage();
 			txtDebug = new System.Windows.Forms.TextBox();
@@ -176,7 +176,7 @@
 			//
 			// helpToolStripMenuItem
 			//
-			helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { userManualToolStripMenuItem, websiteToolStripMenuItem });
+			helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { userManualToolStripMenuItem, aboutToolStripMenuItem });
 			helpToolStripMenuItem.Name = "helpToolStripMenuItem";
 			helpToolStripMenuItem.Size = new System.Drawing.Size(44, 22);
 			helpToolStripMenuItem.Text = "&Help";
@@ -185,16 +185,16 @@
 			//
 			userManualToolStripMenuItem.Name = "userManualToolStripMenuItem";
 			userManualToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F1;
-			userManualToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
+			userManualToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
 			userManualToolStripMenuItem.Text = "&User Manual";
 			userManualToolStripMenuItem.Click += userManualToolStripMenuItem_Click;
 			//
-			// websiteToolStripMenuItem
+			// aboutToolStripMenuItem
 			//
-			websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-			websiteToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
-			websiteToolStripMenuItem.Text = "&Website";
-			websiteToolStripMenuItem.Click += websiteToolStripMenuItem_Click;
+			aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+			aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			aboutToolStripMenuItem.Text = "&About";
+			aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
 			//
 			// tcMain
 			//
@@ -226,7 +226,7 @@
 			//
 			txtDebug.BackColor = System.Drawing.SystemColors.MenuBar;
 			txtDebug.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtDebug.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtDebug.Font = new System.Drawing.Font("Cascadia Code", 9F);
 			txtDebug.Location = new System.Drawing.Point(2, 2);
 			txtDebug.Margin = new System.Windows.Forms.Padding(2);
 			txtDebug.Multiline = true;
@@ -252,7 +252,7 @@
 			//
 			txtVars.BackColor = System.Drawing.SystemColors.MenuBar;
 			txtVars.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtVars.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtVars.Font = new System.Drawing.Font("Cascadia Code", 9F);
 			txtVars.Location = new System.Drawing.Point(2, 2);
 			txtVars.Margin = new System.Windows.Forms.Padding(2);
 			txtVars.Multiline = true;
@@ -277,7 +277,7 @@
 			//
 			txtHotkeys.BackColor = System.Drawing.SystemColors.MenuBar;
 			txtHotkeys.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtHotkeys.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtHotkeys.Font = new System.Drawing.Font("Cascadia Code", 9F);
 			txtHotkeys.Location = new System.Drawing.Point(3, 3);
 			txtHotkeys.Margin = new System.Windows.Forms.Padding(2);
 			txtHotkeys.Multiline = true;
@@ -303,7 +303,7 @@
 			//
 			txtHistory.BackColor = System.Drawing.SystemColors.MenuBar;
 			txtHistory.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtHistory.Font = new System.Drawing.Font("Cascadia Code", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			txtHistory.Font = new System.Drawing.Font("Cascadia Code", 9F);
 			txtHistory.Location = new System.Drawing.Point(2, 2);
 			txtHistory.Margin = new System.Windows.Forms.Padding(2);
 			txtHistory.Multiline = true;
@@ -362,7 +362,6 @@
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
 		private System.Windows.Forms.ToolStripMenuItem refreshToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem userManualToolStripMenuItem;
-		private System.Windows.Forms.ToolStripMenuItem websiteToolStripMenuItem;
 		private System.Windows.Forms.TabControl tcMain;
 		private System.Windows.Forms.TabPage tpDebug;
 		private System.Windows.Forms.TabPage tpVars;
@@ -373,5 +372,6 @@
 		private System.Windows.Forms.TabPage tpHistory;
 		private System.Windows.Forms.TextBox txtHistory;
 		private System.Windows.Forms.ToolStripMenuItem clearDebugLogToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 	}
 }
