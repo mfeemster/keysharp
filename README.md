@@ -398,29 +398,18 @@ try ; Use this.
 
 ## Code acknowledgements ##
 
-The initial IronAHK developers 2010 - 2015.
-
-[Logical string comparison](https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer) [cddl 1.0](https://opensource.org/licenses/cddl1.php)
-
-[Cross platform INI file processor](https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class)
-
-[P/Invoke calls](https://www.pinvoke.net)
-
-[Tuple splatter](https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter)
-
-[Rich text box with line numbers in Keyview](https://www.codeproject.com/Articles/38858/Line-Numbers-for-RichText-Control-in-C)
-
-[Semver version parsing](https://github.com/maxhauser/semver)
-
-[PictureBox derivation](https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat)
-
-[Using SendMessage() with string](https://gist.github.com/BoyCook/5075907)
-
-[Program icon](https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/) is a derivative of work by [Bamicon](https://thenounproject.com/bamicon/)
-
-[NAudio] (https://github.com/naudio/NAudio)
-
-Various posts on [Stack Overflow](https://stackoverflow.com/)
+* The initial IronAHK developers 2010 - 2015
+* [Logical string comparison](https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer), [cddl 1.0](https://opensource.org/licenses/cddl1.php)
+* [Cross platform INI file processor](https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class)
+* [P/Invoke calls](https://www.pinvoke.net)
+* [Tuple splatter](https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter)
+* [Rich text box with line numbers in Keyview](https://www.codeproject.com/Articles/38858/Line-Numbers-for-RichText-Control-in-C)
+* [Semver version parsing](https://github.com/maxhauser/semver)
+* [PictureBox derivation](https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat)
+* [Using SendMessage() with string](https://gist.github.com/BoyCook/5075907)
+* [Program icon](https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/) is a derivative of work by [Bamicon](https://thenounproject.com/bamicon/)
+* [NAudio](https://github.com/naudio/NAudio)
+* Various posts on [Stack Overflow](https://stackoverflow.com/)
 
 ## Who do I talk to? ##
 
