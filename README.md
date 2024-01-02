@@ -16,10 +16,10 @@
 	+ Run `.\Keysharp.exe yourfilename.ahk`
 	
 ### Building From Source on Windows ###
-* Download Visual Studio 2022
-	+ This should install .NET 7. If it doesn't, you need to install it manually from the link above.
+* Download the latest version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/).
+	+ This should install .NET 8. If it doesn't, you need to install it manually from the link above.
 * Open Keysharp.sln
-* Build all (building the installer is not necessary)
+* Build all (building the installer is not necessary).
 * CD to bin\release\net7.0-windows
 * Run `.\Keysharp.exe yourtestfile.ahk`
 	
