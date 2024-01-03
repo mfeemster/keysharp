@@ -47,7 +47,7 @@ namespace Keysharp.Scripting
 			else if (i > 0 && IsArrayExtension(parts[x]))
 			{
 				var extend = (CodeMethodInvokeExpression)parts[x];
-				_ = extend.Parameters.Add(right ? VarMixedExpr(parts[y]) : new CodePrimitiveExpression(null));
+				_ = extend.Parameters.Add(right ? VarMixedExpr(parts[y]) : nullPrimitive);
 
 				if (right)
 					parts.RemoveAt(y);
@@ -71,7 +71,7 @@ namespace Keysharp.Scripting
 								   ? caie
 								   : parts[x] is CodePropertyReferenceExpression cpre ? cpre : VarId(parts[x] as CodeExpression, false);
 
-			assign.Right = right ? (parts[y] is CodeVariableReferenceExpression cvre2 ? cvre2 : VarMixedExpr(parts[y])) : new CodePrimitiveExpression(null);
+			assign.Right = right ? (parts[y] is CodeVariableReferenceExpression cvre2 ? cvre2 : VarMixedExpr(parts[y])) : nullPrimitive;
 			parts[x] = assign;
 
 			if (right)
@@ -107,7 +107,7 @@ namespace Keysharp.Scripting
 				parts.RemoveAt(y);
 			}
 			else
-				_ = set.Parameters.Add(new CodePrimitiveExpression(null));
+				_ = set.Parameters.Add(nullPrimitive);
 
 			set.Parameters.AddRange(parameters);//Indexes go at the end because there can be a variable number of them.
 			parts.RemoveAt(i);

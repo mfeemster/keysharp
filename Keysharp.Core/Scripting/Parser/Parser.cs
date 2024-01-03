@@ -155,6 +155,8 @@ namespace Keysharp.Scripting
 		private CodeTypeDeclaration targetClass;
 		private uint tryCount;
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
+		internal static CodePrimitiveExpression nullPrimitive = new CodePrimitiveExpression(null);
 
 		public Parser(CompilerHelper ch)
 		{
@@ -328,7 +330,7 @@ namespace Keysharp.Scripting
 											   meth.ReturnType.BaseType != "System.Void"
 											   && !(meth.Statements.Cast<CodeStatement>().LastOrDefault() is CodeMethodReturnStatement)
 											  ).ToList().ForEach(meth2 =>
-													  meth2.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(""))));
+													  meth2.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive)));
 
 			//Find every call to SetPropertyValue() and determine if it's actually setting it for a type, in which case it's setting a static member of a type, and thus needs to be converted to SetPropertyValueT().
 			foreach (var cmietype in setPropertyValueCalls)
@@ -617,7 +619,7 @@ namespace Keysharp.Scripting
 									_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
 
 								for (; i < ctm2.Parameters.Count; i++)//Fill whatever remains of the base constructor parameters with nulls.
-									_ = thisconstructor.BaseConstructorArgs.Add(new CodePrimitiveExpression(null));
+									_ = thisconstructor.BaseConstructorArgs.Add(nullPrimitive);
 							}
 						}
 						else//Try built in types.
@@ -642,7 +644,7 @@ namespace Keysharp.Scripting
 												_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
 
 											for (; i < ctorparams.Length; i++)//Fill whatever remains of the base constructor parameters with empty strings.
-												_ = thisconstructor.BaseConstructorArgs.Add(new CodePrimitiveExpression(null));
+												_ = thisconstructor.BaseConstructorArgs.Add(nullPrimitive);
 
 											break;
 										}
@@ -789,11 +791,13 @@ namespace Keysharp.Scripting
 						foreach (var globalvar in scopekv.Value)
 						{
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
+							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
 								Name = name,
-								Text = $"\t\tpublic static object {name};"// {{ get; set; }}"
-							}); ;
+								//Text = $"\t\tpublic static object {name} = {init};"
+								Text = $"\t\tpublic static object {name};"
+							});
 						}
 					}
 				}

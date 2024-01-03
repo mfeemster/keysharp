@@ -14,6 +14,26 @@ If (x == 100)
 else
 	FileAppend, "fail", "*"
 
+reffunc1(&xx := 0) ; Declare and initialize inline.
+
+If (xx == 100)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+callreffunc(&p1)
+{
+	reffunc1(&p1 := 123)
+}
+
+xx := ""
+callreffunc(&xx := 0)
+
+If (xx == 100)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 x := 11
 y11 := 123
 

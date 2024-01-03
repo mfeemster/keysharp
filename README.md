@@ -136,13 +136,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.	
 * A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
 * AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with `IsSet()`.
-* Variables used as function call reference arguments cannot be defined and initialized inline like:
-	+ `DllCall("QueryPerformanceFrequency", "Int64*", &freq := 0)`
-	+ Instead do:
-```
-		freq := 0
-		DllCall("QueryPerformanceFrequency", "Int64*", &freq)
-```
 * Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless `RTrim` is specified.
 * In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if `LTrim` is specified.
 * Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
@@ -160,17 +153,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 		f := b
 		g := c ; No question mark needed for c or d.
 		h := d
-	}
-```
-* Try statements cannot have a control statement on the same line. Instead, put them on the next line:
-```
-try loop ; Not supported.
-	{
-	}
-	;
-try ; Use this.
-	loop
-	{
 	}
 ```
 * The `#Requires` directive differs in the following ways:
@@ -386,7 +368,7 @@ try ; Use this.
 * The Help and Window Spy menu items are not implemented yet.
 * `Download()` only supports the `*0` option, and not any other numerical values.
 * Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-* Static class member variable initializers like static `x.y := 42` are not supported. Instead, just initialize in one step like static `x := { y, 42 }`.
+* Static class member variable initializers like `static x.y := 42` are not supported. Instead, just initialize in one step like `static x := { y, 42 }`.
 * Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
 * The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.

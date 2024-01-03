@@ -180,3 +180,21 @@ If (z == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+reffunc1(&a)
+{
+	a := 100
+}
+
+func5()
+{
+	static x := 111
+	reffunc1(&x := 0)
+	
+	if (x == 100)
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+}
+
+func5()

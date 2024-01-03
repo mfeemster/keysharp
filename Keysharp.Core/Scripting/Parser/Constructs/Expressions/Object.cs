@@ -194,7 +194,7 @@ namespace Keysharp.Scripting
 					throw new ParseException($"{ExUnexpected} at line {line}");
 
 				collect:
-				entries.Add(value ?? new CodePrimitiveExpression(null));
+				entries.Add(value ?? nullPrimitive);
 			}
 
 			keys = names.ToArray();

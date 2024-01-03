@@ -547,7 +547,7 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
-						var result = parts.Length > 1 ? ParseSingleExpression(line, parts[1], false) : new CodePrimitiveExpression("");
+						var result = parts.Length > 1 ? ParseSingleExpression(line, parts[1], false) : emptyStringPrimitive;
 						return new CodeStatement[] { new CodeMethodReturnStatement(result) };
 					}
 				}
@@ -771,17 +771,27 @@ namespace Keysharp.Scripting
 
 					if (parts.Length > 1 && parts[1] != "{")
 					{
-						if (parts[1].StartsWith("throw", StringComparison.OrdinalIgnoreCase))
+						var templines = new List<CodeLine>
 						{
-							var templines = new List<CodeLine>();
-							templines.Add(new CodeLine(line.FileName, line.LineNumber, parts[1]));
-							var result = ParseFlow(templines, 0);
+							new CodeLine(line.FileName, line.LineNumber, parts[1])
+						};
+						var result = ParseFlow(templines, 0);
+
+						if (result != null)//First check to see if it was a flow statement.
+						{
 							tcf.TryStatements.AddRange(result);
 						}
-						else//Any other control flow statements aren't supported on a singel line, such as try if, try while etc...
+						else//If it wasn't, then just parse as a single expression.
 						{
-							var result = ParseSingleExpression(line, parts[1], true);//Allow a single line try statement to create vars.
-							_ = tcf.TryStatements.Add(result);
+							var exprResult = ParseSingleExpression(line, parts[1], true);//Allow a single line try statement to create vars.
+
+							if (exprResult != null)
+							{
+								exprResult = OptimizeLoneExpression(exprResult);//Make sure we reduce x++ to only x++ and not (x + 1) - 1.
+								_ = tcf.TryStatements.Add(exprResult);
+							}
+							else
+								throw new ParseException($"The code '{parts[1]}' following a try statement could not be parsed.", line);
 						}
 					}
 					else

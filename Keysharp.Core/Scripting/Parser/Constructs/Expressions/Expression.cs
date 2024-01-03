@@ -249,7 +249,7 @@ namespace Keysharp.Scripting
 			left = Reflections.flatPublicStaticProperties.TryGetValue(name, out var pi)
 				   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 				   : VarId(name, true);
-			var result = value == null ? new CodePrimitiveExpression(null) : IsExpressionParameter(value) ? ParseSingleExpression(line, value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(value);
+			var result = value == null ? nullPrimitive : IsExpressionParameter(value) ? ParseSingleExpression(line, value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(value);
 			return new CodeAssignStatement(left, result);
 		}
 
@@ -287,7 +287,7 @@ namespace Keysharp.Scripting
 								{
 									var tupleInvoke = (CodeMethodInvokeExpression)InternalMethods.MakeObjectTuple;
 									tupleInvoke.Parameters.Clear();
-									_ = tupleInvoke.Parameters.Add(new CodePrimitiveExpression(null));
+									_ = tupleInvoke.Parameters.Add(nullPrimitive);
 									_ = tupleInvoke.Parameters.Add(indexcmie);
 									parts[n] = tupleInvoke;//Replace Index() with MakeObjectTuple(null, Index()).
 								}
@@ -580,7 +580,7 @@ namespace Keysharp.Scripting
 								}
 
 								if (paren.Count > 0 && paren[paren.Count - 1].ToString() == ",")
-									paramExprs.Add(new CodePrimitiveExpression(null));
+									paramExprs.Add(nullPrimitive);
 
 								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), paramExprs.ToArray()));
 							}
@@ -626,6 +626,7 @@ namespace Keysharp.Scripting
 							var (refIndexes, args) = ParseArguments(paren);
 							var tempCode = TokensToCode(paren);
 							var codeStrings = SplitStringBalanced(tempCode, ',', true);//Tricky here: we need the code, not the parsed tokens.
+							var scope = Scope.ToLower();
 
 							//Each argument must be parsed as a single expression.
 							//They cannot all be parsed together as a multi expression because the comma delimiter conflicts.
@@ -635,7 +636,26 @@ namespace Keysharp.Scripting
 								{
 									var arg = args[i1];
 									tempCode = codeStrings[i1];
-									passed.Add(ParseExpression(line, tempCode, arg, /*create*/false));//override the value of create with false because the arguments passed into a function should never be created automatically.
+									var argExpr = ParseExpression(line, tempCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
+
+									if (argExpr is CodeBinaryOperatorExpression cboe)
+									{
+										_ = parent.Add(cboe);
+										argExpr = cboe.Left as CodeVariableReferenceExpression;
+									}
+
+									//Allow for the declaration of a variable at the same time it's passed to a function call.
+									if (argExpr is CodeVariableReferenceExpression cvre)
+									{
+										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName) &&
+												!Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out var _) &&
+												!currentFuncParams.TryPeek(out var _))
+										{
+											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										}
+									}
+
+									passed.Add(argExpr);
 								}
 							}
 							else
@@ -646,7 +666,7 @@ namespace Keysharp.Scripting
 								invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
 								var getmethod = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
 								var expand = VarIdExpand(name);
-								_ = getmethod.Parameters.Add(new CodePrimitiveExpression(null));
+								_ = getmethod.Parameters.Add(nullPrimitive);
 
 								//The returned object is a call to Vars, but since we are doing a function call here
 								//we need to call Invoke() instead, but we still want the arguments that
@@ -671,7 +691,7 @@ namespace Keysharp.Scripting
 							//If a variable by the same name as the function exists at the current or parent scope,
 							//assume it's a lambda. In that case, don't convert it to an invoke here.
 							//Instead, do it in Parser.GeneratecompileUnit().
-							if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), Scope, name))
+							if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, name))
 							{
 								foreach (var ri in refIndexes)
 								{
@@ -700,7 +720,7 @@ namespace Keysharp.Scripting
 								invoke.Parameters.AddRange(ConvertDirectParamsToInvoke(oldInvoke.Parameters));
 							}
 
-							allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
+							allMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(invoke);
 						}
 
 						parts[i] = invoke;
@@ -1243,7 +1263,7 @@ namespace Keysharp.Scripting
 			//by detecting that the last token was an operator with nothing following it.
 			if (parts[parts.Count - 1] is Script.Operator opend)
 			{
-				parts.Add(new CodePrimitiveExpression(""));
+				parts.Add(emptyStringPrimitive);
 			}
 
 			//Unsure what this final loop actually does.
@@ -1271,7 +1291,7 @@ namespace Keysharp.Scripting
 							if (x < 0)
 							{
 								if (LaxExpressions)
-									return new CodePrimitiveExpression(null);
+									return nullPrimitive;
 								else
 									throw new ParseException("Ternary with no condition.");
 							}
@@ -1311,7 +1331,7 @@ namespace Keysharp.Scripting
 								throw new ParseException("Ternary operator must have at least one branch");
 
 							if (branch[1].Count == 0)
-								branch[1].Add(new CodePrimitiveExpression(null));
+								branch[1].Add(nullPrimitive);
 
 							ternary.TrueBranch = ParseExpression(line, code, branch[0], create);
 							ternary.FalseBranch = ParseExpression(line, code, branch[1], create);
@@ -1359,7 +1379,7 @@ namespace Keysharp.Scripting
 							if (LaxExpressions)
 							{
 								if (y > parts.Count - 1)
-									return new CodePrimitiveExpression(null);
+									return nullPrimitive;
 							}
 
 							invoke.Method = (CodeMethodReferenceExpression)InternalMethods.OperateUnary;
@@ -1410,12 +1430,12 @@ namespace Keysharp.Scripting
 								{
 									if (parts[x] is Script.Operator sox && sox == Script.Operator.TernaryA)
 									{
-										parts[x] = new CodePrimitiveExpression(null);
+										parts[x] = nullPrimitive;
 										goto next;
 									}
 
 									if (y > parts.Count - 1)
-										return new CodePrimitiveExpression(null);
+										return nullPrimitive;
 								}
 								else
 									throw new ParseException(ExInvalidExpression);
@@ -1556,12 +1576,12 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
-						expr.Add(new CodePrimitiveExpression(null));
+						expr.Add(nullPrimitive);
 						//expr.Add(new CodeSnippetExpression("UnsetArg.Default"));
 					}
 
 					if (i == parts.Length - 1)
-						expr.Add(new CodePrimitiveExpression(null));
+						expr.Add(nullPrimitive);
 
 					//expr.Add(new CodeSnippetExpression("UnsetArg.Default"));
 					continue;

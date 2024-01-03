@@ -420,3 +420,37 @@ if (xx == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+xx := 0
+
+try loop
+{
+	xx++
+	if (xx == 5)
+		break
+
+}
+
+if (xx == 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+xx := 0
+
+try while (xx < 5)
+	xx++
+
+if (xx == 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+xx := 0
+
+try xx++
+
+if (xx == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

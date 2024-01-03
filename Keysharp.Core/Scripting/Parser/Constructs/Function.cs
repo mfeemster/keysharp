@@ -266,7 +266,7 @@ namespace Keysharp.Scripting
 					if (opt)
 					{
 						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(nullPrimitive)));
 					}
 
 					if (byref)
@@ -303,7 +303,7 @@ namespace Keysharp.Scripting
 					else if (code[i] == Multicast)
 					{
 						_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-						_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+						_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(nullPrimitive)));
 					}
 					else
 					{
@@ -323,7 +323,7 @@ namespace Keysharp.Scripting
 						if (x == i)
 						{
 							_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-							_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+							_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(nullPrimitive)));
 						}
 						else
 						{
@@ -332,13 +332,13 @@ namespace Keysharp.Scripting
 							if (sub.ToLower() == "unset")
 							{
 								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(nullPrimitive)));
 								//currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodeSnippetExpression("UnsetArg.Default"))));
 							}
 							else if (sub.Length == 0)
 							{
 								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(null))));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(nullPrimitive)));
 							}
 							else if (wasstr)
 							{

@@ -2252,7 +2252,6 @@ AdjustMasterVolumeSliderPos()
 MasterPeak()
 {
 	global audioMeter
-	peak := 0
-	ComCall 3, audioMeter, "float*", &peak
+	ComCall 3, audioMeter, "float*", &peak := 0
 	return peak
 }

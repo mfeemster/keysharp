@@ -190,13 +190,13 @@ else
 
 class MyArray extends Array
 {
-__Item[index]
-{
-	get
+	__Item[index]
 	{
-		return 123
+		get
+		{
+			return 123
+		}
 	}
-}
 }
 
 classname := MyArray()
@@ -220,13 +220,13 @@ else
 
 class MyMap extends Map
 {
-__Item[index]
-{
-	get
+	__Item[index]
 	{
-		return 321
+		get
+		{
+			return 321
+		}
 	}
-}
 }
 
 classname := MyMap()
@@ -250,24 +250,24 @@ else
 
 class base1
 {
-__Item[index]
-{
-	get
+	__Item[index]
 	{
-		return 1
+		get
+		{
+			return 1
+		}
 	}
-}
 }
 
 class sub1 extends base1
 {
-__Item[index]
-{
-	get
+	__Item[index]
 	{
-		return 2
+		get
+		{
+			return 2
+		}
 	}
-}
 }
 
 class subarr1 extends Array
@@ -276,13 +276,13 @@ class subarr1 extends Array
 
 class subarr2 extends subarr1
 {
-__Item[index]
-{
-	get
+	__Item[index]
 	{
-		return 3
+		get
+		{
+			return 3
+		}
 	}
-}
 }
 
 obj := sub1()
@@ -313,13 +313,13 @@ class submap1 extends Map
 
 class submap2 extends submap1
 {
-__Item[index]
-{
-	get
+	__Item[index]
 	{
-		return 4
+		get
+		{
+			return 4
+		}
 	}
-}
 }
 
 obj := submap2()

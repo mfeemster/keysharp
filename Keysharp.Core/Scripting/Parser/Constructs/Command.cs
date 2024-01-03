@@ -131,7 +131,7 @@ namespace Keysharp.Scripting
 			code = code.Trim(Spaces);
 
 			if (code.Length == 0)
-				return new CodePrimitiveExpression(null);
+				return nullPrimitive;
 
 			if (expr && code.Length > 2 && code[0] == Resolve && code[code.Length - 1] == Resolve)
 				code = code.Substring(1, code.Length - 2);
@@ -157,7 +157,7 @@ namespace Keysharp.Scripting
 					if (explicitExpr)
 						throw;
 
-					return new CodePrimitiveExpression(null);
+					return nullPrimitive;
 				}
 			}
 
