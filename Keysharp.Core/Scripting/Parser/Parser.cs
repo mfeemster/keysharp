@@ -74,6 +74,7 @@ namespace Keysharp.Scripting
 			FlowDefault,
 			FlowFor,
 			FlowElse,
+			FlowExtends,
 			FlowGosub,
 			FlowGoto,
 			FlowIf,
@@ -180,6 +181,8 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
+
+		public static string GetKeywords() => string.Join(' ', keywords);
 
 		public static string TrimParens(string code)
 		{
@@ -744,7 +747,7 @@ namespace Keysharp.Scripting
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
 
-			_ = initial.Add(new CodeSnippetExpression("HandleCommandLineParams(args)"));
+			_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Env.HandleCommandLineParams(args)"));
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
 			//_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));

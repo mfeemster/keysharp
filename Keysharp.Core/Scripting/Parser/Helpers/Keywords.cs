@@ -99,6 +99,7 @@ namespace Keysharp.Scripting
 		internal const string FlowContinue = "continue";
 		internal const string FlowDefault = "default";
 		internal const string FlowElse = "else";
+		internal const string FlowExtends = "extends";
 		internal const string FlowFinally = "finally";
 		internal const string FlowFor = "for";
 		internal const string FlowGosub = "gosub";

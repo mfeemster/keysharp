@@ -345,9 +345,14 @@ using static Keysharp.Scripting.Script.Operator;
 			foreach (CompilerError error in results)
 			{
 				var file = string.IsNullOrEmpty(error.FileName) ? filename : error.FileName;
+				file = Path.GetFileName(file);
+
+				if (file.Length == 0)
+					file = "*";
+
 				_ = !error.IsWarning
-					? sbe.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}")
-					: sbw.AppendLine($"{Path.GetFileName(file)}, line {error.Line}: {error.ErrorText}");
+					? sbe.AppendLine($"{file}, line {error.Line}: {error.ErrorText}")
+					: sbw.AppendLine($"{file}, line {error.Line}: {error.ErrorText}");
 			}
 
 			return (sbe.ToString(), sbw.ToString());

@@ -12,13 +12,9 @@ namespace Keysharp.Core
 {
 	public static class Reflections
 	{
-#if DEBUG
 		internal static Dictionary<string, MethodInfo> flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
-#endif
 		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
-
 		internal static Dictionary<string, Assembly> loadedAssemblies;
-
 		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
 		internal static sttd stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
@@ -44,9 +40,7 @@ namespace Keysharp.Core
 			typeToStringMethods = new ttsd(sttcap / 5);
 			typeToStringProperties = new ttsd(sttcap / 5);
 			loadedAssemblies = new Dictionary<string, Assembly>();
-#if DEBUG
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
-#endif
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 			stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		}
@@ -82,13 +76,12 @@ namespace Keysharp.Core
 					 .Where(p => p.GetCustomAttribute<PublicForTestOnly>() == null))
 				flatPublicStaticProperties.TryAdd(property.Name, property);
 
-#if DEBUG
-
 			foreach (var method in types
 					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
 					 .Where(m => !m.IsSpecialName && m.GetCustomAttribute<PublicForTestOnly>() == null))
 				flatPublicStaticMethods.TryAdd(method.Name, method);
 
+#if DEBUG
 			var mlist = flatPublicStaticMethods.Keys.ToList();
 			mlist.Sort();
 			var plist = flatPublicStaticProperties.Keys.ToList();

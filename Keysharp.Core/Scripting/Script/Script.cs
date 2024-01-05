@@ -267,6 +267,14 @@ namespace Keysharp.Scripting
 
 		public static void ListVars() => mainWindow?.ShowInternalVars();
 
+		public static string GetPublicStaticPropertyNames()
+		{
+			var l1 = Reflections.flatPublicStaticMethods.Keys.ToList();
+			l1.AddRange(Reflections.flatPublicStaticProperties.Keys);
+			var hs = new HashSet<string>(l1);
+			return string.Join(' ', hs);
+		}
+
 		public static string GetVars(object obj = null)
 		{
 			var tabLevel = 0;

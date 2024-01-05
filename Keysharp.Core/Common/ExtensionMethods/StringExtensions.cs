@@ -372,5 +372,9 @@ namespace System//Extension methods should be in the same namespace of the objec
 		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		? str.Substring(0, str.LastIndexOf(trim))
 		: str;
+		internal static string TrimStartOf(this string str, string trim, bool ignoreCase = true) =>
+		str.StartsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
+		? str.Substring(trim.Length)
+		: str;
 	}
 }

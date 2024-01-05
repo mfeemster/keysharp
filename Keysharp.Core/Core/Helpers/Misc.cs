@@ -6,7 +6,7 @@ using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
-	public class Misc
+	public static class Misc
 	{
 		public static Keysharp.Core.Array Array(params object[] obj)
 		{

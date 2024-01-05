@@ -31,7 +31,23 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Scintilla5.NET" Version="5.3.3.12" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x86\Lexilla.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x86\Scintilla.dll">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

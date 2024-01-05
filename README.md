@@ -391,6 +391,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * [Using SendMessage() with string](https://gist.github.com/BoyCook/5075907)
 * [Program icon](https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/) is a derivative of work by [Bamicon](https://thenounproject.com/bamicon/)
 * [NAudio](https://github.com/naudio/NAudio)
+* [Scintilla setup code in Keyview](https://github.com/robinrodricks/ScintillaNET.Demo)
 * Various posts on [Stack Overflow](https://stackoverflow.com/)
 
 ## Who do I talk to? ##
