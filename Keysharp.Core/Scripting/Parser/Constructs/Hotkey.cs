@@ -681,7 +681,14 @@ namespace Keysharp.Scripting
 								}
 								else
 								{
-									var expr = ParseMultiExpression(codeLine, replacement, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+									var replacementToUse = replacement;
+
+									if (IsCommand(replacement))
+									{
+										replacementToUse = ConvertCommandToExpression(replacement);
+									}
+
+									var expr = ParseMultiExpression(codeLine, replacementToUse, true);//Original appeared to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 									method.Statements.AddRange(expr);
 								}
 							}

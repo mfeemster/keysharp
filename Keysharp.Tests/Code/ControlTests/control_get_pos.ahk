@@ -9,10 +9,10 @@ BtnShow.OnEvent("Click", "GetPos")
 MyGui.Show()
 
 GetPos() {
-    pos1 := ControlGetPos("X = 10 Y = 10", "Get Positions")
-    pos2 := ControlGetPos("X = 10 Y = 50", "Get Positions")
-    pos3 := ControlGetPos("X = 10 Y = 90", "Get Positions")
-    MsgBox("X: " pos1["X"] " Y: " pos1["Y"] " Width: " pos1["Width"] " Height: " pos1["Height"], "Button 1")
-    MsgBox("X: " pos2["X"] " Y: " pos2["Y"] " Width: " pos2["Width"] " Height: " pos2["Height"], "Button 2")
-    MsgBox("X: " pos3["X"] " Y: " pos3["Y"] " Width: " pos3["Width"] " Height: " pos3["Height"], "Button 3")
+    ControlGetPos(&x1, &y1, &w1, &h1, "X = 10 Y = 10", "Get Positions")
+    ControlGetPos(&x2, &y2, &w2, &h2, "X = 10 Y = 50", "Get Positions")
+    ControlGetPos(&x3, &y3, &w3, &h3, "X = 10 Y = 90", "Get Positions")
+    MsgBox("X: " x1 " Y: " y1 " Width: " w1 " Height: " h1, "Button 1")
+    MsgBox("X: " x2 " Y: " y2 " Width: " w2 " Height: " h2, "Button 2")
+    MsgBox("X: " x3 " Y: " y3 " Width: " w3 " Height: " h3, "Button 3")
 }

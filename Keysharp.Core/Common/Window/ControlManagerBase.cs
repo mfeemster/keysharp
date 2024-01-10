@@ -34,7 +34,7 @@
 
 		internal abstract Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract Keysharp.Core.Map ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal abstract void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null);
 
 		internal abstract long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText);
 

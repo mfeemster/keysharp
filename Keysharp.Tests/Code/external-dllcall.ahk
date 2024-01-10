@@ -89,3 +89,19 @@ if (result == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+str := "hello"
+DllCall("msvcrt.dll\_wcsrev", "Str", str)
+
+if (str == "olleh")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+str2 := "world"
+DllCall("msvcrt.dll\_wcsrev", "Str", &str2)
+
+if (str2 == "dlrow")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

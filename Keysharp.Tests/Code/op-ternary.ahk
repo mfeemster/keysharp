@@ -266,3 +266,25 @@ if (x = 22)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+x := 1
+y := x == 1? true:false
+
+if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := x == 1?true:false
+
+if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := x == 1 ?true:false
+
+if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

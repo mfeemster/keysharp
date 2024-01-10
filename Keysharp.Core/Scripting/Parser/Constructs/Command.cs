@@ -111,19 +111,35 @@ namespace Keysharp.Scripting
 			return parts;
 		}
 
-		private bool ParseCommand(CodeLine line, string code)
+		private string ConvertCommandToExpression(string code)
 		{
+			var span = code.AsSpan();
 			var firstSpace = code.IndexOf(' ');
-			var lineNumber = codeLines.IndexOf(line);
 
 			if (firstSpace != -1)
 			{
-				var newCode = string.Concat(code.AsSpan(0, firstSpace).TrimEnd(','), "(", code.AsSpan(firstSpace + 1), ")");
+				return string.Concat(span.Slice(0, firstSpace).TrimEnd(','), "(", span.Slice(firstSpace + 1), ")");
+			}
+			else if (span.IndexOfAny(ParensSv) == -1)
+			{
+				return $"{code}()";
+			}
+
+			return "";
+		}
+
+		private bool ParseCommand(CodeLine line, string code)
+		{
+			var newCode = ConvertCommandToExpression(code);
+
+			if (newCode.Length > 0)
+			{
+				var lineNumber = codeLines.IndexOf(line);
 				codeLines[lineNumber] = new CodeLine(line.FileName, line.LineNumber, newCode);
 				return true;
 			}
-
-			return false;
+			else
+				return false;
 		}
 
 		private CodeExpression ParseCommandParameter(CodeLine line, string code, bool byref = false, bool expr = false)

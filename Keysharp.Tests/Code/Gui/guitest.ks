@@ -16,7 +16,10 @@ Gui2 := ""
 
 global gb3Hwnd, gui2StyleButtonHwnd
 
-winpos := ""
+winposx := ""
+winposy := ""
+winposw := ""
+winposh := ""
 
 ; ┌────────────────┐
 ; │  Tab One Menu  │
@@ -920,8 +923,8 @@ Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w500 +Multiline")
 
 SecondGUI() {
 	Gui2.Show()
-	EditPos := ControlGetPos(Gui2Edit.Hwnd)
-	;MsgBox("Edit position: " . EditPos["X"] . " " EditPos["Y"])
+	ControlGetPos(&x, &y,,, Gui2Edit.Hwnd)
+	;MsgBox("Edit position: " . x . " " y)
 }
 
 GetTheControls() {
@@ -934,10 +937,7 @@ GetTheControls() {
 
 	MsgBox(TheMsg, "Testing different methods of finding controls")
 	Sleep(2000)
-	ThePos := ControlGetPos(Gui2FindCtrlsButton.Hwnd)
-
-
-
+	ControlGetPos(&x, &y,,, Gui2FindCtrlsButton.Hwnd)
 }
 
 FindSecondGuiEdit() {
@@ -1925,18 +1925,18 @@ Reset_Edit_Style() {
 ; └──────────────────────┘
 
 MoveGui() {
+	global winposx, winposy, winposw, winposh
 	Tab.UseTab("Second")
 	MyGui.UseGroup(gb2_TabTwo)
-	global winpos
-	winpos := WinGetPos(MyGui)
+	WinGetPos(&winposx, &winposy, &winposw, &winposh, MyGui)
 	MyGui.Move(100, 100, 200, 200)
-
 }
 
 MoveGuiBack() {
+	global winposx, winposy, winposw, winposh
 	Tab.UseTab("Second")
 	MyGui.UseGroup(gb2_TabTwo)
-	MyGui.Move(winpos["X"], winpos["Y"], winpos["Width"], winpos["Height"])
+	MyGui.Move(winposx, winposy, winposw, winposh)
 }
 
 ; ┌──────────────────────────┐

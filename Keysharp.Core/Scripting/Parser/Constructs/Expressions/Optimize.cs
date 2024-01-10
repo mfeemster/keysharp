@@ -37,23 +37,31 @@ namespace Keysharp.Scripting
 
 			try
 			{
-				if (invoke.Parameters[1] is CodePrimitiveExpression cpe1)
-					left = cpe1.Value;
-				else if (invoke.Parameters[1] is CodeSnippetExpression cse1)
-					left = cse1.Value;
+				if (invoke.Parameters[1] is CodeSnippetExpression cse1)//Longs.
+				{
+					var ll = cse1.Value.ParseLong(false);
 
-				if (invoke.Parameters[2] is CodePrimitiveExpression cpe2)
+					if (ll != null)
+						left = ll;
+				}
+				else if (invoke.Parameters[1] is CodePrimitiveExpression cpe1)//Strings and doubles.
+					left = cpe1.Value;
+
+				if (invoke.Parameters[2] is CodeSnippetExpression cse2)
+				{
+					var rl = cse2.Value.ParseLong(false);
+
+					if (rl != null)
+						right = rl;
+				}
+				else if (invoke.Parameters[2] is CodePrimitiveExpression cpe2)
 					right = cpe2.Value;
-				else if (invoke.Parameters[2] is CodeSnippetExpression cse2)
-					right = cse2.Value;
 
 				if (left != null && right != null)
 				{
-					var ll = left.ParseLong(false);
-					var rl = right.ParseLong(false);
 					object result;
 
-					if (ll is long l && rl is long r)
+					if (left is long l && right is long r)
 					{
 						result = Script.Operate((Script.Operator)invoke.Parameters[0].UserData[RawData], l, r);
 
@@ -61,9 +69,10 @@ namespace Keysharp.Scripting
 							return new CodeSnippetExpression($"{lresult}L");
 					}
 					else
+					{
 						result = Script.Operate((Script.Operator)invoke.Parameters[0].UserData[RawData], left, right);
-
-					return new CodePrimitiveExpression(result);
+						return new CodePrimitiveExpression(result);
+					}
 				}
 			}
 			catch (Exception)

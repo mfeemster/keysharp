@@ -28,6 +28,8 @@
 
   <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
+    <Content Include="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Lexilla.dll" />
+    <Content Include="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Scintilla.dll" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,6 +50,14 @@
     <None Update="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x86\Scintilla.dll">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Lexilla.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Scintilla.dll" />
   </ItemGroup>
 
 </Project>

@@ -267,7 +267,9 @@ namespace Keysharp.Scripting
 
 						case "REQUIRES":
 						{
-							if (p1.StartsWith("AutoHotkey") || p1.StartsWith("Keysharp"))
+							var reqAhk = p1.StartsWith("AutoHotkey");
+
+							if (reqAhk || p1.StartsWith("Keysharp"))
 							{
 								var splits = p1.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -276,6 +278,10 @@ namespace Keysharp.Scripting
 									var ver = splits[1].Trim(new char[] { 'v', '+' });
 									var plus = splits[1].EndsWith('+');
 									var reqvers = Script.ParseVersionToInts(ver);
+
+									//If it's AHK v2.x, then we support it, so don't check.
+									if (reqAhk && ver.StartsWith("2."))
+										break;
 
 									if (!reqvers.Any(x => x != 0))
 										throw new ParseException($"This script requires {p1}", line, name);
@@ -490,30 +496,41 @@ namespace Keysharp.Scripting
 				}
 				else
 				{
-					var cont = Parser.IsContinuationLine(code, true);
-					var peek = source.Peek();
+					var splits = code.Split(Spaces, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-					if (code.EndsWith('=') && peek != '(' && peek != '[')//Very special case for ending with = If the next line is not a paren or bracket, it's an empty assignment, otherwise it's the start of a continuation statement.
-						cont = false;
-
-					//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
-					var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-
-					if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']')) && ((code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
-										//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
-										(code.Length > 1 &&
-										 !code.Contains('(') && !code.Contains(')') &&
-										 code[code.Length - 2] != ' ' &&
-										 code[code.Length - 2] != '\t'
-										)
-									   )
-								)
-					   )
+					//First test for lines like:
+					//  } else
+					//because they are not continuation lines.
+					if (splits.Length > 1 && splits[0][0] == BlockClose && Parser.flowOperators.Contains(splits[1]))
 					{
-						if (cont)
-							code += SingleSpace;
+					}
+					else
+					{
+						var cont = Parser.IsContinuationLine(code, true);
+						var peek = source.Peek();
 
-						code += ParseContinuations(source, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+						if (code.EndsWith('=') && peek != '(' && peek != '[')//Very special case for ending with = If the next line is not a paren or bracket, it's an empty assignment, otherwise it's the start of a continuation statement.
+							cont = false;
+
+						//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
+						var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+
+						if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']')) && ((code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
+											//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
+											(code.Length > 1 &&
+											 !code.Contains('(') && !code.Contains(')') &&
+											 code[code.Length - 2] != ' ' &&
+											 code[code.Length - 2] != '\t'
+											)
+										   )
+									)
+						   )
+						{
+							if (cont)
+								code += SingleSpace;
+
+							code += ParseContinuations(source, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
+						}
 					}
 				}
 

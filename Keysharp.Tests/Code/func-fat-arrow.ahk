@@ -416,3 +416,14 @@ If (tot == 34)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+x := true
+y := false
+
+y := true ? (a) => 1 : (b) => 2
+z := y()
+
+If (z == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

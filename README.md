@@ -119,6 +119,10 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
+* Function calls on the right side of the `:=` operator must use parentheses and must not use command style.
+	+ `x := func 123 ; not supported`
+	+ `x := func, 123 ; not supported`
+	+ `x := func(123) ; supported`
 * The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
 * `DllCall()` has the following caveats:
 	+ An alternative to passing a `Buffer` object with type `Ptr` to a function which will allocate and place string data into the buffer, the caller can instead use a `StringBuffer` object to hold the new string. `wsprintf()` is one such example.
@@ -167,7 +171,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `this.propname` refers to the property in the most derived subclass.
 	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
-* `WinGetPos()` and `WinGetClientPos()` do not take reference parameters. Instead, they take 4 optional arguments and return a `Map` with the following entries: `X`, `Y`, `Width`, `Height`.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 	+ The following options are different:
 		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
@@ -295,6 +298,9 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 			+ `lam := &a => a := (a * 2)`
 	+ For an argument to be passed as a reference, the function parameter in that position must be declared as a reference:
 		+ `func(&p1) { }`
+	+ Reference parameters cannot be optional because C# does not support it.
+		+ `func(p1, &p2 := 0) ; not supported`
+		+ `func(p1, &p2) ; supported`
 	+ When passing a class member variable as a dynamic reference to a function from within another function of that same class, the `this` prefix must be used:
 ```
 	class myclass
@@ -347,7 +353,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * Spin boxes with paired buddy controls are not supported. Just use the regular spin box in C#.
 * `IL_Create()` only takes one parameter: `LargeIcons`. `InitialCount` and `GrowCount` are no longer needed because memory is handled internally.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
-* `PixelGetColor()` does not accept a mode as its third parameter.
+* `PixelGetColor()` ignores the `mode` parameter.
 * The `3` and `5` options for `DirSelect()` don't apply in C#.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
@@ -385,7 +391,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * [Cross platform INI file processor](https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class)
 * [P/Invoke calls](https://www.pinvoke.net)
 * [Tuple splatter](https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter)
-* [Rich text box with line numbers in Keyview](https://www.codeproject.com/Articles/38858/Line-Numbers-for-RichText-Control-in-C)
 * [Semver version parsing](https://github.com/maxhauser/semver)
 * [PictureBox derivation](https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat)
 * [Using SendMessage() with string](https://gist.github.com/BoyCook/5075907)

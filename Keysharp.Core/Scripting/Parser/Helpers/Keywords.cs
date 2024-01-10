@@ -597,11 +597,12 @@ namespace Keysharp.Scripting
 		//internal const string AssignShiftRight = ">>" + Equal;
 		internal const string Throw = "throw";
 		internal const string TrueTxt = "true";
-		internal const string VarExt = "#_@$?";
+		internal const string VarExt = "#_@";//$?";
 		internal static readonly char[] BlockOpenAndSpace = { BlockOpen, SingleSpace };
 		internal static readonly char[] BlockOpenParenOpen = { BlockOpen, ParenOpen };
 		internal static SearchValues<char> BlockOpenParenOpenSv = SearchValues.Create(BlockOpenParenOpen);
 		internal static readonly char[] Parens = { ParenOpen, ParenClose };
+		internal static SearchValues<char> ParensSv = SearchValues.Create(Parens);
 		internal static readonly char[] BlockOpenSpaceAndParens = BlockOpenAndSpace.Concat(Parens);
 		internal static readonly char[] CrLf = "\r\n".ToCharArray();
 		internal static SearchValues<char> CrLfSv = SearchValues.Create(CrLf);
@@ -621,6 +622,7 @@ namespace Keysharp.Scripting
 		internal static SearchValues<char> SpaceMultiDelimSv;
 		internal static readonly char[] FlowDelimiters;
 		internal static SearchValues<char> FlowDelimitersSv;
+		internal static readonly char[] FlowDelimiters2;
 
 #if !LEGACY
 		internal const char LastVar = '$';
@@ -664,6 +666,13 @@ namespace Keysharp.Scripting
 			FlowDelimiters[1] = HotkeyBound;
 			Spaces.CopyTo(FlowDelimiters, offset);
 			FlowDelimitersSv = SearchValues.Create(FlowDelimiters);
+			offset = 4;
+			FlowDelimiters2 = new char[Spaces.Length + offset];
+			FlowDelimiters2[0] = Multicast;
+			FlowDelimiters2[1] = BlockOpen;
+			FlowDelimiters2[2] = ParenOpen;
+			FlowDelimiters2[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
+			Spaces.CopyTo(FlowDelimiters2, offset);
 			SpaceMultiDelim = new char[Spaces.Length + 1];
 			SpaceMultiDelim[0] = Multicast;
 			Spaces.CopyTo(SpaceMultiDelim, 1);

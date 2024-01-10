@@ -35,11 +35,52 @@ b := false
 try
 {
 	throw Error("asdf")
+} catch
+	b := true
+
+if (b == true)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	throw Error("asdf")
 }
 catch Error
 {
 	b := true
 }
+
+if (b == true)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	throw Error("asdf")
+} catch Error
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	throw Error("asdf")
+} catch Error
+	b := true
 
 if (b == true)
 	FileAppend, "pass", "*"
@@ -451,6 +492,13 @@ xx := 0
 try xx++
 
 if (xx == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+try xx := StrLen("hello")
+
+if (xx == 5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

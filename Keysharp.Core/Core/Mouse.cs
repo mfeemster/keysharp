@@ -35,16 +35,16 @@ namespace Keysharp.Core
 		/// <item><term><c>Relative</c></term>: <description>treat the coordinates as relative offsets from the current mouse position.</description></item>
 		/// </list>
 		/// </param>
-		public static void Click(object obj)
+		public static void Click(object options)
 		{
-			var options = obj.As();
+			var opts = options.As();
 			int x = 0, y = 0;
 			var vk = 0u;
 			var event_type = KeyEventTypes.KeyDown;
 			var repeat_count = 0L;
 			var move_offset = false;
 			var ht = Script.HookThread;
-			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
+			ht.ParseClickOptions(opts, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
 											  , vk, x, y, 0, 0, repeat_count, event_type, ThreadAccessors.A_DefaultMouseSpeed, move_offset);//, true, true);
@@ -70,10 +70,10 @@ namespace Keysharp.Core
 		/// <item><term>Relative</term>: <description>Same as Window.</description></item>
 		/// </list>
 		/// </param>
-		public static void CoordMode(object obj0, object obj1 = null)
+		public static void CoordMode(object targetType, object relativeTo = null)
 		{
-			var target = obj0.As();
-			var mode = obj1.As(Keyword_Screen);
+			var target = targetType.As();
+			var mode = relativeTo.As(Keyword_Screen);
 			CoordModeType rel;
 
 			if (Options.IsOption(mode, Keyword_Relative))
@@ -101,62 +101,32 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static void MouseClick(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null, object obj4 = null, object obj5 = null, object obj6 = null)
+		public static void MouseClick(object whichButton = null, object x = null, object y = null, object clickCount = null, object speed = null, object downOrUp = null, object relative = null)
 		{
-			var whichButton = obj0.As();
-			var x = obj1.Ai(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
-			var y = obj2.Ai(KeyboardMouseSender.CoordUnspecified);
-			var repeatCount = obj3.Al(1);
-			var speed = (int)obj4.Al(ThreadAccessors.A_DefaultMouseSpeed);
-			var downOrUp = obj5.As();
-			var relative = obj6.As();
+			var wb = whichButton.As();
+			var ix = x.Ai(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
+			var iy = y.Ai(KeyboardMouseSender.CoordUnspecified);
+			var repeatCount = clickCount.Al(1);
+			var ispeed = (int)speed.Al(ThreadAccessors.A_DefaultMouseSpeed);
+			var du = downOrUp.As();
+			var rel = relative.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-			PerformMouse(Actions.ACT_MOUSECLICK, whichButton, x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
-						 speed, relative, repeatCount, downOrUp);//, true, true);
+			PerformMouse(Actions.ACT_MOUSECLICK, wb, ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
+						 ispeed, rel, repeatCount, du);//, true, true);
 		}
 
-		public static void MouseClickDrag(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null, object obj6 = null)
+		public static void MouseClickDrag(object whichButton, object x1, object y1, object x2, object y2, object speed = null, object relative = null)
 		{
-			var whichButton = obj0.As();
-			var x1 = obj1.Ai(KeyboardMouseSender.CoordUnspecified);//If no starting coords are specified, mark it as "use the current mouse position".
-			var y1 = obj2.Ai(KeyboardMouseSender.CoordUnspecified);
-			var x2 = obj3.Ai(KeyboardMouseSender.CoordUnspecified);
-			var y2 = obj4.Ai(KeyboardMouseSender.CoordUnspecified);
-			var speed = (int)obj5.Al(ThreadAccessors.A_DefaultMouseSpeed);
-			var relative = obj6.As();
+			var wb = whichButton.As();
+			var ix1 = x1.Ai(KeyboardMouseSender.CoordUnspecified);//If no starting coords are specified, mark it as "use the current mouse position".
+			var iy1 = y1.Ai(KeyboardMouseSender.CoordUnspecified);
+			var ix2 = x2.Ai(KeyboardMouseSender.CoordUnspecified);
+			var iy2 = y2.Ai(KeyboardMouseSender.CoordUnspecified);
+			var ispeed = (int)speed.Al(ThreadAccessors.A_DefaultMouseSpeed);
+			var rel = relative.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-			PerformMouse(Actions.ACT_MOUSECLICKDRAG, whichButton, x1, y1, x2, y2,
-						 speed, relative, 1, "");//, true, true);
-		}
-
-		public static void MouseGetPos()
-		{
-			object x = null, y = null, w = null, c = null, obj = null;
-			MouseGetPos(ref x, ref y, ref w, ref c, obj);
-		}
-
-		public static void MouseGetPos(ref object x)
-		{
-			object y = null, w = null, c = null, obj = null;
-			MouseGetPos(ref x, ref y, ref w, ref c, obj);
-		}
-
-		public static void MouseGetPos(ref object x, ref object y)
-		{
-			object w = null, c = null, obj = null;
-			MouseGetPos(ref x, ref y, ref w, ref c, obj);
-		}
-
-		public static void MouseGetPos(ref object x, ref object y, ref object w)
-		{
-			object c = null, obj = null;
-			MouseGetPos(ref x, ref y, ref w, ref c, obj);
-		}
-
-		public static void MouseGetPos(ref object x, ref object y, ref object w, ref object c)
-		{
-			object obj = null;
-			MouseGetPos(ref x, ref y, ref w, ref c, obj);
+			PerformMouse(Actions.ACT_MOUSECLICKDRAG, wb, ix1, iy1, ix2, iy2,
+						 ispeed, rel, 1, "");//, true, true);
 		}
 
 		/// <summary>
@@ -171,9 +141,9 @@ namespace Keysharp.Core
 		/// <item><term>2</term>: retrieve the <paramref name="control"/> ID rather than its class name.</item>
 		/// </list>
 		/// </param>
-		public static void MouseGetPos(ref object x, ref object y, ref object w, ref object c, object obj)
+		public static void MouseGetPos(ref object outputVarX, ref object outputVarY, ref object outputVarWin, ref object outputVarControl, object flag = null)
 		{
-			var mode = obj.Al();
+			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
 			var found = Window.WindowManager.WindowFromPoint(pos);
 			var win = found.Handle.ToInt64();
@@ -198,34 +168,33 @@ namespace Keysharp.Core
 				ly -= location.Y;
 			}
 
-			x = lx;
-			y = ly;
-			w = win;
-			c = control;
+			outputVarX = lx;
+			outputVarY = ly;
+			outputVarWin = win;
+			outputVarControl = control;
 		}
 
-		public static void MouseMove(object obj0, object obj1, object obj2 = null, object obj3 = null)
+		public static void MouseMove(object x, object y, object speed = null, object relative = null)
 		{
-			var x = obj0.Ai(KeyboardMouseSender.CoordUnspecified);
-			var y = obj1.Ai(KeyboardMouseSender.CoordUnspecified);
-			var speed = (int)obj2.Al(ThreadAccessors.A_DefaultMouseSpeed);
-			var relative = obj3.As();
+			var ix = x.Ai(KeyboardMouseSender.CoordUnspecified);
+			var iy = y.Ai(KeyboardMouseSender.CoordUnspecified);
+			var s = (int)speed.Al(ThreadAccessors.A_DefaultMouseSpeed);
+			var r = relative.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-			PerformMouse(Actions.ACT_MOUSEMOVE, "", x, y, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
-						 speed, relative, 1, "");//, true, true);
+			PerformMouse(Actions.ACT_MOUSEMOVE, "", ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
+						 s, r, 1, "");//, true, true);
 		}
 
-		public static void SetDefaultMouseSpeed(object obj) => Accessors.A_DefaultMouseSpeed = obj;
+		public static void SetDefaultMouseSpeed(object speed) => Accessors.A_DefaultMouseSpeed = speed;
 
-		public static void SetMouseDelay(object obj0, object obj1 = null)
+		public static void SetMouseDelay(object delay, object play = null)
 		{
-			var play = string.Empty;
-			play = obj1.As().ToLowerInvariant();
-			var isplay = play == "play";
+			var p = play.As().ToLowerInvariant();
+			var isplay = p == "play";
 			var del = isplay ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay;
 
-			if (obj0 != null)
-				del = obj0.Al();
+			if (delay != null)
+				del = delay.Al();
 
 			if (isplay)
 				Accessors.A_MouseDelayPlay = del;

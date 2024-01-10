@@ -36,6 +36,11 @@ if (x == 1) {
 	FileAppend, "fail", "*"
 }
 
+if (x == 1) {
+	FileAppend, "pass", "*"
+} else
+	FileAppend, "fail", "*"
+
 ; Ensure else blocks are attached to the proper parent if block.
 x := 1
 
@@ -90,6 +95,28 @@ if (x ==)
 	FileAppend, "fail", "*"
 else if (x !=)
 	FileAppend, "pass", "*"
+
+x := ""
+b := true
+c := false
+
+If b
+    x := 123
+
+if (c)
+    b := 123
+else
+    b := 456
+	
+if (x == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (b == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 arr := [123, 456, 789]
 

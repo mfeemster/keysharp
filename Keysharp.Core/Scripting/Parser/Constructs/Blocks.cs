@@ -1,10 +1,37 @@
 ﻿using System.CodeDom;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
+		private void CloseElseBlocks()
+		{
+			var ifCount = blocks.Where(b => b.Kind == CodeBlock.BlockKind.IfElse).Count();
+
+			//Pop previous undeclared else blocks, such as:
+			//if ()
+			//{
+			//  if ()
+			//  {
+			//  }
+			//}//When the parser gets here, it needs to pop the previous else which was never declared.
+			//
+			//Also handles this:
+			//if ()
+			//  x := 123
+			//
+			//if (b)//Elses need to be popped here.
+			//{
+			//}
+			//else
+			//{
+			//}
+			while (elses.Count > ifCount)
+				_ = elses.Pop();
+		}
+
 		private void CloseBlock(Stack<CodeBlock> stack)
 		{
 			var top = stack.Pop();

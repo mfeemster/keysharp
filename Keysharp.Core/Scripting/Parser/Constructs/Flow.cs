@@ -69,6 +69,7 @@ namespace Keysharp.Scripting
 					var block = new CodeBlock(line, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
 					block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 					_ = CloseTopSingleBlock();
+					CloseElseBlocks();//Also called in Statements. Both places are needed to handle various situations.
 					blocks.Push(block);
 					elses.Push(ifelse.FalseStatements);
 					return new CodeStatement[] { ifelse };
@@ -655,13 +656,13 @@ namespace Keysharp.Scripting
 				{
 					if (parts.Length > 1)
 					{
-						var mutltiexprs = ParseMultiExpression(line, parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
+						var multiexprs = ParseMultiExpression(line, parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
 
 						if (globalFuncVars.PeekOrNull() is List<string> gflist)
 						{
-							var funcglobalvarinitstatements = new List<CodeStatement>(mutltiexprs.Length);
+							var funcglobalvarinitstatements = new List<CodeStatement>(multiexprs.Length);
 
-							foreach (var expr in mutltiexprs)
+							foreach (var expr in multiexprs)
 							{
 								if (expr is CodeExpressionStatement ces)
 								{
@@ -681,6 +682,24 @@ namespace Keysharp.Scripting
 
 							if (funcglobalvarinitstatements.Count > 0)
 								return funcglobalvarinitstatements.ToArray();
+						}
+						else//Strange syntax, but global can be declared outside of a function and it's just ignored.
+						{
+							var codeStatements = new List<CodeStatement>(multiexprs.Length);
+
+							foreach (var expr in multiexprs)
+							{
+								if (expr.Expression is CodeBinaryOperatorExpression cboe && cboe.Left is CodeVariableReferenceExpression cvre2)
+								{
+									allVars[targetClass].GetOrAdd(Scope)[cvre2.VariableName] = cboe.Right;
+									codeStatements.Add(new CodeExpressionStatement(cboe));
+								}
+								else if (expr.Expression is CodeVariableReferenceExpression cvre)
+									allVars[targetClass].GetOrAdd(Scope)[cvre.VariableName] = nullPrimitive;
+							}
+
+							if (codeStatements.Count > 0)
+								return codeStatements.ToArray();
 						}
 					}
 					else if (parts.Length == 1)
@@ -771,39 +790,17 @@ namespace Keysharp.Scripting
 
 					if (parts.Length > 1 && parts[1] != "{")
 					{
-						var templines = new List<CodeLine>
-						{
-							new CodeLine(line.FileName, line.LineNumber, parts[1])
-						};
-						var result = ParseFlow(templines, 0);
-
-						if (result != null)//First check to see if it was a flow statement.
-						{
-							tcf.TryStatements.AddRange(result);
-						}
-						else//If it wasn't, then just parse as a single expression.
-						{
-							var exprResult = ParseSingleExpression(line, parts[1], true);//Allow a single line try statement to create vars.
-
-							if (exprResult != null)
-							{
-								exprResult = OptimizeLoneExpression(exprResult);//Make sure we reduce x++ to only x++ and not (x + 1) - 1.
-								_ = tcf.TryStatements.Add(exprResult);
-							}
-							else
-								throw new ParseException($"The code '{parts[1]}' following a try statement could not be parsed.", line);
-						}
+						var lineIndex = codeLines.IndexOf(line) + 1;
+						codeLines.Insert(lineIndex, new CodeLine(line.FileName, lineIndex, parts[1]));
+						SetLineIndexes();
 					}
-					else
+
+					var block = new CodeBlock(line, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
 					{
-						var block = new CodeBlock(line, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
-						{
-							Type = type
-						};
-						_ = CloseTopSingleBlock();
-						blocks.Push(block);
-					}
-
+						Type = type
+					};
+					_ = CloseTopSingleBlock();
+					blocks.Push(block);
 					return new CodeStatement[] { tcf };
 				}
 

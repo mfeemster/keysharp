@@ -1,8 +1,6 @@
-﻿using ScintillaNET;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Linq;
 using ScintillaNET;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Keyview
 {

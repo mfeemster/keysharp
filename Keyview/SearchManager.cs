@@ -81,7 +81,7 @@ namespace Keyview
 				TextArea.ScrollCaret();
 			}
 
-			SearchBox.Focus();
+			_ = SearchBox.Focus();
 		}
 	}
 }

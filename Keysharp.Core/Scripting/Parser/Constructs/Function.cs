@@ -120,6 +120,7 @@ namespace Keysharp.Scripting
 				codeLines.Insert(n, new CodeLine(line.FileName, line.LineNumber, "{"));
 				codeLines.Insert(n + 1, new CodeLine(line.FileName, line.LineNumber + 1, $"return {theRest}"));
 				codeLines.Insert(n + 2, new CodeLine(line.FileName, line.LineNumber + 2, "}"));
+				SetLineIndexes();
 			}
 
 			var block = new CodeBlock(line, method.Name, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());

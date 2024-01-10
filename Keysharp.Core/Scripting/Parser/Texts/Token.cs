@@ -549,14 +549,7 @@ namespace Keysharp.Scripting
 
 		internal bool IsFlowOperator(string code)
 		{
-			const int offset = 4;
-			var delimiters = new char[Spaces.Length + offset];
-			delimiters[0] = Multicast;
-			delimiters[1] = BlockOpen;
-			delimiters[2] = ParenOpen;
-			delimiters[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
-			Spaces.CopyTo(delimiters, offset);
-			var word = code.Split(delimiters, 2)[0].ToLowerInvariant();
+			var word = code.Split(FlowDelimiters2, 2)[0].ToLowerInvariant();
 
 			if (Scope.Length > 0)
 			{
@@ -682,6 +675,8 @@ namespace Keysharp.Scripting
 
 				if (IsSpace(sym))
 					continue;
+				else if (sym == TernaryA)
+					list.Add("?");
 				else if (IsCommentAt(code, i))
 					MoveToEOL(code, ref i);
 				else if (IsIdentifier(sym) || sym == Resolve || (sym == Concatenate && i + 1 < code.Length && IsIdentifier(code[i + 1])))

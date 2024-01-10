@@ -170,7 +170,7 @@ namespace Keysharp.Core
 		/// <param name="x">The X coordinate of the pixel, which can be expressions. Coordinates are relative to the active window unless CoordMode was used to change that.</param>
 		/// <param name="y">The Y coordinate of the pixel, see <paramref name="X"/>.</param>
 		/// <returns>The color as a hexadecimal string in red-green-blue (RGB) format. For example, the color purple is defined 0x800080 because it has an intensity of 80 for its blue and red components but an intensity of 00 for its green component.</returns>
-		public static string PixelGetColor(object obj0, object obj1)
+		public static string PixelGetColor(object obj0, object obj1, object obj2 = null)
 		{
 			var x = obj0.Ai();
 			var y = obj1.Ai();

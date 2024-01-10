@@ -5,7 +5,6 @@ using System.Linq;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
-
 using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
@@ -59,7 +58,8 @@ namespace Keysharp.Core
 
 		public static Array ControlGetItems(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetItems);
 
-		public static Keysharp.Core.Map ControlGetPos(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetPos);
+		public static void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
+		ControlManager.ControlGetPos(ref outX, ref outY, ref outWidth, ref outHeight, ctrl, title?.ToString(), text?.ToString(), excludeTitle?.ToString(), excludeText?.ToString());
 
 		public static long ControlGetStyle(params object[] obj) => obj.O2S3().Splat(ControlManager.ControlGetStyle);
 
@@ -448,7 +448,29 @@ namespace Keysharp.Core
 
 		public static string WinGetClass(params object[] obj) => SearchWindow(obj, true) is WindowItem win ? win.ClassName : "";
 
-		public static Keysharp.Core.Map WinGetClientPos(params object[] obj) => SearchWindow(obj, true) is WindowItem win ? win.ClientLocation.ToPos() : new Keysharp.Core.Map();
+		public static void WinGetClientPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
+		WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
+
+		private static void WinPosHelper(bool client, ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title, object text, object excludeTitle, object excludeText)
+		{
+			var obj = new[] { title, text, excludeTitle, excludeText };
+			var map = DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? (client ? win.ClientLocation.ToPos() : win.Location.ToPos()) : new Keysharp.Core.Map());
+
+			if (map.Count > 0)
+			{
+				outX = map["X"];
+				outY = map["Y"];
+				outWidth = map["Width"];
+				outHeight = map["Height"];
+			}
+			else
+			{
+				outX = 0.0;
+				outY = 0.0;
+				outWidth = 0.0;
+				outHeight = 0.0;
+			}
+		}
 
 		public static object WinGetControls(params object[] obj)
 		{
@@ -549,7 +571,8 @@ namespace Keysharp.Core
 
 		public static object WinGetPID(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.PID.ToInt64() : 0L);
 
-		public static Keysharp.Core.Map WinGetPos(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Location.ToPos() : new Keysharp.Core.Map());
+		public static void WinGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
+		WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
 
 		public static string WinGetProcessName(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.ProcessName : "");
 

@@ -596,7 +596,7 @@ namespace Keysharp.Core.Windows
 			return new Array();
 		}
 
-		internal override Keysharp.Core.Map ControlGetPos(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -606,10 +606,12 @@ namespace Keysharp.Core.Windows
 				if (WindowsAPI.MapWindowPoints(IntPtr.Zero, WindowsAPI.GetParent(item.Handle), ref rect, 2) == 0)
 					throw new Error($"Could not map rect from screen to window in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-				return rect.ToPos();
+				var pos = rect.ToPos();
+				outX = pos["X"];
+				outY = pos["Y"];
+				outWidth = pos["Width"];
+				outHeight = pos["Height"];
 			}
-
-			return new Keysharp.Core.Map();
 		}
 
 		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.Style : 0;

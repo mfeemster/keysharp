@@ -8,6 +8,23 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
+		private static bool IsBalanced(List<object> source, string ch1, string ch2)
+		{
+			int ct1 = 0, ct2 = 0;
+
+			foreach (var ob in source)
+			{
+				var os = ob.ToString();
+
+				if (os == ch1)
+					ct1++;
+				else if (os == ch2)
+					ct2++;
+			}
+
+			return ct1 == ct2;
+		}
+
 		private bool IsArrayExtension(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.ExtendArray.MethodName;
 
 		private bool IsJsonObject(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.Index.MethodName;
@@ -47,7 +64,7 @@ namespace Keysharp.Scripting
 					{
 						bracketLevel--;
 					}
-					else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && s == delim)
+					else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && (delim.Length == 0 || s == delim))
 					{
 						return i;
 					}

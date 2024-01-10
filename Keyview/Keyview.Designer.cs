@@ -133,6 +133,7 @@ namespace Keyview
 			this.txtOut.Size = new System.Drawing.Size(428, 403);
 			this.txtOut.TabIndex = 2;
 			this.txtOut.Text = "";
+			this.txtOut.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtOut_KeyDown);
 			//
 			// toolStrip1
 			//
@@ -327,7 +328,7 @@ namespace Keyview
 			this.searchToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[]
 			{
 				this.findToolStripMenuItem,
-				this.toolStripSeparator7,
+				//this.toolStripSeparator7,
 				//this.goToLineToolStripMenuItem
 			});
 			this.searchToolStripMenuItem.Name = "searchToolStripMenuItem";

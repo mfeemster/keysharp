@@ -99,17 +99,7 @@ namespace Keysharp.Scripting
 						if (blocks.Count == 0)
 							throw new ParseException(ExUnexpected, codeline);
 
-						var ifCount = blocks.Where(b => b.Kind == CodeBlock.BlockKind.IfElse).Count();
-
-						//Pop previous undeclared else blocks, such as:
-						//if ()
-						//{
-						//  if ()
-						//  {
-						//  }
-						//}//When the parser gets here, it needs to pop the previous else which was never declared.
-						while (elses.Count > ifCount)
-							_ = elses.Pop();
+						CloseElseBlocks();
 
 						//Case statements don't need to be enclosed in braces.
 						//But different action needs to be taken based on whether it was opened with a brace.
@@ -374,6 +364,7 @@ namespace Keysharp.Scripting
 								codeLines.Insert(i + 1, new CodeLine(codeline.FileName, codeline.LineNumber, "{"));
 								codeLines.Insert(i + 2, new CodeLine(codeline.FileName, codeline.LineNumber, token == Token.PropGet ? $"return {theRest}" : theRest));
 								codeLines.Insert(i + 3, new CodeLine(codeline.FileName, codeline.LineNumber, "}"));
+								SetLineIndexes();
 								propblock.Type = CodeBlock.BlockType.Expect;
 							}
 							else

@@ -177,7 +177,7 @@ namespace Keyview
 		private void GenerateKeystrokes(string keys)
 		{
 			HotKeyManager.Enable = false;
-			txtIn.Focus();
+			_ = txtIn.Focus();
 			SendKeys.Send(keys);
 			HotKeyManager.Enable = true;
 		}
@@ -362,7 +362,7 @@ namespace Keyview
 		{
 			if (InvokeRequired)
 			{
-				BeginInvoke(action);
+				_ = BeginInvoke(action);
 			}
 			else
 			{
@@ -454,7 +454,7 @@ namespace Keyview
 				{
 					PanelSearch.Visible = true;
 					TxtSearch.Text = SearchManager.LastSearch;
-					TxtSearch.Focus();
+					_ = TxtSearch.Focus();
 					TxtSearch.SelectAll();
 				});
 			}
@@ -462,7 +462,7 @@ namespace Keyview
 			{
 				InvokeIfNeeded(delegate ()
 				{
-					TxtSearch.Focus();
+					_ = TxtSearch.Focus();
 					TxtSearch.SelectAll();
 				});
 			}
@@ -594,7 +594,7 @@ namespace Keyview
 						goto theend;
 					}
 
-					tslCodeStatus.Text = "Trimming parents from C# code...";
+					tslCodeStatus.Text = "Trimming parens from C# code...";
 					Refresh();
 					code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
 					tslCodeStatus.Text = "Compiling C# code...";
@@ -675,6 +675,8 @@ namespace Keyview
 				lastKeyTime = DateTime.Now;
 		}
 
+		private void txtOut_KeyDown(object sender, KeyEventArgs e) => txtIn_KeyDown(sender, e);
+
 		private void txtIn_MarginClick(object sender, MarginClickEventArgs e)
 		{
 			var txt = sender as Scintilla;
@@ -693,7 +695,7 @@ namespace Keyview
 				else
 				{
 					// Add bookmark
-					line.MarkerAdd(BOOKMARK_MARKER);
+					_ = line.MarkerAdd(BOOKMARK_MARKER);
 				}
 			}
 		}
@@ -735,7 +737,7 @@ namespace Keyview
 		private void wordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
 			wordWrapItem.Checked = !wordWrapItem.Checked;
-			txtIn.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
+			txtOut.WrapMode = txtIn.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
 		}
 
 		private void zoom100ToolStripMenuItem_Click(object sender, EventArgs e)

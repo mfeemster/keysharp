@@ -393,7 +393,10 @@ namespace Keysharp.Scripting
 								parts.RemoveAt(i);
 							}
 							else
-								parts[i] = ParseExpression(line, code, paren, create);
+							{
+								var tempCode = TokensToCode(paren);
+								parts[i] = ParseExpression(line, tempCode, paren, create);
+							}
 						}
 					}
 					else if (part[0] == ParenClose)
@@ -647,9 +650,11 @@ namespace Keysharp.Scripting
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
 									if (argExpr is CodeVariableReferenceExpression cvre)
 									{
+										_ = currentFuncParams.TryPeek(out var pl);
+
 										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName) &&
-												!Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out var _) &&
-												!currentFuncParams.TryPeek(out var _))
+												!Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _) &&
+												(pl == null || !pl.Contains(cvre.VariableName)))
 										{
 											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
 										}
@@ -825,6 +830,7 @@ namespace Keysharp.Scripting
 						void AddParts(CodeMemberMethod cmd)
 						{
 							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);//This works even when assignIndex is -1.
+							//var extracted = ExtractRange(parts, i - 1, parts.Count);//Start at the parameters collection which should be right before parts[i] which is "=>".
 							parts.Add("FuncObj(");
 							parts.Add("\"" + cmd.Name + "\"");
 							parts.Add(",");
@@ -858,6 +864,7 @@ namespace Keysharp.Scripting
 
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, retstr));
 							codeLines.Insert(lineNumber, new CodeLine(line.FileName, lineNumber++, "}"));
+							SetLineIndexes();
 						}
 
 						if (cmieIndex != -1 && cmieIndex <  i)//Named func member := memberfunc(a) => a * 2
@@ -913,7 +920,7 @@ namespace Keysharp.Scripting
 							{
 								cmd.Name = $"anonfunc_{labelCount++:X}";
 
-								if (parts[assignIndex + 2] as string == "*")
+								if (parts[assignIndex + 2] as string == "*")//Account for member4 := a* => (a[1] + a[2]) * 2
 								{
 									var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre.VariableName);
 									_ = cpde.CustomAttributes.Add(cad);
@@ -946,7 +953,41 @@ namespace Keysharp.Scripting
 					{
 						var (opValid, ops) = OperatorFromString(part);
 
-						if (opValid && (ops == Script.Operator.Increment || ops == Script.Operator.Decrement))
+						if (opValid && (ops == Script.Operator.TernaryA || ops == Script.Operator.TernaryB))
+						{
+							parts[i] = ops;
+							var n = i + 1;
+							var nextOp = parts.FindIndex(i, (p) =>
+							{
+								var ps = p.ToString();
+								return ps == "?" || ps == ":";
+							});
+
+							if (nextOp == -1)
+								nextOp = parts.Count;
+
+							var ternaryParts = ExtractRange(parts, n, nextOp);
+
+							while (ternaryParts[0].ToString() == "("
+									&& ternaryParts[ternaryParts.Count - 1].ToString() != ")"
+									&& !IsBalanced(ternaryParts, "(", ")"))
+							{
+								ternaryParts.RemoveAt(0);
+							}
+
+							while (ternaryParts[0].ToString() != "("
+									&& !ternaryParts[0].ToString().EndsWith("(")
+									&& ternaryParts[ternaryParts.Count - 1].ToString() == ")"
+									&& !IsBalanced(ternaryParts, "(", ")"))
+							{
+								ternaryParts.RemoveAt(ternaryParts.Count - 1);
+							}
+
+							var ternaryCode = TokensToCode(ternaryParts);
+							var ternaryExpr = ParseExpression(line, ternaryCode, ternaryParts, false);
+							parts.Insert(n, ternaryExpr);
+						}
+						else if (opValid && (ops == Script.Operator.Increment || ops == Script.Operator.Decrement))
 						{
 							int z = -1, x = i - 1, y = i + 1;
 							var d = 1L;
@@ -1299,7 +1340,6 @@ namespace Keysharp.Scripting
 							var cond = VarMixedExpr(parts[x]);
 							var eval = (CodeMethodInvokeExpression)InternalMethods.IfElse;
 							_ = eval.Parameters.Add(cond);
-							var ternary = new CodeTernaryOperatorExpression { Condition = eval };
 							int depth = 1, max = parts.Count - i, start = i;
 							var branch = new[] { new List<object>(max), new List<object>(max) };
 
@@ -1333,14 +1373,17 @@ namespace Keysharp.Scripting
 							if (branch[1].Count == 0)
 								branch[1].Add(nullPrimitive);
 
-							ternary.TrueBranch = ParseExpression(line, code, branch[0], create);
-							ternary.FalseBranch = ParseExpression(line, code, branch[1], create);
+							//No real way to recover the code here because all of the branches have been parsed to objects already.
+							//It doesn't really matter though.
+							//The branches have both already been parsed and should have been reduced to a single expression.
+							var trueBranch  = ParseExpression(line,  code, branch[0], create);
+							var falseBranch = ParseExpression(line, code, branch[1], create);
 							//CodeDOM does not have built in support for ternary operators. So we must manually create the code string for the ternary,
 							//then use a code snippet to hold the string. This is not ideal, but there is no other way.
 							var evalstr = Ch.CodeToString(eval);
-							var tbs = Ch.CodeToString(ternary.TrueBranch);
-							var fbs = Ch.CodeToString(ternary.FalseBranch);
-							parts[x] = new CodeSnippetExpression($"(_ = {evalstr} ? {tbs} : {fbs})");
+							var tbs = Ch.CodeToString(trueBranch);
+							var fbs = Ch.CodeToString(falseBranch);
+							parts[x] = new CodeSnippetExpression($"(_ = {evalstr} ? (object){tbs} : (object){fbs})");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
 							parts.RemoveRange(start, parts.Count - start);
 							//i++;//Tried, but not needed.
 							//continue;
@@ -1504,7 +1547,9 @@ namespace Keysharp.Scripting
 							|| parts[i] is CodePrimitiveExpression
 							|| parts[i] is CodeTernaryOperatorExpression
 							|| parts[i] is CodeBinaryOperatorExpression
-							|| parts[i] is CodePropertyReferenceExpression))
+							|| parts[i] is CodePropertyReferenceExpression
+							|| parts[i] is CodeSnippetExpression
+						 ))
 						throw new ParseException($"Value of {parts[i]} of type {parts[i].GetType()} was not a type that can be used with the concatenation operator.");
 
 					if (i % 2 == 1)

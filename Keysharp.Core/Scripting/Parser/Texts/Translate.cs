@@ -94,12 +94,8 @@ namespace Keysharp.Scripting
 					_ = replaced.Append(param);
 					break;
 
-				case "setbatchlines":
 				case "setworkingdir":
-					_ = replaced.Append("A_");
-					_ = replaced.Append(cmd, 3, cmd.Length - 3);
-					_ = replaced.Append(Equal);
-					_ = replaced.Append(param);
+					_ = replaced.Append($"A_WorkingDir := {param}");
 					break;
 
 				case "setenv":

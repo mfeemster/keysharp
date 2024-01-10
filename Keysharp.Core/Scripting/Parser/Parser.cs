@@ -33,7 +33,7 @@ namespace Keysharp.Scripting
 		private const string mainScope = "";
 		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
 
-		private static FrozenSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		internal static FrozenSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowBreak,
 			FlowContinue,
@@ -58,7 +58,7 @@ namespace Keysharp.Scripting
 			Throw
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
-		private static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		internal static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			AndTxt,
 			OrTxt,
@@ -117,6 +117,7 @@ namespace Keysharp.Scripting
 		private Dictionary<string, string> conditionIds;
 		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
 		private Stack<CodeStatementCollection> elses = new ();
+		private Stack<CodeTernaryOperatorExpression> ternaries = new ();
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private uint exCount;
 		private string fileName;
@@ -406,6 +407,7 @@ namespace Keysharp.Scripting
 
 			var createDummyRef = false;
 			var tsVar = DateTime.Now.ToString("_MMddyyyyHHmmssfffffff");
+			var ctrObjectArray = new CodeTypeReference(typeof(object[]));
 
 			while (targetClass.Members.Cast<CodeTypeMember>().Any(ctm => ctm.Name == tsVar))
 				tsVar = "_" + tsVar;
@@ -435,7 +437,7 @@ namespace Keysharp.Scripting
 						{
 							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
 						}
-						//Handle proper casing for all method calls.
+						//Handle proper casing and refs for all method calls.
 						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
 						{
 							var methParams = cmm.Parameters;
@@ -458,6 +460,30 @@ namespace Keysharp.Scripting
 										}
 									}
 								}
+							}
+
+							//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+							if (methParams.Count > cmie.Parameters.Count)
+							{
+								var newParams = new List<CodeExpression>(methParams.Count);
+
+								for (var i = cmie.Parameters.Count; i < methParams.Count; i++)
+								{
+									var mp = methParams[i];
+
+									if (!mp.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute"))//Ignore variadic object[] parameters.
+									{
+										if (mp.Direction == FieldDirection.Ref)
+										{
+											newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
+											createDummyRef = true;
+										}
+										else
+											newParams.Add(nullPrimitive);
+									}
+								}
+
+								cmie.Parameters.AddRange(newParams.ToArray());
 							}
 						}
 						else if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
@@ -488,6 +514,30 @@ namespace Keysharp.Scripting
 											}
 										}
 									}
+								}
+
+								//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+								if (methParams.Length > cmie.Parameters.Count)
+								{
+									var newParams = new List<CodeExpression>(methParams.Length);
+
+									for (var i = cmie.Parameters.Count; i < methParams.Length; i++)
+									{
+										var mp = methParams[i];
+
+										if (!mp.IsOptional)
+										{
+											if (mp.ParameterType.IsByRef && !mp.IsOut)
+											{
+												newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
+												createDummyRef = true;
+											}
+											else if (mp.ParameterType != typeof(object[]))//Do not pass for variadic object[] parameters.
+												newParams.Add(nullPrimitive);
+										}
+									}
+
+									cmie.Parameters.AddRange(newParams.ToArray());
 								}
 							}
 						}
@@ -1034,6 +1084,14 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
+		private void SetLineIndexes()
+		{
+			var i = 0;
+
+			foreach (var line in codeLines)
+				line.LineNumber = i++;
+		}
+
 		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
 			foreach (CodeTypeDeclaration type in mainNs.Types)
@@ -1079,6 +1137,15 @@ namespace Keysharp.Scripting
 				foreach (CodeTypeMember typemember in targetClass.Members)
 				{
 					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
+						return true;
+				}
+			}
+
+			if (allVars.TryGetValue(targetClass, out var globalTypeFuncs))
+			{
+				if (globalTypeFuncs.TryGetValue("", out var scopeVars))//The type didn't contain the variable, so check if the local function scope contains it.
+				{
+					if (scopeVars.ContainsKey(varName))
 						return true;
 				}
 			}

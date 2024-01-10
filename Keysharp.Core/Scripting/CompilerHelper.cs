@@ -278,40 +278,47 @@ using static Keysharp.Scripting.Script.Operator;
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
 			var x = Keysharp.Core.Env.FindCommandLineArg("cp");
-			parser = new Parser(this);
+			var (pushed, btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
 
-			if (x != null)
+			if (pushed)
 			{
-				x = x.Trim(Keywords.DashSlash);
+				parser = new Parser(this);
 
-				if (x.Length > 2 && int.TryParse(x.AsSpan().Slice(2), out var codepage))
-					enc = Encoding.GetEncoding(codepage);
-			}
+				if (x != null)
+				{
+					x = x.Trim(Keywords.DashSlash);
 
-			for (var i = 0; i < fileNames.Length; i++)//This has likely never been tested with more than one file at a time. Need to figure that out.//TODO
-			{
-				try
+					if (x.Length > 2 && int.TryParse(x.AsSpan().Slice(2), out var codepage))
+						enc = Encoding.GetEncoding(codepage);
+				}
+
+				for (var i = 0; i < fileNames.Length; i++)//This has likely never been tested with more than one file at a time. Need to figure that out.//TODO
 				{
-					if (System.IO.File.Exists(fileNames[i]))
+					try
 					{
-						Script.scriptName = fileNames[i];
-						units[i] = parser.Parse(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
+						if (System.IO.File.Exists(fileNames[i]))
+						{
+							Script.scriptName = fileNames[i];
+							units[i] = parser.Parse(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
+						}
+						else
+						{
+							Script.scriptName = "*";
+							units[i] = parser.Parse(new StringReader(fileNames[i]), "*");//In memory.
+						}
 					}
-					else
+					catch (Keysharp.Core.ParseException e)
 					{
-						Script.scriptName = "*";
-						units[i] = parser.Parse(new StringReader(fileNames[i]), "*");//In memory.
+						_ = errors.Add(new CompilerError(e.File, (int)e.Line, 0, "0", e.Message));
 					}
+					catch (Exception e)
+					{
+						_ = errors.Add(new CompilerError { ErrorText = e.Message });
+					}
+					finally { }
 				}
-				catch (Keysharp.Core.ParseException e)
-				{
-					_ = errors.Add(new CompilerError(e.File, (int)e.Line, 0, "0", e.Message));
-				}
-				catch (Exception e)
-				{
-					_ = errors.Add(new CompilerError { ErrorText = e.Message });
-				}
-				finally { }
+
+				Keysharp.Core.Common.Threading.Threads.EndThread(pushed);
 			}
 
 			return (units, errors);
