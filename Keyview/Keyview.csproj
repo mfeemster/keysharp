@@ -7,9 +7,9 @@
     <StartupObject>Keyview.Program</StartupObject>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <AssemblyVersion>0.0.0.5</AssemblyVersion>
-    <FileVersion>0.0.0.5</FileVersion>
-    <Version>0.0.0.5</Version>
+    <AssemblyVersion>0.0.0.6</AssemblyVersion>
+    <FileVersion>0.0.0.6</FileVersion>
+    <Version>0.0.0.6</Version>
     <Authors>Matt Feemster</Authors>
     <Description>A viewer which shows the C# code that is generated from compiling Keysharp script code</Description>
     <Company>Keysharp</Company>

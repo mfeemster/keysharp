@@ -29,17 +29,17 @@ namespace Keysharp.Core
 			};
 			KeyDown += (sender, e) =>
 			{
-				if (e.KeyCode == Keys.Back || e.KeyCode == Keys.Delete)
-				{
-					key = mod = Keys.None;
-				}
-				else
+				e.Handled = true;
+				//if (e.KeyCode == Keys.Back || e.KeyCode == Keys.Delete)
+				//{
+				//  key = mod = Keys.None;
+				//}
+				//else
 				{
 					key = e.KeyCode;
 					mod = e.Modifiers;
 					Validate();
 				}
-
 				SetText();
 			};
 			PreviewKeyDown += (sender, e) =>

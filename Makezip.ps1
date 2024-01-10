@@ -17,9 +17,11 @@ Compress-Archive -LiteralPath `
 ,".\bin\release\$net\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll" `
 ,".\bin\release\$net\Microsoft.Extensions.DependencyModel.dll" `
 ,".\bin\release\$net\Microsoft.NET.HostModel.dll" `
+,".\bin\release\$net\Scintilla.NET.dll" `
 ,".\bin\release\$net\System.Management.dll" `
 ,".\bin\release\$net\Keysharp.Core.deps.json" `
 ,".\bin\release\$net\Keysharp.deps.json" `
 ,".\bin\release\$net\Keysharp.runtimeconfig.json" `
 ,".\bin\release\$net\Keyview.runtimeconfig.json" `
+,".\bin\release\$net\x64" `
 -DestinationPath ".\Keysharp_$AssemblyVersion.zip" -Force
