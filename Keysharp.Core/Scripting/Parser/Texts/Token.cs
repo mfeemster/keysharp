@@ -676,7 +676,12 @@ namespace Keysharp.Scripting
 				if (IsSpace(sym))
 					continue;
 				else if (sym == TernaryA)
-					list.Add("?");
+				{
+					if (list.Count > 0 && list[list.Count - 1].ToString() == "?")
+						list[list.Count - 1] = "??";
+					else
+						list.Add("?");
+				}
 				else if (IsCommentAt(code, i))
 					MoveToEOL(code, ref i);
 				else if (IsIdentifier(sym) || sym == Resolve || (sym == Concatenate && i + 1 < code.Length && IsIdentifier(code[i + 1])))

@@ -37,6 +37,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference OperateTernary => new MethodReference(typeof(Script), "OperateTernary");
 			internal static MethodReference OperateUnary => new MethodReference(typeof(Script), "OperateUnary");
 			internal static MethodReference OperateZero => new MethodReference(typeof(Script), "OperateZero");
+			internal static MethodReference OrMaybe => new MethodReference(typeof(Script), "OrMaybe");
 			internal static MethodReference Parameter => new MethodReference(typeof(Script), "Parameter");
 			internal static MethodReference Parameters => new MethodReference(typeof(Script), "Parameters");
 			internal static MethodReference Pop => new MethodReference(typeof(Loops), "Pop");

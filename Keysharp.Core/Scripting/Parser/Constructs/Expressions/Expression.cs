@@ -1391,7 +1391,7 @@ namespace Keysharp.Scripting
 							//i++;//Tried, but not needed.
 							//continue;
 						}
-						else if (op == Script.Operator.NullAssign)//Unsure what this does.
+						else if (op == Script.Operator.NullAssign)
 						{
 							if (x < 0)
 								throw new ParseException("Nullable assignment with no condition.");
@@ -1401,18 +1401,13 @@ namespace Keysharp.Scripting
 							if (n >= parts.Count)
 								throw new ParseException("Nullable assignment with no right-hand operator");
 
-							var result = InternalVariable;
-							var left = new CodeBinaryOperatorExpression(result, CodeBinaryOperatorType.Assign, VarMixedExpr(parts[x]));
-							var eval = (CodeMethodInvokeExpression)InternalMethods.IfElse;
-							_ = eval.Parameters.Add(left);
-							var ternary = new CodeTernaryOperatorExpression { Condition = eval, TrueBranch = result };
-							var right = new List<object>();
-
-							while (n < parts.Count)
-								right.Add(parts[n++]);
-
-							ternary.FalseBranch = ParseExpression(line, code, right, create);
-							parts[x] = ternary;
+							var orMaybe = (CodeMethodInvokeExpression)InternalMethods.OrMaybe;
+							var leftExpr = VarMixedExpr(parts[x]);
+							var rightSlice = parts.Slice(n, parts.Count - n);
+							var rightExpr = ParseExpression(line, code, rightSlice, create);
+							_ = orMaybe.Parameters.Add(leftExpr);
+							_ = orMaybe.Parameters.Add(rightExpr);
+							parts[x] = orMaybe;
 							parts.RemoveRange(i, parts.Count - i);
 						}
 						else if (x == -1)

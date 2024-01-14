@@ -1,5 +1,6 @@
 using System;
 using Keysharp.Core;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keysharp.Scripting
 {
@@ -237,12 +238,7 @@ namespace Keysharp.Scripting
 
 		public static BoolResult IfTest(object result) => new BoolResult(ForceBool(result), result);
 
-		//if (result is bool b)
-		//  return b;
-		//else if (IsNumeric(result))
-		//  return ForceDouble(result) != 0;
-		//else
-		//  return result is string s ? !string.IsNullOrEmpty(s) : result != null;
+		public static object OrMaybe(object left, object right) => Keysharp.Core.Misc.IsSet(left) == 1L ? left : right;
 
 		public static bool IsNumeric(Type type) =>
 		type == typeof(long)

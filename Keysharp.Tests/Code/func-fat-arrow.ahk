@@ -417,7 +417,6 @@ If (tot == 34)
 else
 	FileAppend, "fail", "*"
 
-x := true
 y := false
 
 y := true ? (a) => 1 : (b) => 2

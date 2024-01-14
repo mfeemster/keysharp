@@ -81,5 +81,8 @@ namespace Keysharp.Tests
 
 		[Test, Category("Operator")]
 		public void Ternary() => Assert.IsTrue(TestScript("op-ternary", true));
+
+		[Test, Category("Operator")]
+		public void NullAssign() => Assert.IsTrue(TestScript("op-null-assign", false));
 	}
 }
