@@ -13,7 +13,8 @@ namespace Keysharp.Scripting
 	{
 		private CodeExpression InternalVariable => VarRef(string.Concat(Scope, scopeChar + "\0", InternalID), false);
 
-		internal CodeExpression VarId(string name, bool create, bool dyn = false) => name == args ? new CodeSnippetExpression(args) : VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
+		//internal CodeExpression VarId(string name, bool create, bool dyn = false) => name == args ? new CodeSnippetExpression(args) : VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
+		internal CodeExpression VarId(string name, bool create, bool dyn = false) => VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
 
 		private bool IsVarAssignment(object expr) => expr is CodeBinaryOperatorExpression cboe&& cboe.Operator == CodeBinaryOperatorType.Assign;
 
