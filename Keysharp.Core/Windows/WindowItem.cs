@@ -84,7 +84,7 @@ namespace Keysharp.Core.Windows
 
 				if (IsSpecified)
 				{
-					var detectHiddenText = Accessors.A_DetectHiddenTextCur;
+					var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
 						if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
@@ -249,6 +249,8 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
+		internal override WindowItemBase NonChildParentWindow => new WindowItem(WindowsAPI.GetNonChildParent(Handle));
+
 		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
 
 		internal override IntPtr PID
@@ -301,8 +303,12 @@ namespace Keysharp.Core.Windows
 				var tv = Threads.GetThreadVariables();
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
-					var text = tv.titleMatchModeSpeed ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
-					items.Add(text);
+					if (tv.detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
+					{
+						var text = tv.titleMatchModeSpeed ? WindowsAPI.GetWindowText(hwnd) : WindowsAPI.GetWindowTextTimeout(hwnd, 5000);//AHK used 5000.
+						items.Add(text);
+					}
+
 					return true;
 				}, 0);
 				return items.ToArray();

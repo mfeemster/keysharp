@@ -20,9 +20,18 @@ namespace Keysharp.Core
 				compType = StringComparison.CurrentCulture;
 		}
 
-		public new bool Equals(object x, object y) => x is not null&& y is not null&& string.Compare(x.ToString(), y.ToString(), compType) == 0;
+		public new bool Equals(object x, object y)// => x is not null&& y is not null&& string.Compare(x.ToString(), y.ToString(), compType) == 0;
+		{
+			if (x is string ls && y is string rs)
+				return string.Compare(ls, rs, compType) == 0;
 
-		public int GetHashCode(object obj) => obj.GetHashCode();
+			if (ReferenceEquals(x, y))
+				return true;
+
+			return x.Equals(y);
+		}
+
+		public int GetHashCode(object obj) => obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
 	}
 
 	public class Map : KeysharpObject, IEnumerable<(object, object)>, ICollection

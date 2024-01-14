@@ -451,78 +451,11 @@ namespace Keysharp.Core
 		public static void WinGetClientPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
 		WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
 
-		private static void WinPosHelper(bool client, ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title, object text, object excludeTitle, object excludeText)
-		{
-			var obj = new[] { title, text, excludeTitle, excludeText };
-			var map = DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? (client ? win.ClientLocation.ToPos() : win.Location.ToPos()) : new Keysharp.Core.Map());
+		public static object WinGetControls(params object[] obj) =>
+		WinGetControlsHelper(true, obj);
 
-			if (map.Count > 0)
-			{
-				outX = map["X"];
-				outY = map["Y"];
-				outWidth = map["Width"];
-				outHeight = map["Height"];
-			}
-			else
-			{
-				outX = 0.0;
-				outY = 0.0;
-				outWidth = 0.0;
-				outHeight = 0.0;
-			}
-		}
-
-		public static object WinGetControls(params object[] obj)
-		{
-			var (title, text, excludeTitle, excludeText) = obj.O1S3();
-			var win = WindowManager.FindWindow(title, text, excludeTitle, excludeText);
-
-			if (win != null)
-			{
-				var controls = win.ChildWindows;
-
-				if (controls.Count == 0)
-					return "";
-
-				var arr = new Array(controls.Count);
-
-				foreach (var ctrl in controls)
-					_ = arr.Add(ctrl.ClassNN);
-
-				WindowItemBase.DoWinDelay();
-				return arr;
-			}
-			else if (!Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-			return "";
-		}
-
-		public static object WinGetControlsHwnd(params object[] obj)
-		{
-			var (title, text, excludeTitle, excludeText) = obj.O1S3();
-			var win = WindowManager.FindWindow(title, text, excludeTitle, excludeText);
-
-			if (win != null)
-			{
-				var controls = win.ChildWindows;
-
-				if (controls.Count == 0)
-					return "";
-
-				var arr = new Array(controls.Count);
-
-				foreach (var ctrl in controls)
-					_ = arr.Add(ctrl.Handle.ToInt64());
-
-				WindowItemBase.DoWinDelay();
-				return arr;
-			}
-			else if (!Keysharp.Scripting.Script.IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-			return "";
-		}
+		public static object WinGetControlsHwnd(params object[] obj) =>
+		WinGetControlsHelper(false, obj);
 
 		public static long WinGetCount(params object[] obj) => DoDelayedFunc(() => SearchWindows(obj).Count);
 
@@ -580,7 +513,7 @@ namespace Keysharp.Core
 
 		public static long WinGetStyle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Style : 0L);
 
-		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : ""));
+		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : new string[] { "" }));
 
 		public static string WinGetTitle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Title : "");
 
@@ -918,35 +851,25 @@ namespace Keysharp.Core
 			return b ? 1L : 0L;
 		}
 
-		internal static void DoDelayedAction(Action act)
+		internal static (bool, IntPtr) CtrlToIntPtr(object ctrl)
 		{
-			act();
-			WindowItemBase.DoWinDelay();
-		}
-
-		internal static T DoDelayedFunc<T>(Func<T> func)
-		{
-			var val = func();
-			WindowItemBase.DoWinDelay();
-			return val;
-		}
-
-		internal static WindowItemBase SearchControl(object ctrl, object title, string text, string excludeTitle, string excludeText, bool throwifnull = true)
-		{
-			string s;
-
-			if (ctrl is long l)
+			if (ctrl == null)
 			{
-				var ptr = new IntPtr(l);
-
-				if (WindowsAPI.IsWindow(ptr))
-					return WindowManagerProvider.Instance.CreateWindow(ptr);
-				else if (throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
-					throw new TargetError($"Could not find child control with handle: {l}");
-				else
-					return null;
+				return (false, IntPtr.Zero);
 			}
-			else if ((s = (ctrl as string)) == null)
+			else if (ctrl is long l)
+			{
+				return (true, new IntPtr(l));
+			}
+			else if (ctrl is IntPtr ip)
+			{
+				return (true, ip);
+			}
+			else if (ctrl is int i)
+			{
+				return (true, i);
+			}
+			else if (!(ctrl is string))
 			{
 				object hwnd = null;
 
@@ -962,11 +885,38 @@ namespace Keysharp.Core
 					ptr = new IntPtr(ll);
 				else if (hwnd is IntPtr p)
 					ptr = p;
+				else if (hwnd is int ii)
+					ptr = new IntPtr(ii);
 
+				return (true, ptr);
+			}
+
+			return (false, IntPtr.Zero);
+		}
+
+		internal static void DoDelayedAction(Action act)
+		{
+			act();
+			WindowItemBase.DoWinDelay();
+		}
+
+		internal static T DoDelayedFunc<T>(Func<T> func)
+		{
+			var val = func();
+			WindowItemBase.DoWinDelay();
+			return val;
+		}
+
+		internal static WindowItemBase SearchControl(object ctrl, object title, string text, string excludeTitle, string excludeText, bool throwifnull = true)
+		{
+			var (parsed, ptr) = CtrlToIntPtr(ctrl);
+
+			if (parsed)
+			{
 				if (WindowsAPI.IsWindow(ptr))
 					return WindowManagerProvider.Instance.CreateWindow(ptr);
 				else if (throwifnull && !Keysharp.Scripting.Script.IsMainWindowClosing)
-					throw new TargetError($"Could not find child control with handle: {ptr.ToInt64()}");
+					throw new TargetError($"Could not find child control with handle: {ptr}");
 				else
 					return null;
 			}
@@ -978,6 +928,7 @@ namespace Keysharp.Core
 
 			var sc = new SearchCriteria();
 			string classortext = null;
+			string s = ctrl as string;
 
 			if (!string.IsNullOrEmpty(s))
 			{
@@ -1046,6 +997,83 @@ namespace Keysharp.Core
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
 			var (windows, crit) = WindowManager.FindWindowGroup(title, text, excludeTitle, excludeText);
 			return windows;
+		}
+
+		private static object WinGetControlsHelper(bool nn, params object[] obj)
+		{
+			var (title, text, excludeTitle, excludeText) = obj.O1S3();
+			var win = WindowManager.FindWindow(title, text, excludeTitle, excludeText);
+
+			if (win != null)
+			{
+				var controls = win.ChildWindows;
+
+				if (controls.Count == 0)
+					return "";
+
+				var arr = new Array(controls.Count);
+
+				if (nn)
+				{
+					foreach (var ctrl in controls)
+						_ = arr.Add(ctrl.ClassNN);
+				}
+				else
+				{
+					foreach (var ctrl in controls)
+						_ = arr.Add(ctrl.Handle.ToInt64());
+				}
+
+				WindowItemBase.DoWinDelay();
+				return arr;
+			}
+			else if (!Keysharp.Scripting.Script.IsMainWindowClosing)
+				throw new TargetError($"Could not find window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+			return "";
+		}
+
+		private static void WinPosHelper(bool client, ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title, object text, object excludeTitle, object excludeText)
+		{
+			var obj = new[] { title, text, excludeTitle, excludeText };
+			//DoDelayedFunc(() =>
+			{
+				if (SearchWindow(obj, true) is WindowItem win)
+				{
+					var rect = client ? win.ClientLocation : win.Location;
+					var map = rect.ToPos(Accessors.A_ScaledScreenDPI);
+
+					if (client)
+					{
+						var rectStruct = new RECT()
+						{
+							Left = (int)map["X"].Ad(),
+							Top = (int)map["Y"].Ad(),
+							Right = (int)(map["X"].Ad() + map["Width"].Ad()),
+							Bottom = (int)(map["Y"].Ad() + map["Height"].Ad())
+						};
+						_ = WindowsAPI.MapWindowPoints(win.Handle, IntPtr.Zero, ref rectStruct, 1);
+						outX = rectStruct.Left;
+						outY = rectStruct.Top;
+						outWidth = rectStruct.Right;
+						outHeight = rectStruct.Bottom;
+					}
+					else
+					{
+						outX = (long)map["X"].Ad();
+						outY = (long)map["Y"].Ad();
+						outWidth  = (long)map["Width"].Ad();
+						outHeight = (long)map["Height"].Ad();
+					}
+				}
+				else
+				{
+					outX = 0L;
+					outY = 0L;
+					outWidth = 0L;
+					outHeight = 0L;
+				}
+			}//);
 		}
 
 		private static void WinSetStyleHelper(object[] o, bool ex)

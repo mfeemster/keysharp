@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 using static Keysharp.Core.Flow;
@@ -226,15 +225,10 @@ namespace Keysharp.Core
 		};
 
 		private static int windowCount = 0;
-
 		private bool closingFromDestroy;
-
 		private bool dpiscaling = true;
-
 		private bool lastfound = false;
-
 		private bool owndialogs = false;
-
 		private bool resizable = false;
 
 		public object BackColor
@@ -293,13 +287,13 @@ namespace Keysharp.Core
 			{
 				var parent = form.Parent;
 
-				do
+				while (parent != null)
 				{
 					if (parent is KeysharpForm kf)
 						return kf;
 
 					parent = parent.Parent;
-				} while (parent != null);
+				}
 
 				return parent as KeysharpForm;
 			}
@@ -454,7 +448,8 @@ namespace Keysharp.Core
 						AcceptsTab = opts.wanttab ?? false,
 						AcceptsReturn = opts.wantreturn ?? false,
 						Multiline = ml,
-						ReadOnly = opts.rdonly ?? false
+						ReadOnly = opts.rdonly ?? false,
+						WordWrap = ml
 					};
 
 					if (opts.limit != int.MinValue)
@@ -631,6 +626,9 @@ namespace Keysharp.Core
 						else if (opts.ischecked == -1 || opts.checkedgray)
 							chk.CheckState = CheckState.Indeterminate;
 					}
+
+					if (opts.rightj.HasValue)
+						chk.CheckAlign = ContentAlignment.MiddleRight;
 
 					ctrl = chk;
 				}
@@ -1172,7 +1170,8 @@ namespace Keysharp.Core
 					else if (ctrl is TabPage || ctrl is TabControl)
 						r = 10;
 
-					var defheight = (int)(fontpixels * Math.Round(r + 0.5));//AHK used external leading, but just use fontpixels here because it's close enough.
+					var fontRows = (int)(Math.Round(fontpixels + 0.5) * r);//This is a rough attempt to make text boxes tall enough to show the requested number of lines without having the scrollbars appear unnecessarily.
+					var defheight = fontRows;//AHK used external leading, but just use fontpixels here because it's close enough.
 
 					if (ctrl is ComboBox cmb)
 					{
@@ -1188,15 +1187,15 @@ namespace Keysharp.Core
 					}
 					else if (ctrl is GroupBox gb)
 					{
-						gb.Height = defheight + ((gb.Margin.Top + gb.Margin.Bottom) * (2 + ((int)(r + 1 + 0.5) - 2)));//This odd formula comes straight from the AHK source.
+						gb.Height = defheight + ((gb.Margin.Top + gb.Margin.Bottom) * (2 + ((int)(r + 1.5) - 2)));//This odd formula comes straight from the AHK source.
 					}
 					else if (ctrl is ListView lv)
 					{
-						lv.Height = defheight + ((lv.Margin.Top + lv.Margin.Bottom) * (2 + ((int)(r + 1 + 0.5) - 2)));//ListView doesn't have an ItemHeight property, so attempt to compute here in the same way GroupBox is done above.
+						lv.Height = defheight + ((lv.Margin.Top + lv.Margin.Bottom) * (2 + ((int)(r + 1.5) - 2)));//ListView doesn't have an ItemHeight property, so attempt to compute here in the same way GroupBox is done above.
 					}
 					else if (ctrl is TabControl tc2)
 					{
-						tc2.Height = defheight + ((tc2.Margin.Top + tc2.Margin.Bottom) * (2 + ((int)(r + 1 + 0.5) - 1)));//Same here, but -1.
+						tc2.Height = defheight + ((tc2.Margin.Top + tc2.Margin.Bottom) * (2 + ((int)(r + 1.5) - 1)));//Same here, but -1.
 					}
 					else
 					{
@@ -1217,12 +1216,12 @@ namespace Keysharp.Core
 
 						if (r > 1)
 						{
-							ctrl.Height = (int)(r * fontpixels);
+							ctrl.Height = (ctrl.Height - ctrl.ClientSize.Height) + fontRows;
 						}
 						else
 						{
 							var ctrlheight = ctrl.PreferredSize.Height;
-							ctrlheight += ctrl.Margin.Top + ctrl.Margin.Bottom + ctrl.Padding.Top + ctrl.Padding.Bottom;
+							//ctrlheight += ctrl.Margin.Top + ctrl.Margin.Bottom + ctrl.Padding.Top + ctrl.Padding.Bottom;
 							ctrlheight += ctrl.Height - ctrl.ClientSize.Height;//Account for the border.
 							ctrl.Height = ctrlheight;
 						}
@@ -1246,7 +1245,7 @@ namespace Keysharp.Core
 				else if (opts.xp != int.MinValue)
 					xoffset += opts.xp;
 				else if (opts.xm != int.MinValue)
-					xoffset = form.Padding.Left;
+					xoffset = form.Margin.Left;
 				else if (opts.xs != int.MinValue)
 					xoffset = Section.X + opts.xs;
 				else
@@ -1259,7 +1258,7 @@ namespace Keysharp.Core
 				else if (opts.yp != int.MinValue)
 					yoffset += opts.yp;
 				else if (opts.ym != int.MinValue)
-					yoffset = form.Padding.Top;
+					yoffset = form.Margin.Top;
 				else if (opts.ys != int.MinValue)
 					yoffset = Section.Y + opts.ys;
 				else
@@ -1477,11 +1476,11 @@ namespace Keysharp.Core
 				_ = WindowsAPI.FlashWindow(form.Handle, b);
 		}
 
-		public Map GetClientPos() => GuiControl.GetClientPos(form, dpiscaling);
+		public void GetClientPos(ref object x, ref object y, ref object width, ref object height) => GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls);
 
-		public Map GetPos() => GuiControl.GetPos(form, dpiscaling);
+		public void GetPos(ref object x, ref object y, ref object width, ref object height) => GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public void Hide() => form.Hide();
 
@@ -1591,12 +1590,16 @@ namespace Keysharp.Core
 						if (showOptionsDkt.TryGetValue("Owner", out var func))
 							func(this, val);
 					}
-					else if (showOptionsDkt.TryGetValue(str, out var func))
+					else if (showOptionsDkt.TryGetValue(str, out var func))//Used +/-.
 					{
 						if (split[0] == '+')
 							func(this, true);
 						else if (split[0] == '-')
 							func(this, false);
+					}
+					else if (showOptionsDkt.TryGetValue(split, out var func2))//No +/-, so just try as is.
+					{
+						func2(this, true);//No +/- so just assume true.
 					}
 					else//Special style, windows only. Need to figure out how to make this cross platform.//TODO
 					{

@@ -24,6 +24,7 @@ namespace Keysharp.Core
 		internal static ttsd typeToStringMethods = new ttsd(sttcap / 5);
 		internal static ttsd typeToStringProperties = new ttsd(sttcap / 5);
 		internal static Dictionary<string, Type> stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
+
 		static Reflections() => Initialize();
 
 		/// <summary>
@@ -342,6 +343,8 @@ namespace Keysharp.Core
 
 			return ct;
 		}
+
+		internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Count() > 0;
 
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
 

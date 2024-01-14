@@ -31,7 +31,7 @@ namespace Keysharp.Core
 			{
 				var text = obj0;
 				var filename = obj1.As();
-				var enc = ThreadAccessors.A_FileEncoding;
+				var encoding = ThreadAccessors.A_FileEncodingRaw;
 				var raw = false;
 				var crlf = false;
 				TextWriter tw = null;
@@ -48,24 +48,24 @@ namespace Keysharp.Core
 						{
 							case "ascii":
 							case "us-ascii":
-								enc = System.Text.Encoding.ASCII;
+								encoding = System.Text.Encoding.ASCII;
 								break;
 
 							case "utf-8":
-								enc = System.Text.Encoding.UTF8;
+								encoding = System.Text.Encoding.UTF8;
 								break;
 
 							case "utf-8-raw":
-								enc = new UTF8Encoding(false);//Not byte order mark.
+								encoding = new UTF8Encoding(false);//Not byte order mark.
 								break;
 
 							case "utf-16":
 							case "unicode":
-								enc = System.Text.Encoding.Unicode;
+								encoding = System.Text.Encoding.Unicode;
 								break;
 
 							case "utf-16-raw":
-								enc = new UnicodeEncoding(false, false);//Little endian, no byte order mark.
+								encoding = new UnicodeEncoding(false, false);//Little endian, no byte order mark.
 								break;
 
 							case "raw":
@@ -94,7 +94,7 @@ namespace Keysharp.Core
 								else if (info.filename == "**")
 									info.sw = Console.Error;
 								else
-									info.sw = new StreamWriter(info.filename, true, enc);
+									info.sw = new StreamWriter(info.filename, true, encoding);
 							}
 
 							tw = info.sw;
@@ -106,7 +106,7 @@ namespace Keysharp.Core
 				else if (filename == "**")
 					tw = Console.Error;
 				else
-					tw = new StreamWriter(filename, true, enc);
+					tw = new StreamWriter(filename, true, encoding);
 
 				if (tw != null)
 				{
@@ -650,7 +650,7 @@ namespace Keysharp.Core
 			var filename = obj0.As();
 			var flags = obj1.As();
 			var enc = obj2.As();
-			var encoding = ThreadAccessors.A_FileEncoding;
+			var encoding = ThreadAccessors.A_FileEncodingRaw;
 			var ienc = enc.ParseInt(false);
 
 			if (ienc.HasValue)
@@ -785,7 +785,7 @@ namespace Keysharp.Core
 			object output = null;
 			var filename = obj0.As();
 			var options = obj1.As();
-			var enc = ThreadAccessors.A_FileEncoding;
+			var enc = ThreadAccessors.A_FileEncodingRaw;
 
 			if (string.IsNullOrEmpty(filename))
 				return "";

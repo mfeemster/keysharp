@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Text;
 using Keysharp.Core.COM;
-using Keysharp.Core.Common.Patterns;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
@@ -114,8 +111,8 @@ namespace Keysharp.Core
 				if (Environment.OSVersion.Platform == PlatformID.Win32NT && path.Length != 0 && !Path.HasExtension(path))
 					path += ".dll";
 
-				//Need to begin caching these. Repeated calls are probably expensive.
-				//if (container.GetMember("name"))
+				//Caching this would be ideal, but it doesn't seem possible because you can't modify the type after it's created.
+				//Creating the assembly, module, type and method take about 4-7ms, so it's not too big of a deal.
 				var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.RunAndCollect);
 				var module = assembly.DefineDynamicModule("module");
 				var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
@@ -357,125 +354,6 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static IntPtr CallDel(IntPtr vtbl, IntPtr[] args)
-		{
-			switch (args.Length)
-			{
-				case 0:
-					var del0 = (DelNone)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(DelNone));
-					return del0();
-
-				case 1:
-					var del1 = (Del0)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del0));
-					return del1(args[0]);
-
-				case 2:
-					var del2 = (Del1)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del1));
-					return del2(args[0], args[1]);
-
-				case 3:
-					var del3 = (Del2)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del2));
-					return del3(args[0], args[1], args[2]);
-
-				case 4:
-					var del4 = (Del3)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del3));
-					return del4(args[0], args[1], args[2], args[3]);
-
-				case 5:
-					var del5 = (Del4)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del4));
-					return del5(args[0], args[1], args[2], args[3], args[4]);
-
-				case 6:
-					var del6 = (Del5)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del5));
-					return del6(args[0], args[1], args[2], args[3], args[4], args[5]);
-
-				case 7:
-					var del7 = (Del6)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del6));
-					return del7(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-
-				case 8:
-					var del8 = (Del7)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del7));
-					return del8(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-
-				case 9:
-					var del9 = (Del8)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del8));
-					return del9(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-
-				case 10:
-					var del10 = (Del9)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del9));
-					return del10(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
-
-				case 11:
-					var del11 = (Del10)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del10));
-					return del11(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
-
-				case 12:
-					var del12 = (Del11)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del11));
-					return del12(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
-
-				case 13:
-					var del13 = (Del12)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del12));
-					return del13(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
-
-				case 14:
-					var del14 = (Del13)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del13));
-					return del14(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
-
-				case 15:
-					var del15 = (Del14)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del14));
-					return del15(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
-
-				case 16:
-					var del16 = (Del15)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del15));
-					return del16(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
-			}
-
-			return IntPtr.Zero;
-		}
-
-		/// <summary>
-		/// https://github.com/dotnet/runtime/issues/13578
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <param name="t"></param>
-		/// <returns></returns>
-		/// <exception cref="ArgumentNullException"></exception>
-		/// <exception cref="ArgumentException"></exception>
-		//public static Delegate GetDelegateForFunctionPointerFix(IntPtr ptr, Type t)
-		//{
-		//  //Validate the parameters (modified from https://referencesource.microsoft.com/#mscorlib/system/runtime/interopservices/marshal.cs)
-		//  if (ptr == IntPtr.Zero)
-		//  {
-		//      throw new ArgumentNullException(nameof(ptr));
-		//  }
-
-		//  if (t is null)
-		//  {
-		//      throw new ArgumentNullException(nameof(t));
-		//  }
-
-		//  //skip the IsRuntimeImplemented check as IsRuntimeImplemented is not visible and I cannot be bothered
-
-		//  if (t.IsGenericType && !t.IsConstructedGenericType)
-		//  {
-		//      throw new ArgumentException("The specified Type must not be an open generic type definition.", nameof(t));
-		//  }
-
-		//  Type? c = t.BaseType;
-
-		//  if (c != typeof(Delegate) && c != typeof(MulticastDelegate))
-		//  {
-		//      throw new ArgumentException("Type must derive from Delegate or MulticastDelegate.", nameof(t));
-		//  }
-
-		//  if (GetDelegateForFunctionPointerInternalPointer is null)
-		//  {
-		//      GetDelegateForFunctionPointerInternalPointer = typeof(Marshal).GetMethod("GetDelegateForFunctionPointerInternal", BindingFlags.Static | BindingFlags.NonPublic).CreateDelegate<Func<IntPtr, Type, Delegate>>();
-		//  }
-
-		//  return GetDelegateForFunctionPointerInternalPointer(ptr, t);
-		//}
-
 		/// <summary>
 		/// Returns a binary number stored at the specified address in memory.
 		/// </summary>
@@ -601,6 +479,8 @@ namespace Keysharp.Core
 			}
 		}
 
+		//  return GetDelegateForFunctionPointerInternalPointer(ptr, t);
+		//}
 		public static long NumPut(params object[] obj)
 		{
 			Buffer buf;
@@ -696,5 +576,121 @@ namespace Keysharp.Core
 
 			return buf.Ptr.ToInt64() + offset;
 		}
+
+		private static IntPtr CallDel(IntPtr vtbl, IntPtr[] args)
+		{
+			switch (args.Length)
+			{
+				case 0:
+					var del0 = (DelNone)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(DelNone));
+					return del0();
+
+				case 1:
+					var del1 = (Del0)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del0));
+					return del1(args[0]);
+
+				case 2:
+					var del2 = (Del1)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del1));
+					return del2(args[0], args[1]);
+
+				case 3:
+					var del3 = (Del2)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del2));
+					return del3(args[0], args[1], args[2]);
+
+				case 4:
+					var del4 = (Del3)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del3));
+					return del4(args[0], args[1], args[2], args[3]);
+
+				case 5:
+					var del5 = (Del4)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del4));
+					return del5(args[0], args[1], args[2], args[3], args[4]);
+
+				case 6:
+					var del6 = (Del5)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del5));
+					return del6(args[0], args[1], args[2], args[3], args[4], args[5]);
+
+				case 7:
+					var del7 = (Del6)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del6));
+					return del7(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+
+				case 8:
+					var del8 = (Del7)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del7));
+					return del8(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+
+				case 9:
+					var del9 = (Del8)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del8));
+					return del9(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+
+				case 10:
+					var del10 = (Del9)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del9));
+					return del10(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
+
+				case 11:
+					var del11 = (Del10)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del10));
+					return del11(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
+
+				case 12:
+					var del12 = (Del11)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del11));
+					return del12(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
+
+				case 13:
+					var del13 = (Del12)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del12));
+					return del13(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
+
+				case 14:
+					var del14 = (Del13)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del13));
+					return del14(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
+
+				case 15:
+					var del15 = (Del14)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del14));
+					return del15(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
+
+				case 16:
+					var del16 = (Del15)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del15));
+					return del16(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
+			}
+
+			return IntPtr.Zero;
+		}
+
+		/// <summary>
+		/// https://github.com/dotnet/runtime/issues/13578
+		/// </summary>
+		/// <param name="ptr"></param>
+		/// <param name="t"></param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentNullException"></exception>
+		/// <exception cref="ArgumentException"></exception>
+		//public static Delegate GetDelegateForFunctionPointerFix(IntPtr ptr, Type t)
+		//{
+		//  //Validate the parameters (modified from https://referencesource.microsoft.com/#mscorlib/system/runtime/interopservices/marshal.cs)
+		//  if (ptr == IntPtr.Zero)
+		//  {
+		//      throw new ArgumentNullException(nameof(ptr));
+		//  }
+
+		//  if (t is null)
+		//  {
+		//      throw new ArgumentNullException(nameof(t));
+		//  }
+
+		//  //skip the IsRuntimeImplemented check as IsRuntimeImplemented is not visible and I cannot be bothered
+
+		//  if (t.IsGenericType && !t.IsConstructedGenericType)
+		//  {
+		//      throw new ArgumentException("The specified Type must not be an open generic type definition.", nameof(t));
+		//  }
+
+		//  Type? c = t.BaseType;
+
+		//  if (c != typeof(Delegate) && c != typeof(MulticastDelegate))
+		//  {
+		//      throw new ArgumentException("Type must derive from Delegate or MulticastDelegate.", nameof(t));
+		//  }
+
+		//  if (GetDelegateForFunctionPointerInternalPointer is null)
+		//  {
+		//      GetDelegateForFunctionPointerInternalPointer = typeof(Marshal).GetMethod("GetDelegateForFunctionPointerInternal", BindingFlags.Static | BindingFlags.NonPublic).CreateDelegate<Func<IntPtr, Type, Delegate>>();
+		//  }
 	}
 }

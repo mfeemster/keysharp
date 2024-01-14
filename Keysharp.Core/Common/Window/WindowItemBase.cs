@@ -46,6 +46,7 @@ namespace Keysharp.Core.Common.Window
 		internal abstract Rectangle Location { get; set; }
 		internal abstract string NetClassName { get; }
 		internal abstract string NetClassNN { get; }
+		internal abstract WindowItemBase NonChildParentWindow { get; }
 		internal abstract WindowItemBase ParentWindow { get; }
 
 		internal virtual string Path
@@ -108,10 +109,12 @@ namespace Keysharp.Core.Common.Window
 
 		public override string ToString() => $"{Handle.ToInt64()}";
 
-		internal static void DoControlDelay() { }// => DoDelay(ThreadAccessors.A_ControlDelay);//These cause out of order execution bugs with threads and are not needed anyway.
+		internal static void DoControlDelay()
+		{ }// => DoDelay(ThreadAccessors.A_ControlDelay);//These cause out of order execution bugs with threads and are not needed anyway.
 
 		//public override string ToString() => IsSpecified ? Title : "not specified window";
-		internal static void DoWinDelay() { }// => DoDelay(ThreadAccessors.A_WinDelay);
+		internal static void DoWinDelay()
+		{ }// => DoDelay(ThreadAccessors.A_WinDelay);
 
 		internal abstract void ChildFindPoint(PointAndHwnd pah);
 

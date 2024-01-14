@@ -187,16 +187,15 @@ namespace Keysharp.Scripting
 
 		public static string TrimParens(string code)
 		{
-			var parenssb = new StringBuilder(code.Length);
-			var spaceandtabs = new char[] { ' ', '\t' };
 			var anyparens = false;
 			var badline = false;
+			var parenssb = new StringBuilder(code.Length);
 
 			//Microsoft's expression code erroneously adds parens where they shouldn't be, so remove them from the code here whenever a line starts with a paren.
 			foreach (var line in code.SplitLines())
 			{
 				var either = false;
-				var trimmedline = line.Trim(spaceandtabs);
+				var trimmedline = line.AsSpan().Trim(SpaceTab);
 				var startparen = trimmedline.StartsWith("(");// && !trimmedline.EndsWith("),");
 				var endparen = trimmedline.EndsWith(");");
 
@@ -406,7 +405,7 @@ namespace Keysharp.Scripting
 			}
 
 			var createDummyRef = false;
-			var tsVar = DateTime.Now.ToString("_MMddyyyyHHmmssfffffff");
+			var tsVar = DateTime.Now.ToString("__MMddyyyyHHmmssfffffff");
 			var ctrObjectArray = new CodeTypeReference(typeof(object[]));
 
 			while (targetClass.Members.Cast<CodeTypeMember>().Any(ctm => ctm.Name == tsVar))
@@ -1131,6 +1130,15 @@ namespace Keysharp.Scripting
 						return true;
 				}
 			}
+
+			if (currentFuncParams.TryPeek(out var pl))
+				if (pl.Contains(varName))
+					return true;
+
+			if (staticFuncVars.TryGetValue(currentType, out var st))
+				if (st.TryPeek(out var stat))
+					if (stat.TryGetValue(varName, out var sv))
+						return true;
 
 			if (currentType != targetClass)//Last attempt, check if it's a global variable.
 			{

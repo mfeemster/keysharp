@@ -158,12 +158,9 @@ namespace Keysharp.Core.Windows
 			var ctrl = WindowsAPI.WindowFromPoint(location);
 
 			if (ctrl != IntPtr.Zero)
-			{
-				var parent = WindowsAPI.GetNonChildParent(ctrl);//Find the first ancestor that isn't a child.
-				return new WindowItem(parent);
-			}
+				return new WindowItem(ctrl);
 
-			return new WindowItem(ctrl);//Just return empty if no window was found.
+			return null;
 		}
 	}
 }

@@ -39,9 +39,11 @@ namespace Keysharp.Core
 
 		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
+
 		public bool AltSubmit { get; internal set; } = false;
 
 		public string ClassNN => WindowManagerProvider.Instance.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+
 		public Control Control => _control;
 
 		public object Enabled
@@ -51,7 +53,9 @@ namespace Keysharp.Core
 		}
 
 		public object Focused => _control.Focused;
+
 		public Gui Gui { get; private set; }
+
 		public long Hwnd => _control.Handle.ToInt64();
 
 		public object Name
@@ -673,6 +677,8 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
+		public void GetClientPos(ref object x, ref object y, ref object width, ref object height) => GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+
 		public long GetCount(object obj = null)
 		{
 			if (_control is ListView lv)
@@ -779,7 +785,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public Map GetPos() => GetPos(_control, dpiscaling);
+		public void GetPos(ref object x, ref object y, ref object width, ref object height) => GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public long GetPrev(object obj)
 		{
@@ -983,6 +989,7 @@ namespace Keysharp.Core
 			var width = obj2.Al(long.MinValue);
 			var height = obj3.Al(long.MinValue);
 			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var hasScrollBars = _control is KeysharpEdit || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
 			if (y != long.MinValue)
 				_control.Top = (int)Math.Round(y * scale);
@@ -990,11 +997,11 @@ namespace Keysharp.Core
 			if (x != long.MinValue)
 				_control.Left = (int)Math.Round(x * scale);
 
-			if (width != long.MinValue)
-				_control.Width = (int)Math.Round(width * scale);
+			if (width != long.MinValue)//Add extra if the control has scrollbars, even if they are not visible.
+				_control.Width = (int)Math.Round(width * scale) - (hasScrollBars ? System.Windows.Forms.SystemInformation.VerticalScrollBarWidth : 0);
 
-			if (height != long.MinValue)
-				_control.Height = (int)Math.Round(height * scale);
+			if (height != long.MinValue)//Unsure if it's needed here too.
+				_control.Height = (int)Math.Round(height * scale) - (hasScrollBars ? System.Windows.Forms.SystemInformation.HorizontalScrollBarHeight : 0);
 		}
 
 		public void OnCommand(object obj0, object obj1, object obj2 = null) => HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref commandHandlers);
@@ -1654,9 +1661,30 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static Map GetClientPos(Control control, bool scaling) => control.ClientRectangle.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI);
+		internal static void GetClientPos(Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, true, ref x, ref y, ref w, ref h);
 
-		internal static Map GetPos(Control control, bool scaling) => control.Bounds.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI);
+		internal static void GetPos(Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, false, ref x, ref y, ref w, ref h);
+
+		internal static void GetPosHelper(Control control, bool scaling, bool client, ref object x, ref object y, ref object w, ref object h)
+		{
+			var rect = client ? control.ClientRectangle : control.Bounds;
+			var map = rect.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI).map;
+
+			if (map.Count == 4)
+			{
+				x = map["X"];
+				y = map["Y"];
+				w = map["Width"];
+				h = map["Height"];
+			}
+			else
+			{
+				x = 0L;
+				y = 0L;
+				w = 0L;
+				h = 0L;
+			}
+		}
 
 		internal object InvokeMessageHandlers(ref Message m)
 		{

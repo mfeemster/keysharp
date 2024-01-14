@@ -322,7 +322,15 @@ namespace Keysharp.Scripting
 										{
 											var arg = args[i1];
 											var temp = codeStrings[i1].TrimStart('&');
-											passed.Add(ParseExpression(line, temp, arg, /*create*/false));//override the value of create with false because the arguments passed into a function should never be created automatically.
+											var expr = ParseExpression(line, temp, arg, true/*create false*/);//Override the value of create with true because reference arguments passed to a function should always be created automatically.
+
+											if (expr is CodeBinaryOperatorExpression cboe)
+											{
+												_ = parent.Add(cboe);
+												passed.Add(cboe.Left);
+											}
+											else
+												passed.Add(expr);
 										}
 									}
 									else
@@ -650,14 +658,9 @@ namespace Keysharp.Scripting
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
 									if (argExpr is CodeVariableReferenceExpression cvre)
 									{
-										_ = currentFuncParams.TryPeek(out var pl);
-
-										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName) &&
-												!Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _) &&
-												(pl == null || !pl.Contains(cvre.VariableName)))
-										{
+										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName)
+												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _))
 											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
-										}
 									}
 
 									passed.Add(argExpr);

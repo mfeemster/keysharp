@@ -365,8 +365,9 @@ namespace Keysharp.Scripting
 				typetouse = item.GetType();
 
 			var namestr = name.ToString();
+			KeysharpObject kso = null;
 
-			if (item is KeysharpObject kso && kso.op != null)
+			if ((kso = item as KeysharpObject) != null && kso.op != null)
 			{
 				if (kso.op.TryGetValue(namestr, out var val) && val is OwnpropsMap opm)
 				{
@@ -413,6 +414,11 @@ namespace Keysharp.Scripting
 			else if (Marshal.IsComObject(item))
 			{
 				_ = item.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });
+				return value;
+			}
+			else if (kso != null)//No property was present, so create one and assign the value to it.
+			{
+				_ = kso.DefineProp(namestr, Misc.Map("value", value));
 				return value;
 			}
 

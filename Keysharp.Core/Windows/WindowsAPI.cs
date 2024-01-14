@@ -2319,22 +2319,26 @@ namespace Keysharp.Core.Windows
 		[DllImport(user32)]
 		internal static extern bool IsCharAlphaNumeric(char ch);
 
+		/// <summary>
+		/// Returns the first ancestor of aWnd that isn't itself a child.  aWnd itself is returned if
+		/// it is not a child.  Returns NULL only if aWnd is NULL.  Also, it should always succeed
+		/// based on the axiom that any window with the WS_CHILD style (aka WS_CHILDWINDOW) must have
+		/// a non-child ancestor somewhere up the line.
+		/// This function doesn't do anything special with owned vs. unowned windows.  Despite what MSDN
+		/// says, GetParent() does not return the owner window, at least in some cases on Windows XP
+		/// (e.g. BulletProof FTP Server). It returns NULL instead. In any case, it seems best not to
+		/// worry about owner windows for this function's caller (MouseGetPos()), since it might be
+		/// desirable for that command to return the owner window even though it can't actually be
+		/// activated.  This is because attempts to activate an owner window should automatically cause
+		/// the OS to activate the topmost owned window instead.  In addition, the owner window may
+		/// contain the actual title or text that the user is interested in.  UPDATE: Due to the fact
+		/// that this function retrieves the first parent that's not a child window, it's likely that
+		/// that window isn't its owner anyway (since the owner problem usually applies to a parent
+		/// window being owned by some controlling window behind it).
+		/// </summary>
+		/// <param name="hwnd"></param>
+		/// <returns></returns>
 		internal static IntPtr GetNonChildParent(IntPtr hwnd)
-		// Returns the first ancestor of aWnd that isn't itself a child.  aWnd itself is returned if
-		// it is not a child.  Returns NULL only if aWnd is NULL.  Also, it should always succeed
-		// based on the axiom that any window with the WS_CHILD style (aka WS_CHILDWINDOW) must have
-		// a non-child ancestor somewhere up the line.
-		// This function doesn't do anything special with owned vs. unowned windows.  Despite what MSDN
-		// says, GetParent() does not return the owner window, at least in some cases on Windows XP
-		// (e.g. BulletProof FTP Server). It returns NULL instead. In any case, it seems best not to
-		// worry about owner windows for this function's caller (MouseGetPos()), since it might be
-		// desirable for that command to return the owner window even though it can't actually be
-		// activated.  This is because attempts to activate an owner window should automatically cause
-		// the OS to activate the topmost owned window instead.  In addition, the owner window may
-		// contain the actual title or text that the user is interested in.  UPDATE: Due to the fact
-		// that this function retrieves the first parent that's not a child window, it's likely that
-		// that window isn't its owner anyway (since the owner problem usually applies to a parent
-		// window being owned by some controlling window behind it).
 		{
 			if (hwnd == IntPtr.Zero) return hwnd;
 

@@ -55,6 +55,8 @@ namespace Keysharp.Core
 			}
 		}
 
+		protected override bool ShowFocusCues => false;
+
 		public KeysharpCheckBox(int _add = 0, int _remove = 0)
 		{
 			addstyle = _add;

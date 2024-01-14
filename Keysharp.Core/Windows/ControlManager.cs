@@ -600,18 +600,27 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				if (!WindowsAPI.GetWindowRect(item.Handle, out var rect))
-					throw new Error($"Could not get rect control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				var (parsed, ptr) = Window.CtrlToIntPtr(ctrl);
+				var coordParent = parsed && ptr == item.Handle ? item.NonChildParentWindow.Handle : item.Handle;
 
-				if (WindowsAPI.MapWindowPoints(IntPtr.Zero, WindowsAPI.GetParent(item.Handle), ref rect, 2) == 0)
-					throw new Error($"Could not map rect from screen to window in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-				var pos = rect.ToPos();
-				outX = pos["X"];
-				outY = pos["Y"];
-				outWidth = pos["Width"];
-				outHeight = pos["Height"];
+				if (WindowsAPI.GetWindowRect(item.Handle, out var rect))
+				{
+					if (WindowsAPI.MapWindowPoints(IntPtr.Zero, coordParent, ref rect, 2) != 0)
+					{
+						var pos = rect.ToPos();
+						outX = pos["X"];
+						outY = pos["Y"];
+						outWidth = pos["Width"];
+						outHeight = pos["Height"];
+						return;
+					}
+				}
 			}
+
+			outX = 0L;
+			outY = 0L;
+			outWidth = 0L;
+			outHeight = 0L;
 		}
 
 		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.Style : 0;

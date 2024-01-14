@@ -145,33 +145,40 @@ namespace Keysharp.Core
 		{
 			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
-			var found = Window.WindowManager.WindowFromPoint(pos);
-			var win = found.Handle.ToInt64();
-			var lx = (long)pos.X;
-			var ly = (long)pos.Y;
+			var aX = 0;
+			var aY = 0;
+			CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);
+			outputVarX = (long)(pos.X - aX);
+			outputVarY = (long)(pos.Y - aY);
+			var child = Window.WindowManager.WindowFromPoint(pos);
 
+			if (child == null || child.Handle == IntPtr.Zero)
+				return;
+
+			var parent = child.NonChildParentWindow;
+			outputVarWin = parent.Handle;
+
+			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
+			//and also better matches the control that Window Spy would think is under the cursor:
 			if ((mode & 0x01) == 0)
 			{
 				var pah = new Keysharp.Core.Common.Window.PointAndHwnd(new POINT() { x = pos.X, y = pos.Y });//Find topmost control containing point.
-				found.ChildFindPoint(pah);
+				parent.ChildFindPoint(pah);
 
 				if (pah.hwndFound != IntPtr.Zero)
-					found = Common.Window.WindowManagerProvider.Instance.CreateWindow(pah.hwndFound);
+					child = Common.Window.WindowManagerProvider.Instance.CreateWindow(pah.hwndFound);
 			}
 
-			var control = (mode & 2) == 2 ? found.Handle.ToInt64().ToString() : found.ClassNN;
+			if (child.Handle == parent.Handle)//If there's no control per se, make it blank.
+				return;
 
-			if (Coords.Mouse == CoordModeType.Window)
+			if ((mode & 0x02) != 0)
 			{
-				var location = Window.WindowManager.GetForeGroundWindow().Location;
-				lx -= location.X;
-				ly -= location.Y;
+				outputVarControl = child.Handle;
+				return;
 			}
 
-			outputVarX = lx;
-			outputVarY = ly;
-			outputVarWin = win;
-			outputVarControl = control;
+			outputVarControl = child.ClassNN;
 		}
 
 		public static void MouseMove(object x, object y, object speed = null, object relative = null)

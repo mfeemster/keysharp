@@ -553,3 +553,47 @@ If (z == 7)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+a := 0
+
+func_static()
+{
+	static s1 := 123
+	func_static2(&s1)
+}
+
+func_static2(&p2)
+{
+	global a := p2
+}
+
+func_static()
+
+If (a == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := 0
+
+func_static3()
+{
+	static s2 := 456
+	myclassobj := myclass()
+	myclassobj.func2(&s2)
+}
+
+class myclass
+{
+	func2(&p2)
+	{
+		global a := p2
+	}
+}
+
+func_static3()
+
+If (a == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

@@ -15,7 +15,6 @@ using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
-
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
@@ -31,6 +30,8 @@ namespace Keysharp.Core
 		private static bool allowMainWindow = true;
 
 		private static long clipboardTimeout = 1000L;
+		private static long controlDelay = 20L;
+		private static long defaultMouseSpeed = 2L;
 		private static object detectHiddenText = true;
 		private static object detectHiddenWindows = false;
 		private static Encoding fileEncoding = Encoding.Default;
@@ -38,7 +39,14 @@ namespace Keysharp.Core
 		private static bool iconHidden;
 		private static string initialWorkingDir = Environment.CurrentDirectory;
 		private static uint inputLevel;
+		private static long keyDelay = 10L;
+		private static long keyDelayPlay = -1L;
+		private static long keyDuration = -1L;
+		private static long keyDurationPlay = -1L;
 		private static string menuMaskKey = "";
+		private static long mouseDelay = 10L;
+		private static long mouseDelayPlay = -1L;
+		private static long peekFrequency = 5L;
 		private static Icon prevTrayIcon;
 		private static object regView = 64L;
 		private static object sendLevel = 0L;
@@ -46,6 +54,7 @@ namespace Keysharp.Core
 		private static object storeCapsLockMode = true;
 		private static object titleMatchMode = 2L;
 		private static object titleMatchModeSpeed = true;
+		private static long winDelay = 100L;
 
 		/// <summary>
 		/// The version of the assembly that was used to compile the script that is currently running.
@@ -323,7 +332,11 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The delay in milliseconds that will occur after each control-modifying command.
 		/// </summary>
-		public static object A_ControlDelay { get; set; } = 20L;
+		public static object A_ControlDelay
+		{
+			get => controlDelay;
+			set => controlDelay = ThreadAccessors.A_ControlDelay = value.Al();
+		}
 
 		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
 		public static string A_CoordModeMenu => Mouse.Coords.Menu.ToString();
@@ -370,7 +383,11 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
 		/// </summary>
-		public static object A_DefaultMouseSpeed { get; set; } = 2L;
+		public static object A_DefaultMouseSpeed
+		{
+			get => defaultMouseSpeed;
+			set => defaultMouseSpeed = ThreadAccessors.A_DefaultMouseSpeed = value.Al();
+		}
 
 		/// <summary>
 		/// The full path and name of the folder containing the current user's desktop files.
@@ -394,7 +411,7 @@ namespace Keysharp.Core
 				var val = Options.OnOff(value);
 
 				if (val != null)
-					detectHiddenText = val.Value;
+					detectHiddenText = ThreadAccessors.A_DetectHiddenText = val.Value.Ab();
 			}
 		}
 
@@ -410,7 +427,7 @@ namespace Keysharp.Core
 				var val = Options.OnOff(value);
 
 				if (val != null)
-					detectHiddenWindows = val.Value;
+					detectHiddenWindows = ThreadAccessors.A_DetectHiddenWindows = val.Value.Ab();
 			}
 		}
 
@@ -464,6 +481,7 @@ namespace Keysharp.Core
 			set
 			{
 				fileEncoding = Files.GetEncoding(value.ToString());
+				ThreadAccessors.A_FileEncoding = value;
 			}
 		}
 
@@ -659,22 +677,38 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The delay that will occur after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
-		public static object A_KeyDelay { get; set; } = 10L;
+		public static object A_KeyDelay
+		{
+			get => keyDelay;
+			set => keyDelay = ThreadAccessors.A_KeyDelay = value.Al();
+		}
 
 		/// <summary>
 		/// The delay that will occur in SendPlay mode after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
-		public static object A_KeyDelayPlay { get; set; } = -1L;
+		public static object A_KeyDelayPlay
+		{
+			get => keyDelayPlay;
+			set => keyDelayPlay = ThreadAccessors.A_KeyDelayPlay = value.Al();
+		}
 
 		/// <summary>
 		/// The delay between the press of a key and before its release, used with <see cref="A_KeyDelay"/>.
 		/// </summary>
-		public static object A_KeyDuration { get; set; } = -1L;
+		public static object A_KeyDuration
+		{
+			get => keyDuration;
+			set => keyDuration = ThreadAccessors.A_KeyDuration = value.Al();
+		}
 
 		/// <summary>
 		/// The delay in SendPlay mode between the press of a key and before its release, used with <see cref="A_KeyDelayPlay"/>.
 		/// </summary>
-		public static object A_KeyDurationPlay { get; set; } = -1L;
+		public static object A_KeyDurationPlay
+		{
+			get => keyDurationPlay;
+			set => keyDurationPlay = ThreadAccessors.A_KeyDurationPlay = value.Al();
+		}
 
 		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Keysharp.Core.Accessors)).Location;
 		public static string A_KeysharpPath => A_AhkPath;
@@ -1151,12 +1185,20 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Sets the delay that will occur after each mouse movement or click.
 		/// </summary>
-		public static object A_MouseDelay { get; set; } = 10L;
+		public static object A_MouseDelay
+		{
+			get => mouseDelay;
+			set => mouseDelay = ThreadAccessors.A_MouseDelay = value.Al();
+		}
 
 		/// <summary>
 		/// Sets the delay that will occur in SendPlay mode after each mouse movement or click.
 		/// </summary>
-		public static object A_MouseDelayPlay { get; set; } = -1L;
+		public static object A_MouseDelayPlay
+		{
+			get => mouseDelayPlay;
+			set => mouseDelayPlay = ThreadAccessors.A_MouseDelayPlay = value.Al();
+		}
 
 		/// <summary>
 		/// Current 3-digit millisecond (000-999).
@@ -1191,7 +1233,11 @@ namespace Keysharp.Core
 		/// </summary>
 		public static string A_OSVersion => Environment.OSVersion.VersionString;
 
-		public static object A_PeekFrequency { get; set; } = 5L;
+		public static object A_PeekFrequency
+		{
+			get => peekFrequency;
+			set => peekFrequency = ThreadAccessors.A_PeekFrequency = value.Al();
+		}
 
 		/// <summary>
 		/// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, π.
@@ -1226,7 +1272,12 @@ namespace Keysharp.Core
 		public static object A_RegView
 		{
 			get => regView;
-			set => regView = value is string s && s.ToLower() == "default" ? 64L : value.Al() == 32L ? 32L : 64L;
+
+			set
+			{
+				regView = value is string s && s.ToLower() == "default" ? 64L : value.Al() == 32L ? 32L : 64L;
+				ThreadAccessors.A_RegView = regView.Al();
+			}
 		}
 
 		/// <summary>
@@ -1284,6 +1335,7 @@ namespace Keysharp.Core
 			set
 			{
 				sendLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
+				ThreadAccessors.A_SendLevel = sendLevel.Aui();
 			}
 		}
 
@@ -1294,7 +1346,7 @@ namespace Keysharp.Core
 			set
 			{
 				if (Enum.TryParse<SendModes>(value.As(), out var temp))
-					sendMode = temp;
+					sendMode = ThreadAccessors.A_SendMode = temp;
 			}
 		}
 
@@ -1332,7 +1384,7 @@ namespace Keysharp.Core
 				var val = Options.OnOff(value);
 
 				if (val != null)
-					storeCapsLockMode = val.Value;
+					storeCapsLockMode = ThreadAccessors.A_StoreCapsLockMode = val.Value;
 			}
 		}
 
@@ -1502,7 +1554,11 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The current delay set by <code>SetWinDelay</code>.
 		/// </summary>
-		public static object A_WinDelay { get; set; } = 100L;
+		public static object A_WinDelay
+		{
+			get => winDelay;
+			set => winDelay = ThreadAccessors.A_WinDelay = value.Al();
+		}
 
 		/// <summary>
 		/// The Windows directory. For example: <code>C:\Windows</code>.
@@ -1560,11 +1616,6 @@ namespace Keysharp.Core
 		public static long False => 0L;
 		public static long True => 1L;
 
-		internal static bool A_DetectHiddenTextCur
-		{
-			get => Threads.GetThreadVariables().detectHiddenText;
-		}
-
 		/// <summary>
 		/// The most recent reason the script was asked to terminate. This variable is blank unless the script has an OnExit subroutine and that subroutine is currently running or has been called at least once by an exit attempt. See OnExit for details.
 		/// </summary>
@@ -1592,16 +1643,57 @@ namespace Keysharp.Core
 
 	internal static class ThreadAccessors
 	{
-		internal static long A_ControlDelay => Threads.GetThreadVariables().controlDelay;
-
-		internal static long A_DefaultMouseSpeed => Threads.GetThreadVariables().defaultMouseSpeed;
-
-		internal static bool A_DetectHiddenWindows => Threads.GetThreadVariables().detectHiddenWindows;
-
-		internal static Encoding A_FileEncoding
+		internal static long A_ControlDelay
 		{
-			get => Threads.GetThreadVariables().fileEncoding;
+			get => Threads.GetThreadVariables().controlDelay;
+			set => Threads.GetThreadVariables().controlDelay = value;
 		}
+
+		internal static long A_DefaultMouseSpeed
+		{
+			get => Threads.GetThreadVariables().defaultMouseSpeed;
+			set => Threads.GetThreadVariables().defaultMouseSpeed = value;
+		}
+
+		internal static bool A_DetectHiddenText
+		{
+			get => Threads.GetThreadVariables().detectHiddenText;
+			set => Threads.GetThreadVariables().detectHiddenText = value;
+		}
+
+		internal static bool A_DetectHiddenWindows
+		{
+			get => Threads.GetThreadVariables().detectHiddenWindows;
+			set => Threads.GetThreadVariables().detectHiddenWindows = value;
+		}
+
+		internal static object A_FileEncoding
+		{
+			get
+			{
+				var fileEncoding = A_FileEncodingRaw;
+				var val = fileEncoding.BodyName;
+
+				if (fileEncoding is UnicodeEncoding ue)
+				{
+					if (ue.GetPreamble().Length == 0)
+						val += "-raw";
+				}
+				else if (fileEncoding is UTF8Encoding u8)
+				{
+					if (u8.GetPreamble().Length == 0)
+						val += "-raw";
+				}
+
+				return val;
+			}
+			set
+			{
+				Threads.GetThreadVariables().fileEncoding = Files.GetEncoding(value.ToString());
+			}
+		}
+
+		internal static Encoding A_FileEncodingRaw => Threads.GetThreadVariables().fileEncoding;
 
 		internal static long A_KeyDelay
 		{
@@ -1630,21 +1722,25 @@ namespace Keysharp.Core
 		internal static long A_MouseDelay
 		{
 			get => Threads.GetThreadVariables().mouseDelay;
+			set => Threads.GetThreadVariables().mouseDelay = value;
 		}
 
 		internal static long A_MouseDelayPlay
 		{
 			get => Threads.GetThreadVariables().mouseDelayPlay;
+			set => Threads.GetThreadVariables().mouseDelayPlay = value;
 		}
 
 		internal static long A_PeekFrequency
 		{
 			get => Threads.GetThreadVariables().peekFrequency;
+			set => Threads.GetThreadVariables().peekFrequency = value;
 		}
 
 		internal static long A_RegView
 		{
 			get => Threads.GetThreadVariables().regView;
+			set => Threads.GetThreadVariables().regView = value;
 		}
 
 		internal static uint A_SendLevel
@@ -1659,7 +1755,16 @@ namespace Keysharp.Core
 			set => Threads.GetThreadVariables().sendMode = value;
 		}
 
-		internal static bool A_StoreCapsLockMode => Threads.GetThreadVariables().storeCapsLockMode;
-		internal static long A_WinDelay => Threads.GetThreadVariables().winDelay;
+		internal static bool A_StoreCapsLockMode
+		{
+			get => Threads.GetThreadVariables().storeCapsLockMode;
+			set => Threads.GetThreadVariables().storeCapsLockMode = value;
+		}
+
+		internal static long A_WinDelay
+		{
+			get => Threads.GetThreadVariables().winDelay;
+			set => Threads.GetThreadVariables().winDelay = value;
+		}
 	}
 }

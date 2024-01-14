@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common.Window
 {
@@ -31,6 +32,11 @@ namespace Keysharp.Core.Common.Window
 		internal WindowItemBase FindWindow(object title, string text, string excludeTitle, string excludeText, bool last = false)
 		{
 			WindowItemBase foundWindow = null;
+			var (parsed, ptr) = Keysharp.Core.Window.CtrlToIntPtr(title);
+
+			if (parsed)
+				if (WindowsAPI.IsWindow(ptr))
+					return LastFound = WindowManagerProvider.Instance.CreateWindow(ptr);
 
 			if (title is Gui gui)
 			{
