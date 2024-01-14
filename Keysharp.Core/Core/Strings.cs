@@ -698,8 +698,10 @@ namespace Keysharp.Core
 
 		public static string StrGet(object obj0, object obj1 = null, object obj2 = null)
 		{
-			var len = obj1.Al(long.MinValue);
-			var encoding = obj2 is string s ? Files.GetEncoding(s) : Encoding.Unicode;
+			var s = obj2 as string;
+			var hasThree = s != null;
+			var encoding = hasThree ? Files.GetEncoding(s) : Encoding.Unicode;
+			var len = hasThree ? obj1.Al(long.MinValue) : long.MinValue;
 			var ptr = IntPtr.Zero;
 			var buf = obj0 as Buffer;
 

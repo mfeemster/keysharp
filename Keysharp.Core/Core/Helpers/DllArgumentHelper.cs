@@ -181,12 +181,14 @@ namespace Keysharp.Core
 							}
 							else if (name == "uint" || name == "int")
 							{
-								if (p is null)
-									args[n] = 0;
-								else if (p is IntPtr ip)
+								if (p is IntPtr ip)
 									args[n] = ip.ToInt64();
+								else if (p is long l && l > 0)
+									args[n] = l;
+								else if (p is int ii && ii > 0)
+									args[n] = ii;
 								else
-									args[n] = (int)p.Al();
+									SetupPointerArg(i, n);
 							}
 							else
 								SetupPointerArg(i, n);
