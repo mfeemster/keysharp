@@ -119,6 +119,7 @@ namespace Keyview
 			this.txtIn.Size = new System.Drawing.Size(456, 403);
 			this.txtIn.TabIndex = 1;
 			this.txtIn.Text = "";
+			this.txtIn.WrapMode = WrapMode.Word;
 			this.txtIn.TextChanged += new System.EventHandler(this.txtIn_TextChanged);
 			this.txtIn.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtIn_KeyDown);
 			//
@@ -133,6 +134,7 @@ namespace Keyview
 			this.txtOut.Size = new System.Drawing.Size(428, 403);
 			this.txtOut.TabIndex = 2;
 			this.txtOut.Text = "";
+			this.txtOut.WrapMode = WrapMode.Word;
 			this.txtOut.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtOut_KeyDown);
 			//
 			// toolStrip1
@@ -379,6 +381,7 @@ namespace Keyview
 			this.wordWrapItem.Name = "wordWrapItem";
 			this.wordWrapItem.Size = new System.Drawing.Size(254, 28);
 			this.wordWrapItem.Text = "Word Wrap";
+			this.wordWrapItem.Checked = true;
 			this.wordWrapItem.Click += new System.EventHandler(this.wordWrapToolStripMenuItem1_Click);
 			//
 			// indentGuidesItem

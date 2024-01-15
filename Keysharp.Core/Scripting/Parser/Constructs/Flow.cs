@@ -126,15 +126,13 @@ namespace Keysharp.Scripting
 				case FlowSwitch:
 				{
 					var snip = new CodeSnippetStatement();
-					var switchargs = new string[1];
+					var switchargs = new List<string>() { "" };
 
 					if (parts.Length > 1)
-					{
-						switchargs = StripCommentSingle(parts[1]).Trim(Parens).Split(Spaces.Append(',').ToArray(), StringSplitOptions.RemoveEmptyEntries);
-					}
+						switchargs = SplitStringBalanced(parts[1], ',');
 
 					var switchvar = switchargs[0];
-					var cse = new CodeSwitchStatement(switchvar, switchargs.Length > 1 ? switchargs[1] : null, switchCount++);
+					var cse = new CodeSwitchStatement(switchvar, switchargs.Count > 1 ? switchargs[1].Trim() : null, switchCount++);
 					var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 					var block = new CodeBlock(line, Scope, cse.AllStatements, CodeBlock.BlockKind.Switch, blocks.PeekOrNull()) { Type = type };
 					_ = CloseTopSingleBlock();
@@ -156,7 +154,7 @@ namespace Keysharp.Scripting
 						{
 							var colonindex = parts[1].IndexOf(':');
 							var casearg = colonindex != -1 ? parts[1].Substring(0, colonindex) : throw new ParseException("Case not terminated with a colon", line);
-							var casearr = casearg.Split(Spaces, StringSplitOptions.RemoveEmptyEntries);
+							var casearr = SplitStringBalanced(casearg, ',').Select(a => a.Trim()).ToArray();
 							var casename = $"ks_caselabel{caseCount++}";
 							colonindex++;
 
@@ -174,25 +172,25 @@ namespace Keysharp.Scripting
 								{
 									var comparg = "System.StringComparison." + css.CaseSense.ToString();
 									var cmie = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeTypeReferenceExpression("System.String"), "Compare"));
-									_ = cmie.Parameters.Add(new CodeSnippetExpression(css.SwitchVarTempName));
+									_ = cmie.Parameters.Add(new CodeSnippetExpression($"{css.SwitchVarTempName}str"));
 									_ = cmie.Parameters.Add(new CodeSnippetExpression($"{casearg}.ToString()"));
 									_ = cmie.Parameters.Add(new CodeSnippetExpression(comparg));
 									var coe = new CodeBinaryOperatorExpression(cmie, CodeBinaryOperatorType.ValueEquality, new CodeSnippetExpression("0"));
 									css.CaseExpressions.Add(casename, coe);
 								}
-								else if (!string.IsNullOrEmpty(css.SwitchVar))
-									css.CaseExpressions.Add(casename, $"{css.SwitchVar} == {casearr[0]}");
+								else if (!string.IsNullOrEmpty(css.SwitchVar) && !string.IsNullOrEmpty(css.SwitchVarTempName))
+									css.CaseExpressions.Add(casename, $"{css.SwitchVarTempName} == {casearr[0]}");
 								else
 									css.CaseExpressions.Add(casename, $"{casearr[0]}");
 							}
 							else
 							{
-								casearr = casearg.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
+								casearr = SplitStringBalanced(casearg, ',').Select(a => a.Trim()).ToArray();
 
-								if (!string.IsNullOrEmpty(css.SwitchVar))
+								if (!string.IsNullOrEmpty(css.SwitchVar) && !string.IsNullOrEmpty(css.SwitchVarTempName))
 									for (var i = 0; i < casearr.Length; i++)
-										if (casearr[i].IndexOf(' ') == -1)
-											casearr[i] = $"{css.SwitchVar} == {casearr[i]}";
+										//if (casearr[i].IndexOf(' ') == -1)
+										casearr[i] = $"{css.SwitchVarTempName} == {casearr[i]}";
 
 								css.CaseExpressions.Add(casename, string.Join("||", casearr));
 							}

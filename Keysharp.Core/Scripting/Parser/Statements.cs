@@ -426,10 +426,16 @@ namespace Keysharp.Scripting
 										}
 
 										//statements[n].LinePragma = lines[n];
-										//if (parentBlock != null && parentBlock.Kind == CodeBlock.BlockKind.Try && parentBlock.Statements.Count > 0)
-										//  parentBlock.Statements.Insert(parentBlock.Statements.Count - 1, statements[n]);
-										//else
-										_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
+
+										if (statements[n].Expression is CodeBinaryOperatorExpression cboe2 && cboe2.Operator != CodeBinaryOperatorType.Assign)
+										{
+											var cboe3 = new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"),
+													CodeBinaryOperatorType.Assign,
+													cboe2);
+											_ = parent.Add(new CodeExpressionStatement(cboe3));
+										}
+										else
+											_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
 									}
 								}
 							}

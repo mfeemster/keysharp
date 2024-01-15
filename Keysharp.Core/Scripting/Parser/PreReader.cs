@@ -29,7 +29,7 @@ namespace Keysharp.Scripting
 			FlowGosub,
 			FlowIf,
 			FlowLoop,
-			FlowReturn,
+			//FlowReturn,//A brace following return is not OTB, instead it's the beginning of the creation of a Map to be returned.
 			FlowSwitch,
 			FlowTry,
 			//FlowUntil,//Could  until { one : 1 } == x ever be done?
@@ -515,7 +515,12 @@ namespace Keysharp.Scripting
 						//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
 						var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
 
-						if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']')) && ((code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
+						//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
+						//Checking return is for: return {
+						//  one : 1
+						// }
+						//Because it's the one flow statement that when followed by a brance is not OTB, instead it's returning a map.
+						if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']')) && (string.Compare(splits[0], "return", true) == 0 || (code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||
 											//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
 											(code.Length > 1 &&
 											 !code.Contains('(') && !code.Contains(')') &&
@@ -574,7 +579,11 @@ namespace Keysharp.Scripting
 
 								//Only split if it's an OTB flow statement like if {
 								//Do not split if it's a command statement like FileAppend {one, 1}, "*"
-								if (splits.Length > 1 && splits[1][0] == '{' && otbFlowKeywords.Contains(splits[0]))
+								if (splits.Length > 1
+										&& splits[1][0] == '{'
+										&& otbFlowKeywords.Contains(splits[0])
+										//&& !splits[splits.Length - 1].EndsWith("}")
+								   )
 								{
 									var firstOpen = rest.IndexOf('{');
 									var cur = rest.Substring(0, firstOpen).Trim(Spaces);

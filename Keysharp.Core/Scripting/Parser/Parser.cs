@@ -187,9 +187,10 @@ namespace Keysharp.Scripting
 
 		public static string TrimParens(string code)
 		{
-			var anyparens = false;
-			var badline = false;
-			var parenssb = new StringBuilder(code.Length);
+			var anyParens = false;
+			var sb = new StringBuilder(code.Length);
+			var badLines = new Stack<bool>();
+			var dummy = true;
 
 			//Microsoft's expression code erroneously adds parens where they shouldn't be, so remove them from the code here whenever a line starts with a paren.
 			foreach (var line in code.SplitLines())
@@ -197,40 +198,41 @@ namespace Keysharp.Scripting
 				var either = false;
 				var trimmedline = line.AsSpan().Trim(SpaceTab);
 				var startparen = trimmedline.StartsWith("(");// && !trimmedline.EndsWith("),");
-				var endparen = trimmedline.EndsWith(");");
+				var endParenSemi = trimmedline.EndsWith(");");
+				var endParenComma = trimmedline.EndsWith("),");
 
-				if (startparen && endparen)
+				if (startparen && (endParenSemi || endParenComma))
 				{
 					var noparensline = line.Remove(line.IndexOf('('), 1);
 					var lastrparen = line.LastIndexOf(')');
 					noparensline = noparensline.Remove(Math.Max(0, lastrparen - 1), 1);
-					_ = parenssb.AppendLine(noparensline);
-					anyparens = true;
+					_ = sb.AppendLine(noparensline);
+					anyParens = true;
 					either = true;
 				}
 				else if (startparen)
 				{
-					badline = true;
+					badLines.Push(true);
 					var noparensline = line.Remove(line.IndexOf('('), 1);
-					_ = parenssb.AppendLine(noparensline);
-					anyparens = true;
+					_ = sb.AppendLine(noparensline);
+					anyParens = true;
 					either = true;
 				}
-				else if (badline && endparen)
+				else if (badLines.Count > 0 && endParenSemi)// && !line.IsBalanced('(', ')'))//This will likely fail when there are parens in quotes which lead an imbalanced line to be balanced.
 				{
 					var lastrparen = line.LastIndexOf(')');
 					//var noparensline = line.Remove(Math.Max(0, lastrparen - 1), 1);
 					var noparensline = line.Remove(Math.Max(0, lastrparen), 1);
-					_ = parenssb.AppendLine(noparensline);
-					badline = false;
+					_ = sb.AppendLine(noparensline);
+					badLines.Pop();
 					either = true;
 				}
 
 				if (!either)
-					_ = parenssb.AppendLine(line);
+					_ = sb.AppendLine(line);
 			}
 
-			return anyparens ? parenssb.ToString() : code;
+			return anyParens ? sb.ToString() : code;
 		}
 
 		/// <summary>

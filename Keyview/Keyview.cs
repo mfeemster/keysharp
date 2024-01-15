@@ -597,6 +597,7 @@ namespace Keyview
 					tslCodeStatus.Text = "Trimming parens from C# code...";
 					Refresh();
 					code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
+					//code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
 					tslCodeStatus.Text = "Compiling C# code...";
 					var asm = Assembly.GetExecutingAssembly();
 					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
@@ -671,7 +672,7 @@ namespace Keyview
 		{
 			if (e.KeyCode == Keys.F5)
 				force = true;
-			else
+			else if (object.ReferenceEquals(sender, txtIn))
 				lastKeyTime = DateTime.Now;
 		}
 

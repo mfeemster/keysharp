@@ -433,7 +433,7 @@ namespace Keysharp.Scripting
 									  ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 									  //Check for function or property calls on an object, which only count as read operations.
 									  : VarIdOrConstant(part,
-														i == 0 &&
+														(i == 0 || (s.EndsWith('=') && parts[i - 1] is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign)) && //This accounts for either the left side of a single assignment like x := 0 or a multi-assignment like x := y := 0, where we create x and y.
 														(!s.StartsWith("[") || parts.Count == 1) &&
 														(create || s.EndsWith('='))//Covers :=, +=, -= etc...
 														, false);
@@ -652,7 +652,7 @@ namespace Keysharp.Scripting
 									if (argExpr is CodeBinaryOperatorExpression cboe)
 									{
 										_ = parent.Add(cboe);
-										argExpr = cboe.Left as CodeVariableReferenceExpression;
+										argExpr = cboe.Left;
 									}
 
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
@@ -1116,8 +1116,10 @@ namespace Keysharp.Scripting
 														 && IsAssignOp(sw)) || IsVarAssignment(parts[w])))
 								{
 									var l = parts.Count - w;
-									var sub = new List<object>(l + 1);
-									sub.Add(parts[z]);
+									var sub = new List<object>(l + 1)
+									{
+										parts[z]
+									};
 
 									for (var wx = w; wx < parts.Count; wx++)
 										sub.Add(parts[wx]);

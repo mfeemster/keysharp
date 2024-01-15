@@ -34,6 +34,7 @@ namespace Keysharp.Scripting
 			var parenLevel = 0;
 			var braceLevel = 0;
 			var bracketLevel = 0;
+			var ternaryLevel = 0;
 			var i = 0;
 
 			for (; i < parts.Length; i++)
@@ -64,9 +65,17 @@ namespace Keysharp.Scripting
 					{
 						bracketLevel--;
 					}
-					else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && (delim.Length == 0 || s == delim))
+					else if (s == "?")
+					{
+						ternaryLevel++;
+					}
+					else if (parenLevel == 0 && braceLevel == 0 && bracketLevel == 0 && ternaryLevel == 0 && (delim.Length == 0 || s == delim))
 					{
 						return i;
+					}
+					else if (ternaryLevel > 0 && s == ":")//Put this below the delimiter check because delim might be ":".
+					{
+						ternaryLevel--;//Only subtract if we're in a ternary, otherwise we're parsing an object.
 					}
 				}
 			}

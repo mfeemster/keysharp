@@ -32,3 +32,15 @@ If (x != y)
 	FileAppend, "fail", "*"
 else
 	FileAppend, "pass", "*"
+
+a := b := 123
+
+If (a == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (b == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

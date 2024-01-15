@@ -97,7 +97,7 @@ namespace Keysharp.Scripting
 		{
 			var i = 0;
 
-			while (i < code.Length && IsIdentifier(code[i])) i++;
+			while (i < code.Length && (IsIdentifier(code[i]) || code[i] == '.')) i++;
 
 			if (i == 0)
 				return false;

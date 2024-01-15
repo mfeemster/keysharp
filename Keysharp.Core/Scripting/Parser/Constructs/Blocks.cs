@@ -1,6 +1,7 @@
 ﻿using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Keysharp.Scripting
 {
@@ -48,7 +49,16 @@ namespace Keysharp.Scripting
 						if (css.CaseSense != null)
 						{
 							var right = new CodeMethodInvokeExpression(VarId(css.SwitchVar, false), "ToString");
-							_ = origlocalparent.Add(new CodeVariableDeclarationStatement(new CodeTypeReference("System.String"), css.SwitchVarTempName, right));
+							_ = origlocalparent.Add(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right));
+							_ = origlocalparent.Add(new CodeVariableDeclarationStatement(new CodeTypeReference("System.String"), $"{css.SwitchVarTempName}str", right));
+							allVars[typeStack.Peek()].GetOrAdd(Scope)[css.SwitchVarTempName] = nullPrimitive;
+						}
+						else if (!string.IsNullOrEmpty(css.SwitchVar))
+						{
+							var tokens = SplitTokens(css.SwitchVar);
+							var right = ParseExpression(top.Line, css.SwitchVar, tokens, true);
+							_ = origlocalparent.Add(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right));
+							allVars[typeStack.Peek()].GetOrAdd(Scope)[css.SwitchVarTempName] = nullPrimitive;
 						}
 
 						foreach (var cond in css.CaseExpressions)
@@ -108,7 +118,7 @@ namespace Keysharp.Scripting
 						_ = origlocalparent.Add(css.FinalLabelStatement);
 						_ = origlocalparent.Add(new CodeSnippetStatement(";"));//End labels seem to need a semicolon.
 
-						if (css.CaseSense != null)
+						if (css.CaseSense != null || !string.IsNullOrEmpty(css.SwitchVar))
 							_ = origlocalparent.Add(new CodeAssignStatement(new CodeSnippetExpression(css.SwitchVarTempName), new CodeSnippetExpression("null")));
 					}
 				}

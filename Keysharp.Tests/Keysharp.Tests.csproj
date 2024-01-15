@@ -31,6 +31,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Code\func-return.ahk~RF19ce6abc.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
   </ItemGroup>
 

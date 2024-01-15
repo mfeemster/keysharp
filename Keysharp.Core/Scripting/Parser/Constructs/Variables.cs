@@ -65,10 +65,18 @@ namespace Keysharp.Scripting
 							}
 							else if (!isparam && !isstatic/* && islocal*/)
 							{
-								allVars[typeStack.Peek()].GetOrAdd(tempscope)[toplevelvar] = nullPrimitive;
+								var dkt = allVars[typeStack.Peek()].GetOrAdd(tempscope);
+
+								if (!dkt.ContainsKey(toplevelvar))//Ensure it hasn't been declared and initialized yet.
+									dkt[toplevelvar] = nullPrimitive;
 							}
 							else if (!isparam && allglobal)
-								allVars[typeStack.Peek()].GetOrAdd("")[toplevelvar] = nullPrimitive;
+							{
+								var dkt = allVars[typeStack.Peek()].GetOrAdd("");
+
+								if (!dkt.ContainsKey(toplevelvar))
+									dkt[toplevelvar] = nullPrimitive;
+							}
 						}
 
 						return isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);

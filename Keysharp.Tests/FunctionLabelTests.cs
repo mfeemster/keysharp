@@ -54,5 +54,9 @@ namespace Keysharp.Tests
 		[NonParallelizable]
 		[Test, Category("Function")]
 		public void RefParamsInFunc() => Assert.IsTrue(TestScript("func-ref-params", false));
+
+		[NonParallelizable]
+		[Test, Category("Function")]
+		public void ReturnFunc() => Assert.IsTrue(TestScript("func-return", false));
 	}
 }

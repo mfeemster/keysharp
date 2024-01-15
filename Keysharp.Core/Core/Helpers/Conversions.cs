@@ -253,7 +253,7 @@ namespace Keysharp.Core
 
 		internal static StringComparison ParseComparisonOption(object option)
 		{
-			switch (option.ToString().ToLowerInvariant())
+			switch (option.ToString().Trim().ToLowerInvariant())
 			{
 				case "1":
 				case Keyword_On: return StringComparison.Ordinal;

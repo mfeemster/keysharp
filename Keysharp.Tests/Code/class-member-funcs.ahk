@@ -333,3 +333,68 @@ if (val == 12)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Test command style when using methods.
+
+class myclass2
+{
+	classfunc0()
+    {
+		program.a := 0
+    }
+
+    classfunc1(p1)
+    {
+		program.a := p1
+    }
+    
+    classfunc2(p1, p2)
+    {
+		program.a := p1 + p2
+    }
+
+    classfunc3(p1, p2, p3*)
+    {
+		temp := p1 + p2
+
+		for n in p3
+		{
+			temp += p3[A_Index]
+		}
+	
+		program.a := temp
+    }
+}
+
+a := ""
+class2obj := myclass2()
+class2obj.classfunc0
+
+if (a == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+class2obj.classfunc1 1
+
+if (a == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+class2obj.classfunc2 1, 2
+
+if (a == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+class2obj.classfunc3 1, 2, 4, 5, 6
+
+if (a == 18)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

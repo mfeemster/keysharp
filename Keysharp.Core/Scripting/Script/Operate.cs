@@ -400,16 +400,30 @@ namespace Keysharp.Scripting
 				case Operator.IdentityInequality:
 				{
 					_ = MatchTypes(ref left, ref right);
-					return left == null ? right != null : !left.Equals(right);
+
+					if (left == null)
+						return right != null;
+
+					if (left is string s1 && right is string s2)
+						return Strings.StrCmp(s1, s2, true) != 0;
+
+					return !left.Equals(right);
 				}
 
 				case Operator.IdentityEquality://This is for a double equal sign in a conditional, and uses case sensitive comparison for strings.
 				{
 					_ = MatchTypes(ref left, ref right);
-					return left == null ? right == null : left.Equals(right);
+
+					if (left == null)
+						return right == null;
+
+					if (left is string s1 && right is string s2)
+						return Strings.StrCmp(s1, s2, true) == 0;
+
+					return left.Equals(right);
 				}
 
-				case Operator.ValueEquality://This is for a single equal sign in a conditional, and uses the global StringCaseSense comparison type for strings.
+				case Operator.ValueEquality://This is for a single equal sign in a conditional, and uses the case insensitive comparison type for strings.
 				{
 					_ = MatchTypes(ref left, ref right);
 
@@ -462,7 +476,7 @@ namespace Keysharp.Scripting
 				case Operator.LessThan:
 				{
 					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) < 0;
+						return Strings.StrCmp(s1, s2, true) < 0;
 					else
 						return left == null ? right == null : ForceDouble(left) < ForceDouble(right);
 				}
@@ -470,7 +484,7 @@ namespace Keysharp.Scripting
 				case Operator.LessThanOrEqual:
 				{
 					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) <= 0;
+						return Strings.StrCmp(s1, s2, true) <= 0;
 					else
 						return left == null ? right == null : ForceDouble(left) <= ForceDouble(right);
 				}
@@ -478,7 +492,7 @@ namespace Keysharp.Scripting
 				case Operator.GreaterThan:
 				{
 					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) > 0;
+						return Strings.StrCmp(s1, s2, true) > 0;
 					else
 						return left == null ? right == null : ForceDouble(left) > ForceDouble(right);
 				}
@@ -486,7 +500,7 @@ namespace Keysharp.Scripting
 				case Operator.GreaterThanOrEqual:
 				{
 					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) >= 0;
+						return Strings.StrCmp(s1, s2, true) >= 0;
 					else
 						return left == null ? right == null : ForceDouble(left) >= ForceDouble(right);
 				}
@@ -496,7 +510,7 @@ namespace Keysharp.Scripting
 					_ = MatchTypes(ref left, ref right);
 
 					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) != 0;//This uses the global StringCaseSense comparison type for strings.
+						return Strings.StrCmp(s1, s2, false) != 0;
 					else
 						return left == null ? right != null : !left.Equals(right);//Will go here if both are double or decimal.
 				}
