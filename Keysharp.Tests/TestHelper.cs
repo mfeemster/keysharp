@@ -97,7 +97,7 @@ namespace Keysharp.Tests
 				return string.Empty;
 			}
 
-			code = CompilerHelper.UsingStr + Parser.TrimParens(code);
+			code = CompilerHelper.UsingStr + code;
 
 			using (var sourceWriter = new StreamWriter("./" + name + ".cs"))
 			{

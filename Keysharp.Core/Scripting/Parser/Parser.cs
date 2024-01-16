@@ -4,12 +4,14 @@ using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using Keysharp.Core;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
@@ -149,6 +151,7 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
 		private tsmd setPropertyValueCalls = new tsmd();
 		private Stack<CodeBlock> singleLoops = new ();
+		private HashSet<CodeSnippetExpression> assignSnippets = new ();
 		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
 		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
 		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
@@ -184,56 +187,6 @@ namespace Keysharp.Scripting
 		}
 
 		public static string GetKeywords() => string.Join(' ', keywords);
-
-		public static string TrimParens(string code)
-		{
-			var anyParens = false;
-			var sb = new StringBuilder(code.Length);
-			var badLines = new Stack<bool>();
-			var dummy = true;
-
-			//Microsoft's expression code erroneously adds parens where they shouldn't be, so remove them from the code here whenever a line starts with a paren.
-			foreach (var line in code.SplitLines())
-			{
-				var either = false;
-				var trimmedline = line.AsSpan().Trim(SpaceTab);
-				var startparen = trimmedline.StartsWith("(");// && !trimmedline.EndsWith("),");
-				var endParenSemi = trimmedline.EndsWith(");");
-				var endParenComma = trimmedline.EndsWith("),");
-
-				if (startparen && (endParenSemi || endParenComma))
-				{
-					var noparensline = line.Remove(line.IndexOf('('), 1);
-					var lastrparen = line.LastIndexOf(')');
-					noparensline = noparensline.Remove(Math.Max(0, lastrparen - 1), 1);
-					_ = sb.AppendLine(noparensline);
-					anyParens = true;
-					either = true;
-				}
-				else if (startparen)
-				{
-					badLines.Push(true);
-					var noparensline = line.Remove(line.IndexOf('('), 1);
-					_ = sb.AppendLine(noparensline);
-					anyParens = true;
-					either = true;
-				}
-				else if (badLines.Count > 0 && endParenSemi)// && !line.IsBalanced('(', ')'))//This will likely fail when there are parens in quotes which lead an imbalanced line to be balanced.
-				{
-					var lastrparen = line.LastIndexOf(')');
-					//var noparensline = line.Remove(Math.Max(0, lastrparen - 1), 1);
-					var noparensline = line.Remove(Math.Max(0, lastrparen), 1);
-					_ = sb.AppendLine(noparensline);
-					badLines.Pop();
-					either = true;
-				}
-
-				if (!either)
-					_ = sb.AppendLine(line);
-			}
-
-			return anyParens ? sb.ToString() : code;
-		}
 
 		/// <summary>
 		/// Return a DOM representation of a script.
@@ -354,6 +307,8 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "SetStaticMemberValueT");
 								cmie.Method.TypeArguments.Add(name);
 								cmie.Parameters.RemoveAt(0);
+								//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
+								//ReevaluateSnippet(cse);
 							}
 						}
 					}
@@ -377,6 +332,8 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
 								cmie.Method.TypeArguments.Add(name);
 								cmie.Parameters.RemoveAt(0);
+								//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
+								//ReevaluateSnippet(cse);
 							}
 						}
 					}
@@ -400,6 +357,8 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMethodT");
 								cmie.Method.TypeArguments.Add(name);
 								cmie.Parameters.RemoveAt(0);
+								//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
+								//ReevaluateSnippet(cse);
 							}
 						}
 					}
@@ -542,6 +501,9 @@ namespace Keysharp.Scripting
 								}
 							}
 						}
+
+						//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
+						//ReevaluateSnippet(cse);
 					}
 				}
 			}
@@ -775,6 +737,9 @@ namespace Keysharp.Scripting
 				for (var i = 0; i < gotoLoopDepth; i++)
 					gkv.Value.Statements.Insert(gotoIndex, pop);
 			}
+
+			foreach (var assign in assignSnippets)//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments, so it shouldn't matter.
+				ReevaluateSnippet(assign);
 
 			return unit;
 		}

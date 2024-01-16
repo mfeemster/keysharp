@@ -49,7 +49,7 @@ namespace Keysharp.Scripting
 						if (css.CaseSense != null)
 						{
 							var right = new CodeMethodInvokeExpression(VarId(css.SwitchVar, false), "ToString");
-							_ = origlocalparent.Add(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right));
+							_ = origlocalparent.Add(BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right)));
 							_ = origlocalparent.Add(new CodeVariableDeclarationStatement(new CodeTypeReference("System.String"), $"{css.SwitchVarTempName}str", right));
 							allVars[typeStack.Peek()].GetOrAdd(Scope)[css.SwitchVarTempName] = nullPrimitive;
 						}
@@ -57,7 +57,7 @@ namespace Keysharp.Scripting
 						{
 							var tokens = SplitTokens(css.SwitchVar);
 							var right = ParseExpression(top.Line, css.SwitchVar, tokens, true);
-							_ = origlocalparent.Add(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right));
+							_ = origlocalparent.Add(BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right)));
 							allVars[typeStack.Peek()].GetOrAdd(Scope)[css.SwitchVarTempName] = nullPrimitive;
 						}
 

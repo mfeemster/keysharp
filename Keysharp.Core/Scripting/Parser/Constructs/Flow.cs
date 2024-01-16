@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Keysharp.Core;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -637,9 +638,9 @@ namespace Keysharp.Scripting
 
 							foreach (var expr in ParseMultiExpression(line, parts[1], true))
 								if (expr is CodeExpressionStatement ces &&
-										ces.Expression is CodeBinaryOperatorExpression cboe &&
+										ces.Expression.WasCboe() is CodeBinaryOperatorExpression cboe &&
 										cboe.Left is CodeVariableReferenceExpression cvre)
-									funclocalvarinitstatements.Add(new CodeExpressionStatement(cboe));
+									funclocalvarinitstatements.Add(new CodeExpressionStatement(BinOpToSnippet(cboe)));
 
 							if (funclocalvarinitstatements.Count > 0)
 								return funclocalvarinitstatements.ToArray();
@@ -664,13 +665,13 @@ namespace Keysharp.Scripting
 							{
 								if (expr is CodeExpressionStatement ces)
 								{
-									if (ces.Expression is CodeBinaryOperatorExpression cboe)
+									if (ces.Expression.WasCboe() is CodeBinaryOperatorExpression cboe)
 									{
 										if (cboe.Left is CodeVariableReferenceExpression cvre)
 										{
 											cvre.VariableName = cvre.VariableName.Trim('%').ToLower();//ParseMultiExpression() knows we are in a function, so it will attach the scope. But this is a global variable reference, so remove it plus the _.
 											gflist.Add(cvre.VariableName);
-											funcglobalvarinitstatements.Add(new CodeExpressionStatement(cboe));
+											funcglobalvarinitstatements.Add(new CodeExpressionStatement(BinOpToSnippet(cboe)));
 										}
 									}
 									else if (ces.Expression is CodeVariableReferenceExpression cvre)
@@ -687,10 +688,10 @@ namespace Keysharp.Scripting
 
 							foreach (var expr in multiexprs)
 							{
-								if (expr.Expression is CodeBinaryOperatorExpression cboe && cboe.Left is CodeVariableReferenceExpression cvre2)
+								if (expr.Expression.WasCboe() is CodeBinaryOperatorExpression cboe && cboe.Left is CodeVariableReferenceExpression cvre2)
 								{
 									allVars[targetClass].GetOrAdd(Scope)[cvre2.VariableName] = cboe.Right;
-									codeStatements.Add(new CodeExpressionStatement(cboe));
+									codeStatements.Add(new CodeExpressionStatement(BinOpToSnippet(cboe)));
 								}
 								else if (expr.Expression is CodeVariableReferenceExpression cvre)
 									allVars[targetClass].GetOrAdd(Scope)[cvre.VariableName] = nullPrimitive;
@@ -742,7 +743,7 @@ namespace Keysharp.Scripting
 							{
 								if (expr is CodeExpressionStatement ces)
 								{
-									if (ces.Expression is CodeBinaryOperatorExpression cboe)
+									if (ces.Expression.WasCboe() is CodeBinaryOperatorExpression cboe)
 									{
 										if (cboe.Left is CodeVariableReferenceExpression cvre)
 											dkt[cvre.VariableName.Trim('%').ToLower()] = cboe.Right;

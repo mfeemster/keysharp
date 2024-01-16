@@ -2,6 +2,7 @@ using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using Keysharp.Core;
+using Keysharp.Core.Common.ExtensionMethods;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
 using static Keysharp.Scripting.Keywords;
@@ -436,7 +437,9 @@ namespace Keysharp.Scripting
 								// the mouse button (since that would be undesirable 90% of the time).  This is done
 								// by inserting a single extra IF-statement above the Send that produces the down-event:
 								var ks = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "GetKeyState", new CodeExpression[] { new CodePrimitiveExpression(remap_dest) });
-								_ = method.Statements.Add(new CodeConditionStatement(new CodeCastExpression("Boolean", ks), new CodeStatement[] { new CodeExpressionStatement(send) }));
+								var ifelse = (CodeMethodInvokeExpression)Parser.InternalMethods.IfElse;
+								ifelse.Parameters.Add(ks);
+								_ = method.Statements.Add(new CodeConditionStatement(ifelse, new CodeStatement[] { new CodeExpressionStatement(send) }));
 							}
 							else
 								_ = method.Statements.Add(send);

@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using Keysharp.Core;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -391,14 +392,8 @@ namespace Keysharp.Scripting
 								var statements = ParseMultiExpression(codeline, code, true);
 
 								for (n = 0; n < statements.Length; n++)
-								{
-									var expr = OptimizeLoneExpression(statements[n].Expression);
-
-									if (expr == null)
-										continue;
-									else
-										statements[n] = new CodeExpressionStatement(expr);
-								}
+								  if (OptimizeLoneExpression(statements[n].Expression) is CodeExpression expr)
+								      statements[n] = new CodeExpressionStatement(BinOpToSnippet(expr));
 
 								for (n = 0; n < statements.Length; n++)
 								{
@@ -407,7 +402,7 @@ namespace Keysharp.Scripting
 										var expr = ces.Expression;
 
 										//This is checking for the declaration and initialization of class member variables. Only record here after the parsing and optimization above have been done.
-										if (InClassDefinition() && Scope.Length == 0 && expr is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign
+										if (InClassDefinition() && Scope.Length == 0 && expr.WasCboeAssign() is CodeBinaryOperatorExpression cboe
 												&& cboe.Left is CodeVariableReferenceExpression cvre)//We are in a type that is not the main class, and also not inside of a function. Static or instance properties can be initialized with a string.
 										{
 											allVars[typeStack.Peek()].GetOrAdd(Scope)[cvre.VariableName] = cboe.Right;
@@ -426,16 +421,7 @@ namespace Keysharp.Scripting
 										}
 
 										//statements[n].LinePragma = lines[n];
-
-										if (statements[n].Expression is CodeBinaryOperatorExpression cboe2 && cboe2.Operator != CodeBinaryOperatorType.Assign)
-										{
-											var cboe3 = new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"),
-													CodeBinaryOperatorType.Assign,
-													cboe2);
-											_ = parent.Add(new CodeExpressionStatement(cboe3));
-										}
-										else
-											_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
+										_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
 									}
 								}
 							}

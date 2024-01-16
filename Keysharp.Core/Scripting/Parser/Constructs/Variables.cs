@@ -3,8 +3,10 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using Keysharp.Core;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -16,7 +18,7 @@ namespace Keysharp.Scripting
 		//internal CodeExpression VarId(string name, bool create, bool dyn = false) => name == args ? new CodeSnippetExpression(args) : VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
 		internal CodeExpression VarId(string name, bool create, bool dyn = false) => VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
 
-		private bool IsVarAssignment(object expr) => expr is CodeBinaryOperatorExpression cboe&& cboe.Operator == CodeBinaryOperatorType.Assign;
+		private bool IsVarAssignment(object expr) => (expr as CodeExpression).WasCboeAssign() is CodeBinaryOperatorExpression;
 
 		private bool IsVarReference(object expr) => expr is CodeArrayIndexerExpression || expr is CodeVariableReferenceExpression;
 
@@ -219,7 +221,7 @@ namespace Keysharp.Scripting
 			else if (part is CodePrimitiveExpression cpe)
 				return cpe;
 			else if (IsVarAssignment(part))
-				return (CodeBinaryOperatorExpression)part;
+				return (part as CodeExpression).WasCboeAssign();
 			else if (part is CodeExpression ce)
 				return ce;
 			else

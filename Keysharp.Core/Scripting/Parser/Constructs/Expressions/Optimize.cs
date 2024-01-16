@@ -1,5 +1,6 @@
 using System;
 using System.CodeDom;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -87,7 +88,7 @@ namespace Keysharp.Scripting
 		{
 			if (IsVarAssignment(expr))
 			{
-				var assign = (CodeBinaryOperatorExpression)expr;
+				var assign = expr.WasCboeAssign();
 				assign.Right = OptimizeExpression(assign.Right);
 				return assign;
 			}

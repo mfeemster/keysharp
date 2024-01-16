@@ -5,12 +5,57 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Keysharp.Core;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
+		internal CodeExpression BinOpToSnippet(CodeObject co)
+		{
+			if (co.GetExpr() is CodeExpression expr)
+			{
+				if (expr is CodeBinaryOperatorExpression cboe)
+				{
+					if (cboe.Operator == CodeBinaryOperatorType.Assign)
+					{
+						var c2s = Ch.CodeToString(cboe);
+						c2s = c2s.Substring(1, c2s.Length - 2);
+						var cse = new CodeSnippetExpression($"{c2s}");
+						cse.UserData["orig"] = cboe;
+						cboe.UserData["snippet"] = cse;
+						cboe.Left.UserData["snippet"] = cse;
+						cboe.Right.UserData["snippet"] = cse;
+						assignSnippets.Add(cse);
+						return cse;
+					}
+					else
+					{
+						var c2s = Ch.CodeToString(cboe);
+						var cse = new CodeSnippetExpression($"_ = ({c2s})");
+						cse.UserData["orig"] = cboe;
+						cboe.UserData["snippet"] = cse;
+						cboe.Left.UserData["snippet"] = cse;
+						cboe.Right.UserData["snippet"] = cse;
+						assignSnippets.Add(cse);
+						return cse;
+					}
+				}
+
+				return expr;
+			}
+
+			return null;
+		}
+
+		internal void ReevaluateSnippet(CodeSnippetExpression cse)
+		{
+			var c2s = Ch.CodeToString(cse.UserData["orig"] as CodeExpression);
+			c2s = c2s.Substring(1, c2s.Length - 2);
+			cse.Value = $"{c2s}";
+		}
+
 		private static (List<int>, List<List<object>>) ParseArguments(List<object> paren)
 		{
 			var paramIndex = 0;
@@ -163,7 +208,7 @@ namespace Keysharp.Scripting
 
 			if (passedLen > 0)
 			{
-				if (passed.Length == 1 && passed[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+				if (passed.Length == 1 && passed[0].WasCboe() is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 				{
 					_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(passed[0], "ParseObject"));
 				}
@@ -324,9 +369,9 @@ namespace Keysharp.Scripting
 											var temp = codeStrings[i1].TrimStart('&');
 											var expr = ParseExpression(line, temp, arg, true/*create false*/);//Override the value of create with true because reference arguments passed to a function should always be created automatically.
 
-											if (expr is CodeBinaryOperatorExpression cboe)
+											if (expr.WasCboe() is CodeBinaryOperatorExpression cboe)
 											{
-												_ = parent.Add(cboe);
+												_ = parent.Add(expr);
 												passed.Add(cboe.Left);
 											}
 											else
@@ -558,7 +603,7 @@ namespace Keysharp.Scripting
 
 								if (index.Length == 0)
 									_ = invoke.Parameters.Add(new CodeSnippetExpression("System.Array.Empty<object>()"));
-								else if (index[0] is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
+								else if (index[0].WasCboe() is CodeBinaryOperatorExpression cbe && (cbe.Operator == CodeBinaryOperatorType.BooleanAnd || cbe.Operator == CodeBinaryOperatorType.BooleanOr))
 									_ = invoke.Parameters.Add(new CodeMethodInvokeExpression(index[0], "ParseObject"));
 								else
 									foreach (var p in index)
@@ -649,9 +694,9 @@ namespace Keysharp.Scripting
 									tempCode = codeStrings[i1];
 									var argExpr = ParseExpression(line, tempCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
 
-									if (argExpr is CodeBinaryOperatorExpression cboe)
+									if (argExpr.WasCboe() is CodeBinaryOperatorExpression cboe)
 									{
-										_ = parent.Add(cboe);
+										_ = parent.Add(argExpr);
 										argExpr = cboe.Left;
 									}
 
@@ -1089,7 +1134,7 @@ namespace Keysharp.Scripting
 							{
 								if (LaxExpressions)
 								{
-									if ((x > 0 && (parts[x] is CodeBinaryOperatorExpression || parts[x] is CodeMethodInvokeExpression || parts[x] is CodePrimitiveExpression)) ||
+									if ((x > 0 && ((parts[x] as CodeExpression).WasCboe() is CodeBinaryOperatorExpression || parts[x] is CodeMethodInvokeExpression || parts[x] is CodePrimitiveExpression)) ||
 											(y < parts.Count && (parts[y] is string && !IsOperator(parts[y] as string) || parts[y] is Script.Operator)))
 									{
 										parts.RemoveAt(i);
@@ -1381,14 +1426,14 @@ namespace Keysharp.Scripting
 							//No real way to recover the code here because all of the branches have been parsed to objects already.
 							//It doesn't really matter though.
 							//The branches have both already been parsed and should have been reduced to a single expression.
-							var trueBranch  = ParseExpression(line,  code, branch[0], create);
+							var trueBranch = ParseExpression(line, code, branch[0], create);
 							var falseBranch = ParseExpression(line, code, branch[1], create);
 							//CodeDOM does not have built in support for ternary operators. So we must manually create the code string for the ternary,
 							//then use a code snippet to hold the string. This is not ideal, but there is no other way.
 							var evalstr = Ch.CodeToString(eval);
 							var tbs = Ch.CodeToString(trueBranch);
 							var fbs = Ch.CodeToString(falseBranch);
-							parts[x] = new CodeSnippetExpression($"(_ = {evalstr} ? (object){tbs} : (object){fbs})");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+							parts[x] = new CodeSnippetExpression($"(_ = {evalstr} ? (object)({tbs}) : (object)({fbs}))");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
 							parts.RemoveRange(start, parts.Count - start);
 							//i++;//Tried, but not needed.
 							//continue;
@@ -1465,7 +1510,7 @@ namespace Keysharp.Scripting
 										 (sop == Script.Operator.BooleanAnd || sop == Script.Operator.BooleanOr))//z := (x && y)
 									parts[x] = new CodeMethodInvokeExpression(boolean, "ParseObject");
 								else
-									parts[x] = boolean;
+									parts[x] = BinOpToSnippet(boolean);
 							}
 							else
 							{
@@ -1564,7 +1609,7 @@ namespace Keysharp.Scripting
 			if (parts.Count != 1)
 				throw new ParseException($"parts count of {parts.Count} was not 1.");
 
-			return IsVarAssignment(parts[0]) ? (CodeBinaryOperatorExpression)parts[0] : (CodeExpression)parts[0];
+			return BinOpToSnippet(parts[0] as CodeExpression);
 		}
 
 		private CodeExpressionStatement[] ParseMultiExpression(CodeLine line, string code, bool create, List<List<object>> subs = null)

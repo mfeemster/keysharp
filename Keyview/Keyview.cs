@@ -594,10 +594,7 @@ namespace Keyview
 						goto theend;
 					}
 
-					tslCodeStatus.Text = "Trimming parens from C# code...";
-					Refresh();
-					code = CompilerHelper.UsingStr + Keysharp.Scripting.Parser.TrimParens(code);//Need to manually add the using static statements.
-					//code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
+					code = CompilerHelper.UsingStr + code;
 					tslCodeStatus.Text = "Compiling C# code...";
 					var asm = Assembly.GetExecutingAssembly();
 					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));

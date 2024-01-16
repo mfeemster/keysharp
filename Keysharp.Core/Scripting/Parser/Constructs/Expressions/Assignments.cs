@@ -1,6 +1,7 @@
 ﻿using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
+using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -62,7 +63,7 @@ namespace Keysharp.Scripting
 			if (assign.Left != null)
 				return;
 
-			if (parts[x] is CodeBinaryOperatorExpression binary)
+			if ((parts[x] as CodeExpression).WasCboeAssign() is CodeBinaryOperatorExpression binary)
 			{
 				assign.Left = (CodeArrayIndexerExpression)binary.Left;
 			}
@@ -72,7 +73,7 @@ namespace Keysharp.Scripting
 								   : parts[x] is CodePropertyReferenceExpression cpre ? cpre : VarId(parts[x] as CodeExpression, false);
 
 			assign.Right = right ? (parts[y] is CodeVariableReferenceExpression cvre2 ? cvre2 : VarMixedExpr(parts[y])) : nullPrimitive;
-			parts[x] = assign;
+			parts[x] = BinOpToSnippet(assign);
 
 			if (right)
 				parts.RemoveAt(y);

@@ -170,7 +170,6 @@ namespace Keysharp.Main
 					return Message($"Creating C# code from DOM: {e.Message}", true);
 				}
 
-				code = Keysharp.Scripting.Parser.TrimParens(code);
 				code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
