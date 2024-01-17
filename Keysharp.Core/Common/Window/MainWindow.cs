@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Security.Cryptography;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
@@ -32,7 +33,6 @@ namespace Keysharp.Scripting
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			//          ThreadId = WindowsAPI.GetCurrentThreadId();
-			windowSpyToolStripMenuItem.Visible = false;
 			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
 		}
 
@@ -264,7 +264,12 @@ namespace Keysharp.Scripting
 
 		private void windowSpyToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
-			Keysharp.Core.Dialogs.MsgBox("This feature is not implemented");
+			var path = System.IO.Path.GetDirectoryName(Accessors.A_KeysharpPath);
+			var exe = path + "/Keysharp.exe";
+			var opt = path + "/Scripts/WindowSpy.ks";
+			object pid = 0;
+			//Keysharp.Core.Dialogs.MsgBox(exe + "\r\n" + path + "\r\n" + opt);
+			_ = Core.Processes.Run("\"" + exe + "\"", path, "", ref pid, "\"" + opt + "\"");
 		}
 
 		public enum MainFocusedTab

@@ -133,21 +133,22 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static long Run(object obj0, object obj1 = null, object obj2 = null)
+		/// <summary>
+		/// Overload that is needed because ref parameters can't be optional.
+		/// </summary>
+		/// <param name="target"></param>
+		/// <param name="workingDir"></param>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		public static long Run(object target, object workingDir = null, object options = null)
 		{
-			var target = obj0.As();
-			var workingDir = obj1.As();
-			var options = obj2.As();
 			object pid = null;
 			return Run(target, workingDir, options, ref pid, null);
 		}
 
-		public static long Run(object obj0, object obj1, object obj2, ref object obj3, object obj4 = null)
+		public static long Run(object target, object workingDir, object options, ref object outputVarPID, object args = null)
 		{
-			var target = obj0.As();
-			var workingDir = obj1.As();
-			var options = obj2.As();
-			return RunInternal(target, workingDir, options, ref obj3, obj4);
+			return RunInternal(target.As(), workingDir.As(), options.As(), ref outputVarPID, args.As());
 		}
 
 		/// <summary>
@@ -180,21 +181,22 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static long RunWait(object obj0, object obj1, object obj2)
+		/// <summary>
+		/// Overload that is needed because ref parameters can't be optional.
+		/// </summary>
+		/// <param name="target"></param>
+		/// <param name="workingDir"></param>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		public static long RunWait(object target, object workingDir = null, object options = null)
 		{
-			var target = obj0.As();
-			var workingDir = obj1.As();
-			var options = obj2.As();
-			object obj3 = null;
-			return RunWait(target, workingDir, options, ref obj3, null);
+			object pid = null;
+			return RunWait(target, workingDir, options, ref pid, null);
 		}
 
-		public static long RunWait(object obj0, object obj1, object obj2, ref object obj3, object obj4)
+		public static long RunWait(object target, object workingDir, object options, ref object outputVarPID, object args = null)
 		{
-			var target = obj0.As();
-			var workingDir = obj1.As();
-			var options = obj2.As();
-			return RunInternal(target, workingDir, options, ref obj3, obj4, true);
+			return RunInternal(target.As(), workingDir.As(), options.As(), ref outputVarPID, args.As(), true);
 		}
 
 		/// <summary>
@@ -249,11 +251,10 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, object arg, bool wait = false)
+		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, string args, bool wait = false)
 		{
 			var pid = 0;
 			var isadmin = false;
-			var args = arg.As();
 
 			try
 			{

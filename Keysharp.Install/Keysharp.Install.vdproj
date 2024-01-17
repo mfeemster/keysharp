@@ -99,6 +99,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_597C4E20F0064EA0B035191859C1C9E3"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_59CCEC8EE7A7C980A1E913F124DA40FC"
         "OwnerKey" = "8:_C5EDF82FA7FC464798EAC591B6F2D418"
         "MsmSig" = "8:_UNDEFINED"
@@ -929,6 +935,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_597C4E20F0064EA0B035191859C1C9E3"
+            {
+            "SourcePath" = "8:..\\Keysharp\\Scripts\\WindowSpy.ks"
+            "TargetName" = "8:WindowSpy.ks"
+            "Tag" = "8:"
+            "Folder" = "8:_A0134BE123494C06ACD60E118C579BBD"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:TRUE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_59CCEC8EE7A7C980A1E913F124DA40FC"
             {
             "AssemblyRegister" = "3:1"
@@ -964,7 +990,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keyview, Version=0.0.0.5, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keyview, Version=0.0.0.6, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_5EF7E4429AD94C069A1DCA8950D96F73"
@@ -1456,7 +1482,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keysharp, Version=0.0.0.5, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keysharp, Version=0.0.0.6, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_C5EDF82FA7FC464798EAC591B6F2D418"
@@ -1507,7 +1533,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Keysharp.Core, Version=0.0.0.5, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Keysharp.Core, Version=0.0.0.6, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_D24D6CFFFCA930D1681DA46227A74CCD"
@@ -1770,6 +1796,17 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_A0134BE123494C06ACD60E118C579BBD"
+                    {
+                    "Name" = "8:Scripts"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_710D47157EDB404E84EF1A1E14E8A28E"
+                        "Folders"
+                        {
+                        }
+                    }
                     "{9EF0B969-E518-4E46-987F-47570745A589}:_CE5F68279A0B4E0AB1EDFB04C68F6EF5"
                     {
                     "Name" = "8:x64"
@@ -1833,7 +1870,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Keysharp"
         "ProductCode" = "8:{5307A72C-0C92-4519-8E0F-0D7872A13C43}"
-        "PackageCode" = "8:{39517DF9-8F4F-4562-B30D-6C1FD7493B25}"
+        "PackageCode" = "8:{48BD55CC-3155-4BB6-A837-3C2D8CD9FFFA}"
         "UpgradeCode" = "8:{E99D4BE3-7101-4C11-8719-A75ED137BD66}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"

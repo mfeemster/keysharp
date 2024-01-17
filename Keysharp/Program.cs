@@ -138,9 +138,10 @@ namespace Keysharp.Main
 				}
 
 				if (string.IsNullOrEmpty(script))
-				{
 					return Message("No script was specified, no text was read from stdin, and no script named keysharp.ahk was found in the current folder or your documents folder.", true);
-				}
+
+				if (!System.IO.File.Exists(script))
+					return Message($"Could not find the script file {script}.", true);
 
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
 				string namenoext, path, scriptdir;
@@ -159,16 +160,12 @@ namespace Keysharp.Main
 				}
 
 				if (domerrs.HasErrors)
-				{
 					return HandleCompilerErrors(domerrs, script, path, "Compiling script to DOM");
-				}
 
 				var (code, exc) = ch.CreateCodeFromDom(domunits);
 
 				if (exc is Exception e)
-				{
 					return Message($"Creating C# code from DOM: {e.Message}", true);
-				}
 
 				code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
 

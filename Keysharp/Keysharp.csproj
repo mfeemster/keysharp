@@ -30,6 +30,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Scripts\WindowSpy.ks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Scripts\WindowSpy.ks">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="..\Keysharp.ico" Link="Keysharp.ico" />
   </ItemGroup>
 

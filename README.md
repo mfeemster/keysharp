@@ -218,7 +218,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `Cosh(value) => Double`
 	+ `Tanh(value) => Double`
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
-	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, Args])`.
+	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, &OutputVarPID, Args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
 * `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `Menu` supports several new methods:
