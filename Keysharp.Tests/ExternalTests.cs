@@ -34,14 +34,6 @@ namespace Keysharp.Tests
 			var strbuf = Keysharp.Core.Misc.StringBuffer(str);
 			_ = Dll.DllCall("user32.dll\\CharUpperBuff", "ptr", strbuf, "UInt", len);
 			Assert.AreEqual(strbuf.ToString(), str.ToUpper());
-			//object freq = 0L;
-			//object counterbefore = 0L;
-			//object counterafter = 0L;
-			//Keysharp.Scripting.Script.InvokeWithRefs(Keysharp.Scripting.Script.GetMethodOrProperty(null, "DllCall", 3), "QueryPerformanceFrequency", "Int64*", Mrh(2, freq, v => freq = v));
-			//Keysharp.Scripting.Script.InvokeWithRefs(Keysharp.Scripting.Script.GetMethodOrProperty(null, "DllCall", 3), "QueryPerformanceCounter", "Int64*", Mrh(2, counterbefore, v => counterbefore = v));
-			//Keysharp.Core.Flow.Sleep(1000L);
-			//Keysharp.Scripting.Script.InvokeWithRefs(Keysharp.Scripting.Script.GetMethodOrProperty(null, "DllCall", 3), "QueryPerformanceCounter", "Int64*", Mrh(2, counterafter, v => counterafter = v));
-			//var elapsed = Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Multiply, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Divide, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Subtract, counterafter, counterbefore), freq), 1000L);
 			Assert.IsTrue(TestScript("external-dllcall", true));
 		}
 

@@ -51,9 +51,17 @@ namespace Keysharp.Scripting
 
 		internal void ReevaluateSnippet(CodeSnippetExpression cse)
 		{
-			var c2s = Ch.CodeToString(cse.UserData["orig"] as CodeExpression);
+			var orig = cse.UserData["orig"] as CodeExpression;
+			var c2s = Ch.CodeToString(orig);
 			c2s = c2s.Substring(1, c2s.Length - 2);
-			cse.Value = $"{c2s}";
+
+			if (orig is CodeBinaryOperatorExpression cboe)
+			{
+				if (cboe.Operator == CodeBinaryOperatorType.Assign)
+					cse.Value = $"{c2s}";
+				else
+					cse.Value = $"_ = ({c2s})";
+			}
 		}
 
 		private static (List<int>, List<List<object>>) ParseArguments(List<object> paren)
@@ -324,6 +332,7 @@ namespace Keysharp.Scripting
 						{
 							var invoke = (CodeMethodInvokeExpression)InternalMethods.Invoke;
 							CodeMethodInvokeExpression tempinvoke = null;
+							var scope = Scope.ToLower();
 
 							//Distinguish between Index which is an array or dictionary lookup and GetMethodOrProperty which is getting a method or property to be called.
 							if (parts[n] is CodeMethodInvokeExpression indexcmie)
@@ -344,7 +353,7 @@ namespace Keysharp.Scripting
 									tempinvoke.Parameters.Clear();
 									tempinvoke.Parameters.AddRange(indexcmie.Parameters);
 									parts[n] = tempinvoke;//Replace GetPropertyValue() with GetMethodOrProperty().
-									getMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(tempinvoke);
+									getMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(tempinvoke);
 								}
 							}
 
@@ -434,6 +443,7 @@ namespace Keysharp.Scripting
 							parts[i] = invoke;
 							parts.RemoveAt(n);
 							i--;//Do this to ensure we don't miss a token, particularly in the case of chained method calls such as: MyGui.Add("Button",, "Click Me").OnEvent("Click", "MenuHandler").
+							allMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(invoke);
 						}
 						else
 						{

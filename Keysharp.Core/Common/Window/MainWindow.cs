@@ -81,10 +81,10 @@ namespace Keysharp.Scripting
 
 				case WindowsAPI.WM_COPYDATA:
 				{
-					if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))//Needs to be handled here instead of MessageFilter because that one doesn't seem to intercept it.
+					if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var msgMonitor))//Needs to be handled here instead of MessageFilter because that one doesn't seem to intercept it.
 					{
 						var copyStruct = (WindowsAPI.COPYDATASTRUCT)m.GetLParam(typeof(WindowsAPI.COPYDATASTRUCT));
-						_ = handlers.InvokeEventHandlers(m.WParam.ToInt64(), copyStruct.lpData, m.Msg, m.HWnd.ToInt64());
+						_ = msgMonitor.funcs.InvokeEventHandlers(m.WParam.ToInt64(), copyStruct.lpData, m.Msg, m.HWnd.ToInt64());
 						handled = true;
 					}
 				}

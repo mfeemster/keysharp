@@ -64,19 +64,15 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static Keysharp.Core.Map CaretGetPos()
+		public static bool CaretGetPos(ref long outputVarX, ref long outputVarY)
 		{
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
 			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 
 			if (targetWindow == IntPtr.Zero) // No window is in the foreground, report blank coordinate.
 			{
-				return new Keysharp.Core.Map(new Dictionary<object, object>()
-				{
-					{ "CaretFound", false },
-					{ "X", "" },
-					{ "Y", "" }
-				});
+				outputVarX = outputVarY = 0L;
+				return false;
 			}
 
 			var h = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var _);
@@ -85,12 +81,8 @@ namespace Keysharp.Core
 
 			if (!result)
 			{
-				return new Keysharp.Core.Map(new Dictionary<object, object>()
-				{
-					{ "CaretFound", false },
-					{ "X", "" },
-					{ "Y", "" }
-				});
+				outputVarX = outputVarY = 0L;
+				return false;
 			}
 
 			var pt = new Point
@@ -103,12 +95,9 @@ namespace Keysharp.Core
 			WindowsAPI.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
-			return new Keysharp.Core.Map(new Dictionary<object, object>()
-			{
-				{ "CaretFound", true },
-				{ "X",  pt.X },
-				{ "Y", pt.Y }
-			});
+			outputVarX = pt.X;
+			outputVarY = pt.Y;
+			return true;
 		}
 
 		public static string GetKeyName(object obj) => GetKeyNamePrivate(obj.As(), 0) as string;

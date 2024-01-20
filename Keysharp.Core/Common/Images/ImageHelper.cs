@@ -236,7 +236,7 @@ namespace Keysharp.Core.Common
 		}
 	}
 
-	internal class GdiHandleHolder : KeysharpObject
+	internal sealed class GdiHandleHolder : KeysharpObject
 	{
 		private bool disposeHandle = true;
 		private IntPtr handle;

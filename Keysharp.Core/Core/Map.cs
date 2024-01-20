@@ -75,29 +75,38 @@ namespace Keysharp.Core
 
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
 
-		public Map(object values = null)
+		public Map(params object[] obj) => _ = __New(obj);
+
+		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
+
+		public override object __New(params object[] values)
 		{
-			if (values == null)
+			if (values == null || values.Length == 0)
 			{
 				map = new Dictionary<object, object>();
 			}
 			else
 			{
-				if (values is Map m)
+				if (values.Length == 1)
 				{
-					map = m.map;
-					caseSense = m.caseSense;
+					if (values[0] is Map m)
+					{
+						map = m.map;
+						caseSense = m.caseSense;
+						return "";
+					}
+					else if (values[0] is Dictionary<object, object> dkt)
+					{
+						map = dkt;
+						return "";
+					}
 				}
-				else if (values is Dictionary<object, object> dkt)
-					map = dkt;
-				else
-					Set(values);
+
+				Set(values);
 			}
+
+			return "";
 		}
-
-		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
-
-		public void __New(params object[] values) => Set(values);
 
 		public void Clear() => map.Clear();
 

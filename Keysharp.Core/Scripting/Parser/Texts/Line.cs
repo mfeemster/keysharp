@@ -12,8 +12,8 @@ namespace Keysharp.Scripting
 
 			//This is needed so that ordinary lines that end in an operator, like FileAppend, "pass", "*", are not considered continuations.
 			//Checking for a comma appears to be enough, but it might need further checks if some corner case throws it off in the future.
-			if (next && code.Contains(','))
-				return false;
+			//if (next && code.Contains(','))
+			//  return false;
 
 			//Also don't treat directives that end in * as continuations, such as #Hotstring *
 			if (code.StartsWith('#'))
@@ -36,6 +36,7 @@ namespace Keysharp.Scripting
 				case Address:
 				case Less:
 				case Greater:
+				case ParenOpen:
 					return !(IsHotstringLabel(code) || IsHotkeyLabel(code));
 
 				//case ParenOpen ://Unsure if these would ever be needed.

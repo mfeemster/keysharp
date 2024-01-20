@@ -46,15 +46,17 @@ namespace Keysharp.Core
 			}
 		}
 
-		public Buffer(object obj0, object obj1 = null) => __New(obj0, obj1);
+		public Buffer(params object[] obj) => __New(obj);
 
 		~Buffer()
 		{
 			Dispose(true);
 		}
 
-		public void __New(object obj0, object obj1 = null)
+		public override object __New(params object[] obj)
 		{
+			var obj0 = obj[0];
+
 			if (obj0 is byte[] bytearray)//This will sometimes be passed internally within the library.
 			{
 				Size = bytearray.Length;
@@ -73,7 +75,7 @@ namespace Keysharp.Core
 			else//This will be called by the user.
 			{
 				var bytecount = obj0.Al(0);
-				var fill = obj1.Al(long.MinValue);
+				var fill = obj.Length > 1 ? obj[1].Al(long.MinValue) : long.MinValue;
 				Size = bytecount;//Performs the allocation.
 
 				if (fill != long.MinValue && bytecount > 0)
@@ -84,6 +86,8 @@ namespace Keysharp.Core
 						Marshal.WriteByte(Ptr, i, val);
 				}
 			}
+
+			return "";
 		}
 
 		public virtual void Dispose(bool disposing)
@@ -125,9 +129,17 @@ namespace Keysharp.Core
 	{
 		internal StringBuilder sb;
 
-		public StringBuffer(string str = "", int capacity = 256) => sb = new StringBuilder(str, capacity);
+		public StringBuffer(params object[] obj) => _ = __New(obj);
 
 		public static implicit operator string(StringBuffer s) => s.sb.ToString();
+
+		public override object __New(params object[] obj)
+		{
+			var str = obj.Length > 0 ? obj[0].ToString() : "";
+			var capacity = obj.Length > 1 ? obj[1].Ai() : 256;
+			sb = new StringBuilder(str, capacity);
+			return "";
+		}
 
 		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
 		{

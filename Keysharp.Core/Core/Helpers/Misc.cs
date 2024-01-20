@@ -10,12 +10,16 @@ namespace Keysharp.Core
 	{
 		public static Keysharp.Core.Array Array(params object[] obj)
 		{
-			if (obj.Length == 0)
-				return new Keysharp.Core.Array(64);
-
-			var arr = new Keysharp.Core.Array(obj.Length);
-			arr.Push(obj);
-			return arr;
+			if (obj == null || obj.Length == 0)
+			{
+				var arr = new Keysharp.Core.Array
+				{
+					Capacity = 64
+				};
+				return arr;
+			}
+			else
+				return new Keysharp.Core.Array(obj);
 		}
 
 		public static Keysharp.Core.Buffer Buffer(object obj0, object obj1 = null) => new (obj0, obj1);
@@ -73,7 +77,7 @@ namespace Keysharp.Core
 			return true;
 		}
 
-		public static FuncObj FuncObj(object obj0, object obj1 = null, object obj2 = null) => new FuncObj(obj0.As(), obj1, obj2);
+		public static IFuncObj FuncObj(object obj0, object obj1 = null, object obj2 = null) => new FuncObj(obj0.As(), obj1, obj2);
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new (obj0, obj1, obj2);
 

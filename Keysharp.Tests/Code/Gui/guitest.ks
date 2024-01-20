@@ -896,6 +896,12 @@ ThirdGuiButton.OnEvent("Click", "ThirdGUI")
 MouseMoveButton := MyGui.Add("Button", "x10 y+10", "Mouse-moving tests")
 MouseMoveButton.OnEvent("Click", "MoveTheMouse")
 
+AddMsgMonitorButton := MyGui.Add("Button", "x10 y+10", "Add msg mon for clicking in edit ctrl testing")
+AddMsgMonitorButton.OnEvent("Click", "AddMsgMonitor")
+
+RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+10", "Remove msg mon")
+RemoveMsgMonitorButton.OnEvent("Click", "RemoveMsgMonitor")
+
 ^!9:: {
 	GetPix()
 }
@@ -1050,6 +1056,34 @@ MoveTheMouse() {
 	ToolTip()
 	
 }
+
+AddMsgMonitor()
+{
+	OnMessage 0x0201, "WM_LBUTTONDOWN"
+}
+
+RemoveMsgMonitor()
+{
+	OnMessage 0x0201, "WM_LBUTTONDOWN", 0
+}
+
+WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
+{
+    X := lParam & 0xFFFF
+    Y := lParam >> 16
+    Control := ""
+    thisGui := GuiFromHwnd(hwnd)
+    thisGuiControl := GuiCtrlFromHwnd(hwnd)
+
+    if (thisGuiControl && (thisGuiControl.hwnd == CZ_Edit1.hwnd))
+    {
+        thisGui := thisGuiControl.Gui
+        Control := "`n(in control " . thisGuiControl.ClassNN . ")"
+		ToolTip "You left-clicked in Gui window '" thisGui.Title "' at client coordinates " X "x" Y "." Control
+		SetTimer(() => ToolTip(), -2500)
+    }
+}
+
 ;ReloaderBtn := MyGui.Add("Button", "w200 h25 x10 y+5", "Reload").OnEvent("Click", "Reload")
 
 ;ReloadMe() {

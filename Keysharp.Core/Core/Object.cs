@@ -18,7 +18,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public virtual FuncObj GetMethod(object obj0 = null, object obj1 = null) => Function.GetMethod(this, obj0, obj1);
+		public virtual IFuncObj GetMethod(object obj0 = null, object obj1 = null) => Function.GetMethod(this, obj0, obj1);
 
 		//public bool DefineProp(object obj0, object obj1)
 		//{
@@ -219,6 +219,10 @@ namespace Keysharp.Core
 
 			tabLevel--;
 		}
+
+		public virtual object __New(params object[] obj) => "";
+
+		//public void __Init() { }
 
 		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 

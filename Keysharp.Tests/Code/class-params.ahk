@@ -23,6 +23,7 @@ class testsubclass extends testclass
 	__New(p1, p2, p3, p4)
 	{
 		global
+		super.__New(p1, p2, p3)
 		x := p1 * 10
 		y := p2 * 10
 		z := p3 * 10
@@ -102,7 +103,7 @@ If (val == 40)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 class testclassnoargs
 {
 	a := ""
@@ -126,6 +127,7 @@ class testsubclassfourargs extends testclassnoargs
 	__New(p1, p2)
 	{
 		global
+		super.__New()
 		x := p1 * 10
 		y := p2 * 10
 	}
@@ -168,8 +170,8 @@ If (val == 20)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
-class testclassthreargs
+	
+class testclassthreeargs
 {
 	a := 1
 	b := 2
@@ -184,7 +186,7 @@ class testclassthreargs
 	}
 }
 
-class testsubclassnoargs extends testclassthreargs
+class testsubclassnoargs extends testclassthreeargs
 {
 	x := ""
 	y := ""
@@ -192,12 +194,13 @@ class testsubclassnoargs extends testclassthreargs
 	__New()
 	{
 		global
+		super.__New()
 		x := 100
 		y := 200
 	}
 }
 
-testclassobj := testclassthreargs(1, 2, 3)
+testclassobj := testclassthreeargs(1, 2, 3)
 testsubclassobj := testsubclassnoargs()
 
 val := testclassobj.a

@@ -154,7 +154,16 @@ namespace Keysharp.Core.Common.Input
 			set => input.VisibleText = value.Ab();
 		}
 
-		public InputObject(string options, string endKeys, string matchList) => input = new InputType(this, options, endKeys, matchList);
+		public InputObject(params object[] obj) => _ = __New(obj);
+
+		public override object __New(params object[] obj)
+		{
+			var options = obj[0].ToString();
+			var endKeys = obj[1].ToString();
+			var matchList = obj[2].ToString();
+			input = new InputType(this, options, endKeys, matchList);
+			return "";
+		}
 
 		public void KeyOpt(object obj0, object obj1)
 		{

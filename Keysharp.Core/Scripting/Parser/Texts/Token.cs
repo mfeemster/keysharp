@@ -444,8 +444,14 @@ namespace Keysharp.Scripting
 		{
 			result = null;
 
-			if (string.IsNullOrEmpty(code))
+			if (code == null)
 				return true;
+
+			if (code.Length == 0)
+			{
+				result = code;
+				return true;
+			}
 
 			switch (code.ToLowerInvariant())
 			{
@@ -584,9 +590,11 @@ namespace Keysharp.Scripting
 			if (code.Length == 0)
 				return Token.Unknown;
 
-			if (IsGetOrSet(code, "get"))
+			var codeSpan = code.AsSpan();
+
+			if (IsGetOrSet(codeSpan, "get"))
 				return Token.PropGet;
-			else if (IsGetOrSet(code, "set"))
+			else if (IsGetOrSet(codeSpan, "set"))
 				return Token.PropSet;
 			else if (IsProperty(line))
 				return Token.Prop;
@@ -605,8 +613,8 @@ namespace Keysharp.Scripting
 
 		private bool IsDirective(string code) => code.Length > 2 && code[0] == Directive;
 
-		private bool IsGetOrSet(string code, string name)
-		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && InClassDefinition() && Scope.Length > 0;
+		private bool IsGetOrSet(ReadOnlySpan<char> code, string name)
+		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && code.IndexOfAny(ParensSv) == -1 && InClassDefinition() && Scope.Length > 0;
 
 		private bool IsProperty(CodeLine line)
 		{
@@ -741,50 +749,7 @@ namespace Keysharp.Scripting
 				}
 				else if (sym == StringBound || sym == StringBoundVerbatim)
 				{
-					var escape = false;
-					var verbatim = sym == StringBoundVerbatim;
-					var str = new StringBuilder(code.Length);
-					_ = str.Append(StringBound);
-					i++;
-
-					if (i == code.Length)
-						throw new ParseException(ExUntermStr);
-
-					for (; i < code.Length; i++)
-					{
-						sym = code[i];
-
-						if (verbatim)
-						{
-							var isbound = sym == StringBoundVerbatim;
-
-							if (!escape && isbound)
-							{
-								_ = str.Append(StringBound);
-								break;
-							}
-
-							_ = str.Append(sym);
-
-							if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
-								throw new ParseException(ExUntermStr);
-						}
-						else
-						{
-							var isbound = sym == StringBound;
-							_ = str.Append(sym);
-
-							if (!escape && isbound)
-								break;
-
-							if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
-								throw new ParseException(ExUntermStr);
-						}
-
-						escape = sym == Escape ? !escape : false;
-					}
-
-					list.Add(str.ToString());
+					list.Add(ParseString(code, ref i));
 				}
 				else
 				{
@@ -970,6 +935,55 @@ namespace Keysharp.Scripting
 			}
 
 			return list;
+		}
+
+		private static string ParseString(string code, ref int i)
+		{
+			var escape = false;
+			var sym = code[i];
+			var verbatim = sym == StringBoundVerbatim;
+			var str = new StringBuilder(code.Length);
+			_ = str.Append(StringBound);
+			i++;
+
+			if (i == code.Length)
+				throw new ParseException(ExUntermStr);
+
+			for (; i < code.Length; i++)
+			{
+				sym = code[i];
+
+				if (verbatim)
+				{
+					var isbound = sym == StringBoundVerbatim;
+
+					if (!escape && isbound)
+					{
+						_ = str.Append(StringBound);
+						break;
+					}
+
+					_ = str.Append(sym);
+
+					if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
+						throw new ParseException(ExUntermStr);
+				}
+				else
+				{
+					var isbound = sym == StringBound;
+					_ = str.Append(sym);
+
+					if (!escape && isbound)
+						break;
+
+					if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
+						throw new ParseException(ExUntermStr);
+				}
+
+				escape = sym == Escape ? !escape : false;
+			}
+
+			return str.ToString();
 		}
 
 		private string TokensToCode(List<object> tokens)

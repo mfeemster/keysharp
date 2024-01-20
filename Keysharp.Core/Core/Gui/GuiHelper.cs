@@ -6,6 +6,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Keysharp.Core.Common;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using Keysharp.Scripting;
@@ -15,7 +17,7 @@ namespace Keysharp.Core
 {
 	public static class GuiHelper
 	{
-		internal static ConcurrentDictionary<long, List<IFuncObj>> onMessageHandlers = new ();
+		internal static ConcurrentDictionary<long, MsgMonitor> onMessageHandlers = new ();
 
 		private static Dictionary<string, Form> guis;
 
@@ -750,22 +752,33 @@ namespace Keysharp.Core
 	{
 		public bool PreFilterMessage(ref Message m)
 		{
-			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var handlers))
+			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
+				var tv = Threads.GetThreadVariables();
+
+				if (!Threads.AnyThreadsAvailable() || tv.priority > 0)
+					return false;
+
+				if (monitor.instanceCount >= monitor.maxInstances)
+					return false;
+
 				Script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
 				var now = DateTime.Now;
+				Script.lastPeekTime = now;
+				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
+				monitor.instanceCount++;
+				object res = null;
 
-				if (Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht &&
-						ht.kbdMsSender is Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbd)
+				try
 				{
-					kbd.lastPeekTime = now;
+					res = monitor.funcs.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
+				}
+				finally
+				{
+					monitor.instanceCount--;
 				}
 
-				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
-				//AHK seems to launch these in threads, but that seems odd, so just call them inline here.
-				var res = handlers.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
-
-				if (res.IsNotNullOrEmpty())
+				if (res != null && res.IsNotNullOrEmpty())
 					return true;
 			}
 

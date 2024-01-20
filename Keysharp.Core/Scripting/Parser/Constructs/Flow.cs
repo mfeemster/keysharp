@@ -348,7 +348,7 @@ namespace Keysharp.Scripting
 					var blockOpen = parts[1].EndsWith(BlockOpen);
 					parts[1] = StripCommentSingle(parts[1]).TrimEnd(BlockOpen).Trim(Spaces);
 					var trimmed = StripEnclosing(parts[1], '(', ')');
-					var temp = trimmed.Split("in");
+					var temp = trimmed.Split("in ", 2, StringSplitOptions.TrimEntries);
 
 					if (temp.Length == 2)
 					{
@@ -573,6 +573,9 @@ namespace Keysharp.Scripting
 					{
 						basetype = classparts[2];
 						classtype.BaseTypes.Add(basetype);
+
+						if (string.Compare(basetype, "gui", true) == 0)
+							Persistent = true;
 					}
 					else
 					{
@@ -580,7 +583,6 @@ namespace Keysharp.Scripting
 						classtype.BaseTypes.Add(basetype);
 					}
 
-					_ = constructor.Statements.Add(new CodeSnippetExpression("__Init()"));
 					_ = classtype.Members.Add(constructor);
 					var callmeth = new CodeMemberMethod
 					{
@@ -798,7 +800,6 @@ namespace Keysharp.Scripting
 					{
 						Type = type
 					};
-					_ = CloseTopSingleBlock();
 					blocks.Push(block);
 					return new CodeStatement[] { tcf };
 				}

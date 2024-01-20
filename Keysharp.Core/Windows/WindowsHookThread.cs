@@ -5383,7 +5383,7 @@ namespace Keysharp.Core.Windows
 							//if (priority < (long)Accessors.A_Priority)
 							//  continue;
 							//Original tries to do some type of thread init here.//TOOD
-							kbdMsSender.lastPeekTime = DateTime.Now;
+							Script.lastPeekTime = DateTime.Now;
 						}
 					}
 

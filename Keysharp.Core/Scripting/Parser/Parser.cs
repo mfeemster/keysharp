@@ -307,8 +307,6 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "SetStaticMemberValueT");
 								cmie.Method.TypeArguments.Add(name);
 								cmie.Parameters.RemoveAt(0);
-								//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
-								//ReevaluateSnippet(cse);
 							}
 						}
 					}
@@ -332,8 +330,6 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
 								cmie.Method.TypeArguments.Add(name);
 								cmie.Parameters.RemoveAt(0);
-								//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
-								//ReevaluateSnippet(cse);
 							}
 						}
 					}
@@ -357,8 +353,6 @@ namespace Keysharp.Scripting
 								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMethodT");
 								cmie.Method.TypeArguments.Add(name);
 								cmie.Parameters.RemoveAt(0);
-								//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
-								//ReevaluateSnippet(cse);
 							}
 						}
 					}
@@ -368,6 +362,7 @@ namespace Keysharp.Scripting
 			var createDummyRef = false;
 			var tsVar = DateTime.Now.ToString("__MMddyyyyHHmmssfffffff");
 			var ctrObjectArray = new CodeTypeReference(typeof(object[]));
+			var argsSnippet = new CodeSnippetExpression("args");
 
 			while (targetClass.Members.Cast<CodeTypeMember>().Any(ctm => ctm.Name == tsVar))
 				tsVar = "_" + tsVar;
@@ -502,8 +497,36 @@ namespace Keysharp.Scripting
 							}
 						}
 
-						//if (cmie.ParentSnippet() is CodeSnippetExpression cse)
-						//ReevaluateSnippet(cse);
+						//Calling a virtual method with super will not work with regular reflection.
+						//It will always resolve to the most derived class.
+						//So to actually call the base, we need to replace it with a literal call to
+						//base._New()
+						//No other methods will ever be virtual/override so we should only ever
+						//have to do this for __New().
+						if (cmie.Method.MethodName == "Invoke"
+								&& cmie.Parameters.Count > 0
+								&& cmie.Parameters[0] is CodeMethodInvokeExpression cmieGetProperty
+								&& cmieGetProperty.Method.MethodName == "GetMethodOrProperty"
+								&& cmieGetProperty.Parameters.Count > 1
+								&& cmieGetProperty.Parameters[0] is CodeVariableReferenceExpression cvre
+								&& cvre.VariableName == "super"
+								&& cmieGetProperty.Parameters[1] is CodePrimitiveExpression cpe2
+								&& cpe2.Value.ToString() == "__New")
+						{
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression("base"), "__New");
+
+							if (cmie.Parameters.Count == 1)
+							{
+								cmie.Parameters.Clear();
+								_ = cmie.Parameters.Add(argsSnippet);
+							}
+							else
+							{
+								var superParams = cmie.Parameters.Cast<CodeExpression>().Skip(1).ToArray();
+								cmie.Parameters.Clear();
+								cmie.Parameters.AddRange(superParams);
+							}
+						}
 					}
 				}
 			}
@@ -517,17 +540,33 @@ namespace Keysharp.Scripting
 				});
 			}
 
+			var ctrpaa = new CodeTypeReference(typeof(System.ParamArrayAttribute));
+			var cad = new CodeAttributeDeclaration(ctrpaa);
+			var cdpeArgs = new CodeParameterDeclarationExpression(typeof(object[]), "args");
+			_ = cdpeArgs.CustomAttributes.Add(cad);
+
 			foreach (var typeMethods in methods)
 			{
 				CodeMemberMethod newmeth = null, callmeth = null;
 
 				if (typeMethods.Key != targetClass)
 				{
+					var baseType = typeMethods.Key.BaseTypes[0].BaseType;
+					var origNewParams = new List<CodeParameterDeclarationExpression>();
+
 					foreach (var method in typeMethods.Value.Values)
 					{
 						if (newmeth == null && string.Compare(method.Name, "__New", true) == 0)//__New() and Call() have already been added.
 						{
+							method.Attributes = MemberAttributes.Public | MemberAttributes.Override;
 							method.Name = "__New";//Ensure it's properly cased.
+
+							for (var i = method.Parameters.Count - 1; i >= 0; i--)
+								method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[i].Name} = args.Length > {i} ? args[{i}] : null")));
+
+							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
+							method.Parameters.Clear();
+							method.Parameters.Add(cdpeArgs);
 							newmeth = method;
 						}
 						else if (callmeth == null && string.Compare(method.Name, "Call", true) == 0)
@@ -594,48 +633,46 @@ namespace Keysharp.Scripting
 					if (newmeth != null)
 					{
 						_ = typeMethods.Key.Members.Add(newmeth);
-
-						if (thisconstructor != null)
-						{
-							thisconstructor.Parameters.Clear();
-							thisconstructor.Parameters.AddRange(newmeth.Parameters);
-							//get param names and pass.
-							var newparams = newmeth.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => p.Name).ToArray();
-							var newparamnames = string.Join(',', newparams);
-							_ = thisconstructor.Statements.Add(new CodeSnippetExpression($"__New({newparamnames})"));
-							callmeth.Parameters.Clear();
-							callmeth.Parameters.AddRange(newmeth.Parameters);
-							callmeth.Statements.Clear();
-							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
-						}
+						newmeth.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression("__Init()")));
 					}
 					else
-					{
-						callmeth.Statements.Clear();
-						_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}()"));
-						callmeth.Parameters.Clear();
-					}
+						_ = thisconstructor.Statements.Add(new CodeSnippetExpression("__Init()"));
 
-					var baseType = typeMethods.Key.BaseTypes[0].BaseType;
+					//The lines relating to args and __New() work whether any params were declared or not.
+					if (thisconstructor != null)
+					{
+						var ctorParams = origNewParams.Select(p => p.Name).ToArray();
+						var newparamnames = string.Join(", ", ctorParams);
+
+						if (baseType == "KeysharpObject")
+							_ = thisconstructor.Statements.Add(new CodeSnippetExpression($"__New(args)"));
+
+						thisconstructor.Parameters.Clear();
+						thisconstructor.Parameters.Add(cdpeArgs);
+						//Get param names and pass.
+						callmeth.Parameters.Clear();
+						callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
+						callmeth.Statements.Clear();
+						_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+					}
 
 					if (baseType != "KeysharpObject" && thisconstructor != null)
 					{
 						var rawBaseTypeName = "";
 
-						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)//There is a severe problem here: they can derive from non-user defined types. How to find them?//TODO
+						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)
 						{
 							rawBaseTypeName = ctdbase.Name;
 
 							if (ctdbase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
 							{
-								var i = 0;
 								thisconstructor.BaseConstructorArgs.Clear();
-
-								for (; i < thisconstructor.Parameters.Count && i < ctm2.Parameters.Count; i++)//Iterate through all of the parameters in this class's constructor.
-									_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
-
-								for (; i < ctm2.Parameters.Count; i++)//Fill whatever remains of the base constructor parameters with nulls.
-									_ = thisconstructor.BaseConstructorArgs.Add(nullPrimitive);
+								thisconstructor.BaseConstructorArgs.Add(argsSnippet);
+								//var i = 0;
+								//for (; i < thisconstructor.Parameters.Count && i < ctm2.Parameters.Count; i++)//Iterate through all of the parameters in this class's constructor.
+								//  _ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
+								//for (; i < ctm2.Parameters.Count; i++)//Fill whatever remains of the base constructor parameters with nulls.
+								//  _ = thisconstructor.BaseConstructorArgs.Add(nullPrimitive);
 							}
 						}
 						else//Try built in types.
@@ -649,19 +686,17 @@ namespace Keysharp.Scripting
 
 									foreach (var ctor in ctors)
 									{
-										var ctorparams = ctor.GetParameters();//Built in types will always just have on constructor, such as Array and Map because users don't control those.
+										var ctorparams = ctor.GetParameters();//Built in types will always just have one constructor, such as Array and Map because users don't control those.
 
 										if (ctorparams.Length > 0)
 										{
-											var i = 0;
 											thisconstructor.BaseConstructorArgs.Clear();
-
-											for (; i < thisconstructor.Parameters.Count && i < ctorparams.Length; i++)//Iterate through all of the parameters in this class's constructor.
-												_ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
-
-											for (; i < ctorparams.Length; i++)//Fill whatever remains of the base constructor parameters with empty strings.
-												_ = thisconstructor.BaseConstructorArgs.Add(nullPrimitive);
-
+											thisconstructor.BaseConstructorArgs.Add(argsSnippet);
+											//var i = 0;
+											//for (; i < thisconstructor.Parameters.Count && i < ctorparams.Length; i++)//Iterate through all of the parameters in this class's constructor.
+											//  _ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
+											//for (; i < ctorparams.Length; i++)//Fill whatever remains of the base constructor parameters with empty strings.
+											//  _ = thisconstructor.BaseConstructorArgs.Add(nullPrimitive);
 											break;
 										}
 									}
@@ -810,6 +845,10 @@ namespace Keysharp.Scripting
 						foreach (var globalvar in scopekv.Value)
 						{
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
+
+							if (name == "this")//Never create a "this" variable inside of a class definition.
+								continue;
+
 							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
@@ -829,6 +868,10 @@ namespace Keysharp.Scripting
 						foreach (var globalvar in scopekv.Value)
 						{
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
+
+							if (name == "this")//Never create a "this" variable inside of a class definition.
+								continue;
+
 							var isstatic = globalvar.Value.UserData.Contains("isstatic");
 							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()

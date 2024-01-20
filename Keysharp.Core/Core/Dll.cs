@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -9,9 +10,20 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
 {
+	internal class DllCache
+	{
+		internal AssemblyBuilder assembly;
+		internal ModuleBuilder module;
+		internal TypeBuilder container;
+		internal MethodBuilder invoke;
+		internal Type created;
+		internal MethodInfo method;
+	}
+
 	public static class Dll
 	{
 		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
+		private static ConcurrentDictionary<string, DllCache> dllCache = new ConcurrentDictionary<string, DllCache>();
 
 		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
 		{

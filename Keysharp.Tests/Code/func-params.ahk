@@ -399,3 +399,33 @@ If (val == 6)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+funcdef1(p := '')
+{
+	if (p == "")
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+}
+
+funcdef1()
+
+funcdef2(p := '"')
+{
+	if (p == "`"")
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+}
+
+funcdef2()
+
+funcdef3(p := 'asdf')
+{
+	if (p == "asdf")
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+}
+
+funcdef3()

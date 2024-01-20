@@ -11,7 +11,7 @@ namespace Keysharp.Benchmark
 	public class MathBench
 	{
 		private Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private FuncObj fo = Func("Cos");
+		private IFuncObj fo = Func("Cos");
 		private Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
 		private List<object> objvals = new List<object>();
 		private double totalCos;

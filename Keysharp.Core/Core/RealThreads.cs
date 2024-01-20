@@ -3,7 +3,26 @@ using System.Threading.Tasks;
 
 namespace Keysharp.Core
 {
-	public class RealThread : KeysharpObject
+	public static class RealThreads
+	{
+		public static object LockRun(object obj0, object obj1, params object[] args)
+		{
+			lock (obj0)
+			{
+				var funcObj = Function.GetFuncObj(obj1, null, true);
+				return funcObj.Call(args);
+			}
+		}
+
+		public static object StartRealThread(object obj, params object[] args)
+		{
+			var funcObj = Function.GetFuncObj(obj, null, true);
+			var tsk = Task.Run(() => funcObj.Call(args));
+			return new RealThread(tsk);
+		}
+	}
+
+	public sealed class RealThread : KeysharpObject
 	{
 		internal Task<object> task;
 
@@ -29,25 +48,6 @@ namespace Keysharp.Core
 				task.Wait();
 
 			return task.Result;
-		}
-	}
-
-	public static class RealThreads
-	{
-		public static object LockRun(object obj0, object obj1, params object[] args)
-		{
-			lock (obj0)
-			{
-				var funcObj = Function.GetFuncObj(obj1, null, true);
-				return funcObj.Call(args);
-			}
-		}
-
-		public static object StartRealThread(object obj, params object[] args)
-		{
-			var funcObj = Function.GetFuncObj(obj, null, true);
-			var tsk = Task.Run(() => funcObj.Call(args));
-			return new RealThread(tsk);
 		}
 	}
 }

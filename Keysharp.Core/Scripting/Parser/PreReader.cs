@@ -490,6 +490,13 @@ namespace Keysharp.Scripting
 				var bracketlevels = 0;
 				var inquote = false;
 				var verbatim = false;
+				var peek = source.Peek();
+				//var sbCurrent = new StringBuilder(256);
+
+				//for (var i = 0; i < code.Length; i++)
+				//{
+				//  var ch = code[i];
+				//}
 
 				if (code.Length == 1 && (code[0] == BlockOpen || code[0] == BlockClose))
 				{
@@ -507,9 +514,8 @@ namespace Keysharp.Scripting
 					else
 					{
 						var cont = Parser.IsContinuationLine(code, true);
-						var peek = source.Peek();
 
-						if (code.EndsWith('=') && peek != '(' && peek != '[')//Very special case for ending with = If the next line is not a paren or bracket, it's an empty assignment, otherwise it's the start of a continuation statement.
+						if (code.EndsWith('=') && peek != '(' && peek != '{' && peek != '[')//Very special case for ending with = If the next line is not a paren, brace or bracket, it's an empty assignment, otherwise it's the start of a continuation statement.
 							cont = false;
 
 						//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
@@ -520,7 +526,7 @@ namespace Keysharp.Scripting
 						//  one : 1
 						// }
 						//Because it's the one flow statement that when followed by a brance is not OTB, instead it's returning a map.
-						if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']')) && (string.Compare(splits[0], "return", true) == 0 || (code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||
+						if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']') || !code.IsBalanced('(', ')')) && (string.Compare(splits[0], "return", true) == 0 || (code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||
 											//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
 											(code.Length > 1 &&
 											 !code.Contains('(') && !code.Contains(')') &&

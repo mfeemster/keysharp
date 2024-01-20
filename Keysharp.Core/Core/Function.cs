@@ -8,17 +8,24 @@ namespace Keysharp.Core
 	public interface IFuncObj
 	{
 		public object Inst { get; }
+		public bool IsBuiltIn { get; }
 		public bool IsValid { get; }
 		public string Name { get; }
+
+		public IFuncObj Bind(params object[] obj);
 
 		public object Call(params object[] obj);
 
 		public object CallWithRefs(params object[] obj);
+
+		public bool IsByRef(object obj = null);
+
+		public bool IsOptional(object obj = null);
 	}
 
 	public static class Function
 	{
-		public static FuncObj Func(object obj, object obj1 = null, object obj2 = null)
+		public static IFuncObj Func(object obj, object obj1 = null, object obj2 = null)
 		{
 			var name = obj.As();
 			var fo = new FuncObj(name, obj1, obj2);
@@ -26,7 +33,7 @@ namespace Keysharp.Core
 				   : throw new MethodError($"Unable to retrieve method {name}.");
 		}
 
-		public static FuncObj GetMethod(object obj0, object obj1 = null, object obj2 = null)
+		public static IFuncObj GetMethod(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var val = obj0;
 			var name = obj1.As();
@@ -65,7 +72,7 @@ namespace Keysharp.Core
 			return mph != null && mph.pi != null ? 1L : 0L;
 		}
 
-		public static BoundFunc ObjBindMethod(object obj0, object obj1, object obj2 = null, params object[] obj)
+		public static IFuncObj ObjBindMethod(object obj0, object obj1, object obj2 = null, params object[] obj)
 		{
 			var o = obj0;
 			var paramCount = obj1.Ai(-1);
@@ -102,90 +109,6 @@ namespace Keysharp.Core
 				throw new TypeError($"Improper value of {h} was supplied for a function object.");
 
 			return del;
-		}
-	}
-
-	public class BoundFunc : FuncObj
-	{
-		internal object[] boundargs;
-
-		public BoundFunc(MethodInfo m, object[] ba, object o = null)
-			: base(m, o)
-		{
-			boundargs = ba;
-		}
-
-		public override object Call(params object[] obj) => base.Call(CreateArgs(obj).ToArray());
-
-		public override object CallWithRefs(params object[] obj)
-		{
-			var argsList = CreateArgs(obj);
-			var refs = new List<RefHolder>(obj.Length);
-
-			for (var i = 0; i < argsList.Count; i++)
-			{
-				if (argsList[i] is RefHolder rh)
-				{
-					rh.index = i;//Must change the index since the array has changed.
-					refs.Add(rh);
-					argsList[i] = rh.val;
-				}
-			}
-
-			var argsArray = argsList.ToArray();
-			var val = base.Call(argsArray);
-
-			for (var i = 0; i < refs.Count; i++)
-			{
-				var rh = refs[i];
-				rh.reassign(argsArray[rh.index]);//Use value from new array.
-			}
-
-			return val;
-		}
-
-		private List<object> CreateArgs(params object[] obj)
-		{
-			int i = 0, argsused = 0;
-			var argsList = new List<object>(mph.parameters.Length);
-
-			for (; i < boundargs.Length; i++)
-			{
-				if (boundargs[i] != null)
-				{
-					argsList.Add(boundargs[i]);
-				}
-				else if (argsused < obj.Length)
-				{
-					argsList.Add(obj[argsused]);
-					argsused++;
-				}
-				else
-					argsList.Add(null);
-			}
-
-			if (mph.IsVariadic)
-			{
-				for (; argsused < obj.Length; argsused++)
-					argsList.Add(obj[argsused]);
-			}
-			else
-			{
-				for (; argsused < obj.Length && argsused < mph.parameters.Length; argsused++)
-					argsList.Add(obj[argsused]);
-			}
-
-			while (argsList.Count < mph.parameters.Length)
-			{
-				var param = mph.parameters[argsList.Count];
-
-				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
-					argsList.Add(param.DefaultValue);
-				else
-					argsList.Add(null);
-			}
-
-			return argsList;
 		}
 	}
 
@@ -336,7 +259,91 @@ namespace Keysharp.Core
 		IntPtr p25 = new IntPtr(), IntPtr p26 = new IntPtr(), IntPtr p27 = new IntPtr(), IntPtr p28 = new IntPtr(), IntPtr p29 = new IntPtr(), IntPtr p30 = new IntPtr(), IntPtr p31 = new IntPtr());
 	}
 
-	public class FuncObj : KeysharpObject, IFuncObj
+	internal class BoundFunc : FuncObj
+	{
+		internal object[] boundargs;
+
+		internal BoundFunc(MethodInfo m, object[] ba, object o = null)
+			: base(m, o)
+		{
+			boundargs = ba;
+		}
+
+		public override object Call(params object[] obj) => base.Call(CreateArgs(obj).ToArray());
+
+		public override object CallWithRefs(params object[] obj)
+		{
+			var argsList = CreateArgs(obj);
+			var refs = new List<RefHolder>(obj.Length);
+
+			for (var i = 0; i < argsList.Count; i++)
+			{
+				if (argsList[i] is RefHolder rh)
+				{
+					rh.index = i;//Must change the index since the array has changed.
+					refs.Add(rh);
+					argsList[i] = rh.val;
+				}
+			}
+
+			var argsArray = argsList.ToArray();
+			var val = base.Call(argsArray);
+
+			for (var i = 0; i < refs.Count; i++)
+			{
+				var rh = refs[i];
+				rh.reassign(argsArray[rh.index]);//Use value from new array.
+			}
+
+			return val;
+		}
+
+		private List<object> CreateArgs(params object[] obj)
+		{
+			int i = 0, argsused = 0;
+			var argsList = new List<object>(mph.parameters.Length);
+
+			for (; i < boundargs.Length; i++)
+			{
+				if (boundargs[i] != null)
+				{
+					argsList.Add(boundargs[i]);
+				}
+				else if (argsused < obj.Length)
+				{
+					argsList.Add(obj[argsused]);
+					argsused++;
+				}
+				else
+					argsList.Add(null);
+			}
+
+			if (mph.IsVariadic)
+			{
+				for (; argsused < obj.Length; argsused++)
+					argsList.Add(obj[argsused]);
+			}
+			else
+			{
+				for (; argsused < obj.Length && argsused < mph.parameters.Length; argsused++)
+					argsList.Add(obj[argsused]);
+			}
+
+			while (argsList.Count < mph.parameters.Length)
+			{
+				var param = mph.parameters[argsList.Count];
+
+				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
+					argsList.Add(param.DefaultValue);
+				else
+					argsList.Add(null);
+			}
+
+			return argsList;
+		}
+	}
+
+	internal class FuncObj : KeysharpObject, IFuncObj
 	{
 		protected bool anyRef;
 		protected object inst;
@@ -346,17 +353,15 @@ namespace Keysharp.Core
 		public object Inst => inst;
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
-		public bool IsVariadic => isVariadic;
-
-		public long MaxParams => 9999;//All functions in keysharp are variadic so this property doesn't apply.
-
-		public long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
-
 		public string Name => mi != null ? mi.Name : "";
+		internal bool IsVariadic => isVariadic;
 
+		internal long MaxParams => 9999;//All functions in keysharp are variadic so this property doesn't apply.
+
+		internal long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 		internal MethodPropertyHolder Mph => mph;
 
-		public FuncObj(string s, object o = null, object paramCount = null)
+		internal FuncObj(string s, object o = null, object paramCount = null)
 			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)
 		{
 		}
@@ -375,7 +380,7 @@ namespace Keysharp.Core
 				Init();
 		}
 
-		public BoundFunc Bind(params object[] obj)
+		public IFuncObj Bind(params object[] obj)
 		=> new BoundFunc(mi, obj, inst);
 
 		public virtual object Call(params object[] obj) => mph.callFunc(inst, obj);

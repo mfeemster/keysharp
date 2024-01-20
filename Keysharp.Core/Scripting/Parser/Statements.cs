@@ -10,7 +10,6 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-
 		private void AddPropStatements(CodeBlock.BlockKind blockKind)
 		{
 			var scope = Scope.TrimEndOf(blockKind == CodeBlock.BlockKind.PropGet ? "_get" : "_set");
@@ -156,8 +155,11 @@ namespace Keysharp.Scripting
 										{
 											if (gfv == null || !gfv.Contains(v.Key))
 											{
-												var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
-												meth.Statements.Insert(vari++, dec);
+												if (!InClassDefinition() || v.Key != "this")//Never create a "this" variable inside of a class definition.
+												{
+													var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
+													meth.Statements.Insert(vari++, dec);
+												}
 											}
 										}
 									}
@@ -392,8 +394,8 @@ namespace Keysharp.Scripting
 								var statements = ParseMultiExpression(codeline, code, true);
 
 								for (n = 0; n < statements.Length; n++)
-								  if (OptimizeLoneExpression(statements[n].Expression) is CodeExpression expr)
-								      statements[n] = new CodeExpressionStatement(BinOpToSnippet(expr));
+									if (OptimizeLoneExpression(statements[n].Expression) is CodeExpression expr)
+										statements[n] = new CodeExpressionStatement(BinOpToSnippet(expr));
 
 								for (n = 0; n < statements.Length; n++)
 								{

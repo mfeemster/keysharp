@@ -5,39 +5,34 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows.Forms;
+using Keysharp.Core.Common;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static Keysharp.Core.Misc;
 using Timer = System.Timers.Timer;
 
 namespace Keysharp.Core
 {
 	public static class Flow
 	{
-		internal static ConcurrentDictionary<string, FuncObj> cachedFuncObj = new ConcurrentDictionary<string, FuncObj>();
+		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ConcurrentDictionary<string, IFuncObj>();
+
+		internal static bool callingCritical;
+
+		internal static bool hasExited;
 
 		// Use some negative value unlikely to ever be passed explicitly:
 		internal static int IntervalUnspecified = int.MinValue + 303;
 
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
-		internal static ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<FuncObj, System.Windows.Forms.Timer>();
-		internal static bool hasExited;
 		internal static bool persistentValueSetByUser;
-		internal static bool callingCritical;
+		internal static ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer>();
+		internal static bool AllowInterruption { get; set; } = true;
 
 		/// <summary>
 		/// Is the Script currently suspended?
 		/// </summary>
 		internal static bool Suspended { get; set; }
-
-		internal static bool AllowInterruption { get; set; } = true;
-
-		public static void Init()
-		{
-			hasExited = false;
-		}
 
 		/// <summary>
 		/// Prevents the current thread from being interrupted by other
@@ -143,6 +138,14 @@ namespace Keysharp.Core
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
 		public static bool ExitApp(object obj = null) => ExitAppInternal(ExitReasons.Exit, obj);
 
+		public static void Init()
+		{
+			hasExited = false;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static bool IsTrueAndRunning(object obj) => !hasExited&& Keysharp.Scripting.Script.ForceBool(obj);
+
 		/// <summary>
 		/// Specifies a label to run automatically when the program exits.
 		/// </summary>
@@ -155,7 +158,22 @@ namespace Keysharp.Core
 		/// <param name="number">The number of the message to monitor.</param>
 		/// <param name="function">The name of a function to call whenever the specified message is received.</param>
 		/// <param name="maxThreads">The maximum number of concurrent threads to launch per message number.</param>
-		public static void OnMessage(object obj0, object obj1, object obj2 = null) => GuiHelper.onMessageHandlers.GetOrAdd(obj0.Al()).ModifyEventHandlers(Function.GetFuncObj(obj1, null, true), obj2.Al(1));
+		public static void OnMessage(object obj0, object obj1, object obj2 = null)
+		{
+			var msg = obj0.Al();
+			var maxInstances = obj2.Al(1);
+			var monitor = GuiHelper.onMessageHandlers.GetOrAdd(msg);
+
+			if (maxInstances > 0)
+				monitor.maxInstances = Math.Clamp((int)maxInstances, 1, MsgMonitor.MAX_INSTANCES);
+			else if (maxInstances < 0)
+				monitor.maxInstances = (int)(-maxInstances);
+
+			monitor.funcs.ModifyEventHandlers(Function.GetFuncObj(obj1, null, true), maxInstances);
+
+			if (maxInstances == 0 && monitor.funcs.Count == 0)
+				_ = GuiHelper.onMessageHandlers.TryRemove(msg, out var _);
+		}
 
 		/// <summary>
 		/// Pauses the current thread.
@@ -184,7 +202,7 @@ namespace Keysharp.Core
 		        state = !(thread.ThreadState == ThreadState.Suspended || thread.ThreadState == ThreadState.SuspendRequested);
 
 		    //Should figure out the right way to do this.//TODO
-		    #pragma warning disable 612, 618
+		    //#pragma warning disable 612, 618
 
 		    if (state == true)
 		    {
@@ -201,7 +219,7 @@ namespace Keysharp.Core
 		            Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 		    }
 
-		    #pragma warning restore 612, 618
+		    //#pragma warning restore 612, 618
 		    }
 		*/
 
@@ -228,7 +246,7 @@ namespace Keysharp.Core
 			var period = obj1.Al(long.MaxValue);
 			var priority = obj2.Al();
 			var once = period < 0;
-			FuncObj func = null;
+			IFuncObj func = null;
 			System.Windows.Forms.Timer timer = null;
 
 			if (once)
@@ -518,9 +536,6 @@ namespace Keysharp.Core
 				mainTimer = null;
 			}
 		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsTrueAndRunning(object obj) => !hasExited&& Keysharp.Scripting.Script.ForceBool(obj);
 
 		internal enum ExitReasons
 		{

@@ -600,14 +600,19 @@ namespace Keysharp.Tests
 
 			using (var f = Keysharp.Core.Files.FileOpen(filename, "rw"))//Read/write buffers and arrays.
 			{
-				var arr = new Array(4);
+				var arr = new Array();
+				arr.Capacity = 4;
 
-				for (var i = 0L; i < (long)arr.Count; i++)
+				for (var i = 0L; i < (long)arr.Capacity; i++)
 					arr.Push(i);
 
 				var count = f.RawWrite(arr);//The values added were longs, this internally converts them to bytes.
 				f.Seek(0);
-				var arr2 = new Array(4);
+				var arr2 = new Array();
+				arr2.Push(0);
+				arr2.Push(0);
+				arr2.Push(0);
+				arr2.Push(0);
 				f.RawRead(arr2);
 
 				for (var i = 1; i <= arr.Count; i++)

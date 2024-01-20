@@ -144,31 +144,6 @@ namespace System.Collections.Generic
 
 		public static uint Aui(this object obj, uint def = default) => obj != null ? obj.ParseUInt().Value : def;
 
-		public static bool B1(this IList obj, bool def = default) => obj.Ab(0, def);
-
-		public static double D1(this IList obj, double def1 = default) => obj.Ad(0, def1);
-
-		public static (double, double) D2(this IList obj, double def1 = default, double def2 = default)
-		{
-			var r1 = obj.Ad(0, def1);
-			var r2 = obj.Ad(1, def2);
-			return (r1, r2);
-		}
-
-		public static (double, bool) Db(this IList obj, double def1 = default, bool def2 = default)
-		{
-			var r1 = obj.Ad(0, def1);
-			var r2 = obj.Ab(1, def2);
-			return (r1, r2);
-		}
-
-		public static (double, int) Di(this IList obj, double def1 = default, int def2 = default)
-		{
-			var r1 = obj.Ad(0, def1);
-			var r2 = obj.Ai(1, def2);
-			return (r1, r2);
-		}
-
 		public static Type GetEnumeratedType<T>(this IEnumerable<T> e) => typeof(T);
 
 		/// <summary>
@@ -303,29 +278,6 @@ namespace System.Collections.Generic
 			return (r1, r2, r3, r4, r5, r6, r7, r8, r9);
 		}
 
-		public static (int, int) I2(this IList obj, int def1 = 0, int def2 = 0)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			return (r1, r2);
-		}
-
-		public static (int, int, string) I2S1(this IList obj, int def1 = 0, int def2 = 0, string def3 = "")
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (int, int, int) I3(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			return (r1, r2, r3);
-		}
-
 		public static (int, int, int, object, object, string, string, string) I3O2S3(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, object def4 = null, object def5 = null, string def6 = "", string def7 = "", string def8 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -337,15 +289,6 @@ namespace System.Collections.Generic
 			var r7 = obj.As(6, def7);
 			var r8 = obj.As(7, def8);
 			return (r1, r2, r3, r4, r5, r6, r7, r8);
-		}
-
-		public static (int, int, int, int) I4(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, int def4 = 0)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			return (r1, r2, r3, r4);
 		}
 
 		public static (int, int, int, int, object, string, string, string) I4O1S3(this IList obj, int def1 = default, int def2 = default, int def3 = default, int def4 = default, object def5 = null, string def6 = "", string def7 = "", string def8 = "")
@@ -374,58 +317,6 @@ namespace System.Collections.Generic
 			var r9 = obj.As(8, def9);
 			return (r1, r2, r3, r4, r5, r6, r7, r8, r9);
 		}
-
-		public static (int, int, int, int, string) I4S1(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, int def4 = 0, string def5 = "")
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			var r5 = obj.As(4, def5);
-			return (r1, r2, r3, r4, r5);
-		}
-
-		public static (int, int, int, int, string, string) I4S2(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, int def4 = 0, string def5 = "", string def6 = "")
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			var r5 = obj.As(4, def5);
-			var r6 = obj.As(5, def6);
-			return (r1, r2, r3, r4, r5, r6);
-		}
-
-		public static (int, int, int, int, int, int) I6(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, int def4 = 0, int def5 = 0, int def6 = 0)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			var r5 = obj.Ai(4, def5);
-			var r6 = obj.Ai(5, def6);
-			return (r1, r2, r3, r4, r5, r6);
-		}
-
-		public static (int, int, int, int, int, int, string) I6S1(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, int def4 = 0, int def5 = 0, int def6 = 0, string def7 = "")
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			var r5 = obj.Ai(4, def5);
-			var r6 = obj.Ai(5, def6);
-			var r7 = obj.As(6, def7);
-			return (r1, r2, r3, r4, r5, r6, r7);
-		}
-
-		public static (int, bool) Ib(this IList obj, int def1 = default, bool def2 = default)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ab(1, def2);
-			return (r1, r2);
-		}
-		//static object ehLock = "";
 
 		public static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
@@ -468,14 +359,6 @@ namespace System.Collections.Generic
 			return result;
 		}
 
-		public static (int, object, int) Ioi(this IList obj, int def1 = 0, string def2 = "", int def3 = 0)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.Ao(1, def2);
-			var r3 = obj.Ai(2, def3);
-			return (r1, r2, r3);
-		}
-
 		public static (int, string, string) Is2(this IList obj, int def1 = default, string def2 = "", string def3 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -486,46 +369,7 @@ namespace System.Collections.Generic
 
 		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& ((result.ParseLong(false) is long l&& l != 0) || result.ParseBool().IsTrue() || (result is string s&& s != ""));
 
-		public static (int, string, int, int) Isi2(this IList obj, int def1 = default, string def2 = "", int def3 = default, int def4 = default)
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
 		public static long L1(this IList obj, long def = default) => obj.Al(0, def);
-
-		public static (long, long) L2(this IList obj, long def1 = default, long def2 = default)
-		{
-			var r1 = obj.Al(0, def1);
-			var r2 = obj.Al(1, def2);
-			return (r1, r2);
-		}
-
-		public static (long, long, int, string) L2I1S1(this IList obj, long def1 = default, long def2 = default, int def3 = default, string def4 = "")
-		{
-			var r1 = obj.Al(0, def1);
-			var r2 = obj.Al(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.As(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
-		public static (long, bool) Lb(this IList obj, long def1 = default, bool def2 = default)
-		{
-			var r1 = obj.Al(0, def1);
-			var r2 = obj.Ab(1, def2);
-			return (r1, r2);
-		}
-
-		public static (long, string) Ls(this IList obj, long def1 = default, string def2 = "")
-		{
-			var r1 = obj.Al(0, def1);
-			var r2 = obj.As(1, def2);
-			return (r1, r2);
-		}
 
 		public static (long, string, string) Ls2(this IList obj, long def1 = default, string def2 = "", string def3 = "")
 		{
@@ -564,22 +408,6 @@ namespace System.Collections.Generic
 			return r1;
 		}
 
-		public static (object, long, string) O1L1S1(this IList obj, object def1 = null, long def2 = default, string def3 = "")
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Al(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (object, long, long) O1L2(this IList obj, object def1 = null, long def2 = default, long def3 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Al(1, def2);
-			var r3 = obj.Al(2, def3);
-			return (r1, r2, r3);
-		}
-
 		public static (object, string, string, string, string, string, string, string, string, string, string) O1S10(this IList obj, object def1 = null, string def2 = "", string def3 = "", string def4 = "", string def5 = "", string def6 = "", string def7 = "", string def8 = "", string def9 = "", string def10 = "", string def11 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -613,13 +441,6 @@ namespace System.Collections.Generic
 			var r3 = obj.As(2, def3);
 			var r4 = obj.As(3, def4);
 			return (r1, r2, r3, r4);
-		}
-
-		public static (object, object) O2(this IList obj, object def1 = null, object def2 = null)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Ao(1, def2);
-			return (r1, r2);
 		}
 
 		public static (object, object, string, string, int, string, string, string) O2S2I1S3(this IList obj, object def1 = null, object def2 = null, string def3 = "", string def4 = "", int def5 = 0, string def6 = "", string def7 = "", string def8 = "")
@@ -656,64 +477,9 @@ namespace System.Collections.Generic
 			return (r1, r2, r3, r4, r5, r6);
 		}
 
-		public static (object, bool) Ob(this IList obj, object def1 = null, bool def2 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Ab(1, def2);
-			return (r1, r2);
-		}
-
-		public static (object, int) Oi(this IList obj, object def1 = null, int def2 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Ai(1, def2);
-			return (r1, r2);
-		}
-
-		public static (object, long) OL(this IList obj, object def1 = null, long def2 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.Al(1, def2);
-			return (r1, r2);
-		}
-
-		public static (object, string) Os(this IList obj, object def1 = null, string def2 = "")
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.As(1, def2);
-			return (r1, r2);
-		}
-
-		public static (object, string, string, string) Os3(this IList obj, object def1 = null, string def2 = "", string def3 = "", string def4 = "")
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			var r4 = obj.As(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
-		public static (object, string, int) Osi(this IList obj, object def1 = null, string def2 = "", int def3 = default)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ai(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (object, string, object) Oso(this IList obj, object def1 = null, string def2 = "", object def3 = null)
-		{
-			var r1 = obj.Ao(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ao(2, def3);
-			return (r1, r2, r3);
-		}
-
 		public static T PeekOrNull<T>(this Stack<T> stack) where T : class => stack.TryPeek(out var result) ? result : null;
 
 		public static T PopOrNull<T>(this Stack<T> stack) where T : class => stack.TryPop(out var result) ? result : null;
-
-		public static void RemoveRange<T>(this List<T> list, int index) => list.RemoveRange(index, list.Count - index);
 
 		public static string S1(this IList obj, string def = "") => obj.As(0, def);
 
@@ -730,13 +496,6 @@ namespace System.Collections.Generic
 			return (r1, r2, r3, r4, r5, r6, r7, r8);
 		}
 
-		public static (string, object) S1O1(this IList obj, string def1 = "", object def2 = null)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ao(1, def2);
-			return (r1, r2);
-		}
-
 		public static (string, object, string, string, string) S1O1S3(this IList obj, string def1 = "", object def2 = null, string def3 = "", string def4 = "", string def5 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -745,14 +504,6 @@ namespace System.Collections.Generic
 			var r4 = obj.As(3, def4);
 			var r5 = obj.As(4, def5);
 			return (r1, r2, r3, r4, r5);
-		}
-
-		public static (string, object, object) S1O2(this IList obj, string def1 = "", object def2 = null, object def3 = null)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ao(1, def2);
-			var r3 = obj.Ao(2, def3);
-			return (r1, r2, r3);
 		}
 
 		public static (string, object, object, string, string, string) S1O2S3(this IList obj, string def1 = "", object def2 = null, object def3 = null, string def4 = "", string def5 = "", string def6 = "")
@@ -773,48 +524,6 @@ namespace System.Collections.Generic
 			return (r1, r2);
 		}
 
-		public static (string, string, bool) S2b(this IList obj, string def1 = "", string def2 = "", bool def3 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ab(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, string, int) S2i(this IList obj, string def1 = "", string def2 = "", int def3 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ai(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, string, int, int) S2i2(this IList obj, string def1 = "", string def2 = "", int def3 = default, int def4 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
-		public static (string, string, object) S2o(this IList obj, string def1 = "", string def2 = "", object def3 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ao(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, string, object, string) S2os(this IList obj, string def1 = "", string def2 = "", object def3 = null, string def4 = "")
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.Ao(2, def3);
-			var r4 = obj.As(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
 		public static (string, string, string) S3(this IList obj, string def1 = "", string def2 = "", string def3 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -823,137 +532,10 @@ namespace System.Collections.Generic
 			return (r1, r2, r3);
 		}
 
-		public static (string, string, string, int, int) S3i2(this IList obj, string def1 = "", string def2 = "", string def3 = "", int def4 = default, int def5 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			var r4 = obj.Ai(3, def4);
-			var r5 = obj.Ai(4, def5);
-			return (r1, r2, r3, r4, r5);
-		}
-
-		public static (string, string, string, string) S4(this IList obj, string def1 = "", string def2 = "", string def3 = "", string def4 = "")
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			var r4 = obj.As(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
-		public static (string, string, string, string, string) S5(this IList obj, string def1 = "", string def2 = "", string def3 = "", string def4 = "", string def5 = "")
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			var r4 = obj.As(3, def4);
-			var r5 = obj.As(4, def5);
-			return (r1, r2, r3, r4, r5);
-		}
-
-		public static (string, string, string, string, string, int) S5i(this IList obj, string def1 = "", string def2 = "", string def3 = "", string def4 = "", string def5 = "", int def6 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			var r4 = obj.As(3, def4);
-			var r5 = obj.As(4, def5);
-			var r6 = obj.Ai(5, def6);
-			return (r1, r2, r3, r4, r5, r6);
-		}
-
-		public static (string, string, string, string, string, string, string, int, int) S7i2(this IList obj, string def1 = "",
-				string def2 = "", string def3 = "", string def4 = "",
-				string def5 = "", string def6 = "", string def7 = "",
-				int def8 = default, int def9 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			var r4 = obj.As(3, def4);
-			var r5 = obj.As(4, def5);
-			var r6 = obj.As(5, def6);
-			var r7 = obj.As(6, def7);
-			var r8 = obj.Ai(7, def8);
-			var r9 = obj.Ai(8, def9);
-			return (r1, r2, r3, r4, r5, r6, r7, r8, r9);
-		}
-
-		public static (string, bool) Sb(this IList obj, string def1 = "", bool def2 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ab(1, def2);
-			return (r1, r2);
-		}
-
-		public static (string, double) Sd(this IList obj, string def1 = "", double def2 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ad(1, def2);
-			return (r1, r2);
-		}
-
-		public static (string, int) Si(this IList obj, string def1 = "", int def2 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ai(1, def2);
-			return (r1, r2);
-		}
-
-		public static (string, int, int) Si2(this IList obj, string def1 = "", int def2 = default, int def3 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, int, int, int) Si3(this IList obj, string def1 = "", int def2 = default, int def3 = default, int def4 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.Ai(2, def3);
-			var r4 = obj.Ai(3, def4);
-			return (r1, r2, r3, r4);
-		}
-
-		public static (string, int, string) Sis(this IList obj, string def1 = "", int def2 = default, string def3 = "")
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ai(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, long, long) Sl2(this IList obj, string def1 = "", long def2 = 0L, long def3 = 0L)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Al(1, def2);
-			var r3 = obj.Al(2, def3);
-			return (r1, r2, r3);
-		}
-
 		public static (string, long, string) Sls(this IList obj, string def1 = "", long def2 = default, string def3 = "")
 		{
 			var r1 = obj.As(0, def1);
 			var r2 = obj.Al(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, object, int) Soi(this IList obj, string def1 = "", object def2 = null, int def3 = default)
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ao(1, def2);
-			var r3 = obj.Ai(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static (string, object, string) Sos(this IList obj, string def1 = "", object def2 = null, string def3 = "")
-		{
-			var r1 = obj.As(0, def1);
-			var r2 = obj.Ao(1, def2);
 			var r3 = obj.As(2, def3);
 			return (r1, r2, r3);
 		}
@@ -994,22 +576,4 @@ namespace System.Collections.Generic
 			return arr;
 		}
 	}
-
-	/*
-	    public class EqualityComp : IEqualityComparer<object>
-	    {
-	    public new bool Equals([AllowNull] object x, [AllowNull] object y)
-	    {
-	        if (x is null || y is null)
-	            return false;
-
-	        if (x is string s1 && y is string s2)
-	            return string.Compare(s1, s2, StringComparison.OrdinalIgnoreCase) == 0;
-
-	        return x.Equals(y);
-	    }
-
-	    public int GetHashCode([DisallowNull] object obj) => obj.GetHashCode();
-	    }
-	*/
 }

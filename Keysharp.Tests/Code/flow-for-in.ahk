@@ -1,14 +1,14 @@
 arr := [10, 20, 30]
 x := 0
 
-for ( in arr)
+for (in arr)
 	x++
 
 if (x == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 x := 0
 
 for (i in arr)
@@ -271,6 +271,21 @@ else
 	FileAppend, "fail", "*"
 
 if (y == 180)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+funcin()
+{
+	return [1, 2, 3]
+}
+
+x := 0
+
+for w in funcin()
+	x += w
+
+if (x == 6)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

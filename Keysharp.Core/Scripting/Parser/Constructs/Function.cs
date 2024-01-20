@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Keysharp.Core;
+using Keysharp.Core.Windows;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -60,8 +61,14 @@ namespace Keysharp.Scripting
 				switch (sym)
 				{
 					case StringBound:
-						str = !str;
-						goto default;
+					case StringBoundVerbatim:
+					{
+						var origi = i;
+						var rest = ParseString(code, ref i);
+						//rest = rest.Substring(1, rest.Length - 2);
+						_ = buf.Append(code.Substring(origi, (i - origi) + 1));
+						continue;
+					}
 
 					case ParenClose:
 						if (str)
@@ -308,17 +315,18 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
-						var str = false;
 						var wasstr = false;
 						x = i;
 
-						while (!(i == code.Length || (code[i] == Multicast && !str)))
+						while (!(i == code.Length || code[i] == Multicast))
 						{
-							if (code[i++] == StringBound)
+							if (code[i] == StringBound || code[i] == StringBoundVerbatim)
 							{
-								str = !str;
-								wasstr = !str;
+								_ = ParseString(code, ref i);
+								wasstr = true;
 							}
+
+							i++;
 						}
 
 						if (x == i)
@@ -376,31 +384,31 @@ namespace Keysharp.Scripting
 			if (code.Equals(TrueTxt, cs) || code.Equals(FalseTxt, cs) || code.Equals(NullTxt, cs))
 				return code;
 
-			if (code[0] == StringBound)
+			if (code[0] == StringBound || code[0] == StringBoundVerbatim)
 			{
-				var str = true;
-
-				for (var i = 1; i < code.Length; i++)
-				{
-					if (code[i] == StringBound)
-					{
-						str = !str;
-						var n = i + 1;
-
-						if (n < code.Length && code[n] == code[i])
-						{
-							i = n;
-						}
-						else if (n != code.Length)
-							throw new ParseException(err);
-					}
-				}
-
-				if (str)
-					throw new ParseException(err);
-
+				var i = 0;
+				code = ParseString(code, ref i);
 				code = code.Substring(1, code.Length - 2);
-				_ = code.Replace(new string(StringBound, 2), string.Empty);
+				//code = EscapedString(code.Substring(1, code.Length - 2), false);
+				//var str = true;
+				//for (var i = 1; i < code.Length; i++)
+				//{
+				//  if (code[i] == StringBound || code[i] == StringBoundVerbatim)
+				//  {
+				//      str = !str;
+				//      var n = i + 1;
+				//      if (n < code.Length && code[n] == code[i])
+				//      {
+				//          i = n;
+				//      }
+				//      else if (n != code.Length)
+				//          throw new ParseException(err);
+				//  }
+				//}
+				//if (str)
+				//  throw new ParseException(err);
+				//code = code.Substring(1, code.Length - 2);
+				//code = code.Replace(new string(StringBound, 2), string.Empty);
 			}
 			else if (!IsPrimitiveObject(code))
 				throw new ParseException(err);

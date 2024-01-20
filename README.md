@@ -20,7 +20,7 @@
 	+ This should install .NET 8. If it doesn't, you need to install it manually from the link above.
 * Open Keysharp.sln
 * Build all (building the installer is not necessary).
-* CD to bin\release\net7.0-windows
+* CD to bin\release\net8.0-windows
 * Run `.\Keysharp.exe yourtestfile.ahk`
 	
 ## Overview ##
@@ -31,9 +31,9 @@ The intent is for Keysharp to run on Windows, Linux and eventually Mac. For now,
 
 This project is in an extremely early state and should not be used on production systems by anyone.
 
-Some general notes about Keysharp's implementation of the [AutoHotkey V2 specification](https://www.autohotkey.com/docs/v2/):
+Some general notes about Keysharp's implementation of the [AutoHotkey v2 specification](https://www.autohotkey.com/docs/v2/):
 
-* The syntax is V2 style. While some remnants of V1 will work, it's unintentional and only V2 is supported.
+* The syntax is v2 style. While some remnants of V1 will work, it's unintentional and only v2 is supported.
 
 * The operation of Keysharp is different than AHK. While AHK is an interpreted scripting language, Keysharp actually creates a compiled .NET executable and runs it.
 
@@ -50,9 +50,9 @@ Some general notes about Keysharp's implementation of the [AutoHotkey V2 specifi
 * In addition to Keysharp.exe, there is another executable that ships with the installer named Keyview.exe. This program can be used to see the C# code that is generated from the corresponding script code.
 	+ It gives real-time feedback so you can see immediately when you have a syntax error.
 	+ It is recommended that you use this to write code.
-	+ The editor is very primitive at the moment, and help improving it would be greatly appreciated.
+	+ The features are very primitive at the moment, and help improving it would be greatly appreciated.
 
-Despite our best efforts to remain compatible with the AHK spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. There are also slight syntax changes.
+Despite our best efforts to remain compatible with the AHK v2 spec, there are differences. Some of these differences are a reduction in functionality, and others are an increase. There are also slight syntax changes.
 
 ## Differences: ##
 
@@ -108,6 +108,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `SetWinDelay()`, `A_WinDelay`, `SetControlDelay` and `A_ControlDelay` exist but have no effect.
 * Static function variables are initialized on program startup, rather than the first time the function is called. This is because C# does not support static function variables.
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
+* The parameters for `__New()` in a class definition will be automatically passed to the base class in the order they are declared.
+	+ To change the values passed, or the order they are passed in, call `super.__New(arg1, arg2, ...)` in `__New()`.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
@@ -212,7 +214,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `Join(separator := ',') => String`
 	+ `MapTo(callback: (value [, index]) => Any) => Array`
 	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 when `a > b`.
-* A new function `Atan2(y, x) => Double` while AHK only supports `Atan(value)`.
+* A new function `Atan2(y, x) => Double`
+	+ AHK only supports `Atan(value)`.
 * Hyperbolic versions of the trigonometric functions:
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
@@ -249,7 +252,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * A new function `Collect()` which calls `GC.Collect()` to force a memory collection.
 	+ This rarely ever has to be used in properly written code.
 * In addition to using `#ClipboardTimeout`, a new accessor named `A_ClipboardTimeout` can be used at any point in the program to get or set that value.
-* AHK does not support reloading a compiled script, however Keysharp does.
+* A compiled script can be reloaded.
+	+ AHK does not support reloading a compiled script.
 * `A_EventInfo` is not limited to positive values when reporting the mouse wheel scroll amount.
 	+ When scrolling up, the value will be positive, and negative when scrolling down.
 * New accessors:
@@ -275,7 +279,6 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
 	+ `A_UseHook` returns the value `n` specified with `#UseHook n`.
 	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
-
 * `Log(number, base := 10)` is by default base 10, but it can accept a double as the second parameter to specify a custom base.
 * In `SetTimer()`:
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
@@ -299,8 +302,8 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 	+ For an argument to be passed as a reference, the function parameter in that position must be declared as a reference:
 		+ `func(&p1) { }`
 	+ Reference parameters cannot be optional because C# does not support it.
-		+ `func(p1, &p2 := 0) ; not supported`
-		+ `func(p1, &p2) ; supported`
+		+ `func(p1, &p2 := 0) {} ; not supported`
+		+ `func(p1, &p2) {} ; supported`
 	+ When passing a class member variable as a dynamic reference to a function from within another function of that same class, the `this` prefix must be used:
 ```
 	class myclass
@@ -361,8 +364,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The address of a variable cannot be taken using the reference operator except when passing an argument to a function.
 	+ `x := &var ; not supported`
 	+ `functhattakesref(&x) ; supported`
-* `OnMessage()` doesn't observe any of the threading behavior mentioned in the documentation because threading has not been implemented yet. Instead, the handlers are called inline.
-	+ The third parameter is just used to specify if the handler should be inserted, added or removed from the list of handlers for the specified message.
+* `OnMessage()` doesn't observe any of the behavior mentioned in the documentation regarding the message check interval because it's implemented in a different way.
 	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
 	+ The pause menu item has been removed.
@@ -383,6 +385,7 @@ Despite our best efforts to remain compatible with the AHK spec, there are diffe
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
 * When passing `"Interrupt"` as the second argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
+* Tooltips do not automatically disappear when clicking on them.
 
 ## Code acknowledgements ##
 

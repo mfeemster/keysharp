@@ -14,14 +14,13 @@ namespace Keysharp.Core
 	public class GuiControl : KeysharpObject
 	{
 		internal string typename;
-		private readonly Control _control;
-		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();//These all need to be converted to FuncObj.
+		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();
 		private readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
+		private Control _control;
 
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
-
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
@@ -366,15 +365,21 @@ namespace Keysharp.Core
 
 		internal Control Ctrl => _control;
 
-		public GuiControl(Gui gui, Control control, string name, bool wrap = false)
+		public GuiControl(params object[] obj) => _ = __New(obj);
+
+		public override object __New(params object[] obj)
 		{
+			var gui = obj[0] as Gui;
+			var control = obj[1] as Control;
+			var name = obj[2].ToString();
+			var wrap = obj.Length > 3 ? obj[3].Ab() : false;
 			Gui = gui;
 			typename = name;
 			_control = control;
 			_control.Tag = this;
 
 			if (wrap)//Just a holder for the controls in the main window.
-				return;
+				return "";
 
 			_control.Click += _control_Click;
 			_control.DoubleClick += _control_DoubleClick;
@@ -446,6 +451,7 @@ namespace Keysharp.Core
 			_control.KeyDown += _control_KeyDown;
 			_control.MouseDown += _control_MouseDown;
 			dummyHandle = _control.Handle;//Force creation of the handle.
+			return "";
 		}
 
 		public object Add(params object[] obj)

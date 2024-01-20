@@ -1280,9 +1280,15 @@ namespace Keysharp.Core
 		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public bool Success => match.Success;
 
-		public RegExResults(Match m) => match = m;
+		public RegExResults(params object[] obj) => _ = __New(obj);
 
 		public static implicit operator long(RegExResults r) => r.Pos();
+
+		public override object __New(params object[] obj)
+		{
+			match = obj[0] as Match;
+			return "";
+		}
 
 		public IEnumerator GetEnumerator() => match.Groups.GetEnumerator();
 

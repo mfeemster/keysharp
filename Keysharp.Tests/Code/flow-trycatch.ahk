@@ -502,3 +502,17 @@ if (xx == 5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+xx := 0
+
+loop
+	try
+		xx++
+	catch
+		x := 0
+until xx > 2
+
+if (xx == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

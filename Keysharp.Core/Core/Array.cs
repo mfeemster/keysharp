@@ -53,30 +53,28 @@ namespace Keysharp.Core
 
 		object ICollection.SyncRoot => ((ICollection)array).SyncRoot;
 
-		public Array(object obj = null)
-		{
-			if (obj == null)
-				array = new List<object>();
-			else if (obj is Array arr)
-				array = arr.array;
-			else if (obj is List<object> list)
-				array = list;
-			else if (obj is ICollection c)
-				array = new List<object>(c.Cast<object>().ToList());
-			else
-			{
-				var l = obj.Al(-1);
-
-				if (l > 0)
-					array = new List<object>((int)l);
-				else
-					throw new ValueError(obj: $"Invalid value of {obj} passed to Array constructor.");
-			}
-		}
+		public Array(params object[] obj) => _ = __New(obj);
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
-		public void __New(params object[] values) => Push(values);
+		public override object __New(params object[] obj)
+		{
+			if (obj == null || obj.Length == 0)
+				array = new List<object>();
+			else if (obj.Length == 1 && obj[0] is object[] objarr)
+				array = new List<object>(objarr);
+			else if (obj.Length == 1 && obj[0] is List<object> objlist)
+				array = objlist;
+			else if (obj.Length == 1 && obj[0] is ICollection c)
+				array = c.Cast<object>().ToList();
+			else
+			{
+				array = new List<object>();
+				Push(obj);
+			}
+
+			return "";
+		}
 
 		public int Add(object value)
 		{

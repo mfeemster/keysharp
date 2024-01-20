@@ -558,7 +558,6 @@ namespace Keysharp.Scripting
 		internal const string LibEnv = "AHKLIBPATH";
 		internal const string LibExt = "ahk";
 		internal const char LibSeperator = '_';
-		internal const string LTrim = "ltrim";
 		internal const char Minus = '-';
 		internal const string MsgBox = "msgbox";
 		internal const char MultiComA = '/';

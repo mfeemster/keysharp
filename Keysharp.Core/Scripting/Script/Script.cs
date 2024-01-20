@@ -42,6 +42,7 @@ namespace Keysharp.Scripting
 		internal static bool inputTimerExists;
 		internal static bool isReadyToExecute;
 		internal static IFuncObj lastHotFunc;
+		internal static DateTime lastPeekTime;
 		internal static MainWindow mainWindow;
 		internal static Gui mainWindowGui;
 		internal static int MAX_THREADS_LIMIT = 0xFF;
@@ -573,7 +574,7 @@ namespace Keysharp.Scripting
 			// beneficial in terms of increasing GUI & script responsiveness, so it is kept.
 			// The following might also improve performance slightly by avoiding extra Peek() calls, while also
 			// reducing premature thread interruptions.
-			kbdMouseSender.lastPeekTime = tick_now;
+			lastPeekTime = tick_now;
 			return ResultType.Ok;
 		}
 

@@ -332,13 +332,13 @@ namespace Keysharp.Core
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
+		public Gui(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
-			var options = obj0.As();
-			var caption = obj1.As();
-			var eventObj = obj2;
-			var newCount = Interlocked.Increment(ref windowCount);
+			__New(obj0, obj1, obj2);
+		}
 
+		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
+		{
 			if (obj3 is KeysharpForm kf)
 			{
 				form = kf;
@@ -346,8 +346,40 @@ namespace Keysharp.Core
 				foreach (var ctrl in form.GetAllControlsRecusrvive<Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
 					ctrl.Tag = new GuiControl(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
 			}
-			else
+
+			LastContainer = form;
+			allGuiHwnds[form.Handle.ToInt64()] = this;
+
+			if (lastfound)
+				Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
+		}
+
+		public static void DestroyAll()
+		{
+			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Keysharp.Scripting.Script.mainWindow).ToArray())//Destroy everything but the main window, which will destroy itself.
 			{
+				try
+				{
+					gui.Destroy();
+				}
+				catch
+				{
+				}
+			}
+
+			allGuiHwnds.Clear();
+		}
+
+		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
+
+		public override object __New(params object[] obj)
+		{
+			if (form == null)//Don't allow derived classes to init twice.
+			{
+				var options = obj.Length > 0 ? obj[0].As() : null;
+				var caption = obj.Length > 1 ? obj[1].As() : null;
+				var eventObj = obj.Length > 2 ? obj[2] : null;
+				var newCount = Interlocked.Increment(ref windowCount);
 				form = new KeysharpForm
 				{
 					//form.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -376,36 +408,15 @@ namespace Keysharp.Core
 				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//TODO
 				var y = (int)Math.Round(form.Font.Size * 0.75f);
 				form.Margin = new Padding(x, y, x, y);
+				LastContainer = form;
+				allGuiHwnds[form.Handle.ToInt64()] = this;
+
+				if (lastfound)
+					Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
 			}
 
-			LastContainer = form;
-			allGuiHwnds[form.Handle.ToInt64()] = this;
-
-			if (lastfound)
-				Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
+			return "";
 		}
-
-		public static Gui __New(object obj0 = null, object obj1 = null, object obj2 = null) => New(obj0, obj1, obj2);
-
-		public static void DestroyAll()
-		{
-			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Keysharp.Scripting.Script.mainWindow).ToArray())//Destroy everything but the main window, which will destroy itself.
-			{
-				try
-				{
-					gui.Destroy();
-				}
-				catch
-				{
-				}
-			}
-
-			allGuiHwnds.Clear();
-		}
-
-		public static Gui New(object obj0 = null, object obj1 = null, object obj2 = null) => new Gui(obj0, obj1, obj2);
-
-		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
 		public GuiControl Add(object obj0, object obj1 = null, object obj2 = null)
 		{
