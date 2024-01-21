@@ -91,7 +91,7 @@ namespace Keysharp.Scripting
 				throw new ParseException("Expected closing parenthesis");
 
 			var isFatArrow = false;
-			var param = buf.ToString().ToLower();//All variables, including function parameters, are lowercase.
+			var param = buf.ToString();
 			buf.Length = 0;
 			i++;
 
@@ -269,7 +269,7 @@ namespace Keysharp.Scripting
 						part = part.Trim('?');
 					}
 
-					var cpde = new CodeParameterDeclarationExpression(typeof(object), part);
+					var cpde = new CodeParameterDeclarationExpression(typeof(object), part.ToLower());//All variables, including function parameters, are lowercase.
 
 					if (opt)
 					{

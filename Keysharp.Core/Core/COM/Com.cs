@@ -239,15 +239,14 @@ namespace Keysharp.Core.COM
 		public static ComObject ComObjFromPtr(object obj0)
 		{
 			if (obj0 is IntPtr ip)
-			{
 				obj0 = Marshal.GetObjectForIUnknown(ip);
-			}
+			else if (obj0 is long l)
+				obj0 = Marshal.GetObjectForIUnknown(new IntPtr(l));
 
 			if (obj0 is IDispatch id)
-			{
-				//AHK did something here with trying to query an interface, but I hope that the above IDispatch cast does the same thing.
 				return new ComObject(vt_dispatch, id);
-			}
+			else if (Marshal.IsComObject(obj0))
+				return new ComObject(vt_unknown, obj0);
 
 			throw new ValueError($"Passed in value {obj0} of type {obj0.GetType()} was not of type IDispatch.");
 		}
@@ -262,8 +261,12 @@ namespace Keysharp.Core.COM
 				ptr = co.Ptr;
 			else if (Marshal.IsComObject(obj0))
 				ptr = obj0;
+			else if (obj0 is IntPtr ip)
+				ptr = Marshal.GetObjectForIUnknown(ip);
+			else if (obj0 is long l)
+				ptr = Marshal.GetObjectForIUnknown(new IntPtr(l));
 			else
-				throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
+				throw new ValueError($"The passed in object {obj0} of type {obj0.GetType()} was not a ComObject or a raw COM interface.");
 
 			if (obj1 != null && obj2 != null)
 			{

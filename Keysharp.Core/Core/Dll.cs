@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -191,7 +192,11 @@ namespace Keysharp.Core
 						throw ose;
 					}
 
-					//need to copy args back to parameters here.//TODO
+					if (value is int i)
+						return (long)i;
+					else if (value is uint ui)
+						return (long)ui;
+
 					return value;
 				}
 				catch (Exception e)
@@ -491,32 +496,44 @@ namespace Keysharp.Core
 			}
 		}
 
-		//  return GetDelegateForFunctionPointerInternalPointer(ptr, t);
-		//}
 		public static long NumPut(params object[] obj)
 		{
+			IntPtr addr = IntPtr.Zero;
 			Buffer buf;
 			var offset = 0;
 			int lastPairIndex;
 			var offsetSpecified = !((obj.Length & 1) == 1);
+			object target = null;
+			IntPtr finalAddr = IntPtr.Zero;
 
 			if (offsetSpecified)
 			{
 				lastPairIndex = obj.Length - 4;
 				offset = obj.Ai(obj.Length - 1);
-				buf = obj[obj.Length - 2] as Buffer;
+				target = obj[obj.Length - 2];
 			}
 			else
 			{
 				lastPairIndex = obj.Length - 3;
-				buf = obj[obj.Length - 1] as Buffer;
+				target = obj[obj.Length - 1];
 			}
+
+			buf = target as Buffer;
+
+			if (buf != null)
+				addr = buf.Ptr;
+			else if (target is IntPtr ptr)
+				addr = ptr;
+			else if (target is long l)
+				addr = new IntPtr(l);
+			else if (target is int i)
+				addr = new IntPtr(i);
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
+				var inc = 0;
 				var type = obj[i] as string;
 				var number = obj[i + 1];
-				var inc = 0;
 				byte[] bytes;
 
 				switch (type.ToLower())
@@ -577,16 +594,28 @@ namespace Keysharp.Core
 						break;
 				}
 
-				if ((offset + bytes.Length) <= (long)buf.Size)
+				finalAddr = IntPtr.Add(addr, offset);
+
+				if (buf != null)
 				{
-					Marshal.Copy(bytes, 0, buf.Ptr + offset, bytes.Length);
+					if ((offset + bytes.Length) <= (long)buf.Size)
+					{
+						Marshal.Copy(bytes, 0, finalAddr, bytes.Length);
+						offset += inc;
+					}
+					else
+						throw new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {(long)buf.Size}.");
+				}
+				else if (addr != IntPtr.Zero)
+				{
+					Marshal.Copy(bytes, 0, finalAddr, bytes.Length);
 					offset += inc;
 				}
 				else
-					throw new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {(long)buf.Size}.");
+					throw new IndexError($"Could not parse target {target} as a Buffer or memory address.");
 			}
 
-			return buf.Ptr.ToInt64() + offset;
+			return IntPtr.Add(addr, offset).ToInt64();
 		}
 
 		private static IntPtr CallDel(IntPtr vtbl, IntPtr[] args)
@@ -664,45 +693,5 @@ namespace Keysharp.Core
 
 			return IntPtr.Zero;
 		}
-
-		/// <summary>
-		/// https://github.com/dotnet/runtime/issues/13578
-		/// </summary>
-		/// <param name="ptr"></param>
-		/// <param name="t"></param>
-		/// <returns></returns>
-		/// <exception cref="ArgumentNullException"></exception>
-		/// <exception cref="ArgumentException"></exception>
-		//public static Delegate GetDelegateForFunctionPointerFix(IntPtr ptr, Type t)
-		//{
-		//  //Validate the parameters (modified from https://referencesource.microsoft.com/#mscorlib/system/runtime/interopservices/marshal.cs)
-		//  if (ptr == IntPtr.Zero)
-		//  {
-		//      throw new ArgumentNullException(nameof(ptr));
-		//  }
-
-		//  if (t is null)
-		//  {
-		//      throw new ArgumentNullException(nameof(t));
-		//  }
-
-		//  //skip the IsRuntimeImplemented check as IsRuntimeImplemented is not visible and I cannot be bothered
-
-		//  if (t.IsGenericType && !t.IsConstructedGenericType)
-		//  {
-		//      throw new ArgumentException("The specified Type must not be an open generic type definition.", nameof(t));
-		//  }
-
-		//  Type? c = t.BaseType;
-
-		//  if (c != typeof(Delegate) && c != typeof(MulticastDelegate))
-		//  {
-		//      throw new ArgumentException("Type must derive from Delegate or MulticastDelegate.", nameof(t));
-		//  }
-
-		//  if (GetDelegateForFunctionPointerInternalPointer is null)
-		//  {
-		//      GetDelegateForFunctionPointerInternalPointer = typeof(Marshal).GetMethod("GetDelegateForFunctionPointerInternal", BindingFlags.Static | BindingFlags.NonPublic).CreateDelegate<Func<IntPtr, Type, Delegate>>();
-		//  }
 	}
 }
