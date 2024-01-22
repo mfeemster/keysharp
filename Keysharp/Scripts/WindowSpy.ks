@@ -118,9 +118,9 @@ TryUpdate() {
     
     UpdateText("Ctrl_Title", WinDataText)
     CoordMode "Mouse", "Window"
-    MouseGetPos &mrX, &mrY, , 
+    MouseGetPos &mrX, &mrY
     CoordMode "Mouse", "Client"
-    MouseGetPos &mcX, &mcY, , 
+    MouseGetPos &mcX, &mcY
     mClr := PixelGetColor(msX,msY,"RGB")
     mClr := SubStr(mClr, 3)
     

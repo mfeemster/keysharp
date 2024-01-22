@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
@@ -11,20 +11,10 @@ using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
 {
-	internal class DllCache
-	{
-		internal AssemblyBuilder assembly;
-		internal ModuleBuilder module;
-		internal TypeBuilder container;
-		internal MethodBuilder invoke;
-		internal Type created;
-		internal MethodInfo method;
-	}
-
 	public static class Dll
 	{
-		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
 		private static ConcurrentDictionary<string, DllCache> dllCache = new ConcurrentDictionary<string, DllCache>();
+		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
 
 		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
 		{
@@ -124,65 +114,96 @@ namespace Keysharp.Core
 				if (Environment.OSVersion.Platform == PlatformID.Win32NT && path.Length != 0 && !Path.HasExtension(path))
 					path += ".dll";
 
-				//Caching this would be ideal, but it doesn't seem possible because you can't modify the type after it's created.
-				//Creating the assembly, module, type and method take about 4-7ms, so it's not too big of a deal.
-				var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.RunAndCollect);
-				var module = assembly.DefineDynamicModule("module");
-				var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
-				var invoke = container.DefinePInvokeMethod(
-								 name,
-								 path,
-								 MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.PinvokeImpl,
-								 CallingConventions.Standard,
-								 helper.ReturnType,
-								 helper.types,
-								 helper.CDecl ? CallingConvention.Cdecl : CallingConvention.Winapi,
-								 CharSet.Auto);
-				invoke.SetImplementationFlags(invoke.GetMethodImplementationFlags() | MethodImplAttributes.PreserveSig);
+				var id = GetDllCallId(name, path, helper);
+				MethodInfo method;
 
-				for (var i = 0; i < helper.args.Length; i++)
+				if (dllCache.TryGetValue(id, out var cached))
 				{
-					if (helper.args[i] is string s)
+					method = cached.method;
+				}
+				else
+				{
+					try
 					{
-						if (helper.names[i] == "astr")
+						//Caching this would be ideal, but it doesn't seem possible because you can't modify the type after it's created.
+						//Creating the assembly, module, type and method take about 4-7ms, so it's not too big of a deal.
+						var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.RunAndCollect);
+						var module = assembly.DefineDynamicModule("module");
+						var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
+						var invoke = container.DefinePInvokeMethod(
+										 name,
+										 path,
+										 MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.PinvokeImpl,
+										 CallingConventions.Standard,
+										 helper.ReturnType,
+										 helper.types,
+										 helper.CDecl ? CallingConvention.Cdecl : CallingConvention.Winapi,
+										 CharSet.Auto);
+						invoke.SetImplementationFlags(invoke.GetMethodImplementationFlags() | MethodImplAttributes.PreserveSig);
+
+						for (var i = 0; i < helper.args.Length; i++)
 						{
-							var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
-							pb.SetCustomAttribute(new CustomAttributeBuilder(
-													  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
-													  new object[] { System.Runtime.InteropServices.UnmanagedType.LPStr }));
+							if (helper.args[i] is string s)
+							{
+								if (helper.names[i] == "astr")
+								{
+									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
+									pb.SetCustomAttribute(new CustomAttributeBuilder(
+															  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
+															  new object[] { System.Runtime.InteropServices.UnmanagedType.LPStr }));
+								}
+								else if (helper.names[i] == "bstr")
+								{
+									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
+									pb.SetCustomAttribute(new CustomAttributeBuilder(
+															  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
+															  new object[] { System.Runtime.InteropServices.UnmanagedType.BStr }));
+								}
+							}
+							else if (helper.args[i] is System.Array array)
+							{
+								//var p = invoke.GetParameters();
+								var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
+								pb.SetCustomAttribute(new CustomAttributeBuilder(
+														  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
+														  new object[] { System.Runtime.InteropServices.UnmanagedType.SafeArray },
+														  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
+														  new object[] { System.Runtime.InteropServices.VarEnum.VT_VARIANT }
+													  ));
+							}
 						}
-						else if (helper.names[i] == "bstr")
+
+						var created = container.CreateType();
+						method = created.GetMethod(name);
+
+						if (method == null)
+							throw new Error($"Method {name} could not be found.");
+
+						dllCache[id] = new DllCache()
 						{
-							var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
-							pb.SetCustomAttribute(new CustomAttributeBuilder(
-													  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
-													  new object[] { System.Runtime.InteropServices.UnmanagedType.BStr }));
-						}
+							assembly = assembly,
+							module = module,
+							container = container,
+							invoke = invoke,
+							created = created,
+							method = method
+						};
 					}
-					else if (helper.args[i] is System.Array array)
+					catch (Exception e)
 					{
-						//var p = invoke.GetParameters();
-						var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
-						pb.SetCustomAttribute(new CustomAttributeBuilder(
-												  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
-												  new object[] { System.Runtime.InteropServices.UnmanagedType.SafeArray },
-												  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
-												  new object[] { System.Runtime.InteropServices.VarEnum.VT_VARIANT }
-											  ));
+						var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
+
+						if (e.InnerException is Keysharp.Core.Error err)
+							inner += " " + err.Message;
+
+						var error = new Error($"An error occurred when calling {name} in {path}: {e.Message}{inner}");
+						error.Extra = "0x" + Accessors.A_LastError.ToString("X");
+						throw error;
 					}
 				}
 
-				var created = container.CreateType();
-
 				try
 				{
-					var method = created.GetMethod(name);
-
-					if (method == null)
-						throw new Error($"Method {name} could not be found.");
-
-					//ParameterInfo[] Myarray = method.GetParameters();
-					//ParameterAttributes Myparamattributes = Myarray[0].Attributes;
 					var value = method.Invoke(null, helper.args);
 
 					if (helper.ReturnName == "HRESULT" && value is int retval && retval < 0)
@@ -618,6 +639,11 @@ namespace Keysharp.Core
 			return IntPtr.Add(addr, offset).ToInt64();
 		}
 
+		internal static string GetDllCallId(string name, string path, DllArgumentHelper helper)
+		{
+			return $"{name}{path}{helper.ReturnType}{string.Join(',', helper.names)}-{string.Join(',', helper.types.Select(t => t.Name))}";
+		}
+
 		private static IntPtr CallDel(IntPtr vtbl, IntPtr[] args)
 		{
 			switch (args.Length)
@@ -693,5 +719,15 @@ namespace Keysharp.Core
 
 			return IntPtr.Zero;
 		}
+	}
+
+	internal class DllCache
+	{
+		internal AssemblyBuilder assembly;
+		internal TypeBuilder container;
+		internal Type created;
+		internal MethodBuilder invoke;
+		internal MethodInfo method;
+		internal ModuleBuilder module;
 	}
 }
