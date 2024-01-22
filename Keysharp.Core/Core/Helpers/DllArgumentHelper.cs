@@ -164,9 +164,21 @@ namespace Keysharp.Core
 								}
 								else if (p is ComObject co)
 								{
-									var pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
-									args[n] = pUnk;
-									_ = Marshal.Release(pUnk);
+									if (co.Ptr is IntPtr ip || co.Ptr is long || co.Ptr is int)
+									{
+										if (usePtr)
+											SetupPointerArg(i, n, co.Ptr);
+										else
+											args[n] = co.Ptr;
+									}
+									else if (Marshal.IsComObject(co.Ptr))
+									{
+										var pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
+										args[n] = pUnk;
+										_ = Marshal.Release(pUnk);
+									}
+									else
+										throw new TypeError($"COM object with ptr type {co.Ptr.GetType()} could not be converted into a DLL argument.");
 								}
 								else if (Marshal.IsComObject(p))
 								{

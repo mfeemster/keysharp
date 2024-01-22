@@ -144,6 +144,11 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with `IsSet()`.
 * Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless `RTrim` is specified.
 * In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if `LTrim` is specified.
+* Because a comma at the end of a line indicates a continuation statement, command style syntax with a trailing comma is not supported:
+	+ `MouseGetPos &mrX, &mrY, , ; not supported`
+	+ `MouseGetPos &mrX, &mrY ; omitting the trailing comma is supported`
+	+ `MouseGetPos(&mrX, &mrY) ; using parens is preferred`
+	+ `MouseGetPos(&mrX, &mrY, , ) ; trailing commas can be used with parens`
 * Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
 * Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
 * Dynamic variable references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.

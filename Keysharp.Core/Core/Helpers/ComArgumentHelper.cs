@@ -40,16 +40,11 @@ namespace Keysharp.Core
 				GCHandle gch;
 
 				if (obj != null)
-				{
 					gch = GCHandle.Alloc(obj != null ? obj : parameters[i], GCHandleType.Pinned);
-				}
+				else if (parameters[i] is ComObject co)
+					gch = GCHandle.Alloc(co.Ptr, GCHandleType.Pinned);
 				else
-				{
-					if (parameters[i] is ComObject co)
-						gch = GCHandle.Alloc(co.Ptr, GCHandleType.Pinned);
-					else
-						gch = GCHandle.Alloc(parameters[i], GCHandleType.Pinned);
-				}
+					gch = GCHandle.Alloc(parameters[i], GCHandleType.Pinned);
 
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();

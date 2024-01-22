@@ -213,6 +213,18 @@ namespace Keysharp.Core
 						throw ose;
 					}
 
+					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+					for (var pi = 0; pi < parameters.Length; pi++)
+					{
+						var p = parameters[pi];
+
+						if (p is ComObject co)
+						{
+							object obj = co.Ptr;
+							co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+						}
+					}
+
 					if (value is int i)
 						return (long)i;
 					else if (value is uint ui)

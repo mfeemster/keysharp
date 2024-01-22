@@ -51,37 +51,29 @@ namespace Keysharp.Core.COM
 			{
 				if (item is IntPtr ip)
 					return ip;//.ToInt64();
-				//else if (VarType == COM.Com.vt_unknown ||
-				//       ((Flags & Com.vt_byref) == Com.vt_byref) ||
-				//       ((Flags & Com.vt_array) == Com.vt_array))
-				//{
-				//  var pUnk = Marshal.GetIUnknownForObject(item);
-				//  //var vtbl = new IntPtr[1];
-				//  //var pUnk = Marshal.GetIUnknownForObject(ptr);
-				//  //var pVtbl = Marshal.ReadIntPtr(pUnk);
-				//  //Marshal.Copy(pVtbl, vtbl, 0, indexPlus1);
-				//  //TypedReference tr = __makeref(pUnk);
-				//  //IntPtr ptr = **(IntPtr**)(&tr);
-				//  //var gch = GCHandle.Alloc(pUnk, GCHandleType.Pinned);
-				//  //var intptr = gch.AddrOfPinnedObject();
-				//  //var intptr2 = GCHandle.ToIntPtr(gch);
-				//  //var pVtbl = Marshal.ReadIntPtr(intptr);
-				//  //gch.Free();
-				//  var pVtbl = pUnk;// Marshal.ReadIntPtr(pUnk);
-				//  Marshal.Release(pUnk);
-				//  return pVtbl;
-				//}
 				else
 					return item;
 			}
 			set
 			{
-				//if ((VarType == COM.Com.vt_unknown ||
-				//  VarType == COM.Com.vt_dispatch) && item == null)
-				//{
-				//  item = value;
-				//}
-				item = value;
+				object temp;
+
+				if (value is IntPtr ip && ip != IntPtr.Zero)
+					temp = Marshal.GetObjectForIUnknown(ip);
+				else if (value is long l && l > 0)
+					temp = Marshal.GetObjectForIUnknown(new IntPtr(l));
+				else
+					temp = value;
+
+				if (temp != null && Marshal.IsComObject(temp))
+				{
+					if (temp is IDispatch id)
+						item = id;
+					else
+						item = temp;
+				}
+				else
+					item = value;
 			}
 		}
 
@@ -90,54 +82,15 @@ namespace Keysharp.Core.COM
 
 		public ComObject(object varType, object val, object flags = null)
 		{
-			var co = ValueToVarType(val, (int)varType.Al(), true);
-			VarType = co.VarType;
+			var vt = (int)varType.Al();
+			var co = ValueToVarType(val, vt, true);
+			VarType = vt;
 			Flags = flags != null ? flags.Al() : 0L;
 
 			if (VarType == Com.vt_bstr && val is not long)
 				Flags |= F_OWNVALUE;
 
-			Ptr = val;
-			//vtbl = new IntPtr[MaxVtableLen];
-			//if (Marshal.IsComObject(Ptr))
-			//{
-			//  pUnk = Marshal.GetIUnknownForObject(Ptr);
-			//}
-			//else if (Ptr is IntPtr ip)
-			//{
-			//  pUnk = ip;
-			//}
-			//pVtbl = Marshal.ReadIntPtr(pUnk);
-			//Marshal.Copy(pVtbl, vtbl, 0, MaxVtableLen);
-			//switch (VarType)
-			//{
-			//  case Com.vt_empty: break;
-			//  case Com.vt_null: break; //SQL-style Null
-			//  case Com.vt_i2: break; //16-bit signed int
-			//  case Com.vt_i4: break; //32-bit signed int
-			//  case Com.vt_r4: break; //32-bit floating-point number
-			//  case Com.vt_r8: break; //64-bit floating-point number
-			//  case Com.vt_cy: break; //Currency
-			//  case Com.vt_date: break; //Date
-			//  case Com.vt_bstr: break; //COM string (Unicode string with length prefix)
-			//  case Com.vt_dispatch: break; //COM object
-			//  case Com.vt_error: break; //Error code(32-bit integer)
-			//  case Com.vt_bool: break; //Boolean True(-1) or False(0)
-			//  case Com.vt_variant: break; //VARIANT(must be combined with VT_ARRAY or VT_BYREF)
-			//  case Com.vt_unknown: break; //IUnknown interface pointer
-			//  case Com.vt_decimal: break; //(not supported)
-			//  case Com.vt_i1: break; //8-bit signed int
-			//  case Com.vt_ui1: break; //8-bit unsigned int
-			//  case Com.vt_ui2: break; //16-bit unsigned int
-			//  case Com.vt_ui4: break; //32-bit unsigned int
-			//  case Com.vt_i8: break; //64-bit signed int
-			//  case Com.vt_ui8: break; //64-bit unsigned int
-			//  case Com.vt_int: break; //Signed machine int
-			//  case Com.vt_uint: break; //Unsigned machine int
-			//  case Com.vt_record: break; //User-defined type -- NOT SUPPORTED
-			//  case Com.vt_array: break; //SAFEARRAY
-			//  case Com.vt_byref: break; //Pointer to another type of value
-			//}
+			Ptr = co.Ptr;
 		}
 
 		internal ComObject()
@@ -231,7 +184,7 @@ namespace Keysharp.Core.COM
 				return new ComObject()
 				{
 					Ptr = val.Ab() ? -1 : 0,//The true value for a variant is actual -1. Not sure if this should be short, int or long?//TODO.
-					VarType = Com.vt_bool
+					VarType = varType
 				};
 			}
 

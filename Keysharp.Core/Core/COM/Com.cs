@@ -451,7 +451,10 @@ namespace Keysharp.Core.COM
 			if (ptr is IntPtr ip2)
 				pUnk = ip2;
 			else
+			{
 				pUnk = Marshal.GetIUnknownForObject(ptr);
+				_ = Marshal.Release(pUnk);
+			}
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ComArgumentHelper(parameters);
