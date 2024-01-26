@@ -106,7 +106,8 @@ namespace Keysharp.Core
 
 				if (isreturn)
 				{
-					returnType = type;
+					returnType = name.EndsWith("str") ? typeof(IntPtr) : type;//Native functions that return strings should be treated as pointers which will be converted manually after the call is done.
+					returnName = name;
 				}
 				else if (!isreturn && i < parameters.Length)
 				{
@@ -193,14 +194,14 @@ namespace Keysharp.Core
 							}
 							else if (name == "uint" || name == "int")
 							{
-								if (p is IntPtr ip)
+								if (usePtr)
+									SetupPointerArg(i, n);
+								else if (p is IntPtr ip)
 									args[n] = ip.ToInt64();
 								else if (p is long l && l > 0)
 									args[n] = l;
 								else if (p is int ii && ii > 0)
 									args[n] = ii;
-								else
-									SetupPointerArg(i, n);
 							}
 							else
 								SetupPointerArg(i, n);

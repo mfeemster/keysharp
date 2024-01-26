@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using Keysharp.Core.COM;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
 
 namespace Keysharp.Core
@@ -196,7 +197,7 @@ namespace Keysharp.Core
 						if (e.InnerException is Keysharp.Core.Error err)
 							inner += " " + err.Message;
 
-						var error = new Error($"An error occurred when calling {name} in {path}: {e.Message}{inner}");
+						var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}");
 						error.Extra = "0x" + Accessors.A_LastError.ToString("X");
 						throw error;
 					}
@@ -211,6 +212,14 @@ namespace Keysharp.Core
 						var ose = new OSError($"DllCall with return type of HRESULT returned {retval}.");
 						ose.Extra = "0x" + ose.Number.ToString("X");
 						throw ose;
+					}
+
+					if (helper.ReturnType == typeof(IntPtr))
+					{
+						if (helper.ReturnName == "astr")
+							value = Marshal.PtrToStringAnsi((IntPtr)value);
+						else if (helper.ReturnName == "str" || helper.ReturnName == "wstr")
+							value = Marshal.PtrToStringUni((IntPtr)value);
 					}
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
@@ -239,7 +248,7 @@ namespace Keysharp.Core
 					if (e.InnerException is Keysharp.Core.Error err)
 						inner += " " + err.Message;
 
-					var error = new Error($"An error occurred when calling {name} in {path}: {e.Message}{inner}");
+					var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}");
 					error.Extra = "0x" + Accessors.A_LastError.ToString("X");
 					throw error;
 				}
@@ -388,7 +397,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception e)
 					{
-						var error = new Error($"An error occurred when calling {function}: {e.Message}");
+						var error = new Error($"An error occurred when calling {function}(): {e.Message}");
 						error.Extra = "0x" + Accessors.A_LastError.ToString("X");
 						throw error;
 					}
