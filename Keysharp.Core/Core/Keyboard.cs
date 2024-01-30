@@ -392,7 +392,6 @@ break_twice:;
 			{
 				Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 				{
-					Scripting.Script.mainWindow.Show();
 					Scripting.Script.mainWindow.ShowHistory();
 				});
 			}

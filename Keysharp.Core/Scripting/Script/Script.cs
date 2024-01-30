@@ -20,8 +20,10 @@ namespace Keysharp.Scripting
 	{
 		public static bool ForceKeybdHook;
 		public static bool HotstringNoMouse = false;
+
 		//public static bool MaxThreadsBuffer = false;
 		public static uint MaxThreadsPerHotkey = 1u;
+
 		public static uint MaxThreadsTotal = 12u;
 		public static bool NoTrayIcon = false;
 		public static bool WinActivateForce = false;
@@ -162,6 +164,65 @@ namespace Keysharp.Scripting
 			}
 		}
 
+		public static string GetPublicStaticPropertyNames()
+		{
+			var l1 = Reflections.flatPublicStaticMethods.Keys.ToList();
+			l1.AddRange(Reflections.flatPublicStaticProperties.Keys);
+			var hs = new HashSet<string>(l1);
+			return string.Join(' ', hs);
+		}
+
+		public static string GetVars(object obj = null)
+		{
+			var tabLevel = 0;
+			var doInternal = obj.Ab(true);
+			var sbuf = new StringBuffer();
+			var sb = sbuf.sb;
+			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
+			_ = sb.AppendLine($"**User defined**\r\n");
+
+			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
+				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
+				{
+					var val = fieldKv.Value.GetValue(null);
+					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
+					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
+				}
+
+			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
+
+			if (doInternal)
+			{
+				foreach (var propKv in Reflections.flatPublicStaticProperties)
+				{
+					var list = typesToProps.GetOrAdd(propKv.Value.DeclaringType.Name);
+
+					if (list.Count == 0)
+						list.Capacity = 200;
+
+					list.Add(propKv.Value);
+				}
+
+				foreach (var t2pKv in typesToProps)
+				{
+					var typeName = t2pKv.Key;
+					_ = sb.AppendLine($"{typeName}:");
+
+					foreach (var prop in t2pKv.Value.OrderBy(p => p.Name))
+					{
+						var val = prop.GetValue(null);
+						var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
+						_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
+					}
+
+					_ = sb.AppendLine("--------------------------------------------------");
+					_ = sb.AppendLine();
+				}
+			}
+
+			return sbuf.sb.ToString();
+		}
+
 		public static void HandleSingleInstance(string name, eScriptInstance inst)
 		{
 			if (name.Length == 0 || name == "*")//Happens when running in Keyview.
@@ -268,64 +329,61 @@ namespace Keysharp.Scripting
 
 		public static void ListVars() => mainWindow?.ShowInternalVars();
 
-		public static string GetPublicStaticPropertyNames()
+		/// <summary>
+		/// Sends a string to the debugger (if any) for display.
+		/// </summary>
+		/// <param name="obj0">The text to send to the debugger for display.</param>
+		/// <param name="obj1">True to first clear the display, else false to append.</param>
+		public static void OutputDebug(object obj0, object obj1 = null)
 		{
-			var l1 = Reflections.flatPublicStaticMethods.Keys.ToList();
-			l1.AddRange(Reflections.flatPublicStaticProperties.Keys);
-			var hs = new HashSet<string>(l1);
-			return string.Join(' ', hs);
-		}
+			var text = obj0.As();
+			var clear = obj1.Ab();
+			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
 
-		public static string GetVars(object obj = null)
-		{
-			var tabLevel = 0;
-			var doInternal = obj.Ab(true);
-			var sbuf = new StringBuffer();
-			var sb = sbuf.sb;
-			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
-			_ = sb.AppendLine($"**User defined**\r\n");
-
-			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
-				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
-				{
-					var val = fieldKv.Value.GetValue(null);
-					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
-					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
-				}
-
-			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
-
-			if (doInternal)
+			//This will throw when running tests.
+			try
 			{
-				foreach (var propKv in Reflections.flatPublicStaticProperties)
-				{
-					var list = typesToProps.GetOrAdd(propKv.Value.DeclaringType.Name);
-
-					if (list.Count == 0)
-						list.Capacity = 200;
-
-					list.Add(propKv.Value);
-				}
-
-				foreach (var t2pKv in typesToProps)
-				{
-					var typeName = t2pKv.Key;
-					_ = sb.AppendLine($"{typeName}:");
-
-					foreach (var prop in t2pKv.Value.OrderBy(p => p.Name))
-					{
-						var val = prop.GetValue(null);
-						var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
-						_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
-					}
-
-					_ = sb.AppendLine("--------------------------------------------------");
-					_ = sb.AppendLine();
-				}
+				Console.Out.WriteLine(text);//Will print to the console when piped to | more, even though this is a windows application.
+			}
+			catch
+			{
 			}
 
-			return sbuf.sb.ToString();
+			if (!IsMainWindowClosing)
+				if (clear)
+					mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
+				else
+					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
 		}
+
+		public static void RunMainWindow(string title, Func<object> userInit)
+		{
+			mainWindow = new MainWindow();
+
+			if (!string.IsNullOrEmpty(title))
+				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
+
+			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
+			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
+			//Parser.Persistent = true;
+			mainWindowGui = new Gui(null, null, null, mainWindow);
+			//This combo of using Activate, the minimize, then making extra sure in the Load event handler seems to work well enough.
+			//Sometimes the form will show in the bottom left corner very quickly, but it should barely be visible to users.
+			mainWindow.WindowState = FormWindowState.Minimized;
+			mainWindow.Activate();
+			_ = mainWindow.BeginInvoke(() =>
+			{
+				_ = userInit();
+				//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
+				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
+				isReadyToExecute = true;
+			});
+			Application.Run(mainWindow);
+		}
+
+		public static void SetName(string s) => scriptName = s;
+
+		public static void ShowDebug() => mainWindow?.ShowDebug();
 
 		/*
 		    internal static string GetVariableInfo()
@@ -412,60 +470,6 @@ namespace Keysharp.Scripting
 		    return sb.ToString();
 		    }
 		*/
-
-		/// <summary>
-		/// Sends a string to the debugger (if any) for display.
-		/// </summary>
-		/// <param name="obj0">The text to send to the debugger for display.</param>
-		/// <param name="obj1">True to first clear the display, else false to append.</param>
-		public static void OutputDebug(object obj0, object obj1 = null)
-		{
-			var text = obj0.As();
-			var clear = obj1.Ab();
-			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
-
-			//This will throw when running tests.
-			try
-			{
-				Console.Out.WriteLine(text);//Will print to the console when piped to | more, even though this is a windows application.
-			}
-			catch
-			{
-			}
-
-			if (!IsMainWindowClosing)
-				if (clear)
-					mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
-				else
-					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
-		}
-
-		public static void RunMainWindow(string title, Func<object> userInit)
-		{
-			mainWindow = new MainWindow();
-
-			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
-
-			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
-			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-			//Parser.Persistent = true;
-			mainWindowGui = new Gui(null, null, null, mainWindow);
-			//This combo of using Activate, the minimize, then making extra sure in the Load event handler seems to work well enough.
-			//Sometimes the form will show in the bottom left corner very quickly, but it should barely be visible to users.
-			mainWindow.WindowState = FormWindowState.Minimized;
-			mainWindow.Activate();
-			_ = mainWindow.BeginInvoke(() =>
-			{
-				_ = userInit();
-				//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
-				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
-				isReadyToExecute = true;
-			});
-			Application.Run(mainWindow);
-		}
-
-		public static void SetName(string s) => scriptName = s;
 
 		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
 

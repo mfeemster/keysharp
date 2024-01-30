@@ -233,6 +233,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
 	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
+* A new function `ShowDebug()` to show the main window and focus the debug output tab.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.

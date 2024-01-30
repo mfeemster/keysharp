@@ -375,3 +375,31 @@ string GetAppHostPath()
 }
 
 Console.WriteLine(GetAppHostPath());
+
+//Good parsing testing code:
+class FFITypes {
+    static NumTypeSize := Map()
+    static __new() {
+        for t in [
+            [1,  'Int8' ,  'char' ],  ; Int8 is not used in WinRT, but maybe Win32metadata.
+            [1, 'UInt8' , 'uchar' ],
+            [2,  'Int16',  'short'],
+            [2, 'UInt16', 'ushort'],
+            [4,  'Int32',  'int'  ],
+            [4, 'UInt32', 'uint'  ],
+            [8,  'Int64',  'int64'],
+            [8, 'UInt64', 'uint64'],
+            [4, 'Single', 'float' ],
+            [8, 'Double', 'double'],
+            [A_PtrSize, 'IntPtr', 'ptr'],
+            [A_PtrSize, 'UIntPtr', 'uptr'],
+            ] {
+            this.NumTypeSize[t[3]] := t[1]
+            this.%t[2]% := NumberTypeInfo(t*)
+        }
+        for t in ['Attribute', 'Void'] {
+            this.%t% := BasicTypeInfo(t)
+        }
+    }
+}
+

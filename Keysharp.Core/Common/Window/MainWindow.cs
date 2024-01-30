@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Security.Cryptography;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
@@ -18,6 +17,7 @@ namespace Keysharp.Scripting
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool success;
 		private AboutBox about;
+		private bool callingInternalVars = false;
 
 		public bool IsClosing { get; private set; }
 
@@ -60,11 +60,49 @@ namespace Keysharp.Scripting
 			});
 		}
 
-		internal void ListHotkeys() => SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys);
+		internal void ListHotkeys()
+		{
+			this.Invoke(() =>
+			{
+				ShowIfNeeded();
+				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys);
+			});
+		}
 
-		internal void ShowHistory() => SetTextInternal(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History, txtHistory);
+		internal void ShowDebug()
+		{
+			this.Invoke(() =>
+			{
+				ShowIfNeeded();
+				tcMain.SelectedTab = tpDebug;
+			});
+		}
 
-		internal void ShowInternalVars() => SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars);
+		internal void ShowHistory()
+		{
+			this.Invoke(() =>
+			{
+				ShowIfNeeded();
+				SetTextInternal(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History, txtHistory);
+			});
+		}
+
+		internal void ShowInternalVars()
+		{
+			try
+			{
+				callingInternalVars = true;//Gets called twice if called before first showing.
+				this.Invoke(() =>
+				{
+					ShowIfNeeded();
+					SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars);
+				});
+			}
+			finally
+			{
+				callingInternalVars = false;
+			}
+		}
 
 		protected override void WndProc(ref Message m)
 		{
@@ -251,9 +289,22 @@ namespace Keysharp.Scripting
 			txt.ScrollToCaret();
 		}
 
+		private void ShowIfNeeded()
+		{
+			if (WindowState == FormWindowState.Minimized)
+			{
+				Show();
+				WindowState = FormWindowState.Normal;
+			}
+		}
+
 		private void suspendHotkeysToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Scripting.Script.SuspendHotkeys();
 
-		private void TpVars_HandleCreated(object sender, System.EventArgs e) => ShowInternalVars();
+		private void TpVars_HandleCreated(object sender, System.EventArgs e)
+		{
+			if (!callingInternalVars)
+				ShowInternalVars();
+		}
 
 		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
