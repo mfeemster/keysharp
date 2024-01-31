@@ -108,7 +108,7 @@ namespace Keysharp.Core.COM
 		private void Dispatcher_EventReceivedGlobalFunc(object sender, DispatcherEventArgs e)
 		{
 			if (logAll)
-				Keysharp.Scripting.Script.OutputDebug($"[{e.DispId}]: {e.Name} received to be dispatched to a global function with {e.Arguments.Length} + 1 args.");
+				Keysharp.Scripting.Script.OutputDebug($"Dispatch ID {e.DispId}: {e.Name} received to be dispatched to a global function with {e.Arguments.Length} + 1 args.");
 
 			var thisObj = thisArg[0];
 
@@ -127,7 +127,7 @@ namespace Keysharp.Core.COM
 		private void Dispatcher_EventReceivedObjectMethod(object sender, DispatcherEventArgs e)
 		{
 			if (logAll)
-				Keysharp.Scripting.Script.OutputDebug($"[{e.DispId}]: {e.Name} received to be dispatched to an object method with {e.Arguments.Length} + 1 args.");
+				Keysharp.Scripting.Script.OutputDebug($"Dispatch ID {e.DispId}: {e.Name} received to be dispatched to an object method with {e.Arguments.Length} + 1 args.");
 
 			var thisObj = thisArg[0];
 

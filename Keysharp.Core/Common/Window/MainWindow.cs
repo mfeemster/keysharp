@@ -36,42 +36,56 @@ namespace Keysharp.Scripting
 			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
 		}
 
-		public void AddText(string s, MainFocusedTab tab)
+		public void AddText(string s, MainFocusedTab tab, bool focus)
 		{
 			//Use CheckedBeginInvoke() because CheckedInvoke() seems to crash if this is called right as the window is closing.
 			//Such as with a hotkey that prints on mouse click, which will cause a print when the X is clicked to close.
 			this.CheckedBeginInvoke(() =>
 			{
 				GetText(tab).AppendText($"{s}\r\n");//This should scroll to the bottom, if not, try this:
+
 				//txt.SelectionStart = txt.TextLength;
 				//txt.ScrollToCaret();
-				tcMain.SelectedTab = GetTab(tab);
+				if (focus)
+				{
+					var sel = GetTab(tab);
+
+					if (sel != null)
+						tcMain.SelectedTab = sel;
+				}
 			}, false, false);
 		}
 
-		public void ClearText(MainFocusedTab tab) => SetText(string.Empty, tab);
+		public void ClearText(MainFocusedTab tab) => SetText(string.Empty, tab, false);
 
-		public void SetText(string s, MainFocusedTab tab)
+		public void SetText(string s, MainFocusedTab tab, bool focus)
 		{
-			this.Invoke(() =>
+			this.BeginInvoke(() =>//These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
 			{
 				GetText(tab).Text = s;
-				tcMain.SelectedTab = GetTab(tab);
+
+				if (focus)
+				{
+					var sel = GetTab(tab);
+
+					if (sel != null)
+						tcMain.SelectedTab = sel;
+				}
 			});
 		}
 
 		internal void ListHotkeys()
 		{
-			this.Invoke(() =>
+			this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
-				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys);
+				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys, true);
 			});
 		}
 
 		internal void ShowDebug()
 		{
-			this.Invoke(() =>
+			this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				tcMain.SelectedTab = tpDebug;
@@ -80,22 +94,22 @@ namespace Keysharp.Scripting
 
 		internal void ShowHistory()
 		{
-			this.Invoke(() =>
+			this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
-				SetTextInternal(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History, txtHistory);
+				SetTextInternal(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
 			});
 		}
 
-		internal void ShowInternalVars()
+		internal void ShowInternalVars(bool showTab)
 		{
 			try
 			{
 				callingInternalVars = true;//Gets called twice if called before first showing.
-				this.Invoke(() =>
+				this.BeginInvoke(() =>
 				{
 					ShowIfNeeded();
-					SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars);
+					SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars, showTab);
 				});
 			}
 			finally
@@ -268,7 +282,7 @@ namespace Keysharp.Scripting
 		private void refreshToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 			if (tcMain.SelectedTab == tpVars)
-				ShowInternalVars();
+				ShowInternalVars(true);
 			else if (tcMain.SelectedTab == tpHotkeys)
 				ListHotkeys();
 			else if (tcMain.SelectedTab == tpHistory)
@@ -277,13 +291,13 @@ namespace Keysharp.Scripting
 
 		private void reloadScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.Reload();
 
-		private void SetTextInternal(string text, MainFocusedTab tab, System.Windows.Forms.TextBox txt)
+		private void SetTextInternal(string text, MainFocusedTab tab, System.Windows.Forms.TextBox txt, bool focus)
 		{
 			var lineHeight = TextRenderer.MeasureText("X", txtVars.Font).Height;
 			var linesPerPage = 1.0 * txtVars.ClientSize.Height / lineHeight;
 			var oldCharIndex = txtVars.GetCharIndexFromPosition(new Point(0, 0));//Magic number, it scrolls backward on each update with smaller numbers.
 			var oldLineIndex = txtVars.GetLineFromCharIndex(oldCharIndex);//Magic number, it scrolls backward on each update with smaller numbers.
-			SetText(text, tab);
+			SetText(text, tab, focus);
 			var newCharIndex = oldLineIndex == 0 ? 0 : txtVars.GetFirstCharIndexFromLine(Math.Max(0, oldLineIndex + (int)linesPerPage));
 			txt.Select(Math.Max(0, newCharIndex), 0);
 			txt.ScrollToCaret();
@@ -303,7 +317,7 @@ namespace Keysharp.Scripting
 		private void TpVars_HandleCreated(object sender, System.EventArgs e)
 		{
 			if (!callingInternalVars)
-				ShowInternalVars();
+				ShowInternalVars(false);
 		}
 
 		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)
@@ -311,7 +325,7 @@ namespace Keysharp.Scripting
 			Keysharp.Core.Dialogs.MsgBox("This feature is not implemented");
 		}
 
-		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowInternalVars();
+		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowInternalVars(true);
 
 		private void windowSpyToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{

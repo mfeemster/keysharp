@@ -72,7 +72,7 @@ namespace Keysharp.Core
 			return mph != null && mph.pi != null ? 1L : 0L;
 		}
 
-		public static IFuncObj ObjBindMethod(object obj0, object obj1, object obj2 = null, params object[] obj)
+		public static IFuncObj ObjBindMethod(object obj0, object obj1 = null, object obj2 = null, params object[] obj)
 		{
 			var o = obj0;
 			var paramCount = obj1.Ai(-1);

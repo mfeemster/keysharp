@@ -114,7 +114,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
-	+ `ObjOwnProps()` takes an optional second argument which is a boolean. Passing `True` means return name and value, passing `False` or empty means return name only.
+	+ `ObjOwnProps()` takes an optional second parameter as a boolean (default: `false`). Passing `True` means return name and value, passing `False` or empty means return name only.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
 
@@ -146,7 +146,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if `LTrim` is specified.
 * Because a comma at the end of a line indicates a continuation statement, command style syntax with a trailing comma is not supported:
 	+ `MouseGetPos &mrX, &mrY, , ; not supported`
-	+ `MouseGetPos &mrX, &mrY ; omitting the trailing comma is supported`
+	+ `MouseGetPos &mrX, &mrY ; omitting the trailing commas is supported`
 	+ `MouseGetPos(&mrX, &mrY) ; using parens is preferred`
 	+ `MouseGetPos(&mrX, &mrY, , ) ; trailing commas can be used with parens`
 * Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
@@ -344,6 +344,16 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `StartRealThread(funcobj [, params*]) => RealThread` Call `funcobj` in a real thread, optionally passing `params` to it, and return a `RealThread` object.
 	+ `LockRun(lockobj, funcobj [, params*])` Call `funcobj` inside of a lock on `lockobj`, optionally passing `params` to it.
 		+ `lockobj` must be initialized to some value, such as an empty string.
+* `FuncObj()`, `IsFunc()`, `Any.HasProp()` and `ObjBindMethod()` take a new optional parameter which specifies the parameter count of the method to search for.
+	+ The new signatures are:
+		+ `ObjBindMethod(Obj [, ParamCount , Method, Params])`
+		+ `FuncObj(Name, Object [, ParamCount])`
+		+ `IsFunc(FunctionName [, ParamCount])`
+		+ `Any.HasProp(PropName [, ParamCount])`
+			+ The only properties which can have parameters are the `__Item[]` indexer properties.
+	+ This is needed to resolve the proper overloaded method.
+	+ Omit `ParamCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
+* `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
 
 ###	Removals: ###
 * Nested classes are not supported.

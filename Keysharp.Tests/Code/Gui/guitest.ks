@@ -2060,6 +2060,9 @@ comDllRemoveFromTaskbarBtn.OnEvent("Click", "ComDeleteFromTaskbar")
 comDllRunWordBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word")
 comDllRunWordBtn.OnEvent("Click", "ComRunWord")
 
+comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
+comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
+
 DllMsgBox()
 {
 	WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
@@ -2180,6 +2183,64 @@ ComRunWord()
 	WinMaximize("ahk_exe winword.exe")
 	doc := wd.Documents.Add()
 	wd.Selection.TypeText("Hi Keysharp!")
+}
+
+handlerobj := ""
+
+ComRunWordEventListener()
+{
+	global handlerobj := mycomhandler()
+	wd := ComObject("Word.Application")
+	ComObjConnect(wd, handlerobj, true)
+	wd.Visible := "True"
+	WinMaximize("ahk_exe winword.exe")
+	doc := wd.Documents.Add()
+	wd.Selection.TypeText("Keysharp should receive events from this.")
+}
+
+class mycomhandler
+{
+    WindowActivate(obj1, obj2, comobj)
+    {
+		OutputDebug("`tReceived WindowActivate event.")
+		ShowDebug()
+    }
+
+    WindowDeactivate(obj1, obj2, comobj)
+    {
+		OutputDebug("`tReceived WindowDeactivate event.")
+		ShowDebug()
+    }
+
+	NewDocument(obj1, comobj)
+	{
+		OutputDebug("`tReceived NewDocument event.")
+		ShowDebug()
+	}
+	
+    DocumentChange(comobj)
+    {
+		OutputDebug("`tReceived DocumentChange event.")
+		ShowDebug()
+    }
+
+    WindowSize(obj1, obj2, comobj)
+    {
+		OutputDebug("`tReceived WindowSize event.")
+		ShowDebug()
+    }
+
+    DocumentBeforeClose(obj1, obj2, comobj)
+    {
+		OutputDebug("`tReceived DocumentBeforeClose event.")
+		ShowDebug()
+    }
+
+    Quit(comobj)
+    {
+		OutputDebug("`tReceived Quit event.")
+		ShowDebug()
+    }
 }
 
 OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.

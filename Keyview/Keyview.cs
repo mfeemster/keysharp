@@ -50,6 +50,7 @@ namespace Keyview
 
 		private static string keywords1 = "true false this thishotkey super unset isset " + Keysharp.Scripting.Parser.GetKeywords();
 		private static string keywords2 = Keysharp.Scripting.Script.GetPublicStaticPropertyNames();
+		private readonly Button btnCopyFullCode = new Button();
 		private readonly CheckBox chkFullCode = new CheckBox();
 		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 		private readonly System.Windows.Forms.Timer timer = new Timer();
@@ -69,14 +70,24 @@ namespace Keyview
 		{
 			InitializeComponent();
 			Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+			btnCopyFullCode.Text = "Copy full code";
+			btnCopyFullCode.Click += CopyFullCode_Click;
+			btnCopyFullCode.Margin = new Padding(15);
+			var host = new ToolStripControlHost(btnCopyFullCode)
+			{
+				Alignment = ToolStripItemAlignment.Right
+			};
+			_ = toolStrip1.Items.Add(host);
 			chkFullCode.Text = "Full code";
 			chkFullCode.CheckStateChanged += chkFullCode_CheckStateChanged;
-			var host = new ToolStripControlHost(chkFullCode)
+			host = new ToolStripControlHost(chkFullCode)
 			{
 				Alignment = ToolStripItemAlignment.Right
 			};
 			_ = toolStrip1.Items.Add(host);
 		}
+
+		private static Color IntToColor(int rgb) => Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
 
 		//private void TxtIn_StyleNeeded(object sender, StyleNeededEventArgs e)
 		//{
@@ -96,26 +107,11 @@ namespace Keyview
 		//  //  startPos++;
 		//  //}
 		//}
+		private void BtnClearSearch_Click(object sender, EventArgs e) => CloseSearch();
 
-		private static Color IntToColor(int rgb)
-		{
-			return Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
-		}
+		private void BtnNextSearch_Click(object sender, EventArgs e) => SearchManager.Find(true, false);
 
-		private void BtnClearSearch_Click(object sender, EventArgs e)
-		{
-			CloseSearch();
-		}
-
-		private void BtnNextSearch_Click(object sender, EventArgs e)
-		{
-			SearchManager.Find(true, false);
-		}
-
-		private void BtnPrevSearch_Click(object sender, EventArgs e)
-		{
-			SearchManager.Find(false, false);
-		}
+		private void BtnPrevSearch_Click(object sender, EventArgs e) => SearchManager.Find(false, false);
 
 		private void chkFullCode_CheckStateChanged(object sender, EventArgs e) => SetTxtOut(chkFullCode.Checked ? fullCode : trimmedCode);
 
@@ -137,10 +133,9 @@ namespace Keyview
 			}
 		}
 
-		private void collapseAllToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			txtIn.FoldAll(FoldAction.Contract);
-		}
+		private void collapseAllToolStripMenuItem_Click(object sender, EventArgs e) => txtIn.FoldAll(FoldAction.Contract);
+
+		private void CopyFullCode_Click(object sender, EventArgs e) => Clipboard.SetText(fullCode);
 
 		private void copyToolStripMenuItem_Click(object sender, EventArgs e)
 		{
@@ -154,25 +149,13 @@ namespace Keyview
 			lastKeyTime = DateTime.Now;
 		}
 
-		private void expandAllToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			txtIn.FoldAll(FoldAction.Expand);
-		}
+		private void expandAllToolStripMenuItem_Click(object sender, EventArgs e) => txtIn.FoldAll(FoldAction.Expand);
 
-		private void findAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			OpenReplaceDialog();
-		}
+		private void findAndReplaceToolStripMenuItem_Click(object sender, EventArgs e) => OpenReplaceDialog();
 
-		private void findDialogToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			OpenFindDialog();
-		}
+		private void findDialogToolStripMenuItem_Click(object sender, EventArgs e) => OpenFindDialog();
 
-		private void findToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			OpenSearch();
-		}
+		private void findToolStripMenuItem_Click(object sender, EventArgs e) => OpenSearch();
 
 		private void GenerateKeystrokes(string keys)
 		{
@@ -202,10 +185,7 @@ namespace Keyview
 			txtIn.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
 		}
 
-		private void indentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			Indent();
-		}
+		private void indentSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Indent();
 
 		//private void InitBookmarkMargin()
 		//{
@@ -254,10 +234,7 @@ namespace Keyview
 			txt.AutomaticFold = AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change;
 		}
 
-		private void InitColors(Scintilla txt)
-		{
-			txt.CaretForeColor = Color.Black;
-		}
+		private void InitColors(Scintilla txt) => txt.CaretForeColor = Color.Black;
 
 		private void InitDragDropFile()
 		{
@@ -429,10 +406,7 @@ namespace Keyview
 			lastKeyTime = DateTime.Now;
 		}
 
-		private void lowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			Lowercase();
-		}
+		private void lowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Lowercase();
 
 		private void OpenFindDialog()
 		{
@@ -484,10 +458,7 @@ namespace Keyview
 			lastKeyTime = DateTime.Now;
 		}
 
-		private void outdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			Outdent();
-		}
+		private void outdentSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Outdent();
 
 		private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
 		{
@@ -495,10 +466,7 @@ namespace Keyview
 			lastKeyTime = DateTime.Now;
 		}
 
-		private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			txtIn.SelectAll();
-		}
+		private void selectAllToolStripMenuItem_Click(object sender, EventArgs e) => txtIn.SelectAll();
 
 		private void selectLineToolStripMenuItem_Click(object sender, EventArgs e)
 		{
@@ -673,8 +641,6 @@ namespace Keyview
 				lastKeyTime = DateTime.Now;
 		}
 
-		private void txtOut_KeyDown(object sender, KeyEventArgs e) => txtIn_KeyDown(sender, e);
-
 		private void txtIn_MarginClick(object sender, MarginClickEventArgs e)
 		{
 			var txt = sender as Scintilla;
@@ -700,6 +666,8 @@ namespace Keyview
 
 		private void txtIn_TextChanged(object sender, EventArgs e) => lastKeyTime = DateTime.Now;
 
+		private void txtOut_KeyDown(object sender, KeyEventArgs e) => txtIn_KeyDown(sender, e);
+
 		private void TxtSearch_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (HotKeyManager.IsHotkey(e, Keys.Enter))
@@ -713,10 +681,7 @@ namespace Keyview
 			}
 		}
 
-		private void TxtSearch_TextChanged(object sender, EventArgs e)
-		{
-			SearchManager.Find(true, true);
-		}
+		private void TxtSearch_TextChanged(object sender, EventArgs e) => SearchManager.Find(true, true);
 
 		private void Uppercase()
 		{
@@ -727,10 +692,7 @@ namespace Keyview
 			lastKeyTime = DateTime.Now;
 		}
 
-		private void uppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			Uppercase();
-		}
+		private void uppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Uppercase();
 
 		private void wordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
 		{
@@ -738,34 +700,16 @@ namespace Keyview
 			txtOut.WrapMode = txtIn.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
 		}
 
-		private void zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			ZoomDefault();
-		}
+		private void zoom100ToolStripMenuItem_Click(object sender, EventArgs e) => ZoomDefault();
 
-		private void ZoomDefault()
-		{
-			txtIn.Zoom = 0;
-		}
+		private void ZoomDefault() => txtIn.Zoom = 0;
 
-		private void ZoomIn()
-		{
-			txtIn.ZoomIn();
-		}
+		private void ZoomIn() => txtIn.ZoomIn();
 
-		private void zoomInToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			ZoomIn();
-		}
+		private void zoomInToolStripMenuItem_Click(object sender, EventArgs e) => ZoomIn();
 
-		private void ZoomOut()
-		{
-			txtIn.ZoomOut();
-		}
+		private void ZoomOut() => txtIn.ZoomOut();
 
-		private void zoomOutToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			ZoomOut();
-		}
+		private void zoomOutToolStripMenuItem_Click(object sender, EventArgs e) => ZoomOut();
 	}
 }

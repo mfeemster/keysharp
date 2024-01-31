@@ -327,7 +327,7 @@ namespace Keysharp.Scripting
 
 		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
 
-		public static void ListVars() => mainWindow?.ShowInternalVars();
+		public static void ListVars() => mainWindow?.ShowInternalVars(true);
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.
@@ -351,9 +351,9 @@ namespace Keysharp.Scripting
 
 			if (!IsMainWindowClosing)
 				if (clear)
-					mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug);
+					mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
 				else
-					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug);
+					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 		}
 
 		public static void RunMainWindow(string title, Func<object> userInit)
