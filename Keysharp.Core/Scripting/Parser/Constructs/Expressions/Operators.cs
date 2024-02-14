@@ -226,7 +226,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		internal static int OperatorPrecedence(Script.Operator op)
+		internal static int OperatorPrecedence(Script.Operator op, CodeLine codeLine)
 		{
 			switch (op)
 			{
@@ -296,7 +296,7 @@ namespace Keysharp.Scripting
 					return -15;
 
 				default:
-					throw new ParseException($"Operator {op} was not a value which can be used when determining precedence.");
+					throw new ParseException($"Operator {op} was not a value which can be used when determining precedence.", codeLine);
 			}
 		}
 	}

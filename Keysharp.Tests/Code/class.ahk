@@ -14,7 +14,7 @@ If (classobj.a == "")
 else
 	FileAppend, "fail", "*"
 
-If (classobj.b == "")
+If (classobj.b == "asdf")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

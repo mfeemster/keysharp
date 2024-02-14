@@ -1,6 +1,6 @@
 ; #Include %A_ScriptDir%/header.ahk
 
-pid :=
+pid := 0
 Run("notepad.exe", "", "max", &pid)
 ProcessWait(pid)
 ProcessSetPriority("H", pid)

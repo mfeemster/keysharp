@@ -340,13 +340,11 @@ using static Keysharp.Scripting.Script.Operator;
 			if (results.HasErrors)
 			{
 				_ = sbe.AppendLine("The following errors occurred:");
-				_ = sbe.AppendLine();
 			}
 
 			if (results.HasWarnings)
 			{
 				_ = sbw.AppendLine("The following warnings occurred:");
-				_ = sbw.AppendLine();
 			}
 
 			foreach (CompilerError error in results)
@@ -358,8 +356,8 @@ using static Keysharp.Scripting.Script.Operator;
 					file = "*";
 
 				_ = !error.IsWarning
-					? sbe.AppendLine($"{file}, line {error.Line}: {error.ErrorText}")
-					: sbw.AppendLine($"{file}, line {error.Line}: {error.ErrorText}");
+					? sbe.AppendLine($"\n{error.ErrorText}")
+					: sbw.AppendLine($"\n{error.ErrorText}");
 			}
 
 			return (sbe.ToString(), sbw.ToString());
@@ -375,23 +373,21 @@ using static Keysharp.Scripting.Script.Operator;
 				var str = $"{Path.GetFileName(filename)}{diag.Location.GetLineSpan()} - {diag.GetMessage()}";
 
 				if (diag.Severity == DiagnosticSeverity.Warning)
-					_ = sbw.AppendLine(str);
+					_ = sbw.AppendLine($"\t{str}");
 
 				if (diag.Severity == DiagnosticSeverity.Error)
-					_ = sbe.AppendLine(str);
+					_ = sbe.AppendLine($"\t{str}");
 			}
 
 			if (sbw.Length != 0)
 			{
-				_ = sbw.Insert(0, "The following warnings occurred: ");
-				_ = sbw.AppendLine();
+				_ = sbw.Insert(0, "The following warnings occurred:\n");
 			}
 
 			if (sbe.Length != 0)
 			{
-				_ = sbe.Insert(0, "The following errors occurred: ");
-				_ = sbe.AppendLine();
-				return $"{desc} failed:\n\n{sbe}\n\n\n{sbw}" + (message != "" ? "\n\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
+				_ = sbe.Insert(0, "The following errors occurred:\n");
+				return $"{desc} failed.\n\n{sbe}\n{sbw}" + (message != "" ? "\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
 			}
 
 			return "";

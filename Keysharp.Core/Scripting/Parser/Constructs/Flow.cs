@@ -28,8 +28,8 @@ namespace Keysharp.Scripting
 
 		private CodeStatement[] ParseFlow(List<CodeLine> lines, int index)
 		{
-			var line = lines[index];
-			var code = line.Code;
+			var codeLine = lines[index];
+			var code = codeLine.Code;
 			var cspan = code.AsSpan();
 			string[] parts = { string.Empty, string.Empty };
 			int[] d = { cspan.IndexOfAny(FlowDelimitersSv), cspan.IndexOfAny(BlockOpenParenOpenSv) };
@@ -63,11 +63,11 @@ namespace Keysharp.Scripting
 				case FlowIf:
 				{
 					if (parts.Length < 1)
-						throw new ParseException("If requires a parameter", line);
+						throw new ParseException("If requires a parameter", codeLine);
 
-					var condition = ParseFlowParameter(line, parts[1], true, out var blockOpen, false);
+					var condition = ParseFlowParameter(codeLine, parts[1], true, out var blockOpen, false);
 					var ifelse = new CodeConditionStatement { Condition = condition };
-					var block = new CodeBlock(line, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
+					var block = new CodeBlock(codeLine, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
 					block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 					_ = CloseTopSingleBlock();
 					CloseElseBlocks();//Also called in Statements. Both places are needed to handle various situations.
@@ -80,7 +80,7 @@ namespace Keysharp.Scripting
 				{
 					if (parent.Count > 0 && parent[parent.Count - 1] is CodeTryCatchFinallyStatement tcf)
 					{
-						var left = VarId($"try{tryCount}success", true);
+						var left = VarId(codeLine, $"try{tryCount}success", true);
 						//
 						var cas = new CodeAssignStatement(left, new CodeSnippetExpression("false"));
 						tcf.TryStatements.Insert(0, cas);
@@ -88,23 +88,23 @@ namespace Keysharp.Scripting
 						cas = new CodeAssignStatement(left, new CodeSnippetExpression("true"));
 						_ = tcf.TryStatements.Add(cas);
 						//
-						var condition = ParseFlowParameter(line, $"try{tryCount}success", true, out var blockOpen, true);
+						var condition = ParseFlowParameter(codeLine, $"try{tryCount}success", true, out var blockOpen, true);
 						var ccs = new CodeConditionStatement { Condition = condition };
 						tcf.FinallyStatements.Insert(0, ccs);
 						var type = parts.Length > 1 && parts[1][parts[1].Length - 1] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-						var block = new CodeBlock(line, Scope, ccs.TrueStatements, CodeBlock.BlockKind.TryElse, blocks.PeekOrNull()) { Type = type };
+						var block = new CodeBlock(codeLine, Scope, ccs.TrueStatements, CodeBlock.BlockKind.TryElse, blocks.PeekOrNull()) { Type = type };
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 					}
 					else if (elses.Count > 0)//This must come last otherwise it will take precedence over the special situations above.
 					{
-						var next = line.Code.AsSpan().TrimStart(Spaces).Slice(FlowElse.Length).TrimStart(Spaces).ToString();
+						var next = codeLine.Code.AsSpan().TrimStart(Spaces).Slice(FlowElse.Length).TrimStart(Spaces).ToString();
 
 						if (!IsEmptyStatement(next))
-							lines.Insert(index + 1, new CodeLine(line.FileName, line.LineNumber, next.TrimEnd(BlockOpenAndSpace)));
+							lines.Insert(index + 1, new CodeLine(codeLine.FileName, codeLine.LineNumber, next.TrimEnd(BlockOpenAndSpace)));
 
 						var type = parts.Length > 1 && parts[1][parts[1].Length - 1] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-						var block = new CodeBlock(line, Scope, elses.Pop(), CodeBlock.BlockKind.IfElse, blocks.PeekOrNull()) { Type = type };
+						var block = new CodeBlock(codeLine, Scope, elses.Pop(), CodeBlock.BlockKind.IfElse, blocks.PeekOrNull()) { Type = type };
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 					}
@@ -113,14 +113,14 @@ namespace Keysharp.Scripting
 						var blockOpen = parts.Length > 1 && parts[1].AsSpan().Trim().EndsWith("{");
 						parent.RemoveAt(parent.Count - 1);
 						var ifelse = new CodeConditionStatement { Condition = new CodeSnippetExpression("Pop().index == 0L") };
-						var block = new CodeBlock(line, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
+						var block = new CodeBlock(codeLine, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
 						block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 						return new CodeStatement[] { ifelse };
 					}
 					else
-						throw new ParseException("Else with no preceeding if, try, for, loop or while block", line);
+						throw new ParseException("Else with no preceeding if, try, for, loop or while block.", codeLine);
 				}
 				break;
 
@@ -135,7 +135,7 @@ namespace Keysharp.Scripting
 					var switchvar = switchargs[0];
 					var cse = new CodeSwitchStatement(switchvar, switchargs.Count > 1 ? switchargs[1].Trim() : null, switchCount++);
 					var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-					var block = new CodeBlock(line, Scope, cse.AllStatements, CodeBlock.BlockKind.Switch, blocks.PeekOrNull()) { Type = type };
+					var block = new CodeBlock(codeLine, Scope, cse.AllStatements, CodeBlock.BlockKind.Switch, blocks.PeekOrNull()) { Type = type };
 					_ = CloseTopSingleBlock();
 					blocks.Push(block);
 					switches.Push(cse);
@@ -148,13 +148,13 @@ namespace Keysharp.Scripting
 					{
 						if (parentBlock != null && (parentBlock.Kind == CodeBlock.BlockKind.CaseWithBrace || parentBlock.Kind == CodeBlock.BlockKind.CaseWithoutBrace))
 						{
-							CloseBlock();
+							CloseBlock(codeLine);
 						}
 
 						if (parts.Length > 1)//Note that case does not support OTB style braces.
 						{
 							var colonindex = parts[1].IndexOf(':');
-							var casearg = colonindex != -1 ? parts[1].Substring(0, colonindex) : throw new ParseException("Case not terminated with a colon", line);
+							var casearg = colonindex != -1 ? parts[1].Substring(0, colonindex) : throw new ParseException("Case not terminated with a colon.", codeLine);
 							var casearr = SplitStringBalanced(casearg, ',').Select(a => a.Trim()).ToArray();
 							var casename = $"ks_caselabel{caseCount++}";
 							colonindex++;
@@ -164,7 +164,7 @@ namespace Keysharp.Scripting
 								var next = parts[1].AsSpan(colonindex).TrimStart(Spaces).ToString();
 
 								if (!IsEmptyStatement(next))
-									lines.Insert(index + 1, new CodeLine(line.FileName, line.LineNumber, next));
+									lines.Insert(index + 1, new CodeLine(codeLine.FileName, codeLine.LineNumber, next));
 							}
 
 							if (casearr.Length == 1)
@@ -198,15 +198,15 @@ namespace Keysharp.Scripting
 
 							var hasbrace = blockOpen || (lines.Count > index + 1 && lines[index + 1].Code.TrimStart(Spaces).StartsWith(BlockOpen));
 							var type = CodeBlock.BlockType.Within;
-							var block = new CodeBlock(line, Scope, css.CaseBodyStatements.GetOrAdd(casename), hasbrace ? CodeBlock.BlockKind.CaseWithBrace : CodeBlock.BlockKind.CaseWithoutBrace, blocks.PeekOrNull()) { Type = type };
+							var block = new CodeBlock(codeLine, Scope, css.CaseBodyStatements.GetOrAdd(casename), hasbrace ? CodeBlock.BlockKind.CaseWithBrace : CodeBlock.BlockKind.CaseWithoutBrace, blocks.PeekOrNull()) { Type = type };
 							_ = CloseTopSingleBlock();
 							blocks.Push(block);
 						}
 						else
-							throw new ParseException("Case with no argument", line);
+							throw new ParseException("Case with no argument.", codeLine);
 					}
 					else
-						throw new ParseException("Case with no preceeding switch block", line);
+						throw new ParseException("Case with no preceeding switch block.", codeLine);
 				}
 				break;
 
@@ -216,12 +216,12 @@ namespace Keysharp.Scripting
 					{
 						if (parentBlock != null && (parentBlock.Kind == CodeBlock.BlockKind.CaseWithBrace || parentBlock.Kind == CodeBlock.BlockKind.CaseWithoutBrace))
 						{
-							CloseBlock();
+							CloseBlock(codeLine);
 						}
 
 						var hasbrace = lines.Count > index + 1 && lines[index + 1].Code.TrimStart(Spaces).StartsWith(BlockOpen);
 						var type = CodeBlock.BlockType.Within;//Might want this to always be within to avoid the funny stuff Statements does for normal blocks.
-						var block = new CodeBlock(line, Scope, css.DefaultStatements, hasbrace ? CodeBlock.BlockKind.CaseWithBrace : CodeBlock.BlockKind.CaseWithoutBrace, blocks.PeekOrNull()) { Type = type };
+						var block = new CodeBlock(codeLine, Scope, css.DefaultStatements, hasbrace ? CodeBlock.BlockKind.CaseWithBrace : CodeBlock.BlockKind.CaseWithoutBrace, blocks.PeekOrNull()) { Type = type };
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 					}
@@ -230,13 +230,13 @@ namespace Keysharp.Scripting
 
 				case FlowGosub:
 				{
-					throw new ParseException("Gosub is no longer supported, use goto with a label instead", line);
+					throw new ParseException("Gosub is no longer supported, use goto with a label instead.", codeLine);
 				}
 
 				case FlowGoto:
 				{
 					if (parts.Length < 1)
-						throw new ParseException("No label specified for goto statement", line);
+						throw new ParseException("No label specified for goto statement.", codeLine);
 
 					var cgs = new CodeGotoStatement(parts[1]);
 
@@ -295,17 +295,17 @@ namespace Keysharp.Scripting
 						}
 
 						if (skip && parts[1].Length == 0)
-							throw new ParseException("Loop type must have an argument", line);
+							throw new ParseException("Loop type must have an argument.", codeLine);
 
 						if (skip)
 						{
 							sub = sub.Skip(1).ToArray();
 
 							foreach (var s in sub)
-								_ = iterator.Parameters.Add(ParseCommandParameter(line, s.Trim(), false, true));
+								_ = iterator.Parameters.Add(ParseCommandParameter(codeLine, s.Trim(), false, true));
 						}
 						else
-							_ = iterator.Parameters.Add(ParseCommandParameter(line, parts[1], false, true));
+							_ = iterator.Parameters.Add(ParseCommandParameter(codeLine, parts[1], false, true));
 					}
 					else
 					{
@@ -327,7 +327,7 @@ namespace Keysharp.Scripting
 						TestExpression = new CodeMethodInvokeExpression(null, "IsTrueAndRunning", condition),
 						IncrementStatement = new CodeSnippetStatement(string.Empty)
 					};
-					var block = new CodeBlock(line, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID);
+					var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID);
 					block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 
 					if (parent.Count > 0 && parent[parent.Count - 1] is CodeLabeledStatement cls)
@@ -355,7 +355,7 @@ namespace Keysharp.Scripting
 						var coldeclid = InternalID;
 						var testid = InternalID;
 						var id = InternalID;
-						var expr = ParseSingleExpression(line, temp.Last(), false);
+						var expr = ParseSingleExpression(codeLine, temp.Last(), false);
 						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
 
 						//Extreme hack to tell the enumerator whether to return 1 or 2 values which changes
@@ -390,7 +390,7 @@ namespace Keysharp.Scripting
 
 							if (split != "")
 							{
-								var loopvarexpr = ParseSingleExpression(line, split, true);//We do want to create the iteration loop vars as local function vars.
+								var loopvarexpr = ParseSingleExpression(codeLine, split, true);//We do want to create the iteration loop vars as local function vars.
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
 								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
 							}
@@ -417,7 +417,7 @@ namespace Keysharp.Scripting
 						};
 						loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
 						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/({vars}) = {id}.Current"));
-						var block = new CodeBlock(line, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
+						var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
 						{
 							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
 						};
@@ -434,7 +434,7 @@ namespace Keysharp.Scripting
 				case FlowWhile:
 				{
 					var blockOpen = false;
-					var condition = parts.Length > 1 ? ParseFlowParameter(line, parts[1], true, out blockOpen, true) : new CodePrimitiveExpression(true);
+					var condition = parts.Length > 1 ? ParseFlowParameter(codeLine, parts[1], true, out blockOpen, true) : new CodePrimitiveExpression(true);
 					var loop = new CodeIterationStatement
 					{
 						InitStatement = new CodeSnippetStatement(string.Empty),
@@ -442,7 +442,7 @@ namespace Keysharp.Scripting
 						IncrementStatement = new CodeSnippetStatement(string.Empty)
 					};
 					loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
-					var block = new CodeBlock(line, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
+					var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
 					{
 						Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
 					};
@@ -459,7 +459,7 @@ namespace Keysharp.Scripting
 					{
 						var ccs = new CodeConditionStatement();
 						var token = StripCommentSingle(parts[1]);
-						var expr = ParseSingleExpression(line, token, false);
+						var expr = ParseSingleExpression(codeLine, token, false);
 						var iftest = (CodeMethodInvokeExpression)InternalMethods.IfElse;
 						_ = iftest.Parameters.Add(expr);
 						ccs.Condition = iftest;
@@ -481,26 +481,26 @@ namespace Keysharp.Scripting
 						if (int.TryParse(parts[1], out b))
 						{
 							if (b < 1)
-								throw new ParseException("Break parameter must be a static integer greater than zero", line);
+								throw new ParseException("Break parameter must be a static integer greater than zero.", codeLine);
 
 							exit = PeekLoopLabel(true, b);
 
 							if (exit == null)
-								throw new ParseException($"Could not find a loop {b} levels above", line);
+								throw new ParseException($"Could not find a loop {b} levels above.", codeLine);
 						}
 						else//Assume it was a label if parsing an int failed.
 						{
 							(exit, b) = PeekLoopLabel(true, parts[1]);
 
 							if (exit == null)
-								throw new ParseException($"Could not find a loop above with the name {parts[1]}", line);
+								throw new ParseException($"Could not find a loop above with the name {parts[1]}.", codeLine);
 						}
 					}
 					else
 						(exit, b) = PeekLoopLabel(true, "");
 
 					if (exit == null)
-						throw new ParseException("Cannot break outside of a loop", line);
+						throw new ParseException("Cannot break outside of a loop.", codeLine);
 
 					//Handle calls to Pop() here instead of in Parser.GenerateCompileUnit() where gotos are handled.
 					var codeStatements = new List<CodeStatement>(b);
@@ -522,13 +522,13 @@ namespace Keysharp.Scripting
 						parts[1] = StripCommentSingle(parts[1]);
 
 						if (!int.TryParse(parts[1], out c) || c < 1)
-							throw new ParseException("Continue parameter must be a static integer greater than zero", line);
+							throw new ParseException("Continue parameter must be a static integer greater than zero.", codeLine);
 					}
 
 					var cont = PeekLoopLabel(false, c);
 
 					if (cont == null)
-						throw new ParseException("Cannot continue outside a loop", line);
+						throw new ParseException("Cannot continue outside a loop.", codeLine);
 
 					//Need to use a goto instead of a continue statement because Until statements still need to be executed after continue.
 					return new CodeStatement[] { new CodeExpressionStatement(new CodeSnippetExpression($"goto {cont}")) };
@@ -541,13 +541,13 @@ namespace Keysharp.Scripting
 						_ = CloseTopLabelBlock();
 
 						if (parts.Length > 1)
-							throw new ParseException("Cannot have return parameter for entry point method", line);
+							throw new ParseException("Cannot have return parameter for entry point method.", codeLine);
 
 						return new CodeStatement[] { new CodeMethodReturnStatement(new CodePrimitiveExpression(1)) };
 					}
 					else
 					{
-						var result = parts.Length > 1 ? ParseSingleExpression(line, parts[1], false) : emptyStringPrimitive;
+						var result = parts.Length > 1 ? ParseSingleExpression(codeLine, parts[1], false) : emptyStringPrimitive;
 						return new CodeStatement[] { new CodeMethodReturnStatement(result) };
 					}
 				}
@@ -558,7 +558,7 @@ namespace Keysharp.Scripting
 					var classparts = parts[1].Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 					var classtype = AddType(classparts[0].ToLower());
 					var blockOpen = parts.Length > 1 && parts[1].AsSpan().Trim().EndsWith("{");
-					var block = new CodeBlock(line, Scope, null, CodeBlock.BlockKind.Class, blocks.PeekOrNull(), InternalID, InternalID)
+					var block = new CodeBlock(codeLine, Scope, null, CodeBlock.BlockKind.Class, blocks.PeekOrNull(), InternalID, InternalID)
 					{
 						Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
 					};
@@ -618,7 +618,7 @@ namespace Keysharp.Scripting
 						if (parts.Length > 1)
 						{
 							var parencount = 0;
-							var temptoks = SplitTokens(parts[1]);//Find the variable names because they needed to be added to the local vars before ParseMultiExpression() is called so they get properly added.
+							var temptoks = SplitTokens(codeLine, parts[1]);//Find the variable names because they needed to be added to the local vars before ParseMultiExpression() is called so they get properly added.
 							var funclocalvarinitstatements = new List<CodeStatement>(temptoks.Count);
 
 							for (var ti = 0; ti < temptoks.Count; ti++)
@@ -638,7 +638,7 @@ namespace Keysharp.Scripting
 							//Now that we know the variable names, reparse, but pass true to create them.
 							//Unlike global, we do want to create any variable we encounter here as local ones.
 
-							foreach (var expr in ParseMultiExpression(line, parts[1], true))
+							foreach (var expr in ParseMultiExpression(codeLine, parts[1], true))
 								if (expr is CodeExpressionStatement ces &&
 										ces.Expression.WasCboe() is CodeBinaryOperatorExpression cboe &&
 										cboe.Left is CodeVariableReferenceExpression cvre)
@@ -648,7 +648,7 @@ namespace Keysharp.Scripting
 								return funclocalvarinitstatements.ToArray();
 						}
 						else
-							throw new ParseException("local keyword must be followed be one or more variable names", line);
+							throw new ParseException("local keyword must be followed be one or more variable names.", codeLine);
 					}
 				}
 				break;
@@ -657,7 +657,7 @@ namespace Keysharp.Scripting
 				{
 					if (parts.Length > 1)
 					{
-						var multiexprs = ParseMultiExpression(line, parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
+						var multiexprs = ParseMultiExpression(codeLine, parts[1], false);//Do not create any variables based on what is parsed from the global variable initialization statements.
 
 						if (globalFuncVars.PeekOrNull() is List<string> gflist)
 						{
@@ -678,6 +678,8 @@ namespace Keysharp.Scripting
 									}
 									else if (ces.Expression is CodeVariableReferenceExpression cvre)
 										gflist.Add(cvre.VariableName.Trim('%').ToLower());
+									else
+										funcglobalvarinitstatements.Add(expr);
 								}
 							}
 
@@ -701,6 +703,9 @@ namespace Keysharp.Scripting
 
 							if (codeStatements.Count > 0)
 								return codeStatements.ToArray();
+
+							//lines.Insert(index + 1, new CodeLine(codeLine.FileName, codeLine.LineNumber, code.Remove(0, 6).TrimStart(Spaces)));
+							//return null;
 						}
 					}
 					else if (parts.Length == 1)
@@ -719,7 +724,7 @@ namespace Keysharp.Scripting
 						{
 							var parencount = 0;
 							var bracketcount = 0;
-							var temptoks = SplitTokens(parts[1]);//Find the variable names because they needed to be added to the static vars before ParseMultiExpression() is called so they get properly added.
+							var temptoks = SplitTokens(codeLine, parts[1]);//Find the variable names because they needed to be added to the static vars before ParseMultiExpression() is called so they get properly added.
 
 							for (var ti = 0; ti < temptoks.Count; ti++)
 							{
@@ -739,7 +744,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							var mutltiexprs = ParseMultiExpression(line, parts[1], true);//Do not create any variables based on what is parsed from the static variable initialization statements.
+							var mutltiexprs = ParseMultiExpression(codeLine, parts[1], true);//Do not create any variables based on what is parsed from the static variable initialization statements.
 
 							foreach (var expr in mutltiexprs)
 							{
@@ -775,7 +780,7 @@ namespace Keysharp.Scripting
 						if (IsPrimitiveObject(token, out var obj))
 							ctes.ToThrow = new CodeSnippetExpression($"Error({obj})");
 						else
-							ctes.ToThrow = ParseSingleExpression(line, token, false);
+							ctes.ToThrow = ParseSingleExpression(codeLine, token, false);
 					}
 
 					return new CodeStatement[] { ctes };
@@ -791,12 +796,12 @@ namespace Keysharp.Scripting
 
 					if (parts.Length > 1 && parts[1] != "{")
 					{
-						var lineIndex = codeLines.IndexOf(line) + 1;
-						codeLines.Insert(lineIndex, new CodeLine(line.FileName, lineIndex, parts[1]));
+						var lineIndex = codeLines.IndexOf(codeLine) + 1;
+						codeLines.Insert(lineIndex, new CodeLine(codeLine.FileName, lineIndex, parts[1]));
 						SetLineIndexes();
 					}
 
-					var block = new CodeBlock(line, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
+					var block = new CodeBlock(codeLine, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
 					{
 						Type = type
 					};
@@ -857,10 +862,10 @@ namespace Keysharp.Scripting
 						_ = catchVars.Add(excname);
 						excCatchVars.Push(catchVars);
 						var type = parts.Length > 1 && parts[1].EndsWith(BlockOpen) ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-						var block = new CodeBlock(line, Scope, ctch.Statements, CodeBlock.BlockKind.Catch, blocks.PeekOrNull()) { Type = type };
+						var block = new CodeBlock(codeLine, Scope, ctch.Statements, CodeBlock.BlockKind.Catch, blocks.PeekOrNull()) { Type = type };
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
-						var left = VarId(excname, false);
+						var left = VarId(codeLine, excname, false);
 						var result = new CodeSnippetExpression(excname);
 						//var cas = new CodeAssignStatement(left, result);
 						ctch.LocalName = excname;
@@ -891,7 +896,7 @@ namespace Keysharp.Scripting
 						tcf.CatchClauses.AddRange(catches);
 					}
 					else
-						throw new ParseException("Catch with no preceeding try block", line);
+						throw new ParseException("Catch with no preceeding try block.", codeLine);
 				}
 				break;
 
@@ -900,12 +905,12 @@ namespace Keysharp.Scripting
 					if (parent.Count > 0 && parent[parent.Count - 1] is CodeTryCatchFinallyStatement tcf)
 					{
 						var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-						var block = new CodeBlock(line, Scope, tcf.FinallyStatements, CodeBlock.BlockKind.Finally, blocks.PeekOrNull()) { Type = type };
+						var block = new CodeBlock(codeLine, Scope, tcf.FinallyStatements, CodeBlock.BlockKind.Finally, blocks.PeekOrNull()) { Type = type };
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 					}
 					else
-						throw new ParseException("Finally with no preceeding try block", line);
+						throw new ParseException("Finally with no preceeding try block.", codeLine);
 				}
 				break;
 
@@ -916,7 +921,7 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
-		private CodeExpression ParseFlowParameter(CodeLine line, string code, bool inequality, out bool blockOpen, bool expr)
+		private CodeExpression ParseFlowParameter(CodeLine codeLine, string code, bool inequality, out bool blockOpen, bool expr)
 		{
 			blockOpen = false;
 			code = code.Trim(Spaces);
@@ -925,7 +930,7 @@ namespace Keysharp.Scripting
 				return new CodePrimitiveExpression(false);
 
 			if (LaxExpressions && IsLegacyIf(code))
-				return ParseLegacyIf(line, code);
+				return ParseLegacyIf(codeLine, code);
 			else if (expr || IsExpressionIf(code))
 			{
 				code = StripComment(code).TrimEnd(Spaces);
@@ -938,7 +943,7 @@ namespace Keysharp.Scripting
 				}
 
 				this.blockOpen = false;
-				var result = ParseSingleExpression(line, code, false);
+				var result = ParseSingleExpression(codeLine, code, false);
 				blockOpen = blockOpen || this.blockOpen;
 				var trimparens = code.Trim(BothParens);
 
@@ -965,18 +970,18 @@ namespace Keysharp.Scripting
 				}
 
 				if (inequality)
-					return ParseInequality(line, code);
+					return ParseInequality(codeLine, code);
 
 				if (IsPrimitiveObject(code, out var result))
 					return new CodePrimitiveExpression(result);
 				else
-					throw new ParseException(ExUnexpected, line);
+					throw new ParseException(ExUnexpected, codeLine);
 			}
 			else
-				throw new ParseException("Invalid arguments for if statement", line);
+				throw new ParseException("Invalid arguments for if statement.", codeLine);
 		}
 
-		private CodeExpression ParseInequality(CodeLine line, string code)
+		private CodeExpression ParseInequality(CodeLine codeLine, string code)
 		{
 			var i = 0;
 			var buf = new StringBuilder(code.Length);
@@ -991,7 +996,7 @@ namespace Keysharp.Scripting
 			if (i != code.Length) // if test argument is not a lone identifier then it is an expression
 			{
 				if (System.Array.IndexOf(ops, code[i]) == -1)
-					throw new ParseException(ExUnexpected, line);
+					throw new ParseException(ExUnexpected, codeLine);
 
 				_ = buf.Append(code[i++]);
 
@@ -1007,20 +1012,20 @@ namespace Keysharp.Scripting
 			}
 
 			var iftest = (CodeMethodInvokeExpression)InternalMethods.IfElse;
-			var expr = ParseSingleExpression(line, buf.ToString(), false);
+			var expr = ParseSingleExpression(codeLine, buf.ToString(), false);
 			_ = iftest.Parameters.Add(expr);
 			return iftest;
 		}
 
-		private CodeExpression ParseLegacyIf(CodeLine line, string code)
+		private CodeExpression ParseLegacyIf(CodeLine codeLine, string code)
 		{
 			var parts = code.TrimStart(Spaces).Split(Spaces, 3);
 
 			if (parts.Length != 3)
-				throw new ParseException($"Legacy if requires 3 parts, but {parts.Length} were supplied.");
+				throw new ParseException($"Legacy if requires 3 parts, but {parts.Length} were supplied.", codeLine);
 
 			if (!IsIdentifier(parts[0]))
-				throw new ParseException($"First legacy if token of {parts[0]} was not an identifier.");
+				throw new ParseException($"First legacy if token of {parts[0]} was not an identifier.", codeLine);
 
 			var not = false;
 
@@ -1033,7 +1038,7 @@ namespace Keysharp.Scripting
 			}
 
 			var invoke = (CodeMethodInvokeExpression)InternalMethods.IfLegacy;
-			_ = invoke.Parameters.Add(VarId(parts[0], false));
+			_ = invoke.Parameters.Add(VarId(codeLine, parts[0], false));
 			parts[1] = parts[1].ToLowerInvariant();
 
 			switch (parts[1])
@@ -1046,10 +1051,10 @@ namespace Keysharp.Scripting
 					break;
 
 				default:
-					throw new ParseException($"Second legacy if token of {code} was not any of: between, in, contains, is.");
+					throw new ParseException($"Second legacy if token of {code} was not any of: between, in, contains, is.", codeLine);
 			}
 
-			_ = invoke.Parameters.Add(ParseCommandParameter(line, parts[2]));
+			_ = invoke.Parameters.Add(ParseCommandParameter(codeLine, parts[2]));
 
 			if (not)//Easiest way to do not since CodeDOM does not support unary ! operators.
 				_ = invoke.Parameters.Add(new CodePrimitiveExpression(true));

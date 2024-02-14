@@ -111,7 +111,7 @@ namespace Keysharp.Scripting
 			return i - 1;
 		}
 
-		private void ParseObject(CodeLine line, string code, List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
+		private void ParseObject(CodeLine codeLine, string code, List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
 		{
 			var names = new List<CodeExpression>();
 			var entries = new List<CodeExpression>();
@@ -125,7 +125,7 @@ namespace Keysharp.Scripting
 				CodeExpression value = null;
 
 				if (!(parts[i] is string name))//Each token shouldn't be anything else other than a string.
-					throw new ParseException($"{ExUnexpected} at line {line}");
+					throw new ParseException($"{ExUnexpected}", codeLine);
 
 				if (name.Length > 2)
 				{
@@ -166,10 +166,10 @@ namespace Keysharp.Scripting
 
 					//Need to reparse so that something like map.one can be properly interpreted.
 					//This is because it would have been incorrectly parsed earlier because it was enclosed with %%.
-					var tokens = SplitTokens(name);
+					var tokens = SplitTokens(codeLine, name);
 					_ = ExtractRange(parts, startPos, i);
 					i = startPos - 1; //i++ below will reset back to zero.
-					var expr = ParseExpression(line, code, tokens, false);
+					var expr = ParseExpression(codeLine, code, tokens, false);
 					names.Add(expr);
 				}
 				else
@@ -181,13 +181,13 @@ namespace Keysharp.Scripting
 					goto collect;
 
 				if (!(parts[i] is string assign))
-					throw new ParseException($"{ExUnexpected} at line {line}");
+					throw new ParseException(ExUnexpected, codeLine);
 
 				if (assign.Length == 1 && assign[0] == Multicast)
 					goto collect;
 
 				if (!(assign.Length == 1 && (assign[0] == Equal || assign[0] == HotkeyBound)))//Should be an = or : char.
-					throw new ParseException($"{ExUnexpected} at line {line}");
+					throw new ParseException(ExUnexpected, codeLine);
 
 				i++;
 
@@ -201,7 +201,7 @@ namespace Keysharp.Scripting
 
 				if (splits.Count > 0)
 				{
-					var exprs = ParseMultiExpression(line, splits[entries.Count], tempparts, create, subs);
+					var exprs = ParseMultiExpression(codeLine, splits[entries.Count], tempparts, create, subs);
 
 					if (exprs.Length > 0)
 					{
@@ -214,10 +214,10 @@ namespace Keysharp.Scripting
 					goto collect;
 
 				if (!(parts[i] is string delim))
-					throw new ParseException($"{ExUnexpected} at line {line}");
+					throw new ParseException(ExUnexpected, codeLine);
 
 				if (!(delim.Length == 1 && delim[0] == Multicast))
-					throw new ParseException($"{ExUnexpected} at line {line}");
+					throw new ParseException(ExUnexpected, codeLine);
 
 				collect:
 				entries.Add(value ?? nullPrimitive);

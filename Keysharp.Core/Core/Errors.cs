@@ -41,8 +41,9 @@ namespace Keysharp.Core
 		public long Line { get; set; }
 
 		//public new string Message => message;
-		public override string Message => message;//Must be done this way, else the reflection dictionary sees it as a dupe from the base.
+		public override string Message => ToString();//Must be done this way, else the reflection dictionary sees it as a dupe from the base.
 
+		public string RawMessage => message;
 		public string Stack { get; set; }
 		public string What { get; set; }
 		//Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
@@ -72,20 +73,48 @@ namespace Keysharp.Core
 			//If this is a parsing error, then File and Line need to be set by the calling code.
 			File = frame.GetFileName();
 			Line = frame.GetFileLineNumber();
-			Stack = new StackTrace(frame).ToString();
+			Stack = FixStackTrace(new StackTrace(frame).ToString());
 		}
 
 		public override string ToString()
 		{
+			var st = FixStackTrace(StackTrace);
 			var sb = new StringBuilder(512);
-			_ = sb.AppendLine($"Message: {Message}\n");
-			_ = sb.AppendLine($"What: {What}\n");
-			_ = sb.AppendLine($"Extra: {Extra}\n");
-			_ = sb.AppendLine($"File: {File}\n");
-			_ = sb.AppendLine($"Line: {Line}\n");
-			_ = sb.AppendLine($"Local stack: {Stack}");
-			_ = sb.AppendLine($"Full stack: {StackTrace}");
+			_ = sb.AppendLine($"\tMessage: {message}");
+			_ = sb.AppendLine($"\tWhat: {What}");
+			_ = sb.AppendLine($"\tExtra/Code: {Extra}");
+			_ = sb.AppendLine($"\tFile: {File}");
+			_ = sb.AppendLine($"\tLine: {Line}");
+			_ = sb.AppendLine($"\tLocal stack:\n\t\t{Stack}");
+			_ = sb.AppendLine($"\tFull stack:\n\t\t{st}");
 			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Strip out the full paths and only show the file names.
+		/// </summary>
+		/// <param name="stack"></param>
+		/// <returns></returns>
+		private static string FixStackTrace(string stack)
+		{
+			var delim = " in ";
+			var lines = stack.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+			for (var i = 0; i < lines.Length; i++)
+			{
+				var line = lines[i];
+				var firstIn = line.IndexOf(delim) + delim.Length;
+				var lastColon = line.LastIndexOf(':');
+
+				if (firstIn != -1 && lastColon > firstIn)
+				{
+					var path = line.Substring(firstIn, lastColon - firstIn);
+					var filename = System.IO.Path.GetFileName(path);
+					lines[i] = line.Replace(path, filename).Replace(".cs:line", ".cs, line");
+				}
+			}
+
+			return string.Join("\n\t\t", lines);
 		}
 	}
 
@@ -137,8 +166,8 @@ namespace Keysharp.Core
 		public ParseException(string message)
 			: this(message, default, "") { }
 
-		public ParseException(string message, CodeLine line)
-			: this(message, line.LineNumber, line.Code, line.FileName) { }
+		public ParseException(string message, CodeLine codeLine)
+			: this(message, codeLine.LineNumber, codeLine.Code, codeLine.FileName) { }
 
 		public ParseException(string message, int line, string code)
 			: this(message, line, code, "") { }

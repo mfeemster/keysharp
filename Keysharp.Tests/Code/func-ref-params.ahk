@@ -272,7 +272,7 @@ else
 		
 x :=
 y :=
-z :=
+z := ""
 val := myreffunc(x, &y, &z)
 
 If (val == 888)

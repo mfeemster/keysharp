@@ -1241,27 +1241,6 @@ namespace Keysharp.Core
 		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
 
 		/// <summary>
-		/// Reverse vesion of NthIndexOf().
-		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="substr"></param>
-		/// <param name="pos"></param>
-		/// <param name="n"></param>
-		/// <param name="comp"></param>
-		/// <returns></returns>
-		internal static int LastNthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
-		{
-			pos = str.Length + pos + 1;
-
-			do
-			{
-				pos = str.LastIndexOf(substr, pos - 1, comp);
-			} while (--n > 0 && pos != -1);
-
-			return pos;
-		}
-
-		/// <summary>
 		/// An internal optimized version of StrCompare().
 		/// </summary>
 		internal static int StrCmp(string left, string right, bool caseSensitive) => string.Compare(left, right, caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);

@@ -297,7 +297,7 @@ If (x == 6)
 else
 	FileAppend, "fail", "*"
 	
-b :=
+b := ""
 
 AssignFunc(xx)
 {

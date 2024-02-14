@@ -24,7 +24,7 @@ outArgs :=
 outDescription :=
 outIcon :=
 outIconNum :=
-outRunState :=
+outRunState := ""
 FileGetShortcut("./testshortcut.lnk",
 	&outTarget,
 	&outDir,

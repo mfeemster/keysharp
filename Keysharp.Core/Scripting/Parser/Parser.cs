@@ -24,16 +24,74 @@ namespace Keysharp.Scripting
 
 		internal const string scopeChar = "_";
 		internal const string varsPropertyName = "Vars";
-		internal bool ErrorStdOut;
-		internal CodeStatementCollection initial = new CodeStatementCollection();
-		internal string name = string.Empty;
-		internal bool NoTrayIcon;
-		internal bool Persistent;
-		private const string args = "args";
-		private const string initParams = "initparams";
-		private const string mainClassName = "program";
-		private const string mainScope = "";
-		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
+
+		/// <summary>
+		/// The order of these is critically important. Items that start with the same character must go from longest to shortest.
+		/// </summary>
+		internal static FrozenSet<string> contExprOperators = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+		{
+			",",
+			//"%",
+			".=",
+			".",
+			"??",
+			"?",
+			"+=",
+			"+",
+			"-=",
+			"-",
+			"**",
+			"*=",
+			"*",
+			"!==",
+			"!=",
+			"!",
+			"~",
+			"&&",
+			"&=",
+			"&",
+			"^=",
+			"^",
+			"||",
+			"|=",
+			"|",
+			"//=",
+			"//",
+			"/=",
+			"/",
+			"<<=",
+			"<<",
+			">>>=",
+			">>>",
+			">>=",
+			">>",
+			"~=",
+			"<=",
+			"<",
+			">=",
+			">",
+			":=",
+			"==",
+			"=>",
+			"=",
+			":",
+			"["
+		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+
+		internal static List<string> contExprOperatorsList = contExprOperators.ToList();
+		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
+
+		/// <summary>
+		/// The order of these is critically important. Items that start with the same character must go from longest to shortest.
+		/// </summary>
+		internal static FrozenSet<string> exprVerbalOperators = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+
+		{
+			"is",
+			"and",
+			"not",
+			"or"
+		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
 
 		internal static FrozenSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -52,11 +110,14 @@ namespace Keysharp.Scripting
 			FlowWhile,
 			FunctionLocal,
 			FunctionGlobal,
+			//FunctionStatic,//Can't have this in here, else it throws off IsFlowOperator().
 			FlowTry,
 			FlowCatch,
 			FlowFinally,
 			FlowUntil,
 			FlowSwitch,
+			//FlowGet,
+			//FlowSet,
 			Throw
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
@@ -94,6 +155,32 @@ namespace Keysharp.Scripting
 			Throw
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
+		internal static FrozenSet<string> nonContExprOperators = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+		{
+			"++",
+			"--"
+		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+
+		internal static List<string> nonContExprOperatorsList = nonContExprOperators.ToList();
+		internal static CodePrimitiveExpression nullPrimitive = new CodePrimitiveExpression(null);
+
+		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		{
+			FlowGet,
+			FlowSet
+		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+		internal bool ErrorStdOut;
+		internal CodeStatementCollection initial = new CodeStatementCollection();
+		internal string name = string.Empty;
+		internal bool NoTrayIcon;
+		internal bool Persistent;
+		private const string args = "args";
+		private const string initParams = "initparams";
+		private const string mainClassName = "program";
+		private const string mainScope = "";
+		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
+
 		private static FrozenSet<string> persistentTerms = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
 		{
 			"settimer",
@@ -111,6 +198,7 @@ namespace Keysharp.Scripting
 		private Stack<bool> allStaticVars = new Stack<bool>();
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
 		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
+		private HashSet<CodeSnippetExpression> assignSnippets = new ();
 		private bool blockOpen;
 		private Stack<CodeBlock> blocks = new ();
 		private uint caseCount;
@@ -119,7 +207,6 @@ namespace Keysharp.Scripting
 		private Dictionary<string, string> conditionIds;
 		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
 		private Stack<CodeStatementCollection> elses = new ();
-		private Stack<CodeTernaryOperatorExpression> ternaries = new ();
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private uint exCount;
 		private string fileName;
@@ -132,7 +219,6 @@ namespace Keysharp.Scripting
 		private int labelCount;
 		private string lastHotkeyFunc = "";
 		private string lastHotstringFunc = "";
-		private long line;
 		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
 
 		private CodeMemberMethod main = new CodeMemberMethod()
@@ -151,17 +237,15 @@ namespace Keysharp.Scripting
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
 		private tsmd setPropertyValueCalls = new tsmd();
 		private Stack<CodeBlock> singleLoops = new ();
-		private HashSet<CodeSnippetExpression> assignSnippets = new ();
 		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
 		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
 		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
 		private uint switchCount;
 		private Stack<CodeSwitchStatement> switches = new ();
 		private CodeTypeDeclaration targetClass;
+		private Stack<CodeTernaryOperatorExpression> ternaries = new ();
 		private uint tryCount;
 		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
-		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
-		internal static CodePrimitiveExpression nullPrimitive = new CodePrimitiveExpression(null);
 
 		public Parser(CompilerHelper ch)
 		{
@@ -172,6 +256,8 @@ namespace Keysharp.Scripting
 			targetClass = AddType(mainClassName);
 			_ = targetClass.Members.Add(main);
 		}
+
+		public static string GetKeywords() => string.Join(' ', keywords);
 
 		public static bool IsTypeOrBase(Type t1, string t2)
 		{
@@ -185,8 +271,6 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
-
-		public static string GetKeywords() => string.Join(' ', keywords);
 
 		/// <summary>
 		/// Return a DOM representation of a script.
@@ -784,12 +868,8 @@ namespace Keysharp.Scripting
 		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
 			name = nm;
-			//Init();//Init here every time because this may be reused within a single program run, such as in Keyview.
 			var reader = new PreReader(this);
 			codeLines = reader.Read(codeStream, name);
-			//var lineIndex = 0;
-			//foreach (var line in codeLines)
-			//  line.LineNumber = lineIndex++;
 #if DEBUG
 			File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
@@ -897,7 +977,8 @@ namespace Keysharp.Scripting
 
 								if (initcmm != null)
 								{
-									_ = initcmm.Statements.Add(new CodeSnippetExpression($"{name} = {init}"));
+									if (string.Compare(init, "null", true) != 0)
+										_ = initcmm.Statements.Add(new CodeSnippetExpression($"{name} = {init}"));
 
 									foreach (DictionaryEntry kv in globalvar.Value.UserData)
 										if (kv.Key is CodeExpressionStatement ces2)

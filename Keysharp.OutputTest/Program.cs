@@ -48,7 +48,7 @@ using static Keysharp.Scripting.Script.Operator;
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.5")]
+[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.6")]
 
 namespace Keysharp.CompiledMain
 {
@@ -80,7 +80,7 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.Variables.InitGlobalVars();
 				Keysharp.Scripting.Script.SetName(name);
 				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
-				HandleCommandLineParams(args);
+				Keysharp.Core.Env.HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
 				UserMainCode();
 				Keysharp.Core.Flow.Sleep(-2);

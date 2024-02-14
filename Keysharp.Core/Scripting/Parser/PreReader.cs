@@ -1,4 +1,5 @@
 using Keysharp.Core;
+using Keysharp.Core.Windows;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualBasic.ApplicationServices;
 using System;
@@ -6,6 +7,7 @@ using System.CodeDom;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,14 +28,15 @@ namespace Keysharp.Scripting
 			FlowClass,
 			FlowElse,
 			FlowFinally,
+			FlowFor,
 			FlowGosub,
 			FlowIf,
 			FlowLoop,
 			//FlowReturn,//A brace following return is not OTB, instead it's the beginning of the creation of a Map to be returned.
 			FlowSwitch,
 			FlowTry,
-			//FlowUntil,//Could  until { one : 1 } == x ever be done?
-			//FlowWhile//Same: while { one : 1 } == x
+			FlowUntil,//Could until { one : 1 } == x ever be done?
+			FlowWhile//Same: while { one : 1 } == x
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 		private Parser parser;
 		internal static int NextHotIfCount => ++hotifcount;
@@ -44,10 +47,21 @@ namespace Keysharp.Scripting
 
 		internal List<CodeLine> Read(TextReader source, string name)
 		{
-			string code;
-			var line = 0;
+			var lineNumber = 0;
+			var sb = new StringBuilder(256);
 			var list = new List<CodeLine>();
 			var extralines = new List<CodeLine>();
+			var escape = false;
+			var verbatim = false;
+			string code;
+			ReadOnlySpan<char> prev = "";
+			ReadOnlySpan<char> openBraceSpan = "{".ToCharArray();
+			ReadOnlySpan<char> closeBraceSpan = "}".ToCharArray();
+			ReadOnlySpan<char> spaceTabOpenBraceSpan = " \t{".ToCharArray();
+			ReadOnlySpan<char> hotkeySignalSpan = "::".ToCharArray();
+			ReadOnlySpan<char> hotkeySignalOtbSpan = "::{".ToCharArray();
+			char last = (char)0;
+			bool inString = false, inMlComment = false;
 			var replace = new[,]//These will need to be done differently on linux.//LINUXTODO
 			{
 				{ "%A_AhkPath%", Accessors.A_AhkPath },
@@ -90,529 +104,784 @@ namespace Keysharp.Scripting
 					}
 				}
 				else
-					throw new ParseException($"Command line include file {cmdinc} specified with -/include not found", line, "");
+					throw new ParseException($"Command line include file {cmdinc} specified with -/include not found.", lineNumber, "");
 			}
+
+			void StartNewLine(string str)
+			{
+				list.Add(new CodeLine(name, lineNumber, str));
+				_ = sb.Clear();
+			}
+			void AddToPreviousLine(CodeLine prevLine, string str)
+			{
+				prevLine.Code += str;
+				_ = sb.Clear();
+			}
+			list.Add(new CodeLine(name, lineNumber, ""));//Always have one line to avoid always having to check for Count > 0.
 
 			while ((code = source.ReadLine()) != null)
 			{
-				line++;
+				lineNumber++;
 
-				if (line == 1 && code.Length > 2 && code[0] == '#' && code[1] == '!')
+				if (code.Length == 0)
 					continue;
 
-				code = Parser.StripComment(code).Trim(Spaces);
+				if (code[0] == ';')
+					continue;
 
-				if (code.Length > 1 && code[0] == MultiComA && code[1] == MultiComB)
+				var commentIgnore = false;
+				var noCommentCode = Parser.StripComment(code);
+				var span = noCommentCode.AsSpan().Trim(Spaces);
+
+				if (span.Length == 0)
+					continue;
+
+				var prevSpan = prev.TrimEnd(Spaces);
+
+				for (var i = 0; i < span.Length; i++)//Should really just reference span everywhere.
 				{
-					while ((code = source.ReadLine()) != null)
+					var ch = span[i];
+					var wasCont = false;
+
+					if (inMlComment)
 					{
-						line++;
-						code = code.TrimStart(Spaces);
-
-						if (code.Length > 1 && code[0] == MultiComB && code[1] == MultiComA)
+						if (ch == '/' && last == '*')
 						{
-							code = code.Substring(2);
-							break;
-						}
-					}
+							inMlComment = false;
 
-					if (code == null)
-						continue;
-				}
-
-				if (code.Length > 1 && code[0] == Directive)
-				{
-					if (code.Length < 2)
-						throw new ParseException($"{ExUnknownDirv} at line {code}", line, code);
-
-					var delim = new char[Spaces.Length + 1];
-					delim[0] = Multicast;
-					Spaces.CopyTo(delim, 1);
-					var sub = code.Split(delim, 2);
-					var parts = new[] { sub[0], sub.Length > 1 ? sub[1] : string.Empty };
-					var p1 = Parser.StripComment(parts[1]).Trim(Spaces);
-					var numeric = int.TryParse(p1, out var value);
-					var next = true;
-					var includeOnce = false;
-					var upper = parts[0].Substring(1).ToUpperInvariant();
-
-					switch (upper)
-					{
-						case "INCLUDE":
-							includeOnce = true;
-
-						goto case "INCLUDEAGAIN";
-
-						case "DLLLOAD":
-						{
-							var silent = false;
-							p1 = p1.Trim('"');//Quotes throw off the system file/path functions, so remove them.
-
-							if (p1.Length > 3 && p1.StartsWith("*i ", StringComparison.OrdinalIgnoreCase))
+							if (i < span.Length - 1)
 							{
-								p1 = p1.Substring(3);
-								silent = true;
-							}
-
-							for (var i = 0; i < replace.Length / 2; i++)
-								p1 = p1.Replace(replace[i, 0], replace[i, 1]);
-
-							PreloadedDlls.Add((p1, silent));
-							//The generated code for this is handled in Parser.Parse() because it must come before the InitGlobalVars();
-						}
-						break;
-
-						case "INCLUDEAGAIN":
-						{
-							var silent = false;
-							var isLib = false;
-							p1 = p1.RemoveAll("\"");//Quotes throw off the system file/path functions, so remove them.
-
-							if (p1.StartsWith('<') && p1.EndsWith('>'))
-							{
-								p1 = p1.Trim(libBrackets).Split('_', StringSplitOptions.None)[0];
-
-								if (!p1.EndsWith(".ahk"))
-									p1 += ".ahk";
-
-								isLib = true;
-							}
-
-							if (p1.StartsWith("*i ", StringComparison.OrdinalIgnoreCase))
-							{
-								p1 = p1.Substring(3);
-								silent = true;
-							}
-							else if (p1.StartsWith("*i", StringComparison.OrdinalIgnoreCase))
-							{
-								p1 = p1.Substring(2);
-								silent = true;
-							}
-
-							if (isLib)
-							{
-								var paths = new List<string>(6);
-
-								if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-								{
-									paths.Add($"{includePath}\\{p1}");//Folder relative to the script file, or as overriden.
-									paths.Add($"{Accessors.A_MyDocuments}\\AutoHotkey\\{LibDir}\\{p1}");//User library.
-									paths.Add($"{Accessors.A_KeysharpPath}\\{LibDir}\\{p1}");//Executable folder, standard library.
-								}
-								else if (Path.DirectorySeparatorChar == '/' && Environment.OSVersion.Platform == PlatformID.Unix)
-								{
-									paths.Add($"{includePath}/{p1}");
-									paths.Add(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("HOME"), "/AutoHotkey"), p1));
-									paths.Add($"{Accessors.A_KeysharpPath}/{LibDir}/{p1}");//Three ways to get the possible executable folder.
-									paths.Add($"/usr/{LibDir}/AutoHotkey/{LibDir}/{p1}");
-									paths.Add($"/usr/local/{LibDir}/AutoHotkey/{LibDir}/{p1}");
-								}
-
-								var found = false;
-
-								foreach (var dir in paths)
-								{
-									if (System.IO.File.Exists(dir))
-									{
-										found = true;
-
-										if (includeOnce && includes.Contains(dir))
-											break;
-
-										_ = includes.AddUnique(dir);
-										list.AddRange(Read(new StreamReader(dir), dir));
-										break;
-									}
-								}
-
-								if (!found && !silent)
-									throw new ParseException($"Include file {p1} not found at any of the locations: {string.Join(Environment.NewLine, paths)}", line, code);
+								last = ch;
+								continue;
 							}
 							else
-							{
-								for (var i = 0; i < replace.Length / 2; i++)
-									p1 = p1.Replace(replace[i, 0], replace[i, 1]);
-
-								var path = p1;
-
-								if (!Path.IsPathRooted(path) && Directory.Exists(includePath))
-									path = Path.Combine(includePath, path);
-								else if (!Path.IsPathRooted(path))
-									path = Path.Combine(Path.GetDirectoryName(name), path);
-
-								path = Path.GetFullPath(path);
-
-								if (Directory.Exists(path))
-								{
-									includePath = path;
-								}
-								else if (System.IO.File.Exists(path))
-								{
-									if (includeOnce && includes.Contains(path))
-										break;
-
-									_ = includes.AddUnique(path);
-									list.AddRange(Read(new StreamReader(path), path));
-								}
-								else
-								{
-									if (!silent)
-										throw new ParseException($"Include file {p1} not found at location {path}", line, code);
-
-									break;
-								}
-							}
-						}
-						break;
-
-						case "REQUIRES":
-						{
-							var reqAhk = p1.StartsWith("AutoHotkey");
-
-							if (reqAhk || p1.StartsWith("Keysharp"))
-							{
-								var splits = p1.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-								if (splits.Length > 1)
-								{
-									var ver = splits[1].Trim(new char[] { 'v', '+' });
-									var plus = splits[1].EndsWith('+');
-									var reqvers = Script.ParseVersionToInts(ver);
-
-									//If it's AHK v2.x, then we support it, so don't check.
-									if (reqAhk && ver.StartsWith("2."))
-										break;
-
-									if (!reqvers.Any(x => x != 0))
-										throw new ParseException($"This script requires {p1}", line, name);
-
-									Script.VerifyVersion(ver, plus, line, name);
-									//In addition to being checked here, it must be added to the code for when it runs as a compiled exe.
-									var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "VerifyVersion");
-									_ = cmie.Parameters.Add(new CodePrimitiveExpression(ver));
-									_ = cmie.Parameters.Add(new CodePrimitiveExpression(plus));
-									_ = cmie.Parameters.Add(new CodePrimitiveExpression(0));
-									_ = cmie.Parameters.Add(new CodeSnippetExpression("name"));
-									parser.initial.Insert(0, new CodeExpressionStatement(cmie));
-									//Sub release designators such as "-alpha", "-beta" are not supported in C#. Only the assembly version is supported.
-								}
-							}
-						}
-						break;
-
-						case "HOTIF":
-							if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
-							{
-								var hotiffuncname = $"HotIf_{NextHotIfCount}";
-								extralines.Add(new CodeLine(name, line, $"{hotiffuncname}(thehotkey)"));
-								extralines.Add(new CodeLine(name, line, "{"));
-								extralines.Add(new CodeLine(name, line, $"return {parts[1]}"));
-								extralines.Add(new CodeLine(name, line, "}"));
-								var tempcl = new CodeLine(name, line, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
-
-								if (line < list.Count)
-								{
-									list.Insert(line, tempcl);
-								}
-								else
-								{
-									list.Add(tempcl);
-								}
-							}
-							else
-								list.Add(new CodeLine(name, line, "HotIf(\"\")"));
-
-							break;
-
-						case "NODYNAMICVARS":
-							parser.DynamicVars = false;
-							break;
-
-						//case "NOENV":
-						//  NoEnv = true;
-						//  break;
-
-						case "PERSISTENT":
-							parser.Persistent = true;
-							break;
-
-						case "SINGLEINSTANCE":
-						{
-							switch (p1.ToUpperInvariant())
-							{
-								case "FORCE":
-									SingleInstance = eScriptInstance.Force;
-									break;
-
-								case "IGNORE":
-									SingleInstance = eScriptInstance.Ignore;
-									break;
-
-								case "PROMPT":
-									SingleInstance = eScriptInstance.Prompt;
-									break;
-
-								case "OFF":
-									SingleInstance = eScriptInstance.Off;
-									break;
-
-								default:
-									break;
-							}
-						}
-						break;
-
-						case "HOTSTRING":
-						{
-							if (sub.Length > 1)
-							{
-								var splits = sub[1].Split(' ', 2);
-
-								if (splits.Length > 0)
-								{
-									p1 = splits[0].ToUpperInvariant();
-
-									switch (p1.ToUpperInvariant())
-									{
-										case "NOMOUSE":
-											list.Add(new CodeLine(name, line, code));
-											break;
-
-										case "ENDCHARS":
-											list.Add(new CodeLine(name, line, code));
-											//list.Add(new CodeLine(name, line, Parser.EscapedString(code, false)));
-											break;
-
-										default:
-											list.Add(new CodeLine(name, line, "Hotstring(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
-											next = false;
-											break;
-									}
-								}
-							}
-						}
-						break;
-
-						//Deprecated directives.
-						case "ALLOWSAMELINECOMMENTS":
-						case "HOTKEYINTERVAL":
-						case "HOTKEYMODIFIERTIMEOUT":
-						case "INSTALLKEYBDHOOK":
-						case "INSTALLMOUSEHOOK":
-						case "KEYHISTORY":
-						case "MAXHOTKEYSPERINTERVAL":
-						case "MAXMEM":
-							break;
-
-						//Directives that will be processed in Statements().
-						case "ASSEMBLYTITLE":
-						case "ASSEMBLYDESCRIPTION":
-						case "ASSEMBLYCONFIGURATION":
-						case "ASSEMBLYCOMPANY":
-						case "ASSEMBLYPRODUCT":
-						case "ASSEMBLYCOPYRIGHT":
-						case "ASSEMBLYTRADEMARK":
-						case "ASSEMBLYVERSION":
-						case "CLIPBOARDTIMEOUT":
-						case "ERRORSTDOUT":
-						case "USEHOOK":
-						case "MAXTHREADS":
-
-						//case "MAXTHREADSBUFFER":
-						//case "MAXTHREADSPERHOTKEY":
-						case "NOTRAYICON":
-						case "SUSPENDEXEMPT":
-						case "WINACTIVATEFORCE":
-						case Keyword_IfWin:
-							list.Add(new CodeLine(name, line, code));
-							break;
-
-						default:
-							next = false;
-							break;
-					}
-
-					if (next)
-						continue;
-				}
-
-				if (code.Length > 0 && code[0] == ParenOpen)
-				{
-					if (list.Count == 0)
-						throw new ParseException($"{ExUnexpected} at line {code}", line, code);
-
-					var buf = new StringBuilder(256);
-					//_ = buf.Append(options[0]);// code);
-					_ = buf.Append(code);
-					_ = buf.Append(newlineToUse);
-
-					while ((code = source.ReadLine()) != null)
-					{
-						var codeTrim = code.TrimStart(Spaces);
-
-						if (codeTrim.Length > 0 && codeTrim[0] == ParenClose)
-						{
-							code = codeTrim = codeTrim.Substring(1);
-							_ = buf.Append(ParenClose);
-							break;
+								commentIgnore = true;
 						}
 						else
 						{
-							_ = buf.Append(code);
-							_ = buf.Append(newlineToUse);
+							last = ch;
+							continue;
 						}
 					}
-
-					var str = buf.ToString();
-					var result = Parser.MultilineString(str);
-					var lastlistitem = list[list.Count - 1];
-
-					if (lastlistitem.Code.EndsWith('\''))
-						lastlistitem.Code = lastlistitem.Code.Substring(0, lastlistitem.Code.Length - 1) + '\"';
-
-					if (code.EndsWith('\''))
-						code = code.Substring(0, code.Length - 1) + '\"';
-
-					lastlistitem.Code += result + code;
-					continue;
-				}
-
-				code = code.Trim(Spaces);
-
-				if (code.StartsWith(multiLineComments))
-					code = code.Substring(2);
-
-				if (code.Length == 0 || Parser.IsCommentLine(code))
-					continue;
-
-				var parenlevels = 0;
-				var bracelevels = 0;
-				var bracketlevels = 0;
-				var inquote = false;
-				var verbatim = false;
-				var peek = source.Peek();
-				//var sbCurrent = new StringBuilder(256);
-
-				//for (var i = 0; i < code.Length; i++)
-				//{
-				//  var ch = code[i];
-				//}
-
-				if (code.Length == 1 && (code[0] == BlockOpen || code[0] == BlockClose))
-				{
-				}
-				else
-				{
-					var splits = code.Split(Spaces, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-					//First test for lines like:
-					//  } else
-					//because they are not continuation lines.
-					if (splits.Length > 1 && splits[0][0] == BlockClose && Parser.flowOperators.Contains(splits[1]))
+					else if (!inString)
 					{
-					}
-					else
-					{
-						var cont = Parser.IsContinuationLine(code, true);
-
-						if (code.EndsWith('=') && peek != '(' && peek != '{' && peek != '[')//Very special case for ending with = If the next line is not a paren, brace or bracket, it's an empty assignment, otherwise it's the start of a continuation statement.
-							cont = false;
-
-						//Don't count hotstrings/keys because they can have brackets and braces as their trigger, which may not be balanced.
-						var ll = code.Contains("::", StringComparison.OrdinalIgnoreCase) ? false : LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-
-						//OcurredInBalance is for checking that the := was not inside of a function declaring a default parameter value like func(a := 123).
-						//Checking return is for: return {
-						//  one : 1
-						// }
-						//Because it's the one flow statement that when followed by a brance is not OTB, instead it's returning a map.
-						if (cont || (ll && (((!code.IsBalanced('{', '}') || !code.IsBalanced('[', ']') || !code.IsBalanced('(', ')')) && (string.Compare(splits[0], "return", true) == 0 || (code.IndexOf('(') != -1 && !code.IsBalanced('(', ')')) || code.OcurredInBalance(":=", '(', ')'))) ||
-											//Non-flow statements that end in { or [, such as constructing a map or array, are also considered the start of a multiline statement.
-											(code.Length > 1 &&
-											 !code.Contains('(') && !code.Contains(')') &&
-											 code[code.Length - 2] != ' ' &&
-											 code[code.Length - 2] != '\t'
-											)
-										   )
-									)
-						   )
+						if (ch == '*' && last == '/')
 						{
-							if (cont)
-								code += SingleSpace;
+							inMlComment = true;
+							last = ch;
+							sb.Remove(sb.Length - 1, 1);
 
-							code += ParseContinuations(source, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-						}
-					}
-				}
-
-				if (Parser.IsContinuationLine(code, false))
-				{
-					if (list.Count == 0)
-						throw new ParseException(ExUnexpected, line, code);
-
-					var i = list.Count - 1;
-					var buf = new StringBuilder(list[i].Code, list[i].Code.Length + /*newlineToUse.Length*/1 + code.Length);//Was originally using newline, but probably want space instead.
-					_ = buf.Append(/*newlineToUse*/SingleSpace);
-					_ = buf.Append(code);
-					list[i].Code = buf.ToString();
-				}
-				else
-				{
-					Parser.Translate(ref code);
-
-					if (code.Length != 0)
-					{
-						//var tempLine = line;
-						var rest = code.Trim(Spaces);
-						var firstImbalanced = 0;
-
-						while (rest.Length > 0)
-						{
-							if (rest.StartsWith('{') || rest.StartsWith('}'))
-							{
-								list.Add(new CodeLine(name, line, rest[0].ToString()));
-								rest = rest.Substring(1).Trim(Spaces);
-							}
-							else if ((firstImbalanced = rest.FindFirstImbalanced('{', '}')) != -1)
-							{
-								var cur = rest.Substring(0, firstImbalanced).Trim(Spaces);
-								list.Add(new CodeLine(name, line, cur));
-								rest = rest.Substring(firstImbalanced).Trim(Spaces);
-							}
+							if (i < span.Length - 1)
+								continue;
 							else
-							{
-								var splits = rest.Split(Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+								commentIgnore = true;
+						}
+						else if (ch == ';')
+						{
+							span = span.Slice(0, i).TrimEnd(Spaces);
+							i = span.Length - 1;
+							commentIgnore = true;
+						}
+					}
 
-								//Only split if it's an OTB flow statement like if {
-								//Do not split if it's a command statement like FileAppend {one, 1}, "*"
-								if (splits.Length > 1
-										&& splits[1][0] == '{'
-										&& otbFlowKeywords.Contains(splits[0])
-										//&& !splits[splits.Length - 1].EndsWith("}")
-								   )
+					if (!commentIgnore)
+					{
+						if (i == 0)
+						{
+							if (span[0] == '#')
+							{
+								if (span.Length < 2)
+									throw new ParseException(ExUnknownDirv, lineNumber, code);
+
+								var sub = noCommentCode.Split(SpaceMultiDelim, 2, StringSplitOptions.TrimEntries);
+								var parts = new[] { sub[0], sub.Length > 1 ? sub[1] : string.Empty };
+								var p1 = Parser.StripComment(parts[1]).Trim(Spaces);
+								var numeric = int.TryParse(p1, out var value);
+								var includeOnce = false;
+								var upper = parts[0].Substring(1).ToUpperInvariant();
+								var next = true;
+
+								switch (upper)
 								{
-									var firstOpen = rest.IndexOf('{');
-									var cur = rest.Substring(0, firstOpen).Trim(Spaces);
-									list.Add(new CodeLine(name, line, cur));
-									rest = rest.Substring(firstOpen).Trim(Spaces);
+									case "INCLUDE":
+										includeOnce = true;
+
+									goto case "INCLUDEAGAIN";
+
+									case "DLLLOAD":
+									{
+										var silent = false;
+										p1 = p1.Trim('"');//Quotes throw off the system file/path functions, so remove them.
+
+										if (p1.Length > 3 && p1.StartsWith("*i ", StringComparison.OrdinalIgnoreCase))
+										{
+											p1 = p1.Substring(3);
+											silent = true;
+										}
+
+										for (var ii = 0; ii < replace.Length / 2; ii++)
+											p1 = p1.Replace(replace[ii, 0], replace[ii, 1]);
+
+										PreloadedDlls.Add((p1, silent));
+										//The generated code for this is handled in Parser.Parse() because it must come before the InitGlobalVars();
+									}
+									break;
+
+									case "INCLUDEAGAIN":
+									{
+										var silent = false;
+										var isLib = false;
+										p1 = p1.RemoveAll("\"");//Quotes throw off the system file/path functions, so remove them.
+
+										if (p1.StartsWith('<') && p1.EndsWith('>'))
+										{
+											p1 = p1.Trim(libBrackets).Split('_', StringSplitOptions.None)[0];
+
+											if (!p1.EndsWith(".ahk"))
+												p1 += ".ahk";
+
+											isLib = true;
+										}
+
+										if (p1.StartsWith("*i ", StringComparison.OrdinalIgnoreCase))
+										{
+											p1 = p1.Substring(3);
+											silent = true;
+										}
+										else if (p1.StartsWith("*i", StringComparison.OrdinalIgnoreCase))
+										{
+											p1 = p1.Substring(2);
+											silent = true;
+										}
+
+										if (isLib)
+										{
+											var paths = new List<string>(6);
+
+											if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+											{
+												paths.Add($"{includePath}\\{p1}");//Folder relative to the script file, or as overriden.
+												paths.Add($"{Accessors.A_MyDocuments}\\AutoHotkey\\{LibDir}\\{p1}");//User library.
+												paths.Add($"{Accessors.A_KeysharpPath}\\{LibDir}\\{p1}");//Executable folder, standard library.
+											}
+											else if (Path.DirectorySeparatorChar == '/' && Environment.OSVersion.Platform == PlatformID.Unix)
+											{
+												paths.Add($"{includePath}/{p1}");
+												paths.Add(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("HOME"), "/AutoHotkey"), p1));
+												paths.Add($"{Accessors.A_KeysharpPath}/{LibDir}/{p1}");//Three ways to get the possible executable folder.
+												paths.Add($"/usr/{LibDir}/AutoHotkey/{LibDir}/{p1}");
+												paths.Add($"/usr/local/{LibDir}/AutoHotkey/{LibDir}/{p1}");
+											}
+
+											var found = false;
+
+											foreach (var dir in paths)
+											{
+												if (System.IO.File.Exists(dir))
+												{
+													found = true;
+
+													if (includeOnce && includes.Contains(dir))
+														break;
+
+													_ = includes.AddUnique(dir);
+													list.AddRange(Read(new StreamReader(dir), dir));
+													break;
+												}
+											}
+
+											if (!found && !silent)
+												throw new ParseException($"Include file {p1} not found at any of the locations: {string.Join(Environment.NewLine, paths)}", lineNumber, code);
+										}
+										else
+										{
+											for (var ii = 0; ii < replace.Length / 2; ii++)
+												p1 = p1.Replace(replace[ii, 0], replace[ii, 1]);
+
+											var path = p1;
+
+											if (!Path.IsPathRooted(path) && Directory.Exists(includePath))
+												path = Path.Combine(includePath, path);
+											else if (!Path.IsPathRooted(path))
+												path = Path.Combine(Path.GetDirectoryName(name), path);
+
+											path = Path.GetFullPath(path);
+
+											if (Directory.Exists(path))
+											{
+												includePath = path;
+											}
+											else if (System.IO.File.Exists(path))
+											{
+												if (includeOnce && includes.Contains(path))
+													break;
+
+												_ = includes.AddUnique(path);
+												list.AddRange(Read(new StreamReader(path), path));
+											}
+											else
+											{
+												if (!silent)
+													throw new ParseException($"Include file {p1} not found at location {path}", lineNumber, code);
+
+												break;
+											}
+										}
+									}
+									break;
+
+									case "REQUIRES":
+									{
+										var reqAhk = p1.StartsWith("AutoHotkey");
+
+										if (reqAhk || p1.StartsWith("Keysharp"))
+										{
+											var splits = p1.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+											if (splits.Length > 1)
+											{
+												var ver = splits[1].Trim(new char[] { 'v', '+' });
+												var plus = splits[1].EndsWith('+');
+												var reqvers = Script.ParseVersionToInts(ver);
+
+												//If it's AHK v2.x, then we support it, so don't check.
+												if (reqAhk && ver.StartsWith("2."))
+													break;
+
+												if (!reqvers.Any(x => x != 0))
+													throw new ParseException($"This script requires {p1}", lineNumber, name);
+
+												Script.VerifyVersion(ver, plus, lineNumber, code);
+												//In addition to being checked here, it must be added to the code for when it runs as a compiled exe.
+												var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "VerifyVersion");
+												_ = cmie.Parameters.Add(new CodePrimitiveExpression(ver));
+												_ = cmie.Parameters.Add(new CodePrimitiveExpression(plus));
+												_ = cmie.Parameters.Add(new CodePrimitiveExpression(0));
+												_ = cmie.Parameters.Add(new CodeSnippetExpression("name"));
+												parser.initial.Insert(0, new CodeExpressionStatement(cmie));
+												//Sub release designators such as "-alpha", "-beta" are not supported in C#. Only the assembly version is supported.
+											}
+										}
+									}
+									break;
+
+									case "HOTIF":
+										if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
+										{
+											var hotiffuncname = $"HotIf_{NextHotIfCount}";
+											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
+											extralines.Add(new CodeLine(name, lineNumber, "{"));
+											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
+											extralines.Add(new CodeLine(name, lineNumber, "}"));
+											var tempcl = new CodeLine(name, lineNumber, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+
+											if (lineNumber < list.Count)
+											{
+												list.Insert(lineNumber, tempcl);
+											}
+											else
+											{
+												list.Add(tempcl);
+											}
+										}
+										else
+											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
+
+										break;
+
+									case "NODYNAMICVARS":
+										parser.DynamicVars = false;
+										break;
+
+									//case "NOENV":
+									//  NoEnv = true;
+									//  break;
+
+									case "PERSISTENT":
+										parser.Persistent = true;
+										break;
+
+									case "SINGLEINSTANCE":
+									{
+										switch (p1.ToUpperInvariant())
+										{
+											case "FORCE":
+												SingleInstance = eScriptInstance.Force;
+												break;
+
+											case "IGNORE":
+												SingleInstance = eScriptInstance.Ignore;
+												break;
+
+											case "PROMPT":
+												SingleInstance = eScriptInstance.Prompt;
+												break;
+
+											case "OFF":
+												SingleInstance = eScriptInstance.Off;
+												break;
+
+											default:
+												break;
+										}
+									}
+									break;
+
+									case "HOTSTRING":
+									{
+										if (sub.Length > 1)
+										{
+											var splits = sub[1].Split(' ', 2);
+
+											if (splits.Length > 0)
+											{
+												p1 = splits[0].ToUpperInvariant();
+
+												switch (p1.ToUpperInvariant())
+												{
+													case "NOMOUSE":
+														list.Add(new CodeLine(name, lineNumber, span.ToString()));
+														break;
+
+													case "ENDCHARS":
+														list.Add(new CodeLine(name, lineNumber, span.ToString()));
+														break;
+
+													default:
+														list.Add(new CodeLine(name, lineNumber, "Hotstring(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+														next = false;
+														break;
+												}
+											}
+										}
+									}
+									break;
+
+									//Deprecated directives.
+									case "ALLOWSAMELINECOMMENTS":
+									case "HOTKEYINTERVAL":
+									case "HOTKEYMODIFIERTIMEOUT":
+									case "INSTALLKEYBDHOOK":
+									case "INSTALLMOUSEHOOK":
+									case "KEYHISTORY":
+									case "MAXHOTKEYSPERINTERVAL":
+									case "MAXMEM":
+										break;
+
+									//Directives that will be processed in Statements().
+									case "ASSEMBLYTITLE":
+									case "ASSEMBLYDESCRIPTION":
+									case "ASSEMBLYCONFIGURATION":
+									case "ASSEMBLYCOMPANY":
+									case "ASSEMBLYPRODUCT":
+									case "ASSEMBLYCOPYRIGHT":
+									case "ASSEMBLYTRADEMARK":
+									case "ASSEMBLYVERSION":
+									case "CLIPBOARDTIMEOUT":
+									case "ERRORSTDOUT":
+									case "USEHOOK":
+									case "MAXTHREADS":
+
+									//case "MAXTHREADSBUFFER":
+									//case "MAXTHREADSPERHOTKEY":
+									case "NOTRAYICON":
+									case "SUSPENDEXEMPT":
+									case "WINACTIVATEFORCE":
+									case Keyword_IfWin:
+										list.Add(new CodeLine(name, lineNumber, span.ToString()));
+										break;
+
+									default:
+										next = false;
+										break;
+								}
+
+								if (!next)
+									list.Add(new CodeLine(name, lineNumber, span.ToString()));
+
+								break;
+							}
+							else if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
+							{
+								//Comments within the quote preceeding a continuation ( are not part of the string.
+								if (last == '"' || prevSpan.EndsWith(Quote) || prevSpan.EndsWith(":="))
+								{
+									if (list.Count == 0)
+										throw new ParseException(ExUnexpected, lineNumber, code);
+
+									var buf = new StringBuilder(256);
+									_ = buf.Append(code);
+									_ = buf.Append(newlineToUse);
+
+									while ((code = source.ReadLine()) != null)
+									{
+										var codeTrim = code.TrimStart(Spaces);
+
+										if (codeTrim.Length > 0 && codeTrim[0] == ParenClose)
+										{
+											code = codeTrim = codeTrim.Substring(1);
+											_ = buf.Append(ParenClose);
+											break;
+										}
+										else
+										{
+											_ = buf.Append(code);
+											_ = buf.Append(newlineToUse);
+										}
+									}
+
+									var str = buf.ToString();
+									var result = Parser.MultilineString(str, lineNumber, name);
+									var lastlistitem = list[list.Count - 1];
+
+									if (lastlistitem.Code.EndsWith('\''))
+										lastlistitem.Code = lastlistitem.Code.Substring(0, lastlistitem.Code.Length - 1) + '\"';
+
+									if (code.EndsWith('\''))
+										code = code.Substring(0, code.Length - 1) + '\"';
+
+									_ = sb.Append(result);//This should get added here and break//TODO
+									i = 0;
+									span = code.AsSpan();
+
+									if (span.Length == 0)
+									{
+										ch = result.Length > 0 ? result[result.Length - 1] : (char)0;
+										commentIgnore = true;
+									}
+									else
+										ch = span[0];
+
+									wasCont = true;
+								}
+							}
+							else if (span.StartsWith("/*"))//Need this here so it doesn't get confused with a line starting with an operator below.
+							{
+								last = '*';
+								inMlComment = true;
+								i++;
+								continue;
+							}
+							else if (span.StartsWith("*/"))//Need this here so it doesn't get confused with a line starting with an operator below.
+							{
+								last = '/';
+								inMlComment = false;
+								i++;
+								continue;
+							}
+						}
+
+						if (!commentIgnore)
+						{
+							if (ch == '\'')
+							{
+								if (!inString)
+								{
+									if (i == 0 || span[i - 1] != '`')
+										inString = verbatim = true;
+								}
+								else if (verbatim)
+								{
+									if (i == 0 || span[i - 1] != '`')
+										inString = verbatim = false;
+								}
+							}
+							else if (ch == '\"' && !verbatim)
+							{
+								if (!inString)
+								{
+									if (i == 0 || span[i - 1] != Escape)
+										inString = true;
 								}
 								else
 								{
-									list.Add(new CodeLine(name, line, rest));
-									break;
+									if (i == 0 || span[i - 1] != Escape || !escape)//Checking escape accounts for ``.
+										inString = false;
+								}
+							}
+
+							escape = ch == Escape ? !escape : false;
+							_ = sb.Append(ch);
+						}
+					}
+
+					if (i == span.Length - 1 || span.Length == 0)//Span length will be 0 after a non quoted continuation section.
+					{
+						var newLineStr = wasCont ? sb.ToString() : sb.ToString().Trim(Spaces);
+						var newLineSpan = newLineStr.AsSpan();
+						var prevLine = list[list.Count - 1];
+						var prevLineSpan = prevLine.Code.AsSpan().Trim(Spaces);
+						bool newInQuote = false, prevInQuote = false;
+						bool newVerbatim = false, prevVerbatim = false;
+						int newParenlevels = 0, newBracelevels = 0, newBracketlevels = 0;
+						int prevParenlevels = 0, prevBracelevels = 0, prevBracketlevels = 0;
+						var lastNested = LineLevels(prevLine.Code, ref prevInQuote, ref prevVerbatim, ref prevParenlevels, ref prevBracelevels, ref prevBracketlevels);
+						var anyNested = LineLevels(newLineStr, ref newInQuote, ref newVerbatim, ref newParenlevels, ref newBracelevels, ref newBracketlevels);
+						var lastQuoteIndex = prevLineSpan.LastIndexOf('"');
+						var tempPrev = lastQuoteIndex != -1 ? prevLineSpan.Slice(0, lastQuoteIndex).Trim(Spaces) : prevLineSpan;
+						//Getting the first or last token is necessary because of the and, is, not, or operators because those words
+						//might be contained within a variable name.
+						var newStartOpIndex = newLineSpan.IndexOfAny(SpaceTabOpenParenSv);
+						var newStartSubSpan = newStartOpIndex == -1 ? newLineSpan : newLineSpan.Slice(0, newStartOpIndex).Trim(Spaces);
+						var newStartSubSpanStr = newStartSubSpan.ToString();
+						//
+						var prevStartOpIndex = prevLineSpan.IndexOfAny(SpaceTabOpenParenSv);
+						var prevStartSubSpan = prevStartOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(0, prevStartOpIndex).Trim(Spaces);
+						var prevStartSubSpanStr = prevStartSubSpan.ToString();
+						//
+						var prevEndOpIndex = prevLineSpan.LastIndexOfAny(SpaceTabOpenParenSv);
+						var prevEndSubSpan = prevEndOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(prevEndOpIndex + 1).Trim(Spaces);
+						var prevEndSubSpanStr = prevEndSubSpan.ToString();
+
+						//Previous line was an empty if test without parens, don't join.
+						//if x =
+						//...
+						if (!lastNested
+								&& Parser.flowOperators.Contains(prevStartSubSpanStr)
+								&& prevLine.Code.EndsWith('='))
+						{
+							StartNewLine(newLineStr);
+						}
+						//Check if the previous line ends with a := or a := "
+						//Note that := "" is not a continuation line.
+						//This could be a standalone empty assign, or an assign that is to be joined with this line.
+						else if (tempPrev.EndsWith(":="))
+						{
+							//Empty assign before closing brace, don't join.
+							//if (...)
+							//{
+							//  x :=
+							//}
+							if (newLineStr == "}")
+							{
+								StartNewLine(newLineStr);
+							}
+							else
+							{
+								//Flow, don't join.
+								//x :=
+								//if (...)
+								if (Parser.flowOperators.Contains(newStartSubSpanStr)
+										|| Parser.propKeywords.Contains(newStartSubSpanStr)
+										|| string.Compare(newStartSubSpanStr, "static", true) == 0//Don't join assignments of static class or function variables with any others.
+										|| string.Compare(prevStartSubSpanStr, "static", true) == 0)
+								{
+									StartNewLine(newLineStr);
+								}
+								else//All other cases, join.
+								{
+									AddToPreviousLine(prevLine, newLineStr);
+								}
+							}
+						}
+						else//Other cases.
+						{
+							var newIsHotkey = newLineStr.FindFirstNotInQuotes("::") != -1;
+							var prevIsHotkey = prevLine.Code.FindFirstNotInQuotes("::") != -1;
+							var prevIsDirective = prevLine.Code.StartsWith('#');
+
+							//New line started with an operator.
+							//x := 1//Previous line.
+							//+ 2//New line.
+							if (newStartSubSpan.StartsWithAnyOf(Parser.nonContExprOperatorsList) == -1
+									&& !prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
+									&& !newIsHotkey//Ensure same for new.
+									&& !prevIsDirective//Ensure previous line wasn't a directive.
+									&& (Parser.exprVerbalOperators.Contains(newStartSubSpanStr)
+										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1))//Verbal operators must match the token, others can just be the start of the string.
+							{
+								AddToPreviousLine(prevLine, newLineStr);
+							}
+							else
+							{
+								//Previous line ended with an operator.
+								//x := 1 +//Previous line.
+								//2//New line.
+								if (!prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
+										&& !newIsHotkey//Ensure same for new.
+										&& !prevIsDirective//Ensure previous line wasn't a directive.
+										&& prevEndSubSpan.EndsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
+										&& (Parser.contExprOperators.Contains(prevEndSubSpanStr) || prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)
+								   )
+								{
+									if (prevEndSubSpanStr.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
+									{
+										StartNewLine(newLineStr);
+									}
+									else
+									{
+										AddToPreviousLine(prevLine, newLineStr);
+									}
+								}
+								else
+								{
+									var isPropLine = Parser.propKeywords.Contains(newStartSubSpanStr);
+									var wasPropLine = Parser.propKeywords.Contains(prevStartSubSpanStr);
+									var wasFuncDef = prevLine.Code.FindFirstNotInQuotes("(") != -1 && prevLine.Code.FindFirstNotInQuotes(")") != -1;
+
+									if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0)
+										//if (parenlevels == 0 && bracelevels == 1 && bracketlevels == 0)
+									{
+										//Previous line was in an imbalanced state with only 1 extra open brace { and
+										//the beginning of the line is a flow statement. This is OTB style and is not
+										//a continuation line, so add a new line.
+										//if (...) {
+										if (prevLineSpan.EndsWith(openBraceSpan)
+												&& (prevIsHotkey//::d {
+													|| otbFlowKeywords.Contains(prevStartSubSpanStr)//if (...) {
+													|| wasPropLine//get {
+													|| wasFuncDef)//myfunc() {
+										   )
+										{
+											//if (...) {
+											//} else...
+											//...or
+											//d:: {
+											//...
+											if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
+											{
+												var newLineRest = newLineSpan.Slice(1).Trim(Spaces).ToString();
+												var newCloseBrace = "}";
+												StartNewLine(newCloseBrace);
+												StartNewLine(newLineRest);
+											}
+											else
+												StartNewLine(newLineStr);
+
+											goto EndLine;
+										}
+									}
+
+									//Previous line was non OTB flow or function definition and this line starts with { as expected,
+									//but there is unexpected code after.
+									//Place the unexpected code on its own line.
+									//if (...)//Previous line.
+									//{ x := 123//New line.
+									//...
+									if ((otbFlowKeywords.Contains(prevStartSubSpanStr) || wasFuncDef)
+											&& !prevLineSpan.EndsWith(openBraceSpan)
+											&& newLineSpan.StartsWith(openBraceSpan)
+											&& newLineSpan.Length > 1)
+									{
+										var newLineRest = newLineSpan.Slice(1).Trim(Spaces).ToString();
+										var newOpenBrace = "{";
+										StartNewLine(newOpenBrace);
+										StartNewLine(newLineRest);
+									}
+									else if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
+									{
+										var newLineRest = newLineSpan.Slice(1).Trim(Spaces);
+										var newLineRestFirstTokenIndex = newLineRest.IndexOfAny(SpaceTabOpenParenSv);
+										//Check for closing of a function call or fat arrow function like:
+										//})
+										var newLineRestFirstTokenSpan = newLineRestFirstTokenIndex == -1 ? newLineRest : newLineRest.Slice(0, newLineRestFirstTokenIndex);
+
+										if (!otbFlowKeywords.Contains(newLineRestFirstTokenSpan.ToString()))
+										{
+											prevLine.Code += newLineStr;
+											_ = sb.Clear();
+											goto EndLine;
+										}
+
+										//Check for the start of a new flow statement like:
+										//} else {
+										StartNewLine("}");
+
+										if (newLineRestFirstTokenIndex > 0 && newLineRest.Length > newLineRestFirstTokenIndex)
+										{
+											var flowBraceIndex = newLineRest.IndexOf('{');
+
+											if (flowBraceIndex != -1)
+											{
+												StartNewLine(newLineRest.Slice(0, flowBraceIndex).ToString());
+												StartNewLine("{");
+												StartNewLine(newLineRest.Slice(flowBraceIndex + 1).TrimStart(Spaces).ToString());
+											}
+											else//There wasn't a {, but there could have been more flow statements afteward, such as else if.
+												StartNewLine(newLineRest.ToString());
+										}
+										else//Length matched exactly, so it was just a } else.
+											StartNewLine(newLineRest.ToString());
+									}
+									//Previous line was a standalone open or close brace, so don't join.
+									//This will have only happened if the line before it was not a multiline statement.
+									//if (...)
+									//{//Previous line.
+									//  x := 123//New line.
+									//...
+									else if (prevLine.Code == "{")
+									{
+										StartNewLine(newLineStr);
+									}
+									else if (prevLine.Code == "}")
+									{
+										StartNewLine(newLineStr);
+									}
+									//Previous line was balanced and the new line is imbalanced in a non-OTB manner.
+									//x := 1//Previous line.
+									//y := [//New line.
+									//...
+									else if (!lastNested && anyNested)
+									{
+										StartNewLine(newLineStr);
+									}
+									//Previous line was imbalanced in a non-OTB manner, but the new line balanced it.
+									//x := [//Previous line.
+									//1, 2]//New line.
+									else if (lastNested && !anyNested && !isPropLine && !wasPropLine)
+									{
+										AddToPreviousLine(prevLine, newLineStr);
+									}
+									//Previous and/or new line is imbalanced in a non-OTB manner.
+									//x := [//Previous line.
+									//1//New line.
+									//...
+									else if (anyNested && !isPropLine && !wasPropLine)
+									{
+										AddToPreviousLine(prevLine, newLineStr);
+									}
+									else//No other special cases detected, so just add it as a new line.
+									{
+										StartNewLine(newLineStr);
+									}
 								}
 							}
 						}
 					}
+
+					EndLine:
+
+					if (!commentIgnore)
+						last = ch;
 				}
+
+				prev = span;
 			}
 
-			line = list.Count > 0 ? list[list.Count - 1].LineNumber : 0;
+			if (sb.Length > 0)//If anything is left over, add it.
+			{
+				var newLineStr = sb.ToString().Trim(Spaces);
+				StartNewLine(newLineStr);
+			}
 
 			foreach (var extraline in extralines)
-			{
-				extraline.LineNumber = ++line;
 				list.Add(extraline);
+
+			if (list.Count > 0)//Entire file could have just been comments, or empty.
+			{
+				lineNumber = list[0].LineNumber;
+
+				foreach (var codeLine in list)
+				{
+					var s = codeLine.Code;
+					Parser.Translate(codeLine, ref s);
+
+					if (s == null)
+						throw new ParseException($"Could not translate line {s}", codeLine);
+
+					codeLine.Code = s;
+					codeLine.LineNumber = lineNumber++;
+				}
 			}
 
 			return list;
@@ -690,80 +959,6 @@ namespace Keysharp.Scripting
 			}
 
 			return parenlevels != 0 || bracelevels != 0 || bracketlevels != 0;
-		}
-		private string ParseContinuations(TextReader source, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
-		{
-			string code;
-			var sb = new StringBuilder(256);
-
-			while ((code = source.ReadLine()) != null)
-			{
-				code = Parser.StripComment(code).Trim(Spaces);
-
-				if (code.Length > 0)
-				{
-					if (code[0] == ParenOpen && bracketlevels == 0)//There can be multiline strings within continuation sections. Ignore for array creation, because a lambda like () => 1 might be an element, in which case it'd match the check for ParenOpen.
-					{
-						_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-						var buf = new StringBuilder(256);
-						_ = buf.Append(code);
-						_ = buf.Append(newlineToUse);
-						var wasinquote = false;
-
-						while ((code = source.ReadLine()) != null)
-						{
-							var codeTrim = code.TrimStart(Spaces);
-
-							if (codeTrim.Length > 0 && codeTrim[0] == ParenClose)
-							{
-								wasinquote = inquote;
-								code = string.Concat(codeTrim.SkipWhile(x => x == ParenClose));
-								_ = buf.Append(ParenClose);
-								_ = LineLevels(codeTrim, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-								break;
-							}
-							else
-							{
-								_ = buf.Append(code);
-								_ = buf.Append(newlineToUse);
-								_ = LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels);
-							}
-						}
-
-						var str = buf.ToString();
-						var result = (inquote || wasinquote) ? Parser.MultilineString(str) : str;
-						_ = sb.Append(result);
-
-						if (code != null)//Nested continuation statements can sometimes return null.
-							_ = sb.Append(code);
-						else
-							break;
-					}
-					else
-					{
-						_ = sb.Append(code);
-					}
-
-					var cont = Parser.IsContinuationLine(code, true);
-
-					if (cont)//Without inserting a space, the parser will get confused if operators are attached to other symbols.
-						_ = sb.Append(' ');
-
-					if (!LineLevels(code, ref inquote, ref verbatim, ref parenlevels, ref bracelevels, ref bracketlevels) && !cont)
-						break;
-				}
-			}
-
-			if (parenlevels != 0)
-				throw new ParseException($"{ExUnbalancedParens} around line {sb}");
-
-			if (bracelevels != 0)
-				throw new ParseException($"{ExUnbalancedBraces} around line {sb}");
-
-			if (bracketlevels != 0)
-				throw new ParseException($"{ExUnbalancedBrackets} around line {sb}");
-
-			return sb.ToString();
 		}
 	}
 }

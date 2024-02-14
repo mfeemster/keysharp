@@ -10,6 +10,10 @@ namespace Keysharp.Tests
 		[Test, Category("Misc")]
 		public void SimplePass() => Assert.IsTrue(TestScript("misc-pass", false));
 
+		[NonParallelizable]
+		[Test, Category("Misc")]
+		public void MiscSyntax() => Assert.IsTrue(TestScript("misc-syntax", false));
+
 		[Test, Category("Misc")]
 		public void MiscObject()
 		{

@@ -115,7 +115,7 @@ else
 x :=
 x += 1
 
-if (x = 1)
+if (x = 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

@@ -25,10 +25,10 @@ namespace Keysharp.Scripting
 			_ = assemblyAttributes.Add(dec);
 		}
 
-		private void ParseDirective(string code)
+		private void ParseDirective(CodeLine codeLine, string code)
 		{
 			if (code.Length < 2)
-				throw new ParseException(ExUnknownDirv);
+				throw new ParseException(ExUnknownDirv, codeLine);
 
 			var parts = code.Split(directiveDelims, 2);
 
@@ -126,7 +126,7 @@ namespace Keysharp.Scripting
 						initial.Insert(0, clipset);
 					}
 					else
-						throw new ParseException($"#{upper} directive must be followed by numerical value.");
+						throw new ParseException($"#{upper} directive must be followed by numerical value.", codeLine);
 				}
 				break;
 
@@ -167,7 +167,7 @@ namespace Keysharp.Scripting
 						initial.Insert(0, propset);
 					}
 					else
-						throw new ParseException($"#{upper} directive must be followed by numerical value.");
+						throw new ParseException($"#{upper} directive must be followed by numerical value.", codeLine);
 				}
 				break;
 
@@ -236,7 +236,7 @@ namespace Keysharp.Scripting
 						initial.Insert(0, propset);
 					}
 					else
-						throw new ParseException($"#{upper} directive must be followed by numerical value.");
+						throw new ParseException($"#{upper} directive must be followed by numerical value.", codeLine);
 				}
 				break;
 
@@ -259,7 +259,7 @@ namespace Keysharp.Scripting
 						_ = parent.Add(propset);
 					}
 					else
-						throw new ParseException($"#{upper} directive must be followed by numerical value.");
+						throw new ParseException($"#{upper} directive must be followed by numerical value.", codeLine);
 				}
 				break;
 
@@ -281,7 +281,7 @@ namespace Keysharp.Scripting
 					break;
 
 				default:
-					throw new ParseException(ExUnknownDirv);
+					throw new ParseException(ExUnknownDirv, codeLine);
 			}
 		}
 	}

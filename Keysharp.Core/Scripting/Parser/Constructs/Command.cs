@@ -128,21 +128,21 @@ namespace Keysharp.Scripting
 			return "";
 		}
 
-		private bool ParseCommand(CodeLine line, string code)
+		private bool ParseCommand(CodeLine codeLine, string code)
 		{
 			var newCode = ConvertCommandToExpression(code);
 
 			if (newCode.Length > 0)
 			{
-				var lineNumber = codeLines.IndexOf(line);
-				codeLines[lineNumber] = new CodeLine(line.FileName, line.LineNumber, newCode);
+				var lineNumber = codeLines.IndexOf(codeLine);
+				codeLines[lineNumber] = new CodeLine(codeLine.FileName, codeLine.LineNumber, newCode);
 				return true;
 			}
 			else
 				return false;
 		}
 
-		private CodeExpression ParseCommandParameter(CodeLine line, string code, bool byref = false, bool expr = false)
+		private CodeExpression ParseCommandParameter(CodeLine codeLine, string code, bool byref = false, bool expr = false)
 		{
 			code = code.Trim(Spaces);
 
@@ -165,7 +165,7 @@ namespace Keysharp.Scripting
 			{
 				try
 				{
-					return ParseSingleExpression(line, code, false);
+					return ParseSingleExpression(codeLine, code, false);
 				}
 				catch (Keysharp.Core.ParseException)
 				{
@@ -178,7 +178,7 @@ namespace Keysharp.Scripting
 			}
 
 			code = StripComment(code);
-			return byref ? VarId(code, false) : VarIdExpand(code);
+			return byref ? VarId(codeLine, code, false) : VarIdExpand(codeLine, code);
 		}
 	}
 }

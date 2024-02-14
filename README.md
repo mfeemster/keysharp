@@ -117,6 +117,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `ObjOwnProps()` takes an optional second parameter as a boolean (default: `false`). Passing `True` means return name and value, passing `False` or empty means return name only.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
+* `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
 
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.

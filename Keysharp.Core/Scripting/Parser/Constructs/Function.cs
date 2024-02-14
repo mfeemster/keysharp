@@ -11,10 +11,10 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		public string ParseFunction(CodeLine line, int n)
+		public string ParseFunction(CodeLine codeLine, int n)
 		{
 			StartNewFunction();
-			var code = line.Code;
+			var code = codeLine.Code;
 			int i;
 			var buf = new StringBuilder();
 			string name;
@@ -38,17 +38,17 @@ namespace Keysharp.Scripting
 					break;
 				}
 				else
-					throw new ParseException(ExUnexpected);
+					throw new ParseException(ExUnexpected, codeLine);
 			}
 
 			if (buf.Length == 0)
-				throw new ParseException(ExUnexpected);
+				throw new ParseException(ExUnexpected, codeLine);
 
 			name = buf.ToString();
 			buf.Length = 0;
 
 			if (!InClassDefinition() && IsLocalMethodReference(name))
-				throw new ParseException("Duplicate function: \"" + name + "\".");
+				throw new ParseException("Duplicate function: \"" + name + "\".", codeLine);
 
 			var blockType = CodeBlock.BlockType.Expect;
 			var str = false;
@@ -64,7 +64,7 @@ namespace Keysharp.Scripting
 					case StringBoundVerbatim:
 					{
 						var origi = i;
-						var rest = ParseString(code, ref i);
+						var rest = ParseString(codeLine, code, ref i);
 						//rest = rest.Substring(1, rest.Length - 2);
 						_ = buf.Append(code.Substring(origi, (i - origi) + 1));
 						continue;
@@ -88,7 +88,7 @@ namespace Keysharp.Scripting
 			}
 
 			if (!stop)
-				throw new ParseException("Expected closing parenthesis");
+				throw new ParseException("Expected closing parenthesis.", codeLine);
 
 			var isFatArrow = false;
 			var param = buf.ToString();
@@ -113,7 +113,7 @@ namespace Keysharp.Scripting
 				else if (IsCommentAt(code, i))
 					break;
 				else if (!IsSpace(sym))
-					throw new ParseException(ExUnexpected);
+					throw new ParseException(ExUnexpected, codeLine);
 			}
 
 			var method = LocalMethod(name);
@@ -124,18 +124,18 @@ namespace Keysharp.Scripting
 			if (isFatArrow)
 			{
 				var theRest = code.AsSpan(i).TrimStart(FatArrow).Trim().ToString();
-				codeLines.Insert(n, new CodeLine(line.FileName, line.LineNumber, "{"));
-				codeLines.Insert(n + 1, new CodeLine(line.FileName, line.LineNumber + 1, $"return {theRest}"));
-				codeLines.Insert(n + 2, new CodeLine(line.FileName, line.LineNumber + 2, "}"));
+				codeLines.Insert(n, new CodeLine(codeLine.FileName, codeLine.LineNumber, "{"));
+				codeLines.Insert(n + 1, new CodeLine(codeLine.FileName, codeLine.LineNumber + 1, $"return {theRest}"));
+				codeLines.Insert(n + 2, new CodeLine(codeLine.FileName, codeLine.LineNumber + 2, "}"));
 				SetLineIndexes();
 			}
 
-			var block = new CodeBlock(line, method.Name, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
+			var block = new CodeBlock(codeLine, method.Name, method.Statements, CodeBlock.BlockKind.Function, blocks.PeekOrNull());
 			block.Type = blockType;
 			_ = CloseTopSingleBlock();
 			blocks.Push(block);
 
-			if (ParseFunctionParameters(param) is List<CodeParameterDeclarationExpression> funcparams)
+			if (ParseFunctionParameters(param, codeLine) is List<CodeParameterDeclarationExpression> funcparams)
 			{
 				foreach (var funcparam in funcparams)
 				{
@@ -148,7 +148,7 @@ namespace Keysharp.Scripting
 			return method.Name;
 		}
 
-		public string ParseFunctionName(string code)
+		public string ParseFunctionName(CodeLine codeLine, string code)
 		{
 			var buf = new StringBuilder();
 
@@ -161,11 +161,11 @@ namespace Keysharp.Scripting
 				else if (sym == ParenOpen)
 					break;
 				else
-					throw new ParseException(ExUnexpected);
+					throw new ParseException(ExUnexpected, codeLine);
 			}
 
 			if (buf.Length == 0)
-				throw new ParseException(ExUnexpected);
+				throw new ParseException(ExUnexpected, codeLine);
 
 			return buf.ToString();
 		}
@@ -221,7 +221,7 @@ namespace Keysharp.Scripting
 			return invoke;
 		}
 
-		private List<CodeParameterDeclarationExpression> ParseFunctionParameters(string code)
+		private List<CodeParameterDeclarationExpression> ParseFunctionParameters(string code, CodeLine codeLine)
 		{
 			var i = 0;
 			var names = new List<CodeParameterDeclarationExpression>();
@@ -238,7 +238,7 @@ namespace Keysharp.Scripting
 
 				if (x == i)
 				{
-					throw new ParseException(ExUnexpected);
+					throw new ParseException(ExUnexpected, codeLine);
 				}
 				else
 				{
@@ -306,7 +306,7 @@ namespace Keysharp.Scripting
 
 					if (i == code.Length)
 					{
-						throw new ParseException(ExUnexpected);
+						throw new ParseException(ExUnexpected, codeLine);
 					}
 					else if (code[i] == Multicast)
 					{
@@ -322,7 +322,7 @@ namespace Keysharp.Scripting
 						{
 							if (code[i] == StringBound || code[i] == StringBoundVerbatim)
 							{
-								_ = ParseString(code, ref i);
+								_ = ParseString(codeLine, code, ref i);
 								wasstr = true;
 							}
 
@@ -352,9 +352,9 @@ namespace Keysharp.Scripting
 							else if (wasstr)
 							{
 								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(ValidateParameterLiteral(sub)))));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(ValidateParameterLiteral(sub, codeLine)))));
 							}
-							else if (PrimitiveToExpression(ValidateParameterLiteral(sub)) is CodeExpression expr)
+							else if (PrimitiveToExpression(ValidateParameterLiteral(sub, codeLine)) is CodeExpression expr)
 							{
 								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
 								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(expr)));
@@ -364,7 +364,7 @@ namespace Keysharp.Scripting
 				}
 
 				if (i < code.Length && code[i] != Multicast)
-					throw new ParseException(ExUnexpected);
+					throw new ParseException(ExUnexpected, codeLine);
 				else
 					i++;
 			}
@@ -372,9 +372,9 @@ namespace Keysharp.Scripting
 			return names.Count == 0 ? null : names;
 		}
 
-		private string ValidateParameterLiteral(string code)
+		private string ValidateParameterLiteral(string code, CodeLine codeLine)
 		{
-			const string err = "Default parameter value expects a literal";
+			const string err = "Default parameter value expects a literal.";
 
 			if (code.Length == 0)
 				return null;
@@ -387,7 +387,7 @@ namespace Keysharp.Scripting
 			if (code[0] == StringBound || code[0] == StringBoundVerbatim)
 			{
 				var i = 0;
-				code = ParseString(code, ref i);
+				code = ParseString(codeLine, code, ref i);
 				code = code.Substring(1, code.Length - 2);
 				//code = EscapedString(code.Substring(1, code.Length - 2), false);
 				//var str = true;
@@ -411,7 +411,7 @@ namespace Keysharp.Scripting
 				//code = code.Replace(new string(StringBound, 2), string.Empty);
 			}
 			else if (!IsPrimitiveObject(code))
-				throw new ParseException(err);
+				throw new ParseException(err, codeLine);
 
 			return code;
 		}

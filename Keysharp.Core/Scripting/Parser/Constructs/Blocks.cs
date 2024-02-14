@@ -33,7 +33,7 @@ namespace Keysharp.Scripting
 				_ = elses.Pop();
 		}
 
-		private void CloseBlock(Stack<CodeBlock> stack)
+		private void CloseBlock(CodeLine codeLine, Stack<CodeBlock> stack)
 		{
 			var top = stack.Pop();
 
@@ -48,14 +48,14 @@ namespace Keysharp.Scripting
 					{
 						if (css.CaseSense != null)
 						{
-							var right = new CodeMethodInvokeExpression(VarId(css.SwitchVar, false), "ToString");
+							var right = new CodeMethodInvokeExpression(VarId(codeLine, css.SwitchVar, false), "ToString");
 							_ = origlocalparent.Add(BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right)));
 							_ = origlocalparent.Add(new CodeVariableDeclarationStatement(new CodeTypeReference("System.String"), $"{css.SwitchVarTempName}str", right));
 							allVars[typeStack.Peek()].GetOrAdd(Scope)[css.SwitchVarTempName] = nullPrimitive;
 						}
 						else if (!string.IsNullOrEmpty(css.SwitchVar))
 						{
-							var tokens = SplitTokens(css.SwitchVar);
+							var tokens = SplitTokens(codeLine, css.SwitchVar);
 							var right = ParseExpression(top.Line, css.SwitchVar, tokens, true);
 							_ = origlocalparent.Add(BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(css.SwitchVarTempName), CodeBinaryOperatorType.Assign, right)));
 							allVars[typeStack.Peek()].GetOrAdd(Scope)[css.SwitchVarTempName] = nullPrimitive;
@@ -127,13 +127,13 @@ namespace Keysharp.Scripting
 				_ = top.Statements.Add(new CodeLabeledStatement(top.EndLabel, new CodeSnippetStatement(";")));//End labels seem to need a semicolon.
 		}
 
-		private void CloseBlock()
+		private void CloseBlock(CodeLine codeLine)
 		{
 			CloseTopSingleBlocks();
-			CloseBlock(-1, false);
+			CloseBlock(codeLine, -1, false);
 		}
 
-		private void CloseBlock(int level, bool skip)
+		private void CloseBlock(CodeLine codeLine, int level, bool skip)
 		{
 			if (blocks.Count < (skip ? 2 : 1))
 				return;
@@ -144,17 +144,17 @@ namespace Keysharp.Scripting
 			if (top.IsSingle && blocks.Count > top.Level)
 				goto end;
 
-			CloseBlock(blocks);
+			CloseBlock(codeLine, blocks);
 			end:
 
 			if (skip)
 				blocks.Push(peek);
 		}
 
-		private void CloseSingleLoopBlocks()
+		private void CloseSingleLoopBlocks(CodeLine codeLine)
 		{
 			while (singleLoops.Count != 0)
-				CloseBlock(singleLoops);
+				CloseBlock(codeLine, singleLoops);
 		}
 
 		private CodeBlock CloseTopLabelBlock() => blocks.Count != 0 && blocks.Peek().Kind == CodeBlock.BlockKind.Label ? blocks.Pop() : null;

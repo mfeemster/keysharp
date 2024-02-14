@@ -16,6 +16,10 @@ namespace Keysharp.Scripting
 		public const string newlineToUse = "\n";
 		public static readonly char[] BothBraces = "{}".ToCharArray();
 		public static readonly char[] BothParens = "()".ToCharArray();
+		public static readonly char[] BothBrackets = "[]".ToCharArray();
+		internal static SearchValues<char> AllBracesBracketsParensSv;
+
+		public static readonly char[] Quote = "\"".ToCharArray();
 		public static readonly char[] Comma = ",".ToCharArray();
 		public static readonly char[] DashSlash = "-/".ToCharArray();
 		public static readonly char[] FatArrow = "=>".ToCharArray();
@@ -88,7 +92,7 @@ namespace Keysharp.Scripting
 		internal const string ExUnbalancedBrackets = "Unbalanced brackets in expression";
 		internal const string ExUnbalancedParens = "Unbalanced parentheses in expression";
 		internal const string ExUnclosedBlock = "Unclosed block";
-		internal const string ExUnexpected = "Unexpected symbol";
+		internal const string ExUnexpected = "Unexpected symbol.";
 		internal const string ExUnknownDirv = "Unrecognized directive";
 		internal const string ExUntermStr = "Unterminated string";
 		internal const string FalseTxt = "false";
@@ -102,11 +106,13 @@ namespace Keysharp.Scripting
 		internal const string FlowExtends = "extends";
 		internal const string FlowFinally = "finally";
 		internal const string FlowFor = "for";
+		internal const string FlowGet = "get";
 		internal const string FlowGosub = "gosub";
 		internal const string FlowGoto = "goto";
 		internal const string FlowIf = "if";
 		internal const string FlowLoop = "loop";
 		internal const string FlowReturn = "return";
+		internal const string FlowSet = "set";
 		internal const string FlowSwitch = "switch";
 		internal const string FlowTry = "try";
 		internal const string FlowUntil = "until";
@@ -615,6 +621,8 @@ namespace Keysharp.Scripting
 		internal static SearchValues<char> SpaceTabSv = SearchValues.Create(SpaceTab);
 		internal static readonly char[] SpaceTabComma = " \t,".ToCharArray();
 		internal static readonly char[] SpaceTabOpenBrace = " \t{".ToCharArray();
+		internal static readonly char[] SpaceTabOpenParen = " \t(".ToCharArray();
+		internal static SearchValues<char> SpaceTabOpenParenSv = SearchValues.Create(SpaceTabOpenParen);
 		internal static readonly char[] TrimLine = "\t\r\n ".ToCharArray();
 		internal static readonly char[] TrimSec = "[]".ToCharArray();
 		internal static readonly char[] SpaceMultiDelim;
@@ -676,6 +684,12 @@ namespace Keysharp.Scripting
 			SpaceMultiDelim[0] = Multicast;
 			Spaces.CopyTo(SpaceMultiDelim, 1);
 			SpaceMultiDelimSv = SearchValues.Create(SpaceMultiDelim);
+			//
+			var braces = new char[6];
+			BothBraces.CopyTo(braces, 0);
+			BothBrackets.CopyTo(braces, 2);
+			BothBrackets.CopyTo(braces, 4);
+			AllBracesBracketsParensSv = SearchValues.Create(braces);
 		}
 	}
 }

@@ -651,7 +651,6 @@ gb2Btn1.OnEvent("Click", "SendToApp")
 gb2Btn2 := MyGui.Add("Button", "x95 yp", "This Edit")
 gb2Btn2.OnEvent("Click", "SendToGui")
 
-
 ;MyGui.Add("Text", , "Testing placement")
 
 SendToApp() {
@@ -663,9 +662,9 @@ SendToApp() {
 	Send("{Raw}``100`%`n")
 	Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
 	; Line above produces [You should see '' after the ellipses ...] 
-	Send("{Blind}You should see nothing after the ellipses ... '{Blind}'")
+	Send("{Blind}You should see nothing after the ellipses ... {Blind}")
 	Send("`n")
-	Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+	Send("{Text}You should see the Blind mode syntax in single quotes after the ellipses ... '{Blind}'")
 	Sleep(500)
 	MsgBox("End of Notepad test", "Test finished", "T2")
 	Send("{Alt}Fx")
@@ -684,7 +683,7 @@ SendToGui() {
 	Send("{Blind}{Text}You should see '{Blind}{Text}' after the ellipses ... {Blind}{Text}`n")
 	Send("{Blind}You should see nothing after the ellipses ... {Blind}")
 	Send("`n")
-	Send("{Text}You should see the Blind mode syntax after the ellipses ... '{Blind}'")
+	Send("{Text}You should see the Blind mode syntax in single quotes after the ellipses ... '{Blind}'")
 }
 
 MyGui.UseGroup()
@@ -1039,7 +1038,7 @@ ThirdGUI() {
 
 MoveTheMouse() {
 	mx :=
-	my :=
+	my := 0
 	CoordMode("Mouse", "Screen")
 	MouseGetPos(&mx, &my)
 	SendMode("Event")
@@ -1285,7 +1284,7 @@ Click_CB() {
 
 GetPix() {
 	mx :=
-	my :=
+	my := 0
 	MouseGetPos(&mx, &my)
 	MyColorText.Text := PixelGetColor(mx, my)
 	ColorString := "Bold s12 c" MyColorText.Text
@@ -1557,10 +1556,10 @@ FuncBtnTwo.OnEvent("Click", "StupidTrickTwo")
 FuncBtnThree := MyGui.Add("Button", "x250 yp", "Hotkey Off")
 FuncBtnThree.OnEvent("Click", "StupidTrickThree")
 
-FuncBtnFour := MyGui.Add("Button", "x340 yp", "Hotkey with FuncObj")
+FuncBtnFour := MyGui.Add("Button", "x340 yp", "RCtrl and RShift -> AltTab`nwith FuncObj")
 FuncBtnFour.OnEvent("Click", "FuncObjTest")
 
-FuncBtnFive := MyGui.Add("Button", "x10 y+30 w150", "Toggle AltTab Hotkey On or Off")
+FuncBtnFive := MyGui.Add("Button", "x10 y+30 w150", "Toggle AltTab Hotkey`nOn or Off")
 FuncBtnFive.OnEvent("Click", "ToggleHotkey")
 
 FuncBtnSix := MyGui.Add("Button", "x170 yp w150", "From .INI`nRCtrl+LShift = AltTab")
@@ -1606,15 +1605,15 @@ StupidTrickThree() {
 	}
 }
 
+RealFn2(TheMessage) {
+	Hotkey("RCtrl & RShift", TheMessage)
+	MsgBox(TheMessage)
+}
+
 FuncObjTest() {
 	RealFn2 := FuncObj("RealFn2")
 	fn2 := RealFn2.Bind("AltTab")
 	fn2()
-
-	RealFn2(TheMessage) {
-		Hotkey("RCtrl & RShift", TheMessage)
-		MsgBox(TheMessage)
-	}
 }
 
 ToggleHotkey() {
@@ -1878,7 +1877,7 @@ ShowEditHwnd() {
 UpdateOSD()
 {
 	mx :=
-	my :=
+	my := 0
 	MouseGetPos(&mx, &my)
 	CoordText.SetFont("bold s20")
 	CoordText.Text := ("X: " mx " Y: " my)
@@ -1983,7 +1982,7 @@ CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the scre
 	try 
 	{
 	resultX :=
-	resultY :=
+	resultY := 0
 	ImageSearch(&resultX, &resultY, 0, 0, A_ScreenWidth, A_ScreenHeight, "killbill.png")
 
 	If (resultX != "")

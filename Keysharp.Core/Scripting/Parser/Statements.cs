@@ -62,14 +62,13 @@ namespace Keysharp.Scripting
 		{
 			for (var i = 0; i < codeLines.Count; i++)
 			{
-				var codeline = codeLines[i];
-				var code = codeline.Code;
+				var codeLine = codeLines[i];
+				var code = codeLine.Code;
 
 				if (string.IsNullOrEmpty(code))
 					continue;
 
-				line = codeline.LineNumber;
-				fileName = codeline.FileName;
+				fileName = codeLine.FileName;
 				parentBlock = blocks.Count > 0 ? blocks.Peek() : null;
 				parent = parentBlock != null ? parentBlock.Statements : main.Statements;
 				var blocksCount = -1;
@@ -82,7 +81,7 @@ namespace Keysharp.Scripting
 					case BlockOpen:
 						if (blocks.Count == 0)
 						{
-							block = new CodeBlock(codeline, Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
+							block = new CodeBlock(codeLine, Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
 							_ = CloseTopSingleBlock();
 							blocks.Push(block);
 						}
@@ -97,7 +96,7 @@ namespace Keysharp.Scripting
 
 					case BlockClose:
 						if (blocks.Count == 0)
-							throw new ParseException(ExUnexpected, codeline);
+							throw new ParseException(ExUnexpected, codeLine);
 
 						CloseElseBlocks();
 
@@ -108,7 +107,7 @@ namespace Keysharp.Scripting
 						if (parentBlock != null)
 						{
 							if (parentBlock.Kind == CodeBlock.BlockKind.CaseWithoutBrace)
-								CloseBlock();
+								CloseBlock(codeLine);
 							//If the case statement just contained empty braces, it means go do nothing and go to the end, instead of falling through which would be done when no braces or statements are present.
 							else if (parentBlock.Kind == CodeBlock.BlockKind.CaseWithBrace && parentBlock.Statements.Count == 0 && switches.PeekOrNull() is CodeSwitchStatement css)
 								_ = parentBlock.Statements.Add(new CodeGotoStatement(css.FinalLabelStatement.Label));
@@ -187,7 +186,7 @@ namespace Keysharp.Scripting
 							}
 						}
 
-						CloseBlock();
+						CloseBlock(codeLine);
 						skip = true;
 						break;
 
@@ -210,23 +209,23 @@ namespace Keysharp.Scripting
 					if (code.Length == 0)
 						continue;
 
-					codeline.Code = code;
+					codeLine.Code = code;
 				}
 
-				var token = GetToken(codeline);
+				var token = GetToken(codeLine);
 
 				try
 				{
 					switch (token)
 					{
 						case Token.Assign:
-							var assign = ParseAssign(codeline, code);
+							var assign = ParseAssign(codeLine, code);
 							//assign.LinePragma = codeline;
 							_ = parent.Add(assign);
 							break;
 
 						case Token.Command:
-							if (ParseCommand(codeline, code))
+							if (ParseCommand(codeLine, code))
 							{
 								if (block != null)//Reset the block state and reparse this line as a function call.
 									block.Type = CodeBlock.BlockType.Expect;
@@ -333,9 +332,9 @@ namespace Keysharp.Scripting
 									prop.Attributes |= MemberAttributes.Static;
 
 								properties[typeStack.Peek()].GetOrAdd(prop.Name).Add(prop);
-								var blockOpen = codeline.Code.AsSpan().Trim().EndsWith("{");
+								var blockOpen = codeLine.Code.AsSpan().Trim().EndsWith("{");
 								var blockType = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
-								var propblock = new CodeBlock(codeline, prop.Name, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
+								var propblock = new CodeBlock(codeLine, prop.Name, null, CodeBlock.BlockKind.Prop, blocks.PeekOrNull())
 								{
 									Type = blockType
 								};
@@ -356,17 +355,17 @@ namespace Keysharp.Scripting
 							foreach (CodeParameterDeclarationExpression p in prop.Parameters)
 								funcParams.Add(p.Name);
 
-							var span1 = codeline.Code.ToLower().AsSpan();
+							var span1 = codeLine.Code.ToLower().AsSpan();
 							var span2 = span1.TrimStart("get").TrimStart("set").TrimStart(Spaces);
 							var isFatArrow = span2.StartsWith("=>");
-							var propblock = new CodeBlock(codeline, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
+							var propblock = new CodeBlock(codeLine, token == Token.PropGet ? "get" : "set", null, token == Token.PropGet ? CodeBlock.BlockKind.PropGet : CodeBlock.BlockKind.PropSet, blocks.PeekOrNull());
 
 							if (isFatArrow)
 							{
 								var theRest = span2.TrimStart("=>").Trim().ToString();
-								codeLines.Insert(i + 1, new CodeLine(codeline.FileName, codeline.LineNumber, "{"));
-								codeLines.Insert(i + 2, new CodeLine(codeline.FileName, codeline.LineNumber, token == Token.PropGet ? $"return {theRest}" : theRest));
-								codeLines.Insert(i + 3, new CodeLine(codeline.FileName, codeline.LineNumber, "}"));
+								codeLines.Insert(i + 1, new CodeLine(codeLine.FileName, codeLine.LineNumber, "{"));
+								codeLines.Insert(i + 2, new CodeLine(codeLine.FileName, codeLine.LineNumber, token == Token.PropGet ? $"return {theRest}" : theRest));
+								codeLines.Insert(i + 3, new CodeLine(codeLine.FileName, codeLine.LineNumber, "}"));
 								SetLineIndexes();
 								propblock.Type = CodeBlock.BlockType.Expect;
 							}
@@ -387,15 +386,11 @@ namespace Keysharp.Scripting
 
 							if (IsFunction(code, n < codeLines.Count ? codeLines[n].Code : string.Empty))
 							{
-								_ = ParseFunction(codeline, n);
+								_ = ParseFunction(codeLine, n);
 							}
 							else
 							{
-								var statements = ParseMultiExpression(codeline, code, true);
-
-								for (n = 0; n < statements.Length; n++)
-									if (OptimizeLoneExpression(statements[n].Expression) is CodeExpression expr)
-										statements[n] = new CodeExpressionStatement(BinOpToSnippet(expr));
+								var statements = ParseMultiExpression(codeLine, code, true);
 
 								for (n = 0; n < statements.Length; n++)
 								{
@@ -422,8 +417,7 @@ namespace Keysharp.Scripting
 											}
 										}
 
-										//statements[n].LinePragma = lines[n];
-										_ = parent.Add(statements[n]);//This will erroneously enclose the expression in parens, which must be stripped out at the code level.
+										_ = parent.Add(statements[n]);
 									}
 								}
 							}
@@ -431,17 +425,17 @@ namespace Keysharp.Scripting
 						break;
 
 						case Token.Directive:
-							ParseDirective(code);
+							ParseDirective(codeLine, code);
 							break;
 
 						case Token.Unknown:
 						default:
-							throw new ParseException(ExUnexpected, codeline);
+							throw new ParseException(ExUnexpected, codeLine);
 					}
 				}
 				catch (ParseException e)
 				{
-					throw new ParseException(e.Message, codeline);
+					throw new ParseException(e.RawMessage, codeLine);
 				}
 				//catch (Exception ex)
 				//{
@@ -450,13 +444,13 @@ namespace Keysharp.Scripting
 				finally { }
 
 				if (blocks.Count == blocksCount && blocks.Peek().IsSingle)
-					CloseBlock(blocksCount, blocks.Count > blocksCount && blocksCount != -1);
+					CloseBlock(codeLine, blocksCount, blocks.Count > blocksCount && blocksCount != -1);
 			}
 
 			CloseTopSingleBlocks();
 			_ = CloseTopLabelBlock();
 			CloseTopSingleBlocks();
-			CloseSingleLoopBlocks();
+			CloseSingleLoopBlocks(new CodeLine(name, 0, ""));
 
 			if (blocks.Count > 0)
 				throw new ParseException(ExUnclosedBlock, blocks.Peek().Line);

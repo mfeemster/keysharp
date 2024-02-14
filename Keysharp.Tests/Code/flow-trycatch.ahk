@@ -97,7 +97,7 @@ try
 catch Error as errex
 {
 	b := true
-	str := errex.Message
+	str := errex.RawMessage
 }
 
 if (b == true)

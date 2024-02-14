@@ -26,12 +26,12 @@ namespace Keysharp.Scripting
 
 		internal BlockType Type { get; set; }
 
-		internal CodeBlock(CodeLine line, string method, CodeStatementCollection statements, BlockKind kind, CodeBlock parent)
-			: this(line, method, statements, kind, parent, null, null) { }
+		internal CodeBlock(CodeLine codeLine, string method, CodeStatementCollection statements, BlockKind kind, CodeBlock parent)
+			: this(codeLine, method, statements, kind, parent, null, null) { }
 
-		internal CodeBlock(CodeLine line, string method, CodeStatementCollection statements, BlockKind kind, CodeBlock parent, string endLabel, string exitLabel)
+		internal CodeBlock(CodeLine codeLine, string method, CodeStatementCollection statements, BlockKind kind, CodeBlock parent, string endLabel, string exitLabel)
 		{
-			Line = line;
+			Line = codeLine;
 			Method = method;
 			Statements = statements ?? new CodeStatementCollection();
 			Type = BlockType.Expect;

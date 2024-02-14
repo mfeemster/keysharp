@@ -16,7 +16,7 @@ namespace Keysharp.Scripting
 		private CodeExpression InternalVariable => VarRef(string.Concat(Scope, scopeChar + "\0", InternalID), false);
 
 		//internal CodeExpression VarId(string name, bool create, bool dyn = false) => name == args ? new CodeSnippetExpression(args) : VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
-		internal CodeExpression VarId(string name, bool create, bool dyn = false) => VarId(VarIdExpand(VarNormalizedName(name)), create, dyn);
+		internal CodeExpression VarId(CodeLine codeLine, string name, bool create, bool dyn = false) => VarId(VarIdExpand(codeLine, VarNormalizedName(name)), create, dyn);
 
 		private bool IsVarAssignment(object expr) => (expr as CodeExpression).WasCboeAssign() is CodeBinaryOperatorExpression;
 
@@ -91,7 +91,7 @@ namespace Keysharp.Scripting
 			return name;//It was something else other than CodePrimitiveExpression, so it was probably a CodeArrayIndexerExpression.
 		}
 
-		private CodeExpression VarIdExpand(string code)
+		private CodeExpression VarIdExpand(CodeLine codeLine, string code)
 		{
 			code = EscapedString(code, true);
 
@@ -103,7 +103,7 @@ namespace Keysharp.Scripting
 
 			if (!DynamicVars)
 			{
-				throw new ParseException(ExNoDynamicVars);
+				throw new ParseException(ExNoDynamicVars, codeLine);
 			}
 
 			var id = false;
@@ -128,11 +128,11 @@ namespace Keysharp.Scripting
 						var str = sub.ToString();
 
 						if (single)
-							parts.Add(VarRefOrPrimitive(VarIdOrConstant(str, false, true)));//Do double dispatching for single %variable%.
+							parts.Add(VarRefOrPrimitive(codeLine, VarIdOrConstant(codeLine, str, false, true)));//Do double dispatching for single %variable%.
 						else if (Reflections.flatPublicStaticProperties.TryGetValue(str, out var prop))//Else it's a concatenated%variable%, so do single dispatching, but check if the concat includes an accessor.
 							parts.Add(new CodeVariableReferenceExpression(prop.Name));
 						else//Not an accessor, so just concat as is.
-							parts.Add(VarIdOrConstant(str, false, false));
+							parts.Add(VarIdOrConstant(codeLine, str, false, false));
 
 						sub.Length = 0;
 						id = false;
@@ -173,12 +173,12 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private CodeExpression VarIdOrConstant(string name, bool create, bool dyn)
+		private CodeExpression VarIdOrConstant(CodeLine codeLine, string name, bool create, bool dyn)
 		{
 			switch (name.ToLowerInvariant())
 			{
 				case "a_linenumber":
-					return new CodeCastExpression(new CodeTypeReference(typeof(long)), new CodePrimitiveExpression(line));
+					return new CodeCastExpression(new CodeTypeReference(typeof(long)), new CodePrimitiveExpression(codeLine.LineNumber));
 
 				case "a_linefile":
 					return new CodePrimitiveExpression(Path.GetFullPath(fileName));
@@ -210,14 +210,14 @@ namespace Keysharp.Scripting
 				return new CodePrimitiveExpression(string.Empty);
 
 				default:
-					return VarId(name, create, dyn);
+					return VarId(codeLine, name, create, dyn);
 			}
 		}
 
-		private CodeExpression VarMixedExpr(object part)
+		private CodeExpression VarMixedExpr(CodeLine codeLine, object part)
 		{
 			if (IsVarReference(part))
-				return VarRefOrPrimitive(part);
+				return VarRefOrPrimitive(codeLine, part);
 			else if (part is CodePrimitiveExpression cpe)
 				return cpe;
 			else if (IsVarAssignment(part))
@@ -247,7 +247,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private CodeExpression VarRefOrPrimitive(object var)
+		private CodeExpression VarRefOrPrimitive(CodeLine codeLine, object var)
 		{
 			if (var is CodePrimitiveExpression cpe)
 				return cpe;
@@ -259,7 +259,7 @@ namespace Keysharp.Scripting
 				return cvre;
 
 			if (!IsVarReference(var))
-				throw new ParseException($"{var} is not a variable reference.");
+				throw new ParseException($"{var} is not a variable reference.", codeLine);
 
 			return (CodeArrayIndexerExpression)var;
 		}

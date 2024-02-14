@@ -71,13 +71,13 @@ namespace Keysharp.Scripting
 			return buffer.ToString();
 		}
 
-		internal static string MultilineString(string code)
+		internal static string MultilineString(string code, int lineNumber, string name)
 		{
 			var reader = new StringReader(code);
 			var line = reader.ReadLine().Trim(Spaces);
 
 			if (line.Length < 1 || line[0] != ParenOpen)
-				throw new ParseException($"Multiline string length of {line.Length} is not < 1 or the first character of {line[0]} is not '('.");
+				throw new ParseException($"Multiline string length of {line.Length} is not < 1 or the first character of {line[0]} is not '('.", lineNumber, code, name);
 
 			var join = newlineToUse;
 			bool ltrim = false, rtrim = false, stripComments = false, percentResolve = true, literalEscape = false;
@@ -133,7 +133,7 @@ namespace Keysharp.Scripting
 								if (option.Length > joinOpt.Length && option.Substring(0, joinOpt.Length).Equals(joinOpt, System.StringComparison.OrdinalIgnoreCase))
 									join = option.Substring(joinOpt.Length).Replace("`s", " ");
 								else
-									throw new ParseException(ExMultiStr);
+									throw new ParseException(ExMultiStr, lineNumber, code, name);
 
 								break;
 						}
@@ -230,7 +230,7 @@ namespace Keysharp.Scripting
 			return -1;
 		}
 
-		private void RemoveExcessParentheses(List<object> parts)
+		private void RemoveExcessParentheses(CodeLine codeLine, List<object> parts)
 		{
 			while (parts.Count > 1)
 			{
@@ -259,7 +259,7 @@ namespace Keysharp.Scripting
 							if (check.Length != 1)
 								break;
 							else if (--level < 0)
-								throw new ParseException(ExUnbalancedParens);
+								throw new ParseException(ExUnbalancedParens, codeLine);
 
 							break;
 					}

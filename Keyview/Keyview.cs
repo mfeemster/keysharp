@@ -547,7 +547,15 @@ namespace Keyview
 					{
 						var (errors, warnings) = CompilerHelper.GetCompilerErrors(domerrs);
 						SetFailure();
-						SetTxtOut($"Error creating DOM from script:\n\n{errors}\n\n\n{warnings}");
+						var txt = "Error creating DOM from script.";
+
+						if (errors.Length > 0)
+							txt += $"\n\n{errors}";
+
+						if (warnings.Length > 0)
+							txt += $"\n\n{warnings}";
+
+						SetTxtOut(txt);
 						goto theend;
 					}
 
@@ -592,7 +600,7 @@ namespace Keyview
 					else
 					{
 						SetFailure();
-						SetTxtOut(CompilerHelper.HandleCompilerErrors(results.Diagnostics, "Keyview", "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n\n" + code);
+						SetTxtOut(CompilerHelper.HandleCompilerErrors(results.Diagnostics, "Keyview", "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
 					}
 				}
 				catch

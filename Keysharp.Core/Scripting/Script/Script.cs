@@ -473,7 +473,7 @@ namespace Keysharp.Scripting
 
 		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
 
-		public static void VerifyVersion(string ver, bool plus, int line, string source)
+		public static void VerifyVersion(string ver, bool plus, int line, string code)
 		{
 			var ahkver = Accessors.A_AhkVersion;
 			var reqvers = ParseVersionToInts(ver);
@@ -484,10 +484,10 @@ namespace Keysharp.Scripting
 				if (plus)
 				{
 					if (reqvers[i] > thisvers[i])
-						throw new ParseException($"This script requires Keysharp >= v{ver}, but you have v{ahkver}", line, source);
+						throw new ParseException($"This script requires Keysharp >= v{ver}, but you have v{ahkver}", line, code);
 				}
 				else if (reqvers[i] != thisvers[i])
-					throw new ParseException($"This script requires Keysharp == v{ver}, but you have v{ahkver}", line, source);
+					throw new ParseException($"This script requires Keysharp == v{ver}, but you have v{ahkver}", line, code);
 
 				if (thisvers[i] > reqvers[i])
 					break;

@@ -71,6 +71,15 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return true;
 		}
 
+		internal static int EndsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
+		{
+			foreach (var end in strings)
+				if (str.EndsWith(end, StringComparison.OrdinalIgnoreCase))
+					return end.Length;
+
+			return -1;
+		}
+
 		/// <summary>
 		/// Taken loosely from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
 		/// </summary>
@@ -142,6 +151,54 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return ret;
 		}
 
+		internal static int FindFirstNotInQuotes(this string source, string s)
+		{
+			var escape = false;
+			var inquote = false;
+
+			for (var i = 0; i < source.Length; i++)
+			{
+				var ch = source[i];
+
+				if (ch == '\'')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || source[i - 1] != '`')
+							inquote = true;
+					}
+				}
+				else if (ch == '\"')
+				{
+					if (!inquote)
+					{
+						if (i == 0 || source[i - 1] != '`')
+							inquote = true;
+					}
+					else
+					{
+						if (i == 0 || source[i - 1] != '`' || !escape)//Checking escape accounts for ``.
+							inquote = false;
+					}
+				}
+
+				if (ch == Keywords.Escape)
+					escape = !escape;
+				else
+					escape = false;
+
+				if (!inquote)
+				{
+					if (source.Substring(i).StartsWith(s, StringComparison.OrdinalIgnoreCase))
+					{
+						return i;
+					}
+				}
+			}
+
+			return -1;
+		}
+
 		internal static int FindFirstNotOf(this string source, string chars, int offset = 0)
 		{
 			if (source.Length == 0) return -1;
@@ -204,6 +261,27 @@ namespace System//Extension methods should be in the same namespace of the objec
 					ct2++;
 
 			return ct1 == ct2;
+		}
+
+		/// <summary>
+		/// Reverse vesion of NthIndexOf().
+		/// </summary>
+		/// <param name="str"></param>
+		/// <param name="substr"></param>
+		/// <param name="pos"></param>
+		/// <param name="n"></param>
+		/// <param name="comp"></param>
+		/// <returns></returns>
+		internal static int LastNthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
+		{
+			pos = str.Length + pos + 1;
+
+			do
+			{
+				pos = str.LastIndexOf(substr, pos - 1, comp);
+			} while (--n > 0 && pos != -1);
+
+			return pos;
 		}
 
 		/// <summary>
@@ -358,6 +436,15 @@ namespace System//Extension methods should be in the same namespace of the objec
 			return match;
 		}
 
+		internal static int StartsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
+		{
+			foreach (var start in strings)
+				if (str.StartsWith(start, StringComparison.OrdinalIgnoreCase))
+					return start.Length;
+
+			return -1;
+		}
+
 		internal static ReadOnlySpan<char> TrimEndAlpha(this string s)
 		{
 			var len = s.Length;
@@ -372,6 +459,7 @@ namespace System//Extension methods should be in the same namespace of the objec
 		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		? str.Substring(0, str.LastIndexOf(trim))
 		: str;
+
 		internal static string TrimStartOf(this string str, string trim, bool ignoreCase = true) =>
 		str.StartsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		? str.Substring(trim.Length)

@@ -30,7 +30,7 @@ namespace Keysharp.Scripting
 		}
 
 		[Conditional(Legacy)]
-		internal static void Translate(ref string code)
+		internal static void Translate(CodeLine codeLine, ref string code)
 		{
 			string cmd, param;
 			var cspan = code.AsSpan();
@@ -107,7 +107,7 @@ namespace Keysharp.Scripting
 
 				case "ifequal":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -121,7 +121,7 @@ namespace Keysharp.Scripting
 
 				case "ifnotequal":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -136,7 +136,7 @@ namespace Keysharp.Scripting
 
 				case "ifgreater":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -150,7 +150,7 @@ namespace Keysharp.Scripting
 
 				case "ifgreaterorequal":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -165,7 +165,7 @@ namespace Keysharp.Scripting
 
 				case "ifless":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -179,7 +179,7 @@ namespace Keysharp.Scripting
 
 				case "iflessorequal":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -194,7 +194,7 @@ namespace Keysharp.Scripting
 
 				case "ifexist":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -207,7 +207,7 @@ namespace Keysharp.Scripting
 
 				case "ifnotexist":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -221,7 +221,7 @@ namespace Keysharp.Scripting
 
 				case "ifinstring":
 					if (parts.Length < 2)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -236,7 +236,7 @@ namespace Keysharp.Scripting
 
 				case "ifnotinstring":
 					if (parts.Length < 2)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -252,7 +252,7 @@ namespace Keysharp.Scripting
 
 				case "ifmsgbox":
 					if (parts.Length < 1)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(FlowIf);
 					_ = replaced.Append(SingleSpace);
@@ -344,7 +344,7 @@ namespace Keysharp.Scripting
 				// HACK: convert L/R paramter for legacy StringGetPos command
 				case "stringgetpos":
 					if (parts.Length < 3)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0].Trim(StringBound));
 					_ = replaced.Append(AssignPre);
@@ -363,7 +363,7 @@ namespace Keysharp.Scripting
 
 				case "stringleft":
 					if (parts.Length < 3)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0]);
 					_ = replaced.Append(AssignPre);
@@ -380,7 +380,7 @@ namespace Keysharp.Scripting
 
 				case "stringlen":
 					if (parts.Length < 2)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0]);
 					_ = replaced.Append(AssignPre);
@@ -393,7 +393,7 @@ namespace Keysharp.Scripting
 
 				case "stringmid":
 					if (parts.Length < 3)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0]);
 					_ = replaced.Append(AssignPre);
@@ -421,7 +421,7 @@ namespace Keysharp.Scripting
 
 				case "stringright":
 					if (parts.Length < 3)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0]);
 					_ = replaced.Append(AssignPre);
@@ -441,7 +441,7 @@ namespace Keysharp.Scripting
 
 				case "stringtrimleft":
 					if (parts.Length < 3)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0]);
 					_ = replaced.Append(AssignPre);
@@ -458,7 +458,7 @@ namespace Keysharp.Scripting
 
 				case "stringtrimright":
 					if (parts.Length < 3)
-						throw new ParseException(ExTooFewParams);
+						throw new ParseException(ExTooFewParams, codeLine);
 
 					_ = replaced.Append(parts[0]);
 					_ = replaced.Append(AssignPre);

@@ -241,7 +241,7 @@ else
 	FileAppend, "pass", "*"
 
 o :=
-pcount :=
+pcount := ""
 varfunc5(p1, pvar*)
 {
 	pcount := pvar.Length

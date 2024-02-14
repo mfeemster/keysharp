@@ -42,8 +42,8 @@ else
 	FileAppend, "fail", "*"
 
 x := 123
-y :=
-m := { one : x ?? 456,  two : y ?? 789}
+yy :=
+m := { one : x ?? 456,  two : yy ?? 789}
 
 if (m.one = 123)
 	FileAppend, "pass", "*"

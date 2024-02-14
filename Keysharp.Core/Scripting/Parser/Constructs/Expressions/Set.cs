@@ -6,7 +6,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private int Set(IEnumerable parts, int offset)
+		private int Set(IEnumerable parts, int offset, CodeLine codeLine)
 		{
 			var e = parts.GetEnumerator();
 
@@ -77,7 +77,7 @@ namespace Keysharp.Scripting
 							levels[1]--;
 
 							if (levels[1] < 0)
-								throw new ParseException(ExUnbalancedParens);
+								throw new ParseException(ExUnbalancedParens, codeLine);
 							else if (expect == BlockClose && levels[0] == 0 && levels[1] == 0 && levels[2] == 0)
 								return position;
 
@@ -91,7 +91,7 @@ namespace Keysharp.Scripting
 							levels[2]--;
 
 							if (levels[2] < 0)
-								throw new ParseException(ExUnbalancedParens);
+								throw new ParseException(ExUnbalancedParens, codeLine);
 							else if (expect == ArrayClose && levels[0] == 0 && levels[1] == 0 && levels[2] == 0)
 								return position;
 
@@ -105,7 +105,7 @@ namespace Keysharp.Scripting
 							levels[0]--;
 
 							if (levels[0] < 0)
-								throw new ParseException(ExUnbalancedParens);
+								throw new ParseException(ExUnbalancedParens, codeLine);
 							else if (expect == ParenClose && levels[0] == 0 && levels[1] == 0 && levels[2] == 0)
 								return position;
 
@@ -119,7 +119,7 @@ namespace Keysharp.Scripting
 			}
 
 			if (levels[0] != 0 || levels[1] != 0 || levels[2] != 0)
-				throw new ParseException(ExUnbalancedParens);
+				throw new ParseException(ExUnbalancedParens, codeLine);
 
 			return 0;
 		}

@@ -36,29 +36,20 @@ if (x = 0) ; No window in this test, so HWND will be 0.
 else
 	FileAppend, "fail", "*"
 
+x := A_LineNumber ; This is not a reliable indicator of the line because the preprocessor condenses everything.
 
-x := A_LineNumber ; This line must start at 40 for the test to pass, so nothing above it can ever be moved.
-
-if (x = 40)
+if (x > 0) ; 
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
+oldx := x
 x := A_LineNumber
 
-if (x = 47)
+if (x > oldx)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
-x := A_LineNumber
-
-if (x = 54)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-; End line tests. Anything after this can be moved.
 
 x := A_LineFile
 

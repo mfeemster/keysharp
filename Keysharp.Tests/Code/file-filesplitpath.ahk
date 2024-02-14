@@ -3,7 +3,7 @@
 path := "../../../Keysharp.Tests/Code/DirCopy/file1.txt"
 filename := 
 ext := 
-namenoext := 
+namenoext := ""
 SplitPath(path, &filename, , &ext, &namenoext)
 
 ; Can't really to drive or path, because it differs by OS.

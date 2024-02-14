@@ -11,14 +11,14 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
+		private CodeMethodInvokeExpression AddHotkeyMethodInvoke(CodeLine codeLine, string hotkeyName, uint hook_action, string replacement, ref bool suffixHasTilde, ref bool hookIsMandatory)
 		{
 			if (hook_action != (uint)HotkeyTypeEnum.Normal && !string.IsNullOrEmpty(lastHotkeyFunc))
 				// A hotkey is stacked above, eg,
 				// x::
 				// y & z::altTab
 				// Not supported.
-				throw new ParseException("Hotkey or hotstring is missing its opening brace.");
+				throw new ParseException("Hotkey or hotstring is missing its opening brace.", codeLine);
 
 			if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
 				return null;
@@ -365,7 +365,7 @@ namespace Keysharp.Scripting
 								// y::z
 								// which would cause x:: to just do the "down"
 								// part of y::z.
-								throw new ParseException("Hotkey or hotstring is missing its opening brace.");
+								throw new ParseException("Hotkey or hotstring is missing its opening brace.", codeLine);
 
 							// Otherwise, remap_keybd_to_mouse==false.
 							var blind_mods = "";
@@ -447,7 +447,7 @@ namespace Keysharp.Scripting
 							methods[targetClass].Add(method.Name, method);
 
 							//"Down" is finished, proceed with "Up".
-							if (AddHotkeyMethodInvoke(remap_source, (uint)HotkeyTypeEnum.Normal, remap_dest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+							if (AddHotkeyMethodInvoke(codeLine, remap_source, (uint)HotkeyTypeEnum.Normal, remap_dest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 							{
 								_ = parent.Add(cmie);//Normally the caller does this, but since we're adding two of them here, we need to do it manually. The second one will get added by the caller.
 								ClearParserHotState();
@@ -459,7 +459,7 @@ namespace Keysharp.Scripting
 								_ = method.Statements.Add(send);
 								methods[targetClass].Add(method.Name, method);
 
-								if (AddHotkeyMethodInvoke(remap_source, (uint)HotkeyTypeEnum.Normal, remap_dest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie2)
+								if (AddHotkeyMethodInvoke(codeLine, remap_source, (uint)HotkeyTypeEnum.Normal, remap_dest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie2)
 								{
 									ClearParserHotState();
 									return cmie2;
@@ -481,7 +481,7 @@ namespace Keysharp.Scripting
 						// the hotstring (as a label) does not actually exist as a line.  But it seems
 						// best to report it this way in case the hotstring is inside a #Include file,
 						// so that the correct file name and approximate line number are shown:
-						throw new ParseException($"This hotstring is missing its abbreviation: {buf}.");
+						throw new ParseException($"This hotstring is missing its abbreviation: {buf}.", codeLine);
 					}
 
 					// In the case of hotstrings, hotstring_start is the beginning of the hotstring itself,
@@ -499,7 +499,7 @@ namespace Keysharp.Scripting
 						// {
 						// }
 						// would execute the block. But X is supposed to mean "execute this line".
-						throw new ParseException("Expected single-line action.");
+						throw new ParseException("Expected single-line action.", codeLine);
 
 					if (hotkeyUsesOtb)
 					{
@@ -545,7 +545,7 @@ namespace Keysharp.Scripting
 						//    x::action
 						// Note that if it is ":X:def::action" instead, we do not end up here and
 						// "::abc::" will also trigger "action".
-						throw new ParseException("Hotkey or hotstring is missing its opening brace.");
+						throw new ParseException("Hotkey or hotstring is missing its opening brace.", codeLine);
 					}
 
 					var funcname = "";
@@ -567,7 +567,7 @@ namespace Keysharp.Scripting
 
 						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
 						{
-							funcname = ParseFunctionName(nextBuf);
+							funcname = ParseFunctionName(codeLine, nextBuf);
 
 							foreach (var stacked in stackedHotstrings)//Go back through all stacked hotstrings that were parsed, and reset their function object to the one that was just parsed.
 								stacked.Parameters[1] = new CodeSnippetExpression("FuncObj(\"" + funcname + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
@@ -700,7 +700,7 @@ namespace Keysharp.Scripting
 							methods[targetClass].Add(method.Name, method);
 						}
 
-						if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+						if (AddHotkeyMethodInvoke(codeLine, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 						{
 							ClearParserHotState();
 							return cmie;
@@ -713,7 +713,7 @@ namespace Keysharp.Scripting
 
 						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
 						{
-							lastHotkeyFunc = ParseFunctionName(nextBuf);
+							lastHotkeyFunc = ParseFunctionName(codeLine, nextBuf);
 
 							foreach (var stacked in stackedHotkeys)//Go back through all stacked hotstrings that were parsed, and reset their function object to the one that was just parsed.
 								stacked.Parameters[0] = new CodeSnippetExpression("FuncObj(\"" + lastHotkeyFunc + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
@@ -723,7 +723,7 @@ namespace Keysharp.Scripting
 							if (nextBuf.RemoveAll(Spaces).Contains($"{lastHotkeyFunc}()"))//They didn't explicitly supply the ThisHotkey parameter, so add it.
 								lines[nextIndex] = new CodeLine(nextLine.FileName, nextLine.LineNumber, nextBuf.Insert(nextBuf.IndexOf('(') + 1, "thishotkey"));
 
-							if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+							if (AddHotkeyMethodInvoke(codeLine, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 							{
 								ClearParserHotState();
 								return cmie;
@@ -746,7 +746,7 @@ namespace Keysharp.Scripting
 								blocks.Push(block);
 								methods[targetClass].Add(method.Name, method);
 
-								if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+								if (AddHotkeyMethodInvoke(codeLine, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 								{
 									ClearParserHotState();
 									return cmie;
@@ -758,7 +758,7 @@ namespace Keysharp.Scripting
 								{
 									funcname = SetLastHotkeyFunc(hotName);//If this is the first of a stack, set the function name to the hash of the first stacked item's name, else keep that name for subsequent stacked hotkeys.
 
-									if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+									if (AddHotkeyMethodInvoke(codeLine, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 									{
 										return cmie;//Do not clear state here, we want to save it for future stacked hotkeys.
 									}
@@ -796,7 +796,7 @@ namespace Keysharp.Scripting
 									blocks.Push(block);
 									methods[targetClass].Add(method.Name, method);
 
-									if (AddHotkeyMethodInvoke(hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
+									if (AddHotkeyMethodInvoke(codeLine, hotName, hook_action, replacement, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 									{
 										ClearParserHotState();
 										return cmie;

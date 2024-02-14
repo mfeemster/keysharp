@@ -518,7 +518,7 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		internal static bool IsSpace(char sym) => System.Array.IndexOf(Spaces, sym) != -1;
+		internal static bool IsSpace(char sym) => SpacesSv.Contains(sym);
 
 		internal static bool IsSpace(string code)
 		{
@@ -582,9 +582,9 @@ namespace Keysharp.Scripting
 			return extracted;
 		}
 
-		private Token GetToken(CodeLine line)
+		private Token GetToken(CodeLine codeLine)
 		{
-			var code = line.Code;
+			var code = codeLine.Code;
 			code = code.TrimStart(Spaces);
 
 			if (code.Length == 0)
@@ -596,7 +596,7 @@ namespace Keysharp.Scripting
 				return Token.PropGet;
 			else if (IsGetOrSet(codeSpan, "set"))
 				return Token.PropSet;
-			else if (IsProperty(line))
+			else if (IsProperty(codeLine))
 				return Token.Prop;
 			else if (IsFlowOperator(code))
 				return Token.Flow;
@@ -616,9 +616,9 @@ namespace Keysharp.Scripting
 		private bool IsGetOrSet(ReadOnlySpan<char> code, string name)
 		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && code.IndexOfAny(ParensSv) == -1 && InClassDefinition() && Scope.Length > 0;
 
-		private bool IsProperty(CodeLine line)
+		private bool IsProperty(CodeLine codeLine)
 		{
-			var code = line.Code;
+			var code = codeLine.Code;
 
 			if (InClassDefinition() && Scope.Length == 0)
 			{
@@ -653,16 +653,16 @@ namespace Keysharp.Scripting
 						if (closeBracket == code.Length - 1)
 						{
 							if (!isitem)
-								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", line);
+								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", codeLine);
 						}
 						else
-							throw new ParseException("Missing close bracket on property indexer.", line);
+							throw new ParseException("Missing close bracket on property indexer.", codeLine);
 					}
 					else if (isitem)
-						throw new ParseException("The __Item property must have brackets and take at least one parameter.", line);
+						throw new ParseException("The __Item property must have brackets and take at least one parameter.", codeLine);
 
 					if (isstatic && isitem)
-						throw new ParseException("The __Item property cannot be static.", line);
+						throw new ParseException("The __Item property cannot be static.", codeLine);
 
 					if (IsIdentifier(copy))
 						return true;
@@ -672,7 +672,7 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private List<object> SplitTokens(string code)
+		private List<object> SplitTokens(CodeLine codeLine, string code)
 		{
 			var json = false;
 			var list = new List<object>();
@@ -708,7 +708,7 @@ namespace Keysharp.Scripting
 							sym = code[++i];
 
 							if (!(sym == '+' || sym == '-' || char.IsDigit(sym)))
-								throw new ParseException(ExInvalidExponent);
+								throw new ParseException(ExInvalidExponent, codeLine);
 
 							_ = id.Append(sym);
 						}
@@ -749,7 +749,7 @@ namespace Keysharp.Scripting
 				}
 				else if (sym == StringBound || sym == StringBoundVerbatim)
 				{
-					list.Add(ParseString(code, ref i));
+					list.Add(ParseString(codeLine, code, ref i));
 				}
 				else
 				{
@@ -907,7 +907,7 @@ namespace Keysharp.Scripting
 										goto case BlockClose;
 										}
 										else if (!IsSpace(code[j]))
-											throw new ParseException(ExUnexpected);
+											throw new ParseException(ExUnexpected, codeLine);
 									}
 
 									return list;
@@ -922,7 +922,7 @@ namespace Keysharp.Scripting
 								default:
 									if (sym == Resolve || sym == Multicast)
 									goto case Add;
-									throw new ParseException(ExUnexpected);
+									throw new ParseException(ExUnexpected, codeLine);
 							}
 						}
 					}
@@ -937,7 +937,7 @@ namespace Keysharp.Scripting
 			return list;
 		}
 
-		private static string ParseString(string code, ref int i)
+		private static string ParseString(CodeLine codeLine, string code, ref int i)
 		{
 			var escape = false;
 			var sym = code[i];
@@ -947,7 +947,7 @@ namespace Keysharp.Scripting
 			i++;
 
 			if (i == code.Length)
-				throw new ParseException(ExUntermStr);
+				throw new ParseException(ExUntermStr, codeLine);
 
 			for (; i < code.Length; i++)
 			{
@@ -966,7 +966,7 @@ namespace Keysharp.Scripting
 					_ = str.Append(sym);
 
 					if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
-						throw new ParseException(ExUntermStr);
+						throw new ParseException(ExUntermStr, codeLine);
 				}
 				else
 				{
@@ -977,7 +977,7 @@ namespace Keysharp.Scripting
 						break;
 
 					if ((!isbound || escape) && i == code.Length - 1)//If we've reached the end and it's not a quote. or it is a quote but we are in escape, then it's an unterminated string.
-						throw new ParseException(ExUntermStr);
+						throw new ParseException(ExUntermStr, codeLine);
 				}
 
 				escape = sym == Escape ? !escape : false;
