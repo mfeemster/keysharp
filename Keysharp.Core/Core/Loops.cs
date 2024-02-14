@@ -565,7 +565,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception ex)
 					{
-						Console.Error.WriteLine(ex);
+						Script.OutputDebug(ex);
 					}
 
 					if (subdirs != null)
@@ -588,7 +588,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception ex)
 					{
-						Console.Error.WriteLine(ex);
+						Script.OutputDebug(ex);
 					}
 
 					if (files != null)

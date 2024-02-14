@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Linux.X11;
+using Keysharp.Scripting;
 
 namespace Keysharp.Core.Linux
 {
@@ -259,7 +260,7 @@ namespace Keysharp.Core.Linux
 				catch (ArgumentException)
 				{
 					// TODO
-					Console.Error.WriteLine("Warning, could not look up key: " + Lookup);
+					Script.OutputDebug("Warning, could not look up key: " + Lookup);
 					return Keys.None;
 				}
 			}
