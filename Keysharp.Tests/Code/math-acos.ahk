@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 if (3.1415926535897931 == ACos(-1))
 	FileAppend, "pass", "*"

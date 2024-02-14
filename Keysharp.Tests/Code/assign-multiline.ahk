@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 product := "Prod"
 color := "Red"

@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 x := "test"
 y := StrLen(x)

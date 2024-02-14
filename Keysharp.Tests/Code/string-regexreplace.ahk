@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 outputVarCount :=
 match := RegExReplace("abc123123", "123$", "xyz")
 

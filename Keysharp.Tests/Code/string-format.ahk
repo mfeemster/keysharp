@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 s := Format("{1}", 123)
 

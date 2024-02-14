@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 o = ooo
 
 If o not between blue and red

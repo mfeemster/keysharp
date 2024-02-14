@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 x := 2
 y := 2

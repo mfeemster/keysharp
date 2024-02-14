@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 buf := Buffer(32)
 s := "tester"

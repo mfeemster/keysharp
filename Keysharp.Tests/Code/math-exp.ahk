@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 if (0.36787944117144233 == Exp(-1))
 	FileAppend, "pass", "*"

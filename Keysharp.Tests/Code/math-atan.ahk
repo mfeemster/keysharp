@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 if (-0.7853981633974483 == ATan(-1))
 	FileAppend, "pass", "*"

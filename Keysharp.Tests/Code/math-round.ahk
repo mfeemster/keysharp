@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 if (Round(3.14) == 3)
 	FileAppend, "pass", "*"

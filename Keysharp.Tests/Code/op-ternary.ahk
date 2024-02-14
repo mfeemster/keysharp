@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 z := 3 > 2 ? 1 : 10
 

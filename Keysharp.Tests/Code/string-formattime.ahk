@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 x := "20200704070809"
 y := FormatTime(x, "d")

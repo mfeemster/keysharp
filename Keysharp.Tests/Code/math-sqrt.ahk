@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 if (0 == Sqrt(0))
 	FileAppend, "pass", "*"

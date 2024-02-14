@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 x := 1
 m := { x : 1, "two" : 2, "three" : 3 }

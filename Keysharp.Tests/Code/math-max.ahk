@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 			
 if (Max(-6, -6) == -6)
 	FileAppend, "pass", "*"

@@ -1,4 +1,4 @@
-;#Include %A_ScriptDir%/header.ahk
+
 
 ; Can't really test if some of these properties have "valid" values. So at least just test if they can be compiled properly in a script.
 
