@@ -30,6 +30,14 @@ if x = 1 {
 } else { FileAppend, "pass", "*"
 }
 
+x := 123
+
+if (!x) {
+} else if (x == 123) { FileAppend, "pass", "*"
+}
+
+x := 1
+
 if (x == 1) {
 	FileAppend, "pass", "*"
 } else {
@@ -101,12 +109,12 @@ b := true
 c := false
 
 If b
-    x := 123
+	x := 123
 
 if (c)
-    b := 123
+	b := 123
 else
-    b := 456
+	b := 456
 	
 if (x == 123)
 	FileAppend, "pass", "*"

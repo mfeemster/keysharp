@@ -719,8 +719,7 @@ namespace Keysharp.Scripting
 									var wasPropLine = Parser.propKeywords.Contains(prevStartSubSpanStr);
 									var wasFuncDef = prevLine.Code.FindFirstNotInQuotes("(") != -1 && prevLine.Code.FindFirstNotInQuotes(")") != -1;
 
-									if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0)
-										//if (parenlevels == 0 && bracelevels == 1 && bracketlevels == 0)
+									if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0 && !newLineSpan.StartsWith(closeBraceSpan))
 									{
 										//Previous line was in an imbalanced state with only 1 extra open brace { and
 										//the beginning of the line is a flow statement. This is OTB style and is not
