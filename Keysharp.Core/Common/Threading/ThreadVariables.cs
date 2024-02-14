@@ -32,7 +32,6 @@ namespace Keysharp.Core.Common.Threading
 		internal long keyDuration = -1L;
 		internal long keyDurationPlay = -1L;
 		internal long lastFoundForm = 0L;
-		internal Stack<LoopInfo> loops;
 		internal long mouseDelay = 10L;
 		internal long mouseDelayPlay = -1L;
 		internal long peekFrequency = 5L;
@@ -93,7 +92,6 @@ namespace Keysharp.Core.Common.Threading
 			keyDuration = -1L;
 			keyDurationPlay = -1L;
 			lastFoundForm = 0L;
-			loops?.Clear();
 			mouseDelay = 10L;
 			mouseDelayPlay = -1L;
 			peekFrequency = 5L;
@@ -135,7 +133,6 @@ namespace Keysharp.Core.Common.Threading
 			keyDuration = Accessors.A_KeyDuration.Al();
 			keyDurationPlay = Accessors.A_KeyDurationPlay.Al();
 			lastFoundForm = IntPtr.Zero;
-			loops = null;
 			mouseDelay = Accessors.A_MouseDelay.Al();
 			mouseDelayPlay = Accessors.A_MouseDelayPlay.Al();
 			peekFrequency = Accessors.A_PeekFrequency.Al();

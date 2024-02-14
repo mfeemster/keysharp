@@ -13,14 +13,13 @@ namespace Keysharp.Core
 {
 	public static class Loops
 	{
-		internal static Stack<LoopInfo> LoopStack
-		{
-			get
-			{
-				var tv = Threads.GetThreadVariables();
-				return tv.loops ?? (tv.loops = new Stack<LoopInfo>());
-			}
-		}
+		/// <summary>
+		/// LoopStack is marked as [ThreadStatic] because it must actually be thread safe for real threads.
+		/// </summary>
+		[ThreadStatic]
+		private static Stack<LoopInfo> loopStack;
+
+		internal static Stack<LoopInfo> LoopStack => loopStack ?? (loopStack = new Stack<LoopInfo>());
 
 		public static long Inc()
 		{
