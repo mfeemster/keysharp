@@ -85,6 +85,7 @@ namespace Keyview
 				Alignment = ToolStripItemAlignment.Right
 			};
 			_ = toolStrip1.Items.Add(host);
+			Text += $" {Assembly.GetExecutingAssembly().GetName().Version}";
 		}
 
 		private static Color IntToColor(int rgb) => Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
