@@ -62,7 +62,6 @@ namespace Keysharp.Main
 						else//Parameters.
 						{
 							//No need to add args to A_Args, because it will be handled in the compiled program with HandleCommandLineParams().
-							//Keysharp.Core.Accessors.A_Args.Add(args[i]);
 							continue;
 						}
 					}
