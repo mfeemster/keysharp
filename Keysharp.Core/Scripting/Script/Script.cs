@@ -361,7 +361,7 @@ namespace Keysharp.Scripting
 			mainWindow = new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = title + " - Keysharp v" + Accessors.A_AhkVersion;
+				mainWindow.Text = title + " - Keysharp " + Accessors.A_AhkVersion;
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;

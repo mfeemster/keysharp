@@ -399,8 +399,11 @@ namespace Keysharp.Core
 		{
 			typeToStringProperties.Clear();
 			stringToTypeProperties.Clear();
+			var exeAssembly = Accessors.GetAssembly();
 
-			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp")))
+			//The compiled and running output of a script will have the name of the script file without the extension.
+			//So we can't just use "Keysharp" to identify it.
+			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp") || exeAssembly == assy))
 				foreach (var type in item.GetTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
