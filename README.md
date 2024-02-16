@@ -29,7 +29,7 @@ Keysharp is a fork and improvement of the abandoned IronAHK project, which itsel
 
 The intent is for Keysharp to run on Windows, Linux and eventually Mac. For now, only Windows is supported.
 
-This project is in an extremely early state and should not be used on production systems by anyone.
+This project is in the alpha testing stage and is not yet recommended for production systems.
 
 Some general notes about Keysharp's implementation of the [AutoHotkey v2 specification](https://www.autohotkey.com/docs/v2/):
 
