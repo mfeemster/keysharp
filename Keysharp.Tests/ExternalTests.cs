@@ -3,6 +3,7 @@ using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using NUnit.Framework;
 using static Keysharp.Core.Dll;
+using static Keysharp.Core.External;
 using static Keysharp.Core.Misc;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 

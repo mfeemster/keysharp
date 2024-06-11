@@ -58,6 +58,7 @@ using static Keysharp.Core.Dir;
 using static Keysharp.Core.Drive;
 using static Keysharp.Core.Dll;
 using static Keysharp.Core.Env;
+using static Keysharp.Core.External;
 using static Keysharp.Core.Files;
 using static Keysharp.Core.Flow;
 using static Keysharp.Core.Function;
@@ -129,11 +130,7 @@ using static Keysharp.Scripting.Script.Operator;
 		{
 			{
 				"CompilerDirectoryPath", Path.Combine(Environment.CurrentDirectory,
-#if DEBUG
 													  "./roslyn"
-#else
-													  "./roslyn"
-#endif
 													 )
 			}
 		});
@@ -184,7 +181,7 @@ using static Keysharp.Scripting.Script.Operator;
 						"System.Runtime.dll",
 						"System.Private.CoreLib.dll",
 						"System.Drawing.Common.dll",
-						"System.Windows.Forms.dll",
+						"./System.Windows.Forms.dll",//We use our own local build of Windows.Forms on linux.
 						"Keysharp.Core.dll"
 					}
 				};
