@@ -2,44 +2,22 @@
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Reflection;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Emit;
-using System.Text.Json;
-using System.Runtime.InteropServices;
 using System.Collections.Immutable;
-using Keysharp.Core;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
 using System.Windows.Forms;
-
-
-#if WINDOWS
-
-	using Microsoft.CodeAnalysis.CSharp;
-
-#endif
+using Keysharp.Core;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 
 namespace Keysharp.Scripting
 {
 	public class CompilerHelper
 	{
-		/// <summary>
-		/// Needed as a static here so it can be accessed in other areas of Keysharp.Core, such as in Accessors,
-		/// to determine if the executing code is a standalone executable, or a script that was compiled and ran through
-		/// the main program.
-		/// </summary>
-		public static Assembly compiledasm;
-
-		private Parser parser;
-
-		/// <summary>
-		/// Define the compile unit to use for code generation.
-		/// </summary>
-		//CodeCompileUnit targetUnit;
-
-		//CodeTypeDeclaration targetClass;
-
 		//CodeEntryPointMethod entryPoint;
 		/// <summary>
 		/// For some reason, the CodeEntryPoint object doesn't seem to allow adding parameters, so we use the base and manually set values and add string[] args.
@@ -95,44 +73,73 @@ using static Keysharp.Scripting.Script.Operator;
 #else
 		public static readonly string UsingStr =
 			@"using static Keysharp.Core.Accessors;
-//using static Keysharp.Core.Common.Window.WindowItemBase;
-using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
-using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
-using static Keysharp.Core.Dialogs;
-using static Keysharp.Core.Dir;
-using static Keysharp.Core.Drive;
-using static Keysharp.Core.Env;
-using static Keysharp.Core.External;
-using static Keysharp.Core.Files;
-using static Keysharp.Core.Flow;
-using static Keysharp.Core.Function;
-using static Keysharp.Core.GuiHelper;
-using static Keysharp.Core.Images;
-using static Keysharp.Core.ImageLists;
-using static Keysharp.Core.Ini;
-using static Keysharp.Core.Input;
-using static Keysharp.Core.Keyboard;
-using static Keysharp.Core.KeysharpObject;
-using static Keysharp.Core.Loops;
-using static Keysharp.Core.Maths;
-using static Keysharp.Core.Menu;
-using static Keysharp.Core.Misc;
-using static Keysharp.Core.Monitor;
-using static Keysharp.Core.Mouse;
-using static Keysharp.Core.Network;
-using static Keysharp.Core.Options;
-using static Keysharp.Core.Processes;
-using static Keysharp.Core.RealThreads;
-using static Keysharp.Core.Screen;
-using static Keysharp.Core.Security;
-using static Keysharp.Core.SimpleJson;
-using static Keysharp.Core.Strings;
-using static Keysharp.Core.ToolTips;
-using static Keysharp.Core.Window;
-using static Keysharp.Scripting.Script;
-using static Keysharp.Scripting.Script.Operator;
-";
+		//using static Keysharp.Core.Common.Window.WindowItemBase;
+		using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
+		using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
+		using static Keysharp.Core.Dialogs;
+		using static Keysharp.Core.Dir;
+		using static Keysharp.Core.Drive;
+		using static Keysharp.Core.Env;
+		using static Keysharp.Core.External;
+		using static Keysharp.Core.Files;
+		using static Keysharp.Core.Flow;
+		using static Keysharp.Core.Function;
+		using static Keysharp.Core.GuiHelper;
+		using static Keysharp.Core.Images;
+		using static Keysharp.Core.ImageLists;
+		using static Keysharp.Core.Ini;
+		using static Keysharp.Core.Input;
+		using static Keysharp.Core.Keyboard;
+		using static Keysharp.Core.KeysharpObject;
+		using static Keysharp.Core.Loops;
+		using static Keysharp.Core.Maths;
+		using static Keysharp.Core.Menu;
+		using static Keysharp.Core.Misc;
+		using static Keysharp.Core.Monitor;
+		using static Keysharp.Core.Mouse;
+		using static Keysharp.Core.Network;
+		using static Keysharp.Core.Options;
+		using static Keysharp.Core.Processes;
+		using static Keysharp.Core.RealThreads;
+		using static Keysharp.Core.Screen;
+		using static Keysharp.Core.Security;
+		using static Keysharp.Core.SimpleJson;
+		using static Keysharp.Core.Strings;
+		using static Keysharp.Core.ToolTips;
+		using static Keysharp.Core.Window;
+		using static Keysharp.Scripting.Script;
+		using static Keysharp.Scripting.Script.Operator;
+		";
 #endif
+		/// <summary>
+		/// Needed as a static here so it can be accessed in other areas of Keysharp.Core, such as in Accessors,
+		/// to determine if the executing code is a standalone executable, or a script that was compiled and ran through
+		/// the main program.
+		/// </summary>
+		public static Assembly compiledasm;
+
+		private CodeGeneratorOptions cgo = new CodeGeneratorOptions
+		{
+			IndentString = "\t",
+			VerbatimOrder = true,
+			BracingStyle = "C"
+		};
+
+		private Parser parser;
+
+		/// <summary>
+		/// Define the compile unit to use for code generation.
+		/// </summary>
+		//CodeCompileUnit targetUnit;
+
+		private CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
+		{
+			{
+				"CompilerDirectoryPath", Path.Combine(Environment.CurrentDirectory, "./roslyn")
+			}
+		});
+
+
 		public CompilerHelper()
 		{
 			parser = new Parser(this);
@@ -163,68 +170,71 @@ using static Keysharp.Scripting.Script.Operator;
 			}
 		}
 
-#if !WINDOWS
-		CodeDomProvider provider = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider();
-#else
-
-		private CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
+		public static (string, string) GetCompilerErrors(CompilerErrorCollection results, string filename = "")
 		{
+			var sbe = new StringBuilder();
+			var sbw = new StringBuilder();
+
+			if (results.HasErrors)
 			{
-				"CompilerDirectoryPath", Path.Combine(Environment.CurrentDirectory,
-													  "./roslyn"
-													 )
+				_ = sbe.AppendLine("The following errors occurred:");
 			}
-		});
 
-#endif
-
-		private CodeGeneratorOptions cgo = new CodeGeneratorOptions
-		{
-			IndentString = "\t",
-			VerbatimOrder = true,
-			BracingStyle = "C"
-		};
-
-		internal string CodeToString(CodeExpression expr)
-		{
-			using (TextWriter tx = new StringWriter())
+			if (results.HasWarnings)
 			{
-				provider.GenerateCodeFromExpression(expr, tx, cgo);
-				return tx.ToString();
+				_ = sbw.AppendLine("The following warnings occurred:");
 			}
+
+			foreach (CompilerError error in results)
+			{
+				var file = string.IsNullOrEmpty(error.FileName) ? filename : error.FileName;
+				file = Path.GetFileName(file);
+
+				if (file.Length == 0)
+					file = "*";
+
+				_ = !error.IsWarning
+					? sbe.AppendLine($"\n{error.ErrorText}")
+					: sbw.AppendLine($"\n{error.ErrorText}");
+			}
+
+			return (sbe.ToString(), sbw.ToString());
 		}
 
+		public static string HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string desc, string message = "")
+		{
+			var sbe = new StringBuilder();
+			var sbw = new StringBuilder();
+
+			foreach (var diag in diagnostics)
+			{
+				var str = $"{Path.GetFileName(filename)}{diag.Location.GetLineSpan()} - {diag.GetMessage()}";
+
+				if (diag.Severity == DiagnosticSeverity.Warning)
+					_ = sbw.AppendLine($"\t{str}");
+
+				if (diag.Severity == DiagnosticSeverity.Error)
+					_ = sbe.AppendLine($"\t{str}");
+			}
+
+			if (sbw.Length != 0)
+			{
+				_ = sbw.Insert(0, "The following warnings occurred:\n");
+			}
+
+			if (sbe.Length != 0)
+			{
+				_ = sbe.Insert(0, "The following errors occurred:\n");
+				return $"{desc} failed.\n\n{sbe}\n{sbw}" + (message != "" ? "\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
+			}
+
+			return "";
+		}
 
 		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir)
 		{
 			try
 			{
-#if !WINDOWS
-				var parameters = new CompilerParameters()
-				{
-					GenerateExecutable = !string.IsNullOrEmpty(outputname),
-					IncludeDebugInformation = false,
-					GenerateInMemory = true,
-					OutputAssembly = outputname,
-					MainClass = "Keysharp.CompiledMain.program",
-					ReferencedAssemblies =
-					{
-						"System.dll",
-						"System.Collections.dll",
-						"System.Data.dll",
-						"System.IO.dll",
-						"System.Linq.dll",
-						"System.Reflection.dll",
-						"System.Runtime.dll",
-						"System.Private.CoreLib.dll",
-						"System.Drawing.Common.dll",
-						"./System.Windows.Forms.dll",//We use our own local build of Windows.Forms on linux.
-						"Keysharp.Core.dll"
-					}
-				};
-				var results = provider.CompileAssemblyFromSource(parameters, code);
-				return (results, null, null);
-#else
 				var tree = SyntaxFactory.ParseSyntaxTree(code,
 						   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
@@ -277,7 +287,6 @@ using static Keysharp.Scripting.Script.Operator;
 				var res = compilation.CreateDefaultWin32Resources(true, true, null, msi);//The first argument must be true to embed version/assembly information.
 				var compilationResult = compilation.Emit(ms, win32Resources: res);
 				return (compilationResult, ms, null);
-#endif
 			}
 			catch (Exception e)
 			{
@@ -366,65 +375,13 @@ using static Keysharp.Scripting.Script.Operator;
 				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 
-		public static (string, string) GetCompilerErrors(CompilerErrorCollection results, string filename = "")
+		internal string CodeToString(CodeExpression expr)
 		{
-			var sbe = new StringBuilder();
-			var sbw = new StringBuilder();
-
-			if (results.HasErrors)
+			using (TextWriter tx = new StringWriter())
 			{
-				_ = sbe.AppendLine("The following errors occurred:");
+				provider.GenerateCodeFromExpression(expr, tx, cgo);
+				return tx.ToString();
 			}
-
-			if (results.HasWarnings)
-			{
-				_ = sbw.AppendLine("The following warnings occurred:");
-			}
-
-			foreach (CompilerError error in results)
-			{
-				var file = string.IsNullOrEmpty(error.FileName) ? filename : error.FileName;
-				file = Path.GetFileName(file);
-
-				if (file.Length == 0)
-					file = "*";
-
-				_ = !error.IsWarning
-					? sbe.AppendLine($"\n{error.ErrorText}")
-					: sbw.AppendLine($"\n{error.ErrorText}");
-			}
-
-			return (sbe.ToString(), sbw.ToString());
-		}
-
-		public static string HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string desc, string message = "")
-		{
-			var sbe = new StringBuilder();
-			var sbw = new StringBuilder();
-
-			foreach (var diag in diagnostics)
-			{
-				var str = $"{Path.GetFileName(filename)}{diag.Location.GetLineSpan()} - {diag.GetMessage()}";
-
-				if (diag.Severity == DiagnosticSeverity.Warning)
-					_ = sbw.AppendLine($"\t{str}");
-
-				if (diag.Severity == DiagnosticSeverity.Error)
-					_ = sbe.AppendLine($"\t{str}");
-			}
-
-			if (sbw.Length != 0)
-			{
-				_ = sbw.Insert(0, "The following warnings occurred:\n");
-			}
-
-			if (sbe.Length != 0)
-			{
-				_ = sbe.Insert(0, "The following errors occurred:\n");
-				return $"{desc} failed.\n\n{sbe}\n{sbw}" + (message != "" ? "\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
-			}
-
-			return "";
 		}
 	}
 }

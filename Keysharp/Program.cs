@@ -48,11 +48,7 @@ namespace Keysharp.Main
 
 				for (var i = 0; i < args.Length; i++)
 				{
-					if (!args[i].StartsWith('-')
-#if WINDOWS
-							&& !args[i].StartsWith('/')
-#endif
-					   )
+					if (!args[i].StartsWith('-') && !args[i].StartsWith('/'))
 					{
 						if (!gotscript)//Script name.
 						{
@@ -183,20 +179,6 @@ namespace Keysharp.Main
 				}
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
-#if !WINDOWS
-				var (results, dummyms, compileexc) = ch.Compile(code, exeout ? path + ".exe" : string.Empty);
-
-				if (results == null)
-				{
-					return Message($"Compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}", true);
-				}
-				else if (results.Errors.HasErrors)
-				{
-					return HandleCompilerErrors(results.Errors, script, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
-				}
-
-				CompilerHelper.compiledasm = results.CompiledAssembly;
-#else
 				//Message($"Before compiling, setting current dir to {Environment.CurrentDirectory}", false);
 				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
 
@@ -252,8 +234,6 @@ namespace Keysharp.Main
 				{
 					return HandleCompilerErrors(results.Diagnostics, script, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
 				}
-
-#endif
 
 				if (validate)
 					return 0;//Any other error condition returned 1 already.
@@ -334,8 +314,6 @@ namespace Keysharp.Main
 			Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", newPath, RegistryValueKind.ExpandString);//Restore the old path to what it was without the passed in value included.
 		}
 
-#if WINDOWS
-
 		private static int HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string path, string desc, string message = "")
 		{
 			var errstr = CompilerHelper.HandleCompilerErrors(diagnostics, filename, desc, message);
@@ -349,8 +327,6 @@ namespace Keysharp.Main
 
 			return 0;
 		}
-
-#endif
 
 		private static int HandleCompilerErrors(CompilerErrorCollection results, string filename, string path, string desc, string message = "")
 		{
