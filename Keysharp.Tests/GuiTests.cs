@@ -66,7 +66,7 @@ namespace Keysharp.Tests
 			Application.Run(form);
 			run = false;
 			task.Wait();
-			var ret = Keysharp.Core.Dialogs.MsgBox("ok, hand, def: 1, timeout5", "this is a sample title", "0 16 t5");
+			var ret = Keysharp.Core.Dialogs.MsgBox("ok, hand, def: 1, timeout: 5", "this is a sample title", "0 16 t5");
 			Assert.AreEqual(ret, "Timeout");
 		}
 
