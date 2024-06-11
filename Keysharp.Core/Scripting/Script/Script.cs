@@ -119,6 +119,7 @@ namespace Keysharp.Scripting
 
 			if (hwnd == 0)
 			{
+#if WINDOWS
 				var ed = "";
 
 				try
@@ -148,6 +149,8 @@ namespace Keysharp.Scripting
 				}
 				else
 					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
+
+#endif
 			}
 			else
 			{

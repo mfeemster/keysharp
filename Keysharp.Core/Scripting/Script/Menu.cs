@@ -24,7 +24,7 @@ namespace Keysharp.Scripting
 			if (NoTrayIcon)
 				return;
 
-			trayMenu = new Menu(Tray.ContextMenuStrip);
+			trayMenu = new Keysharp.Core.Menu(Tray.ContextMenuStrip);
 			trayMenu.AddStandard();
 			trayIcon.Tag = trayMenu;
 			trayIcon.MouseClick += TrayIcon_MouseClick;
@@ -61,7 +61,7 @@ namespace Keysharp.Scripting
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)
 		{
-			if (sender is NotifyIcon ni && ni.Tag is Menu mnu)
+			if (sender is NotifyIcon ni && ni.Tag is Keysharp.Core.Menu mnu)
 				if (mnu.ClickCount == 1)
 					if (mnu.defaultItem is ToolStripItem tsi)
 						mnu.Tsmi_Click(tsi, new EventArgs());
@@ -69,7 +69,7 @@ namespace Keysharp.Scripting
 
 		private static void TrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
 		{
-			if (sender is NotifyIcon ni && ni.Tag is Menu mnu)
+			if (sender is NotifyIcon ni && ni.Tag is Keysharp.Core.Menu mnu)
 				if (mnu.ClickCount > 1)
 					if (mnu.defaultItem is ToolStripItem tsi)
 						mnu.Tsmi_Click(tsi, new EventArgs());

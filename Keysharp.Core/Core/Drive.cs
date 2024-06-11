@@ -155,10 +155,12 @@ namespace Keysharp.Core
 		/// <param name="label">The label to set the drive to.</param>
 		public static void DriveSetLabel(object obj0, object obj1 = null)
 		{
+#if WINDOWS
 			var drive = obj0.As();
 			var label = obj1.As();
 			var drv = new DriveInfo(drive);
 			drv.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
+#endif
 		}
 
 		/// <summary>

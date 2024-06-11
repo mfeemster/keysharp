@@ -34,7 +34,7 @@ namespace Keysharp.Scripting
 #if WINDOWS
 				Keysharp.Core.Processes.MainThreadID = Keysharp.Core.Windows.WindowsAPI.GetCurrentThreadId();
 #else
-				Keysharp.Core.Processes.MainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
+				Keysharp.Core.Processes.MainThreadID = (uint)System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 #endif
 				Keysharp.Core.Processes.ManagedMainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 				_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
