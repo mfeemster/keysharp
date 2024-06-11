@@ -1014,7 +1014,7 @@ namespace Keysharp.Core
 				return "";
 			}
 		}
-
+#if WINDOWS
 		/// <summary>
 		/// The name of the root key being accessed (HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, or HKEY_CURRENT_CONFIG). For remote registry access, this value will not include the computer name.
 		/// </summary>
@@ -1136,7 +1136,7 @@ namespace Keysharp.Core
 				return "";
 			}
 		}
-
+#endif
 		public static object A_MaxHotkeysPerInterval
 		{
 			get => maxHotkeysPerInterval;

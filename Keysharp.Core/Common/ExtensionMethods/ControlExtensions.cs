@@ -71,7 +71,7 @@ namespace System.Windows.Forms
 				return default;
 
 			if (control.InvokeRequired)
-				return control.Invoke(action);
+				return (T)control.Invoke(action);//Linux needs the cast.
 			else
 				return action();
 		}
