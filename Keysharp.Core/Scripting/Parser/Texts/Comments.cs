@@ -10,20 +10,11 @@ namespace Keysharp.Scripting
 		internal static bool IsCommentAt(string code, int offset)
 		{
 			var spaced = offset == 0 || IsSpace(code[offset - 1]);
-#if LEGACY
 			return code.Length - offset >= Comment.Length && MemoryExtensions.Equals(code.AsSpan(offset, Comment.Length), Comment, StringComparison.Ordinal) && spaced;
-#else
-			return code[offset] == Comment && spaced;
-#endif
 		}
 
 		internal static bool IsCommentLine(string code) =>
-#if LEGACY
 		code.Length >= Comment.Length&& MemoryExtensions.Equals(code.AsSpan(0, Comment.Length), Comment, StringComparison.Ordinal);
-
-#else
-		return code.Length > 0 && code[0] == Comment;
-#endif
 
 		internal static bool IsEmptyStatement(string code)
 		{

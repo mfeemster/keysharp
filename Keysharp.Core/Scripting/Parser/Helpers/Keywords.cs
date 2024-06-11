@@ -634,10 +634,10 @@ namespace Keysharp.Scripting
 #if !LEGACY
 		internal const char LastVar = '$';
 #endif
-#if !LEGACY
-		internal static char Escape = DefaultEscape;
-#else
 		internal static readonly char[] zerochars = new char[] { '0' };
+#if !LEGACY
+		internal static char Escape = DefaultEscape;
+#else
 		internal static string Comment = DefaultComment.ToString();
 		internal static char Escape = DefaultEscape;
 #endif
@@ -657,12 +657,6 @@ namespace Keysharp.Scripting
 #if !LEGACY
 		internal static char Multicast = DefaultMulticast;
 #else
-#endif
-
-#if LEGACY
-		// []
-#else
-		internal const string VarExt = "#_$";
 #endif
 
 		static Keywords()
