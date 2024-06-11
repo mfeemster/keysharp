@@ -264,11 +264,9 @@ namespace Keysharp.Core
 				Application.SetCompatibleTextRenderingDefault(false);
 			}
 
+#if WINDOWS
 			_ = System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
-			//if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			//{
-			//  _ = WindowsAPI.SetProcessDPIAware();
-			//}
+#endif
 		}
 
 		/// <summary>
