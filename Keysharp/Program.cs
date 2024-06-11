@@ -184,7 +184,7 @@ namespace Keysharp.Main
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
 #if !WINDOWS
-				var (results, compileexc) = ch.Compile(code, exeout ? path + ".exe" : string.Empty);
+				var (results, dummyms, compileexc) = ch.Compile(code, exeout ? path + ".exe" : string.Empty);
 
 				if (results == null)
 				{
