@@ -422,7 +422,6 @@ namespace Keysharp.Core
 				foreach (var opt in Options.ParseOptions(options))
 				{
 					long hwnd = 0;
-					double dtemp = 0;
 
 					if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
 					else if (Options.TryParse(opt, "T", ref timeout)) { }

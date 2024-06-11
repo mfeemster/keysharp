@@ -11,10 +11,7 @@ namespace Keysharp.Core.Common
 	/// </summary>
 	internal class ImageFinder
 	{
-		private Point? match;
 		private object matchLocker = new object();
-		private CoordProvider Provider;
-		private ManualResetEvent[] resets;
 		private Bitmap sourceImage;
 		private int threads = Environment.ProcessorCount;
 
@@ -142,14 +139,6 @@ namespace Keysharp.Core.Common
 				}
 			}
 
-			//resets = new ManualResetEvent[threads];
-			//Provider = new CoordProvider(sourceImage.Size, new Size(1, 1));
-			//for (var i = 0; i < threads; i++)
-			//{
-			//  resets[i] = new ManualResetEvent(false);
-			//  _ = ThreadPool.QueueUserWorkItem(new WaitCallback(PixelWorker), i);
-			//}
-			//_ = WaitHandle.WaitAll(resets);
 			return null;
 		}
 

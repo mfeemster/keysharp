@@ -7,6 +7,7 @@ using Keysharp.Core.Common.Threading;
 using NUnit.Framework;
 using Array = Keysharp.Core.Array;
 using Buffer = Keysharp.Core.Buffer;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

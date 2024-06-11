@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.Threading;
+//using Keysharp.Core.Common.Threading;
 
 namespace System.Collections
 {
@@ -318,6 +319,39 @@ namespace System.Collections.Generic
 			return (r1, r2, r3, r4, r5, r6, r7, r8, r9);
 		}
 
+		public static (int, string, string) Is2(this IList obj, int def1 = default, string def2 = "", string def3 = "")
+		{
+			var r1 = obj.Ai(0, def1);
+			var r2 = obj.As(1, def2);
+			var r3 = obj.As(2, def3);
+			return (r1, r2, r3);
+		}
+
+		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& ((result.ParseLong(false) is long l&& l != 0) || result.ParseBool().IsTrue() || (result is string s&& s != ""));
+
+		public static long L1(this IList obj, long def = default) => obj.Al(0, def);
+
+		public static (long, string, string) Ls2(this IList obj, long def1 = default, string def2 = "", string def3 = "")
+		{
+			var r1 = obj.Al(0, def1);
+			var r2 = obj.As(1, def2);
+			var r3 = obj.As(2, def3);
+			return (r1, r2, r3);
+		}
+
+		public static Dictionary<T, T2> Merge<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
+		{
+			var merged = new Dictionary<T, T2>();
+
+			foreach (var kv in dkt1)
+				merged.Add(kv.Key, kv.Value);
+
+			foreach (var kv in dkt2)
+				_ = merged.TryAdd(kv.Key, kv.Value);
+
+			return merged;
+		}
+
 		public static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
 			object result = null;
@@ -357,39 +391,6 @@ namespace System.Collections.Generic
 			}
 
 			return result;
-		}
-
-		public static (int, string, string) Is2(this IList obj, int def1 = default, string def2 = "", string def3 = "")
-		{
-			var r1 = obj.Ai(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& ((result.ParseLong(false) is long l&& l != 0) || result.ParseBool().IsTrue() || (result is string s&& s != ""));
-
-		public static long L1(this IList obj, long def = default) => obj.Al(0, def);
-
-		public static (long, string, string) Ls2(this IList obj, long def1 = default, string def2 = "", string def3 = "")
-		{
-			var r1 = obj.Al(0, def1);
-			var r2 = obj.As(1, def2);
-			var r3 = obj.As(2, def3);
-			return (r1, r2, r3);
-		}
-
-		public static Dictionary<T, T2> Merge<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
-		{
-			var merged = new Dictionary<T, T2>();
-
-			foreach (var kv in dkt1)
-				merged.Add(kv.Key, kv.Value);
-
-			foreach (var kv in dkt2)
-				_ = merged.TryAdd(kv.Key, kv.Value);
-
-			return merged;
 		}
 
 		public static void ModifyEventHandlers(this List<IFuncObj> handlers, IFuncObj fo, long i)

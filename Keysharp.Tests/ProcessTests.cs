@@ -1,6 +1,7 @@
 ﻿using static Keysharp.Core.Processes;
 using NUnit.Framework;
 using Keysharp.Core.Common.Threading;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

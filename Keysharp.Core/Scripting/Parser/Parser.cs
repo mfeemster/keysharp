@@ -204,7 +204,6 @@ namespace Keysharp.Scripting
 		private uint caseCount;
 		private CompilerHelper Ch;
 		private List<CodeLine> codeLines = new List<CodeLine>();
-		private Dictionary<string, string> conditionIds;
 		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
 		private Stack<CodeStatementCollection> elses = new ();
 		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();

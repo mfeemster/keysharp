@@ -12,14 +12,13 @@ namespace Keysharp.Core
 {
 	public static class Keyboard
 	{
+		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
 		internal static readonly ToggleStates toggleStates = new ToggleStates();
 		internal static bool blockInput;
 		internal static ToggleValueType blockInputMode = ToggleValueType.Default;
 		internal static bool blockMouseMove;
 		internal static Dictionary<string, HotkeyDefinition> hotkeys = new Dictionary<string, HotkeyDefinition>();
 		internal static Dictionary<string, HotstringDefinition> hotstrings = new Dictionary<string, HotstringDefinition>();
-		private static FuncObj keyCondition;
-		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
 
 		/// <summary>
 		/// Disables or enables the user's ability to interact with the computer via keyboard and mouse.

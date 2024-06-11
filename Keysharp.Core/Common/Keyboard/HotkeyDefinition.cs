@@ -34,7 +34,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const uint NO_SUPPRESS_STATES = NO_SUPPRESS_NEXT_UP_EVENT;
 		internal const uint NO_SUPPRESS_SUFFIX_VARIES = AT_LEAST_ONE_VARIANT_HAS_TILDE | AT_LEAST_ONE_VARIANT_LACKS_TILDE;
 		internal static string COMPOSITE_DELIMITER = " & ";
-		internal static uint enabledCount;
 		internal static uint joyHotkeyCount;
 		internal static bool[] joystickHasHotkeys = new bool[Joystick.Joystick.MaxJoysticks];
 		internal static List<HotkeyDefinition> shk = new List<HotkeyDefinition>(256);
@@ -62,8 +61,8 @@ namespace Keysharp.Core.Common.Keyboard
 		private static uint throttledKeyCount;
 		private static DateTime timeNow;
 		private static DateTime timePrev = DateTime.MinValue;
-		private static HookType whichHookAlways;
-		private static HookType whichHookNeeded;
+		private static HookType whichHookAlways = HookType.None;
+		private static HookType whichHookNeeded = HookType.None;
 		internal bool Enabled { get; set; }
 		internal Options EnabledOptions { get; }
 		internal Keys Extra { get; }
@@ -700,7 +699,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// keyboard layout.  Allow the script to start, but warn the user about the problem.
 					// Note that this hotkey's label is still valid even though the hotkey wasn't created.
 
-					if (!Script.validateThenExit) // Current keyboard layout is not relevant in /validate mode.
+					if (!Script.ValidateThenExit) // Current keyboard layout is not relevant in /validate mode.
 						_ = Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
 				}
 			}

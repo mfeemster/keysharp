@@ -19,20 +19,6 @@ namespace Keysharp.Core
 	{
 		internal static ConcurrentDictionary<long, MsgMonitor> onMessageHandlers = new ();
 
-		private static Dictionary<string, Form> guis;
-
-		internal static Form DefaultGui
-		{
-			get
-			{
-				if (guis == null)
-					return null;
-
-				var key = DefaultGuiId;
-				return guis.TryGetValue(key, out var form) ? form : null;
-			}
-		}
-
 		internal static string DefaultGuiId
 		{
 			get => Threads.GetThreadVariables().defaultGui ?? "1";

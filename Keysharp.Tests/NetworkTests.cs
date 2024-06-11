@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using static Keysharp.Core.Network;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

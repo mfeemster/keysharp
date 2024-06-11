@@ -4,6 +4,7 @@ using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

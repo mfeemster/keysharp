@@ -305,7 +305,7 @@ namespace Keyview
 				txt.Styles[Style.Cpp.CommentLineDoc].ForeColor = IntToColor(0x77A7DB);
 				txt.Styles[Style.Cpp.Word].ForeColor = IntToColor(0x48A8EE);
 				txt.Styles[Style.Cpp.Word2].ForeColor = IntToColor(0xF98906);
-				txt.SetSelectionBackColor(true, IntToColor(0x114D9C));
+				txt.SelectionBackColor = IntToColor(0x114D9C);
 			}
 			else
 			{
@@ -321,7 +321,7 @@ namespace Keyview
 				txt.Styles[Style.Cpp.Regex].ForeColor = IntToColor(0xff00ff);
 				txt.Styles[Style.Cpp.Word].ForeColor = Color.Blue;
 				txt.Styles[Style.Cpp.Word2].ForeColor = Color.FromArgb(52, 146, 184); // Turqoise
-				txt.SetSelectionBackColor(true, Color.FromArgb(153, 201, 239));
+				txt.SelectionBackColor = Color.FromArgb(153, 201, 239);
 			}
 
 			//Extras.

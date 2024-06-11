@@ -22,7 +22,9 @@ Code obsolescence/deprecation:
 		
 TODO/ENSURE THESE WORK:
 	
+	Make sure you capture all of these changes whcih were added to AHK v2.1: https://www.autohotkey.com/boards/viewtopic.php?f=37&t=118744
 	Go through change log in help file and see how much needs to be implemented in Keysharp.
+	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
 	Include a command line switch to list all available pre-defined public functions which can be called from within a script.
 	Ensure this works: https://lifehacker.com/use-autohotkey-to-scroll-the-command-prompt-backwards-b-5626708
 	Perhaps look into including a long integer/extended precision library.
@@ -38,50 +40,21 @@ TODO/ENSURE THESE WORK:
 	meta about AltTab hotkeys and I just wanted to say: if you ever get around to them – just leave them out. They serve next to no purpose, are very hackily implemented in AHK, they need a ton of edge-cases and weirdness, and they are just overall a mess. So yeah, just a heads-up I guess.
 	If you want to read up on why I said this: https://discord.com/channels/115993023636176902/546213647526133760/888810883675983902
 
-	tanks says:  also please msg me when you post code i very do mch want to feature it and offer direct hosting for downloads. we all accept that initial versions arent ready for primetime. but the more exposure the better.
-
-	Here is an example of something not working because we haven't implemented threads properly.
-	#MaxThreadsPerHotkey 3
-	#z::  ; Win+Z hotkey (change this hotkey to suit your preferences).
-	{
-		static KeepWinZRunning := false
-		if KeepWinZRunning  ; This means an underlying thread is already running the loop below.
-		{
-			KeepWinZRunning := false  ; Signal that thread's loop to stop.
-			return  ; End this thread so that the one underneath will resume and see the change made by the line above.
-		}
-		; Otherwise:
-		KeepWinZRunning := true
-		Loop
-		{
-			; The next four lines are the action you want to repeat (update them to suit your preferences):
-			ToolTip("Press Win-Z again to stop this from flashing.")
-			Sleep(1000)
-			ToolTip()
-			Sleep(1000)
-			; But leave the rest below unchanged.
-			if(not KeepWinZRunning)  ; The user signaled the loop to stop by pressing Win-Z again.
-				break  ; Break out of this loop.
-		}
-		KeepWinZRunning := false  ; Reset in preparation for the next press of this hotkey.
-	}
-	#MaxThreadsPerHotkey 1
-
+	tank says:  also please msg me when you post code i very do mch want to feature it and offer direct hosting for downloads. we all accept that initial versions arent ready for primetime. but the more exposure the better.
 
 	Give attribution to:
 		Need to include this https://opensource.org/licenses/cddl1.php for the logical string comparison code: https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 		Ini utility, attribution: https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class
 		pinvoke.net (and make a donation)
 		Tuple splatter extension methods, attribution: https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter
-		Rich text box with line numbers in Keyview: https://www.codeproject.com/Articles/38858/Line-Numbers-for-RichText-Control-in-C
 		Semver: https://github.com/maxhauser/semver
 		PictureBox derivation: https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat
 		Using SendMessage() with string: https://gist.github.com/BoyCook/5075907
 		The program icon is a derivative of work by Bamicon: https://thenounproject.com/bamicon/ https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/ Creative Commons 
 		Microsoft PowerShell code used for COM: https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/engine/COM/
 		NAudio: https://github.com/naudio/NAudio
-		
-	Make sure all of these new V2 features work: https://lexikos.github.io/v2/docs/v2-changes.htm
+		Scintilla editor for .NET: https://github.com/desjarlais/Scintilla.NET
+			
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
 	
 	There are four areas/types of versions being dealt with.
@@ -192,8 +165,6 @@ i'll also need substantial help testing. despite writing unit tests for each pie
 
 INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	A version/fork of AHK called AHK_H which uses some threading, but not entirely: https://github.com/thqby/AutoHotkey_H
-	This is just a thought for a future feature, perhaps pending extensive COM support. I've used code like this below to create Word instances in node-red using edge-js. IMHO support for at least MS Office apps would be a huge plus:
-		Activator.CreateInstance(Type.GetTypeFromProgID("Word.Application")
 	Be sure to keep in touch and coordinate with Tab Nation at https://www.youtube.com/c/TABNationAutoHotkey/videos and tadamm88@gmail.com
 	Good writeup on scan codes and fake shift: https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
 	Might be usable: https://github.com/Paris/AutoHotkey-Scripts/blob/master/Functions.ahk and https://github.com/Paris/AutoHotkey-Scripts
@@ -202,12 +173,14 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Look at https://espanso.org/ a cross platform text expander written in rust.
 	https://github.com/mooz/xkeysnail
 	https://github.com/rbreaves/kinto 
+	https://github.com/Jmgr/actiona
 	http://daviddeley.com/autohotkey/xprxmp/autohotkey_expression_examples.htm
 	https://github.com/Run1e/autohotkey-oofs
 	https://stackoverflow.com/questions/27977924/in-windows-10-how-can-we-determine-which-virtual-desktop-a-window-belongs-to/32527200#32527200
 	shutdown command on linux: https://stackoverflow.com/questions/11803283/shutdown-linux-using-c-sharp-and-mono/11803470#11803470
 	 http://msdn.microsoft.com/en-us/library/aa376874%28v=vs.85%29.aspx
 	 https://codegolf.stackexchange.com/questions/107874/shut-down-the-computer
+	Send keys on linux with Mono: https://stackoverflow.com/questions/7823921/control-mouse-and-keyboard-from-c-sharp-mono-on-linux
 	https://www.autohotkey.com/boards/viewtopic.php?f=37&t=29689
 	https://www.alfredapp.com/
 	https://forum.keyboardmaestro.com/
@@ -224,7 +197,6 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 		https://beeftext.org/
 		https://github.com/giosali/hypoinput
 	More efficient hotstring matching from Mr. Doge in Discord: https://github.com/FuPeiJiang/Keysharp_hotstring.ah2
-	Possible COM wrapper: https://www.codeproject.com/Articles/10888/SafeCOMWrapper-Managed-Disposable-Strongly-Typed-s
 	When the time comes for adding web functionality: https://docs.microsoft.com/en-us/microsoft-edge/webview2/get-started/winforms
 	DataGridView:
 		https://github.com/topics/datagridview?l=c%23
@@ -239,11 +211,11 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Code demonstrating dynamic properties (already implemented): https://p.ahkscript.org/?p=0bce480c
 	A lexer for AHK: https://github.com/tinku99/ahklexers
 	AutoIt interpreter in C#: https://github.com/Unknown6656/AutoIt-Interpreter
-	Scintilla editor for .NET: https://github.com/desjarlais/Scintilla.NET
 	CLR support in AHK:
 		https://github.com/Lexikos/CLR.ahk
 		https://www.autohotkey.com/boards/viewtopic.php?f=83&t=113543&p=505906&hilit=clr_loadlibrary#p505906
-		
+	List of AHK alternatives. Inspect the code in these for ideas on how to do things in X11.
+		https://autohotkey.wiki/alternatives
 		
 	I am not sure what you mean by print. Do you mean something to write to the console? So in C++, it's printf() or cout, and in C# it's Console.WriteLine(). Something like that? I didn't know that AHK didn't have that. Are you sure? If it doesn't, then yes, we can add it in Keysharp. 
 		
@@ -297,7 +269,8 @@ Linux ideas/research:
 		Start with evdev and ignore X.
 		To swallow events the way AHK does, you need to listen to the devices and either swallow events or allow them to pass through. If you pass through, you need to reinsert it into the device.
 	Old automation libraries that worked on X, but no longer do on Wayland:
-		Autokey and x duo tool.
+		Autokey and xdotools.
+		Autokey and others: https://www.autohotkey.com/boards/viewtopic.php?f=22&t=65552
 	Linux has a system wide hotkey reigstry which can usually be found in some settings gui.
 	
 	

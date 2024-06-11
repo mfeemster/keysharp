@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="5.3.3.12" />
+    <PackageReference Include="Scintilla5.NET" Version="5.5.1" />
   </ItemGroup>
 
   <ItemGroup>

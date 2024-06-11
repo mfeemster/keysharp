@@ -20,44 +20,36 @@ namespace Keysharp.Scripting
 	{
 		public static bool ForceKeybdHook;
 		public static bool HotstringNoMouse = false;
-
-		//public static bool MaxThreadsBuffer = false;
 		public static uint MaxThreadsPerHotkey = 1u;
-
 		public static uint MaxThreadsTotal = 12u;
 		public static bool NoTrayIcon = false;
 		public static bool WinActivateForce = false;
+		public static bool ValidateThenExit;
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
 		internal const int SLEEP_INTERVAL = 10;
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
-		internal static bool calledByIsDialogMessageOrDispatch;
-		internal static uint calledByIsDialogMessageOrDispatchMsg;
 		internal static List<IFuncObj> ClipFunctions = new List<IFuncObj>();
-		internal static bool deferMessagesForUnderlyingPump;
 		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
 		internal static bool hsResetUponMouseClick = HotstringNoMouse;
-		internal static bool hsSameLineAction;
 		internal static InputType input;
 		internal static DateTime inputTimeoutAt = DateTime.Now;
 		internal static bool inputTimerExists;
 		internal static bool isReadyToExecute;
-		internal static IFuncObj lastHotFunc;
 		internal static DateTime lastPeekTime;
 		internal static MainWindow mainWindow;
 		internal static Gui mainWindowGui;
-		internal static int MAX_THREADS_LIMIT = 0xFF;
+		internal static int maxThreadsLimit = 0xFF;
 		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = MenuType.None;
-		internal static int nLayersNeedingTimer;
-		internal static List<IFuncObj> OnErrorHandlers;
-		internal static List<IFuncObj> OnExitHandlers = new List<IFuncObj>();
-		internal static Icon PausedIcon;
-		internal static bool Persistent;
+		internal static List<IFuncObj> onErrorHandlers;
+		internal static List<IFuncObj> onExitHandlers = new List<IFuncObj>();
+		internal static Icon pausedIcon;
+		internal static bool persistent;
 		internal static IntPtr playbackHook = IntPtr.Zero;
 		internal static DateTime priorHotkeyStartTime = DateTime.Now;
 		internal static string scriptName = "";
-		internal static Icon SuspendedIcon;
+		internal static Icon suspendedIcon;
 		internal static string thisHotkeyName, priorHotkeyName;
 		internal static DateTime thisHotkeyStartTime = DateTime.Now;
 		internal static DateTime timeLastInputKeyboard = timeLastInputPhysical;
@@ -65,7 +57,6 @@ namespace Keysharp.Scripting
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
-		internal static bool validateThenExit;
 		private static IntPtr mainWindowHandle;
 
 		public static bool ResetUponMouseClick => hsResetUponMouseClick;

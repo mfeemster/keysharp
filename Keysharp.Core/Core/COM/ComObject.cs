@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection.Metadata;
@@ -34,7 +35,7 @@ namespace Keysharp.Core.COM
 	{
 		internal static long F_OWNVALUE = 1;
 		internal static int MaxVtableLen = 16;
-		internal List<IFuncObj> handlers;
+		internal List<IFuncObj> handlers = new List<IFuncObj>();
 		internal object item;
 
 		public long Flags { get; set; }
@@ -251,3 +252,4 @@ namespace Keysharp.Core.COM
 		}
 	}
 }
+#endif

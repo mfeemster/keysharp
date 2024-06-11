@@ -1,4 +1,5 @@
-﻿using Keysharp.Core.Windows;
+﻿#if WINDOWS
+using Keysharp.Core.Windows;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
@@ -632,3 +633,4 @@ namespace Keysharp.Core.COM
 		private static extern void GetActiveObject(ref Guid rclsid, IntPtr pvReserved, [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
 	}
 }
+#endif

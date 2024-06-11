@@ -5,6 +5,7 @@ using static Keysharp.Core.Screen;
 using System.Globalization;
 using static Keysharp.Core.Mouse;
 using Keysharp.Core.Common.Threading;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

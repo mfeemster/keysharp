@@ -15,7 +15,6 @@ namespace Keysharp.Core
 	public static class Dll
 	{
 		private static ConcurrentDictionary<string, DllCache> dllCache = new ConcurrentDictionary<string, DllCache>();
-		private static Func<IntPtr, Type, Delegate> GetDelegateForFunctionPointerInternalPointer;
 
 		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
 		{

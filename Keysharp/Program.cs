@@ -44,6 +44,7 @@ namespace Keysharp.Main
 				var script = string.Empty;
 				var gotscript = false;
 				var fromstdin = false;
+				var validate = false;
 
 				for (var i = 0; i < args.Length; i++)
 				{
@@ -66,11 +67,7 @@ namespace Keysharp.Main
 						}
 					}
 
-#if WINDOWS
 					var option = args[i].TrimStart(Keywords.DashSlash);
-#else
-					var option = args[i].TrimStart('-');
-#endif
 					var opt = option.ToLowerInvariant();
 
 					switch (opt)
@@ -78,6 +75,10 @@ namespace Keysharp.Main
 						case "version":
 						case "v":
 							return Message($"{asm.GetName().Version}", false);
+
+						case "validate":
+							Script.ValidateThenExit = validate = true;
+							break;
 
 						case "about":
 							var license = asm.GetManifestResourceStream(typeof(Program).Namespace + ".license.txt");
@@ -254,7 +255,7 @@ namespace Keysharp.Main
 
 #endif
 
-				if (Keysharp.Core.Env.FindCommandLineArg("validate") != null)
+				if (validate)
 					return 0;//Any other error condition returned 1 already.
 
 				GC.Collect();

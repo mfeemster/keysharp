@@ -511,21 +511,16 @@ namespace Keysharp.Core
 		{
 			//Internal use/results:
 			internal object control;
-
 			internal int count;
 
 			//Internal use:
-			internal DataFlow dataFlow;
-
+			internal DataFlow dataFlow = DataFlow.Render;
 			internal bool ignoreRemainingSubunits;
-
 			internal string name;
-
 			internal SoundControlType targetControl;
 
 			//Parameters of search:
 			internal Guid targetIid;
-
 			internal int targetInstance;
 			internal string targetName;
 			// Valid only when target_control == SoundControlType::Name.

@@ -53,9 +53,9 @@ namespace Keysharp.Core
 		{
 			object result = null;
 
-			if (Script.OnErrorHandlers != null)
+			if (Script.onErrorHandlers != null)
 			{
-				foreach (var handler in Script.OnErrorHandlers)
+				foreach (var handler in Script.onErrorHandlers)
 				{
 					result = handler.Call(err, err.ExcType);
 
@@ -260,10 +260,10 @@ namespace Keysharp.Core
 			var i = obj1.Al(1L);
 			var del = Function.GetFuncObj(e, null, true);
 
-			if (Script.OnErrorHandlers == null)
-				Script.OnErrorHandlers = new List<IFuncObj>();
+			if (Script.onErrorHandlers == null)
+				Script.onErrorHandlers = new List<IFuncObj>();
 
-			Script.OnErrorHandlers.ModifyEventHandlers(del, i);
+			Script.onErrorHandlers.ModifyEventHandlers(del, i);
 		}
 
 		public static OSError OSError(params object[] obj) => new (obj);

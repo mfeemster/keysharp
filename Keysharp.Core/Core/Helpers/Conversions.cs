@@ -8,13 +8,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
-using Microsoft.Win32;
+#if WINDOWS
+	using Microsoft.Win32;
+#endif
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
 	public static class Conversions
 	{
+#if WINDOWS
 		private const string bin = "REG_BINARY";
 
 		private const string dword = "REG_DWORD";
@@ -30,6 +33,7 @@ namespace Keysharp.Core
 		private const string regsz = "REG_SZ";
 
 		private const string unk = "UNKNOWN";
+#endif
 
 		/// <summary>
 		/// Need to manually provide a wrapper because calendar is not a constant, which is required for default parameters.
@@ -175,6 +179,7 @@ namespace Keysharp.Core
 			return long.Parse(str.ToString());
 		}
 
+#if WINDOWS
 		internal static RegistryValueKind GetRegistryType(string val)
 		{
 			switch (val)
@@ -240,7 +245,7 @@ namespace Keysharp.Core
 					return unk;
 			}
 		}
-
+#endif
 		internal static byte HighByte(int i) => (byte)((((ulong)i) >> 8) & 0xff);
 
 		internal static short HighWord(int i) => (short)((((ulong)i) >> 16) & 0xffff);
@@ -589,6 +594,7 @@ namespace Keysharp.Core
 			return options;
 		}
 
+#if WINDOWS
 		internal static (RegistryKey, string, string) ToRegKey(string root, bool writable = false)
 		{
 			var (reg, comp, key) = ToRegRootKey(root);
@@ -652,7 +658,7 @@ namespace Keysharp.Core
 					throw new ValueError($"{root} was not a valid registry type.");
 			}
 		}
-
+#endif
 		internal static string ToStringCaseSense(StringComparison type)
 		{
 			switch (type)

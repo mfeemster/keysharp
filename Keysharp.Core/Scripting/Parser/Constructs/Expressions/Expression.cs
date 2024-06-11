@@ -788,8 +788,6 @@ namespace Keysharp.Scripting
 
 						parts[i] = invoke;
 						invokes.Add(invoke);
-						specialaddcall:
-						;
 					}
 					//This is very strange and prevents single = from working in if statements when comparing variables such as if (x = y)
 					//Not exactly sure what an "implicit assignment" is, since it's not mentioned anywhere in the documentation
@@ -1350,7 +1348,6 @@ namespace Keysharp.Scripting
 						var invoke = (CodeMethodInvokeExpression)InternalMethods.OperateUnary;
 						_ = invoke.Parameters.Add(OperatorAsFieldReference(op));
 						_ = invoke.Parameters.Add(VarMixedExpr(codeLine, parts[n]));
-						next:
 						parts[i] = invoke;
 						parts.RemoveAt(n);
 					}

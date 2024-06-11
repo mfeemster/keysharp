@@ -150,7 +150,7 @@ namespace Keysharp.Core
 		/// Specifies a label to run automatically when the program exits.
 		/// </summary>
 		/// <param name="label">The name of a label. Leave blank to remove an existing label, if any.</param>
-		public static void OnExit(object obj0, object obj1 = null) => Script.OnExitHandlers.ModifyEventHandlers(Function.GetFuncObj(obj0, null, true), obj1.Al(1L));
+		public static void OnExit(object obj0, object obj1 = null) => Script.onExitHandlers.ModifyEventHandlers(Function.GetFuncObj(obj0, null, true), obj1.Al(1L));
 
 		/// <summary>
 		/// Specifies a function to call automatically when the program receives the specified message.
@@ -226,8 +226,8 @@ namespace Keysharp.Core
 		public static object Persistent(object obj = null)
 		{
 			var b = obj.Ab(true);
-			var old = Script.Persistent;
-			Script.Persistent = persistentValueSetByUser = b;
+			var old = Script.persistent;
+			Script.persistent = persistentValueSetByUser = b;
 			return old;
 		}
 
@@ -461,7 +461,7 @@ namespace Keysharp.Core
 			Accessors.A_ExitReason = obj0.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;
-			var result = Script.OnExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
+			var result = Script.onExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
 
 			if (result.IsCallbackResultNonEmpty())//If any exit handlers returned a non empty value, abort the exit.
 			{
@@ -470,7 +470,7 @@ namespace Keysharp.Core
 				return true;
 			}
 			else
-				Keysharp.Scripting.Script.OnExitHandlers.Clear();
+				Keysharp.Scripting.Script.onExitHandlers.Clear();
 
 			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
 			AllowInterruption = allowInterruption_prev;

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Keysharp.Scripting;
 using NUnit.Framework;
+using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

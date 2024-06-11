@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -34,10 +35,9 @@ using System.Runtime.InteropServices;
 /// </summary>
 namespace Keysharp.Core.Windows
 {
-	/*
-	    You can never use the code rearranger on this file because many of the types
-	    in it are for COM, and the order of declarations must match exactly.
-	*/
+	//You can never use the code rearranger on this file because many of the types
+	//in it are for COM, and the order of declarations must match exactly.
+
 	internal struct AudioVolumeNotificationDataStruct
 	{
 		internal Guid guidEventContext;
@@ -1759,3 +1759,4 @@ namespace Keysharp.Core.Windows
 	/// <param name="data">Audio Volume Notification Data</param>
 	internal delegate void AudioEndpointVolumeNotificationDelegate(AudioVolumeNotificationData data);
 }
+#endif

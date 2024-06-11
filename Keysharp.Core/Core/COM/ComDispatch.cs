@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if WINDOWS
+#nullable enable
+using System;
 using System.Runtime.InteropServices;
 using ct = System.Runtime.InteropServices.ComTypes;
 using System.Threading;
@@ -82,7 +84,7 @@ namespace Keysharp.Core.COM
 		private int cookie;
 		private bool disposedValue;
 		private Guid interfaceID;
-		private ct.ITypeInfo typeInfo = null;
+		private readonly ct.ITypeInfo? typeInfo;
 
 		public ComObject Co { get; }
 
@@ -97,7 +99,7 @@ namespace Keysharp.Core.COM
 				throw new ValueError($"The passed in COM object of type {container.GetType()} was not of type IConnectionPointContainer.");
 
 			Co = cobj;
-			ct.ITypeInfo ti;
+			ct.ITypeInfo? ti;
 
 			if (container is IProvideClassInfo ipci)
 				_ = ipci.GetClassInfo(out ti);
@@ -142,7 +144,7 @@ namespace Keysharp.Core.COM
 						ppTI.ReleaseTypeAttr(typeAttr);
 					}
 				}
-				catch (COMException cme)
+				catch (COMException)
 				{
 				}
 			}
@@ -225,7 +227,7 @@ namespace Keysharp.Core.COM
 
 		protected virtual void OnEvent(object sender, DispatcherEventArgs e) => EventReceived?.Invoke(sender, e);
 
-		internal event EventHandler<DispatcherEventArgs> EventReceived;
+		internal event EventHandler<DispatcherEventArgs>? EventReceived;
 	}
 
 	internal class DispatcherEventArgs : EventArgs
@@ -236,7 +238,7 @@ namespace Keysharp.Core.COM
 
 		internal string Name { get; }
 
-		internal object Result { get; set; }
+		internal object? Result { get; set; }
 
 		internal DispatcherEventArgs(int dispId, string name, params object[] arguments)
 		{
@@ -246,3 +248,4 @@ namespace Keysharp.Core.COM
 		}
 	}
 }
+#endif

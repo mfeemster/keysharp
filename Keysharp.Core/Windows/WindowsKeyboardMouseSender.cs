@@ -132,6 +132,7 @@ namespace Keysharp.Core.Windows
 		/// <returns></returns>
 		internal static ResultType LayoutHasAltGrDirect(IntPtr layout)
 		{
+#if WINDOWS
 			const int KLLF_ALTGR = 0x0001;
 			var result = ResultType.Fail;
 			var hmod = LoadKeyboardLayoutModule(layout);
@@ -152,6 +153,9 @@ namespace Keysharp.Core.Windows
 			}
 
 			return result;
+#else
+			return ResultType.ConditionFalse;
+#endif
 		}
 
 		/// <summary>
@@ -185,6 +189,7 @@ namespace Keysharp.Core.Windows
 		internal static IntPtr LoadKeyboardLayoutModule(IntPtr layout)
 		{
 			var hmod = IntPtr.Zero;
+#if WINDOWS
 			// Unfortunately activating the layout seems to be the only way to retrieve it's name.
 			// This may have side-effects in general (such as the language selector flickering),
 			// but shouldn't have any in our case since we're only changing layouts for our thread,
@@ -214,6 +219,7 @@ namespace Keysharp.Core.Windows
 					_ = ActivateKeyboardLayout(new IntPtr(oldLayout), 0); // Nothing we can do if it fails.
 			}
 
+#endif
 			return hmod;
 		}
 

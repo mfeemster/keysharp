@@ -25,11 +25,7 @@ namespace Keysharp.Core
 		internal static long hotkeyModifierTimeout = 50L;
 		internal static long hotkeyThrottleInterval = 2000L;
 		internal static long maxHotkeysPerInterval = 2000L;
-
-		//internal static ThreadPriority threadPriorityDef = ThreadPriority.Normal;
 		private static bool allowMainWindow = true;
-
-		private static long clipboardTimeout = 1000L;
 		private static long controlDelay = 20L;
 		private static long defaultMouseSpeed = 2L;
 		private static object detectHiddenText = true;
@@ -637,7 +633,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// <code>true</code> if the current user has administrator rights, <code>false</code> otherwise.
 		/// </summary>
-		public static bool A_ISAdmin => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+		public static bool A_ISAdmin =>
+#if WINDOWS
+		new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+#else
+		false;//Need to figure this out on linux.//TODO
+#endif
 
 		/// <summary>
 		/// <code>true</code> if the current executing assembly is a compiled script, <code>false</code> otherwise;

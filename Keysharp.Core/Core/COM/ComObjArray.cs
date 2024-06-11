@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -98,3 +99,4 @@ namespace Keysharp.Core.COM
 		public object this[int index] { get => ((IList)array)[index]; set => ((IList)array)[index] = value; }
 	}
 }
+#endif

@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Collections.Generic;
 using Microsoft.Win32;
@@ -207,3 +208,4 @@ namespace Keysharp.Core
 		internal static RegistryView GetRegView() => ThreadAccessors.A_RegView.Al() == 32L ? RegistryView.Registry32 : RegistryView.Registry64;
 	}
 }
+#endif

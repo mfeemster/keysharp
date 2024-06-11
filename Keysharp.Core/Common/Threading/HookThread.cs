@@ -290,13 +290,13 @@ namespace Keysharp.Core.Common.Threading
 
 	internal class KeysharpMsg
 	{
-		internal bool completed;
+		//internal bool completed;
 		internal IntPtr hwnd = IntPtr.Zero;
 		internal IntPtr lParam = IntPtr.Zero;
 		internal uint message;
 		internal object obj;
-		internal System.Drawing.Point pt;
-		internal uint time;
+		//internal System.Drawing.Point pt;
+		//internal uint time;
 		internal IntPtr wParam = IntPtr.Zero;
 	}
 }

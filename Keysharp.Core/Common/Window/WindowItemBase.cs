@@ -12,7 +12,7 @@ namespace Keysharp.Core.Common.Window
 	{
 		internal double distanceFound;
 		internal IntPtr hwndFound = IntPtr.Zero;
-		internal bool ignoreDisabled;
+		internal bool ignoreDisabled = false;
 		internal POINT pt;
 		internal RECT rectFound = new RECT();
 

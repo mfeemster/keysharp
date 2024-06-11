@@ -91,7 +91,7 @@ namespace Keysharp.Core.Common.Threading
 						else
 							ret = "";
 					}
-					catch (Exception ex)
+					catch (Exception)
 					{
 					}
 					finally

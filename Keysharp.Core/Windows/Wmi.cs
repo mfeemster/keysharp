@@ -1,4 +1,5 @@
-﻿using System.Management;
+﻿#if WINDOWS
+using System.Management;
 
 namespace Keysharp.Core.Windows
 {
@@ -46,3 +47,4 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+#endif
