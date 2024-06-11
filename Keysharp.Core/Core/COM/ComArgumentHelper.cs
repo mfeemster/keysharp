@@ -1,21 +1,16 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using Keysharp.Core.COM;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Patterns;
 using Keysharp.Scripting;
 
-namespace Keysharp.Core
+namespace Keysharp.Core.COM
 {
 	internal class ComArgumentHelper : ArgumentHelper
 	{
-		internal IntPtr[] args;
-		internal HashSet<IntPtr> bstrs;
+		internal nint[] args;
+		internal HashSet<nint> bstrs;
 		internal static char[] pointerChars = new char[] { ' ', '*', 'p', 'P' };
 
 		internal ComArgumentHelper(object[] parameters)
@@ -50,8 +45,8 @@ namespace Keysharp.Core
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
 			}
-			var len  = parameters.Length / 2;
-			args = new IntPtr[len];
+			var len = parameters.Length / 2;
+			args = new nint[len];
 			hasreturn = (parameters.Length & 1) == 1;
 
 			for (var i = 0; i < parameters.Length; i++)
@@ -84,7 +79,7 @@ namespace Keysharp.Core
 					case 'P':
 					case 'p':
 						name = name.TrimEnd(pointerChars);
-						type = typeof(IntPtr);
+						type = typeof(nint);
 						//usePtr = true;
 						SetupPointerArg(i, n);
 						goto TypeDetermined;
@@ -118,7 +113,7 @@ namespace Keysharp.Core
 						type = typeof(string);
 
 						if (p is string s)
-							SetupPointerArg(i, n, UnicodeEncoding.UTF8.GetBytes(s + char.MinValue));
+							SetupPointerArg(i, n, Encoding.UTF8.GetBytes(s + char.MinValue));
 						else
 							throw new TypeError($"Argument had type {name} but was not a string.");
 
@@ -127,10 +122,10 @@ namespace Keysharp.Core
 
 					case "astr":
 					{
-						type = typeof(IntPtr);
+						type = typeof(nint);
 
 						if (p is string s)
-							SetupPointerArg(i, n, ASCIIEncoding.ASCII.GetBytes(s + char.MinValue));
+							SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s + char.MinValue));
 						else
 							throw new TypeError($"Argument had type {name} but was not a string.");
 
@@ -141,10 +136,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(long);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr(p.Al());
+							args[n] = new nint(p.Al());
 
 						break;
 					}
@@ -153,10 +148,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(ulong);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr(p.Al());//No real way to make an unsigned long here.
+							args[n] = new nint(p.Al());//No real way to make an unsigned long here.
 
 						//args[n] = new UIntPtr(p.Al());//No real way to make an unsigned long here.
 						break;
@@ -167,10 +162,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(int);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr(p.Ai());
+							args[n] = new nint(p.Ai());
 
 						break;
 					}
@@ -179,10 +174,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(uint);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr(p.Aui());
+							args[n] = new nint(p.Aui());
 
 						break;
 					}
@@ -191,10 +186,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(short);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr((short)p.Al());
+							args[n] = new nint((short)p.Al());
 
 						break;
 					}
@@ -203,10 +198,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(ushort);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr((ushort)p.Al());
+							args[n] = new nint((ushort)p.Al());
 
 						break;
 					}
@@ -215,10 +210,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(sbyte);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr((sbyte)p.Al());
+							args[n] = new nint((sbyte)p.Al());
 
 						break;
 					}
@@ -227,10 +222,10 @@ namespace Keysharp.Core
 					{
 						type = typeof(byte);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else
-							args[n] = new IntPtr((byte)p.Al());
+							args[n] = new nint((byte)p.Al());
 
 						break;
 					}
@@ -240,7 +235,7 @@ namespace Keysharp.Core
 						type = typeof(float);
 						var f = p.Af();
 						var iref = (int*)&f;
-						args[n] = new IntPtr(*iref);
+						args[n] = new nint(*iref);
 						break;
 					}
 
@@ -249,28 +244,28 @@ namespace Keysharp.Core
 						type = typeof(double);
 						var d = p.Ad();
 						var lref = (long*)&d;
-						args[n] = new IntPtr(*lref);
+						args[n] = new nint(*lref);
 						break;
 					}
 
 					case "uptr":
 					case "ptr":
 					{
-						type = typeof(IntPtr);
+						type = typeof(nint);
 
-						if (p is IntPtr ip)
+						if (p is nint ip)
 							args[n] = ip;
 						else if (p is int || p is long || p is uint)
-							args[n] = new IntPtr((long)Convert.ChangeType(p, typeof(long)));
+							args[n] = new nint((long)Convert.ChangeType(p, typeof(long)));
 						else if (p is Buffer buf)
 							args[n] = buf.Ptr;
-						else if (p is Keysharp.Core.Array array)
+						else if (p is Array array)
 							SetupPointerArg(i, n, array.array);
 						else if (p is ComObject co)
 						{
-							IntPtr pUnk;
+							nint pUnk;
 
-							if (co.Ptr is IntPtr ip2)
+							if (co.Ptr is nint ip2)
 								pUnk = ip2;
 							else
 								pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
@@ -323,3 +318,4 @@ namespace Keysharp.Core
 		}
 	}
 }
+#endif

@@ -1,12 +1,10 @@
+#if WINDOWS
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Media;
 using System.Runtime.InteropServices;
-using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Windows;
-using Microsoft.VisualBasic;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core
 {
@@ -540,3 +538,4 @@ namespace Keysharp.Core
 		};
 	}
 }
+#endif

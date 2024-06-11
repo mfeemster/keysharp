@@ -4,8 +4,9 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Keysharp.Core;
-using Keysharp.Core.COM;
-
+#if WINDOWS
+	using Keysharp.Core.COM;
+#endif
 namespace Keysharp.Scripting
 {
 	public partial class Script
@@ -107,6 +108,8 @@ namespace Keysharp.Scripting
 				var val = mph.callFunc(item, new object[] { key });
 				return (item, val);
 			}
+
+#if WINDOWS
 			else if (item is ComObject co)
 			{
 				//return (co.Ptr, new ComMethodPropertyHolder(key));//Unwrap.
@@ -117,6 +120,7 @@ namespace Keysharp.Scripting
 				return (item, new ComMethodPropertyHolder(key));
 			}
 
+#endif
 			throw new MemberError($"Attempting to get method or property {key} on object {item} failed.");
 		}
 
@@ -166,6 +170,8 @@ namespace Keysharp.Scripting
 			{
 				return mph1.callFunc(item, new object[] { namestr });
 			}
+
+#if WINDOWS
 			else if (item is ComObject co)
 			{
 				//return co.Ptr.GetType().InvokeMember(namestr, BindingFlags.GetProperty, null, item, null);//Unwrap.
@@ -175,6 +181,8 @@ namespace Keysharp.Scripting
 			{
 				return item.GetType().InvokeMember(namestr, BindingFlags.GetProperty, null, item, null);
 			}
+
+#endif
 
 			if (throwOnError)
 				throw new PropertyError($"Attempting to get property {name} on object {item} failed.");
@@ -406,6 +414,8 @@ namespace Keysharp.Scripting
 			{
 				return mph1.callFunc(item, new object[] { namestr, value });
 			}
+
+#if WINDOWS
 			else if (item is ComObject co)
 			{
 				//_ = co.Ptr.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });//Unwrap.
@@ -416,6 +426,8 @@ namespace Keysharp.Scripting
 				_ = item.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });
 				return value;
 			}
+
+#endif
 			else if (kso != null)//No property was present, so create one and assign the value to it.
 			{
 				_ = kso.DefineProp(namestr, Misc.Map("value", value));

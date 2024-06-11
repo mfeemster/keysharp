@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Keysharp.Core;
-using Keysharp.Core.COM;
+#if WINDOWS
+	using Keysharp.Core.COM;
+#endif
 
 namespace Keysharp.Scripting
 {
@@ -44,12 +46,16 @@ namespace Keysharp.Scripting
 					array.SetValue(value, actualindex);
 					return value;
 				}
+
+#if WINDOWS
 				else if (item is ComObjArray coa)
 				{
 					var actualindex = position < 0 ? coa.array.Length + position : position;
 					coa.array.SetValue(value, actualindex);
 					return value;
 				}
+
+#endif
 				else if (item == null)
 				{
 					return null;
@@ -129,12 +135,15 @@ namespace Keysharp.Scripting
 					var actualindex = position < 0 ? array.Length + position : position - 1;
 					return array.GetValue(actualindex);
 				}
+
+#if WINDOWS
 				else if (item is ComObjArray coa)
 				{
 					var actualindex = position < 0 ? coa.array.Length + position : position;
 					return coa.array.GetValue(actualindex);
 				}
 
+#endif
 				//These are probably never used.
 				/*  else if (typeof(IEnumerable).IsAssignableFrom(item.GetType()))
 				    {
