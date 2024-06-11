@@ -106,7 +106,7 @@ namespace Keysharp.Tests
 			}
 
 #if !WINDOWS
-			var (results, compileexc) = ch.Compile(code, string.Empty);
+			var (results, dummyms, compileexc) = ch.Compile(code, string.Empty);
 
 			if (compileexc != null)
 			{
