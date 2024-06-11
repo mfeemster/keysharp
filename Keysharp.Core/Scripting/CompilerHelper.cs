@@ -194,12 +194,8 @@ using static Keysharp.Scripting.Script.Operator;
 			}
 		}
 
-#if !WINDOWS
-		public (CompilerResults, Exception) Compile(string code, string outputname)
-#else
 
 		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir)
-#endif
 		{
 			try
 			{
