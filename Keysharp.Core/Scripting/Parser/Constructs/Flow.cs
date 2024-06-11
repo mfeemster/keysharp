@@ -275,10 +275,12 @@ namespace Keysharp.Scripting
 							case "PARSE":
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopParse;
 								break;
+#if WINDOWS
 
 							case "REG":
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRegistry;
 								break;
+#endif
 
 							case "EACH":
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopEach;

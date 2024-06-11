@@ -30,6 +30,7 @@ namespace Keysharp.Core.Windows
 
 		private void EjectRetract(uint control, long l, long lo)
 		{
+#if WINDOWS
 			var fileHandle = IntPtr.Zero;
 
 			try
@@ -61,6 +62,8 @@ namespace Keysharp.Core.Windows
 				_ = WindowsAPI.CloseHandle(fileHandle);
 				fileHandle = IntPtr.Zero;
 			}
+
+#endif
 		}
 	}
 }

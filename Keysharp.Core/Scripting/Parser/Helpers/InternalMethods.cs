@@ -31,7 +31,9 @@ namespace Keysharp.Scripting
 			internal static MethodReference LoopFile => new MethodReference(typeof(Core.Loops), "LoopFile");
 			internal static MethodReference LoopParse => new MethodReference(typeof(Core.Loops), "LoopParse");
 			internal static MethodReference LoopRead => new MethodReference(typeof(Core.Loops), "LoopRead");
+#if WINDOWS
 			internal static MethodReference LoopRegistry => new MethodReference(typeof(Core.Loops), "LoopRegistry");
+#endif
 			internal static MethodReference MakeObjectTuple => new MethodReference(typeof(Script), "MakeObjectTuple");
 			internal static MethodReference Operate => new MethodReference(typeof(Script), "Operate");
 			internal static MethodReference OperateTernary => new MethodReference(typeof(Script), "OperateTernary");

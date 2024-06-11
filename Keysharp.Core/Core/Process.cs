@@ -290,7 +290,7 @@ namespace Keysharp.Core
 				}
 
 				var tv = Threads.GetThreadVariables();
-				var prc = new Process
+				var prc = new Process//Unsure what to do about this on linux.//TODO
 				{
 					StartInfo = new ProcessStartInfo
 					{

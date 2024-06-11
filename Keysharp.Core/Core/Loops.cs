@@ -303,7 +303,7 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
-
+#if WINDOWS
 		/// <summary>
 		/// Retrieves the contents of the specified registry subkey, one item at a time.
 		/// </summary>
@@ -414,6 +414,7 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
+#endif
 
 		public static IEnumerator MakeBaseEnumerator(object obj)
 		{
@@ -604,7 +605,7 @@ namespace Keysharp.Core
 					break;
 			}
 		}
-
+#if WINDOWS
 		private static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
 		{
 			//try
@@ -696,6 +697,7 @@ namespace Keysharp.Core
 					out var l);
 			return l;
 		}
+#endif
 	}
 
 	public class LoopInfo
@@ -723,7 +725,9 @@ namespace Keysharp.Core
 	public enum LoopType
 	{
 		Normal,
+#if WINDOWS
 		Registry,
+#endif
 		Directory,
 		Parse,
 		File,
