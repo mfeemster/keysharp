@@ -86,9 +86,11 @@ namespace Keysharp.Core
 		/// <returns>The serial number of the drive</returns>
 		public static long DriveGetSerial(object obj)//Will need a cross platform way to query version.//TODO
 		{
+#if WINDOWS
 			var drive = obj.As().TrimEnd('\\');
 			var serialstr = Wmi.Identifier("Win32_LogicalDisk", "VolumeSerialNumber", "SELECT * FROM Win32_LogicalDisk WHERE Name = \"" + drive + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			return long.TryParse(serialstr, NumberStyles.HexNumber, Parser.culture, out var l) ? l : 0L;
+#endif
 		}
 
 		/// <summary>

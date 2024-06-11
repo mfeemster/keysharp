@@ -197,6 +197,7 @@ namespace Keysharp.Core
 		/// </param>
 		public static void FileCreateShortcut(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null, object obj5 = null, object obj6 = null, object obj7 = null, object obj8 = null)
 		{
+#if WINDOWS
 			var target = obj0.As();
 			var link = obj1.As();
 			var workingDir = obj2.As();
@@ -222,6 +223,7 @@ namespace Keysharp.Core
 			shortcut.Hotkey = shortcutKey != "" ? $"Ctrl+Alt+{shortcutKey}" : "";
 			shortcut.WindowStyle = (int)runState;
 			shortcut.Save();
+#endif
 		}
 
 		/// <summary>

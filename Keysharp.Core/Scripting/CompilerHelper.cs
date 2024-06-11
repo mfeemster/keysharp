@@ -227,7 +227,7 @@ using static Keysharp.Scripting.Script.Operator;
 					}
 				};
 				var results = provider.CompileAssemblyFromSource(parameters, code);
-				return (results, null);
+				return (results, null, null);
 #else
 				var tree = SyntaxFactory.ParseSyntaxTree(code,
 						   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
