@@ -90,6 +90,8 @@ namespace Keysharp.Core
 			var drive = obj.As().TrimEnd('\\');
 			var serialstr = Wmi.Identifier("Win32_LogicalDisk", "VolumeSerialNumber", "SELECT * FROM Win32_LogicalDisk WHERE Name = \"" + drive + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			return long.TryParse(serialstr, NumberStyles.HexNumber, Parser.culture, out var l) ? l : 0L;
+#else
+			return 0L;
 #endif
 		}
 

@@ -458,6 +458,7 @@ namespace Keysharp.Core
 										   ref object outIconNum,
 										   ref object outRunState)
 		{
+#if WINDOWS
 			var link = obj.As();
 
 			try
@@ -486,6 +487,8 @@ namespace Keysharp.Core
 			{
 				throw new OSError(ex);
 			}
+
+#endif
 		}
 
 		/// <summary>
@@ -1159,6 +1162,8 @@ namespace Keysharp.Core
 
 		private static string ResolveShortcut(string filePath)
 		{
+#if WINDOWS
+
 			try
 			{
 				// IWshRuntimeLibrary is in the COM library "Windows Script Host Object Model"
@@ -1171,6 +1176,10 @@ namespace Keysharp.Core
 				// A COMException is thrown if the file is not a valid shortcut (.lnk) file
 				return null;
 			}
+
+#else
+			return "";
+#endif
 		}
 	}
 }

@@ -306,7 +306,7 @@ namespace Keysharp.Core
 			//These class names will be something else on Linux. Need a cross platform way to do this.//TODO
 			if ((ctrl = SearchControl("msctls_statusbar321", title, text, excludeTitle, excludeText, false)) != null)
 			{
-				var sb = new StatusBar(ctrl.Handle);
+				var sb = new Keysharp.Core.Windows.StatusBar(ctrl.Handle);
 				part = Math.Max(0, part - 1);
 
 				if (part < sb.Captions.Length)

@@ -402,8 +402,10 @@ namespace Keysharp.Core
 					case 4: buttons = MessageBoxButtons.YesNo; break;
 
 					case 5: buttons = MessageBoxButtons.RetryCancel; break;
+#if WINDOWS
 
 					case 6: buttons = MessageBoxButtons.CancelTryContinue; break;
+#endif
 				}
 
 				//System modal dialogs are no longer supported in Windows.
@@ -460,11 +462,13 @@ namespace Keysharp.Core
 							case "r/c":
 							case "rc":
 								buttons = MessageBoxButtons.RetryCancel; break;
+#if WINDOWS
 
 							case "canceltryagaincontinue":
 							case "c/t/c":
 							case "ctc":
 								buttons = MessageBoxButtons.CancelTryContinue; break;
+#endif
 
 							case "iconx": icon = MessageBoxIcon.Hand; break;
 
@@ -477,8 +481,10 @@ namespace Keysharp.Core
 							case "default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
 
 							case "default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
+#if WINDOWS
 
 							case "default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
+#endif
 						}
 					}
 				}
