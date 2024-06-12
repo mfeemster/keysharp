@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum XKeySym : uint
 	{
@@ -32,3 +33,4 @@
 		XK_Hyper_R = 0xFFEE,
 	}
 }
+#endif

@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11.Events
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11.Events
 {
 	internal enum EventMasks : long
 	{
@@ -30,3 +31,4 @@
 		OwnerGrabButton = 1 << 24
 	}
 }
+#endif

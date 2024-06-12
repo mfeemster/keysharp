@@ -1,3 +1,4 @@
+#if LINUX
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,6 +9,9 @@ using Keysharp.Scripting;
 
 namespace Keysharp.Core.Linux
 {
+	/// <summary>
+	/// Concrete implementation of KeyboardMouseSender for the linux platfrom.
+	/// </summary>
 	internal class LinuxKeyboardMouseSender : Common.Keyboard.KeyboardMouseSender
 	{
 		private Dictionary<char, CachedKey> Cache;
@@ -287,3 +291,5 @@ namespace Keysharp.Core.Linux
 		}
 	}
 }
+
+#endif

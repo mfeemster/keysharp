@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common.Window
+﻿namespace Keysharp.Core.Common.Platform
 {
 	internal abstract class ControlManagerBase
 	{

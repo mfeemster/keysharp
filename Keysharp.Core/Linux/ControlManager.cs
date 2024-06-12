@@ -1,7 +1,11 @@
-﻿using Keysharp.Core.Common.Window;
+﻿#if LINUX
+using Keysharp.Core.Common.Platform;
 
 namespace Keysharp.Core.Linux
 {
+	/// <summary>
+	/// Concrete implementation of ControlManager for the linux platfrom.
+	/// </summary>
 	internal class ControlManager : ControlManagerBase
 	{
 		internal override long ControlAddItem(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
@@ -44,7 +48,8 @@ namespace Keysharp.Core.Linux
 
 		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Array();
 
-		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null) { }
+		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)
+		{ }
 
 		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 
@@ -127,3 +132,5 @@ namespace Keysharp.Core.Linux
 		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout) => 1;
 	}
 }
+
+#endif

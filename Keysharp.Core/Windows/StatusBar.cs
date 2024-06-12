@@ -1,89 +1,22 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 
 namespace Keysharp.Core.Windows
 {
 	/// <summary>
+	/// Concrete implementation of StatusBar for the Windows platfrom.
 	/// Helper class to get status bar info from a window in another process.
 	/// Gotten from: http://www.pinvoke.net/default.aspx/user32/SB_GETTEXT.html and changed to use SendMessageTimeout().
 	/// </summary>
-	internal class StatusBar
+	internal class StatusBar : Keysharp.Core.Common.Window.StatusBarBase
 	{
-		private const int timeout = 2000;
-		private string[] captions;
-		private IntPtr handle;
-		private int panelCount;
-		private int pid;
-
-		internal string Caption
-		{
-			get => string.Join(" | ", Captions);
-			set => SetCaptions(-1, value);
-		}
-
-		internal string[] Captions
-		{
-			get
-			{
-				if (captions == null)
-					captions = GetCaptions();
-
-				return captions;
-			}
-		}
-
-		internal int OwningPID
-		{
-			get
-			{
-				if (pid == -1)
-					pid = GetOwningPid();
-
-				return pid;
-			}
-		}
-
-		internal int PanelCount
-		{
-			get
-			{
-				if (panelCount == -1)
-					panelCount = GetPanelCount();
-
-				return panelCount;
-			}
-		}
-
 		internal StatusBar(IntPtr hWnd)
+			: base(hWnd)
 		{
-			handle = hWnd;
-			panelCount = -1;
-			pid = -1;
-		}
-
-		internal void SetCaptions(int index, string caption)
-		{
-			if (index == -1)
-			{
-				var oldParts = Captions;
-				var newParts = caption.Split(new string[] { " | " }, StringSplitOptions.None);
-
-				if ((oldParts.Length == newParts.Length) && (newParts.Length > 0))
-				{
-					for (var i = 0; i < oldParts.Length; i++)
-					{
-						if (oldParts[i] != newParts[i])
-							SetCaption(i, newParts[i]);
-					}
-				}
-			}
-			else
-			{
-				SetCaption(index, caption);
-			}
 		}
 
 		//May need to add wait functionality here the way AHK does in StatusBarUtil().
-		private string GetCaption(uint index)
+		protected override string GetCaption(uint index)
 		{
 			//var length = WindowsAPI.SendMessage(_handle, WindowsAPI.SB_GETTEXTLENGTH, index, 0);
 			_ = WindowsAPI.SendMessageTimeout(handle, WindowsAPI.SB_GETTEXTLENGTH, index, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var result);
@@ -160,18 +93,11 @@ namespace Keysharp.Core.Windows
 			return string.Empty;
 		}
 
-		private string[] GetCaptions()
-		{
-			var count = PanelCount;
-			var caps = new string[count];
-
-			for (uint i = 0; i < count; i++)
-				caps[i] = GetCaption(i);
-
-			return caps;
-		}
-
-		private int GetOwningPid()
+		/// <summary>
+		/// Might be able to make this common by abstracting thread ids.//TODO
+		/// </summary>
+		/// <returns></returns>
+		protected override int GetOwningPid()
 		{
 			var ownpid = IntPtr.Zero;
 
@@ -181,7 +107,7 @@ namespace Keysharp.Core.Windows
 			return ownpid.ToInt32();
 		}
 
-		private int GetPanelCount()
+		protected override int GetPanelCount()
 		{
 			if (handle != IntPtr.Zero)
 			{
@@ -191,7 +117,7 @@ namespace Keysharp.Core.Windows
 
 			return 0;
 		}
-
-		private void SetCaption(int index, string caption) => throw new NotImplementedException("Sorry... You'll have to figure out SB_SETTEXT.");
 	}
 }
+
+#endif

@@ -4,9 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
 using Keysharp.Scripting;
-using static Keysharp.Core.Windows.WindowsAPI;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
@@ -147,10 +145,10 @@ namespace Keysharp.Core
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
-			CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);
+			Script.platformManager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);
 			outputVarX = (long)(pos.X - aX);
 			outputVarY = (long)(pos.Y - aY);
-			var child = Window.WindowManager.WindowFromPoint(pos);
+			var child = Script.windowManager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == IntPtr.Zero)
 				return;
@@ -162,11 +160,11 @@ namespace Keysharp.Core
 			//and also better matches the control that Window Spy would think is under the cursor:
 			if ((mode & 0x01) == 0)
 			{
-				var pah = new Keysharp.Core.Common.Window.PointAndHwnd(new POINT() { x = pos.X, y = pos.Y });//Find topmost control containing point.
+				var pah = new Keysharp.Core.Common.Window.PointAndHwnd(pos);//Find topmost control containing point.
 				parent.ChildFindPoint(pah);
 
 				if (pah.hwndFound != IntPtr.Zero)
-					child = Common.Window.WindowManagerProvider.Instance.CreateWindow(pah.hwndFound);
+					child = Script.windowManager.CreateWindow(pah.hwndFound);
 			}
 
 			if (child.Handle == parent.Handle)//If there's no control per se, make it blank.
@@ -213,7 +211,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				_ = GetWindowRect(GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
+				var rect = Script.windowManager.ActiveWindow.Location;
 				x += rect.Left;
 				y += rect.Top;
 			}
@@ -223,7 +221,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				_ = GetWindowRect(GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
+				var rect = Script.windowManager.ActiveWindow.Location;
 				x1 += rect.Left;
 				y1 += rect.Top;
 				x2 += rect.Left;
@@ -236,7 +234,7 @@ namespace Keysharp.Core
 			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
 			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//TODO
 			{
-				_ = GetWindowRect(GetForegroundWindow(), out var rect);//Need a cross platform way to do this.//TODO
+				var rect = Script.windowManager.ActiveWindow.Location;
 				return new Point(p.X - rect.Left, p.Y - rect.Top);
 			}
 

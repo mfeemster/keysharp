@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 
 namespace Keysharp.Core.Linux.X11
 {
@@ -100,3 +101,4 @@ namespace Keysharp.Core.Linux.X11
 		Down = 116
 	}
 }
+#endif

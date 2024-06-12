@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Keysharp.Core.Linux.X11;
@@ -72,3 +73,4 @@ namespace Keysharp.Core.Linux.Proxies
 		}
 	}
 }
+#endif

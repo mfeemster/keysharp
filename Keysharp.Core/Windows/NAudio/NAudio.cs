@@ -1,9 +1,7 @@
 ﻿#if WINDOWS
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Runtime.InteropServices;
 
 /// <summary>

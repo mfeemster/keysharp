@@ -1,3 +1,4 @@
+#if LINUX
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -81,3 +82,4 @@ namespace Keysharp.Core.Linux.X11
 
 	internal delegate int XErrorHandler(IntPtr DisplayHandle, ref XErrorEvent error_event);
 }
+#endif

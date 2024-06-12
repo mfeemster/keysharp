@@ -1,9 +1,12 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Accessibility;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Scripting;
 using Microsoft.Win32.SafeHandles;
 
@@ -1466,6 +1469,16 @@ namespace Keysharp.Core.Windows
 							  oleacc = "oleacc.dll",
 							  oleaut = "oleaut32.dll";
 
+		internal static System.Drawing.Point ToPoint(this Keysharp.Core.Windows.RECT rect) => new System.Drawing.Point(rect.Left, rect.Top);
+
+		internal static Keysharp.Core.Map ToPos(this Keysharp.Core.Windows.RECT rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		{
+			{ "X", rect.Left * scale },
+			{ "Y", rect.Top * scale },
+			{ "Width", (rect.Right - rect.Left)* scale },
+			{ "Height", (rect.Bottom - rect.Top)* scale },
+		});
+
 		[DllImport(oleacc)]
 		internal static extern int AccessibleObjectFromWindow(IntPtr hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
 
@@ -1890,54 +1903,6 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32)]
 		internal static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
-		/// <summary>
-		/// aX and aY are interpreted according to the current coord mode.  If necessary, they are converted to
-		/// screen coordinates based on the position of the active window's upper-left corner (or its client area).
-		/// </summary>
-		/// <param name="aX"></param>
-		/// <param name="aY"></param>
-		/// <param name="aWhichMode"></param>
-		internal static void CoordToScreen(ref int aX, ref int aY, CoordMode modeType)
-		{
-			var coordMode = Mouse.Coords.GetCoordMode(modeType);
-
-			if (coordMode == CoordModeType.Screen)
-				return;
-
-			var active_window = GetForegroundWindow();
-
-			if (active_window != IntPtr.Zero && !IsIconic(active_window))
-			{
-				if (coordMode == CoordModeType.Window)
-				{
-					if (GetWindowRect(active_window, out var rect))
-					{
-						aX += rect.Left;
-						aY += rect.Top;
-					}
-				}
-				else // (coord_mode == CoordModeType.Window.Client)
-				{
-					var pt = new Point(0, 0);
-
-					if (ClientToScreen(active_window, ref pt))
-					{
-						aX += pt.X;
-						aY += pt.Y;
-					}
-				}
-			}
-
-			//else no active window per se, so don't convert the coordinates.  Leave them as-is as desired
-			// by the caller.  More details:
-			// Revert to screen coordinates if the foreground window is minimized.  Although it might be
-			// impossible for a visible window to be both foreground and minimized, it seems that hidden
-			// windows -- such as the script's own main window when activated for the purpose of showing
-			// a popup menu -- can be foreground while simultaneously being minimized.  This fixes an
-			// issue where the mouse will move to the upper-left corner of the screen rather than the
-			// intended coordinates (v1.0.17).
-		}
 
 		//void CoordToScreen(POINT &aPoint, int aWhichMode)
 		//// For convenience. See function above for comments.
@@ -2483,3 +2448,4 @@ namespace Keysharp.Core.Windows
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
 	}
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿#if LINUX
+using System.Runtime.InteropServices;
 using Keysharp.Core.Linux.X11.Events;
 
 namespace Keysharp.Core.Linux.X11
@@ -112,3 +113,4 @@ namespace Keysharp.Core.Linux.X11
 		public override string ToString() => type.ToString();
 	}
 }
+#endif

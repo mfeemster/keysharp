@@ -1,15 +1,18 @@
+#if LINUX
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Window;
 using Keysharp.Core.Linux.Proxies;
+using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
-	/// Concrete implementation of WindowManager for the Linux platfrom.
+	/// Concrete implementation of WindowManager for the linux platfrom.
 	/// </summary>
-	internal class WindowManager : Common.Window.WindowManagerBase
+	internal class WindowManager : WindowManagerBase
 	{
 		// ToDo: There may be more than only one xDisplay
 		private XDisplay _display = null;
@@ -41,7 +44,9 @@ namespace Keysharp.Core.Linux
 
 		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow) => throw new NotImplementedException();
 
-		internal override WindowItemBase GetForeGroundWindow() => throw new NotImplementedException();
+		internal override IntPtr GetForeGroundWindowHwnd() => throw new NotImplementedException();
+
+		internal override bool IsWindow(IntPtr handle) => throw new NotImplementedException();
 
 		internal override void MinimizeAll() => throw new NotImplementedException();
 
@@ -50,3 +55,5 @@ namespace Keysharp.Core.Linux
 		internal override WindowItemBase WindowFromPoint(Point location) => throw new NotImplementedException();
 	}
 }
+
+#endif

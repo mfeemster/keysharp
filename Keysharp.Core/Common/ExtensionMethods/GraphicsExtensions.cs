@@ -111,22 +111,12 @@ namespace System.Drawing
 			return bmp2;
 		}
 
-		internal static System.Drawing.Point ToPoint(this Keysharp.Core.Windows.RECT rect) => new System.Drawing.Point(rect.Left, rect.Top);
-
 		internal static Keysharp.Core.Map ToPos(this Rectangle rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
 		{
 			{ "X", rect.Left * scale },
 			{ "Y", rect.Top * scale },
 			{ "Width", rect.Width * scale },
 			{ "Height", rect.Height * scale },
-		});
-
-		internal static Keysharp.Core.Map ToPos(this Keysharp.Core.Windows.RECT rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
-		{
-			{ "X", rect.Left * scale },
-			{ "Y", rect.Top * scale },
-			{ "Width", (rect.Right - rect.Left)* scale },
-			{ "Height", (rect.Bottom - rect.Top)* scale },
 		});
 	}
 }

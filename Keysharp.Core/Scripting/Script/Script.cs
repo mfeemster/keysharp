@@ -1,6 +1,7 @@
 ﻿using Keysharp.Core;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using System;
@@ -57,6 +58,10 @@ namespace Keysharp.Scripting
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
+		internal static WindowManagerBase windowManager = WindowManagerProvider.Instance;
+		internal static ControlManagerBase controlManager = ControlManagerProvider.Instance;
+		internal static PlatformManagerBase platformManager = PlatformManagerProvider.Instance;
+		//Do we need one here for status bar etc...?//TODO
 		private static IntPtr mainWindowHandle;
 
 		public static bool ResetUponMouseClick => hsResetUponMouseClick;
@@ -264,7 +269,7 @@ namespace Keysharp.Scripting
 		public static string ListKeyHistory()
 		{
 			var sb = new StringBuilder(2048);
-			var target_window = Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow();
+			var target_window = Script.windowManager.ActiveWindow;
 			var win_title = target_window.IsSpecified ? target_window.Title : "";
 			var enabledTimers = 0;
 
@@ -534,19 +539,14 @@ namespace Keysharp.Scripting
 			if (HookThread != null)
 				return false;
 
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				HookThread = new Keysharp.Core.Windows.WindowsHookThread();
-				return true;
-			}
-			else if (Environment.OSVersion.Platform == PlatformID.Unix)
-			{
-				HookThread = new Keysharp.Core.Linux.LinuxHookThread();
-				Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");
-				return true;
-			}
-
-			return false;
+#if WINDOWS
+			HookThread = new Keysharp.Core.Windows.WindowsHookThread();
+			return true;
+#elif LINUX
+			HookThread = new Keysharp.Core.Linux.LinuxHookThread();
+			Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");
+			return true;
+#endif
 		}
 
 		internal static ResultType IsCycleComplete(int aSleepDuration, DateTime aStartTime, bool aAllowEarlyReturn)

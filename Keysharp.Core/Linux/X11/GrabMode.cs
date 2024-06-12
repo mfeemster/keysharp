@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum GrabMode
 	{
@@ -6,3 +7,4 @@
 		GrabModeAsync = 1
 	}
 }
+#endif

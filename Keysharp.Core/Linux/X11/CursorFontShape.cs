@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum CursorFontShape
 	{
@@ -88,3 +89,4 @@
 		XC_num_glyphs = 154
 	}
 }
+#endif

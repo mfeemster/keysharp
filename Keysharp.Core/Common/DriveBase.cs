@@ -3,15 +3,21 @@ using System.IO;
 
 namespace Keysharp.Core.Common
 {
-	internal abstract class Drive
+	internal abstract class DriveBase
 	{
 		protected DriveInfo drive;
 
 		internal abstract long Serial { get; }
 
-		internal abstract StatusCD Status { get; }
+		internal string VolumeLabel
+		{
+			get => drive.VolumeLabel;
+			set => drive.VolumeLabel = value;
+		}
 
-		internal Drive(DriveInfo udrive) => drive = udrive;
+		internal abstract string StatusCD { get; }
+
+		internal DriveBase(DriveInfo udrive) => drive = udrive;
 
 		/// <summary>
 		/// Ejects the CD Drive
@@ -45,35 +51,17 @@ namespace Keysharp.Core.Common
 		/// </summary>
 		internal abstract void UnLock();
 
-		internal static class DriveProvider
-		{
-			// UNDONE: organise DriveProvider
-
-			/// <summary>
-			/// Creates platform specific SystemDrive Instance
-			/// </summary>
-			/// <param name="drive"></param>
-			/// <returns></returns>
-			internal static Drive CreateDrive(DriveInfo drive)
-			{
-				if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-					return new Windows.Drive(drive);
-				else
-					return new Linux.Drive(drive);
-			}
-		}
-
 		/// <summary>
 		/// Status of the CD
 		/// </summary>
-		internal enum StatusCD
-		{
-			NotReady,
-			Open,
-			Playing,
-			Paused,
-			Seeking,
-			Stopped
-		}
+		//internal enum StatusCD
+		//{
+		//  NotReady,
+		//  Open,
+		//  Playing,
+		//  Paused,
+		//  Seeking,
+		//  Stopped
+		//}
 	}
 }

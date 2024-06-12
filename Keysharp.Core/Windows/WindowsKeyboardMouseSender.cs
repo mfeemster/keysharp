@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using Microsoft.Win32;
@@ -30,6 +32,9 @@ namespace Keysharp.Core.Windows
 		internal uint time_to_wait; // This member is present only when message==0; otherwise, a struct is present.
 	}
 
+	/// <summary>
+	/// Concrete implementation of KeyboardMouseSender for the Windows platfrom.
+	/// </summary>
 	internal class WindowsKeyboardMouseSender : Keysharp.Core.Common.Keyboard.KeyboardMouseSender
 	{
 		internal static bool firstCallForThisEvent;
@@ -442,10 +447,10 @@ namespace Keysharp.Core.Windows
 		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
 		{
 			if (window == IntPtr.Zero)
-				window = Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow().Handle;
+				window = Script.windowManager.GetForeGroundWindowHwnd();
 
 			var tempzero = IntPtr.Zero;
-			return GetKeyboardLayout(Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, window));
+			return GetKeyboardLayout(Script.windowManager.GetFocusedCtrlThread(ref tempzero, window));
 		}
 
 		//  // SendInput() appears to be limited to 5000 chars (10000 events in array), at least on XP.  This is
@@ -1088,7 +1093,7 @@ namespace Keysharp.Core.Windows
 			{
 				// Convert relative coords to screen coords if necessary (depends on CoordMode).
 				// None of this is done for playback mode since that mode already returned higher above.
-				CoordToScreen(ref x, ref y, CoordMode.Mouse);
+				Script.platformManager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
 			}
 
 			if (sendMode == SendModes.Input) // Track predicted cursor position for use by subsequent events put into the array.
@@ -1263,7 +1268,7 @@ namespace Keysharp.Core.Windows
 							{
 								var tx = (int)ev.paramL;
 								var ty = (int)ev.paramH;
-								CoordToScreen(ref tx, ref ty, CoordMode.Mouse);   // Playback uses screen coords.
+								Script.platformManager.CoordToScreen(ref tx, ref ty, CoordMode.Mouse);   // Playback uses screen coords.
 								ev.paramL = (uint)tx;
 								ev.paramH = (uint)ty;
 							}
@@ -2142,7 +2147,7 @@ namespace Keysharp.Core.Windows
 				// for each keystroke.
 				// v1.1.27.01: Use the thread of the focused control, which may differ from the active window.
 				var tempzero = IntPtr.Zero;
-				keybdLayoutThread = Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
+				keybdLayoutThread = Script.windowManager.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
 			}
 
 			targetKeybdLayout = GetKeyboardLayout(keybdLayoutThread); // If keybd_layout_thread==0, this will get our thread's own layout, which seems like the best/safest default.
@@ -4140,3 +4145,4 @@ namespace Keysharp.Core.Windows
 		*/
 	}
 }
+#endif

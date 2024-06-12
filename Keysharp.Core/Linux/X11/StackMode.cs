@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum StackMode
 	{
@@ -9,3 +10,4 @@
 		Opposite = 4
 	}
 }
+#endif

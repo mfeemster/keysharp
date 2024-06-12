@@ -6,7 +6,8 @@ using System.Windows.Forms;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+using Keysharp.Core.Windows;
+using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
@@ -89,9 +90,10 @@ namespace Keysharp.Core
 				X = info.rcCaret.Left,
 				Y = info.rcCaret.Top
 			};
-			_ = WindowsAPI.ClientToScreen(info.hwndCaret, ref pt);// Unconditionally convert to screen coordinates, for simplicity.
+			var caretWnd = Script.windowManager.CreateWindow(info.hwndCaret);
+			caretWnd.ClientToScreen(ref pt);// Unconditionally convert to screen coordinates, for simplicity.
 			int x = 0, y = 0;
-			WindowsAPI.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
+			Keysharp.Scripting.Script.platformManager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
 			outputVarX = pt.X;

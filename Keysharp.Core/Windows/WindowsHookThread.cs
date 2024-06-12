@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
@@ -17,6 +19,12 @@ using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {
+	/// <summary>
+	/// Concrete implementation of HookThread for the Windows platfrom.
+	/// Once we figure out how to wire up a hook on linux, we need to go through every method here and move any that are not
+	/// windows-specific into the base class to reduce duplication.
+	/// Of course leave any windows-specific methods here.
+	/// </summary>
 	internal class WindowsHookThread : Keysharp.Core.Common.Threading.HookThread
 	{
 		private static uint pendingDeadKeySC;
@@ -1653,7 +1661,7 @@ namespace Keysharp.Core.Windows
 
 			for (var input = Script.input; input != null; input = input.Prev)
 			{
-				if (input.InProgress() && input.IsInteresting(ref ev))
+				if (input.InProgress() && input.IsInteresting(ev.dwExtraInfo))
 				{
 					if (keyUp && input.ScriptObject != null && input.ScriptObject.OnKeyUp != null
 							&& (((input.KeySC[sc] | input.KeyVK[vk]) & INPUT_KEY_NOTIFY) != 0
@@ -1732,7 +1740,7 @@ namespace Keysharp.Core.Windows
 			// See Get_active_window_keybd_layout macro definition for related comments.
 			var activeWindow = GetForegroundWindow(); // Set default in case there's no focused control.
 			var tempzero = IntPtr.Zero;
-			var activeWindowKeybdLayout = GetKeyboardLayout(Common.Window.WindowManagerProvider.Instance.GetFocusedCtrlThread(ref tempzero, activeWindow));
+			var activeWindowKeybdLayout = GetKeyboardLayout(Script.windowManager.GetFocusedCtrlThread(ref tempzero, activeWindow));
 
 			// Univeral Windows Platform apps apparently have their own handling for dead keys:
 			//  - Dead key followed by Esc produces Chr(27), unlike non-UWP apps.
@@ -2009,7 +2017,7 @@ namespace Keysharp.Core.Windows
 
 			for (; input != null; input = input.Prev)
 			{
-				if (!input.InProgress() || !input.IsInteresting(ref ev))
+				if (!input.InProgress() || !input.IsInteresting(ev.dwExtraInfo))
 					continue;
 
 				var keyFlags = input.KeyVK[vk] | input.KeySC[sc];
@@ -5138,7 +5146,7 @@ namespace Keysharp.Core.Windows
 							var tv = Threads.GetThreadVariables();
 							tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
 
-							switch (msg.message)//Almost none of this is going to work until we figure out how threads are going to work.
+							switch (msg.message)
 							{
 								case (uint)UserMessages.AHK_CHANGE_HOOK_STATE: // No blank line between this in the above to indicate fall-through.
 									// In this case, wParam contains the bitwise set of hooks that should be active.
@@ -5640,3 +5648,4 @@ namespace Keysharp.Core.Windows
 	// that should be maintained:
 	// AHK_HOOK_HOTKEY = WM_USER, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON, AHK_RETURN_PID
 }
+#endif

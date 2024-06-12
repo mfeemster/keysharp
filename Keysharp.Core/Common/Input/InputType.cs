@@ -289,10 +289,10 @@ namespace Keysharp.Core.Common.Input
 			HotkeyDefinition.InstallKeybdHook(); // Install the hook (if needed).
 		}
 
-		internal bool IsInteresting(ref KBDLLHOOKSTRUCT ev)
+		internal bool IsInteresting(ulong dwExtraInfo)
 		{
 			char? ch = null;
-			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring(MinSendLevel - 1, ev.dwExtraInfo, ref ch);
+			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring(MinSendLevel - 1, dwExtraInfo, ref ch);
 		}
 
 		internal void ParseOptions(string options)

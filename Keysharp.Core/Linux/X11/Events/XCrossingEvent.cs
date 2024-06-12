@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.Runtime.InteropServices;
 
 namespace Keysharp.Core.Linux.X11.Events
@@ -25,3 +26,4 @@ namespace Keysharp.Core.Linux.X11.Events
 		internal int state;
 	}
 }
+#endif

@@ -1,3 +1,4 @@
+#if LINUX
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -153,3 +154,4 @@ namespace Keysharp.Core.Linux
 
 	internal delegate void XEventHandler(XEvent Event);
 }
+#endif

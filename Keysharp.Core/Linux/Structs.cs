@@ -1,10 +1,10 @@
+#if LINUX
 #pragma warning disable 649
 
 using System;
 using System.Runtime.InteropServices;
 using System.Timers;
 
-// X11 Version
 namespace Keysharp.Core.Linux
 {
 	internal partial class LinuxAPI
@@ -383,3 +383,4 @@ namespace Keysharp.Core.Linux
 		}
 	}
 }
+#endif

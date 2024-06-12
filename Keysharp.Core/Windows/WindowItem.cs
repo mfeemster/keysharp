@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
 using Keysharp.Scripting;
@@ -12,7 +13,7 @@ using static Keysharp.Scripting.Keywords;
 namespace Keysharp.Core.Windows
 {
 	/// <summary>
-	/// Represents a window under the Windows platform.
+	/// Concrete implementation of WindowItem for the Windows platfrom.
 	/// </summary>
 	internal class WindowItem : Common.Window.WindowItemBase
 	{
@@ -22,7 +23,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				if (IsSpecified && WindowManagerProvider.Instance.ActiveWindow is WindowItem item)
+				if (IsSpecified && Script.windowManager.ActiveWindow is WindowItem item)
 				{
 					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
@@ -36,7 +37,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (IsSpecified)
 				{
-					if (WindowManagerProvider.Instance.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
+					if (Script.windowManager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
 						if (WindowsAPI.IsIconic(Handle))
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
@@ -182,6 +183,8 @@ namespace Keysharp.Core.Windows
 		}
 
 		internal override bool IsHung => Handle == IntPtr.Zero ? false : WindowsAPI.IsHungAppWindow(Handle);
+
+		internal override bool IsIconic => WindowsAPI.IsIconic(Handle);
 
 		internal override Rectangle Location
 		{
@@ -402,6 +405,26 @@ namespace Keysharp.Core.Windows
 					}
 				}
 			}
+		}
+
+		/// <summary>
+		/// Left-Clicks on this window/control
+		/// </summary>
+		/// <param name="location"></param>
+		internal override void Click(Point? location = null)
+		{
+			SendMouseEvent((uint)MOUSEEVENTF.LEFTDOWN, location);
+			SendMouseEvent((uint)MOUSEEVENTF.LEFTUP, location);
+		}
+
+		/// <summary>
+		/// Right-Clicks on this window/control
+		/// </summary>
+		/// <param name="location"></param>
+		internal override void ClickRight(Point? location = null)
+		{
+			SendMouseEvent((uint)MOUSEEVENTF.RIGHTDOWN, location);
+			SendMouseEvent((uint)MOUSEEVENTF.RIGHTUP, location);
 		}
 
 		internal override bool Visible
@@ -651,7 +674,7 @@ namespace Keysharp.Core.Windows
 				// Window Spy.  This overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint().
 				// The pixel at (left, top) lies inside the control, whereas MSDN says "the pixel at (right, bottom)
 				// lies immediately outside the rectangle" -- so use < instead of <= below:
-				if (pah.pt.x >= rect.Left && pah.pt.x < rect.Right && pah.pt.y >= rect.Top && pah.pt.y < rect.Bottom)
+				if (pah.pt.X >= rect.Left && pah.pt.X < rect.Right && pah.pt.Y >= rect.Top && pah.pt.Y < rect.Bottom)
 				{
 					// If the window's center is closer to the given point, break the tie and have it take
 					// precedence.  This solves the problem where a particular control from a set of overlapping
@@ -659,7 +682,7 @@ namespace Keysharp.Core.Windows
 					// user would find more intuitive (the control whose center is closest to the mouse):
 					var centerx = rect.Left + ((double)(rect.Right - rect.Left) / 2);
 					var centery = rect.Top + ((double)(rect.Bottom - rect.Top) / 2);
-					var distance = Math.Sqrt(Math.Pow(pah.pt.x - centerx, 2.0) + Math.Pow(pah.pt.y - centery, 2.0));
+					var distance = Math.Sqrt(Math.Pow(pah.pt.X - centerx, 2.0) + Math.Pow(pah.pt.Y - centery, 2.0));
 					var updateIt = pah.hwndFound == IntPtr.Zero;
 
 					if (!updateIt)
@@ -679,7 +702,7 @@ namespace Keysharp.Core.Windows
 					if (updateIt)
 					{
 						pah.hwndFound = hwnd;
-						pah.rectFound = rect; // And at least one caller uses this returned rect.
+						pah.rectFound = new System.Drawing.Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top); // And at least one caller uses this returned rect.
 						pah.distanceFound = distance;
 					}
 				}
@@ -687,6 +710,15 @@ namespace Keysharp.Core.Windows
 				return true;
 			}, 0);
 		}
+
+		internal override System.Drawing.Point ClientToScreen()
+		{
+			var pt = new System.Drawing.Point();
+			_ = WindowsAPI.ClientToScreen(Handle, ref pt);
+			return pt;
+		}
+
+		internal override void ClientToScreen(ref System.Drawing.Point pt) => WindowsAPI.ClientToScreen(Handle, ref pt);
 
 		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
@@ -794,7 +826,7 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
 
-		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, Point? location = null)
+		internal override void SendMouseEvent(uint mouseevent, Point? location = null)
 		{
 			var click = new Point();
 
@@ -811,7 +843,7 @@ namespace Keysharp.Core.Windows
 			}
 
 			var lparam = new IntPtr(Conversions.MakeInt(click.X, click.Y));
-			_ = WindowsAPI.PostMessage(Handle, (uint)mouseevent, new IntPtr(1), lparam);
+			_ = WindowsAPI.PostMessage(Handle, mouseevent, new IntPtr(1), lparam);
 		}
 
 		internal override void SetTransparency(byte level, Color color)

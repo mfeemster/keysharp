@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.Runtime.InteropServices;
 
 namespace Keysharp.Core.Linux.X11
@@ -10,3 +11,4 @@ namespace Keysharp.Core.Linux.X11
 		internal IntPtr modifiermap;
 	}
 }
+#endif

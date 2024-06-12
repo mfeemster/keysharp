@@ -1,7 +1,9 @@
+#if WINDOWS
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Window;
 
 namespace Keysharp.Core.Windows
@@ -9,7 +11,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Concrete implementation of WindowManager for the Windows platfrom.
 	/// </summary>
-	internal class WindowManager : Common.Window.WindowManagerBase
+	internal class WindowManager : WindowManagerBase
 	{
 		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
 
@@ -137,7 +139,9 @@ namespace Keysharp.Core.Windows
 			return thread_id;
 		}
 
-		internal override WindowItemBase GetForeGroundWindow() => new WindowItem(WindowsAPI.GetForegroundWindow());
+		internal override IntPtr GetForeGroundWindowHwnd() => WindowsAPI.GetForegroundWindow();
+
+		internal override bool IsWindow(IntPtr handle) => WindowsAPI.IsWindow(handle);
 
 		internal override void MinimizeAll()
 		{
@@ -164,3 +168,4 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+#endif

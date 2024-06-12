@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -6,12 +7,11 @@ using Keysharp.Core.Common.Window;
 using Keysharp.Core.Linux.Proxies;
 using Keysharp.Core.Linux.X11;
 using Keysharp.Core.Linux.X11.Types;
-using Keysharp.Core.Windows;//Code in Linux probably shouldn't be referencing windows specific code.//TODO
 
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
-	/// Represents a window under the Linux platform.
+	/// Concrete implementation of WindowItem for the linux platfrom.
 	/// </summary>
 	internal class WindowItem : Common.Window.WindowItemBase//Do we want to prefix each of these derived classes with Windws/Linux?//TODO
 	{
@@ -64,6 +64,8 @@ namespace Keysharp.Core.Linux
 		}
 
 		internal override bool IsHung => throw new NotImplementedException();
+
+		internal override bool IsIconic => throw new NotImplementedException();
 
 		internal override Rectangle Location
 		{
@@ -164,6 +166,22 @@ namespace Keysharp.Core.Linux
 
 		internal override void ChildFindPoint(PointAndHwnd pah) => throw new NotImplementedException();
 
+		/// <summary>
+		/// Left-Clicks on this window/control
+		/// </summary>
+		/// <param name="location"></param>
+		internal override void Click(Point? location = null) => throw new NotImplementedException();
+
+		/// <summary>
+		/// Right-Clicks on this window/control
+		/// </summary>
+		/// <param name="location"></param>
+		internal override void ClickRight(Point? location = null) => throw new NotImplementedException();
+
+		internal override System.Drawing.Point ClientToScreen() => throw new NotImplementedException();
+
+		internal override void ClientToScreen(ref System.Drawing.Point pt) => throw new NotImplementedException();
+
 		internal override bool Close() => throw new NotImplementedException();
 
 		internal override uint GetMenuItemId(params string[] items) => throw new NotImplementedException();
@@ -176,10 +194,12 @@ namespace Keysharp.Core.Linux
 
 		internal override bool Redraw() => throw new NotImplementedException();
 
-		internal override void SendMouseEvent(MOUSEEVENTF mouseevent, System.Drawing.Point? location = null) => throw new NotImplementedException();
+		internal override void SendMouseEvent(uint mouseevent, System.Drawing.Point? location = null) => throw new NotImplementedException();
 
 		internal override void SetTransparency(byte level, System.Drawing.Color color) => throw new NotImplementedException();
 
 		internal override bool Show() => throw new NotImplementedException();
 	}
 }
+
+#endif

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using Keysharp.Core.Linux.X11;
 using Keysharp.Core.Linux.X11.Types;
 
@@ -46,3 +47,5 @@ namespace Keysharp.Core.Linux.Proxies
 		//
 	}
 }
+
+#endif

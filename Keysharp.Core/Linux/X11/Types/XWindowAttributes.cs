@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.Runtime.InteropServices;
 
 namespace Keysharp.Core.Linux.X11.Types
@@ -51,3 +52,4 @@ namespace Keysharp.Core.Linux.X11.Types
 		internal IntPtr screen;
 	}
 }
+#endif

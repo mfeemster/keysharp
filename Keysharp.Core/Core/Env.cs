@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-
 using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using Keysharp.Scripting;
 
@@ -154,16 +153,10 @@ namespace Keysharp.Core
 		{
 			if (startswith)
 				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
-#if WINDOWS
-						|| x.StartsWith('/')
-#endif
-																			) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
 				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
-#if WINDOWS
-						|| x.StartsWith('/')
-#endif
-																			) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
 		public static string FindCommandLineArgVal(string arg, bool startswith = true)
@@ -172,38 +165,15 @@ namespace Keysharp.Core
 
 			for (var i = 0; i < args.Length; i++)
 			{
-				if ((args[i].StartsWith('-')
-#if WINDOWS
-						|| args[i].StartsWith('/')
-#endif
-					) && args[i].StartsWith(arg, StringComparison.OrdinalIgnoreCase))
-				{
+				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && args[i].StartsWith(arg, StringComparison.OrdinalIgnoreCase))
 					if (i < args.Length - 1)
 						return args[i + 1];
-				}
 			}
 
 			return null;
 		}
 
-		public static void HandleCommandLineParams(string[] args)
-		{
-			//          var arr = new Array();
-			//          for (var i = 0; i < args.Length; i++)
-			//          {
-			//              if (args[i].StartsWith('-')
-			//#if WINDOWS
-			//                      || args[i].StartsWith('/')
-			//#endif
-			//                 )
-			//              {
-			//                  arr.Add(args[i]);
-			//                  if (args[i].StartsWith("/include", StringComparison.OrdinalIgnoreCase) && i < args.Length - 1)
-			//                      arr.Add(args[++i]);
-			//              }
-			//          }
-			Keysharp.Core.Accessors.A_Args.AddRange(args);
-		}
+		public static void HandleCommandLineParams(string[] args) => Keysharp.Core.Accessors.A_Args.AddRange(args);
 
 		/// <summary>
 		/// The clipboard object doesn't provide a way to determine if it's truly empty or not.

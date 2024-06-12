@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11.Types
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11.Types
 {
 	internal enum XWindowClass
 	{
@@ -6,3 +7,4 @@
 		InputOnly = 2
 	}
 }
+#endif

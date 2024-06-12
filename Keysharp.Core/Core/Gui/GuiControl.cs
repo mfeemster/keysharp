@@ -5,8 +5,10 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Window;
 using Keysharp.Core.Windows;
+using Keysharp.Scripting;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
@@ -41,7 +43,7 @@ namespace Keysharp.Core
 
 		public bool AltSubmit { get; internal set; } = false;
 
-		public string ClassNN => WindowManagerProvider.Instance.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+		public string ClassNN => Script.windowManager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 		public Control Control => _control;
 
@@ -63,7 +65,7 @@ namespace Keysharp.Core
 			set => _control.Name = value.ToString();
 		}
 
-		public string NetClassNN => WindowManagerProvider.Instance.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
+		public string NetClassNN => Script.windowManager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 		public object Parent
 		{

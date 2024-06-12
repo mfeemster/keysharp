@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
+using Keysharp.Scripting;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Common.Window
@@ -13,10 +14,10 @@ namespace Keysharp.Core.Common.Window
 		internal double distanceFound;
 		internal IntPtr hwndFound = IntPtr.Zero;
 		internal bool ignoreDisabled = false;
-		internal POINT pt;
-		internal RECT rectFound = new RECT();
+		internal System.Drawing.Point pt;
+		internal System.Drawing.Rectangle rectFound = new ();
 
-		internal PointAndHwnd(POINT p) => pt = p;
+		internal PointAndHwnd(System.Drawing.Point p) => pt = p;
 	}
 
 	/// <summary>
@@ -48,6 +49,7 @@ namespace Keysharp.Core.Common.Window
 		internal abstract string NetClassNN { get; }
 		internal abstract WindowItemBase NonChildParentWindow { get; }
 		internal abstract WindowItemBase ParentWindow { get; }
+		internal abstract bool IsIconic { get; }
 
 		internal virtual string Path
 		{
@@ -122,21 +124,17 @@ namespace Keysharp.Core.Common.Window
 		/// Left-Clicks on this window/control
 		/// </summary>
 		/// <param name="location"></param>
-		internal virtual void Click(Point? location = null)
-		{
-			SendMouseEvent(MOUSEEVENTF.LEFTDOWN, location);
-			SendMouseEvent(MOUSEEVENTF.LEFTUP, location);
-		}
+		internal abstract void Click(Point? location = null);
 
 		/// <summary>
 		/// Right-Clicks on this window/control
 		/// </summary>
 		/// <param name="location"></param>
-		internal virtual void ClickRight(Point? location = null)
-		{
-			SendMouseEvent(MOUSEEVENTF.RIGHTDOWN, location);
-			SendMouseEvent(MOUSEEVENTF.RIGHTUP, location);
-		}
+		internal abstract void ClickRight(Point? location = null);
+
+		internal abstract System.Drawing.Point ClientToScreen();
+
+		internal abstract void ClientToScreen(ref System.Drawing.Point pt);
 
 		internal abstract bool Close();
 
@@ -152,7 +150,7 @@ namespace Keysharp.Core.Common.Window
 
 			if (!string.IsNullOrEmpty(criteria.Group))
 			{
-				if (WindowManagerProvider.Instance.Groups.TryGetValue(criteria.Group, out var stack))
+				if (Script.windowManager.Groups.TryGetValue(criteria.Group, out var stack))
 				{
 					if (stack.sc.Count > 0)//An empty group is assumed to want to match all windows.
 					{
@@ -181,7 +179,7 @@ namespace Keysharp.Core.Common.Window
 				if (!TitleCompare(Title, criteria.Title))
 					return false;
 
-				if (!ThreadAccessors.A_DetectHiddenWindows && !WindowsAPI.IsWindowVisible(Handle))
+				if (!ThreadAccessors.A_DetectHiddenWindows && !Visible)
 					return false;
 			}
 
@@ -256,7 +254,7 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract bool Redraw();
 
-		internal abstract void SendMouseEvent(MOUSEEVENTF mouseevent, Point? location = null);
+		internal abstract void SendMouseEvent(uint mouseevent, Point? location = null);
 
 		internal abstract void SetTransparency(byte level, Color color);
 

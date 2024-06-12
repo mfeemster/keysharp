@@ -1,7 +1,7 @@
-﻿namespace Keysharp.Core.Common.Window
+﻿namespace Keysharp.Core.Common.Platform
 {
 	/// <summary>
-	/// Singleton Facade for easy accessing current Platform's ControlManager
+	/// Singleton Facade for easy accessing current platform's ControlManager.
 	/// </summary>
 	internal class ControlManagerProvider
 	{
@@ -17,7 +17,7 @@
 	}
 
 	/// <summary>
-	/// Singleton Facade for easy accessing current Platform's WindowManager
+	/// Singleton Facade for easy accessing current platform's WindowManager.
 	/// </summary>
 	internal class WindowManagerProvider
 	{
@@ -29,6 +29,22 @@
 
 		// private constructor
 		private WindowManagerProvider()
+		{ }
+	}
+
+	/// <summary>
+	/// Singleton Facade for easy accessing current platform's PlatformManager.
+	/// </summary>
+	internal class PlatformManagerProvider
+	{
+		public static PlatformManagerBase Instance { get; } = PlatformProvider.CreatePlatformManager();
+
+		// Explicit static constructor to tell C# compiler
+		// not to mark type as beforefieldinit
+		static PlatformManagerProvider() { }
+
+		// private constructor
+		private PlatformManagerProvider()
 		{ }
 	}
 }

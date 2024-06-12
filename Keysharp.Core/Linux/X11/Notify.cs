@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum NotifyDetail
 	{
@@ -19,3 +20,4 @@
 		NotifyUngrab = 2
 	}
 }
+#endif

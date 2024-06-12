@@ -28,7 +28,7 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>..\bin\release\</OutputPath>
-    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">LEGACY;WINDOWS</DefineConstants>
+        <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">LEGACY;WINDOWS</DefineConstants>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">LEGACY;LINUX</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>5</WarningLevel>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if LINUX
+using System;
 
 namespace Keysharp.Core.Linux.X11
 {
@@ -14,3 +15,4 @@ namespace Keysharp.Core.Linux.X11
 		CWStackMode = 1 << 6
 	}
 }
+#endif

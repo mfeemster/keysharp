@@ -1,16 +1,23 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.IO;
 
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
-	/// Implementation for native Linux Drive Operations
+	/// Concrete implementation of Drive for the linux platfrom.
 	/// </summary>
-	internal class Drive : Common.Drive
+	internal class Drive : Common.DriveBase
 	{
 		internal override long Serial => throw new NotImplementedException();
 
-		internal override StatusCD Status => throw new NotImplementedException();
+		internal override string StatusCD
+		{
+			get
+			{
+				throw new NotImplementedException();
+			}
+		}
 
 		internal Drive(DriveInfo drv)
 			: base(drv) { }
@@ -24,3 +31,4 @@ namespace Keysharp.Core.Linux
 		internal override void UnLock() => throw new NotImplementedException();
 	}
 }
+#endif

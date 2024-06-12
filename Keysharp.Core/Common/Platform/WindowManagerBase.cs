@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using Keysharp.Core.Windows;
+using Keysharp.Core.Common.Window;
+using Keysharp.Scripting;
 
-namespace Keysharp.Core.Common.Window
+namespace Keysharp.Core.Common.Platform
 {
 	internal class WindowGroup
 	{
@@ -23,26 +24,28 @@ namespace Keysharp.Core.Common.Window
 		internal Dictionary<string, WindowGroup> Groups { get; } = new Dictionary<string, WindowGroup>(StringComparer.OrdinalIgnoreCase);
 		internal abstract WindowItemBase LastFound { get; set; }
 
-		internal abstract WindowItemBase CreateWindow(IntPtr id);
+		internal abstract WindowItemBase CreateWindow(nint id);
 
 		internal abstract IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows);
 
 		internal abstract WindowItemBase FindWindow(SearchCriteria criteria, bool last = false);
 
+		internal abstract bool IsWindow(IntPtr handle);
+
 		internal WindowItemBase FindWindow(object title, string text, string excludeTitle, string excludeText, bool last = false)
 		{
 			WindowItemBase foundWindow = null;
-			var (parsed, ptr) = Keysharp.Core.Window.CtrlToIntPtr(title);
+			var (parsed, ptr) = Core.Window.CtrlToIntPtr(title);
 
 			if (parsed)
-				if (WindowsAPI.IsWindow(ptr))
-					return LastFound = WindowManagerProvider.Instance.CreateWindow(ptr);
+				if (IsWindow(ptr))
+					return LastFound = Script.windowManager.CreateWindow(ptr);
 
 			if (title is Gui gui)
 			{
-				return (LastFound = CreateWindow(gui.Hwnd));
+				return LastFound = CreateWindow(gui.Hwnd);
 			}
-			else if ((title == null || (title is string s && string.IsNullOrEmpty(s))) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
+			else if ((title == null || title is string s && string.IsNullOrEmpty(s)) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
 			{
 				foundWindow = LastFound;
 			}
@@ -65,7 +68,7 @@ namespace Keysharp.Core.Common.Window
 			SearchCriteria criteria = null;
 			var foundWindows = new List<WindowItemBase>();
 
-			if ((title == null || (title is string s && string.IsNullOrEmpty(s))) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
+			if ((title == null || title is string s && string.IsNullOrEmpty(s)) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
 			{
 				if (LastFound != null)
 					foundWindows.Add(LastFound);
@@ -82,9 +85,9 @@ namespace Keysharp.Core.Common.Window
 			return (foundWindows, criteria);
 		}
 
-		internal abstract uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow);
+		internal abstract uint GetFocusedCtrlThread(ref nint apControl, nint aWindow);
 
-		internal abstract WindowItemBase GetForeGroundWindow();
+		internal abstract IntPtr GetForeGroundWindowHwnd();
 
 		internal abstract void MinimizeAll();
 

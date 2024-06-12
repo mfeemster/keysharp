@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum XAtom : uint
 	{
@@ -75,3 +76,4 @@
 		XA_LAST_PREDEFINED = 68
 	}
 }
+#endif

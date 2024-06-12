@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum MapState
 	{
@@ -7,3 +8,4 @@
 		IsViewable = 2
 	}
 }
+#endif

@@ -1,9 +1,13 @@
-﻿using System;
+﻿#if LINUX
+using System;
 using System.Collections.Generic;
 using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core.Linux
 {
+	/// <summary>
+	/// Concrete implementation of HookThread for the linux platfrom.
+	/// </summary>
 	internal class LinuxHookThread : Keysharp.Core.Common.Threading.HookThread
 	{
 		public override void SimulateKeyPress(uint key)
@@ -72,3 +76,5 @@ namespace Keysharp.Core.Linux
 		}
 	}
 }
+
+#endif

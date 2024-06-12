@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.Linux.X11
+﻿#if LINUX
+namespace Keysharp.Core.Linux.X11
 {
 	internal enum XRequest : byte
 	{
@@ -124,3 +125,4 @@
 		X_NoOperation = 127
 	}
 }
+#endif

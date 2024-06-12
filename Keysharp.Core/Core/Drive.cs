@@ -1,16 +1,12 @@
-using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
-using Keysharp.Scripting;
 
 namespace Keysharp.Core
 {
 	public static class Drive
 	{
+		//private static Keysharp.Core.Common.Drive
 		/// <summary>
 		/// Ejects the specified CD drive.
 		/// </summary>
@@ -84,16 +80,8 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="path">Path of drive to receive information from.</param>
 		/// <returns>The serial number of the drive</returns>
-		public static long DriveGetSerial(object obj)//Will need a cross platform way to query version.//TODO
-		{
-#if WINDOWS
-			var drive = obj.As().TrimEnd('\\');
-			var serialstr = Wmi.Identifier("Win32_LogicalDisk", "VolumeSerialNumber", "SELECT * FROM Win32_LogicalDisk WHERE Name = \"" + drive + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
-			return long.TryParse(serialstr, NumberStyles.HexNumber, Parser.culture, out var l) ? l : 0L;
-#else
-			return 0L;
-#endif
-		}
+		public static long DriveGetSerial(object obj)
+		=> Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As().TrimEnd('\\'))).Serial;
 
 		/// <summary>
 		/// Retrieves the free disk space of a drive, in megabytes.
@@ -109,7 +97,7 @@ namespace Keysharp.Core
 		/// <returns>The status of the drive</returns>
 		public static string DriveGetStatus(object obj)
 		{
-			var drv = new DriveInfo(obj.As());
+			var drv = new DriveInfo(obj.As().TrimEnd('\\'));
 			var val = drv.DriveFormat;//Will throw DriveNotFoundException on invalid paths.
 			return drv.IsReady ? "Ready" : "NotReady";
 		}
@@ -121,16 +109,8 @@ namespace Keysharp.Core
 		/// <returns>The status of the CD drive</returns>
 		public static string DriveGetStatusCD(object obj)
 		{
-			var drive = obj.As().TrimEnd('\\');
-			var sb = new StringBuilder(128);
-			var str = $"open {drive} type cdaudio alias cd wait shareable";
-
-			if (WindowsAPI.mciSendString(str, sb, sb.Capacity, IntPtr.Zero) != 0)
-				throw new Error($"Opening CD {drive} failed.");
-
-			var res = WindowsAPI.mciSendString("status cdaudio mode", sb, sb.Capacity, IntPtr.Zero);
-			_ = WindowsAPI.mciSendString("close cd wait", null, 0, IntPtr.Zero);
-			return res != 0 ? throw new Error($"Obtaining status for CD {drive} failed.") : sb.ToString();
+			var drive = Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As().TrimEnd('\\')));
+			return drive.StatusCD;
 		}
 
 		/// <summary>
@@ -144,7 +124,7 @@ namespace Keysharp.Core
 		/// Prevents the eject feature of the specified drive from working.
 		/// </summary>
 		/// <param name="path">Path of drive to lock.</param>
-		public static void DriveLock(object obj) => Common.Drive.DriveProvider.CreateDrive(new DriveInfo(obj.As())).Lock();
+		public static void DriveLock(object obj) => Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As())).Lock();
 
 		/// <summary>
 		/// Retracts the specified CD drive.
@@ -159,19 +139,18 @@ namespace Keysharp.Core
 		/// <param name="label">The label to set the drive to.</param>
 		public static void DriveSetLabel(object obj0, object obj1 = null)
 		{
-#if WINDOWS
-			var drive = obj0.As();
+			var drv = obj0.As();
 			var label = obj1.As();
-			var drv = new DriveInfo(drive);
-			drv.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
-#endif
+			var di = new DriveInfo(drv);
+			var drive = Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(di);
+			drive.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
 		}
 
 		/// <summary>
 		/// Restores the eject feature of the specified drive.
 		/// </summary>
 		/// <param name="path">Path of drive to unlock.</param>
-		public static void DriveUnlock(object obj) => Common.Drive.DriveProvider.CreateDrive(new DriveInfo(obj.As())).UnLock();
+		public static void DriveUnlock(object obj) => Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As())).UnLock();
 
 		/// <summary>
 		/// adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
@@ -215,17 +194,17 @@ namespace Keysharp.Core
 
 		private static void DriveHelper(string dr, bool b)
 		{
-			Common.Drive drive;
+			Keysharp.Core.Common.DriveBase drive;
 
 			if (dr.Length == 0)
 			{
 				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom).ToList();
 				drive = allDrives.Count > 0
-						? Common.Drive.DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
+						? Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
 						: throw new Error("Failed to find any CDROM or DVD drives.");
 			}
 			else
-				drive = Common.Drive.DriveProvider.CreateDrive(new DriveInfo(dr));
+				drive = Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(dr));
 
 			if (b)
 				drive.Eject();

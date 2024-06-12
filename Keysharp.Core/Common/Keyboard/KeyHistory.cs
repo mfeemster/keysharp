@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Keysharp.Core.Windows;
+using Keysharp.Scripting;
 
 namespace Keysharp.Core.Common.Keyboard
 {
@@ -38,7 +38,7 @@ namespace Keysharp.Core.Common.Keyboard
 				title_prev = title_curr;
 				title_curr = histitem.targetWindow;
 
-				if (histitem.vk == WindowsAPI.VK_PACKET)//Unicode character probably sent via SendInput. Need to remove Windows specific code from here.//TODO
+				if (histitem.vk == (uint)System.Windows.Forms.Keys.Packet)//Unicode character probably sent via SendInput.
 				{
 					_ = sb.AppendLine();
 					_ = sb.Append($"E7 {histitem.sc:X4}\t{histitem.eventType}\t{(histitem.keyUp ? 'u' : 'd')}\t{histitem.elapsedTime:F2}\t{(char)histitem.sc}              \t{((title_curr != title_prev) ? title_curr : "")}");//Display title only when it changes.
@@ -98,7 +98,7 @@ namespace Keysharp.Core.Common.Keyboard
 			item.vk = vk;
 			item.sc = sc;
 			item.eventType = 'i'; // Callers all want this.
-			var win = Keysharp.Core.Common.Window.WindowManagerProvider.Instance.GetForeGroundWindow();
+			var win = Script.windowManager.ActiveWindow;
 			var forewin = win.Handle;
 
 			if (forewin != IntPtr.Zero)

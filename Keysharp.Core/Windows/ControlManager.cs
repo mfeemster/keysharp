@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -6,12 +7,16 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Window;
 using Keysharp.Scripting;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {
+	/// <summary>
+	/// Concrete implementation of ControlManager for the Windows platfrom.
+	/// </summary>
 	internal class ControlManager : ControlManagerBase
 	{
 		internal static uint ConvertMouseButton(string buf, bool allowWheel = true)
@@ -269,13 +274,7 @@ namespace Keysharp.Core.Windows
 				item = Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
 				var rect = new Point(winx, winx);
 				_ = WindowsAPI.ClientToScreen(item.Handle, ref rect);
-				var newx = rect.X;
-				var newy = rect.Y;
-				var pah = new PointAndHwnd(new POINT
-				{
-					x = newx,
-					y = newy
-				});
+				var pah = new PointAndHwnd(rect);
 				item.ChildFindPoint(pah);
 				item = pah.hwndFound != IntPtr.Zero ? new WindowItem(pah.hwndFound) : item;
 			}
@@ -1318,3 +1317,4 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+#endif
