@@ -162,8 +162,10 @@ namespace System.Windows.Forms
 
 		internal static void ResumeDrawing(this Control control)
 		{
+#if WINDOWS
 			_ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 1, 0);
 			control.Refresh();
+#endif
 		}
 
 		internal static (Control, Control) RightBottomMost(this Control control)
@@ -259,7 +261,12 @@ namespace System.Windows.Forms
 			}
 		}
 
-		internal static void SuspendDrawing(this Control control) => _ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 0, 0);
+		internal static void SuspendDrawing(this Control control)
+		{
+#if WINDOWS
+			_ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 0, 0);
+#endif
+		}
 
 		internal static int TabHeight(this Control control)
 		{

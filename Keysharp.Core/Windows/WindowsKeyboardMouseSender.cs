@@ -10,7 +10,9 @@ using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
-using Microsoft.Win32;
+#if WINDOWS
+	using Microsoft.Win32;
+#endif
 using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Keywords;
 

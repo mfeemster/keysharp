@@ -19,6 +19,7 @@ namespace Keysharp.Core
 		/// <returns></returns>
 		public static ClipboardAll ClipboardAll(object obj0 = null, object obj1 = null)
 		{
+#if WINDOWS
 			var data = obj0;
 			var size = obj1.Al(long.MinValue);
 
@@ -97,6 +98,9 @@ namespace Keysharp.Core
 				}
 			}
 
+#elif LINUX
+			throw new NotImplementedException();
+#endif
 			return new ClipboardAll(System.Array.Empty<byte>());
 		}
 
@@ -139,14 +143,15 @@ namespace Keysharp.Core
 		/// </summary>
 		public static void EnvUpdate()
 		{
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
-				try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
-				catch (Exception ex) { throw new OSError(ex); }
-			}
+#if WINDOWS
 
-			//Linux probably has some built in cmd exe which does this.//TODO
+			//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
+			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
+			catch (Exception ex) { throw new OSError(ex); }
+
+#elif LINUX
+			throw new NotImplementedException();
+#endif
 		}
 
 		public static string FindCommandLineArg(string arg, bool startswith = true)
@@ -205,10 +210,15 @@ namespace Keysharp.Core
 		/// <param name="param"></param>
 		public static object SysGet(object obj)
 		{
+#if WINDOWS
+
 			if (obj is Keysharp.Core.Windows.SystemMetric en)
 				return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics(en);
 
 			return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics((SystemMetric)obj.Ai());
+#elif LINUX
+			throw new NotImplementedException();
+#endif
 		}
 
 		internal static int ClipFormatStringToInt(string fmt) => DataFormats.GetFormat(fmt) is DataFormats.Format d ? d.Id : 0;
@@ -224,6 +234,8 @@ namespace Keysharp.Core
 		{
 			if (format != 0)
 			{
+#if WINDOWS
+
 				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))
 				{
 					byte[] buf;
@@ -247,6 +259,10 @@ namespace Keysharp.Core
 
 					return buf;
 				}
+
+#elif LINUX
+				throw new NotImplementedException();
+#endif
 			}
 
 			return null;
@@ -258,6 +274,8 @@ namespace Keysharp.Core
 		{
 			unsafe
 			{
+#if WINDOWS
+
 				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
 				{
 					var ptr = clip.Ptr;
@@ -286,6 +304,10 @@ namespace Keysharp.Core
 
 					_ = WindowsAPI.CloseClipboard();
 				}
+
+#elif LINUX
+				throw new NotImplementedException();
+#endif
 			}
 		}
 	}

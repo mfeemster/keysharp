@@ -503,6 +503,8 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <returns></returns>
 		internal ToggleValueType? ToggleVal(uint key)
 		{
+#if WINDOWS
+
 			if (forceToggle != null) // Key is a toggleable key.
 			{
 				if (key == WindowsAPI.VK_SCROLL)
@@ -513,6 +515,7 @@ namespace Keysharp.Core.Common.Keyboard
 					return forceToggle.forceNumLock;
 			}
 
+#endif
 			return null;
 		}
 	}

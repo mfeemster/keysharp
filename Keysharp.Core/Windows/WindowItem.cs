@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
@@ -900,3 +901,4 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+#endif

@@ -30,7 +30,11 @@ namespace Keysharp.Scripting
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
+#if WINDOWS
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
+#else
+			success = true;
+#endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			//          ThreadId = WindowsAPI.GetCurrentThreadId();
 			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
@@ -121,6 +125,7 @@ namespace Keysharp.Scripting
 		protected override void WndProc(ref Message m)
 		{
 			var handled = false;
+#if WINDOWS
 
 			switch (m.Msg)
 			{
@@ -156,6 +161,7 @@ namespace Keysharp.Scripting
 					break;
 			}
 
+#endif
 			base.WndProc(ref m);
 
 			if (handled)

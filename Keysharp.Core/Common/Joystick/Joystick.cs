@@ -101,6 +101,7 @@ namespace Keysharp.Core.Common.Joystick
 		/// </summary>
 		internal static void PollJoysticks()//Will need to figure out making this cross platform.//TODO
 		{
+#if WINDOWS
 			// Even if joystick hotkeys aren't currently allowed to fire, poll it anyway so that hotkey
 			// messages can be buffered for later.
 			var jie = JOYINFOEX.Default;
@@ -131,6 +132,10 @@ namespace Keysharp.Core.Common.Joystick
 				// be processed when messages are next checked:
 				HotkeyDefinition.TriggerJoyHotkeys(i, buttons_newly_down);
 			}
+
+#else
+			throw new NotImplementedException();
+#endif
 		}
 
 		internal static object ScriptGetJoyState(JoyControls joy, uint joystickID)
@@ -140,6 +145,8 @@ namespace Keysharp.Core.Common.Joystick
 		// bool return value is used only by KeyWait, so is false for "up" and true for "down".
 		// If there was a problem determining the position/state, aToken is made blank and false is returned.
 		{
+#if WINDOWS
+
 			// Set default in case of early return.
 			if (joy == JoyControls.Invalid) // Currently never called this way.
 				return false; // And leave aToken set to blank.
@@ -244,6 +251,9 @@ namespace Keysharp.Core.Common.Joystick
 			} // switch()
 
 			return resultDouble;// If above didn't return, the result should now be in result_double.
+#else
+			throw new NotImplementedException();
+#endif
 		}
 	}
 
