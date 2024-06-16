@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Windows;
 using Keysharp.Scripting;
 
@@ -88,10 +89,10 @@ namespace Keysharp.Core
 							}
 							else
 							{
-								var foreground = Script.windowManager.ActiveWindow;
+								var foreground = WindowProvider.Manager.ActiveWindow;
 
 								if (foreground.Handle != IntPtr.Zero)
-									Script.platformManager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
+									PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
 
 								//This is the hard case. They've specified coordinates relative to a window, however if that window
 								//is minimized, then its coordinates are impossible to get. Attempt to use the RestoreBounds property, but that is usually

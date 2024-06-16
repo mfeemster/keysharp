@@ -24,7 +24,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				if (IsSpecified && Script.windowManager.ActiveWindow is WindowItem item)
+				if (IsSpecified && WindowProvider.Manager.ActiveWindow is WindowItem item)
 				{
 					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
@@ -38,7 +38,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (IsSpecified)
 				{
-					if (Script.windowManager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
+					if (WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
 						if (WindowsAPI.IsIconic(Handle))
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
@@ -154,7 +154,17 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override Rectangle ClientLocation => !IsSpecified || !WindowsAPI.GetClientRect(Handle, out var rect) ? Rectangle.Empty : new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+		internal override Rectangle ClientLocation
+		{
+			get
+			{
+				if (!IsSpecified || !WindowsAPI.GetClientRect(Handle, out var rect))
+					return Rectangle.Empty;
+
+				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
+				return new Rectangle((int)(scale * rect.Left), (int)(scale * rect.Top), (int)(scale * (rect.Right - rect.Left)), (int)(scale * (rect.Bottom - rect.Top)));
+			}
+		}
 
 		internal override bool Enabled
 		{
@@ -189,8 +199,14 @@ namespace Keysharp.Core.Windows
 
 		internal override Rectangle Location
 		{
-			get => !IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect) ? Rectangle.Empty : new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+			get
+			{
+				if (!IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect))
+					return Rectangle.Empty;
 
+				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
+				return new Rectangle((int)(scale * rect.Left), (int)(scale * rect.Top), (int)(scale * (rect.Right - rect.Left)), (int)(scale * (rect.Bottom - rect.Top)));
+			}
 			set
 			{
 				if (!IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect))
@@ -716,6 +732,9 @@ namespace Keysharp.Core.Windows
 		{
 			var pt = new System.Drawing.Point();
 			_ = WindowsAPI.ClientToScreen(Handle, ref pt);
+			var scale = 1.0 / Accessors.A_ScaledScreenDPI;
+			pt.X = (int)(scale * pt.X);
+			pt.Y = (int)(scale * pt.Y);
 			return pt;
 		}
 

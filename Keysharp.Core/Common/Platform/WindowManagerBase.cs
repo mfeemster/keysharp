@@ -39,7 +39,7 @@ namespace Keysharp.Core.Common.Platform
 
 			if (parsed)
 				if (IsWindow(ptr))
-					return LastFound = Script.windowManager.CreateWindow(ptr);
+					return LastFound = WindowProvider.Manager.CreateWindow(ptr);
 
 			if (title is Gui gui)
 			{

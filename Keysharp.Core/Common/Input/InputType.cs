@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
 using Keysharp.Scripting;
 
 namespace Keysharp.Core.Common.Input
@@ -192,8 +192,8 @@ namespace Keysharp.Core.Common.Input
 							var sb = new StringBuilder();
 							state[(int)Keys.ShiftKey] |= 0x80; // Indicate that the neutral shift key is down for conversion purposes.
 							var active_window_keybd_layout = hook.kbdMsSender.GetFocusedKeybdLayout(IntPtr.Zero);
-							var count = WindowsAPI.ToUnicodeEx(EndingVK, hook.MapVkToSc(EndingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
-															   , sb, 2, Script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
+							var count = PlatformProvider.Manager.ToUnicodeEx(EndingVK, hook.MapVkToSc(EndingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
+										, sb, 2, Script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
 							keyName = keyName.Substring(0, count);
 						}
 						else
@@ -420,7 +420,7 @@ namespace Keysharp.Core.Common.Input
 						// Otherwise, for any key name which has a VK shared by two possible SCs
 						// (such as Up and NumpadUp), handle it by SC so it's identified correctly.
 						var nextkey = sub.Slice(0, endPos).ToString();
-						vk = ht.TextToVK(nextkey, ref modifiersLR, true, true, WindowsAPI.GetKeyboardLayout(0));
+						vk = ht.TextToVK(nextkey, ref modifiersLR, true, true, PlatformProvider.Manager.GetKeyboardLayout(0));
 
 						if (vk != 0)
 						{
@@ -449,7 +449,7 @@ namespace Keysharp.Core.Common.Input
 
 						singleCharString = ch.ToString();
 						modifiersLR = 0u;  // Init prior to below.
-						vk = ht.TextToVK(singleCharString, ref modifiersLR, true, true, WindowsAPI.GetKeyboardLayout(0));
+						vk = ht.TextToVK(singleCharString, ref modifiersLR, true, true, PlatformProvider.Manager.GetKeyboardLayout(0));
 						vkByNumber = false;
 						break;
 				} // switch()

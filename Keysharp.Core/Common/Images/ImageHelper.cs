@@ -83,6 +83,8 @@ namespace Keysharp.Core.Common
 
 			try
 			{
+#if WINDOWS
+
 				if (filename.StartsWith("HICON:", StringComparison.OrdinalIgnoreCase))
 				{
 					var hstr = filename.AsSpan(6);
@@ -117,6 +119,8 @@ namespace Keysharp.Core.Common
 							_ = WindowsAPI.DeleteObject(ptr);
 					}
 				}
+
+#endif
 
 				if (bmp == null)//Wasn't a handle, and instead was a filename.
 				{

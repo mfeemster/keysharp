@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Keysharp.Scripting;
+using Microsoft.VisualBasic.ApplicationServices;
 
 namespace Keysharp.Core.Common.Platform
 {
-	internal class PlatformManagerBase
+	internal abstract class PlatformManagerBase
 	{
 		/// <summary>
 		/// aX and aY are interpreted according to the current coord mode.  If necessary, they are converted to
@@ -23,7 +25,7 @@ namespace Keysharp.Core.Common.Platform
 			if (coordMode == CoordModeType.Screen)
 				return;
 
-			var activeWindow = Script.windowManager.ActiveWindow;
+			var activeWindow = WindowProvider.Manager.ActiveWindow;
 
 			if (activeWindow.Handle != IntPtr.Zero && !activeWindow.IsIconic)
 			{
@@ -50,5 +52,9 @@ namespace Keysharp.Core.Common.Platform
 			// issue where the mouse will move to the upper-left corner of the screen rather than the
 			// intended coordinates (v1.0.17).
 		}
+
+		internal abstract IntPtr GetKeyboardLayout(uint idThread);
+
+		internal abstract int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
 	}
 }

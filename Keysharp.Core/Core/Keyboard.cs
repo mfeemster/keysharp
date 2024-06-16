@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Windows;
 using Keysharp.Scripting;
@@ -90,10 +91,10 @@ namespace Keysharp.Core
 				X = info.rcCaret.Left,
 				Y = info.rcCaret.Top
 			};
-			var caretWnd = Script.windowManager.CreateWindow(info.hwndCaret);
+			var caretWnd = WindowProvider.Manager.CreateWindow(info.hwndCaret);
 			caretWnd.ClientToScreen(ref pt);// Unconditionally convert to screen coordinates, for simplicity.
 			int x = 0, y = 0;
-			Keysharp.Scripting.Script.platformManager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
+			PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
 			outputVarX = pt.X;
@@ -119,7 +120,7 @@ namespace Keysharp.Core
 			Keysharp.Core.Common.Joystick.JoyControls joy;
 			uint? joystickid = 0u;
 			uint? dummy = null;
-			var vk = ht.TextToVK(keyname, ref dummy, false, true, WindowsAPI.GetKeyboardLayout(0));
+			var vk = ht.TextToVK(keyname, ref dummy, false, true, PlatformProvider.Manager.GetKeyboardLayout(0));
 
 			if (vk == 0)
 			{
@@ -431,7 +432,7 @@ break_twice:;
 			var kbdMouseSender = ht.kbdMsSender;
 			uint? modLR = null;
 
-			if ((vk = ht.TextToVK(keyname, ref modLR, false, true, WindowsAPI.GetKeyboardLayout(0))) == 0)
+			if ((vk = ht.TextToVK(keyname, ref modLR, false, true, PlatformProvider.Manager.GetKeyboardLayout(0))) == 0)
 			{
 				joy = Joystick.ConvertJoy(keyname, ref joystickId);
 
@@ -690,7 +691,7 @@ break_twice:;
 			var vk = 0u;
 			var sc = 0u;
 			uint? modLR = null;
-			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, WindowsAPI.GetKeyboardLayout(0));//Need to make cross platform.
+			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, PlatformProvider.Manager.GetKeyboardLayout(0));//Need to make cross platform.
 
 			switch (callid)
 			{

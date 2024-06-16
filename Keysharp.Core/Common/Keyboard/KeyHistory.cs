@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Scripting;
 
 namespace Keysharp.Core.Common.Keyboard
@@ -98,7 +99,7 @@ namespace Keysharp.Core.Common.Keyboard
 			item.vk = vk;
 			item.sc = sc;
 			item.eventType = 'i'; // Callers all want this.
-			var win = Script.windowManager.ActiveWindow;
+			var win = WindowProvider.Manager.ActiveWindow;
 			var forewin = win.Handle;
 
 			if (forewin != IntPtr.Zero)

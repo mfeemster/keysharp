@@ -107,7 +107,7 @@ namespace Keysharp.Core.Windows
 		//private bool dead;
 		//private List<uint> deadKeys;
 		//private bool ignore;
-		//private IntPtr kbd = WindowsAPI.GetKeyboardLayout(0);
+		//private IntPtr kbd = PlatformProvider.Manager.GetKeyboardLayout(0);
 		//private WindowsAPI.LowLevelKeyboardProc proc;
 
 		private DateTime thisEventTime;
@@ -449,10 +449,10 @@ namespace Keysharp.Core.Windows
 		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
 		{
 			if (window == IntPtr.Zero)
-				window = Script.windowManager.GetForeGroundWindowHwnd();
+				window = WindowProvider.Manager.GetForeGroundWindowHwnd();
 
 			var tempzero = IntPtr.Zero;
-			return GetKeyboardLayout(Script.windowManager.GetFocusedCtrlThread(ref tempzero, window));
+			return PlatformProvider.Manager.GetKeyboardLayout(WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, window));
 		}
 
 		//  // SendInput() appears to be limited to 5000 chars (10000 events in array), at least on XP.  This is
@@ -1095,7 +1095,7 @@ namespace Keysharp.Core.Windows
 			{
 				// Convert relative coords to screen coords if necessary (depends on CoordMode).
 				// None of this is done for playback mode since that mode already returned higher above.
-				Script.platformManager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
+				PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
 			}
 
 			if (sendMode == SendModes.Input) // Track predicted cursor position for use by subsequent events put into the array.
@@ -1270,7 +1270,7 @@ namespace Keysharp.Core.Windows
 							{
 								var tx = (int)ev.paramL;
 								var ty = (int)ev.paramH;
-								Script.platformManager.CoordToScreen(ref tx, ref ty, CoordMode.Mouse);   // Playback uses screen coords.
+								PlatformProvider.Manager.CoordToScreen(ref tx, ref ty, CoordMode.Mouse);   // Playback uses screen coords.
 								ev.paramL = (uint)tx;
 								ev.paramH = (uint)ty;
 							}
@@ -2149,10 +2149,10 @@ namespace Keysharp.Core.Windows
 				// for each keystroke.
 				// v1.1.27.01: Use the thread of the focused control, which may differ from the active window.
 				var tempzero = IntPtr.Zero;
-				keybdLayoutThread = Script.windowManager.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
+				keybdLayoutThread = WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
 			}
 
-			targetKeybdLayout = GetKeyboardLayout(keybdLayoutThread); // If keybd_layout_thread==0, this will get our thread's own layout, which seems like the best/safest default.
+			targetKeybdLayout = PlatformProvider.Manager.GetKeyboardLayout(keybdLayoutThread); // If keybd_layout_thread==0, this will get our thread's own layout, which seems like the best/safest default.
 			targetLayoutHasAltGr = LayoutHasAltGr(targetKeybdLayout);  // Note that WM_INPUTLANGCHANGEREQUEST is not monitored by MsgSleep for the purpose of caching our thread's keyboard layout.  This is because it would be unreliable if another msg pump such as MsgBox is running.  Plus it hardly helps perf. at all, and hurts maintainability.
 			// Below is now called with "true" so that the hook's modifier state will be corrected (if necessary)
 			// prior to every send.

@@ -6,47 +6,35 @@ namespace Keysharp.Core.Common.Platform
 {
 	internal static class ControlProvider
 	{
-		private static ControlManagerBase manager;
-		/// <summary>
-		/// Creates a ControlManager for the current platform
-		/// </summary>
-		public static ControlManagerBase CreateControlManager() => manager ?? (manager =
+		internal static ControlManagerBase Manager { get; } =
 #if WINDOWS
-					new Windows.ControlManager()
+			new Windows.ControlManager()
 #elif LINUX
-					new Linux.ControlManager()
+			new Linux.ControlManager()
 #endif
-																			  );
+		;
 	}
 
 	internal static class WindowProvider
 	{
-		private static WindowManagerBase manager;
-		/// <summary>
-		/// Creates a WindowManager for the current platform
-		/// </summary>
-		public static WindowManagerBase CreateWindowManager() => manager ?? (manager =
+		internal static WindowManagerBase Manager { get; } =
 #if WINDOWS
-					new Windows.WindowManager()
+			new Windows.WindowManager()
 #elif LINUX
-					new Linux.WindowManager()
+			new Linux.WindowManager()
 #endif
-																			);
+		;
 	}
 
 	internal static class PlatformProvider
 	{
-		private static PlatformManagerBase manager;
-		/// <summary>
-		/// Creates a WindowManager for the current platform
-		/// </summary>
-		public static PlatformManagerBase CreatePlatformManager() => manager ?? (manager =
+		internal static PlatformManagerBase Manager { get; } =
 #if WINDOWS
-					new Windows.PlatformManager()
+			new Windows.PlatformManager()
 #elif LINUX
-					new Linux.PlatformManager()
+			new Linux.PlatformManager()
 #endif
-																				);
+		;
 	}
 
 	internal static class DriveProvider

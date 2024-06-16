@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Keysharp.Core;
-using Keysharp.Core.Windows;
 
 namespace System.Windows.Forms
 {
@@ -163,7 +162,7 @@ namespace System.Windows.Forms
 		internal static void ResumeDrawing(this Control control)
 		{
 #if WINDOWS
-			_ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 1, 0);
+			_ = Keysharp.Core.Windows.WindowsAPI.SendMessage(control.Handle, Keysharp.Core.Windows.WindowsAPI.WM_SETREDRAW, 1, 0);
 			control.Refresh();
 #endif
 		}
@@ -264,7 +263,7 @@ namespace System.Windows.Forms
 		internal static void SuspendDrawing(this Control control)
 		{
 #if WINDOWS
-			_ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 0, 0);
+			_ = Keysharp.Core.Windows.WindowsAPI.SendMessage(control.Handle, Keysharp.Core.Windows.WindowsAPI.WM_SETREDRAW, 0, 0);
 #endif
 		}
 

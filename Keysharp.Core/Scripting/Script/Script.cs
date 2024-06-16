@@ -58,10 +58,6 @@ namespace Keysharp.Scripting
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
-		internal static WindowManagerBase windowManager = WindowManagerProvider.Instance;
-		internal static ControlManagerBase controlManager = ControlManagerProvider.Instance;
-		internal static PlatformManagerBase platformManager = PlatformManagerProvider.Instance;
-		//Do we need one here for status bar etc...?//TODO
 		private static IntPtr mainWindowHandle;
 
 		public static bool ResetUponMouseClick => hsResetUponMouseClick;
@@ -269,7 +265,7 @@ namespace Keysharp.Scripting
 		public static string ListKeyHistory()
 		{
 			var sb = new StringBuilder(2048);
-			var target_window = Script.windowManager.ActiveWindow;
+			var target_window = WindowProvider.Manager.ActiveWindow;
 			var win_title = target_window.IsSpecified ? target_window.Title : "";
 			var enabledTimers = 0;
 

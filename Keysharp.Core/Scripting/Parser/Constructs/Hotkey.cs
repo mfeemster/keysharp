@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Keysharp.Core;
 using Keysharp.Core.Common.ExtensionMethods;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Windows;
 using static Keysharp.Scripting.Keywords;
 
@@ -47,7 +48,7 @@ namespace Keysharp.Scripting
 			var suffixHasTilde = false;
 			var hookIsMandatory = false;
 			var ht = Keysharp.Scripting.Script.HookThread;
-			var kbLayout = WindowsAPI.GetKeyboardLayout(0);
+			var kbLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
 			string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
 			void ClearParserHotstringState()
 			{

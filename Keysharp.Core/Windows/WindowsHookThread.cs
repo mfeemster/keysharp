@@ -1740,7 +1740,7 @@ namespace Keysharp.Core.Windows
 			// See Get_active_window_keybd_layout macro definition for related comments.
 			var activeWindow = GetForegroundWindow(); // Set default in case there's no focused control.
 			var tempzero = IntPtr.Zero;
-			var activeWindowKeybdLayout = GetKeyboardLayout(Script.windowManager.GetFocusedCtrlThread(ref tempzero, activeWindow));
+			var activeWindowKeybdLayout = PlatformProvider.Manager.GetKeyboardLayout(WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, activeWindow));
 
 			// Univeral Windows Platform apps apparently have their own handling for dead keys:
 			//  - Dead key followed by Esc produces Chr(27), unlike non-UWP apps.
@@ -4805,7 +4805,7 @@ namespace Keysharp.Core.Windows
 				return 0;
 
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = GetKeyboardLayout(0);
+				keybdLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// Don't trim() aText or modify it because that will mess up the caller who expects it to be unchanged.
 			// Instead, for now, just check it as-is.  The only extra whitespace that should exist, due to trimming
@@ -5008,7 +5008,7 @@ namespace Keysharp.Core.Windows
 		internal override char VKtoChar(uint vk, IntPtr keybdLayout)
 		{
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = GetKeyboardLayout(0);
+				keybdLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// MapVirtualKeyEx() always produces 'A'-'Z' for those keys regardless of keyboard layout,
 			// but for any other keys it produces the correct results, so we'll use it:
@@ -5612,40 +5612,5 @@ namespace Keysharp.Core.Windows
 		// The rest don't have explicit names in GUI_EVENT_NAMES:
 		, GUI_EVENT_WM_COMMAND = GUI_EVENT_NAMED_COUNT
 	};
-
-	// WM_USER is the lowest number that can be a user-defined message.  Anything above that is also valid.
-	// NOTE: Any msg about WM_USER will be kept buffered (unreplied-to) whenever the script is uninterruptible.
-	// If this is a problem, try making the msg have an ID less than WM_USER via a technique such as that used
-	// for AHK_USER_MENU (perhaps WM_COMMNOTIFY can be "overloaded" to contain more than one type of msg).
-	// Also, it has been announced in OnMessage() that message numbers between WM_USER and 0x1000 are earmarked
-	// for possible future use by the program, so don't use a message above 0x1000 without good reason.
-	internal enum UserMessages : uint
-	{
-		AHK_HOOK_HOTKEY = WM_USER, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON
-		, AHK_UNUSED_MSG, AHK_EXIT_BY_RELOAD, AHK_EXIT_BY_SINGLEINSTANCE, AHK_CHECK_DEBUGGER
-
-		// Allow some room here in between for more "exit" type msgs to be added in the future (see below comment).
-		, AHK_GUI_ACTION = WM_USER + 20 // Avoid WM_USER+100/101 and vicinity.  See below comment.
-
-		// v1.0.43.05: On second thought, it seems better to stay close to WM_USER because the OnMessage page
-		// documents, "it is best to choose a number greater than 4096 (0x1000) to the extent you have a choice.
-		// This reduces the chance of interfering with messages used internally by current and future versions..."
-		// v1.0.43.03: Changed above msg number because Micha reports that previous number (WM_USER+100) conflicts
-		// with msgs sent by HTML control (AHK_CLIPBOARD_CHANGE) and possibly others (I think WM_USER+100 may be the
-		// start of a range used by other common controls too).  So trying a higher number that's (hopefully) very
-		// unlikely to be used by OS features.
-		, AHK_CLIPBOARD_CHANGE, AHK_HOOK_TEST_MSG, AHK_CHANGE_HOOK_STATE, AHK_GETWINDOWTEXT
-
-		, AHK_HOT_IF_EVAL   // HotCriterionAllowsFiring uses this to ensure expressions are evaluated only on the main thread.
-		, AHK_HOOK_SYNC // For WaitHookIdle().
-		, AHK_INPUT_END, AHK_INPUT_KEYDOWN, AHK_INPUT_CHAR, AHK_INPUT_KEYUP
-		, AHK_HOOK_SET_KEYHISTORY
-		, AHK_START_LOOP
-	}
-
-	// NOTE: TRY NEVER TO CHANGE the specific numbers of the above messages, since some users might be
-	// using the Post/SendMessage commands to automate AutoHotkey itself.  Here is the original order
-	// that should be maintained:
-	// AHK_HOOK_HOTKEY = WM_USER, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON, AHK_RETURN_PID
 }
 #endif

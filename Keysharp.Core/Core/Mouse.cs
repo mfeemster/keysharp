@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using static Keysharp.Scripting.Keywords;
@@ -145,10 +146,10 @@ namespace Keysharp.Core
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
-			Script.platformManager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);
+			PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);
 			outputVarX = (long)(pos.X - aX);
 			outputVarY = (long)(pos.Y - aY);
-			var child = Script.windowManager.WindowFromPoint(pos);
+			var child = WindowProvider.Manager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == IntPtr.Zero)
 				return;
@@ -164,7 +165,7 @@ namespace Keysharp.Core
 				parent.ChildFindPoint(pah);
 
 				if (pah.hwndFound != IntPtr.Zero)
-					child = Script.windowManager.CreateWindow(pah.hwndFound);
+					child = WindowProvider.Manager.CreateWindow(pah.hwndFound);
 			}
 
 			if (child.Handle == parent.Handle)//If there's no control per se, make it blank.
@@ -211,7 +212,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				var rect = Script.windowManager.ActiveWindow.Location;
+				var rect = WindowProvider.Manager.ActiveWindow.Location;
 				x += rect.Left;
 				y += rect.Top;
 			}
@@ -221,7 +222,7 @@ namespace Keysharp.Core
 		{
 			if (Coords.Mouse == CoordModeType.Window)
 			{
-				var rect = Script.windowManager.ActiveWindow.Location;
+				var rect = WindowProvider.Manager.ActiveWindow.Location;
 				x1 += rect.Left;
 				y1 += rect.Top;
 				x2 += rect.Left;
@@ -234,7 +235,7 @@ namespace Keysharp.Core
 			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
 			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//TODO
 			{
-				var rect = Script.windowManager.ActiveWindow.Location;
+				var rect = WindowProvider.Manager.ActiveWindow.Location;
 				return new Point(p.X - rect.Left, p.Y - rect.Top);
 			}
 

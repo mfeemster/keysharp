@@ -150,7 +150,7 @@ namespace Keysharp.Core.Common.Window
 
 			if (!string.IsNullOrEmpty(criteria.Group))
 			{
-				if (Script.windowManager.Groups.TryGetValue(criteria.Group, out var stack))
+				if (WindowProvider.Manager.Groups.TryGetValue(criteria.Group, out var stack))
 				{
 					if (stack.sc.Count > 0)//An empty group is assumed to want to match all windows.
 					{

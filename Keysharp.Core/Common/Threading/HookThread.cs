@@ -299,4 +299,41 @@ namespace Keysharp.Core.Common.Threading
 		//internal uint time;
 		internal IntPtr wParam = IntPtr.Zero;
 	}
+
+
+	// WM_USER (0x0400) is the lowest number that can be a user-defined message.  Anything above that is also valid.
+	// NOTE: Any msg about WM_USER will be kept buffered (unreplied-to) whenever the script is uninterruptible.
+	// If this is a problem, try making the msg have an ID less than WM_USER via a technique such as that used
+	// for AHK_USER_MENU (perhaps WM_COMMNOTIFY can be "overloaded" to contain more than one type of msg).
+	// Also, it has been announced in OnMessage() that message numbers between WM_USER and 0x1000 are earmarked
+	// for possible future use by the program, so don't use a message above 0x1000 without good reason.
+	//Make sure the minimum value of WM_USER (0x0400) is ok for linux.//TODO
+	internal enum UserMessages : uint
+	{
+		AHK_HOOK_HOTKEY = 0x0400, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON
+		, AHK_UNUSED_MSG, AHK_EXIT_BY_RELOAD, AHK_EXIT_BY_SINGLEINSTANCE, AHK_CHECK_DEBUGGER
+
+		// Allow some room here in between for more "exit" type msgs to be added in the future (see below comment).
+		, AHK_GUI_ACTION = 0x0400 + 20 // Avoid WM_USER+100/101 and vicinity.  See below comment.
+
+		// v1.0.43.05: On second thought, it seems better to stay close to WM_USER because the OnMessage page
+		// documents, "it is best to choose a number greater than 4096 (0x1000) to the extent you have a choice.
+		// This reduces the chance of interfering with messages used internally by current and future versions..."
+		// v1.0.43.03: Changed above msg number because Micha reports that previous number (WM_USER+100) conflicts
+		// with msgs sent by HTML control (AHK_CLIPBOARD_CHANGE) and possibly others (I think WM_USER+100 may be the
+		// start of a range used by other common controls too).  So trying a higher number that's (hopefully) very
+		// unlikely to be used by OS features.
+		, AHK_CLIPBOARD_CHANGE, AHK_HOOK_TEST_MSG, AHK_CHANGE_HOOK_STATE, AHK_GETWINDOWTEXT
+
+		, AHK_HOT_IF_EVAL   // HotCriterionAllowsFiring uses this to ensure expressions are evaluated only on the main thread.
+		, AHK_HOOK_SYNC // For WaitHookIdle().
+		, AHK_INPUT_END, AHK_INPUT_KEYDOWN, AHK_INPUT_CHAR, AHK_INPUT_KEYUP
+		, AHK_HOOK_SET_KEYHISTORY
+		, AHK_START_LOOP
+	}
+
+	// NOTE: TRY NEVER TO CHANGE the specific numbers of the above messages, since some users might be
+	// using the Post/SendMessage commands to automate AutoHotkey itself.  Here is the original order
+	// that should be maintained:
+	// AHK_HOOK_HOTKEY = WM_USER, AHK_HOTSTRING, AHK_USER_MENU, AHK_DIALOG, AHK_NOTIFYICON, AHK_RETURN_PID
 }
