@@ -43,7 +43,7 @@ namespace Keysharp.Core
 
 		public bool AltSubmit { get; internal set; } = false;
 
-		public string ClassNN => Script.windowManager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+		public string ClassNN => WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 		public Control Control => _control;
 
@@ -65,7 +65,7 @@ namespace Keysharp.Core
 			set => _control.Name = value.ToString();
 		}
 
-		public string NetClassNN => Script.windowManager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
+		public string NetClassNN => WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 		public object Parent
 		{
