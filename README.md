@@ -238,6 +238,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
+* Gui controls support taking a boolean `AutoSize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
 * `SubStr()` uses a default of 1 for the second parameter, `StartingPos`, to relieve the user of always having to specify it.
 * New string functions:
 	+ `NormalizeEol(str, eol) => String` to take in a string and make all line endings match the value passed in, or the default for the current environment.
