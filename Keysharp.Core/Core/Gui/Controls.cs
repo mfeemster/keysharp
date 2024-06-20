@@ -167,16 +167,23 @@ namespace Keysharp.Core
 
 	public class KeysharpForm : Form
 	{
-		internal bool beenShown = false;
 		internal object eventObj;
 		internal bool showWithoutActivation;
+		private bool beenShown = false;
 
 		[System.ComponentModel.Browsable(false)]
 		protected override bool ShowWithoutActivation => showWithoutActivation;
 
+		internal bool BeenShown => beenShown;
+
 		public KeysharpForm()
 		{
+			AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			//See Gui.Show() for where the remainder of the properties get set, such as scaling values.
 			Font = MainWindow.OurDefaultFont;
+			StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			KeyPreview = true;
 			DoubleBuffered = true;
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
@@ -706,6 +713,26 @@ namespace Keysharp.Core
 			//SetStyle(ControlStyles.DoubleBuffer, true);
 			//SetStyle(ControlStyles.ResizeRedraw, true);
 			//SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+		}
+
+		internal void AdjustSize(double dpiscale)
+		{
+			var tempw = 0.0;
+			var temph = 0.0;
+
+			foreach (TabPage tp in TabPages)
+			{
+				(Control right, Control bottom) rb = tp.RightBottomMost();
+
+				if (rb.right != null)
+					tempw = Math.Max(tempw, ((this.TabWidth() + rb.right.Right)) + (tp.Margin.Right + Margin.Right));
+
+				if (rb.bottom != null)
+					temph = Math.Max(temph, ((this.TabHeight() + rb.bottom.Bottom)) + (tp.Margin.Bottom + (Margin.Bottom * dpiscale)));
+			}
+
+			Width  = (int)Math.Round(tempw);
+			Height = (int)Math.Round(temph);
 		}
 
 		internal void SetColor(Color color)

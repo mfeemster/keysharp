@@ -75,6 +75,37 @@ namespace System.Windows.Forms
 				return action();
 		}
 
+		internal static T FindParent<T>(this Control control) where T : Control
+		{
+			var parent = control.Parent;
+
+			while (parent != null)
+			{
+				if (parent is T pt)
+					return pt;
+
+				parent = parent.Parent;
+			}
+
+			return null;
+		}
+
+		internal static HashSet<T> FindParents<T>(this Control control) where T : Control
+		{
+			var parent = control.Parent;
+			var parents = new HashSet<T>();
+
+			while (parent != null)
+			{
+				if (parent is T pt)
+					parents.Add(pt);
+
+				parent = parent.Parent;
+			}
+
+			return parents;
+		}
+
 		internal static TabPage FindTab(this TabControl tc, string text, bool exact)
 		{
 			foreach (TabPage tp in tc.TabPages)
@@ -287,6 +318,12 @@ namespace System.Windows.Forms
 			}
 
 			return 0;
+		}
+
+		internal static void TagAndAdd(this Control control, Control add)
+		{
+			add.Tag = control.Controls.Count;
+			control.Controls.Add(add);
 		}
 
 		private static void GetMenuItems(ToolStripItem item, List<ToolStripItem> items)

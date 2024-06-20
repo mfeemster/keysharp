@@ -80,23 +80,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public KeysharpForm ParentForm
-		{
-			get
-			{
-				var parent = _control.Parent;
-
-				do
-				{
-					if (parent is KeysharpForm kf)
-						return kf;
-
-					parent = parent.Parent;
-				} while (parent != null);
-
-				return parent as KeysharpForm;
-			}
-		}
+		public KeysharpForm ParentForm => _control.FindParent<KeysharpForm>();
 
 		public object Text
 		{
