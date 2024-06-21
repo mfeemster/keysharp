@@ -63,11 +63,15 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
+#if WINDOWS
 
 			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
 				SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
+
+#endif
 		}
 
+#if WINDOWS
 		protected override void OnMouseUp(MouseEventArgs e)
 		{
 			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
@@ -75,6 +79,7 @@ namespace Keysharp.Core
 			else
 				base.OnMouseUp(e);
 		}
+#endif
 
 		protected override void WndProc(ref Message m)
 		{
@@ -596,9 +601,12 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
+#if WINDOWS
 
 			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
 				SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
+
+#endif
 		}
 
 		protected override void WndProc(ref Message m)

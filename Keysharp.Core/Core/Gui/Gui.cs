@@ -795,6 +795,8 @@ namespace Keysharp.Core
 				{
 #if WINDOWS
 					var tv = new KeysharpTreeView(!opts.hscroll ? WindowsAPI.TVS_NOHSCROLL : 0, 0);
+#else
+					var tv = new KeysharpTreeView(0, 0);
 #endif
 
 					if (opts.buttons.HasValue)
