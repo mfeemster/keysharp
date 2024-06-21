@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Keysharp.Core.Common.Platform;
+using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Windows
 {
@@ -19,6 +20,19 @@ namespace Keysharp.Core.Windows
 
 		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl)
 		=> WindowsAPI.ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, cchBuff, wFlags, dwhkl);
+
+		internal override bool SetDllDirectory(string path) => WindowsAPI.SetDllDirectory(path);
+
+		internal override IntPtr LoadLibrary(string path) => WindowsAPI.LoadLibrary(path);
+
+		internal override int GetModuleHandleEx(uint flags, string moduleName, out IntPtr module) =>
+		WindowsAPI.GetModuleHandleEx(flags, moduleName, out module);
+
+		internal override uint CurrentThreadId() => Keysharp.Core.Windows.WindowsAPI.GetCurrentThreadId();
+
+		internal override bool DestroyIcon(IntPtr icon) => WindowsAPI.DestroyIcon(icon);
+
+		internal override bool ExitProgram(uint flags, uint reason) => WindowsAPI.ExitWindowsEx(flags, reason);
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-﻿#if !LINUX
+﻿#if LINUX
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +20,19 @@ namespace Keysharp.Core.Linux
 
 		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl)
 		=> throw new NotImplementedException();
+
+		internal override bool SetDllDirectory(string path) => throw new NotImplementedException();
+
+		internal override IntPtr LoadLibrary(string path) => throw new NotImplementedException();
+
+		internal override int GetModuleHandleEx(uint flags, string moduleName, out IntPtr module) => throw new NotImplementedException();
+
+		internal override uint CurrentThreadId() => Keysharp.Core.Windows.WindowsAPI.GetCurrentThreadId() => throw new NotImplementedException();
+
+		internal override bool DestroyIcon(IntPtr icon) => true;
+
+		internal override bool ExitProgram(uint flags, uint reason) => true;
+
 	}
 }
 #endif

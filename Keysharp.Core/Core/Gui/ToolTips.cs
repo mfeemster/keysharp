@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
 using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Windows;
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -174,7 +173,7 @@ namespace Keysharp.Core
 						Accessors.A_IconNumber = obj1;
 					}
 
-					_ = WindowsAPI.DestroyIcon(ptr);
+					_ =  PlatformProvider.Manager.DestroyIcon(ptr);
 				}
 			}
 			else

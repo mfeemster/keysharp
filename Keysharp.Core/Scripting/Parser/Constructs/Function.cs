@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Keysharp.Core;
-using Keysharp.Core.Windows;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

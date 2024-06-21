@@ -50,5 +50,17 @@ namespace Keysharp.Core.Common.Platform
 		internal abstract IntPtr GetKeyboardLayout(uint idThread);
 
 		internal abstract int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+
+		internal abstract bool SetDllDirectory(string path);
+
+		internal abstract IntPtr LoadLibrary(string path);
+
+		internal abstract int GetModuleHandleEx(uint flags, string moduleName, out IntPtr module);
+
+		internal abstract uint CurrentThreadId();
+
+		internal abstract bool DestroyIcon(IntPtr icon);
+
+		internal abstract bool ExitProgram(uint flags, uint reason);
 	}
 }

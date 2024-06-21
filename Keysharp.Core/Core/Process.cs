@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
@@ -216,7 +216,7 @@ namespace Keysharp.Core
 			if (Environment.OSVersion.Platform != PlatformID.Win32NT)
 				return;//Does linux have a shutdown command?//TODO
 
-			_ = WindowsAPI.ExitWindowsEx((uint)obj.Al(), 0);
+			_ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
 		}
 
 		//internal static int MsgFilterMax() => Threads.IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;

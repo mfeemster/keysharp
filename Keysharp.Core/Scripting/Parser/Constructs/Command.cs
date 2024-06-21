@@ -1,8 +1,6 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
-using Keysharp.Core.Windows;
-using Microsoft.CodeAnalysis.Text;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

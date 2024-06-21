@@ -1,6 +1,9 @@
 using Keysharp.Core;
+using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -73,15 +76,15 @@ namespace Keysharp.Scripting
 				{
 					if (dll.Item1.Length == 0)
 					{
-						if (!WindowsAPI.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
+						if (!PlatformProvider.Manager.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
 							if (!dll.Item2)
-								throw new Error("WindowsAPI.SetDllDirectory(null) failed.");
+								throw new Error("PlatformProvider.Manager.SetDllDirectory(null) failed.");
 					}
 					else if (Directory.Exists(dll.Item1))
 					{
-						if (!WindowsAPI.SetDllDirectory(dll.Item1))
+						if (!PlatformProvider.Manager.SetDllDirectory(dll.Item1))
 							if (!dll.Item2)
-								throw new Error($"WindowsAPI.SetDllDirectory({dll.Item1}) failed.");
+								throw new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed.");
 					}
 					else
 					{
@@ -90,14 +93,18 @@ namespace Keysharp.Scripting
 						if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
 							dllname += ".dll";
 
-						var hmodule = WindowsAPI.LoadLibrary(dllname);
+						var hmodule = PlatformProvider.Manager.LoadLibrary(dllname);
 
 						if (hmodule != IntPtr.Zero)
 						{
 							// "Pin" the dll so that the script cannot unload it with FreeLibrary.
 							// This is done to avoid undefined behavior when DllCall optimizations
 							// resolves a proc address in a dll loaded by this directive.
-							_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+#if WINDOWS
+							_ = PlatformProvider.Manager.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+#else
+							_ = PlatformProvider.Manager.GetModuleHandleEx(0, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+#endif
 						}
 						else if (!dll.Item2)
 							throw new Error($"Failed to load DLL {dllname}.");

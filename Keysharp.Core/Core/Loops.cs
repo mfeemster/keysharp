@@ -5,9 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+	using Microsoft.Win32;
+#endif
 using Keysharp.Scripting;
-using Microsoft.Win32;
 
 namespace Keysharp.Core
 {
@@ -524,9 +526,13 @@ namespace Keysharp.Core
 
 		internal static string GetShortPath(string filename)
 		{
+#if WINDOWS
 			var buffer = new StringBuilder(1024);
 			_ = WindowsAPI.GetShortPathName(filename, buffer, buffer.Capacity);
 			return buffer.ToString();
+#else
+			return "";
+#endif
 		}
 
 		internal static LoopInfo Peek() => LoopStack.PeekOrNull();

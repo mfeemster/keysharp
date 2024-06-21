@@ -5,7 +5,7 @@ using System.Drawing;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Window;
 using Keysharp.Core.Linux.Proxies;
-using Keysharp.Core.Windows;
+
 
 namespace Keysharp.Core.Linux
 {
