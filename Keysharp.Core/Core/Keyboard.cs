@@ -7,7 +7,9 @@ using Keysharp.Core.Common.Joystick;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -67,6 +69,7 @@ namespace Keysharp.Core
 
 		public static bool CaretGetPos(ref long outputVarX, ref long outputVarY)
 		{
+#if WINDOWS
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
 			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 
@@ -100,6 +103,9 @@ namespace Keysharp.Core
 			outputVarX = pt.X;
 			outputVarY = pt.Y;
 			return true;
+#else
+			return false;
+#endif
 		}
 
 		public static string GetKeyName(object obj) => GetKeyNamePrivate(obj.As(), 0) as string;
@@ -531,7 +537,7 @@ break_twice:;
 
 		public static void SendText(object obj) => Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
 
-		public static void SetCapsLockState(object obj) => SetToggleState(WindowsAPI.VK_CAPITAL, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+		public static void SetCapsLockState(object obj) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
 		public static void SetKeyDelay(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
@@ -558,9 +564,9 @@ break_twice:;
 			}
 		}
 
-		public static void SetNumLockState(object obj) => SetToggleState(WindowsAPI.VK_NUMLOCK, ref toggleStates.forceNumLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+		public static void SetNumLockState(object obj) => SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
-		public static void SetScrollLockState(object obj) => SetToggleState(WindowsAPI.VK_SCROLL, ref toggleStates.forceScrollLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+		public static void SetScrollLockState(object obj) => SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
 		public static void SetStoreCapsLockMode(object obj) => Accessors.A_StoreCapsLockMode = obj;
 
@@ -596,7 +602,7 @@ break_twice:;
 
 			if (vk == 0)
 				vk = ht.MapScToVk(sc);
-			else if (sc == 0 && (vk == WindowsAPI.VK_RETURN || (sc = ht.MapVkToSc(vk, true)) == 0)) // Prefer the non-Numpad name.
+			else if (sc == 0 && (vk == (uint)Keys.Return || (sc = ht.MapVkToSc(vk, true)) == 0)) // Prefer the non-Numpad name.
 				sc = ht.MapVkToSc(vk);
 
 			// Check SC first to properly differentiate between Home/NumpadHome, End/NumpadEnd, etc.
@@ -622,9 +628,9 @@ break_twice:;
 		{
 			// Always turn input ON/OFF even if g_BlockInput says its already in the right state.  This is because
 			// BlockInput can be externally and undetectably disabled, e.g. if the user presses Ctrl-Alt-Del:
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)//Need to figure out how to make this cross platform.//TODO
-				_ = WindowsAPI.BlockInput(enable);
-
+#if WINDOWS
+			_ = WindowsAPI.BlockInput(enable);
+#endif
 			blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
 		}

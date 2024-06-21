@@ -8,7 +8,9 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+#if WINDOWS
+	using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+#endif
 using Keysharp.Scripting;
 using static Keysharp.Core.Flow;
 
