@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 
 namespace Keysharp.Core.Common.Joystick
 {

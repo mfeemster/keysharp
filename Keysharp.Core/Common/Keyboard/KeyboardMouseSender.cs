@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Common.Keyboard
 {
@@ -103,8 +102,6 @@ namespace Keysharp.Core.Common.Keyboard
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
 		private readonly StringBuilder caser = new StringBuilder(32);
-		private readonly List<HotstringDefinition> expand = new List<HotstringDefinition>();
-		private readonly StringBuilder history;
 		private readonly List<HotkeyDefinition> hotkeys;
 		private readonly List<HotstringDefinition> hotstrings;
 		private readonly Dictionary<Keys, bool> pressed;
@@ -113,7 +110,6 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			hotkeys = new List<HotkeyDefinition>();
 			hotstrings = new List<HotstringDefinition>();
-			history = new StringBuilder(retention);
 			pressed = new Dictionary<Keys, bool>();
 
 			foreach (int i in Enum.GetValues(typeof(Keys)))
@@ -499,23 +495,22 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <summary>
 		/// This is all done because C# doesn't allow class members to be references.
 		/// </summary>
-		/// <param name="key"></param>
+		/// <param name="vk"></param>
 		/// <returns></returns>
-		internal ToggleValueType? ToggleVal(uint key)
+		internal ToggleValueType? ToggleVal(uint vk)
 		{
-#if WINDOWS
+			var key = (System.Windows.Forms.Keys)vk;
 
 			if (forceToggle != null) // Key is a toggleable key.
 			{
-				if (key == WindowsAPI.VK_SCROLL)
+				if (key == Keys.Scroll)
 					return forceToggle.forceScrollLock;
-				else if (key == WindowsAPI.VK_CAPITAL)
+				else if (key == Keys.Capital)
 					return forceToggle.forceCapsLock;
-				else if (key == WindowsAPI.VK_NUMLOCK)
+				else if (key == Keys.NumLock)
 					return forceToggle.forceNumLock;
 			}
 
-#endif
 			return null;
 		}
 	}

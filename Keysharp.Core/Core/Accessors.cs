@@ -15,7 +15,9 @@ using System.Threading;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using Keysharp.Scripting;
 
 namespace Keysharp.Core
@@ -229,6 +231,8 @@ namespace Keysharp.Core
 		{
 			get
 			{
+#if WINDOWS
+
 				if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
 				{
 					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
@@ -258,10 +262,13 @@ namespace Keysharp.Core
 						return string.Join(Environment.NewLine, files);
 				}
 
+#endif
 				return "";
 			}
 			set
 			{
+#if WINDOWS
+
 				if (value != null)
 				{
 					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
@@ -276,6 +283,8 @@ namespace Keysharp.Core
 							Clipboard.SetDataObject(value.ToString(), true);
 					}
 				}
+
+#endif
 			}
 		}
 
@@ -1444,8 +1453,12 @@ namespace Keysharp.Core
 		{
 			get
 			{
+#if WINDOWS
 				var lii = Windows.LASTINPUTINFO.Default;
 				return WindowsAPI.GetLastInputInfo(ref lii) ? Environment.TickCount - lii.dwTime : 0L;
+#else
+				return 0L;
+#endif
 			}
 		}
 

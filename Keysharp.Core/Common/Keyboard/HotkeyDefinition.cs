@@ -5,7 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using Keysharp.Scripting;
 using static Keysharp.Core.Misc;
 using static Keysharp.Scripting.Keywords;
@@ -2234,17 +2236,18 @@ namespace Keysharp.Core.Common.Keyboard
 			// for example, be used to register the naked SHIFT key.  So what we do here saves the
 			// user from having to specify +SHIFT in the script:
 			var modifiersToRegister = modifiers;
+			var key = (System.Windows.Forms.Keys)vk;
 
-			switch (vk)
+			switch (key)
 			{
-				case WindowsAPI.VK_LWIN:
-				case WindowsAPI.VK_RWIN: modifiersToRegister |= KeyboardMouseSender.MOD_WIN; break;
+				case Keys.LWin:
+				case Keys.RWin: modifiersToRegister |= KeyboardMouseSender.MOD_WIN; break;
 
-				case WindowsAPI.VK_CONTROL: modifiersToRegister |= KeyboardMouseSender.MOD_CONTROL; break;
+				case Keys.ControlKey: modifiersToRegister |= KeyboardMouseSender.MOD_CONTROL; break;
 
-				case WindowsAPI.VK_SHIFT: modifiersToRegister |= KeyboardMouseSender.MOD_SHIFT; break;
+				case Keys.ShiftKey: modifiersToRegister |= KeyboardMouseSender.MOD_SHIFT; break;
 
-				case WindowsAPI.VK_MENU: modifiersToRegister |= KeyboardMouseSender.MOD_ALT; break;
+				case Keys.Menu: modifiersToRegister |= KeyboardMouseSender.MOD_ALT; break;
 			}
 
 			// Must register them to our main window (i.e. don't use NULL to indicate our thread),

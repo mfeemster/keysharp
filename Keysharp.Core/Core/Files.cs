@@ -8,7 +8,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Keysharp.Core.Common;
-using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using Microsoft.VisualBasic.FileIO;
 
 namespace Keysharp.Core
@@ -888,12 +890,15 @@ namespace Keysharp.Core
 			var path = Path.GetDirectoryName(s);
 			var dir = new DirectoryInfo(path);
 			var filename = Path.GetFileName(s);
+#if WINDOWS
 
 			foreach (var file in dir.EnumerateFiles(filename))
 				//This appears to be not implemented in mono:
 				//https://github.com/mono/mono-basic/blob/master/vbruntime/Microsoft.VisualBasic/Microsoft.VisualBasic.FileIO/FileSystemOperation.vb
 				//May need some type of system call for non-windows OS.
 				Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+
+#endif
 		}
 
 		/// <summary>
@@ -906,7 +911,9 @@ namespace Keysharp.Core
 
 			try
 			{
+#if WINDOWS
 				_ = WindowsAPI.SHEmptyRecycleBin(IntPtr.Zero, s != "" ? s : null, WindowsAPI.SHERB_NOCONFIRMATION | WindowsAPI.SHERB_NOPROGRESSUI | WindowsAPI.SHERB_NOSOUND);
+#endif
 			}
 			catch (Exception ex)
 			{

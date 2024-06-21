@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 
 namespace Keysharp.Core
 {
@@ -45,8 +46,11 @@ namespace Keysharp.Core
 
 			if (startingFolder.StartsWith("::"))
 			{
+#if WINDOWS
+
 				if (WindowsAPI.SHGetKnownFolderPath(new Guid(startingFolder.Trim(new char[] { ':', '{', '}' }))) is string s)
 					select.SelectedPath = s;
+#endif
 			}
 			else if (Keysharp.Core.Options.TryParseString(startingFolder, "*", ref str))
 				select.SelectedPath = str;
@@ -344,7 +348,11 @@ namespace Keysharp.Core
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
+#if WINDOWS
 			var mbopts = (MessageBoxOptions)WindowsAPI.MB_SETFOREGROUND;//For some reason this constant is not available in C#, but it works and is required to make the message box take the focus.
+#else
+			var mbopts = MessageBoxOptions.ServiceNotification;
+#endif
 			//var help = false;
 			Control owner = GuiHelper.DialogOwner;// ?? Form.ActiveForm;
 			var timeout = 0.0;

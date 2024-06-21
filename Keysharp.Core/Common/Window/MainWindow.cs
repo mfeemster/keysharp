@@ -6,7 +6,9 @@ using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using static Keysharp.Core.Misc;
 
 namespace Keysharp.Scripting
@@ -258,9 +260,12 @@ namespace Keysharp.Scripting
 				return;
 			}
 
+#if WINDOWS
+
 			if (success)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
+#endif
 			Keysharp.Core.Gui.DestroyAll();
 			about?.Close();
 		}
