@@ -1,11 +1,11 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Windows.Forms;
 using Keysharp.Core;
 using Keysharp.Core.Common.ExtensionMethods;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Windows;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -324,9 +324,11 @@ namespace Keysharp.Scripting
 
 						var tempindex = buf.IndexOf(temp[0], hotkeyFlagIndex);
 						remap_dest_modifiers = buf.Substring(hotkeyFlagIndex, tempindex - hotkeyFlagIndex);
+						var remap_dest_key = (Keys)remap_dest_vk;
+						var remap_source_key = (Keys)remap_source_vk;
 
 						if (remap_dest_modifiers.Length == 0
-								&& (remap_dest_vk == WindowsAPI.VK_PAUSE)
+								&& (remap_dest_key == Keys.Pause)
 								&& string.Compare(remap_dest, "Pause", true) == 0) // Specifically "Pause", not "vk13".
 						{
 							// In the unlikely event that the dest key has the same name as a command, disqualify it
@@ -382,19 +384,19 @@ namespace Keysharp.Scripting
 
 							var extra_event = ""; // Set default.
 
-							switch (remap_dest_vk)
+							switch (remap_dest_key)
 							{
-								case WindowsAPI.VK_LMENU:
-								case WindowsAPI.VK_RMENU:
-								case WindowsAPI.VK_MENU:
-									switch (remap_source_vk)
+								case Keys.LMenu:
+								case Keys.RMenu:
+								case Keys.Menu:
+									switch (remap_source_key)
 									{
-										case WindowsAPI.VK_LCONTROL:
-										case WindowsAPI.VK_CONTROL:
+										case Keys.LControlKey:
+										case Keys.ControlKey:
 											extra_event = "{LCtrl up}"; // Somewhat surprisingly, this is enough to make "Ctrl::Alt" properly remap both right and left control.
 											break;
 
-										case WindowsAPI.VK_RCONTROL:
+										case Keys.RControlKey:
 											extra_event = "{RCtrl up}";
 											break;
 											// Below is commented out because its only purpose was to allow a shift key remapped to alt

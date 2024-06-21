@@ -3,7 +3,11 @@ using Keysharp.Core.Common.Input;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#elif LINUX
+	using Keysharp.Core.Linux
+#endif
 using System;
 using System.Collections.Generic;
 using System.Drawing;
