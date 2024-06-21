@@ -9,7 +9,9 @@ using System.Windows.Forms;
 using Keysharp.Core.Common;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Windows;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using Keysharp.Scripting;
 using static Keysharp.Scripting.Keywords;
 
@@ -33,15 +35,14 @@ namespace Keysharp.Core
 
 		public static Icon GetIcon(string source, int n)
 		{
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				var prc = System.Diagnostics.Process.GetCurrentProcess().Handle;
-				var icon = WindowsAPI.ExtractIcon(prc, source, n);
+#if WINDOWS
+			var prc = System.Diagnostics.Process.GetCurrentProcess().Handle;
+			var icon = WindowsAPI.ExtractIcon(prc, source, n);
 
-				if (icon != IntPtr.Zero)
-					return Icon.FromHandle(icon);
-			}
+			if (icon != IntPtr.Zero)
+				return Icon.FromHandle(icon);
 
+#endif
 			return Icon.ExtractAssociatedIcon(source);
 		}
 
@@ -295,6 +296,8 @@ namespace Keysharp.Core
 			if (lvco.icon.HasValue)
 				col.ImageIndex = lvco.icon.Value == 0 ? -1 : lvco.icon.Value;
 
+#if WINDOWS
+
 			if (lvco.iconright.HasValue)
 			{
 				var colflags = new LV_COLUMN();
@@ -310,6 +313,8 @@ namespace Keysharp.Core
 
 				_ = WindowsAPI.SendLVColMessage(lv.Handle, WindowsAPI.LVM_SETCOLUMN, (uint)col.Index, ref colflags);
 			}
+
+#endif
 
 			if (lvco.inttype.HasValue)
 			{
@@ -748,7 +753,9 @@ namespace Keysharp.Core
 				if (monitor.instanceCount >= monitor.maxInstances)
 					return false;
 
+#if WINDOWS
 				Script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
+#endif
 				var now = DateTime.Now;
 				Script.lastPeekTime = now;
 				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.

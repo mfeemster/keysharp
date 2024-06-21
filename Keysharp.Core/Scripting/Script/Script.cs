@@ -6,7 +6,7 @@ using Keysharp.Core.Common.Threading;
 #if WINDOWS
 	using Keysharp.Core.Windows;
 #elif LINUX
-	using Keysharp.Core.Linux
+	using Keysharp.Core.Linux;
 #endif
 using System;
 using System.Collections.Generic;

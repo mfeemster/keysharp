@@ -7,8 +7,9 @@ using System.Windows.Forms;
 using Keysharp.Core.Common;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Window;
-using Keysharp.Core.Windows;
-using Keysharp.Scripting;
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
@@ -1285,11 +1286,15 @@ namespace Keysharp.Core
 				if (opts.page != int.MinValue)
 					tb.LargeChange = opts.page;
 
+#if WINDOWS
+
 				if (opts.thick != int.MinValue)
 					_ = WindowsAPI.SendMessage(tb.Handle, WindowsAPI.TBM_SETTHUMBLENGTH, (uint)opts.thick, 0);
 
 				if (opts.tooltip)
 					_ = WindowsAPI.SendMessage(tb.Handle, WindowsAPI.TBM_SETTIPSIDE, (uint)opts.tooltipside, 0);
+
+#endif
 			}
 			else if (_control is KeysharpTreeView tv)
 			{
@@ -1502,6 +1507,8 @@ namespace Keysharp.Core
 
 							default:
 							{
+#if WINDOWS
+
 								if (il.ImageSize.Width > WindowsAPI.GetSystemMetrics(SystemMetric.SM_CXSMICON))//Need a cross platform way to do this.//TODO
 								{
 									oldil = ImageLists.IL_GetId(lv.LargeImageList);
@@ -1513,6 +1520,10 @@ namespace Keysharp.Core
 									lv.SmallImageList = newil;
 								}
 
+#else//Just use the large image icon on non-Windows.
+								oldil = ImageLists.IL_GetId(lv.LargeImageList);
+								lv.LargeImageList = newil;
+#endif
 								break;
 							}
 						}
@@ -1680,6 +1691,8 @@ namespace Keysharp.Core
 
 		internal object InvokeMessageHandlers(ref Message m)
 		{
+#if WINDOWS
+
 			if (m.Msg == WindowsAPI.WM_NOTIFY || m.Msg == WindowsAPI.WM_REFLECT + WindowsAPI.WM_NOTIFY)
 			{
 				if (notifyHandlers != null)
@@ -1709,6 +1722,7 @@ namespace Keysharp.Core
 				}
 			}
 
+#endif
 			return null;
 		}
 

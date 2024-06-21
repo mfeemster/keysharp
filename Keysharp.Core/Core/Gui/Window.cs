@@ -7,7 +7,9 @@ using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
-using Keysharp.Core.Windows;//Code in Common probably shouldn't be referencing windows specific code.//TODO
+#if WINDOWS
+	using Keysharp.Core.Windows;
+#endif
 using Keysharp.Scripting;
 using static Keysharp.Scripting.Script;
 
