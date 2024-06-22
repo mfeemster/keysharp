@@ -1,9 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <StartupObject>Keysharp.Main.Program</StartupObject>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
@@ -20,15 +29,22 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>..\bin\debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;LEGACY,WINDOWS</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">DEBUG;TRACE;LEGACY;WINDOWS</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">DEBUG;TRACE;LEGACY;LINUX</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>5</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>..\bin\release\</OutputPath>
-    <DefineConstants>TRACE;LEGACY,WINDOWS</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">TRACE;LEGACY;WINDOWS</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">TRACE;LEGACY;LINUX</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>5</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <None Remove="Scripts\WindowSpy.ks" />
   </ItemGroup>
