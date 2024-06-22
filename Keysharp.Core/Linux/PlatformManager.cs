@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 
 namespace Keysharp.Core.Linux
@@ -38,7 +39,7 @@ namespace Keysharp.Core.Linux
 
 		internal override bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam) => true;
 
-		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, Keys vk) => true;
+		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk) => true;
 	}
 }
 #endif

@@ -2057,7 +2057,7 @@ namespace Keysharp.Core.Windows
 		internal static extern IntPtr GetAncestor(IntPtr hwnd, GetAncestorFlags flags);
 
 		[DllImport(user32)]
-		internal static extern bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, Keys vk);
+		internal static extern bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk);
 
 		[DllImport(user32)]
 		internal static extern bool UnregisterHotKey(IntPtr hWnd, uint id);

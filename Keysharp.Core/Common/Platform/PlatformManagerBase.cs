@@ -71,6 +71,6 @@ namespace Keysharp.Core.Common.Platform
 
 		internal abstract bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
 
-		internal abstract bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, Keys vk);
+		internal abstract bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk);
 	}
 }

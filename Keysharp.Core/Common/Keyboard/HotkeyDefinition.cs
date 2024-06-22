@@ -2247,7 +2247,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// otherwise any modal dialogs, such as MessageBox(), that call DispatchMessage()
 			// internally wouldn't be able to find anyone to send hotkey messages to, so they
 			// would probably be lost:
-			return (isRegistered = PlatformProvider.Manager.RegisterHotKey(Script.MainWindowHandle, id, (KeyModifiers)modifiersToRegister, (System.Windows.Forms.Keys)vk))
+			return (isRegistered = PlatformProvider.Manager.RegisterHotKey(Script.MainWindowHandle, id, (KeyModifiers)modifiersToRegister, vk))
 				   ? ResultType.Ok
 				   : ResultType.Fail;
 			// Above: On failure, reset the modifiers in case this function changed them.  This is
