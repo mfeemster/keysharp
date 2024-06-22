@@ -56,6 +56,8 @@ namespace Keysharp.Core.Linux
 
 		internal override bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLr, IntPtr keybdLayout) => false;
 
+		internal override void Unhook() { }
+
 		internal override char VKtoChar(uint vk, IntPtr keybdLayout) => (char)0;
 
 		internal override void WaitHookIdle()

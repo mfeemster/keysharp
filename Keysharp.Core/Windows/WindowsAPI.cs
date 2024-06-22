@@ -1781,13 +1781,13 @@ namespace Keysharp.Core.Windows
 		internal static extern bool PostThreadMessage(uint threadId, uint msg, UIntPtr wParam, IntPtr lParam);
 
 		[DllImport(user32)]
-		internal static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+		internal static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
 		[DllImport(user32)]
-		internal static extern bool PostMessage(IntPtr hWnd, uint Msg, uint wParam, uint lParam);
+		internal static extern bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
 
 		[DllImport(user32)]
-		internal static extern bool PostMessage(IntPtr hWnd, uint Msg, string wParam, IntPtr lParam);
+		internal static extern bool PostMessage(IntPtr hWnd, uint msg, string wParam, IntPtr lParam);
 
 		[DllImport(user32)]
 		internal static extern IntPtr RealChildWindowFromPoint(IntPtr hwndParent, Point ptParentClientCoords);
@@ -1796,13 +1796,13 @@ namespace Keysharp.Core.Windows
 		internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
 		[DllImport(user32)]
-		internal static extern uint SendMessage(IntPtr hWnd, uint wMsg, uint wParam, uint lParam);
+		internal static extern uint SendMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
 
 		[DllImport(user32)]
-		internal static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+		internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
 		[DllImport(user32)]
-		internal static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, int[] lParam);
+		internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, int[] lParam);
 
 		[DllImport(user32)]
 		internal static extern IntPtr SendLVColMessage(IntPtr hWnd, uint msg, uint wParam, ref LV_COLUMN lParam);

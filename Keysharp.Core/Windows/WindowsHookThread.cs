@@ -4999,6 +4999,20 @@ namespace Keysharp.Core.Windows
 			} // vk is a modifier key.
 		}
 
+		internal override void Unhook()
+		{
+			// PostQuitMessage() might be needed to prevent hang-on-exit.  Once this is done, no message boxes or
+			// other dialogs can be displayed.  MSDN: "The exit value returned to the system must be the wParam
+			// parameter of the WM_QUIT message."  In our case, PostQuitMessage() should announce the same exit code
+			// that we will eventually call exit() with:
+			//Original did these, but HookThread.Stop() will take care of it before this is called.
+			//WindowsAPI.PostQuitMessage(exitCode);
+			AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
+
+			if (Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
+				_ = WindowsAPI.UnhookWindowsHookEx(Script.playbackHook);
+		}
+
 		/// <summary>
 		/// Given a VK code, returns the character that an unmodified keypress would produce
 		/// on the given keyboard layout.  Defaults to the script's own layout if omitted.

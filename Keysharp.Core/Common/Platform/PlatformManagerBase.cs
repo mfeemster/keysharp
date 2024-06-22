@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Text;
+using Keysharp.Core.Windows;
+using System.Windows.Forms;
 
 namespace Keysharp.Core.Common.Platform
 {
@@ -62,5 +64,13 @@ namespace Keysharp.Core.Common.Platform
 		internal abstract bool DestroyIcon(IntPtr icon);
 
 		internal abstract bool ExitProgram(uint flags, uint reason);
+
+		internal abstract bool UnregisterHotKey(IntPtr hWnd, uint id);
+
+		internal abstract bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+		internal abstract bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
+
+		internal abstract bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, Keys vk);
 	}
 }

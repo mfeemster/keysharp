@@ -13,6 +13,7 @@ using static Keysharp.Core.Misc;
 using static Keysharp.Scripting.Keywords;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
+using Keysharp.Core.Common.Platform;
 
 namespace Keysharp.Core.Common.Keyboard
 {
@@ -717,17 +718,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static void AllDestruct()
 		{
-			var ht = Script.HookThread;
-			// PostQuitMessage() might be needed to prevent hang-on-exit.  Once this is done, no message boxes or
-			// other dialogs can be displayed.  MSDN: "The exit value returned to the system must be the wParam
-			// parameter of the WM_QUIT message."  In our case, PostQuitMessage() should announce the same exit code
-			// that we will eventually call exit() with:
-			//Original did these, but HookThread.Stop() will take care of it before this is called.
-			//WindowsAPI.PostQuitMessage(exitCode);
-			ht.AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
-
-			if (Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
-				_ = WindowsAPI.UnhookWindowsHookEx(Script.playbackHook);
+			Script.HookThread.Unhook();
 
 			foreach (var hk in shk)
 				_ = hk.Unregister(); //Hotkeys will unregister as they go out of scope, but force them to do it now.
@@ -1918,7 +1909,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// those that aren't kept queued due to the message filter) prior to returning to its caller.
 					// But for maintainability, it seems best to change this to g_hWnd vs. NULL to make joystick
 					// hotkeys behave more like standard hotkeys.
-					_ = WindowsAPI.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, i, IntPtr.Zero);
+					_ = PlatformProvider.Manager.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, i, IntPtr.Zero);
 				}
 
 				//else continue the loop in case the user has newly pressed more than one joystick button.
@@ -2196,7 +2187,7 @@ namespace Keysharp.Core.Common.Keyboard
 						// affect response time (this feature is rarely used anyway).
 						//Some hotkeys will be using the hook and others will be using the built in Windows hotkey handler.
 						//Sending a message will work for both cases.
-						_ = WindowsAPI.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, id, 0);
+						_ = PlatformProvider.Manager.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, id, 0);
 					}
 
 					//else it was posted too long ago, so don't do it.  This is because most users wouldn't
@@ -2256,7 +2247,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// otherwise any modal dialogs, such as MessageBox(), that call DispatchMessage()
 			// internally wouldn't be able to find anyone to send hotkey messages to, so they
 			// would probably be lost:
-			return (isRegistered = WindowsAPI.RegisterHotKey(Script.MainWindowHandle, id, (KeyModifiers)modifiersToRegister, (System.Windows.Forms.Keys)vk))
+			return (isRegistered = PlatformProvider.Manager.RegisterHotKey(Script.MainWindowHandle, id, (KeyModifiers)modifiersToRegister, (System.Windows.Forms.Keys)vk))
 				   ? ResultType.Ok
 				   : ResultType.Fail;
 			// Above: On failure, reset the modifiers in case this function changed them.  This is
@@ -2359,7 +2350,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var handle = Script.MainWindowHandle;
 			Script.mainWindow?.Invoke(() =>
 			{
-				isRegistered = WindowsAPI.UnregisterHotKey(handle, id);
+				PlatformProvider.Manager.UnregisterHotKey(handle, id);
 			});
 			return isRegistered ? ResultType.Ok : ResultType.Fail;//I've see it fail in one rare case.
 		}

@@ -31,6 +31,14 @@ namespace Keysharp.Core.Linux
 		internal override bool DestroyIcon(IntPtr icon) => true;
 
 		internal override bool ExitProgram(uint flags, uint reason) => true;
+
+		internal override bool UnregisterHotKey(IntPtr hWnd, uint id) => true;
+
+		internal override bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam) => true;
+
+		internal override bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam) => true;
+
+		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, Keys vk) => true;
 	}
 }
 #endif

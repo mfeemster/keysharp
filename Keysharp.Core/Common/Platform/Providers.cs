@@ -49,7 +49,7 @@ namespace Keysharp.Core.Common.Platform
 #if WINDOWS
 			return new Windows.Drive(drive);
 #elif LINUX
-			return new Linux.LinuxDrive(drive);
+			return new Linux.Drive(drive);
 #endif
 		}
 	}

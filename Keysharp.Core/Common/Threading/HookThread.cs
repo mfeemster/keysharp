@@ -340,6 +340,8 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout);
 
+		internal abstract void Unhook();
+
 		internal abstract char VKtoChar(uint vk, IntPtr keybdLayout);
 
 		internal string VKtoKeyName(uint vk, bool useFallback)

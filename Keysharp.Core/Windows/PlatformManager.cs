@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Windows;
 
@@ -33,6 +34,14 @@ namespace Keysharp.Core.Windows
 		internal override bool DestroyIcon(IntPtr icon) => WindowsAPI.DestroyIcon(icon);
 
 		internal override bool ExitProgram(uint flags, uint reason) => WindowsAPI.ExitWindowsEx(flags, reason);
+
+		internal override bool UnregisterHotKey(IntPtr hWnd, uint id) => WindowsAPI.UnregisterHotKey(hWnd, id);
+
+		internal override bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam) => WindowsAPI.PostMessage(hWnd, msg, wParam, lParam);
+
+		internal override bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam) => WindowsAPI.PostMessage(hWnd, msg, wParam, lParam);
+
+		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, Keys vk) => WindowsAPI.RegisterHotKey(hWnd, id, fsModifiers, vk);
 	}
 }
 #endif
