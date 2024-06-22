@@ -7,6 +7,8 @@ using System.Windows.Forms;
 using Keysharp.Core.Common.Threading;
 #if WINDOWS
 	using Keysharp.Core.Windows;
+#elif LINUX
+	using Keysharp.Core.Linux;
 #endif
 using Keysharp.Scripting;
 using static Keysharp.Core.Misc;
