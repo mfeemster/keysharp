@@ -1,13 +1,9 @@
 ﻿#if WINDOWS
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Windows;
 
 namespace Keysharp.Core.Windows
 {

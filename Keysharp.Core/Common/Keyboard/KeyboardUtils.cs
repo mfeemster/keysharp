@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Keyboard
+﻿using System;
+
+namespace Keysharp.Core.Common.Keyboard
 {
 	internal static class KeyboardUtils
 	{
@@ -20,6 +22,20 @@
 		internal static string[] SEND_MODES = { "Event", "Input", "Play", "InputThenPlay" }; // Must match the SendModes enum.
 
 		internal static uint MakeLong(short lowPart, short highPart) => (((ushort)lowPart) | (uint)(highPart << 16));
+	}
+
+	[Flags]
+	internal enum KeyModifiers
+	{
+		None = 0,
+		Alt = 1,
+		Control = 2,
+		Shift = 4,
+
+		// Either WINDOWS key was held down. These keys are labeled with the Windows logo.
+		// Keyboard shortcuts that involve the WINDOWS key are reserved for use by the
+		// operating system.
+		Windows = 8
 	}
 
 	// FAIL = 0 to remind that FAIL should have the value zero instead of something arbitrary
