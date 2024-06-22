@@ -11,7 +11,7 @@ namespace Keysharp.Core.Common.Window
 {
 	internal class PointAndHwnd
 	{
-		internal double distanceFound;
+		internal double distanceFound = 0.0;
 		internal IntPtr hwndFound = IntPtr.Zero;
 		internal bool ignoreDisabled = false;
 		internal System.Drawing.Point pt;

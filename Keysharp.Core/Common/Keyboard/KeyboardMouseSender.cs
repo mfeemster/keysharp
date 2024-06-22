@@ -69,22 +69,22 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const uint SendLevelMax = 100u;
 		internal const int StateDown = 0x80;
 		internal const int StateOn = 0x01;
-		internal static uint altGrExtraInfo;
+		internal static uint altGrExtraInfo = 0u;
 		internal static char[] bracechars = "{}".ToCharArray();
 		internal static SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
 		internal static string[] CoordModes = new string[] { "Client", "Window", "Screen" };
 		internal static char[] llChars = "Ll".ToCharArray();
 		internal static SearchValues<char> llCharsSv = SearchValues.Create(llChars);
-		internal static KeyType prefixKey;
+		internal static KeyType prefixKey = null;
 		internal static string sendKeyChars = "^+!#{}";
 		internal static uint thisHotkeyModifiersLR;
 		internal bool abortArraySend;
 		internal int maxEvents;
-		internal uint modifiersLRCtrlAltDelMask;
+		internal uint modifiersLRCtrlAltDelMask = 0u;
 		internal uint modifiersLRLogical;
-		internal uint modifiersLRLogicalNonIgnored;
-		internal uint modifiersLRNumpadMask;
-		internal uint modifiersLRPhysical;
+		internal uint modifiersLRLogicalNonIgnored = 0u;
+		internal uint modifiersLRNumpadMask = 0u;
+		internal uint modifiersLRPhysical = 0u;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
@@ -423,11 +423,11 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int AS_PREFIX_FOR_HOTKEY = 2;
 		internal const int PREFIX_ACTUAL = 1; // Values for used_as_prefix below, for places that need to distinguish between type of prefix.
 		internal const int PREFIX_FORCED = 2; // v1.0.44: Added so that a neutral hotkey like Control can be forced to fire on key-up even though it isn't actually a prefix key.
-		internal uint asModifiersLR;// If this key is a modifier, this will have the corresponding bit(s) for that key.
+		internal uint asModifiersLR = 0u;// If this key is a modifier, this will have the corresponding bit(s) for that key.
 		internal bool downPerformedAction;
 		internal uint firstHotkey;
-		internal ToggleStates forceToggle;  // Pointer to a global variable for toggleable keys only.  NULL for others.
-		internal bool hotkeyDownWasSuppressed;// the last key-down resulted in an action (modifiers matched those of a valid hotkey)
+		internal ToggleStates forceToggle = null;  // Pointer to a global variable for toggleable keys only.  NULL for others.
+		internal bool hotkeyDownWasSuppressed = false;// the last key-down resulted in an action (modifiers matched those of a valid hotkey)
 		internal uint hotkeyToFireUponRelease; // A up-event hotkey queued by a prior down-event.
 		internal bool isDown;// this key is currently down.
 		internal bool itPutAltDown;// this key resulted in ALT being pushed down (due to alt-tab).

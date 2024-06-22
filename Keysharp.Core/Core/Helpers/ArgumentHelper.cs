@@ -11,7 +11,7 @@ namespace Keysharp.Core
 		protected bool cdecl = false;
 		protected HashSet<GCHandle> gcHandles = new HashSet<GCHandle>();
 		protected ScopeHelper gcHandlesScope;
-		protected bool hasreturn;
+		protected bool hasreturn = false;
 		protected string returnName = "";
 		protected Type returnType = typeof(int);
 		internal bool CDecl => cdecl;

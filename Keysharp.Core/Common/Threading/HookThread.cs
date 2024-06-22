@@ -33,16 +33,16 @@ namespace Keysharp.Core.Common.Threading
 			SingleReader = true
 		});
 
-		internal static System.Threading.Mutex keybdMutex, mouseMutex;
+		internal static System.Threading.Mutex keybdMutex = null, mouseMutex = null;
 		internal static string KeybdMutexName = "Keysharp Keybd";
-		internal static Dictionary<string, uint> keyToSc;
-		internal static Dictionary<string, uint> keyToVk;
+		internal static Dictionary<string, uint> keyToSc = null;
+		internal static Dictionary<string, uint> keyToVk = null;
 		internal static int KSCM_SIZE = (int)((MODLR_MAX + 1) * SC_ARRAY_COUNT);
 		internal static int KVKM_SIZE = (int)((MODLR_MAX + 1) * VK_ARRAY_COUNT);
 		internal static string MouseMutexName = "Keysharp Mouse";
 		internal static string[] vksc = new string[] { "vk", "sc" };
 		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
-		internal bool blockWinKeys;
+		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
 		internal bool hsResetUponMouseClick = true;
 		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender;
@@ -52,7 +52,7 @@ namespace Keysharp.Core.Common.Threading
 		// It's tracked this way, rather than as a count of the number of prefixes currently down, out of
 		// concern that such a count might accidentally wind up above zero (due to a key-up being missed somehow)
 		// and never come back down, thus penalizing performance until the program is restarted:
-		internal KeyType prefixKey;
+		internal KeyType prefixKey = null;
 
 		// Whether the alt-tab menu was shown by an AltTab hotkey or alt-tab was detected
 		// by the hook.  This might be inaccurate if the menu was displayed before the hook
@@ -60,11 +60,11 @@ namespace Keysharp.Core.Common.Threading
 		// be a problem, the accuracy could be improved by additional checks with FindWindow(),
 		// keeping in mind that there are at least 3 different window classes to check,
 		// depending on OS and the "AltTabSettings" registry value.
-		protected internal bool altTabMenuIsVisible;
+		protected internal bool altTabMenuIsVisible = false;
 
 		protected internal System.Threading.Tasks.Task<System.Threading.Tasks.Task> channelReadThread;
 
-		protected internal uint channelThreadID;
+		protected internal uint channelThreadID = 0u;
 
 		// Whether to disguise the next up-event for lwin/rwin to suppress Start Menu.
 		// There is only one variable because even if multiple modifiers are pressed
@@ -75,7 +75,7 @@ namespace Keysharp.Core.Common.Threading
 		// These are made global, rather than static inside the hook function, so that
 		// we can ensure they are initialized by the keyboard init function every
 		// time it's called (currently it can be only called once):
-		protected internal bool disguiseNextMenu;
+		protected internal bool disguiseNextMenu = false;
 
 		protected internal bool hookSynced;
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
@@ -381,8 +381,8 @@ namespace Keysharp.Core.Common.Threading
 
 	internal class HotstringMsg
 	{
-		internal CaseConformModes caseMode;
-		internal char endChar;
+		internal CaseConformModes caseMode = CaseConformModes.None;
+		internal char endChar = (char)0;
 		internal HotstringDefinition hs;
 	}
 

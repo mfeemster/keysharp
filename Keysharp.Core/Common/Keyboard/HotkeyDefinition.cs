@@ -44,7 +44,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static uint joyHotkeyCount;
 		internal static bool[] joystickHasHotkeys = new bool[Joystick.Joystick.MaxJoysticks];
 		internal static List<HotkeyDefinition> shk = new List<HotkeyDefinition>(256);
-		internal bool allowExtraModifiers;
+		internal bool allowExtraModifiers = false;
 		internal bool constructedOK;
 		internal HotkeyVariant firstVariant, lastVariant;
 		internal uint hookAction;
@@ -52,7 +52,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool isRegistered;
 		internal bool keybdHookMandatory;
 		internal bool keyUp;
-		internal uint modifiers;
+		internal uint modifiers = 0u;
 		internal uint modifierSC;
 		internal uint modifiersConsolidatedLR;
 		internal uint modifiersLR;
@@ -2472,11 +2472,11 @@ namespace Keysharp.Core.Common.Keyboard
 	internal class HkSortedType
 	{
 		internal bool allowExtraModifiers;
-		internal uint idWithFlags;
-		internal uint modifiers;
+		internal uint idWithFlags = 0u;
+		internal uint modifiers = 0u;
 		internal uint modifiersLR;
-		internal uint sc;
-		internal uint vk;
+		internal uint sc = 0u;
+		internal uint vk = 0u;
 
 		/// <summary>
 		/// The only items whose order are important are those with the same suffix.  For a given suffix,

@@ -13,7 +13,7 @@ namespace Keysharp.Core
 		public static System.Threading.SynchronizationContext mainContext;
 
 		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
-		internal static uint CurrentThreadID;
+		internal static uint CurrentThreadID = 0u;
 		internal static uint MainThreadID;
 		internal static int ManagedMainThreadID;
 		internal static string runDomain;
