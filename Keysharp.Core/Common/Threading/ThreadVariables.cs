@@ -37,7 +37,7 @@ namespace Keysharp.Core.Common.Threading
 		internal long peekFrequency = 5L;
 		internal long priority;
 		internal Random randomGenerator;
-		internal StringBuilder regsb;
+		internal StringBuilder regsb = null;
 		internal long regView = 64L;
 		internal uint sendLevel;
 		internal SendModes sendMode = SendModes.Input;

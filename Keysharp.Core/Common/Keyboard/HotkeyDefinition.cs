@@ -2471,10 +2471,10 @@ namespace Keysharp.Core.Common.Keyboard
 
 	internal class HkSortedType
 	{
-		internal bool allowExtraModifiers;
+		internal bool allowExtraModifiers = false;
 		internal uint idWithFlags = 0u;
 		internal uint modifiers = 0u;
-		internal uint modifiersLR;
+		internal uint modifiersLR = 0u;
 		internal uint sc = 0u;
 		internal uint vk = 0u;
 

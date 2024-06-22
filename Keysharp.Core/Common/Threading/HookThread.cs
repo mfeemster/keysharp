@@ -45,7 +45,7 @@ namespace Keysharp.Core.Common.Threading
 		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
 		internal bool hsResetUponMouseClick = true;
-		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender;
+		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender = null;
 		internal byte[] physicalKeyState = new byte[VK_ARRAY_COUNT];
 
 		// The prefix key that's currently down (i.e. in effect).
@@ -76,8 +76,7 @@ namespace Keysharp.Core.Common.Threading
 		// we can ensure they are initialized by the keyboard init function every
 		// time it's called (currently it can be only called once):
 		protected internal bool disguiseNextMenu = false;
-
-		protected internal bool hookSynced;
+		protected internal bool hookSynced = false;
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
 		protected internal IntPtr kbdHook = IntPtr.Zero;
 		protected internal KeyHistory keyHistory = new KeyHistory();
@@ -86,7 +85,7 @@ namespace Keysharp.Core.Common.Threading
 		protected internal KeyType[] kvk;
 		protected internal uint[] kvkm;
 		protected internal IntPtr mouseHook = IntPtr.Zero;
-		protected internal bool undisguisedMenuInEffect;
+		protected internal bool undisguisedMenuInEffect = false;
 		protected volatile bool running;
 
 		internal HookThread()
@@ -383,7 +382,7 @@ namespace Keysharp.Core.Common.Threading
 	{
 		internal CaseConformModes caseMode = CaseConformModes.None;
 		internal char endChar = (char)0;
-		internal HotstringDefinition hs;
+		internal HotstringDefinition hs = null;
 	}
 
 	internal class KeysharpMsg

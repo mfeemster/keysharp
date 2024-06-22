@@ -78,10 +78,10 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static KeyType prefixKey = null;
 		internal static string sendKeyChars = "^+!#{}";
 		internal static uint thisHotkeyModifiersLR;
-		internal bool abortArraySend;
-		internal int maxEvents;
+		internal bool abortArraySend = false;
+		internal int maxEvents = 0;
 		internal uint modifiersLRCtrlAltDelMask = 0u;
-		internal uint modifiersLRLogical;
+		internal uint modifiersLRLogical = 0u;
 		internal uint modifiersLRLogicalNonIgnored = 0u;
 		internal uint modifiersLRNumpadMask = 0u;
 		internal uint modifiersLRPhysical = 0u;

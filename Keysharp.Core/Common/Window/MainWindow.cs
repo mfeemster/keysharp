@@ -17,7 +17,7 @@ namespace Keysharp.Scripting
 	{
 		public static Font OurDefaultFont = new System.Drawing.Font("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
-		private bool success = false;
+		private bool success;
 		private AboutBox about;
 		private bool callingInternalVars = false;
 
@@ -355,7 +355,8 @@ namespace Keysharp.Scripting
 			Hotkeys,
 			History
 		}
-
+#if WINDOWS
 		public event VariadicAction ClipboardUpdate;
+#endif
 	}
 }
