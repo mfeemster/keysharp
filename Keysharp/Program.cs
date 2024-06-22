@@ -87,6 +87,7 @@ namespace Keysharp.Main
 						case "codeout":
 							codeout = true;
 							break;
+#if WINDOWS
 
 						case "install"://To be called by the installer during installation.
 							InstallToPath(exeDir);
@@ -97,6 +98,7 @@ namespace Keysharp.Main
 							return 0;
 							//default:
 							//  return Message($"Unrecognized switch: {args[i]}", true);
+#endif
 					}
 				}
 
@@ -297,6 +299,7 @@ namespace Keysharp.Main
 			return dir;
 		}
 
+#if WINDOWS
 		internal static void InstallToPath(string path)
 		{
 			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
@@ -313,6 +316,7 @@ namespace Keysharp.Main
 			var newPath = string.Join(';', oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(s => string.Compare(s, path, true) != 0));
 			Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", newPath, RegistryValueKind.ExpandString);//Restore the old path to what it was without the passed in value included.
 		}
+#endif
 
 		private static int HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string path, string desc, string message = "")
 		{
