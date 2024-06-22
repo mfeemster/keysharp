@@ -355,8 +355,7 @@ namespace Keysharp.Scripting
 			Hotkeys,
 			History
 		}
-#if WINDOWS
+
 		public event VariadicAction ClipboardUpdate;
-#endif
 	}
 }
