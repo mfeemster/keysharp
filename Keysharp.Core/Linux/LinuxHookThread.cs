@@ -1,6 +1,7 @@
 ﻿#if LINUX
 using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
 
 namespace Keysharp.Core.Linux

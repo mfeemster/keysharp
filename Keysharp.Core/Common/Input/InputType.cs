@@ -6,6 +6,7 @@ using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
+using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 
 namespace Keysharp.Core.Common.Input
 {
@@ -465,7 +466,7 @@ namespace Keysharp.Core.Common.Input
 						// That leaves mostly just the number keys (top row) and all
 						// punctuation chars, which are the ones that we want to be
 						// distinguished between shifted and unshifted:
-						if ((modifiersLR & (KeyboardMouseSender.MOD_LSHIFT | KeyboardMouseSender.MOD_RSHIFT)) != 0)
+						if ((modifiersLR & (MOD_LSHIFT | MOD_RSHIFT)) != 0)
 							KeyVK[vk] |= HookThread.END_KEY_WITH_SHIFT;
 						else
 							KeyVK[vk] |= HookThread.END_KEY_WITHOUT_SHIFT;

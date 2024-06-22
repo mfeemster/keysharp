@@ -160,7 +160,7 @@ namespace Keysharp.Core.Linux
 		internal WindowItem(XWindow uxwindow)
 			: this(new IntPtr(uxwindow.ID)) => _xwindow = uxwindow;
 
-		private WindowItem(IntPtr handle) : base(handle)
+		internal WindowItem(IntPtr handle) : base(handle)
 		{
 		}
 

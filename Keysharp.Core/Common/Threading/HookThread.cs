@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Keysharp.Core.Common.Keyboard;
+using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+using static Keysharp.Core.Common.Keyboard.VirtualKeys;
 
 namespace Keysharp.Core.Common.Threading
 {
@@ -34,8 +37,8 @@ namespace Keysharp.Core.Common.Threading
 		internal static string KeybdMutexName = "Keysharp Keybd";
 		internal static Dictionary<string, uint> keyToSc;
 		internal static Dictionary<string, uint> keyToVk;
-		internal static int KSCM_SIZE = (int)((KeyboardMouseSender.MODLR_MAX + 1) * SC_ARRAY_COUNT);
-		internal static int KVKM_SIZE = (int)((KeyboardMouseSender.MODLR_MAX + 1) * VK_ARRAY_COUNT);
+		internal static int KSCM_SIZE = (int)((MODLR_MAX + 1) * SC_ARRAY_COUNT);
+		internal static int KVKM_SIZE = (int)((MODLR_MAX + 1) * VK_ARRAY_COUNT);
 		internal static string MouseMutexName = "Keysharp Mouse";
 		internal static string[] vksc = new string[] { "vk", "sc" };
 		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
@@ -175,7 +178,100 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract bool IsWheelVK(uint vk);
 
-		internal abstract uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral);
+		/// <summary>
+		/// Convert the given virtual key / scan code to its equivalent bitwise modLR value.
+		/// Callers rely upon the fact that we convert a neutral key such as VK_SHIFT into MOD_LSHIFT,
+		/// not the bitwise combo of MOD_LSHIFT|MOD_RSHIFT.
+		/// v1.0.43: VK_SHIFT should yield MOD_RSHIFT if the caller explicitly passed the right vs. left scan code.
+		/// The SendPlay method relies on this to properly release AltGr, such as after "SendPlay @" in German.
+		/// Other things may also rely on it because it is more correct.
+		/// </summary>
+		/// <param name="vk"></param>
+		/// <param name="sc"></param>
+		/// <param name="pIsNeutral"></param>
+		/// <returns></returns>
+		internal virtual uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral)
+		{
+			if (vk == 0 && sc == 0)
+				return 0;
+
+			if (vk != 0) // Have vk take precedence over any non-zero sc.
+			{
+				switch (vk)
+				{
+					case VK_SHIFT:
+						if (sc == ScanCodes.RShift)
+							return MOD_RSHIFT;
+
+						//else aSC is omitted (0) or SC_LSHIFT.  Either way, most callers would probably want that considered "neutral".
+						if (isNeutral != null)
+							isNeutral = true;
+
+						return MOD_LSHIFT;
+
+					case VK_LSHIFT: return MOD_LSHIFT;
+
+					case VK_RSHIFT: return MOD_RSHIFT;
+
+					case VK_CONTROL:
+						if (sc == ScanCodes.RControl)
+							return MOD_RCONTROL;
+
+						//else aSC is omitted (0) or SC_LCONTROL.  Either way, most callers would probably want that considered "neutral".
+						if (isNeutral != null)
+							isNeutral = true;
+
+						return MOD_LCONTROL;
+
+					case VK_LCONTROL: return MOD_LCONTROL;
+
+					case VK_RCONTROL: return MOD_RCONTROL;
+
+					case VK_MENU:
+						if (sc == ScanCodes.RAlt)
+							return MOD_RALT;
+
+						//else aSC is omitted (0) or SC_LALT.  Either way, most callers would probably want that considered "neutral".
+						if (isNeutral != null)
+							isNeutral = true;
+
+						return MOD_LALT;
+
+					case VK_LMENU: return MOD_LALT;
+
+					case VK_RMENU: return MOD_RALT;
+
+					case VK_LWIN: return MOD_LWIN;
+
+					case VK_RWIN: return MOD_RWIN;
+
+					default:
+						return 0;
+				}
+			}
+
+			// If above didn't return, rely on the scan code instead, which is now known to be non-zero.
+			switch (sc)
+			{
+				case ScanCodes.LShift: return MOD_LSHIFT;
+
+				case ScanCodes.RShift: return MOD_RSHIFT;
+
+				case ScanCodes.LControl: return MOD_LCONTROL;
+
+				case ScanCodes.RControl: return MOD_RCONTROL;
+
+				case ScanCodes.LAlt: return MOD_LALT;
+
+				case ScanCodes.RAlt: return MOD_RALT;
+
+				case ScanCodes.LWin: return MOD_LWIN;
+
+				case ScanCodes.RWin: return MOD_RWIN;
+			}
+
+			return 0;
+		}
 
 		internal ref uint Kscm(uint i, uint j) => ref kscm[(i * SC_ARRAY_COUNT) + j];
 

@@ -16,6 +16,9 @@ using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Misc;
 using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Keywords;
+using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+using static Keysharp.Core.Common.Keyboard.ScanCodes;
+using static Keysharp.Core.Common.Keyboard.VirtualKeys;
 
 namespace Keysharp.Core.Windows
 {
@@ -40,20 +43,20 @@ namespace Keysharp.Core.Windows
 		{
 			keyToSc = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
 			{
-				{"NumpadEnter", SC_NUMPADENTER},
-				{"Delete", SC_DELETE},
-				{"Del", SC_DELETE},
-				{"Insert", SC_INSERT},
-				{"Ins", SC_INSERT},
+				{"NumpadEnter", NumpadEnter},
+				{"Delete", Delete},
+				{"Del", Delete},
+				{"Insert", Insert},
+				{"Ins", Insert},
 				//{"Clear", SC_CLEAR},  // Seems unnecessary because there is no counterpart to the Numpad5 clear key?
-				{"Up", SC_UP},
-				{"Down", SC_DOWN},
-				{"Left", SC_LEFT},
-				{"Right", SC_RIGHT},
-				{"Home", SC_HOME},
-				{"End", SC_END},
-				{"PgUp", SC_PGUP},
-				{"PgDn", SC_PGDN}
+				{"Up", Up},
+				{"Down", Down},
+				{"Left", Left},
+				{"Right", Right},
+				{"Home", Home},
+				{"End", End},
+				{"PgUp", PgUp},
+				{"PgDn", PgDn}
 			};
 			keyToVk = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
 			{
@@ -843,14 +846,14 @@ namespace Keysharp.Core.Windows
 				// are really modifier keys on anything but a standard English keyboard.  However,
 				// long years of use haven't shown this to be a problem, and there are certainly other
 				// parts of the code that do not support custom layouts remapping the modifier keys.
-				ksc[SC_LCONTROL].asModifiersLR = MOD_LCONTROL;
-				ksc[SC_RCONTROL].asModifiersLR = MOD_RCONTROL;
-				ksc[SC_LALT].asModifiersLR = MOD_LALT;
-				ksc[SC_RALT].asModifiersLR = MOD_RALT;
-				ksc[SC_LSHIFT].asModifiersLR = MOD_LSHIFT;
-				ksc[SC_RSHIFT].asModifiersLR = MOD_RSHIFT;
-				ksc[SC_LWIN].asModifiersLR = MOD_LWIN;
-				ksc[SC_RWIN].asModifiersLR = MOD_RWIN;
+				ksc[LControl].asModifiersLR = MOD_LCONTROL;
+				ksc[RControl].asModifiersLR = MOD_RCONTROL;
+				ksc[LAlt].asModifiersLR = MOD_LALT;
+				ksc[RAlt].asModifiersLR = MOD_RALT;
+				ksc[LShift].asModifiersLR = MOD_LSHIFT;
+				ksc[RShift].asModifiersLR = MOD_RSHIFT;
+				ksc[LWin].asModifiersLR = MOD_LWIN;
+				ksc[RWin].asModifiersLR = MOD_RWIN;
 				// Use the address rather than the value, so that if the global var's value
 				// changes during runtime, ours will too:
 				kvk[VK_SCROLL].forceToggle = Keyboard.toggleStates;
@@ -934,15 +937,15 @@ namespace Keysharp.Core.Windows
 							// in case future changes ever ruin that assumption:
 							kvk[VK_LMENU].usedAsSuffix = true;
 							kvk[VK_RMENU].usedAsSuffix = true;
-							ksc[SC_LALT].usedAsSuffix = true;
-							ksc[SC_RALT].usedAsSuffix = true;
+							ksc[LAlt].usedAsSuffix = true;
+							ksc[RAlt].usedAsSuffix = true;
 
 							if (hk.keyUp) // Fix for v1.1.07.03: Set only if true in case there was already an "up" hotkey.
 							{
 								kvk[VK_LMENU].usedAsKeyUp = true;
 								kvk[VK_RMENU].usedAsKeyUp = true;
-								ksc[SC_LALT].usedAsKeyUp = true;
-								ksc[SC_RALT].usedAsKeyUp = true;
+								ksc[LAlt].usedAsKeyUp = true;
+								ksc[RAlt].usedAsKeyUp = true;
 							}
 
 							break;
@@ -951,15 +954,15 @@ namespace Keysharp.Core.Windows
 							// The neutral key itself is also set to be a suffix further below.
 							kvk[VK_LSHIFT].usedAsSuffix = true;
 							kvk[VK_RSHIFT].usedAsSuffix = true;
-							ksc[SC_LSHIFT].usedAsSuffix = true;
-							ksc[SC_RSHIFT].usedAsSuffix = true;
+							ksc[LShift].usedAsSuffix = true;
+							ksc[RShift].usedAsSuffix = true;
 
 							if (hk.keyUp) // Fix for v1.1.07.03: Set only if true in case there was already an "up" hotkey.
 							{
 								kvk[VK_LSHIFT].usedAsKeyUp = true;
 								kvk[VK_RSHIFT].usedAsKeyUp = true;
-								ksc[SC_LSHIFT].usedAsKeyUp = true;
-								ksc[SC_RSHIFT].usedAsKeyUp = true;
+								ksc[LShift].usedAsKeyUp = true;
+								ksc[RShift].usedAsKeyUp = true;
 							}
 
 							break;
@@ -967,15 +970,15 @@ namespace Keysharp.Core.Windows
 						case VK_CONTROL:
 							kvk[VK_LCONTROL].usedAsSuffix = true;
 							kvk[VK_RCONTROL].usedAsSuffix = true;
-							ksc[SC_LCONTROL].usedAsSuffix = true;
-							ksc[SC_RCONTROL].usedAsSuffix = true;
+							ksc[LControl].usedAsSuffix = true;
+							ksc[RControl].usedAsSuffix = true;
 
 							if (hk.keyUp) // Fix for v1.1.07.03: Set only if true in case there was already an "up" hotkey.
 							{
 								kvk[VK_LCONTROL].usedAsKeyUp = true;
 								kvk[VK_RCONTROL].usedAsKeyUp = true;
-								ksc[SC_LCONTROL].usedAsKeyUp = true;
-								ksc[SC_RCONTROL].usedAsKeyUp = true;
+								ksc[LControl].usedAsKeyUp = true;
+								ksc[RControl].usedAsKeyUp = true;
 							}
 
 							break;
@@ -1235,37 +1238,37 @@ namespace Keysharp.Core.Windows
 							if (thisHk.vk == VK_MENU || thisHk.vk == VK_LMENU)
 							{
 								Kvkm(modifiersLR, VK_LMENU) = thisHk.idWithFlags;
-								Kscm(modifiersLR, SC_LALT) = thisHk.idWithFlags;
+								Kscm(modifiersLR, LAlt) = thisHk.idWithFlags;
 							}
 
 							if (thisHk.vk == VK_MENU || thisHk.vk == VK_RMENU)
 							{
 								Kvkm(modifiersLR, VK_RMENU) = thisHk.idWithFlags;
-								Kscm(modifiersLR, SC_RALT) = thisHk.idWithFlags;
+								Kscm(modifiersLR, RAlt) = thisHk.idWithFlags;
 							}
 
 							if (thisHk.vk == VK_SHIFT || thisHk.vk == VK_LSHIFT)
 							{
 								Kvkm(modifiersLR, VK_LSHIFT) = thisHk.idWithFlags;
-								Kscm(modifiersLR, SC_LSHIFT) = thisHk.idWithFlags;
+								Kscm(modifiersLR, LShift) = thisHk.idWithFlags;
 							}
 
 							if (thisHk.vk == VK_SHIFT || thisHk.vk == VK_RSHIFT)
 							{
 								Kvkm(modifiersLR, VK_RSHIFT) = thisHk.idWithFlags;
-								Kscm(modifiersLR, SC_RSHIFT) = thisHk.idWithFlags;
+								Kscm(modifiersLR, RShift) = thisHk.idWithFlags;
 							}
 
 							if (thisHk.vk == VK_CONTROL || thisHk.vk == VK_LCONTROL)
 							{
 								Kvkm(modifiersLR, VK_LCONTROL) = thisHk.idWithFlags;
-								Kscm(modifiersLR, SC_LCONTROL) = thisHk.idWithFlags;
+								Kscm(modifiersLR, LControl) = thisHk.idWithFlags;
 							}
 
 							if (thisHk.vk == VK_CONTROL || thisHk.vk == VK_RCONTROL)
 							{
 								Kvkm(modifiersLR, VK_RCONTROL) = thisHk.idWithFlags;
-								Kscm(modifiersLR, SC_RCONTROL) = thisHk.idWithFlags;
+								Kscm(modifiersLR, RControl) = thisHk.idWithFlags;
 							}
 						} // if (do_cascade)
 					}
@@ -2257,88 +2260,88 @@ namespace Keysharp.Core.Windows
 		/// <param name="sc"></param>
 		/// <param name="pIsNeutral"></param>
 		/// <returns></returns>
-		internal override uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral)
-		{
-			if (vk == 0 && sc == 0)
-				return 0;
+		//internal override uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral)
+		//{
+		//  if (vk == 0 && sc == 0)
+		//      return 0;
 
-			if (vk != 0) // Have vk take precedence over any non-zero sc.
-			{
-				switch (vk)
-				{
-					case VK_SHIFT:
-						if (sc == SC_RSHIFT)
-							return MOD_RSHIFT;
+		//  if (vk != 0) // Have vk take precedence over any non-zero sc.
+		//  {
+		//      switch (vk)
+		//      {
+		//          case VK_SHIFT:
+		//              if (sc == SC_RSHIFT)
+		//                  return MOD_RSHIFT;
 
-						//else aSC is omitted (0) or SC_LSHIFT.  Either way, most callers would probably want that considered "neutral".
-						if (isNeutral != null)
-							isNeutral = true;
+		//              //else aSC is omitted (0) or SC_LSHIFT.  Either way, most callers would probably want that considered "neutral".
+		//              if (isNeutral != null)
+		//                  isNeutral = true;
 
-						return MOD_LSHIFT;
+		//              return MOD_LSHIFT;
 
-					case VK_LSHIFT: return MOD_LSHIFT;
+		//          case VK_LSHIFT: return MOD_LSHIFT;
 
-					case VK_RSHIFT: return MOD_RSHIFT;
+		//          case VK_RSHIFT: return MOD_RSHIFT;
 
-					case VK_CONTROL:
-						if (sc == SC_RCONTROL)
-							return MOD_RCONTROL;
+		//          case VK_CONTROL:
+		//              if (sc == SC_RCONTROL)
+		//                  return MOD_RCONTROL;
 
-						//else aSC is omitted (0) or SC_LCONTROL.  Either way, most callers would probably want that considered "neutral".
-						if (isNeutral != null)
-							isNeutral = true;
+		//              //else aSC is omitted (0) or SC_LCONTROL.  Either way, most callers would probably want that considered "neutral".
+		//              if (isNeutral != null)
+		//                  isNeutral = true;
 
-						return MOD_LCONTROL;
+		//              return MOD_LCONTROL;
 
-					case VK_LCONTROL: return MOD_LCONTROL;
+		//          case VK_LCONTROL: return MOD_LCONTROL;
 
-					case VK_RCONTROL: return MOD_RCONTROL;
+		//          case VK_RCONTROL: return MOD_RCONTROL;
 
-					case VK_MENU:
-						if (sc == SC_RALT)
-							return MOD_RALT;
+		//          case VK_MENU:
+		//              if (sc == SC_RALT)
+		//                  return MOD_RALT;
 
-						//else aSC is omitted (0) or SC_LALT.  Either way, most callers would probably want that considered "neutral".
-						if (isNeutral != null)
-							isNeutral = true;
+		//              //else aSC is omitted (0) or SC_LALT.  Either way, most callers would probably want that considered "neutral".
+		//              if (isNeutral != null)
+		//                  isNeutral = true;
 
-						return MOD_LALT;
+		//              return MOD_LALT;
 
-					case VK_LMENU: return MOD_LALT;
+		//          case VK_LMENU: return MOD_LALT;
 
-					case VK_RMENU: return MOD_RALT;
+		//          case VK_RMENU: return MOD_RALT;
 
-					case VK_LWIN: return MOD_LWIN;
+		//          case VK_LWIN: return MOD_LWIN;
 
-					case VK_RWIN: return MOD_RWIN;
+		//          case VK_RWIN: return MOD_RWIN;
 
-					default:
-						return 0;
-				}
-			}
+		//          default:
+		//              return 0;
+		//      }
+		//  }
 
-			// If above didn't return, rely on the scan code instead, which is now known to be non-zero.
-			switch (sc)
-			{
-				case SC_LSHIFT: return MOD_LSHIFT;
+		//  // If above didn't return, rely on the scan code instead, which is now known to be non-zero.
+		//  switch (sc)
+		//  {
+		//      case SC_LSHIFT: return MOD_LSHIFT;
 
-				case SC_RSHIFT: return MOD_RSHIFT;
+		//      case SC_RSHIFT: return MOD_RSHIFT;
 
-				case SC_LCONTROL: return MOD_LCONTROL;
+		//      case SC_LCONTROL: return MOD_LCONTROL;
 
-				case SC_RCONTROL: return MOD_RCONTROL;
+		//      case SC_RCONTROL: return MOD_RCONTROL;
 
-				case SC_LALT: return MOD_LALT;
+		//      case SC_LALT: return MOD_LALT;
 
-				case SC_RALT: return MOD_RALT;
+		//      case SC_RALT: return MOD_RALT;
 
-				case SC_LWIN: return MOD_LWIN;
+		//      case SC_LWIN: return MOD_LWIN;
 
-				case SC_RWIN: return MOD_RWIN;
-			}
+		//      case SC_RWIN: return MOD_RWIN;
+		//  }
 
-			return 0;
-		}
+		//  return 0;
+		//}
 
 		/// <summary>
 		/// v1.0.38.06: The keyboard and mouse hooks now call this common function to reduce code size and improve
@@ -4176,11 +4179,11 @@ namespace Keysharp.Core.Windows
 				// KbdEdit seems to follow this rule when VK_RSHIFT is assigned to a non-ext key.
 				// It's definitely possible to assign RShift a different VK, but 1) it can't be
 				// done with MSKLC, and 2) KbdEdit clears the ext flag (so aSC != SC_RSHIFT).
-				case SC_RSHIFT:
+				case RShift:
 
 				// NumLock doesn't have the 0xE0 prefix but has KBDEXT.  Actually pressing the key
 				// will produce VK_PAUSE if CTRL is down, but with SC_NUMLOCK rather than SC_PAUSE.
-				case SC_NUMLOCK:
+				case NumpadLock:
 					// These cases can be handled by adjusting aSC to reflect the fact that these
 					// keys don't really have the 0xE0 prefix, and allowing MapVirtualKey() to be
 					// called below in case they have been remapped.
@@ -4193,7 +4196,7 @@ namespace Keysharp.Core.Windows
 				// receives only 0x45, not 0xE11D (which I guess would be truncated to 0x1D/ctrl).
 				// The documentation for KbdEdit also indicates the mapping of Pause is "hard-wired":
 				// http://www.kbdedit.com/manual/low_level_edit_vk_mappings.html
-				case SC_PAUSE:
+				case Pause:
 					return VK_PAUSE;
 			}
 
@@ -4234,16 +4237,16 @@ namespace Keysharp.Core.Windows
 			{
 				// MapVirtualKey() returns 0xE11D, but we want the code normally received by the
 				// hook (sc045).  See sc_to_vk() for more comments.
-				case VK_PAUSE: sc = SC_PAUSE; break;
+				case VK_PAUSE: sc = Pause; break;
 
 				// PrintScreen: MapVirtualKey() returns 0x54, which is SysReq (produced by pressing
 				// Alt+PrintScreen, but still maps to VK_SNAPSHOT).  Use sc137 for consistency with
 				// what the hook reports for the naked keypress (and therefore what a hotkey is
 				// likely to need).
-				case VK_SNAPSHOT: sc = SC_PRINTSCREEN; break;
+				case VK_SNAPSHOT: sc = PrintScreen; break;
 
 				// See comments in sc_to_vk().
-				case VK_NUMLOCK: sc = SC_NUMLOCK; break;
+				case VK_NUMLOCK: sc = NumpadLock; break;
 			}
 
 			if (sc != 0) // Above found a match.
@@ -4486,24 +4489,24 @@ namespace Keysharp.Core.Windows
 								kvk[VK_MENU].usedAsPrefix = KeyType.PREFIX_FORCED;
 								kvk[VK_LMENU].usedAsPrefix = KeyType.PREFIX_FORCED;
 								kvk[VK_RMENU].usedAsPrefix = KeyType.PREFIX_FORCED;
-								ksc[SC_LALT].usedAsPrefix = KeyType.PREFIX_FORCED;
-								ksc[SC_RALT].usedAsPrefix = KeyType.PREFIX_FORCED;
+								ksc[LAlt].usedAsPrefix = KeyType.PREFIX_FORCED;
+								ksc[RAlt].usedAsPrefix = KeyType.PREFIX_FORCED;
 								break;
 
 							case VK_SHIFT:
 								kvk[VK_SHIFT].usedAsPrefix = KeyType.PREFIX_FORCED;
 								kvk[VK_LSHIFT].usedAsPrefix = KeyType.PREFIX_FORCED;
 								kvk[VK_RSHIFT].usedAsPrefix = KeyType.PREFIX_FORCED;
-								ksc[SC_LSHIFT].usedAsPrefix = KeyType.PREFIX_FORCED;
-								ksc[SC_RSHIFT].usedAsPrefix = KeyType.PREFIX_FORCED;
+								ksc[LShift].usedAsPrefix = KeyType.PREFIX_FORCED;
+								ksc[RShift].usedAsPrefix = KeyType.PREFIX_FORCED;
 								break;
 
 							case VK_CONTROL:
 								kvk[VK_CONTROL].usedAsPrefix = KeyType.PREFIX_FORCED;
 								kvk[VK_LCONTROL].usedAsPrefix = KeyType.PREFIX_FORCED;
 								kvk[VK_RCONTROL].usedAsPrefix = KeyType.PREFIX_FORCED;
-								ksc[SC_LCONTROL].usedAsPrefix = KeyType.PREFIX_FORCED;
-								ksc[SC_RCONTROL].usedAsPrefix = KeyType.PREFIX_FORCED;
+								ksc[LControl].usedAsPrefix = KeyType.PREFIX_FORCED;
+								ksc[RControl].usedAsPrefix = KeyType.PREFIX_FORCED;
 								break;
 						}
 
@@ -4901,8 +4904,8 @@ namespace Keysharp.Core.Windows
 				// that instance's kbdMsSender.modifiersLR_logical doesn't say it's down, which is definitely wrong.  So it
 				// is now omitted below:
 				var isNotIgnored = ev.dwExtraInfo != KeyIgnore;
-				var isFakeShift = ev.scanCode == SC_FAKE_LSHIFT || ev.scanCode == SC_FAKE_RSHIFT;
-				var isFakeCtrl = ev.scanCode == SC_FAKE_LCTRL; // AltGr.
+				var isFakeShift = ev.scanCode == FakeLShift || ev.scanCode == FakeRShift;
+				var isFakeCtrl = ev.scanCode == FakeLControl; // AltGr.
 				var eventIsPhysical = !isFakeShift && KeybdEventIsPhysical(ev.flags, vk, keyUp);// For backward-compatibility, fake LCtrl is marked as physical.
 
 				if (keyUp)
@@ -5552,14 +5555,14 @@ namespace Keysharp.Core.Windows
 			// since beardboy's testing shows that NT4 receives the neutral keys like Win9x does:
 			switch (vk)
 			{
-				case VK_SHIFT: vk = (sc == SC_RSHIFT) ? VK_RSHIFT : VK_LSHIFT; break;
+				case VK_SHIFT: vk = (sc == RShift) ? VK_RSHIFT : VK_LSHIFT; break;
 
-				case VK_CONTROL: vk = (sc == SC_RCONTROL) ? VK_RCONTROL : VK_LCONTROL; break;
+				case VK_CONTROL: vk = (sc == RControl) ? VK_RCONTROL : VK_LCONTROL; break;
 
-				case VK_MENU: vk = (sc == SC_RALT) ? VK_RMENU : VK_LMENU; break;
+				case VK_MENU: vk = (sc == RAlt) ? VK_RMENU : VK_LMENU; break;
 			}
 
-			if (lParam.scanCode == SC_FAKE_LCTRL && altGrExtraInfo != 0 && (lParam.flags & LLKHF_INJECTED) != 0)
+			if (lParam.scanCode == FakeLControl && altGrExtraInfo != 0 && (lParam.flags & LLKHF_INJECTED) != 0)
 			{
 				// This LCtrl is a result of sending RAlt, which hasn't been received yet.
 				// Override dwExtraInfo, though it will only affect this hook instance.

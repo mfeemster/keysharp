@@ -586,7 +586,7 @@ namespace Keysharp.Core.Windows
 					// installed, the Alt-up will be suppressed to further reduce the risk of side-effects.  Testing
 					// showed that the suppressed event worked just as well (in theory, because the system's handling
 					// of it isn't and can't be suppressed).
-					sender.SendKeyEvent(KeyEventTypes.KeyUp, WindowsAPI.VK_MENU, 0, IntPtr.Zero, false, KeyboardMouseSender.KeyBlockThis);//Porting these will be tough.
+					sender.SendKeyEvent(KeyEventTypes.KeyUp, VirtualKeys.VK_MENU, 0, IntPtr.Zero, false, KeyboardMouseSender.KeyBlockThis);//Porting these will be tough.
 				}
 
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
@@ -626,8 +626,8 @@ namespace Keysharp.Core.Windows
 				// but later, after the hotkey is released, it can be.  So perhaps this is being
 				// caused by the fact that the user has keys held down (logically or physically?)
 				// Releasing those keys with a key-up event might help, so try that sometime:
-				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, WindowsAPI.VK_MENU);
-				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, WindowsAPI.VK_MENU);
+				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, VirtualKeys.VK_MENU);
+				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, VirtualKeys.VK_MENU);
 				// Also replacing "2-alts" with "alt-tab" below, for now:
 				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
 			}

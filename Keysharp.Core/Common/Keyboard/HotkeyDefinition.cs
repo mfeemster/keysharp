@@ -11,6 +11,8 @@ using Keysharp.Core.Common.Threading;
 using Keysharp.Scripting;
 using static Keysharp.Core.Misc;
 using static Keysharp.Scripting.Keywords;
+using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+using static Keysharp.Core.Common.Keyboard.VirtualKeys;
 
 namespace Keysharp.Core.Common.Keyboard
 {
@@ -140,21 +142,21 @@ namespace Keysharp.Core.Common.Keyboard
 						// the hook.
 						switch (modifiersLR)
 						{
-							case KeyboardMouseSender.MOD_LCONTROL: modifierVK = WindowsAPI.VK_LCONTROL; break;//Will need to make this cross platform at some point, probably using Keys.//TODO
+							case MOD_LCONTROL: modifierVK = VK_LCONTROL; break;//Will need to make this cross platform at some point, probably using Keys.//TODO
 
-							case KeyboardMouseSender.MOD_RCONTROL: modifierVK = WindowsAPI.VK_RCONTROL; break;
+							case MOD_RCONTROL: modifierVK = VK_RCONTROL; break;
 
-							case KeyboardMouseSender.MOD_LSHIFT: modifierVK = WindowsAPI.VK_LSHIFT; break;
+							case MOD_LSHIFT: modifierVK = VK_LSHIFT; break;
 
-							case KeyboardMouseSender.MOD_RSHIFT: modifierVK = WindowsAPI.VK_RSHIFT; break;
+							case MOD_RSHIFT: modifierVK = VK_RSHIFT; break;
 
-							case KeyboardMouseSender.MOD_LALT: modifierVK = WindowsAPI.VK_LMENU; break;
+							case MOD_LALT: modifierVK = VK_LMENU; break;
 
-							case KeyboardMouseSender.MOD_RALT: modifierVK = WindowsAPI.VK_RMENU; break;
+							case MOD_RALT: modifierVK = VK_RMENU; break;
 
-							case KeyboardMouseSender.MOD_LWIN: modifierVK = WindowsAPI.VK_LWIN; break;
+							case MOD_LWIN: modifierVK = VK_LWIN; break;
 
-							case KeyboardMouseSender.MOD_RWIN: modifierVK = WindowsAPI.VK_RWIN; break;
+							case MOD_RWIN: modifierVK = VK_RWIN; break;
 
 							default:
 								throw new ValueError("This AltTab hotkey must have exactly one modifier/prefix.", _name);
@@ -185,9 +187,9 @@ namespace Keysharp.Core.Common.Keyboard
 
 						// In addition, to support preventing the toggleable keys from toggling, handle those
 						// with the hook also.
-						case WindowsAPI.VK_NUMLOCK:
-						case WindowsAPI.VK_CAPITAL:
-						case WindowsAPI.VK_SCROLL:
+						case VK_NUMLOCK:
+						case VK_CAPITAL:
+						case VK_SCROLL:
 
 						// When the AppsKey used as a suffix, always use the hook to handle it because registering
 						// such keys with RegisterHotkey() will fail to suppress(hide) the key-up events from the system,
@@ -197,17 +199,17 @@ namespace Keysharp.Core.Common.Keyboard
 						// if the Alt key is held down before pressing Appskey, it's native function does
 						// not occur.  This may be similar to the fact that LWIN and RWIN don't cause the
 						// start menu to appear if a shift key is held down.
-						case WindowsAPI.VK_APPS:
+						case VK_APPS:
 
 						// Finally, the non-neutral (left-right) modifier keys (except LWin and RWin) must also
 						// be done with the hook because even if RegisterHotkey() claims to succeed on them,
 						// I'm 99% sure I tried it and the hotkeys don't actually work with that method:
-						case WindowsAPI.VK_LCONTROL:
-						case WindowsAPI.VK_RCONTROL:
-						case WindowsAPI.VK_LSHIFT:
-						case WindowsAPI.VK_RSHIFT:
-						case WindowsAPI.VK_LMENU:
-						case WindowsAPI.VK_RMENU:
+						case VK_LCONTROL:
+						case VK_RCONTROL:
+						case VK_LSHIFT:
+						case VK_RSHIFT:
+						case VK_LMENU:
+						case VK_RMENU:
 							keybdHookMandatory = true;
 							break;
 
@@ -215,8 +217,8 @@ namespace Keysharp.Core.Common.Keyboard
 						// handle this key with the hook (the presence of a normal modifier makes
 						// this unnecessary, at least under WinXP, because the Start Menu is
 						// never invoked when a modifier key is held down with lwin/rwin).
-						case WindowsAPI.VK_LWIN:
-						case WindowsAPI.VK_RWIN:
+						case VK_LWIN:
+						case VK_RWIN:
 
 						// If this hotkey is an unmodified modifier (e.g. Control::) and there
 						// are any other hotkeys that rely specifically on this modifier,
@@ -235,9 +237,9 @@ namespace Keysharp.Core.Common.Keyboard
 						// neutral keys with the hook so that their action will only fire
 						// when the key is released (thus allowing each key to be used for its
 						// normal modifying function):
-						case WindowsAPI.VK_CONTROL:
-						case WindowsAPI.VK_MENU:
-						case WindowsAPI.VK_SHIFT:
+						case VK_CONTROL:
+						case VK_MENU:
+						case VK_SHIFT:
 							if (modifiers == 0 && modifiersLR == 0) // Modifier key as suffix and has no modifiers (or only a ModifierVK/SC).
 								keybdHookMandatory = true;
 
@@ -563,7 +565,7 @@ namespace Keysharp.Core.Common.Keyboard
 							// requires the keyboard hook. ALT hotkeys don't need it because the mouse hook sends
 							// a CTRL keystroke to disguise them, a trick that is unfortunately not reliable for
 							// when it happens while the while key is down (though it does disguise a Win-up).
-							|| ((hot.modifiersConsolidatedLR & (KeyboardMouseSender.MOD_LWIN | KeyboardMouseSender.MOD_RWIN)) != 0 && (hot.modifiersConsolidatedLR & (KeyboardMouseSender.MOD_LALT | KeyboardMouseSender.MOD_RALT)) == 0)
+							|| ((hot.modifiersConsolidatedLR & (MOD_LWIN | MOD_RWIN)) != 0 && (hot.modifiersConsolidatedLR & (MOD_LALT | MOD_RALT)) == 0)
 							// For v1.0.30, above has been expanded to include Win+Shift and Win+Control modifiers.
 							|| (hot.vk != 0 && !ht.IsMouseVK(hot.vk)) // e.g. "RButton & Space"
 							|| (hot.modifierVK != 0 && !ht.IsMouseVK(hot.modifierVK)))) // e.g. "Space & RButton"
@@ -1589,9 +1591,9 @@ namespace Keysharp.Core.Common.Keyboard
 
 				isMouse = ht.IsMouseVK(tempVk);
 
-				if ((modifiersLR.Value & (KeyboardMouseSender.MOD_LSHIFT | KeyboardMouseSender.MOD_RSHIFT)) != 0)
+				if ((modifiersLR.Value & (MOD_LSHIFT | MOD_RSHIFT)) != 0)
 					if (tempVk >= 'A' && tempVk <= 'Z')  // VK of an alpha char is the same as the ASCII code of its uppercase version.
-						modifiersLR &= ~(KeyboardMouseSender.MOD_LSHIFT | KeyboardMouseSender.MOD_RSHIFT);
+						modifiersLR &= ~(MOD_LSHIFT | MOD_RSHIFT);
 
 				// Above: Making alpha chars case insensitive seems much more friendly.  In other words,
 				// if the user defines ^Z as a hotkey, it will really be ^z, not ^+z.  By removing SHIFT
@@ -1668,8 +1670,8 @@ namespace Keysharp.Core.Common.Keyboard
 					// modifiers from left-right to neutral.  But exclude right-side modifiers (except RWin) so that
 					// things like AltGr are more precisely handled (the implications of this policy could use
 					// further review).  Currently, right-Alt (via AltGr) is the only possible right-side key.
-					thisHotkey.modifiers |= kbdMouseSender.ConvertModifiersLR(modifiersLR.Value & (KeyboardMouseSender.MOD_RWIN | KeyboardMouseSender.MOD_LWIN | KeyboardMouseSender.MOD_LCONTROL | KeyboardMouseSender.MOD_LALT | KeyboardMouseSender.MOD_LSHIFT));
-					thisHotkey.modifiersLR |= modifiersLR.Value & (KeyboardMouseSender.MOD_RSHIFT | KeyboardMouseSender.MOD_RALT | KeyboardMouseSender.MOD_RCONTROL); // Not MOD_RWIN since it belongs above.
+					thisHotkey.modifiers |= kbdMouseSender.ConvertModifiersLR(modifiersLR.Value & (MOD_RWIN | MOD_LWIN | MOD_LCONTROL | MOD_LALT | MOD_LSHIFT));
+					thisHotkey.modifiersLR |= modifiersLR.Value & (MOD_RSHIFT | MOD_RALT | MOD_RCONTROL); // Not MOD_RWIN since it belongs above.
 				}
 			}
 
@@ -1765,20 +1767,20 @@ namespace Keysharp.Core.Common.Keyboard
 					case '!':
 						if (!keyRight && !keyLeft)
 						{
-							modifiers |= KeyboardMouseSender.MOD_ALT;
+							modifiers |= MOD_ALT;
 							break;
 						}
 
 						// Both left and right may be specified, e.g. ><+a means both shift keys must be held down:
 						if (keyLeft)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_LALT;
+							modifiersLR |= MOD_LALT;
 							keyLeft = false;
 						}
 
 						if (keyRight)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_RALT;
+							modifiersLR |= MOD_RALT;
 							keyRight = false;
 						}
 
@@ -1787,19 +1789,19 @@ namespace Keysharp.Core.Common.Keyboard
 					case '^':
 						if (!keyRight && !keyLeft)
 						{
-							modifiers |= KeyboardMouseSender.MOD_CONTROL;
+							modifiers |= MOD_CONTROL;
 							break;
 						}
 
 						if (keyLeft)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_LCONTROL;
+							modifiersLR |= MOD_LCONTROL;
 							keyLeft = false;
 						}
 
 						if (keyRight)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_RCONTROL;
+							modifiersLR |= MOD_RCONTROL;
 							keyRight = false;
 						}
 
@@ -1808,19 +1810,19 @@ namespace Keysharp.Core.Common.Keyboard
 					case '+':
 						if (!keyRight && !keyLeft)
 						{
-							modifiers |= KeyboardMouseSender.MOD_SHIFT;
+							modifiers |= MOD_SHIFT;
 							break;
 						}
 
 						if (keyLeft)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_LSHIFT;
+							modifiersLR |= MOD_LSHIFT;
 							keyLeft = false;
 						}
 
 						if (keyRight)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_RSHIFT;
+							modifiersLR |= MOD_RSHIFT;
 							keyRight = false;
 						}
 
@@ -1829,19 +1831,19 @@ namespace Keysharp.Core.Common.Keyboard
 					case '#':
 						if (!keyRight && !keyLeft)
 						{
-							modifiers |= KeyboardMouseSender.MOD_WIN;
+							modifiers |= MOD_WIN;
 							break;
 						}
 
 						if (keyLeft)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_LWIN;
+							modifiersLR |= MOD_LWIN;
 							keyLeft = false;
 						}
 
 						if (keyRight)
 						{
-							modifiersLR |= KeyboardMouseSender.MOD_RWIN;
+							modifiersLR |= MOD_RWIN;
 							keyRight = false;
 						}
 
@@ -2241,13 +2243,13 @@ namespace Keysharp.Core.Common.Keyboard
 			switch (key)
 			{
 				case Keys.LWin:
-				case Keys.RWin: modifiersToRegister |= KeyboardMouseSender.MOD_WIN; break;
+				case Keys.RWin: modifiersToRegister |= MOD_WIN; break;
 
-				case Keys.ControlKey: modifiersToRegister |= KeyboardMouseSender.MOD_CONTROL; break;
+				case Keys.ControlKey: modifiersToRegister |= MOD_CONTROL; break;
 
-				case Keys.ShiftKey: modifiersToRegister |= KeyboardMouseSender.MOD_SHIFT; break;
+				case Keys.ShiftKey: modifiersToRegister |= MOD_SHIFT; break;
 
-				case Keys.Menu: modifiersToRegister |= KeyboardMouseSender.MOD_ALT; break;
+				case Keys.Menu: modifiersToRegister |= MOD_ALT; break;
 			}
 
 			// Must register them to our main window (i.e. don't use NULL to indicate our thread),

@@ -255,8 +255,12 @@ namespace Keysharp.Core.Common
 
 		~GdiHandleHolder()
 		{
+#if WINDOWS
+
 			if (disposeHandle && handle != IntPtr.Zero)
 				_ = WindowsAPI.DeleteObject(handle);//Windows specific, figure out how to do this, or if it's even needed on other platforms.//TODO
+
+#endif
 		}
 
 		public static implicit operator long(GdiHandleHolder holder) => holder.handle.ToInt64();

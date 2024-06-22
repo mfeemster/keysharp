@@ -15,6 +15,8 @@ using Keysharp.Scripting;
 #endif
 using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Keywords;
+using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+using static Keysharp.Core.Common.Keyboard.VirtualKeys;
 
 namespace Keysharp.Core.Windows
 {
@@ -47,7 +49,7 @@ namespace Keysharp.Core.Windows
 
 		internal static int MaxInitialEventsSI = 500;
 
-		internal static uint menuMaskKeySC = SC_LCONTROL;
+		internal static uint menuMaskKeySC = ScanCodes.LControl;
 
 		internal static uint menuMaskKeyVK = VK_CONTROL;
 
@@ -1384,9 +1386,9 @@ namespace Keysharp.Core.Windows
 			//   01d 11 Ctrl keyup  (left scan code)
 			//   138 12 Alt  syskeyup (right vs. left scan code)
 			// Check for VK_MENU not VK_RMENU because caller should have translated it to neutral:
-			if (vk == VK_MENU && sc == SC_RALT && targetLayoutHasAltGr == ResultType.ConditionTrue && sendMode == SendModes.Play)
+			if (vk == VK_MENU && sc == ScanCodes.RAlt && targetLayoutHasAltGr == ResultType.ConditionTrue && sendMode == SendModes.Play)
 				// Must pass VK_CONTROL rather than VK_LCONTROL because playback hook requires neutral modifiers.
-				PutKeybdEventIntoArray(MOD_LCONTROL, VK_CONTROL, SC_LCONTROL, eventFlags, extraInfo); // Recursive call to self.
+				PutKeybdEventIntoArray(MOD_LCONTROL, VK_CONTROL, ScanCodes.LControl, eventFlags, extraInfo); // Recursive call to self.
 
 			// Above must be done prior to the capacity check below because above might add a new array item.
 
@@ -3930,7 +3932,7 @@ namespace Keysharp.Core.Windows
 
 					// The following is done to avoid an extraneous artificial {LCtrl Up} later on,
 					// since the keyboard driver should insert one in response to this {RAlt Up}:
-					if (targetLayoutHasAltGr != ResultType.Fail && sc == SC_RALT)
+					if (targetLayoutHasAltGr != ResultType.Fail && sc == ScanCodes.RAlt)
 						eventModifiersLR &= ~MOD_LCONTROL;
 
 					if (doKeyHistory && ht.keyHistory is KeyHistory kh)

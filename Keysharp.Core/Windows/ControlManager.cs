@@ -22,25 +22,25 @@ namespace Keysharp.Core.Windows
 		internal static uint ConvertMouseButton(string buf, bool allowWheel = true)
 		{
 			if (buf?.Length == 0 || buf.StartsWith("L"))
-				return WindowsAPI.VK_LBUTTON;
+				return VirtualKeys.VK_LBUTTON;
 
-			if (buf.StartsWith("R")) return WindowsAPI.VK_RBUTTON;
+			if (buf.StartsWith("R")) return VirtualKeys.VK_RBUTTON;
 
-			if (buf.StartsWith("M")) return WindowsAPI.VK_MBUTTON;
+			if (buf.StartsWith("M")) return VirtualKeys.VK_MBUTTON;
 
-			if (buf == "X1") return WindowsAPI.VK_XBUTTON1;
+			if (buf == "X1") return VirtualKeys.VK_XBUTTON1;
 
-			if (buf == "X2") return WindowsAPI.VK_XBUTTON2;
+			if (buf == "X2") return VirtualKeys.VK_XBUTTON2;
 
 			if (allowWheel)
 			{
-				if (buf == "WheelUp" || buf == "WU") return WindowsAPI.VK_WHEEL_UP;
+				if (buf == "WheelUp" || buf == "WU") return VirtualKeys.VK_WHEEL_UP;
 
-				if (buf == "WheelDown" || buf == "WD") return WindowsAPI.VK_WHEEL_DOWN;
+				if (buf == "WheelDown" || buf == "WD") return VirtualKeys.VK_WHEEL_DOWN;
 
-				if (buf == "WheelLeft" || buf == "WL") return WindowsAPI.VK_WHEEL_LEFT;
+				if (buf == "WheelLeft" || buf == "WL") return VirtualKeys.VK_WHEEL_LEFT;
 
-				if (buf == "WheelRight" || buf == "WR") return WindowsAPI.VK_WHEEL_RIGHT;
+				if (buf == "WheelRight" || buf == "WR") return VirtualKeys.VK_WHEEL_RIGHT;
 			}
 
 			return 0;
@@ -302,32 +302,32 @@ namespace Keysharp.Core.Windows
 			var lparam = KeyboardUtils.MakeLong((short)ctrlx, (short)ctrly);
 			uint msg_down = 0, msg_up = 0;
 			uint wparam = 0, wparam_up = 0;
-			var vk_is_wheel = vk == WindowsAPI.VK_WHEEL_UP || vk == WindowsAPI.VK_WHEEL_DOWN;
-			var vk_is_hwheel = vk == WindowsAPI.VK_WHEEL_LEFT || vk == WindowsAPI.VK_WHEEL_RIGHT;
+			var vk_is_wheel = vk == VirtualKeys.VK_WHEEL_UP || vk == VirtualKeys.VK_WHEEL_DOWN;
+			var vk_is_hwheel = vk == VirtualKeys.VK_WHEEL_LEFT || vk == VirtualKeys.VK_WHEEL_RIGHT;
 
 			if (vk_is_wheel)
 			{
-				wparam = (uint)(clickCount * ((vk == WindowsAPI.VK_WHEEL_UP) ? WindowsAPI.WHEEL_DELTA : -WindowsAPI.WHEEL_DELTA)) << 16;  // High order word contains the delta.
+				wparam = (uint)(clickCount * ((vk == VirtualKeys.VK_WHEEL_UP) ? WindowsAPI.WHEEL_DELTA : -WindowsAPI.WHEEL_DELTA)) << 16;  // High order word contains the delta.
 				msg_down = WindowsAPI.WM_MOUSEWHEEL;
 			}
 			else if (vk_is_hwheel)  // Lexikos: Support horizontal scrolling in Windows Vista and later.
 			{
-				wparam = (uint)(clickCount * ((vk == WindowsAPI.VK_WHEEL_LEFT) ? -WindowsAPI.WHEEL_DELTA : WindowsAPI.WHEEL_DELTA)) << 16;
+				wparam = (uint)(clickCount * ((vk == VirtualKeys.VK_WHEEL_LEFT) ? -WindowsAPI.WHEEL_DELTA : WindowsAPI.WHEEL_DELTA)) << 16;
 				msg_down = WindowsAPI.WM_MOUSEHWHEEL;
 			}
 			else
 			{
 				switch (vk)
 				{
-					case WindowsAPI.VK_LBUTTON: msg_down = WindowsAPI.WM_LBUTTONDOWN; msg_up = WindowsAPI.WM_LBUTTONUP; wparam = WindowsAPI.MK_LBUTTON; break;
+					case VirtualKeys.VK_LBUTTON: msg_down = WindowsAPI.WM_LBUTTONDOWN; msg_up = WindowsAPI.WM_LBUTTONUP; wparam = WindowsAPI.MK_LBUTTON; break;
 
-					case WindowsAPI.VK_RBUTTON: msg_down = WindowsAPI.WM_RBUTTONDOWN; msg_up = WindowsAPI.WM_RBUTTONUP; wparam = WindowsAPI.MK_RBUTTON; break;
+					case VirtualKeys.VK_RBUTTON: msg_down = WindowsAPI.WM_RBUTTONDOWN; msg_up = WindowsAPI.WM_RBUTTONUP; wparam = WindowsAPI.MK_RBUTTON; break;
 
-					case WindowsAPI.VK_MBUTTON: msg_down = WindowsAPI.WM_MBUTTONDOWN; msg_up = WindowsAPI.WM_MBUTTONUP; wparam = WindowsAPI.MK_MBUTTON; break;
+					case VirtualKeys.VK_MBUTTON: msg_down = WindowsAPI.WM_MBUTTONDOWN; msg_up = WindowsAPI.WM_MBUTTONUP; wparam = WindowsAPI.MK_MBUTTON; break;
 
-					case WindowsAPI.VK_XBUTTON1: msg_down = WindowsAPI.WM_XBUTTONDOWN; msg_up = WindowsAPI.WM_XBUTTONUP; wparam_up = WindowsAPI.VK_XBUTTON1 << 16; wparam = WindowsAPI.MK_XBUTTON1 | wparam_up; break;
+					case VirtualKeys.VK_XBUTTON1: msg_down = WindowsAPI.WM_XBUTTONDOWN; msg_up = WindowsAPI.WM_XBUTTONUP; wparam_up = VirtualKeys.VK_XBUTTON1 << 16; wparam = WindowsAPI.MK_XBUTTON1 | wparam_up; break;
 
-					case WindowsAPI.VK_XBUTTON2: msg_down = WindowsAPI.WM_XBUTTONDOWN; msg_up = WindowsAPI.WM_XBUTTONUP; wparam_up = WindowsAPI.XBUTTON2 << 16; wparam = WindowsAPI.MK_XBUTTON2 | wparam_up; break;
+					case VirtualKeys.VK_XBUTTON2: msg_down = WindowsAPI.WM_XBUTTONDOWN; msg_up = WindowsAPI.WM_XBUTTONUP; wparam_up = WindowsAPI.XBUTTON2 << 16; wparam = WindowsAPI.MK_XBUTTON2 | wparam_up; break;
 				}
 			}
 

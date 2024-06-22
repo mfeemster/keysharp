@@ -63,20 +63,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const uint KeyIgnoreMax = KeyIgnore;
 		internal const uint KeyPhysIgnore = KeyIgnore - 1;
 		internal const int MaxMouseSpeed = 100;
-		internal const uint MOD_ALT = 0x0001;
-		internal const uint MOD_CONTROL = 0x0002;
-		internal const uint MOD_LALT = 0x04;
-		internal const uint MOD_LCONTROL = 0x01;
-		internal const uint MOD_LSHIFT = 0x10;
-		internal const uint MOD_LWIN = 0x40;
-		internal const uint MOD_RALT = 0x08;
-		internal const uint MOD_RCONTROL = 0x02;
-		internal const uint MOD_RSHIFT = 0x20;
-		internal const uint MOD_RWIN = 0x80;
-		internal const uint MOD_SHIFT = 0x0004;
-		internal const uint MOD_WIN = 0x0008;
-		internal const uint MODLR_COUNT = 8;
-		internal const uint MODLR_MAX = 0xFF;
+
 		internal const string ModLRString = "<^>^<!>!<+>+<#>#";
 		internal const uint MsgOffsetMouseMove = 0x80000000;
 		internal const uint SendLevelMax = 100u;
