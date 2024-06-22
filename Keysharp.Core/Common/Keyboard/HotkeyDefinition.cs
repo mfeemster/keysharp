@@ -1909,7 +1909,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// those that aren't kept queued due to the message filter) prior to returning to its caller.
 					// But for maintainability, it seems best to change this to g_hWnd vs. NULL to make joystick
 					// hotkeys behave more like standard hotkeys.
-					_ = PlatformProvider.Manager.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, i, IntPtr.Zero);
+					_ = PlatformProvider.Manager.PostHotkeyMessage(Script.MainWindowHandle, (uint)i, 0u);
 				}
 
 				//else continue the loop in case the user has newly pressed more than one joystick button.
@@ -2187,7 +2187,7 @@ namespace Keysharp.Core.Common.Keyboard
 						// affect response time (this feature is rarely used anyway).
 						//Some hotkeys will be using the hook and others will be using the built in Windows hotkey handler.
 						//Sending a message will work for both cases.
-						_ = PlatformProvider.Manager.PostMessage(Script.MainWindowHandle, WindowsAPI.WM_HOTKEY, id, 0);
+						_ = PlatformProvider.Manager.PostHotkeyMessage(Script.MainWindowHandle, id, 0);
 					}
 
 					//else it was posted too long ago, so don't do it.  This is because most users wouldn't

@@ -39,6 +39,8 @@ namespace Keysharp.Core.Linux
 
 		internal override bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam) => true;
 
+		internal override bool PostHotkeyMessage(IntPtr hWnd, uint wParam, uint lParam) => true;
+
 		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk) => true;
 	}
 }

@@ -37,6 +37,8 @@ namespace Keysharp.Core.Windows
 
 		internal override bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam) => WindowsAPI.PostMessage(hWnd, msg, wParam, lParam);
 
+		internal override bool PostHotkeyMessage(IntPtr hWnd, uint wParam, uint lParam) => WindowsAPI.PostMessage(hWnd, WindowsAPI.WM_HOTKEY, wParam, lParam);
+
 		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk) => WindowsAPI.RegisterHotKey(hWnd, id, fsModifiers, vk);
 	}
 }
