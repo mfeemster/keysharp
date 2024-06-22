@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Common.Platform;
 using Keysharp.Core.Common.Threading;
 using Keysharp.Core.Common.Window;
 #if WINDOWS
 	using Keysharp.Core.Windows;
+#elif LINUX
+	using Keysharp.Core.Linux;
 #endif
 using Keysharp.Scripting;
 using static Keysharp.Scripting.Script;
