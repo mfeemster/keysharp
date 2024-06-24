@@ -172,7 +172,7 @@ namespace Keysharp.Scripting
 							else
 								commentIgnore = true;
 						}
-						else if (ch == ';')
+						else if (ch == ';' && (last == ' ' || last == '\t'))
 						{
 							span = span.Slice(0, i).TrimEnd(Spaces);
 							i = span.Length - 1;
