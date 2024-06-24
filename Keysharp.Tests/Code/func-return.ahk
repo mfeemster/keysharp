@@ -1,3 +1,13 @@
+func0() {
+}
+
+x := func0()
+
+If (x == )
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 func1(a)
 {
 	return a
@@ -10,8 +20,7 @@ If (x == 123)
 else
 	FileAppend, "fail", "*"
 	
-func2(a)
-{
+func2(a) {
 	return a * 2
 }
 
