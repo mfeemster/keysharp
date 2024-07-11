@@ -606,246 +606,246 @@ namespace Keysharp.Scripting
 					{
 						var prevLine = list[list.Count - 1];
 						var newLineStr = wasCont ? sb.ToString() : sb.ToString().Trim(Spaces);
-						if (IsHotstringLabel(prevLine.Code)) //hotstrings don't create nesting since their replacement_str is literal
+
+						if (IsHotstringLabel(prevLine.Code))
+						{
+							StartNewLine(newLineStr);
+							goto EndLine;
+						}
+
+						var newLineSpan = newLineStr.AsSpan();
+						var prevLineSpan = prevLine.Code.AsSpan().Trim(Spaces);
+						bool newInQuote = false, prevInQuote = false;
+						bool newVerbatim = false, prevVerbatim = false;
+						int newParenlevels = 0, newBracelevels = 0, newBracketlevels = 0;
+						int prevParenlevels = 0, prevBracelevels = 0, prevBracketlevels = 0;
+						var lastNested = LineLevels(prevLine.Code, ref prevInQuote, ref prevVerbatim, ref prevParenlevels, ref prevBracelevels, ref prevBracketlevels);
+						var anyNested = LineLevels(newLineStr, ref newInQuote, ref newVerbatim, ref newParenlevels, ref newBracelevels, ref newBracketlevels);
+						var lastQuoteIndex = prevLineSpan.LastIndexOf('"');
+						var tempPrev = lastQuoteIndex != -1 ? prevLineSpan.Slice(0, lastQuoteIndex).Trim(Spaces) : prevLineSpan;
+						//Getting the first or last token is necessary because of the and, is, not, or operators because those words
+						//might be contained within a variable name.
+						var newStartOpIndex = newLineSpan.IndexOfAny(SpaceTabOpenParenSv);
+						var newStartSubSpan = newStartOpIndex == -1 ? newLineSpan : newLineSpan.Slice(0, newStartOpIndex).Trim(Spaces);
+						var newStartSubSpanStr = newStartSubSpan.ToString();
+						//
+						var prevStartOpIndex = prevLineSpan.IndexOfAny(SpaceTabOpenParenSv);
+						var prevStartSubSpan = prevStartOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(0, prevStartOpIndex).Trim(Spaces);
+						var prevStartSubSpanStr = prevStartSubSpan.ToString();
+						//
+						var prevEndOpIndex = prevLineSpan.LastIndexOfAny(SpaceTabOpenParenSv);
+						var prevEndSubSpan = prevEndOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(prevEndOpIndex + 1).Trim(Spaces);
+						var prevEndSubSpanStr = prevEndSubSpan.ToString();
+
+						//Previous line was an empty if test without parens, don't join.
+						//if x =
+						//...
+						if (!lastNested
+								&& Parser.flowOperators.Contains(prevStartSubSpanStr)
+								&& prevLine.Code.EndsWith('='))
 						{
 							StartNewLine(newLineStr);
 						}
-						else
+						//Check if the previous line ends with a := or a := "
+						//Note that := "" is not a continuation line.
+						//This could be a standalone empty assign, or an assign that is to be joined with this line.
+						else if (tempPrev.EndsWith(":="))
 						{
-							var newLineSpan = newLineStr.AsSpan();
-							var prevLineSpan = prevLine.Code.AsSpan().Trim(Spaces);
-							bool newInQuote = false, prevInQuote = false;
-							bool newVerbatim = false, prevVerbatim = false;
-							int newParenlevels = 0, newBracelevels = 0, newBracketlevels = 0;
-							int prevParenlevels = 0, prevBracelevels = 0, prevBracketlevels = 0;
-							var lastNested = LineLevels(prevLine.Code, ref prevInQuote, ref prevVerbatim, ref prevParenlevels, ref prevBracelevels, ref prevBracketlevels);
-							var anyNested = LineLevels(newLineStr, ref newInQuote, ref newVerbatim, ref newParenlevels, ref newBracelevels, ref newBracketlevels);
-							var lastQuoteIndex = prevLineSpan.LastIndexOf('"');
-							var tempPrev = lastQuoteIndex != -1 ? prevLineSpan.Slice(0, lastQuoteIndex).Trim(Spaces) : prevLineSpan;
-							//Getting the first or last token is necessary because of the and, is, not, or operators because those words
-							//might be contained within a variable name.
-							var newStartOpIndex = newLineSpan.IndexOfAny(SpaceTabOpenParenSv);
-							var newStartSubSpan = newStartOpIndex == -1 ? newLineSpan : newLineSpan.Slice(0, newStartOpIndex).Trim(Spaces);
-							var newStartSubSpanStr = newStartSubSpan.ToString();
-							//
-							var prevStartOpIndex = prevLineSpan.IndexOfAny(SpaceTabOpenParenSv);
-							var prevStartSubSpan = prevStartOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(0, prevStartOpIndex).Trim(Spaces);
-							var prevStartSubSpanStr = prevStartSubSpan.ToString();
-							//
-							var prevEndOpIndex = prevLineSpan.LastIndexOfAny(SpaceTabOpenParenSv);
-							var prevEndSubSpan = prevEndOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(prevEndOpIndex + 1).Trim(Spaces);
-							var prevEndSubSpanStr = prevEndSubSpan.ToString();
-
-							//Previous line was an empty if test without parens, don't join.
-							//if x =
-							//...
-							if (!lastNested
-									&& Parser.flowOperators.Contains(prevStartSubSpanStr)
-									&& prevLine.Code.EndsWith('='))
+							//Empty assign before closing brace, don't join.
+							//if (...)
+							//{
+							//  x :=
+							//}
+							if (newLineStr == "}")
 							{
 								StartNewLine(newLineStr);
 							}
-							//Check if the previous line ends with a := or a := "
-							//Note that := "" is not a continuation line.
-							//This could be a standalone empty assign, or an assign that is to be joined with this line.
-							else if (tempPrev.EndsWith(":="))
+							else
 							{
-								//Empty assign before closing brace, don't join.
+								//Flow, don't join.
+								//x :=
 								//if (...)
-								//{
-								//  x :=
-								//}
-								if (newLineStr == "}")
+								if (Parser.flowOperators.Contains(newStartSubSpanStr)
+										|| Parser.propKeywords.Contains(newStartSubSpanStr)
+										|| string.Compare(newStartSubSpanStr, "static", true) == 0//Don't join assignments of static class or function variables with any others.
+										|| string.Compare(prevStartSubSpanStr, "static", true) == 0)
 								{
 									StartNewLine(newLineStr);
 								}
-								else
+								else//All other cases, join.
 								{
-									//Flow, don't join.
-									//x :=
-									//if (...)
-									if (Parser.flowOperators.Contains(newStartSubSpanStr)
-											|| Parser.propKeywords.Contains(newStartSubSpanStr)
-											|| string.Compare(newStartSubSpanStr, "static", true) == 0//Don't join assignments of static class or function variables with any others.
-											|| string.Compare(prevStartSubSpanStr, "static", true) == 0)
+									AddToPreviousLine(prevLine, newLineStr);
+								}
+							}
+						}
+						else//Other cases.
+						{
+							var newIsHotkey = newLineStr.FindFirstNotInQuotes("::") != -1;
+							var prevIsHotkey = prevLine.Code.FindFirstNotInQuotes("::") != -1;
+							var prevIsDirective = prevLine.Code.StartsWith('#');
+
+							//New line started with an operator.
+							//x := 1//Previous line.
+							//+ 2//New line.
+							if (newStartSubSpan.StartsWithAnyOf(Parser.nonContExprOperatorsList) == -1
+									&& !prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
+									&& !newIsHotkey//Ensure same for new.
+									&& !prevIsDirective//Ensure previous line wasn't a directive.
+									&& (Parser.exprVerbalOperators.Contains(newStartSubSpanStr)
+										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1))//Verbal operators must match the token, others can just be the start of the string.
+							{
+								AddToPreviousLine(prevLine, newLineStr);
+							}
+							else
+							{
+								//Previous line ended with an operator.
+								//x := 1 +//Previous line.
+								//2//New line.
+								if (!prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
+										&& !newIsHotkey//Ensure same for new.
+										&& !prevIsDirective//Ensure previous line wasn't a directive.
+										&& prevEndSubSpan.EndsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
+										&& (Parser.contExprOperators.Contains(prevEndSubSpanStr) || prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)
+								   )
+								{
+									if (prevEndSubSpanStr.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
 									{
 										StartNewLine(newLineStr);
 									}
-									else//All other cases, join.
+									else
 									{
 										AddToPreviousLine(prevLine, newLineStr);
 									}
 								}
-							}
-							else//Other cases.
-							{
-								var newIsHotkey = newLineStr.FindFirstNotInQuotes("::") != -1;
-								var prevIsHotkey = prevLine.Code.FindFirstNotInQuotes("::") != -1;
-								var prevIsDirective = prevLine.Code.StartsWith('#');
-
-								//New line started with an operator.
-								//x := 1//Previous line.
-								//+ 2//New line.
-								if (newStartSubSpan.StartsWithAnyOf(Parser.nonContExprOperatorsList) == -1
-										&& !prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
-										&& !newIsHotkey//Ensure same for new.
-										&& !prevIsDirective//Ensure previous line wasn't a directive.
-										&& (Parser.exprVerbalOperators.Contains(newStartSubSpanStr)
-											|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1))//Verbal operators must match the token, others can just be the start of the string.
-								{
-									AddToPreviousLine(prevLine, newLineStr);
-								}
 								else
 								{
-									//Previous line ended with an operator.
-									//x := 1 +//Previous line.
-									//2//New line.
-									if (!prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
-											&& !newIsHotkey//Ensure same for new.
-											&& !prevIsDirective//Ensure previous line wasn't a directive.
-											&& prevEndSubSpan.EndsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
-											&& (Parser.contExprOperators.Contains(prevEndSubSpanStr) || prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)
-									)
+									var isPropLine = Parser.propKeywords.Contains(newStartSubSpanStr);
+									var wasPropLine = Parser.propKeywords.Contains(prevStartSubSpanStr);
+									var wasFuncDef = prevLine.Code.FindFirstNotInQuotes("(") != -1 && prevLine.Code.FindFirstNotInQuotes(")") != -1;
+
+									if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0)
 									{
-										if (prevEndSubSpanStr.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
+										//Previous line was in an imbalanced state with only 1 extra open brace { and
+										//the beginning of the line is a flow statement. This is OTB style and is not
+										//a continuation line, so add a new line.
+										//if (...) {
+										if (prevLineSpan.EndsWith(openBraceSpan)
+												&& (prevIsHotkey//::d {
+													|| otbFlowKeywords.Contains(prevStartSubSpanStr)//if (...) {
+													|| wasPropLine//get {
+													|| wasFuncDef)//myfunc() {
+										   )
 										{
-											StartNewLine(newLineStr);
-										}
-										else
-										{
-											AddToPreviousLine(prevLine, newLineStr);
+											//if (...) {
+											//} else...
+											//...or
+											//d:: {
+											//...
+											if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
+											{
+												var newLineRest = newLineSpan.Slice(1).Trim(Spaces).ToString();
+												var newCloseBrace = "}";
+												StartNewLine(newCloseBrace);
+												StartNewLine(newLineRest);
+											}
+											else
+												StartNewLine(newLineStr);
+
+											goto EndLine;
 										}
 									}
-									else
+
+									//Previous line was non OTB flow or function definition and this line starts with { as expected,
+									//but there is unexpected code after.
+									//Place the unexpected code on its own line.
+									//if (...)//Previous line.
+									//{ x := 123//New line.
+									//...
+									if ((otbFlowKeywords.Contains(prevStartSubSpanStr) || wasFuncDef)
+											&& !prevLineSpan.EndsWith(openBraceSpan)
+											&& newLineSpan.StartsWith(openBraceSpan)
+											&& newLineSpan.Length > 1)
 									{
-										var isPropLine = Parser.propKeywords.Contains(newStartSubSpanStr);
-										var wasPropLine = Parser.propKeywords.Contains(prevStartSubSpanStr);
-										var wasFuncDef = prevLine.Code.FindFirstNotInQuotes("(") != -1 && prevLine.Code.FindFirstNotInQuotes(")") != -1;
+										var newLineRest = newLineSpan.Slice(1).Trim(Spaces).ToString();
+										var newOpenBrace = "{";
+										StartNewLine(newOpenBrace);
+										StartNewLine(newLineRest);
+									}
+									else if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
+									{
+										var newLineRest = newLineSpan.Slice(1).Trim(Spaces);
+										var newLineRestFirstTokenIndex = newLineRest.IndexOfAny(SpaceTabOpenParenSv);
+										//Check for closing of a function call or fat arrow function like:
+										//})
+										var newLineRestFirstTokenSpan = newLineRestFirstTokenIndex == -1 ? newLineRest : newLineRest.Slice(0, newLineRestFirstTokenIndex);
 
-										if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0)
+										if (!otbFlowKeywords.Contains(newLineRestFirstTokenSpan.ToString()))
 										{
-											//Previous line was in an imbalanced state with only 1 extra open brace { and
-											//the beginning of the line is a flow statement. This is OTB style and is not
-											//a continuation line, so add a new line.
-											//if (...) {
-											if (prevLineSpan.EndsWith(openBraceSpan)
-													&& (prevIsHotkey//::d {
-														|| otbFlowKeywords.Contains(prevStartSubSpanStr)//if (...) {
-														|| wasPropLine//get {
-														|| wasFuncDef)//myfunc() {
-											)
-											{
-												//if (...) {
-												//} else...
-												//...or
-												//d:: {
-												//...
-												if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
-												{
-													var newLineRest = newLineSpan.Slice(1).Trim(Spaces).ToString();
-													var newCloseBrace = "}";
-													StartNewLine(newCloseBrace);
-													StartNewLine(newLineRest);
-												}
-												else
-													StartNewLine(newLineStr);
-
-												goto EndLine;
-											}
+											prevLine.Code += newLineStr;
+											_ = sb.Clear();
+											goto EndLine;
 										}
 
-										//Previous line was non OTB flow or function definition and this line starts with { as expected,
-										//but there is unexpected code after.
-										//Place the unexpected code on its own line.
-										//if (...)//Previous line.
-										//{ x := 123//New line.
-										//...
-										if ((otbFlowKeywords.Contains(prevStartSubSpanStr) || wasFuncDef)
-												&& !prevLineSpan.EndsWith(openBraceSpan)
-												&& newLineSpan.StartsWith(openBraceSpan)
-												&& newLineSpan.Length > 1)
+										//Check for the start of a new flow statement like:
+										//} else {
+										StartNewLine("}");
+
+										if (newLineRestFirstTokenIndex > 0 && newLineRest.Length > newLineRestFirstTokenIndex)
 										{
-											var newLineRest = newLineSpan.Slice(1).Trim(Spaces).ToString();
-											var newOpenBrace = "{";
-											StartNewLine(newOpenBrace);
-											StartNewLine(newLineRest);
-										}
-										else if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
-										{
-											var newLineRest = newLineSpan.Slice(1).Trim(Spaces);
-											var newLineRestFirstTokenIndex = newLineRest.IndexOfAny(SpaceTabOpenParenSv);
-											//Check for closing of a function call or fat arrow function like:
-											//})
-											var newLineRestFirstTokenSpan = newLineRestFirstTokenIndex == -1 ? newLineRest : newLineRest.Slice(0, newLineRestFirstTokenIndex);
+											var flowBraceIndex = newLineRest.IndexOf('{');
 
-											if (!otbFlowKeywords.Contains(newLineRestFirstTokenSpan.ToString()))
+											if (flowBraceIndex != -1)
 											{
-												prevLine.Code += newLineStr;
-												_ = sb.Clear();
-												goto EndLine;
+												StartNewLine(newLineRest.Slice(0, flowBraceIndex).ToString());
+												StartNewLine("{");
+												StartNewLine(newLineRest.Slice(flowBraceIndex + 1).TrimStart(Spaces).ToString());
 											}
-
-											//Check for the start of a new flow statement like:
-											//} else {
-											StartNewLine("}");
-
-											if (newLineRestFirstTokenIndex > 0 && newLineRest.Length > newLineRestFirstTokenIndex)
-											{
-												var flowBraceIndex = newLineRest.IndexOf('{');
-
-												if (flowBraceIndex != -1)
-												{
-													StartNewLine(newLineRest.Slice(0, flowBraceIndex).ToString());
-													StartNewLine("{");
-													StartNewLine(newLineRest.Slice(flowBraceIndex + 1).TrimStart(Spaces).ToString());
-												}
-												else//There wasn't a {, but there could have been more flow statements afteward, such as else if.
-													StartNewLine(newLineRest.ToString());
-											}
-											else//Length matched exactly, so it was just a } else.
+											else//There wasn't a {, but there could have been more flow statements afteward, such as else if.
 												StartNewLine(newLineRest.ToString());
 										}
-										//Previous line was a standalone open or close brace, so don't join.
-										//This will have only happened if the line before it was not a multiline statement.
-										//if (...)
-										//{//Previous line.
-										//  x := 123//New line.
-										//...
-										else if (prevLine.Code == "{")
-										{
-											StartNewLine(newLineStr);
-										}
-										else if (prevLine.Code == "}")
-										{
-											StartNewLine(newLineStr);
-										}
-										//Previous line was balanced and the new line is imbalanced in a non-OTB manner.
-										//x := 1//Previous line.
-										//y := [//New line.
-										//...
-										else if (!lastNested && anyNested)
-										{
-											StartNewLine(newLineStr);
-										}
-										//Previous line was imbalanced in a non-OTB manner, but the new line balanced it.
-										//x := [//Previous line.
-										//1, 2]//New line.
-										else if (lastNested && !anyNested && !isPropLine && !wasPropLine)
-										{
-											AddToPreviousLine(prevLine, newLineStr);
-										}
-										//Previous and/or new line is imbalanced in a non-OTB manner.
-										//x := [//Previous line.
-										//1//New line.
-										//...
-										else if (anyNested && !isPropLine && !wasPropLine)
-										{
-											AddToPreviousLine(prevLine, newLineStr);
-										}
-										else//No other special cases detected, so just add it as a new line.
-										{
-											StartNewLine(newLineStr);
-										}
+										else//Length matched exactly, so it was just a } else.
+											StartNewLine(newLineRest.ToString());
+									}
+									//Previous line was a standalone open or close brace, so don't join.
+									//This will have only happened if the line before it was not a multiline statement.
+									//if (...)
+									//{//Previous line.
+									//  x := 123//New line.
+									//...
+									else if (prevLine.Code == "{")
+									{
+										StartNewLine(newLineStr);
+									}
+									else if (prevLine.Code == "}")
+									{
+										StartNewLine(newLineStr);
+									}
+									//Previous line was balanced and the new line is imbalanced in a non-OTB manner.
+									//x := 1//Previous line.
+									//y := [//New line.
+									//...
+									else if (!lastNested && anyNested)
+									{
+										StartNewLine(newLineStr);
+									}
+									//Previous line was imbalanced in a non-OTB manner, but the new line balanced it.
+									//x := [//Previous line.
+									//1, 2]//New line.
+									else if (lastNested && !anyNested && !isPropLine && !wasPropLine)
+									{
+										AddToPreviousLine(prevLine, newLineStr);
+									}
+									//Previous and/or new line is imbalanced in a non-OTB manner.
+									//x := [//Previous line.
+									//1//New line.
+									//...
+									else if (anyNested && !isPropLine && !wasPropLine)
+									{
+										AddToPreviousLine(prevLine, newLineStr);
+									}
+									else//No other special cases detected, so just add it as a new line.
+									{
+										StartNewLine(newLineStr);
 									}
 								}
 							}
