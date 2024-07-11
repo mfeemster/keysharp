@@ -422,7 +422,7 @@ namespace Keysharp.Core
 					//var lbl = new KeysharpLabel(0x20)
 					var lbl = new KeysharpLabel
 					{
-						Font = form.Font
+						Font = Conversions.ConvertFont(form.Font)
 					};
 					ctrl = lbl;
 				}
@@ -448,6 +448,12 @@ namespace Keysharp.Core
 						ReadOnly = opts.rdonly ?? false,
 						WordWrap = ml
 					};
+#if !WINDOWS
+
+					if (opts.number)
+						txt.MakeNumeric();
+
+#endif
 
 					if (opts.limit != int.MinValue)
 						txt.MaxLength = opts.limit;
@@ -508,6 +514,12 @@ namespace Keysharp.Core
 						Multiline = ml,
 						ReadOnly = opts.rdonly ?? false
 					};
+#if !WINDOWS
+
+					if (opts.number)
+						txt.MakeNumeric();
+
+#endif
 
 					if (opts.limit != int.MinValue)
 						txt.MaxLength = opts.limit;
@@ -1486,11 +1498,7 @@ namespace Keysharp.Core
 		public void Flash(object obj)
 		{
 #if WINDOWS
-			var b = obj.Ab(true);
-
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-				_ = WindowsAPI.FlashWindow(form.Handle, b);
-
+			_ = WindowsAPI.FlashWindow(form.Handle, obj.Ab(true));
 #endif
 		}
 

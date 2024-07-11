@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -82,6 +83,30 @@ namespace Keysharp.Core
 			}
 
 			return DateTime.MinValue;
+		}
+
+		internal static Font ConvertFont(Font font)
+		{
+#if WINDOWS
+			return font;
+#else
+			//This is needed to properly set bold/italic fonts in linux.
+			//https://github.com/mono/mono/issues/17314
+			var tempFont = new Font(font.FontFamily, font.Size, font.Style);
+			var validFontFamily = tempFont.FontFamily;
+
+			foreach (FontFamily ff in FontFamily.Families)
+			{
+				if (ff.Name == tempFont.FontFamily.Name)
+				{
+					validFontFamily = ff;
+					break;
+				}
+			}
+
+			var regularfont = new Font(validFontFamily, font.Size, FontStyle.Regular);
+			return new Font(regularfont, font.Style);
+#endif
 		}
 
 		internal static ToggleValueType ConvertOnOff(object mode, ToggleValueType def = ToggleValueType.Invalid)
@@ -307,7 +332,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			return new Font(family, size, display);
+			return ConvertFont(new Font(family, size, display));
 		}
 
 		internal static List<int> ParseRange(string[] splits)

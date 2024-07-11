@@ -642,7 +642,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// <code>true</code> if the current user has administrator rights, <code>false</code> otherwise.
 		/// </summary>
-		public static bool A_ISAdmin =>
+		public static bool A_IsAdmin =>
 #if WINDOWS
 		new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 #else

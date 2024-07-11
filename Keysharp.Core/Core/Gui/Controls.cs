@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 #if WINDOWS
 	using Keysharp.Core.Windows;
 #endif
 using Keysharp.Scripting;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Keysharp.Core
 {
@@ -29,6 +31,9 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
+#if LINUX
+			FlatStyle = FlatStyle.Flat;
+#endif
 			//Any setting of this field causes click events to behave unpredictably, so don't use it, and therefor don't support double clicks.
 			//This differs from the documentation which says that double click is supported.
 			//This isn't worth implementing since it's behavior that will almost never be desired.
@@ -68,6 +73,8 @@ namespace Keysharp.Core
 			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
 				SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
 
+#else
+			FlatStyle = FlatStyle.Flat;
 #endif
 		}
 
@@ -170,6 +177,40 @@ namespace Keysharp.Core
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#if !WINDOWS
+		internal void MakeNumeric()
+		{
+			KeyPress += KeysharpEdit_KeyPress;
+			Validating += KeysharpEdit_Validating;
+		}
+
+		private void KeysharpEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			if (Text.Any(ch => !char.IsDigit(ch)))
+				Text = "";
+		}
+
+		private void KeysharpEdit_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (ModifierKeys.HasFlag(Keys.Control))
+			{
+				var vch = '\u0016';
+
+				if (e.KeyChar == vch)
+				{
+					var text = Clipboard.GetText();
+
+					if (text.Any(ch => !char.IsDigit(ch)))
+						e.Handled = true;
+				}
+			}
+
+			if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+			{
+				e.Handled = true;
+			}
+		}
+#endif
 	}
 
 	public class KeysharpForm : Form
@@ -298,7 +339,15 @@ namespace Keysharp.Core
 				if (!url.Contains("://"))
 					url = "https://" + url;
 
+#if WINDOWS
 				_ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+#else
+				System.Diagnostics.Process proc = new System.Diagnostics.Process();
+				proc.EnableRaisingEvents = false;
+				proc.StartInfo.FileName = "xdg-open";
+				proc.StartInfo.Arguments = url;
+				proc.Start();
+#endif
 				ll.Links[ll.Links.IndexOf(e.Link)].Visited = true;
 			}
 
@@ -619,6 +668,7 @@ namespace Keysharp.Core
 	public class KeysharpRichEdit : RichTextBox
 	{
 		private readonly int addstyle, removestyle;
+		internal bool isnumeric = false;
 
 		internal CharacterCasing CharacterCasing { get; set; } = CharacterCasing.Normal;
 
@@ -646,23 +696,62 @@ namespace Keysharp.Core
 				base.WndProc(ref m);
 		}
 
+#if !WINDOWS
+		internal void MakeNumeric()
+		{
+			isnumeric = true;
+			Validating += KeysharpRichEdit_Validating;
+		}
+
+		private void KeysharpRichEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			if (Text.Any(ch => !char.IsDigit(ch)))
+				Text = "";
+		}
+#endif
 		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			switch (CharacterCasing)
+#if !WINDOWS
+
+			if (isnumeric)
 			{
-				case CharacterCasing.Normal:
-					break;
+				if (ModifierKeys.HasFlag(Keys.Control))
+				{
+					var vch = '\u0016';
 
-				case CharacterCasing.Upper:
-					e.KeyChar = char.ToUpper(e.KeyChar);
-					break;
+					if (e.KeyChar == vch)
+					{
+						var text = Clipboard.GetText();
 
-				case CharacterCasing.Lower:
-					e.KeyChar = char.ToLower(e.KeyChar);
-					break;
+						if (text.Any(ch => !char.IsDigit(ch)))
+							e.Handled = true;
+					}
+				}
 
-				default:
-					break;
+				if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+				{
+					e.Handled = true;
+				}
+			}
+			else
+#endif
+			{
+				switch (CharacterCasing)
+				{
+					case CharacterCasing.Normal:
+						break;
+
+					case CharacterCasing.Upper:
+						e.KeyChar = char.ToUpper(e.KeyChar);
+						break;
+
+					case CharacterCasing.Lower:
+						e.KeyChar = char.ToLower(e.KeyChar);
+						break;
+
+					default:
+						break;
+				}
 			}
 		}
 	}
