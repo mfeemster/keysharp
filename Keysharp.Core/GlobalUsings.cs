@@ -72,6 +72,7 @@ global using global::Semver.Utility;
 #endif
 
 #if LINUX
+	global using global::Keysharp.Core.Linux;
 	global using global::Keysharp.Core.Linux.Proxies;
 	global using global::Keysharp.Core.Linux.X11;
 	global using global::Keysharp.Core.Linux.X11.Events;
