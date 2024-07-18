@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Keysharp.Core;
-#if WINDOWS
-	using Keysharp.Core.COM;
-#endif
-namespace Keysharp.Scripting
+﻿namespace Keysharp.Scripting
 {
 	public partial class Script
 	{

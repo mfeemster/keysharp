@@ -1,8 +1,4 @@
-﻿using System.Drawing;
-using System.Linq;
-using ScintillaNET;
-
-namespace Keyview
+﻿namespace Keyview
 {
 	public class CSharpStyler : ScintillaStyler
 	{

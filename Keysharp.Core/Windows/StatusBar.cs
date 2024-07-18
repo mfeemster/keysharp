@@ -1,6 +1,4 @@
 ﻿#if WINDOWS
-using System;
-
 namespace Keysharp.Core.Windows
 {
 	/// <summary>

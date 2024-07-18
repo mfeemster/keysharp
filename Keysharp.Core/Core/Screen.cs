@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Text.RegularExpressions;
-using Keysharp.Core.Common;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core

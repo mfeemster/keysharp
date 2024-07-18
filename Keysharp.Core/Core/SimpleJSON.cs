@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/// <summary>
 	/// Serialize JSON strings.

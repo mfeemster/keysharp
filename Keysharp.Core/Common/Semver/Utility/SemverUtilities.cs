@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-
-namespace Semver.Utility
+﻿namespace Semver.Utility
 {
 	/// <summary>
 	/// Combine hash codes in a good way since <c>System.HashCode</c> isn't available.

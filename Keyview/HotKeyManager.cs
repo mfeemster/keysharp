@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace Keyview
+﻿namespace Keyview
 {
 	internal class HotKeyManager
 	{

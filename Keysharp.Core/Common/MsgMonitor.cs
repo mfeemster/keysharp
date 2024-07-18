@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common
 {
 	internal class MsgMonitor
 	{

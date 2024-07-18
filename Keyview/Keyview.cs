@@ -1,14 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Windows.Forms;
-using Keysharp.Core;
-using Keysharp.Scripting;
-using ScintillaNET;
-
-namespace Keyview
+﻿namespace Keyview
 {
 	/// <summary>
 	/// Much of the Scintilla-related code was taken from: https://github.com/robinrodricks/ScintillaNET.Demo

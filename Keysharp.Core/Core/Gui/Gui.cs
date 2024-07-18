@@ -1,18 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Windows.Forms;
-using Keysharp.Core.Common;
-#if WINDOWS
-	using Keysharp.Core.Windows;//Code in Core probably shouldn't be referencing windows specific code.//TODO
-#endif
-using Keysharp.Scripting;
-using static Keysharp.Core.Flow;
+﻿using static Keysharp.Core.Flow;
 
 namespace Keysharp.Core
 {

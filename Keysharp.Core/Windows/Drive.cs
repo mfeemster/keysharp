@@ -1,11 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Globalization;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
-using Keysharp.Scripting;
-
 namespace Keysharp.Core.Windows
 {
 	/// <summary>

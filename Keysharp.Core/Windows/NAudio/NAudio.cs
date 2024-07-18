@@ -1,9 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
-
 /// <summary>
 /// This code was taken from a project named NAudio which is located at https://github.com/naudio/NAudio
 /// It consists of only the parts needed to make certain Keysharp sound functions work

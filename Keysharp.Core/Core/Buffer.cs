@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Buffer : KeysharpObject, IDisposable
 	{

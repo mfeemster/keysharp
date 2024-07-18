@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class Dir
 	{

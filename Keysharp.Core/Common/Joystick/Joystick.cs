@@ -1,11 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using Keysharp.Core.Common.Keyboard;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-
-namespace Keysharp.Core.Common.Joystick
+﻿namespace Keysharp.Core.Common.Joystick
 {
 	internal static class Joystick
 	{

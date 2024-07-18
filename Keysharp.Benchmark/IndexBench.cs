@@ -1,6 +1,4 @@
-﻿using BenchmarkDotNet.Attributes;
-using Keysharp.Core;
-using static Keysharp.Core.Loops;
+﻿using static Keysharp.Core.Loops;
 using static Keysharp.Scripting.Script;
 using Array = Keysharp.Core.Array;
 

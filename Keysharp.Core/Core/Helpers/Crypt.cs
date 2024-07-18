@@ -1,9 +1,3 @@
-using System;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
-using System.Text;
-
 namespace Keysharp.Core
 {
 	public static class Crypt

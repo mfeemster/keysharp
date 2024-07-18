@@ -1,8 +1,4 @@
 ﻿#if LINUX
-using System;
-using System.Collections.Generic;
-using Keysharp.Core.Linux.X11;
-
 namespace Keysharp.Core.Linux.Proxies
 {
 	/// <summary>

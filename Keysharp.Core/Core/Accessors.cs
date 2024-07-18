@@ -1,26 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Text;
-using System.Threading;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-using Keysharp.Scripting;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class Accessors
 	{

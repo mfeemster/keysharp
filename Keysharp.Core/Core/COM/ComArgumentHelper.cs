@@ -1,10 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
-using Keysharp.Scripting;
-
 namespace Keysharp.Core.COM
 {
 	internal class ComArgumentHelper : ArgumentHelper

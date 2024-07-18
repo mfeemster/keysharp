@@ -1,6 +1,3 @@
-using System;
-using System.CodeDom;
-using Keysharp.Core.Common.ExtensionMethods;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

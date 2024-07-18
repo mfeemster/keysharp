@@ -1,5 +1,3 @@
-using System.CodeDom;
-
 namespace Keysharp.Scripting
 {
 	internal class CodeBlock

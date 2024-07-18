@@ -1,19 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Text;
-using System.Windows.Forms;
-using Keysharp.Core.Common;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-using Keysharp.Scripting;
-using static Keysharp.Scripting.Keywords;
+﻿using static Keysharp.Scripting.Keywords;
+using MethodInvoker = System.Windows.Forms.MethodInvoker;
 
 namespace Keysharp.Core
 {

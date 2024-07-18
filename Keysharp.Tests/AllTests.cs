@@ -1,9 +1,4 @@
-﻿using System;
-using System.Globalization;
-using Keysharp.Core;
-using Keysharp.Core.Common.Threading;
-using NUnit.Framework;
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
+﻿using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

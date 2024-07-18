@@ -1,12 +1,6 @@
 #if LINUX
 #pragma warning disable 649
 
-using System;
-using System.Runtime.InteropServices;
-using System.Timers;
-using System.Windows.Forms;
-using Keysharp.Core.Linux.X11;
-
 namespace Keysharp.Core.Linux
 {
 	internal partial class LinuxAPI
@@ -180,17 +174,17 @@ namespace Keysharp.Core.Linux
 		[Flags]
 		internal enum XSizeHintsFlags
 		{
-			USPosition = (1 << 0),
-			USSize = (1 << 1),
-			PPosition = (1 << 2),
-			PSize = (1 << 3),
-			PMinSize = (1 << 4),
-			PMaxSize = (1 << 5),
-			PResizeInc = (1 << 6),
-			PAspect = (1 << 7),
-			PAllHints = (PPosition | PSize | PMinSize | PMaxSize | PResizeInc | PAspect),
-			PBaseSize = (1 << 8),
-			PWinGravity = (1 << 9),
+			USPosition = 1 << 0,
+			USSize = 1 << 1,
+			PPosition = 1 << 2,
+			PSize = 1 << 3,
+			PMinSize = 1 << 4,
+			PMaxSize = 1 << 5,
+			PResizeInc = 1 << 6,
+			PAspect = 1 << 7,
+			PAllHints = PPosition | PSize | PMinSize | PMaxSize | PResizeInc | PAspect,
+			PBaseSize = 1 << 8,
+			PWinGravity = 1 << 9,
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -219,14 +213,14 @@ namespace Keysharp.Core.Linux
 		[Flags]
 		internal enum XWMHintsFlags
 		{
-			InputHint = (1 << 0),
-			StateHint = (1 << 1),
-			IconPixmapHint = (1 << 2),
-			IconWindowHint = (1 << 3),
-			IconPositionHint = (1 << 4),
-			IconMaskHint = (1 << 5),
-			WindowGroupHint = (1 << 6),
-			AllHints = (InputHint | StateHint | IconPixmapHint | IconWindowHint | IconPositionHint | IconMaskHint | WindowGroupHint)
+			InputHint = 1 << 0,
+			StateHint = 1 << 1,
+			IconPixmapHint = 1 << 2,
+			IconWindowHint = 1 << 3,
+			IconPositionHint = 1 << 4,
+			IconMaskHint = 1 << 5,
+			WindowGroupHint = 1 << 6,
+			AllHints = InputHint | StateHint | IconPixmapHint | IconWindowHint | IconPositionHint | IconMaskHint | WindowGroupHint
 		}
 
 		internal enum XInitialState

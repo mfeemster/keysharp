@@ -1,6 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using static Semver.SemVersionStyles;
+﻿using static Semver.SemVersionStyles;
 
 namespace Semver
 {
@@ -29,7 +27,7 @@ namespace Semver
 		public static bool IsValid(this SemVersionStyles styles)
 		{
 			// Either it is the Any style
-			if (styles == Any) return true;
+			if (styles == SemVersionStyles.Any) return true;
 
 			// Or it is some combination of the flags
 			return (styles & AllowAll) == styles

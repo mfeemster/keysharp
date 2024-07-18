@@ -1,21 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#elif LINUX
-	using Keysharp.Core.Linux;
-#endif
-using Keysharp.Scripting;
-using static Keysharp.Core.Misc;
+﻿using static Keysharp.Core.Misc;
 using static Keysharp.Scripting.Keywords;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
-using Keysharp.Core.Common.Platform;
 
 namespace Keysharp.Core.Common.Keyboard
 {

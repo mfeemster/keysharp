@@ -271,9 +271,11 @@ Linux ideas/research:
 	Old automation libraries that worked on X, but no longer do on Wayland:
 		Autokey and xdotools.
 		Autokey and others: https://www.autohotkey.com/boards/viewtopic.php?f=22&t=65552
+	https://github.com/ReimuNotMoe/ydotool
 	Linux has a system wide hotkey reigstry which can usually be found in some settings gui.
 	
-	
+Mac ideas/research:
+	WinForms for 64-bit Mac: https://github.com/emclient/mac-playground
 	
 Closed development links to revisit:
 	https://docs.microsoft.com/en-us/dotnet/framework/tools/signtool-exe?redirectedfrom=MSDN

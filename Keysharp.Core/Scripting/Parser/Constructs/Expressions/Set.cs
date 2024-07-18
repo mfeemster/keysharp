@@ -1,5 +1,3 @@
-using System.Collections;
-using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

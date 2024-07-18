@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
-using Keysharp.Scripting;
-using static Keysharp.Core.Misc;
+﻿using static Keysharp.Core.Misc;
 
 namespace Keysharp.Core.Common.Keyboard
 {

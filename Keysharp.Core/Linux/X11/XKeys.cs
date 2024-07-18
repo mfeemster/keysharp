@@ -1,6 +1,4 @@
 ﻿#if LINUX
-using System;
-
 namespace Keysharp.Core.Linux.X11
 {
 	[Flags]

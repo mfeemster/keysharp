@@ -1,13 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Reflection.Metadata;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Keysharp.Core.Common.Keyboard;
-
 namespace Keysharp.Core.COM
 {
 	internal delegate IntPtr DelNone();

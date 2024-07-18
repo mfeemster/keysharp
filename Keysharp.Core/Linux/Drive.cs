@@ -1,7 +1,4 @@
 ﻿#if LINUX
-using System;
-using System.IO;
-
 namespace Keysharp.Core.Linux
 {
 	/// <summary>

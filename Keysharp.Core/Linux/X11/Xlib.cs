@@ -1,10 +1,4 @@
 #if LINUX
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-using Keysharp.Core.Linux.X11.Events;
-using Keysharp.Core.Linux.X11.Types;
-
 namespace Keysharp.Core.Linux.X11
 {
 	internal class Xlib

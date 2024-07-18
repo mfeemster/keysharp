@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Scripting;
-
-namespace Keysharp.Core.Common.Keyboard
+﻿namespace Keysharp.Core.Common.Keyboard
 {
 	internal class KeyHistory
 	{

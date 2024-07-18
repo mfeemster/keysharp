@@ -1,10 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Threading;
-using Keysharp.Scripting;
-
-namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common
 {
 	/// <summary>
 	/// Class which provides common search Methods to find a Color or a subimage in given Image.

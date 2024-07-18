@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using Semver.Comparers;
-using Semver.Utility;
-
-namespace Semver
+﻿namespace Semver
 {
 	/// <summary>
 	/// A semantic version number. Conforms with v2.0.0 of semantic versioning

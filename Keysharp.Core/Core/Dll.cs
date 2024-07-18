@@ -1,16 +1,4 @@
 #if WINDOWS
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using Keysharp.Core.COM;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Windows;
-
 namespace Keysharp.Core
 {
 	public static class Dll

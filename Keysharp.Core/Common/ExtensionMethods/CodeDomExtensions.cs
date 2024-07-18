@@ -1,6 +1,4 @@
-﻿using System.CodeDom;
-
-namespace Keysharp.Core.Common.ExtensionMethods
+﻿namespace Keysharp.Core.Common.ExtensionMethods
 {
 	internal static class CodeDomExtensions
 	{

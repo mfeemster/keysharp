@@ -1,7 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Runtime.InteropServices;
-
 namespace Keysharp.Core.Windows
 {
 	[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"),

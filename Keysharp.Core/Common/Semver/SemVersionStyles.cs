@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Semver
+﻿namespace Semver
 {
 	/// <summary>
 	/// <para>Determines the styles that are allowed in version strings passed to the

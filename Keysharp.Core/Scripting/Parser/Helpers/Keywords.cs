@@ -1,7 +1,4 @@
-﻿using System;
-using System.Buffers;
-
-namespace Keysharp.Scripting
+﻿namespace Keysharp.Scripting
 {
 	public class Keywords
 	{

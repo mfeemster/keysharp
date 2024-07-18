@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public interface IComplexDialog
 	{

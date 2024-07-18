@@ -1,7 +1,3 @@
-using System;
-using System.Globalization;
-using System.Reflection;
-using System.Text;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
@@ -313,7 +309,7 @@ namespace Keysharp.Scripting
 						continue;
 					}
 
-					var obj = v is Array || v is Core.Map || v is Core.FuncObj;// Delegate;
+					var obj = v is System.Array || v is Core.Map || v is Core.FuncObj;// Delegate;
 
 					if (!obj)
 						_ = buffer.Append(StringBound);

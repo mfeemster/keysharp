@@ -1,11 +1,5 @@
 ﻿namespace Keysharp.Benchmark
 {
-	using BenchmarkDotNet.Analysers;
-	using BenchmarkDotNet.Configs;
-	using BenchmarkDotNet.Exporters;
-	using BenchmarkDotNet.Loggers;
-	using BenchmarkDotNet.Running;
-
 	public sealed class Program
 	{
 		[System.STAThreadAttribute()]
@@ -33,19 +27,18 @@
 			//var summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
 			//var summary = BenchmarkRunner.Run<MathBench>(config);
 			//var summary = BenchmarkRunner.Run<IndexBench>(config);
-			var summary = BenchmarkRunner.Run<ListAddBench>(config);
+			//var summary = BenchmarkRunner.Run<ListAddBench>(config);
+			var summary = BenchmarkRunner.Run<NestedMapPopulatorBenchmark>(config);
 			//var summary = BenchmarkRunner.Run<IndexBench>();
 			//var summary = BenchmarkRunner.Run<FuncBench>(config);
 			var logger = ConsoleLogger.Default;
 			MarkdownExporter.Console.ExportToLog(summary, logger);
 			ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
-			//BenchmarkRunner.Run<MapReadBenchmark>();
-			//BenchmarkRunner.Run<MapWriteBenchmark>();
-			//var bm = new ByteArrayToHexaBenchmark();
-			//bm.Size = 100;
-			//bm.Setup();
-			//var str = bm.ToHexWithByteManipulation(bm._array);
-			//Console.WriteLine(str);
+			summary = BenchmarkRunner.Run<NestedMapRetrieverBenchmark>(config);
+			//var summary = BenchmarkRunner.Run<IndexBench>();
+			//var summary = BenchmarkRunner.Run<FuncBench>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
 		}
 	}
 }

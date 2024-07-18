@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common
 {
 	/// <summary>
 	/// Create a global Instance of CoordProvider and use it multithreaded

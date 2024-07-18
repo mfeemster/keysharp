@@ -1,14 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Keysharp.Core.COM;
-using Keysharp.Core.Common.Patterns;
-using Keysharp.Scripting;
-
 namespace Keysharp.Core
 {
 	internal class DllArgumentHelper : ArgumentHelper

@@ -1,16 +1,3 @@
-using Keysharp.Core;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
-
 namespace Keysharp.Scripting
 {
 	public partial class Script

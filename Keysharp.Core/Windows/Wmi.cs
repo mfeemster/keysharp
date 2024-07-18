@@ -1,6 +1,4 @@
 ﻿#if WINDOWS
-using System.Management;
-
 namespace Keysharp.Core.Windows
 {
 	internal class Wmi

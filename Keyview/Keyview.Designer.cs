@@ -1,6 +1,4 @@
-﻿using ScintillaNET;
-
-namespace Keyview
+﻿namespace Keyview
 {
 	partial class Keyview
 	{

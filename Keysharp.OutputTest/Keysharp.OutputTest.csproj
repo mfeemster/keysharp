@@ -11,6 +11,7 @@
     <Company>Keysharp</Company>
     <Description>A simple test program to paste generated code into for debugging</Description>
     <SignAssembly>False</SignAssembly>
+    <DelaySign>False</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

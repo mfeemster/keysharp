@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-
-namespace Semver.Comparers
+﻿namespace Semver.Comparers
 {
 	/// <summary>
 	/// An interface that combines equality and order comparison for the <see cref="SemVersion"/>

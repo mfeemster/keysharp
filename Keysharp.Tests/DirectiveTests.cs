@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-using NUnit.Framework;
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
+﻿using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

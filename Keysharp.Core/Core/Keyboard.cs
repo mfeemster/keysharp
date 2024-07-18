@@ -1,17 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Joystick;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-using Keysharp.Scripting;
-
 namespace Keysharp.Core
 {
 	public static class Keyboard

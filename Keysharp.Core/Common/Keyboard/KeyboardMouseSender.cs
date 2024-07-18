@@ -1,13 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
-
-namespace Keysharp.Core.Common.Keyboard
+﻿namespace Keysharp.Core.Common.Keyboard
 {
 	/// <summary>
 	/// Screen coordinates, which can be negative.  SHORT vs. INT is used because the likelihood

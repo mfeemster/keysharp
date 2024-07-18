@@ -1,10 +1,4 @@
 #if LINUX
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using Keysharp.Core.Linux.X11;
-using Keysharp.Core.Linux.X11.Events;
-
 namespace Keysharp.Core.Linux
 {
 	/// <summary>

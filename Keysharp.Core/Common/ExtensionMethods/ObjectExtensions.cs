@@ -1,10 +1,4 @@
-﻿using System.Collections;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using Keysharp.Scripting;
-
-namespace System
+﻿namespace System
 {
 	public static class ObjectExtensions
 	{

@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using static Keysharp.Scripting.Keywords;
+﻿using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {

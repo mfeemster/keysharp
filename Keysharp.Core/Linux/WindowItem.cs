@@ -1,22 +1,6 @@
 ﻿#if LINUX
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Window;
-using Keysharp.Core.Linux.Proxies;
-using Keysharp.Core.Linux.X11;
-using Keysharp.Core.Linux.X11.Types;
+
 using static Keysharp.Core.Linux.LinuxAPI;
-using static System.Windows.Forms.AxHost;
-using Keysharp.Core.Linux.X11.Events;
-using Keysharp.Core.Windows;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using Keysharp.Core.Common.Threading;
-using System.Linq;
 
 namespace Keysharp.Core.Linux
 {

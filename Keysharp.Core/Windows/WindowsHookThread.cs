@@ -1,24 +1,11 @@
 ﻿#if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Input;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Threading;
-using Keysharp.Scripting;
-using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Misc;
-using static Keysharp.Core.Windows.WindowsAPI;
-using static Keysharp.Scripting.Keywords;
+using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.ScanCodes;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
+using static Keysharp.Core.Windows.WindowsAPI;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {

@@ -1,13 +1,4 @@
-﻿using System;
-using System.IO;
-using Keysharp.Core;
-using NUnit.Framework;
-using System.Threading;
-using System.Threading.Tasks;
-using Keysharp.Core.Windows;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Threading;
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
+﻿using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {

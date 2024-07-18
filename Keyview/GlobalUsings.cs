@@ -1,0 +1,10 @@
+﻿global using global::Keysharp.Core;
+global using global::Keysharp.Scripting;
+global using global::ScintillaNET;
+global using global::System;
+global using global::System.Drawing;
+global using global::System.IO;
+global using global::System.Linq;
+global using global::System.Reflection;
+global using global::System.Text;
+global using global::System.Windows.Forms;

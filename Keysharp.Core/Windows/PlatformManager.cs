@@ -1,10 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Text;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
-
 namespace Keysharp.Core.Windows
 {
 	/// <summary>

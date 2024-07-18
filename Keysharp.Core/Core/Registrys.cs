@@ -1,8 +1,4 @@
 #if WINDOWS
-using System;
-using System.Collections.Generic;
-using Microsoft.Win32;
-
 namespace Keysharp.Core
 {
 	public static class Registrys

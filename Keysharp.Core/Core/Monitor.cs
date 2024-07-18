@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class Monitor
 	{

@@ -1,8 +1,4 @@
-﻿using System;
-
-using Keysharp.Scripting;
-
-namespace Keysharp.Core.Common.Window
+﻿namespace Keysharp.Core.Common.Window
 {
 	public class SearchCriteria
 	{

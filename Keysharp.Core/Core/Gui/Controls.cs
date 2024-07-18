@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Windows.Forms;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-using Keysharp.Scripting;
-using static System.Net.Mime.MediaTypeNames;
+﻿using Label = System.Windows.Forms.Label;
 
 namespace Keysharp.Core
 {

@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Keysharp.Scripting
 {
 	public partial class Parser

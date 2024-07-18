@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text.RegularExpressions;
-using static Keysharp.Scripting.Keywords;
+﻿using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {

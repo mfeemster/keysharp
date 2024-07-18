@@ -1,8 +1,4 @@
-﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
-
-namespace Keysharp.Scripting
+﻿namespace Keysharp.Scripting
 {
 	internal class CodeSwitchStatement : CodeStatement
 	{

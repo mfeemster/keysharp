@@ -7,10 +7,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Keysharp.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
+using Keysharp.Scripting;
 
 namespace Keysharp.Main
 {

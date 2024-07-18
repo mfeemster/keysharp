@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common
 {
 	internal abstract class DriveBase
 	{

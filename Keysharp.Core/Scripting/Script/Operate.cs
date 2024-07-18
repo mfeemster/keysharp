@@ -1,7 +1,3 @@
-using System;
-using Keysharp.Core;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-
 namespace Keysharp.Scripting
 {
 	public partial class Script

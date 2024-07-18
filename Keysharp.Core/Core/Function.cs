@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Keysharp.Core.Common.Threading;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public interface IFuncObj
 	{

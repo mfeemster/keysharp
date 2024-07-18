@@ -1,10 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-using System.Windows.Forms;
-using Keysharp.Scripting;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class ComMethodPropertyHolder : MethodPropertyHolder
 	{

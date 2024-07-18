@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using Keysharp.Core;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Threading;
-using Keysharp.Core.Common.Window;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-using static Keysharp.Core.Misc;
+﻿using static Keysharp.Core.Misc;
 
 namespace Keysharp.Scripting
 {

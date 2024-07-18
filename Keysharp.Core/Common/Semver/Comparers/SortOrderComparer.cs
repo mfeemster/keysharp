@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Semver.Utility;
-
-namespace Semver.Comparers
+﻿namespace Semver.Comparers
 {
 	internal class SortOrderComparer : Comparer<SemVersion>, ISemVersionComparer
 	{

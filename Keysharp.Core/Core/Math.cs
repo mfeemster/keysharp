@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Keysharp.Core.Common.Threading;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/// <summary>
 	/// Most functions here do not take variadic parameters so they can run as fast as possible.

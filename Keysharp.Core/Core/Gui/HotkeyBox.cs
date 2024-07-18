@@ -1,6 +1,3 @@
-using System;
-using System.Text;
-using System.Windows.Forms;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core

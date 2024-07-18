@@ -1,14 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-
 namespace Keysharp.Core
 {
 	public static class Dialogs

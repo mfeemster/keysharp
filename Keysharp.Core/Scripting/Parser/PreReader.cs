@@ -1,12 +1,3 @@
-using System;
-using System.CodeDom;
-using System.Collections.Frozen;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Keysharp.Core;
-using Microsoft.CodeAnalysis;
 using static Keysharp.Scripting.Keywords;
 using static Keysharp.Scripting.Parser;
 

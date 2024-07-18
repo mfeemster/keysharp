@@ -1,7 +1,3 @@
-using System;
-using System.CodeDom;
-using System.Reflection;
-
 namespace Keysharp.Scripting
 {
 	internal class MethodReference

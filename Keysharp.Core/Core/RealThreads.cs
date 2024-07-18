@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class RealThreads
 	{

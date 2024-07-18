@@ -1,7 +1,5 @@
-using System;
-using System.Drawing;
-using System.Windows.Forms;
-using Keysharp.Scripting;
+using Label = System.Windows.Forms.Label;
+using Timer = System.Windows.Forms.Timer;
 
 namespace Keysharp.Core
 {

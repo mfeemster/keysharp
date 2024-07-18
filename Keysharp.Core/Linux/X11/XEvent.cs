@@ -1,7 +1,4 @@
 ﻿#if LINUX
-using System.Runtime.InteropServices;
-using Keysharp.Core.Linux.X11.Events;
-
 namespace Keysharp.Core.Linux.X11
 {
 	[StructLayout(LayoutKind.Explicit)]

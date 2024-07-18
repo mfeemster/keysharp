@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using System.Windows.Forms;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
-
-namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common
 {
 	internal static class ImageHelper
 	{

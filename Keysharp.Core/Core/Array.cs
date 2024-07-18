@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using Keysharp.Scripting;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Array : KeysharpObject, IEnumerable<(object, object)>, ICollection, IList
 	{

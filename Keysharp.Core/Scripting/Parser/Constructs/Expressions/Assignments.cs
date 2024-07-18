@@ -1,8 +1,4 @@
-﻿using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using Keysharp.Core.Common.ExtensionMethods;
-using static Keysharp.Scripting.Keywords;
+﻿using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
 {

@@ -16,6 +16,7 @@
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <SignAssembly>False</SignAssembly>
+    <DelaySign>False</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -33,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="5.5.1" />
+    <PackageReference Include="Scintilla5.NET" Version="5.6.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,11 +2,6 @@
 
 namespace Keysharp.Benchmark
 {
-	using System;
-	using System.Collections.Generic;
-	using BenchmarkDotNet.Attributes;
-	using Keysharp.Core;
-
 	[MemoryDiagnoser]
 	public class MathBench
 	{

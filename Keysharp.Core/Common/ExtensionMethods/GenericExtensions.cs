@@ -1,12 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Windows.Forms;
-using Keysharp.Core;
-using Keysharp.Core.Common.Threading;
-//using Keysharp.Core.Common.Threading;
-
-namespace System.Collections
+﻿namespace System.Collections
 {
 	public static class SystemCollectionsExtensions
 	{

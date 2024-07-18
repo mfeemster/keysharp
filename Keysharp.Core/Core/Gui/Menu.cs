@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading;
-using System.Windows.Forms;
-using Keysharp.Core.Common;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Menu
 	{

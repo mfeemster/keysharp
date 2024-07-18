@@ -1,8 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using Semver.Utility;
-
-namespace Semver
+﻿namespace Semver
 {
 	/// <summary>
 	/// An individual metadata identifier for a semantic version.

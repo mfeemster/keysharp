@@ -1,7 +1,4 @@
-﻿using System.Windows.Forms;
-using ScintillaNET;
-
-namespace Keyview
+﻿namespace Keyview
 {
 	internal class SearchManager
 	{

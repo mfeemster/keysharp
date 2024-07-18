@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Any
 	{

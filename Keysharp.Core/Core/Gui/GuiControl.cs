@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using Keysharp.Core.Common;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Window;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#endif
+﻿using Label = System.Windows.Forms.Label;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core

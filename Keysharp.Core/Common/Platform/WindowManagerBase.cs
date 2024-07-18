@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using Keysharp.Core.Common.Window;
-using Keysharp.Scripting;
-
 namespace Keysharp.Core.Common.Platform
 {
 	internal class WindowGroup

@@ -1,5 +1,3 @@
-using System.CodeDom;
-
 namespace Keysharp.Scripting
 {
 	public class CodeLine : CodeLinePragma

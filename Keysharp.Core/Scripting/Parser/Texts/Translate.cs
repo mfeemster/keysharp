@@ -1,7 +1,3 @@
-using System;
-using System.Diagnostics;
-using System.Text;
-using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

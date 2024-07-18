@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public interface IClearable
 	{

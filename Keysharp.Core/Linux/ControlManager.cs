@@ -1,5 +1,4 @@
 ﻿#if LINUX
-using Keysharp.Core.Common.Platform;
 
 namespace Keysharp.Core.Linux
 {

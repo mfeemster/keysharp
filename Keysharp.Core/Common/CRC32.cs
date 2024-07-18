@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-
-namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common
 {
 	/// <summary>
 	/// Adapted from http://tomkaminski.com/crc32-hashalgorithm-c-net

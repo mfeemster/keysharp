@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using Keysharp.Scripting;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class CaseEqualityComp : IEqualityComparer<object>
 	{

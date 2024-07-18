@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Text;
-using Keysharp.Scripting;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Error : KeysharpException
 	{

@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Keysharp.Core;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

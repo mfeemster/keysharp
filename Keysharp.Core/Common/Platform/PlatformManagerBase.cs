@@ -1,9 +1,4 @@
-﻿using System;
-using System.Text;
-using Keysharp.Core.Common.Keyboard;
-using System.Windows.Forms;
-
-namespace Keysharp.Core.Common.Platform
+﻿namespace Keysharp.Core.Common.Platform
 {
 	internal abstract class PlatformManagerBase
 	{

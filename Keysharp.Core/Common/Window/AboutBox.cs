@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace Keysharp.Core.Common.Window
+﻿namespace Keysharp.Core.Common.Window
 {
 	partial class AboutBox : Form
 	{

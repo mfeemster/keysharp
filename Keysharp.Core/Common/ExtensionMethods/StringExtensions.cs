@@ -1,10 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Keysharp.Scripting;
-
-namespace System//Extension methods should be in the same namespace of the objec they extend to make their use easy.
+﻿namespace System//Extension methods should be in the same namespace of the object they extend to make their use easy.
 {
 	public static class CharExtensions
 	{

@@ -1,11 +1,3 @@
-using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using Keysharp.Core;
-using Keysharp.Core.Common.ExtensionMethods;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting

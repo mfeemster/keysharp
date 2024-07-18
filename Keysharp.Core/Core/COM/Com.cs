@@ -1,13 +1,4 @@
 ﻿#if WINDOWS
-using Keysharp.Core.Windows;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
 namespace Keysharp.Core.COM
 {
 	unsafe public static class Com

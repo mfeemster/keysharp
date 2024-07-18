@@ -1,11 +1,4 @@
 #if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Window;
-
 namespace Keysharp.Core.Windows
 {
 	/// <summary>

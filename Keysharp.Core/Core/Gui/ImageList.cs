@@ -1,10 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using Keysharp.Core.Common;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class ImageLists
 	{

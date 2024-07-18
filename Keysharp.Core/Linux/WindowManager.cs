@@ -1,14 +1,4 @@
 #if LINUX
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Window;
-using Keysharp.Core.Linux.Proxies;
-using Keysharp.Core.Linux.X11;
-using Keysharp.Core.Linux.X11.Types;
-
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
@@ -18,7 +8,7 @@ namespace Keysharp.Core.Linux
 	{
 		// ToDo: There may be more than only one xDisplay
 		private XDisplay _display = null;
-		internal static object xLibLock;//The X11 Winforms implementation uses this, so attempt to do the same here.
+		internal static object xLibLock = new object();//The X11 Winforms implementation uses this, so attempt to do the same here.
 
 		internal override WindowItemBase ActiveWindow => new WindowItem(_display.XGetInputFocusWindow());
 

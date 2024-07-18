@@ -1,15 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-	using Microsoft.Win32;
-#endif
-using Keysharp.Scripting;
+using EnumerationOptions = System.IO.EnumerationOptions;
 
 namespace Keysharp.Core
 {

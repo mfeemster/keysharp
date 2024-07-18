@@ -1,16 +1,4 @@
 ﻿#if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Forms;
-using Accessibility;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Scripting;
-using Microsoft.Win32.SafeHandles;
-
 namespace Keysharp.Core.Windows
 {
 	internal enum SystemMetric : int

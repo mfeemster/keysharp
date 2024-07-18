@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Drawing.Drawing2D;
-using System.Runtime.InteropServices;
-
-namespace System.Drawing
+﻿namespace System.Drawing
 {
 	/// <summary>
 	/// An improved color structure that allows the values to be set after construction.

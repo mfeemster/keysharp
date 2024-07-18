@@ -25,6 +25,7 @@
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <SignAssembly>False</SignAssembly>
+    <DelaySign>False</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

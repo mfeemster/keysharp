@@ -1,9 +1,6 @@
 ﻿#if WINDOWS
 #nullable enable
-using System;
-using System.Runtime.InteropServices;
 using ct = System.Runtime.InteropServices.ComTypes;
-using System.Threading;
 
 namespace Keysharp.Core.COM
 {

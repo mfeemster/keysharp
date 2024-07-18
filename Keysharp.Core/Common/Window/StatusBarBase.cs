@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Keysharp.Core.Common.Window
+﻿namespace Keysharp.Core.Common.Window
 {
 	internal abstract class StatusBarBase
 	{

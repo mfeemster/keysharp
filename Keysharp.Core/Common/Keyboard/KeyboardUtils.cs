@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Keysharp.Core.Common.Keyboard
+﻿namespace Keysharp.Core.Common.Keyboard
 {
 	internal static class KeyboardUtils
 	{

@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace System.IO
+﻿namespace System.IO
 {
 	public static class SystemIoExtensions
 	{

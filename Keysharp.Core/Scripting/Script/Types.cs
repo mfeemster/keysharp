@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Keysharp.Scripting
+﻿namespace Keysharp.Scripting
 {
 	/// <summary>
 	/// This was needed to implement this note in the documentation for && and ||:

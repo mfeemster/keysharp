@@ -1,5 +1,3 @@
-using System.Drawing;
-
 namespace Keysharp.Core
 {
 	internal abstract class MouseController

@@ -1,13 +1,3 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Windows.Forms;
-using Keysharp.Core.Common;
-using Keysharp.Core.Common.Threading;
-using Keysharp.Scripting;
 using Timer = System.Timers.Timer;
 
 namespace Keysharp.Core

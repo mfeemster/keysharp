@@ -1,25 +1,4 @@
-﻿using Keysharp.Core;
-using Keysharp.Core.Common.Input;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Threading;
-#if WINDOWS
-	using Keysharp.Core.Windows;
-#elif LINUX
-	using Keysharp.Core.Linux;
-#endif
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Windows.Forms;
-using static Keysharp.Scripting.MainWindow;
-
-namespace Keysharp.Scripting
+﻿namespace Keysharp.Scripting
 {
 	public partial class Script
 	{

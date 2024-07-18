@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Security;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Threading;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core

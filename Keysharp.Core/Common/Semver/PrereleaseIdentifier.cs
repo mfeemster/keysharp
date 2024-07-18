@@ -1,9 +1,4 @@
-﻿using System;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using Semver.Utility;
-
-namespace Semver
+﻿namespace Semver
 {
 	/// <summary>
 	/// An individual prerelease identifier for a semantic version.

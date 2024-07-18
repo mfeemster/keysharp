@@ -1,22 +1,8 @@
 #if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Platform;
-using Keysharp.Core.Common.Threading;
-using Keysharp.Scripting;
-#if WINDOWS
-	using Microsoft.Win32;
-#endif
-using static Keysharp.Core.Windows.WindowsAPI;
-using static Keysharp.Scripting.Keywords;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
+using static Keysharp.Core.Windows.WindowsAPI;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {

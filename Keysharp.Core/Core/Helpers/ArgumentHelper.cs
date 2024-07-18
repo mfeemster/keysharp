@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Keysharp.Core.Common.Patterns;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	internal class ArgumentHelper
 	{

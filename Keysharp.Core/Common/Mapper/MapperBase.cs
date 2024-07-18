@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Keysharp.Core.Common.Mapper
+﻿namespace Keysharp.Core.Common.Mapper
 {
 	internal class MapperBase<T> where T : struct, IConvertible
 	{

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Common.Threading;
-
-namespace Keysharp.Core.Common.Input
+﻿namespace Keysharp.Core.Common.Input
 {
 	public class InputObject : KeysharpObject
 	{

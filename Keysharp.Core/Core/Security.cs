@@ -1,5 +1,3 @@
-using System;
-
 namespace Keysharp.Core
 {
 	public static class Security

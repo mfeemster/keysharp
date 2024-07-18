@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-#if WINDOWS
-	using Keysharp.Core.COM;
-#endif
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class External
 	{

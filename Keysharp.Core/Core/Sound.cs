@@ -1,11 +1,4 @@
 #if WINDOWS
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Media;
-using System.Runtime.InteropServices;
-using Keysharp.Core.Windows;
-
 namespace Keysharp.Core
 {
 	public static class Sound

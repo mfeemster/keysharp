@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Keysharp.Core.Common.Patterns
+﻿namespace Keysharp.Core.Common.Patterns
 {
 	internal class ScopeHelper
 	{

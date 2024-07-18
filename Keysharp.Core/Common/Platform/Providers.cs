@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using Keysharp.Core.Common.Window;
-
-namespace Keysharp.Core.Common.Platform
+﻿namespace Keysharp.Core.Common.Platform
 {
 	internal static class ControlProvider
 	{

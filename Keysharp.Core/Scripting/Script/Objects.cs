@@ -1,11 +1,3 @@
-using System;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Keysharp.Core;
-#if WINDOWS
-	using Keysharp.Core.COM;
-#endif
-
 namespace Keysharp.Scripting
 {
 	public partial class Script

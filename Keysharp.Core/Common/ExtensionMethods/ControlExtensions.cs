@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Keysharp.Core;
-
-namespace System.Windows.Forms
+﻿namespace System.Windows.Forms
 {
 	/// <summary>
 	/// By using extension methods, it releives us of having to write some of these methods twice.

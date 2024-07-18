@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using Keysharp.Core.Common.Input;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class Input
 	{

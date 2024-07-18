@@ -1,7 +1,4 @@
-﻿using NUnit.Framework;
-using Keysharp.Core;
-using static Keysharp.Core.Loops;
-using Keysharp.Core.Common.Threading;
+﻿using static Keysharp.Core.Loops;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests

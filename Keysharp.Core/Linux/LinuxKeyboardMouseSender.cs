@@ -1,11 +1,4 @@
 #if LINUX
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
-using Keysharp.Core.Common.Keyboard;
-using Keysharp.Core.Linux.X11;
-using Keysharp.Scripting;
 
 namespace Keysharp.Core.Linux
 {

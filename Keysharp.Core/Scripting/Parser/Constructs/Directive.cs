@@ -1,7 +1,3 @@
-using System;
-using System.CodeDom;
-using System.Reflection;
-using Keysharp.Core;
 using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Scripting
