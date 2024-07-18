@@ -1,7 +1,6 @@
 #if LINUX
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Keysharp.Core.Linux.X11;
 using Keysharp.Core.Linux.X11.Events;
@@ -32,7 +31,7 @@ namespace Keysharp.Core.Linux
 		// We set a placeholder errorhandler for some time and restore it later
 		private bool suppressErrors = false;
 
-		private List<int> windows;
+		private List<uint> windows;
 
 		internal IntPtr Handle { get; private set; }
 
@@ -53,7 +52,7 @@ namespace Keysharp.Core.Linux
 
 		private XConnectionSingleton()
 		{
-			windows = new List<int>();
+			windows = new List<uint>();
 			// Kick off a thread listening to X events
 			listener = new Thread(Listen);
 			listener.Start();
@@ -118,32 +117,30 @@ namespace Keysharp.Core.Linux
 		/// specific function, and then recurses on all child windows. It is called to
 		/// select all initial windows. It make some time (~0.5s)
 		/// </summary>
-		/// <param name="Display"></param>
-		/// <param name="RootWindow"></param>
-		private void RecurseTree(IntPtr Display, int RootWindow)
+		/// <param name="display"></param>
+		/// <param name="rootWindow"></param>
+		private unsafe void RecurseTree(IntPtr display, uint rootWindow)
 		{
-			int[] Children;
-
-			if (!windows.Contains(RootWindow))
-				windows.Add(RootWindow);
+			if (!windows.Contains(rootWindow))
+				windows.Add(rootWindow);
 
 			// Request all children of the given window, along with the parent
-			_ = Xlib.XQueryTree(Display, RootWindow, out var RootWindowRet, out var ParentWindow, out var ChildrenPtr, out var NChildren);
+			_ = Xlib.XQueryTree(display, rootWindow, out var RootWindowRet, out var ParentWindow, out var childrenPtr, out var nChildren);
 
-			if (NChildren != 0)
+			if (nChildren != 0)
 			{
-				// Fill the array with zeroes to prevent NullReferenceException from glue layer
-				Children = new int[NChildren];
-				Marshal.Copy(ChildrenPtr, Children, 0, NChildren);
-				_ = Xlib.XSelectInput(Display, RootWindow, selectMask);
+				var pSource = (uint*)childrenPtr.ToPointer();
+				_ = Xlib.XSelectInput(display, rootWindow, selectMask);
 
 				// Subwindows shouldn't be forgotten, especially since everything is a subwindow of RootWindow
-				for (var i = 0; i < NChildren; i++)
+				for (var i = 0; i < nChildren; i++)
 				{
-					if (Children[i] != 0)
+					var child = pSource[i];
+
+					if (child != 0)
 					{
-						_ = Xlib.XSelectInput(Display, Children[i], selectMask);
-						RecurseTree(Display, Children[i]);
+						_ = Xlib.XSelectInput(display, child, selectMask);
+						RecurseTree(display, child);
 					}
 				}
 			}

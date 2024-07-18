@@ -9,35 +9,70 @@ namespace Keysharp.Core.Linux.X11
 {
 	internal class Xlib
 	{
-		[DllImport("libX11")]
-		internal static extern void XCloseDisplay(IntPtr Dpy);
+		private const string libraryName = "libX11";
 
-		[DllImport("libX11")]
-		internal static extern int XDefaultRootWindow(IntPtr Display);
+		[DllImport(libraryName)]
+		internal static extern void XCloseDisplay(IntPtr display);
+
+		[DllImport(libraryName)]
+		internal static extern uint XDefaultRootWindow(IntPtr display);
+
+		[DllImport(libraryName)]
+		internal static extern int XDefaultScreen(IntPtr display);
 
 		[DllImport("X11")]
 		internal static extern int XFree(IntPtr ptr);
 
-		[DllImport("libX11")]
-		internal static extern int XGetInputFocus(IntPtr display, out int window, out int focusState);
+		[DllImport(libraryName)]
+		internal static extern int XGetInputFocus(IntPtr display, out uint window, out int focusState);
 
-		[DllImport("libX11")]
-		internal static extern int XGetTextProperty(IntPtr Display, int Window, ref XTextProperty Return, XAtom Property);
+		[DllImport(libraryName)]
+		internal static extern int XGetTextProperty(IntPtr display, uint window, ref XTextProperty ret, XAtom atom);
 
-		[DllImport("libX11")]
-		internal static extern int XGetWindowAttributes(IntPtr display, int window, ref XWindowAttributes attributes);
+		[DllImport(libraryName)]
+		internal static extern int XGetWindowAttributes(IntPtr display, uint window, ref XWindowAttributes attributes);
 
-		[DllImport("libX11")]
-		internal static extern uint XKeysymToKeycode(IntPtr Display, uint Keysym);
+		[DllImport(libraryName)]
+		internal static extern int XGetWindowProperty(IntPtr display, uint window, IntPtr atom, IntPtr longOffset, IntPtr longLength, bool delete, IntPtr reqType, out IntPtr actualType, out int actualFormat, out IntPtr nitems, out IntPtr bytesAfter, ref IntPtr prop);
 
-		[DllImport("libX11")]
-		internal static extern int XLookupString(ref XEvent Key, StringBuilder Buffer, int Count, IntPtr KeySym, IntPtr Useless);
+		[DllImport(libraryName)]
+		internal static extern uint XKeysymToKeycode(IntPtr display, uint keySym);
 
-		[DllImport("libX11")]
-		internal static extern void XNextEvent(IntPtr Display, ref XEvent Event);
+		[DllImport(libraryName)]
+		internal static extern int XLookupString(ref XEvent key, StringBuilder buffer, int count, IntPtr keySym, IntPtr useless);
 
-		[DllImport("libX11")]
-		internal static extern IntPtr XOpenDisplay(IntPtr From);
+		[DllImport(libraryName)]
+		internal static extern void XNextEvent(IntPtr display, ref XEvent ev);
+
+		[DllImport(libraryName)]
+		internal static extern IntPtr XOpenDisplay(IntPtr from);
+
+		[DllImport(libraryName)]
+		internal static extern int XIconifyWindow(IntPtr display, uint window, int screenNumber);
+
+		[DllImport(libraryName)]
+		internal static extern int XMapWindow(IntPtr display, uint window);
+
+		[DllImport(libraryName)]
+		internal static extern int XUnmapWindow(IntPtr display, uint window);
+
+		[DllImport(libraryName)]
+		internal static extern int XClearWindow(IntPtr display, uint window);
+
+		[DllImport(libraryName)]
+		internal static extern int XKillClient(IntPtr display, uint window);
+
+		[DllImport(libraryName)]
+		internal static extern IntPtr XInternAtom(IntPtr display, string atomName, bool onlyIfExists);
+
+		[DllImport(libraryName)]
+		internal static extern int XInternAtoms(IntPtr display, string[] atomNames, int atomCount, bool onlyIfExists, IntPtr[] atoms);
+
+		[DllImport(libraryName)]
+		internal static extern int XSendEvent(IntPtr display, uint window, bool propagate, EventMasks eventMask, ref XEvent sendEvent);
+
+		[DllImport(libraryName)]
+		internal static extern int XFlush(IntPtr display);
 
 		/// <summary>
 		/// The XQueryTree() function returns the root ID, the parent window ID,
@@ -48,38 +83,38 @@ namespace Keysharp.Core.Linux.X11
 		/// To free a non-NULL children list when it is no longer needed, use XFree().
 		/// </summary>
 		/// <param name="display">Specifies the connection to the X server.</param>
-		/// <param name="w">Specifies the window whose list of children, root, parent, and number of children you want to obtain.</param>
+		/// <param name="window">Specifies the window whose list of children, root, parent, and number of children you want to obtain.</param>
 		/// <param name="root_return">Returns the root window.</param>
 		/// <param name="parent_return">Returns the parent window.</param>
 		/// <param name="children_return">Returns the list of children.</param>
 		/// <param name="nchildren_return">Returns the number of children.</param>
 		/// <returns></returns>
-		[DllImport("libX11")]
-		internal static extern int XQueryTree(IntPtr display, int w, out int root_return, out int parent_return,
-											  out IntPtr children_return, out int nchildren_return);
+		[DllImport(libraryName)]
+		internal static extern int XQueryTree(IntPtr display, uint window, out int rootReturn, out int parentReturn,
+											  out IntPtr childrenReturn, out int nchildrenReturn);
 
-		[DllImport("libX11")]
-		internal static extern IntPtr XSelectInput(IntPtr Display, int Window, EventMasks EventMask);
+		[DllImport(libraryName)]
+		internal static extern IntPtr XSelectInput(IntPtr display, uint window, EventMasks eventMask);
 
-		[DllImport("libX11")]
-		internal static extern XErrorHandler XSetErrorHandler(XErrorHandler Handler);
+		[DllImport(libraryName)]
+		internal static extern XErrorHandler XSetErrorHandler(XErrorHandler handler);
 
-		[DllImport("libX11")]
-		internal static extern void XSetTextProperty(IntPtr Display, int Window, ref XTextProperty Prop, XAtom property);
+		[DllImport(libraryName)]
+		internal static extern void XSetTextProperty(IntPtr display, uint window, ref XTextProperty textProp, XAtom atom);
 
-		[DllImport("X11")]
-		internal static extern int XStringListToTextProperty(ref IntPtr argv, int argc, ref XTextProperty textprop);
+		[DllImport(libraryName)]
+		internal static extern int XStringListToTextProperty(ref IntPtr argv, int argc, ref XTextProperty textProp);
 
-		[DllImport("X11")]
-		internal static extern int XStringListToTextProperty(IntPtr[] argv, int argc, ref XTextProperty textprop);
+		[DllImport(libraryName)]
+		internal static extern int XStringListToTextProperty(IntPtr[] argv, int argc, ref XTextProperty textProp);
 
-		[DllImport("libX11")]
-		internal static extern uint XStringToKeysym(string Convert);
+		[DllImport(libraryName)]
+		internal static extern uint XStringToKeysym(string convert);
 
 		[DllImport("libXtst.so.6")]
-		internal static extern void XTestFakeKeyEvent(IntPtr Display, uint KeyCode, bool isPress, ulong delay);
+		internal static extern void XTestFakeKeyEvent(IntPtr display, uint keyCode, bool isPress, ulong delay);
 	}
 
-	internal delegate int XErrorHandler(IntPtr DisplayHandle, ref XErrorEvent error_event);
+	internal delegate int XErrorHandler(IntPtr displayHandle, ref XErrorEvent errorEvent);
 }
 #endif

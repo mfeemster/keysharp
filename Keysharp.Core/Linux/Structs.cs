@@ -4,6 +4,8 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Timers;
+using System.Windows.Forms;
+using Keysharp.Core.Linux.X11;
 
 namespace Keysharp.Core.Linux
 {
@@ -261,6 +263,7 @@ namespace Keysharp.Core.Linux
 			internal int height_inc;
 		}
 
+
 		internal enum NA
 		{
 			WM_PROTOCOLS,
@@ -347,7 +350,7 @@ namespace Keysharp.Core.Linux
 
 		internal struct CaretStruct
 		{
-			internal Timer Timert;                // Blink interval
+			internal System.Windows.Forms.Timer Timert;  // Blink interval
 			internal IntPtr Hwnd;                // Window owning the caret
 			internal IntPtr Window;                // Actual X11 handle of the window
 			internal int X;                // X position of the caret

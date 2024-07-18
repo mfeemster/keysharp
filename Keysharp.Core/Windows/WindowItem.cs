@@ -312,14 +312,14 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override string[] Text
+		internal override List<string> Text
 		{
 			get
 			{
 				if (!IsSpecified)
-					return new string[0];
+					return [];
 
-				var items = new List<string>();
+				var items = new List<string>(64);
 				var tv = Threads.GetThreadVariables();
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
@@ -331,7 +331,7 @@ namespace Keysharp.Core.Windows
 
 					return true;
 				}, 0);
-				return items.ToArray();
+				return items;
 			}
 		}
 
@@ -818,6 +818,12 @@ namespace Keysharp.Core.Windows
 		internal override bool Kill()
 		{
 			_ = Close();
+			var i = 0;
+
+			while (Exists && i++ < 5)
+			{
+				System.Threading.Thread.Sleep(0);
+			}
 
 			if (!Exists)
 				return true;
@@ -846,7 +852,7 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
 
-		internal override void SendMouseEvent(uint mouseevent, Point? location = null)
+		internal void SendMouseEvent(uint mouseevent, Point? location = null)
 		{
 			var click = new Point();
 

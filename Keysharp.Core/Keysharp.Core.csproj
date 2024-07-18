@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-    <PackageReference Include="Core.System.Windows.Forms" Version="1.0.0-alpha4" />
+    <ProjectReference Include="..\..\system.windows.forms\System.Windows.Forms\System.Windows.Forms.csproj" />
   </ItemGroup>
   
   <ItemGroup>

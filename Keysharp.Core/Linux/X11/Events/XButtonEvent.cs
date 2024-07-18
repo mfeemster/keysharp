@@ -20,8 +20,17 @@ namespace Keysharp.Core.Linux.X11.Events
 		internal int x_root;
 		internal int y_root;
 		internal int state;
-		internal int button;
+		internal Buttons button;
 		internal bool same_screen;
+	}
+
+	internal enum Buttons
+	{
+		Left = 1,
+		Middle = 2,
+		Right = 3,
+		Four = 4,
+		Five = 5,
 	}
 }
 #endif

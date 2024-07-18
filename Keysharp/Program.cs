@@ -48,7 +48,11 @@ namespace Keysharp.Main
 
 				for (var i = 0; i < args.Length; i++)
 				{
-					if (!args[i].StartsWith('-') && !args[i].StartsWith('/'))
+					if (!args[i].StartsWith('-')
+#if WINDOWS
+							&& !args[i].StartsWith('/')
+#endif
+					   )
 					{
 						if (!gotscript)//Script name.
 						{
@@ -142,6 +146,9 @@ namespace Keysharp.Main
 				if (!System.IO.File.Exists(script))
 					return Message($"Could not find the script file {script}.", true);
 
+#if DEBUG
+				Keysharp.Scripting.Script.OutputDebug($"Creating DOM from {script}");
+#endif
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
 				string namenoext, path, scriptdir;
 
@@ -161,6 +168,9 @@ namespace Keysharp.Main
 				if (domerrs.HasErrors)
 					return HandleCompilerErrors(domerrs, script, path, "Compiling script to DOM");
 
+#if DEBUG
+				Keysharp.Scripting.Script.OutputDebug("Creating code from DOM.");
+#endif
 				var (code, exc) = ch.CreateCodeFromDom(domunits);
 
 				if (exc is Exception e)
@@ -182,6 +192,9 @@ namespace Keysharp.Main
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
 				//Message($"Before compiling, setting current dir to {Environment.CurrentDirectory}", false);
+#if DEBUG
+				Keysharp.Scripting.Script.OutputDebug("Compiling code.");
+#endif
 				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
 
 				if (results == null)
@@ -248,6 +261,9 @@ namespace Keysharp.Main
 
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
+#if DEBUG
+				Keysharp.Scripting.Script.OutputDebug("Running compiled code.");
+#endif
 				_ = main.Invoke(null, new object[] { args });
 			}
 			catch (Exception ex)

@@ -15,6 +15,9 @@ namespace Keysharp.Core.Windows
 	{
 		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
 
+		/// <summary>
+		/// Return all top level windows. This does not recurse into child windows.
+		/// </summary>
 		internal override IEnumerable<WindowItemBase> AllWindows
 		{
 			get

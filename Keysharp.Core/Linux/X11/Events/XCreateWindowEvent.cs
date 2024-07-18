@@ -12,7 +12,7 @@ namespace Keysharp.Core.Linux.X11.Events
 		internal bool send_event;
 		internal IntPtr display;
 		internal IntPtr parent;
-		internal int window;
+		internal uint window;
 		internal int x;
 		internal int y;
 		internal int width;

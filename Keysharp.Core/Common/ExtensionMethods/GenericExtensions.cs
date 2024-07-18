@@ -104,7 +104,7 @@ namespace System.Collections.Generic
 
 		public static float Af(this object obj, float def = default) => obj != null ? obj.ParseFloat().Value : def;
 
-		public static void AddRange<T>(this HashSet<T> hash, HashSet<T> add) where T : class, new ()
+		public static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> add) where T : class, new ()
 		{
 			foreach (var item in add)
 				_ = hash.Add(item);

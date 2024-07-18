@@ -91,7 +91,7 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract Size Size { get; set; }
 		internal abstract long Style { get; set; }
-		internal abstract string[] Text { get; }
+		internal abstract List<string> Text { get; }
 		internal abstract string Title { get; set; }
 		internal abstract object Transparency { get; set; }
 		internal abstract object TransparentColor { get; set; }
@@ -253,8 +253,6 @@ namespace Keysharp.Core.Common.Window
 		internal abstract WindowItemBase RealChildWindowFromPoint(Point location);
 
 		internal abstract bool Redraw();
-
-		internal abstract void SendMouseEvent(uint mouseevent, Point? location = null);
 
 		internal abstract void SetTransparency(byte level, Color color);
 
