@@ -13,7 +13,9 @@ namespace Keysharp.Core.Linux
 		internal override WindowItemBase ActiveWindow => new WindowItem(_display.XGetInputFocusWindow());
 
 		/// <summary>
-		/// Return all top level windows. This does not recurse into child windows.
+		/// Return all top level windows.
+		/// This behaves differently on linux in that it *does* recurse into child windows.
+		/// This is needed because otherwise none of the windows will be properly found.
 		/// </summary>
 		internal override IEnumerable<WindowItemBase> AllWindows
 		{
@@ -21,7 +23,7 @@ namespace Keysharp.Core.Linux
 			{
 				var attr = new XWindowAttributes();
 				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
-				var filter = (uint id) =>
+				var filter = (long id) =>
 				{
 					if (Xlib.XGetWindowAttributes(_display.Handle, id, ref attr) != 0)
 						if (doHidden || attr.map_state == MapState.IsViewable)
@@ -29,57 +31,20 @@ namespace Keysharp.Core.Linux
 
 					return false;
 				};
-				return _display.XQueryTree(filter).Select(w => new WindowItem(w));
+				//return _display.XQueryTree(filter).Select(w => new WindowItem(w));
+				return _display.XQueryTreeRecursive(filter).Select(w => new WindowItem(w));
 			}
-		}
-
-		internal override WindowItemBase LastFound//If Hwnds work on linux, then it might just be ok to use the base.
-		{
-			get => throw new NotImplementedException();
-			set => throw new NotImplementedException();
 		}
 
 		internal WindowManager()
 		{
 			_display = XDisplay.Default;
-			//We do this for windows, need some type of equivalent for linux.
-			//Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
+			Processes.CurrentThreadID = (uint)Xlib.gettid();
 		}
 
 		internal override WindowItemBase CreateWindow(IntPtr id) => new WindowItem(id);
 
 		internal override IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows) => windows;
-
-		internal override WindowItemBase FindWindow(SearchCriteria criteria, bool last = false)
-		{
-			WindowItemBase found = null;
-
-			if (criteria.IsEmpty)
-				return found;
-
-			if (criteria.HasID)
-			{
-				var temp = CreateWindow(criteria.ID);
-
-				if (temp.Exists)
-					return temp;
-			}
-
-			foreach (var window in AllWindows)
-			{
-				if (window.Equals(criteria))
-				{
-					found = window;
-
-					if (!last)
-						break;
-				}
-			}
-
-			return found;
-		}
-
-		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false) => null;
 
 		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow) => throw new NotImplementedException();
 
@@ -88,14 +53,75 @@ namespace Keysharp.Core.Linux
 		internal override bool IsWindow(IntPtr handle)
 		{
 			var attr = new XWindowAttributes();
-			return Xlib.XGetWindowAttributes(_display.Handle, (uint)handle.ToInt64(), ref attr) != 0;
+			return Xlib.XGetWindowAttributes(_display.Handle, handle.ToInt64(), ref attr) != 0;
 		}
 
-		internal override void MinimizeAll() => throw new NotImplementedException();
+		internal override void MinimizeAll()
+		{
+			//Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in MinimizeAll()");
+			var windows = AllWindows;
 
-		internal override void MinimizeAllUndo() => throw new NotImplementedException();
+			foreach (var window in windows)
+			{
+				//  //Keysharp.Scripting.Script.OutputDebug($"Examiniming window: {window.Title}");
+				window.WindowState = FormWindowState.Minimized;
+			}
+		}
+
+		internal override void MinimizeAllUndo()
+		{
+			var windows = AllWindows;
+
+			foreach (var window in windows)
+			{
+				//  //Keysharp.Scripting.Script.OutputDebug($"Examiniming window: {window.Title}");
+				//window.WindowState = FormWindowState.Normal;
+				window.WindowState = FormWindowState.Normal;
+			}
+		}
+
+		internal override void MaximizeAll()
+		{
+			var windows = AllWindows;
+
+			foreach (var window in windows)
+			{
+				//  //Keysharp.Scripting.Script.OutputDebug($"Examiniming window: {window.Title}");
+				//window.WindowState = FormWindowState.Normal;
+				window.WindowState = FormWindowState.Maximized;
+			}
+		}
 
 		internal override WindowItemBase WindowFromPoint(Point location) => throw new NotImplementedException();
+
+		internal void SendNetWMMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2, IntPtr l3)
+		{
+			var xev = new XEvent();
+			xev.ClientMessageEvent.type = XEventName.ClientMessage;
+			xev.ClientMessageEvent.send_event = true;
+			xev.ClientMessageEvent.window = window;
+			xev.ClientMessageEvent.message_type = message_type;
+			xev.ClientMessageEvent.format = 32;
+			xev.ClientMessageEvent.ptr1 = l0;
+			xev.ClientMessageEvent.ptr2 = l1;
+			xev.ClientMessageEvent.ptr3 = l2;
+			xev.ClientMessageEvent.ptr4 = l3;
+			_ = Xlib.XSendEvent(_display.Handle, _display.Root.ID, false, EventMasks.SubstructureRedirect | EventMasks.SubstructureNofity, ref xev);
+		}
+
+		internal void SendNetClientMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2)
+		{
+			var xev = new XEvent();
+			xev.ClientMessageEvent.type = XEventName.ClientMessage;
+			xev.ClientMessageEvent.send_event = true;
+			xev.ClientMessageEvent.window = window;
+			xev.ClientMessageEvent.message_type = message_type;
+			xev.ClientMessageEvent.format = 32;
+			xev.ClientMessageEvent.ptr1 = l0;
+			xev.ClientMessageEvent.ptr2 = l1;
+			xev.ClientMessageEvent.ptr3 = l2;
+			_ = Xlib.XSendEvent(_display.Handle, window, false, EventMasks.NoEvent, ref xev);
+		}
 	}
 }
 

@@ -9,7 +9,26 @@ namespace Keysharp.Core.Linux.X11.Types
 		internal int format;
 		internal IntPtr nitems;
 
-		internal string GetText() => Marshal.PtrToStringAnsi(value);
+		internal unsafe string GetText() => Marshal.PtrToStringAuto(value);
+		//{
+		//  var strings = new byte[1024];
+		//  Keysharp.Scripting.Script.OutputDebug($"GetText() ptr: {value.ToInt64()}, format: {format}, nitems: {nitems.ToInt64()}.");
+
+		//  if (Xlib.XTextPropertyToStringList(value, ref strings, out int countReturn) != 0)
+		//  {
+		//      if (countReturn > 0)
+		//      {
+		//          fixed (void* ptr = strings)
+		//          {
+		//              return Marshal.PtrToStringUTF8(new IntPtr(ptr));
+		//          }
+		//      }
+		//  }
+		//  else
+		//      Keysharp.Scripting.Script.OutputDebug($"XTextPropertyToStringList() failed.");
+
+		//  return "";
+		//}
 
 		internal bool SetText(string value)
 		{

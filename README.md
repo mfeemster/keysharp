@@ -226,6 +226,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
 	+ `Tanh(value) => Double`
+* A new function `WinMaximizeAll()` to maximize all windows.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, &OutputVarPID, Args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.

@@ -16,13 +16,45 @@ namespace Keysharp.Core.Common.Platform
 		internal abstract WindowItemBase ActiveWindow { get; }
 		internal abstract IEnumerable<WindowItemBase> AllWindows { get; }
 		internal Dictionary<string, WindowGroup> Groups { get; } = new Dictionary<string, WindowGroup>(StringComparer.OrdinalIgnoreCase);
-		internal abstract WindowItemBase LastFound { get; set; }
+
+		internal virtual WindowItemBase LastFound
+		{
+			get => CreateWindow(Keysharp.Scripting.Script.HwndLastUsed);
+			set => Keysharp.Scripting.Script.HwndLastUsed = value.Handle;
+		}
 
 		internal abstract WindowItemBase CreateWindow(nint id);
 
 		internal abstract IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows);
 
-		internal abstract WindowItemBase FindWindow(SearchCriteria criteria, bool last = false);
+		internal virtual WindowItemBase FindWindow(SearchCriteria criteria, bool last = false)
+		{
+			WindowItemBase found = null;
+
+			if (criteria.IsEmpty)
+				return found;
+
+			if (criteria.HasID)
+			{
+				var temp = CreateWindow(criteria.ID);
+
+				if (temp.Exists)
+					return temp;
+			}
+
+			foreach (var window in AllWindows)
+			{
+				if (window.Equals(criteria))
+				{
+					found = window;
+
+					if (!last)
+						break;
+				}
+			}
+
+			return found;
+		}
 
 		internal abstract bool IsWindow(IntPtr handle);
 
@@ -55,7 +87,25 @@ namespace Keysharp.Core.Common.Platform
 			return foundWindow;
 		}
 
-		internal abstract List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false);
+		internal virtual List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false)
+		{
+			var found = new List<WindowItemBase>();
+			//Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in FindWindowGroup()");
+
+			foreach (var window in AllWindows)
+			{
+				//Keysharp.Scripting.Script.OutputDebug($"FindWindowGroup(): about to examine window: {window.Title}");
+				if (criteria.IsEmpty || window.Equals(criteria))
+				{
+					found.Add(window);
+
+					if (!forceAll && string.IsNullOrEmpty(criteria.Group))//If it was a group match, or if the caller specified that they want all matched windows, add it and keep going.
+						break;
+				}
+			}
+
+			return found;
+		}
 
 		internal (List<WindowItemBase>, SearchCriteria) FindWindowGroup(object title, string text, string excludeTitle, string excludeText, bool forceAll = false)
 		{
@@ -86,6 +136,8 @@ namespace Keysharp.Core.Common.Platform
 		internal abstract void MinimizeAll();
 
 		internal abstract void MinimizeAllUndo();
+
+		internal abstract void MaximizeAll();
 
 		internal abstract WindowItemBase WindowFromPoint(Point location);
 	}

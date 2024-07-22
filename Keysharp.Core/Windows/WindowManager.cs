@@ -6,6 +6,7 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowManager : WindowManagerBase
 	{
+
 		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
 
 		/// <summary>
@@ -28,12 +29,6 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override WindowItemBase LastFound
-		{
-			get => CreateWindow(Keysharp.Scripting.Script.HwndLastUsed);
-			set => Keysharp.Scripting.Script.HwndLastUsed = value.Handle;
-		}
-
 		internal WindowManager() => Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
 
 		internal override WindowItemBase CreateWindow(IntPtr id) => new WindowItem(id);
@@ -54,53 +49,6 @@ namespace Keysharp.Core.Windows
 					   WindowsAPI.GetShellWindow() != w.Handle &&
 					   !WindowsAPI.IsWindowCloaked(w.Handle);
 			});
-		}
-
-		internal override WindowItemBase FindWindow(SearchCriteria criteria, bool last = false)
-		{
-			WindowItemBase found = null;
-
-			if (criteria.IsEmpty)
-				return found;
-
-			if (criteria.HasID)
-			{
-				var temp = CreateWindow(criteria.ID);
-
-				if (temp.Exists)
-					return temp;
-			}
-
-			foreach (var window in AllWindows)
-			{
-				if (window.Equals(criteria))
-				{
-					found = window;
-
-					if (!last)
-						break;
-				}
-			}
-
-			return found;
-		}
-
-		internal override List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false)
-		{
-			var found = new List<WindowItemBase>();
-
-			foreach (var window in AllWindows)
-			{
-				if (criteria.IsEmpty || window.Equals(criteria))
-				{
-					found.Add(window);
-
-					if (!forceAll && string.IsNullOrEmpty(criteria.Group))//If it was a group match, or if the caller specified that they want all matched windows, add it and keep going.
-						break;
-				}
-			}
-
-			return found;
 		}
 
 		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow)
@@ -151,6 +99,12 @@ namespace Keysharp.Core.Windows
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
 			_ = WindowsAPI.PostMessage(window.Handle, WindowsAPI.WM_COMMAND, new IntPtr(416), IntPtr.Zero);
 			WindowItemBase.DoWinDelay();
+		}
+
+		internal override void MaximizeAll()
+		{
+			foreach (var window in AllWindows)
+				window.WindowState = FormWindowState.Maximized;
 		}
 
 		internal override WindowItemBase WindowFromPoint(Point location)

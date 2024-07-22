@@ -79,6 +79,7 @@ namespace Keysharp.Core.Linux.Proxies
 		internal IntPtr TARGETS;
 		internal IntPtr PostAtom;       // PostMessage atom
 		internal IntPtr AsyncAtom;      // Support for async messages
+		internal IntPtr HoverAtom;       // PostMessage atom
 
 		internal static XDisplay Default
 		{
@@ -101,6 +102,7 @@ namespace Keysharp.Core.Linux.Proxies
 		{
 			Handle = prt;
 			screenNumber = Xlib.XDefaultScreen(Handle);
+			SetupAtoms();
 		}
 
 		public void Dispose()
@@ -123,7 +125,7 @@ namespace Keysharp.Core.Linux.Proxies
 		/// Returns the handle of the window which currently has input focus
 		/// </summary>
 		/// <returns></returns>
-		internal uint XGetInputFocusHandle()
+		internal long XGetInputFocusHandle()
 		{
 			_ = Xlib.XGetInputFocus(Handle, out var hwndWnd, out var focusState);
 			return hwndWnd;
@@ -133,29 +135,41 @@ namespace Keysharp.Core.Linux.Proxies
 		/// Returns all Windows of this XDisplay
 		/// </summary>
 		/// <returns></returns>
-		internal IEnumerable<XWindow> XQueryTree(Func<uint, bool> filter = null) => XQueryTree(Root, filter);
+		internal IEnumerable<XWindow> XQueryTree(Func<long, bool> filter = null) => XQueryTree(Root, filter);
 
 		/// <summary>
 		/// Return all child xWindows from given xWindow
 		/// </summary>
 		/// <param name="windowToObtain"></param>
 		/// <returns></returns>
-		internal unsafe IEnumerable<XWindow> XQueryTree(XWindow windowToObtain, Func<uint, bool> filter = null)
+		internal unsafe IEnumerable<XWindow> XQueryTree(XWindow windowToObtain, Func<long, bool> filter = null)
 		{
-			var wins = new List<XWindow>();
+			var windows = new List<XWindow>();
 			var childrenReturn = IntPtr.Zero;
 
 			try
 			{
 				_ = Xlib.XQueryTree(Handle, windowToObtain.ID, out var rootReturn, out var parentReturn, out childrenReturn, out var nChildrenReturn);
-				var pSource = (uint*)childrenReturn.ToPointer();
+				var pSource = (long*)childrenReturn.ToPointer();
 
 				for (var i = 0; i < nChildrenReturn; i++)
 				{
-					var id = pSource[i];
+					try
+					{
+						var id = pSource[i];
 
-					if (filter == null || filter(id))
-						wins.Add(new XWindow(this, id));
+						if (filter == null || filter(id))
+						{
+							var window = new XWindow(this, id);
+							windows.Add(window);
+							//var tempItem = new WindowItem(window);
+							//Keysharp.Scripting.Script.OutputDebug($"Adding window from XQueryTree() with id: {id}, title: {tempItem.Title}");
+						}
+					}
+					catch (Exception ex)
+					{
+						Keysharp.Scripting.Script.OutputDebug($"Error when applying XQueryTree() filter: {ex.Message}");
+					}
 				}
 			}
 			catch (Exception e)
@@ -164,18 +178,21 @@ namespace Keysharp.Core.Linux.Proxies
 			}
 			finally
 			{
-				Xlib.XFree(childrenReturn);
+				if (childrenReturn != IntPtr.Zero)
+					_ = Xlib.XFree(childrenReturn);
 			}
 
-			return wins;
+			//Keysharp.Scripting.Script.OutputDebug($"Exiting XQueryTree().");
+			return windows;
 		}
 
 		/// <summary>
-		/// Return all child xWindows from given xWindow
+		/// Return all child xWindows from given xWindow, recursively.
 		/// </summary>
 		/// <param name="windowToObtain"></param>
 		/// <returns></returns>
-		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(XWindow windowToObtain, Func<uint, bool> filter = null)
+		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(Func<long, bool> filter = null) => XQueryTreeRecursive(Root, filter);
+		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(XWindow windowToObtain, Func<long, bool> filter = null)
 		{
 			var childrenReturn = IntPtr.Zero;
 			var windows = new HashSet<XWindow>();
@@ -183,7 +200,7 @@ namespace Keysharp.Core.Linux.Proxies
 			try
 			{
 				_ = Xlib.XQueryTree(Handle, windowToObtain.ID, out var rootReturn, out var parentReturn, out childrenReturn, out var nChildrenReturn);
-				var pSource = (uint*)childrenReturn.ToPointer();
+				var pSource = (long*)childrenReturn.ToPointer();
 
 				for (var i = 0; i < nChildrenReturn; i++)
 				{
@@ -193,7 +210,9 @@ namespace Keysharp.Core.Linux.Proxies
 					if (filter == null || filter(id))
 					{
 						var window = new XWindow(this, id);
-						_ = windows.Add(window);
+						windows.Add(window);
+						//var tempItem = new WindowItem(window);
+						//Keysharp.Scripting.Script.OutputDebug($"Adding window from XQueryTree() with id: {id}, title: {tempItem.Title}");
 						windows.AddRange(XQueryTreeRecursive(window, filter));
 					}
 				}
@@ -208,6 +227,7 @@ namespace Keysharp.Core.Linux.Proxies
 					_ = Xlib.XFree(childrenReturn);
 			}
 
+			//Keysharp.Scripting.Script.OutputDebug($"Exiting XQueryTreeRecursive().");
 			return windows;
 		}
 
@@ -288,7 +308,7 @@ namespace Keysharp.Core.Linux.Proxies
 				"_SWF_HoverAtom"
 			};
 			IntPtr[] atoms = new IntPtr[atom_names.Length];
-			Xlib.XInternAtoms(Handle, atom_names, atom_names.Length, false, atoms);
+			_ = Xlib.XInternAtoms(Handle, atom_names, atom_names.Length, false, atoms);
 			int off = 0;
 			WM_PROTOCOLS = atoms[off++];
 			WM_DELETE_WINDOW = atoms[off++];
@@ -359,9 +379,11 @@ namespace Keysharp.Core.Linux.Proxies
 			TARGETS = atoms[off++];
 			AsyncAtom = atoms[off++];
 			PostAtom = atoms[off++];
-			//HoverState.Atom = atoms[off++];
+			HoverAtom = atoms[off++];
 			//DIB = (IntPtr)Atom.XA_PIXMAP;
 			_NET_SYSTEM_TRAY_S = Xlib.XInternAtom(Handle, "_NET_SYSTEM_TRAY_S" + screenNumber.ToString(), false);
+			//for (var i = 0; i < atom_names.Length; i++)
+			//  Keysharp.Scripting.Script.OutputDebug($"Atom {atom_names[i]} = {atoms[i].ToInt64()}.");
 		}
 
 	}

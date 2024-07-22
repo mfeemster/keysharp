@@ -22,14 +22,14 @@ namespace Keysharp.Core.Linux.Proxies
 		/// <summary>
 		/// ID of the window
 		/// </summary>
-		internal uint ID { get; set; }
+		internal long ID { get; set; }
 
 		/// <summary>
 		/// Backreference to the XDisplay from this Window
 		/// </summary>
 		internal XDisplay XDisplay { get; } = null;
 
-		internal XWindow(XDisplay display, uint window)
+		internal XWindow(XDisplay display, long window)
 		{
 			XDisplay = display;
 			ID = window;

@@ -30,7 +30,7 @@ namespace Keysharp.Core.Windows
 				{
 					if (WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
-						if (WindowsAPI.IsIconic(Handle))
+						if (IsIconic)
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
 						else
 							_ = SetForegroundWindowEx(this);
@@ -446,7 +446,7 @@ namespace Keysharp.Core.Windows
 			{
 				return !IsSpecified
 					   ? FormWindowState.Normal
-					   : WindowsAPI.IsZoomed(Handle) ? FormWindowState.Maximized : (WindowsAPI.IsIconic(Handle) ? FormWindowState.Minimized : FormWindowState.Normal);
+					   : WindowsAPI.IsZoomed(Handle) ? FormWindowState.Maximized : (IsIconic ? FormWindowState.Minimized : FormWindowState.Normal);
 			}
 			set
 			{
@@ -491,7 +491,7 @@ namespace Keysharp.Core.Windows
 			var sender = Script.HookThread.kbdMsSender;
 
 			//Restore the window *before* checking if it is already active.
-			if (WindowsAPI.IsIconic(targetWindow))
+			if (win.IsIconic)
 				// This might never return if targetWindow is a hung window.  But it seems better
 				// to do it this way than to use the PostMessage() method, which might not work
 				// reliably with apps that don't handle such messages in a standard way.

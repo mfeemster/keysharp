@@ -572,6 +572,17 @@ namespace Keysharp.Core
 
 		public static void WinMinimizeAllUndo(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MinimizeAllUndo);
 
+		public static void WinMaximizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MaximizeAll);
+
+		//public static void PrintAllWindowText(params object[] obj)
+		//{
+		//  //Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in PrintAllWindowText()");
+		//  var windows = WindowProvider.Manager.AllWindows;
+		//
+		//  foreach (var window in windows)
+		//      Keysharp.Scripting.Script.OutputDebug(window.Title);
+		//}
+
 		public static void WinMove(params object[] obj)
 		{
 			var (x, y, width, height, title, text, excludeTitle, excludeText) = obj.I4O1S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue);

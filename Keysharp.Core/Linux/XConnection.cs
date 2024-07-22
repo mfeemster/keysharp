@@ -25,7 +25,7 @@ namespace Keysharp.Core.Linux
 		// We set a placeholder errorhandler for some time and restore it later
 		private bool suppressErrors = false;
 
-		private List<uint> windows;
+		private List<long> windows;
 
 		internal IntPtr Handle { get; private set; }
 
@@ -46,7 +46,7 @@ namespace Keysharp.Core.Linux
 
 		private XConnectionSingleton()
 		{
-			windows = new List<uint>();
+			windows = new List<long>();
 			// Kick off a thread listening to X events
 			listener = new Thread(Listen);
 			listener.Start();
@@ -113,17 +113,17 @@ namespace Keysharp.Core.Linux
 		/// </summary>
 		/// <param name="display"></param>
 		/// <param name="rootWindow"></param>
-		private unsafe void RecurseTree(IntPtr display, uint rootWindow)
+		private unsafe void RecurseTree(IntPtr display, long rootWindow)
 		{
 			if (!windows.Contains(rootWindow))
 				windows.Add(rootWindow);
 
 			// Request all children of the given window, along with the parent
-			_ = Xlib.XQueryTree(display, rootWindow, out var RootWindowRet, out var ParentWindow, out var childrenPtr, out var nChildren);
+			_ = Xlib.XQueryTree(display, rootWindow, out var rootWindowRet, out var parentWindow, out var childrenPtr, out var nChildren);
 
 			if (nChildren != 0)
 			{
-				var pSource = (uint*)childrenPtr.ToPointer();
+				var pSource = (long*)childrenPtr.ToPointer();
 				_ = Xlib.XSelectInput(display, rootWindow, selectMask);
 
 				// Subwindows shouldn't be forgotten, especially since everything is a subwindow of RootWindow
