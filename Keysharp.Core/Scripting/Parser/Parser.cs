@@ -856,7 +856,7 @@ namespace Keysharp.Scripting
 			var reader = new PreReader(this);
 			codeLines = reader.Read(codeStream, name);
 #if DEBUG
-			File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
+			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
 			Statements();
 

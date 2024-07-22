@@ -6,9 +6,10 @@ namespace Keysharp.Core.Linux
 	/// </summary>
 	internal class WindowManager : WindowManagerBase
 	{
+		internal static object xLibLock = new object();//The X11 Winforms implementation uses this, so attempt to do the same here.
+
 		// ToDo: There may be more than only one xDisplay
 		private XDisplay _display = null;
-		internal static object xLibLock = new object();//The X11 Winforms implementation uses this, so attempt to do the same here.
 
 		internal override WindowItemBase ActiveWindow => new WindowItem(_display.XGetInputFocusWindow());
 
@@ -56,43 +57,46 @@ namespace Keysharp.Core.Linux
 			return Xlib.XGetWindowAttributes(_display.Handle, handle.ToInt64(), ref attr) != 0;
 		}
 
+		internal override void MaximizeAll()
+		{
+			foreach (var window in AllWindows)
+			{
+				//Keysharp.Scripting.Script.OutputDebug($"MaximizeAll(): Examiniming window: {window.Title}");
+				window.WindowState = FormWindowState.Maximized;
+			}
+		}
+
 		internal override void MinimizeAll()
 		{
-			//Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in MinimizeAll()");
-			var windows = AllWindows;
-
-			foreach (var window in windows)
+			foreach (var window in AllWindows)
 			{
-				//  //Keysharp.Scripting.Script.OutputDebug($"Examiniming window: {window.Title}");
+				//Keysharp.Scripting.Script.OutputDebug($"MinimizeAll(): Examiniming window: {window.Title}");
 				window.WindowState = FormWindowState.Minimized;
 			}
 		}
 
 		internal override void MinimizeAllUndo()
 		{
-			var windows = AllWindows;
-
-			foreach (var window in windows)
+			foreach (var window in AllWindows)
 			{
-				//  //Keysharp.Scripting.Script.OutputDebug($"Examiniming window: {window.Title}");
-				//window.WindowState = FormWindowState.Normal;
+				//Keysharp.Scripting.Script.OutputDebug($"MinimizeAllUndo(): Examiniming window: {window.Title}");
 				window.WindowState = FormWindowState.Normal;
 			}
 		}
 
-		internal override void MaximizeAll()
+		internal void SendNetClientMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2)
 		{
-			var windows = AllWindows;
-
-			foreach (var window in windows)
-			{
-				//  //Keysharp.Scripting.Script.OutputDebug($"Examiniming window: {window.Title}");
-				//window.WindowState = FormWindowState.Normal;
-				window.WindowState = FormWindowState.Maximized;
-			}
+			var xev = new XEvent();
+			xev.ClientMessageEvent.type = XEventName.ClientMessage;
+			xev.ClientMessageEvent.send_event = true;
+			xev.ClientMessageEvent.window = window;
+			xev.ClientMessageEvent.message_type = message_type;
+			xev.ClientMessageEvent.format = 32;
+			xev.ClientMessageEvent.ptr1 = l0;
+			xev.ClientMessageEvent.ptr2 = l1;
+			xev.ClientMessageEvent.ptr3 = l2;
+			_ = Xlib.XSendEvent(_display.Handle, window, false, EventMasks.NoEvent, ref xev);
 		}
-
-		internal override WindowItemBase WindowFromPoint(Point location) => throw new NotImplementedException();
 
 		internal void SendNetWMMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2, IntPtr l3)
 		{
@@ -109,20 +113,7 @@ namespace Keysharp.Core.Linux
 			_ = Xlib.XSendEvent(_display.Handle, _display.Root.ID, false, EventMasks.SubstructureRedirect | EventMasks.SubstructureNofity, ref xev);
 		}
 
-		internal void SendNetClientMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2)
-		{
-			var xev = new XEvent();
-			xev.ClientMessageEvent.type = XEventName.ClientMessage;
-			xev.ClientMessageEvent.send_event = true;
-			xev.ClientMessageEvent.window = window;
-			xev.ClientMessageEvent.message_type = message_type;
-			xev.ClientMessageEvent.format = 32;
-			xev.ClientMessageEvent.ptr1 = l0;
-			xev.ClientMessageEvent.ptr2 = l1;
-			xev.ClientMessageEvent.ptr3 = l2;
-			_ = Xlib.XSendEvent(_display.Handle, window, false, EventMasks.NoEvent, ref xev);
-		}
+		internal override WindowItemBase WindowFromPoint(Point location) => throw new NotImplementedException();
 	}
 }
-
 #endif

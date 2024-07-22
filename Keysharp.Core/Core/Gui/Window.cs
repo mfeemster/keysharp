@@ -403,7 +403,7 @@ namespace Keysharp.Core
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
 			var criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
 			var window = WindowProvider.Manager.ActiveWindow;
-			return (window != null && window.Equals(criteria)) ? window.Handle.ToInt64() : 0;
+			return (window != null && window.Equals(criteria)) ? window.Handle.ToInt64() : 0L;
 		}
 
 		/// <summary>
@@ -445,6 +445,8 @@ namespace Keysharp.Core
 			var win = SearchWindow(obj, false);
 			return win != null ? win.Handle.ToInt64() : 0;
 		}
+
+		public static long WinGetAlwaysOnTop(params object[] obj) => (SearchWindow(obj, true) is WindowItem win && win.AlwaysOnTop) ? 1L : 0L;
 
 		public static string WinGetClass(params object[] obj) => SearchWindow(obj, true) is WindowItem win ? win.ClassName : "";
 

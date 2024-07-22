@@ -263,7 +263,9 @@ using static Keysharp.Scripting.Script.Operator;
 									  new CSharpCompilationOptions(OutputKind.WindowsApplication)
 									  .WithUsings(usings)
 									  .WithOptimizationLevel(OptimizationLevel.Release)
-									  .WithPlatform(Platform.AnyCpu))
+									  .WithPlatform(Platform.AnyCpu)
+									  .WithConcurrentBuild(true)
+								  )
 								  .AddReferences(references)
 								  .AddSyntaxTrees(tree)
 								  ;

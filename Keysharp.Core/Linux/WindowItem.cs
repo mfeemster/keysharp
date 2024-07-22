@@ -13,12 +13,13 @@ namespace Keysharp.Core.Linux
 	internal class WindowItem : Common.Window.WindowItemBase//Do we want to prefix each of these derived classes with Windws/Linux?//TODO
 	{
 		private XWindow _xwindow = null;
+		private WindowManager manager = (Keysharp.Core.Linux.WindowManager)WindowProvider.Manager;
 
 		internal override bool Active
 		{
 			get
 			{
-				if (IsSpecified && WindowProvider.Manager.ActiveWindow is WindowItem item)
+				if (IsSpecified && manager.ActiveWindow is WindowItem item)
 				{
 					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
@@ -32,7 +33,7 @@ namespace Keysharp.Core.Linux
 			{
 				if (IsSpecified)
 				{
-					if (WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
+					if (manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
 						if (IsIconic)
 						{
@@ -42,7 +43,7 @@ namespace Keysharp.Core.Linux
 						{
 							lock (WindowManager.xLibLock)
 							{
-								((Keysharp.Core.Linux.WindowManager)WindowProvider.Manager).SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 							}
 						}
 					}
@@ -52,16 +53,41 @@ namespace Keysharp.Core.Linux
 
 		internal override bool AlwaysOnTop
 		{
-			get => throw new NotImplementedException();
-			set => throw new NotImplementedException();
+			get
+			{
+				if (!IsSpecified)
+					return false;
+
+				var onTop = false;
+				ReadStateProps((atom) =>
+				{
+					if (atom == _xwindow.XDisplay._NET_WM_STATE_ABOVE)
+					{
+						onTop = true;
+						return false;
+					}
+					else
+						return true;
+				});
+				return onTop;
+			}
+			set
+			{
+				manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, value ? 1 : 0, _xwindow.XDisplay._NET_WM_STATE_ABOVE, IntPtr.Zero, IntPtr.Zero);
+			}
 		}
+
 		internal override bool Bottom
 		{
 			set => throw new NotImplementedException();
 		}
+
 		internal override List<WindowItemBase> ChildWindows => throw new NotImplementedException();
+
 		internal override string ClassName => throw new NotImplementedException();
+
 		internal override string ClassNN => throw new NotImplementedException();
+
 		internal override Rectangle ClientLocation
 		{
 			get
@@ -70,19 +96,25 @@ namespace Keysharp.Core.Linux
 				return new Rectangle(attr.x, attr.y, attr.width, attr.height);//These need to be client values, unsure how.//TODO
 			}
 		}
+
 		internal override bool Enabled
 		{
 			get => throw new NotImplementedException();
 			set => throw new NotImplementedException();
 		}
+
 		internal override bool Exists => throw new NotImplementedException();
+
 		internal override long ExStyle
 		{
 			get => throw new NotImplementedException();
 			set => throw new NotImplementedException();
 		}
+
 		internal override bool IsHung => throw new NotImplementedException();
+
 		internal override bool IsIconic => WindowState == FormWindowState.Minimized;
+
 		internal override Rectangle Location
 		{
 			get
@@ -93,12 +125,19 @@ namespace Keysharp.Core.Linux
 
 			set => throw new NotImplementedException();
 		}
+
 		internal override string NetClassName => throw new NotImplementedException();
+
 		internal override string NetClassNN => throw new NotImplementedException();
+
 		internal override WindowItemBase NonChildParentWindow => throw new NotImplementedException();
+
 		internal override WindowItemBase ParentWindow => throw new NotImplementedException();
+
 		internal override IntPtr PID => throw new NotImplementedException();
+
 		internal override WindowItemBase PreviousWindow => throw new NotImplementedException();
+
 		internal override Size Size
 		{
 			get
@@ -109,11 +148,13 @@ namespace Keysharp.Core.Linux
 
 			set => throw new NotImplementedException();
 		}
+
 		internal override long Style
 		{
 			get => throw new NotImplementedException();
 			set => throw new NotImplementedException();
 		}
+
 		internal override List<string> Text
 		{
 			get
@@ -197,6 +238,7 @@ namespace Keysharp.Core.Linux
 				}
 			}
 		}
+
 		internal override object Transparency
 		{
 			get
@@ -208,6 +250,7 @@ namespace Keysharp.Core.Linux
 				throw new NotImplementedException();
 			}
 		}
+
 		internal override object TransparentColor
 		{
 			get
@@ -219,6 +262,7 @@ namespace Keysharp.Core.Linux
 				throw new NotImplementedException();
 			}
 		}
+
 		internal override bool Visible
 		{
 			get
@@ -245,6 +289,7 @@ namespace Keysharp.Core.Linux
 				}
 			}
 		}
+
 		internal override FormWindowState WindowState
 		{
 			get
@@ -255,54 +300,21 @@ namespace Keysharp.Core.Linux
 				if (Control.FromHandle(Handle) is Form form)
 					return form.WindowState;
 
-				IntPtr actual_atom;
-				int actual_format;
-				IntPtr nitems;
-				IntPtr bytes_after;
-				IntPtr prop = IntPtr.Zero;
-				IntPtr atom;
-				int maximized;
-				bool minimized;
-				XWindowAttributes attributes;
-				//Hwnd hwnd;
-				//hwnd = Hwnd.ObjectFromHandle(handle);
-				maximized = 0;
-				minimized = false;
-				_ = Xlib.XGetWindowProperty(_xwindow.XDisplay.Handle,
-											_xwindow.ID,
-											_xwindow.XDisplay._NET_WM_STATE,
-											IntPtr.Zero,
-											new IntPtr(256),
-											false,
-											(IntPtr)XAtom.XA_ATOM,
-											out actual_atom,
-											out actual_format,
-											out nitems,
-											out bytes_after,
-											ref prop);
-				var itemCount = nitems.ToInt64();
-				//Keysharp.Scripting.Script.OutputDebug($"Window state returned {itemCount} atoms.");
-
-				if (itemCount > 0 && prop != IntPtr.Zero)
+				var maximized = 0;
+				var minimized = false;
+				ReadStateProps((atom) =>
 				{
-					for (int i = 0; i < nitems; i++)
+					if ((atom == _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ) || (atom == _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT))
 					{
-						atom = (IntPtr)Marshal.ReadInt64(prop, i * 8);
-						//Keysharp.Scripting.Script.OutputDebug($"Atom {i} was {atom}.");
-						//Keysharp.Scripting.Script.OutputDebug($"\tName: {Xlib.GetAtomName(_xwindow.XDisplay.Handle, atom)}.");
-
-						if ((atom == _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ) || (atom == _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT))
-						{
-							maximized++;
-						}
-						else if (atom == _xwindow.XDisplay._NET_WM_STATE_HIDDEN)
-						{
-							minimized = true;
-						}
+						maximized++;
+					}
+					else if (atom == _xwindow.XDisplay._NET_WM_STATE_HIDDEN)
+					{
+						minimized = true;
 					}
 
-					_ = Xlib.XFree(prop);
-				}
+					return true;
+				});
 
 				if (minimized)
 					return FormWindowState.Minimized;
@@ -324,8 +336,6 @@ namespace Keysharp.Core.Linux
 					return;
 				}
 
-				var mgr = (Keysharp.Core.Linux.WindowManager)WindowProvider.Manager;
-
 				//Got this logic from Winforms.
 				switch (value)
 				{
@@ -337,13 +347,13 @@ namespace Keysharp.Core.Linux
 							{
 								_ = Xlib.XMapWindow(_xwindow.XDisplay.Handle, Handle);
 								//Keysharp.Scripting.Script.OutputDebug($"Window was minimized, so setting to normal.");
-								mgr.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 							}
 							else if (current_state == FormWindowState.Maximized)
 							{
 								//Keysharp.Scripting.Script.OutputDebug($"Window was maximized, so setting to normal.");
-								mgr.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
-								mgr.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 							}
 
 							//else
@@ -360,7 +370,7 @@ namespace Keysharp.Core.Linux
 						{
 							if (current_state == FormWindowState.Maximized)
 							{
-								mgr.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
 							}
 
 							_ = Xlib.XIconifyWindow(_xwindow.XDisplay.Handle, Handle.ToInt64(), _xwindow.XDisplay.ScreenNumber);
@@ -378,10 +388,10 @@ namespace Keysharp.Core.Linux
 								_ = Xlib.XMapWindow(_xwindow.XDisplay.Handle, Handle);
 							}
 
-							mgr.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, 1 /* Add */, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
+							manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_WM_STATE, 1 /* Add */, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
 						}
 
-						mgr.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+						manager.SendNetWMMessage(Handle, _xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 						return;
 					}
 				}
@@ -393,11 +403,14 @@ namespace Keysharp.Core.Linux
 		{
 			_xwindow = uxwindow;
 		}
+
 		internal WindowItem(IntPtr handle)
 			: this(new XWindow(XDisplay.Default, handle.ToInt64()))
 		{
 		}
+
 		internal override void ChildFindPoint(PointAndHwnd pah) => throw new NotImplementedException();
+
 		/// <summary>
 		/// Left-Clicks on this window/control
 		/// </summary>
@@ -409,6 +422,7 @@ namespace Keysharp.Core.Linux
 			//Might need a sleep here.
 			SendMouseEvent(XEventName.ButtonRelease, EventMasks.ButtonRelease, Buttons.Left, location);
 		}
+
 		/// <summary>
 		/// Right-Clicks on this window/control
 		/// </summary>
@@ -420,8 +434,11 @@ namespace Keysharp.Core.Linux
 			//Might need a sleep here.
 			SendMouseEvent(XEventName.ButtonRelease, EventMasks.ButtonRelease, Buttons.Right, location);
 		}
+
 		internal override System.Drawing.Point ClientToScreen() => throw new NotImplementedException();
+
 		internal override void ClientToScreen(ref System.Drawing.Point pt) => throw new NotImplementedException();
+
 		internal override bool Close()
 		{
 			if (!IsSpecified)
@@ -445,7 +462,9 @@ namespace Keysharp.Core.Linux
 			//ev.ClientMessageEvent.data.l [1] = CurrentTime;
 			return Xlib.XSendEvent(_xwindow.XDisplay.Handle, _xwindow.ID, false, EventMasks.NoEvent, ref ev) != 0;
 		}
+
 		internal override uint GetMenuItemId(params string[] items) => throw new NotImplementedException();
+
 		internal override bool Hide()
 		{
 			if (!IsSpecified)
@@ -459,6 +478,7 @@ namespace Keysharp.Core.Linux
 
 			return Xlib.XUnmapWindow(_xwindow.XDisplay.Handle, _xwindow.ID) != 0;
 		}
+
 		internal override bool Kill()
 		{
 			if (!IsSpecified)
@@ -481,7 +501,52 @@ namespace Keysharp.Core.Linux
 			_ = Xlib.XKillClient(_xwindow.XDisplay.Handle, _xwindow.ID);
 			return !Exists;
 		}
+
+		internal bool ReadStateProps(Func<long, bool> func)
+		{
+			IntPtr prop = IntPtr.Zero;
+
+			if (Xlib.XGetWindowProperty(_xwindow.XDisplay.Handle,
+										_xwindow.ID,
+										_xwindow.XDisplay._NET_WM_STATE,
+										IntPtr.Zero,
+										new IntPtr(256),
+										false,
+										(IntPtr)XAtom.XA_ATOM,
+										out var actualAtom,
+										out var actualFormat,
+										out var nitems,
+										out var bytesAfter,
+										ref prop) == 0)
+			{
+				var itemCount = nitems.ToInt64();
+
+				if (itemCount > 0 && prop != IntPtr.Zero)
+				{
+					for (int i = 0; i < nitems; i++)
+					{
+						var atom = (IntPtr)Marshal.ReadInt64(prop, i * 8);
+						//Keysharp.Scripting.Script.OutputDebug($"ReadStateProps() item {i} was atom {atom}.");
+
+						if (!func(atom))
+							break;
+					}
+
+					_ = Xlib.XFree(prop);
+				}
+
+				//else
+				//  Keysharp.Scripting.Script.OutputDebug($"ReadStateProps() contained zero atoms.");
+				return true;
+			}
+			else
+				Keysharp.Scripting.Script.OutputDebug($"ReadStateProps() XGetWindowProperty failed.");
+
+			return false;
+		}
+
 		internal override WindowItemBase RealChildWindowFromPoint(System.Drawing.Point location) => throw new NotImplementedException();
+
 		internal override bool Redraw()
 		{
 			if (!IsSpecified)
@@ -489,6 +554,7 @@ namespace Keysharp.Core.Linux
 
 			return Xlib.XClearWindow(_xwindow.XDisplay.Handle, _xwindow.ID) != 0;
 		}
+
 		internal void SendMouseEvent(XEventName evName, EventMasks evMask, Buttons button, System.Drawing.Point? location = null)
 		{
 			var click = new Point();
@@ -522,7 +588,9 @@ namespace Keysharp.Core.Linux
 			//Mask might also need to be 0xfff?
 			_ = Xlib.XSendEvent(_xwindow.XDisplay.Handle, Handle.ToInt64(), true, evMask, ref ev);
 		}
+
 		internal override void SetTransparency(byte level, System.Drawing.Color color) => throw new NotImplementedException();
+
 		internal override bool Show()
 		{
 			if (!IsSpecified)

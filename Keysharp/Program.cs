@@ -281,10 +281,9 @@ namespace Keysharp.Main
 
 				try
 				{
-					if (System.IO.File.Exists(trace))
-						System.IO.File.Delete(trace);
-
-					System.IO.File.WriteAllText(trace, msg);
+					//if (System.IO.File.Exists(trace))
+					//  System.IO.File.Delete(trace);
+					//System.IO.File.WriteAllText(trace, msg);
 				}
 				catch (Exception exx)
 				{
@@ -340,7 +339,7 @@ namespace Keysharp.Main
 
 			if (errstr != "")
 			{
-				System.IO.File.WriteAllText($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt", errstr);
+				//System.IO.File.WriteAllText($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt", errstr);
 				_ = Message(errstr, true);
 				return 1;
 			}
@@ -368,14 +367,14 @@ namespace Keysharp.Main
 					_ = sb.Append(message);
 
 				var errstr = sb.ToString();
-				System.IO.File.WriteAllText($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt", errstr);
+				//System.IO.File.WriteAllText($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt", errstr);
 				_ = Message(errstr, true);
 			}
 			else
 			{
 				try
 				{
-					System.IO.File.Delete($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt");
+					//System.IO.File.Delete($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt");
 				}
 				catch { }
 			}

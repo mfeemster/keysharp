@@ -90,7 +90,12 @@
 		/// <summary>
 		/// The full path and name of the folder containing the current user's application-specific data. For example: <code>C:\Documents and Settings\Username\Application Data</code>
 		/// </summary>
-		public static string A_AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+		public static string A_AppData =>
+#if WINDOWS
+		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#else//On linux, ApplicationData maps to home/.config which is a file, not a folder. So just map it to home instead.
+		Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+#endif
 
 		/// <summary>
 		/// The full path and name of the folder containing the all-users application-specific data.
