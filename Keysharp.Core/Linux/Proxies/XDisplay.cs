@@ -41,7 +41,7 @@ namespace Keysharp.Core.Linux.Proxies
 		//internal IntPtr _NET_WM_STRUT_PARTIAL;
 		//internal IntPtr _NET_WM_ICON_GEOMETRY;
 		internal IntPtr _NET_WM_ICON;
-		//internal IntPtr _NET_WM_PID;
+		internal IntPtr _NET_WM_PID;
 		//internal IntPtr _NET_WM_HANDLED_ICONS;
 		internal IntPtr _NET_WM_USER_TIME;
 		internal IntPtr _NET_FRAME_EXTENTS;
@@ -269,7 +269,7 @@ namespace Keysharp.Core.Linux.Proxies
 				//"_NET_WM_STRUT_PARTIAL",
 				//"_NET_WM_ICON_GEOMETRY",
 				"_NET_WM_ICON",
-				//"_NET_WM_PID",
+				"_NET_WM_PID",
 				//"_NET_WM_HANDLED_ICONS",
 				"_NET_WM_USER_TIME",
 				"_NET_FRAME_EXTENTS",
@@ -343,7 +343,7 @@ namespace Keysharp.Core.Linux.Proxies
 			//_NET_WM_STRUT_PARTIAL = atoms [off++];
 			//_NET_WM_ICON_GEOMETRY = atoms [off++];
 			_NET_WM_ICON = atoms[off++];
-			//_NET_WM_PID = atoms [off++];
+			_NET_WM_PID = atoms [off++];
 			//_NET_WM_HANDLED_ICONS = atoms [off++];
 			_NET_WM_USER_TIME = atoms[off++];
 			_NET_FRAME_EXTENTS = atoms[off++];

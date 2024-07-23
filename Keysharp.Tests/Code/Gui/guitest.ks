@@ -314,6 +314,9 @@ t2g2t4.SetFont("s10")
 e4 := MyGui.Add("Edit", "w200 xp y+10 h50 +0x8", "Edit 4")
 e3Btn := MyGui.Add("Button", "xp y+10", "Toggle ControlSetStyle Edit")
 e3Btn.OnEvent("Click", "ShowE3Hwnd")
+numericText := MyGui.Add("Text", "x10 y+10", "The text box below should be numeric only")
+numericText.SetFont("cBlue s8")
+numericEdit := MyGui.Add("Edit", "w200 xp y+10 number")
 
 ShowE3Hwnd() {
 	ControlSetStyle("^0x8", e3)
@@ -903,6 +906,28 @@ AddMsgMonitorButton.OnEvent("Click", "AddMsgMonitor")
 
 RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+10", "Remove msg mon")
 RemoveMsgMonitorButton.OnEvent("Click", "RemoveMsgMonitor")
+
+MinimizeAllButton := MyGui.Add("Button", "x10 y+10", "Minimize all")
+MinimizeAllButton.OnEvent("Click", "MinimizeAll")
+UndoMinimizeAllButton := MyGui.Add("Button", "x10 y+10", "Undo minimize all")
+UndoMinimizeAllButton.OnEvent("Click", "UndoMinimizeAll")
+MaximizeAllButton := MyGui.Add("Button", "x10 y+10", "Maximize all")
+MaximizeAllButton.OnEvent("Click", "MaximizeAll")
+
+MinimizeAll()
+{
+	WinMinimizeAll()
+}
+
+UndoMinimizeAll()
+{
+	WinMinimizeAllUndo()
+}
+
+MaximizeAll()
+{
+	WinMaximizeAll()
+}
 
 ^!9:: {
 	GetPix()

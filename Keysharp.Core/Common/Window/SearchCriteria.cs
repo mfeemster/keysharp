@@ -12,7 +12,7 @@
 		public IntPtr ID { get; set; }
 		public bool IsEmpty => !HasID&& !HasExcludes&& string.IsNullOrEmpty(Group)&& string.IsNullOrEmpty(Title)&& string.IsNullOrEmpty(Text)&& string.IsNullOrEmpty(ClassName)&& string.IsNullOrEmpty(Path);
 		public string Path { get; set; }
-		public IntPtr PID { get; set; }
+		public long PID { get; set; }
 		public string Text { get; set; }
 		public string Title { get; set; }
 

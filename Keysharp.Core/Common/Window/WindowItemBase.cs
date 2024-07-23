@@ -42,7 +42,7 @@ namespace Keysharp.Core.Common.Window
 		internal abstract string NetClassNN { get; }
 		internal abstract WindowItemBase NonChildParentWindow { get; }
 		internal abstract WindowItemBase ParentWindow { get; }
-		internal abstract bool IsIconic { get; }
+		internal virtual bool IsIconic => WindowState == FormWindowState.Minimized;
 
 		internal virtual string Path
 		{
@@ -50,7 +50,7 @@ namespace Keysharp.Core.Common.Window
 			{
 				try
 				{
-					var proc = System.Diagnostics.Process.GetProcessById((int)PID.ToInt64());
+					var proc = System.Diagnostics.Process.GetProcessById((int)PID);
 					return proc.MainModule.FileName;
 				}
 				catch
@@ -60,7 +60,7 @@ namespace Keysharp.Core.Common.Window
 			}
 		}
 
-		internal abstract IntPtr PID { get; }
+		internal abstract long PID { get; }
 		internal abstract WindowItemBase PreviousWindow { get; }
 
 		internal virtual string ProcessName
@@ -71,7 +71,7 @@ namespace Keysharp.Core.Common.Window
 
 				try
 				{
-					var proc = System.Diagnostics.Process.GetProcessById((int)PID.ToInt64());
+					var proc = System.Diagnostics.Process.GetProcessById((int)PID);
 					filename = proc.MainModule.ModuleName;
 				}
 				catch
@@ -179,7 +179,7 @@ namespace Keysharp.Core.Common.Window
 			if (criteria.ID != IntPtr.Zero && Handle != criteria.ID)
 				return false;
 
-			if (criteria.PID != IntPtr.Zero && PID != criteria.PID)
+			if (criteria.PID != 0L && PID != criteria.PID)
 				return false;
 
 			if (!string.IsNullOrEmpty(criteria.Path))

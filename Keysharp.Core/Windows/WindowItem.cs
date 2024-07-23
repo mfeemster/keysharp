@@ -185,8 +185,6 @@ namespace Keysharp.Core.Windows
 
 		internal override bool IsHung => Handle == IntPtr.Zero ? false : WindowsAPI.IsHungAppWindow(Handle);
 
-		internal override bool IsIconic => WindowsAPI.IsIconic(Handle);
-
 		internal override Rectangle Location
 		{
 			get
@@ -263,7 +261,7 @@ namespace Keysharp.Core.Windows
 
 		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
 
-		internal override IntPtr PID
+		internal override long PID
 		{
 			get
 			{
@@ -446,7 +444,7 @@ namespace Keysharp.Core.Windows
 			{
 				return !IsSpecified
 					   ? FormWindowState.Normal
-					   : WindowsAPI.IsZoomed(Handle) ? FormWindowState.Maximized : (IsIconic ? FormWindowState.Minimized : FormWindowState.Normal);
+					   : WindowsAPI.IsZoomed(Handle) ? FormWindowState.Maximized : (WindowsAPI.IsIconic(Handle) ? FormWindowState.Minimized : FormWindowState.Normal);
 			}
 			set
 			{
@@ -818,7 +816,7 @@ namespace Keysharp.Core.Windows
 			if (!Exists)
 				return true;
 
-			var pid = PID.ToInt32();
+			var pid = (int)PID;
 			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : IntPtr.Zero;
 
 			if (prc != IntPtr.Zero)

@@ -59,7 +59,7 @@ namespace Keysharp.Core.Linux
 					return false;
 
 				var onTop = false;
-				ReadStateProps((atom) =>
+				ReadProps(_xwindow.XDisplay._NET_WM_STATE, (IntPtr)XAtom.XA_ATOM, (atom) =>
 				{
 					if (atom == _xwindow.XDisplay._NET_WM_STATE_ABOVE)
 					{
@@ -103,7 +103,7 @@ namespace Keysharp.Core.Linux
 			set => throw new NotImplementedException();
 		}
 
-		internal override bool Exists => throw new NotImplementedException();
+		internal override bool Exists => IsSpecified && _xwindow.XDisplay.XQueryTreeRecursive().Any(xw => xw.ID == _xwindow.ID);
 
 		internal override long ExStyle
 		{
@@ -112,8 +112,6 @@ namespace Keysharp.Core.Linux
 		}
 
 		internal override bool IsHung => throw new NotImplementedException();
-
-		internal override bool IsIconic => WindowState == FormWindowState.Minimized;
 
 		internal override Rectangle Location
 		{
@@ -134,7 +132,19 @@ namespace Keysharp.Core.Linux
 
 		internal override WindowItemBase ParentWindow => throw new NotImplementedException();
 
-		internal override IntPtr PID => throw new NotImplementedException();
+		internal override long PID
+		{
+			get
+			{
+				var pid = 0L;
+				_ = ReadProps(_xwindow.XDisplay._NET_WM_PID, (IntPtr)XAtom.AnyPropertyType, (atom) =>
+				{
+					pid = atom;
+					return false;
+				});
+				return pid;
+			}
+		}
 
 		internal override WindowItemBase PreviousWindow => throw new NotImplementedException();
 
@@ -302,7 +312,7 @@ namespace Keysharp.Core.Linux
 
 				var maximized = 0;
 				var minimized = false;
-				ReadStateProps((atom) =>
+				ReadProps(_xwindow.XDisplay._NET_WM_STATE, (IntPtr)XAtom.XA_ATOM, (atom) =>
 				{
 					if ((atom == _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ) || (atom == _xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT))
 					{
@@ -502,17 +512,17 @@ namespace Keysharp.Core.Linux
 			return !Exists;
 		}
 
-		internal bool ReadStateProps(Func<long, bool> func)
+		internal bool ReadProps(IntPtr state, IntPtr type, Func<long, bool> func)
 		{
 			IntPtr prop = IntPtr.Zero;
 
 			if (Xlib.XGetWindowProperty(_xwindow.XDisplay.Handle,
 										_xwindow.ID,
-										_xwindow.XDisplay._NET_WM_STATE,
+										state,
 										IntPtr.Zero,
 										new IntPtr(256),
 										false,
-										(IntPtr)XAtom.XA_ATOM,
+										type,
 										out var actualAtom,
 										out var actualFormat,
 										out var nitems,

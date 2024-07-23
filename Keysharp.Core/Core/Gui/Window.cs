@@ -504,7 +504,7 @@ namespace Keysharp.Core
 			return val;
 		}
 
-		public static object WinGetPID(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.PID.ToInt64() : 0L);
+		public static object WinGetPID(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.PID : 0L);
 
 		public static void WinGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
 		WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
