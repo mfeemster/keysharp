@@ -82,7 +82,25 @@ namespace Keysharp.Core.Linux
 			set => throw new NotImplementedException();
 		}
 
-		internal override List<WindowItemBase> ChildWindows => throw new NotImplementedException();
+		internal override List<WindowItemBase> ChildWindows
+		{
+			get
+			{
+				var windows = new List<WindowItemBase>();
+				var attr = new XWindowAttributes();
+				var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
+				var filter = (long id) =>
+				{
+					if (Xlib.XGetWindowAttributes(_xwindow.XDisplay.Handle, id, ref attr) != 0)
+						if (detectHiddenText || attr.map_state == MapState.IsViewable)
+							return true;
+
+					return false;
+				};
+				windows.AddRange(_xwindow.XDisplay.XQueryTreeRecursive(_xwindow, filter).Select(w => new WindowItem(w)));
+				return windows;
+			}
+		}
 
 		internal override string ClassName => throw new NotImplementedException();
 
