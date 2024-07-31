@@ -14,7 +14,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				var serialstr = Wmi.Identifier("Win32_LogicalDisk", "VolumeSerialNumber", "SELECT * FROM Win32_LogicalDisk WHERE Name = \"" + drive.Name + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+				var serialstr = Wmi.Identifier("Win32_LogicalDisk", "VolumeSerialNumber", "SELECT * FROM Win32_LogicalDisk WHERE DeviceId = '" + drive.Name.Substring(0, 2) + "'");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 				return long.TryParse(serialstr, NumberStyles.HexNumber, Parser.culture, out var l) ? l : 0L;
 			}
 		}

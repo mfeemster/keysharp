@@ -65,6 +65,33 @@
 			return true;
 		}
 
+#if LINUX
+		/// <summary>
+		/// Gotten from: https://stackoverflow.com/questions/54325155/how-to-get-hard-disk-serial-number-compatible-with-linux-windows
+		/// </summary>
+		/// <param name="cmd">The Bash command to run</param>
+		/// <returns>The output of the Bash command</returns>
+		internal static string Bash(this string cmd)
+		{
+			var escapedArgs = cmd.Replace("\"", "\\\"");
+			var process = new Process()
+			{
+				StartInfo = new ProcessStartInfo
+				{
+					FileName = "/bin/bash",
+					Arguments = $"-c \"{escapedArgs}\"",
+					RedirectStandardOutput = true,
+					UseShellExecute = false,
+					CreateNoWindow = true,
+				}
+			};
+			_ = process.Start();
+			string result = process.StandardOutput.ReadToEnd();
+			process.WaitForExit();
+			return result;
+		}
+#endif
+
 		internal static int EndsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
 		{
 			foreach (var end in strings)

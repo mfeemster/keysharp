@@ -77,7 +77,7 @@ namespace Keysharp.Core
 		/// <param name="path">Path of drive to receive information from.</param>
 		/// <returns>The serial number of the drive</returns>
 		public static long DriveGetSerial(object obj)
-		=> Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As().TrimEnd('\\'))).Serial;
+		=> Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As())).Serial;
 
 		/// <summary>
 		/// Retrieves the free disk space of a drive, in megabytes.

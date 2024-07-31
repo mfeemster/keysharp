@@ -858,7 +858,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
-
+#if LINUX
 		public static long zzzLinuxTester(params object[] obj)
 		{
 			/*
@@ -886,11 +886,46 @@ namespace Keysharp.Core
 			//
 			//
 			//
-			Keysharp.Scripting.Script.OutputDebug($"Is admin: {Accessors.A_IsAdmin}");
-			Keysharp.Scripting.Script.OutputDebug($"pthread self: {Xlib.pthread_self()}");
+			/*
+			    Keysharp.Scripting.Script.OutputDebug($"Is admin: {Accessors.A_IsAdmin}");
+			    Keysharp.Scripting.Script.OutputDebug($"pthread self: {Xlib.pthread_self()}");
+			*/
+			//
+			//
+			//
+			/*
+			    var val = "";
+			    var serial = "udevadm info --query=property --name=/dev/sda | grep ID_SERIAL_SHORT".Bash();
+
+			    if (!string.IsNullOrEmpty(serial))
+			    {
+			    var components = serial.Split('=');
+
+			    if (components.Length >= 2)
+			        val = components[1];
+			    }
+
+			    Keysharp.Scripting.Script.OutputDebug($"sda serial: {val}");
+			*/
+			//
+			//
+			//
+			var name = "/dev/sda";
+			var freespace = Keysharp.Core.Drive.DriveGetSpaceFree(name);
+			Keysharp.Scripting.Script.OutputDebug($"sda free space: {freespace}");
+			var status = Keysharp.Core.Drive.DriveGetStatus(name);
+			Keysharp.Scripting.Script.OutputDebug($"sda status: {status}");
+			var tp = Keysharp.Core.Drive.DriveGetType(name);
+			Keysharp.Scripting.Script.OutputDebug($"sda type: {tp}");
+			var lbl = Keysharp.Core.Drive.DriveGetLabel(name);
+			Keysharp.Scripting.Script.OutputDebug($"sda label: {lbl}");
+			var fsys = Keysharp.Core.Drive.DriveGetFileSystem(name);
+			Keysharp.Scripting.Script.OutputDebug($"sda file system: {fsys}");
+			var cap = Keysharp.Core.Drive.DriveGetCapacity(name);
+			Keysharp.Scripting.Script.OutputDebug($"sda capacity: {cap}");
 			return 0L;
 		}
-
+#endif
 
 		internal static (bool, IntPtr) CtrlToIntPtr(object ctrl)
 		{
