@@ -1461,7 +1461,7 @@
 				var lii = Windows.LASTINPUTINFO.Default;
 				return WindowsAPI.GetLastInputInfo(ref lii) ? Environment.TickCount - lii.dwTime : 0L;
 #else
-				return 0L;
+				return "xprintidle".Bash().Al();
 #endif
 			}
 		}

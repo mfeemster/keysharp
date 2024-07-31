@@ -910,19 +910,30 @@ namespace Keysharp.Core
 			//
 			//
 			//
-			var name = "/dev/sda";
-			var freespace = Keysharp.Core.Drive.DriveGetSpaceFree(name);
-			Keysharp.Scripting.Script.OutputDebug($"sda free space: {freespace}");
-			var status = Keysharp.Core.Drive.DriveGetStatus(name);
-			Keysharp.Scripting.Script.OutputDebug($"sda status: {status}");
-			var tp = Keysharp.Core.Drive.DriveGetType(name);
-			Keysharp.Scripting.Script.OutputDebug($"sda type: {tp}");
-			var lbl = Keysharp.Core.Drive.DriveGetLabel(name);
-			Keysharp.Scripting.Script.OutputDebug($"sda label: {lbl}");
-			var fsys = Keysharp.Core.Drive.DriveGetFileSystem(name);
-			Keysharp.Scripting.Script.OutputDebug($"sda file system: {fsys}");
-			var cap = Keysharp.Core.Drive.DriveGetCapacity(name);
-			Keysharp.Scripting.Script.OutputDebug($"sda capacity: {cap}");
+			/*
+			    var name = "/dev/sda";
+			    var freespace = Keysharp.Core.Drive.DriveGetSpaceFree(name);
+			    Keysharp.Scripting.Script.OutputDebug($"sda free space: {freespace}");
+			    var status = Keysharp.Core.Drive.DriveGetStatus(name);
+			    Keysharp.Scripting.Script.OutputDebug($"sda status: {status}");
+			    var tp = Keysharp.Core.Drive.DriveGetType(name);
+			    Keysharp.Scripting.Script.OutputDebug($"sda type: {tp}");
+			    var lbl = Keysharp.Core.Drive.DriveGetLabel(name);
+			    Keysharp.Scripting.Script.OutputDebug($"sda label: {lbl}");
+			    var fsys = Keysharp.Core.Drive.DriveGetFileSystem(name);
+			    Keysharp.Scripting.Script.OutputDebug($"sda file system: {fsys}");
+			    var cap = Keysharp.Core.Drive.DriveGetCapacity(name);
+			    Keysharp.Scripting.Script.OutputDebug($"sda capacity: {cap}");
+			*/
+			//
+			//
+			//
+			for (var i = 0; i < 5; i++)
+			{
+				Keysharp.Scripting.Script.OutputDebug($"Idle time: {Accessors.A_TimeIdle}");
+				System.Threading.Thread.Sleep(100);
+			}
+
 			return 0L;
 		}
 #endif
