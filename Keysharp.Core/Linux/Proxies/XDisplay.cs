@@ -149,26 +149,28 @@ namespace Keysharp.Core.Linux.Proxies
 
 			try
 			{
-				_ = Xlib.XQueryTree(Handle, windowToObtain.ID, out var rootReturn, out var parentReturn, out childrenReturn, out var nChildrenReturn);
-				var pSource = (long*)childrenReturn.ToPointer();
-
-				for (var i = 0; i < nChildrenReturn; i++)
+				if (Xlib.XQueryTree(Handle, windowToObtain.ID, out var rootReturn, out var parentReturn, out childrenReturn, out var nChildrenReturn) != 0)
 				{
-					try
-					{
-						var id = pSource[i];
+					var pSource = (long*)childrenReturn.ToPointer();
 
-						if (filter == null || filter(id))
-						{
-							var window = new XWindow(this, id);
-							windows.Add(window);
-							//var tempItem = new WindowItem(window);
-							//Keysharp.Scripting.Script.OutputDebug($"Adding window from XQueryTree() with id: {id}, title: {tempItem.Title}");
-						}
-					}
-					catch (Exception ex)
+					for (var i = 0; i < nChildrenReturn; i++)
 					{
-						Keysharp.Scripting.Script.OutputDebug($"Error when applying XQueryTree() filter: {ex.Message}");
+						try
+						{
+							var id = pSource[i];
+
+							if (filter == null || filter(id))
+							{
+								var window = new XWindow(this, id);
+								windows.Add(window);
+								//var tempItem = new WindowItem(window);
+								//Keysharp.Scripting.Script.OutputDebug($"Adding window from XQueryTree() with id: {id}, title: {tempItem.Title}");
+							}
+						}
+						catch (Exception ex)
+						{
+							Keysharp.Scripting.Script.OutputDebug($"Error when applying XQueryTree() filter: {ex.Message}");
+						}
 					}
 				}
 			}
@@ -199,21 +201,23 @@ namespace Keysharp.Core.Linux.Proxies
 
 			try
 			{
-				_ = Xlib.XQueryTree(Handle, windowToObtain.ID, out var rootReturn, out var parentReturn, out childrenReturn, out var nChildrenReturn);
-				var pSource = (long*)childrenReturn.ToPointer();
-
-				for (var i = 0; i < nChildrenReturn; i++)
+				if (Xlib.XQueryTree(Handle, windowToObtain.ID, out var rootReturn, out var parentReturn, out childrenReturn, out var nChildrenReturn) != 0)
 				{
-					var id = pSource[i];
+					var pSource = (long*)childrenReturn.ToPointer();
 
-					//We are assuming that if this window didn't pass the filter test, then its child windows won't either.
-					if (filter == null || filter(id))
+					for (var i = 0; i < nChildrenReturn; i++)
 					{
-						var window = new XWindow(this, id);
-						windows.Add(window);
-						//var tempItem = new WindowItem(window);
-						//Keysharp.Scripting.Script.OutputDebug($"Adding window from XQueryTree() with id: {id}, title: {tempItem.Title}");
-						windows.AddRange(XQueryTreeRecursive(window, filter));
+						var id = pSource[i];
+
+						//We are assuming that if this window didn't pass the filter test, then its child windows won't either.
+						if (filter == null || filter(id))
+						{
+							var window = new XWindow(this, id);
+							windows.Add(window);
+							//var tempItem = new WindowItem(window);
+							//Keysharp.Scripting.Script.OutputDebug($"Adding window from XQueryTree() with id: {id}, title: {tempItem.Title}");
+							windows.AddRange(XQueryTreeRecursive(window, filter));
+						}
 					}
 				}
 			}

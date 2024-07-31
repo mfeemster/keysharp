@@ -576,15 +576,6 @@ namespace Keysharp.Core
 
 		public static void WinMaximizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MaximizeAll);
 
-		//public static void PrintAllWindowText(params object[] obj)
-		//{
-		//  //Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in PrintAllWindowText()");
-		//  var windows = WindowProvider.Manager.AllWindows;
-		//
-		//  foreach (var window in windows)
-		//      Keysharp.Scripting.Script.OutputDebug(window.Title);
-		//}
-
 		public static void WinMove(params object[] obj)
 		{
 			var (x, y, width, height, title, text, excludeTitle, excludeText) = obj.I4O1S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue);
@@ -868,6 +859,39 @@ namespace Keysharp.Core
 			return b ? 1L : 0L;
 		}
 
+		public static long zzzLinuxTester(params object[] obj)
+		{
+			/*
+			    Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in PrintAllWindowText()");
+			    var windows = WindowProvider.Manager.AllWindows;
+
+			    foreach (var window in windows)
+			        Keysharp.Scripting.Script.OutputDebug(window.PID + ", " + window.Title);
+			*/
+			//
+			//
+			//
+			/*
+			    Accessors.A_Clipboard = "Asdf";
+			    var clip = Accessors.A_Clipboard as string;
+			    Keysharp.Scripting.Script.OutputDebug($"Initial clipboard: {clip}");
+			    var arr = Env.ClipboardAll();
+			    Accessors.A_Clipboard = "";
+			    clip = Accessors.A_Clipboard as string;
+			    Keysharp.Scripting.Script.OutputDebug($"Cleared clipboard: {clip}");
+			    Accessors.A_Clipboard = arr;
+			    clip = Accessors.A_Clipboard as string;
+			    Keysharp.Scripting.Script.OutputDebug($"Restored clipboard: {clip}");
+			*/
+			//
+			//
+			//
+			Keysharp.Scripting.Script.OutputDebug($"Is admin: {Accessors.A_IsAdmin}");
+			Keysharp.Scripting.Script.OutputDebug($"pthread self: {Xlib.pthread_self()}");
+			return 0L;
+		}
+
+
 		internal static (bool, IntPtr) CtrlToIntPtr(object ctrl)
 		{
 			if (ctrl == null)
@@ -1057,23 +1081,22 @@ namespace Keysharp.Core
 			{
 				if (SearchWindow(obj, true) is WindowItem win)
 				{
-					var scale = 1.0;// / Accessors.A_ScaledScreenDPI;
 					var rect = client ? win.ClientLocation : win.Location;
 
 					if (client)
 					{
 						var pt = win.ClientToScreen();
-						outX = (long)(scale * (rect.Left + pt.X));
-						outY = (long)(scale * (rect.Top + pt.Y));
+						outX = (long)(rect.Left + pt.X);
+						outY = (long)(rect.Top + pt.Y);
 					}
 					else
 					{
-						outX = (long)(scale * rect.Left);
-						outY = (long)(scale * rect.Top);
+						outX = (long)rect.Left;
+						outY = (long)rect.Top;
 					}
 
-					outWidth  = (long)(rect.Width * scale);
-					outHeight = (long)(rect.Height * scale);
+					outWidth  = (long)rect.Width;
+					outHeight = (long)rect.Height;
 				}
 				else
 				{

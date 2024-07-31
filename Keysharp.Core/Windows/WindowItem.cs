@@ -108,42 +108,6 @@ namespace Keysharp.Core.Windows
 
 		internal override string ClassName => IsSpecified ? WindowsAPI.GetClassName(Handle) : string.Empty;
 
-		internal override string ClassNN
-		{
-			get
-			{
-				var className = ClassName;
-				var classNN = className;
-				// to get the classNN we must know the enumeration
-				// of our parent window:
-				var parent = ParentWindow;
-
-				if (parent.IsSpecified)
-				{
-					var nn = 1; // Class NN counter
-
-					// now we must know the postion of our "control"
-					foreach (var c in parent.ChildWindows)
-					{
-						if (c.IsSpecified)
-						{
-							if (c.ClassName == className)
-							{
-								if (c.Equals(this))
-									break;
-								else
-									++nn;  // if its the same class but not our control
-							}
-						}
-					}
-
-					classNN += nn.ToString(); // if its the same class and our control
-				}
-
-				return classNN;
-			}
-		}
-
 		internal override Rectangle ClientLocation
 		{
 			get
@@ -210,53 +174,6 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override string NetClassName
-		{
-			get
-			{
-				if (Control.FromHandle(Handle) is Control c)
-					return c.GetType().Name;
-
-				return "";
-			}
-		}
-
-		internal override string NetClassNN
-		{
-			get
-			{
-				if (Control.FromHandle(Handle) is Control ctrl)
-				{
-					var className = ctrl.GetType().Name;
-					var classNN = className;
-					var parent = ctrl.Parent;
-
-					if (parent != null)
-					{
-						var nn = 1; // Class NN counter
-
-						// now we must know the postion of our "control"
-						foreach (var c in parent.GetAllControlsRecusrvive<Control>())
-						{
-							if (c.GetType().Name == className)
-							{
-								if (c == ctrl)
-									break;
-								else
-									++nn;  // if its the same class but not our control
-							}
-						}
-
-						classNN += nn.ToString(); // if its the same class and our control
-					}
-
-					return classNN;
-				}
-
-				return "";
-			}
-		}
-
 		internal override WindowItemBase NonChildParentWindow => new WindowItem(WindowsAPI.GetNonChildParent(Handle));
 
 		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
@@ -270,15 +187,14 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override WindowItemBase PreviousWindow => !IsSpecified ? null : new WindowItem(WindowsAPI.GetWindow(Handle, WindowsAPI.GW_HWNDPREV));
-
 		internal override Size Size
 		{
 			get
 			{
+				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				return !IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect)
 					   ? Size.Empty
-					   : new Size(rect.Right - rect.Left, rect.Bottom - rect.Top);
+					   : new Size((int)(scale * (rect.Right - rect.Left)), (int)(scale * (rect.Bottom - rect.Top)));
 			}
 			set
 			{
@@ -355,11 +271,11 @@ namespace Keysharp.Core.Windows
 				}
 				else
 				{
-					var color = Math.Clamp((int)value.Al(), 0, 255);
+					var alpha = Math.Clamp((int)value.Al(), 0, 255);
 
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero ||
-							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)color, WindowsAPI.LWA_ALPHA))
-						throw new OSError("", $"Could not assign transparency with alpha value of {color}.");
+							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)alpha, WindowsAPI.LWA_ALPHA))
+						throw new OSError("", $"Could not assign transparency with alpha value of {alpha}.");
 				}
 			}
 		}
@@ -726,8 +642,6 @@ namespace Keysharp.Core.Windows
 			return pt;
 		}
 
-		internal override void ClientToScreen(ref System.Drawing.Point pt) => WindowsAPI.ClientToScreen(Handle, ref pt);
-
 		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
 		internal override uint GetMenuItemId(params string[] items)
@@ -828,15 +742,15 @@ namespace Keysharp.Core.Windows
 			return !Exists;
 		}
 
-		internal override WindowItemBase RealChildWindowFromPoint(Point location)
-		{
-			WindowItemBase child = null;
+		//internal override WindowItemBase RealChildWindowFromPoint(Point location)
+		//{
+		//  WindowItemBase child = null;
 
-			if (IsSpecified)
-				child = new WindowItem(WindowsAPI.RealChildWindowFromPoint(Handle, location));
+		//  if (IsSpecified)
+		//      child = new WindowItem(WindowsAPI.RealChildWindowFromPoint(Handle, location));
 
-			return child;
-		}
+		//  return child;
+		//}
 
 		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
 
@@ -858,26 +772,6 @@ namespace Keysharp.Core.Windows
 
 			var lparam = new IntPtr(Conversions.MakeInt(click.X, click.Y));
 			_ = WindowsAPI.PostMessage(Handle, mouseevent, new IntPtr(1), lparam);
-		}
-
-		internal override void SetTransparency(byte level, Color color)
-		{
-			if (!IsSpecified)
-				return;
-
-			if (level == byte.MaxValue)
-				ExStyle &= ~WindowsAPI.WS_EX_LAYERED;
-			else
-			{
-				var flags = WindowsAPI.LWA_ALPHA;
-				var c = (color.B << 16) | (color.G << 8) | color.R;
-
-				if (c != 0)
-					flags |= WindowsAPI.LWA_COLORKEY;
-
-				ExStyle |= WindowsAPI.WS_EX_LAYERED;
-				_ = WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)c, level, (uint)flags);
-			}
 		}
 
 		internal override bool Show()

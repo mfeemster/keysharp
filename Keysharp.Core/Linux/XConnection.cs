@@ -119,22 +119,23 @@ namespace Keysharp.Core.Linux
 				windows.Add(rootWindow);
 
 			// Request all children of the given window, along with the parent
-			_ = Xlib.XQueryTree(display, rootWindow, out var rootWindowRet, out var parentWindow, out var childrenPtr, out var nChildren);
-
-			if (nChildren != 0)
+			if (Xlib.XQueryTree(display, rootWindow, out var rootWindowRet, out var parentWindow, out var childrenPtr, out var nChildren) != 0)
 			{
-				var pSource = (long*)childrenPtr.ToPointer();
-				_ = Xlib.XSelectInput(display, rootWindow, selectMask);
-
-				// Subwindows shouldn't be forgotten, especially since everything is a subwindow of RootWindow
-				for (var i = 0; i < nChildren; i++)
+				if (nChildren != 0)
 				{
-					var child = pSource[i];
+					var pSource = (long*)childrenPtr.ToPointer();
+					_ = Xlib.XSelectInput(display, rootWindow, selectMask);
 
-					if (child != 0)
+					// Subwindows shouldn't be forgotten, especially since everything is a subwindow of RootWindow
+					for (var i = 0; i < nChildren; i++)
 					{
-						_ = Xlib.XSelectInput(display, child, selectMask);
-						RecurseTree(display, child);
+						var child = pSource[i];
+
+						if (child != 0)
+						{
+							_ = Xlib.XSelectInput(display, child, selectMask);
+							RecurseTree(display, child);
+						}
 					}
 				}
 			}

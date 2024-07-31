@@ -10,9 +10,13 @@ namespace Keysharp.Tests
 		{
 			Accessors.A_Clipboard = "Asdf";
 			var arr = Env.ClipboardAll();
-			Accessors.A_Clipboard = "";
-			Accessors.A_Clipboard = arr;
 			var clip = Accessors.A_Clipboard as string;
+			Assert.AreEqual("Asdf", clip);
+			Accessors.A_Clipboard = "";
+			clip = Accessors.A_Clipboard as string;
+			Assert.AreEqual("", clip);
+			Accessors.A_Clipboard = arr;
+			clip = Accessors.A_Clipboard as string;
 			Assert.AreEqual("Asdf", clip);
 		}
 

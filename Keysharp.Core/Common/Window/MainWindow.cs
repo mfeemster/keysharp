@@ -10,6 +10,10 @@ namespace Keysharp.Scripting
 		private AboutBox about;
 		private bool callingInternalVars = false;
 
+#if LINUX
+		private static Gdk.Atom clipAtom = Gdk.Atom.Intern("CLIPBOARD", false);
+		private Gtk.Clipboard gtkClipBoard = Gtk.Clipboard.Get(clipAtom);
+#endif
 		public bool IsClosing { get; private set; }
 
 		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
@@ -21,10 +25,11 @@ namespace Keysharp.Scripting
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
-#if WINDOWS
-			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
-#else
+#if LINUX
+			gtkClipBoard.OwnerChange += gtkClipBoard_OwnerChange;
 			success = true;
+#elif WINDOWS
+			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			//          ThreadId = WindowsAPI.GetCurrentThreadId();
@@ -254,10 +259,19 @@ namespace Keysharp.Scripting
 			if (success)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
+#elif LINUX
+			gtkClipBoard.OwnerChange -= gtkClipBoard_OwnerChange;
 #endif
 			Keysharp.Core.Gui.DestroyAll();
 			about?.Close();
 		}
+
+#if LINUX
+		private void gtkClipBoard_OwnerChange(object o, Gtk.OwnerChangeArgs args)
+		{
+			ClipboardUpdate?.Invoke(null);
+		}
+#endif
 
 		private void MainWindow_Load(object sender, EventArgs e)
 		{
@@ -330,7 +344,11 @@ namespace Keysharp.Scripting
 		private void windowSpyToolStripMenuItem_Click(object sender, System.EventArgs e)
 		{
 			var path = System.IO.Path.GetDirectoryName(Accessors.A_KeysharpPath);
+#if WINDOWS
 			var exe = path + "/Keysharp.exe";
+#else
+			var exe = path + "/Keysharp";
+#endif
 			var opt = path + "/Scripts/WindowSpy.ks";
 			object pid = 0;
 			//Keysharp.Core.Dialogs.MsgBox(exe + "\r\n" + path + "\r\n" + opt);

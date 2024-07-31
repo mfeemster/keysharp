@@ -1,5 +1,4 @@
 #if LINUX
-
 namespace Keysharp.Core.Linux
 {
 	/// <summary>

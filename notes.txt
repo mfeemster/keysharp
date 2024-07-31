@@ -273,6 +273,8 @@ Linux ideas/research:
 		Autokey and others: https://www.autohotkey.com/boards/viewtopic.php?f=22&t=65552
 	https://github.com/ReimuNotMoe/ydotool
 	Linux has a system wide hotkey reigstry which can usually be found in some settings gui.
+	Another event listener: https://github.com/Narsil/rdev
+	Check out accessibility, it might help because the use case is the same: https://www.freedesktop.org/wiki/Accessibility/
 	
 Mac ideas/research:
 	WinForms for 64-bit Mac: https://github.com/emclient/mac-playground

@@ -1,7 +1,12 @@
+using static System.Windows.Forms.DataFormats;
+
 namespace Keysharp.Core
 {
 	public static class Env
 	{
+		private static IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
+				.Select(f => f.Name);
+				
 		/// <summary>
 		/// Gotten from AHK.
 		/// </summary>
@@ -9,7 +14,9 @@ namespace Keysharp.Core
 		/// <returns></returns>
 		public static ClipboardAll ClipboardAll(object obj0 = null, object obj1 = null)
 		{
-#if WINDOWS
+#if LINUX
+			return new ClipboardAll();
+#elif WINDOWS
 			var data = obj0;
 			var size = obj1.Al(long.MinValue);
 
@@ -88,10 +95,8 @@ namespace Keysharp.Core
 				}
 			}
 
-#elif LINUX
-			throw new NotImplementedException();
-#endif
 			return new ClipboardAll(System.Array.Empty<byte>());
+#endif
 		}
 
 		public static bool ClipWait(object obj0 = null, object obj1 = null)
@@ -176,13 +181,7 @@ namespace Keysharp.Core
 		/// attempts to provide such functionality.
 		/// </summary>
 		/// <returns>True if empty, else false.</returns>
-		public static bool IsClipboardEmpty()
-		{
-			var dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
-							  .Select(f => f.Name);
-			var containsSomething = dataFormats.Any(Clipboard.ContainsData);
-			return !containsSomething;
-		}
+		public static bool IsClipboardEmpty() => !dataFormats.Any(Clipboard.ContainsData);
 
 		public static void OnClipboardChange(object obj0, object obj1 = null)
 		{
@@ -264,44 +263,89 @@ namespace Keysharp.Core
 		{
 			unsafe
 			{
-#if WINDOWS
+#if LINUX
+				clip.Restore();
+#elif WINDOWS
+				var wasOpened = false;
 
-				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
+				try
 				{
-					var ptr = clip.Ptr;
-					length = Math.Min(Math.Max(0U, length), (long)clip.Size);
-
-					for (var index = 0; index < length;)
+					if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
 					{
-						var cliptype = (uint)Marshal.ReadInt32(ptr, index);
+						wasOpened = true;
+						var ptr = clip.Ptr;
+						length = Math.Min(Math.Max(0U, length), (long)clip.Size);
 
-						if (cliptype == 0)
-							break;
-
-						index += 4;
-						var size = Marshal.ReadInt32(ptr, index);
-						index += 4;
-
-						if (index + size < length)
+						for (var index = 0; index < length;)
 						{
-							var hglobal = Marshal.AllocHGlobal(size);
-							System.Buffer.MemoryCopy((ptr + index).ToPointer(), hglobal.ToPointer(), size, size);
-							_ = WindowsAPI.SetClipboardData(cliptype, hglobal);
-							//Do not free hglobal here.
-							index += size;
+							var cliptype = (uint)Marshal.ReadInt32(ptr, index);
+
+							if (cliptype == 0)
+								break;
+
+							index += 4;
+							var size = Marshal.ReadInt32(ptr, index);
+							index += 4;
+
+							if (index + size < length)
+							{
+								var hglobal = Marshal.AllocHGlobal(size);
+								System.Buffer.MemoryCopy((ptr + index).ToPointer(), hglobal.ToPointer(), size, size);
+								_ = WindowsAPI.SetClipboardData(cliptype, hglobal);
+								//Do not free hglobal here.
+								index += size;
+							}
 						}
 					}
-
-					_ = WindowsAPI.CloseClipboard();
+				}
+				finally
+				{
+					if (wasOpened)
+						_ = WindowsAPI.CloseClipboard();
 				}
 
-#elif LINUX
-				throw new NotImplementedException();
+
 #endif
 			}
 		}
 	}
 
+#if LINUX
+	/// <summary>
+	/// Taken from: https://stackoverflow.com/questions/6262454/c-sharp-backing-up-and-restoring-clipboard
+	/// </summary>
+	public class ClipboardAll : KeysharpObject
+	{
+		Dictionary<string, object> backup = new Dictionary<string, object>();
+		IDataObject dataObject = Clipboard.GetDataObject();
+		string[] formats;
+
+		public ClipboardAll()
+		{
+			Save();
+		}
+
+		internal void Save()
+		{
+			backup = new Dictionary<string, object>();
+			dataObject = Clipboard.GetDataObject();
+			formats = dataObject.GetFormats(false);
+
+			foreach (var lFormat in formats)
+				backup.Add(lFormat, dataObject.GetData(lFormat, false));
+		}
+
+		internal void Restore()
+		{
+			dataObject = new DataObject();
+
+			foreach (var format in formats)
+				dataObject.SetData(format, backup[format]);
+
+			Clipboard.SetDataObject(dataObject);
+		}
+	}
+#elif WINDOWS
 	public class ClipboardAll : Buffer
 	{
 		public ClipboardAll(byte[] obj)
@@ -309,4 +353,6 @@ namespace Keysharp.Core
 		{
 		}
 	}
+#endif
+
 }

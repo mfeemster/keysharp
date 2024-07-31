@@ -27,7 +27,41 @@ namespace Keysharp.Core.Common.Window
 		/// <summary>
 		/// Get the ClassName + number of occurence of this window (control)
 		/// </summary>
-		internal abstract string ClassNN { get; }
+		internal virtual string ClassNN
+		{
+			get
+			{
+				var className = ClassName;
+				var classNN = className;
+				// to get the classNN we must know the enumeration
+				// of our parent window:
+				var parent = ParentWindow;
+
+				if (parent.IsSpecified)
+				{
+					var nn = 1; // Class NN counter
+
+					// now we must know the postion of our "control"
+					foreach (var c in parent.ChildWindows)
+					{
+						if (c.IsSpecified)
+						{
+							if (c.ClassName == className)
+							{
+								if (c.Equals(this))
+									break;
+								else
+									++nn;  // if its the same class but not our control
+							}
+						}
+					}
+
+					classNN += nn.ToString(); // if its the same class and our control
+				}
+
+				return classNN;
+			}
+		}
 
 		internal abstract Rectangle ClientLocation { get; }
 		internal int Delay { get; set; } = 100;
@@ -38,8 +72,51 @@ namespace Keysharp.Core.Common.Window
 		internal abstract bool IsHung { get; }
 		internal bool IsSpecified => Handle != IntPtr.Zero;
 		internal abstract Rectangle Location { get; set; }
-		internal abstract string NetClassName { get; }
-		internal abstract string NetClassNN { get; }
+		internal virtual string NetClassName
+		{
+			get
+			{
+				if (Control.FromHandle(Handle) is Control c)
+					return c.GetType().Name;
+
+				return "";
+			}
+		}
+		internal virtual string NetClassNN
+		{
+			get
+			{
+				if (Control.FromHandle(Handle) is Control ctrl)
+				{
+					var className = ctrl.GetType().Name;
+					var classNN = className;
+					var parent = ctrl.Parent;
+
+					if (parent != null)
+					{
+						var nn = 1; // Class NN counter
+
+						// now we must know the postion of our "control"
+						foreach (var c in parent.GetAllControlsRecusrvive<Control>())
+						{
+							if (c.GetType().Name == className)
+							{
+								if (c == ctrl)
+									break;
+								else
+									++nn;  // if its the same class but not our control
+							}
+						}
+
+						classNN += nn.ToString(); // if its the same class and our control
+					}
+
+					return classNN;
+				}
+
+				return "";
+			}
+		}
 		internal abstract WindowItemBase NonChildParentWindow { get; }
 		internal abstract WindowItemBase ParentWindow { get; }
 		internal virtual bool IsIconic => WindowState == FormWindowState.Minimized;
@@ -61,7 +138,6 @@ namespace Keysharp.Core.Common.Window
 		}
 
 		internal abstract long PID { get; }
-		internal abstract WindowItemBase PreviousWindow { get; }
 
 		internal virtual string ProcessName
 		{
@@ -127,7 +203,7 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract System.Drawing.Point ClientToScreen();
 
-		internal abstract void ClientToScreen(ref System.Drawing.Point pt);
+		internal virtual void ClientToScreen(ref System.Drawing.Point pt) => pt = ClientToScreen();
 
 		internal abstract bool Close();
 
@@ -243,11 +319,11 @@ namespace Keysharp.Core.Common.Window
 
 		internal abstract bool Kill();
 
-		internal abstract WindowItemBase RealChildWindowFromPoint(Point location);
+		//internal abstract WindowItemBase RealChildWindowFromPoint(Point location);
 
 		internal abstract bool Redraw();
 
-		internal abstract void SetTransparency(byte level, Color color);
+		//internal abstract void SetTransparency(byte level, Color color);
 
 		internal abstract bool Show();
 

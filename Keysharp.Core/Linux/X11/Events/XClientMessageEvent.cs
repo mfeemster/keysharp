@@ -1,5 +1,5 @@
 ﻿#if LINUX
-namespace Keysharp.Core.Linux.X11.Events
+namespace Keysharp.Core.Linux.X11
 {
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XClientMessageEvent

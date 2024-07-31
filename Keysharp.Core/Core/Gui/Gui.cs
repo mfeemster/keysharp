@@ -1615,9 +1615,9 @@ namespace Keysharp.Core
 					}
 					else//Special style, windows only. Need to figure out how to make this cross platform.//TODO
 					{
+#if WINDOWS
 						var temp = 0;
 						var handle = this.form.Handle;
-#if WINDOWS
 
 						if (Options.TryParse(split, "+E", ref temp))
 						{

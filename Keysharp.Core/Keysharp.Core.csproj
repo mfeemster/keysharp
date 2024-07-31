@@ -48,6 +48,7 @@
 
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
     <ProjectReference Include="..\..\system.windows.forms\System.Windows.Forms\System.Windows.Forms.csproj" />
+    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
   </ItemGroup>
   
   <ItemGroup>

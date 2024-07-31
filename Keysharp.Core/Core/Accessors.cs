@@ -219,6 +219,7 @@
 				if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
 				{
 					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
+#endif
 
 					if (Clipboard.GetData(DataFormats.Text) is string text)
 						return text;
@@ -243,6 +244,8 @@
 
 					if (Clipboard.GetData(DataFormats.FileDrop) is string[] files)
 						return string.Join(Environment.NewLine, files);
+
+#if WINDOWS
 				}
 
 #endif
@@ -250,10 +253,22 @@
 			}
 			set
 			{
-#if WINDOWS
-
 				if (value != null)
 				{
+#if LINUX
+
+					if (value is ClipboardAll arr)
+						Env.RestoreClipboardAll(arr, 0L);
+					else if (value is string s && s?.Length == 0)
+					{
+						//Clipboard.Clear();//For some reason this doesn't work on linux. Bug reported here: https://github.com/DanielVanNoord/System.Windows.Forms/issues/17
+						Clipboard.SetDataObject("", true);
+					}
+					else
+						Clipboard.SetDataObject(value.ToString(), true);
+
+#elif WINDOWS
+
 					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
@@ -265,9 +280,9 @@
 						else
 							Clipboard.SetDataObject(value.ToString(), true);
 					}
-				}
 
 #endif
+				}
 			}
 		}
 
@@ -625,12 +640,18 @@
 		/// <summary>
 		/// <code>true</code> if the current user has administrator rights, <code>false</code> otherwise.
 		/// </summary>
-		public static bool A_IsAdmin =>
-#if WINDOWS
-		new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-#else
-		false;//Need to figure this out on linux.//TODO
+		public static bool A_IsAdmin
+		{
+			get
+			{
+#if LINUX
+				return Xlib.geteuid() == 0;
+#elif WINDOWS
+				using var id = WindowsIdentity.GetCurrent();
+				return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
 #endif
+			}
+		}
 
 		/// <summary>
 		/// <code>true</code> if the current executing assembly is a compiled script, <code>false</code> otherwise;
