@@ -1,7 +1,6 @@
 # Keysharp #
 
 ## How do I get set up? ##
-
 * If .NET 8 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 ### Installing on Windows ###
@@ -237,6 +236,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
 * A new function `ShowDebug()` to show the main window and focus the debug output tab.
+* `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.

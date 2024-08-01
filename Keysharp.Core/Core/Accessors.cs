@@ -102,7 +102,7 @@
 		/// </summary>
 		public static string A_AppDataCommon => Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
 
-		public static Array A_Args { get; internal set; } = new Array();
+		public static Array A_Args { get; internal set; } = [];
 
 		/// <summary>
 		/// The company of the assembly that is currently executing, specified with the #ASSEMBLYCOMPANY directive.

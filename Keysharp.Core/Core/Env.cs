@@ -6,7 +6,7 @@ namespace Keysharp.Core
 	{
 		private static IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
 				.Select(f => f.Name);
-				
+
 		/// <summary>
 		/// Gotten from AHK.
 		/// </summary>
@@ -138,13 +138,14 @@ namespace Keysharp.Core
 		/// </summary>
 		public static void EnvUpdate()
 		{
-#if WINDOWS
+#if LINUX
+			"source ~/.bashrc".Bash();
+#elif WINDOWS
 
 			//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
 			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
 			catch (Exception ex) { throw new OSError(ex); }
 
-#elif LINUX
 			throw new NotImplementedException();
 #endif
 		}
