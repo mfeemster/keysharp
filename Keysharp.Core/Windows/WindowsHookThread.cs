@@ -2525,7 +2525,7 @@ namespace Keysharp.Core.Windows
 				IntPtr altTabWindow;
 
 				if ((altTabWindow = FindWindow("#32771", null)) != IntPtr.Zero // There is an alt-tab window...
-						&& GetWindowThreadProcessId(altTabWindow, out _) == GetCurrentThreadId()) // ...and it's owned by the hook thread (not the main thread).
+						&& GetWindowThreadProcessId(altTabWindow, out _) == mgr.CurrentThreadId()) // ...and it's owned by the hook thread (not the main thread).
 				{
 					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDown, VK_ESCAPE);
 					// By definition, an Alt key should be logically down if the alt-tab menu is visible (even if it
@@ -5070,7 +5070,7 @@ namespace Keysharp.Core.Windows
 		// that it was in the middle of, though it could start something new immediately after).
 		{
 			//Make sure this is not called within the channel thread because it would deadlock if so.
-			if (channelThreadID != GetCurrentThreadId() && IsReadThreadRunning())
+			if (channelThreadID != mgr.CurrentThreadId() && IsReadThreadRunning())
 			{
 				hookSynced = false;
 
@@ -5120,7 +5120,7 @@ namespace Keysharp.Core.Windows
 				{
 					Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;//AHK Sets this to critical which seems extreme.
 					var reader = channel.Reader;
-					channelThreadID = GetCurrentThreadId();
+					channelThreadID = mgr.CurrentThreadId();
 
 					await foreach (var item in reader.ReadAllAsync())//This should be totally reworked to use object types/casting rather than packing all manner of obscure meaning into bits and bytes of wparam and lparam.
 						//while (true)
@@ -5133,7 +5133,7 @@ namespace Keysharp.Core.Windows
 						//var item = await reader.ReadAsync();
 						//var theasyncfunc = async () =>
 						var criterion_found_hwnd = IntPtr.Zero;
-						channelThreadID = GetCurrentThreadId();
+						channelThreadID = mgr.CurrentThreadId();
 
 						if (item is KeysharpMsg msg)
 						{

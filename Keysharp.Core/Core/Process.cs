@@ -205,13 +205,7 @@ namespace Keysharp.Core
 		/// </list>
 		/// </param>
 		/// </summary>
-		public static void Shutdown(object obj)
-		{
-			if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-				return;//Does linux have a shutdown command?//TODO
-
-			_ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
-		}
+		public static void Shutdown(object obj) => _ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
 
 		//internal static int MsgFilterMax() => Threads.IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;
 

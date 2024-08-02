@@ -18,7 +18,7 @@
 			var resizeNonIcon = obj3.Ab();
 			var il = imageLists.GetOrAdd(id);
 
-			if (ImageHelper.LoadImage(filename, 0, 0, iconnumber) is Bitmap bmp)
+			if (ImageHelper.LoadImage(filename, 0, 0, iconnumber).Item1 is Bitmap bmp)
 			{
 				if (!ImageHelper.IsIcon(filename))
 				{

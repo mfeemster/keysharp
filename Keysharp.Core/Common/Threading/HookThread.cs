@@ -80,6 +80,7 @@ namespace Keysharp.Core.Common.Threading
 		protected internal IntPtr mouseHook = IntPtr.Zero;
 		protected internal bool undisguisedMenuInEffect = false;
 		protected volatile bool running;
+		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 
 		internal HookThread()
 		{

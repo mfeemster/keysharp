@@ -52,8 +52,6 @@
 
 		internal abstract IntPtr LoadLibrary(string path);
 
-		internal abstract int GetModuleHandleEx(uint flags, string moduleName, out IntPtr module);
-
 		internal abstract uint CurrentThreadId();
 
 		internal abstract bool DestroyIcon(IntPtr icon);

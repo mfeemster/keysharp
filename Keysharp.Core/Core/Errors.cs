@@ -91,7 +91,7 @@
 		private static string FixStackTrace(string stack)
 		{
 			var delim = " in ";
-			var lines = stack.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+			var lines = stack.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			for (var i = 0; i < lines.Length; i++)
 			{

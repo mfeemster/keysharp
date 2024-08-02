@@ -69,9 +69,10 @@
 			return icon;
 		}
 
-		internal static Bitmap LoadImage(string filename, int w, int h, object iconindex)
+		internal static (Bitmap, object) LoadImage(string filename, int w, int h, object iconindex)
 		{
 			Bitmap bmp = null;
+			object temp = null;
 
 			try
 			{
@@ -92,6 +93,8 @@
 
 						if (!dontClear)
 							_ = WindowsAPI.DestroyIcon(tempico.Handle);
+						else
+							temp = tempico;
 					}
 				}
 				else if (filename.StartsWith("HBITMAP:", StringComparison.OrdinalIgnoreCase))
@@ -140,6 +143,8 @@
 							{
 								bmp = bmp.Resize(SystemInformation.IconSize.Width, SystemInformation.IconSize.Height);
 							}
+
+							temp = ico;
 						}
 					}
 					else if (ext == ".ico")
@@ -154,16 +159,23 @@
 							if (tempico == null)
 								tempico = icos[0];
 
+							temp = tempico;
 							bmp = tempico?.ToBitmap();
 						}
 						else if (iconindex.Ai() is int iconint)
 						{
 							if (iconint < icos.Count)
+							{
+								temp = icos[iconint];
 								bmp = icos[iconint].ToBitmap();
+							}
 						}
 
 						if (bmp == null)
+						{
+							temp = icos[0];
 							bmp = icos[0].ToBitmap();
+						}
 
 						if (w > 0 || h > 0)
 						{
@@ -184,6 +196,7 @@
 						{
 							tempcur.Draw(gr, new Rectangle(0, 0, tempcur.Size.Width, tempcur.Size.Height));
 							bmp = curbm;
+							temp = tempcur;
 						}
 					}
 					else
@@ -206,7 +219,7 @@
 				throw new TypeError(ex.Message);
 			}
 
-			return bmp;
+			return (bmp, temp);
 		}
 
 		internal static object PrepareIconNumber(object iconnumber)

@@ -275,6 +275,8 @@ Linux ideas/research:
 	Linux has a system wide hotkey reigstry which can usually be found in some settings gui.
 	Another event listener: https://github.com/Narsil/rdev
 	Check out accessibility, it might help because the use case is the same: https://www.freedesktop.org/wiki/Accessibility/
+	Keyboard and mouse mapper for both X11 and Wayland: https://nocache.org/p/remap-mouse-keyboard-buttons-on-linux-works-for-x11-and-wayland
+	Info about input devices, mapping and capturing: http://xahlee.info/linux/linux_show_keycode_keysym.html
 	
 Mac ideas/research:
 	WinForms for 64-bit Mac: https://github.com/emclient/mac-playground

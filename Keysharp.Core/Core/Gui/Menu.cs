@@ -186,7 +186,7 @@
 
 			if (GetMenuItem(name) is ToolStripItem tsmi)
 			{
-				if (ImageHelper.LoadImage(filename, width, 0, iconnumber) is Bitmap bmp)
+				if (ImageHelper.LoadImage(filename, width, 0, iconnumber).Item1 is Bitmap bmp)
 					tsmi.Image = bmp;
 			}
 		}

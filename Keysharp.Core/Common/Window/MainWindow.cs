@@ -32,7 +32,6 @@ namespace Keysharp.Scripting
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
-			//          ThreadId = WindowsAPI.GetCurrentThreadId();
 			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
 		}
 

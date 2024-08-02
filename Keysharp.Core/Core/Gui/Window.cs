@@ -928,12 +928,44 @@ namespace Keysharp.Core
 			//
 			//
 			//
-			for (var i = 0; i < 5; i++)
-			{
-				Keysharp.Scripting.Script.OutputDebug($"Idle time: {Accessors.A_TimeIdle}");
-				System.Threading.Thread.Sleep(100);
-			}
+			/*
+			    for (var i = 0; i < 5; i++)
+			    {
+			    Keysharp.Scripting.Script.OutputDebug($"Idle time: {Accessors.A_TimeIdle}");
+			    System.Threading.Thread.Sleep(100);
+			    }
+			*/
+			//
+			//
+			//
+			//Edit();
+			//
+			//
+			//
+			/*
+			    var orig = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH");
+			    Keysharp.Scripting.Script.OutputDebug($"Initial LD_LIBRARY_PATH: {orig}");
+			    var path = "/usr/local/lib";
+			    var append = path;
+			    orig = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
+			    var newPath = "";
 
+			    if (orig != "")
+			    {
+			    append = ":" + append;
+			    newPath = orig + append;
+			    //newPath = "\"" + orig + "\"" + append;
+			    }
+			    else
+			    newPath = append;
+
+			    Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", newPath);
+			    Keysharp.Scripting.Script.OutputDebug($"New LD_LIBRARY_PATH: {Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")}");
+			*/
+			//
+			//
+			//
+			Keysharp.Scripting.Script.OutputDebug($"There are {Env.MouseButtonCount()} mouse buttons.");
 			return 0L;
 		}
 #endif

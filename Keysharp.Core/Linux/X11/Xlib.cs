@@ -3,6 +3,10 @@ namespace Keysharp.Core.Linux.X11
 {
 	internal class Xlib
 	{
+		private const string libCName = "libc";
+		private const string libDlName = "libdl.so";
+		private const string libGdiPlusName = "libgdiplus";
+		private const string libPthreadName = "libpthread.so.0";
 		private const string libX11Name = "libX11";
 		private const string libXfixesName = "libXfixes";//"libXfixes.so.3",
 
@@ -212,17 +216,29 @@ namespace Keysharp.Core.Linux.X11
 		[DllImport("libXtst.so.6")]
 		internal static extern void XTestFakeKeyEvent(IntPtr display, uint keyCode, bool isPress, ulong delay);
 
-		[DllImport("libc")]
+		[DllImport(libCName)]
 		internal static extern int getpid();
 
-		[DllImport("libc")]
+		[DllImport(libCName)]
 		internal static extern int gettid();
 
-		[DllImport("libc")]
+		[DllImport(libCName)]
 		internal static extern uint geteuid();
 
-		[DllImport("libpthread.so.0")]
+		[DllImport(libPthreadName)]
 		internal static extern ulong pthread_self();
+
+		[DllImport(libGdiPlusName, ExactSpelling = true)]
+		internal static extern int GdipDisposeImage(IntPtr image);
+
+		[DllImport(libDlName)]
+		internal static extern IntPtr dlopen(string filename, uint flags);
+
+		[DllImport(libDlName)]
+		internal static extern IntPtr dlsym(IntPtr handle, string symbol);
+
+		internal const int RTLD_LAZY = 1;
+		internal const int RTLD_NOW = 2;
 	}
 
 	internal delegate int XErrorHandler(IntPtr displayHandle, ref XErrorEvent errorEvent);

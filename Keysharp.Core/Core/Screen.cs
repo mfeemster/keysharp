@@ -122,7 +122,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				bmp = ImageHelper.LoadImage(filename, w, h, iconnumber);
+				bmp = ImageHelper.LoadImage(filename, w, h, iconnumber).Item1;
 
 				if (bmp == null)
 					throw new FormatException($"Loading icon or bitmap from {filename} failed.");

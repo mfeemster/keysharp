@@ -146,7 +146,7 @@
 
 			if (filename != "*")
 			{
-				var bmp = ImageHelper.LoadImage(filename, 0, 0, iconnumber);
+				var (bmp, temp) = ImageHelper.LoadImage(filename, 0, 0, iconnumber);
 
 				if (Script.Tray == null)
 					Script.CreateTrayMenu();
@@ -154,7 +154,10 @@
 				if (bmp != null)
 				{
 					var ptr = bmp.GetHicon();
-					var icon = Icon.FromHandle(ptr);
+					var icon = temp as Icon;
+
+					if (icon == null)
+						icon = Icon.FromHandle(ptr);
 
 					if (icon != null)
 					{

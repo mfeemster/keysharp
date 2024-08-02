@@ -6,6 +6,7 @@ namespace Keysharp.Scripting
 		{
 			internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
 			internal static DateTime startTime = DateTime.Now;
+			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
 			private static Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
 
 			public bool AutoMark { get; set; }
@@ -21,11 +22,7 @@ namespace Keysharp.Scripting
 			{
 				Keysharp.Core.Window.SetProcessDPIAware();
 				Keysharp.Core.Flow.Init();
-#if WINDOWS
-				Keysharp.Core.Processes.MainThreadID = Keysharp.Core.Windows.WindowsAPI.GetCurrentThreadId();
-#else
-				Keysharp.Core.Processes.MainThreadID = (uint)System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
-#endif
+				Keysharp.Core.Processes.MainThreadID = mgr.CurrentThreadId();
 				Keysharp.Core.Processes.ManagedMainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 				_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 				var stack = new StackTrace(false).GetFrames();
@@ -59,38 +56,38 @@ namespace Keysharp.Scripting
 					}
 				}
 
-				foreach (var dll in preloadedDlls)//Need to figure out a cross platform way to do DLL work.//TODO
+				foreach (var dll in preloadedDlls)
 				{
 					if (dll.Item1.Length == 0)
 					{
-						if (!PlatformProvider.Manager.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
+						if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
 							if (!dll.Item2)
 								throw new Error("PlatformProvider.Manager.SetDllDirectory(null) failed.");
 					}
 					else if (Directory.Exists(dll.Item1))
 					{
-						if (!PlatformProvider.Manager.SetDllDirectory(dll.Item1))
+						if (!mgr.SetDllDirectory(dll.Item1))
 							if (!dll.Item2)
 								throw new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed.");
 					}
 					else
 					{
 						var dllname = dll.Item1;
+#if WINDOWS
 
 						if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
 							dllname += ".dll";
 
-						var hmodule = PlatformProvider.Manager.LoadLibrary(dllname);
+#endif
+						var hmodule = mgr.LoadLibrary(dllname);
 
 						if (hmodule != IntPtr.Zero)
 						{
+#if WINDOWS
 							// "Pin" the dll so that the script cannot unload it with FreeLibrary.
 							// This is done to avoid undefined behavior when DllCall optimizations
 							// resolves a proc address in a dll loaded by this directive.
-#if WINDOWS
-							_ = PlatformProvider.Manager.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
-#else
-							_ = PlatformProvider.Manager.GetModuleHandleEx(0, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+							_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
 #endif
 						}
 						else if (!dll.Item2)

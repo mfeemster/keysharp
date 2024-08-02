@@ -41,6 +41,7 @@
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
+		internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		private static IntPtr mainWindowHandle;
 
 		public static bool ResetUponMouseClick => hsResetUponMouseClick;
@@ -103,7 +104,9 @@
 
 			if (hwnd == 0)
 			{
-#if WINDOWS
+#if LINUX
+				_ = $"$EDITOR {Accessors.A_ScriptFullPath}".Bash();
+#elif WINDOWS
 				var ed = "";
 
 				try

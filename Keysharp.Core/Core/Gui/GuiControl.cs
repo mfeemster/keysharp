@@ -301,7 +301,7 @@ namespace Keysharp.Core
 						else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
 					}
 
-					if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
+					if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
 					{
 						if (pic.SizeMode == PictureBoxSizeMode.Zoom)
 						{
@@ -1441,11 +1441,12 @@ namespace Keysharp.Core
 				var iconnumber = ImageHelper.PrepareIconNumber(obj1);
 				var part = obj2.Ai(1);
 				part--;
+				(Bitmap, object) ret;
 
-				if (part < ss.Items.Count && ImageHelper.LoadImage(filename, 0, 0, iconnumber) is Bitmap bmp)
+				if (part < ss.Items.Count && (ret = ImageHelper.LoadImage(filename, 0, 0, iconnumber)).Item1 is Bitmap bmp)
 				{
 					ss.Items[part].Image = bmp;
-					return bmp.GetHicon();
+					return ret.Item2 is Icon icon ? icon.Handle : bmp.GetHicon();
 				}
 			}
 

@@ -78,6 +78,7 @@
 		internal uint modifiersLRPhysical = 0u;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
+		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		private const int retention = 1024;
 		private readonly StringBuilder caser = new StringBuilder(32);
 		private readonly List<HotkeyDefinition> hotkeys;

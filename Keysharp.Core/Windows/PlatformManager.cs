@@ -16,9 +16,6 @@ namespace Keysharp.Core.Windows
 
 		internal override IntPtr LoadLibrary(string path) => WindowsAPI.LoadLibrary(path);
 
-		internal override int GetModuleHandleEx(uint flags, string moduleName, out IntPtr module) =>
-		WindowsAPI.GetModuleHandleEx(flags, moduleName, out module);
-
 		internal override uint CurrentThreadId() => Keysharp.Core.Windows.WindowsAPI.GetCurrentThreadId();
 
 		internal override bool DestroyIcon(IntPtr icon) => WindowsAPI.DestroyIcon(icon);

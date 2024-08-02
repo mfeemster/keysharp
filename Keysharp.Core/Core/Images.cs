@@ -28,7 +28,7 @@
 					Clipboard.SetImage(Keysharp.Core.Common.ImageHelper.ConvertCursorToBitmap(cur));
 				}
 			}
-			else if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
+			else if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
 			{
 				Clipboard.SetImage(new Bitmap(bmp));
 			}
@@ -66,6 +66,7 @@
 			}
 
 			var ext = System.IO.Path.GetExtension(filename).ToLower();
+			(Bitmap, object) ret;
 
 			if (ext == ".cur")
 			{
@@ -73,12 +74,18 @@
 				handle = cur.Handle;
 				obj2 = 2L;
 			}
-			else if (ImageHelper.LoadImage(filename, width, height, iconnumber) is Bitmap bmp)
+			else if ((ret = ImageHelper.LoadImage(filename, width, height, iconnumber)).Item1 is Bitmap bmp)
 			{
 				//Calling GetHbitmap() and GetHicon() creates a persistent handle that keeps the bitmap in memory, and must be destroyed later.
-				if (ImageHelper.IsIcon(filename))
+				if (ret.Item2 is Icon ic)
 				{
-					handle = bmp.GetHicon();
+					handle = ic.Handle;
+					disposeHandle = false;
+					obj2 = 1L;
+				}
+				else if (ImageHelper.IsIcon(filename))
+				{
+					handle = ret.Item1.GetHicon();
 					disposeHandle = true;
 					obj2 = 1L;
 				}
