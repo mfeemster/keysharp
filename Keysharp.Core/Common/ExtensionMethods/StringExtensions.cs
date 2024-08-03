@@ -88,7 +88,7 @@
 			_ = process.Start();
 			string result = process.StandardOutput.ReadToEnd();
 			process.WaitForExit();
-			return result;
+			return result.Trim(Keywords.CrLf);
 		}
 #endif
 

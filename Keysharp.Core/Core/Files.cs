@@ -184,13 +184,55 @@
 		/// </param>
 		public static void FileCreateShortcut(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null, object obj5 = null, object obj6 = null, object obj7 = null, object obj8 = null)
 		{
-#if WINDOWS
 			var target = obj0.As();
 			var link = obj1.As();
 			var workingDir = obj2.As();
 			var args = obj3.As();
 			var description = obj4.As();
 			var icon = obj5.As();
+#if LINUX
+			var type = obj6.As();
+
+			if (workingDir != "" || args != "" || description != "" || icon != "")
+			{
+				var creator = new ShortcutCreator();
+				creator.Add("Icon", icon);
+				creator.Add("Path", workingDir);
+				creator.Add("Comment", description);
+
+				if (args != "")
+					creator.Add("Exec", target + " " + args);
+				else
+					creator.Add("Exec", target);
+
+				if (type != "")
+				{
+					if (long.TryParse(type, out var tp))
+					{
+						if (tp == 0)//Wasn't a number, assume text and use verbatim.
+							creator.Add("Type", type);
+						else if (tp == 1)//Was a number, test for 1 2 or 3.
+							creator.Add("Type", "Application");
+						else if (tp == 2)
+							creator.Add("Type", "Link");
+						else if (tp == 3)
+							creator.Add("Type", "Directory");
+						else//Was something else, so just assume it's of type Application.
+							creator.Add("Type", "Application");
+					}
+					else
+						creator.Add("Type", type);
+				}
+				else//Was not specified, so just assume it's of type Application.
+					creator.Add("Type", "Application");
+
+				creator.Save(link);
+				$"chmod +x '{link}'".Bash();
+			}
+			else
+				$"ln -sf '{target}' '{link}'".Bash();
+
+#elif WINDOWS
 			var shortcutKey = obj6.As();
 			var iconNumber = obj7.Al(0);
 			var runState = obj8.Al(1);
@@ -445,8 +487,50 @@
 										   ref object outIconNum,
 										   ref object outRunState)
 		{
-#if WINDOWS
 			var link = obj.As();
+#if LINUX
+			var dest = $"readlink -f '{link}'".Bash();
+
+			if (link == dest)//Was not just a simple symlink.
+			{
+				var sc = new ShortcutCreator(link);
+				outTarget = sc.Get("Exec");
+				outDir = sc.Get("Path");
+				outDescription = sc.Get("Comment");
+				outIcon = sc.Get("Icon");
+				outIconNum = sc.Get("Type");
+
+				if (outTarget is string s && s.Length > 0)
+				{
+					if (s[0] != '"' && s[0] != '\'')
+					{
+						var splits = s.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+						if (splits.Length > 1)
+							outArgs = splits[1];
+					}
+					else//It was quoted.
+					{
+						var firstArgIndex = s.FindFirstNotInQuotes(" ");
+						var tempArgs = firstArgIndex != -1 && firstArgIndex < s.Length - 1 ? s.Substring(firstArgIndex + 1) : "";
+						outArgs = tempArgs.Trim();
+					}
+				}
+				else
+					outArgs = "";//No way to determine args.
+			}
+			else
+			{
+				outTarget = dest;
+				outDir = "";
+				outArgs = "";
+				outDescription = "";
+				outIcon = "";
+				outIconNum = "";
+			}
+
+			outRunState = "";
+#elif WINDOWS
 
 			try
 			{
@@ -871,19 +955,28 @@
 		/// </param>
 		public static void FileRecycle(object obj)
 		{
-			var s = obj.As();
-			var path = Path.GetDirectoryName(s);
-			var dir = new DirectoryInfo(path);
-			var filename = Path.GetFileName(s);
-#if WINDOWS
+			try
+			{
+				var s = obj.As();
+				var path = Path.GetDirectoryName(s);
+				var dir = new DirectoryInfo(path);
+				var filename = Path.GetFileName(s);
+#if LINUX
+				$"gio trash {s}".Bash();
+#elif WINDOWS
 
-			foreach (var file in dir.EnumerateFiles(filename))
-				//This appears to be not implemented in mono:
-				//https://github.com/mono/mono-basic/blob/master/vbruntime/Microsoft.VisualBasic/Microsoft.VisualBasic.FileIO/FileSystemOperation.vb
-				//May need some type of system call for non-windows OS.
-				Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+				foreach (var file in dir.EnumerateFiles(filename))
+					//This appears to be not implemented in mono:
+					//https://github.com/mono/mono-basic/blob/master/vbruntime/Microsoft.VisualBasic/Microsoft.VisualBasic.FileIO/FileSystemOperation.vb
+					//May need some type of system call for non-windows OS.
+					Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
 #endif
+			}
+			catch (Exception ex)
+			{
+				throw new OSError(ex);
+			}
 		}
 
 		/// <summary>
@@ -896,7 +989,9 @@
 
 			try
 			{
-#if WINDOWS
+#if LINUX
+				"gio trash --empty".Bash();
+#elif WINDOWS
 				_ = WindowsAPI.SHEmptyRecycleBin(IntPtr.Zero, s != "" ? s : null, WindowsAPI.SHERB_NOCONFIRMATION | WindowsAPI.SHERB_NOPROGRESSUI | WindowsAPI.SHERB_NOSOUND);
 #endif
 			}
@@ -905,7 +1000,6 @@
 				throw new OSError(ex);
 			}
 		}
-
 		/// <summary>
 		/// Changes the attributes of one or more files or folders. Wildcards are supported.
 		/// </summary>
@@ -952,7 +1046,6 @@
 			if (failures != 0)
 				throw new Error($"Failed {failures} times setting file attributes.", "", failures);
 		}
-
 		/// <summary>
 		/// Changes the datetime stamp of one or more files or folders. Wildcards are supported.
 		/// </summary>
@@ -1040,7 +1133,6 @@
 			if (failures != 0)
 				throw new Error($"Failed {failures} times setting file time.", "", failures);
 		}
-
 		internal static Encoding GetEncoding(object s)
 		{
 			var val = s.ToString().ToLowerInvariant();
@@ -1083,7 +1175,6 @@
 
 			return System.Text.Encoding.Unicode;
 		}
-
 		/// <summary>
 		/// Expand wildcards in a filename and extension.
 		/// </summary>
@@ -1103,7 +1194,6 @@
 			srcext = srcext.TrimStart('.');
 			return destfile.ReplaceFirst("*", srcfile) + (destex.IndexOf("*") != -1 ? destex.ReplaceFirst("*", srcext) : destex);
 		}
-
 		private static void FileCopyMove(string source, string dest, bool flag, bool move)
 		{
 			var failures = 0;
@@ -1151,27 +1241,60 @@
 			if (failures > 0)
 				throw new Error($"Failed {failures} times moving or copying files.", "", failures);
 		}
+	}
 
-		private static string ResolveShortcut(string filePath)
+#if LINUX
+	internal class ShortcutCreator
+	{
+		private Dictionary<string, string> fields = new Dictionary<string, string>()
 		{
-#if WINDOWS
+			{ "Type", "Application" },
+			{ "Name", "" },
+			{ "Comment", "" },
+			{ "Icon", "" },
+			{ "Exec", "" },
+			{ "Path", "" },
+		};
 
-			try
-			{
-				// IWshRuntimeLibrary is in the COM library "Windows Script Host Object Model"
-				var shell = new IWshRuntimeLibrary.WshShell();
-				var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(filePath);
-				return shortcut.TargetPath;
-			}
-			catch (COMException)
-			{
-				// A COMException is thrown if the file is not a valid shortcut (.lnk) file
-				return null;
-			}
+		internal ShortcutCreator()
+		{
+		}
 
-#else
-			return "";
-#endif
+		internal ShortcutCreator(string path)
+		{
+			var lines = File.ReadAllLines(path);
+
+			if (lines.Length > 0)
+			{
+				if (lines[0].StartsWith("[Desktop Entry]", StringComparison.OrdinalIgnoreCase))
+				{
+					for (var i = 1; i < lines.Length; i++)
+					{
+						var splits = lines[i].Split('=', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+						if (splits.Length > 1)
+						{
+							Add(splits[0], splits[1]);
+						}
+					}
+				}
+			}
+		}
+
+		internal void Add(string name, string value)
+		{
+			if (fields.ContainsKey(name))
+				fields[name] = value;
+		}
+
+		internal string Get(string name) => fields.TryGetValue(name, out var val) ? val : "";
+
+		internal void Save(string path) => File.WriteAllText(path, Write());
+
+		internal string Write()
+		{
+			return "[Desktop Entry]" + Environment.NewLine + string.Join(Environment.NewLine, fields.Where(kv => kv.Value != "").Select(kv => $"{kv.Key}={kv.Value}"));
 		}
 	}
+#endif
 }

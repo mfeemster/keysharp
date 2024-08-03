@@ -965,7 +965,34 @@ namespace Keysharp.Core
 			//
 			//
 			//
-			Keysharp.Scripting.Script.OutputDebug($"There are {Env.MouseButtonCount()} mouse buttons.");
+			/*
+			    Keysharp.Scripting.Script.OutputDebug($"There are {Env.MouseButtonCount()} mouse buttons.");
+			*/
+			//
+			//
+			//
+			/*
+			    Files.FileCreateShortcut("`firefox`", "/home/heretic/Desktop/myfirefox.desktop", "", "www.google.com", "my firefox shortcut", "/usr/share/cinnamon/faces/6_grapes.jpg", "Application");
+			    Files.FileCreateShortcut("/home/heretic/Documents/cmdlines.txt", "/home/heretic/Desktop/cmdshortcut");
+			    object tgt = "";
+			    object dir = "";
+			    object args = "";
+			    object desc = "";
+			    object icon = "";
+			    object iconNum = "";
+			    object runState = "";
+			    //Files.FileGetShortcut("/home/heretic/Desktop/cmdshortcut", ref tgt, ref dir, ref args, ref desc, ref icon, ref iconNum, ref runState);
+			    //Keysharp.Scripting.Script.OutputDebug($"/home/heretic/Desktop/cmdshortcut: {tgt} {dir} {args} {desc} {icon} {iconNum} {runState}");
+			    //tgt = "";
+			    //dir = "";
+			    //args = "";
+			    //desc = "";
+			    //icon = "";
+			    //iconNum = "";
+			    //runState = "";
+			    Files.FileGetShortcut("/home/heretic/Desktop/myfirefox.desktop", ref tgt, ref dir, ref args, ref desc, ref icon, ref iconNum, ref runState);
+			    Keysharp.Scripting.Script.OutputDebug($"/home/heretic/Desktop/myfirefox.desktop: {tgt} {dir} {args} {desc} {icon} {iconNum} {runState}");
+			*/
 			return 0L;
 		}
 #endif
