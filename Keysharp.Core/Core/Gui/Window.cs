@@ -618,9 +618,9 @@ namespace Keysharp.Core
 
 		public static void WinSetExStyle(params object[] obj) => WinSetStyleHelper(obj, true);
 
+#if WINDOWS
 		public static void WinSetRegion(params object[] obj)
 		{
-#if WINDOWS
 			var (options, title, text, excludeTitle, excludeText) = obj.S1O1S3();
 			var winargs = new object[] { title, text, excludeTitle, excludeText };
 
@@ -702,10 +702,8 @@ namespace Keysharp.Core
 				throw new ValueError($"Could not create region for window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 			WindowItemBase.DoWinDelay();
-#else
-			throw new NotImplementedException();
-#endif
 		}
+#endif
 
 		public static void WinSetStyle(params object[] obj) => WinSetStyleHelper(obj, false);
 
