@@ -53,9 +53,9 @@ namespace Keysharp.Core
 			}
 		}
 
+#if WINDOWS
 		public static bool CaretGetPos(ref long outputVarX, ref long outputVarY)
 		{
-#if WINDOWS
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
 			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 
@@ -89,10 +89,8 @@ namespace Keysharp.Core
 			outputVarX = pt.X;
 			outputVarY = pt.Y;
 			return true;
-#else
-			return false;
-#endif
 		}
+#endif
 
 		public static string GetKeyName(object obj) => GetKeyNamePrivate(obj.As(), 0) as string;
 
@@ -614,7 +612,13 @@ break_twice:;
 		{
 			// Always turn input ON/OFF even if g_BlockInput says its already in the right state.  This is because
 			// BlockInput can be externally and undetectably disabled, e.g. if the user presses Ctrl-Alt-Del:
-#if WINDOWS
+#if LINUX
+			var cmdstr = enable ? "--enable" : "--disable";
+
+			foreach (var id in KeyboardUtils.kbMouseList)
+				_ = $"xinput {cmdstr} {id}".Bash();
+
+#elif WINDOWS
 			_ = WindowsAPI.BlockInput(enable);
 #endif
 			blockInput = enable;

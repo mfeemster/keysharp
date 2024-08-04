@@ -991,6 +991,40 @@ namespace Keysharp.Core
 			    Files.FileGetShortcut("/home/heretic/Desktop/myfirefox.desktop", ref tgt, ref dir, ref args, ref desc, ref icon, ref iconNum, ref runState);
 			    Keysharp.Scripting.Script.OutputDebug($"/home/heretic/Desktop/myfirefox.desktop: {tgt} {dir} {args} {desc} {icon} {iconNum} {runState}");
 			*/
+			//var ids = new int [2, 4, 5, 9, 10, 3, 5, 6, 8];
+			//var ids = new int [3, 5, 6, 8];
+			//var inputStr = "xinput".Bash();
+			//var inputStrSplits = inputStr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			//foreach (var split in inputStrSplits)
+			//{
+			//  if (!split.Contains("XTEST"))
+			//  {
+			//      if (split.Contains("slave pointer"))
+			//      {
+			//          var lineSplits = split.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			//          foreach (var lineSplit in lineSplits)
+			//          {
+			//              if (lineSplit.StartsWith("id="))
+			//              {
+			//                  var num = lineSplit.Substring(3).Al();
+			//              }
+			//          }
+			//      }
+			//      else if (split.Contains("slave keyboard"))
+			//      {
+			//      }
+			//  }
+			//}
+			//Keysharp.Scripting.Script.OutputDebug($"Kbs: {string.Join(',', KeyboardUtils.keyboardList)}");
+			//Keysharp.Scripting.Script.OutputDebug($"Mice: {string.Join(',', KeyboardUtils.mouseList)}");
+			foreach (var id in KeyboardUtils.kbMouseList)
+				_ = $"xinput --disable {id}".Bash();
+
+			Thread.Sleep(5000);
+
+			foreach (var id in KeyboardUtils.kbMouseList)
+				_ = $"xinput --enable {id}".Bash();
+
 			return 0L;
 		}
 #endif

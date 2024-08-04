@@ -19,7 +19,55 @@
 
 		internal static string[] SEND_MODES = { "Event", "Input", "Play", "InputThenPlay" }; // Must match the SendModes enum.
 
-		internal static uint MakeLong(short lowPart, short highPart) => (((ushort)lowPart) | (uint)(highPart << 16));
+		internal static uint MakeLong(short lowPart, short highPart) => ((ushort)lowPart) | (uint)(highPart << 16);
+		internal static List<int> mouseList = new List<int>();
+		internal static List<int> keyboardList = new List<int>();
+		internal static List<int> kbMouseList = new List<int>();
+
+		static KeyboardUtils()
+		{
+			var inputStr = "xinput".Bash();
+			var inputStrSplits = inputStr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+			foreach (var split in inputStrSplits)
+			{
+				//Keysharp.Scripting.Script.OutputDebug($"Examining split xinput string: {split}");
+				if (!split.Contains("XTEST"))
+				{
+					if (split.Contains("slave  pointer"))//The two spaces are intentional.
+					{
+						var lineSplits = split.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+						foreach (var lineSplit in lineSplits)
+						{
+							//Keysharp.Scripting.Script.OutputDebug($"Examining mouse line split: {lineSplit}");
+							if (lineSplit.StartsWith("id="))
+							{
+								mouseList.Add(lineSplit.Substring(3).Ai());
+								break;
+							}
+						}
+					}
+					else if (split.Contains("slave  keyboard"))
+					{
+						var lineSplits = split.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+						foreach (var lineSplit in lineSplits)
+						{
+							//Keysharp.Scripting.Script.OutputDebug($"Examining kb line split: {lineSplit}");
+							if (lineSplit.StartsWith("id="))
+							{
+								keyboardList.Add(lineSplit.Substring(3).Ai());
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			kbMouseList.AddRange(keyboardList);
+			kbMouseList.AddRange(mouseList);
+		}
 	}
 
 	[Flags]
