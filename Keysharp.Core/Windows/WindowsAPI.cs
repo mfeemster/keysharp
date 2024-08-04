@@ -2109,9 +2109,6 @@ namespace Keysharp.Core.Windows
 
 		internal delegate IntPtr PlaybackProc(int nCode, IntPtr wParam, ref EventMsg lParam);
 
-		//[DllImport(user32)]
-		//internal static extern int GetSystemMetrics(int sysMetric);
-
 		[DllImport(user32)]
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
 	}

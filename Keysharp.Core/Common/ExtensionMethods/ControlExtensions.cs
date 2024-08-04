@@ -188,10 +188,12 @@
 
 		internal static void ResumeDrawing(this Control control)
 		{
-#if WINDOWS
+#if LINUX
+			control.ResumeLayout();
+#elif WINDOWS
 			_ = Keysharp.Core.Windows.WindowsAPI.SendMessage(control.Handle, Keysharp.Core.Windows.WindowsAPI.WM_SETREDRAW, 1, 0);
-			control.Refresh();
 #endif
+			control.Refresh();
 		}
 
 		internal static (Control, Control) RightBottomMost(this Control control)
@@ -289,7 +291,9 @@
 
 		internal static void SuspendDrawing(this Control control)
 		{
-#if WINDOWS
+#if LINUX
+			control.SuspendLayout();
+#elif WINDOWS
 			_ = Keysharp.Core.Windows.WindowsAPI.SendMessage(control.Handle, Keysharp.Core.Windows.WindowsAPI.WM_SETREDRAW, 0, 0);
 #endif
 		}

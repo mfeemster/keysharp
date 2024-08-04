@@ -5,6 +5,16 @@ namespace Keysharp.Core
 		internal static int nFileDialogs;
 		internal static int nFolderDialogs;
 		internal static int nMessageBoxes;
+		internal static Guid computer = new Guid("0AC0837C-BBF8-452A-850D-79D08E667CA7");//Computer (/).
+		internal static Guid desktop = new Guid("B4BFCC3A-DB2C-424C-B029-7FE99A87C641");//Desktop (~/Desktop).
+		internal static Guid documents = new Guid("FDD39AD0-238F-46AF-ADB4-6C85480369C7");//Documents (~/Documents).
+		internal static Guid downloads = new Guid("374DE290-123F-4565-9164-39C4925E467B");//Downloads (~/Downloads).
+		internal static Guid music = new Guid("4BD8D571-6D19-48D3-BE97-422220080E43");//Music (~/Music).
+		internal static Guid pictures = new Guid("33E28130-4E1E-4676-835A-98395C3BC3BB");//Pictures (~/Pictures).
+		internal static Guid @public = new Guid("DFDF76A2-C82A-4D63-906A-5644AC457385");//Public (~/Public).
+		internal static Guid userprofile = new Guid("5E6C858F-0E22-4760-9AFE-EA3317B67173");//User profile root (~/).
+		internal static Guid userprofiles = new Guid("0762D272-C50A-4BB0-A382-697DCD729B80");//User profiles (/home).
+
 		internal static Dictionary<int, ProgressDialog> ProgressDialogs { get; set; }
 
 		internal static Dictionary<int, SplashDialog> SplashDialogs { get; set; }
@@ -35,10 +45,34 @@ namespace Keysharp.Core
 
 			if (startingFolder.StartsWith("::"))
 			{
-#if WINDOWS
+				var guidStr = startingFolder.Trim([':', '{', '}']).ToLower();
+				var guid = new Guid(guidStr);
+#if LINUX
 
-				if (WindowsAPI.SHGetKnownFolderPath(new Guid(startingFolder.Trim(new char[] { ':', '{', '}' }))) is string s)
+				if (guid == computer)
+					select.SelectedPath = "/";
+				else if (guid == desktop)
+					select.SelectedPath = "~/Desktop";
+				else if (guid == documents)
+					select.SelectedPath = "~/Documents";
+				else if (guid == downloads)
+					select.SelectedPath = "~/Downloads";
+				else if (guid == music)
+					select.SelectedPath = "~/Music";
+				else if (guid == pictures)
+					select.SelectedPath = "~/Pictures";
+				else if (guid == @public)
+					select.SelectedPath = "~/Public";
+				else if (guid == userprofile)
+					select.SelectedPath = "~/";
+				else if (guid == userprofiles)
+					select.SelectedPath = "/home";
+
+#elif WINDOWS
+
+				if (WindowsAPI.SHGetKnownFolderPath(new Guid(guidStr)) is string s)
 					select.SelectedPath = s;
+
 #endif
 			}
 			else if (Keysharp.Core.Options.TryParseString(startingFolder, "*", ref str))

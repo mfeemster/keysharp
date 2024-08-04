@@ -1497,9 +1497,7 @@ namespace Keysharp.Core
 
 							default:
 							{
-#if WINDOWS
-
-								if (il.ImageSize.Width > WindowsAPI.GetSystemMetrics(SystemMetric.SM_CXSMICON))//Need a cross platform way to do this.//TODO
+								if (il.ImageSize.Width > Env.SysGet(SystemMetric.SM_CXSMICON).Al())
 								{
 									oldil = ImageLists.IL_GetId(lv.LargeImageList);
 									lv.LargeImageList = newil;
@@ -1510,10 +1508,6 @@ namespace Keysharp.Core
 									lv.SmallImageList = newil;
 								}
 
-#else//Just use the large image icon on non-Windows.
-								oldil = ImageLists.IL_GetId(lv.LargeImageList);
-								lv.LargeImageList = newil;
-#endif
 								break;
 							}
 						}

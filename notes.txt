@@ -277,6 +277,7 @@ Linux ideas/research:
 	Check out accessibility, it might help because the use case is the same: https://www.freedesktop.org/wiki/Accessibility/
 	Keyboard and mouse mapper for both X11 and Wayland: https://nocache.org/p/remap-mouse-keyboard-buttons-on-linux-works-for-x11-and-wayland
 	Info about input devices, mapping and capturing: http://xahlee.info/linux/linux_show_keycode_keysym.html
+	An SO post on making hotkey hooks in X11: https://stackoverflow.com/questions/4037230/global-hotkey-with-x11-xlib
 	
 Mac ideas/research:
 	WinForms for 64-bit Mac: https://github.com/emclient/mac-playground

@@ -30,11 +30,13 @@ namespace Keysharp.Core
 			//SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpCheckBox : CheckBox
@@ -76,13 +78,13 @@ namespace Keysharp.Core
 			else
 				base.OnMouseUp(e);
 		}
-#endif
 
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpComboBox : ComboBox
@@ -106,11 +108,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpDateTimePicker : DateTimePicker
@@ -134,11 +138,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpEdit : TextBox
@@ -162,12 +168,12 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if !WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
-#if !WINDOWS
 		internal void MakeNumeric()
 		{
 			KeyPress += KeysharpEdit_KeyPress;
@@ -253,11 +259,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpLabel : Label
@@ -281,11 +289,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpLinkLabel : LinkLabel
@@ -344,11 +354,13 @@ namespace Keysharp.Core
 			return null;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpListBox : ListBox
@@ -372,11 +384,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpListView : ListView
@@ -386,11 +400,13 @@ namespace Keysharp.Core
 
 		public KeysharpListView() => ColumnClick += KeysharpListView_ColumnClick;
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 
 		/// <summary>
 		/// Gotten from https://docs.microsoft.com/en-us/previous-versions/dotnet/articles/ms996467(v=msdn.10)
@@ -433,11 +449,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpNumericUpDown : NumericUpDown
@@ -461,11 +479,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	/// <summary>
@@ -531,11 +551,13 @@ namespace Keysharp.Core
 			base.OnPaint(pe);
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	/// <summary>
@@ -614,11 +636,13 @@ namespace Keysharp.Core
 			// None... Helps control the flicker.
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpRadioButton : RadioButton
@@ -648,11 +672,13 @@ namespace Keysharp.Core
 #endif
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpRichEdit : RichTextBox
@@ -680,13 +706,13 @@ namespace Keysharp.Core
 			KeyPress += KeysharpRichEdit_KeyPress;
 		}
 
+#if !WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
 
-#if !WINDOWS
 		internal void MakeNumeric()
 		{
 			isnumeric = true;
@@ -767,11 +793,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpTabControl : TabControl
@@ -852,11 +880,13 @@ namespace Keysharp.Core
 				base.OnDrawItem(e);
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 
 		/// <summary>
 		/// Focusing gets rid of the unsightly dotted selection box on the tab.
@@ -917,11 +947,13 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 
 	public class KeysharpTreeView : TreeView
@@ -959,10 +991,12 @@ namespace Keysharp.Core
 
 		public void RemoveMarkForExpansion(TreeNode node) => _ = expandStates.Remove(node);
 
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#endif
 	}
 }
