@@ -1017,13 +1017,23 @@ namespace Keysharp.Core
 			//}
 			//Keysharp.Scripting.Script.OutputDebug($"Kbs: {string.Join(',', KeyboardUtils.keyboardList)}");
 			//Keysharp.Scripting.Script.OutputDebug($"Mice: {string.Join(',', KeyboardUtils.mouseList)}");
-			foreach (var id in KeyboardUtils.kbMouseList)
-				_ = $"xinput --disable {id}".Bash();
+			/*
+			    foreach (var id in KeyboardUtils.kbMouseList)
+			    _ = $"xinput --disable {id}".Bash();
 
-			Thread.Sleep(5000);
+			    Thread.Sleep(5000);
 
-			foreach (var id in KeyboardUtils.kbMouseList)
-				_ = $"xinput --enable {id}".Bash();
+			    foreach (var id in KeyboardUtils.kbMouseList)
+			    _ = $"xinput --enable {id}".Bash();
+			*/
+			//
+			//
+			//
+			var mgr = WindowProvider.Manager;
+			var  win = mgr.WindowFromPoint(new Point(1000, 1000));
+
+			if (win != null)
+				Keysharp.Scripting.Script.OutputDebug($"Found window: {win.Title}");
 
 			return 0L;
 		}

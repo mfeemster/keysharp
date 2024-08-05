@@ -113,7 +113,22 @@ namespace Keysharp.Core.Linux
 			_ = Xlib.XSendEvent(_display.Handle, _display.Root.ID, false, EventMasks.SubstructureRedirect | EventMasks.SubstructureNofity, ref xev);
 		}
 
-		internal override WindowItemBase WindowFromPoint(Point location) => throw new NotImplementedException();
+		internal override WindowItemBase WindowFromPoint(Point location)
+		{
+			var x = location.X;
+			var y = location.Y;
+
+			foreach (var window in AllWindows)
+			{
+				var wloc = window.Location;
+
+				if (x >= wloc.X && x < wloc.X + wloc.Width &&
+						y >= wloc.Y && y < wloc.Y + wloc.Height)
+					return window;
+			}
+
+			return null;
+		}
 	}
 }
 #endif
