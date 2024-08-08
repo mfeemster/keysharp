@@ -29,7 +29,9 @@
 		internal long priority;
 		internal Random randomGenerator;
 		internal StringBuilder regsb = null;
+#if WINDOWS
 		internal long regView = 64L;
+#endif
 		internal uint sendLevel;
 		internal SendModes sendMode = SendModes.Input;
 		internal bool storeCapsLockMode = true;
@@ -89,7 +91,9 @@
 			priority = 0L;
 			randomGenerator = null;
 			_ = (regsb?.Clear());
+#if WINDOWS
 			regView = 64L;
+#endif
 			sendLevel = 0;
 			sendMode = SendModes.Input;
 			storeCapsLockMode = true;
@@ -130,7 +134,9 @@
 			priority = Accessors.A_Priority.Al();
 			randomGenerator = null;
 			_ = (regsb?.Clear());
+#if WINDOWS
 			regView = Accessors.A_RegView.Al();
+#endif
 			sendLevel = Accessors.A_SendLevel.Aui();
 
 			if (Enum.TryParse<SendModes>(Accessors.A_SendMode.As(), out var temp))

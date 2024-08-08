@@ -12,9 +12,6 @@
 			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
 			Processes.mainContext = System.Threading.SynchronizationContext.Current;//This must happen after the icon is created.
 
-			if (Environment.OSVersion.Platform != PlatformID.Win32NT)//Hopefully this is possible on non-windows OSes.//TODO
-				return;
-
 			if (NoTrayIcon)
 				return;
 
@@ -23,7 +20,10 @@
 			trayIcon.Tag = trayMenu;
 			trayIcon.MouseClick += TrayIcon_MouseClick;
 			trayIcon.MouseDoubleClick += TrayIcon_MouseDoubleClick;
-			var icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+			Icon icon = null;
+#if WINDOWS
+			icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+#endif
 
 			if (Accessors.A_IsCompiled || icon == null)//For some reason this is needed when running as a compiled exe.
 				icon = Core.Properties.Resources.Keysharp_ico;
@@ -34,11 +34,8 @@
 				trayIcon.Visible = true;
 			}
 
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)//Not sure whether resources work on non-windows implementations of C#.//TODO
-			{
-				pausedIcon = Core.Properties.Resources.Keysharp_p_ico;//Pause isn't really needed since pausing is not supported. Perhaps it can be used for something else some day.
-				suspendedIcon = Core.Properties.Resources.Keysharp_s_ico;
-			}
+			pausedIcon = Core.Properties.Resources.Keysharp_p_ico;//Pause isn't really needed since pausing is not supported. Perhaps it can be used for something else some day.
+			suspendedIcon = Core.Properties.Resources.Keysharp_s_ico;
 		}
 
 		internal static void SuspendHotkeys()

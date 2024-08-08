@@ -163,12 +163,14 @@
 			_ = sb.AppendLine($"**User defined**\r\n");
 
 			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
+			{
 				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
 				{
 					var val = fieldKv.Value.GetValue(null);
 					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
 					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
 				}
+			}
 
 			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
 
@@ -191,9 +193,16 @@
 
 					foreach (var prop in t2pKv.Value.OrderBy(p => p.Name))
 					{
-						var val = prop.GetValue(null);
-						var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
-						_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
+						try
+						{
+							var val = prop.GetValue(null);
+							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
+							_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
+						}
+						catch (Exception ex)
+						{
+							Keysharp.Scripting.Script.OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
+						}
 					}
 
 					_ = sb.AppendLine("--------------------------------------------------");

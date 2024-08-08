@@ -183,9 +183,18 @@ namespace Keysharp.Main
 				{
 					writeCodeTask = Task.Run(() =>
 					{
-						using (var sourceWriter = new StreamWriter(path + ".cs"))
+						var codePath = $"{path}.cs";
+
+						try
 						{
-							sourceWriter.WriteLine(code);
+							using (var sourceWriter = new StreamWriter(codePath))
+							{
+								sourceWriter.WriteLine(code);
+							}
+						}
+						catch (Exception writeex)
+						{
+							Message($"Writing code to {codePath} failed: {writeex.Message}", true);
 						}
 					});
 				}
@@ -210,6 +219,8 @@ namespace Keysharp.Main
 					{
 						writeExeTask = Task.Run(() =>
 						{
+							var finalPath = "";
+
 							try
 							{
 								var ver = GetLatestDotNetVersion();//Windows only.
@@ -221,12 +232,23 @@ namespace Keysharp.Main
 								//var currentDepsConfigPath = Path.ChangeExtension(loc, "deps.json");
 								//File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
 								//Message($"About to write executable to {path}.exe/dll.", false);
+#if LINUX
+								finalPath = path;
+								HostWriter.CreateAppHost(
+									appHostSourceFilePath: @$"/lib/dotnet/sdk/{ver}/AppHostTemplate/apphost",
+									appHostDestinationFilePath: finalPath,
+									appBinaryFilePath: $"{path}.dll",
+									windowsGraphicalUserInterface: false,
+									assemblyToCopyResorcesFrom: $"{path}.dll");
+#elif WINDOWS
+								finalPath = $"{path}.exe";
 								HostWriter.CreateAppHost(
 									appHostSourceFilePath: @$"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\{ver}\runtimes\win-x64\native\apphost.exe",
-									appHostDestinationFilePath: $"{path}.exe",
+									appHostDestinationFilePath: finalPath,
 									appBinaryFilePath: $"{path}.dll",
 									windowsGraphicalUserInterface: true,
 									assemblyToCopyResorcesFrom: $"{path}.dll");
+#endif
 								var ksCorePath = Path.Combine(exeDir, "Keysharp.Core.dll");
 								//Need to copy Keysharp.Core from the install path to folder the script resides in. Without it, the compiled exe cannot be run in a standalone manner.
 								//MessageBox.Show($"scriptdir = {scriptdir}");
@@ -238,7 +260,7 @@ namespace Keysharp.Main
 							}
 							catch (Exception writeex)
 							{
-								Message($"Writing executable to {path}.exe failed: {writeex.Message}", true);
+								Message($"Writing executable to {finalPath} failed: {writeex.Message}", true);
 							}
 						});
 					}
@@ -305,12 +327,11 @@ namespace Keysharp.Main
 
 		internal static string GetLatestDotNetVersion()
 		{
-			//var key = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
-			//key = key.OpenSubKey(@"SOFTWARE\WOW6432Node\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.NETCore.App");
-			//var versions = key.GetValueNames().Select(v => new Version(v.Split("-")[0])).ToList();
-			//versions.Sort();
-			//return versions.Last().ToString();
+#if LINUX
+			var dir = Directory.GetDirectories(@"/lib/dotnet/sdk/").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
+#elif WINDOWS
 			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
+#endif
 			return dir;
 		}
 

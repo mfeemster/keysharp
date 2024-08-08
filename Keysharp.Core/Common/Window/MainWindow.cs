@@ -11,8 +11,8 @@ namespace Keysharp.Scripting
 		private bool callingInternalVars = false;
 
 #if LINUX
-		private static Gdk.Atom clipAtom = Gdk.Atom.Intern("CLIPBOARD", false);
-		private Gtk.Clipboard gtkClipBoard = Gtk.Clipboard.Get(clipAtom);
+		//private static Gdk.Atom clipAtom = Gdk.Atom.Intern("CLIPBOARD", false);
+		//private Gtk.Clipboard gtkClipBoard = Gtk.Clipboard.Get(clipAtom);
 #endif
 		public bool IsClosing { get; private set; }
 
@@ -26,7 +26,7 @@ namespace Keysharp.Scripting
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
 #if LINUX
-			gtkClipBoard.OwnerChange += gtkClipBoard_OwnerChange;
+			//gtkClipBoard.OwnerChange += gtkClipBoard_OwnerChange;
 			success = true;
 #elif WINDOWS
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
@@ -259,17 +259,17 @@ namespace Keysharp.Scripting
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
 #elif LINUX
-			gtkClipBoard.OwnerChange -= gtkClipBoard_OwnerChange;
+			//gtkClipBoard.OwnerChange -= gtkClipBoard_OwnerChange;
 #endif
 			Keysharp.Core.Gui.DestroyAll();
 			about?.Close();
 		}
 
 #if LINUX
-		private void gtkClipBoard_OwnerChange(object o, Gtk.OwnerChangeArgs args)
-		{
-			ClipboardUpdate?.Invoke(null);
-		}
+		//private void gtkClipBoard_OwnerChange(object o, Gtk.OwnerChangeArgs args)
+		//{
+		//  ClipboardUpdate?.Invoke(null);
+		//}
 #endif
 
 		private void MainWindow_Load(object sender, EventArgs e)

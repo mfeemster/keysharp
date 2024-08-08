@@ -316,10 +316,14 @@ namespace Keysharp.Scripting
 			var tcf = new CodeTryCatchFinallyStatement();
 			//
 			var ctch2 = new CodeCatchClause("kserr", new CodeTypeReference("Keysharp.Core.Error"));
-			var ces = new CodeSnippetExpression("ErrorOccurred(kserr)");
+			var cse = new CodeSnippetExpression("ErrorOccurred(kserr)");
+			var pushcse = new CodeSnippetExpression("var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();");
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr)");
-			var ccs = new CodeConditionStatement(ces);
+			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);");
+			var ccs = new CodeConditionStatement(cse);
+			_ = ccs.TrueStatements.Add(pushcse);
 			_ = ccs.TrueStatements.Add(msg);
+			_ = ccs.TrueStatements.Add(popcse);
 			_ = ctch2.Statements.Add(ccs);
 			_ = ctch2.Statements.Add(new CodeExpressionStatement(exit1));
 			_ = ctch2.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
@@ -332,12 +336,16 @@ namespace Keysharp.Scripting
 				{
 					if (ErrorOccurred(kserr))
 					{
+						var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 						MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr);
+						Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
 					}
 				}
 				else
 				{
+					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 					MsgBox(""Uncaught exception:\r\n"" + ""Message: "" + ex.Message + ""\r\nStack: "" + ex.StackTrace);
+					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
 				}
 "));
 			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));

@@ -26,6 +26,7 @@
 
 		static KeyboardUtils()
 		{
+#if LINUX
 			var inputStr = "xinput".Bash();
 			var inputStrSplits = inputStr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -67,6 +68,7 @@
 
 			kbMouseList.AddRange(keyboardList);
 			kbMouseList.AddRange(mouseList);
+#endif
 		}
 	}
 

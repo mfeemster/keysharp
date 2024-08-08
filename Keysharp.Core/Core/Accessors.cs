@@ -351,9 +351,13 @@
 		/// The type of mouse cursor currently being displayed. It will be one of the following words: AppStarting, Arrow, Cross, Help, IBeam, Icon, No, Size, SizeAll, SizeNESW, SizeNS, SizeNWSE, SizeWE, UpArrow, Wait, Unknown. The acronyms used with the size-type cursors are compass directions, e.g. NESW = NorthEast+SouthWest. The hand-shaped cursors (pointing and grabbing) are classfied as Unknown.
 		/// </summary>
 		public static string A_Cursor =>
-		Cursor.Current is Cursor cur
-		? cur.ToString().Trim(new char[] { '[', ']' }).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
-		: "Default";
+		Cursor.Current is Cursor cur ?
+#if LINUX
+		cur.ToString().Trim(Keywords.BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
+#elif WINDOWS
+		cur.ToString().Trim(Keywords.BothBrackets).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
+#endif
+		: "Default---";
 
 		/// <summary>
 		/// See <see cref="A_MDay"/>.
@@ -1284,6 +1288,7 @@
 
 		public static long A_PtrSize => 8L;
 
+#if WINDOWS
 		public static object A_RegView
 		{
 			get => regView;
@@ -1294,6 +1299,7 @@
 				ThreadAccessors.A_RegView = regView.Al();
 			}
 		}
+#endif
 
 		/// <summary>
 		/// Number of pixels per logical inch along the screen width. In a system with multiple display monitors,
@@ -1756,12 +1762,13 @@
 			set => Threads.GetThreadVariables().peekFrequency = value;
 		}
 
+#if WINDOWS
 		internal static long A_RegView
 		{
 			get => Threads.GetThreadVariables().regView;
 			set => Threads.GetThreadVariables().regView = value;
 		}
-
+#endif
 		internal static uint A_SendLevel
 		{
 			get => Threads.GetThreadVariables().sendLevel;

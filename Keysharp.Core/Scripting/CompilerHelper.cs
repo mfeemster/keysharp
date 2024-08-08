@@ -248,7 +248,7 @@ using static Keysharp.Scripting.Script.Operator;
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Linq.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Reflection.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Runtime.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(coreDir, "netstandard.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(coreDir, "netstandard.dll")),//Is this even still needed?//TODO
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),

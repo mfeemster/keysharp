@@ -118,6 +118,7 @@ namespace Keysharp.Core.Linux
 			var x = location.X;
 			var y = location.Y;
 
+			//Manually searched windows, but that likely is not what we need, given the context it's used in. Mostl likely will need to revisit using AtSpi.//TODO
 			foreach (var window in AllWindows)
 			{
 				var wloc = window.Location;
