@@ -308,6 +308,50 @@ namespace Keysharp.Core
 			return sb.ToString();
 		}
 
+		internal static int TryCatch(Action action)
+		{
+			try
+			{
+				action();
+				return 0;
+			}
+			catch (Keysharp.Core.Error kserr)
+			{
+				if (ErrorOccurred(kserr))
+				{
+					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					Keysharp.Core.Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
+					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+				}
+
+				Keysharp.Core.Flow.ExitApp(1);
+				return 1;
+			}
+			catch (System.Exception mainex)
+			{
+				var ex = mainex.InnerException ?? mainex;
+
+				if (ex is Keysharp.Core.Error kserr)
+				{
+					if (ErrorOccurred(kserr))
+					{
+						var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						Keysharp.Core.Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr);
+						Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+					}
+				}
+				else
+				{
+					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					Keysharp.Core.Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace);
+					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+				}
+
+				Keysharp.Core.Flow.ExitApp(1);
+				return 1;
+			}
+		}
+
 		private static Map Object(params object[] obj)
 		{
 			if (obj.Length == 0)

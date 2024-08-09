@@ -363,10 +363,13 @@
 			mainWindow.Activate();
 			_ = mainWindow.BeginInvoke(() =>
 			{
-				_ = userInit();
-				//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
-				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
-				isReadyToExecute = true;
+				_ = Misc.TryCatch(() =>
+				{
+					_ = userInit();
+					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
+					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
+					isReadyToExecute = true;
+				});
 			});
 			Application.Run(mainWindow);
 		}

@@ -102,19 +102,19 @@ namespace Keysharp.Scripting
 
 		internal void ShowInternalVars(bool showTab)
 		{
-			try
+			callingInternalVars = true;//Gets called twice if called before first showing.
+			this.BeginInvoke(() =>
 			{
-				callingInternalVars = true;//Gets called twice if called before first showing.
-				this.BeginInvoke(() =>
+				try
 				{
 					ShowIfNeeded();
 					SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars, showTab);
-				});
-			}
-			finally
-			{
-				callingInternalVars = false;
-			}
+				}
+				finally
+				{
+					callingInternalVars = false;
+				}
+			});
 		}
 
 		protected override void WndProc(ref Message m)
