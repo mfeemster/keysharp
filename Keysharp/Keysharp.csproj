@@ -23,7 +23,6 @@
     <Description>A C# port and enhancement of the Autohotkey program</Description>
     <Company>Keysharp</Company>
     <PreserveCompilationContext>true</PreserveCompilationContext>
-    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
   </PropertyGroup>

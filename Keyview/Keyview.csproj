@@ -29,12 +29,16 @@
 
   <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
-    <Content Include="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Lexilla.dll" />
-    <Content Include="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Scintilla.dll" />
+    <Content Include="$(USERPROFILE)\.nuget\packages\scintilla5.net\5.6.1\runtimes\win-x64\native\Lexilla.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(USERPROFILE)\.nuget\packages\scintilla5.net\5.6.1\runtimes\win-x64\native\Scintilla.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="5.6.0" />
+    <PackageReference Include="Scintilla5.NET" Version="5.6.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,23 +46,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x86\Lexilla.dll">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
+    <None Remove="$(USERPROFILE)\.nuget\packages\scintilla5.net\5.6.1\runtimes\win-x64\native\Lexilla.dll" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x86\Scintilla.dll">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Lexilla.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="C:\Users\redoubter\.nuget\packages\scintilla5.net\5.3.3.12\build\x64\Scintilla.dll" />
+    <None Remove="$(USERPROFILE)\.nuget\packages\scintilla5.net\5.6.1\runtimes\win-x64\native\Scintilla.dll" />
   </ItemGroup>
 
 </Project>

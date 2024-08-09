@@ -317,9 +317,9 @@ namespace Keysharp.Scripting
 			//
 			var ctch2 = new CodeCatchClause("kserr", new CodeTypeReference("Keysharp.Core.Error"));
 			var cse = new CodeSnippetExpression("ErrorOccurred(kserr)");
-			var pushcse = new CodeSnippetExpression("var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();");
+			var pushcse = new CodeSnippetExpression("var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread()");
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr)");
-			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);");
+			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(__pushed)");
 			var ccs = new CodeConditionStatement(cse);
 			_ = ccs.TrueStatements.Add(pushcse);
 			_ = ccs.TrueStatements.Add(msg);
@@ -890,6 +890,7 @@ namespace Keysharp.Scripting
 
 			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodePrimitiveExpression(name));
 			_ = initial.Add(namevar);
+			//_ = initial.Add(new CodeSnippetExpression("Assembly assembly = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(\"C:\\\\Program Files\\\\Keysharp\\\\Keysharp.Core.dll\")"));
 			var userMainMethod = new CodeMemberMethod()
 			{
 				Attributes = MemberAttributes.Public | MemberAttributes.Static,
