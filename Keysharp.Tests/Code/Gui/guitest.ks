@@ -76,21 +76,25 @@ TEST_HEADER := MyGui.Add("Text", "s20 w1200","Keysharp GUI Tests")
 ; └────────────────────────────────────┘
 headerBtn := MyGui.Add("Button", "s8 x10 y+10", "Make header font larger Comic Sans MS")
 headerBtn.OnEvent("Click", "ChangeFont")
+
 ; ┌──────────────────────────────┐
 ; │  Add button to restore font  │
 ; └──────────────────────────────┘
 headerBtn2 := MyGui.Add("Button", "s8 x+10 yp", "Restore header font")
 headerBtn2.OnEvent("Click", "ChangeFontBack")
+
 ; ┌───────────────────────────────────┐
 ; │  Add button to change background  │
 ; └───────────────────────────────────┘
 bgBtn := MyGui.Add("Button", "s8 x+10 yp", "Change GUI Backgroud")
 bgBtn.OnEvent("Click", "ChangeBG")
+
 ; ┌────────────────────────────────────┐
 ; │  Add button to restore background  │
 ; └────────────────────────────────────┘
 bgBtn2 := MyGui.Add("Button", "s8 x+10 yp", "Restore GUI Backgroud")
 bgBtn2.OnEvent("Click", "RestoreBG")
+
 ; ┌─────────────────┐
 ; │  GroupBox test  │
 ; └─────────────────┘
@@ -114,8 +118,9 @@ LV.OnEvent("DoubleClick", "LV_DoubleClick")
 ; ┌─────────────────────────────────────────────────────────────────────────────┐
 ; │  Gather a list of file names from a folder and put them into the ListView:  │
 ; └─────────────────────────────────────────────────────────────────────────────┘
-Loop Files, A_MyDocuments "\*.*"
-  LV.Add(, A_LoopFileName, A_LoopFileSizeKB)
+Loop Files, A_MyDocuments . A_DirSeperator . "*.*"
+	LV.Add(, A_LoopFileName, A_LoopFileSizeKB)
+
 ; ┌─────────────────────────────────────────────┐
 ; │  Show an input box and retrieve the result  │
 ; └─────────────────────────────────────────────┘
@@ -126,6 +131,7 @@ InputBtn.OnEvent("Click", "InputTest")
 
 ;LV.ModifyCol()  ; Auto-size each column to fit its contents.
 LV.ModifyCol(2, "Integer")  ; For sorting purposes, indicate that column 2 is an integer.
+
 ; ┌─────────────────────┐
 ; │  Add a radio group  │
 ; └─────────────────────┘
@@ -1683,42 +1689,48 @@ LV_DoubleClick(LV, RowNumber)
 	ColumnText := LV.GetText(RowNumber, 2)
 	ToolTip("You double-clicked row number " RowNumber ". File '" RowText "' has size " ColumnText "kb.")
 }
+
 ; ┌──────────────────────┐
 ; │  Change header font  │
 ; └──────────────────────┘
+
 ChangeFont()
 {
-global TEST_HEADER
-TEST_HEADER.SetFont("cBlue s14", "Comic Sans MS")
+	global TEST_HEADER
+	TEST_HEADER.SetFont("cBlue s14", "Comic Sans MS")
 }
 ; ┌────────────────┐
 ; │  Restore font  │
 ; └────────────────┘
+
 ChangeFontBack()
 {
-TEST_HEADER.SetFont("cBlack s8", "Arial")
-MsgBox("Done", "Restoring Font")
+	TEST_HEADER.SetFont("cBlack s8", "Arial")
+	MsgBox("Done", "Restoring Font")
 }
 ; ┌───────────────────────────┐
 ; │  Change background color  │
 ; └───────────────────────────┘
+
 ChangeBG()
 {
-MsgBox(MyGui.BackColor, "Background color:")
-MyGui.BackColor := GuiBGColor
+	MsgBox(MyGui.BackColor, "Background color:")
+	MyGui.BackColor := GuiBGColor
 }
 ; ┌───────────────────────────────┐
 ; │  Restore background function  │
 ; └───────────────────────────────┘
+
 RestoreBG()
 {
-global MyGui
-MyGui.BackColor := 0xF0F0F0
+	global MyGui
+	MyGui.BackColor := 0xF0F0F0
 }
 
 ; ┌───────────────────────┐
 ; │  Input test function  │
 ; └───────────────────────┘
+
 InputTest() {
 	OutputVar := InputBox("What is your first name?", "Question 1").Value
 	if (OutputVar = "Bill")
@@ -1736,7 +1748,7 @@ InputTest() {
 ; └───────────────────────┘
 
 RadioThreeClicked() {
-MsgBox("You clicked the last radio button.", "Radio 3 Clicked")
+	MsgBox("You clicked the last radio button.", "Radio 3 Clicked")
 }
 
 ; ┌─────────────────────┐
@@ -1744,11 +1756,11 @@ MsgBox("You clicked the last radio button.", "Radio 3 Clicked")
 ; └─────────────────────┘
 
 CheckBoxOneClicked() {
-IsChecked := ControlGetChecked(CheckBoxOne, "KEYSHARP TESTS")
-MsgBox("1 is checked - 0 is unchecked`nTests 'ControlGetChecked' also`n`nValue is: " IsChecked, "Checkbox Test")
-TrayTip("TrayTipTest", "I will see myself out, thanks!", "Icon!")
-Sleep(1000)
-HideTrayTip()
+	IsChecked := ControlGetChecked(CheckBoxOne, "KEYSHARP TESTS")
+	MsgBox("1 is checked - 0 is unchecked`nTests 'ControlGetChecked' also`n`nValue is: " IsChecked, "Checkbox Test")
+	TrayTip("TrayTipTest", "I will see myself out, thanks!", "Icon!")
+	Sleep(1000)
+	HideTrayTip()
 }
 
 ; ┌─────────────────┐

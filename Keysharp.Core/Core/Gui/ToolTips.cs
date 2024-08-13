@@ -35,22 +35,46 @@
 				tooltipInvokerForm.CheckedInvoke(() =>
 				{
 					if (persistentTooltips[id] == null)
-						persistentTooltips[id] = new ToolTip { Active = true, AutomaticDelay = 0, InitialDelay = 0, ReshowDelay = 0, ShowAlways = true };
+						persistentTooltips[id] = new ToolTip
+					{
+						Active = true,
+#if WINDOWS
+						AutomaticDelay = 0,//Delay of 0 throws an exception on linux.
+#endif
+						InitialDelay = 0,
+						ReshowDelay = 0,
+						ShowAlways = true
+					};
 
 					tt = persistentTooltips[id];
 
+#if WINDOWS
 					var h = tt.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.NonPublic);
 
 					handle = ((IntPtr)h.GetValue(tt)).ToInt64();
+
+#elif LINUX
+					var ttwndField = tt.GetType().GetField("tooltip_window", BindingFlags.Instance | BindingFlags.NonPublic);
+
+					var ttwnd = ttwndField.GetValue(tt);
+
+					var hprop = ttwnd.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.Public);
+
+					handle = ((IntPtr)hprop.GetValue(ttwnd)).ToInt64();
+
+#endif
 				}, false);
 				tooltipInvokerForm.CheckedBeginInvoke(() =>
 				{
 					tt.Active = true;
+#if LINUX
+					tt.SetToolTip(tooltipInvokerForm, text);//Setting position is not possible on linux.
+#elif WINDOWS
 
-					//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
-					//is active.
 					if (one_or_both_coords_unspecified)
 					{
+						//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
+						//is active.
 						var temppt = System.Windows.Forms.Cursor.Position;
 						temppt.X += 10;
 						temppt.Y += 10;
@@ -112,6 +136,7 @@
 						}
 					}
 
+#endif
 					//AHK did a large amount of work to make sure the tooltip didn't go off screen
 					//and also to ensure it was not behind the mouse cursor. This seems like overkill
 					//for two reasons.

@@ -113,8 +113,9 @@ namespace Keysharp.Core
 			//Dialogs.MsgBox(Path.GetFullPath(path));
 			//Dialogs.MsgBox(Accessors.A_WorkingDir);
 
-			if (!path.StartsWith("\\\\") && !char.IsLetter(path[0]))//Convert something like "*.txt" to "./*.txt".
-				path = "./" + path;
+			//Convert something like "*.txt" to "./*.txt".
+			if (!path.StartsWith("\\\\") && !char.IsLetter(path[0]) && path[0] != '.' && path[0] != '/')
+				path = "." + Path.DirectorySeparatorChar + path;
 
 			if (!string.IsNullOrEmpty(mode))
 			{

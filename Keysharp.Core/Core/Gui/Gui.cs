@@ -785,6 +785,7 @@ namespace Keysharp.Core
 					else if (opts.sortheader.HasValue)
 						lv.HeaderStyle = opts.sortheader.IsFalse() ? ColumnHeaderStyle.Nonclickable : ColumnHeaderStyle.Clickable;
 
+					lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 					ctrl = lv;
 				}
 				break;
