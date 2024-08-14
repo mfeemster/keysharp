@@ -27,6 +27,15 @@ namespace Keysharp.Scripting
 			FlowWhile//Same: while { one : 1 } == x
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 		private Parser parser;
+		private HashSet<string> defines = new HashSet<string>()
+		{
+#if WINDOWS
+			"WINDOWS",
+#elif LINUX
+			"LINUX",
+#endif
+		};
+		private Stack<bool> currentDefines = new Stack<bool>();
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Force;
@@ -131,44 +140,47 @@ namespace Keysharp.Scripting
 					var ch = span[i];
 					var wasCont = false;
 
-					if (inMlComment)
+					if (!InNotDefine())
 					{
-						if (ch == '/' && last == '*')
+						if (inMlComment)
 						{
-							inMlComment = false;
+							if (ch == '/' && last == '*')
+							{
+								inMlComment = false;
 
-							if (i < span.Length - 1)
+								if (i < span.Length - 1)
+								{
+									last = ch;
+									continue;
+								}
+								else
+									commentIgnore = true;
+							}
+							else
 							{
 								last = ch;
 								continue;
 							}
-							else
-								commentIgnore = true;
 						}
-						else
+						else if (!inString && !InNotDefine())
 						{
-							last = ch;
-							continue;
-						}
-					}
-					else if (!inString)
-					{
-						if (ch == '*' && last == '/')
-						{
-							inMlComment = true;
-							last = ch;
-							sb.Remove(sb.Length - 1, 1);
+							if (ch == '*' && last == '/')
+							{
+								inMlComment = true;
+								last = ch;
+								sb.Remove(sb.Length - 1, 1);
 
-							if (i < span.Length - 1)
-								continue;
-							else
+								if (i < span.Length - 1)
+									continue;
+								else
+									commentIgnore = true;
+							}
+							else if (ch == ';' && (last == ' ' || last == '\t'))
+							{
+								span = span.Slice(0, i).TrimEnd(Spaces);
+								i = span.Length - 1;
 								commentIgnore = true;
-						}
-						else if (ch == ';' && (last == ' ' || last == '\t'))
-						{
-							span = span.Slice(0, i).TrimEnd(Spaces);
-							i = span.Length - 1;
-							commentIgnore = true;
+							}
 						}
 					}
 
@@ -181,7 +193,7 @@ namespace Keysharp.Scripting
 								if (span.Length < 2)
 									throw new ParseException(ExUnknownDirv, lineNumber, code);
 
-								var sub = noCommentCode.Split(SpaceMultiDelim, 2, StringSplitOptions.TrimEntries);
+								var sub = noCommentCode.Split(SpaceMultiDelim, 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 								var parts = new[] { sub[0], sub.Length > 1 ? sub[1] : string.Empty };
 								var p1 = Parser.StripComment(parts[1]).Trim(Spaces);
 								var numeric = int.TryParse(p1, out var value);
@@ -191,6 +203,68 @@ namespace Keysharp.Scripting
 
 								switch (upper)
 								{
+									case "IF":
+									{
+										if (parts[1] == string.Empty)
+											throw new ParseException($"#if was not followed by an identifier.", lineNumber, code);
+
+										if (!defines.Contains(parts[1]) && Conversions.ConvertOnOff(parts[1]) != ToggleValueType.On)
+										{
+											currentDefines.Push(false);
+											continue;
+										}
+										else
+											currentDefines.Push(true);
+									}
+									break;
+
+									case "ELIF":
+									{
+										if (currentDefines.Count == 0)
+											throw new ParseException($"#elif was not preceded by an #if.", lineNumber, code);
+
+										if (parts[1] == string.Empty)
+											throw new ParseException($"#elif was not followed by an identifier.", lineNumber, code);
+
+										if (InNotDefine() &&
+												(defines.Contains(parts[1])
+												 ||
+												 Conversions.ConvertOnOff(parts[1]) == ToggleValueType.On))
+										{
+											_ = currentDefines.Pop();
+											currentDefines.Push(true);
+										}
+										else
+										{
+											_ = currentDefines.Pop();
+											currentDefines.Push(false);
+											continue;
+										}
+									}
+									break;
+
+									case "ELSE":
+									{
+										if (currentDefines.Count == 0)
+											throw new ParseException($"#else was not preceded by an #if.", lineNumber, code);
+
+										var define = !currentDefines.Pop();
+										currentDefines.Push(define);
+
+										if (!define)
+											continue;
+									}
+									break;
+
+									case "ENDIF":
+									{
+										if (currentDefines.Count == 0)
+											throw new ParseException($"#endif was not preceded by an #if.", lineNumber, code);
+
+										_ = currentDefines.Pop();
+									}
+									break;
+
 									case "INCLUDE":
 										includeOnce = true;
 
@@ -489,7 +563,11 @@ namespace Keysharp.Scripting
 
 								break;
 							}
-							else if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
+
+							if (InNotDefine())
+								continue;
+
+							if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
 							{
 								//Comments within the quote preceeding a continuation ( are not part of the string.
 								if (last == '"' || prevSpan.EndsWith(Quote) || prevSpan.EndsWith(":="))
@@ -559,7 +637,7 @@ namespace Keysharp.Scripting
 							}
 						}
 
-						if (!commentIgnore)
+						if (!commentIgnore && !InNotDefine())
 						{
 							if (ch == '\'')
 							{
@@ -858,6 +936,9 @@ namespace Keysharp.Scripting
 				StartNewLine(newLineStr);
 			}
 
+			if (currentDefines.Count != 0)
+				throw new ParseException($"#if was never closed with an #endif.", lineNumber, code);
+
 			foreach (var extraline in extralines)
 				list.Add(extraline);
 
@@ -880,6 +961,8 @@ namespace Keysharp.Scripting
 
 			return list;
 		}
+
+		private bool InNotDefine() => currentDefines.Count > 0 && !currentDefines.Peek();
 
 		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
 		{

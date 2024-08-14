@@ -167,13 +167,13 @@ namespace Keysharp.Core
 			addstyle = _add;
 			removestyle = _remove;
 		}
-
-#if !WINDOWS
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+#else
 		internal void MakeNumeric()
 		{
 			KeyPress += KeysharpEdit_KeyPress;

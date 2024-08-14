@@ -51,6 +51,9 @@ namespace Keysharp.Tests
 		public void IncludeAsmInfo() => Assert.IsTrue(TestScript("directive-include-asminfo", false));
 
 		[Test, Category("Directives")]
+		public void Defines() => Assert.IsTrue(TestScript("directive-defines", true));
+
+		[Test, Category("Directives")]
 		public void Misc() => Assert.IsTrue(TestScript("directive-misc", false));
 	}
 }

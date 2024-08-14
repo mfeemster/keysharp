@@ -41,8 +41,7 @@ namespace Keysharp.Tests
 				string line;
 
 				while ((line = sr.ReadLine()) != null)
-					if (!line.StartsWith("#") && !line.StartsWith(";"))
-						_ = sb.AppendLine("\t" + line);
+					_ = sb.AppendLine("\t" + line);
 			}
 
 			_ = sb.AppendLine("}");
