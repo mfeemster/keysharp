@@ -369,5 +369,61 @@ using static Keysharp.Scripting.Script.Operator;
 				return tx.ToString();
 			}
 		}
+
+		internal object EvaluateCode(string code)
+		{
+			var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
+			var usings = new List<string>()//These aren't what show up in the output .cs file.
+			{
+				"System"
+			};
+			var references = new List<MetadataReference>
+			{
+				MetadataReference.CreateFromFile(Path.Combine(coreDir, "mscorlib.dll")),
+				MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.dll")),
+				MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll"))
+
+			};
+			string finalCode = @"
+using System;
+
+namespace Dyn
+{
+	public class DynamicCode
+	{
+		public object Evaluate()
+		{
+			return " + code + @";
+		}
+	}
+}";
+			var tree = SyntaxFactory.ParseSyntaxTree(finalCode,
+					   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
+			var ms = new MemoryStream();
+			var compilation = CSharpCompilation.Create("DynamicCode")
+							  .WithOptions(
+								  new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+								  .WithUsings(usings)
+								  .WithOptimizationLevel(OptimizationLevel.Release)
+								  .WithPlatform(Platform.AnyCpu)
+								  .WithConcurrentBuild(true)
+							  )
+							  .AddReferences(references)
+							  .AddSyntaxTrees(tree)
+							  ;
+			var results = compilation.Emit(ms);
+
+			if (results.Success)
+			{
+				ms.Seek(0, SeekOrigin.Begin);
+				var arr = ms.ToArray();
+				var compiledasm = Assembly.Load(arr);
+				object o = compiledasm.CreateInstance("Dyn.DynamicCode");
+				Type t = o.GetType();
+				return t.GetMethod("Evaluate").Invoke(o, null);
+			}
+			else
+				throw new ParseException($"Failed to compile: {code}.");
+		}
 	}
 }

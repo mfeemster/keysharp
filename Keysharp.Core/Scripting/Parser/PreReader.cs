@@ -36,10 +36,10 @@ namespace Keysharp.Scripting
 #endif
 		};
 		private Stack<bool> currentDefines = new Stack<bool>();
+		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Force;
-
 		internal PreReader(Parser p) => parser = p;
 
 		internal List<CodeLine> Read(TextReader source, string name)
@@ -208,8 +208,13 @@ namespace Keysharp.Scripting
 										if (parts[1] == string.Empty)
 											throw new ParseException($"#if was not followed by an identifier.", lineNumber, code);
 
-										if (!defines.Contains(parts[1]) && Conversions.ConvertOnOff(parts[1]) != ToggleValueType.On)
+										//var sw = new Stopwatch();
+										//sw.Start();
+
+										if (!EvaluateDefine(parts[1]))
 										{
+											//sw.Stop();
+											//Script.OutputDebug($"Evaluating #if took {sw.ElapsedMilliseconds}ms");
 											currentDefines.Push(false);
 											continue;
 										}
@@ -226,11 +231,13 @@ namespace Keysharp.Scripting
 										if (parts[1] == string.Empty)
 											throw new ParseException($"#elif was not followed by an identifier.", lineNumber, code);
 
-										if (InNotDefine() &&
-												(defines.Contains(parts[1])
-												 ||
-												 Conversions.ConvertOnOff(parts[1]) == ToggleValueType.On))
+										//var sw = new Stopwatch();
+										//sw.Start();
+
+										if (InNotDefine() && EvaluateDefine(parts[1]))
 										{
+											//sw.Stop();
+											//Script.OutputDebug($"Evaluating #elif took {sw.ElapsedMilliseconds}ms");
 											_ = currentDefines.Pop();
 											currentDefines.Push(true);
 										}
@@ -960,6 +967,41 @@ namespace Keysharp.Scripting
 			}
 
 			return list;
+		}
+
+		private bool EvaluateDefine(string code)
+		{
+			if (tempCompiler == null)
+				tempCompiler = new CompilerHelper();
+
+			var cl = new CodeLine("Dyn", 1, code);
+			var tokens = parser.SplitTokens(cl, code);
+			var newsb = new StringBuilder(tokens.Count * 5);
+
+			foreach (string tok in tokens)
+			{
+				if (tok == "(" || tok == ")" || tok == "||" || tok == "&&")
+				{
+					_ = newsb.Append(tok);
+				}
+				else if (defines.Contains(tok, StringComparer.OrdinalIgnoreCase))
+				{
+					_ = newsb.Append("true");
+				}
+				else
+				{
+					var conv = Conversions.ConvertOnOff(tok);
+
+					if (conv == ToggleValueType.On)
+						_ = newsb.Append("true");
+					else
+						_ = newsb.Append("false");
+				}
+			}
+
+			var evalCode = newsb.ToString();
+			var val = (bool)tempCompiler.EvaluateCode(evalCode);
+			return val;
 		}
 
 		private bool InNotDefine() => currentDefines.Count > 0 && !currentDefines.Peek();
