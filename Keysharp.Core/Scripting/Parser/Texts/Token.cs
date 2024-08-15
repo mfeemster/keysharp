@@ -561,110 +561,7 @@ namespace Keysharp.Scripting
 			return flowOperators.Contains(word);
 		}
 
-		private List<object> ExtractRange(List<object> parts, int start, int end)
-		{
-			var extracted = new List<object>(end - start);
-
-			for (var i = start; i < end; i++)
-			{
-				extracted.Add(parts[start]);
-				parts.RemoveAt(start);
-			}
-
-			return extracted;
-		}
-
-		private Token GetToken(CodeLine codeLine)
-		{
-			var code = codeLine.Code;
-			code = code.TrimStart(Spaces);
-
-			if (code.Length == 0)
-				return Token.Unknown;
-
-			var codeSpan = code.AsSpan();
-
-			if (IsGetOrSet(codeSpan, "get"))
-				return Token.PropGet;
-			else if (IsGetOrSet(codeSpan, "set"))
-				return Token.PropSet;
-			else if (IsProperty(codeLine))
-				return Token.Prop;
-			else if (IsFlowOperator(code))
-				return Token.Flow;
-			else if (IsLabel(code))
-				return Token.Label;
-			else if (IsHotkeyLabel(code) || IsHotstringLabel(code))
-				return Token.Hotkey;
-			else if (IsAssignment(code))
-				return Token.Assign;
-			else if (IsDirective(code))
-				return Token.Directive;
-			else return IsCommand(code) ? Token.Command : Token.Expression;
-		}
-
-		private bool IsDirective(string code) => code.Length > 2 && code[0] == Directive;
-
-		private bool IsGetOrSet(ReadOnlySpan<char> code, string name)
-		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && code.IndexOfAny(ParensSv) == -1 && InClassDefinition() && Scope.Length > 0;
-
-		private bool IsProperty(CodeLine codeLine)
-		{
-			var code = codeLine.Code;
-
-			if (InClassDefinition() && Scope.Length == 0)
-			{
-				if (code.Contains(":="))
-					return false;
-
-				if (code.EndsWith('{'))
-					code = code.TrimEnd(SpaceTabOpenBrace);
-
-				var copy = code;
-				var isstatic = false;
-
-				if (copy.StartsWith("static "))
-				{
-					copy = copy.Substring(7, code.Length - 7);
-					isstatic = true;
-				}
-
-				var openBracket = copy.IndexOf('[');
-
-				if (openBracket != -1)
-					copy = copy.AsSpan(0, openBracket).Trim().ToString();
-
-				if (copy.Length > 0)
-				{
-					var isitem = string.Compare(copy, "__Item", true) == 0;
-
-					if (openBracket != -1)
-					{
-						var closeBracket = code.IndexOf(']');
-
-						if (closeBracket == code.Length - 1)
-						{
-							if (!isitem)
-								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", codeLine);
-						}
-						else
-							throw new ParseException("Missing close bracket on property indexer.", codeLine);
-					}
-					else if (isitem)
-						throw new ParseException("The __Item property must have brackets and take at least one parameter.", codeLine);
-
-					if (isstatic && isitem)
-						throw new ParseException("The __Item property cannot be static.", codeLine);
-
-					if (IsIdentifier(copy))
-						return true;
-				}
-			}
-
-			return false;
-		}
-
-		private List<object> SplitTokens(CodeLine codeLine, string code)
+		internal List<object> SplitTokens(CodeLine codeLine, string code)
 		{
 			var json = false;
 			var list = new List<object>();
@@ -976,6 +873,109 @@ namespace Keysharp.Scripting
 			}
 
 			return str.ToString();
+		}
+
+		private List<object> ExtractRange(List<object> parts, int start, int end)
+		{
+			var extracted = new List<object>(end - start);
+
+			for (var i = start; i < end; i++)
+			{
+				extracted.Add(parts[start]);
+				parts.RemoveAt(start);
+			}
+
+			return extracted;
+		}
+
+		private Token GetToken(CodeLine codeLine)
+		{
+			var code = codeLine.Code;
+			code = code.TrimStart(Spaces);
+
+			if (code.Length == 0)
+				return Token.Unknown;
+
+			var codeSpan = code.AsSpan();
+
+			if (IsGetOrSet(codeSpan, "get"))
+				return Token.PropGet;
+			else if (IsGetOrSet(codeSpan, "set"))
+				return Token.PropSet;
+			else if (IsProperty(codeLine))
+				return Token.Prop;
+			else if (IsFlowOperator(code))
+				return Token.Flow;
+			else if (IsLabel(code))
+				return Token.Label;
+			else if (IsHotkeyLabel(code) || IsHotstringLabel(code))
+				return Token.Hotkey;
+			else if (IsAssignment(code))
+				return Token.Assign;
+			else if (IsDirective(code))
+				return Token.Directive;
+			else return IsCommand(code) ? Token.Command : Token.Expression;
+		}
+
+		private bool IsDirective(string code) => code.Length > 2 && code[0] == Directive;
+
+		private bool IsGetOrSet(ReadOnlySpan<char> code, string name)
+		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && code.IndexOfAny(ParensSv) == -1 && InClassDefinition() && Scope.Length > 0;
+
+		private bool IsProperty(CodeLine codeLine)
+		{
+			var code = codeLine.Code;
+
+			if (InClassDefinition() && Scope.Length == 0)
+			{
+				if (code.Contains(":="))
+					return false;
+
+				if (code.EndsWith('{'))
+					code = code.TrimEnd(SpaceTabOpenBrace);
+
+				var copy = code;
+				var isstatic = false;
+
+				if (copy.StartsWith("static "))
+				{
+					copy = copy.Substring(7, code.Length - 7);
+					isstatic = true;
+				}
+
+				var openBracket = copy.IndexOf('[');
+
+				if (openBracket != -1)
+					copy = copy.AsSpan(0, openBracket).Trim().ToString();
+
+				if (copy.Length > 0)
+				{
+					var isitem = string.Compare(copy, "__Item", true) == 0;
+
+					if (openBracket != -1)
+					{
+						var closeBracket = code.IndexOf(']');
+
+						if (closeBracket == code.Length - 1)
+						{
+							if (!isitem)
+								throw new ParseException("Indexed properties are not supported except in the special case of the __Item property.", codeLine);
+						}
+						else
+							throw new ParseException("Missing close bracket on property indexer.", codeLine);
+					}
+					else if (isitem)
+						throw new ParseException("The __Item property must have brackets and take at least one parameter.", codeLine);
+
+					if (isstatic && isitem)
+						throw new ParseException("The __Item property cannot be static.", codeLine);
+
+					if (IsIdentifier(copy))
+						return true;
+				}
+			}
+
+			return false;
 		}
 
 		private string TokensToCode(List<object> tokens)

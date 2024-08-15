@@ -49,3 +49,25 @@ if (x == 200)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+x := 10
+
+#if ((WINDOWS || LINUX) && 0))
+	x *= 2
+#endif
+
+if (x == 10)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 10
+
+#if ((WINDOWS || LINUX) && 1))
+	x *= 2
+#endif
+
+if (x == 20)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
