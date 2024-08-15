@@ -21,6 +21,7 @@ winposy := ""
 winposw := ""
 winposh := ""
 
+#if WINDOWS
 ; ┌────────────────┐
 ; │  Tab One Menu  │
 ; └────────────────┘
@@ -38,23 +39,29 @@ FileMenu.SetIcon("Pause Icon", A_KeysharpCorePath, "Keysharp_p.ico")
 ImgSrchMenu := Menu()
 ImgSrchMenu.Add("Image Search Test", "ImgSrch")
 
-
 MyMenuBar := MenuBar()
 MyMenuBar.Add("&Menu Icon Test", FileMenu)
 MyMenuBar.Add("Image Search", ImgSrchMenu)
+#endif
 
 MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
+
+#if LINUX
+	MyGui.Show()
+#endif
 
 CloseApp() {
 	ExitApp
 }
 
+#if WINDOWS
 ; ┌───────────────────┐
 ; │  Add Menu to GUI  │
 ; └───────────────────┘
 
 MyGui.MenuBar := MyMenuBar
+#endif
 
 ; ┌─────────────┐
 ; │  Start TAB  │
@@ -228,7 +235,7 @@ WriteINI() {
 	ControlSetText(IniFileText2, iniWriteEdit)
 }
 
-
+#if WINDOWS
 ;;;;;;;;;
 ; ┌──────────────────────┐
 ; │  Second Tab section  │
@@ -298,7 +305,7 @@ SrchPicText.SetFont("s10 cBlue")
 ; └────────────────────────┘
 MyGui.UseGroup()
 Tab.UseTab("Second")
-gb2_TabTwo := MyGui.Add("GroupBox", "x350 y10 w325 h550", "Tab Two - Group Two")
+gb2_TabTwo := MyGui.Add("GroupBox", "x350 y10 w400 h550", "Tab Two - Group Two")
 MyGui.UseGroup(gb2_TabTwo)
 
 ; ┌─────────┐
@@ -323,6 +330,24 @@ e3Btn.OnEvent("Click", "ShowE3Hwnd")
 numericText := MyGui.Add("Text", "x10 y+10", "The text box below should be numeric only")
 numericText.SetFont("cBlue s8")
 numericEdit := MyGui.Add("Edit", "w200 xp y+10 number")
+
+setNumericBtn := MyGui.Add("Button", "x+10 yp", "Num")
+setNumericBtn.SetFont("s8 cBlue")
+setNumericBtn.OnEvent("Click", "SetNumeric")
+
+resetNumericBtn := MyGui.Add("Button", "x+10 yp", "Unr")
+resetNumericBtn.SetFont("s8 cBlue")
+resetNumericBtn.OnEvent("Click", "ClearNumeric")
+
+SetNumeric()
+{
+	numericEdit.Opt("+Number")
+}
+
+ClearNumeric()
+{
+	numericEdit.Opt("-Number")
+}
 
 ShowE3Hwnd() {
 	ControlSetStyle("^0x8", e3)
@@ -1963,6 +1988,7 @@ Finally, ControlSetText operates on the Object created from the Hwnd.
 StopToolTip() {
 	ToolTip()
 }
+#endif
 
 ; ┌───────────────────────────────┐
 ; │  Tab One Group Two functions  │
@@ -1978,11 +2004,19 @@ Reset_Style() {
 Set_Edit_Style() 
 {
 	;MsgBox(HwndMyEdit, "This is the ID")
-	ControlSetStyle("+0x8", HwndMyEdit)
+#if WINDOWS
+ 	ControlSetStyle("+0x8", HwndMyEdit)
 	ControlFocus(HwndMyEdit)
+#else
+	MyEdit2.Opt("+Uppercase")
+	HwndMyEdit := MyEdit2.Hwnd
+	; ControlFocus(HwndMyEdit)
+#endif
 }
 
-Reset_Edit_Style() {
+Reset_Edit_Style()
+{
+#if WINDOWS
 	Str := ControlGetStyle(HwndMyEdit)
 	MsgBox(Format("0x{1:x}", Str), "Style of Edit1 Before Reset")
 
@@ -1991,8 +2025,13 @@ Reset_Edit_Style() {
 	
 	Str := ControlGetStyle(HwndMyEdit)
 	MsgBox(Format("0x{1:x}", Str), "Style of Edit1 After Reset")
+#else
+	MyEdit2.Opt("-Uppercase")
+	HwndMyEdit := MyEdit2.Hwnd
+#endif
 }
 
+#if WINDOWS
 ; ┌──────────────────────┐
 ; │  Move Gui functions  │
 ; └──────────────────────┘
@@ -2011,6 +2050,7 @@ MoveGuiBack() {
 	MyGui.UseGroup(gb2_TabTwo)
 	MyGui.Move(winposx, winposy, winposw, winposh)
 }
+#endif
 
 ; ┌──────────────────────────┐
 ; │  Image Search functions  │
@@ -2038,6 +2078,7 @@ CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the scre
 	}
 }
 
+#if WINDOWS
 ; ┌──────────────────────────┐
 ; │  Hotkeys with DllCall()  │
 ; └──────────────────────────┘
@@ -2391,3 +2432,4 @@ MasterPeak()
 }
 
 MyGui.Show()
+#endif

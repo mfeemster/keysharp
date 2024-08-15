@@ -151,6 +151,10 @@ namespace Keysharp.Core
 	{
 		private readonly int addstyle, removestyle;
 
+#if !WINDOWS
+		internal bool IsNumeric { get; set; }
+
+#endif
 		protected override CreateParams CreateParams
 		{
 			get
@@ -166,7 +170,12 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
+#if !WINDOWS
+			KeyPress += KeysharpEdit_KeyPress;
+			Validating += KeysharpEdit_Validating;
+#endif
 		}
+
 #if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
@@ -174,36 +183,37 @@ namespace Keysharp.Core
 				base.WndProc(ref m);
 		}
 #else
-		internal void MakeNumeric()
-		{
-			KeyPress += KeysharpEdit_KeyPress;
-			Validating += KeysharpEdit_Validating;
-		}
 
 		private void KeysharpEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			if (Text.Any(ch => !char.IsDigit(ch)))
-				Text = "";
+			if (IsNumeric)
+			{
+				if (Text.Any(ch => !char.IsDigit(ch)))
+					Text = string.Join("", Text.Where(ch => char.IsDigit(ch)));
+			}
 		}
 
 		private void KeysharpEdit_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (ModifierKeys.HasFlag(Keys.Control))
+			if (IsNumeric)
 			{
-				var vch = '\u0016';
-
-				if (e.KeyChar == vch)
+				if (ModifierKeys.HasFlag(Keys.Control))
 				{
-					var text = Clipboard.GetText();
+					var vch = '\u0016';
 
-					if (text.Any(ch => !char.IsDigit(ch)))
-						e.Handled = true;
+					if (e.KeyChar == vch)
+					{
+						var text = Clipboard.GetText();
+
+						if (text.Any(ch => !char.IsDigit(ch)))
+							e.Handled = true;
+					}
 				}
-			}
 
-			if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
-			{
-				e.Handled = true;
+				if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+				{
+					e.Handled = true;
+				}
 			}
 		}
 #endif
@@ -684,8 +694,10 @@ namespace Keysharp.Core
 	public class KeysharpRichEdit : RichTextBox
 	{
 		private readonly int addstyle, removestyle;
-		internal bool isnumeric = false;
+#if !WINDOWS
+		internal bool IsNumeric { get; set; }
 
+#endif
 		internal CharacterCasing CharacterCasing { get; set; } = CharacterCasing.Normal;
 
 		protected override CreateParams CreateParams
@@ -704,32 +716,33 @@ namespace Keysharp.Core
 			addstyle = _add;
 			removestyle = _remove;
 			KeyPress += KeysharpRichEdit_KeyPress;
+#if !WINDOWS
+			Validating += KeysharpRichEdit_Validating;
+#endif
 		}
 
-#if !WINDOWS
+#if WINDOWS
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
-
-		internal void MakeNumeric()
-		{
-			isnumeric = true;
-			Validating += KeysharpRichEdit_Validating;
-		}
+#else
 
 		private void KeysharpRichEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			if (Text.Any(ch => !char.IsDigit(ch)))
-				Text = "";
+			if (IsNumeric)
+			{
+				if (Text.Any(ch => !char.IsDigit(ch)))
+					Text = string.Join("", Text.Where(ch => char.IsDigit(ch)));
+			}
 		}
 #endif
 		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
 		{
 #if !WINDOWS
 
-			if (isnumeric)
+			if (IsNumeric)
 			{
 				if (ModifierKeys.HasFlag(Keys.Control))
 				{

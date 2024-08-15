@@ -1215,6 +1215,19 @@ namespace Keysharp.Core
 				if (opts.limit != int.MinValue)
 					txt.MaxLength = opts.limit;
 
+#if WINDOWS
+				long val;
+
+				if (opts.number)
+					val = WindowsAPI.GetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE).ToInt64() | 0x2000;
+				else
+					val = WindowsAPI.GetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE).ToInt64() & ~0x2000;
+
+				_ = WindowsAPI.SetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE, new IntPtr(val));
+#else
+				txt.IsNumeric = opts.number;
+#endif
+
 				if (opts.lowercase.IsTrue())
 					txt.CharacterCasing = CharacterCasing.Lower;
 				else if (opts.uppercase.IsTrue())
@@ -1246,6 +1259,19 @@ namespace Keysharp.Core
 
 				if (opts.limit != int.MinValue)
 					rtxt.MaxLength = opts.limit;
+
+#if WINDOWS
+				long val;
+
+				if (opts.number)
+					val = WindowsAPI.GetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE).ToInt64() | 0x2000;
+				else
+					val = WindowsAPI.GetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE).ToInt64() & ~0x2000;
+
+				_ = WindowsAPI.SetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE, new IntPtr(val));
+#else
+				rtxt.IsNumeric = opts.number;
+#endif
 
 				if (opts.lowercase.IsTrue())
 					rtxt.CharacterCasing = CharacterCasing.Lower;

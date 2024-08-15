@@ -437,7 +437,7 @@ namespace Keysharp.Core
 #if !WINDOWS
 
 					if (opts.number)
-						txt.MakeNumeric();
+						txt.IsNumeric = true;
 
 #endif
 
@@ -503,7 +503,7 @@ namespace Keysharp.Core
 #if !WINDOWS
 
 					if (opts.number)
-						txt.MakeNumeric();
+						txt.IsNumeric = true;
 
 #endif
 
@@ -2035,7 +2035,7 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "limit", ref options.limit, StringComparison.OrdinalIgnoreCase, true)) { }
 				else if (Options.TryParse(opt, "Lowercase", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.lowercase = tempbool; }
 				else if (Options.TryParse(opt, "Uppercase", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.uppercase = tempbool; }
-				else if (string.Compare(opt, "Number", true) == 0) { options.number = true; }
+				else if (Options.TryParse(opt, "Number", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.number = tempbool; }
 				else if (Options.TryParseString(opt, "Password", ref options.pwdch, StringComparison.OrdinalIgnoreCase)) { options.pwd = true; }
 				else if (Options.TryParse(opt, "ReadOnly", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rdonly = tempbool; }
 				else if (Options.TryParse(opt, "WantCtrlA", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantctrla = tempbool; }
