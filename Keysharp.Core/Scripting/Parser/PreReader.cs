@@ -559,6 +559,9 @@ namespace Keysharp.Scripting
 								break;
 							}
 
+							if (InNotDefine())
+								goto LineFinished;
+
 							if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
 							{
 								//Comments within the quote preceeding a continuation ( are not part of the string.
@@ -990,7 +993,7 @@ namespace Keysharp.Scripting
 			return val;
 		}
 
-		private bool InNotDefine() => currentDefines.Count > 0 && !currentDefines.Peek();
+		private bool InNotDefine() => currentDefines.Count > 0 && currentDefines.Any(d => d == false);
 
 		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
 		{

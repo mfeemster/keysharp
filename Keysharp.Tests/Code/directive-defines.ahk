@@ -71,3 +71,43 @@ if (x == 20)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; False outer with true inner.
+x := 10
+
+#if LINUX
+    #if LINUX
+		x := 20
+    #else
+        x := 1
+    #endif
+#endif
+
+#if WINDOWS
+	if (x == 10)
+#elif LINUX
+	if (x == 20)
+#endif
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; True outer with false inner.
+x := 10
+
+#if WINDOWS
+    #if LINUX
+		x := 20
+    #else
+        x := 1
+    #endif
+#endif
+
+#if WINDOWS
+	if (x == 1)
+#elif LINUX
+	if (x == 10)
+#endif
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
