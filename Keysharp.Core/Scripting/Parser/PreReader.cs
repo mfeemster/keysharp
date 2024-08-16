@@ -970,7 +970,7 @@ namespace Keysharp.Scripting
 
 			foreach (string tok in tokens)
 			{
-				if (tok == "(" || tok == ")" || tok == "||" || tok == "&&")
+				if (tok == "(" || tok == ")" || tok == "||" || tok == "&&" || tok == "!")
 				{
 					_ = newsb.Append(tok);
 				}

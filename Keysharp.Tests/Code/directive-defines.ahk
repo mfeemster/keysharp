@@ -136,3 +136,22 @@ str := ""
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+str := ""
+
+#if !WINDOWS
+    str := "not windows"
+#elif !LINUX
+    str := "not linux"
+#else
+	str := "not unknown"
+#endif
+
+#if WINDOWS
+	if (str == "not linux")
+#else
+	if (str == "not windows")
+#endif
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
