@@ -35,7 +35,7 @@ namespace Keysharp.Scripting
 			"LINUX",
 #endif
 		};
-		private Stack<bool> currentDefines = new Stack<bool>();
+		private Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
 		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
@@ -213,7 +213,7 @@ namespace Keysharp.Scripting
 										var val = EvaluateDefine(parts[1]);
 										//sw.Stop();
 										//Script.OutputDebug($"Evaluating #if took {sw.ElapsedMilliseconds}ms");
-										currentDefines.Push(val);
+										currentDefines.Push((val, val));
 										goto LineFinished;
 									}
 
@@ -230,8 +230,8 @@ namespace Keysharp.Scripting
 										var val = InNotDefine() && EvaluateDefine(parts[1]);
 										//sw.Stop();
 										//Script.OutputDebug($"Evaluating #elif took {sw.ElapsedMilliseconds}ms");
-										_ = currentDefines.Pop();
-										currentDefines.Push(val);
+										var bb = currentDefines.Pop();
+										currentDefines.Push((val, val || bb.Item2));
 										goto LineFinished;
 									}
 
@@ -240,8 +240,9 @@ namespace Keysharp.Scripting
 										if (currentDefines.Count == 0)
 											throw new ParseException($"#else was not preceded by an #if.", lineNumber, code);
 
-										var define = !currentDefines.Pop();
-										currentDefines.Push(define);
+										var bb = currentDefines.Pop();
+										var define = bb.Item2 ? false : !bb.Item1;//If any previous blocks were true, skip this one by setting it to false.
+										currentDefines.Push((define, define || bb.Item2));
 										goto LineFinished;
 									}
 
@@ -993,7 +994,7 @@ namespace Keysharp.Scripting
 			return val;
 		}
 
-		private bool InNotDefine() => currentDefines.Count > 0 && currentDefines.Any(d => d == false);
+		private bool InNotDefine() => currentDefines.Count > 0 && currentDefines.Any((bb) => bb.Item1 == false);
 
 		private bool LineLevels(string code, ref bool inquote, ref bool verbatim, ref int parenlevels, ref int bracelevels, ref int bracketlevels)
 		{

@@ -76,11 +76,11 @@ else
 x := 10
 
 #if LINUX
-    #if LINUX
+	#if LINUX
 		x := 20
-    #else
-        x := 1
-    #endif
+	#else
+		x := 1
+	#endif
 #endif
 
 #if WINDOWS
@@ -96,17 +96,42 @@ else
 x := 10
 
 #if WINDOWS
-    #if LINUX
+	#if LINUX
 		x := 20
-    #else
-        x := 1
-    #endif
+	#else
+		x := 1
+	#endif
 #endif
 
 #if WINDOWS
 	if (x == 1)
 #elif LINUX
 	if (x == 10)
+#endif
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+str := ""
+
+#if WINDOWS
+	#if WINDOWS
+		str .= "windows"
+	#elif LINUX
+		str .= "linux"
+	#else
+		str .= "unknown"
+	#endif
+#elif LINUX
+	str .= "linux"
+#else
+	str .= "unknown"
+#endif
+
+#if WINDOWS
+	if (str == "windows")
+#elif LINUX
+	if (str == "linux")
 #endif
 	FileAppend, "pass", "*"
 else
