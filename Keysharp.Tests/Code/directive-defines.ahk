@@ -1,4 +1,5 @@
 #define SOMETHING
+#define SOMETHING_UNDERSCORE
 
 x := 10
 
@@ -176,6 +177,17 @@ x := 10
 #endif
 
 if (x == 10)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := 10
+
+#if SOMETHING_UNDERSCORE
+	x *= 2
+#endif
+
+if (x == 20)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

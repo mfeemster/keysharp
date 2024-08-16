@@ -970,6 +970,12 @@ namespace Keysharp.Scripting
 
 		private bool EvaluateDefine(string code)
 		{
+			//Take the simple path first.
+			//There is no need to instantiate a compiler object to parse and evaluate the code
+			//if it's just a single define term.
+			if (code != "0" && code != "1" && code.All(ch => char.IsAsciiLetterOrDigit(ch) || ch == '_'))
+				return defines.Contains(code, StringComparer.OrdinalIgnoreCase);
+
 			if (tempCompiler == null)
 				tempCompiler = new CompilerHelper();
 
