@@ -203,6 +203,15 @@ namespace Keysharp.Scripting
 
 								switch (upper)
 								{
+									case "DEFINE":
+									{
+										if (parts[1] == string.Empty)
+											throw new ParseException($"#define was not followed by an identifier.", lineNumber, code);
+
+										_ = defines.Add(parts[1]);
+										goto LineFinished;
+									}
+
 									case "IF":
 									{
 										if (parts[1] == string.Empty)

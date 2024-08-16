@@ -82,7 +82,7 @@ TEST_HEADER := MyGui.Add("Text", "s20 w1200","Keysharp GUI Tests")
 ; ┌────────────────────────────────────┐
 ; │  Add button to change header font  │
 ; └────────────────────────────────────┘
-headerBtn := MyGui.Add("Button", "s8 x10 y+10", "Make header font larger Comic Sans MS")
+headerBtn := MyGui.Add("Button", "s8 x10 y+10 Autosize", "Make header font larger Comic Sans MS")
 headerBtn.OnEvent("Click", "ChangeFont")
 
 ; ┌──────────────────────────────┐
@@ -236,7 +236,7 @@ WriteINI() {
 	ControlSetText(IniFileText2, iniWriteEdit)
 }
 
-#if WINDOWS
+
 ;;;;;;;;;
 ; ┌──────────────────────┐
 ; │  Second Tab section  │
@@ -250,28 +250,30 @@ gb1_TabTwo := MyGui.Add("GroupBox", "x10 y10 w325 h800", "Tab Two - Group One") 
 ;gb2_TabTwo := MyGui.Add("GroupBox", "x350 yp w325 h800", "Tab Two - Group Two")
 ;MyGui.UseGroup()
 MyGui.UseGroup(gb1_TabTwo) 
+
 ; ┌────────┐
 ; │  Edit  │
 ; └────────┘
 SecondEdit := MyGui.Add("Edit", "w300 h200")
 SecondEditText := MyGui.Add("Text", "cBlue s10 w200", "ControlSetText Test")
 HwndSecondEdit := SecondEdit.Hwnd
-EditBtn1 := MyGui.Add("Button", "s8 xp y+10", "Text -> Edit")
+EditBtn1 := MyGui.Add("Button", "xp y+10 Autosize", "Text -> Edit")
 EditBtn1.OnEvent("Click", "SendTextToEdit")
-EditBtn2 := MyGui.Add("Button", "s8 x90 yp", "Clear Edit")
+EditBtn2 := MyGui.Add("Button", "x90 yp Autosize", "Clear Edit")
 EditBtn2.OnEvent("Click", "ClearEdit")
-EditHwndBtn := MyGui.Add("Button", "s8 x165 yp", "Show Edit Hwnd")
+EditHwndBtn := MyGui.Add("Button", "x169 yp Autosize", "Show Edit Hwnd")
 EditHwndBtn.OnEvent("Click", "ShowEditHwnd")
+
 ; ┌────────────┐
 ; │  RichEdit  │
 ; └────────────┘
 SecondRichEdit := MyGui.Add("RichEdit", "x10 w250 h150", "Try pasting rich text and/or images here!")
 SecondRichEditText := MyGui.Add("Text", "cBlue s10 w200", "ControlSetText Test (RichEdit)")
-RichEditBtn1 := MyGui.Add("Button", "s8 x10 y+10", "Send Text to RichEdit")
+RichEditBtn1 := MyGui.Add("Button", "x10 y+10 Autosize", "Send Text to RichEdit")
 RichEditBtn1.OnEvent("Click", "SendTextToRichEdit")
-RichEditBtn2 := MyGui.Add("Button", "s8 x150 yp", "Clear RichEdit")
+RichEditBtn2 := MyGui.Add("Button", "x150 yp Autosize", "Clear RichEdit")
 RichEditBtn2.OnEvent("Click", "ClearRichEdit")
-
+#if WINDOWS
 ; ┌────────────┐
 ; │  TreeView  │
 ; └────────────┘
@@ -1817,43 +1819,37 @@ HideTrayTip() {
 	}
 }
 
-#if WINDOWS
+
 ; ┌──────────────────────────────┐
 ; │  Send Text to Edit Callback  │
 ; └──────────────────────────────┘
 
-SendTextToEdit() {
 EditVar := "
-(
-A line of text.
-By default, the hard carriage return (Enter) between the previous line and this one will be stored.
-	This line is indented with a tab; by default, that tab will also be stored.
-"Quote marks" are now automatically escaped when appropriate - not yet implemented.
-)"
-	;MsgBox(EditVar)
-	ControlSetText(EditVar, SecondEdit)
-}
-; ┌───────────────────────┐
-; │  Clear Edit Callback  │
-; └───────────────────────┘
-ClearEdit() {
-	ControlSetText(, SecondEdit)
-}
-
-; ┌──────────────────────┐
-; │  RichEdit Callbacks  │
-; └──────────────────────┘
-
-SendTextToRichEdit() {
-RichEditVar := "
 (
 A line of text.
 By default, the hard carriage return (Enter) between the previous line and this one will be stored.
 	This line is indented with a tab; by default, that tab will also be stored.
 "Quote marks" are now automatically escaped when appropriate.
 )"
+
+SendTextToEdit() {
 	;MsgBox(EditVar)
-	ControlSetText(RichEditVar, SecondRichEdit)
+	ControlSetText(EditVar, SecondEdit)
+}
+
+; ┌───────────────────────┐
+; │  Clear Edit Callback  │
+; └───────────────────────┘
+ClearEdit() {
+	ControlSetText(, SecondEdit)
+}
+; ┌──────────────────────┐
+; │  RichEdit Callbacks  │
+; └──────────────────────┘
+
+SendTextToRichEdit() {
+	;MsgBox(EditVar)
+	ControlSetText(EditVar, SecondRichEdit)
 }
 
 ; ┌───────────────────────┐
@@ -1863,6 +1859,7 @@ ClearRichEdit() {
 	ControlSetText(, SecondRichEdit)
 }
 
+#if WINDOWS
 ; ┌───────────┐
 ; │  LoadPic  │
 ; └───────────┘
@@ -1927,7 +1924,7 @@ Pbtn2Clicked() {
 MC_Colors() {
 	MsgBox("Not implemented.", "Future feature")
 }
-
+#endif
 ; ┌─────────────────────┐
 ; │  Test GuiCtrl.Hwnd  │
 ; └─────────────────────┘
@@ -1940,7 +1937,7 @@ ShowEditHwnd() {
 ; │  Update OSD  │
 ; └──────────────┘
 
-
+#if WINDOWS
 UpdateOSD()
 {
 	mx :=

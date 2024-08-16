@@ -8,7 +8,9 @@ namespace Keysharp.Scripting
 			internal static DateTime startTime = DateTime.Now;
 			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
 			private static Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
-
+#if LINUX
+			private static Encoding enc1252 = Encoding.Default;
+#endif
 			public bool AutoMark { get; set; }
 
 			/// <summary>
@@ -22,6 +24,10 @@ namespace Keysharp.Scripting
 			{
 				Keysharp.Core.Window.SetProcessDPIAware();
 				Keysharp.Core.Flow.Init();
+#if LINUX
+				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
+				enc1252 = Encoding.GetEncoding(1252);
+#endif
 				Keysharp.Core.Processes.MainThreadID = mgr.CurrentThreadId();
 				Keysharp.Core.Processes.ManagedMainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 				_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.

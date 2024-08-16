@@ -1214,7 +1214,7 @@ namespace Keysharp.Core
 					}
 					else if (ctrl is ListBox lb)
 					{
-						lb.Height = (int)Math.Round(lb.ItemHeight * r * dpiinv) + ((lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom);
+						lb.Height = (int)Math.Round(lb.ItemHeight * r * dpiinv) + (lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom;
 					}
 					else if (ctrl is TreeView tv)
 					{
