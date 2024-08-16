@@ -91,9 +91,9 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		internal override void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-		}
+		//internal override void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		//{
+		//}
 
 		internal override void ControlShow(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{

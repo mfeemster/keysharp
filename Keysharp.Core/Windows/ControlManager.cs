@@ -788,18 +788,18 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (Control.FromHandle(item.Handle) is Control ctrl2)//No matter what I've tried, sending WM_SETTEXT will not work with buttons, however this method works flawlessly.
-					ctrl2.Text = str;
-				else
-					item.Title = str;//Just in case... it seems to work on text boxes.
+		//internal override void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		//{
+		//  if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+		//  {
+		//      if (Control.FromHandle(item.Handle) is Control ctrl2)//No matter what I've tried, sending WM_SETTEXT will not work with buttons, however this method works flawlessly.
+		//          ctrl2.Text = str;
+		//      else
+		//          item.Title = str;//Just in case... it seems to work on text boxes.
 
-				WindowItemBase.DoControlDelay();
-			}
-		}
+		//      WindowItemBase.DoControlDelay();
+		//  }
+		//}
 
 		internal override void ControlShow(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
