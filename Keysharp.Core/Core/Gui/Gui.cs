@@ -2137,6 +2137,7 @@ namespace Keysharp.Core
 		}
 		internal void Form_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			var handle = form.Handle.ToInt64();
 			var result = closedHandlers?.InvokeEventHandlers(this);
 
 			if (!closingFromDestroy)
@@ -2150,7 +2151,7 @@ namespace Keysharp.Core
 			}
 			else if (form != null)
 			{
-				_ = allGuiHwnds.TryRemove(form.Handle.ToInt64(), out _);
+				_ = allGuiHwnds.TryRemove(handle, out _);
 				form = null;
 			}
 

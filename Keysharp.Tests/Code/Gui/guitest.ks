@@ -1,5 +1,5 @@
-If (FileExist(A_Desktop "\MyScreenClip.png"))
-	FileDelete(A_Desktop "\MyScreenClip.png")
+If (FileExist(A_Desktop . "/MyScreenClip.png"))
+	FileDelete(A_Desktop . "/MyScreenClip.png")
 
 GuiBGColor := "BackgroundFF9A9A"
 ;BGColor2 := "0xFFFFAA"
@@ -21,11 +21,11 @@ winposy := ""
 winposw := ""
 winposh := ""
 
-#if WINDOWS
+
 ; ┌────────────────┐
 ; │  Tab One Menu  │
 ; └────────────────┘
-
+#if WINDOWS
 FileMenu := Menu()
 FileMenu.Add("System", "MenuHandler")
 FileMenu.Add("Script Icon", "MenuHandler")
@@ -42,6 +42,7 @@ ImgSrchMenu.Add("Image Search Test", "ImgSrch")
 MyMenuBar := MenuBar()
 MyMenuBar.Add("&Menu Icon Test", FileMenu)
 MyMenuBar.Add("Image Search", ImgSrchMenu)
+
 #endif
 
 MyGui := Gui(, "KEYSHARP TESTS")
@@ -55,14 +56,14 @@ CloseApp() {
 	ExitApp
 }
 
-#if WINDOWS
+
 ; ┌───────────────────┐
 ; │  Add Menu to GUI  │
 ; └───────────────────┘
 
-MyGui.MenuBar := MyMenuBar
+#if WINDOWS
+	MyGui.MenuBar := MyMenuBar
 #endif
-
 ; ┌─────────────┐
 ; │  Start TAB  │
 ; └─────────────┘
@@ -193,7 +194,6 @@ g2Label4 := MyGui.Add("Text", "x10", "Uppercase - restrict or reset")
 MyEdit2 := MyGui.Add("Edit", "x10 w300 h100")
 HwndMyEdit := MyEdit2.Hwnd
 
-
 g2Btn3 := MyGui.Add("Button", "x10 y+10", "Uppercase")
 g2Btn3.SetFont("s8 cBlue")
 g2Btn4 := MyGui.Add("Button", "x100 yp", "Unrestrict")
@@ -202,16 +202,19 @@ g2Btn4.SetFont("s8 cBlue")
 g2Btn3.OnEvent("Click", "Set_Edit_Style")
 g2Btn4.OnEvent("Click", "Reset_Edit_Style")
 
+
 iniLabel := MyGui.Add("Text", "xm y+5 cRed", "Click to read kstests.ini`nKey = PRIMATE2`nValue = BONOBO")
 iniBtn1 := MyGui.Add("Button", "x220 yp", "Read INI")
 iniBtn1.OnEvent("Click", "ReadINI")
 iniText := MyGui.Add("Text", "w100 x150 y+10", "")
 iniEdit := MyGui.Add("Edit", "x10 y+10 w300 h180")
 
+kstests := "." . A_DirSeperator . "kstests.ini"
+
 ReadINI() {
-	Val := IniRead(".\kstests.ini", "section2", "PRIMATE2")
+	Val := IniRead(kstests, "section2", "PRIMATE2")
 	iniText.SetFont("s10 cBlue")
-	IniFileText := FileRead(".\kstests.ini")
+	IniFileText := FileRead(kstests)
 	ControlSetText(Val, iniText)
 	;ControlSetText("Testing", iniText)
 	ControlSetText(IniFileText, iniEdit)
@@ -221,17 +224,15 @@ ReadINI() {
 iniWriteBtn := MyGui.Add("Button", "x10 y+10", "Write INI")
 iniWriteBtn.OnEvent("Click", "WriteINI")
 writeLabel := MyGui.Add("Text", "x100 yp cGreen", "Write and Re-Write`nChange case`nThen change back")
-
-
 iniWriteEdit := MyGui.Add("Edit", "x10 y+10 w300 h180")
 
 WriteINI() {
-	IniWrite("BonoboBozo has been captured", ".\kstests.ini", "SECTION42", "PRIMATEZ_ON_LOOSE")
-	IniFileText2 := FileRead(".\kstests.ini")
+	IniWrite("BonoboBozo has been captured", kstests, "SECTION42", "PRIMATEZ_ON_LOOSE")
+	IniFileText2 := FileRead(kstests)
 	ControlSetText(IniFileText2, iniWriteEdit)
 	Sleep(2000)
-	IniWrite("BONOBOBOZO has escaped", ".\kstests.ini", "SECTION42", "PRIMATEZ_ON_LOOSE")
-	IniFileText2 := FileRead(".\kstests.ini")
+	IniWrite("BONOBOBOZO has escaped", kstests, "SECTION42", "PRIMATEZ_ON_LOOSE")
+	IniFileText2 := FileRead(kstests)
 	ControlSetText(IniFileText2, iniWriteEdit)
 }
 
@@ -426,7 +427,6 @@ Tab.UseTab("Second")
 MyPictureBtn := MyGui.Add("Button", "cBlue s10 x400 y600", "Display a Picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
 SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Picture will display above")
-
 
 
 ;;;;;;;;;;
@@ -924,7 +924,6 @@ FindEdit := MyGui.Add("Button", "x10 y+10", "Get Edit Hwnd")
 FindEdit.OnEvent("Click", "FindSecondGuiEdit")
 
 
-
 ThirdGuiButton := MyGui.Add("Button", "x10 y+10", "'Find By' Tests")
 ThirdGuiButton.OnEvent("Click", "ThirdGUI")
 
@@ -1035,6 +1034,7 @@ FindByItem() {
 	EditObj := Gui2Edit
 	MsgBox(EditObj.Text)
 }
+
 
 ; GUI3
 
@@ -1702,8 +1702,7 @@ ToggleFromIni() {
 		MsgBox("Set the .INI hotkeyfirst!", "ERROR", "T2")
 	}
 }
-
-
+#endif
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
 ; └───────────────────────────┘
@@ -1768,6 +1767,7 @@ InputTest() {
 		MsgBox(OutputVar ", That makes me sad.", "Sorry to hear it")
 }
 
+
 ; ┌───────────────────────┐
 ; │  RadioThree callback  │
 ; └───────────────────────┘
@@ -1788,6 +1788,7 @@ CheckBoxOneClicked() {
 	HideTrayTip()
 }
 
+#if WINDOWS
 ; ┌─────────────────┐
 ; │  TreeView Edit  │
 ; └─────────────────┘
@@ -1796,7 +1797,7 @@ MyTreeView_Edit(TV, Item) {
 	TV.Modify(TV.GetParent(Item), "Sort")  ; This works even if the item has no parent.
 	;return
 }
-
+#endif
 
 ; ┌───────────────────────────────────────────────────────────────────────────┐
 ; │  https://www.autohotkey.com/board/topic/69784-different-tab-backgrounds/  │
@@ -1816,7 +1817,7 @@ HideTrayTip() {
 	}
 }
 
-
+#if WINDOWS
 ; ┌──────────────────────────────┐
 ; │  Send Text to Edit Callback  │
 ; └──────────────────────────────┘
@@ -1854,6 +1855,7 @@ By default, the hard carriage return (Enter) between the previous line and this 
 	;MsgBox(EditVar)
 	ControlSetText(RichEditVar, SecondRichEdit)
 }
+
 ; ┌───────────────────────┐
 ; │  Clear Edit Callback  │
 ; └───────────────────────┘
@@ -1952,7 +1954,6 @@ UpdateOSD()
 ; │  GroupBox Tab - Functions  │
 ; └────────────────────────────┘
 
-
 SendToGB3() {
 GB3Text := "
 (
@@ -2006,12 +2007,11 @@ Set_Edit_Style()
 	;MsgBox(HwndMyEdit, "This is the ID")
 #if WINDOWS
  	ControlSetStyle("+0x8", HwndMyEdit)
-	ControlFocus(HwndMyEdit)
 #else
 	MyEdit2.Opt("+Uppercase")
 	HwndMyEdit := MyEdit2.Hwnd
-	; ControlFocus(HwndMyEdit)
 #endif
+	ControlFocus(HwndMyEdit)
 }
 
 Reset_Edit_Style()
@@ -2028,6 +2028,7 @@ Reset_Edit_Style()
 #else
 	MyEdit2.Opt("-Uppercase")
 	HwndMyEdit := MyEdit2.Hwnd
+	ControlFocus(HwndMyEdit)
 #endif
 }
 
@@ -2050,7 +2051,6 @@ MoveGuiBack() {
 	MyGui.UseGroup(gb2_TabTwo)
 	MyGui.Move(winposx, winposy, winposw, winposh)
 }
-#endif
 
 ; ┌──────────────────────────┐
 ; │  Image Search functions  │
@@ -2078,7 +2078,6 @@ CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the scre
 	}
 }
 
-#if WINDOWS
 ; ┌──────────────────────────┐
 ; │  Hotkeys with DllCall()  │
 ; └──────────────────────────┘
@@ -2432,4 +2431,5 @@ MasterPeak()
 }
 
 MyGui.Show()
+
 #endif

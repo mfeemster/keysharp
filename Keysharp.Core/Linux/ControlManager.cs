@@ -26,6 +26,13 @@ namespace Keysharp.Core.Linux
 
 		internal override void ControlFocus(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is Control ctrl2)
+					ctrl2.Focus();
+				else
+					item.Active = true;//Will not work for X11.//TODO
+			}
 		}
 
 		internal override long ControlGetChecked(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
