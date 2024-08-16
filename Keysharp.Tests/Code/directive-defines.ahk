@@ -52,7 +52,7 @@ else
 
 x := 10
 
-#if ((WINDOWS || LINUX) && 0))
+#if (((WINDOWS || LINUX) && 0))
 	x *= 2
 #endif
 
@@ -63,7 +63,7 @@ else
 
 x := 10
 
-#if ((WINDOWS || LINUX) && 1))
+#if (((WINDOWS || LINUX) && 1))
 	x *= 2
 #endif
 

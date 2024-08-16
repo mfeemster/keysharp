@@ -1,5 +1,3 @@
-#Include %A_ScriptDir%/header.ahk
-
 z := ""
 
 Loop Parse "hello"

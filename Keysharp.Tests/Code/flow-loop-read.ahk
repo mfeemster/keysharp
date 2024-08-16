@@ -1,5 +1,3 @@
-#Include %A_ScriptDir%/header.ahk
-
 x := ""
 
 ; MsgBox(A_WorkingDir)

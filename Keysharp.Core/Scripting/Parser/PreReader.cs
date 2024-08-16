@@ -210,18 +210,12 @@ namespace Keysharp.Scripting
 
 										//var sw = new Stopwatch();
 										//sw.Start();
-
-										if (!EvaluateDefine(parts[1]))
-										{
-											//sw.Stop();
-											//Script.OutputDebug($"Evaluating #if took {sw.ElapsedMilliseconds}ms");
-											currentDefines.Push(false);
-											continue;
-										}
-										else
-											currentDefines.Push(true);
+										var val = EvaluateDefine(parts[1]);
+										//sw.Stop();
+										//Script.OutputDebug($"Evaluating #if took {sw.ElapsedMilliseconds}ms");
+										currentDefines.Push(val);
+										goto LineFinished;
 									}
-									break;
 
 									case "ELIF":
 									{
@@ -233,22 +227,13 @@ namespace Keysharp.Scripting
 
 										//var sw = new Stopwatch();
 										//sw.Start();
-
-										if (InNotDefine() && EvaluateDefine(parts[1]))
-										{
-											//sw.Stop();
-											//Script.OutputDebug($"Evaluating #elif took {sw.ElapsedMilliseconds}ms");
-											_ = currentDefines.Pop();
-											currentDefines.Push(true);
-										}
-										else
-										{
-											_ = currentDefines.Pop();
-											currentDefines.Push(false);
-											continue;
-										}
+										var val = InNotDefine() && EvaluateDefine(parts[1]);
+										//sw.Stop();
+										//Script.OutputDebug($"Evaluating #elif took {sw.ElapsedMilliseconds}ms");
+										_ = currentDefines.Pop();
+										currentDefines.Push(val);
+										goto LineFinished;
 									}
-									break;
 
 									case "ELSE":
 									{
@@ -257,11 +242,8 @@ namespace Keysharp.Scripting
 
 										var define = !currentDefines.Pop();
 										currentDefines.Push(define);
-
-										if (!define)
-											continue;
+										goto LineFinished;
 									}
-									break;
 
 									case "ENDIF":
 									{
@@ -269,9 +251,15 @@ namespace Keysharp.Scripting
 											throw new ParseException($"#endif was not preceded by an #if.", lineNumber, code);
 
 										_ = currentDefines.Pop();
+										goto LineFinished;
 									}
-									break;
+								}
 
+								if (InNotDefine())
+									goto LineFinished;
+
+								switch (upper)
+								{
 									case "INCLUDE":
 										includeOnce = true;
 
@@ -570,9 +558,6 @@ namespace Keysharp.Scripting
 
 								break;
 							}
-
-							if (InNotDefine())
-								continue;
 
 							if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
 							{
@@ -934,6 +919,7 @@ namespace Keysharp.Scripting
 						last = ch;
 				}
 
+				LineFinished:
 				prev = span;
 			}
 
