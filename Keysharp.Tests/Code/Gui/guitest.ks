@@ -126,7 +126,7 @@ LV.OnEvent("DoubleClick", "LV_DoubleClick")
 ; ┌─────────────────────────────────────────────────────────────────────────────┐
 ; │  Gather a list of file names from a folder and put them into the ListView:  │
 ; └─────────────────────────────────────────────────────────────────────────────┘
-Loop Files, A_MyDocuments . A_DirSeperator . "*.*"
+Loop Files, A_MyDocuments . A_DirSeparator . "*.*"
 	LV.Add(, A_LoopFileName, A_LoopFileSizeKB)
 
 ; ┌─────────────────────────────────────────────┐
@@ -209,7 +209,7 @@ iniBtn1.OnEvent("Click", "ReadINI")
 iniText := MyGui.Add("Text", "w100 x150 y+10", "")
 iniEdit := MyGui.Add("Edit", "x10 y+10 w300 h180")
 
-kstests := "." . A_DirSeperator . "kstests.ini"
+kstests := "." . A_DirSeparator . "kstests.ini"
 
 ReadINI() {
 	Val := IniRead(kstests, "section2", "PRIMATE2")
@@ -246,8 +246,7 @@ Tab.UseTab("Second")
 ; ┌─────────────────────────────┐
 ; │  Add group boxes - 8/23/22  │
 ; └─────────────────────────────┘
-gb1_TabTwo := MyGui.Add("GroupBox", "x10 y10 w325 h800", "Tab Two - Group One") ; 
-;gb2_TabTwo := MyGui.Add("GroupBox", "x350 yp w325 h800", "Tab Two - Group Two")
+gb1_TabTwo := MyGui.Add("GroupBox", "x10 y10 w325 h850", "Tab Two - Group One") ; 
 ;MyGui.UseGroup()
 MyGui.UseGroup(gb1_TabTwo) 
 
@@ -259,9 +258,9 @@ SecondEditText := MyGui.Add("Text", "cBlue s10 w200", "ControlSetText Test")
 HwndSecondEdit := SecondEdit.Hwnd
 EditBtn1 := MyGui.Add("Button", "xp y+10 Autosize", "Text -> Edit")
 EditBtn1.OnEvent("Click", "SendTextToEdit")
-EditBtn2 := MyGui.Add("Button", "x90 yp Autosize", "Clear Edit")
+EditBtn2 := MyGui.Add("Button", "x+5 yp Autosize", "Clear Edit")
 EditBtn2.OnEvent("Click", "ClearEdit")
-EditHwndBtn := MyGui.Add("Button", "x169 yp Autosize", "Show Edit Hwnd")
+EditHwndBtn := MyGui.Add("Button", "x+5 yp Autosize", "Show Edit Hwnd")
 EditHwndBtn.OnEvent("Click", "ShowEditHwnd")
 
 ; ┌────────────┐
@@ -271,9 +270,10 @@ SecondRichEdit := MyGui.Add("RichEdit", "x10 w250 h150", "Try pasting rich text 
 SecondRichEditText := MyGui.Add("Text", "cBlue s10 w200", "ControlSetText Test (RichEdit)")
 RichEditBtn1 := MyGui.Add("Button", "x10 y+10 Autosize", "Send Text to RichEdit")
 RichEditBtn1.OnEvent("Click", "SendTextToRichEdit")
-RichEditBtn2 := MyGui.Add("Button", "x150 yp Autosize", "Clear RichEdit")
-RichEditBtn2.OnEvent("Click", "ClearRichEdit")
-#if WINDOWS
+RichEditBtn2 := MyGui.Add("Button", "x+5 yp Autosize", "Send Rtf to RichEdit")
+RichEditBtn2.OnEvent("Click", "SendRtfToRichEdit")
+RichEditBtn3 := MyGui.Add("Button", "x10 y+5 Autosize", "Clear RichEdit")
+RichEditBtn3.OnEvent("Click", "ClearRichEdit")
 ; ┌────────────┐
 ; │  TreeView  │
 ; └────────────┘
@@ -292,7 +292,7 @@ P2C2C1 := TV.Add("Child 2's first child", P2C2)
 ; └──────────────────────────┘
 MousePosText := MyGui.Add("Text", "x10 y+10 cBlue s10 w200", "Uses SetTimer to show mouse position")
 CoordText := MyGui.Add("Text", "x10 y+10 cLime", "")
-;CoordText.SetFont("s20") 
+CoordText.SetFont("bold s20")
 SetTimer("UpdateOSD", 200)
 UpdateOSD()  ; Make the first update immediate rather than waiting for the timer.
 
@@ -300,7 +300,7 @@ UpdateOSD()  ; Make the first update immediate rather than waiting for the timer
 ; │  Insert Image for searching  │
 ; └──────────────────────────────┘
 
-SrchPic := MyGui.Add("Picture", "x10 y+10 h-1", A_ScriptDir "\killbill.png")
+SrchPic := MyGui.Add("Picture", "x10 y+10 h-1", A_ScriptDir . A_DirSeparator . "killbill.png")
 SrchPicText := MyGui.Add("Text", "x10 y+15 w200", "^ Use top menu to find me!")
 SrchPicText.SetFont("s10 cBlue")
 ; ┌────────────────────────┐
@@ -308,7 +308,7 @@ SrchPicText.SetFont("s10 cBlue")
 ; └────────────────────────┘
 MyGui.UseGroup()
 Tab.UseTab("Second")
-gb2_TabTwo := MyGui.Add("GroupBox", "x350 y10 w400 h550", "Tab Two - Group Two")
+gb2_TabTwo := MyGui.Add("GroupBox", "x350 y10 w400 h600", "Tab Two - Group Two")
 MyGui.UseGroup(gb2_TabTwo)
 
 ; ┌─────────┐
@@ -320,18 +320,43 @@ e1 := MyGui.Add("Edit", "w200 xp y+10 +0x20")
 t2g2t2 := MyGui.Add("Text", "xp y+10 w250 cBlue s10", "Alternate password entry (*)")
 t2g2t2.SetFont("s10")
 e2 := MyGui.Add("Edit", "w200 xp y+10 Password*")
-t2g2t3 := MyGui.Add("Text", "xp y+10 w250 cBlue", "Uppercase - ControlSetStyle")
+
+#if WINDOWS
+	t2g2t3 := MyGui.Add("Text", "xp y+10 w250 cBlue", "Uppercase - ControlSetStyle")
+#else
+	t2g2t3 := MyGui.Add("Text", "xp y+10 w250 cBlue", "Uppercase - Opt(`"+Uppercase`")")
+#endif
+
 t2g2t3.SetFont("s10")
 e3 := MyGui.Add("Edit", "w200 xp y+10 h50", "Edit 3")
 MyGui.UseGroup(gb2_TabTwo)
-ControlSetStyle("+0x8", e3)
-t2g2t4 := MyGui.Add("Text", "xp y+10 w250 cBlue", "Uppercase - +0x8")
+
+#if WINDOWS
+	ControlSetStyle("+0x8", e3)
+#else
+	e3.Opt("+Uppercase")
+#endif
+
+#if WINDOWS
+	t2g2t4 := MyGui.Add("Text", "xp y+10 w250 cBlue", "Uppercase - +0x8")
+#else
+	t2g2t4 := MyGui.Add("Text", "xp y+10 w250 cBlue", "Uppercase - Constructor")
+#endif
+
 t2g2t4.SetFont("s10")
-e4 := MyGui.Add("Edit", "w200 xp y+10 h50 +0x8", "Edit 4")
+
+#if WINDOWS
+	e4 := MyGui.Add("Edit", "w200 xp y+10 h50 +0x8", "Edit 4")
+#else
+	isUpper := true
+	e4 := MyGui.Add("Edit", "w200 xp y+10 h50 Uppercase", "Edit 4")
+#endif
+
 e3Btn := MyGui.Add("Button", "xp y+10", "Toggle ControlSetStyle Edit")
 e3Btn.OnEvent("Click", "ShowE3Hwnd")
-numericText := MyGui.Add("Text", "x10 y+10", "The text box below should be numeric only")
-numericText.SetFont("cBlue s8")
+
+numericText := MyGui.Add("Text", "x10 y+10 Autosize", "The text box below should be numeric only")
+numericText.SetFont("s10 cBlue")
 numericEdit := MyGui.Add("Edit", "w200 xp y+10 number")
 
 setNumericBtn := MyGui.Add("Button", "x+10 yp", "Num")
@@ -352,8 +377,18 @@ ClearNumeric()
 	numericEdit.Opt("-Number")
 }
 
-ShowE3Hwnd() {
+ShowE3Hwnd()
+{
+#if WINDOWS
 	ControlSetStyle("^0x8", e3)
+#else
+	global isUpper
+	if (isUpper)
+		e3.Opt("")
+	else
+		e3.Opt("+Uppercase")
+	isUpper := !isUpper
+#endif
 	ControlFocus(e3.Hwnd)
 }
 
@@ -361,10 +396,14 @@ ShowE3Hwnd() {
 ; │  Move GUI  │
 ; └────────────┘
 
+MoveText := MyGui.Add("Text", "x10 y+10 Autosize", "Move window with this caption, or blank to move this window")
+MoveText.SetFont("s10 cBlue")
+MoveEdit := MyGui.Add("Edit", "w200 xp y+10", "")
+MoveEdit.Text := "About Calculator"
 MoveButton := MyGui.Add("Button", , "Move GUI")
 MoveButton.OnEvent("Focus", "ChangeMoveBtnColor")
 MoveButton.OnEvent("Click", "MoveGui")
-MoveButtonBack := MyGui.Add("Button", "x120 yp", "Move GUI Back")
+MoveButtonBack := MyGui.Add("Button", "x120 yp Autosize", "Move GUI Back")
 MoveButtonBack.OnEvent("Focus", "ChangeMoveBtnBackColor")
 MoveButtonBack.OnEvent("Click", "MoveGuiBack")
 
@@ -378,6 +417,7 @@ ChangeMoveBtnBackColor() {
 	MoveButtonBack.SetFont("cRed")
 }
 
+#if WINDOWS
 ; ┌───────────────────────┐
 ; │  SendMessage Section  │
 ; └───────────────────────┘
@@ -426,7 +466,7 @@ Tab.UseTab("Second")
 ; ┌───────────────┐
 ; │  Add Picture  │
 ; └───────────────┘
-MyPictureBtn := MyGui.Add("Button", "cBlue s10 x400 y600", "Display a Picture")
+MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10", "Display a Picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
 SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Picture will display above")
 
@@ -643,7 +683,7 @@ MyGui.UseGroup(gb1)
 CpText := MyGui.Add("Text", , "gb1 - Image copying tests")
 CpText.SetFont("s8 cBlue")
 MyRE := MyGui.Add("RichEdit", "x10 y+10 w300 h100")
-MySecondPic := LoadPicture(A_ScriptDir "\Robin.png")
+MySecondPic := LoadPicture(A_ScriptDir . A_DirSeparator . "Robin.png")
 CopyImageToClipboard("HBITMAP:" MySecondPic)
 ShowBtn := MyGui.Add("Button", "x10 y+10", "Paste Pic")
 ShowBtn.OnEvent("Click", "PastePic")
@@ -664,7 +704,7 @@ ShowBtn2 := MyGui.Add("Button", "x10 y+10", "Paste from file")
 ShowBtn2.OnEvent("Click", "CopyPicFromFile")
 
 CopyPicFromFile() {
-	SelectedFile := FileSelect("3", "C:\Users\" A_UserName "\Pictures\Keysharp")
+	SelectedFile := FileSelect("3", A_AppData . A_DirSeparator . "Pictures")
 	
 	if (SelectedFile != "")
 	{
@@ -868,7 +908,7 @@ CZ_SeparatorText1.SetFont("s8 CBlue")
 
 LV2 := MyGui.Add("ListView", "r5 w300 x10 y+5", ["Name","Size (KB)"])
 
-Loop Files, A_MyDocuments "\*.*"
+Loop Files, A_MyDocuments . A_DirSeparator . "*.*"
   LV2.Add(, A_LoopFileName, A_LoopFileSizeKB)
 
 LV2_Btn1 := MyGui.Add("Button", "x10 y+5 w72 h25" ,"Selected")
@@ -1356,19 +1396,19 @@ GetPix() {
 
 LoadSC() {
 	Tab.UseTab("Send & Hotkey")
-
-	If (!FileExist(A_Desktop "\MyScreenClip.png")) {
-		GetScreenClip(100, 100, 200, 200, A_Desktop "\MyScreenClip.png")
+	path := A_Desktop . A_DirSeparator . "MyScreenClip.png"
+	If (!FileExist(path)) {
+		GetScreenClip(100, 100, 200, 200, path)
 		Sleep(100)
 	}
-	MyThirdPic := LoadPicture(A_Desktop "\MyScreenClip.png")
+	MyThirdPic := LoadPicture(path)
 
 	MyLoadedPic := MyGui.Add("Picture", "x450 y700 w170 h170", "HBITMAP:" MyThirdPic)
 	Sleep(2000)
 
 	DllCall("DestroyWindow", "Ptr", MyLoadedPic.Hwnd)
 	; Tab.UseTab()
-	FileDelete(A_Desktop "\MyScreenClip.png")
+	FileDelete(path)
 	MyThirdPic := ""
 	MyLoadedPic := ""
 	MyThirdPic := ""
@@ -1790,16 +1830,13 @@ CheckBoxOneClicked() {
 	HideTrayTip()
 }
 
-#if WINDOWS
 ; ┌─────────────────┐
 ; │  TreeView Edit  │
 ; └─────────────────┘
 MyTreeView_Edit(TV, Item) {
 	;MsgBox("Sort Not Implemented", "Men at Work")
 	TV.Modify(TV.GetParent(Item), "Sort")  ; This works even if the item has no parent.
-	;return
 }
-#endif
 
 ; ┌───────────────────────────────────────────────────────────────────────────┐
 ; │  https://www.autohotkey.com/board/topic/69784-different-tab-backgrounds/  │
@@ -1834,6 +1871,7 @@ By default, the hard carriage return (Enter) between the previous line and this 
 
 SendTextToEdit() {
 	;MsgBox(EditVar)
+	global EditVar
 	ControlSetText(EditVar, SecondEdit)
 }
 
@@ -1849,7 +1887,37 @@ ClearEdit() {
 
 SendTextToRichEdit() {
 	;MsgBox(EditVar)
-	ControlSetText(EditVar, SecondRichEdit)
+	; ControlSetText(EditVar, SecondRichEdit)
+	global EditVar
+	SecondRichEdit.Value := EditVar
+}
+
+SendRtfToRichEdit()
+{
+	RawRichEditVar := "
+(
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang3081\deflangfe3081{\fonttbl{\f0\fswiss\fprq2\fcharset0 Calibri;}}
+{\colortbl ;\red0\green0\blue255;\red5\green99\blue193;}
+{\*\generator Riched20 10.0.19041}{\*\mmathPr\mnaryLim0\mdispDef1\mwrapIndent1440 }\viewkind4\uc1 
+\pard\widctlpar\sa160\sl252\slmult1\qc {\f0\fs22\lang2057{\field{\*\fldinst{HYPERLINK "https://github.com/dotnet/winforms/issues/146" }}{\fldrslt{\ul\cf1\cf2\ul Example}}}}\f0\fs22\lang2057  Document\par
+\par
+
+\pard\widctlpar\fi-360\li360\sa160\sl252\slmult1 1.\tab Section Title {{\field{\*\fldinst{HYPERLINK "http://www.google.com" }}{\fldrslt{\ul\cf1\cf2\ul www.google.com}}}}\f0\fs22  \par
+
+\pard\widctlpar\fi-432\li792\sa160\sl252\slmult1 1.1.\tab  Some stuff\par
+
+\pard\widctlpar\fi-504\li1224\sa160\sl252\slmult1 1.1.1.\tab  Some stuff\rquote s thing\par
+
+\pard\widctlpar\fi-432\li792\sa160\sl252\slmult1 1.2.\tab  More stuff\par
+
+\pard\widctlpar\fi-360\li360\sa160\sl252\slmult1 2.\tab Next Section\par
+
+\pard\widctlpar\fi-432\li792\sa160\sl252\slmult1 2.1.\tab Other stuff\par
+
+\pard\widctlpar\li720\sa160\sl252\slmult1\par
+}
+)"
+SecondRichEdit.RichText := RawRichEditVar
 }
 
 ; ┌───────────────────────┐
@@ -1867,7 +1935,7 @@ ClearRichEdit() {
 
 LoadPic() {
 	Tab.UseTab("Second")
-	MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir "\monkey.ico")
+	MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir . A_DirSeparator . "monkey.ico")
 	Sleep(2000)
 	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
 	MyFirstPic := ""
@@ -1937,16 +2005,15 @@ ShowEditHwnd() {
 ; │  Update OSD  │
 ; └──────────────┘
 
-#if WINDOWS
 UpdateOSD()
 {
 	mx :=
 	my := 0
 	MouseGetPos(&mx, &my)
-	CoordText.SetFont("bold s20")
 	CoordText.Text := ("X: " mx " Y: " my)
 }
 
+#if WINDOWS
 ; ┌────────────────────────────┐
 ; │  GroupBox Tab - Functions  │
 ; └────────────────────────────┘
@@ -2029,26 +2096,30 @@ Reset_Edit_Style()
 #endif
 }
 
-#if WINDOWS
 ; ┌──────────────────────┐
 ; │  Move Gui functions  │
 ; └──────────────────────┘
 
 MoveGui() {
-	global winposx, winposy, winposw, winposh
+	global winposx, winposy, winposw, winposh, gb2_TabTwo
 	Tab.UseTab("Second")
 	MyGui.UseGroup(gb2_TabTwo)
-	WinGetPos(&winposx, &winposy, &winposw, &winposh, MyGui)
-	MyGui.Move(100, 100, 200, 200)
+	guiToUse := MoveEdit.Text != "" ? MoveEdit.Text : MyGui ; Either search for the text the user entered, or just use this Gui directly.
+	WinGetPos(&winposx, &winposy, &winposw, &winposh, guiToUse)
+	WinMove(100, 100, 200, 200, guiToUse)
+	; MyGui.Move(100, 100, 200, 200)
 }
 
 MoveGuiBack() {
-	global winposx, winposy, winposw, winposh
+	global winposx, winposy, winposw, winposh, gb2_TabTwo
 	Tab.UseTab("Second")
 	MyGui.UseGroup(gb2_TabTwo)
-	MyGui.Move(winposx, winposy, winposw, winposh)
+	guiToUse := MoveEdit.Text != "" ? MoveEdit.Text : MyGui
+	WinMove(winposx, winposy, winposw, winposh, guiToUse)
+	; MyGui.Move(winposx, winposy, winposw, winposh)
 }
 
+#if WINDOWS
 ; ┌──────────────────────────┐
 ; │  Image Search functions  │
 ; └──────────────────────────┘

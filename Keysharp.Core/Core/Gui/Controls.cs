@@ -206,7 +206,10 @@ namespace Keysharp.Core
 						var text = Clipboard.GetText();
 
 						if (text.Any(ch => !char.IsDigit(ch)))
+						{
+							Text = string.Join("", Text.Where(ch => char.IsDigit(ch)));
 							e.Handled = true;
+						}
 					}
 				}
 

@@ -43,6 +43,7 @@ namespace Keysharp.Core.Linux
 							lock (WindowManager.xLibLock)
 							{
 								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 							}
 						}
 					}
@@ -56,6 +57,9 @@ namespace Keysharp.Core.Linux
 			{
 				if (!IsSpecified)
 					return false;
+
+				if (Control.FromHandle((IntPtr)xwindow.ID) is Form form)
+					return form.TopMost;
 
 				var onTop = false;
 				_ = ReadProps(xwindow.XDisplay._NET_WM_STATE, (IntPtr)XAtom.XA_ATOM, (atom) =>
@@ -73,7 +77,14 @@ namespace Keysharp.Core.Linux
 			set
 			{
 				if (IsSpecified)
-					manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, value ? 1 : 0, xwindow.XDisplay._NET_WM_STATE_ABOVE, IntPtr.Zero, IntPtr.Zero);
+				{
+					if (Control.FromHandle((IntPtr)xwindow.ID) is Form form)
+						form.TopMost = value;
+					else
+						manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, value ? 1 : 0, xwindow.XDisplay._NET_WM_STATE_ABOVE, IntPtr.Zero, IntPtr.Zero);
+
+					_  = Xlib.XFlush(xwindow.XDisplay.Handle);
+				}
 			}
 		}
 
@@ -94,6 +105,8 @@ namespace Keysharp.Core.Linux
 					//Keysharp.Scripting.Script.OutputDebug($"Bottom: about to call XRaiseWindow().");
 					_ = Xlib.XRaiseWindow(xwindow.XDisplay.Handle, xwindow.ID);
 				}
+
+				_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 			}
 		}
 
@@ -148,7 +161,7 @@ namespace Keysharp.Core.Linux
 					var attr = xwindow.Attributes;
 					var pt = ClientToScreen();
 					var scale = 1.0 / Accessors.A_ScaledScreenDPI;
-					//Width and heigh do not include the border.
+					//Width and height do not include the border.
 					//pt is already scaled.
 					return new Rectangle(pt.X, pt.Y, (int)(scale * attr.width), (int)(scale * attr.height));
 				}
@@ -197,8 +210,21 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				var attr = xwindow.Attributes;
+
+				//For some reason, Mono Winforms windows don't properly return the frame dimensions when queried below, so
+				//the location is is always erroneously below where the top of the title bar is.
+				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+					return ctrl.Bounds;
+
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
-				return new Rectangle((int)(scale * attr.x), (int)(scale * attr.y), (int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
+				Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out var x, out var y, out var dummy);
+				//Adjust for the title bar. This appears to work at least for GTK apps. Revisit if it doesn't work for other GUI toolkits.
+				var frame = FrameExtents();
+				x -= frame.Left;
+				y -= frame.Top;
+				//return new Rectangle((int)(scale * attr.x), (int)(scale * attr.y), (int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
+				//Unsure if we should use the attr border with or the width and height from FrameExtents()? Also, where/when to scale?//TODO
+				return new Rectangle((int)(scale * x), (int)(scale * y), (int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
 			}
 			set
 			{
@@ -214,7 +240,12 @@ namespace Keysharp.Core.Linux
 					if (value.Y != int.MinValue)
 						y = value.Y;
 
-					_ = Xlib.XMoveWindow(xwindow.XDisplay.Handle, xwindow.ID, x, y);
+					if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+						ctrl.Location = new Point(x, y);
+					else
+						_ = Xlib.XMoveWindow(xwindow.XDisplay.Handle, xwindow.ID, x, y);//This is smart enough not to need manual processing for the title bar.
+
+					_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 				}
 			}
 		}
@@ -248,10 +279,11 @@ namespace Keysharp.Core.Linux
 
 				try
 				{
-					_ = Xlib.XQueryTree(Handle, xwindow.ID, out var rootReturn, out parentReturn, out childrenReturn, out var nChildrenReturn);
+					_ = Xlib.XQueryTree(xwindow.XDisplay.Handle, xwindow.ID, out var rootReturn, out parentReturn, out childrenReturn, out var nChildrenReturn);
 				}
-				catch
+				catch (Exception ex)
 				{
+					Keysharp.Scripting.Script.OutputDebug($"XQueryTree() failed: {ex.Message}");
 				}
 				finally
 				{
@@ -288,14 +320,24 @@ namespace Keysharp.Core.Linux
 			{
 				var attr = xwindow.Attributes;
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
-				return new Size((int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
+
+				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+					return ctrl.Size;
+				else
+					return new Size((int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
 			}
 			set
 			{
 				if (IsSpecified)
 				{
 					var scale = 1.0 / Accessors.A_ScaledScreenDPI;
-					_ = Xlib.XResizeWindow(xwindow.XDisplay.Handle, xwindow.ID, value.Width, value.Height);
+
+					if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+						ctrl.Size = new Size(value.Width, value.Height);
+					else
+						_ = Xlib.XResizeWindow(xwindow.XDisplay.Handle, xwindow.ID, value.Width, value.Height);
+
+					_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 				}
 			}
 		}
@@ -405,6 +447,8 @@ namespace Keysharp.Core.Linux
 							prop.Free();
 						}
 					}
+
+					_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 				}
 			}
 		}
@@ -440,6 +484,8 @@ namespace Keysharp.Core.Linux
 					var alpha = (IntPtr)Math.Clamp((int)value.Al(), 0, 255);
 					_ = Xlib.XChangeProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_WM_WINDOW_OPACITY, (IntPtr)XAtom.XA_CARDINAL, 32, PropertyMode.Replace, ref alpha, 1);
 				}
+
+				_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 			}
 		}
 
@@ -479,6 +525,7 @@ namespace Keysharp.Core.Linux
 					}
 
 					_ = value ? Show() : Hide();
+					_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 				}
 			}
 		}
@@ -557,7 +604,7 @@ namespace Keysharp.Core.Linux
 						}
 
 						//Active = true;
-						return;
+						break;
 					}
 
 					case FormWindowState.Minimized:
@@ -572,7 +619,7 @@ namespace Keysharp.Core.Linux
 							_ = Xlib.XIconifyWindow(xwindow.XDisplay.Handle, Handle.ToInt64(), xwindow.XDisplay.ScreenNumber);
 						}
 
-						return;
+						break;
 					}
 
 					case FormWindowState.Maximized:
@@ -588,9 +635,11 @@ namespace Keysharp.Core.Linux
 						}
 
 						manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-						return;
+						break;
 					}
 				}
+
+				_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 			}
 		}
 
@@ -635,7 +684,13 @@ namespace Keysharp.Core.Linux
 		{
 			if (IsSpecified)
 			{
-				_ = Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out var x, out var y, out var dummy);
+				int x = 0, y = 0;
+
+				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+					_ = Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, ctrl.ClientRectangle.X, ctrl.ClientRectangle.Y, out x, out y, out var dummy);
+				else
+					_ = Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out x, out y, out var dummy);
+
 				var pt = new System.Drawing.Point(x, y);
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				pt.X = (int)(scale * pt.X);
@@ -1165,6 +1220,34 @@ namespace Keysharp.Core.Linux
 			}
 
 			return cp;
+		}
+
+		private Rectangle FrameExtents()
+		{
+			var prop = IntPtr.Zero;
+			var rect = Rectangle.Empty;
+			_ = Xlib.XGetWindowProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_FRAME_EXTENTS, IntPtr.Zero, new IntPtr(40), false, (IntPtr)XAtom.XA_CARDINAL, out var actualAtom, out var actualFormat, out var nitems, out var bytesAfter, ref prop);
+
+			if (prop != IntPtr.Zero)
+			{
+				try
+				{
+					if (nitems.ToInt32() == 4)
+					{
+						rect = new Rectangle(
+							Marshal.ReadInt32(prop, 0),//L
+							Marshal.ReadInt32(prop, 2 * IntPtr.Size),//T
+							Marshal.ReadInt32(prop, IntPtr.Size),//R
+							Marshal.ReadInt32(prop, 3 * IntPtr.Size));//B
+					}
+				}
+				finally
+				{
+					_ = Xlib.XFree(prop);
+				}
+			}
+
+			return rect;
 		}
 	}
 }

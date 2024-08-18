@@ -439,9 +439,9 @@
 		}
 
 		/// <summary>
-		/// The native directory seperator string, i.e. "/" on Unix, "\" on Windows.
+		/// The native directory separator string, i.e. "/" on Unix, "\" on Windows.
 		/// </summary>
-		public static string A_DirSeperator => Path.DirectorySeparatorChar.ToString();
+		public static string A_DirSeparator => Path.DirectorySeparatorChar.ToString();
 
 		/// <summary>
 		/// Represents the natural logarithmic base, specified by the constant, e.

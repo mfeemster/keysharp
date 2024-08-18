@@ -148,6 +148,7 @@ namespace Keysharp.Core
 
 			var parent = child.NonChildParentWindow;
 			outputVarWin = parent.Handle;
+#if WINDOWS
 
 			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
 			//and also better matches the control that Window Spy would think is under the cursor:
@@ -159,6 +160,8 @@ namespace Keysharp.Core
 				if (pah.hwndFound != IntPtr.Zero)
 					child = WindowProvider.Manager.CreateWindow(pah.hwndFound);
 			}
+
+#endif
 
 			if (child.Handle == parent.Handle)//If there's no control per se, make it blank.
 				return;

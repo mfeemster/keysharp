@@ -176,7 +176,7 @@
 #endif
 
 			if (throwOnError)
-				throw new PropertyError($"Attempting to get property {name} on object {item} failed.");
+				throw new PropertyError($"Attempting to get property {namestr} on object {item} failed.");
 			else
 				return null;
 		}
@@ -214,7 +214,7 @@
 				}
 			}
 			else
-				throw new PropertyError($"Attempting to get static property or field {name} failed.");
+				throw new PropertyError($"Attempting to get static property or field {namestr} failed.");
 		}
 
 		public static object Invoke((object, object) mitup, params object[] parameters)
