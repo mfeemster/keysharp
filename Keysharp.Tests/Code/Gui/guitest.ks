@@ -464,9 +464,14 @@ Tab.UseTab("Second")
 ; ┌───────────────┐
 ; │  Add Picture  │
 ; └───────────────┘
-MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10 Autosize", "Display a Picture")
+MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10 Autosize", "Display a picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
 SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Picture will display above")
+
+#if WINDOWS
+DestroyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10 Autosize", "Destroy picture control")
+DestroyPictureBtn.OnEvent("Click", "DestroyPic")
+#endif
 
 #if WINDOWS
 ;;;;;;;;;;
@@ -1929,19 +1934,37 @@ ClearRichEdit() {
 ; │  LoadPic  │
 ; └───────────┘
 
+MyFirstPic := ""
+Monkey := A_ScriptDir . A_DirSeparator . "monkey.ico"
 
 LoadPic() {
+	global
+	local x, y, w, h
 	Tab.UseTab("Second")
-	MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir . A_DirSeparator . "monkey.ico")
+	
+	if (MyFirstPic = "")
+	{
+		MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1 border", Monkey)
+	}
+	else
+	{
+		; MyFirstPic.GetPos(&x, &y, &w, &h)
+		MyFirstPic.Value := Monkey
+		; MyFirstPic.Move(,,w, h)
+	}
+	
 	Sleep(2000)
-#if WINDOWS
-	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
-#else
 	MyFirstPic.Value := ""
-#endif
 	Tab.UseTab()
 	; MyGui.Opts("+Redraw")
 }
+
+#if WINDOWS
+DestroyPic()
+{
+	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
+}
+#endif
 
 #if WINDOWS
 ; ┌────────────────────┐

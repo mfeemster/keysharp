@@ -88,9 +88,9 @@
 		internal static Bitmap Resize(this Bitmap bmp, int width, int height)
 		{
 			//AHK used these formulas and rounded.
-			if (width == -1)
+			if (width < 0)
 				width = (int)(((double)bmp.Width / bmp.Height * height) + 0.5);
-			else if (height == -1)
+			else if (height < 0)
 				height = (int)(((double)bmp.Height / bmp.Width * width) + 0.5);
 
 			var srcRect = new Rectangle(0, 0, bmp.Width, bmp.Height);

@@ -230,17 +230,18 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, &OutputVarPID, Args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
-* `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `Menu` supports several new methods:
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
 	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
+* `Picture` supports clearing the picture by setting the `Value` property to empty.
+* `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
+* `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
+* Gui controls support taking a boolean `Autosize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
 * A new function `ShowDebug()` to show the main window and focus the debug output tab.
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
-* `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
-* Gui controls support taking a boolean `AutoSize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
 * `SubStr()` uses a default of 1 for the second parameter, `StartingPos`, to relieve the user of always having to specify it.
 * New string functions:
 	+ `NormalizeEol(str, eol) => String` to take in a string and make all line endings match the value passed in, or the default for the current environment.
@@ -253,6 +254,8 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `Multiline` is true by default.
 	+ `WantReturn` and `Password` are not supported.
 	+ `Uppercase` and `Lowercase` are supported, but only for key presses, not for pasting.
+	+ The `GuiControl.Value` property will only get/set the displayed text of the control. To get/set the raw rich text, use the new property `GuiControl.RichText`.
+		+ Attempting to use `GuiControl.RichText` on any control other than `RichEdit` will throw an exception.
 * Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
 * A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
 	+ Uses the same arguments as `LoadPicture()`.
@@ -281,6 +284,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `A_DefaultHotstringPriority` returns the default hotstring priority.
 	+ `A_DefaultHotstringSendMode` returns the default hotstring sending mode.
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
+	+ `A_DirSeparator` returns the directory separator character which is `\` on Windows and `/` elsewhere.
 	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.

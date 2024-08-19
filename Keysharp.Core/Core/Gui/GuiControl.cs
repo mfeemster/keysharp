@@ -333,6 +333,11 @@ namespace Keysharp.Core
 							else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
 						}
 
+						//If neither were set, make one set and the other unset to force a resize internally
+						//so it will match the dimensions of what's already loaded.
+						if (width < 0 && height < 0)
+							width = pic.Height;
+
 						if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
 						{
 							if (pic.SizeMode == PictureBoxSizeMode.Zoom)
