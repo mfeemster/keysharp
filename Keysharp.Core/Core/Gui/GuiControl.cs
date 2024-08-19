@@ -307,49 +307,60 @@ namespace Keysharp.Core
 					ss.Text = val;
 				else if (_control is KeysharpPictureBox pic)
 				{
-					var splits = val.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-					var width = int.MinValue;
-					var height = int.MinValue;
-					var icon = "";
-					object iconnumber = 0;
-					var filename = splits.Last();
-
-					for (var i = 0; i < splits.Length - 1; i++)
+					if (val == "")
 					{
-						var opt = splits[i];
-
-						if (Options.TryParse(opt, "*w", ref width)) { }
-						else if (Options.TryParse(opt, "*h", ref height)) { }
-						else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
-					}
-
-					if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
-					{
-						if (pic.SizeMode == PictureBoxSizeMode.Zoom)
-						{
-							var ratio = bmp.Height != 0 ? (double)bmp.Width / bmp.Height : 1;
-
-							if (ratio == 0)
-								ratio = 1;
-
-							if (width > 0)
-								pic.Width = width;
-
-							if (height > 0)
-								pic.Height = height;
-
-							if (width < 0 && pic.ScaleWidth)
-								pic.Width = (int)(pic.Height * ratio);
-
-							if (height < 0 && pic.ScaleHeight)
-								pic.Height = (int)(pic.Width / ratio);
-						}
-
 						var oldimage = pic.Image;
-						pic.Image = bmp;
+						pic.Image = null;
 
 						if (oldimage is Bitmap oldbmp)
 							oldbmp.Dispose();
+					}
+					else
+					{
+						var splits = val.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+						var width = int.MinValue;
+						var height = int.MinValue;
+						var icon = "";
+						object iconnumber = 0;
+						var filename = splits.Last();
+
+						for (var i = 0; i < splits.Length - 1; i++)
+						{
+							var opt = splits[i];
+
+							if (Options.TryParse(opt, "*w", ref width)) { }
+							else if (Options.TryParse(opt, "*h", ref height)) { }
+							else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+						}
+
+						if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
+						{
+							if (pic.SizeMode == PictureBoxSizeMode.Zoom)
+							{
+								var ratio = bmp.Height != 0 ? (double)bmp.Width / bmp.Height : 1;
+
+								if (ratio == 0)
+									ratio = 1;
+
+								if (width > 0)
+									pic.Width = width;
+
+								if (height > 0)
+									pic.Height = height;
+
+								if (width < 0 && pic.ScaleWidth)
+									pic.Width = (int)(pic.Height * ratio);
+
+								if (height < 0 && pic.ScaleHeight)
+									pic.Height = (int)(pic.Width / ratio);
+							}
+
+							var oldimage = pic.Image;
+							pic.Image = bmp;
+
+							if (oldimage is Bitmap oldbmp)
+								oldbmp.Dispose();
+						}
 					}
 				}
 			}

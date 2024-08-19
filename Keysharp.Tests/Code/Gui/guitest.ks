@@ -429,7 +429,6 @@ SendBtn1.OnEvent("Click", "ChangeTitle")
 SendBtn2 := MyGui.Add("Button", "x120 yp", "Restore Title")
 SendBtn2.OnEvent("Click", "RestoreTitle")
 
-
 ChangeTitle() {
 	Title := "KEYSHARP'S BRAND SPANKING NEW TITLE"
 	SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
@@ -439,7 +438,6 @@ RestoreTitle() {
 	Title := "KEYSHARP TESTS"
 	SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
 }
-
 
 ; ┌───────────────────────┐
 ; │  PostMessage Section  │
@@ -458,7 +456,7 @@ AboutNotepad() {
 	Sleep(2000)
 	WinKill("ahk_exe Notepad.exe")
 }
-
+#endif
 
 MyGui.UseGroup()
 Tab.UseTab("Second")
@@ -466,11 +464,11 @@ Tab.UseTab("Second")
 ; ┌───────────────┐
 ; │  Add Picture  │
 ; └───────────────┘
-MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10", "Display a Picture")
+MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10 Autosize", "Display a Picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
 SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Picture will display above")
 
-
+#if WINDOWS
 ;;;;;;;;;;
 ; ┌─────────────────────┐
 ; │  Third Tab section  │
@@ -1927,7 +1925,6 @@ ClearRichEdit() {
 	ControlSetText(, SecondRichEdit)
 }
 
-#if WINDOWS
 ; ┌───────────┐
 ; │  LoadPic  │
 ; └───────────┘
@@ -1937,13 +1934,16 @@ LoadPic() {
 	Tab.UseTab("Second")
 	MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1", A_ScriptDir . A_DirSeparator . "monkey.ico")
 	Sleep(2000)
+#if WINDOWS
 	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
-	MyFirstPic := ""
+#else
+	MyFirstPic.Value := ""
+#endif
 	Tab.UseTab()
-
 	; MyGui.Opts("+Redraw")
 }
 
+#if WINDOWS
 ; ┌────────────────────┐
 ; │  Listbox Callback  │
 ; └────────────────────┘
