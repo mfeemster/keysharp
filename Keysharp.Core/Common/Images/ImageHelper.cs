@@ -120,16 +120,23 @@
 				if (bmp == null)//Wasn't a handle, and instead was a filename.
 				{
 					var ext = System.IO.Path.GetExtension(filename).ToLower();
-#if WINDOWS
 
-					if (ext == ".exe" || ext == ".dll" || ext == ".icl" || ext == ".cpl" || ext == ".scr")
+					if (ext == ".dll"
+#if WINDOWS
+							|| ext == ".exe" || ext == ".icl" || ext == ".cpl" || ext == ".scr"
+#endif
+					   )
 					{
 						Icon ico = null;
 
 						if (iconindex is string iconstr)
 							ico = LoadIconFromAssembly(filename, iconstr);
+
+#if WINDOWS
 						else if (iconindex is int iconint)
 							ico = GuiHelper.GetIcon(filename, iconint);
+
+#endif
 
 						if (ico != null)
 						{
@@ -148,73 +155,71 @@
 							temp = ico;
 						}
 					}
-					else
-#endif
-						if (ext == ".ico")
+					else if (ext == ".ico")
+					{
+						var ico = new Icon(filename);
+						var icos = GuiHelper.SplitIcon(ico);
+
+						if (w > 0 && h > 0)
 						{
-							var ico = new Icon(filename);
-							var icos = GuiHelper.SplitIcon(ico);
+							var tempico = icos.FirstOrDefault(tempico => tempico.Width == w && tempico.Height == h);
 
-							if (w > 0 && h > 0)
+							if (tempico == null)
+								tempico = icos[0];
+
+							temp = tempico;
+							bmp = tempico?.ToBitmap();
+						}
+						else if (iconindex.Ai() is int iconint)
+						{
+							if (iconint < icos.Count)
 							{
-								var tempico = icos.FirstOrDefault(tempico => tempico.Width == w && tempico.Height == h);
-
-								if (tempico == null)
-									tempico = icos[0];
-
-								temp = tempico;
-								bmp = tempico?.ToBitmap();
+								temp = icos[iconint];
+								bmp = icos[iconint].ToBitmap();
 							}
-							else if (iconindex.Ai() is int iconint)
-							{
-								if (iconint < icos.Count)
-								{
-									temp = icos[iconint];
-									bmp = icos[iconint].ToBitmap();
-								}
-							}
+						}
 
-							if (bmp == null)
-							{
-								temp = icos[0];
-								bmp = icos[0].ToBitmap();
-							}
+						if (bmp == null)
+						{
+							temp = icos[0];
+							bmp = icos[0].ToBitmap();
+						}
+
+						if (w > 0 || h > 0)
+						{
+							if (bmp.Width > w || bmp.Height > h)
+								bmp = bmp.Resize(w, h);
+						}
+						else if (bmp.Size != SystemInformation.IconSize)
+						{
+							bmp = bmp.Resize(SystemInformation.IconSize.Width, SystemInformation.IconSize.Height);
+						}
+					}
+					else if (ext == ".cur")
+					{
+						var tempcur = new Cursor(filename);
+						var curbm = new Bitmap(tempcur.Size.Width, tempcur.Size.Height);
+
+						using (var gr = Graphics.FromImage(curbm))
+						{
+							tempcur.Draw(gr, new Rectangle(0, 0, tempcur.Size.Width, tempcur.Size.Height));
+							bmp = curbm;
+							temp = tempcur;
+						}
+					}
+					else
+					{
+						using (var tempBmp = (Bitmap)System.Drawing.Image.FromFile(filename))//Must make a copy because the original will keep the file locked.
+						{
+							bmp = new Bitmap(tempBmp);
 
 							if (w > 0 || h > 0)
 							{
-								if (bmp.Width > w || bmp.Height > h)
+								if (bmp.Width != w || bmp.Height != h)
 									bmp = bmp.Resize(w, h);
 							}
-							else if (bmp.Size != SystemInformation.IconSize)
-							{
-								bmp = bmp.Resize(SystemInformation.IconSize.Width, SystemInformation.IconSize.Height);
-							}
 						}
-						else if (ext == ".cur")
-						{
-							var tempcur = new Cursor(filename);
-							var curbm = new Bitmap(tempcur.Size.Width, tempcur.Size.Height);
-
-							using (var gr = Graphics.FromImage(curbm))
-							{
-								tempcur.Draw(gr, new Rectangle(0, 0, tempcur.Size.Width, tempcur.Size.Height));
-								bmp = curbm;
-								temp = tempcur;
-							}
-						}
-						else
-						{
-							using (var tempBmp = (Bitmap)System.Drawing.Image.FromFile(filename))//Must make a copy because the original will keep the file locked.
-							{
-								bmp = new Bitmap(tempBmp);
-
-								if (w > 0 || h > 0)
-								{
-									if (bmp.Width != w || bmp.Height != h)
-										bmp = bmp.Resize(w, h);
-								}
-							}
-						}
+					}
 				}
 			}
 			catch (Exception ex)

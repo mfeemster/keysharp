@@ -28,8 +28,10 @@ namespace Keysharp.Core
 			if (icon != IntPtr.Zero)
 				return Icon.FromHandle(icon);
 
-#endif
 			return Icon.ExtractAssociatedIcon(source);
+#else
+			return null;
+#endif
 		}
 
 		public static object GuiCtrlFromHwnd(object obj) => Control.FromHandle(new IntPtr(obj.Al())) is Control c&& c.Tag is GuiControl gui ? gui : "";

@@ -473,7 +473,6 @@ DestroyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10 Autosize", "Destroy 
 DestroyPictureBtn.OnEvent("Click", "DestroyPic")
 #endif
 
-#if WINDOWS
 ;;;;;;;;;;
 ; ┌─────────────────────┐
 ; │  Third Tab section  │
@@ -493,6 +492,7 @@ ThirdText1 := MyGui.Add("Text", "cBlue s10", "ListBox Test")
 ; └────────────────┘
 MyListBox := MyGui.Add("ListBox", "r5 w110", ["Red","Green","Blue","Black","White"])
 MyListBox.OnEvent("Change", "ListBoxClicked")
+#if WINDOWS
 MyLbBtn1 := MyGui.Add("Button", "x+10 yp", "Delete White")
 MyLbBtn1.OnEvent("Click", "DeleteWhite")
 MyLbBtn2 := MyGui.Add("Button", "x+10 yp", "Add White")
@@ -589,10 +589,15 @@ Pbtn1 := MyGui.Add("Button", "s8 x10 y+5", "Lower")
 Pbtn2 := MyGui.Add("Button", "s8 x100 yp", "Higher")
 Pbtn1.OnEvent("Click", "Pbtn1Clicked")
 Pbtn2.OnEvent("Click", "Pbtn2Clicked")
+
+#endif
+
 ; ┌──────────────┐
 ; │  Status Bar  │
 ; └──────────────┘
 MySB := MyGui.Add("StatusBar",, "                       ")
+
+#if WINDOWS
 ; ┌─────────────┐
 ; │  Date Time  │
 ; └─────────────┘
@@ -1943,15 +1948,9 @@ LoadPic() {
 	Tab.UseTab("Second")
 	
 	if (MyFirstPic = "")
-	{
 		MyFirstPic := MyGui.Add("Picture", "x400 y650 w100 h-1 border", Monkey)
-	}
 	else
-	{
-		; MyFirstPic.GetPos(&x, &y, &w, &h)
 		MyFirstPic.Value := Monkey
-		; MyFirstPic.Move(,,w, h)
-	}
 	
 	Sleep(2000)
 	MyFirstPic.Value := ""
@@ -1966,7 +1965,7 @@ DestroyPic()
 }
 #endif
 
-#if WINDOWS
+
 ; ┌────────────────────┐
 ; │  Listbox Callback  │
 ; └────────────────────┘
@@ -1974,9 +1973,12 @@ DestroyPic()
 ListBoxClicked() {
 	MsgBox(MyListBox.Text, "ListBox")
 	;MySB.SetIcon("Shell32.dll", 2)
+	; MsgBox("Icon lives at " . A_KeysharpCorePath)
 	MySB.SetIcon(A_KeysharpCorePath, "Keysharp.ico")
 	MySB.SetText(MyListBox.Text . " selected in ListBox")
 }
+
+#if WINDOWS
 ; ┌─────────────────────┐
 ; │  Multi LB Callback  │
 ; └─────────────────────┘
