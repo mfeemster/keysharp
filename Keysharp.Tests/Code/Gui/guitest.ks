@@ -64,6 +64,12 @@ CloseApp() {
 #if WINDOWS
 	MyGui.MenuBar := MyMenuBar
 #endif
+
+; ┌──────────────┐
+; │  Status Bar  │
+; └──────────────┘
+MySB := MyGui.Add("StatusBar", "h36", "                       ")
+
 ; ┌─────────────┐
 ; │  Start TAB  │
 ; └─────────────┘
@@ -593,23 +599,18 @@ ProgressStatusText := MyGui.Add("Text", "x+5 yp cBlue s10 Autosize", "Value: ")
 Pbtn1.OnEvent("Click", "Pbtn1Clicked")
 Pbtn2.OnEvent("Click", "Pbtn2Clicked")
 
-; ┌──────────────┐
-; │  Status Bar  │
-; └──────────────┘
-MySB := MyGui.Add("StatusBar", "h36", "                       ")
-
-#if WINDOWS
 ; ┌─────────────┐
 ; │  Date Time  │
 ; └─────────────┘
 ThirdText7 := MyGui.Add("Text", "x10 y+15 cBlue s10", "DateTime Test")
 MyDateTime := MyGui.Add("DateTime", "s8 x10 y+5 w200", "LongDate")
+
 ; ┌────────────┐
 ; │  MonthCal  │
 ; └────────────┘
 ThirdText8 := MyGui.Add("Text", "x10 y+5 cBlue s10", "MonthCal Test")
 MyMonthCal := MyGui.Add("MonthCal")
-MC_Btn := MyGui.Add("Button", "s8 x10 y+5", "Change Cal Colors (not implemented)")
+MC_Btn := MyGui.Add("Button", "s8 x10 y+5 Autosize", "Change Cal Colors (not implemented)")
 MC_Btn.OnEvent("Click", "MC_Colors")
 
 ; ┌───────────────────────────┐
@@ -646,7 +647,7 @@ STest() {
 		Sleep(5) ; Need time to update Text
 
 	}
-		Loop(MySlider2.Value) {
+	Loop(MySlider2.Value) {
 		padding := MySlider2.Value-A_Index
 		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
 		ControlSetText(s, HwndMyText)
@@ -658,6 +659,7 @@ MyLinkText := MyGui.Add("Text", "x10 y+5", "Link test")
 MyLinkText.SetFont("cBlue s8")
 MyLink := MyGui.Add("Link", "x10 y+5", 'Click this <a href="https://www.autohotkey.com"> link to AHK page</a>')
 
+#if WINDOWS
 MyHkInfoText := MyGui.Add("Text", "x10 y+5 w200", "Define Hotkey test`nFocus Edit and click hotkey(s)")
 MyHkInfoText.SetFont("cBlue s8")
 MyHotkey := MyGui.Add("Hotkey", "x10 y+5")
@@ -2026,10 +2028,11 @@ Pbtn2Clicked() {
 #endif
 }
 
-#if WINDOWS
 MC_Colors() {
 	MsgBox("Not implemented.", "Future feature")
 }
+
+#if WINDOWS
 #endif
 ; ┌─────────────────────┐
 ; │  Test GuiCtrl.Hwnd  │

@@ -357,13 +357,15 @@ namespace Keysharp.Core
 		internal static (string, List<Tuple<int, int, Tuple<string, string>>>) ParseLinkLabelText(string txt)
 		{
 			var sb = new StringBuilder(txt.Length);
-			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries);//Do not trim splits here.
 			var links = new List<Tuple<int, int, Tuple<string, string>>>();
 			var quotes = new char[] { '\'', '\"' };
 
 			foreach (var split in splits)
 			{
-				if (split.StartsWith("href=") || split.StartsWith("id="))
+				var trimSplit = split.TrimStart();
+
+				if (trimSplit.StartsWith("href=") || trimSplit.StartsWith("id="))
 				{
 					var id = "";
 					var url = "";
