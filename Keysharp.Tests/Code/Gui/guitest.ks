@@ -574,7 +574,6 @@ MySliderPos := MyGui.Add("Text", "x10 y+5","")
 ; ┌───────────────────┐
 ; │  Slider Callback  │
 ; └───────────────────┘
-
 SliderPos() {
 	ControlSetText("Slider value is " MySlider.Value, MySliderPos.Hwnd)
 }
@@ -582,9 +581,8 @@ SliderPos() {
 ; ┌────────────────┐
 ; │  Progress Bar  │
 ; └────────────────┘
-; cRed BackgroundGreen Smooth 
 ThirdText6 := MyGui.Add("Text", "x10 cBlue s10", "Progress bar - click buttons to move")
-MyProgress := MyGui.Add("Progress", "x10 y+10 cRed BackgroundGreen", 50)
+MyProgress := MyGui.Add("Progress", "x10 y+10 cRed BackgroundGreen Smooth", 50)
 #if WINDOWS
 	MyProgress.GetPos(&px, &py, &pw, &ph)
 	MyVertProgress := MyGui.Add("Progress", "cRed BackgroundGreen x+10 yp-" . (pw - ph) . " Vertical w" . ph . " h" . pw, 50) ; Swap width and height.
@@ -2010,14 +2008,22 @@ CB_ButtonClicked() {
 Pbtn1Clicked() {
 	;MsgBox(MyProgress.Value)
 	MyProgress.Value -= 10
+#if WINDOWS
 	MyVertProgress.Value -= 10
 	ProgressStatusText.Value := "Values: " . MyProgress.Value . " " . MyVertProgress.Value
+#else
+	ProgressStatusText.Value := "Values: " . MyProgress.Value
+#endif
 }
 
 Pbtn2Clicked() {
 	MyProgress.Value += 10
+#if WINDOWS
 	MyVertProgress.Value += 10
 	ProgressStatusText.Value := "Values: " . MyProgress.Value . " " . MyVertProgress.Value
+#else
+	ProgressStatusText.Value := "Values: " . MyProgress.Value
+#endif
 }
 
 #if WINDOWS

@@ -636,7 +636,6 @@ namespace Keysharp.Core
 						var bw = 0;
 						var bh = 0;
 						var fy = inset;
-						var margin = 0;
 #if WINDOWS
 
 						if (vert)

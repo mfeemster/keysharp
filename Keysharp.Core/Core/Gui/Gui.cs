@@ -981,7 +981,11 @@ namespace Keysharp.Core
 
 				case Keywords.Keyword_Progress:
 				{
-					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor, opts.vertical ? 0x04 : 0);
+					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor
+#if WINDOWS
+													  , opts.vertical ? 0x04 : 0
+#endif
+													 );
 					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 
 					if (opts.nudlow.HasValue)
@@ -996,9 +1000,12 @@ namespace Keysharp.Core
 					if (opts.bgcolor.HasValue)
 						prg.BackColor = opts.bgcolor.Value;
 
+#if WINDOWS
+
 					if (opts.vertical && opts.width == int.MinValue && opts.height == int.MinValue)
 						(prg.Height, prg.Width) = (prg.Width, prg.Height);
 
+#endif
 					ctrl = prg;
 				}
 				break;
