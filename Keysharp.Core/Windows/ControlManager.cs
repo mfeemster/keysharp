@@ -52,7 +52,6 @@ namespace Keysharp.Core.Windows
 				}
 				else
 				{
-#if WINDOWS//Is there any way to do this on linux?
 					int msg;
 
 					if (item.ClassName.Contains("Combo"))
@@ -69,8 +68,6 @@ namespace Keysharp.Core.Windows
 
 					if (res == WindowsAPI.CB_ERR || res == WindowsAPI.CB_ERRSPACE)
 						throw new Error("Failed");
-
-#endif
 				}
 
 				WindowItemBase.DoControlDelay();
@@ -373,8 +370,6 @@ namespace Keysharp.Core.Windows
 				{
 					lb.Items.RemoveAt(n);
 				}
-
-#if WINDOWS//Is there any way to do this on linux?
 				else
 				{
 					if (item.ClassName.Contains("Combo"))
@@ -391,7 +386,6 @@ namespace Keysharp.Core.Windows
 						throw new TargetError($"Erroneous item index when deleting combo or list box selection index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 				}
 
-#endif
 				WindowItemBase.DoControlDelay();
 			}
 		}
@@ -408,8 +402,6 @@ namespace Keysharp.Core.Windows
 				else if (ctrl2 is ListBox lb)
 					return lb.Items.IndexOf(str) + 1L;
 
-#if WINDOWS//Is there any way to do this on linux?
-
 				if (item.ClassName.Contains("Combo"))
 					msg = WindowsAPI.CB_FINDSTRINGEXACT;
 				else if (item.ClassName.Contains("List"))
@@ -422,7 +414,6 @@ namespace Keysharp.Core.Windows
 
 				WindowItemBase.DoControlDelay();
 				return index.ToInt64() + 1;
-#endif
 			}
 
 			return 0L;
@@ -448,10 +439,8 @@ namespace Keysharp.Core.Windows
 				if (ctrl2 is CheckBox cb)
 					return cb.Checked ? 1L : 0L;
 
-#if WINDOWS//Is there any way to do this on linux?
 				//Using SendMessage() with BM_GETCHECK does *not* work on Winforms checkboxes. So we must use this custom automation function gotten from Stack Overflow.
 				return WindowsAPI.IsChecked(item.Handle) ? 1L : 0L;
-#endif
 			}
 
 			return 0L;
