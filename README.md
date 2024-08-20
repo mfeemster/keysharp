@@ -255,6 +255,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `WantReturn` and `Password` are not supported.
 	+ `Uppercase` and `Lowercase` are supported, but only for key presses, not for pasting.
 	+ The `GuiControl.Value` property will only get/set the displayed text of the control. To get/set the raw rich text, use the new property `GuiControl.RichText`.
+		+ Use `AltSubmit` with `Submit()` to get the raw rich text instead of the displayed text.
 		+ Attempting to use `GuiControl.RichText` on any control other than `RichEdit` will throw an exception.
 * Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
 * A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.

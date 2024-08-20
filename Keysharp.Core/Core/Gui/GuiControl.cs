@@ -149,15 +149,15 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (_control is KeysharpRichEdit kre)
-					return Strings.NormalizeEol(kre.Rtf);
+				if (_control is RichTextBox rtf)
+					return Strings.NormalizeEol(rtf.Rtf);
 
 				throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
 			}
 			set
 			{
-				if (_control is KeysharpRichEdit kre)
-					kre.Rtf = Strings.NormalizeEol(value);
+				if (_control is RichTextBox rtf)
+					rtf.Rtf = Strings.NormalizeEol(value);
 				else
 					throw new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.");
 			}
@@ -171,8 +171,8 @@ namespace Keysharp.Core
 					return lbl.Text;
 				else if (_control is TextBox txt)
 					return Strings.NormalizeEol(txt.Text);
-				else if (_control is KeysharpRichEdit kre)
-					return Strings.NormalizeEol(kre.Text);
+				else if (_control is RichTextBox rtf)
+					return Strings.NormalizeEol(rtf.Text);
 				else if (_control is HotkeyBox hk)
 					return hk.GetText();
 				else if (_control is NumericUpDown nud)

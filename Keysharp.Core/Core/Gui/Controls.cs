@@ -581,6 +581,7 @@ namespace Keysharp.Core
 	public class KeysharpProgressBar : ProgressBar
 	{
 		private readonly int removestyle;
+		private readonly bool customColors = false;
 
 		public int AddStyle { get; }
 
@@ -595,58 +596,90 @@ namespace Keysharp.Core
 			}
 		}
 
-		public KeysharpProgressBar(int _add = 0, int _remove = 0)
+		public KeysharpProgressBar(bool _customColors, int _add = 0, int _remove = 0)
 		{
 			AddStyle = _add;
 			removestyle = _remove;
-			SetStyle(ControlStyles.UserPaint, true);
+			customColors = _customColors;
+			SetStyle(ControlStyles.UserPaint, customColors);
 		}
 
 		protected override void OnPaint(PaintEventArgs e)
 		{
-			const int inset = 1;
-
-			using (var offscreenImage = new Bitmap(Width, Height))
+			if (customColors)
 			{
-				using (var offscreen = Graphics.FromImage(offscreenImage))
+				const int inset = 1;
+
+				using (var offscreenImage = new Bitmap(Width, Height))
 				{
-					var rect = new Rectangle(0, 0, Width, Height);
-					var scaleFactor = ((double)Value - Minimum) / ((double)Maximum - Minimum);
-					var vert = (AddStyle & 0x04) == 0x04;
-
-					if (ProgressBarRenderer.IsSupported)
+					using (var offscreen = Graphics.FromImage(offscreenImage))
 					{
-						if ((AddStyle & 0x04) == 0x04)
-							ProgressBarRenderer.DrawVerticalBar(offscreen, rect);
+						var rect = new Rectangle(0, 0, Width, Height);
+						var scaleFactor = ((double)Value - Minimum) / ((double)Maximum - Minimum);
+#if WINDOWS
+						var vert = (AddStyle & 0x04) == 0x04;
+#endif
+
+						if (ProgressBarRenderer.IsSupported)
+						{
+#if WINDOWS
+
+							if ((AddStyle & 0x04) == 0x04)
+								ProgressBarRenderer.DrawVerticalBar(offscreen, rect);
+							else
+#endif
+								ProgressBarRenderer.DrawHorizontalBar(offscreen, rect);
+						}
+
+						var bx = 0;
+						var by = 0;
+						var bw = 0;
+						var bh = 0;
+						var fy = inset;
+						var margin = 0;
+#if WINDOWS
+
+						if (vert)
+						{
+							rect.Width -= inset * 2;
+							rect.Height = (int)((rect.Height - inset) * scaleFactor);
+							fy = (Height - rect.Height) - inset;
+							bx = inset;
+							by = inset;
+							bw = rect.Width;
+							bh = fy;
+						}
 						else
-							ProgressBarRenderer.DrawHorizontalBar(offscreen, rect);
+#endif
+						{
+							rect.Width = (int)((rect.Width - inset) * scaleFactor);
+							rect.Height -= inset * 2;
+							bx = rect.Width + inset;
+							by = inset;
+							bw = (Width - rect.Width) - inset;
+							bh = rect.Height;
+						}
+
+						if (rect.Width < 0) rect.Width = 0;
+
+						if (rect.Height < 0) rect.Height = 0;
+
+						var brush = new SolidBrush(ForeColor);
+						offscreen.FillRectangle(brush, inset, fy, rect.Width, rect.Height);
+						var bkgBrush = new SolidBrush(BackColor);
+						offscreen.FillRectangle(bkgBrush, bx, by, bw, bh);
+						e.Graphics.DrawImage(offscreenImage, 0, 0);
 					}
-
-					if (vert)
-					{
-						rect.Width -= 4;
-						rect.Height = (int)((rect.Height * scaleFactor) - 4);
-					}
-					else
-					{
-						rect.Width = (int)((rect.Width * scaleFactor) - 4);
-						rect.Height -= 4;
-					}
-
-					if (rect.Width == 0) rect.Width = 1;
-
-					if (rect.Height == 0) rect.Height = 1;
-
-					var brush = new LinearGradientBrush(rect, BackColor, ForeColor, vert ? LinearGradientMode.Horizontal : LinearGradientMode.Vertical);
-					offscreen.FillRectangle(brush, inset, vert ? (Height - rect.Height) + inset : inset, rect.Width, rect.Height);
-					e.Graphics.DrawImage(offscreenImage, 0, 0);
 				}
 			}
+			else
+				base.OnPaint(e);
 		}
 
-		protected override void OnPaintBackground(PaintEventArgs pevent)
+		protected override void OnPaintBackground(PaintEventArgs e)
 		{
-			// None... Helps control the flicker.
+			if (!customColors)
+				base.OnPaintBackground(e);
 		}
 
 #if WINDOWS

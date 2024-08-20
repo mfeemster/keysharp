@@ -241,6 +241,9 @@ namespace Keysharp.Core
 
 		public static void SetProcessDPIAware()
 		{
+#if LINUX//Don't have Gtk working on Windows yet, but just in case we ever get it working.//TODO
+			Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");//This must come first.
+#endif
 			Application.EnableVisualStyles();
 
 			if (!dpimodeset)

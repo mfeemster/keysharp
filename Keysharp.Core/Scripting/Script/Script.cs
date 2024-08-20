@@ -77,9 +77,7 @@
 			if (Vars == null)
 				Vars = new Variables();
 
-			//Application.EnableVisualStyles();
-			//Application.SetCompatibleTextRenderingDefault(false);
-			_ = InitHook();
+			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 		}
 
 		public static void Edit()
@@ -538,7 +536,6 @@
 			return true;
 #elif LINUX
 			HookThread = new Keysharp.Core.Linux.LinuxHookThread();
-			Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");
 			return true;
 #endif
 		}

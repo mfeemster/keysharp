@@ -43,14 +43,18 @@ namespace Keysharp.Core.Linux
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				uint msg;// = 0, x_msg = 0, y_msg = 0;
-				n--;
 				var ctrl2 = Control.FromHandle(item.Handle);
+				n--;
 
 				if (ctrl2 is ComboBox cb)
+				{
 					cb.Items.RemoveAt(n);
+					cb.SelectedIndex = -1;//On linux, if the selected item is deleted, it will throw an exception the next time the dropdown is clicked if SelectedIndex is not set to -1.
+				}
 				else if (ctrl2 is ListBox lb)
+				{
 					lb.Items.RemoveAt(n);
+				}
 				else
 				{
 					//How to do the equivalent of what the Windows derivation does, but on linux?
@@ -64,7 +68,6 @@ namespace Keysharp.Core.Linux
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				uint msg = 0;
 				var ctrl2 = Control.FromHandle(item.Handle);
 
 				if (ctrl2 is ComboBox cb)

@@ -358,9 +358,9 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				uint msg;// = 0, x_msg = 0, y_msg = 0;
-				n--;
+				uint msg;
 				var ctrl2 = Control.FromHandle(item.Handle);
+				n--;
 
 				if (ctrl2 is ComboBox cb)
 				{

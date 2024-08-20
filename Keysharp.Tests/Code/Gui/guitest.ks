@@ -20,7 +20,7 @@ winposx := ""
 winposy := ""
 winposw := ""
 winposh := ""
-
+origBackColor := ""
 
 ; ┌────────────────┐
 ; │  Tab One Menu  │
@@ -517,29 +517,30 @@ AddWhite() {
 	ControlAddItem("White", MyListBox)
 }
 
-#if WINDOWS
 ; ┌────────────────┐
 ; │  Multi-select  │
 ; └────────────────┘
 ThirdText2 := MyGui.Add("Text", "x10 y+65 cBlue s10", "ListBox Test (Multi-Select)")
 MyMultiLB := MyGui.Add("ListBox", "+Multi r5 w110 x10 y+10", ["Reactionary Red","Garish Green","Beastly Blue","Banal Black","Washed-out White"])
 MyMultiLB.OnEvent("Change", "MultiLBClicked")
+
 ; ┌─────────────┐
 ; │  Drop-Down  │
 ; └─────────────┘
-ThirdText3 := MyGui.Add("Text", "x10 y+10 cBlue s10", "Drop-down List")
-MyDDL := MyGui.Add("DropDownList", "x10 y+10", ["Orange","Purple","Fuchsia","Lime","Aqua"])
+ThirdText3 := MyGui.Add("Text", "x10 y+10 cBlue s10", "Drop-down List with 4 rows")
+MyDDL := MyGui.Add("DropDownList", "x10 y+10 r4", ["Orange","Purple","Fuchsia","Lime","Aqua"])
 MyDDL.OnEvent("Change", "DDLClicked")
+
 ; ┌─────────────┐
 ; │  Combo Box  │
 ; └─────────────┘
-ThirdText4 := MyGui.Add("Text", "x10 cBlue s10", "ComboBox")
-MyCB := MyGui.Add("ComboBox", "x10 y+10 r10", ["Orange","Purple","Fuchsia","Lime","Aqua"])
+ThirdText4 := MyGui.Add("Text", "x10 cBlue s10", "ComboBox with 3 rows")
+MyCB := MyGui.Add("ComboBox", "x10 y+10 r3", ["Orange","Purple","Fuchsia","Lime","Aqua"])
 CB_Button := MyGui.Add("Button", "h25 w80 x10 y+10", "CB Selection")
 CB_AddBtn := MyGui.Add("Button", "h25 w80 x90 yp", "Add Yellow")
 CB_Button.OnEvent("Click", "CB_ButtonClicked")
 CB_AddBtn.OnEvent("Click", "AddYellow")
-CB_DeleteBtn := MyGui.Add("Button", "h25 w80 x170 yp ", "Del Yellow")
+CB_DeleteBtn := MyGui.Add("Button", "h25 w80 x170 yp", "Del Yellow")
 CB_DeleteBtn.OnEvent("Click", "DeleteYellow")
 
 AddYellow() {
@@ -561,8 +562,6 @@ DeleteYellow() {
 	ControlDeleteItem(YellowIndex, MyCb)
 }
 
-
-
 ; ┌──────────┐
 ; │  Slider  │
 ; └──────────┘
@@ -583,15 +582,18 @@ SliderPos() {
 ; ┌────────────────┐
 ; │  Progress Bar  │
 ; └────────────────┘
-
+; cRed BackgroundGreen Smooth 
 ThirdText6 := MyGui.Add("Text", "x10 cBlue s10", "Progress bar - click buttons to move")
-MyProgress := MyGui.Add("Progress", "x10 y+10", 50)
+MyProgress := MyGui.Add("Progress", "x10 y+10 cRed BackgroundGreen", 50)
+#if WINDOWS
+	MyProgress.GetPos(&px, &py, &pw, &ph)
+	MyVertProgress := MyGui.Add("Progress", "cRed BackgroundGreen x+10 yp-" . (pw - ph) . " Vertical w" . ph . " h" . pw, 50) ; Swap width and height.
+#endif
 Pbtn1 := MyGui.Add("Button", "s8 x10 y+5", "Lower")
 Pbtn2 := MyGui.Add("Button", "s8 x100 yp", "Higher")
+ProgressStatusText := MyGui.Add("Text", "x+5 yp cBlue s10 Autosize", "Value: ")
 Pbtn1.OnEvent("Click", "Pbtn1Clicked")
 Pbtn2.OnEvent("Click", "Pbtn2Clicked")
-
-#endif
 
 ; ┌──────────────┐
 ; │  Status Bar  │
@@ -602,7 +604,7 @@ MySB := MyGui.Add("StatusBar", "h36", "                       ")
 ; ┌─────────────┐
 ; │  Date Time  │
 ; └─────────────┘
-ThirdText7 := MyGui.Add("Text", "x10 y+5 cBlue s10", "DateTime Test")
+ThirdText7 := MyGui.Add("Text", "x10 y+15 cBlue s10", "DateTime Test")
 MyDateTime := MyGui.Add("DateTime", "s8 x10 y+5 w200", "LongDate")
 ; ┌────────────┐
 ; │  MonthCal  │
@@ -1786,6 +1788,7 @@ ChangeFontBack()
 
 ChangeBG()
 {
+	global origBackColor := MyGui.BackColor
 	MsgBox(MyGui.BackColor, "Background color:")
 	MyGui.BackColor := GuiBGColor
 }
@@ -1795,8 +1798,8 @@ ChangeBG()
 
 RestoreBG()
 {
-	global MyGui
-	MyGui.BackColor := 0xF0F0F0
+	global MyGui, origBackColor
+	MyGui.BackColor := origBackColor
 }
 
 ; ┌───────────────────────┐
@@ -1969,14 +1972,13 @@ DestroyPic()
 ; └────────────────────┘
 
 ListBoxClicked() {
-	MsgBox(MyListBox.Text, "ListBox")
+	; MsgBox(MyListBox.Text, "ListBox")
 	;MySB.SetIcon("Shell32.dll", 2)
 	; MsgBox("Icon lives at " . A_KeysharpCorePath)
 	MySB.SetIcon(A_KeysharpCorePath, "Keysharp.ico")
 	MySB.SetText(MyListBox.Text . " selected in ListBox")
 }
 
-#if WINDOWS
 ; ┌─────────────────────┐
 ; │  Multi LB Callback  │
 ; └─────────────────────┘
@@ -1986,12 +1988,14 @@ MultiLBClicked() {
 			MsgBox("Selection number " Index " is " Field, "Multi ListBox")
 		}
 }
+
 ; ┌─────────────────────┐
 ; │  DropDown Callback  │
 ; └─────────────────────┘
 DDLClicked() {
 	MsgBox(MyDDL.Text, "Drop Down List")
 }
+
 ; ┌─────────────────────┐
 ; │  ComboBox Callback  │
 ; └─────────────────────┘
@@ -2006,12 +2010,17 @@ CB_ButtonClicked() {
 Pbtn1Clicked() {
 	;MsgBox(MyProgress.Value)
 	MyProgress.Value -= 10
+	MyVertProgress.Value -= 10
+	ProgressStatusText.Value := "Values: " . MyProgress.Value . " " . MyVertProgress.Value
 }
 
 Pbtn2Clicked() {
 	MyProgress.Value += 10
+	MyVertProgress.Value += 10
+	ProgressStatusText.Value := "Values: " . MyProgress.Value . " " . MyVertProgress.Value
 }
 
+#if WINDOWS
 MC_Colors() {
 	MsgBox("Not implemented.", "Future feature")
 }

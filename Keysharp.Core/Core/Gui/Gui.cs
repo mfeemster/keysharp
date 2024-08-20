@@ -689,13 +689,19 @@ namespace Keysharp.Core
 					if (opts.choose.Any())
 						ddl.SelectedIndex = opts.choose[0];
 
-					if (opts.rows != float.MinValue)
-						ddl.DropDownHeight = (int)Math.Round(ddl.ItemHeight * opts.rows);
-					else if (opts.height != int.MinValue)
-						ddl.DropDownHeight = opts.height;
-
-					//Documentation says ItemHeight can be set with a message, but it can just be set with the ItemHeight property.
 					ddl.IntegralHeight = true;
+
+					if (opts.rows != float.MinValue)
+					{
+						ddl.IntegralHeight = false;
+						ddl.MaxDropDownItems = (int)opts.rows;
+					}
+					else if (opts.height != int.MinValue)
+					{
+						ddl.IntegralHeight = false;
+						ddl.DropDownHeight = opts.height;
+					}
+
 					ctrl = ddl;
 				}
 				break;
@@ -975,7 +981,7 @@ namespace Keysharp.Core
 
 				case Keywords.Keyword_Progress:
 				{
-					var prg = new KeysharpProgressBar(opts.vertical ? 0x04 : 0);
+					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor, opts.vertical ? 0x04 : 0);
 					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 
 					if (opts.nudlow.HasValue)
@@ -989,6 +995,9 @@ namespace Keysharp.Core
 
 					if (opts.bgcolor.HasValue)
 						prg.BackColor = opts.bgcolor.Value;
+
+					if (opts.vertical && opts.width == int.MinValue && opts.height == int.MinValue)
+						(prg.Height, prg.Width) = (prg.Width, prg.Height);
 
 					ctrl = prg;
 				}
@@ -1819,6 +1828,8 @@ namespace Keysharp.Core
 				{
 					if (control is TextBox || control is DateTimePicker || control is MonthCalendar)//Just use value because it's the same and consolidates the formatting in one place, despite being slightly slower.
 						dkt[control.Name] = guictrl.Value;
+					else if (control is RichTextBox)
+						dkt[control.Name] = !guictrl.AltSubmit ? guictrl.Value : guictrl.RichText;
 					else if (control is NumericUpDown nud)
 						dkt[nud.Name] = (double)nud.Value;
 					else if (control is CheckBox cb)
