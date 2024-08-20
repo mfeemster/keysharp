@@ -492,7 +492,7 @@ ThirdText1 := MyGui.Add("Text", "cBlue s10", "ListBox Test")
 ; └────────────────┘
 MyListBox := MyGui.Add("ListBox", "r5 w110", ["Red","Green","Blue","Black","White"])
 MyListBox.OnEvent("Change", "ListBoxClicked")
-#if WINDOWS
+
 MyLbBtn1 := MyGui.Add("Button", "x+10 yp", "Delete White")
 MyLbBtn1.OnEvent("Click", "DeleteWhite")
 MyLbBtn2 := MyGui.Add("Button", "x+10 yp", "Add White")
@@ -517,6 +517,7 @@ AddWhite() {
 	ControlAddItem("White", MyListBox)
 }
 
+#if WINDOWS
 ; ┌────────────────┐
 ; │  Multi-select  │
 ; └────────────────┘
@@ -796,9 +797,6 @@ gb4Btn2.OnEvent("Click", "ClearGB3")
 MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 MyGui.AddText("s14 xm y+10 cBlue", "This should be below.")
-
-MyGui.Opt("+Autosize")
-; MyGui.Show()
 
 ; ┌────────────────┐
 ; │  MENU SECTION  │
@@ -2523,6 +2521,6 @@ MasterPeak()
 	return peak
 }
 
-MyGui.Show()
-
 #endif
+
+MyGui.Show("Autosize")

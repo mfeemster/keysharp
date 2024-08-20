@@ -359,7 +359,7 @@ namespace Keysharp.Core
 				form = new KeysharpForm
 				{
 					eventObj = eventObj,
-					FormBorderStyle = FormBorderStyle.FixedDialog,//Default to a non-resizeable window, with the maximize box disabled.
+					FormBorderStyle = FormBorderStyle.FixedSingle,//Default to a non-resizeable window, with the maximize box disabled.
 					Icon = Keysharp.Core.Properties.Resources.Keysharp_ico,
 					Name = $"Keysharp window {newCount}",
 					MaximizeBox = false,

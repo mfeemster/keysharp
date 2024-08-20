@@ -52,6 +52,7 @@ namespace Keysharp.Core.Windows
 				}
 				else
 				{
+#if WINDOWS//Is there any way to do this on linux?
 					int msg;
 
 					if (item.ClassName.Contains("Combo"))
@@ -68,6 +69,8 @@ namespace Keysharp.Core.Windows
 
 					if (res == WindowsAPI.CB_ERR || res == WindowsAPI.CB_ERRSPACE)
 						throw new Error("Failed");
+
+#endif
 				}
 
 				WindowItemBase.DoControlDelay();
@@ -370,6 +373,8 @@ namespace Keysharp.Core.Windows
 				{
 					lb.Items.RemoveAt(n);
 				}
+
+#if WINDOWS//Is there any way to do this on linux?
 				else
 				{
 					if (item.ClassName.Contains("Combo"))
@@ -386,6 +391,7 @@ namespace Keysharp.Core.Windows
 						throw new TargetError($"Erroneous item index when deleting combo or list box selection index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 				}
 
+#endif
 				WindowItemBase.DoControlDelay();
 			}
 		}
@@ -395,6 +401,14 @@ namespace Keysharp.Core.Windows
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
 				uint msg = 0;
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is ComboBox cb)
+					return cb.Items.IndexOf(str) + 1L;
+				else if (ctrl2 is ListBox lb)
+					return lb.Items.IndexOf(str) + 1L;
+
+#if WINDOWS//Is there any way to do this on linux?
 
 				if (item.ClassName.Contains("Combo"))
 					msg = WindowsAPI.CB_FINDSTRINGEXACT;
@@ -408,6 +422,7 @@ namespace Keysharp.Core.Windows
 
 				WindowItemBase.DoControlDelay();
 				return index.ToInt64() + 1;
+#endif
 			}
 
 			return 0L;
@@ -428,8 +443,15 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is CheckBox cb)
+					return cb.Checked ? 1L : 0L;
+
+#if WINDOWS//Is there any way to do this on linux?
 				//Using SendMessage() with BM_GETCHECK does *not* work on Winforms checkboxes. So we must use this custom automation function gotten from Stack Overflow.
-				return WindowsAPI.IsChecked(item.Handle) ? 1 : 0;
+				return WindowsAPI.IsChecked(item.Handle) ? 1L : 0L;
+#endif
 			}
 
 			return 0L;
@@ -625,7 +647,7 @@ namespace Keysharp.Core.Windows
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
 				if (Control.FromHandle(item.Handle) is Control ctrl2)
-					return ctrl2.Visible ? 1 : 0;
+					return ctrl2.Visible ? 1L : 0L;
 				else
 					_ = item.Visible;
 			}
