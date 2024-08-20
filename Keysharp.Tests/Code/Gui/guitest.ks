@@ -595,7 +595,7 @@ Pbtn2.OnEvent("Click", "Pbtn2Clicked")
 ; ┌──────────────┐
 ; │  Status Bar  │
 ; └──────────────┘
-MySB := MyGui.Add("StatusBar",, "                       ")
+MySB := MyGui.Add("StatusBar", "h36", "                       ")
 
 #if WINDOWS
 ; ┌─────────────┐

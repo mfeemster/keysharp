@@ -1642,7 +1642,7 @@ namespace Keysharp.Core
 			{
 				var text = obj0.As();
 				var part = obj1.Ai(1);
-				var style = obj2.Al();
+				var style = obj2.Al(-1);
 				part--;
 
 				if (part < ss.Items.Count)
@@ -1667,8 +1667,6 @@ namespace Keysharp.Core
 							tssl.BorderStyle = Border3DStyle.Raised;
 							tssl.BorderSides = ToolStripStatusLabelBorderSides.All;
 						}
-						else
-							return false;
 					}
 
 					return true;

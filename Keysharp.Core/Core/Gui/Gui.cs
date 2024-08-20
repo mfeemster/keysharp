@@ -359,10 +359,13 @@ namespace Keysharp.Core
 				form = new KeysharpForm
 				{
 					eventObj = eventObj,
+					FormBorderStyle = FormBorderStyle.FixedDialog,//Default to a non-resizeable window, with the maximize box disabled.
 					Icon = Keysharp.Core.Properties.Resources.Keysharp_ico,
 					Name = $"Keysharp window {newCount}",
-					Text = caption != "" ? caption : Accessors.A_ScriptName,
-					Tag = this
+					MaximizeBox = false,
+					SizeGripStyle = SizeGripStyle.Hide,
+					Tag = this,
+					Text = caption != "" ? caption : Accessors.A_ScriptName
 				};
 				//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
 				//be done in designer-generated code. It appears to cause layout problems.
@@ -1030,8 +1033,9 @@ namespace Keysharp.Core
 				{
 					var ss = new KeysharpStatusStrip();
 					StatusBar = ss;
+					ss.AutoSize = false;
 					ss.ImageScalingSize = new System.Drawing.Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
-					ss.Dock = DockStyle.None;//Using the traditional bottom docking prevents autosize from properly computing the form's dimensions. So leave it undocked.
+					ss.Dock = DockStyle.Bottom;//Docking must be used and must be on the bottom. Don't ever set form.AutoSize = true with this, they are incompatible.
 					ss.SizingGrip = false;
 
 					if (!string.IsNullOrEmpty(text))
@@ -1417,9 +1421,6 @@ namespace Keysharp.Core
 				//every TabControl in the chain.
 				foreach (var partc in ctrl.FindParents<KeysharpTabControl>())
 					partc.AdjustSize(dpiscale);
-
-				//Status strips need to be repositioned as well.
-				RepositionStatusStrips();
 			}
 
 			if (opts.section)
@@ -1719,6 +1720,7 @@ namespace Keysharp.Core
 				}
 			}
 
+			ResizeTabControls();
 			var status = form.Controls.OfType<KeysharpStatusStrip>().ToArray();
 			(int, int) FixStatusStrip(KeysharpStatusStrip ss)
 			{
@@ -1729,15 +1731,6 @@ namespace Keysharp.Core
 				{
 					if (ctrl != ss)
 					{
-						if (ss != null)
-						{
-							//if (ctrl.Top > ss.Top)
-							//{
-							//  ctrl.Top -= (ss.Height);// + form.Margin.Top + form.Margin.Bottom);
-							//  ctrl.Top = Math.Max(ctrl.Top, form.Margin.Top);
-							//}
-						}
-
 						var yval = ctrl.Bottom;
 
 						if (yval > maxy)
@@ -1755,59 +1748,29 @@ namespace Keysharp.Core
 
 			if (auto || (!form.BeenShown && pos[0] == null && pos[1] == null))//The caluclations in this block are not exact, but are as close as we can possibly get in a generic way.
 			{
-				if (!resizable)//Only set it to autosize if they haven't explicitly set it to not be autosize (+Resize).
-				{
-					if (status.Length > 0)
-					{
-						var ss = status[0];
-						var (maxx, maxy) = FixStatusStrip(ss);
-						form.ClientSize = new Size(maxx + form.Margin.Left,
-												   maxy - form.Margin.Bottom);//Seems odd, but needed when form is in autosize mode.
-						ss.Left = 0;
-						ss.Top = form.Height - ss.Height;
-					}
+				//AHK always autosizes on first show when no dimensions are specified.
+				KeysharpStatusStrip ss = null;
+				var ssHeight = 0;
 
-					form.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-					form.AutoSize = true;
-				}
-				else
+				if (status.Length > 0)
 				{
-					if (status.Length > 0)
-					{
-						var ss = status[0];
-						var (maxx, maxy) = FixStatusStrip(ss);
-						form.ClientSize = new Size(maxx + form.Margin.Left,
-												   maxy + ss.Height + form.Margin.Bottom);//Need to manually include the heigh of the status strip when the it's docked.
-						ss.Dock = DockStyle.Bottom;
-						ss.SizingGrip = true;
-					}
-					else
-					{
-						var (maxx, maxy) = FixStatusStrip(null);
-						form.ClientSize = new Size(maxx + form.Margin.Left,
-												   maxy + form.Margin.Bottom);
-					}
+					ss = status[0];
+					ssHeight = ss.Height;
 				}
+
+				var (maxx, maxy) = FixStatusStrip(ss);
+				form.ClientSize = new Size(maxx + form.Margin.Left,
+										   maxy + ssHeight + form.Margin.Bottom);//Need to manually include the height of the status strip when it's docked.
 			}
 			else
 			{
 				var size = form.BeenShown ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
 
-				if (pos[0] != null)//Dimensions must be scaled by DPI.
+				if (pos[0] != null)//Dimensions must be scaled by DPI.//TODO
 					size.Width = (int)pos[0];
 
 				if (pos[1] != null)
 					size.Height = (int)pos[1];
-
-				showOptionsDkt["Resize"](this, true);
-
-				if (status.Length > 0)
-				{
-					var ss = status[0];
-					_ = FixStatusStrip(ss);
-					ss.Dock = DockStyle.Bottom;
-					ss.SizingGrip = true;
-				}
 
 				form.Size = size;
 			}
@@ -1827,8 +1790,6 @@ namespace Keysharp.Core
 
 			form.StartPosition = FormStartPosition.Manual;
 			form.Location = location;
-			ResizeTabControls();
-			RepositionStatusStrips();
 
 			if (hide)
 				form.Hide();
@@ -2200,19 +2161,6 @@ namespace Keysharp.Core
 		private void Form_Load(object sender, EventArgs e)
 		{
 			//form.Visible = false;
-		}
-
-		private void RepositionStatusStrips()
-		{
-			var statusStrips = controls.Values.OfType<GuiControl>().Select(gc => gc.Control).OfType<KeysharpStatusStrip>().ToHashSet();
-
-			foreach (var ksss in statusStrips)
-			{
-				(Control right, Control bottom) = form.RightBottomMost();
-
-				if (bottom != null)
-					ksss.Top = bottom.Bottom + form.Margin.Bottom + bottom.Margin.Top;
-			}
 		}
 
 		private void ResizeTabControls()
