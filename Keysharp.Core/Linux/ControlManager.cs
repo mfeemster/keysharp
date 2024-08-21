@@ -220,8 +220,6 @@ namespace Keysharp.Core.Linux
 			return val;
 		}
 
-		internal override long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-
 		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
@@ -244,12 +242,6 @@ namespace Keysharp.Core.Linux
 		{
 		}
 		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-		}
-		//internal override void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		//{
-		//}
-		internal override void ControlShow(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
 		internal override void ControlShowDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)

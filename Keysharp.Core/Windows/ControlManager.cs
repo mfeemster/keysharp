@@ -615,19 +615,6 @@ namespace Keysharp.Core.Windows
 				   : "";
 		}
 
-		internal override long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (Control.FromHandle(item.Handle) is Control ctrl2)
-					return ctrl2.Visible ? 1L : 0L;
-				else
-					_ = item.Visible;
-			}
-
-			return 0L;
-		}
-
 		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)

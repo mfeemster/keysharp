@@ -52,7 +52,18 @@
 
 		internal abstract string ControlGetText(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal virtual long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Keysharp.Core.Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is Control ctrl2)
+					return ctrl2.Visible ? 1L : 0L;
+				else
+					_ = item.Visible;
+			}
+
+			return 0L;
+		}
 
 		internal virtual void ControlHide(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
 		ShowHideHelper(false, ctrl, title, text, excludeTitle, excludeText);

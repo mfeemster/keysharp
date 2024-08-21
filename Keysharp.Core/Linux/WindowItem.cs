@@ -438,7 +438,7 @@ namespace Keysharp.Core.Linux
 				{
 					if (Control.FromHandle(Handle) is Control ctrl)
 					{
-						control.Text = value;
+						ctrl.Text = value;
 					}
 					else
 					{
