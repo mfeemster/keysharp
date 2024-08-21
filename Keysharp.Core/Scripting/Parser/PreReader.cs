@@ -29,6 +29,7 @@ namespace Keysharp.Scripting
 		private Parser parser;
 		private HashSet<string> defines = new HashSet<string>()
 		{
+			"KEYSHARP",
 #if WINDOWS
 			"WINDOWS",
 #elif LINUX

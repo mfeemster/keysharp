@@ -255,7 +255,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `WantReturn` and `Password` are not supported.
 	+ `Uppercase` and `Lowercase` are supported, but only for key presses, not for pasting.
 	+ The `GuiControl.Value` property will only get/set the displayed text of the control. To get/set the raw rich text, use the new property `GuiControl.RichText`.
-		+ Use `AltSubmit` with `Submit()` to get the raw rich text instead of the displayed text.
+		+ Use `AltSubmit` with `Submit()` to get the raw rich text.
 		+ Attempting to use `GuiControl.RichText` on any control other than `RichEdit` will throw an exception.
 * Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
 * A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
@@ -363,7 +363,46 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ This is needed to resolve the proper overloaded method.
 	+ Omit `ParamCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
 * `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
-
+* Preprocessor directives are supported using the familiar syntax of C#.
+	+ `#if symbol` is used to enable a section of code if symbol is defined.
+	+ By default, the following are defined:
+		+ `WINDOWS` if you are running the script on Microsoft Windows.
+		+ `LINUX` if you are running on linux.
+		+ `KEYSHARP`
+	+ `#else` can be used to take an alternate path if the preceding `#if` evaluates to false.
+	+ `#elif symbol` can be used to evaluate another symbol if the preceding `#if` or `#elif` evaluate to false.
+	+ All preprocessor blocks must end with an `#endif`
+	+ New preprocessor symbols can be defined using `#define symbol`.
+	+ Logical statements can be evaluated using the operators `&&`, `||` and `!`.
+	+ Evaluation of preprocessor statements are case insensitive.
+	+ Some examples are:
+```
+		#if WINDOWS
+			MsgBox("Windows")
+		#elif LINUX
+			MsgBox("linux")
+		#else
+			MsgBox("Unsupported OS")
+		#endif
+		
+		#if !(WINDOWS || LINUX)
+			MsgBox("Unsupported OS")
+		#endif
+		
+		#if 1
+			MsgBox("Always true")
+		#endif
+		
+		#if 0
+			MsgBox("Always false")
+		#endif
+		
+		#define NEW_DEFINE
+		#if NEW_DEFINE
+			MsgBox("True because of new definition")
+		#endif
+```
+	
 ###	Removals: ###
 * Nested classes are not supported.
 * Nested functions are not supported.

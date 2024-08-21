@@ -1,4 +1,5 @@
 ﻿#if LINUX
+
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
@@ -179,7 +180,27 @@ namespace Keysharp.Core.Linux
 			return 0L;
 		}
 
-		internal override string ControlGetChoice(object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
+		internal override string ControlGetChoice(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is ComboBox cb)
+					return cb.SelectedValue != null ? cb.SelectedValue.ToString() : "";
+				else if (ctrl2 is ListBox lb)
+					return lb.SelectedValue != null ? lb.SelectedValue.ToString() : "";
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+
+				WindowItemBase.DoControlDelay();
+			}
+
+			return "";
+		}
+
 		internal override string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
 		internal override long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;

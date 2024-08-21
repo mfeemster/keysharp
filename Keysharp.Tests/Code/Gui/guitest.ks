@@ -876,10 +876,10 @@ CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 h25 y170", "красный (String)"
 CZ_LbBtn4.OnEvent("Click", "ChooseString")
 CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 h25 y195", "ControlGetChoice")
 CZ_LbBtn5.OnEvent("Click", "GetChoice")
-#if WINDOWS
 CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 h25 y220", "ControlGetClassNN")
 CZ_LbBtn6.OnEvent("Click", "GetClassNN")
 
+#if WINDOWS
 CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 h25 y245", "ControlGetEnabled")
 CZ_LbBtn7.OnEvent("Click", "GetEnabled")
 CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 h25 y270", "Disabled!")
@@ -1280,12 +1280,12 @@ GetChoice() {
 	}
 }
 
-#if WINDOWS
 GetClassNN() {
 	ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
 	MsgBox(ClassNN, "ClassNN")
 }
 
+#if WINDOWS
 GetEnabled() {
 	Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
 	MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
