@@ -152,7 +152,8 @@ namespace Keysharp.Core
 				if (_control is RichTextBox rtf)
 					return Strings.NormalizeEol(rtf.Rtf);
 
-				throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
+				return "";
+				//throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
 			}
 			set
 			{
@@ -1776,7 +1777,7 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		private void _control_Click(object sender, EventArgs e)
+		internal void _control_Click(object sender, EventArgs e)
 		{
 			if (_control is TreeView tv)
 				_ = clickHandlers.InvokeEventHandlers(this, GetSelection());
@@ -1807,7 +1808,7 @@ namespace Keysharp.Core
 				_ = clickHandlers.InvokeEventHandlers(this, null);
 		}
 
-		private void _control_DoubleClick(object sender, EventArgs e)
+		internal void _control_DoubleClick(object sender, EventArgs e)
 		{
 			if (_control is TreeView tv)
 				_ = doubleClickHandlers.InvokeEventHandlers(this, GetSelection());
@@ -1831,23 +1832,23 @@ namespace Keysharp.Core
 			//Status strip items are handled in a separate special handler contained within each item.
 		}
 
-		private void _control_GotFocus(object sender, EventArgs e) => focusHandlers?.InvokeEventHandlers(this, 0L);
+		internal void _control_GotFocus(object sender, EventArgs e) => focusHandlers?.InvokeEventHandlers(this, 0L);
 
-		private void _control_KeyDown(object sender, KeyEventArgs e)
+		internal void _control_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
 				CallContextMenuChangeHandlers(true, Cursor.Position.X, Cursor.Position.Y);
 		}
 
-		private void _control_LostFocus(object sender, EventArgs e) => lostFocusHandlers?.InvokeEventHandlers(this, 0L);
+		internal void _control_LostFocus(object sender, EventArgs e) => lostFocusHandlers?.InvokeEventHandlers(this, 0L);
 
-		private void _control_MouseDown(object sender, MouseEventArgs e)
+		internal void _control_MouseDown(object sender, MouseEventArgs e)
 		{
 			if (e.Button == MouseButtons.Right)
 				CallContextMenuChangeHandlers(false, e.X, e.Y);
 		}
 
-		private void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
+		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			if (_control is ListBox lb)
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lb.SelectedIndex + 1L, wasRightClick, x, y));
@@ -1859,19 +1860,19 @@ namespace Keysharp.Core
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, _control.Handle.ToInt64().ToString(), wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
 		}
 
-		private void Cmb_SelectedIndexChanged(object sender, EventArgs e)
+		internal void Cmb_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (_control is ComboBox)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Dtp_ValueChanged(object sender, EventArgs e)
+		internal void Dtp_ValueChanged(object sender, EventArgs e)
 		{
 			if (_control is DateTimePicker)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
+		internal void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
 			var del = Function.GetFuncObj(callback, Gui.form.eventObj, true);
 
@@ -1882,115 +1883,115 @@ namespace Keysharp.Core
 			h.ModifyEventHandlers(del, addremove);
 		}
 
-		private void Hkb_TextChanged(object sender, EventArgs e)
+		internal void Hkb_TextChanged(object sender, EventArgs e)
 		{
 			if (_control is HotkeyBox)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Lb_SelectedIndexChanged(object sender, EventArgs e)
+		internal void Lb_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (_control is ListBox)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Lv_AfterLabelEdit(object sender, LabelEditEventArgs e)
+		internal void Lv_AfterLabelEdit(object sender, LabelEditEventArgs e)
 		{
 			if (_control is ListView)
 				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Item + 1L));//The documentation says to pass "item". Not really sure if that means index, or something else.
 		}
 
-		private void Lv_ColumnClick(object sender, ColumnClickEventArgs e)
+		internal void Lv_ColumnClick(object sender, ColumnClickEventArgs e)
 		{
 			if (_control is ListView)
 				_ = (columnClickHandlers?.InvokeEventHandlers(this, e.Column + 1L));
 		}
 
-		private void Lv_ItemChecked(object sender, ItemCheckedEventArgs e)
+		internal void Lv_ItemChecked(object sender, ItemCheckedEventArgs e)
 		{
 			if (_control is ListView)
 				_ = (itemCheckHandlers?.InvokeEventHandlers(this, e.Item.Index + 1L, e.Item.Checked ? 1L : 0L));
 		}
 
-		private void Lv_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+		internal void Lv_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
 		{
 			if (_control is ListView)
 				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Item.Index + 1L, e.Item.Selected ? 1L : 0L));
 		}
 
-		private void Lv_SelectedIndexChanged(object sender, EventArgs e)
+		internal void Lv_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (_control is ListView lv)
 				_ = (focusedItemChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L));
 		}
 
-		private void Mc_DateChanged(object sender, DateRangeEventArgs e)
+		internal void Mc_DateChanged(object sender, DateRangeEventArgs e)
 		{
 			if (_control is MonthCalendar)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Nud_ValueChanged(object sender, EventArgs e)
+		internal void Nud_ValueChanged(object sender, EventArgs e)
 		{
 			if (_control is NumericUpDown)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Ss_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+		internal void Ss_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
 		{
 			if (_control is StatusStrip ss)
 				_ = (clickHandlers?.InvokeEventHandlers(this, ss.Items.IndexOf(e.ClickedItem) + 1L));
 		}
 
-		private void Tb_MouseCaptureChanged(object sender, EventArgs e)
+		internal void Tb_MouseCaptureChanged(object sender, EventArgs e)
 		{
 			if (_control is TrackBar && !AltSubmit)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Winforms doesn't support the ability to pass the method by which the slider was changed.
 		}
 
-		private void Tb_ValueChanged(object sender, EventArgs e)
+		internal void Tb_ValueChanged(object sender, EventArgs e)
 		{
 			if (_control is TrackBar && AltSubmit)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Winforms doesn't support the ability to pass the method by which the slider was changed.
 		}
 
-		private void Tc_Selected(object sender, TabControlEventArgs e)
+		internal void Tc_Selected(object sender, TabControlEventArgs e)
 		{
 			if (_control is TabControl)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		private void Tv_AfterCheck(object sender, TreeViewEventArgs e)
+		internal void Tv_AfterCheck(object sender, TreeViewEventArgs e)
 		{
 			if (_control is TreeView)
 				_ = (itemCheckHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.Checked ? 1L : 0L));
 		}
 
-		private void Tv_AfterExpand(object sender, TreeViewEventArgs e)
+		internal void Tv_AfterExpand(object sender, TreeViewEventArgs e)
 		{
 			if (_control is TreeView)
 				_ = (itemExpandHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.IsExpanded ? 1L : 0L));
 		}
 
-		private void Tv_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
+		internal void Tv_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
 		{
 			if (_control is TreeView)
 				_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
-		private void Tv_AfterSelect(object sender, TreeViewEventArgs e)
+		internal void Tv_AfterSelect(object sender, TreeViewEventArgs e)
 		{
 			if (_control is TreeView)
 				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
-		private void Tv_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+		internal void Tv_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
 		{
 			if (_control is TreeView tv && e.Node == tv.SelectedNode)
 				_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 		}
 
-		private void Txt_TextChanged(object sender, EventArgs e)
+		internal void Txt_TextChanged(object sender, EventArgs e)
 		{
 			if (_control is TextBox)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));

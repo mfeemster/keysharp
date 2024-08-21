@@ -835,7 +835,7 @@ MenuHandler(Item, *) {
 
 #z::MyMenu.Show()  ; i.e. press the Win-Z hotkey to show the menu.
 ;#z::Run("Notepad.exe")
-
+#endif
 ; ┌──────────────────┐
 ; │  ControlZoo Tab  │
 ; └──────────────────┘
@@ -843,10 +843,9 @@ MenuHandler(Item, *) {
 MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
 gb1_CZ := MyGui.Add("GroupBox", "x10 y10 w380 h875", "ControlZoo - Group One")
-
 CZ_Text1 := MyGui.Add("Text", , "Control Functions testing")
 CZ_Text1.SetFont("s10 CBlue")
-CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
+CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300 Wordwrap Border", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
 CZ_Text2.SetFont("CTeal")
 
 CZ_Text2a := MyGui.Add("Text", "x10 y+5", "ListBox control testing")
@@ -877,6 +876,7 @@ CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 h25 y170", "красный (String)"
 CZ_LbBtn4.OnEvent("Click", "ChooseString")
 CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 h25 y195", "ControlGetChoice")
 CZ_LbBtn5.OnEvent("Click", "GetChoice")
+#if WINDOWS
 CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 h25 y220", "ControlGetClassNN")
 CZ_LbBtn6.OnEvent("Click", "GetClassNN")
 
@@ -1205,7 +1205,7 @@ WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
 ;ReloadMe() {
 ;    Reload()
 ;}
-
+#endif
 ; ┌────────────────────────┐
 ; │  ControlZoo Functions  │
 ; └────────────────────────┘
@@ -1248,7 +1248,11 @@ DeleteWhite2() {
 }
 
 FuchsiaDeleteTrayTip() {
+#if LINUX
+	TrayTip("Also tests ControlFindItem`nClick into another edit box to dismiss this.")
+#else
 	TrayTip("Also tests ControlFindItem")
+#endif
 }
 
 ChooseIndex() {
@@ -1276,6 +1280,7 @@ GetChoice() {
 	}
 }
 
+#if WINDOWS
 GetClassNN() {
 	ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
 	MsgBox(ClassNN, "ClassNN")

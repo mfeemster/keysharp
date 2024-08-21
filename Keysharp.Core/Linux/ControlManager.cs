@@ -31,6 +31,41 @@ namespace Keysharp.Core.Linux
 
 		internal override void ControlChooseIndex(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+				n--;
+
+				if (ctrl2 is ComboBox cb)
+				{
+					if (n >= 0)
+						cb.SelectedIndex = n;
+					else
+						cb.SelectedIndex = -1;
+				}
+				else if (ctrl2 is ListBox lb)
+				{
+					if (n >= 0)
+					{
+						lb.SelectedIndex = n;
+
+						if (lb.GetGuiControl() is GuiControl gc)
+							gc._control_DoubleClick(lb, new EventArgs());
+					}
+					else
+						lb.SelectedIndex = -1;
+				}
+				else if (ctrl2 is TabControl tc)
+				{
+					tc.SelectedIndex = n;
+				}
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+
+				WindowItemBase.DoControlDelay();
+			}
 		}
 
 		internal override long ControlChooseString(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
