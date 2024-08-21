@@ -172,8 +172,19 @@ namespace Keysharp.Core.Linux
 
 		internal override bool Enabled
 		{
-			get => throw new NotImplementedException();
-			set => throw new NotImplementedException();
+			get
+			{
+				var ctrl = Control.FromHandle(Handle);
+				return ctrl != null && ctrl.Enabled;
+				//Need to figure out how to do this for non Winforms controls.//TODO
+			}
+			set
+			{
+				if (Control.FromHandle(Handle) is Control ctrl)
+					ctrl.Enabled = value;
+
+				//Need to figure out how to do this for non Winforms controls.//TODO
+			}
 		}
 
 		internal override bool Exists => IsSpecified && xwindow.XDisplay.XQueryTreeRecursive().Any(xw => xw.ID == xwindow.ID);
@@ -407,8 +418,8 @@ namespace Keysharp.Core.Linux
 				if (!IsSpecified)
 					return "";
 
-				if (Control.FromHandle(Handle) is Control control)
-					return control.Text;
+				if (Control.FromHandle(Handle) is Control ctrl)
+					return ctrl.Text;
 
 				try
 				{
@@ -425,7 +436,7 @@ namespace Keysharp.Core.Linux
 			{
 				if (IsSpecified)
 				{
-					if (Control.FromHandle(Handle) is Control control)
+					if (Control.FromHandle(Handle) is Control ctrl)
 					{
 						control.Text = value;
 					}
@@ -509,8 +520,8 @@ namespace Keysharp.Core.Linux
 				if (!IsSpecified)
 					return false;
 
-				if (Control.FromHandle(Handle) is Control control)
-					return control.Visible;
+				if (Control.FromHandle(Handle) is Control ctrl)
+					return ctrl.Visible;
 
 				return xwindow.Attributes.map_state == MapState.IsViewable;
 			}
@@ -518,9 +529,9 @@ namespace Keysharp.Core.Linux
 			{
 				if (IsSpecified)
 				{
-					if (Control.FromHandle(Handle) is Control control)
+					if (Control.FromHandle(Handle) is Control ctrl)
 					{
-						control.Visible = value;
+						ctrl.Visible = value;
 						return;
 					}
 
@@ -732,9 +743,9 @@ namespace Keysharp.Core.Linux
 			if (!IsSpecified)
 				return false;
 
-			if (Control.FromHandle(Handle) is Control control)
+			if (Control.FromHandle(Handle) is Control ctrl)
 			{
-				control.Visible = false;
+				ctrl.Visible = false;
 				return true;
 			}
 
@@ -856,9 +867,9 @@ namespace Keysharp.Core.Linux
 			if (!IsSpecified)
 				return false;
 
-			if (Control.FromHandle(Handle) is Control control)
+			if (Control.FromHandle(Handle) is Control ctrl)
 			{
-				control.Visible = true;
+				ctrl.Visible = true;
 				return true;
 			}
 

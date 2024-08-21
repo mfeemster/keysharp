@@ -497,14 +497,6 @@ namespace Keysharp.Core.Windows
 			return "";
 		}
 
-		internal override long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-				return item.Enabled ? 1L : 0L;
-
-			return 0L;
-		}
-
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.ExStyle : 0L;
 
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText)
@@ -526,14 +518,6 @@ namespace Keysharp.Core.Windows
 				return info.hwndFocus.ToInt64();
 			}
 			return 0L;
-		}
-
-		internal override long ControlGetHwnd(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-				return item.Handle.ToInt64();
-			else
-				return 0L;
 		}
 
 		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -642,19 +626,6 @@ namespace Keysharp.Core.Windows
 			}
 
 			return 0L;
-		}
-
-		internal override void ControlHide(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (Control.FromHandle(item.Handle) is Control ctrl2)
-					ctrl2.Visible = false;
-				else
-					_ = item.Hide();
-
-				WindowItemBase.DoControlDelay();
-			}
 		}
 
 		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -796,32 +767,6 @@ namespace Keysharp.Core.Windows
 					else if (Options.TryParse(s, "^", ref temp)) { item.Style ^= temp; }
 					else item.Style = val.ParseLong(true).Value;
 				}
-			}
-		}
-
-		//internal override void ControlSetText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		//{
-		//  if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-		//  {
-		//      if (Control.FromHandle(item.Handle) is Control ctrl2)//No matter what I've tried, sending WM_SETTEXT will not work with buttons, however this method works flawlessly.
-		//          ctrl2.Text = str;
-		//      else
-		//          item.Title = str;//Just in case... it seems to work on text boxes.
-
-		//      WindowItemBase.DoControlDelay();
-		//  }
-		//}
-
-		internal override void ControlShow(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (Control.FromHandle(item.Handle) is Control ctrl2)
-					ctrl2.Visible = true;
-				else
-					_ = item.Show();
-
-				WindowItemBase.DoControlDelay();
 			}
 		}
 

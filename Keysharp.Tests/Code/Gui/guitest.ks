@@ -879,7 +879,6 @@ CZ_LbBtn5.OnEvent("Click", "GetChoice")
 CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 h25 y220", "ControlGetClassNN")
 CZ_LbBtn6.OnEvent("Click", "GetClassNN")
 
-#if WINDOWS
 CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 h25 y245", "ControlGetEnabled")
 CZ_LbBtn7.OnEvent("Click", "GetEnabled")
 CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 h25 y270", "Disabled!")
@@ -900,6 +899,7 @@ CZ_LbBtn12.OnEvent("Click", "ShowButton")
 CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 h25 y395", "Visible?")
 CZ_LbBtn13.OnEvent("Click", "IsItHidden")
 
+#if WINDOWS
 CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y420", "Edit Column #")
 CZ_LbBtn14.OnEvent("Click", "GetCol")
 
@@ -1285,7 +1285,6 @@ GetClassNN() {
 	MsgBox(ClassNN, "ClassNN")
 }
 
-#if WINDOWS
 GetEnabled() {
 	Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
 	MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
@@ -1321,6 +1320,7 @@ IsItHidden() {
 	MsgBox(Result, "Visible or Not?")
 }
 
+#if WINDOWS
 GetCol() {
 	CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
 	MsgBox(CurrentCol, "Current Colum No.")

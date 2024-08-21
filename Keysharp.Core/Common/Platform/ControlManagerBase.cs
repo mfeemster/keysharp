@@ -22,13 +22,25 @@
 
 		internal abstract string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal virtual long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Keysharp.Core.Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+				return item.Enabled ? 1L : 0L;
+
+			return 0L;
+		}
 
 		internal abstract long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
 		internal abstract long ControlGetFocus(object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract long ControlGetHwnd(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal virtual long ControlGetHwnd(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Keysharp.Core.Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+				return item.Handle.ToInt64();
+			else
+				return 0L;
+		}
 
 		internal abstract long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
@@ -42,7 +54,8 @@
 
 		internal abstract long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract void ControlHide(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal virtual void ControlHide(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
+		ShowHideHelper(false, ctrl, title, text, excludeTitle, excludeText);
 
 		internal abstract void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
@@ -74,7 +87,8 @@
 			}
 		}
 
-		internal abstract void ControlShow(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal virtual void ControlShow(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
+		ShowHideHelper(true, ctrl, title, text, excludeTitle, excludeText);
 
 		internal abstract void ControlShowDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
@@ -97,5 +111,18 @@
 		internal abstract void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText);
 
 		internal abstract long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout);
+
+		private static void ShowHideHelper(bool val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Keysharp.Core.Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is Control ctrl2)
+					ctrl2.Visible = val;
+				else
+					_ = val ? item.Show() : item.Hide();
+
+				WindowItemBase.DoControlDelay();
+			}
+		}
 	}
 }

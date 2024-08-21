@@ -187,9 +187,9 @@ namespace Keysharp.Core.Linux
 				var ctrl2 = Control.FromHandle(item.Handle);
 
 				if (ctrl2 is ComboBox cb)
-					return cb.SelectedValue != null ? cb.SelectedValue.ToString() : "";
+					return cb.SelectedItem != null ? cb.SelectedItem.ToString() : "";
 				else if (ctrl2 is ListBox lb)
-					return lb.SelectedValue != null ? lb.SelectedValue.ToString() : "";
+					return lb.SelectedItem != null ? lb.SelectedItem.ToString() : "";
 				else
 				{
 					//How to do the equivalent of what the Windows derivation does, but on linux?
@@ -202,20 +202,26 @@ namespace Keysharp.Core.Linux
 		}
 
 		internal override string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
-		internal override long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override long ControlGetHwnd(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Array();
 		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)
 		{ }
 		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override string ControlGetText(object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
-		internal override long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override void ControlHide(object ctrl, object title, string text, string excludeTitle, string excludeText)
+
+		internal override string ControlGetText(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			var val = "";
+
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+				val = Control.FromHandle(item.Handle) is Control ctrl2 ? ctrl2.Text : item.Title;
+
+			return val;
 		}
+
+		internal override long ControlGetVisible(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
+
 		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
