@@ -68,7 +68,40 @@ namespace Keysharp.Core.Linux
 			}
 		}
 
-		internal override long ControlChooseString(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
+		internal override long ControlChooseString(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			var index = 0L;
+
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is ComboBox cb)
+				{
+					index = cb.FindString(str);
+					cb.SelectedIndex = (int)index;
+				}
+				else if (ctrl2 is ListBox lb)
+				{
+					index = lb.FindString(str);
+					lb.SelectedIndex = (int)index;
+
+					if (index >= 0)
+					{
+						if (lb.GetGuiControl() is GuiControl gc)
+							gc._control_DoubleClick(lb, new EventArgs());
+					}
+				}
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+
+				WindowItemBase.DoControlDelay();
+			}
+
+			return index;
+		}
 
 		internal override void ControlClick(object ctrlorpos, object title, string text, string whichButton, int clickCount, string options, string excludeTitle, string excludeText)
 		{
