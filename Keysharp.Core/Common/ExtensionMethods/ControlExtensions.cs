@@ -322,8 +322,22 @@
 
 		internal static void TagAndAdd(this Control control, Control add)
 		{
-			add.Tag = control.Controls.Count;
+			add.Tag = new GuiTag { Index = control.Controls.Count };
 			control.Controls.Add(add);
+		}
+
+		internal static void TagAndAdd(this Control control, GuiControl add)
+		{
+			((GuiTag)add.Control.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
+			control.Controls.Add(add.Control);
+		}
+
+		internal static GuiControl GetGuiControl(this Control control)
+		{
+			if (control.Tag is GuiTag guiTag)
+				return guiTag.GuiControl;
+
+			return null;
 		}
 
 		private static void GetMenuItems(ToolStripItem item, List<ToolStripItem> items)

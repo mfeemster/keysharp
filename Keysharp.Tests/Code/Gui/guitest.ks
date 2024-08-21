@@ -405,7 +405,9 @@ ShowE3Hwnd()
 MoveText := MyGui.Add("Text", "x10 y+10 Autosize", "Move window with this caption, or blank to move this window")
 MoveText.SetFont("s10 cBlue")
 MoveEdit := MyGui.Add("Edit", "w200 xp y+10", "")
-MoveEdit.Text := "About Calculator"
+#if LINUX
+	MoveEdit.Text := "About Calculator"
+#endif
 MoveButton := MyGui.Add("Button", , "Move GUI")
 MoveButton.OnEvent("Focus", "ChangeMoveBtnColor")
 MoveButton.OnEvent("Click", "MoveGui")
@@ -627,7 +629,7 @@ gb2_TabThree := MyGui.Add("GroupBox", "x350 y10 w325 h875", "Tab Three - Group T
 
 InfoText3 := MyGui.Add("Text", "x10 y+10 w200", "Sliding text. Move Slider.")
 InfoText3.SetFont("cBlue s8")
-MyText := MyGui.Add("Text", "x10 y+10 w340 h30")
+MyText := MyGui.Add("Text", "x10 y+10 w300 h30")
 MyText.SetFont("cTeal Consolas Bold")
 HwndMyText := MyText.Hwnd
 
@@ -657,9 +659,8 @@ STest() {
 
 MyLinkText := MyGui.Add("Text", "x10 y+5", "Link test")
 MyLinkText.SetFont("cBlue s8")
-MyLink := MyGui.Add("Link", "x10 y+5", 'Click this <a href="https://www.autohotkey.com"> link to AHK page</a>')
+MyLink := MyGui.Add("Link", "x10 y+5", 'Click this <a href="https://www.autohotkey.com">link to AHK page</a>')
 
-#if WINDOWS
 MyHkInfoText := MyGui.Add("Text", "x10 y+5 w200", "Define Hotkey test`nFocus Edit and click hotkey(s)")
 MyHkInfoText.SetFont("cBlue s8")
 MyHotkey := MyGui.Add("Hotkey", "x10 y+5")
@@ -668,7 +669,7 @@ MyHkText := MyGui.Add("Text", "x10 y+5 w200" , MyHotkey.Value)
 ;MyHkText2 := MyGui.Add("Text", "x10 y+5 w200 cRed", "NOTE: Combos w/Win not working.")
 
 UpdateHK() {
-	ControlSetText( MyHotkey.Value, MyHkText)
+	ControlSetText(MyHotkey.Value, MyHkText)
 }
 
 
@@ -701,7 +702,9 @@ ShowBtn.OnEvent("Click", "PastePic")
 
 PastePic() {
 	ControlFocus(MyRE)
+#if WINDOWS
 	Send("^v")
+#endif
 }
 
 ; ┌──────────────────────────────┐
@@ -722,7 +725,9 @@ CopyPicFromFile() {
 		CopyImageToClipboard(SelectedFile)
 		Sleep(100)
 		ControlFocus(MyRE2)
+#if WINDOWS
 		Send("^v")
+#endif
 	}
 }
 
@@ -753,6 +758,7 @@ gb2Btn2.OnEvent("Click", "SendToGui")
 ;MyGui.Add("Text", , "Testing placement")
 
 SendToApp() {
+#if WINDOWS
 	Run("Notepad.exe")
 	WinWaitActive("ahk_exe Notepad.exe")
 	SendInput("Sincerely,{enter}John Smith")
@@ -769,10 +775,11 @@ SendToApp() {
 	Send("{Alt}Fx")
 	Sleep(100)
 	Send("{Tab}{Enter}")
-
+#endif
 }
 
 SendToGui() {
+#if WINDOWS
 	WinActivate(MyGui)
 	ControlFocus(gb2Edit)
 	SendInput("Sincerely,{enter}John Smith")
@@ -783,8 +790,8 @@ SendToGui() {
 	Send("{Blind}You should see nothing after the ellipses ... {Blind}")
 	Send("`n")
 	Send("{Text}You should see the Blind mode syntax in single quotes after the ellipses ... '{Blind}'")
+#endif
 }
-
 
 
 MyGui.UseGroup()
@@ -800,6 +807,7 @@ MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 MyGui.AddText("s14 xm y+10 cBlue", "This should be below.")
 
+#if WINDOWS
 ; ┌────────────────┐
 ; │  MENU SECTION  │
 ; └────────────────┘
@@ -2032,8 +2040,6 @@ MC_Colors() {
 	MsgBox("Not implemented.", "Future feature")
 }
 
-#if WINDOWS
-#endif
 ; ┌─────────────────────┐
 ; │  Test GuiCtrl.Hwnd  │
 ; └─────────────────────┘
@@ -2054,7 +2060,6 @@ UpdateOSD()
 	CoordText.Text := ("X: " mx " Y: " my)
 }
 
-#if WINDOWS
 ; ┌────────────────────────────┐
 ; │  GroupBox Tab - Functions  │
 ; └────────────────────────────┘
@@ -2071,7 +2076,7 @@ Finally, ControlSetText operates on the Object created from the Hwnd.
 	MsgBox(gb3Hwnd, "Hwnd of Groupbox 3 Edit")
 	obj := GuiCtrlFromHwnd(gb3Hwnd)
 	Result := IsObject(obj)
-	MsgBox(Result, "If '1', is Object")
+	MsgBox(Result, "If '1', the control is an Object")
 	ControlSetText(GB3Text, obj)
 }
 
@@ -2094,7 +2099,6 @@ Finally, ControlSetText operates on the Object created from the Hwnd.
 StopToolTip() {
 	ToolTip()
 }
-#endif
 
 ; ┌───────────────────────────────┐
 ; │  Tab One Group Two functions  │

@@ -289,7 +289,7 @@ namespace Keysharp.Core
 				if (LastContainer != null)
 				{
 					//These must be sorted by tag because the built in Control.Controls collection doesn't keep items in the order they were added.
-					var orderedControls = LastContainer.Controls.Cast<Control>().OrderBy(c => (int)c.Tag);
+					var orderedControls = LastContainer.Controls.Cast<Control>().Where(c => c.Tag is GuiTag).OrderBy(c => ((GuiTag)c.Tag).Index);
 
 					for (var i = orderedControls.Count() - 1; i >= 0; i--)
 					{
@@ -319,6 +319,7 @@ namespace Keysharp.Core
 			{
 				form = kf;
 
+				//This is wrong and needs to add things recursively and keep a count.
 				foreach (var ctrl in form.GetAllControlsRecusrvive<Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
 					ctrl.Tag = new GuiControl(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
 			}
@@ -1364,7 +1365,7 @@ namespace Keysharp.Core
 
 			if (ctrl is TabControl tc && CurrentTab is TabPage currtp)
 			{
-				prevParent.TagAndAdd(ctrl);
+				prevParent.TagAndAdd(holder);
 
 				if (prevParent != form)
 					ctrl.Size = new Size(Math.Min(prevParent.Width - (2 * prevParent.Margin.Right), ctrl.Right), Math.Min(prevParent.Height - (2 * prevParent.Margin.Top), ctrl.Bottom));
@@ -1379,34 +1380,32 @@ namespace Keysharp.Core
 					var parent = LastContainer;
 					//panel.BorderStyle = BorderStyle.FixedSingle;//For debugging so we can see where the panel is.
 					panel.Location = new Point(Math.Max(parent.Margin.Left, ctrl.Left), Math.Max(parent.Margin.Top, ctrl.Top));
-					panel.Tag = parent.Controls.Count;
 					parent.TagAndAdd(panel);
 					ctrl.Location = new Point(panel.Margin.Left, panel.Margin.Top);
 					panel.Size = new System.Drawing.Size(ctrl.Width + panel.Margin.Left + panel.Margin.Right, ctrl.Height + panel.Margin.Top + panel.Margin.Bottom);
 					panel.AutoSize = true;
-					ctrl.Tag = panel.Controls.Count;
-					panel.TagAndAdd(ctrl);
+					panel.TagAndAdd(holder);
 					LastContainer = panel;
 				}
 				else if (LastContainer is Panel pnl)
 				{
-					pnl.TagAndAdd(ctrl);
+					pnl.TagAndAdd(holder);
 				}
 
 				krb.Checked = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 			}
 			else if (ctrl is GroupBox gb)
 			{
-				LastContainer.TagAndAdd(ctrl);
+				LastContainer.TagAndAdd(holder);
 				LastContainer = gb;
 			}
 			else if (ctrl is KeysharpStatusStrip ksss2)
 			{
-				form.TagAndAdd(ksss2);//For status bars, don't add to whatever container we were on, instead always add to the form.
+				form.TagAndAdd(holder);//For status bars, don't add to whatever container we were on, instead always add to the form.
 			}
 			else
 			{
-				LastContainer.TagAndAdd(ctrl);
+				LastContainer.TagAndAdd(holder);
 			}
 
 			if (ctrl is KeysharpPictureBox pbox)
@@ -1831,7 +1830,7 @@ namespace Keysharp.Core
 
 			foreach (Control control in form.Controls)
 			{
-				if (control.Name != "" && control.Tag is GuiControl guictrl)
+				if (control.Name != "" && control.GetGuiControl() is GuiControl guictrl)
 				{
 					if (control is TextBox || control is DateTimePicker || control is MonthCalendar)//Just use value because it's the same and consolidates the formatting in one place, despite being slightly slower.
 						dkt[control.Name] = guictrl.Value;

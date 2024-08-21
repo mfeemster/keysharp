@@ -97,25 +97,28 @@
 							temp = tempico;
 					}
 				}
-				else if (filename.StartsWith("HBITMAP:", StringComparison.OrdinalIgnoreCase))
-				{
-					var hstr = filename.AsSpan(8);
-					var dontClear = hstr[0] == '*';
-
-					if (dontClear)
-						hstr = hstr.Trim('*');
-
-					if (long.TryParse(hstr, out var handle))
+				else
+#endif
+					if (filename.StartsWith("HBITMAP:", StringComparison.OrdinalIgnoreCase))
 					{
-						var ptr = new IntPtr(handle);
-						bmp = System.Drawing.Image.FromHbitmap(ptr);
+						var hstr = filename.AsSpan(8);
+						var dontClear = hstr[0] == '*';
 
-						if (!dontClear)
-							_ = WindowsAPI.DeleteObject(ptr);
-					}
-				}
+						if (dontClear)
+							hstr = hstr.Trim('*');
+
+						if (long.TryParse(hstr, out var handle))
+						{
+							var ptr = new IntPtr(handle);
+							bmp = System.Drawing.Image.FromHbitmap(ptr);
+#if WINDOWS
+
+							if (!dontClear)
+								_ = WindowsAPI.DeleteObject(ptr);
 
 #endif
+						}
+					}
 
 				if (bmp == null)//Wasn't a handle, and instead was a filename.
 				{

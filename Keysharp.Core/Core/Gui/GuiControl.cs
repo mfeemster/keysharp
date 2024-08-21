@@ -390,7 +390,11 @@ namespace Keysharp.Core
 			Gui = gui;
 			typename = name;
 			_control = control;
-			_control.Tag = this;
+			_control.Tag = new GuiTag()
+			{
+				GuiControl = this,
+				Index = _control.Parent != null ? _control.Parent.Controls.Count : 0
+			};
 
 			if (wrap)//Just a holder for the controls in the main window.
 				return "";
@@ -1991,5 +1995,11 @@ namespace Keysharp.Core
 			if (_control is TextBox)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
+	}
+
+	internal class GuiTag
+	{
+		public GuiControl GuiControl { get; set; }
+		public int Index { get; set; }
 	}
 }

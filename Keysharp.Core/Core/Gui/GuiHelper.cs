@@ -34,7 +34,14 @@ namespace Keysharp.Core
 #endif
 		}
 
-		public static object GuiCtrlFromHwnd(object obj) => Control.FromHandle(new IntPtr(obj.Al())) is Control c&& c.Tag is GuiControl gui ? gui : "";
+		public static object GuiCtrlFromHwnd(object obj)
+		{
+			if (Control.FromHandle(new IntPtr(obj.Al())) is Control c)
+				if (c.GetGuiControl() is GuiControl gui)
+					return gui;
+
+			return "";
+		}
 
 		public static object GuiFromHwnd(object obj0, object obj1 = null)
 		{
@@ -59,78 +66,6 @@ namespace Keysharp.Core
 			}
 
 			return "";
-		}
-
-		/// <summary>
-		/// The Windows API funcitons have serious limitations when it comes to loading icons.
-		/// They can't load any of size 256 or larger, plus they are platform specific.
-		/// This loads the desired size and is cross platform.
-		/// Gotten from https://www.codeproject.com/Articles/26824/Extract-icons-from-EXE-or-DLL-files
-		/// </summary>
-		/// <param name="icon"></param>
-		/// <returns></returns>
-		public static List<Icon> SplitIcon(Icon icon)
-		{
-			if (icon == null)
-				throw new ArgumentNullException("icon");
-
-			try
-			{
-				// Get an .ico file in memory, then split it into separate icons.
-				byte[] src = null;
-
-				using (var stream = new System.IO.MemoryStream())
-				{
-					icon.Save(stream);
-					src = stream.ToArray();
-				}
-
-				int count = BitConverter.ToUInt16(src, 4);
-				var splitIcons = new List<Icon>(count);
-				//var sb = new StringBuilder(1024 * 1024);
-
-				for (var i = 0; i < count; i++)
-				{
-					var length = BitConverter.ToInt32(src, 6 + (16 * i) + 8); //ICONDIRENTRY.dwBytesInRes
-					var offset = BitConverter.ToInt32(src, 6 + (16 * i) + 12);//ICONDIRENTRY.dwImageOffset
-
-					using (var dst = new BinaryWriter(new MemoryStream(6 + 16 + length)))
-					{
-						dst.Write(src, 0, 4);//Copy ICONDIR and set idCount to 1.
-						dst.Write((short)1);
-						//Copy ICONDIRENTRY and set dwImageOffset to 22.
-						dst.Write(src, 6 + (16 * i), 12);//ICONDIRENTRY except dwImageOffset.
-						dst.Write(22);                 //ICONDIRENTRY.dwImageOffset.
-						//var pixindex = 0;
-						var start = dst.BaseStream.Position + 40;
-						var end = dst.BaseStream.Position + length;
-
-						for (var ii = start; ii < end; ii += 4)
-						{
-							//sb.AppendLine($"{pixindex}: a: {src[ii + 3]}");
-							//sb.AppendLine($"{pixindex}: r: {src[ii + 2]}");
-							//sb.AppendLine($"{pixindex}: g: {src[ii + 1]}");
-							//sb.AppendLine($"{pixindex}: b: {src[ii]}");
-							var adouble = src[ii + 3] / 255.0;
-							src[ii + 2] = (byte)Math.Round(adouble * src[ii + 2]);
-							src[ii + 1] = (byte)Math.Round(adouble * src[ii + 1]);
-							src[ii] = (byte)Math.Round(adouble * src[ii]);
-							//pixindex++;
-						}
-
-						dst.Write(src, offset, length);//Copy an image.
-						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.
-						splitIcons.Add(new Icon(dst.BaseStream));
-					}
-				}
-
-				//System.IO.File.WriteAllText($"./file{imageindex++}out.txt", sb.ToString());
-				return splitIcons;
-			}
-			catch (Exception e)
-			{
-				throw new Error($"Error splitting icon: {e.Message}");
-			}
 		}
 
 		internal static void AddOrInsertListViewItem(ListView lv, GuiHelper.ListViewOptions lvo, List<string> strs, int insert)
@@ -167,7 +102,7 @@ namespace Keysharp.Core
 		{
 			if (Control.FromHandle(m.HWnd) == control)
 			{
-				if (control.Tag is GuiControl ctrl)
+				if (control.GetGuiControl() is GuiControl ctrl)
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
@@ -463,6 +398,78 @@ namespace Keysharp.Core
 		{
 			foreach (ColumnHeader col in lv.Columns)
 				col.Width = width;
+		}
+
+		/// <summary>
+		/// The Windows API funcitons have serious limitations when it comes to loading icons.
+		/// They can't load any of size 256 or larger, plus they are platform specific.
+		/// This loads the desired size and is cross platform.
+		/// Gotten from https://www.codeproject.com/Articles/26824/Extract-icons-from-EXE-or-DLL-files
+		/// </summary>
+		/// <param name="icon"></param>
+		/// <returns></returns>
+		internal static List<Icon> SplitIcon(Icon icon)
+		{
+			if (icon == null)
+				throw new ArgumentNullException("icon");
+
+			try
+			{
+				// Get an .ico file in memory, then split it into separate icons.
+				byte[] src = null;
+
+				using (var stream = new System.IO.MemoryStream())
+				{
+					icon.Save(stream);
+					src = stream.ToArray();
+				}
+
+				int count = BitConverter.ToUInt16(src, 4);
+				var splitIcons = new List<Icon>(count);
+				//var sb = new StringBuilder(1024 * 1024);
+
+				for (var i = 0; i < count; i++)
+				{
+					var length = BitConverter.ToInt32(src, 6 + (16 * i) + 8); //ICONDIRENTRY.dwBytesInRes
+					var offset = BitConverter.ToInt32(src, 6 + (16 * i) + 12);//ICONDIRENTRY.dwImageOffset
+
+					using (var dst = new BinaryWriter(new MemoryStream(6 + 16 + length)))
+					{
+						dst.Write(src, 0, 4);//Copy ICONDIR and set idCount to 1.
+						dst.Write((short)1);
+						//Copy ICONDIRENTRY and set dwImageOffset to 22.
+						dst.Write(src, 6 + (16 * i), 12);//ICONDIRENTRY except dwImageOffset.
+						dst.Write(22);                 //ICONDIRENTRY.dwImageOffset.
+						//var pixindex = 0;
+						var start = dst.BaseStream.Position + 40;
+						var end = dst.BaseStream.Position + length;
+
+						for (var ii = start; ii < end; ii += 4)
+						{
+							//sb.AppendLine($"{pixindex}: a: {src[ii + 3]}");
+							//sb.AppendLine($"{pixindex}: r: {src[ii + 2]}");
+							//sb.AppendLine($"{pixindex}: g: {src[ii + 1]}");
+							//sb.AppendLine($"{pixindex}: b: {src[ii]}");
+							var adouble = src[ii + 3] / 255.0;
+							src[ii + 2] = (byte)Math.Round(adouble * src[ii + 2]);
+							src[ii + 1] = (byte)Math.Round(adouble * src[ii + 1]);
+							src[ii] = (byte)Math.Round(adouble * src[ii]);
+							//pixindex++;
+						}
+
+						dst.Write(src, offset, length);//Copy an image.
+						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.
+						splitIcons.Add(new Icon(dst.BaseStream));
+					}
+				}
+
+				//System.IO.File.WriteAllText($"./file{imageindex++}out.txt", sb.ToString());
+				return splitIcons;
+			}
+			catch (Exception e)
+			{
+				throw new Error($"Error splitting icon: {e.Message}");
+			}
 		}
 
 		internal static TreeNode TV_FindNode(TreeView parent, long id)
