@@ -822,7 +822,7 @@ namespace Keysharp.Core.Windows
 						throw new Error($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 					if (n + 1 > linecount.ToInt32())
-						throw new Error($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+						throw new ValueError($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 				}
 
 				return buffer.ToString();
@@ -882,15 +882,16 @@ namespace Keysharp.Core.Windows
 
 		internal override object ListViewGetContent(string options, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			object ret = null;
+
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var opts = Options.ParseOptions(options);
 				var focused = false;
 				var count = false;
 				var sel = false;
 				var countcol = false;
 				var col = int.MinValue;
-				object ret = null;
+				var opts = Options.ParseOptions(options);
 
 				foreach (var opt in opts)
 				{
@@ -904,13 +905,13 @@ namespace Keysharp.Core.Windows
 				if (Control.FromHandle(item.Handle) is ListView lv)
 				{
 					if (count && sel)
-						ret = lv.SelectedItems.Count;
+						ret = (long)lv.SelectedItems.Count;
 					else if (count && focused)
-						ret = lv.FocusedItem is ListViewItem lvi ? lvi.Index + 1 : (object)0;
+						ret = lv.FocusedItem is ListViewItem lvi ? lvi.Index + 1L : (object)0L;
 					else if (count && countcol)
-						ret = lv.Columns.Count;
+						ret = (long)lv.Columns.Count;
 					else if (count)
-						ret = lv.Items.Count;
+						ret = (long)lv.Items.Count;
 					else
 					{
 						var sb = new StringBuilder(1024);
@@ -960,7 +961,7 @@ namespace Keysharp.Core.Windows
 							if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.LVM_GETNEXTITEM, -1, WindowsAPI.LVNI_FOCUSED, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 								throw new TargetError($"Could not get next item for list view in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
-							ret = result.ToInt64() + 1;
+							ret = result.ToInt64() + 1L;
 						}
 						else if (sel)
 						{

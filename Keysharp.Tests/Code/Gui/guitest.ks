@@ -899,7 +899,6 @@ CZ_LbBtn12.OnEvent("Click", "ShowButton")
 CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 h25 y395", "Visible?")
 CZ_LbBtn13.OnEvent("Click", "IsItHidden")
 
-#if WINDOWS
 CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y420", "Edit Column #")
 CZ_LbBtn14.OnEvent("Click", "GetCol")
 
@@ -975,24 +974,21 @@ gb2_CZ_Text2.SetFont("s8 cBlue")
 MyColorLabel := MyGui.Add("Text", "x10 y+10 w200", "Color below, may be hard to see.")
 MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
 
-
-SecondGuiButton := MyGui.Add("Button", "x10 y+35", "Control Tests Redux")
+SecondGuiButton := MyGui.Add("Button", "x10 y+35 Autosize", "Control Tests Redux")
 SecondGuiButton.OnEvent("Click", "SecondGUI")
-FindEdit := MyGui.Add("Button", "x10 y+10", "Get Edit Hwnd")
+FindEdit := MyGui.Add("Button", "x10 y+10 Autosize", "Get Edit Hwnd")
 FindEdit.OnEvent("Click", "FindSecondGuiEdit")
 
-
-ThirdGuiButton := MyGui.Add("Button", "x10 y+10", "'Find By' Tests")
+ThirdGuiButton := MyGui.Add("Button", "x10 y+10 Autosize", "'Find By' Tests")
 ThirdGuiButton.OnEvent("Click", "ThirdGUI")
 
-
-MouseMoveButton := MyGui.Add("Button", "x10 y+10", "Mouse-moving tests")
+MouseMoveButton := MyGui.Add("Button", "x10 y+10 Autosize", "Mouse-moving tests")
 MouseMoveButton.OnEvent("Click", "MoveTheMouse")
 
-AddMsgMonitorButton := MyGui.Add("Button", "x10 y+10", "Add msg mon for clicking in edit ctrl testing")
+AddMsgMonitorButton := MyGui.Add("Button", "x10 y+10 Autosize", "Add msg mon for clicking in edit ctrl testing")
 AddMsgMonitorButton.OnEvent("Click", "AddMsgMonitor")
 
-RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+10", "Remove msg mon")
+RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+10 Autosize", "Remove msg mon")
 RemoveMsgMonitorButton.OnEvent("Click", "RemoveMsgMonitor")
 
 MinimizeAllButton := MyGui.Add("Button", "x10 y+10", "Minimize all")
@@ -1017,9 +1013,12 @@ MaximizeAll()
 	WinMaximizeAll()
 }
 
+#if WINDOWS
 ^!9:: {
 	GetPix()
 }
+
+#endif
 
 Gui2 := Gui(,"Testing Child GUI")
 Gui2.Opt("+Owner")
@@ -1033,19 +1032,16 @@ Gui2GetControlsButton.OnEvent("Click", "GetTheControls")
 Gui2FindCtrlsButton := Gui2.Add("Button", "x180 yp", "Enum Ctrls")
 Gui2FindCtrlsButton.OnEvent("Click", "EnumCtrls")
 
-Gui2CtrlIndexButton := Gui2.Add("Button", "x260 yp", "Find by _Item")
+Gui2CtrlIndexButton := Gui2.Add("Button", "x260 yp Autosize", "Find by _Item")
 Gui2CtrlIndexButton.OnEvent("Click", "FindByItem")
 
 Gui2Edit := Gui2.Add("Edit", "x10 y+20 h400 w500 +Multiline")
 ;MsgBox(Gui2Edit.Hwnd, "Hwnd of Edit")
 
-
-
-
 SecondGUI() {
 	Gui2.Show()
 	ControlGetPos(&x, &y,,, Gui2Edit.Hwnd)
-	;MsgBox("Edit position: " . x . " " y)
+	Gui2Edit.Text := "Edit position: " . x . " " y
 }
 
 GetTheControls() {
@@ -1056,9 +1052,10 @@ GetTheControls() {
 
 	TheMsg := TheMsg . "`nThe Main GUI's hwnd is " . MyGui.Hwnd
 
+	ControlGetPos(&x, &y,,, Gui2FindCtrlsButton.Hwnd)
+	TheMsg .= "`n`nFind button's position is " . x . ", " . y
 	MsgBox(TheMsg, "Testing different methods of finding controls")
 	Sleep(2000)
-	ControlGetPos(&x, &y,,, Gui2FindCtrlsButton.Hwnd)
 }
 
 FindSecondGuiEdit() {
@@ -1093,7 +1090,6 @@ FindByItem() {
 	MsgBox(EditObj.Text)
 }
 
-
 ; GUI3
 
 Gui3 := Gui(, "KEYSHARP TESTS")
@@ -1113,7 +1109,7 @@ ButtonDummy := Gui3.Add("Button", "w200", "Test Dummy")
 ButtonDummy.Name := "I am a dummy button"
 MyEdit3 := Gui3.Add("Edit", "x10 h200 w200")
 
-HwndText := ButtonDummy.Hwnd
+HwndText := "Test Dummy button hwnd: " . ButtonDummy.Hwnd
 MyEdit3.Value := HwndText
 
 ;Gui3.Show()
@@ -1125,7 +1121,7 @@ FindByText() {
 
 FindByHwnd() {
 	theItem := Gui3[ButtonTwo.Hwnd]
-	MsgBox("I found a button by its HWND. Text:`n" theItem.Text, "Find by HWND")
+	MsgBox("I found a button by its Hwnd. Text:`n" theItem.Text, "Find by Hwnd")
 }
 
 ;FindByClassNN() {
@@ -1140,13 +1136,12 @@ FindByNetClassNN() {
 
 FindByName() {
 	theItem := Gui3[ButtonDummy.Name]
-	MsgBox("I found a renamed button by Name.`nIt was renamed to:`n" theItem, "Find by Name")
+	MsgBox("I found a renamed button by Name.`nIt was renamed to:`n" theItem.Name, "Find by Name")
 }
 
 ThirdGUI() {
 	Gui3.Show()
 }
-
 
 ;MouseMoveTests() {
 ;    MsgBox("Dead monkey")
@@ -1154,6 +1149,7 @@ ThirdGUI() {
 
 
 MoveTheMouse() {
+#if WINDOWS
 	mx :=
 	my := 0
 	CoordMode("Mouse", "Screen")
@@ -1170,7 +1166,7 @@ MoveTheMouse() {
 	ToolTip("I'm back!")
 	Sleep(2000)
 	ToolTip()
-	
+#endif
 }
 
 AddMsgMonitor()
@@ -1205,7 +1201,7 @@ WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
 ;ReloadMe() {
 ;    Reload()
 ;}
-#endif
+
 ; ┌────────────────────────┐
 ; │  ControlZoo Functions  │
 ; └────────────────────────┘
@@ -1320,7 +1316,6 @@ IsItHidden() {
 	MsgBox(Result, "Visible or Not?")
 }
 
-#if WINDOWS
 GetCol() {
 	CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
 	MsgBox(CurrentCol, "Current Colum No.")
@@ -1393,7 +1388,9 @@ LV_CountCol() {
 	List := ""
 }
 
+
 Click_CB() {
+#if WINDOWS
 	Send("#r")  ; Open the Run dialog.
 	WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
 	ControlShowDropDown("ComboBox1")  ; Show the drop-down list. The second parameter is omitted so that the last found window is used.
@@ -1401,6 +1398,7 @@ Click_CB() {
 	ControlHideDropDown("ComboBox1")  ; Hide the drop-down list.
 	Sleep(1000)
 	Send("{Esc}")  ; Close the Run dialog.
+#endif
 }
 
 
@@ -1415,6 +1413,7 @@ GetPix() {
 }
 
 
+#if WINDOWS
 LoadSC() {
 	Tab.UseTab("Send & Hotkey")
 	path := A_Desktop . A_DirSeparator . "MyScreenClip.png"
@@ -2073,7 +2072,7 @@ SendToGB3() {
 GB3Text := "
 (
 This uses 'ControlSetText' from a button in GroupBox 4 to populate this edit.
-The first message box shows the HWND of this Edit.
+The first message box shows the Hwnd of this Edit.
 The second message box shows '1' (True) if GuiCtrlFromHwnd created an
 object from the Hwnd.
 Finally, ControlSetText operates on the Object created from the Hwnd.
@@ -2093,7 +2092,7 @@ StartEditToolTip() {
 ToolTipText := "
 (
 This uses 'ControlSetText' from a button in GroupBox 4 to populate this edit.
-The first message box shows the HWND of this Edit.
+The first message box shows the Hwnd of this Edit.
 The second message box shows '1' (True) if GuiCtrlFromHwnd created an
 object from the Hwnd.
 Finally, ControlSetText operates on the Object created from the Hwnd.
@@ -2269,7 +2268,7 @@ DllMsgBox()
 DllIsWindowVisible()
 {
 	DetectHiddenWindows True
-	if not DllCall("IsWindowVisible", "Ptr", WinExist("Untitled - Notepad"))  ; WinExist returns an HWND.
+	if not DllCall("IsWindowVisible", "Ptr", WinExist("Untitled - Notepad"))  ; WinExist returns an Hwnd.
 		MsgBox "Notepad is not visible."
 	else
 		MsgBox "Notepad is visible."
@@ -2305,7 +2304,7 @@ DllGetWindowRect()
 	WinWait "Untitled - Notepad"  ; This also sets the "last found window" for use with WinExist below.
 	Rect := Buffer(16)  ; A RECT is a struct consisting of four 32-bit integers (i.e. 4*4=16).
 	win := WinExist()
-	DllCall("GetWindowRect", "Ptr", win, "Ptr", Rect)  ; WinExist returns an HWND.
+	DllCall("GetWindowRect", "Ptr", win, "Ptr", Rect)  ; WinExist returns an Hwnd.
 	L := NumGet(Rect, 0, "Int"), T := NumGet(Rect, 4, "Int")
 	R := NumGet(Rect, 8, "Int"), B := NumGet(Rect, 12, "Int")
 	MsgBox Format("Left: {1} Top: {2} Right: {3} Bottom: {4}", L, T, R, B)

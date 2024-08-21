@@ -206,8 +206,32 @@ namespace Keysharp.Core.Linux
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Array();
+
 		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)
-		{ }
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is Control ctrl2)
+				{
+					outX = ctrl2.Left;
+					outY = ctrl2.Top;
+					outWidth = ctrl2.Width;
+					outHeight = ctrl2.Height;
+				}
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+
+				return;
+			}
+
+			outX = 0L;
+			outY = 0L;
+			outWidth = 0L;
+			outHeight = 0L;
+		}
+
 		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 
 		internal override string ControlGetText(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -247,15 +271,159 @@ namespace Keysharp.Core.Linux
 		internal override void ControlShowDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
-		internal override long EditGetCurrentCol(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override long EditGetCurrentLine(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
+
+		internal override long EditGetCurrentCol(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is TextBox txt)
+					return txt.SelectionStart + 1;
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
+
+			return 0L;
+		}
+
+		internal override long EditGetCurrentLine(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is TextBox txt)
+					return txt.GetLineFromCharIndex(txt.SelectionStart);//On linux the line index is 1-based, so don't add 1 to it.
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
+
+			return 0L;
+		}
+
+		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+				n--;
+
+				if (ctrl2 is TextBox txt)
+				{
+					var lines = txt.Lines;
+
+					if (n >= lines.Length)
+						throw new ValueError($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+					return lines[n];
+				}
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
+
+			return "";
+		}
+
 		internal override long EditGetLineCount(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override string EditGetSelectedText(object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
+
+		internal override string EditGetSelectedText(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is TextBox ctrl2)
+					return ctrl2.SelectedText;
+			}
+
+			return "";
+		}
+
 		internal override void EditPaste(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is TextBox ctrl2)
+					ctrl2.Paste(str);
+			}
 		}
-		internal override object ListViewGetContent(string options, object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
+
+		internal override object ListViewGetContent(string options, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			object ret = null;
+
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var focused = false;
+				var count = false;
+				var sel = false;
+				var countcol = false;
+				var col = int.MinValue;
+				var opts = Options.ParseOptions(options);
+
+				foreach (var opt in opts)
+				{
+					if (string.Compare(opt, "focused", true) == 0) { focused = true; }
+					else if (string.Compare(opt, "count", true) == 0) { count = true; }
+					else if (string.Compare(opt, "selected", true) == 0) { sel = true; }
+					else if (string.Compare(opt, "col", true) == 0) { countcol = true; }
+					else if (Options.TryParse(opt, "col", ref col)) { col--; }
+				}
+
+				if (Control.FromHandle(item.Handle) is ListView lv)
+				{
+					if (count && sel)
+						ret = (long)lv.SelectedItems.Count;
+					else if (count && focused)
+						ret = lv.FocusedItem is ListViewItem lvi ? lvi.Index + 1L : (object)0L;
+					else if (count && countcol)
+						ret = (long)lv.Columns.Count;
+					else if (count)
+						ret = (long)lv.Items.Count;
+					else
+					{
+						var sb = new StringBuilder(1024);
+						var items = new List<ListViewItem>();
+
+						if (focused)
+						{
+							if (lv.FocusedItem is ListViewItem lvi)
+								items.Add(lvi);
+						}
+						else if (sel)
+							items.AddRange(lv.SelectedItems.Cast<ListViewItem>());
+						else
+							items.AddRange(lv.Items.Cast<ListViewItem>());
+
+						if (col >= 0)
+						{
+							if (col >= lv.Columns.Count)
+								throw new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+							items.ForEach(templvi => sb.AppendLine(templvi.SubItems[col].Text));
+						}
+						else
+							items.ForEach(templvi => sb.AppendLine(string.Join('\t', templvi.SubItems.Cast<ListViewItem.ListViewSubItem>().Select(x => x.Text))));
+
+						ret = sb.ToString();
+					}
+				}
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+
+				WindowItemBase.DoControlDelay();
+			}
+
+			return ret;
+		}
+
 		internal override void MenuSelect(object title, string text, string menu, string sub1, string sub2, string sub3, string sub4, string sub5, string sub6, string excludeTitle, string excludeText)
 		{
 		}
