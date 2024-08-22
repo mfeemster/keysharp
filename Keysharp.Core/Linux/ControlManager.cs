@@ -202,6 +202,7 @@ namespace Keysharp.Core.Linux
 		}
 
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
+
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText) => 1;
 
 		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText)
@@ -286,15 +287,14 @@ namespace Keysharp.Core.Linux
 		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
 		DropdownHelper(false, ctrl, title, text, excludeTitle, excludeText);
 
-		internal override void ControlMove(int x, int y, int width, int height, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-		}
 		internal override void ControlSend(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override void ControlSendText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override void ControlSetChecked(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -329,9 +329,11 @@ namespace Keysharp.Core.Linux
 				WindowItemBase.DoControlDelay();
 			}
 		}
+
 		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
@@ -355,6 +357,7 @@ namespace Keysharp.Core.Linux
 
 			return 0L;
 		}
+
 		internal override long EditGetCurrentLine(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -371,6 +374,7 @@ namespace Keysharp.Core.Linux
 
 			return 0L;
 		}
+
 		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -395,6 +399,7 @@ namespace Keysharp.Core.Linux
 
 			return "";
 		}
+
 		internal override long EditGetLineCount(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -412,6 +417,7 @@ namespace Keysharp.Core.Linux
 
 			return 0L;
 		}
+
 		internal override string EditGetSelectedText(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -422,6 +428,7 @@ namespace Keysharp.Core.Linux
 
 			return "";
 		}
+
 		internal override void EditPaste(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -430,6 +437,7 @@ namespace Keysharp.Core.Linux
 					ctrl2.Paste(str);
 			}
 		}
+
 		internal override object ListViewGetContent(string options, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			object ret = null;
@@ -500,12 +508,15 @@ namespace Keysharp.Core.Linux
 
 			return ret;
 		}
+
 		internal override void MenuSelect(object title, string text, string menu, string sub1, string sub2, string sub3, string sub4, string sub5, string sub6, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout) => 1;
 
 		private static void DropdownHelper(bool val, object ctrl, object title, string text, string excludeTitle, string excludeText)

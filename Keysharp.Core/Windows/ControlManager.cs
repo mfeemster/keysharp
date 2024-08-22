@@ -575,8 +575,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var (parsed, ptr) = Window.CtrlToIntPtr(ctrl);
-				var coordParent = parsed && ptr == item.Handle ? item.NonChildParentWindow.Handle : item.Handle;
+				var coordParent = item.ParentWindow.Handle;
 
 				if (WindowsAPI.GetWindowRect(item.Handle, out var rect))
 				{
@@ -609,25 +608,6 @@ namespace Keysharp.Core.Windows
 
 		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
 		DropdownHelper(false, ctrl, title, text, excludeTitle, excludeText);
-
-		internal override void ControlMove(int x, int y, int width, int height, object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (Control.FromHandle(item.Handle) is Control ctrl2)
-				{
-					ctrl2.Location = new Point(x == int.MinValue ? ctrl2.Location.X : x, y == int.MinValue ? ctrl2.Location.Y : y);
-					ctrl2.Size = new Size(width == int.MinValue ? ctrl2.Size.Width : width, height == int.MinValue ? ctrl2.Size.Height : height);
-				}
-				else
-				{
-					item.Location = new Rectangle(x == int.MinValue ? item.Location.X : x, y == int.MinValue ? item.Location.Y : y, 0, 0);//Width and height are ignored.
-					item.Size = new Size(width == int.MinValue ? item.Size.Width : width, height == int.MinValue ? item.Size.Height : height);
-				}
-
-				WindowItemBase.DoControlDelay();
-			}
-		}
 
 		internal override void ControlSend(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.NotRaw);
 
@@ -1237,4 +1217,5 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+
 #endif

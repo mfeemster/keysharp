@@ -998,27 +998,29 @@ MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
 
 SecondGuiButton := MyGui.Add("Button", "x10 y+35 Autosize", "Control Tests Redux")
 SecondGuiButton.OnEvent("Click", "SecondGUI")
-FindEdit := MyGui.Add("Button", "x10 y+10 Autosize", "Get Edit Hwnd")
+FindEdit := MyGui.Add("Button", "x10 y+5 Autosize", "Get Edit Hwnd")
 FindEdit.OnEvent("Click", "FindSecondGuiEdit")
 
-ThirdGuiButton := MyGui.Add("Button", "x10 y+10 Autosize", "'Find By' Tests")
+ThirdGuiButton := MyGui.Add("Button", "x10 y+5 Autosize", "'Find By' Tests")
 ThirdGuiButton.OnEvent("Click", "ThirdGUI")
 
-MouseMoveButton := MyGui.Add("Button", "x10 y+10 Autosize", "Mouse-moving tests")
+MouseMoveButton := MyGui.Add("Button", "x10 y+5 Autosize", "Mouse-moving tests")
 MouseMoveButton.OnEvent("Click", "MoveTheMouse")
 
-AddMsgMonitorButton := MyGui.Add("Button", "x10 y+10 Autosize", "Add msg mon for clicking in edit ctrl testing")
+AddMsgMonitorButton := MyGui.Add("Button", "x10 y+5 Autosize", "Add msg mon for clicking in edit ctrl testing")
 AddMsgMonitorButton.OnEvent("Click", "AddMsgMonitor")
 
-RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+10 Autosize", "Remove msg mon")
+RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+5 Autosize", "Remove msg mon")
 RemoveMsgMonitorButton.OnEvent("Click", "RemoveMsgMonitor")
 
-MinimizeAllButton := MyGui.Add("Button", "x10 y+10", "Minimize all")
+MinimizeAllButton := MyGui.Add("Button", "x10 y+5", "Minimize all")
 MinimizeAllButton.OnEvent("Click", "MinimizeAll")
-UndoMinimizeAllButton := MyGui.Add("Button", "x10 y+10", "Undo minimize all")
+UndoMinimizeAllButton := MyGui.Add("Button", "x10 y+5", "Undo minimize all")
 UndoMinimizeAllButton.OnEvent("Click", "UndoMinimizeAll")
-MaximizeAllButton := MyGui.Add("Button", "x10 y+10", "Maximize all")
+MaximizeAllButton := MyGui.Add("Button", "x10 y+5", "Maximize all")
 MaximizeAllButton.OnEvent("Click", "MaximizeAll")
+MoveAllButton := MyGui.Add("Button", "x10 y+5", "Move me")
+MoveAllButton.OnEvent("Click", "MoveButton")
 
 MinimizeAll()
 {
@@ -1033,6 +1035,16 @@ UndoMinimizeAll()
 MaximizeAll()
 {
 	WinMaximizeAll()
+}
+
+MoveButton()
+{
+	local x, y, w, h
+	
+	ControlGetPos(&x, &y, &w, &h, MoveAllButton.Hwnd, MyGui)
+	x++
+	y++
+	ControlMove(x, y, w, h, MoveAllButton.Hwnd, MyGui)
 }
 
 #if WINDOWS
