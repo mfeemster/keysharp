@@ -280,6 +280,9 @@ RichEditBtn2 := MyGui.Add("Button", "x+5 yp Autosize", "Send Rtf to RichEdit")
 RichEditBtn2.OnEvent("Click", "SendRtfToRichEdit")
 RichEditBtn3 := MyGui.Add("Button", "x10 y+5 Autosize", "Clear RichEdit")
 RichEditBtn3.OnEvent("Click", "ClearRichEdit")
+LinesBtn := MyGui.Add("Button", "x+5 yp Autosize", "EditGetLineCount")
+LinesBtn.OnEvent("Click", "GetLineCount")
+
 ; ┌────────────┐
 ; │  TreeView  │
 ; └────────────┘
@@ -1979,6 +1982,11 @@ SecondRichEdit.RichText := RawRichEditVar
 ; └───────────────────────┘
 ClearRichEdit() {
 	ControlSetText(, SecondRichEdit)
+}
+
+GetLineCount()
+{
+	MsgBox("Regular edit line count: " . EditGetLineCount(SecondEdit, MyGui) . "`nRich edit line count: " . EditGetLineCount(SecondRichEdit, MyGui))
 }
 
 ; ┌───────────┐

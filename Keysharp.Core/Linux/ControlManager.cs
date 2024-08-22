@@ -317,7 +317,7 @@ namespace Keysharp.Core.Linux
 			{
 				var ctrl2 = Control.FromHandle(item.Handle);
 
-				if (ctrl2 is TextBox txt)
+				if (ctrl2 is TextBoxBase txt)
 					return txt.SelectionStart + 1;
 				else
 				{
@@ -334,7 +334,7 @@ namespace Keysharp.Core.Linux
 			{
 				var ctrl2 = Control.FromHandle(item.Handle);
 
-				if (ctrl2 is TextBox txt)
+				if (ctrl2 is TextBoxBase txt)
 					return txt.GetLineFromCharIndex(txt.SelectionStart);//On linux the line index is 1-based, so don't add 1 to it.
 				else
 				{
@@ -352,7 +352,7 @@ namespace Keysharp.Core.Linux
 				var ctrl2 = Control.FromHandle(item.Handle);
 				n--;
 
-				if (ctrl2 is TextBox txt)
+				if (ctrl2 is TextBoxBase txt)
 				{
 					var lines = txt.Lines;
 
@@ -370,13 +370,26 @@ namespace Keysharp.Core.Linux
 			return "";
 		}
 
-		internal override long EditGetLineCount(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
+		internal override long EditGetLineCount(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is TextBoxBase txt)
+					return txt.Lines.LongLength;
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
+
+			return 0L;
+		}
 
 		internal override string EditGetSelectedText(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				if (Control.FromHandle(item.Handle) is TextBox ctrl2)
+				if (Control.FromHandle(item.Handle) is TextBoxBase ctrl2)
 					return ctrl2.SelectedText;
 			}
 
@@ -387,7 +400,7 @@ namespace Keysharp.Core.Linux
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				if (Control.FromHandle(item.Handle) is TextBox ctrl2)
+				if (Control.FromHandle(item.Handle) is TextBoxBase ctrl2)
 					ctrl2.Paste(str);
 			}
 		}
@@ -466,9 +479,11 @@ namespace Keysharp.Core.Linux
 		internal override void MenuSelect(object title, string text, string menu, string sub1, string sub2, string sub3, string sub4, string sub5, string sub6, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout) => 1;
 	}
 }
