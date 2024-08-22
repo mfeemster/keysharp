@@ -175,6 +175,9 @@ CheckBoxOne.OnEvent("Click", "CheckBoxOneClicked")
 Menu_Label := MyGui.Add("Text", "w400 x10 y+10","Press Win-Z to see popup menu")
 Menu_Label.SetFont("cBlue s14")
 
+checkBtn := MyGui.Add("Button", "x10 y+10", "ControlSetChecked")
+checkBtn.OnEvent("Click", "SetChecked")
+
 MyGui.UseGroup()
 Tab.UseTab("First")
 gb2_TabOne := MyGui.Add("GroupBox", "x350 yp w325 h800", "Tab One - Group Two") ; 
@@ -1885,6 +1888,12 @@ CheckBoxOneClicked() {
 	TrayTip("TrayTipTest", "I will see myself out, thanks!", "Icon!")
 	Sleep(1000)
 	HideTrayTip()
+}
+
+SetChecked()
+{
+	ControlSetChecked(true, RadioThree, MyGui)
+	ControlSetChecked(true, CheckBoxOne, MyGui)
 }
 
 ; ┌─────────────────┐

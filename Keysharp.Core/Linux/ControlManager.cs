@@ -295,9 +295,25 @@ namespace Keysharp.Core.Linux
 		internal override void ControlSendText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
+
 		internal override void ControlSetChecked(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var onoff = Conversions.ConvertOnOffToggle(val);
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is CheckBox cb)
+					cb.Checked = onoff == ToggleValueType.Toggle ? !cb.Checked : onoff == ToggleValueType.On;
+				else if (ctrl2 is RadioButton rb)
+					rb.Checked = onoff == ToggleValueType.Toggle ? !rb.Checked : onoff == ToggleValueType.On;
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
 		}
+
 		internal override void ControlSetEnabled(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 		}
@@ -375,7 +391,10 @@ namespace Keysharp.Core.Linux
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
 				if (Control.FromHandle(item.Handle) is TextBoxBase txt)
-					return txt.Lines.LongLength;
+				{
+					var val = txt.Lines.LongLength;
+					return val == 0L ? 1L : val;
+				}
 				else
 				{
 					//How to do the equivalent of what the Windows derivation does, but on linux?
@@ -400,7 +419,7 @@ namespace Keysharp.Core.Linux
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				if (Control.FromHandle(item.Handle) is TextBoxBase ctrl2)
+				if (Control.FromHandle(item.Handle) is TextBox ctrl2)
 					ctrl2.Paste(str);
 			}
 		}
