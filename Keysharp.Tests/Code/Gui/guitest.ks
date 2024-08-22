@@ -175,7 +175,7 @@ CheckBoxOne.OnEvent("Click", "CheckBoxOneClicked")
 Menu_Label := MyGui.Add("Text", "w400 x10 y+10","Press Win-Z to see popup menu")
 Menu_Label.SetFont("cBlue s14")
 
-checkBtn := MyGui.Add("Button", "x10 y+10", "ControlSetChecked")
+checkBtn := MyGui.Add("Button", "x10 y+10 Autosize", "ControlSetChecked")
 checkBtn.OnEvent("Click", "SetChecked")
 
 MyGui.UseGroup()
@@ -979,8 +979,14 @@ gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
 gb2_CZ_Btn5 := MyGui.Add("Button", "x10 y+5 Autosize", "Show ListBox items")
 gb2_CZ_Btn5.OnEvent("Click", "Click_CB_Items")
 
-gb2_CZ_Btn6 := MyGui.Add("Button", "x10 y+5 Autosize", "Show ComboBox items")
+gb2_CZ_Btn6 := MyGui.Add("Button", "x+5 yp Autosize", "Show ComboBox items")
 gb2_CZ_Btn6.OnEvent("Click", "Click_LB_Items")
+
+gb2_CZ_Btn7 := MyGui.Add("Button", "x10 y+5 Autosize", "Show ComboBox dropdown")
+gb2_CZ_Btn7.OnEvent("Click", "Click_CB_Show_Dropdown")
+
+gb2_CZ_Btn8 := MyGui.Add("Button", "x+5 yp Autosize", "Hide ComboBox dropdown")
+gb2_CZ_Btn8.OnEvent("Click", "Click_CB_Hide_Dropdown")
 
 gb2_CZ_Text2 := MyGui.Add("Text", "x10 y+10 w325", "Move mouse to color. Press Ctrl+Alt+9.")
 gb2_CZ_Text2.SetFont("s8 cBlue")
@@ -1450,6 +1456,16 @@ Click_LB_Items()
 	global gb2_CZ_CB
 	items := ControlGetItems(gb2_CZ_CB)
 	MsgBox(items.Join("`n"))
+}
+
+Click_CB_Show_Dropdown()
+{
+	ControlShowDropDown(gb2_CZ_CB, MyGui)
+}
+
+Click_CB_Hide_Dropdown()
+{
+	ControlHideDropDown(gb2_CZ_CB, MyGui)
 }
 
 #if WINDOWS

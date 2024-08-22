@@ -607,16 +607,8 @@ namespace Keysharp.Core.Windows
 				   : "";
 		}
 
-		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.CB_SHOWDROPDOWN, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var _) == 0)
-					throw new Error($"Could not hide combo box drop down for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-				WindowItemBase.DoControlDelay();
-			}
-		}
+		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
+		DropdownHelper(false, ctrl, title, text, excludeTitle, excludeText);
 
 		internal override void ControlMove(int x, int y, int width, int height, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
@@ -749,16 +741,8 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlShowDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-			{
-				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.CB_SHOWDROPDOWN, 1, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var _) == 0)
-					throw new Error($"Could not hide combo box drop down for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-				WindowItemBase.DoControlDelay();
-			}
-		}
+		internal override void ControlShowDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
+		DropdownHelper(true, ctrl, title, text, excludeTitle, excludeText);
 
 		internal override long EditGetCurrentCol(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
@@ -1239,6 +1223,17 @@ namespace Keysharp.Core.Windows
 
 			WindowItemBase.DoControlDelay();
 			return ret;
+		}
+
+		private static void DropdownHelper(bool val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.CB_SHOWDROPDOWN, val ? 1 : 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var _) == 0)
+					throw new Error($"Could not hide combo box drop down for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+
+				WindowItemBase.DoControlDelay();
+			}
 		}
 	}
 }
