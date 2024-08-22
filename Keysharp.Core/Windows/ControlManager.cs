@@ -489,14 +489,6 @@ namespace Keysharp.Core.Windows
 			return "";
 		}
 
-		internal override string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText)
-		{
-			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
-				return item.ClassNN;
-
-			return "";
-		}
-
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.ExStyle : 0L;
 
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText)
@@ -564,16 +556,16 @@ namespace Keysharp.Core.Windows
 					throw new TargetError($"Class name ${item.ClassName} did not contain Combo or List");
 
 				var cnt = (int)WindowsAPI.SendMessage(item.Handle, msg, 0, 0);
-				var listBoxContent = new Array(cnt);
+				var listBoxContent = new List<object>(cnt);
 
 				for (var i = 0; i < cnt; i++)
 				{
 					var sb = new StringBuilder(256);
 					_ = WindowsAPI.SendMessage(item.Handle, x_msg, i, sb);
-					_ = listBoxContent.Add(sb.ToString());
+					listBoxContent.Add(sb.ToString());
 				}
 
-				return listBoxContent;
+				return new Array(listBoxContent);
 			}
 
 			return new Array();

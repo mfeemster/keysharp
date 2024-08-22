@@ -201,11 +201,50 @@ namespace Keysharp.Core.Linux
 			return "";
 		}
 
-		internal override string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText) => "";
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
-		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText) => new Array();
+
+		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			long index = -1;
+
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is ComboBox cb)
+					index = cb.SelectedIndex;
+				else if (ctrl2 is ListBox lb)
+					index = lb.SelectedIndex;
+				else if (ctrl2 is TabControl tc)
+					index = tc.SelectedIndex;
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
+
+			return index + 1L;
+		}
+
+		internal override Keysharp.Core.Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var ctrl2 = Control.FromHandle(item.Handle);
+
+				if (ctrl2 is ComboBox cb)
+					return new Keysharp.Core.Array(cb.Items.Cast<object>().Select(item => (object)item.ToString()).ToList());
+				else if (ctrl2 is ListBox lb)
+					return new Keysharp.Core.Array(lb.Items.Cast<object>().Select(item => (object)item.ToString()).ToList());
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+			}
+
+			return new Keysharp.Core.Array();
+		}
 
 		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)
 		{

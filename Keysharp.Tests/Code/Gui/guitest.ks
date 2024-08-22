@@ -867,58 +867,60 @@ CZ_Edit1 := MyGui.Add("Edit", "x10 y+5 w160 h100")
 
 CZ_LbBtn1 := MyGui.Add("Button", "x180 w120 h25 y95", "Add Fuchsia")
 CZ_LbBtn1.OnEvent("Click", "AddFuchsia")
-CZ_LbBtn2 := MyGui.Add("Button", "x180 w120 h25 y120", "Delete Fuchsia")
+CZ_LbBtn2 := MyGui.Add("Button", "x180 w120 h25 y+1", "Delete Fuchsia")
 CZ_LbBtn2.OnEvent("Click", "DeleteFuchsia")
 CZ_LbBtn2.OnEvent("Focus", "FuchsiaDeleteTrayTip")
-CZ_LbBtn3 := MyGui.Add("Button", "x180 w120 h25 y145", "Purple (Index)")
+CZ_LbBtn3 := MyGui.Add("Button", "x180 w120 h25 y+1", "Purple (Index)")
 CZ_LbBtn3.OnEvent("Click", "ChooseIndex")
-CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 h25 y170", "красный (String)")
+CZ_LbBtn4 := MyGui.Add("Button", "x180 w120 h25 y+1", "красный (String)")
 CZ_LbBtn4.OnEvent("Click", "ChooseString")
-CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 h25 y195", "ControlGetChoice")
+CZ_LbBtn5 := MyGui.Add("Button", "x180 w120 h25 y+1", "ControlGetChoice")
 CZ_LbBtn5.OnEvent("Click", "GetChoice")
-CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 h25 y220", "ControlGetClassNN")
+CZ_LbBtn19 := MyGui.Add("Button", "x180 w120 h25 y+1", "ControlGetIndex")
+CZ_LbBtn19.OnEvent("Click", "GetIndex")
+CZ_LbBtn6 := MyGui.Add("Button", "x180 w120 h25 y+1", "ControlGetClassNN")
 CZ_LbBtn6.OnEvent("Click", "GetClassNN")
 
-CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 h25 y245", "ControlGetEnabled")
+CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlGetEnabled")
 CZ_LbBtn7.OnEvent("Click", "GetEnabled")
-CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 h25 y270", "Disabled!")
+CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 h25 y+1", "Disabled!")
 CZ_LbBtn8.Enabled := False
 
-CZ_LbBtn9 := MyGui.Add("Button", "w120 x180 h25 y295", "ControlGetHwnd")
+CZ_LbBtn9 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlGetHwnd")
 CZ_LbBtn9.OnEvent("Click", "GetHwnd")
 
-CZ_LbBtn10 := MyGui.Add("Button", "w120 x180 h25 y320", "ControlGetText")
+CZ_LbBtn10 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlGetText")
 CZ_LbBtn10.OnEvent("Click", "GetText")
 
-CZ_LbBtn11 := MyGui.Add("Button", "w120 x180 h25 y345", "ControlHide")
+CZ_LbBtn11 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlHide")
 CZ_LbBtn11.OnEvent("Click", "HideButton")
 
-CZ_LbBtn12 := MyGui.Add("Button", "w120 x180 h25 y370", "ControlShow")
+CZ_LbBtn12 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlShow")
 CZ_LbBtn12.OnEvent("Click", "ShowButton")
 
-CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 h25 y395", "Visible?")
+CZ_LbBtn13 := MyGui.Add("Button", "w120 x180 h25 y+1", "Visible?")
 CZ_LbBtn13.OnEvent("Click", "IsItHidden")
 
-CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y420", "Edit Column #")
+CZ_LbBtn14 := MyGui.Add("Button", "w120 x180 h25 y+1", "Edit Column #")
 CZ_LbBtn14.OnEvent("Click", "GetCol")
 
-CZ_LbBtn15 := MyGui.Add("Button", "w120 x180 h25 y445", "Edit Line #")
+CZ_LbBtn15 := MyGui.Add("Button", "w120 x180 h25 y+1", "Edit Line #")
 CZ_LbBtn15.OnEvent("Click", "GetLine")
 
-CZ_LbBtn16 := MyGui.Add("Button", "w120 x180 h25 y470", "Edit Line Text")
+CZ_LbBtn16 := MyGui.Add("Button", "w120 x180 h25 y+1", "Edit Line Text")
 CZ_LbBtn16.OnEvent("Click", "GetLineText")
 
-CZ_LbBtn17 := MyGui.Add("Button", "w120 x180 h25 y495", "Selected text")
+CZ_LbBtn17 := MyGui.Add("Button", "w120 x180 h25 y+1", "Selected text")
 CZ_LbBtn17.OnEvent("Click", "GetSelectedText")
 
-CZ_LbBtn18 := MyGui.Add("Button", "w120 x180 h25 y520", "Edit Paste")
+CZ_LbBtn18 := MyGui.Add("Button", "w120 x180 h25 y+1", "Edit Paste")
 CZ_LbBtn18.OnEvent("Click", "EditPaster")
 
 ; ┌──────────────────────────┐
 ; │  ListView Content Tests  │
 ; └──────────────────────────┘
 
-CZ_SeparatorText1 := MyGui.Add("Text", "x10 y545 w320", "ListView Content Tests")
+CZ_SeparatorText1 := MyGui.Add("Text", "x10 y+10 w320", "ListView Content Tests")
 CZ_SeparatorText1.SetFont("s8 CBlue")
 
 LV2 := MyGui.Add("ListView", "r5 w300 x10 y+5", ["Name","Size (KB)"])
@@ -968,10 +970,16 @@ gb2_CZ_Btn3.OnEvent("Click", "ChooseString_CB")
 gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w200 h25", "Click Win+R, show dropdown")
 gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
 
+gb2_CZ_Btn5 := MyGui.Add("Button", "x10 y+5 Autosize", "Show ListBox items")
+gb2_CZ_Btn5.OnEvent("Click", "Click_CB_Items")
+
+gb2_CZ_Btn6 := MyGui.Add("Button", "x10 y+5 Autosize", "Show ComboBox items")
+gb2_CZ_Btn6.OnEvent("Click", "Click_LB_Items")
+
 gb2_CZ_Text2 := MyGui.Add("Text", "x10 y+10 w325", "Move mouse to color. Press Ctrl+Alt+9.")
 gb2_CZ_Text2.SetFont("s8 cBlue")
 
-MyColorLabel := MyGui.Add("Text", "x10 y+10 w200", "Color below, may be hard to see.")
+MyColorLabel := MyGui.Add("Text", "x10 y+10 w200", "Empty text below:")
 MyColorText := MyGui.Add("Text", "w200 x10 y+10", "")
 
 SecondGuiButton := MyGui.Add("Button", "x10 y+35 Autosize", "Control Tests Redux")
@@ -1276,6 +1284,19 @@ GetChoice() {
 	}
 }
 
+GetIndex() {
+	Try
+	{
+	index := ControlGetIndex(CZ_ListBox, MyGui)
+	MsgBox(index, "Index")
+	}
+		Catch as e  ; Handles the first error thrown by the block above.
+	{
+		MsgBox("You must select an item first.", "ERROR!")
+		Return
+	}
+}
+
 GetClassNN() {
 	ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
 	MsgBox(ClassNN, "ClassNN")
@@ -1401,7 +1422,6 @@ Click_CB() {
 #endif
 }
 
-
 GetPix() {
 	mx :=
 	my := 0
@@ -1412,6 +1432,19 @@ GetPix() {
 	MyColorText.SetFont(ColorString)
 }
 
+Click_CB_Items()
+{
+	global CZ_ListBox
+	items := ControlGetItems(CZ_ListBox)
+	MsgBox(items.Join("`n"))
+}
+
+Click_LB_Items()
+{
+	global gb2_CZ_CB
+	items := ControlGetItems(gb2_CZ_CB)
+	MsgBox(items.Join("`n"))
+}
 
 #if WINDOWS
 LoadSC() {

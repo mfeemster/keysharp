@@ -20,7 +20,14 @@
 
 		internal abstract string ControlGetChoice(object ctrl, object title, string text, string excludeTitle, string excludeText);
 
-		internal abstract string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText);
+		internal virtual string ControlGetClassNN(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Keysharp.Core.Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+				return item.ClassNN;
+
+			return "";
+		}
+
 
 		internal virtual long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
