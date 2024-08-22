@@ -312,8 +312,22 @@ namespace Keysharp.Core.Linux
 				}
 			}
 		}
+
 		internal override void ControlSetEnabled(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
+			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
+			{
+				var onoff = Conversions.ConvertOnOffToggle(val);
+
+				if (Control.FromHandle(item.Handle) is Control ctrl2)
+					ctrl2.Enabled = onoff == ToggleValueType.Toggle ? !ctrl2.Enabled : onoff == ToggleValueType.On;
+				else
+				{
+					//How to do the equivalent of what the Windows derivation does, but on linux?
+				}
+
+				WindowItemBase.DoControlDelay();
+			}
 		}
 		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{

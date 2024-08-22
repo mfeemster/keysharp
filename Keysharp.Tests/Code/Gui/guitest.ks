@@ -889,6 +889,8 @@ CZ_LbBtn6.OnEvent("Click", "GetClassNN")
 
 CZ_LbBtn7 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlGetEnabled")
 CZ_LbBtn7.OnEvent("Click", "GetEnabled")
+CZ_LbBtn20 := MyGui.Add("Button", "w120 x180 h25 y+1", "ControlSetEnabled")
+CZ_LbBtn20.OnEvent("Click", "SetEnabled")
 CZ_LbBtn8 := MyGui.Add("Button", "w120 x180 h25 y+1", "Disabled!")
 CZ_LbBtn8.Enabled := False
 
@@ -926,7 +928,7 @@ CZ_LbBtn18.OnEvent("Click", "EditPaster")
 ; │  ListView Content Tests  │
 ; └──────────────────────────┘
 
-CZ_SeparatorText1 := MyGui.Add("Text", "x10 y+10 w320", "ListView Content Tests")
+CZ_SeparatorText1 := MyGui.Add("Text", "x10 yp+8 w320", "ListView Content Tests")
 CZ_SeparatorText1.SetFont("s8 CBlue")
 
 LV2 := MyGui.Add("ListView", "r5 w300 x10 y+5", ["Name","Size (KB)"])
@@ -1319,6 +1321,12 @@ GetEnabled() {
 	MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
 	Result2 := ControlGetEnabled(CZ_LbBtn6, MyGui)
 	MsgBox(Result2, "ClassNN Button State (1: enabled 0: disabled)")
+}
+
+SetEnabled()
+{
+	Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
+	ControlSetEnabled(!Result, CZ_LbBtn8, MyGui)
 }
 
 GetHwnd() {
