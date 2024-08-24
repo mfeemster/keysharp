@@ -203,7 +203,18 @@ namespace Keysharp.Core.Linux
 
 		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => 1;
 
-		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText) => 1;
+		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText)
+		{
+			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem item)
+			{
+				if (Control.FromHandle(item.Handle) is Form form)
+				{
+					if (form.ActiveControl != null)
+						return form.ActiveControl.Handle.ToInt64();
+				}
+			}
+			return 0L;
+		}
 
 		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{

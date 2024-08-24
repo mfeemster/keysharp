@@ -493,9 +493,9 @@ namespace Keysharp.Core.Windows
 
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText)
 		{
-			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem item)
 			{
-				var h = WindowsAPI.GetWindowThreadProcessId(win.Handle, out var pid);
+				var h = WindowsAPI.GetWindowThreadProcessId(item.Handle, out var pid);
 				var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
 
 				if (!WindowsAPI.GetGUIThreadInfo(h, out info))
@@ -504,7 +504,7 @@ namespace Keysharp.Core.Windows
 				//Use IsChild() to ensure the focused control actually belongs to this window.
 				//Otherwise, a HWND will be returned if any window in the same thread has focus,
 				//including the target window itself (typically when it has no controls).
-				if (!WindowsAPI.IsChild(win.Handle, info.hwndFocus))
+				if (!WindowsAPI.IsChild(item.Handle, info.hwndFocus))
 					return 0L;//As documented, if "none of the target window's controls has focus, the return value is 0".
 
 				return info.hwndFocus.ToInt64();
