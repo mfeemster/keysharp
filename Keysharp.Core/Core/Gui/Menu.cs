@@ -322,8 +322,19 @@
 
 				if (funcorsub is Menu mnu)
 				{
-					while (mnu.MenuItem.Items.Count > 0)//Must use this because add range doesn't work.
-						_ = item.DropDownItems.Add(mnu.MenuItem.Items[0]);
+					var fromMenuItems = mnu.GetMenu().Items;
+
+					while (fromMenuItems.Count > 0)//Must use this because add range doesn't work.
+					{
+						var moveItem = fromMenuItems[0];
+#if WINDOWS
+						_ = item.DropDownItems.Add(moveItem);
+#else
+						//Windows automatically removes a menu item from one collection when it is added to another, but linux doesn't.
+						//So it must be done manually here by reassigning the owner.
+						moveItem.Owner = item.DropDown;
+#endif
+					}
 				}
 				else
 					clickHandlers.GetOrAdd(item).ModifyEventHandlers(Function.GetFuncObj(funcorsub, null, true), 1);

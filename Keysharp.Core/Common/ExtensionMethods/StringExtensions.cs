@@ -70,8 +70,9 @@
 		/// Gotten from: https://stackoverflow.com/questions/54325155/how-to-get-hard-disk-serial-number-compatible-with-linux-windows
 		/// </summary>
 		/// <param name="cmd">The Bash command to run</param>
-		/// <returns>The output of the Bash command</returns>
-		internal static string Bash(this string cmd)
+		/// <param name="wait">Whether to wait for the program to finish before returning. Default: true.</param>
+		/// <returns>The output of the Bash command if wait is true, else empty string.</returns>
+		internal static string Bash(this string cmd, bool wait = true)
 		{
 			var escapedArgs = cmd.Replace("\"", "\\\"");
 			var process = new Process()
@@ -86,9 +87,15 @@
 				}
 			};
 			_ = process.Start();
-			string result = process.StandardOutput.ReadToEnd();
-			process.WaitForExit();
-			return result.Trim(Keywords.CrLf);
+
+			if (wait)
+			{
+				string result = process.StandardOutput.ReadToEnd();
+				process.WaitForExit();
+				return result.Trim(Keywords.CrLf);
+			}
+			else
+				return "";
 		}
 #endif
 

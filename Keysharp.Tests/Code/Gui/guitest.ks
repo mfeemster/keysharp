@@ -25,13 +25,14 @@ origBackColor := ""
 ; ┌────────────────┐
 ; │  Tab One Menu  │
 ; └────────────────┘
-#if WINDOWS
 FileMenu := Menu()
 FileMenu.Add("System", "MenuHandler")
 FileMenu.Add("Script Icon", "MenuHandler")
 FileMenu.Add("Suspend Icon", "MenuHandler")
 FileMenu.Add("Pause Icon", "MenuHandler")
-FileMenu.SetIcon("System", "Shell32.dll", 174) ; 2nd icon group from the file
+#if WINDOWS
+	FileMenu.SetIcon("System", "Shell32.dll", 174) ; 2nd icon group from the file
+#endif
 FileMenu.SetIcon("Script Icon", A_KeysharpCorePath, "Keysharp.ico")
 FileMenu.SetIcon("Suspend Icon", A_KeysharpCorePath, "Keysharp_s.ico")
 FileMenu.SetIcon("Pause Icon", A_KeysharpCorePath, "Keysharp_p.ico")
@@ -42,8 +43,6 @@ ImgSrchMenu.Add("Image Search Test", "ImgSrch")
 MyMenuBar := MenuBar()
 MyMenuBar.Add("&Menu Icon Test", FileMenu)
 MyMenuBar.Add("Image Search", ImgSrchMenu)
-
-#endif
 
 MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
@@ -56,14 +55,11 @@ CloseApp() {
 	ExitApp
 }
 
-
 ; ┌───────────────────┐
 ; │  Add Menu to GUI  │
 ; └───────────────────┘
 
-#if WINDOWS
-	MyGui.MenuBar := MyMenuBar
-#endif
+MyGui.MenuBar := MyMenuBar
 
 ; ┌──────────────┐
 ; │  Status Bar  │
@@ -813,7 +809,6 @@ MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 MyGui.AddText("s14 xm y+10 cBlue", "This should be below.")
 
-#if WINDOWS
 ; ┌────────────────┐
 ; │  MENU SECTION  │
 ; └────────────────┘
@@ -838,7 +833,7 @@ MenuHandler(Item, *) {
 	MsgBox("You selected " Item, "ITEM SELECTED")
 }
 
-
+#if WINDOWS
 #z::MyMenu.Show()  ; i.e. press the Win-Z hotkey to show the menu.
 ;#z::Run("Notepad.exe")
 #endif
@@ -851,7 +846,7 @@ Tab.UseTab("ControlZoo")
 gb1_CZ := MyGui.Add("GroupBox", "x10 y10 w380 h875", "ControlZoo - Group One")
 CZ_Text1 := MyGui.Add("Text", , "Control Functions testing")
 CZ_Text1.SetFont("s10 CBlue")
-CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300 Wordwrap Border", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
+CZ_Text2 := MyGui.Add("Text", "x10 y+10 w300 h30 Wordwrap Border", "For the controls on this tab, we'll add, delete, click, focus and perform other control functions.")
 CZ_Text2.SetFont("CTeal")
 
 CZ_Text2a := MyGui.Add("Text", "x10 y+5", "ListBox control testing")
@@ -2254,7 +2249,6 @@ MoveGuiBack() {
 	; MyGui.Move(winposx, winposy, winposw, winposh)
 }
 
-#if WINDOWS
 ; ┌──────────────────────────┐
 ; │  Image Search functions  │
 ; └──────────────────────────┘
@@ -2281,6 +2275,7 @@ CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the scre
 	}
 }
 
+#if WINDOWS
 ; ┌──────────────────────────┐
 ; │  Hotkeys with DllCall()  │
 ; └──────────────────────────┘

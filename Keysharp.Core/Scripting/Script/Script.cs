@@ -103,7 +103,7 @@
 			if (hwnd == 0)
 			{
 #if LINUX
-				_ = $"$EDITOR {Accessors.A_ScriptFullPath}".Bash();
+				_ = $"$EDITOR {Accessors.A_ScriptFullPath}".Bash(false);
 #elif WINDOWS
 				var ed = "";
 
