@@ -2648,6 +2648,20 @@ DoBeep()
 	SoundBeep(1500, 1000)
 }
 
+wavBtn := MyGui.Add("Button", "xp y+10", "Play wav")
+wavBtn.OnEvent("Click", "DoWav")
 
+wavTxt := MyGui.Add("Edit", "x+10 yp+2 w400")
+
+#if LINUX
+	wavTxt.Text := "/usr/share/sounds/linuxmint-login.wav"
+#else
+	wavTxt.Text := "C:\Windows\Media\Windows Shutdown.wav"
+#endif
+
+DoWav()
+{
+	SoundPlay(wavTxt.Text, 1)
+}
 
 MyGui.Show("Autosize")

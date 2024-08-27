@@ -51,12 +51,13 @@ namespace Keysharp.Core
 		public static object SoundGetName(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetName, obj0, obj1);
 
 		public static object SoundGetVolume(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetVolume, obj0, obj1);
-#if WINDOWS
+
 		/// <summary>
 		/// Plays a sound, video, or other supported file type.
 		/// </summary>
 		/// <param name="filename">
 		/// <para>The name of the file to be played.</para>
+#if WINDOWS
 		/// <para>To produce standard system sounds, specify an asterisk followed by a number as shown below.</para>
 		/// <list type="bullet">
 		/// <item><term>*-1</term>: <description>simple beep</description></item>
@@ -65,12 +66,14 @@ namespace Keysharp.Core
 		/// <item><term>*48</term>: <description>exclamation</description></item>
 		/// <item><term>*64</term>: <description>asterisk (info)</description></item>
 		/// </list>
+#endif
 		/// </param>
 		/// <param name="wait"><c>true</c> to block the current thread until the sound has finished playing, false otherwise.</param>
 		public static void SoundPlay(object obj0, object obj1 = null)
 		{
 			var filename = obj0.As();
 			var wait = obj1.As();
+#if WINDOWS
 
 			if (filename.Length > 1 && filename[0] == '*')
 			{
@@ -95,21 +98,29 @@ namespace Keysharp.Core
 				}
 			}
 
+#endif
+
 			try
 			{
-				var sound = new SoundPlayer(filename);
+				var doWait = wait == "1" || string.Compare(wait, "WAIT", true) == 0;
+#if WINDOWS
+				var sound = new System.Media.SoundPlayer(filename);
 
-				if (wait == "1" || wait == "WAIT")
+				if (doWait)
 					sound.PlaySync();
 				else
 					sound.Play();
+
+#else
+				$"aplay --quiet {filename}".Bash(doWait);
+#endif
 			}
 			catch (Exception ex)
 			{
 				throw new Error(ex.Message);
 			}
 		}
-#endif
+
 		public static void SoundSetMute(object obj0, object obj1 = null, object obj2 = null) => _ = DoSound(SoundCommands.SoundSetMute, obj0, obj1, obj2);
 
 		public static void SoundSetVolume(object obj0, object obj1 = null, object obj2 = null) => _ = DoSound(SoundCommands.SoundSetVolume, obj0, obj1, obj2);
@@ -712,7 +723,7 @@ namespace Keysharp.Core
 #endif
 			, SoundSetVolume, SoundSetMute
 		}
-		
+
 		private enum SoundControlType
 		{
 			Volume,
