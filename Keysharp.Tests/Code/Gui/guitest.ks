@@ -2558,6 +2558,7 @@ SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
         DllCall("SetSystemCursor", "Ptr", h_cursor, "UInt", id)
     }
 }
+#endif
 
 ; ┌──────────────────┐
 ; │  Sound Tab       │
@@ -2565,6 +2566,7 @@ SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
 
 MyGui.UseGroup()
 Tab.UseTab("Sound")
+#if WINDOWS
 audioMeter := SoundGetInterface("{C02216F6-8C67-4B5B-9D00-D008E73E0064}")
 txtMasterName := MyGui.Add("Text", "xp y+10 w400", "Master: " . SoundGetName())
 txtMasterVol := MyGui.Add("Text", "xp y+10 w200", "Volume: " . SoundGetVolume())
@@ -2627,7 +2629,16 @@ MasterPeak()
 	ComCall 3, audioMeter, "float*", &peak := 0
 	return peak
 }
-
 #endif
+
+beepBtn := MyGui.Add("Button", "xp y+10", "Beep")
+beepBtn.OnEvent("Click", "DoBeep")
+
+DoBeep()
+{
+	SoundBeep(1500, 1000)
+}
+
+
 
 MyGui.Show("Autosize")
