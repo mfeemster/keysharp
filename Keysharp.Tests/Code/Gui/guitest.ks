@@ -1002,11 +1002,13 @@ ThirdGuiButton.OnEvent("Click", "ThirdGUI")
 MouseMoveButton := MyGui.Add("Button", "x10 y+5 Autosize", "Mouse-moving tests")
 MouseMoveButton.OnEvent("Click", "MoveTheMouse")
 
+#if WINDOWS
 AddMsgMonitorButton := MyGui.Add("Button", "x10 y+5 Autosize", "Add msg mon for clicking in edit ctrl testing")
 AddMsgMonitorButton.OnEvent("Click", "AddMsgMonitor")
 
 RemoveMsgMonitorButton := MyGui.Add("Button", "x10 y+5 Autosize", "Remove msg mon")
 RemoveMsgMonitorButton.OnEvent("Click", "RemoveMsgMonitor")
+#endif
 
 MinimizeAllButton := MyGui.Add("Button", "x10 y+5", "Minimize all")
 MinimizeAllButton.OnEvent("Click", "MinimizeAll")
@@ -1198,6 +1200,7 @@ MoveTheMouse() {
 #endif
 }
 
+#if WINDOWS
 AddMsgMonitor()
 {
 	OnMessage 0x0201, "WM_LBUTTONDOWN"
@@ -1207,6 +1210,7 @@ RemoveMsgMonitor()
 {
 	OnMessage 0x0201, "WM_LBUTTONDOWN", 0
 }
+#endif
 
 WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
 {
@@ -2107,7 +2111,7 @@ Pbtn1Clicked() {
 	MyVertProgress.Value -= 10
 	ProgressStatusText.Value := "Values: " . MyProgress.Value . " " . MyVertProgress.Value
 #else
-	ProgressStatusText.Value := "Values: " . MyProgress.Value
+	ProgressStatusText.Value := "Value: " . MyProgress.Value
 #endif
 }
 
