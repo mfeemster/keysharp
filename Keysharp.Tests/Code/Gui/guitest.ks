@@ -2566,12 +2566,18 @@ SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
 
 MyGui.UseGroup()
 Tab.UseTab("Sound")
+
 #if WINDOWS
-audioMeter := SoundGetInterface("{C02216F6-8C67-4B5B-9D00-D008E73E0064}")
+	audioMeter := SoundGetInterface("{C02216F6-8C67-4B5B-9D00-D008E73E0064}")
+#endif
+
 txtMasterName := MyGui.Add("Text", "xp y+10 w400", "Master: " . SoundGetName())
+
 txtMasterVol := MyGui.Add("Text", "xp y+10 w200", "Volume: " . SoundGetVolume())
 txtMasterMute := MyGui.Add("Text", "xp y+10 w200", "Muted: " . SoundGetMute())
-txtMasterPeak := MyGui.Add("Text", "xp y+10 w200", "Peak: " . MasterPeak())
+#if WINDOWS
+	txtMasterPeak := MyGui.Add("Text", "xp y+10 w200", "Peak: " . MasterPeak())
+#endif
 btnMasterMute := MyGui.Add("Button", "xp y+10", "Mute")
 btnMasterUnmute := MyGui.Add("Button", "xp y+10", "Unmute")
 btnMasterRefresh := MyGui.Add("Button", "xp y+10", "Refresh")
@@ -2594,7 +2600,9 @@ RefreshSound()
 	txtMasterName.Text := "Master: " . SoundGetName()
 	txtMasterVol.Text := "Volume: " . SoundGetVolume()
 	txtMasterMute.Text := "Muted: " . SoundGetMute()
+#if WINDOWS
 	txtMasterPeak.Text := "Peak: " . MasterPeak()
+#endif
 }
 
 txtMasterVolumeSlider := MyGui.Add("Text", "x10 cBlue s10", "Moving slider sets master volume")
@@ -2623,6 +2631,7 @@ AdjustMasterVolumeSliderPos()
 	txtMasterVol.Text := "Volume: " . SoundGetVolume()
 }
 
+#if WINDOWS
 MasterPeak()
 {
 	global audioMeter

@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using Keysharp.Core.Windows;
-
 namespace Keysharp.Core
 {
 	public static class Sound
@@ -54,7 +51,6 @@ namespace Keysharp.Core
 		public static object SoundGetName(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetName, obj0, obj1);
 
 		public static object SoundGetVolume(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetVolume, obj0, obj1);
-
 #if WINDOWS
 		/// <summary>
 		/// Plays a sound, video, or other supported file type.
@@ -130,53 +126,50 @@ namespace Keysharp.Core
 			{
 				soundSet = true;
 				type = (SoundControlType)((int)soundCmd - (int)SoundCommands.SoundSetVolume);
-				sink = obj1.Ab();
+				sink = obj1.Ab(true);
 				device = obj2;
 			}
 			else
 			{
-				sink = obj0.Ab();
+				sink = obj0.Ab(true);
 				type = (SoundControlType)(int)soundCmd;
 			}
 
-			float settingScalar = 0.0f;
+			var settingScalar = 0.0;
 
 			if (soundSet)
-				settingScalar = Math.Clamp(obj0.Af() * 65536.0f, -65536.0f, 65536.0f);//pactl uses a range of 0-65536.
+				settingScalar = Math.Clamp(obj0.Ad() * 0.01 * 65536.0, -65536.0, 65536.0);//pactl uses a range of 0-65536.
 
-			//var resultFloat = 0.0f;
-			//var resultBool = false;
 			var valStr = obj0 == null ? "" : obj0.ToString();
 			var adjust = valStr.Length > 0 && (valStr[0] == '-' || valStr[0] == '+');
 			var found = false;
 			var sinkStr = sink ? "Sink" : "Source";
 			var devices = GetDevices(sink);
-			var devStr = device.ToString();
+			var devStr = "";
 
 			if (device == null)
 			{
-				device = "@DEFAULT_SINK@";
+				devStr = sink ? "@DEFAULT_SINK@" : "@DEFAULT_SOURCE@";
 				found = true;
 			}
 			else
 			{
-				if (!int.TryParse(devStr, out var deviceIndex))
+				devStr = device.ToString();
+
+				if (int.TryParse(devStr, out var deviceIndex) && devices.TryGetValue(deviceIndex, out var _))
 				{
-					if (!devices.TryGetValue(deviceIndex, out var deviceName))
-					{
-						foreach (var devKv in devices)
-						{
-							if (devKv.Value.StartsWith(devStr, StringComparison.OrdinalIgnoreCase))
-							{
-								found = true;
-								break;
-							}
-						}
-					}
+					found = true;
 				}
 				else
 				{
-					found = true;
+					foreach (var devKv in devices)
+					{
+						if (devKv.Value.StartsWith(devStr, StringComparison.OrdinalIgnoreCase))
+						{
+							found = true;
+							break;
+						}
+					}
 				}
 
 				if (!found)
@@ -189,7 +182,7 @@ namespace Keysharp.Core
 			{
 				case SoundCommands.SoundGetVolume:
 				{
-					var ret = $"pactl get-{sinkStr}-volume {device}".Bash();
+					var ret = $"pactl get-{sinkStr}-volume {devStr}".Bash();
 					var lines = ret.SplitLines().ToList();
 
 					if (lines.Count > 1)
@@ -204,7 +197,7 @@ namespace Keysharp.Core
 
 							if (val1Index != -1)
 							{
-								var val1 = lines[0].Substring(val1Index + 1, firstPercent - val1Index);
+								var val1 = lines[0].Substring(val1Index + 1, (firstPercent - val1Index) - 1);
 
 								if (!double.TryParse(val1, out prc1))
 									throw new OSError($"Could not parse first volume value of {val1}.");
@@ -217,20 +210,13 @@ namespace Keysharp.Core
 
 							if (val2Index != -1)
 							{
-								var val2 = lines[0].Substring(val2Index + 1, lastPercent - val2Index);
+								var val2 = lines[0].Substring(val2Index + 1, (lastPercent - val2Index) - 1);
 
 								if (!double.TryParse(val2, out prc2))
-									throw new OSError($"Could not parse first volume value of {val2}.");
+									throw new OSError($"Could not parse second volume value of {val2}.");
 							}
 						}
 
-						//var balance = 1.0;
-						//var splits = lines[1].Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-						//if (splits.Length > 1 && string.Compare(splits[0], "balance", true) == 0)
-						//{
-						//  if (double.TryParse(splits[splits.Length - 1], out var tempBalance))
-						//      balance = tempBalance;
-						//}
 						return (prc1 + prc2) / 2.0;
 					}
 				}
@@ -238,13 +224,17 @@ namespace Keysharp.Core
 
 				case SoundCommands.SoundGetMute:
 				{
-					var ret = $"pactl get-{sinkStr}-mute {device}".Bash();
-					return string.Compare(ret, "yes", true) == 0 ? 1L : 0L;
+					var ret = $"pactl get-{sinkStr}-mute {devStr}".Bash();
+					return ret.EndsWith("yes", StringComparison.OrdinalIgnoreCase) ? 1L : 0L;
 				}
 
 				case SoundCommands.SoundGetName:
 				{
-					if (!int.TryParse(devStr, out var deviceIndex))
+					if (device == null)
+					{
+						return "pactl get-default-sink".Bash();
+					}
+					else if (int.TryParse(devStr, out var deviceIndex))
 					{
 						if (!devices.TryGetValue(deviceIndex, out var deviceName))
 							throw new TargetError($"{sinkStr} device {device} not found.");
@@ -257,14 +247,20 @@ namespace Keysharp.Core
 
 				case SoundCommands.SoundSetVolume:
 				{
-					_ = $"pactl set-{sinkStr}-volume {device} {(int)settingScalar}".Bash();
+					if (adjust)
+					{
+						var currentVolume = SoundGetVolume(obj0, obj1).Ad() * 0.01 * 65536.0;
+						settingScalar = Math.Clamp(currentVolume + settingScalar, 0.0, 65536.0);
+					}
+
+					_ = $"pactl set-{sinkStr}-volume {devStr} {(int)settingScalar}".Bash();
 				}
 				break;
 
 				case SoundCommands.SoundSetMute:
 				{
 					var act = Conversions.ConvertOnOffToggle(obj0);
-					_ = $"pactl set-{sinkStr}-mute {device} {(act == ToggleValueType.On ? "1" : act == ToggleValueType.Toggle ? "-1" : "0")}".Bash();
+					_ = $"pactl set-{sinkStr}-mute {devStr} {(act == ToggleValueType.On ? "1" : act == ToggleValueType.Toggle ? "-1" : "0")}".Bash();
 				}
 				break;
 
@@ -716,13 +712,15 @@ namespace Keysharp.Core
 #endif
 			, SoundSetVolume, SoundSetMute
 		}
+		
 		private enum SoundControlType
 		{
 			Volume,
 			Mute,
-			Name,
-			IID
-		};
+			Name
+#if WINDOWS
+			, IID
 #endif
+		}
 	}
 }
