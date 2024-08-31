@@ -76,7 +76,7 @@ namespace Keysharp.Core
 			else if (Options.IsOption(mode, Keyword_Screen))
 				rel = CoordModeType.Screen;
 			else
-				throw new ValueError("Invalid value.");
+				throw new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().");
 
 			switch (target.ToLowerInvariant())
 			{
@@ -89,6 +89,9 @@ namespace Keysharp.Core
 				case Keyword_Caret: Coords.Caret = rel; break;
 
 				case Keyword_Menu: Coords.Menu = rel; break;
+
+				default:
+					throw new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().");
 			}
 		}
 

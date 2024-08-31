@@ -11,8 +11,6 @@
 /Keysharp.Forms/bin
 /Keysharp.Forms/obj
 /Keysharp.OutputTest/obj
-/Keysharp/Keysharp.csproj.user
-*.user
 /Keyview/obj
 /Keyview/bin
 /Keysharp.Benchmark/bin
@@ -21,3 +19,10 @@
 /Keysharp.Install/Debug
 /Keysharp.Install/Release
 /privatenotes.txt
+*.dll
+*.exe
+*.msi
+*.user
+*.zip
+/Keysharp.Tests/Code/Gui/methpropskeysharp.txt
+/Keysharp.Tests/Code/test-text-file-out.txt

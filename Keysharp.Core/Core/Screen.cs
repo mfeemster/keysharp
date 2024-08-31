@@ -215,7 +215,7 @@ namespace Keysharp.Core
 		/// <param name="ColorID">The decimal or hexadecimal color ID to search for, in Red-Green-Blue (RGB) format, which can be an expression. Color IDs can be determined using PixelGetColor. For example: 0x9d6346</param>
 		/// <param name="Variation">A number between 0 and 255 (inclusive) to indicate the allowed number of shades of variation in either direction for the intensity of the red, green, and blue components of the color (can be an expression). This parameter is helpful if the color sought is not always exactly the same shade. If you specify 255 shades of variation, all colors will match. The default is 0 shades.</param>
 		/// <returns>The coordinates of the first pixel that matches ColorID (if no match is found, a dictionary with empty values is returned). Coordinates are relative to the active window unless CoordMode was used to change that. If an exception is thrown, null is returned.</returns>
-		public static Keysharp.Core.Map PixelSearch(object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
+		public static long PixelSearch(ref object outX, ref object outY, object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
 		{
 			var x1 = obj0.Ai();
 			var y1 = obj1.Ai();
@@ -252,19 +252,15 @@ namespace Keysharp.Core
 			if (location.HasValue)
 			{
 				location = Mouse.RevertPoint(location.Value, Mouse.Coords.Mouse);
-				return new Keysharp.Core.Map(new Dictionary<object, object>()
-				{
-					{ "X", (long)location.Value.X },
-					{ "Y", (long)location.Value.Y }
-				});
+				outX = (long)location.Value.X;
+				outY = (long)location.Value.Y;
+				return 1L;
 			}
 			else
 			{
-				return new Keysharp.Core.Map(new Dictionary<object, object>()
-				{
-					{ "X", "" },
-					{ "Y", "" }
-				});
+				outX = 0L;
+				outY = 0L;
+				return 0L;
 			}
 		}
 	}

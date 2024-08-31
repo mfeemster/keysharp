@@ -300,7 +300,7 @@ P2C2C1 := TV.Add("Child 2's first child", P2C2)
 ; └──────────────────────────┘
 MousePosText := MyGui.Add("Text", "x10 y+10 cBlue s10 w200", "Uses SetTimer to show mouse position")
 CoordText := MyGui.Add("Text", "x10 y+10 cLime", "")
-CoordText.SetFont("bold s20")
+CoordText.SetFont("bold s16")
 SetTimer("UpdateOSD", 200)
 UpdateOSD()  ; Make the first update immediate rather than waiting for the timer.
 
@@ -2145,8 +2145,14 @@ UpdateOSD()
 {
 	mx :=
 	my := 0
+	msx := 0
+	msy :=
+	prevMode := A_CoordModeMouse
 	MouseGetPos(&mx, &my)
-	CoordText.Text := ("X: " mx " Y: " my)
+	CoordMode("Mouse", "Screen")
+	MouseGetPos(&msx, &msy)
+	CoordMode("Mouse", prevMode)
+	CoordText.Text := ("X: " mx " Y: " my . " (" . msx . ", " . msy . ")")
 }
 
 ; ┌────────────────────────────┐

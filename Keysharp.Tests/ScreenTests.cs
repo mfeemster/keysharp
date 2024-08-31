@@ -68,11 +68,11 @@ namespace Keysharp.Tests
 
 					if (ii != last && ii != white && ii != black)
 					{
-						var loc = Keysharp.Core.Screen.PixelSearch(j, i, j + 1, i + 1, pix);
-						var outx = (long)loc["X"];
-						var outy = (long)loc["Y"];
+						object outX = null;
+						object outY = null;
+						var ret = Keysharp.Core.Screen.PixelSearch(ref outX, ref outY, j, i, j + 1, i + 1, pix);
 
-						if (outx == j && outy == i)
+						if (ret == 1L && (long)outX == j && (long)outY == i)
 							goto pass;
 						else
 							goto fail;

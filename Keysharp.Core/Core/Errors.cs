@@ -78,7 +78,7 @@
 			_ = sb.AppendLine($"\tExtra/Code: {Extra}");
 			_ = sb.AppendLine($"\tFile: {File}");
 			_ = sb.AppendLine($"\tLine: {Line}");
-			_ = sb.AppendLine($"\tLocal stack:\n\t\t{Stack}");
+			_ = sb.AppendLine($"\tLocal stack:\n\t\t{Stack}\n");
 			_ = sb.AppendLine($"\tFull stack:\n\t\t{st}");
 			return sb.ToString();
 		}
