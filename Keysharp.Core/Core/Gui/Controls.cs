@@ -410,8 +410,28 @@ namespace Keysharp.Core
 	{
 		public bool uni = false;
 		private int sortColumn = -1;
+		private bool hasBeenShown;
 
 		public KeysharpListView() => ColumnClick += KeysharpListView_ColumnClick;
+
+
+#if LINUX
+		//Linux has a bug where it will not draw the headers if the control is not initially shown.
+		//Eg: a ListView on a tab that is not selected.
+		//We had to make a new public method ListView.RedrawDetails() to expose this functionality
+		//so we could call it from here.
+		//It only needs to be done once per control on the initial showing.
+		protected override void OnVisibleChanged(EventArgs e)
+		{
+			if (!hasBeenShown)
+			{
+				RedrawDetails();
+				hasBeenShown = true;
+			}
+
+			base.OnVisibleChanged(e);
+		}
+#endif
 
 #if WINDOWS
 		protected override void WndProc(ref Message m)
