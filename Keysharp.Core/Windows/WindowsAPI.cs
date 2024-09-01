@@ -1487,6 +1487,9 @@ namespace Keysharp.Core.Windows
 		internal static extern IntPtr GetMenu(IntPtr hWnd);
 
 		[DllImport(user32)]
+		internal static extern IntPtr GetSystemMenu(IntPtr hWnd, bool revert);
+
+		[DllImport(user32)]
 		internal static extern int GetMenuItemCount(IntPtr hMenu);
 
 		[DllImport(user32)]

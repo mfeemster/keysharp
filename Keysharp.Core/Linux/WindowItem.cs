@@ -736,8 +736,6 @@ namespace Keysharp.Core.Linux
 			return Xlib.XSendEvent(xwindow.XDisplay.Handle, xwindow.ID, false, EventMasks.NoEvent, ref ev) != 0;
 		}
 
-		internal override uint GetMenuItemId(params string[] items) => throw new NotImplementedException();
-
 		internal override bool Hide()
 		{
 			if (!IsSpecified)
@@ -980,11 +978,11 @@ namespace Keysharp.Core.Linux
 			switch (borderStyle)
 			{
 				case BorderStyle.FixedSingle:
-					cp.Style |= (int) WindowStyles.WS_BORDER;
+					cp.Style |= (int)WindowStyles.WS_BORDER;
 					break;
 
 				case BorderStyle.Fixed3D:
-					cp.ExStyle |= (int) WindowExStyles.WS_EX_CLIENTEDGE;
+					cp.ExStyle |= (int)WindowExStyles.WS_EX_CLIENTEDGE;
 					break;
 			}
 

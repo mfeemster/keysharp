@@ -28,7 +28,6 @@
 			return "";
 		}
 
-
 		internal virtual long ControlGetEnabled(object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{
 			if (Keysharp.Core.Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -146,6 +145,94 @@
 		internal abstract void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText);
 
 		internal abstract long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout);
+
+		internal static ToolStripMenuItem GetMenuItem(MenuStrip strip, params string[] items)
+		{
+			var topLevel = items[0];
+			ToolStripMenuItem menuItem = null;
+
+			//First get the top level menu.
+			if (topLevel.EndsWith('&') && int.TryParse(topLevel.Trim('&'), out var n) && n > 0)
+			{
+				n--;
+
+				if (n < strip.Items.Count)
+					menuItem = strip.Items[n] as ToolStripMenuItem;
+				else
+					throw new ValueError($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel);
+			}
+			else
+			{
+				foreach (ToolStripItem tempItem in strip.Items)
+				{
+					if (ControlManagerBase.MenuMatchHelper(tempItem.Text, topLevel))
+					{
+						menuItem = tempItem as ToolStripMenuItem;
+						break;
+					}
+				}
+			}
+
+			for (var i = 1; i < items.Length && menuItem != null; i++)
+			{
+				var item = items[i];
+
+				if (item == null || item.Length == 0)
+					continue;
+
+				if (item.EndsWith('&') && int.TryParse(item.Trim('&'), out n) && n > 0)
+				{
+					n--;
+
+					if (n < menuItem.DropDownItems.Count)
+					{
+						menuItem = menuItem.DropDownItems[n] as ToolStripMenuItem;
+						continue;
+					}
+					else
+						throw new ValueError($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item);
+				}
+				else
+				{
+					foreach (ToolStripItem tempItem in menuItem.DropDownItems)
+					{
+						if (ControlManagerBase.MenuMatchHelper(tempItem.Text, item))
+						{
+							menuItem = tempItem as ToolStripMenuItem;
+							break;
+						}
+					}
+				}
+			}
+
+			return menuItem;
+		}
+
+		internal static bool MenuMatchHelper(string menuText, string match)
+		{
+			var matchFound = menuText.Equals(match, StringComparison.CurrentCultureIgnoreCase);
+
+			if (!matchFound && menuText.IndexOf('&') >= 0)
+			{
+				var tempsb = new StringBuilder(menuText.Length);
+
+				for (var ii = 0; ii < menuText.Length; ii++)//This logic gotten from AHK to remove every other ampersand.
+				{
+					if (menuText[ii] == '&')
+						ii++;
+
+					if (ii < menuText.Length)
+						_ = tempsb.Append(menuText[ii]);
+					else
+						break;
+				}
+
+				menuText = tempsb.ToString();
+				matchFound = menuText.Equals(match, StringComparison.CurrentCultureIgnoreCase);
+			}
+
+			return matchFound;
+		}
 
 		private static void ShowHideHelper(bool val, object ctrl, object title, string text, string excludeTitle, string excludeText)
 		{

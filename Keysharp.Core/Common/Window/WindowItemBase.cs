@@ -313,8 +313,6 @@ namespace Keysharp.Core.Common.Window
 			return item;
 		}
 
-		internal abstract uint GetMenuItemId(params string[] items);
-
 		internal abstract bool Hide();
 
 		internal abstract bool Kill();

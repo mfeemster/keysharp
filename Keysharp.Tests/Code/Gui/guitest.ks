@@ -37,6 +37,14 @@ FileMenu.SetIcon("Script Icon", A_KeysharpCorePath, "Keysharp.ico")
 FileMenu.SetIcon("Suspend Icon", A_KeysharpCorePath, "Keysharp_s.ico")
 FileMenu.SetIcon("Pause Icon", A_KeysharpCorePath, "Keysharp_p.ico")
 
+; Create another menu destined to become a submenu of the above menu.
+MainSubmenu1 := Menu()
+MainSubmenu1.Add("Item A", "MenuHandler")
+MainSubmenu1.Add("Item B", "MenuHandler")
+
+; Create a submenu in the first menu (a right-arrow indicator). When the user selects it, the second menu is displayed.
+FileMenu.Add("My Submenu", MainSubmenu1)
+
 ImgSrchMenu := Menu()
 ImgSrchMenu.Add("Image Search Test", "ImgSrch")
 
@@ -46,10 +54,6 @@ MyMenuBar.Add("Image Search", ImgSrchMenu)
 
 MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
-
-#if LINUX
-	MyGui.Show()
-#endif
 
 CloseApp() {
 	ExitApp
@@ -109,7 +113,7 @@ bgBtn2.OnEvent("Click", "RestoreBG")
 ; │  GroupBox test  │
 ; └─────────────────┘
 
-gb1_TabOne := MyGui.Add("GroupBox", "x10 y+10 w325 h800", "Tab One - Group One") ; 
+gb1_TabOne := MyGui.Add("GroupBox", "x10 y+10 w325 h815", "Tab One - Group One") ; 
 
 ; ┌──────────────────────────────────┐
 ; │  Listview testing                │
@@ -171,8 +175,19 @@ CheckBoxOne.OnEvent("Click", "CheckBoxOneClicked")
 Menu_Label := MyGui.Add("Text", "w400 x10 y+10","Press Win-Z to see popup menu")
 Menu_Label.SetFont("cBlue s14")
 
-checkBtn := MyGui.Add("Button", "x10 y+10 Autosize", "ControlSetChecked")
+checkBtn := MyGui.Add("Button", "x10 y+3 Autosize", "ControlSetChecked")
 checkBtn.OnEvent("Click", "SetChecked")
+
+menuIndexBtn := MyGui.Add("Button", "x+5 yp Autosize", "Select menu by index")
+menuIndexBtn.OnEvent("Click", "SelectMenuByIndex")
+
+menuStringBtn := MyGui.Add("Button", "x10 y+3 Autosize", "Select menu by string")
+menuStringBtn.OnEvent("Click", "SelectByString")
+
+#if WINDOWS
+sysMenuMinimizeBtn := MyGui.Add("Button", "x+5 yp Autosize", "Minimize by system menu")
+sysMenuMinimizeBtn.OnEvent("Click", "MinimizeBySystemMenu")
+#endif
 
 MyGui.UseGroup()
 Tab.UseTab("First")
@@ -1930,6 +1945,23 @@ SetChecked()
 	ControlSetChecked(true, RadioThree, MyGui)
 	ControlSetChecked(true, CheckBoxOne, MyGui)
 }
+
+SelectMenuByIndex()
+{
+	MenuSelect(MyGui, "KEYSHARP TESTS", "1&", "5&", "2&")
+}
+
+SelectByString()
+{
+	MenuSelect(MyGui, "KEYSHARP TESTS", "Menu Icon Test", "My Submenu", "Item B")
+}
+
+#if WINDOWS
+MinimizeBySystemMenu()
+{
+	MenuSelect(MyGui, "KEYSHARP TESTS", "0&", "Minimize")
+}
+#endif
 
 ; ┌─────────────────┐
 ; │  TreeView Edit  │

@@ -1106,12 +1106,29 @@ namespace Keysharp.Core.Windows
 		{
 			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
 			{
-				var hmenu = win.GetMenuItemId(menu, sub1, sub2, sub3, sub4, sub5, sub6);
+				var sysMenu = menu == "0&";
 
-				if (hmenu != 0)
+				if (!sysMenu && Control.FromHandle(win.Handle) is Form form)//Winforms needs special treatment because it doesn't use an actual native main menu.
 				{
-					_ = WindowsAPI.PostMessage(win.Handle, WindowsAPI.WM_COMMAND, hmenu, 0u);
-					WindowItemBase.DoWinDelay();
+					if (form.MainMenuStrip is MenuStrip strip)
+					{
+						if (GetMenuItem(strip, menu, sub1, sub2, sub3, sub4, sub5, sub6) is ToolStripMenuItem item)
+							item.PerformClick();
+						else
+							throw new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
+					}
+				}
+				else
+				{
+					var menuId = win.GetMenuItemId(menu, sub1, sub2, sub3, sub4, sub5, sub6);
+
+					if (menuId != 0xFFFFFFFF)
+					{
+						_ = WindowsAPI.PostMessage(win.Handle, (uint)(sysMenu ? WindowsAPI.WM_SYSCOMMAND : WindowsAPI.WM_COMMAND), menuId, 0U);
+						WindowItemBase.DoWinDelay();
+					}
+					else
+						throw new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
 				}
 			}
 		}

@@ -522,6 +522,19 @@ namespace Keysharp.Core.Linux
 
 		internal override void MenuSelect(object title, string text, string menu, string sub1, string sub2, string sub3, string sub4, string sub5, string sub6, string excludeTitle, string excludeText)
 		{
+			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			{
+				if (Control.FromHandle(win.Handle) is Form form)
+				{
+					if (form.MainMenuStrip is MenuStrip strip)
+					{
+						if (GetMenuItem(strip, menu, sub1, sub2, sub3, sub4, sub5, sub6) is ToolStripMenuItem item)
+							item.PerformClick();
+						else
+							throw new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
+					}
+				}
+			}
 		}
 
 		internal override void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText)

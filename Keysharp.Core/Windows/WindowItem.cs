@@ -644,20 +644,31 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
-		internal override uint GetMenuItemId(params string[] items)
+		internal uint GetMenuItemId(params string[] items)
 		{
 			if (!IsSpecified)
 				return 0;
 
 			var menuid = 0xFFFFFFFF;
-			var menu = WindowsAPI.GetMenu(Handle);
+			IntPtr menu = IntPtr.Zero;
+			var i1 = 0;
+
+			if (items[0] == "0&")
+			{
+				menu = WindowsAPI.GetSystemMenu(Handle, false);
+				i1 = 1;
+			}
+			else
+				menu = WindowsAPI.GetMenu(Handle);
 
 			if (menu == IntPtr.Zero || WindowsAPI.GetMenuItemCount(menu) == 0)
 				return 0xFFFFFFFF;
 
-			foreach (var item in items)
+			for (; i1 < items.Length; i1++)
 			{
-				if (item?.Length == 0)
+				var item = items[i1];
+
+				if (item == null || item.Length == 0)
 					continue;
 
 				if (item.EndsWith('&') && int.TryParse(item.Trim('&'), out var n) && n > 0)
@@ -680,27 +691,7 @@ namespace Keysharp.Core.Windows
 						if (WindowsAPI.GetMenuString(menu, (uint)i, buf, buf.Length - 1, WindowsAPI.MF_BYPOSITION) == 0)
 							return 0xFFFFFFFF;
 
-						var name = buf.ToString();
-						var matchfound = name.Equals(item, StringComparison.CurrentCultureIgnoreCase);
-
-						if (!matchfound && name.IndexOf('&') >= 0)
-						{
-							var tempsb = new StringBuilder(name.Length);
-
-							for (var ii = 0; ii < name.Length; ii++)//This logic gotten from AHK to remove every other ampersand.
-							{
-								if (name[ii] == '&')
-									ii++;
-
-								if (ii < name.Length)
-									_ = tempsb.Append(name[ii]);
-								else
-									break;
-							}
-
-							name = tempsb.ToString();
-							matchfound = name.Equals(item, StringComparison.CurrentCultureIgnoreCase);
-						}
+						var matchfound = ControlManagerBase.MenuMatchHelper(buf.ToString(), item);
 
 						if (matchfound)
 						{

@@ -410,7 +410,6 @@ namespace Keysharp.Core
 	{
 		public bool uni = false;
 		private int sortColumn = -1;
-		private bool hasBeenShown;
 
 		public KeysharpListView() => ColumnClick += KeysharpListView_ColumnClick;
 
@@ -420,15 +419,9 @@ namespace Keysharp.Core
 		//Eg: a ListView on a tab that is not selected.
 		//We had to make a new public method ListView.RedrawDetails() to expose this functionality
 		//so we could call it from here.
-		//It only needs to be done once per control on the initial showing.
 		protected override void OnVisibleChanged(EventArgs e)
 		{
-			if (!hasBeenShown)
-			{
-				RedrawDetails();
-				hasBeenShown = true;
-			}
-
+			RedrawDetails();
 			base.OnVisibleChanged(e);
 		}
 #endif
