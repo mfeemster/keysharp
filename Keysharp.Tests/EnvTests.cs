@@ -41,7 +41,9 @@ namespace Keysharp.Tests
 				Clipboard.SetText("test text");
 				tcs.SetResult(true);
 			});
+#if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
+#endif
 			thread.Start();
 			dt = DateTime.Now;
 			b = Env.ClipWait(null, true);//Will wait indefinitely for any type.
@@ -65,7 +67,9 @@ namespace Keysharp.Tests
 				});
 				tcs.SetResult(true);
 			});
+#if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
+#endif
 			thread.Start();
 			dt = DateTime.Now;
 			b = Env.ClipWait();//Will wait indefinitely for only text or file paths.
@@ -83,7 +87,9 @@ namespace Keysharp.Tests
 				Clipboard.SetImage(bitmap);
 				tcs.SetResult(true);
 			});
+#if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
+#endif
 			thread.Start();
 			dt = DateTime.Now;
 			b = Env.ClipWait(1);//Will wait for one second for only text or file paths.
