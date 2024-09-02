@@ -5,6 +5,7 @@ namespace Keysharp.Tests
 {
 	public partial class Scripting
 	{
+#if WINDOWS
 		[Test, Category("External")]
 		public void CallbackCreate() => Assert.IsTrue(TestScript("external-callbackcreate", false));
 
@@ -35,5 +36,6 @@ namespace Keysharp.Tests
 
 		[Test, Category("External")]
 		public void NumPutNumGet() => Assert.IsTrue(TestScript("external-numput-numget", true));
+#endif
 	}
 }

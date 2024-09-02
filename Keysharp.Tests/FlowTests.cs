@@ -51,6 +51,7 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
 
+#if WINDOWS
 		[Test, Category("Flow")]
 		public void FlowLoopReg()
 		{
@@ -174,6 +175,7 @@ namespace Keysharp.Tests
 			Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");
 			Assert.IsTrue(TestScript("flow-loop-reg", true));
 		}
+#endif
 
 		[Test, Category("Flow")]
 		public void FlowLoopSwitchBreakGoto() => Assert.IsTrue(TestScript("flow-loop-switch-break-goto", true));

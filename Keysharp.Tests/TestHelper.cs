@@ -96,28 +96,6 @@ namespace Keysharp.Tests
 				sourceWriter.WriteLine(code);
 			}
 
-#if !WINDOWS
-			var (results, dummyms, compileexc) = ch.Compile(code, string.Empty);
-
-			if (compileexc != null)
-			{
-				Compiler.Debug(compileexc.Message);
-				return string.Empty;
-			}
-			else if (results == null)
-			{
-				return string.Empty;
-			}
-			else if (results.Errors.HasErrors)
-			{
-				foreach (CompilerError err in results.Errors)
-					Compiler.Debug(err.ErrorText);
-
-				return string.Empty;
-			}
-
-			CompilerHelper.compiledasm = results.CompiledAssembly;
-#else
 			var asm = Assembly.GetExecutingAssembly();
 			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
 
@@ -148,7 +126,6 @@ namespace Keysharp.Tests
 				return string.Empty;
 			}
 
-#endif
 			var buffer = new StringBuilder();
 			var output = string.Empty;
 

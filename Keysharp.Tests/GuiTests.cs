@@ -29,6 +29,7 @@ namespace Keysharp.Tests
 		{
 		}
 
+#if WINDOWS
 		[Test, Category("Gui")]
 		public void MsgBox()
 		{
@@ -60,6 +61,7 @@ namespace Keysharp.Tests
 			var ret = Keysharp.Core.Dialogs.MsgBox("ok, hand, def: 1, timeout: 5", "this is a sample title", "0 16 t5");
 			Assert.AreEqual(ret, "Timeout");
 		}
+#endif
 
 		private void Form_Shown(object sender, EventArgs e)
 		{
