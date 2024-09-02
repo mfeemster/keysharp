@@ -53,15 +53,15 @@ namespace Keysharp.Core
 				{
 					var result = handler.Call(err, err.ExcType);
 
-					if (err.ExcType == Keyword_ExitApp)
-						_ = Flow.ExitAppInternal(Flow.ExitReasons.Error);
-
 					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1L)
 						return false;
 				}
 			}
 
-			return true;
+			if (err.ExcType == Keyword_ExitApp)
+				_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical);
+
+			return err.ExcType != Keywords.Keyword_Return;//Don't report an error if it was just an exit from a thread.
 		}
 
 		public static IFuncObj FuncObj(object obj0, object obj1 = null, object obj2 = null) => new FuncObj(obj0.As(), obj1, obj2);

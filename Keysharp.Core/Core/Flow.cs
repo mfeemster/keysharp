@@ -117,15 +117,18 @@ namespace Keysharp.Core
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
 		public static void Exit(object obj = null)
 		{
-			var exitCode = obj.Ai();
-			Environment.ExitCode = exitCode;
-			Application.ExitThread();
+			var exitCode = obj.Al();
+			Accessors.A_ExitReason = exitCode;
+			throw new Error("Exiting thread")
+			{
+				ExcType = Keywords.Keyword_Return
+			};
 		}
 
 		/// <summary>
 		/// Terminates the program unconditionally.
 		/// </summary>
-		/// <param name="exitCode">An integer that is returned to the caller.</param>
+		/// <param name="exitCode">An integer exit code to be passed to the caller of this program when it exits.</param>
 		public static bool ExitApp(object obj = null) => ExitAppInternal(ExitReasons.Exit, obj);
 
 		public static void Init()
@@ -435,13 +438,14 @@ namespace Keysharp.Core
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
-			var exitCode = obj1.Ai();
+			var exitCode = obj1.Al();
 			Accessors.A_ExitReason = obj0.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;
 			var result = Script.onExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
 
-			if (result.IsCallbackResultNonEmpty())//If any exit handlers returned a non empty value, abort the exit.
+			//If it wasn't a critical shutdown and any exit handlers returned a non empty value, abort the exit.
+			if (obj0 >= ExitReasons.None && result.IsCallbackResultNonEmpty())
 			{
 				Accessors.A_ExitReason = "";
 				AllowInterruption = allowInterruption_prev;
@@ -462,7 +466,11 @@ namespace Keysharp.Core
 			foreach (var kv in timers)
 				kv.Value.Stop();
 
-			while (Keysharp.Scripting.Script.totalExistingThreads > 1)//Check against 1 instead of 0, because this may be launched in a thread as a result of a hotkey.
+			//Check against 1 instead of 0, because this may be launched in a thread as a result of a hotkey.
+			//If this gets stuck in a loop it means we have a thread imbalance/mismatch somewhere.
+			//We added them, but never removed. While seemingly dangerous to have, it's a handy
+			//way to know we've found a bug.
+			while (Keysharp.Scripting.Script.totalExistingThreads > 1)
 				Sleep(200);
 
 			if (!Script.IsMainWindowClosing)
@@ -484,7 +492,7 @@ namespace Keysharp.Core
 				}, true);
 			}
 
-			Environment.ExitCode = exitCode;
+			Environment.ExitCode = (int)exitCode;
 			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 			return false;
 		}
