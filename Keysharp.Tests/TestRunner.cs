@@ -1,13 +1,14 @@
-using Assert = NUnit.Framework.Legacy.ClassicAssert;
+﻿using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class TestRunner
 	{
 		private const string ext = ".ahk";
-		private string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
+		protected string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
+		protected static TestRunner runner = new TestRunner();
 
-		internal bool TestScript(string source, bool testfunc, bool exeout = false)
+		protected bool TestScript(string source, bool testfunc, bool exeout = false)
 		{
 			var b2 = true;
 			var b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true, exeout));
@@ -18,7 +19,7 @@ namespace Keysharp.Tests
 			return b1 && b2;
 		}
 
-		internal bool HasPassed(string output)
+		protected bool HasPassed(string output)
 		{
 			if (string.IsNullOrEmpty(output))
 				return false;
@@ -30,7 +31,7 @@ namespace Keysharp.Tests
 			return output.Length == 0;
 		}
 
-		internal string WrapInFunc(string source)
+		protected string WrapInFunc(string source)
 		{
 			var sb = new StringBuilder();
 			_ = sb.AppendLine("TestFunc()");
@@ -49,9 +50,9 @@ namespace Keysharp.Tests
 			return sb.ToString();
 		}
 
-		internal string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
+		protected string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
 
-		internal void TestException(Action func)
+		protected void TestException(Action func)
 		{
 			var excthrown = false;
 
@@ -67,7 +68,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(excthrown);
 		}
 
-		internal string RunScript(string source, string name, bool execute, bool exeout)
+		protected string RunScript(string source, string name, bool execute, bool exeout)
 		{
 			Keysharp.Scripting.Script.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
@@ -148,7 +149,7 @@ namespace Keysharp.Tests
 						var temp = new string[] { };
 						var result = main.Invoke(null, new object[] { temp });
 
-						if (result is int i && i != 0)//This is for when an exception is thrown internally in the compiled program, the catch blocks make it return 1.
+						if (result is int i && i != 0)//This is for when an exception is thrown protectedly in the compiled program, the catch blocks make it return 1.
 							Console.Write("fail");
 					}
 					catch (Exception ex)

@@ -146,7 +146,6 @@ namespace Keysharp.Core
 			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
 			catch (Exception ex) { throw new OSError(ex); }
 
-			throw new NotImplementedException();
 #endif
 		}
 

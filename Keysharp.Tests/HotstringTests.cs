@@ -5,7 +5,7 @@ namespace Keysharp.Tests
 	/// <summary>
 	/// All hotstring tests must be run sequentially, hence the usage of lock (syncroot).
 	/// </summary>
-	public partial class Scripting
+	public partial class HotstringTests : TestRunner
 	{
 		private static bool btwtyped = false;
 

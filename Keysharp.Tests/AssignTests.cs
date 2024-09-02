@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class AssignTests : TestRunner
 	{
 		[Test, Category("Assign")]
 		public void AssignDynVar() => Assert.IsTrue(TestScript("assign-dyn-var", false));//Dynamic variables only work as global statics, not function variables.

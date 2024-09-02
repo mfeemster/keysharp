@@ -4,7 +4,7 @@ using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class FileAndDirTests : TestRunner
 	{
 		private object syncroot = new object();
 

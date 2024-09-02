@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class OperatorTests : TestRunner
 	{
 		//[Test, Category("Operator")]
 		//public void Dereference() => Assert.IsTrue(TestScript("op-dereference", true));//Probably will never implement this.

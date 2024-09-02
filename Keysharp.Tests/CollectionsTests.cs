@@ -3,7 +3,7 @@ using Buffer = Keysharp.Core.Buffer;
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class CollectionsTests : TestRunner
 	{
 		[Test, Category("Collections")]
 		public void Array()

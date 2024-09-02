@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class MonitorTests : TestRunner
 	{
 		[Test, Category("Monitor")]
 		public void MonitorGet()

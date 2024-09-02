@@ -2178,9 +2178,9 @@ ShowEditHwnd() {
 UpdateOSD()
 {
 	mx :=
-	my := 0
-	msx := 0
-	msy :=
+	my := 
+	msx := 
+	msy := 0
 	prevMode := A_CoordModeMouse
 	MouseGetPos(&mx, &my)
 	CoordMode("Mouse", "Screen")

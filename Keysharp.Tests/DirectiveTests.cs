@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class DirectivesTests : TestRunner
 	{
 		[Test, Category("Directives")]
 		public void AsmInfo()

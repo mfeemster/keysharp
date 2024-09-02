@@ -4,7 +4,7 @@ using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class Screentests : TestRunner
 	{
 		[Test, Category("Screen")]
 		public void ImageSearch()

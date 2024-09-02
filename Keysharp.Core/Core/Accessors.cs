@@ -93,6 +93,7 @@
 		public static string A_AppData =>
 #if WINDOWS
 		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
 #else//On linux, ApplicationData maps to home/.config which is a file, not a folder. So just map it to home instead.
 		Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 #endif
@@ -439,7 +440,7 @@
 		}
 
 		/// <summary>
-		/// The native directory separator string, i.e. "/" on Unix, "\" on Windows.
+		/// The native directory separator string, i.e. "/" on linux, "\" on Windows.
 		/// </summary>
 		public static string A_DirSeparator => Path.DirectorySeparatorChar.ToString();
 
@@ -1032,7 +1033,9 @@
 				return "";
 			}
 		}
+
 #if WINDOWS
+
 		/// <summary>
 		/// The name of the root key being accessed (HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, or HKEY_CURRENT_CONFIG). For remote registry access, this value will not include the computer name.
 		/// </summary>
@@ -1154,7 +1157,9 @@
 				return "";
 			}
 		}
+
 #endif
+
 		public static object A_MaxHotkeysPerInterval
 		{
 			get => maxHotkeysPerInterval;
@@ -1230,6 +1235,11 @@
 		/// </summary>
 		public static string A_MyDocuments => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
+		/// <summary>
+		/// The native newline string string, i.e. "\n" on linux, "\r\n" on Windows.
+		/// </summary>
+		public static string A_NewLine => Environment.NewLine;
+
 		public static bool A_NoTrayIcon => Script.NoTrayIcon;
 
 		/// <summary>
@@ -1289,6 +1299,7 @@
 		public static long A_PtrSize => 8L;
 
 #if WINDOWS
+
 		public static object A_RegView
 		{
 			get => regView;
@@ -1299,6 +1310,7 @@
 				ThreadAccessors.A_RegView = regView.Al();
 			}
 		}
+
 #endif
 
 		/// <summary>
@@ -1763,12 +1775,15 @@
 		}
 
 #if WINDOWS
+
 		internal static long A_RegView
 		{
 			get => Threads.GetThreadVariables().regView;
 			set => Threads.GetThreadVariables().regView = value;
 		}
+
 #endif
+
 		internal static uint A_SendLevel
 		{
 			get => Threads.GetThreadVariables().sendLevel;

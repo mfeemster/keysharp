@@ -3,7 +3,7 @@ using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class FlowTests : TestRunner
 	{
 		[Test, Category("Flow")]
 		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", true));

@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class DriveTests : TestRunner
 	{
 		[Test, Category("Drive")]
 		public void DriveGetSpaceFree()

@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class TypeTests : TestRunner
 	{
 		/// <summary>
 		/// Ensure the type hierarchy matches the documentation exactly.

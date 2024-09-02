@@ -1,7 +1,5 @@
-
-
 x :=
-y := 
+y := 0 
 CoordMode("Mouse", "Screen")
 GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp")
 ImageSearch(&x, &y, 0, 0, 1920, 1080, "./imagesearch.bmp")

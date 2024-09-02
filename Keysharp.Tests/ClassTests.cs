@@ -2,10 +2,10 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class ClassTests : TestRunner
 	{
 		[Test, Category("Class")]
-		public void Class() => Assert.IsTrue(TestScript("class", false));
+		public void ClassBasic() => Assert.IsTrue(TestScript("class", false));
 
 		[Test, Category("Class")]
 		public void ClassWithStaticVar() => Assert.IsTrue(TestScript("class-static", false));

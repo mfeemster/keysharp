@@ -897,7 +897,20 @@ namespace Keysharp.Scripting
 				Name = "UserMainCode",
 				ReturnType = new CodeTypeReference(typeof(object))
 			};
-			userMainMethod.Statements.AddRange(main.Statements);
+
+			if (!Persistent)
+			{
+				var threads = new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads");
+				var btcmie = new CodeMethodInvokeExpression(threads, "BeginThread");
+				userMainMethod.Statements.Add(new CodeAssignStatement(new CodeSnippetExpression("var (__pushed, __btv)"), btcmie));
+				userMainMethod.Statements.AddRange(main.Statements);
+				var etcmie = new CodeMethodInvokeExpression(threads, "EndThread");
+				etcmie.Parameters.Add(new CodeSnippetExpression("__pushed"));
+				userMainMethod.Statements.Add(etcmie);
+			}
+			else
+				userMainMethod.Statements.AddRange(main.Statements);
+
 			main.Statements.Clear();
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 

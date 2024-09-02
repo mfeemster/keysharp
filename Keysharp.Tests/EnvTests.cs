@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class EnvTests : TestRunner
 	{
 		[Test, Category("Env")]
 		[Apartment(ApartmentState.STA)]

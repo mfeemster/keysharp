@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class SoundTests : TestRunner
 	{
 		[Test, Category("Sound")]
 		public void SoundBeep()

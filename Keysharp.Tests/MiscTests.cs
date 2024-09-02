@@ -3,7 +3,7 @@ using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class Misctests : TestRunner
 	{
 		[NonParallelizable]
 		[Test, Category("Misc")]

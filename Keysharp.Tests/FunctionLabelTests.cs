@@ -5,7 +5,7 @@ namespace Keysharp.Tests
 	/// <summary>
 	/// Function tests don't need to also be wrapped in a funciton, so pass false.
 	/// </summary>
-	public partial class Scripting
+	public class FunctionAndLabelTests : TestRunner
 	{
 		[NonParallelizable]
 		[Test, Category("Function")]

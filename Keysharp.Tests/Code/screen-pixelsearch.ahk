@@ -1,5 +1,3 @@
-
-
 x := 0
 y := 0
 last := "0x000000"
@@ -35,9 +33,9 @@ Loop 100
 
 if (found == true)
 {
-	loc := PixelSearch(x, y, x + 1, y + 1, pix)
-	outx := loc["X"]
-	outy := loc["Y"]
+	outx := 
+	outy := 0
+	PixelSearch(&outx, &outy, x, y, x + 1, y + 1, pix)
 	
 	if (outx == x && outy == y)
 		FileAppend, "pass", "*"

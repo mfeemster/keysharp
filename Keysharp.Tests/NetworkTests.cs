@@ -3,10 +3,7 @@ using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
 {
-	/// <summary>
-	/// Function tests don't need to also be wrapped in a funciton, so pass false.
-	/// </summary>
-	public partial class Scripting
+	public partial class NetworkTests : TestRunner
 	{
 		[Test, Category("Network")]
 		public void NetDownload()
@@ -27,7 +24,7 @@ namespace Keysharp.Tests
 			Download("*0 http://textfiles.com/art/asciiart.txt", filename);
 			Assert.IsTrue(System.IO.File.Exists(filename));
 			Assert.AreEqual(16048L, Keysharp.Core.Files.FileGetSize(filename));
-			Assert.IsTrue(TestScript("network-download", false));
+			Assert.IsTrue(TestScript("network-download", true));
 		}
 	}
 }

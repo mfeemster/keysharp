@@ -1,5 +1,3 @@
-
-
 product := "Prod"
 color := "Red"
 
@@ -12,7 +10,7 @@ If (x = 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 Var := "
 (
 A line of text.
@@ -75,18 +73,26 @@ arr := [
 ]
 
 FileDelete("./multilines.txt")
+#if WINDOWS
+FileAppend( "
+(
+Line 1 of the text.
+Line 2 of the text. By default, a linefeed (`r`n) is present between lines.
+)", "./multilines.txt")
+#else
 FileAppend( "
 (
 Line 1 of the text.
 Line 2 of the text. By default, a linefeed (`n) is present between lines.
 )", "./multilines.txt")
+#endif
 
 if (FileExist("./multilines.txt"))
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-teststr := "Line 1 of the text.`nLine 2 of the text. By default, a linefeed (`n) is present between lines."
+teststr := "Line 1 of the text." . A_NewLine . "Line 2 of the text. By default, a linefeed (" . A_NewLine . ") is present between lines."
 data2 := FileRead("./multilines.txt")
 
 if (data2 = teststr)
@@ -102,7 +108,7 @@ Var := "
 A second line not beginning in a tab.
 )"
 
-teststr := "`tA line of text beginning in a tab which should not be removed.`nA second line not beginning in a tab."
+teststr := "`tA line of text beginning in a tab which should not be removed." . A_NewLine . "A second line not beginning in a tab."
 
 if (Var = teststr)
 	FileAppend, "pass", "*"
@@ -115,20 +121,20 @@ Var := "
 A second line not ending in a tab.
 )"
 
-teststr := "`tA line of text not ending in a tab.`nA second line not ending in a tab."
+teststr := "`tA line of text not ending in a tab." . A_NewLine . "A second line not ending in a tab."
 
 if (Var = teststr)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+		
 Var := "
 ( RTrim0
 A line of text ending in a tab.	
 A second line ending in a tab.	
 )"
 
-teststr := "A line of text ending in a tab.`t`nA second line ending in a tab.`t"
+teststr := "A line of text ending in a tab.`t" . A_NewLine . "A second line ending in a tab.`t"
 
 if (Var = teststr)
 	FileAppend, "pass", "*"
@@ -146,7 +152,7 @@ if (Var = teststr)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 Var := "   ; Comment.
 ( Comments
 ; This is not a comment; it is literal. Include the word Comments in the line above to make it a comment.
@@ -195,7 +201,20 @@ more
 string
 )"
 
-teststr := "this is`nmore string"
+teststr := "this is" . A_NewLine . "more string"
+
+if (Var = teststr)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+Var := "
+( `
+Line 1 of the text.
+Line 2 of the text. By default, a linefeed (`r`n) is present between lines.
+)"
+
+teststr := "Line 1 of the text." . A_NewLine . "Line 2 of the text. By default, a linefeed (``r``n) is present between lines."
 
 if (Var = teststr)
 	FileAppend, "pass", "*"

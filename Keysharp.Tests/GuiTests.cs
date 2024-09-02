@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public class GuiTests : TestRunner
 	{
 		[Test, Category("Gui")]
 		[Apartment(ApartmentState.STA)]

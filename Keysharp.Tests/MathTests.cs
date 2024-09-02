@@ -2,7 +2,7 @@
 
 namespace Keysharp.Tests
 {
-	public partial class Scripting
+	public partial class MathTests : TestRunner
 	{
 		[Test, Category("Math")]
 		public void Abs()
