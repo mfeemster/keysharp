@@ -358,24 +358,27 @@ namespace System.Collections.Generic
 
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 					{
-						if (inst is Control ctrl && ctrl.FindForm() is Form form)
-							Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
-
-						foreach (var handler in handlers)
+						_ = Misc.TryCatch(() =>
 						{
-							if (handler != null)
+							if (inst is Control ctrl && ctrl.FindForm() is Form form)
+								Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+
+							foreach (var handler in handlers)
 							{
-								result = handler.Call(obj);
+								if (handler != null)
+								{
+									result = handler.Call(obj);
 
-								if (result == null)
-									continue;
+									if (result == null)
+										continue;
 
-								if (result.IsCallbackResultNonEmpty())
-									break;
+									if (result.IsCallbackResultNonEmpty())
+										break;
+								}
 							}
-						}
 
-						Threads.EndThread(pushed);
+							Threads.EndThread(true);
+						}, true);//Pop on exception because the Pop above won't be called.
 					}
 
 					Keysharp.Scripting.Script.HwndLastUsed = oldHandle;

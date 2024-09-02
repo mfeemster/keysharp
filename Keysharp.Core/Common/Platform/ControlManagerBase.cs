@@ -210,7 +210,7 @@
 
 		internal static bool MenuMatchHelper(string menuText, string match)
 		{
-			var matchFound = menuText.Equals(match, StringComparison.CurrentCultureIgnoreCase);
+			var matchFound = menuText.StartsWith(match, StringComparison.CurrentCultureIgnoreCase);
 
 			if (!matchFound && menuText.IndexOf('&') >= 0)
 			{
@@ -228,7 +228,7 @@
 				}
 
 				menuText = tempsb.ToString();
-				matchFound = menuText.Equals(match, StringComparison.CurrentCultureIgnoreCase);
+				matchFound = menuText.StartsWith(match, StringComparison.CurrentCultureIgnoreCase);
 			}
 
 			return matchFound;

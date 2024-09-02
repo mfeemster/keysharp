@@ -331,22 +331,6 @@ namespace Keysharp.Core
 				Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
 		}
 
-		public static void DestroyAll()
-		{
-			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Keysharp.Scripting.Script.mainWindow).ToArray())//Destroy everything but the main window, which will destroy itself.
-			{
-				try
-				{
-					gui.Destroy();
-				}
-				catch
-				{
-				}
-			}
-
-			allGuiHwnds.Clear();
-		}
-
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
 		public override object __New(params object[] obj)
@@ -1495,7 +1479,12 @@ namespace Keysharp.Core
 		public void Destroy()
 		{
 			closingFromDestroy = true;
-			form.Close();
+
+			//Do not close the window if the program is already exiting because it will throw
+			//an enumeration modified exception because Winforms is internally already iterating over
+			//all open windows to close them.
+			if (!Script.IsMainWindowClosing)
+				form.Close();
 		}
 
 		public void Flash(object obj)
@@ -1896,6 +1885,24 @@ namespace Keysharp.Core
 		}
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Keysharp.Scripting.Script.mainWindow && g.form.Visible);
+
+		internal static void DestroyAll()
+		{
+			//Destroy everything but the main window, which will destroy itself.
+			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Keysharp.Scripting.Script.mainWindow).ToArray())
+			{
+				try
+				{
+					gui.Destroy();
+				}
+				catch
+				{
+				}
+			}
+
+			allGuiHwnds.Clear();
+		}
+
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)

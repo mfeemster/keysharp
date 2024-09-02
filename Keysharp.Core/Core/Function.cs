@@ -134,54 +134,57 @@
 
 			if (delRef != null)
 			{
-				if (!fast)
-					btv = Threads.BeginThread();
-
-				if (reference)
+				Misc.TryCatch(() =>
 				{
-					var arr = paramsPool.Rent();
-					arr[0] = p1;
-					arr[1] = p2;
-					arr[2] = p3;
-					arr[3] = p4;
-					arr[4] = p5;
-					arr[5] = p6;
-					arr[6] = p7;
-					arr[7] = p8;
-					arr[8] = p9;
-					arr[9] = p10;
-					arr[10] = p11;
-					arr[11] = p12;
-					arr[12] = p13;
-					arr[13] = p14;
-					arr[14] = p15;
-					arr[15] = p16;
-					arr[16] = p17;
-					arr[17] = p18;
-					arr[18] = p19;
-					arr[19] = p20;
-					arr[20] = p21;
-					arr[21] = p22;
-					arr[22] = p23;
-					arr[23] = p24;
-					arr[24] = p25;
-					arr[25] = p26;
-					arr[26] = p27;
-					arr[27] = p28;
-					arr[28] = p29;
-					arr[29] = p30;
-					arr[30] = p31;
-					val = DelegatePlaceholderArr(arr);
-					paramsPool.Return(arr);
-				}
-				else
-					val = funcObj.Call(p1, p2, p3, p4, p5, p6, p7, p8,
-									   p9, p10, p11, p12, p13, p14, p15, p16,
-									   p17, p18, p19, p20, p21, p22, p23, p24,
-									   p25, p26, p27, p28, p29, p30, p31);
+					if (!fast)
+						btv = Threads.BeginThread();
 
-				if (!fast)
-					Threads.EndThread(btv.Item1);
+					if (reference)
+					{
+						var arr = paramsPool.Rent();
+						arr[0] = p1;
+						arr[1] = p2;
+						arr[2] = p3;
+						arr[3] = p4;
+						arr[4] = p5;
+						arr[5] = p6;
+						arr[6] = p7;
+						arr[7] = p8;
+						arr[8] = p9;
+						arr[9] = p10;
+						arr[10] = p11;
+						arr[11] = p12;
+						arr[12] = p13;
+						arr[13] = p14;
+						arr[14] = p15;
+						arr[15] = p16;
+						arr[16] = p17;
+						arr[17] = p18;
+						arr[18] = p19;
+						arr[19] = p20;
+						arr[20] = p21;
+						arr[21] = p22;
+						arr[22] = p23;
+						arr[23] = p24;
+						arr[24] = p25;
+						arr[25] = p26;
+						arr[26] = p27;
+						arr[27] = p28;
+						arr[28] = p29;
+						arr[29] = p30;
+						arr[30] = p31;
+						val = DelegatePlaceholderArr(arr);
+						paramsPool.Return(arr);
+					}
+					else
+						val = funcObj.Call(p1, p2, p3, p4, p5, p6, p7, p8,
+										   p9, p10, p11, p12, p13, p14, p15, p16,
+										   p17, p18, p19, p20, p21, p22, p23, p24,
+										   p25, p26, p27, p28, p29, p30, p31);
+
+					if (!fast)
+						Threads.EndThread(btv.Item1);
+				}, !fast);//Pop on exception because the Pop above won't be called.
 			}
 
 			if (val is int i)

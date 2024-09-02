@@ -688,16 +688,16 @@ namespace Keysharp.Core.Windows
 					{
 						var buf = new StringBuilder(256);
 
-						if (WindowsAPI.GetMenuString(menu, (uint)i, buf, buf.Length - 1, WindowsAPI.MF_BYPOSITION) == 0)
-							return 0xFFFFFFFF;
-
-						var matchfound = ControlManagerBase.MenuMatchHelper(buf.ToString(), item);
-
-						if (matchfound)
+						if (WindowsAPI.GetMenuString(menu, (uint)i, buf, buf.Capacity - 1, WindowsAPI.MF_BYPOSITION) > 0)
 						{
-							menuid = WindowsAPI.GetMenuItemID(menu, i);
-							menu = WindowsAPI.GetSubMenu(menu, i);
-							break;
+							var matchfound = ControlManagerBase.MenuMatchHelper(buf.ToString(), item);
+
+							if (matchfound)
+							{
+								menuid = WindowsAPI.GetMenuItemID(menu, i);
+								menu = WindowsAPI.GetSubMenu(menu, i);
+								break;
+							}
 						}
 					}
 				}

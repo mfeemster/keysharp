@@ -5330,14 +5330,7 @@ namespace Keysharp.Core.Windows
 										{
 											if (so.OnEnd is IFuncObj ifo)
 											{
-												try
-												{
-													Threads.LaunchInThread(0, false, false, ifo, new object[] { so });
-												}
-												catch (Error ex)
-												{
-													_ = Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
-												}
+												Threads.LaunchInThread(0, false, false, ifo, new object[] { so }, true);
 											}
 										}
 										else
@@ -5368,17 +5361,10 @@ namespace Keysharp.Core.Windows
 											: input_hook.ScriptObject.OnChar) is IFuncObj ifo
 											&& Threads.AnyThreadsAvailable())
 									{
-										try
-										{
-											var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
-													   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
-													   : new object[] { input_hook.ScriptObject, lParamVal, wParamVal };
-											Threads.LaunchInThread(0, false, false, ifo, args);
-										}
-										catch (Error ex)
-										{
-											_ = Dialogs.MsgBox($"Exception thrown during windows hook thread handler.\n\n{ex}");
-										}
+										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
+												   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
+												   : new object[] { input_hook.ScriptObject, lParamVal, wParamVal };
+										Threads.LaunchInThread(0, false, false, ifo, args, true);
 									}
 									else
 										continue;

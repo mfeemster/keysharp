@@ -2144,16 +2144,14 @@ namespace Keysharp.Core.Common.Keyboard
 				tv.hwndLastUsed = new IntPtr(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
 				object ret = null;
-
-				try
+				var ok = Misc.TryCatch(() =>
 				{
 					ret = variant.callback.Call(o);
-				}
-				catch (Exception ex)
-				{
-					_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotkey handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
+					//throw new Error("ASDf");
+				}, false);
+
+				if (!ok)
 					variant.runAgainAfterFinished = false;  // Ensure this is reset due to the error.
-				}
 
 				_ = Interlocked.Decrement(ref variant.existingThreads);
 
@@ -2196,8 +2194,10 @@ namespace Keysharp.Core.Common.Keyboard
 				// if it was called from an ExecUntil() other than ours here:
 				KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
 				Keysharp.Scripting.Script.SetHotNamesAndTimes(Name);
-				_ = Interlocked.Increment(ref variant.existingThreads);//This is the thread count for this particular hotkey only and must come before the thread is actually launched.
-				Threads.LaunchInThread(variant.priority, false, false, vf, new object[] { Name });
+				//This is the thread count for this particular hotkey only and must come before the thread is actually launched.
+				//It will be decremented within the VariadicFunction above after the callback is called.
+				_ = Interlocked.Increment(ref variant.existingThreads);
+				Threads.LaunchInThread(variant.priority, false, false, vf, new object[] { Name }, false);
 			}
 			catch (Error ex)
 			{

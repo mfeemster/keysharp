@@ -477,16 +477,11 @@ namespace Keysharp.Core.Common.Keyboard
 				tv.sendLevel = inputLevel;
 				tv.hwndLastUsed = hwndCritFound;
 				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
-
-				try
+				var ok = Misc.TryCatch(() =>
 				{
 					ret = funcObj.Call(o);
-				}
-				catch (Error ex)
-				{
-					_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
-				}
-
+					//throw new Error("ASDf");
+				}, false);
 				_ = Interlocked.Decrement(ref existingThreads);
 				return ret;
 			};
@@ -501,7 +496,7 @@ namespace Keysharp.Core.Common.Keyboard
 				Accessors.A_EndChar = endCharRequired ? endChar : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
 				Script.SetHotNamesAndTimes(Name);
 				_ = Interlocked.Increment(ref existingThreads);//This is the thread count for this particular hotstring only.
-				Threads.LaunchInThread(priority, false, false, vf, new object[] { Name });
+				Threads.LaunchInThread(priority, false, false, vf, new object[] { Name }, false);
 			}
 			catch (Error ex)
 			{

@@ -164,10 +164,14 @@ using static Keysharp.Scripting.Script.Operator;
 				_ = sbe.AppendLine("The following errors occurred:");
 			}
 
+#if DEBUG
+
 			if (results.HasWarnings)
 			{
 				_ = sbw.AppendLine("The following warnings occurred:");
 			}
+
+#endif
 
 			foreach (CompilerError error in results)
 			{
@@ -201,10 +205,14 @@ using static Keysharp.Scripting.Script.Operator;
 					_ = sbe.AppendLine($"\t{str}");
 			}
 
+#if DEBUG
+
 			if (sbw.Length != 0)
 			{
 				_ = sbw.Insert(0, "The following warnings occurred:\n");
 			}
+
+#endif
 
 			if (sbe.Length != 0)
 			{
@@ -404,7 +412,7 @@ namespace Dyn
 							  .WithOptions(
 								  new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
 								  .WithUsings(usings)
-								  .WithOptimizationLevel(OptimizationLevel.Release)
+								  .WithOptimizationLevel(OptimizationLevel.Debug)//Quick evaluations don't need to be optimized.
 								  .WithPlatform(Platform.AnyCpu)
 								  .WithConcurrentBuild(true)
 							  )

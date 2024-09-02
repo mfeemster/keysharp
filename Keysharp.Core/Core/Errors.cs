@@ -28,7 +28,8 @@
 	{
 		protected string message = "";
 
-		public string ExcType { get; set; }
+		//Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
+		public string ExcType { get; set; } = Keywords.Keyword_Exit;
 		public string Extra { get; set; }
 		public string File { get; set; }
 		public long Line { get; set; }
@@ -39,7 +40,6 @@
 		public string RawMessage => message;
 		public string Stack { get; set; }
 		public string What { get; set; }
-		//Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
 
 		public KeysharpException(params object[] obj)
 		{

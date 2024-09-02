@@ -191,7 +191,7 @@ sysMenuMinimizeBtn.OnEvent("Click", "MinimizeBySystemMenu")
 
 MyGui.UseGroup()
 Tab.UseTab("First")
-gb2_TabOne := MyGui.Add("GroupBox", "x350 yp w325 h800", "Tab One - Group Two") ; 
+gb2_TabOne := MyGui.Add("GroupBox", "x350 yp w325 h815", "Tab One - Group Two") ; 
 
 ; ┌───────────────────────────────┐
 ; │  Tab One, Group Two controls  │
@@ -1959,7 +1959,9 @@ SelectByString()
 #if WINDOWS
 MinimizeBySystemMenu()
 {
-	MenuSelect(MyGui, "KEYSHARP TESTS", "0&", "Minimize")
+	; MenuSelect(MyGui, "KEYSHARP TESTS", "0&", "Minimize")
+	A_Clipboard := "echo Hello, world!`r"
+	MenuSelect "ahk_exe cmd.exe",, "0&", "Edit", "Paste"
 }
 #endif
 

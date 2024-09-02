@@ -361,13 +361,15 @@
 			mainWindow.Activate();
 			_ = mainWindow.BeginInvoke(() =>
 			{
-				_ = Misc.TryCatch(() =>
+				Misc.TryCatch(() =>
 				{
+					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 					_ = userInit();
 					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
 					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
 					isReadyToExecute = true;
-				});
+					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+				}, true);//Pop on exception because EndThread() above won't be called.
 			});
 			Application.Run(mainWindow);
 		}

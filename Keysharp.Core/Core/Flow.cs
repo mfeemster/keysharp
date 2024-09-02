@@ -330,35 +330,23 @@ namespace Keysharp.Core
 					{
 						t.Enabled = false;
 
-						var remove = false;
-
-						(bool, ThreadVariables) btv = (false, null);
-
-						//If there are threads and NoTimers is set, then this shouldn't run. Revisit when threads are implemented, specifically the Thread() function.//TODO
-						try
+						var remove = !Misc.TryCatch(() =>
 						{
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
-							btv = Threads.PushThreadVariables(pri, true, false);
+							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
 							tv.currentTimer = timer;
 							var ret = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
-						}
-						catch (Exception)
-						{
-							remove = true;
-						}
-						finally
-						{
 							Threads.EndThread(btv.Item1);
+						}, true);
 
-							if (once || remove)
-							{
-								_ = timers.TryRemove(func, out _);
-								t.Stop();
-								t.Dispose();
-							}
-							else if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
-								existing.Enabled = true;
+						if (once || remove)
+						{
+							_ = timers.TryRemove(func, out _);
+							t.Stop();
+							t.Dispose();
 						}
+						else if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
+							existing.Enabled = true;
 					}
 				}
 			};

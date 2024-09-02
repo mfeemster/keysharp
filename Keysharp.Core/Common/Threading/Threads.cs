@@ -52,7 +52,7 @@ namespace Keysharp.Core.Common.Threading
 		}
 
 		internal static void LaunchInThread(int priority, bool skipUninterruptible,
-											bool isCritical, object func, object[] o)//Determine later the optimal threading model.//TODO
+											bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
 		{
 			Task<object> tsk = null;
 
@@ -66,28 +66,41 @@ namespace Keysharp.Core.Common.Threading
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);
+					_ = Interlocked.Increment(ref Script.totalExistingThreads);//Will be decremented in EndThread().
+					btv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
 
-					try
+					if (btv.Item1)
 					{
-						//throw new System.Exception("ASDf");
-						//throw new Error("ASDf");
-						_ = Interlocked.Increment(ref Script.totalExistingThreads);
-						btv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
-						AssignTask(btv.Item2);
+						if (tryCatch)
+						{
+							_ = Misc.TryCatch(() =>
+							{
+								AssignTask(btv.Item2);
 
-						if (func is VariadicFunction vf)
-							ret = vf(o);
-						else if (func is IFuncObj ifo)
-							ret = ifo.Call(o);
+								if (func is VariadicFunction vf)
+									ret = vf(o);
+								else if (func is IFuncObj ifo)
+									ret = ifo.Call(o);
+								else
+									ret = "";
+
+								//throw new Error("ASDf");
+								EndThread(btv.Item1);
+							}, true);
+						}
 						else
-							ret = "";
-					}
-					catch (Exception)
-					{
-					}
-					finally
-					{
-						EndThread(btv.Item1);
+						{
+							AssignTask(btv.Item2);
+
+							if (func is VariadicFunction vf)
+								ret = vf(o);
+							else if (func is IFuncObj ifo)
+								ret = ifo.Call(o);
+							else
+								ret = "";
+
+							EndThread(btv.Item1);
+						}
 					}
 
 					return ret;
