@@ -2,13 +2,13 @@ filename := "./asciiart.txt"
 
 attr := FileExist(filename)
 
-if ("A" == attr)
+if (attr == "N" || attr == "A")
 	FileDelete(filename)
 
 Download("http://textfiles.com/art/asciiart.txt", filename)
 attr := FileExist(filename)
 
-if ("A" == attr)
+if ("A" == attr || "N" == attr)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -22,5 +22,5 @@ else
 
 attr := FileExist(filename)
 
-if ("A" == attr)
+if ("A" == attr || "N" == attr)
 	FileDelete(filename)

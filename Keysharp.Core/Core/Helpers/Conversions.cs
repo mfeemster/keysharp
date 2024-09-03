@@ -431,91 +431,101 @@ namespace Keysharp.Core
 			return i == 0 ? DateTime.MinValue : new DateTime((t[0] * 100) + t[1], t[2], t[3], t[4], t[5], t[6], cal);
 		}
 
+		internal struct FileSetAttribData
+		{
+			internal uint and_mask, xor_mask;
+		};
+
 		internal static FileAttributes ToFileAttribs(string set, FileAttributes attribs)
 		{
-			var state = '+';
+			var op = '=';
+			var mask = 0u;
+			var attrMask = new FileSetAttribData();
+			attrMask.and_mask = 0xFFFFFFFF; // Set default: keep all bits.
+			attrMask.xor_mask = 0; // Set default: affect none.
 
 			foreach (var flag in set)
 			{
-				var applied = FileAttributes.Normal;
-
 				switch (flag)
 				{
 					case '+':
 					case '-':
 					case '^':
-						state = flag;
+						op = flag;
+						continue;
+
+					case ' ':
+					case '\t':
 						continue;
 
 					case 'r':
 					case 'R':
-						applied = FileAttributes.ReadOnly;
+						mask = (uint)FileAttributes.ReadOnly;
 						break;
 
 					case 'a':
 					case 'A':
-						applied = FileAttributes.Archive;
+						mask = (uint)FileAttributes.Archive;
 						break;
 
 					case 's':
 					case 'S':
-						applied = FileAttributes.System;
+						mask = (uint)FileAttributes.System;
 						break;
 
 					case 'h':
 					case 'H':
-						applied = FileAttributes.Hidden;
+						mask = (uint)FileAttributes.Hidden;
 						break;
 
 					case 'n':
 					case 'N':
-						applied = FileAttributes.Normal;
+						mask = (uint)FileAttributes.Normal;
 						break;
 
 					//case 'd':
 					//case 'D':
-					//  applied = FileAttributes.Directory;
+					//  mask = (uint)FileAttributes.Directory;
 					//  break;
 
 					case 'o':
 					case 'O':
-						applied = FileAttributes.Offline;
+						mask = (uint)FileAttributes.Offline;
 						break;
 
 					//case 'c':
 					//case 'C':
-					//  applied = FileAttributes.Compressed;
+					//  mask = (uint)FileAttributes.Compressed;
 					//  break;
 
 					case 't':
 					case 'T':
-						applied = FileAttributes.Temporary;
+						mask = (uint)FileAttributes.Temporary;
 						break;
 				}
 
-				switch (state)
+				switch (op)
 				{
+					case '+':
+						attrMask.and_mask &= ~mask;//Reset bit to 0.
+						attrMask.xor_mask |= mask;//Set bit to 1.
+						break;
 					case '-':
-						attribs &= ~applied;
+						attrMask.and_mask &= ~mask;//Reset bit to 0.
+						attrMask.xor_mask &= ~mask;//Override any prior + or ^.
 						break;
-
 					case '^':
-						if ((attribs & applied) == applied)
-							attribs &= ~applied;
-						else
-							attribs |= applied;
-
+						attrMask.xor_mask ^= mask;//Toggle bit. ^= vs |= to invert any prior + or ^.
+						//Leave and_mask as is, so any prior + or - will be inverted.
 						break;
-
-					default:
-						attribs |= applied;
+					default: //No +/-/^ specified, so overwrite attributes (equal and opposite to FileGetAttrib).
+						attrMask.and_mask = 0;//Reset all bits to 0.
+						attrMask.xor_mask |= mask;//Set bit to 1. |= to accumulate if multiple attributes are present.
 						break;
 				}
-
-				state = '+';
 			}
 
-			return attribs;
+			return (FileAttributes)(((uint)attribs & attrMask.and_mask) ^ attrMask.xor_mask);
 		}
 
 		internal static string[] ToFiles(string path, bool files, bool dirs, bool recurse)

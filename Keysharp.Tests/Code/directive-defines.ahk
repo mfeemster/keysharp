@@ -7,7 +7,11 @@ x := 10
 	x *= 2
 #endif
 
-if (x == 20)
+#if WINDOWS
+	if (x == 20)
+#elif LINUX
+	if (x == 10)
+#endif
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

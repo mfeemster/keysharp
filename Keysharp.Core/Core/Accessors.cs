@@ -667,7 +667,7 @@
 			{
 				var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
 				return path != "keysharp.dll" && path != "keysharp.exe" && path != "testhost.exe"
-					   && path != "keysharp" && path != "testhost";
+					   && path != "keysharp" && path != "testhost" && path != "testhost.dll";
 			}
 		}
 

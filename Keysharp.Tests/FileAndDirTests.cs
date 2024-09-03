@@ -851,19 +851,39 @@ namespace Keysharp.Tests
 			Assert.AreEqual("D", attr);
 			dir = "./FileSetAttrib/file1.txt";
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
 			Assert.AreEqual("A", attr);
+#else
+			Assert.AreEqual("N", attr);
+#endif
 			Keysharp.Core.Files.FileSetAttrib('r', dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-			Assert.AreEqual("RA", attr);
+#if WINDOWS
+			Assert.AreEqual("R", attr);
+#else
+			Assert.AreEqual("R", attr);
+#endif
 			Keysharp.Core.Files.FileSetAttrib("-r", dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
 			Assert.AreEqual("A", attr);
+#else
+			Assert.AreEqual("N", attr);
+#endif
 			Keysharp.Core.Files.FileSetAttrib("^r", dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
 			Assert.AreEqual("RA", attr);
+#else
+			Assert.AreEqual("R", attr);
+#endif			
 			Keysharp.Core.Files.FileSetAttrib("^r", dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
 			Assert.AreEqual("A", attr);
+#else
+			Assert.AreEqual("N", attr);
+#endif
 
 			if (Directory.Exists("./FileSetAttrib"))
 				Directory.Delete("./FileSetAttrib", true);
@@ -934,9 +954,9 @@ namespace Keysharp.Tests
 			val = Ini.IniRead("./testini2.ini", "SectionOne", "keyval");//Ensure the file is processed as case insensitive.
 			Assert.AreEqual("theval", val);
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
-			Assert.AreEqual("groupkey1=groupval1\r\ngroupkey2=groupval2\r\ngroupkey3=groupval3\r\n", val);
+			Assert.AreEqual($"groupkey1=groupval1{Accessors.A_NewLine}groupkey2=groupval2{Accessors.A_NewLine}groupkey3=groupval3{Accessors.A_NewLine}", val);
 			val = Ini.IniRead("./testini2.ini");
-			Assert.AreEqual("sectionone\r\nsectiontwo\r\nsectionthree\r\n", val);
+			Assert.AreEqual($"sectionone{Accessors.A_NewLine}sectiontwo{Accessors.A_NewLine}sectionthree{Accessors.A_NewLine}", val);
 			Ini.IniWrite("thevalnew", "./testini2.ini", "sectionone", "keyval");
 			val = Ini.IniRead("./testini2.ini", "sectionone", "keyval");
 			Assert.AreEqual("thevalnew", val);
@@ -947,10 +967,10 @@ groupkey13=groupval13
 					  ;
 			Ini.IniWrite(str, "./testini2.ini", "sectiontwo");
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
-			Assert.AreEqual("groupkey11=groupval11\r\ngroupkey12=groupval12\r\ngroupkey13=groupval13\r\n", val);
+			Assert.AreEqual($"groupkey11=groupval11{Accessors.A_NewLine}groupkey12=groupval12{Accessors.A_NewLine}groupkey13=groupval13{Accessors.A_NewLine}", val);
 			Ini.IniDelete("./testini2.ini", "sectiontwo", "groupkey11");
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
-			Assert.AreEqual("groupkey12=groupval12\r\ngroupkey13=groupval13\r\n", val);
+			Assert.AreEqual($"groupkey12=groupval12{Accessors.A_NewLine}groupkey13=groupval13{Accessors.A_NewLine}", val);
 			Ini.IniDelete("./testini2.ini", "sectiontwo");
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
 			Assert.AreEqual("", val);
@@ -968,7 +988,11 @@ groupkey13=groupval13
 			var fullpath = Path.GetFullPath(string.Concat(path, "DirCopy"));
 			Dir.SetWorkingDir(fullpath);
 			Assert.AreEqual(fullpath, Accessors.A_WorkingDir);
+#if WINDOWS
 			Dir.SetWorkingDir("C:\\a\\fake\\path");//Non-existent folders don't get assigned.
+#else
+			Dir.SetWorkingDir("/a/fake/path");//Non-existent folders don't get assigned.
+#endif
 			Assert.AreEqual(fullpath, Accessors.A_WorkingDir);//So it should remain unchanged.
 			Dir.SetWorkingDir(origdir);
 			Assert.IsTrue(TestScript("file-filesetworkingdir", true));
@@ -985,10 +1009,16 @@ groupkey13=groupval13
 			object drive = null;
 			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
 			Assert.AreEqual("file1.txt", filename);
-			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToString().ToLower());//This will be different on non-windows or on other dev machines.
+#if WINDOWS
+			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToString().ToLower());//This will be different on other dev machines.
+			Assert.AreEqual("D:\\", drive);
+#else
+			var user = Accessors.A_UserName;
+			Assert.AreEqual($"/home/{user}/Dev/Keysharp/Keysharp.Tests/Code/DirCopy".ToLower(), dir.ToString().ToLower());
+			Assert.AreEqual("/", drive);
+#endif
 			Assert.AreEqual("txt", ext);
 			Assert.AreEqual("file1", namenoext);
-			Assert.AreEqual("D:\\", drive);
 			Assert.IsTrue(TestScript("file-filesplitpath", true));
 		}
 	}

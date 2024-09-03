@@ -20,14 +20,14 @@ else
 
 val := IniRead("./testini2.ini", "sectiontwo")
 
-if ("groupkey1=groupval1`r`ngroupkey2=groupval2`r`ngroupkey3=groupval3`r`n" == val)
+if ("groupkey1=groupval1" . A_NewLine . "groupkey2=groupval2" . A_NewLine . "groupkey3=groupval3" . A_NewLine == val)
   	FileAppend, "pass", "*"
 else
    	FileAppend, "fail", "*"
 
 val := IniRead("./testini2.ini")
 
-if ("sectionone`r`nsectiontwo`r`nsectionthree`r`n" == val)
+if ("sectionone" . A_NewLine . "sectiontwo" . A_NewLine . "sectionthree" . A_NewLine == val)
   	FileAppend, "pass", "*"
 else
    	FileAppend, "fail", "*"
@@ -40,11 +40,11 @@ if ("thevalnew" == val)
 else
    	FileAppend, "fail", "*"
 
-str := "groupkey11=groupval11`r`ngroupkey12=groupval12`r`ngroupkey13=groupval13`r`n"
+str := "groupkey11=groupval11" . A_NewLine . "groupkey12=groupval12" . A_NewLine . "groupkey13=groupval13" . A_NewLine
 IniWrite(str, "./testini2.ini", "sectiontwo")
 val := IniRead("./testini2.ini", "sectiontwo")
 
-if ("groupkey11=groupval11`r`ngroupkey12=groupval12`r`ngroupkey13=groupval13`r`n" == val)
+if ("groupkey11=groupval11" . A_NewLine . "groupkey12=groupval12" . A_NewLine . "groupkey13=groupval13" . A_NewLine == val)
   	FileAppend, "pass", "*"
 else
    	FileAppend, "fail", "*"
@@ -52,7 +52,7 @@ else
 IniDelete("./testini2.ini", "sectiontwo", "groupkey11")
 val := IniRead("./testini2.ini", "sectiontwo")
 
-if ("groupkey12=groupval12`r`ngroupkey13=groupval13`r`n" == val)
+if ("groupkey12=groupval12" . A_NewLine . "groupkey13=groupval13" . A_NewLine == val)
   	FileAppend, "pass", "*"
 else
    	FileAppend, "fail", "*"

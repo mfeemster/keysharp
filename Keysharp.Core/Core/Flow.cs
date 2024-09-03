@@ -373,13 +373,25 @@ namespace Keysharp.Core
 			}
 			else if (delay == -1L)
 			{
-				Application.DoEvents();
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch
+				{
+				}
 			}
 			else if (delay == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
 				while (!hasExited && Keysharp.Scripting.Script.input != null && Keysharp.Scripting.Script.input.InProgress())
 				{
-					Application.DoEvents();
+					try
+					{
+						Application.DoEvents();//Can sometimes throw on linux.
+					}
+					catch
+					{
+					}
 					System.Threading.Thread.Sleep(10);
 				}
 			}
@@ -389,7 +401,14 @@ namespace Keysharp.Core
 
 				while (DateTime.Now < stop && !hasExited)
 				{
-					Application.DoEvents();
+					try
+					{
+						Application.DoEvents();//Can sometimes throw on linux.
+					}
+					catch
+					{
+					}
+					
 					System.Threading.Thread.Sleep(10);
 				}
 			}

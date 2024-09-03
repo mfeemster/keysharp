@@ -2,11 +2,11 @@
 
 path := "../../../Keysharp.Tests/Code/DirCopy/file1.txt"
 filename := 
-ext := 
+dir :=
+ext :=
+drive := 
 namenoext := ""
-SplitPath(path, &filename, , &ext, &namenoext)
-
-; Can't really to drive or path, because it differs by OS.
+SplitPath(path, &filename, &dir, &ext, &namenoext, &drive)
 
 if (filename == "file1.txt")
 	FileAppend, "pass", "*"
@@ -22,3 +22,26 @@ if (namenoext == "file1")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+#if WINDOWS
+	if (StrLower("D:\Dev\keysharp\Keysharp.Tests\Code\DirCopy") == StrLower(dir))
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	if (StrLower("D:\") == StrLower(drive))
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+#else
+	if (StrLower("/home/" . A_UserName . "/Dev/Keysharp/Keysharp.Tests/Code/DirCopy") == StrLower(dir))
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	if ("/" == StrLower(drive))
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+#endif

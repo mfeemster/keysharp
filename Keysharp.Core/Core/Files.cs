@@ -1034,6 +1034,11 @@
 					var set = Conversions.ToFileAttribs(attributes, System.IO.File.GetAttributes(path));
 					System.IO.File.SetAttributes(path, set);
 
+					if (set == FileAttributes.None)
+						set = FileAttributes.Normal;
+					else if (set.HasFlag(FileAttributes.Normal) && set != FileAttributes.Normal)//It was Normal and something else.
+						set &= ~FileAttributes.Normal;//Remove normal because it can only be used alone. Just use the other bits.
+
 					if (System.IO.File.GetAttributes(path) != set)
 						failures++;
 				}

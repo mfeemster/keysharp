@@ -533,6 +533,7 @@ CoordMode, "Mouse", "Client"
 CoordMode, "Caret", "Client"
 CoordMode, "Menu", "Client"
 
+#if WINDOWS
 if (A_RegView == 64)
 	FileAppend, "pass", "*"
 else
@@ -565,6 +566,7 @@ if (A_RegView == 64)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+#endif
 
 if (A_TrayMenu.Handle > 0)
 	FileAppend, "pass", "*"

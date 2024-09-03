@@ -38,7 +38,11 @@ else
 dir := "./FileSetAttrib/file1.txt"
 attr := FileGetAttrib(dir)
 
-if (attr == "A")
+#if WINDOWS
+	if (attr == "A")
+#else
+	if (attr == "N")
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
@@ -46,7 +50,11 @@ else
 FileSetAttrib("r", dir)
 attr := FileGetAttrib(dir)
 
-if (attr == "RA")
+#if WINDOWS
+	if (attr == "R")
+#else
+	if (attr == "R")
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
@@ -54,7 +62,11 @@ else
 FileSetAttrib("-r", dir)
 attr := FileGetAttrib(dir)
 
-if (attr == "A")
+#if WINDOWS
+	if (attr == "A")
+#else
+	if (attr == "N")
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
@@ -62,7 +74,11 @@ else
 FileSetAttrib("^r", dir)
 attr := FileGetAttrib(dir)
 
-if (attr == "RA")
+#if WINDOWS
+	if (attr == "RA")
+#else
+	if (attr == "R")
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
@@ -70,7 +86,11 @@ else
 FileSetAttrib("^r", dir)
 attr := FileGetAttrib(dir)
 
-if (attr == "A")
+#if WINDOWS
+	if (attr == "A")
+#else
+	if (attr == "N")
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"

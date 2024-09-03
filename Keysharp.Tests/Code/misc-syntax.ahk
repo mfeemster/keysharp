@@ -68,11 +68,12 @@ else
 	FileAppend, "fail", "*"
 
 ;Hotkey.
-
+#if WINDOWS
 d::
 {
 	global x := 123
 }
+#endif
 
 ;Exclude ++ and -- from continuation.
 

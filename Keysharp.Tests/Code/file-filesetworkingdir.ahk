@@ -10,7 +10,11 @@ if (A_WorkingDir == fullpath)
 else
   	FileAppend, "fail", "*"
 
-SetWorkingDir("C:\a\fake\path") ; Non-existent folders don't get assigned.
+#if WINDOWS
+	SetWorkingDir("C:\a\fake\path") ; Non-existent folders don't get assigned.
+#else
+	SetWorkingDir("/a/fake/path")
+#endif
 
 if (A_WorkingDir == fullpath) ; So it should remain unchanged.
 	FileAppend, "pass", "*"

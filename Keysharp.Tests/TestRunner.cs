@@ -6,15 +6,15 @@ namespace Keysharp.Tests
 	{
 		private const string ext = ".ahk";
 		protected string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
-		protected static TestRunner runner = new TestRunner();
 
 		protected bool TestScript(string source, bool testfunc, bool exeout = false)
 		{
+			var scriptPath = string.Concat(path, source, ext);
 			var b2 = true;
-			var b1 = HasPassed(RunScript(string.Concat(path, source, ext), source, true, exeout));
+			var b1 = HasPassed(RunScript(scriptPath, source, true, exeout));
 
 			if (testfunc && b1)
-				b2 = HasPassed(RunScript(string.Concat(path, source, ext), source + "_func", true, true, exeout));
+				b2 = HasPassed(RunScript(scriptPath, source + "_func", true, true, exeout));
 
 			return b1 && b2;
 		}

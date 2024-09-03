@@ -10,7 +10,9 @@ namespace Keysharp.Tests
 		{
 			var filename = @"./asciiart.txt";
 
-			if (System.IO.File.Exists(filename))
+			var attr = Keysharp.Core.Files.FileExist(filename);
+
+			if (attr.StartsWith('A') || attr.StartsWith('N'))
 				Keysharp.Core.Files.FileDelete(filename);
 
 			Download("http://textfiles.com/art/asciiart.txt", filename);
@@ -18,7 +20,9 @@ namespace Keysharp.Tests
 			Assert.AreEqual(16048L, Keysharp.Core.Files.FileGetSize(filename));
 			System.Threading.Thread.Sleep(1000);
 
-			if (System.IO.File.Exists(filename))
+			attr = Keysharp.Core.Files.FileExist(filename);
+
+			if (attr.StartsWith('A') || attr.StartsWith('N'))
 				Keysharp.Core.Files.FileDelete(filename);
 
 			Download("*0 http://textfiles.com/art/asciiart.txt", filename);

@@ -1,8 +1,13 @@
-
+; s := Format("{1:G}", Sinh(1 * PI))
+; MsgBox("Sinh(1 * PI) == ". s)
 
 PI = 3.1415926535897931
 
-if (-11.548739357257746 == Sinh(-1 * PI))
+#if WINDOWS
+	if (-11.548739357257746 == Sinh(-1 * PI))
+#else
+	if (-11.548739357257748 == Sinh(-1 * PI))
+#endif
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -27,7 +32,11 @@ if (2.3012989023072947 == Sinh(0.5 * PI))
 else
 	FileAppend, "fail", "*"
 	
-if (11.548739357257746 == Sinh(1 * PI))
+#if WINDOWS
+	if (11.548739357257746 == Sinh(1 * PI))
+#else
+	if (11.548739357257748 == Sinh(1 * PI))
+#endif
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

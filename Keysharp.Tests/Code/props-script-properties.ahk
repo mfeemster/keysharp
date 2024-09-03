@@ -15,6 +15,7 @@ if (x == "props-script-properties.ahk")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
 x := A_ScriptFullPath
 
 if (x != "")
