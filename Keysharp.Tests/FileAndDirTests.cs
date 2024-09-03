@@ -858,32 +858,16 @@ namespace Keysharp.Tests
 #endif
 			Keysharp.Core.Files.FileSetAttrib('r', dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-#if WINDOWS
 			Assert.AreEqual("R", attr);
-#else
-			Assert.AreEqual("R", attr);
-#endif
 			Keysharp.Core.Files.FileSetAttrib("-r", dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-#if WINDOWS
-			Assert.AreEqual("A", attr);
-#else
 			Assert.AreEqual("N", attr);
-#endif
 			Keysharp.Core.Files.FileSetAttrib("^r", dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-#if WINDOWS
-			Assert.AreEqual("RA", attr);
-#else
 			Assert.AreEqual("R", attr);
-#endif			
 			Keysharp.Core.Files.FileSetAttrib("^r", dir);
 			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-#if WINDOWS
-			Assert.AreEqual("A", attr);
-#else
 			Assert.AreEqual("N", attr);
-#endif
 
 			if (Directory.Exists("./FileSetAttrib"))
 				Directory.Delete("./FileSetAttrib", true);
