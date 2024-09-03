@@ -1,30 +1,42 @@
 ; #Include %A_ScriptDir%/header.ahk
 
 path := "../../../Keysharp.Tests/Code/DirCopy"
-attr := FileGetAttrib(path)
+val := FileGetAttrib(path)
 
-if (attr == "D")
+if (val == "D")
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
 
-attr := FileGetAttrib(path . "/file1.txt")
+val := FileGetAttrib(path . "/file1.txt")
 
-if (attr == "A")
+#if WINDOWS
+	if ("A" == val)
+#else
+	if ("N" == val)
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
 
-attr := FileGetAttrib(path . "/file2.txt")
+val := FileGetAttrib(path . "/file2.txt")
 
-if (attr == "A")
+#if WINDOWS
+	if ("A" == val)
+#else
+	if ("N" == val)
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
 
-attr := FileGetAttrib(path . "/file3txt")
+val := FileGetAttrib(path . "/file3txt")
 
-if (attr == "A")
+#if WINDOWS
+	if ("A" == val)
+#else
+	if ("N" == val)
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"

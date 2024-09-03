@@ -97,15 +97,27 @@ namespace Keysharp.Tests
 			dir = string.Concat(path, "DirCopy/file1.txt");
 			Assert.IsTrue(System.IO.File.Exists(dir));
 			val = Dir.DirExist(dir);
+#if WINDOWS
 			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			dir = string.Concat(path, "DirCopy/file2.txt");
 			Assert.IsTrue(System.IO.File.Exists(dir));
 			val = Dir.DirExist(dir);
+#if WINDOWS
 			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			dir = string.Concat(path, "DirCopy/file3txt");
 			Assert.IsTrue(System.IO.File.Exists(dir));
 			val = Dir.DirExist(dir);
+#if WINDOWS
 			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			Assert.IsTrue(TestScript("file-direxist", true));
 		}
 
@@ -372,8 +384,12 @@ namespace Keysharp.Tests
 		{
 			var dir = string.Concat(path, "DirCopy");
 			dir += "/*.txt";
-			var attr = Keysharp.Core.Files.FileExist(dir);
-			Assert.AreEqual("A", attr);
+			var val = Keysharp.Core.Files.FileExist(dir);
+#if WINDOWS
+			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			Assert.IsTrue(TestScript("file-fileexist", true));
 		}
 
@@ -381,17 +397,29 @@ namespace Keysharp.Tests
 		public void FileGetAttrib()
 		{
 			var dir = string.Concat(path, "DirCopy");
-			var attr = Keysharp.Core.Files.FileGetAttrib(dir);
-			Assert.AreEqual("D", attr);
+			var val = Keysharp.Core.Files.FileGetAttrib(dir);
+			Assert.AreEqual("D", val);
 			dir = string.Concat(path, "DirCopy/file1.txt");
-			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-			Assert.AreEqual("A", attr);
+			val = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
+			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			dir = string.Concat(path, "DirCopy/file2.txt");
-			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-			Assert.AreEqual("A", attr);
+			val = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
+			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			dir = string.Concat(path, "DirCopy/file3txt");
-			attr = Keysharp.Core.Files.FileGetAttrib(dir);
-			Assert.AreEqual("A", attr);
+			val = Keysharp.Core.Files.FileGetAttrib(dir);
+#if WINDOWS
+			Assert.AreEqual(val, "A");
+#else
+			Assert.AreEqual(val, "N");
+#endif
 			Assert.IsTrue(TestScript("file-filegetattrib", true));
 		}
 
@@ -407,6 +435,49 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Keysharp.Core.Dir.DirCopy(dir, "./FileGetShortcut/");
 			var patharg = Path.GetDirectoryName(Path.GetFullPath("./FileGetShortcut/file1.txt"));
+			object outTarget = null;
+			object outDir = null;
+			object outArgs = null;
+			object outDescription = null;
+			object outIcon = null;
+			object outIconNum = null;
+			object outRunState = null;
+#if LINUX
+			//Test creating a basic symlink first on linux.
+			Keysharp.Core.Files.FileCreateShortcut
+			(
+				"./FileGetShortcut/file1.txt",
+				"./testshortcut.lnk"
+			);
+
+			Keysharp.Core.Files.FileGetShortcut("./testshortcut.lnk",
+												ref outTarget,
+												ref outDir,
+												ref outArgs,
+												ref outDescription,
+												ref outIcon,
+												ref outIconNum,
+												ref outRunState);
+			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), outTarget.ToString().ToLower());
+			Assert.AreEqual(patharg, outDir.ToString());
+			Assert.AreEqual("", outDescription.ToString());
+			Assert.AreEqual("", outArgs.ToString());
+			Assert.AreEqual("", outIcon.ToString());
+			Assert.AreEqual("", outIconNum.ToString());
+			Assert.AreEqual("", outRunState.ToString());
+			
+			if (System.IO.File.Exists("./testshortcut.lnk"))
+				System.IO.File.Delete("./testshortcut.lnk");
+
+			outTarget = null;
+			outDir = null;
+			outArgs = null;
+			outDescription = null;
+			outIcon = null;
+			outIconNum = null;
+			outRunState = null;
+#endif
+
 			Keysharp.Core.Files.FileCreateShortcut
 			(
 				"./FileGetShortcut/file1.txt",
@@ -415,15 +486,13 @@ namespace Keysharp.Tests
 				"",
 				"TestDescription",
 				"../../../Keysharp.ico",
+#if WINDOWS
 				""
+#else
+				2L
+#endif
 			);
-			object outTarget = null;
-			object outDir = null;
-			object outArgs = null;
-			object outDescription = null;
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
+			
 			Keysharp.Core.Files.FileGetShortcut("./testshortcut.lnk",
 												ref outTarget,
 												ref outDir,
@@ -437,8 +506,13 @@ namespace Keysharp.Tests
 			Assert.AreEqual("TestDescription", outDescription.ToString());
 			Assert.AreEqual("", outArgs.ToString());
 			Assert.AreEqual(Path.GetFullPath("../../../Keysharp.ico"), outIcon.ToString());
+#if WINDOWS
 			Assert.AreEqual("0", outIconNum.ToString());
 			Assert.AreEqual("1", outRunState.ToString());
+#else
+			Assert.AreEqual("Link", outIconNum.ToString());
+			Assert.AreEqual("", outRunState.ToString());
+#endif
 
 			if (System.IO.File.Exists("./testshortcut.lnk"))
 				System.IO.File.Delete("./testshortcut.lnk");
@@ -708,8 +782,9 @@ namespace Keysharp.Tests
 				Assert.AreEqual(pos, 0L);
 				Assert.AreEqual(len, 7L);
 			}
-
+#if WINDOWS
 			//Test modes and permissions by checking for expected exceptions.
+			//linux seems to be ok with these combinations and doesn't throw.
 			TestException(() =>
 			{
 				using (var f = Keysharp.Core.Files.FileOpen(filename, "r -r"))//Test read share.
@@ -729,6 +804,7 @@ namespace Keysharp.Tests
 				}
 			});
 
+#endif
 			using (var f = Keysharp.Core.Files.FileOpen(filename, "r -r"))//Test read share create from handle.
 			{
 				var handle = f.Handle;

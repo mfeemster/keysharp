@@ -41,18 +41,43 @@ if (FileExist(dir))
 else
 	FileAppend, "fail", "*"
 
-if (DirExist(dir) == "A")
+#if WINDOWS
+	if (DirExist(dir) == "A")
+#else
+	if (DirExist(dir) == "N")
+#endif
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-; val = Disk.DirExist(dir);
-; Assert.AreEqual(val, "A");
-; dir = string.Concat(path, "DirCopy/file2.txt");
-; Assert.IsTrue(File.Exists(dir));
-; val = Disk.DirExist(dir);
-; Assert.AreEqual(val, "A");
-; dir = string.Concat(path, "DirCopy/file3txt");
-; Assert.IsTrue(File.Exists(dir));
-; val = Disk.DirExist(dir);
-; Assert.AreEqual(val, "A");
+dir := path . "DirCopy/file2.txt"
+
+if (FileExist(dir))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+#if WINDOWS
+	if (DirExist(dir) == "A")
+#else
+	if (DirExist(dir) == "N")
+#endif
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+dir := path . "DirCopy/file3txt"
+
+if (FileExist(dir))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+#if WINDOWS
+	if (DirExist(dir) == "A")
+#else
+	if (DirExist(dir) == "N")
+#endif
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

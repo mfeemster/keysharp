@@ -3,9 +3,13 @@
 path := "../../../Keysharp.Tests/Code/"
 dir := path . "DirCopy/*.txt"
 
-attr := FileExist(dir)
+val := FileExist(dir)
 
-if ("A" == attr)
+#if WINDOWS
+	if ("A" == val)
+#else
+	if ("N" == val)
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"

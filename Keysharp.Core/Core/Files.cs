@@ -190,12 +190,18 @@
 			var args = obj3.As();
 			var description = obj4.As();
 			var icon = obj5.As();
+
+			if (target == "")
+				throw new ValueError("Shortcut target cannot be an empty string.");
+
 #if LINUX
 			var type = obj6.As();
+			target = Path.GetFullPath(target);
 
 			if (workingDir != "" || args != "" || description != "" || icon != "")
 			{
 				var creator = new ShortcutCreator();
+				icon = Path.GetFullPath(icon);
 				creator.Add("Icon", icon);
 				creator.Add("Path", workingDir);
 				creator.Add("Comment", description);
@@ -487,7 +493,7 @@
 										   ref object outIconNum,
 										   ref object outRunState)
 		{
-			var link = obj.As();
+			var link = Path.GetFullPath(obj.As());
 #if LINUX
 			var dest = $"readlink -f '{link}'".Bash();
 
@@ -508,6 +514,8 @@
 
 						if (splits.Length > 1)
 							outArgs = splits[1];
+						else
+							outArgs = "";
 					}
 					else//It was quoted.
 					{
@@ -522,7 +530,7 @@
 			else
 			{
 				outTarget = dest;
-				outDir = "";
+				outDir = Path.GetDirectoryName(dest);
 				outArgs = "";
 				outDescription = "";
 				outIcon = "";

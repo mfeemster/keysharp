@@ -13,7 +13,7 @@ If (x == 100)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 reffunc1(&xxx) ; Declare inline.
 
 If (xxx == 100)
@@ -252,14 +252,14 @@ If (reffuncobj.IsByRef(4) == false)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 myreffunc := (a, &b, &c) => b := 1111, c := 888
 	
 If (myreffunc.IsByRef(1) == false)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 If (myreffunc.IsByRef(2) == true)
 	FileAppend, "pass", "*"
 else
@@ -269,7 +269,7 @@ If (myreffunc.IsByRef(3) == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-		
+			
 x :=
 y :=
 z := ""

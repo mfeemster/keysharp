@@ -270,7 +270,7 @@ else
 f.Close()
 
 b := false
-
+#if WINDOWS
 try
 {
 	FileOpen(path, "r -r")
@@ -302,6 +302,7 @@ if (b == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+#endif
 
 b := false
 
