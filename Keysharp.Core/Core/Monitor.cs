@@ -42,10 +42,10 @@
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			l  = screen.Bounds.Left;
-			t  = screen.Bounds.Top;
-			r  = screen.Bounds.Right;
-			b  = screen.Bounds.Bottom;
+			l  = (long)screen.Bounds.Left;
+			t  = (long)screen.Bounds.Top;
+			r  = (long)screen.Bounds.Right;
+			b  = (long)screen.Bounds.Bottom;
 			return n > 0L ? n : 1L;
 		}
 
@@ -114,10 +114,10 @@
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			l = screen.WorkingArea.Left;
-			t = screen.WorkingArea.Top;
-			r = screen.WorkingArea.Right;
-			b = screen.WorkingArea.Bottom;
+			l = (long)screen.WorkingArea.Left;
+			t = (long)screen.WorkingArea.Top;
+			r = (long)screen.WorkingArea.Right;
+			b = (long)screen.WorkingArea.Bottom;
 			return n > 0L ? n : 1L;
 		}
 	}
