@@ -5,7 +5,9 @@ namespace Keysharp.Tests
 	public class GuiTests : TestRunner
 	{
 		[Test, Category("Gui")]
+#if WINDOWS
 		[Apartment(ApartmentState.STA)]
+#endif
 		public void FileSelect()
 		{
 			var fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/file1.txt"));
@@ -20,13 +22,7 @@ namespace Keysharp.Tests
 			fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/"));
 			files = Dialogs.FileSelect("S16", fullpath, "", "Text files |*.txt;*.wri;*.ini");
 			//MsgBox(files);
-			files = Dialogs.FileSelect("D", "C:\\D\\", "", "");
-			files = Dialogs.FileSelect("D", "C:\\D", "", "");
-		}
-
-		[Test, Category("Gui")]
-		public void DirSelect()
-		{
+			files = Dialogs.FileSelect("D", "D:\\", "", "");
 		}
 
 #if WINDOWS

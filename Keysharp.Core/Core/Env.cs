@@ -110,7 +110,11 @@ namespace Keysharp.Core
 
 			for (var i = 0L; !checktime || i < time; i += frequency)
 			{
-				if (!type ? Clipboard.ContainsText() || Clipboard.ContainsFileDropList() : !IsClipboardEmpty())
+				if (!type ? Clipboard.ContainsText()
+#if WINDOWS
+				 || Clipboard.ContainsFileDropList()
+#endif
+				 : !IsClipboardEmpty())
 					return true;
 
 				Keysharp.Core.Flow.Sleep(frequency);

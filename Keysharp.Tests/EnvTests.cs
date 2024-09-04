@@ -4,8 +4,10 @@ namespace Keysharp.Tests
 {
 	public class EnvTests : TestRunner
 	{
-		[Test, Category("Env")]
+		[Test, Category("Env"), NonParallelizable]
+#if WINDOWS
 		[Apartment(ApartmentState.STA)]
+#endif
 		public void ClipboardAll()
 		{
 			Accessors.A_Clipboard = "Asdf";
@@ -22,9 +24,12 @@ namespace Keysharp.Tests
 
 		/// <summary>
 		/// This can fail periodically, but mostly works.
+		/// If it fails in a batch, try running on its own.
 		/// </summary>
-		[Test, Category("Env")]
+		[Test, Category("Env"), NonParallelizable]
+#if WINDOWS
 		[Apartment(ApartmentState.STA)]
+#endif
 		public void ClipWait()
 		{
 			Clipboard.Clear();
@@ -77,7 +82,7 @@ namespace Keysharp.Tests
 			ms = (dt2 - dt).TotalMilliseconds;
 			tcs.Task.Wait();
 			Assert.AreEqual(true, b);//Will have detected clipboard data, so ErrorLevel will be 0.
-			//Wait specifically for text/files, and copy an image. This should time out, and ErrorLevel should be set to 1.
+			//Wait specifically for text/files, and copy an image. This should time out.
 			Clipboard.Clear();
 			var bitmap = new Bitmap(640, 480);
 			tcs = new TaskCompletionSource<bool>();
@@ -100,7 +105,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("env-clipwait", true));//For this to work, the bitmap from above must be on the clipboard.
 		}
 
-		[Test, Category("Env")]
+		[Test, Category("Env"), NonParallelizable]
 		public void EnvGet()
 		{
 			var path = Env.EnvGet("PATH");
@@ -110,7 +115,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("env-envget", true));
 		}
 
-		[Test, Category("Env")]
+		[Test, Category("Env"), NonParallelizable]
 		public void EnvSet()
 		{
 			var key = "dummynothing123";
@@ -124,14 +129,14 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("env-envset", true));
 		}
 
-		[Test, Category("Env")]
+		[Test, Category("Env"), NonParallelizable]
 		public void EnvUpdate()
 		{
 			Env.EnvUpdate();
 			Assert.IsTrue(TestScript("env-envupdate", true));
 		}
 
-		[Test, Category("Env")]
+		[Test, Category("Env"), NonParallelizable]
 		public void SysGet()
 		{
 			//Monitors
