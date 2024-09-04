@@ -282,12 +282,16 @@ namespace Keysharp.Core
 				{
 					StartInfo = new ProcessStartInfo
 					{
-						UseShellExecute = true,
 						FileName = target,
 						WorkingDirectory = string.IsNullOrEmpty(workingDir) ? null : workingDir.Trim(),
 						UserName = string.IsNullOrEmpty(runUser) ? null : runUser,
+#if WINDOWS
+						UseShellExecute = true,
 						Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain,
 						Password = (runPassword == null || runPassword.Length == 0) ? null : runPassword
+#else
+						UseShellExecute = false,
+#endif
 					}
 				};
 
@@ -307,7 +311,11 @@ namespace Keysharp.Core
 						case Keyword_Hide: prc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden; break;
 					}
 				}
-				else if (prc.StartInfo.UserName != null || prc.StartInfo.Domain != null)
+				else if (prc.StartInfo.UserName != null
+#if WINDOWS
+				 || prc.StartInfo.Domain != null
+#endif
+				 )
 				{
 					prc.StartInfo.UseShellExecute = false;
 				}
