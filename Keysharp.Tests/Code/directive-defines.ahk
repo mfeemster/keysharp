@@ -195,3 +195,30 @@ if (x == 20)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Test undefining something that has been predefined.
+x := false
+
+#undef SOMETHING
+
+#if SOMETHING
+	x := true
+#endif
+
+if (!x)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := false
+
+#define SOMETHING
+
+#if SOMETHING
+	x := true
+#endif
+
+if (x)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

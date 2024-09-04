@@ -264,6 +264,17 @@ namespace Keysharp.Scripting
 										_ = currentDefines.Pop();
 										goto LineFinished;
 									}
+
+									case "UNDEF":
+									{
+										if (parts[1] == string.Empty)
+											throw new ParseException($"#undef was not followed by an identifier.", lineNumber, code);
+
+										if (!defines.Remove(parts[1]))
+											throw new ParseException($"Attempted to #undef '{parts[1]}' which was not already defined.", lineNumber, code);
+
+										goto LineFinished;
+									}
 								}
 
 								if (InNotDefine())
