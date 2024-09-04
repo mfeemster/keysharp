@@ -595,7 +595,8 @@ namespace Keysharp.Core
 #endif
 					ctrl = new KeysharpButton(opts.addstyle, opts.remstyle)
 					{
-						Name = text
+						Name = text,
+						AutoSize = opts.width == int.MinValue && opts.wp == int.MinValue && opts.height == int.MinValue && opts.hp == int.MinValue
 					};
 
 					if (opts.btndef.IsTrue())
