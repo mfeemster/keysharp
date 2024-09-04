@@ -1,6 +1,8 @@
-; #Include %A_ScriptDir%/header.ahk
-
-val := DriveGetCapacity("C:\")
+#if WINDOWS
+	val := DriveGetCapacity("C:\")
+#else
+	val := DriveGetCapacity("/dev/sda")
+#endif
 			
 if (val > 1000)
  	FileAppend, "pass", "*"

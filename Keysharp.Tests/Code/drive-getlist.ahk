@@ -1,8 +1,10 @@
-; #Include %A_ScriptDir%/header.ahk
-
 val := DriveGetList()
 			
-if (SubStr(val, 1, 1) == "C")
+#if WINDOWS
+	if (SubStr(val, 1, 1) == "C")
+#else
+	if (SubStr(val, 1, 1) == "/")
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"

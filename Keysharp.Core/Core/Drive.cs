@@ -45,7 +45,9 @@ namespace Keysharp.Core
 				type = Common.Mapper.MappingService.Instance.DriveType.LookUpCLRType(drivetype);
 
 			var drives = DriveInfo.GetDrives();
-
+#if !WINDOWS
+			var list = new List<string>(drives.Length);
+#endif
 			for (var i = 0; i < drives.Length; i++)
 			{
 				if (type.HasValue)
@@ -55,7 +57,11 @@ namespace Keysharp.Core
 					try
 					{
 						if (drives[i].DriveType == type.Value)
+#if WINDOWS
 							matchingDevices += drives[i].Name[0];
+#else
+							list.Add(drives[i].Name);
+#endif
 					}
 					catch
 					{
@@ -64,11 +70,18 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					matchingDevices += drives[i].Name[0];
+#if WINDOWS
+							matchingDevices += drives[i].Name[0];
+#else
+							list.Add(drives[i].Name);
+#endif
 				}
 			}
-
+#if WINDOWS
 			return matchingDevices;
+#else
+			return string.Join(';', list);
+#endif
 		}
 
 		/// <summary>

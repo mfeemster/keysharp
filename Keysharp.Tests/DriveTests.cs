@@ -4,10 +4,18 @@ namespace Keysharp.Tests
 {
 	public class DriveTests : TestRunner
 	{
+#if WINDOWS
+			string drive = "C:\\";
+			char driveStart = 'C';
+#else
+			string drive = "/dev";
+			char driveStart = '/';
+#endif
+
 		[Test, Category("Drive")]
 		public void DriveGetSpaceFree()
 		{
-			var free = Drive.DriveGetSpaceFree("C:\\");
+			var free = Drive.DriveGetSpaceFree(drive);
 			Assert.IsTrue(free > 10);//Assume anyone who is running this has at least 10MB of disk space left.
 			Assert.IsTrue(TestScript("drive-getspacefree", true));
 		}
@@ -15,7 +23,7 @@ namespace Keysharp.Tests
 		[Test, Category("Drive")]
 		public void DriveGetCapacity()
 		{
-			var free = Drive.DriveGetCapacity("C:\\");
+			var free = Drive.DriveGetCapacity(drive);
 			Assert.IsTrue(free > 1000);//Assume anyone who is running this has at least 1MB of total disk space.
 			Assert.IsTrue(TestScript("drive-getcapacity", true));
 		}
@@ -23,8 +31,8 @@ namespace Keysharp.Tests
 		[Test, Category("Drive")]
 		public void DriveGetFileSystem()
 		{
-			var sys = Drive.DriveGetFileSystem("C:\\");
-			Assert.IsTrue(sys == "NTFS" || sys == "FAT32" || sys == "FAT" || sys == "CDFS" || sys == "UDF");//Assume it's at least one of the common file system types.
+			var sys = Drive.DriveGetFileSystem(drive);
+			Assert.IsTrue(sys == "NTFS" || sys == "FAT32" || sys == "FAT" || sys == "CDFS" || sys == "UDF" || sys == "udev");//Assume it's at least one of the common file system types.
 			Assert.IsTrue(TestScript("drive-getfilesystem", true));
 		}
 
@@ -32,30 +40,35 @@ namespace Keysharp.Tests
 		public void DriveGetList()
 		{
 			var sys = Drive.DriveGetList();
-			Assert.IsTrue(sys.StartsWith("C"));//Assume it's at least one of the common drive names.
+			Assert.IsTrue(sys.StartsWith(driveStart));//Assume it's at least one of the common drive names.
 			Assert.IsTrue(TestScript("drive-getlist", true));
 		}
 
 		[Test, Category("Drive")]
 		public void DriveGetSerial()
 		{
-			var sys = Drive.DriveGetSerial("C:\\");
+			var sys = Drive.DriveGetSerial(drive);
+#if WINDOWS
 			Assert.IsTrue(sys > 1);//It will be some large hex number.
+#else
+			Assert.IsTrue(sys > 1 || sys == 0);//It will be some large hex number or 0 if there was no serial number.
+#endif
+			
 			Assert.IsTrue(TestScript("drive-getserial", true));
 		}
 
 		[Test, Category("Drive")]
 		public void DriveGetType()
 		{
-			var type = Drive.DriveGetType("C:\\");
-			Assert.AreEqual("Fixed", type);
+			var type = Drive.DriveGetType(drive);
+			Assert.IsTrue(type == "Fixed" || type == "RAMDisk");
 			Assert.IsTrue(TestScript("drive-gettype", true));
 		}
 
 		[Test, Category("Drive")]
 		public void DriveGetStatus()
 		{
-			var ready = Drive.DriveGetStatus("C:\\");
+			var ready = Drive.DriveGetStatus(drive);
 			Assert.AreEqual("Ready", ready);
 			Assert.IsTrue(TestScript("drive-getstatus", true));
 		}
@@ -80,6 +93,7 @@ namespace Keysharp.Tests
 			//Assert.IsTrue(TestScript("drive-driveeject", true));
 		}
 
+#if WINDOWS
 		[Test, Category("Drive")]
 		public void DriveGetSetLabel()
 		{
@@ -92,7 +106,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(origlabel, newlabel);
 			Assert.IsTrue(TestScript("drive-getsetlabel", true));
 		}
-
+#endif
 		[Test, Category("Drive")]
 		public void DriveGetStatusCD()
 		{

@@ -1,8 +1,12 @@
-; #Include %A_ScriptDir%/header.ahk
-
-val := DriveGetSerial("C:\")
+#if WINDOWS
+	val := DriveGetSerial("C:\")
 			
-if (val > 1)
+	if (val > 1)
+#else
+	val := DriveGetSerial("/dev/sda")
+			
+	if (val >= 0)
+#endif
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"

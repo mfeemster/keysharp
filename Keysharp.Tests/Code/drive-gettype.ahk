@@ -1,8 +1,10 @@
-; #Include %A_ScriptDir%/header.ahk
+#if WINDOWS
+	val := DriveGetType("C:\")
+#else
+	val := DriveGetType("/dev/sda")
+#endif
 
-val := DriveGetType("C:\")
-			
-if (val == "Fixed")
+if (val == "Fixed" || val == "RAMDisk")
  	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"

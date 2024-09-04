@@ -1,6 +1,8 @@
-; #Include %A_ScriptDir%/header.ahk
-
-val := DriveGetSpaceFree("C:\")
+#if WINDOWS
+	val := DriveGetSpaceFree("C:\")
+#else
+	val := DriveGetSpaceFree("/dev/sda")
+#endif
 			
 if (val > 10)
  	FileAppend, "pass", "*"
