@@ -969,7 +969,7 @@ LV2_Btn7.OnEvent("Click", "LV_CountCol")
 
 MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
-gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w325 h875", "ControlZoo - Group Two")
+gb2_CZ := MyGui.Add("GroupBox", "x+10 y10 w370 h875", "ControlZoo - Group Two")
 MyGui.UseGroup(gb2_CZ)
 
 ;Reserved4 := MyGui.Add("Text", "x10 y20 w325", "Reserved for Future Testing")
