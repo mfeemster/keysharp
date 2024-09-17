@@ -652,7 +652,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1C050218C7AF46B682A3C2C471962448"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keysharp.runtimeconfig.json"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keysharp.runtimeconfig.json"
             "TargetName" = "8:Keysharp.runtimeconfig.json"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -776,7 +776,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Microsoft.Extensions.DependencyModel.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Microsoft.Extensions.DependencyModel.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -827,7 +827,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_3DA2D6661DC1410791CD7DAEC97DB280"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Scintilla.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Scintilla.dll"
             "TargetName" = "8:Scintilla.dll"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -909,7 +909,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4C00623885B74268B25E5CB96A29A86B"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keysharp.Core.deps.json"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keysharp.Core.deps.json"
             "TargetName" = "8:Keysharp.Core.deps.json"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -929,7 +929,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4D55CA274B104EDBAFD28BB3235EC41E"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keyview.deps.json"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keyview.deps.json"
             "TargetName" = "8:Keyview.deps.json"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1042,7 +1042,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keyview.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keyview.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1330,7 +1330,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A855C0C9CD9447CC8661E4C164426809"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Lexilla.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Lexilla.dll"
             "TargetName" = "8:Lexilla.dll"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1432,7 +1432,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B0DB162521FF40BFA21C59C9E6CA3D6B"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keyview.exe"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keyview.exe"
             "TargetName" = "8:Keyview.exe"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1452,7 +1452,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B31DB086641D4AFCB12EDC0087813CAC"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keysharp.deps.json"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keysharp.deps.json"
             "TargetName" = "8:Keysharp.deps.json"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1503,7 +1503,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\System.Management.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\System.Management.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1534,7 +1534,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keysharp.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keysharp.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1554,7 +1554,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_CA000FB7888146D6A15947C9316DDBF0"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keyview.runtimeconfig.json"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keyview.runtimeconfig.json"
             "TargetName" = "8:Keyview.runtimeconfig.json"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1605,7 +1605,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D5A7A0311B914DD89A4CD8BC18F4CF3E"
             {
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Keysharp.exe"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Keysharp.exe"
             "TargetName" = "8:Keysharp.exe"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
@@ -1760,7 +1760,7 @@
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:..\\bin\\release\\net8.0-windows\\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll"
+            "SourcePath" = "8:..\\bin\\release\\net9.0-windows\\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
