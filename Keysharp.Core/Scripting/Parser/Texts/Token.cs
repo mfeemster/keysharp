@@ -320,14 +320,13 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		//=> string.Compare(code, name, true) == 0 && typeStack.Peek().Name != mainClassName&& Scope.Length > 0;
 		internal static bool IsHotstringLabel(string code) => code.Length > 0 && code[0] == HotkeyBound&& code.Contains(HotkeySignal)&& code.Count(ch => ch == HotkeyBound) >= 4;
 
 		internal static bool IsIdentifier(char symbol) => char.IsLetterOrDigit(symbol) || VarExt.IndexOf(symbol) != -1;
 
-		internal static bool IsIdentifier(string token) => IsIdentifier(token, false);
+		internal bool IsIdentifier(string token) => IsIdentifier(token, false);
 
-		internal static bool IsIdentifier(string token, bool dynamic)
+		internal bool IsIdentifier(string token, bool dynamic)
 		{
 			if (string.IsNullOrEmpty(token))
 				return false;
@@ -353,7 +352,7 @@ namespace Keysharp.Scripting
 					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
 				return false;
 
-			return true;
+			return Ch.IsValidVariable(token);
 		}
 
 		internal static bool IsKeyword(string code) => keywords.Contains(code);
@@ -404,7 +403,7 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		internal static bool IsLegacyIf(string code)
+		internal bool IsLegacyIf(string code)
 		{
 			var part = code.TrimStart(Spaces).Split(Spaces, 3);
 
@@ -543,7 +542,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		internal static bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
+		internal bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
 
 		internal bool IsFlowOperator(string code)
 		{
