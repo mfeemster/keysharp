@@ -79,7 +79,7 @@
 						temppt.X += 10;
 						temppt.Y += 10;
 						var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-						_ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, temppt });
+						_ = m.Invoke(tt, [tooltipInvokerForm, text, 2, temppt]);
 					}
 					else
 					{
@@ -98,7 +98,7 @@
 							if (Mouse.Coords.Tooltip == CoordModeType.Screen)
 							{
 								var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-								_ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, new Point(tempx, tempy) });
+								_ = m.Invoke(tt, [tooltipInvokerForm, text, 2, new Point(tempx, tempy)]);
 							}
 							else
 							{
@@ -124,7 +124,7 @@
 									//var pt = tooltipForm.PointToClient(new Point(tempx, tempy));
 									var pt = new Point(tempx, tempy);
 									var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-									_ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, pt });
+									_ = m.Invoke(tt, [tooltipInvokerForm, text, 2, pt]);
 								}
 								//else//The coord is relative to a window, and the window is not minimized but is also not active.
 								//{
@@ -233,10 +233,8 @@
 			}
 
 			var icon = ToolTipIcon.None;
-			void HandleInt(object o)
+			void HandleInt(int? i)
 			{
-				var i = o.ParseInt();
-
 				if ((i & 4) == 4) { }//tray icon
 				else if ((i & 3) == 3) { icon = ToolTipIcon.Error; }
 				else if ((i & 2) == 2) { icon = ToolTipIcon.Warning; }
@@ -247,17 +245,22 @@
 
 			if (options is string s)
 			{
-				foreach (var opt in Options.ParseOptions(s.ToLower()))
+				foreach (Range r in s.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					if (opt == "iconi") icon = ToolTipIcon.Info;
-					else if (opt == "icon!") icon = ToolTipIcon.Warning;
-					else if (opt == "iconx") icon = ToolTipIcon.Error;
-					else if (opt == "mute") { }
-					else HandleInt(opt);
+					var opt = s.AsSpan(r).Trim();
+
+					if (opt.Length > 0)
+					{
+						if (opt.Equals("iconi", StringComparison.OrdinalIgnoreCase)) icon = ToolTipIcon.Info;
+						else if (opt.Equals("icon!", StringComparison.OrdinalIgnoreCase)) icon = ToolTipIcon.Warning;
+						else if (opt.Equals("iconx", StringComparison.OrdinalIgnoreCase)) icon = ToolTipIcon.Error;
+						else if (opt.Equals("mute", StringComparison.OrdinalIgnoreCase)) { }
+						else HandleInt(int.Parse(opt));
+					}
 				}
 			}
 			else if (options != null)
-				HandleInt(options);
+				HandleInt(options.ParseInt());
 
 			Script.Tray.Visible = true;
 			Script.Tray.ShowBalloonTip(1000, title, text, icon);//Duration is now ignored by Windows.

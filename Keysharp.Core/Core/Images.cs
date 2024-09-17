@@ -6,17 +6,21 @@
 		{
 			var filename = obj0.As();
 			var options = obj1.As();
-			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";
 			object iconnumber = 0;
 
-			foreach (var opt in opts)
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				if (Options.TryParse(opt, "w", ref width)) { }
-				else if (Options.TryParse(opt, "h", ref height)) { }
-				else if (Options.TryParseString(opt, "icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+				var opt = options.AsSpan(r).Trim();
+
+				if (opt.Length > 0)
+				{
+					if (Options.TryParse(opt, "w", ref width)) { }
+					else if (Options.TryParse(opt, "h", ref height)) { }
+					else if (Options.TryParseString(opt, "icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+				}
 			}
 
 			var ext = System.IO.Path.GetExtension(filename).ToLower();
@@ -51,18 +55,22 @@
 			var filename = obj0.As();
 			var options = obj1.As();
 			var handle = IntPtr.Zero;
-			var opts = Options.ParseOptions(options);
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";
 			object iconnumber = 0;
 			var disposeHandle = false;
 
-			foreach (var opt in opts)
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				if (Options.TryParse(opt, "w", ref width)) { }
-				else if (Options.TryParse(opt, "h", ref height)) { }
-				else if (Options.TryParseString(opt, "icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+				var opt = options.AsSpan(r).Trim();
+
+				if (opt.Length > 0)
+				{
+					if (Options.TryParse(opt, "w", ref width)) { }
+					else if (Options.TryParse(opt, "h", ref height)) { }
+					else if (Options.TryParseString(opt, "icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+				}
 			}
 
 			var ext = System.IO.Path.GetExtension(filename).ToLower();

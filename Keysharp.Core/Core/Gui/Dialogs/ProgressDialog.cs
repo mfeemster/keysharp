@@ -9,24 +9,28 @@ namespace Keysharp.Core
 		private ProgressBar progressBar;
 		private Label subText;
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string MainText
 		{
 			get => mainText.Text;
 			set => mainText.Text = value;
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public int ProgressMaximum
 		{
 			get => progressBar.Maximum;
 			set => progressBar.Maximum = value;
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public int ProgressMinimum
 		{
 			get => progressBar.Minimum;
 			set => progressBar.Minimum = value;
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public int ProgressValue
 		{
 			get => progressBar.Value;
@@ -44,12 +48,14 @@ namespace Keysharp.Core
 			}
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string SubText
 		{
 			get => subText.Text;
 			set => subText.Text = value;
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Title
 		{
 			get => Text;

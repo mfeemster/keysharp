@@ -90,7 +90,7 @@
 			{
 				if (map.map.TryGetValue(name, out var mapVal))
 				{
-					return new OwnpropsMap(this, Misc.Map(new object[] { "Value", mapVal }));
+					return new OwnpropsMap(this, Misc.Map(["Value", mapVal]));
 				}
 			}
 

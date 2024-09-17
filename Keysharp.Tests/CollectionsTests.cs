@@ -8,12 +8,12 @@ namespace Keysharp.Tests
 		[Test, Category("Collections")]
 		public void Array()
 		{
-			var arr = new Keysharp.Core.Array(new object[]
-			{
-				10L,
-				20L,
-				30L
-			});
+			var arr = new Keysharp.Core.Array(
+				[
+					10L,
+					20L,
+					30L
+				]);
 			var index = 0;
 
 			foreach (var (i, v) in (IEnumerable<(object, object)>)arr)
@@ -72,17 +72,17 @@ namespace Keysharp.Tests
 		[Test, Category("Collections")]
 		public void AssociativeArray()
 		{
-			var arr = Keysharp.Core.Misc.Dictionary(new object[]
-			{
-				"one",
-				"two",
-				"three"
-			}, new object[]
-			{
-				1L,
-				2L,
-				3L
-			});
+			var arr = Keysharp.Core.Misc.Dictionary(
+						  [
+							  "one",
+							  "two",
+							  "three"
+						  ],
+						  [
+							  1L,
+							  2L,
+							  3L
+						  ]);
 
 			foreach (var (k, v) in (IEnumerable<(object, object)>)arr)
 			{

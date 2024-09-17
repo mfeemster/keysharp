@@ -45,6 +45,7 @@ namespace Keysharp.Core.Windows
 				{"PgUp", PgUp},
 				{"PgDn", PgDn}
 			};
+			keyToScAlt = keyToSc.GetAlternateLookup<ReadOnlySpan<char>>();
 			keyToVk = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
 			{
 				{"Numpad0", VK_NUMPAD0},
@@ -179,6 +180,7 @@ namespace Keysharp.Core.Windows
 				// should):
 				//, {(""), 0}
 			};
+			keyToVkAlt = keyToVk.GetAlternateLookup<ReadOnlySpan<char>>();
 			var foundesc = false;
 
 			foreach (var kv in keyToVk)//Make the reverse dictionary so it's quickerr to look up without requiring a full loop to compare each key value.
@@ -2119,9 +2121,9 @@ namespace Keysharp.Core.Windows
 			return true;
 		}
 
-		internal override uint ConvertMouseButton(string buf, bool allowWheel = true)
+		internal override uint ConvertMouseButton(ReadOnlySpan<char> buf, bool allowWheel = true)
 		{
-			if (buf?.Length == 0 || buf.StartsWith("Left", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("L", StringComparison.OrdinalIgnoreCase))
+			if (buf.Length == 0 || buf.StartsWith("Left", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("L", StringComparison.OrdinalIgnoreCase))
 				return VK_LBUTTON; // Some callers rely on this default when buf is empty.
 
 			if (buf.StartsWith("Right", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("R", StringComparison.OrdinalIgnoreCase)) return VK_RBUTTON;
@@ -4289,7 +4291,7 @@ namespace Keysharp.Core.Windows
 			return returnSecondary ? 0 : sc; // Callers rely on zero being returned for VKs that don't have secondary SCs.
 		}
 
-		internal override void ParseClickOptions(string options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset)
+		internal override void ParseClickOptions(ReadOnlySpan<char> options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset)
 		{
 			// Set defaults for all output parameters for caller.
 			x = CoordUnspecified;
@@ -4300,48 +4302,52 @@ namespace Keysharp.Core.Windows
 			moveOffset = false;
 			uint temp_vk;
 
-			foreach (var opt in options.Split(SpaceTabComma, StringSplitOptions.RemoveEmptyEntries))
+			foreach (Range r in options.SplitAny(SpaceTabComma))
 			{
-				// Parameters can occur in almost any order to enhance usability (at the cost of
-				// slightly diminishing the ability unambiguously add more parameters in the future).
-				// Seems okay to support floats because ATOI() will just omit the decimal portion.
-				if (IsNumber(opt) != 0)
-				{
-					// Any numbers present must appear in the order: X, Y, RepeatCount
-					// (optionally with other options between them).
-					if (x == CoordUnspecified) // This will be converted into repeat-count if it is later discovered there's no Y coordinate.
-						x = opt.ParseInt().Value;
-					else if (y == CoordUnspecified)
-						y = opt.ParseInt().Value;
-					else // Third number is the repeat-count (but if there's only one number total, that's repeat count too, see further below).
-					{
-						var templ = opt.ParseLong();
+				var opt = options[r].Trim();
 
-						if (templ.HasValue)
-							repeatCount = templ.Value;// If negative or zero, caller knows to handle it as a MouseMove vs. Click.
+				if (opt.Length > 0)
+				{
+					// Parameters can occur in almost any order to enhance usability (at the cost of
+					// slightly diminishing the ability to unambiguously add more parameters in the future).
+					// Seems okay to support floats because ATOI() will just omit the decimal portion.
+					var d = 0.0;
+					var decok = false;
+					var intok = int.TryParse(opt, out var i);
+
+					if (!intok)
+						decok = double.TryParse(opt, out d);
+
+					if (intok || decok)
+					{
+						var val = intok ? i : (int)d;
+
+						// Any numbers present must appear in the order: X, Y, RepeatCount
+						// (optionally with other options between them).
+						if (x == CoordUnspecified) // This will be converted into repeat-count if it is later discovered there's no Y coordinate.
+							x = val;
+						else if (y == CoordUnspecified)
+							y = val;
+						else // Third number is the repeat-count (but if there's only one number total, that's repeat count too, see further below).
+							repeatCount = val;
+					}
+					else // Mouse button/name and/or Down/Up/Repeat-count is present.
+					{
+						if ((temp_vk = ConvertMouseButton(opt, true)) != 0)
+						{
+							vk = temp_vk;
+						}
 						else
 						{
-							_ = Dialogs.MsgBox($"Invalid value for click repeat count: {opt}", null, "16");
-							return;
-						}
-					}
-				}
-				else // Mouse button/name and/or Down/Up/Repeat-count is present.
-				{
-					if ((temp_vk = ConvertMouseButton(opt, true)) != 0)
-					{
-						vk = temp_vk;
-					}
-					else
-					{
-						switch (char.ToUpper(opt[0]))
-						{
-							case 'D': eventType = KeyEventTypes.KeyDown; break;
+							switch (char.ToUpper(opt[0]))
+							{
+								case 'D': eventType = KeyEventTypes.KeyDown; break;
 
-							case 'U': eventType = KeyEventTypes.KeyUp; break;
+								case 'U': eventType = KeyEventTypes.KeyUp; break;
 
-							case 'R': moveOffset = true; break; // Since it wasn't recognized as the right mouse button, it must have other letters after it, e.g. Rel/Relative.
-								// default: Ignore anything else to reserve them for future use.
+								case 'R': moveOffset = true; break; // Since it wasn't recognized as the right mouse button, it must have other letters after it, e.g. Rel/Relative.
+									// default: Ignore anything else to reserve them for future use.
+							}
 						}
 					}
 				}
@@ -4631,18 +4637,18 @@ namespace Keysharp.Core.Windows
 
 		internal override bool SystemHasAnotherMouseHook() => SystemHasAnotherdHook(ref mouseMutex, MouseMutexName);
 
-		internal override uint TextToSC(string text, ref bool? specifiedByNumber)
+		internal override uint TextToSC(ReadOnlySpan<char> text, ref bool? specifiedByNumber)
 		{
 			if (text.Length == 0)
 				return 0u;
 
-			if (keyToSc.TryGetValue(text, out var val))
+			if (keyToScAlt.TryGetValue(text, out var val))
 				return val;
 
 			// Do this only after the above, in case any valid key names ever start with SC:
 			if (char.ToUpper(text[0]) == 'S' && char.ToUpper(text[1]) == 'C')
 			{
-				var s = text.AsSpan().Slice(2);
+				var s = text.Slice(2);
 				var digits = 0;
 
 				foreach (var ch in s)
@@ -4675,7 +4681,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="modifiersLR"></param>
 		/// <param name="updatePersistent"></param>
 		/// <returns></returns>
-		internal override uint TextToSpecial(string text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent)
+		internal override uint TextToSpecial(ReadOnlySpan<char> text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent)
 		{
 			if (text.StartsWith("ALTDOWN", StringComparison.OrdinalIgnoreCase))
 			{
@@ -4789,7 +4795,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="allowExplicitVK"></param>
 		/// <param name="keybdLayout"></param>
 		/// <returns></returns>
-		internal override uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout)
+		internal override uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout)
 		{
 			if (text.Length == 0)
 				return 0;
@@ -4806,7 +4812,7 @@ namespace Keysharp.Core.Windows
 
 			if (allowExplicitVK && char.ToUpper(text[0]) == 'V' && char.ToUpper(text[1]) == 'K')
 			{
-				var s = text.AsSpan().Slice(2);
+				var s = text.Slice(2);
 				var digits = 0;
 
 				foreach (var ch in s)
@@ -4817,7 +4823,7 @@ namespace Keysharp.Core.Windows
 				return !ok || (2 + digits < text.Length) ? 0 : ii; // Fixed for v1.1.27: Disallow any invalid suffix so that hotkeys like a::vkb() are not misinterpreted as remappings.
 			}
 
-			if (keyToVk.TryGetValue(text, out var val))
+			if (keyToVkAlt.TryGetValue(text, out var val))
 				return val;
 
 			if (excludeThoseHandledByScanCode)
@@ -4830,7 +4836,7 @@ namespace Keysharp.Core.Windows
 			return sc != 0 ? MapScToVk(sc) : 0;
 		}
 
-		internal override bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout)
+		internal override bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout)
 		{
 			if ((vk = TextToVK(text, ref modifiersLR, true, true, keybdLayout)) != 0)
 			{
@@ -4845,14 +4851,20 @@ namespace Keysharp.Core.Windows
 				return true;// Leave aVK set to 0.  Caller should call sc_to_vk(aSC) if needed.
 			}
 
-			if (text.StartsWith("VK", StringComparison.OrdinalIgnoreCase)) // Could be vkXXscXXX, which TextToVK() does not permit in v1.1.27+.
+			if (text.StartsWith("vk", StringComparison.OrdinalIgnoreCase)) // Could be vkXXscXXX, which TextToVK() does not permit in v1.1.27+.
 			{
-				var splits = text.ToLower().Split(vksc, StringSplitOptions.RemoveEmptyEntries);
+				var vkIndex = text.IndexOf("vk", StringComparison.OrdinalIgnoreCase);
+				var scIndex = text.IndexOf("sc", StringComparison.OrdinalIgnoreCase);
 
-				if (splits.Length >= 2)//C# doesn't really have the facilities to detect an invalid suffix, so just assume it's not there.
+				if (vkIndex == 0 && scIndex > 2)
 				{
-					if (uint.TryParse(splits[0], NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var t1) &&
-							uint.TryParse(splits[1], NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var t2))
+					var vkStart = vkIndex + 2;
+					var vkSpan = text.Slice(vkStart, scIndex - vkStart);
+					var scStart = scIndex;
+					var scSpan = text.Slice(scStart + 2);
+
+					if (uint.TryParse(vkSpan, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var t1) &&
+							uint.TryParse(scSpan, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var t2))
 					{
 						vk = t1;
 						sc = t2;
@@ -5330,7 +5342,7 @@ namespace Keysharp.Core.Windows
 										{
 											if (so.OnEnd is IFuncObj ifo)
 											{
-												Threads.LaunchInThread(0, false, false, ifo, new object[] { so }, true);
+												Threads.LaunchInThread(0, false, false, ifo, [so], true);
 											}
 										}
 										else
@@ -5363,7 +5375,7 @@ namespace Keysharp.Core.Windows
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
 												   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
-												   : new object[] { input_hook.ScriptObject, lParamVal, wParamVal };
+												   : [input_hook.ScriptObject, lParamVal, wParamVal];
 										Threads.LaunchInThread(0, false, false, ifo, args, true);
 									}
 									else

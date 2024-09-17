@@ -269,7 +269,10 @@
 			return i;
 		}
 
-		internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0)
+		internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0) =>
+		source.AsSpan().FirstIndexOf(func, offset);
+
+		internal static int FirstIndexOf(this ReadOnlySpan<char> source, Func<char, bool> func, int offset = 0)
 		{
 			for (var i = offset; i < source.Length; i++)
 				if (func(source[i]))

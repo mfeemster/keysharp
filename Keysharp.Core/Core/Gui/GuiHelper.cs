@@ -1,5 +1,4 @@
-﻿using static Keysharp.Scripting.Keywords;
-using MethodInvoker = System.Windows.Forms.MethodInvoker;
+﻿using MethodInvoker = System.Windows.Forms.MethodInvoker;
 
 namespace Keysharp.Core
 {
@@ -166,42 +165,6 @@ namespace Keysharp.Core
 			return pre.Length == 0 ? id : pre;
 		}
 
-		internal static void LV_ColOptions(ref ColumnHeader col, string options)
-		{
-		}
-
-		internal static void LV_RowOptions(ref ListViewItem row, string options)
-		{
-			var opts = options.Split(new[] { ' ', '\t' }, StringSplitOptions.TrimEntries);
-
-			for (var i = 0; i < opts.Length; i++)
-			{
-				var enable = true;
-				var state = opts[i][0];
-
-				if (state == '-')
-					enable = false;
-
-				if (!enable || state == '+')
-					opts[i] = opts[i].Substring(1);
-
-				var mode = opts[i].ToLowerInvariant();
-
-				switch (mode)
-				{
-					case Keyword_Check: row.Checked = enable; break;
-
-					case Keyword_Focus: row.Focused = enable; break;
-
-					case Keyword_Icon: row.ImageIndex = int.Parse(mode.AsSpan(4)); break;
-
-					case Keyword_Select: row.Selected = enable; break;
-
-					case Keyword_Vis: row.EnsureVisible(); break;
-				}
-			}
-		}
-
 		internal static void ParseAndApplyListViewColumnOptions(ColumnHeader col, string options)
 		{
 			var lvco = ParseListViewColumnOptions(options);
@@ -292,7 +255,7 @@ namespace Keysharp.Core
 		internal static (string, List<Tuple<int, int, Tuple<string, string>>>) ParseLinkLabelText(string txt)
 		{
 			var sb = new StringBuilder(txt.Length);
-			var splits = txt.Split(new string[] { "<a", "</a>" }, StringSplitOptions.RemoveEmptyEntries);//Do not trim splits here.
+			var splits = txt.Split(["<a", "</a>" ], StringSplitOptions.RemoveEmptyEntries);//Do not trim splits here.
 			var links = new List<Tuple<int, int, Tuple<string, string>>>();
 			var quotes = new char[] { '\'', '\"' };
 
@@ -345,31 +308,36 @@ namespace Keysharp.Core
 		{
 			var lvco = new ListViewColumnOptions();
 
-			foreach (var opt in Options.ParseOptions(options))
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var temp = 0;
-				var b = false;
+				var opt = options.AsSpan(r).Trim();
 
-				if (int.TryParse(opt, out var width)) { lvco.width = width; }
-				else if (Options.TryParse(opt, "AutoHdr", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.autohdr = b; }
-				else if (Options.TryParse(opt, "Auto", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.auto = b; }
-				else if (string.Compare(opt, "-Icon", true) == 0) { lvco.icon = 0; }
-				else if (Options.TryParse(opt, "IconRight", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.iconright = b; }
-				else if (Options.TryParse(opt, "Icon", ref temp)) { lvco.icon = temp; }
-				else if (Options.TryParse(opt, "Float", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.floattype = b; }
-				else if (Options.TryParse(opt, "Integer", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.inttype = b; }
-				else if (Options.TryParse(opt, "Text", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.texttype = b; }
-				else if (Options.TryParse(opt, "Center", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.center = b; }
-				else if (Options.TryParse(opt, "Left", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.left = b; }
-				else if (Options.TryParse(opt, "Right", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.right = b; }
-				else if (Options.TryParse(opt, "CaseLocale", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.caselocale = b; }
-				else if (Options.TryParse(opt, "Case", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.casesensitive = b; }
-				else if (Options.TryParse(opt, "Desc", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.desc = b; }
-				else if (Options.TryParse(opt, "Logical", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.logical = b; }
-				else if (Options.TryParse(opt, "NoSort", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.nosort = b; }
-				else if (Options.TryParse(opt, "SortDesc", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.sortdesc = b; }
-				else if (Options.TryParse(opt, "Sort", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.sort = b; }
-				else if (Options.TryParse(opt, "Uni", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.uni = b; }
+				if (opt.Length > 0)
+				{
+					var temp = 0;
+					var b = false;
+
+					if (int.TryParse(opt, out var width)) { lvco.width = width; }
+					else if (Options.TryParse(opt, "AutoHdr", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.autohdr = b; }
+					else if (Options.TryParse(opt, "Auto", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.auto = b; }
+					else if (opt.Equals("-Icon", StringComparison.OrdinalIgnoreCase)) { lvco.icon = 0; }
+					else if (Options.TryParse(opt, "IconRight", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.iconright = b; }
+					else if (Options.TryParse(opt, "Icon", ref temp)) { lvco.icon = temp; }
+					else if (Options.TryParse(opt, "Float", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.floattype = b; }
+					else if (Options.TryParse(opt, "Integer", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.inttype = b; }
+					else if (Options.TryParse(opt, "Text", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.texttype = b; }
+					else if (Options.TryParse(opt, "Center", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.center = b; }
+					else if (Options.TryParse(opt, "Left", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.left = b; }
+					else if (Options.TryParse(opt, "Right", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.right = b; }
+					else if (Options.TryParse(opt, "CaseLocale", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.caselocale = b; }
+					else if (Options.TryParse(opt, "Case", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.casesensitive = b; }
+					else if (Options.TryParse(opt, "Desc", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.desc = b; }
+					else if (Options.TryParse(opt, "Logical", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.logical = b; }
+					else if (Options.TryParse(opt, "NoSort", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.nosort = b; }
+					else if (Options.TryParse(opt, "SortDesc", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.sortdesc = b; }
+					else if (Options.TryParse(opt, "Sort", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.sort = b; }
+					else if (Options.TryParse(opt, "Uni", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.uni = b; }
+				}
 			}
 
 			return lvco;
@@ -379,16 +347,21 @@ namespace Keysharp.Core
 		{
 			var lvo = new ListViewOptions();
 
-			foreach (var opt in Options.ParseOptions(options))
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var temp = 0;
+				var opt = options.AsSpan(r).Trim();
 
-				if (Options.TryParse(opt, "Check", ref lvo.ischecked, StringComparison.OrdinalIgnoreCase, true, true)) { }
-				else if (Options.TryParse(opt, "Focus", ref lvo.focused, StringComparison.OrdinalIgnoreCase, true, true)) { }
-				else if (Options.TryParse(opt, "Select", ref lvo.select, StringComparison.OrdinalIgnoreCase, true, true)) { }
-				else if (Options.TryParse(opt, "Col", ref temp)) { lvo.colstart = temp - 1; }
-				else if (Options.TryParse(opt, "Icon", ref lvo.icon)) { }
-				else if (string.Compare(opt, "Vis", true) == 0) { lvo.vis = true; }
+				if (opt.Length > 0)
+				{
+					var temp = 0;
+
+					if (Options.TryParse(opt, "Check", ref lvo.ischecked, StringComparison.OrdinalIgnoreCase, true, true)) { }
+					else if (Options.TryParse(opt, "Focus", ref lvo.focused, StringComparison.OrdinalIgnoreCase, true, true)) { }
+					else if (Options.TryParse(opt, "Select", ref lvo.select, StringComparison.OrdinalIgnoreCase, true, true)) { }
+					else if (Options.TryParse(opt, "Col", ref temp)) { lvo.colstart = temp - 1; }
+					else if (Options.TryParse(opt, "Icon", ref lvo.icon)) { }
+					else if (opt.Equals("Vis", StringComparison.OrdinalIgnoreCase)) { lvo.vis = true; }
+				}
 			}
 
 			return lvo;
@@ -493,61 +466,65 @@ namespace Keysharp.Core
 				var bold = false;
 				var ischecked = 0;
 				var expanded = 0;
-				//var selected = 0;
 				var icon = int.MinValue;
 
-				foreach (var opt in Options.ParseOptions(options))
+				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					if (string.Compare(opt, "-Bold", true) == 0) { node.NodeFont = new Font(tv.Font, FontStyle.Regular); }
-					else if (Options.TryParse(opt, "Bold", ref bold)) { node.NodeFont = new Font(tv.Font, bold ? FontStyle.Bold : FontStyle.Regular); }
-					else if (string.Compare(opt, "-Check", true) == 0) { node.Checked = false; }
-					else if (Options.TryParse(opt, "Check", ref ischecked, StringComparison.OrdinalIgnoreCase, true)) { node.Checked = ischecked != 0; }
-					else if (string.Compare(opt, "-Expand", true) == 0) { node.Collapse(); tv.RemoveMarkForExpansion(node); }
-					else if (Options.TryParse(opt, "Expand", ref expanded, StringComparison.OrdinalIgnoreCase, true, 1))
-					{
-						if (expanded != 0)
-						{
-							if (modify)
-							{
-								if (node.Nodes.Count == 0)
-									ret = 0;
-								else
-									node.Expand();
-							}
+					var opt = options.AsSpan(r).Trim();
 
-							tv.MarkForExpansion(node);
-						}
-						else
-						{
-							node.Collapse();
-							tv.RemoveMarkForExpansion(node);
-						}
-					}
-					else if (string.Compare(opt, "Select ", true) == 0) { tv.SelectedNode = node; }
-					else if (string.Compare(opt, "Vis", true) == 0) { node.EnsureVisible(); }
-					else if (string.Compare(opt, "VisFirst", true) == 0) { node.EnsureVisible(); tv.TopNode = node; }
-					else if (Options.TryParse(opt, "Icon", ref icon))
+					if (opt.Length > 0)
 					{
-						if (tv.ImageList != null)
+						if (opt.Equals("-Bold", StringComparison.OrdinalIgnoreCase)) { node.NodeFont = new Font(tv.Font, FontStyle.Regular); }
+						else if (Options.TryParse(opt, "Bold", ref bold)) { node.NodeFont = new Font(tv.Font, bold ? FontStyle.Bold : FontStyle.Regular); }
+						else if (opt.Equals("-Check", StringComparison.OrdinalIgnoreCase)) { node.Checked = false; }
+						else if (Options.TryParse(opt, "Check", ref ischecked, StringComparison.OrdinalIgnoreCase, true)) { node.Checked = ischecked != 0; }
+						else if (opt.Equals("-Expand", StringComparison.OrdinalIgnoreCase)) { node.Collapse(); tv.RemoveMarkForExpansion(node); }
+						else if (Options.TryParse(opt, "Expand", ref expanded, StringComparison.OrdinalIgnoreCase, true, 1))
 						{
-							if (icon < tv.ImageList.Images.Count)
+							if (expanded != 0)
 							{
-								node.ImageIndex = icon - 1;
-								node.SelectedImageIndex = node.ImageIndex;
+								if (modify)
+								{
+									if (node.Nodes.Count == 0)
+										ret = 0;
+									else
+										node.Expand();
+								}
+
+								tv.MarkForExpansion(node);
 							}
 							else
 							{
-								node.ImageIndex = -1;
-								node.SelectedImageIndex = node.ImageIndex;
+								node.Collapse();
+								tv.RemoveMarkForExpansion(node);
 							}
 						}
-					}
-					else if (string.Compare(opt, "Sort", true) == 0)
-					{
-						if (node.NextNode == null)
-							ret = 0;
-						else
-							_ = tv.BeginInvoke(new MethodInvoker(tv.Sort));//BeginInvoke() is needed to avoid an infinte loop: https://stackoverflow.com/questions/808696/c-sharp-windows-form-treeview-sort-after-labeledit
+						else if (opt.Equals("Select ", StringComparison.OrdinalIgnoreCase)) { tv.SelectedNode = node; }
+						else if (opt.Equals("Vis", StringComparison.OrdinalIgnoreCase)) { node.EnsureVisible(); }
+						else if (opt.Equals("VisFirst", StringComparison.OrdinalIgnoreCase)) { node.EnsureVisible(); tv.TopNode = node; }
+						else if (Options.TryParse(opt, "Icon", ref icon))
+						{
+							if (tv.ImageList != null)
+							{
+								if (icon < tv.ImageList.Images.Count)
+								{
+									node.ImageIndex = icon - 1;
+									node.SelectedImageIndex = node.ImageIndex;
+								}
+								else
+								{
+									node.ImageIndex = -1;
+									node.SelectedImageIndex = node.ImageIndex;
+								}
+							}
+						}
+						else if (opt.Equals("Sort", StringComparison.OrdinalIgnoreCase))
+						{
+							if (node.NextNode == null)
+								ret = 0;
+							else
+								_ = tv.BeginInvoke(new MethodInvoker(tv.Sort));//BeginInvoke() is needed to avoid an infinte loop: https://stackoverflow.com/questions/808696/c-sharp-windows-form-treeview-sort-after-labeledit
+						}
 					}
 				}
 			}

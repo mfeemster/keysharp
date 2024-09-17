@@ -29,11 +29,12 @@ namespace Keysharp.Core.Common.Threading
 		internal static System.Threading.Mutex keybdMutex = null, mouseMutex = null;
 		internal static string KeybdMutexName = "Keysharp Keybd";
 		internal static Dictionary<string, uint> keyToSc = null;
+		internal static Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToScAlt;
 		internal static Dictionary<string, uint> keyToVk = null;
+		internal static Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToVkAlt;
 		internal static int KSCM_SIZE = (int)((MODLR_MAX + 1) * SC_ARRAY_COUNT);
 		internal static int KVKM_SIZE = (int)((MODLR_MAX + 1) * VK_ARRAY_COUNT);
 		internal static string MouseMutexName = "Keysharp Mouse";
-		internal static string[] vksc = new string[] { "vk", "sc" };
 		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
 		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
@@ -94,7 +95,9 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false);
 
-		internal abstract uint ConvertMouseButton(string buf, bool allowWheel = true);
+		internal uint ConvertMouseButton(string buf, bool allowWheel = true) => ConvertMouseButton(buf.AsSpan(), allowWheel);
+
+		internal abstract uint ConvertMouseButton(ReadOnlySpan<char> buf, bool allowWheel = true);
 
 		internal HookType GetActiveHooks()
 		{
@@ -286,7 +289,10 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract uint MapVkToSc(uint vk, bool returnSecondary = false);
 
-		internal abstract void ParseClickOptions(string options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset);
+		internal void ParseClickOptions(string options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset) =>
+		ParseClickOptions(options.AsSpan(), ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
+
+		internal abstract void ParseClickOptions(ReadOnlySpan<char> options, ref int x, ref int y, ref uint vk, ref KeyEventTypes eventType, ref long repeatCount, ref bool moveOffset);
 
 		internal bool PostMessage(KeysharpMsg msg)
 		=> IsReadThreadRunning()&& channel.Writer.TryWrite(msg);
@@ -325,13 +331,25 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract bool SystemHasAnotherMouseHook();
 
-		internal abstract uint TextToSC(string text, ref bool? specifiedByNumber);
+		internal uint TextToSC(string text, ref bool? specifiedByNumber) =>
+		TextToSC(text.AsSpan(), ref specifiedByNumber);
 
-		internal abstract uint TextToSpecial(string text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent);
+		internal abstract uint TextToSC(ReadOnlySpan<char> text, ref bool? specifiedByNumber);
 
-		internal abstract uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout);
+		internal uint TextToSpecial(string text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent) =>
+		TextToSpecial(text.AsSpan(), ref eventType, ref modifiersLR, updatePersistent);
 
-		internal abstract bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout);
+		internal abstract uint TextToSpecial(ReadOnlySpan<char> text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent);
+
+		internal uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout) =>
+		TextToVK(text.AsSpan(), ref modifiersLR, excludeThoseHandledByScanCode, allowExplicitVK, keybdLayout);
+
+		internal abstract uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout);
+
+		internal bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout) =>
+		TextToVKandSC(text.AsSpan(), ref vk, ref sc, ref modifiersLR, keybdLayout);
+
+		internal abstract bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout);
 
 		internal abstract void Unhook();
 

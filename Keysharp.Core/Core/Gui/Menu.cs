@@ -339,19 +339,24 @@
 				else
 					clickHandlers.GetOrAdd(item).ModifyEventHandlers(Function.GetFuncObj(funcorsub, null, true), 1);
 
-				foreach (var opt in Options.ParseOptions(options))
+				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					var temp = 0;
-					var tempbool = false;
+					var opt = options.AsSpan(r).Trim();
 
-					if (Options.TryParse(opt, "P", ref temp)) { }
-					else if (Options.TryParse(opt, "Radio", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
-					else if (Options.TryParse(opt, "Right", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true))
+					if (opt.Length > 0)
 					{
-						item.TextAlign = tempbool ? System.Drawing.ContentAlignment.MiddleRight : System.Drawing.ContentAlignment.MiddleLeft;
+						var temp = 0;
+						var tempbool = false;
+
+						if (Options.TryParse(opt, "P", ref temp)) { }
+						else if (Options.TryParse(opt, "Radio", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
+						else if (Options.TryParse(opt, "Right", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true))
+						{
+							item.TextAlign = tempbool ? System.Drawing.ContentAlignment.MiddleRight : System.Drawing.ContentAlignment.MiddleLeft;
+						}
+						else if (Options.TryParse(opt, "Break", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
+						else if (Options.TryParse(opt, "BarBreak", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
 					}
-					else if (Options.TryParse(opt, "Break", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
-					else if (Options.TryParse(opt, "BarBreak", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
 				}
 			}
 

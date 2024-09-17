@@ -16,7 +16,7 @@
 			var methodInfo = typeof(ObjectExtensions).GetMethod(nameof(CastTo), BindingFlags.Static | BindingFlags.Public);
 			var genericArguments = new[] { type };
 			var genericMethodInfo = methodInfo?.MakeGenericMethod(genericArguments);
-			return genericMethodInfo?.Invoke(null, new[] { o });
+			return genericMethodInfo?.Invoke(null, [o]);
 		}
 
 		public static T[] Concat<T>(this T[] x, T[] y)

@@ -9,7 +9,7 @@ namespace Keysharp.Core
 		{
 			var options = obj1.As();
 			//obj2/paramcount is unused.
-			return new DelegateHolder(obj0, options.Contains("f", StringComparison.OrdinalIgnoreCase), options.Contains("&"));
+			return new DelegateHolder(obj0, options.Contains('f', StringComparison.OrdinalIgnoreCase), options.Contains('&'));
 		}
 
 		public static void CallbackFree(object obj0)
@@ -138,15 +138,15 @@ namespace Keysharp.Core
 								{
 									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 									pb.SetCustomAttribute(new CustomAttributeBuilder(
-															  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
-															  new object[] { System.Runtime.InteropServices.UnmanagedType.LPStr }));
+															  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
+															  [System.Runtime.InteropServices.UnmanagedType.LPStr]));
 								}
 								else if (helper.names[i] == "bstr")
 								{
 									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 									pb.SetCustomAttribute(new CustomAttributeBuilder(
-															  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
-															  new object[] { System.Runtime.InteropServices.UnmanagedType.BStr }));
+															  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
+															  [System.Runtime.InteropServices.UnmanagedType.BStr]));
 								}
 							}
 							else if (helper.args[i] is System.Array array)
@@ -154,10 +154,10 @@ namespace Keysharp.Core
 								//var p = invoke.GetParameters();
 								var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 								pb.SetCustomAttribute(new CustomAttributeBuilder(
-														  typeof(MarshalAsAttribute).GetConstructor(new[] { typeof(UnmanagedType) }),
-														  new object[] { System.Runtime.InteropServices.UnmanagedType.SafeArray },
+														  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
+														  [System.Runtime.InteropServices.UnmanagedType.SafeArray],
 														  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
-														  new object[] { System.Runtime.InteropServices.VarEnum.VT_VARIANT }
+														  [System.Runtime.InteropServices.VarEnum.VT_VARIANT]
 													  ));
 							}
 						}

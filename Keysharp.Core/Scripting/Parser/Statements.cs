@@ -291,33 +291,38 @@ namespace Keysharp.Scripting
 									{
 										openBracket = code.IndexOf('[');
 										var closeBracket = code.IndexOf(']');
-										var indexParams = code.Substring(openBracket + 1, closeBracket - openBracket - 1).Split(Comma, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+										var sub = code.AsSpan(openBracket + 1, closeBracket - openBracket - 1);
 
-										foreach (var p in indexParams)
+										foreach (Range r in sub.Split(','))
 										{
-											var variadic = false;
-											var pstr = p;
+											var p = sub[r].Trim();
 
-											if (p == "*")
+											if (p.Length > 0)
 											{
-												variadic = true;
-												pstr = "args";//Parameter is variadic, but the name is unspecified, so use "args" as a default (because "params" is a reserved word).
-											}
-											else if (p.EndsWith('*'))
-											{
-												variadic = true;
-												pstr = p.TrimEnd('*');
-											}
+												var pstr = p;
+												var variadic = false;
 
-											var pdecl = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(object)), pstr);
+												if (p.SequenceEqual("*"))
+												{
+													variadic = true;
+													pstr = "args";//Parameter is variadic, but the name is unspecified, so use "args" as a default (because "params" is a reserved word).
+												}
+												else if (p.EndsWith('*'))
+												{
+													variadic = true;
+													pstr = p.TrimEnd('*');
+												}
 
-											if (variadic)
-											{
-												pdecl.Type = new CodeTypeReference(typeof(object[]));
-												_ = pdecl.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+												var pdecl = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(object)), pstr.ToString());
+
+												if (variadic)
+												{
+													pdecl.Type = new CodeTypeReference(typeof(object[]));
+													_ = pdecl.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+												}
+
+												_ = prop.Parameters.Add(pdecl);
 											}
-
-											_ = prop.Parameters.Add(pdecl);
 										}
 									}
 								}

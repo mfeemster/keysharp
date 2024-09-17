@@ -71,7 +71,6 @@ namespace Keysharp.Scripting
 		/// The order of these is critically important. Items that start with the same character must go from longest to shortest.
 		/// </summary>
 		internal static FrozenSet<string> exprVerbalOperators = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-
 		{
 			"is",
 			"and",
@@ -141,13 +140,8 @@ namespace Keysharp.Scripting
 			Throw
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
-		internal static FrozenSet<string> nonContExprOperators = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-		{
-			"++",
-			"--"
-		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 
-		internal static List<string> nonContExprOperatorsList = nonContExprOperators.ToList();
 		internal static CodePrimitiveExpression nullPrimitive = new CodePrimitiveExpression(null);
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -165,7 +159,7 @@ namespace Keysharp.Scripting
 		private const string initParams = "initparams";
 		private const string mainClassName = "program";
 		private const string mainScope = "";
-		private static char[] directiveDelims = Spaces.Concat(new char[] { Multicast });
+		private static char[] directiveDelims = Spaces.Concat([Multicast]);
 
 		private static FrozenSet<string> persistentTerms = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
 		{
@@ -215,7 +209,7 @@ namespace Keysharp.Scripting
 		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
 		private bool memberVarsStatic = false;
 		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
-		private char[] ops = new char[] { Equal, Not, Greater, Less };
+		private char[] ops = [Equal, Not, Greater, Less];
 		private CodeStatementCollection parent;
 		private CodeBlock parentBlock;
 		private CodeStatementCollection prepend = new CodeStatementCollection();
@@ -304,7 +298,7 @@ namespace Keysharp.Scripting
 			else
 			{
 				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "UserMainCode"));
-				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", new CodeExpression[] { new CodePrimitiveExpression(-2L) }));
+				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", [new CodePrimitiveExpression(-2L)]));
 			}
 
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;

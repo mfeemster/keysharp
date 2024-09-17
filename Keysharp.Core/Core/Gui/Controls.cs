@@ -524,8 +524,11 @@ namespace Keysharp.Core
 		private InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
 		private bool scaleHeight;
 		private bool scaleWidth;
+
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Filename { get; private set; }
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool ScaleHeight
 		{
 			get => scaleHeight;
@@ -539,6 +542,7 @@ namespace Keysharp.Core
 			}
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool ScaleWidth
 		{
 			get => scaleWidth;
@@ -742,10 +746,13 @@ namespace Keysharp.Core
 	public class KeysharpRichEdit : RichTextBox
 	{
 		private readonly int addstyle, removestyle;
-#if !WINDOWS
-		internal bool IsNumeric { get; set; }
 
+#if !WINDOWS
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+		internal bool IsNumeric { get; set; }
 #endif
+
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		internal CharacterCasing CharacterCasing { get; set; } = CharacterCasing.Normal;
 
 		protected override CreateParams CreateParams
@@ -985,6 +992,7 @@ namespace Keysharp.Core
 		public bool inverted = false;
 		private readonly int addstyle, removestyle;
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public new int Value
 		{
 			get => inverted ? (Maximum - base.Value) + Minimum : base.Value;

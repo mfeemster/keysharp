@@ -63,7 +63,7 @@
 		internal static uint altGrExtraInfo = 0u;
 		internal static char[] bracechars = "{}".ToCharArray();
 		internal static SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
-		internal static string[] CoordModes = new string[] { "Client", "Window", "Screen" };
+		internal static string[] CoordModes = ["Client", "Window", "Screen"];
 		internal static char[] llChars = "Ll".ToCharArray();
 		internal static SearchValues<char> llCharsSv = SearchValues.Create(llChars);
 		internal static KeyType prefixKey = null;

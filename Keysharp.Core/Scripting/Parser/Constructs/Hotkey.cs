@@ -422,19 +422,19 @@ namespace Keysharp.Scripting
 							// these hotkey threads will get buried under some other thread such as a timer, which
 							// would disrupt the remapping if #MaxThreadsPerHotkey is at its default of 1.
 							var p = $"{{Blind{blind_mods}}}{extra_event}{remap_dest_modifiers}{{{remap_dest} DownR}}";
-							var md = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(remap_dest_is_mouse ? "Keysharp.Core.Mouse" : "Keysharp.Core.Keyboard"), remap_dest_is_mouse ? "SetMouseDelay" : "SetKeyDelay", new CodeExpression[] { new CodePrimitiveExpression(-1) });
+							var md = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(remap_dest_is_mouse ? "Keysharp.Core.Mouse" : "Keysharp.Core.Keyboard"), remap_dest_is_mouse ? "SetMouseDelay" : "SetKeyDelay", [new CodePrimitiveExpression(-1)]);
 							_ = method.Statements.Add(md);
-							var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression(p) });
+							var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", [new CodePrimitiveExpression(p)]);
 
 							if (remap_keybd_to_mouse)
 							{
 								// Since source is keybd and dest is mouse, prevent keyboard auto-repeat from auto-repeating
 								// the mouse button (since that would be undesirable 90% of the time).  This is done
 								// by inserting a single extra IF-statement above the Send that produces the down-event:
-								var ks = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "GetKeyState", new CodeExpression[] { new CodePrimitiveExpression(remap_dest) });
+								var ks = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "GetKeyState", [new CodePrimitiveExpression(remap_dest)]);
 								var ifelse = (CodeMethodInvokeExpression)Parser.InternalMethods.IfElse;
 								ifelse.Parameters.Add(ks);
-								_ = method.Statements.Add(new CodeConditionStatement(ifelse, new CodeStatement[] { new CodeExpressionStatement(send) }));
+								_ = method.Statements.Add(new CodeConditionStatement(ifelse, [new CodeExpressionStatement(send)]));
 							}
 							else
 								_ = method.Statements.Add(send);
@@ -450,7 +450,7 @@ namespace Keysharp.Scripting
 								lastHotkeyFunc = LabelMethodName(remap_source);
 								method = LocalMethod(lastHotkeyFunc);
 								_ = method.Statements.Add(md);
-								send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression($"{{Blind}}{{{remap_dest} Up}}") });
+								send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", [new CodePrimitiveExpression($"{{Blind}}{{{remap_dest} Up}}")]);
 								_ = method.Statements.Add(send);
 								methods[targetClass].Add(method.Name, method);
 
@@ -674,7 +674,7 @@ namespace Keysharp.Scripting
 
 								if (valid)//If it was a VK and/or an SC, send those but don't do the extra up/down sending like above for normal remapping.
 								{
-									var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", new CodeExpression[] { new CodePrimitiveExpression($"{{{replacement}}}") });
+									var send = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Send", [new CodePrimitiveExpression($"{{{replacement}}}")]);
 									_ = method.Statements.Add(send);
 								}
 								else

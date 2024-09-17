@@ -159,6 +159,9 @@ namespace Keysharp.Core
 		}
 
 		internal static bool TryParse(string opt, string prefix, ref int result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, int def = default) =>
+		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);
+
+		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref int result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, int def = default) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> s, out int x) =>
 		{
 			if (int.TryParse(s, out x))
@@ -169,6 +172,9 @@ namespace Keysharp.Core
 		}, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref long result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, long def = default) =>
+		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);
+
+		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref long result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, long def = default) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> s, out long x) =>
 		{
 			if (long.TryParse(s, out x))
@@ -179,22 +185,34 @@ namespace Keysharp.Core
 		}, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref float result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, float def = default) =>
+		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);
+
+		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref float result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, float def = default) =>
 		TryParseWrapper(opt, prefix, float.TryParse, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref double result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, double def = default) =>
+		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);
+
+		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref double result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, double def = default) =>
 		TryParseWrapper(opt, prefix, double.TryParse, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref Color result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false) =>
+		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty);
+
+		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref Color result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => { return Conversions.TryParseColor(v.ToString(), out r); }, ref result, comp, allowempty, System.Windows.Forms.Control.DefaultForeColor);
 
-		internal static bool TryParse(string opt, string prefix, ref bool result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, bool def = default)
+		internal static bool TryParse(string opt, string prefix, ref bool result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, bool def = default) =>
+		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);
+
+		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref bool result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, bool def = default)
 		{
-			if (opt[0] == '-' && opt.AsSpan(1).CompareTo(prefix, StringComparison.OrdinalIgnoreCase) == 0)
+			if (opt[0] == '-' && opt.Slice(1).CompareTo(prefix, StringComparison.OrdinalIgnoreCase) == 0)
 			{
 				result = false;
 				return true;
 			}
-			else if (opt[0] == '+' && opt.AsSpan(1).CompareTo(prefix, StringComparison.OrdinalIgnoreCase) == 0)
+			else if (opt[0] == '+' && opt.Slice(1).CompareTo(prefix, StringComparison.OrdinalIgnoreCase) == 0)
 			{
 				result = true;
 				return true;
@@ -229,6 +247,9 @@ namespace Keysharp.Core
 		internal static bool TryParseCoordinate(string input, out Point p) => throw new NotImplementedException();
 
 		internal static bool TryParseDateTime(string opt, string prefix, string format, ref DateTime result, StringComparison comp = StringComparison.OrdinalIgnoreCase) =>
+		TryParseDateTime(opt.AsSpan(), prefix, format, ref result, comp);
+
+		internal static bool TryParseDateTime(ReadOnlySpan<char> opt, string prefix, string format, ref DateTime result, StringComparison comp = StringComparison.OrdinalIgnoreCase) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out DateTime r) =>
 		{
 			if (!DateTime.TryParseExact(v, format.AsSpan(), CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out r))
@@ -237,10 +258,17 @@ namespace Keysharp.Core
 			return true;
 		}, ref result, comp);
 
+		internal static bool TryParseString(ReadOnlySpan<char> opt, string prefix, ref string result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowEmpty = false) =>
+		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out string r) => { r = v.ToString(); return true; }, ref result, comp, allowEmpty);
+
 		internal static bool TryParseString(string opt, string prefix, ref string result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowEmpty = false) =>
 		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out string r) => { r = v.ToString(); return true; }, ref result, comp, allowEmpty);
 
 		private static bool TryParseWrapper<T>(string opt, string prefix, TryParseHandler<T> handler, ref T result, StringComparison comp = StringComparison.OrdinalIgnoreCase,
+											   bool allowempty = false, T def = default) =>
+		TryParseWrapper(opt.AsSpan(), prefix, handler, ref result, comp, allowempty, def);
+
+		private static bool TryParseWrapper<T>(ReadOnlySpan<char> opt, string prefix, TryParseHandler<T> handler, ref T result, StringComparison comp = StringComparison.OrdinalIgnoreCase,
 											   bool allowempty = false, T def = default)// where T : struct
 		{
 			var doit = false;
@@ -248,12 +276,12 @@ namespace Keysharp.Core
 
 			if (opt.StartsWith(prefix, comp))
 			{
-				suffix = opt.AsSpan(prefix.Length);
+				suffix = opt.Slice(prefix.Length);
 				doit = true;
 			}
-			else if (opt[0] == '+' && opt.AsSpan(1).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+			else if (opt[0] == '+' && opt.Slice(1).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 			{
-				suffix = opt.AsSpan(2);
+				suffix = opt.Slice(2);
 				doit = true;
 			}
 

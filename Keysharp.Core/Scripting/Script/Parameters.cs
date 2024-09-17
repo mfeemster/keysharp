@@ -31,7 +31,7 @@ namespace Keysharp.Scripting
 				return l.ToArray();
 			}
 			else
-				return new object[] { obj };
+				return [obj];
 		}
 
 		public static object Parameter(object[] values, object def, int index) => index < values.Length ? values[index] : def;

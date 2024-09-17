@@ -202,13 +202,15 @@
 						break;
 
 					case "char":
-						bytes = new byte[] { (byte)Convert.ToInt32(number) };
+						bytes = [(byte)Convert.ToInt32(number)];
 						inc = 1;
 						break;
+
 					case "uchar":
-						bytes = new byte[] { (byte)Convert.ToInt32(number) };
+						bytes = [(byte)Convert.ToInt32(number)];
 						inc = 1;
 						break;
+
 					case "double":
 						bytes = BitConverter.GetBytes(Convert.ToDouble(number));
 						inc = 8;

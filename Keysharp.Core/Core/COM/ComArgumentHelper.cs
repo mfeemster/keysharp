@@ -5,7 +5,7 @@ namespace Keysharp.Core.COM
 	{
 		internal nint[] args;
 		internal HashSet<nint> bstrs;
-		internal static char[] pointerChars = new char[] { ' ', '*', 'p', 'P' };
+		internal static char[] pointerChars = [' ', '*', 'p', 'P'];
 
 		internal ComArgumentHelper(object[] parameters)
 			: base(parameters)

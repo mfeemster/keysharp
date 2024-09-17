@@ -2,9 +2,17 @@ using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
-	public static class Screen
+	public static partial class Screen
 	{
-		private static Size size1 = new Size(1, 1);
+		private static Size size1 = new (1, 1);
+		private static Dictionary<string, Regex> optsItems = new Dictionary<string, Regex>
+		{
+			{ Keyword_Icon, IconRegex() },
+			{ Keyword_Trans, TransRegex() },
+			{ Keyword_Variation, VariationRegex() },
+			{ "w", WidthRegex() },
+			{ "h", HeightRegex() }
+		};
 
 		public static Bitmap GetScreenClip(object obj0, object obj1, object obj2, object obj3, object obj4 = null)
 		{
@@ -77,14 +85,6 @@ namespace Keysharp.Core
 			var y2 = obj3.Ai();
 			var filename = obj4.As();
 			var options = obj5.As();
-			var optsItems = new Dictionary<string, Regex>
-			{
-				{ Keyword_Icon, new Regex(@"\*Icon([0-9a-zA-Z]*)") },
-				{ Keyword_Trans, new Regex(@"\*Trans([0-9a-zA-Z]*)") },
-				{ Keyword_Variation, new Regex(@"\*([0-9]*)") },
-				{ "w", new Regex(@"\*w([-0-9]*)") },
-				{ "h", new Regex(@"\*h([-0-9]*)") }
-			};
 			var opts = Options.ParseOptionsRegex(ref options, optsItems, false);
 			Point start;
 			Size bound;
@@ -263,5 +263,20 @@ namespace Keysharp.Core
 				return 0L;
 			}
 		}
+
+		[GeneratedRegex(@"\*Icon([0-9a-zA-Z]*)")]
+		private static partial Regex IconRegex();
+
+		[GeneratedRegex(@"\*Trans([0-9a-zA-Z]*)")]
+		private static partial Regex TransRegex();
+
+		[GeneratedRegex(@"\*([0-9]*)")]
+		private static partial Regex VariationRegex();
+
+		[GeneratedRegex(@"\*w([-0-9]*)")]
+		private static partial Regex WidthRegex();
+
+		[GeneratedRegex(@"\*h([-0-9]*)")]
+		private static partial Regex HeightRegex();
 	}
 }

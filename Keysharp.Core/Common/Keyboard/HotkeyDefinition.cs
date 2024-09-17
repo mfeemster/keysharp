@@ -2197,7 +2197,7 @@ namespace Keysharp.Core.Common.Keyboard
 				//This is the thread count for this particular hotkey only and must come before the thread is actually launched.
 				//It will be decremented within the VariadicFunction above after the callback is called.
 				_ = Interlocked.Increment(ref variant.existingThreads);
-				Threads.LaunchInThread(variant.priority, false, false, vf, new object[] { Name }, false);
+				Threads.LaunchInThread(variant.priority, false, false, vf, [Name], false);
 			}
 			catch (Error ex)
 			{
@@ -2388,9 +2388,9 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;
 		}
 
-		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Active;
+		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Active;
 
-		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow(new object[] { title, text, null, null }, false) is WindowItem win&& win.Exists;
+		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Exists;
 
 		private static bool HotIfWinNotActivePrivate(object title, object text, object hotkey) => !HotIfWinActivePrivate(title, text, hotkey);
 

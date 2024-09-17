@@ -20,9 +20,9 @@ namespace Keysharp.Scripting
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(bool))
-						return (bool)mi.Invoke(input, new object[] { input });
+						return (bool)mi.Invoke(input, [input]);
 					else if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(long))
-						return ((long)mi.Invoke(input, new object[] { input }) != 0);
+						return ((long)mi.Invoke(input, [input]) != 0);
 			}
 
 			return true;//Any non-null, non-empty string is considered true.
@@ -60,7 +60,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(decimal))
-						return (decimal)mi.Invoke(input, new object[] { input });
+						return (decimal)mi.Invoke(input, [input]);
 			}
 			else if (input is IConvertible)
 				return Convert.ToDecimal(input);
@@ -114,7 +114,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(double))
-						return (double)mi.Invoke(input, new object[] { input });
+						return (double)mi.Invoke(input, [input]);
 			}
 			else if (input is IConvertible)
 				return Convert.ToDouble(input);
@@ -167,7 +167,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(int))
-						return (int)mi.Invoke(input, new object[] { input });
+						return (int)mi.Invoke(input, [input]);
 			}
 			else if (input is IConvertible)
 				return Convert.ToInt32(input);
@@ -220,7 +220,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(long))
-						return (long)mi.Invoke(input, new object[] { input });
+						return (long)mi.Invoke(input, [input]);
 			}
 			else if (input is IConvertible)
 				return Convert.ToInt64(input);
@@ -282,7 +282,7 @@ namespace Keysharp.Scripting
 			{
 				foreach (var mi in mis)
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(string))
-						return (string)mi.Invoke(input, new object[] { input });
+						return (string)mi.Invoke(input, [input]);
 			}
 
 			if (input is Keysharp.Core.Map map)

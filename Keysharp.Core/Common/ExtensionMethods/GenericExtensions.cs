@@ -215,17 +215,17 @@ namespace System.Collections.Generic
 			if (!dictionary.Contains(k))
 			{
 				var type = typeof(V);
-				var ctor = type.GetConstructor(new[]
-				{
-					typeof(P1)
-				});
+				var ctor = type.GetConstructor(
+							   [
+								   typeof(P1)
+							   ]);
 
 				if (ctor != null)
 				{
-					var val = ctor.Invoke(new object[]
-					{
-						p1
-					}) as V;
+					var val = ctor.Invoke(
+								  [
+									  p1
+								  ]) as V;
 					dictionary.Add(k, val);
 					return val;
 				}

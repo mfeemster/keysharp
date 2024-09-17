@@ -547,18 +547,20 @@ namespace Keysharp.Scripting
 
 		internal bool IsFlowOperator(string code)
 		{
-			var word = code.Split(FlowDelimiters2, 2)[0].ToLowerInvariant();
-
-			if (Scope.Length > 0)
+			foreach (Range r in code.AsSpan().SplitAny(Keywords.FlowDelimiters2))
 			{
-				switch (word)
+				var word = code.AsSpan(r);
+
+				if (Scope.Length > 0)
 				{
-					case FunctionStatic:
+					if (word.Equals(Keywords.FunctionStatic, StringComparison.OrdinalIgnoreCase))
 						return true;
 				}
+
+				return flowOperators.Contains(word.ToString());//Need to remove this ToString() once they fix .NET 9.//TODO
 			}
 
-			return flowOperators.Contains(word);
+			return false;
 		}
 
 		internal List<object> SplitTokens(CodeLine codeLine, string code)
@@ -615,25 +617,39 @@ namespace Keysharp.Scripting
 					}
 
 					var seq = id.ToString();
-					var parts = IsPrimitiveObject(seq) ? new[] { seq } : seq.Split(Concatenate);
 
-					if (parts[0].Length != 0)
-						list.Add(parts[0]);
-
-					for (var n = 1; n < parts.Length; n++)
+					if (IsPrimitiveObject(seq))
 					{
-						list.Add("[*");//Special signifier [**] that this is a property lookup and not a map[var] lookup. Without distinguishing the two, a map could never have a key that had the same name as a property, such as "Default".
+						if (seq.Length != 0)
+							list.Add(seq);
+					}
+					else
+					{
+						var ct = 0;
 
-						if (parts[n].Contains("%"))//If it was a dynamic variable, don't enclose in quotes.
-							list.Add($"{parts[n]}");
-						else
-							list.Add("\"" + parts[n] + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+						foreach (Range r in seq.AsSpan().Split(Concatenate))
+						{
+							var part = seq.AsSpan(r);
 
-						list.Add("*]");
-						//list.Add(ArrayOpen.ToString());
-						//var str = StringBound.ToString();
-						//list.Add(string.Concat(str, parts[n], str));
-						//list.Add(ArrayClose.ToString());
+							if (ct == 0)
+							{
+								if (part.Length != 0)
+									list.Add(part.ToString());
+							}
+							else
+							{
+								list.Add("[*");//Special signifier [**] that this is a property lookup and not a map[var] lookup. Without distinguishing the two, a map could never have a key that had the same name as a property, such as "Default".
+
+								if (part.Contains('%'))//If it was a dynamic variable, don't enclose in quotes.
+									list.Add($"{part}");
+								else
+									list.Add(string.Concat("\"", part, "\""));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+
+								list.Add("*]");
+							}
+
+							ct++;
+						}
 					}
 				}
 				else if (sym == StringBound || sym == StringBoundVerbatim)
@@ -976,6 +992,30 @@ namespace Keysharp.Scripting
 			}
 
 			return false;
+		}
+
+		private void MoveToEOL(string code, ref int i)
+		{
+			while (i < code.Length)
+			{
+				switch (code[i])
+				{
+					case CR:
+						var n = i + 1;
+
+						if (n < code.Length && code[n] == LF)
+							i = n;
+
+					goto case LF;
+
+					case LF:
+						return;
+
+					default:
+						i++;
+						break;
+				}
+			}
 		}
 
 		private string TokensToCode(List<object> tokens)

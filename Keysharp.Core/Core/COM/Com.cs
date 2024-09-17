@@ -187,7 +187,7 @@ namespace Keysharp.Core.COM
 				{
 					var iptr = Marshal.GetIUnknownForObject(inst);
 
-					if (Marshal.QueryInterface(iptr, ref iid, out var ptr) >= 0)
+					if (Marshal.QueryInterface(iptr, in iid, out var ptr) >= 0)
 						inst = ptr;
 
 					_ = Marshal.Release(iptr);
@@ -287,7 +287,7 @@ namespace Keysharp.Core.COM
 				{
 					var iptr = Marshal.GetIUnknownForObject(ptr);
 
-					if (Marshal.QueryInterface(iptr, ref iid, out var ppv) >= 0)
+					if (Marshal.QueryInterface(iptr, in iid, out var ppv) >= 0)
 					{
 						_ = Marshal.Release(iptr);
 

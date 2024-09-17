@@ -22,8 +22,8 @@ namespace Keysharp.Scripting
 			var codeLine = lines[index];
 			var code = codeLine.Code;
 			var cspan = code.AsSpan();
-			string[] parts = { string.Empty, string.Empty };
-			int[] d = { cspan.IndexOfAny(FlowDelimitersSv), cspan.IndexOfAny(BlockOpenParenOpenSv) };
+			string[] parts = [string.Empty, string.Empty];
+			int[] d = [cspan.IndexOfAny(FlowDelimitersSv), cspan.IndexOfAny(BlockOpenParenOpenSv)];
 
 			if (d[0] == -1 && d[1] == -1)
 				parts[0] = code;
@@ -39,7 +39,7 @@ namespace Keysharp.Scripting
 			}
 
 			if (parts.Length > 1 && IsEmptyStatement(parts[1]))
-				parts = new[] { parts[0].Trim() };
+				parts = [parts[0].Trim()];
 
 			var lower = parts[0].ToLowerInvariant();
 
@@ -64,7 +64,7 @@ namespace Keysharp.Scripting
 					CloseElseBlocks();//Also called in Statements. Both places are needed to handle various situations.
 					blocks.Push(block);
 					elses.Push(ifelse.FalseStatements);
-					return new CodeStatement[] { ifelse };
+					return [ifelse];
 				}
 
 				case FlowElse:
@@ -108,7 +108,7 @@ namespace Keysharp.Scripting
 						block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
-						return new CodeStatement[] { ifelse };
+						return [ifelse];
 					}
 					else
 						throw new ParseException("Else with no preceeding if, try, for, loop or while block.", codeLine);
@@ -234,7 +234,7 @@ namespace Keysharp.Scripting
 					if (parentBlock != null)
 						gotos[cgs] = parentBlock;
 
-					return new CodeStatement[] { cgs };
+					return [cgs];
 				}
 
 				case FlowLoop:
@@ -251,8 +251,8 @@ namespace Keysharp.Scripting
 					if (parts.Length > 1 && parts.Last() != string.Empty)//If the last char was a {, then it was trimmed and replaced with a "".
 					{
 						var sub = parts[1].Split(SpaceTabComma, 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-						var regex = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))");//Gotten from https://stackoverflow.com/questions/3147836/c-sharp-regex-split-commas-outside-quotes
-						var sub2 = sub.Length > 1 ? regex.Split(sub[1]) : new string[] { };
+						var regex = CommaQuotesRegex();
+						var sub2 = sub.Length > 1 ? regex.Split(sub[1]) : [];
 						//sub2[0] = sub2[0].Trim(new char[] { '"' });
 						//sub = new[] { sub[0].Trim(), sub.Length > 1 ? sub[1].Trim() : string.Empty };
 						sub = new string[] { sub[0] }.Concat(sub2);
@@ -329,7 +329,7 @@ namespace Keysharp.Scripting
 					_ = CloseTopSingleBlock();
 					blocks.Push(block);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
-					return new CodeStatement[] { loop, new CodeLabeledStatement(block.ExitLabel), pop };
+					return [loop, new CodeLabeledStatement(block.ExitLabel), pop];
 				}
 
 				case FlowFor:
@@ -419,7 +419,7 @@ namespace Keysharp.Scripting
 						var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 						var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
 						//return new CodeStatement[] { push, loop, new CodeLabeledStatement(block.ExitLabel), pop, new CodeSnippetStatement("}") };
-						return new CodeStatement[] { push, loop, new CodeLabeledStatement(block.ExitLabel), pop, new CodeExpressionStatement(new CodeSnippetExpression("}")) };
+						return [push, loop, new CodeLabeledStatement(block.ExitLabel), pop, new CodeExpressionStatement(new CodeSnippetExpression("}"))];
 					}
 				}
 				break;
@@ -443,7 +443,7 @@ namespace Keysharp.Scripting
 					blocks.Push(block);
 					var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
-					return new CodeStatement[] { push, loop, new CodeLabeledStatement(block.ExitLabel), pop };
+					return [push, loop, new CodeLabeledStatement(block.ExitLabel), pop];
 				}
 
 				case FlowUntil:
@@ -524,7 +524,7 @@ namespace Keysharp.Scripting
 						throw new ParseException("Cannot continue outside a loop.", codeLine);
 
 					//Need to use a goto instead of a continue statement because Until statements still need to be executed after continue.
-					return new CodeStatement[] { new CodeExpressionStatement(new CodeSnippetExpression($"goto {cont}")) };
+					return [new CodeExpressionStatement(new CodeSnippetExpression($"goto {cont}"))];
 				}
 
 				case FlowReturn:
@@ -536,12 +536,12 @@ namespace Keysharp.Scripting
 						if (parts.Length > 1)
 							throw new ParseException("Cannot have return parameter for entry point method.", codeLine);
 
-						return new CodeStatement[] { new CodeMethodReturnStatement(new CodePrimitiveExpression(1)) };
+						return [new CodeMethodReturnStatement(new CodePrimitiveExpression(1))];
 					}
 					else
 					{
 						var result = parts.Length > 1 ? ParseSingleExpression(codeLine, parts[1], false) : emptyStringPrimitive;
-						return new CodeStatement[] { new CodeMethodReturnStatement(result) };
+						return [new CodeMethodReturnStatement(result)];
 					}
 				}
 
@@ -776,7 +776,7 @@ namespace Keysharp.Scripting
 							ctes.ToThrow = ParseSingleExpression(codeLine, token, false);
 					}
 
-					return new CodeStatement[] { ctes };
+					return [ctes];
 				}
 
 				case FlowTry:
@@ -799,7 +799,7 @@ namespace Keysharp.Scripting
 						Type = type
 					};
 					blocks.Push(block);
-					return new CodeStatement[] { tcf };
+					return [tcf];
 				}
 
 				case FlowCatch:
@@ -1054,5 +1054,8 @@ namespace Keysharp.Scripting
 
 			return invoke;
 		}
+
+		[GeneratedRegex(",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))")]
+		private static partial Regex CommaQuotesRegex();//Gotten from https://stackoverflow.com/questions/3147836/c-sharp-regex-split-commas-outside-quotes
 	}
 }

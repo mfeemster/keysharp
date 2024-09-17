@@ -14,6 +14,8 @@ namespace Keysharp.Scripting
 		//private static Gdk.Atom clipAtom = Gdk.Atom.Intern("CLIPBOARD", false);
 		//private Gtk.Clipboard gtkClipBoard = Gtk.Clipboard.Get(clipAtom);
 #endif
+
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool IsClosing { get; private set; }
 
 		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;

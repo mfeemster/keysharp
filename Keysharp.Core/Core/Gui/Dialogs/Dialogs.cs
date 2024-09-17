@@ -15,10 +15,6 @@ namespace Keysharp.Core
 		internal static Guid userprofile = new Guid("5E6C858F-0E22-4760-9AFE-EA3317B67173");//User profile root (~/).
 		internal static Guid userprofiles = new Guid("0762D272-C50A-4BB0-A382-697DCD729B80");//User profiles (/home).
 
-		internal static Dictionary<int, ProgressDialog> ProgressDialogs { get; set; }
-
-		internal static Dictionary<int, SplashDialog> SplashDialogs { get; set; }
-
 		// TODO: organise Dialogs.cs
 		/// <summary>
 		/// Displays a standard dialog that allows the user to select a folder.
@@ -113,19 +109,19 @@ namespace Keysharp.Core
 			opts = opts.ToUpperInvariant();
 			object files = null;
 
-			if (opts.Contains("M"))
+			if (opts.Contains('M'))
 			{
 				opts = opts.Replace("M", string.Empty);
 				multi = true;
 			}
 
-			if (opts.Contains("S"))
+			if (opts.Contains('S'))
 			{
 				opts = opts.Replace("S", string.Empty);
 				save = true;
 			}
 
-			if (opts.Contains("D"))
+			if (opts.Contains('D'))
 			{
 				opts = opts.Replace("D", string.Empty);
 				dir = true;
@@ -235,7 +231,7 @@ namespace Keysharp.Core
 
 				for (var i = 0; i < splits.Count; i++)
 				{
-					if (i == splits.Count - 1 || splits[i].EndsWith(')') && !splits[i + 1].StartsWith("*"))
+					if (i == splits.Count - 1 || (splits[i].EndsWith(')') && !splits[i + 1].StartsWith("*")))
 					{
 						var paren1 = splits[i].IndexOf('(');
 						var paren2 = splits[i].LastIndexOf(')');
@@ -288,9 +284,10 @@ namespace Keysharp.Core
 			var y = int.MinValue;
 			var pw = "";
 
-			foreach (var opt in Options.ParseOptions(options))
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 			{
 				var temp = 0;
+				var opt = options.AsSpan(r).Trim();
 
 				if (Options.TryParse(opt, "w", ref temp)) { w = temp; }
 				else if (Options.TryParse(opt, "h", ref temp)) { h = temp; }
@@ -452,70 +449,97 @@ namespace Keysharp.Core
 				var iopt = 0;
 				var hadNumeric = false;
 
-				foreach (var opt in Options.ParseOptions(options))
+				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					long hwnd = 0;
+					var opt = options.AsSpan(r).Trim();
 
-					if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
-					else if (Options.TryParse(opt, "T", ref timeout)) { }
-					else if (int.TryParse(opt, out var itemp))
+					if (opt.Length > 0)
 					{
-						hadNumeric = true;
-						iopt |= itemp;
-					}
-					else
-					{
-						switch (opt.ToLower())
+						long hwnd = 0;
+
+						if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
+						else if (Options.TryParse(opt, "T", ref timeout)) { }
+						else if (int.TryParse(opt, out var itemp))
 						{
-							case "ok": buttons = MessageBoxButtons.OK; break;
+							hadNumeric = true;
+							iopt |= itemp;
+						}
+						else
+						{
+							switch (opt)
+							{
+								case var b when opt.Equals("ok", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.OK;
+									break;
 
-							case "okcancel":
-							case "o/c":
-							case "oc":
-								buttons = MessageBoxButtons.OKCancel; break;
+								case var b when opt.Equals("okcancel", StringComparison.OrdinalIgnoreCase):
+								case var b2 when opt.Equals("o/c", StringComparison.OrdinalIgnoreCase):
+								case var b3 when opt.Equals("oc", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.OKCancel;
+									break;
 
-							case "abortretryignore":
-							case "a/r/i":
-							case "ari":
-								buttons = MessageBoxButtons.AbortRetryIgnore; break;
+								case var b when opt.Equals("abortretryignore", StringComparison.OrdinalIgnoreCase):
+								case var b2 when opt.Equals("a/r/i", StringComparison.OrdinalIgnoreCase):
+								case var b3 when opt.Equals("ari", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.AbortRetryIgnore;
+									break;
 
-							case "yesnocancel":
-							case "y/n/c":
-							case "ync":
-								buttons = MessageBoxButtons.YesNoCancel; break;
+								case var b when opt.Equals("yesnocancel", StringComparison.OrdinalIgnoreCase):
+								case var b2 when opt.Equals("y/n/c", StringComparison.OrdinalIgnoreCase):
+								case var b3 when opt.Equals("ync", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.YesNoCancel;
+									break;
 
-							case "yesno":
-							case "y/n":
-							case "yn":
-								buttons = MessageBoxButtons.YesNo; break;
+								case var b when opt.Equals("yesno", StringComparison.OrdinalIgnoreCase):
+								case var b2 when opt.Equals("y/n", StringComparison.OrdinalIgnoreCase):
+								case var b3 when opt.Equals("yn", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.YesNo;
+									break;
 
-							case "retrycancel":
-							case "r/c":
-							case "rc":
-								buttons = MessageBoxButtons.RetryCancel; break;
+								case var b when opt.Equals("retrycancel", StringComparison.OrdinalIgnoreCase):
+								case var b2 when opt.Equals("r/c", StringComparison.OrdinalIgnoreCase):
+								case var b3 when opt.Equals("rc", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.RetryCancel;
+									break;
 #if WINDOWS
 
-							case "canceltryagaincontinue":
-							case "c/t/c":
-							case "ctc":
-								buttons = MessageBoxButtons.CancelTryContinue; break;
+								case var b when opt.Equals("canceltryagaincontinue", StringComparison.OrdinalIgnoreCase):
+								case var b2 when opt.Equals("c/t/c", StringComparison.OrdinalIgnoreCase):
+								case var b3 when opt.Equals("ctc", StringComparison.OrdinalIgnoreCase):
+									buttons = MessageBoxButtons.CancelTryContinue;
+									break;
 #endif
 
-							case "iconx": icon = MessageBoxIcon.Hand; break;
+								case var b when opt.Equals("iconx", StringComparison.OrdinalIgnoreCase):
+									icon = MessageBoxIcon.Hand;
+									break;
 
-							case "icon?": icon = MessageBoxIcon.Question; break;
+								case var b when opt.Equals("icon?", StringComparison.OrdinalIgnoreCase):
+									icon = MessageBoxIcon.Question;
+									break;
 
-							case "icon!": icon = MessageBoxIcon.Exclamation; break;
+								case var b when opt.Equals("icon!", StringComparison.OrdinalIgnoreCase):
+									icon = MessageBoxIcon.Exclamation;
+									break;
 
-							case "iconi": icon = MessageBoxIcon.Asterisk; break;
+								case var b when opt.Equals("iconi", StringComparison.OrdinalIgnoreCase):
+									icon = MessageBoxIcon.Asterisk;
+									break;
 
-							case "default2": defaultbutton = MessageBoxDefaultButton.Button2; break;
+								case var b when opt.Equals("default2", StringComparison.OrdinalIgnoreCase):
+									defaultbutton = MessageBoxDefaultButton.Button2;
+									break;
 
-							case "default3": defaultbutton = MessageBoxDefaultButton.Button3; break;
+								case var b when opt.Equals("default3", StringComparison.OrdinalIgnoreCase):
+									defaultbutton = MessageBoxDefaultButton.Button3;
+									break;
 #if WINDOWS
 
-							case "default4": defaultbutton = MessageBoxDefaultButton.Button4; break;
+								case var b when opt.Equals("default4", StringComparison.OrdinalIgnoreCase):
+									defaultbutton = MessageBoxDefaultButton.Button4;
+									break;
 #endif
+							}
 						}
 					}
 				}
@@ -555,180 +579,10 @@ namespace Keysharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Creates or updates a window containing a progress bar or an image.
-		/// </summary>
-		/// <param name="ProgressParam1">
-		/// <para>If the progress window already exists: If Param1 is the word OFF, the window is destroyed. If Param1 is the word SHOW, the window is shown if it is currently hidden.</para>
-		/// <para>Otherwise, if Param1 is an pure number, its bar's position is changed to that value. If Param1 is blank, its bar position will be unchanged but its text will be updated to reflect any new strings provided in SubText, MainText, and WinTitle. In both of these modes, if the window doesn't yet exist, it will be created with the defaults for all options.</para>
-		/// <para>If the progress window does not exist: A new progress window is created (replacing any old one), and Param1 is a string of zero or more options from the list below.</para>
-		/// </param>
-		/// <param name="SubText">The text to display below the image or bar indicator. Although word-wrapping will occur, to begin a new line explicitly, use linefeed (`n). To set an existing window's text to be blank, specify %A_Space%. For the purpose of auto-calculating the window's height, blank lines can be reserved in a way similar to MainText below.</param>
-		/// <param name="MainText">
-		/// <para>The text to display above the image or bar indicator (its font is semi-bold). Although word-wrapping will occur, to begin a new line explicitly, use linefeed (`n).</para>
-		/// <para>If blank or omitted, no space will be reserved in the window for MainText. To reserve space for single line to be added later, or to set an existing window's text to be blank, specify %A_Space%. To reserve extra lines beyond the first, append one or more linefeeds (`n).</para>
-		/// <para>Once the height of MainText's control area has been set, it cannot be changed without recreating the window.</para>
-		/// </param>
-		/// <param name="WinTitle">The text to display below the image or bar indicator. Although word-wrapping will occur, to begin a new line explicitly, use linefeed (`n). To set an existing window's text to be blank, specify %A_Space%. For the purpose of auto-calculating the window's height, blank lines can be reserved in a way similar to MainText below.</param>
-		/// <param name="FontName">
-		/// <para>The name of the font to use for both MainText and SubText. The font table lists the fonts included with the various versions of Windows. If unspecified or if the font cannot be found, the system's default GUI font will be used.</para>
-		/// <para>See the options section below for how to change the size, weight, and color of the font.</para>
-		/// </param>
-		public static void Progress(string ProgressParam1, string SubText, string MainText, string WinTitle, string FontName)
-		{
-			InitDialogs();
-			var progressOptions = new ComplexDlgOptions()
-			{
-				SubText = SubText,
-				MainText = MainText,
-				WinTitle = WinTitle,
-			};
-			progressOptions.ParseGuiID(ProgressParam1);
-			progressOptions.ParseComplexOptions(ProgressParam1);
-			ProgressAsync(progressOptions);
-		}
-
-		/// <summary>
-		/// Creates or updates a window containing a progress bar or an image.
-		/// </summary>
-		/// <param name="ImageFile">
-		/// <para>If this is the word OFF, the window is destroyed. If this is the word SHOW, the window is shown if it is currently hidden.</para>
-		/// <para>Otherwise, this is the file name of the BMP, GIF, or JPG image to display (to display other file formats such as PNG, TIF, and ICO, consider using the Gui command to create a window containing a picture control).</para>
-		/// <para>ImageFile is assumed to be in %A_WorkingDir% if an absolute path isn't specified. If ImageFile and Options are blank and the window already exists, its image will be unchanged but its text will be updated to reflect any new strings provided in SubText, MainText, and WinTitle.</para>
-		/// <para>For newly created windows, if ImageFile is blank or there is a problem loading the image, the window will be displayed without the picture.</para>
-		/// </param>
-		/// <param name="Options">A string of zero or more options from the list further below.</param>
-		/// <param name="SubText">The text to display below the image or bar indicator. Although word-wrapping will occur, to begin a new line explicitly, use linefeed (`n). To set an existing window's text to be blank, specify %A_Space%. For the purpose of auto-calculating the window's height, blank lines can be reserved in a way similar to MainText below.</param>
-		/// <param name="MainText">
-		/// <para>The text to display above the image or bar indicator (its font is semi-bold). Although word-wrapping will occur, to begin a new line explicitly, use linefeed (`n).</para>
-		/// <para>If blank or omitted, no space will be reserved in the window for MainText. To reserve space for single line to be added later, or to set an existing window's text to be blank, specify %A_Space%. To reserve extra lines beyond the first, append one or more linefeeds (`n).</para>
-		/// <para>Once the height of MainText's control area has been set, it cannot be changed without recreating the window.</para>
-		/// </param>
-		/// <param name="WinTitle">The title of the window. If omitted and the window is being newly created, the title defaults to the name of the script (without path). If the B (borderless) option has been specified, there will be no visible title bar but the window can still be referred to by this title in commands such as WinMove.</param>
-		/// <param name="FontName">
-		/// <para>The name of the font to use for both MainText and SubText. The font table lists the fonts included with the various versions of Windows. If unspecified or if the font cannot be found, the system's default GUI font will be used.</para>
-		/// <para>See the options section below for how to change the size, weight, and color of the font.</para>
-		/// </param>
-		public static void SplashImage(string ImageFile, string Options, string SubText, string MainText, string WinTitle, string FontName)
-		{
-			InitDialogs();
-
-			if (string.IsNullOrEmpty(ImageFile))
-				return;
-
-			var splashOptions = new ComplexDlgOptions()
-			{
-				SubText = SubText,
-				MainText = MainText,
-				WinTitle = WinTitle,
-			};
-			splashOptions.ParseGuiID(ImageFile);
-			splashOptions.ParseComplexOptions(Options);
-			SplashImageAsync(splashOptions);
-		}
-
-		private static void InitDialogs()
-		{
-			if (ProgressDialogs == null)
-				ProgressDialogs = new Dictionary<int, ProgressDialog>();
-
-			if (SplashDialogs == null)
-				SplashDialogs = new Dictionary<int, SplashDialog>();
-		}
-
-		private static void ProgressAsync(ComplexDlgOptions Options)
-		{
-			ProgressDialog thisProgress = null;
-
-			if (ProgressDialogs.ContainsKey(Options.GUIID))
-			{
-				thisProgress = ProgressDialogs[Options.GUIID];
-
-				if (thisProgress.InvokeRequired)
-				{
-					_ = thisProgress.Invoke(new AsyncCallDlgOptions(ProgressAsync), Options);
-				}
-			}
-
-			if (thisProgress != null)
-			{
-				Options.AppendShowHideTo(thisProgress);
-			}
-			else
-			{
-				thisProgress = new ProgressDialog();
-				ProgressDialogs.Add(Options.GUIID, thisProgress);
-			}
-
-			Options.AppendTo(thisProgress);
-
-			if (!short.TryParse(Options.Param1, out var num))
-			{
-				num = 0;
-			}
-
-			thisProgress.ProgressValue = num;
-
-			if (!Options.Hide && !thisProgress.Visible)
-				thisProgress.Show();
-		}
-
-		private static void SplashImageAsync(ComplexDlgOptions Options)
-		{
-			SplashDialog thisSplash = null;
-			System.Drawing.Image thisImage = null;
-
-			if (SplashDialogs.ContainsKey(Options.GUIID))
-			{
-				thisSplash = SplashDialogs[Options.GUIID];
-
-				if (thisSplash.InvokeRequired)
-				{
-					_ = thisSplash.Invoke(new AsyncCallDlgOptions(SplashImageAsync), Options);
-				}
-			}
-
-			if (thisSplash != null)
-			{
-				Options.AppendShowHideTo(thisSplash);
-			}
-			else
-			{
-				thisSplash = new SplashDialog();
-				SplashDialogs.Add(Options.GUIID, thisSplash);
-			}
-
-			Options.AppendTo(thisSplash);
-
-			if (System.IO.File.Exists(Options.Param1))
-			{
-				try
-				{
-					thisImage = System.Drawing.Bitmap.FromFile(Options.Param1);
-				}
-				catch (Exception ex)
-				{
-					throw new Error(ex.Message);
-				}
-
-				if (thisImage != null)
-				{
-					thisSplash.Image = thisImage;
-				}
-			}
-
-			if (!Options.Hide && !thisSplash.Visible)
-				thisSplash.Show();
-		}
-
 		public class DialogResultReturn
 		{
 			public string Result { get; set; }
 			public string Value { get; set; }
 		}
-
-		public delegate void AsyncCallDlgOptions(ComplexDlgOptions options);
-
-		public delegate void AsyncComplexDialoge(IComplexDialog complexDlg);
 	}
 }

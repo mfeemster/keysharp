@@ -318,16 +318,16 @@ namespace Keysharp.Tests
 			Assert.AreEqual(1, Maths.Max(0, 1));
 			Assert.AreEqual(1, Maths.Max(1, 1));
 			Assert.AreEqual(2.3, Maths.Max(1.5, 2.3));
-			Assert.AreEqual(0.675, Maths.Max(new object[] { -1.0, 0.675 }));
-			Assert.AreEqual(1, Maths.Max(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675 }));
-			Assert.AreEqual(2, Maths.Max(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675, 2.0 }));
-			Assert.AreEqual(0.675, Maths.Max(new Keysharp.Core.Array(new object[] { -1.0, 0.675 })));
-			Assert.AreEqual(1, Maths.Max(new Keysharp.Core.Array(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675 })));
-			Assert.AreEqual(2, Maths.Max(new Keysharp.Core.Array(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675, 2.0 })));
+			Assert.AreEqual(0.675, Maths.Max([-1.0, 0.675]));
+			Assert.AreEqual(1, Maths.Max([-1.0, -0.5, 0, 0.5, 1, 0.675]));
+			Assert.AreEqual(2, Maths.Max([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0]));
+			Assert.AreEqual(0.675, Maths.Max(new Keysharp.Core.Array([-1.0, 0.675])));
+			Assert.AreEqual(1, Maths.Max(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675])));
+			Assert.AreEqual(2, Maths.Max(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0])));
 			Assert.AreEqual(1, Maths.Max(-1.0, -0.5, 0, 0.5, 1, 0.675));
 			Assert.AreEqual(2, Maths.Max(-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0));
-			Assert.AreEqual(string.Empty, Maths.Max(new object[] { -1.0, "asdf" }));
-			Assert.AreEqual(string.Empty, Maths.Max(new Keysharp.Core.Array(new object[] { -1.0, "asdf" })));
+			Assert.AreEqual(string.Empty, Maths.Max([-1.0, "asdf"]));
+			Assert.AreEqual(string.Empty, Maths.Max(new Keysharp.Core.Array([-1.0, "asdf"])));
 			Assert.IsTrue(TestScript("math-max", true));
 		}
 
@@ -341,16 +341,16 @@ namespace Keysharp.Tests
 			Assert.AreEqual(0, Maths.Min(0, 1));
 			Assert.AreEqual(1, Maths.Min(1, 1));
 			Assert.AreEqual(1.5, Maths.Min(1.5, 2.3));
-			Assert.AreEqual(-1.0, Maths.Min(new object[] { -1.0, 0.675 }));
-			Assert.AreEqual(-1.0, Maths.Min(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675 }));
-			Assert.AreEqual(-1.0, Maths.Min(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675, 2.0 }));
-			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array(new object[] { -1.0, 0.675 })));
-			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675 })));
-			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array(new object[] { -1.0, -0.5, 0, 0.5, 1, 0.675, 2.0 })));
+			Assert.AreEqual(-1.0, Maths.Min([-1.0, 0.675]));
+			Assert.AreEqual(-1.0, Maths.Min([-1.0, -0.5, 0, 0.5, 1, 0.675]));
+			Assert.AreEqual(-1.0, Maths.Min([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0]));
+			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, 0.675])));
+			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675])));
+			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0])));
 			Assert.AreEqual(-1.0, Maths.Min(-1.0, -0.5, 0, 0.5, 1, 0.675));
 			Assert.AreEqual(-1.0, Maths.Min(-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0));
-			Assert.AreEqual(string.Empty, Maths.Min(new object[] { -1.0, "asdf" }));
-			Assert.AreEqual(string.Empty, Maths.Min(new Keysharp.Core.Array(new object[] { -1.0, "asdf" })));
+			Assert.AreEqual(string.Empty, Maths.Min([-1.0, "asdf"]));
+			Assert.AreEqual(string.Empty, Maths.Min(new Keysharp.Core.Array([-1.0, "asdf"])));
 			Assert.IsTrue(TestScript("math-min", true));
 		}
 

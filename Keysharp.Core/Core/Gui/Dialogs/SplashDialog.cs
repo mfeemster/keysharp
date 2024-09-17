@@ -8,12 +8,14 @@ namespace Keysharp.Core
 		private Label main, sub;
 		private PictureBox pic;
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public Image Image
 		{
 			get => pic.Image;
 			set => pic.Image = value;
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string MainText
 		{
 			get => main.Text;
@@ -25,6 +27,7 @@ namespace Keysharp.Core
 			}
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string SubText
 		{
 			get => sub.Text;
@@ -36,6 +39,7 @@ namespace Keysharp.Core
 			}
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Title
 		{
 			get => Text;

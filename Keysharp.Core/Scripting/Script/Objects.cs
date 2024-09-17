@@ -57,7 +57,7 @@ namespace Keysharp.Scripting
 			{
 				if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 0) is MethodPropertyHolder mph1)
 				{
-					_ = mph1.callFunc(item, index.Concat(new object[] { value }));
+					_ = mph1.callFunc(item, index.Concat([value]));
 					return value;
 				}
 			}
@@ -68,7 +68,7 @@ namespace Keysharp.Scripting
 			{
 				if (il1 == mph2.ParamLength || mph2.IsVariadic)
 				{
-					_ = mph2.callFunc(item, index.Concat(new object[] { value }));
+					_ = mph2.callFunc(item, index.Concat([value]));
 					return value;
 				}
 				else

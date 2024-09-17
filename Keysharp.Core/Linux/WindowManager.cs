@@ -6,7 +6,7 @@ namespace Keysharp.Core.Linux
 	/// </summary>
 	internal class WindowManager : WindowManagerBase
 	{
-		internal static object xLibLock = new object();//The X11 Winforms implementation uses this, so attempt to do the same here.
+		internal static Lock xLibLock = new (); //The X11 Winforms implementation uses this, so attempt to do the same here.
 
 		// ToDo: There may be more than only one xDisplay
 		private XDisplay _display = null;

@@ -4,7 +4,8 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		internal static string EscapedString(string code, bool resolve)
+		internal static string EscapedString(string code, bool resolve) => EscapedString(code.AsSpan(), resolve);
+		internal static string EscapedString(ReadOnlySpan<char> code, bool resolve)
 		{
 			if (code.Length == 0)
 				return string.Empty;
@@ -83,52 +84,57 @@ namespace Keysharp.Scripting
 					line = line.Replace("%", string.Empty);
 				}
 
-				//if (line.Contains(","))//Unsure what this was for.
-				//  line = line.Replace(",", string.Empty);
-				foreach (var option in line.Substring(1).Trim().Split(Spaces, StringSplitOptions.RemoveEmptyEntries).Select(x => x.ToLower()))
+				var span = line.AsSpan(1).Trim();
+
+				foreach (Range r in span.SplitAny(Keywords.SpacesSv))
 				{
-					if (option.StartsWith(Keyword_Join))
+					var option = span[r];
+
+					if (option.Length > 0)
 					{
-						join = EscapedString(option.Substring(4), false);
-					}
-					else
-					{
-						switch (option)
+						if (option.StartsWith(Keyword_Join, StringComparison.OrdinalIgnoreCase))
 						{
-							case "ltrim":
-								ltrim = true;
-								break;
+							join = EscapedString(option.Slice(4), false);
+						}
+						else
+						{
+							switch (option)
+							{
+								case var b when option.Equals("ltrim", StringComparison.OrdinalIgnoreCase):
+									ltrim = true;
+									break;
 
-							case "ltrim0":
-								break;
+								case var b when option.Equals("ltrim0", StringComparison.OrdinalIgnoreCase):
+									break;
 
-							case "rtrim":
-								rtrim = true;
-								break;
+								case var b when option.Equals("rtrim", StringComparison.OrdinalIgnoreCase):
+									rtrim = true;
+									break;
 
-							case "rtrim0":
-								break;
+								case var b when option.Equals("rtrim0", StringComparison.OrdinalIgnoreCase):
+									break;
 
-							case "comments":
-							case "comment":
-							case "com":
-							case "c":
-								stripComments = true;
-								break;
+								case var b when option.Equals("comments", StringComparison.OrdinalIgnoreCase):
+								case var b2 when option.Equals("comment", StringComparison.OrdinalIgnoreCase):
+								case var b3 when option.Equals("com", StringComparison.OrdinalIgnoreCase):
+								case var b4 when option.Equals("c", StringComparison.OrdinalIgnoreCase):
+									stripComments = true;
+									break;
 
-							case "`":
-								literalEscape = true;
-								break;
+								case var b4 when option.Equals("`", StringComparison.OrdinalIgnoreCase):
+									literalEscape = true;
+									break;
 
-							default:
-								const string joinOpt = "join";
+								default:
+									const string joinOpt = "join";
 
-								if (option.Length > joinOpt.Length && option.Substring(0, joinOpt.Length).Equals(joinOpt, System.StringComparison.OrdinalIgnoreCase))
-									join = option.Substring(joinOpt.Length).Replace("`s", " ");
-								else
-									throw new ParseException(ExMultiStr, lineNumber, code, name);
+									if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, System.StringComparison.OrdinalIgnoreCase))
+										join = option.Slice(joinOpt.Length).ToString().Replace("`s", " ");
+									else
+										throw new ParseException(ExMultiStr, lineNumber, code, name);
 
-								break;
+									break;
+							}
 						}
 					}
 				}

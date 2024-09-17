@@ -44,7 +44,7 @@
 		private readonly CheckBox chkFullCode = new CheckBox();
 		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 		private readonly System.Windows.Forms.Timer timer = new Timer();
-		private readonly char[] trimend = new char[] { '\n', '\r' };
+		private readonly char[] trimend = ['\n', '\r'];
 		private readonly double updateFreqSeconds = 1;
 		private CompilerHelper ch = new CompilerHelper();
 		private CSharpStyler csStyler = new CSharpStyler();
@@ -532,7 +532,7 @@
 					SetStart();
 					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
-					var (domunits, domerrs) = ch.CreateDomFromFile(new string[] { txtIn.Text });
+					var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
 
 					if (domerrs.HasErrors)
 					{

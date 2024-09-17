@@ -137,7 +137,7 @@ namespace Keysharp.Core
 				string[] value;
 
 				if (val is string s)
-					value = new[] { s };
+					value = [s];
 				//else if (val is string[] sa)//Probably would never be a raw array of strings.
 				//  value = sa;
 				else if (val is Array arr)

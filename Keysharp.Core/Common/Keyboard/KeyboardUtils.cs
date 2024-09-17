@@ -17,7 +17,7 @@
 		internal const uint MODLR_COUNT = 8;
 		internal const uint MODLR_MAX = 0xFF;
 
-		internal static string[] SEND_MODES = { "Event", "Input", "Play", "InputThenPlay" }; // Must match the SendModes enum.
+		internal static string[] SEND_MODES = ["Event", "Input", "Play", "InputThenPlay"]; // Must match the SendModes enum.
 
 		internal static uint MakeLong(short lowPart, short highPart) => ((ushort)lowPart) | (uint)(highPart << 16);
 		internal static List<int> mouseList = new List<int>();
@@ -28,38 +28,35 @@
 		{
 #if LINUX
 			var inputStr = "xinput".Bash();
-			var inputStrSplits = inputStr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-			foreach (var split in inputStrSplits)
+			foreach (Range r in inputStr.AsSpan().SplitAny(Keywords.CrLf))
 			{
+				var split = inputStr.AsSpan(r).Trim();
+
 				//Keysharp.Scripting.Script.OutputDebug($"Examining split xinput string: {split}");
-				if (!split.Contains("XTEST"))
+				if (split.Length > 0 && !split.Contains("XTEST", StringComparison.OrdinalIgnoreCase))
 				{
-					if (split.Contains("slave  pointer"))//The two spaces are intentional.
-					{
-						var lineSplits = split.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+					var mouse = split.Contains("slave  pointer", StringComparison.OrdinalIgnoreCase);//The double spaces are intentional.
+					var kb = split.Contains("slave  keyboard", StringComparison.OrdinalIgnoreCase);
 
-						foreach (var lineSplit in lineSplits)
-						{
-							//Keysharp.Scripting.Script.OutputDebug($"Examining mouse line split: {lineSplit}");
-							if (lineSplit.StartsWith("id="))
-							{
-								mouseList.Add(lineSplit.Substring(3).Ai());
-								break;
-							}
-						}
-					}
-					else if (split.Contains("slave  keyboard"))
+					if (mouse || kb)//The two spaces are intentional.
 					{
-						var lineSplits = split.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-						foreach (var lineSplit in lineSplits)
+						foreach (Range r2 in split.SplitAny(Keywords.SpaceTab))
 						{
-							//Keysharp.Scripting.Script.OutputDebug($"Examining kb line split: {lineSplit}");
-							if (lineSplit.StartsWith("id="))
+							var lineSplit = split[r2].Trim();
+							//Keysharp.Scripting.Script.OutputDebug($"Examining {(mouse ? "mouse" : "kb")} line split: {lineSplit}");
+
+							if (lineSplit.StartsWith("id=", StringComparison.OrdinalIgnoreCase))
 							{
-								keyboardList.Add(lineSplit.Substring(3).Ai());
-								break;
+								if (int.TryParse(lineSplit.Slice(3), out var id))
+								{
+									if (mouse)
+										mouseList.Add(id);
+									else if (kb)
+										keyboardList.Add(id);
+
+									break;
+								}
 							}
 						}
 					}

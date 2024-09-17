@@ -5,7 +5,6 @@
 	/// </summary>
 	internal class ImageFinder
 	{
-		private object matchLocker = new object();
 		private Bitmap sourceImage;
 		private int threads = Environment.ProcessorCount;
 

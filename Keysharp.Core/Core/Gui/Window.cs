@@ -518,7 +518,7 @@ namespace Keysharp.Core
 
 		public static long WinGetStyle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Style : 0L);
 
-		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : new string[] { "" }));
+		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : [ "" ]));
 
 		public static string WinGetTitle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Title : "");
 
@@ -583,7 +583,7 @@ namespace Keysharp.Core
 		{
 			var (x, y, width, height, title, text, excludeTitle, excludeText) = obj.I4O1S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue);
 
-			if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			if (SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem win)
 			{
 				var loc = win.Location;
 
@@ -630,7 +630,6 @@ namespace Keysharp.Core
 			if (!(SearchWindow(winargs, true) is WindowItem win))
 				return;
 
-			var opts = Options.ParseOptions(options);
 			var w = int.MinValue;
 			var h = int.MinValue;
 			var rw = 30;
@@ -639,14 +638,15 @@ namespace Keysharp.Core
 			var wind = false;
 			var points = new List<Point>(16);
 
-			foreach (var opt in opts)
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.SpaceTabSv))
 			{
 				var tempstr = "";
+				var opt = options.AsSpan(r).Trim();
 
 				if (Options.TryParse(opt, "w", ref w)) { }
 				else if (Options.TryParse(opt, "h", ref h)) { }
-				else if (string.Compare(opt, "e", true) == 0) { ellipse = true; }
-				else if (string.Compare(opt, "Wind", true) == 0) { wind = true; }
+				else if (opt.Equals("e", StringComparison.OrdinalIgnoreCase)) { ellipse = true; }
+				else if (opt.Equals("Wind", StringComparison.OrdinalIgnoreCase)) { wind = true; }
 				else if (Options.TryParseString(opt, "r", ref tempstr))
 				{
 					var splits = tempstr.Split('-', StringSplitOptions.None);
@@ -660,7 +660,7 @@ namespace Keysharp.Core
 				}
 				else if (opt.Contains('-'))
 				{
-					var splits = opt.Split('-', StringSplitOptions.None);
+					var splits = opt.ToString().Split('-', StringSplitOptions.None);
 					var vals = Conversions.ParseRange(splits);
 
 					if (vals.Count > 1)
@@ -839,7 +839,7 @@ namespace Keysharp.Core
 			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
 			var start = DateTime.Now;
 
-			if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			if (SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem win)
 			{
 				//Keysharp.Scripting.Script.OutputDebug($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}");
 				//Keysharp.Core.File.FileAppend($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}\n", "out.txt");
@@ -856,189 +856,14 @@ namespace Keysharp.Core
 					Flow.Sleep(100);
 				}
 			}
+
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
 #if LINUX
+		[PublicForTestOnly]
 		public static long zzzLinuxTester(params object[] obj)
 		{
-			/*
-			    Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in PrintAllWindowText()");
-			    var windows = WindowProvider.Manager.AllWindows;
-
-			    foreach (var window in windows)
-			        Keysharp.Scripting.Script.OutputDebug(window.PID + ", " + window.Title);
-			*/
-			//
-			//
-			//
-			/*
-			    Accessors.A_Clipboard = "Asdf";
-			    var clip = Accessors.A_Clipboard as string;
-			    Keysharp.Scripting.Script.OutputDebug($"Initial clipboard: {clip}");
-			    var arr = Env.ClipboardAll();
-			    Accessors.A_Clipboard = "";
-			    clip = Accessors.A_Clipboard as string;
-			    Keysharp.Scripting.Script.OutputDebug($"Cleared clipboard: {clip}");
-			    Accessors.A_Clipboard = arr;
-			    clip = Accessors.A_Clipboard as string;
-			    Keysharp.Scripting.Script.OutputDebug($"Restored clipboard: {clip}");
-			*/
-			//
-			//
-			//
-			/*
-			    Keysharp.Scripting.Script.OutputDebug($"Is admin: {Accessors.A_IsAdmin}");
-			    Keysharp.Scripting.Script.OutputDebug($"pthread self: {Xlib.pthread_self()}");
-			*/
-			//
-			//
-			//
-			/*
-			    var val = "";
-			    var serial = "udevadm info --query=property --name=/dev/sda | grep ID_SERIAL_SHORT".Bash();
-
-			    if (!string.IsNullOrEmpty(serial))
-			    {
-			    var components = serial.Split('=');
-
-			    if (components.Length >= 2)
-			        val = components[1];
-			    }
-
-			    Keysharp.Scripting.Script.OutputDebug($"sda serial: {val}");
-			*/
-			//
-			//
-			//
-			/*
-			    var name = "/dev/sda";
-			    var freespace = Keysharp.Core.Drive.DriveGetSpaceFree(name);
-			    Keysharp.Scripting.Script.OutputDebug($"sda free space: {freespace}");
-			    var status = Keysharp.Core.Drive.DriveGetStatus(name);
-			    Keysharp.Scripting.Script.OutputDebug($"sda status: {status}");
-			    var tp = Keysharp.Core.Drive.DriveGetType(name);
-			    Keysharp.Scripting.Script.OutputDebug($"sda type: {tp}");
-			    var lbl = Keysharp.Core.Drive.DriveGetLabel(name);
-			    Keysharp.Scripting.Script.OutputDebug($"sda label: {lbl}");
-			    var fsys = Keysharp.Core.Drive.DriveGetFileSystem(name);
-			    Keysharp.Scripting.Script.OutputDebug($"sda file system: {fsys}");
-			    var cap = Keysharp.Core.Drive.DriveGetCapacity(name);
-			    Keysharp.Scripting.Script.OutputDebug($"sda capacity: {cap}");
-			*/
-			//
-			//
-			//
-			/*
-			    for (var i = 0; i < 5; i++)
-			    {
-			    Keysharp.Scripting.Script.OutputDebug($"Idle time: {Accessors.A_TimeIdle}");
-			    System.Threading.Thread.Sleep(100);
-			    }
-			*/
-			//
-			//
-			//
-			//Edit();
-			//
-			//
-			//
-			/*
-			    var orig = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH");
-			    Keysharp.Scripting.Script.OutputDebug($"Initial LD_LIBRARY_PATH: {orig}");
-			    var path = "/usr/local/lib";
-			    var append = path;
-			    orig = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
-			    var newPath = "";
-
-			    if (orig != "")
-			    {
-			    append = ":" + append;
-			    newPath = orig + append;
-			    //newPath = "\"" + orig + "\"" + append;
-			    }
-			    else
-			    newPath = append;
-
-			    Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", newPath);
-			    Keysharp.Scripting.Script.OutputDebug($"New LD_LIBRARY_PATH: {Environment.GetEnvironmentVariable("LD_LIBRARY_PATH")}");
-			*/
-			//
-			//
-			//
-			/*
-			    Keysharp.Scripting.Script.OutputDebug($"There are {Env.MouseButtonCount()} mouse buttons.");
-			*/
-			//
-			//
-			//
-			/*
-			    Files.FileCreateShortcut("`firefox`", "/home/heretic/Desktop/myfirefox.desktop", "", "www.google.com", "my firefox shortcut", "/usr/share/cinnamon/faces/6_grapes.jpg", "Application");
-			    Files.FileCreateShortcut("/home/heretic/Documents/cmdlines.txt", "/home/heretic/Desktop/cmdshortcut");
-			    object tgt = "";
-			    object dir = "";
-			    object args = "";
-			    object desc = "";
-			    object icon = "";
-			    object iconNum = "";
-			    object runState = "";
-			    //Files.FileGetShortcut("/home/heretic/Desktop/cmdshortcut", ref tgt, ref dir, ref args, ref desc, ref icon, ref iconNum, ref runState);
-			    //Keysharp.Scripting.Script.OutputDebug($"/home/heretic/Desktop/cmdshortcut: {tgt} {dir} {args} {desc} {icon} {iconNum} {runState}");
-			    //tgt = "";
-			    //dir = "";
-			    //args = "";
-			    //desc = "";
-			    //icon = "";
-			    //iconNum = "";
-			    //runState = "";
-			    Files.FileGetShortcut("/home/heretic/Desktop/myfirefox.desktop", ref tgt, ref dir, ref args, ref desc, ref icon, ref iconNum, ref runState);
-			    Keysharp.Scripting.Script.OutputDebug($"/home/heretic/Desktop/myfirefox.desktop: {tgt} {dir} {args} {desc} {icon} {iconNum} {runState}");
-			*/
-			//var ids = new int [2, 4, 5, 9, 10, 3, 5, 6, 8];
-			//var ids = new int [3, 5, 6, 8];
-			//var inputStr = "xinput".Bash();
-			//var inputStrSplits = inputStr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-			//foreach (var split in inputStrSplits)
-			//{
-			//  if (!split.Contains("XTEST"))
-			//  {
-			//      if (split.Contains("slave pointer"))
-			//      {
-			//          var lineSplits = split.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-			//          foreach (var lineSplit in lineSplits)
-			//          {
-			//              if (lineSplit.StartsWith("id="))
-			//              {
-			//                  var num = lineSplit.Substring(3).Al();
-			//              }
-			//          }
-			//      }
-			//      else if (split.Contains("slave keyboard"))
-			//      {
-			//      }
-			//  }
-			//}
-			//Keysharp.Scripting.Script.OutputDebug($"Kbs: {string.Join(',', KeyboardUtils.keyboardList)}");
-			//Keysharp.Scripting.Script.OutputDebug($"Mice: {string.Join(',', KeyboardUtils.mouseList)}");
-			/*
-			    foreach (var id in KeyboardUtils.kbMouseList)
-			    _ = $"xinput --disable {id}".Bash();
-
-			    Thread.Sleep(5000);
-
-			    foreach (var id in KeyboardUtils.kbMouseList)
-			    _ = $"xinput --enable {id}".Bash();
-			*/
-			//
-			//
-			//
-			var mgr = WindowProvider.Manager;
-			var  win = mgr.WindowFromPoint(new Point(1000, 1000));
-
-			if (win != null)
-				Keysharp.Scripting.Script.OutputDebug($"Found window: {win.Title}");
-
-			return 0L;
 		}
 #endif
 
@@ -1112,7 +937,7 @@ namespace Keysharp.Core
 					return null;
 			}
 
-			var parent = SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
+			var parent = SearchWindow([title, text, excludeTitle, excludeText], true);
 
 			if (ctrl == null)
 				return parent;
@@ -1313,7 +1138,7 @@ namespace Keysharp.Core
 		{
 			var (val, title, text, excludeTitle, excludeText) = obj.I1O1S3();
 
-			if (SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			if (SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem win)
 			{
 				if (val == 0)
 					set(win, false);

@@ -22,6 +22,7 @@ namespace Keysharp.Scripting
 			const string Space = "space";
 			const string Time = "time";
 			var variable = ForceString(subject);
+			var varspan = variable.AsSpan();
 			var ret = false;
 
 			switch (op)
@@ -46,16 +47,24 @@ namespace Keysharp.Scripting
 				break;
 
 				case In:
-					foreach (var sub in test.Split(Delimiter))
-						if (variable.Equals(sub, System.StringComparison.OrdinalIgnoreCase))
+					foreach (Range r in test.AsSpan().Split(Delimiter))
+					{
+						var sub = test.AsSpan(r);
+
+						if (varspan.Equals(sub, System.StringComparison.OrdinalIgnoreCase))
 							ret = true;
+					}
 
 					break;
 
 				case Contains:
-					foreach (var sub in test.Split(Delimiter))
-						if (variable.IndexOf(sub, System.StringComparison.OrdinalIgnoreCase) != -1)
+					foreach (Range r in test.AsSpan().Split(Delimiter))
+					{
+						var sub = test.AsSpan(r);
+
+						if (varspan.IndexOf(sub, System.StringComparison.OrdinalIgnoreCase) != -1)
 							ret = true;
+					}
 
 					break;
 
@@ -77,7 +86,7 @@ namespace Keysharp.Scripting
 					{
 						case Integer:
 						case Number:
-							variable = variable.Trim().TrimStart(new[] { '+', '-' });
+							variable = variable.Trim().TrimStart(Keywords.PlusMinus);
 
 						goto case Xdigit;
 
@@ -97,7 +106,7 @@ namespace Keysharp.Scripting
 					switch (test)
 					{
 						case Float:
-							if (!variable.Contains("."))
+							if (!variable.Contains('.'))
 							{
 								ret = false;
 								goto done;

@@ -414,7 +414,7 @@
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
-		void IList.RemoveAt(int index) => RemoveAt(new object[] { index });//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
+		void IList.RemoveAt(int index) => RemoveAt([index]);//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
 
 		public object this[object idx]
 		{

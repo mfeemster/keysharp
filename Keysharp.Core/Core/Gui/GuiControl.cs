@@ -318,20 +318,27 @@ namespace Keysharp.Core
 					}
 					else
 					{
-						var splits = val.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 						var width = int.MinValue;
 						var height = int.MinValue;
 						var icon = "";
 						object iconnumber = 0;
-						var filename = splits.Last();
+						var filename = "";
 
-						for (var i = 0; i < splits.Length - 1; i++)
+						foreach (Range r in val.AsSpan().SplitAny(Keywords.SpaceTabSv))
 						{
-							var opt = splits[i];
+							var opt = val.AsSpan(r).Trim();
 
-							if (Options.TryParse(opt, "*w", ref width)) { }
-							else if (Options.TryParse(opt, "*h", ref height)) { }
-							else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+							if (opt.Length > 0)
+							{
+								if (Options.TryParse(opt, "*w", ref width)) { }
+								else if (Options.TryParse(opt, "*h", ref height)) { }
+								else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+								else
+								{
+									filename = val.Substring(r.Start.Value);
+									break;
+								}
+							}
 						}
 
 						//If neither were set, make one set and the other unset to force a resize internally
@@ -494,10 +501,15 @@ namespace Keysharp.Core
 					nodes = top == null ? tv.Nodes : top.Nodes;
 				}
 
-				foreach (var opt in Options.ParseOptions(options))
+				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					if (int.TryParse(opt, out var index)) { n = index; }
-					else if (string.Compare(opt, "First", true) == 0) { first = true; }
+					var opt = options.AsSpan(r).Trim();
+
+					if (opt.Length > 0)
+					{
+						if (int.TryParse(opt, out var index)) { n = index; }
+						else if (opt.Equals("First", StringComparison.OrdinalIgnoreCase)) { first = true; }
+					}
 				}
 
 				if (first)

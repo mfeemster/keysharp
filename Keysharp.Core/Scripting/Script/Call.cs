@@ -96,7 +96,7 @@
 			}
 			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
 			{
-				var val = mph.callFunc(item, new object[] { key });
+				var val = mph.callFunc(item, [key]);
 				return (item, val);
 			}
 
@@ -159,7 +159,7 @@
 			//We check for a param length of 1 so we don't accidentally grab properties named Item which have no parameters, such as is the case with ComObject.
 			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
 			{
-				return mph1.callFunc(item, new object[] { namestr });
+				return mph1.callFunc(item, [namestr]);
 			}
 
 #if WINDOWS
@@ -403,7 +403,7 @@
 			}
 			else if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
 			{
-				return mph1.callFunc(item, new object[] { namestr, value });
+				return mph1.callFunc(item, [namestr, value]);
 			}
 
 #if WINDOWS
@@ -414,7 +414,7 @@
 			}
 			else if (Marshal.IsComObject(item))
 			{
-				_ = item.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });
+				_ = item.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, [value]);
 				return value;
 			}
 

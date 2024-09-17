@@ -6,6 +6,7 @@ namespace Keysharp.Core
 	{
 		private Keys key, mod;
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public Limits Limit { get; set; }
 
 		public HotkeyBox()

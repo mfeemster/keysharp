@@ -112,9 +112,9 @@ namespace Keysharp.Core
 			{
 				if (!type ? Clipboard.ContainsText()
 #if WINDOWS
-				 || Clipboard.ContainsFileDropList()
+						|| Clipboard.ContainsFileDropList()
 #endif
-				 : !IsClipboardEmpty())
+						: !IsClipboardEmpty())
 					return true;
 
 				Keysharp.Core.Flow.Sleep(frequency);
@@ -517,6 +517,7 @@ namespace Keysharp.Core
 
 		internal static int ClipFormatStringToInt(string fmt) => DataFormats.GetFormat(fmt) is DataFormats.Format d ? d.Id : 0;
 
+#if WINDOWS
 		/// <summary>
 		/// Gets the data on the clipboard in the specified format.
 		/// Gotten from: http://pinvoke.net/default.aspx/user32/GetClipboardData.html
@@ -528,8 +529,6 @@ namespace Keysharp.Core
 		{
 			if (format != 0)
 			{
-#if WINDOWS
-
 				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))
 				{
 					byte[] buf;
@@ -553,14 +552,11 @@ namespace Keysharp.Core
 
 					return buf;
 				}
-
-#elif LINUX
-				throw new NotImplementedException();
-#endif
 			}
 
 			return null;
 		}
+#endif
 
 		//internal static DataFormats.Format IntToClipFormat(int i) => DataFormats.GetFormat(i);
 
@@ -576,18 +572,32 @@ namespace Keysharp.Core
 		{
 			var count = long.MaxValue;
 			var inputStr = "xinput list --long".Bash();
-			var inputStrSplits = inputStr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-			foreach (var split in inputStrSplits)
+			foreach (Range r in inputStr.AsSpan().SplitAny(Keywords.CrLf))
 			{
-				if (split.Contains("Buttons supported:"))
-				{
-					var btnSplit = split.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+				var split = inputStr.AsSpan(r).Trim();
 
-					if (btnSplit.Length > 1 && long.TryParse(btnSplit[1], out var btnCount))
+				if (split.Contains("Buttons supported:", StringComparison.OrdinalIgnoreCase))
+				{
+					var splitct = 0;
+
+					foreach (Range r2 in split.Split(':'))
 					{
-						//count = Math.Max(count, btnCount);
-						count = Math.Min(count, btnCount);
+						var btnSplit = split[r2].Trim();
+
+						if (btnSplit.Length > 0)
+						{
+							if (splitct > 0)
+							{
+								if (long.TryParse(btnSplit, out var btnCount))
+								{
+									count = Math.Min(count, btnCount);
+									break;
+								}
+							}
+
+							splitct++;
+						}
 					}
 				}
 			}

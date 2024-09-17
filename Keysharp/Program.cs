@@ -17,7 +17,7 @@ namespace Keysharp.Main
 	public static class Program
 	{
 		private static readonly CompilerHelper ch = new CompilerHelper();
-		private static readonly char dotNetMajorVersion = '8';
+		private static readonly char dotNetMajorVersion = '9';
 
 		internal static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
@@ -286,7 +286,7 @@ namespace Keysharp.Main
 #if DEBUG
 				Keysharp.Scripting.Script.OutputDebug("Running compiled code.");
 #endif
-				_ = main.Invoke(null, new object[] { args });
+				_ = main.Invoke(null, [args]);
 			}
 			catch (Exception ex)
 			{

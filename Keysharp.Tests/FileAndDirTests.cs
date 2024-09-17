@@ -6,7 +6,7 @@ namespace Keysharp.Tests
 {
 	public class FileAndDirTests : TestRunner
 	{
-		private object syncroot = new object();
+		private Lock syncroot = new ();
 
 		[Test, Category("FileAndDir")]
 		public void DirCopy()
@@ -449,7 +449,6 @@ namespace Keysharp.Tests
 				"./FileGetShortcut/file1.txt",
 				"./testshortcut.lnk"
 			);
-
 			Keysharp.Core.Files.FileGetShortcut("./testshortcut.lnk",
 												ref outTarget,
 												ref outDir,
@@ -465,7 +464,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual("", outIcon.ToString());
 			Assert.AreEqual("", outIconNum.ToString());
 			Assert.AreEqual("", outRunState.ToString());
-			
+
 			if (System.IO.File.Exists("./testshortcut.lnk"))
 				System.IO.File.Delete("./testshortcut.lnk");
 
@@ -477,7 +476,6 @@ namespace Keysharp.Tests
 			outIconNum = null;
 			outRunState = null;
 #endif
-
 			Keysharp.Core.Files.FileCreateShortcut
 			(
 				"./FileGetShortcut/file1.txt",
@@ -492,7 +490,6 @@ namespace Keysharp.Tests
 				2L
 #endif
 			);
-			
 			Keysharp.Core.Files.FileGetShortcut("./testshortcut.lnk",
 												ref outTarget,
 												ref outDir,
@@ -782,6 +779,7 @@ namespace Keysharp.Tests
 				Assert.AreEqual(pos, 0L);
 				Assert.AreEqual(len, 7L);
 			}
+
 #if WINDOWS
 			//Test modes and permissions by checking for expected exceptions.
 			//linux seems to be ok with these combinations and doesn't throw.
@@ -803,8 +801,8 @@ namespace Keysharp.Tests
 					}
 				}
 			});
-
 #endif
+
 			using (var f = Keysharp.Core.Files.FileOpen(filename, "r -r"))//Test read share create from handle.
 			{
 				var handle = f.Handle;

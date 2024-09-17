@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
@@ -9,13 +9,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <LangVersion>preview</LangVersion>
     <IsPackable>false</IsPackable>
     <OutputType>WinExe</OutputType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <GenerateRuntimeConfigDevFile>true</GenerateRuntimeConfigDevFile>
-    <AssemblyVersion>0.0.0.7</AssemblyVersion>
-    <FileVersion>0.0.0.7</FileVersion>
-    <Version>0.0.0.7</Version>
+    <AssemblyVersion>0.0.0.8</AssemblyVersion>
+    <FileVersion>0.0.0.8</FileVersion>
+    <Version>0.0.0.8</Version>
     <Authors>Matt Feemster</Authors>
     <Description>A suite of unit tests to verify Keysharp functionality</Description>
     <Company>Keysharp</Company>

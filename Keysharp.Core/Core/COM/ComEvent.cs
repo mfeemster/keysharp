@@ -13,7 +13,7 @@ namespace Keysharp.Core.COM
 		internal ComEvent(Dispatcher disp, object sink, bool log)
 		{
 			dispatcher = disp;
-			thisArg = new object[1] { this };
+			thisArg = [this];
 			logAll = log;
 
 			if (sink is string s)

@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Benchmark
+﻿
+namespace Keysharp.Benchmark
 {
 	public sealed class Program
 	{
@@ -28,13 +29,15 @@
 			//var summary = BenchmarkRunner.Run<MathBench>(config);
 			//var summary = BenchmarkRunner.Run<IndexBench>(config);
 			//var summary = BenchmarkRunner.Run<ListAddBench>(config);
-			var summary = BenchmarkRunner.Run<NestedMapPopulatorBenchmark>(config);
+			//var summary = BenchmarkRunner.Run<NestedMapPopulatorBenchmark>(config);
+			//var summary = BenchmarkRunner.Run<HexBench>(config);
+			var summary = BenchmarkRunner.Run<HexBench>();
 			//var summary = BenchmarkRunner.Run<IndexBench>();
 			//var summary = BenchmarkRunner.Run<FuncBench>(config);
 			var logger = ConsoleLogger.Default;
 			MarkdownExporter.Console.ExportToLog(summary, logger);
 			ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
-			summary = BenchmarkRunner.Run<NestedMapRetrieverBenchmark>(config);
+			//summary = BenchmarkRunner.Run<NestedMapRetrieverBenchmark>(config);
 			//var summary = BenchmarkRunner.Run<IndexBench>();
 			//var summary = BenchmarkRunner.Run<FuncBench>(config);
 			MarkdownExporter.Console.ExportToLog(summary, logger);

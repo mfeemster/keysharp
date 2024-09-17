@@ -94,7 +94,7 @@ namespace Keysharp.Scripting
 			if (invoke.Method.MethodName == InternalMethods.Index.MethodName)
 				parameters = invoke.Parameters.Cast<CodeExpression>().ToArray();
 			else//Should never happen.
-				parameters = new CodeExpression[0];
+				parameters = [];
 
 			var set = (CodeMethodInvokeExpression)InternalMethods.SetObject;
 

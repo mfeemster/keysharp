@@ -178,14 +178,22 @@ namespace Keysharp.Core
 						else
 						{
 							kvdkt.Clear();//Documentation seems to suggest it should overwrite all in the specified section.
-							var pairsplits = value.Split(TrimLine, StringSplitOptions.RemoveEmptyEntries);
 
-							foreach (var pair in pairsplits)
+							foreach (Range r in value.AsSpan().SplitAny(TrimLine))
 							{
-								var split = pair.Split('=').Select(l => l.Trim(TrimLine)).ToArray();
+								var pair = value.AsSpan(r).Trim();
 
-								if (split.Length == 2 && kvdkt != null)
-									kvdkt[split[0]] = split[1];
+								if (pair.Length > 0)
+								{
+									var equalsIndex = pair.IndexOf('=');
+
+									if (equalsIndex != -1 && equalsIndex != pair.Length - 1)
+									{
+										var first = pair.Slice(0, equalsIndex);
+										var second = pair.Slice(equalsIndex + 1);
+										kvdkt[first.Trim(TrimLine).ToString()] = second.Trim(TrimLine).ToString();
+									}
+								}
 							}
 						}
 					}
@@ -225,23 +233,28 @@ namespace Keysharp.Core
 			OrderedDictionary kvdkt = null;
 			var inidkt = new OrderedDictionary(StringComparer.CurrentCultureIgnoreCase);
 
-			foreach (var ln in System.IO.File.ReadAllLines(filename).Select(l => l.Trim(TrimLine)).Where(x => x != ""))
+			foreach (var line in System.IO.File.ReadLines(filename))
 			{
-				var split = ln.Split('=').Select(l => l.Trim(TrimLine)).ToArray();
+				var ln = line.Trim(TrimLine);
 
-				if (ln[0] == '#')
+				if (ln.Length > 0)
 				{
-					if (kvdkt == null)
-						_ = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(ln, StringComparer.CurrentCultureIgnoreCase);
+					var split = ln.Split('=').Select(l => l.Trim(TrimLine)).ToArray();
+
+					if (ln[0] == '#')
+					{
+						if (kvdkt == null)
+							_ = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(ln, StringComparer.CurrentCultureIgnoreCase);
+						else
+							kvdkt[ln] = "";
+					}
 					else
-						kvdkt[ln] = "";
-				}
-				else
-				{
-					if (split.Length == 1)
-						kvdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(split[0], StringComparer.CurrentCultureIgnoreCase);
-					else if (split.Length == 2 && kvdkt != null)
-						kvdkt[split[0]] = split[1];
+					{
+						if (split.Length == 1)
+							kvdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(split[0], StringComparer.CurrentCultureIgnoreCase);
+						else if (split.Length == 2 && kvdkt != null)
+							kvdkt[split[0]] = split[1];
+					}
 				}
 			}
 

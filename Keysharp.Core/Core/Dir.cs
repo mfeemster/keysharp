@@ -211,7 +211,7 @@
 
 			if (path.StartsWith(new string(Path.DirectorySeparatorChar, root)))
 			{
-				var parts = path.Substring(root).Split(new[] { Path.DirectorySeparatorChar }, 2);
+				var parts = path.Substring(root).Split(Path.DirectorySeparatorChar, 2);
 				var buf = new StringBuilder(root + parts[0].Length + 1 + parts[1].Length);
 				_ = buf.Append(path, 0, root);
 				_ = buf.Append(parts[0]);

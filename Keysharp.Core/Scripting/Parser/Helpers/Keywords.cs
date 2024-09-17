@@ -600,43 +600,45 @@
 		internal const string Throw = "throw";
 		internal const string TrueTxt = "true";
 		internal const string VarExt = "#_@";//$?";
-		internal static readonly char[] BlockOpenAndSpace = { BlockOpen, SingleSpace };
-		internal static readonly char[] BlockOpenParenOpen = { BlockOpen, ParenOpen };
-		internal static SearchValues<char> BlockOpenParenOpenSv = SearchValues.Create(BlockOpenParenOpen);
-		internal static readonly char[] Parens = { ParenOpen, ParenClose };
-		internal static SearchValues<char> ParensSv = SearchValues.Create(Parens);
+		internal static readonly char[] BlockOpenAndSpace = [BlockOpen, SingleSpace];
+		internal static readonly char[] BlockOpenParenOpen = [BlockOpen, ParenOpen];
+		internal static readonly SearchValues<char> BlockOpenParenOpenSv = SearchValues.Create(BlockOpenParenOpen);
+		internal static readonly char[] Parens = [ParenOpen, ParenClose];
+		internal static readonly SearchValues<char> ParensSv = SearchValues.Create(Parens);
 		internal static readonly char[] BlockOpenSpaceAndParens = BlockOpenAndSpace.Concat(Parens);
 		internal static readonly char[] CrLf = "\r\n".ToCharArray();
-		internal static SearchValues<char> CrLfSv = SearchValues.Create(CrLf);
-		internal static readonly object[] EmptyVariadicArgs = new object[] { System.Array.Empty<object>() };
+		internal static readonly SearchValues<char> CrLfSv = SearchValues.Create(CrLf);
+		internal static readonly object[] EmptyVariadicArgs = [System.Array.Empty<object>()];
 		internal static readonly char[] SpaceColon = " :".ToCharArray();
-		internal static readonly char[] Spaces = { CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f' };
-		internal static SearchValues<char> SpacesSv = SearchValues.Create(Spaces);
-		public static readonly char[] BothBracesSpaces = BothBraces.Concat(Spaces);
-		internal static readonly char[] SpacesQuotes = { CR, LF, SingleSpace, '\t', '\xA0', '"' };
+		internal static readonly char[] Spaces = [CR, LF, SingleSpace, '\t', '\xA0', '\v', '\f'];
+		internal static readonly SearchValues<char> SpacesSv = SearchValues.Create(Spaces);
+		//public static readonly char[] BothBracesSpaces = BothBraces.Concat(Spaces);
+		internal static readonly char[] SpacesQuotes = [CR, LF, SingleSpace, '\t', '\xA0', '"'];
 		internal static readonly char[] SpaceTab = " \t".ToCharArray();
-		internal static SearchValues<char> SpaceTabSv = SearchValues.Create(SpaceTab);
+		internal static readonly SearchValues<char> SpaceTabSv = SearchValues.Create(SpaceTab);
 		internal static readonly char[] SpaceTabComma = " \t,".ToCharArray();
 		internal static readonly char[] SpaceTabOpenBrace = " \t{".ToCharArray();
 		internal static readonly char[] SpaceTabOpenParen = " \t(".ToCharArray();
-		internal static SearchValues<char> SpaceTabOpenParenSv = SearchValues.Create(SpaceTabOpenParen);
+		internal static readonly SearchValues<char> SpaceTabOpenParenSv = SearchValues.Create(SpaceTabOpenParen);
 		internal static readonly char[] TrimLine = "\t\r\n ".ToCharArray();
 		internal static readonly char[] TrimSec = "[]".ToCharArray();
 		internal static readonly char[] SpaceMultiDelim;
-		internal static SearchValues<char> SpaceMultiDelimSv;
+		internal static readonly SearchValues<char> SpaceMultiDelimSv;
 		internal static readonly char[] FlowDelimiters;
-		internal static SearchValues<char> FlowDelimitersSv;
+		internal static readonly SearchValues<char> FlowDelimitersSv;
 		internal static readonly char[] FlowDelimiters2;
+		internal static readonly char[] PlusMinus = ['+', '-'];
+
 
 #if !LEGACY
 		internal const char LastVar = '$';
 #endif
-		internal static readonly char[] zerochars = new char[] { '0' };
+		internal static readonly char[] zerochars = ['0'];
 #if !LEGACY
-		internal static char Escape = DefaultEscape;
+		internal const char Escape = DefaultEscape;
 #else
-		internal static string Comment = DefaultComment.ToString();
-		internal static char Escape = DefaultEscape;
+		internal static readonly string Comment = DefaultComment.ToString();
+		internal const char Escape = DefaultEscape;
 #endif
 
 #if !LEGACY
@@ -645,14 +647,14 @@
 #endif
 
 #if !LEGACY
-		internal static char Resolve = DefaultResolve;
+		internal const char Resolve = DefaultResolve;
 #else
-		internal static char Multicast = DefaultMulticast;
-		internal static char Resolve = DefaultResolve;
+		internal const char Multicast = DefaultMulticast;
+		internal const char Resolve = DefaultResolve;
 #endif
 
 #if !LEGACY
-		internal static char Multicast = DefaultMulticast;
+		internal const char Multicast = DefaultMulticast;
 #else
 #endif
 

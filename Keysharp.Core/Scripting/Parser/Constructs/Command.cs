@@ -9,7 +9,7 @@ namespace Keysharp.Scripting
 			var parts = new List<string>();
 			bool start = true, expr = false, str = false;
 			var last = 0;
-			int[] levels = { 0, 0, 0 }; // parentheses, objects, arrays
+			int[] levels = [0, 0, 0]; // parentheses, objects, arrays
 
 			for (var i = 0; i < code.Length; i++)
 			{

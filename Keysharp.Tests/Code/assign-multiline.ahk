@@ -221,6 +221,177 @@ if (Var = teststr)
 else
 	FileAppend, "fail", "*"
 
+a := true
+b := false
+c := a AND b
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := a AND
+b
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c := true
+c := a
+and b
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := true
+b := false
+c := a OR b
+
+if (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := false
+c := a OR
+b
+
+if (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c := false
+c := a
+or b
+
+if (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := true
+b := false
+c := a OR b
+
+if (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := false
+c := a OR
+b
+
+if (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c := false
+c := a
+or b
+
+if (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := NOT
+c
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := NOT a OR b
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := NOT a
+OR b
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := NOT
+a
+OR b
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := NOT
+(a OR b)
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := NOT (a OR
+b)
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := true
+c := NOT (a
+OR
+b)
+
+if (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+obj := Map()
+
+If (obj is
+KeysharpObject)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := obj is
+KeysharpObject AND
+a
+OR
+b
+
+If (c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c := NOT (obj
+is KeysharpObject)
+
+If (!c)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 ProductIsAvailableInColor(a, b)
 {
 	return 123

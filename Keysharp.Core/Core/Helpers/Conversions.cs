@@ -291,31 +291,44 @@ namespace Keysharp.Core
 			var weight = 400;
 			var quality = 0;
 
-			foreach (var opt in Options.ParseOptions(styles))
+			foreach (Range r in styles.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var mode = opt.ToLowerInvariant();
+				var opt = styles.AsSpan(r).Trim();
 
-				if (Options.TryParse(mode, "s", ref size)) { }
-				else if (Options.TryParse(mode, "q", ref quality)) { }
-				else if (Options.TryParse(mode, "w", ref weight))
+				if (opt.Length > 0)
 				{
-					if (weight <= 400)
-						display &= ~FontStyle.Bold;
-					else if (weight >= 700)
-						display |= FontStyle.Bold;
-				}
+					if (Options.TryParse(opt, "s", ref size)) { }
+					else if (Options.TryParse(opt, "q", ref quality)) { }
+					else if (Options.TryParse(opt, "w", ref weight))
+					{
+						if (weight <= 400)
+							display &= ~FontStyle.Bold;
+						else if (weight >= 700)
+							display |= FontStyle.Bold;
+					}
 
-				switch (mode)
-				{
-					case Keyword_Bold: display |= FontStyle.Bold; break;
+					switch (opt)
+					{
+						case var b when opt.Equals(Keywords.Keyword_Bold, StringComparison.OrdinalIgnoreCase):
+							display |= FontStyle.Bold;
+							break;
 
-					case Keyword_Italic: display |= FontStyle.Italic; break;
+						case var b when opt.Equals(Keywords.Keyword_Italic, StringComparison.OrdinalIgnoreCase):
+							display |= FontStyle.Italic;
+							break;
 
-					case Keyword_Strike: display |= FontStyle.Strikeout; break;
+						case var b when opt.Equals(Keywords.Keyword_Strike, StringComparison.OrdinalIgnoreCase):
+							display |= FontStyle.Strikeout;
+							break;
 
-					case Keyword_Underline: display |= FontStyle.Underline; break;
+						case var b when opt.Equals(Keywords.Keyword_Underline, StringComparison.OrdinalIgnoreCase):
+							display |= FontStyle.Underline;
+							break;
 
-					case Keyword_Norm: display = FontStyle.Regular; break;
+						case var b when opt.Equals(Keywords.Keyword_Norm, StringComparison.OrdinalIgnoreCase):
+							display = FontStyle.Regular;
+							break;
+					}
 				}
 			}
 
@@ -419,13 +432,15 @@ namespace Keysharp.Core
 			return bytes;
 		}
 
-		internal static DateTime ToDateTime(string time, Calendar cal)
+		internal static DateTime ToDateTime(string time, Calendar cal) => ToDateTime(time.AsSpan(), cal);
+
+		internal static DateTime ToDateTime(ReadOnlySpan<char> time, Calendar cal)
 		{
-			int[] t = { DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0 };
+			int[] t = [DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0];
 			int i, k;
 
 			for (i = 0, k = 0; i < t.Length; i++, k += 2)
-				if (k + 1 >= time.Length || !int.TryParse(time.AsSpan(k, 2), out t[i]))
+				if (k + 1 >= time.Length || !int.TryParse(time.Slice(k, 2), out t[i]))
 					break;
 
 			return i == 0 ? DateTime.MinValue : new DateTime((t[0] * 100) + t[1], t[2], t[3], t[4], t[5], t[6], cal);
@@ -510,14 +525,17 @@ namespace Keysharp.Core
 						attrMask.and_mask &= ~mask;//Reset bit to 0.
 						attrMask.xor_mask |= mask;//Set bit to 1.
 						break;
+
 					case '-':
 						attrMask.and_mask &= ~mask;//Reset bit to 0.
 						attrMask.xor_mask &= ~mask;//Override any prior + or ^.
 						break;
+
 					case '^':
 						attrMask.xor_mask ^= mask;//Toggle bit. ^= vs |= to invert any prior + or ^.
 						//Leave and_mask as is, so any prior + or - will be inverted.
 						break;
+
 					default: //No +/-/^ specified, so overwrite attributes (equal and opposite to FileGetAttrib).
 						attrMask.and_mask = 0;//Reset all bits to 0.
 						attrMask.xor_mask |= mask;//Set bit to 1. |= to accumulate if multiple attributes are present.
@@ -620,13 +638,6 @@ namespace Keysharp.Core
 		internal static (RegistryKey, string, string) ToRegKey(string root, bool writable = false)
 		{
 			var (reg, comp, key) = ToRegRootKey(root);
-			//var keys = SubKey.Split(@"/\".ToCharArray());
-			//
-			//for (var i = 0; i < keys.Length - (Parent ? 1 : 0); i++)
-			//  reg = reg.OpenSubKey(keys[i].Trim());
-			//
-			//SubKey = Parent ? keys[keys.Length - 1] : string.Empty;
-			//if (reg.)
 			var regkey = reg.OpenSubKey(key, writable);
 
 			if (regkey == null)

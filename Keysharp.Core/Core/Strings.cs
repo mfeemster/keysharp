@@ -4,8 +4,9 @@ namespace Keysharp.Core
 {
 	public static class Strings
 	{
+		internal static Lock locker = new ();
 		internal static RegexEntry regdkt = new ();
-		private static object[] nullPlaceholder = new object[] { null };
+		private static object[] nullPlaceholder = [null];
 
 		/// <summary>
 		/// Decodes a base 64 character string to binary data.
@@ -277,7 +278,7 @@ namespace Keysharp.Core
 			var str = needle + reverse;
 			RegexWithTag exp = null;
 
-			lock (regdkt)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
+			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
 			{
 				if (!regdkt.TryGetValue(str, out exp))
 				{
@@ -354,7 +355,7 @@ namespace Keysharp.Core
 			var str = needle + reverse;
 			RegexWithTag exp = null;
 
-			lock (regdkt)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
+			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
 			{
 				if (!regdkt.TryGetValue(str, out exp))
 				{
@@ -469,8 +470,8 @@ namespace Keysharp.Core
 		{
 			var input = obj0.As();
 			var options = obj1.As();
-			var splits = options.Split(" ");
-			var opts = Options.KeyValues(string.Join(",", splits), true, new[] { 'f' });
+			var splits = options.Split(' ');
+			var opts = Options.KeyValues(string.Join(",", splits), true, ['f']);
 			IFuncObj function = null;
 			var split = '\n';
 			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
@@ -532,7 +533,7 @@ namespace Keysharp.Core
 			var unique = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("u", StringComparison.OrdinalIgnoreCase)) ?? "");
 			var slashopt = splits.FirstOrDefault(s => s.Equals("\\", StringComparison.OrdinalIgnoreCase) || s.Equals("/", StringComparison.OrdinalIgnoreCase)) ?? "";
 			var slash = false;
-			var slashtype = '\\';
+			var slashtype = System.IO.Path.DirectorySeparatorChar;
 
 			if (!string.IsNullOrEmpty(slashopt))
 			{
@@ -1316,11 +1317,11 @@ namespace Keysharp.Core
 	/// Human readable sorting from https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
 	/// and slightly modified.
 	/// </summary>
-	internal class NaturalComparer : IComparer, IComparer<string>
+	internal partial class NaturalComparer : IComparer, IComparer<string>
 	{
 		private static readonly Regex regex;
 
-		static NaturalComparer() => regex = new Regex(@"[\W\.]*([\w-[\d]]+|[\d]+)", RegexOptions.Compiled);
+		static NaturalComparer() => regex = NaturalRegex();
 
 		public int Compare(string left, string right) => NaturalCompare(left, right);
 
@@ -1399,6 +1400,9 @@ namespace Keysharp.Core
 			// otherwise do a straight text comparison
 			return string.Compare(left, right, StringComparison.CurrentCulture);//Spec says to use "locale" with "logical" sorting.
 		}
+
+		[GeneratedRegex(@"[\W\.]*([\w-[\d]]+|[\d]+)", RegexOptions.Compiled)]
+		private static partial Regex NaturalRegex();
 	}
 
 	internal class RegexWithTag : Regex

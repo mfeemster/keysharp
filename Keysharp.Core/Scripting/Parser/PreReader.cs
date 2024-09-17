@@ -6,7 +6,7 @@ namespace Keysharp.Scripting
 	internal class PreReader
 	{
 		private static int hotifcount;
-		private static char[] libBrackets = new char[] { '<', '>' };
+		private static char[] libBrackets = ['<', '>'];
 		private static string multiLineComments = new string(new[] { MultiComB, MultiComA });
 		private readonly List<string> includes = new List<string>();
 		private string includePath = "./";
@@ -769,18 +769,21 @@ namespace Keysharp.Scripting
 							var newIsHotkey = newLineStr.FindFirstNotInQuotes("::") != -1;
 							var prevIsHotkey = prevLine.Code.FindFirstNotInQuotes("::") != -1;
 							var prevIsDirective = prevLine.Code.StartsWith('#');
-
+							var wasVerbal = false;
 							//New line started with an operator.
 							//x := 1//Previous line.
 							//+ 2//New line.
-							if (newStartSubSpan.StartsWithAnyOf(Parser.nonContExprOperatorsList) == -1
+
+							if (newStartSubSpan.StartsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
 									&& !prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
 									&& !newIsHotkey//Ensure same for new.
 									&& !prevIsDirective//Ensure previous line wasn't a directive.
-									&& (Parser.exprVerbalOperators.Contains(newStartSubSpanStr)
-										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1))//Verbal operators must match the token, others can just be the start of the string.
+									&& ((wasVerbal = Parser.exprVerbalOperators.Contains(newStartSubSpanStr))
+										|| Parser.contExprOperatorsList.Contains(newStartSubSpanStr)
+										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
+							   )//Verbal operators must match the token, others can just be the start of the string.
 							{
-								AddToPreviousLine(prevLine, newLineStr);
+								AddToPreviousLine(prevLine, wasVerbal ? " " + newLineStr : newLineStr);
 							}
 							else
 							{
@@ -791,7 +794,9 @@ namespace Keysharp.Scripting
 										&& !newIsHotkey//Ensure same for new.
 										&& !prevIsDirective//Ensure previous line wasn't a directive.
 										&& prevEndSubSpan.EndsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
-										&& (Parser.contExprOperators.Contains(prevEndSubSpanStr) || prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)
+										&& ((wasVerbal = Parser.exprVerbalOperators.Contains(prevEndSubSpanStr))
+											|| Parser.contExprOperators.Contains(prevEndSubSpanStr)
+											|| prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
 								   )
 								{
 									if (prevEndSubSpanStr.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
@@ -800,7 +805,7 @@ namespace Keysharp.Scripting
 									}
 									else
 									{
-										AddToPreviousLine(prevLine, newLineStr);
+										AddToPreviousLine(prevLine, wasVerbal ? " " + newLineStr : newLineStr);
 									}
 								}
 								else

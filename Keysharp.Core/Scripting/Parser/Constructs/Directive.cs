@@ -29,26 +29,23 @@ namespace Keysharp.Scripting
 			var parts = code.Split(directiveDelims, 2);
 
 			if (parts.Length != 2)
-				parts = new[] { parts[0], string.Empty };
+				parts = [parts[0], string.Empty];
 
 			parts[1] = StripComment(parts[1]).Trim(Spaces);
-
 			var value = 0u;
-
 			bool numeric;
-
 			string[] sub;
 
 			if (parts[1].Length == 0)
 			{
 				numeric = false;
-				sub = new[] { string.Empty, string.Empty };
+				sub = [string.Empty, string.Empty];
 			}
 			else
 			{
 				numeric = uint.TryParse(parts[1], out value);
-				var split = parts[1].Split(new[] { Multicast }, 2);
-				sub = new[] { split[0].Trim(Spaces), split.Length > 1 ? split[1].Trim(Spaces) : string.Empty };
+				var split = parts[1].Split([Multicast], 2);
+				sub = [split[0].Trim(Spaces), split.Length > 1 ? split[1].Trim(Spaces) : string.Empty];
 			}
 
 			var cmd = parts[0].Substring(1);
@@ -190,7 +187,7 @@ namespace Keysharp.Scripting
 								if (splits.Length > 1)
 								{
 									var p2 = EscapedString(splits[1], false);
-									var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Hotstring", new CodeExpression[] { new CodePrimitiveExpression("ENDCHARS"), new CodePrimitiveExpression(p2) });
+									var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Hotstring", [new CodePrimitiveExpression("ENDCHARS"), new CodePrimitiveExpression(p2)]);
 									initial.Insert(0, new CodeExpressionStatement(cmie));
 								}
 							}

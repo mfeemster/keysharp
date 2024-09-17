@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <StartupObject>Keysharp.CompiledMain.program</StartupObject>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <Version>0.0.0.7</Version>
+    <Version>0.0.0.8</Version>
     <Authors>Matt Feemster</Authors>
     <Company>Keysharp</Company>
     <Description>A simple test program to paste generated code into for debugging</Description>
@@ -40,7 +40,6 @@
   <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
   </ItemGroup>

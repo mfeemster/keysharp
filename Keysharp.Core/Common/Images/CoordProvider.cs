@@ -5,7 +5,7 @@
 	/// </summary>
 	internal sealed class CoordProvider
 	{
-		private object Locker = new object();
+		private Lock locker = new ();
 		private Point mCurrent;
 		private bool mDone;
 		private Size mMaxMovement;
@@ -28,7 +28,7 @@
 		/// <returns>Next Coord (Point) or Null if the work is done.</returns>
 		public Point? Next()
 		{
-			lock (Locker)
+			lock (locker)
 			{
 				if (mDone)
 					return null;

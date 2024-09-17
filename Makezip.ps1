@@ -1,4 +1,4 @@
-$net = "net8.0-windows"
+$net = "net9.0-windows"
 $FullPath = [System.IO.Path]::GetFullPath("$PWD\bin\release\$net\Keysharp.dll")
 $DLLBytes = [System.IO.File]::ReadAllBytes($FullPath)
 $Assembly = [System.Reflection.Assembly]::Load($DLLBytes)

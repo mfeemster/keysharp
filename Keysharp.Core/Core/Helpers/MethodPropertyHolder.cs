@@ -96,7 +96,7 @@
 
 							if (ParamLength == 1)
 							{
-								newobj = new object[] { obj };
+								newobj = [obj];
 							}
 							else
 							{

@@ -25,43 +25,45 @@
 
 				if (obj2.As() is string options)
 				{
-					var splits = options.Split(' ');
-
-					foreach (var split in splits)
+					foreach (Range r in options.AsSpan().SplitAny(Keywords.SpaceTabSv))
 					{
-						var val = split.ToString().ToLowerInvariant();
+						var split = options.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
 
-						switch (val)
+						if (split.Length > 0)
 						{
-							case "ascii":
-							case "us-ascii":
-								encoding = System.Text.Encoding.ASCII;
-								break;
+							switch (split)
+							{
+								case var b when split.Equals("ascii", StringComparison.OrdinalIgnoreCase):
+								case var b2 when split.Equals("us-ascii", StringComparison.OrdinalIgnoreCase):
+									encoding = System.Text.Encoding.ASCII;
+									break;
 
-							case "utf-8":
-								encoding = System.Text.Encoding.UTF8;
-								break;
+								case var b when split.Equals("utf-8", StringComparison.OrdinalIgnoreCase):
+									encoding = System.Text.Encoding.UTF8;
+									break;
 
-							case "utf-8-raw":
-								encoding = new UTF8Encoding(false);//Not byte order mark.
-								break;
+								case var b when split.Equals("utf-8-raw", StringComparison.OrdinalIgnoreCase):
+									encoding = new UTF8Encoding(false);//Not byte order mark.
+									break;
 
-							case "utf-16":
-							case "unicode":
-								encoding = System.Text.Encoding.Unicode;
-								break;
+								case var b when split.Equals("utf-16", StringComparison.OrdinalIgnoreCase):
+								case var b2 when split.Equals("unicode", StringComparison.OrdinalIgnoreCase):
+									encoding = System.Text.Encoding.Unicode;
+									break;
 
-							case "utf-16-raw":
-								encoding = new UnicodeEncoding(false, false);//Little endian, no byte order mark.
-								break;
+								case var b when split.Equals("utf-16-raw", StringComparison.OrdinalIgnoreCase):
+									encoding = new UnicodeEncoding(false, false);//Little endian, no byte order mark.
+									break;
 
-							case "raw":
-								raw = true;
-								break;
+								case var b when split.Equals("raw", StringComparison.OrdinalIgnoreCase):
+									raw = true;
+									break;
 
-							case "`n":
-								crlf = true;
-								break;
+								case var b when split.Equals("`n", StringComparison.OrdinalIgnoreCase):
+								case var b2 when split.Equals("\n", StringComparison.OrdinalIgnoreCase):
+									crlf = true;
+									break;
+							}
 						}
 					}
 				}
@@ -253,7 +255,7 @@
 			shortcut.Description = description;
 
 			if (icon != "")
-				shortcut.IconLocation = $"{(Path.GetFullPath(icon))}, {iconNumber}";
+				shortcut.IconLocation = $"{Path.GetFullPath(icon)}, {iconNumber}";
 
 			shortcut.Hotkey = shortcutKey != "" ? $"Ctrl+Alt+{shortcutKey}" : "";
 			shortcut.WindowStyle = (int)runState;
@@ -748,92 +750,98 @@
 			var shareset = false;
 			var eolconv = 0;
 
-			foreach (var flag in Options.ParseOptions(flags))
+			foreach (Range r in flags.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				if (flag == "r")
+				var i = 0;
+				var flag = flags.AsSpan(r).Trim();
+
+				if (flag.Length > 0)
 				{
-					mode = FileMode.Open;
-					access = FileAccess.Read;
-				}
-				else if (flag == "w" || flag.ParseInt(false) == 1)
-				{
-					mode = FileMode.Create;
-					access = FileAccess.ReadWrite;
-				}
-				else if (flag == "a" || flag.ParseInt(false) == 2)
-				{
-					mode = FileMode.Append;
-					access = FileAccess.Write;
-				}
-				else if (flag == "rw" || flag.ParseInt(false) == 3)
-				{
-					mode = FileMode.OpenOrCreate;
-					access = FileAccess.ReadWrite;
-				}
-				else if (flag == "h")
-				{
-					filename = "h*" + filename;
-				}
-				else if (flag == "\n" || flag.ParseInt(false) == 4)
-				{
-					eolconv = 4;
-				}
-				else if (flag == "\r" || flag.ParseInt(false) == 8)
-				{
-					eolconv = 8;
-				}
-				else if (flag == "-")
-				{
-					share = FileShare.None;
-					shareset = true;
-				}
-				else if (flag.StartsWith('-'))
-				{
-					if (flag.Contains('r'))
+					if (flag.Equals("r", StringComparison.OrdinalIgnoreCase))
 					{
-						share &= ~FileShare.Read;
+						mode = FileMode.Open;
+						access = FileAccess.Read;
+					}
+					else if (flag.Equals("w", StringComparison.OrdinalIgnoreCase) || (int.TryParse(flag, out i) && i == 1))
+					{
+						mode = FileMode.Create;
+						access = FileAccess.ReadWrite;
+					}
+					else if (flag.Equals("a", StringComparison.OrdinalIgnoreCase) || (int.TryParse(flag, out i) && i == 2))
+					{
+						mode = FileMode.Append;
+						access = FileAccess.Write;
+					}
+					else if (flag.Equals("rw", StringComparison.OrdinalIgnoreCase) || (int.TryParse(flag, out i) && i == 3))
+					{
+						mode = FileMode.OpenOrCreate;
+						access = FileAccess.ReadWrite;
+					}
+					else if (flag.Equals("h", StringComparison.OrdinalIgnoreCase))
+					{
+						filename = "h*" + filename;
+					}
+					else if (flag.Equals("\n", StringComparison.OrdinalIgnoreCase) || (int.TryParse(flag, out i) && i == 4))
+					{
+						eolconv = 4;
+					}
+					else if (flag.Equals("\r", StringComparison.OrdinalIgnoreCase) || (int.TryParse(flag, out i) && i == 8))
+					{
+						eolconv = 8;
+					}
+					else if (flag.Equals("-", StringComparison.OrdinalIgnoreCase))
+					{
+						share = FileShare.None;
 						shareset = true;
 					}
-
-					if (flag.Contains('w'))
+					else if (flag.StartsWith('-'))
 					{
-						share &= ~FileShare.Write;
-						shareset = true;
-					}
+						if (flag.Contains('r'))
+						{
+							share &= ~FileShare.Read;
+							shareset = true;
+						}
 
-					if (flag.Contains('d'))
-					{
-						share &= ~FileShare.Delete;
-						shareset = true;
-					}
-				}
-				else
-				{
-					var i = flag.ParseInt(false);
-					share = FileShare.None;
+						if (flag.Contains('w'))
+						{
+							share &= ~FileShare.Write;
+							shareset = true;
+						}
 
-					if (i == 0)
-					{
-						shareset = true;
+						if (flag.Contains('d'))
+						{
+							share &= ~FileShare.Delete;
+							shareset = true;
+						}
 					}
 					else
 					{
-						if ((i & 0x100) == 0x100)
+						var b = int.TryParse(flag, out i);
+						share = FileShare.None;
+
+						if (!b)
 						{
-							share |= FileShare.Read;
 							shareset = true;
 						}
-
-						if ((i & 0x200) == 0x200)
+						else
 						{
-							share |= FileShare.Write;
-							shareset = true;
-						}
+							if ((i & 0x100) == 0x100)
+							{
+								share |= FileShare.Read;
+								shareset = true;
+							}
 
-						if ((i & 0x400) == 0x400)
-						{
-							share |= FileShare.Delete;
-							shareset = true;
+							if ((i & 0x200) == 0x200)
+							{
+								share |= FileShare.Write;
+								shareset = true;
+							}
+
+							if ((i & 0x400) == 0x400)
+							{
+								share |= FileShare.Delete;
+								shareset = true;
+							}
 						}
 					}
 				}
@@ -876,28 +884,24 @@
 
 			var max = -1;
 			bool binary = false, nocrlf = false;
-			var splits = options.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-			foreach (var split in splits)
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.SpaceTabSv))
 			{
-				if (Options.TryParse(split, "m", ref max)) { }
-				else
+				var split = options.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
+
+				if (split.Length > 0)
 				{
-					var lower = split.ToLowerInvariant();
-
-					switch (lower)
+					if (Options.TryParse(split, "m", ref max))
 					{
-						case "raw":
+					}
+					else
+					{
+						if (split.Equals("raw", StringComparison.OrdinalIgnoreCase))
 							binary = true;
-							break;
-
-						case "\n":
+						else if (split[0] == '\n')
 							nocrlf = true;
-							break;
-
-						default:
-							enc = GetEncoding(lower);
-							break;
+						else
+							enc = GetEncoding(split.ToString());//Will internally convert to string.
 					}
 				}
 			}

@@ -11,8 +11,10 @@ namespace Keysharp.Core
 		private Label prompt;
 		private System.Windows.Forms.Timer timer;
 		private TextBox txtMessage;
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Default { get; set; }
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Message
 		{
 			get => txtMessage.Text;
@@ -20,6 +22,7 @@ namespace Keysharp.Core
 			//set => txtMessage.Invoke(() => txtMessage.Text = value);
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string PasswordChar
 		{
 			get => txtMessage.PasswordChar.ToString();
@@ -33,6 +36,7 @@ namespace Keysharp.Core
 			}
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Prompt
 		{
 			get => prompt.Text;
@@ -40,10 +44,13 @@ namespace Keysharp.Core
 			//set => prompt.Invoke(() => prompt.Text = value);
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Result { get; private set; } = "";
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public int Timeout { get; set; }
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Title
 		{
 			get => Text;

@@ -167,7 +167,7 @@ namespace Keysharp.Core
 				return 0L;
 			}
 
-			int[] t = { DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0 };
+			int[] t = [DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0];
 			var tempdt = new DateTime(t[1], t[2], t[3], t[4], t[5], t[6], System.Globalization.CultureInfo.CurrentCulture.Calendar);//Will be wrong this if parsing totally failed.
 			return dt != tempdt ? 1L : 0L;
 		}

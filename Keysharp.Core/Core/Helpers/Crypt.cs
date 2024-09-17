@@ -60,10 +60,9 @@ namespace Keysharp.Core
 				return b;
 
 			if (value == null)
-				return new byte[] { };
+				return [];
 
 			throw new TypeError("Cannot serialize an object that was not either a string or byte[].");
-
 			/*
 			    var formatter = new BinaryFormatter();
 

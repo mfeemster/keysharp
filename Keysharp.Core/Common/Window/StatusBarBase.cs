@@ -54,12 +54,12 @@
 			pid = -1;
 		}
 
-		internal void SetCaptions(int index, string caption)
+		internal void SetCaptions(int index, string caption)//Everything here resolves to SetCaption() below which will throw.//TODO
 		{
 			if (index == -1)
 			{
 				var oldParts = Captions;
-				var newParts = caption.Split(new string[] { " | " }, StringSplitOptions.None);
+				var newParts = caption.Split([ " | " ], StringSplitOptions.None);
 
 				if ((oldParts.Length == newParts.Length) && (newParts.Length > 0))
 				{
@@ -83,7 +83,7 @@
 
 		protected abstract int GetPanelCount();
 
-		protected void SetCaption(int index, string caption) => throw new NotImplementedException();
+		protected void SetCaption(int index, string caption) => throw new NotImplementedException();//Did we really never implement this?//TODO
 
 		private string[] GetCaptions()
 		{

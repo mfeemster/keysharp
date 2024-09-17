@@ -192,20 +192,22 @@ namespace Keysharp.Core.Windows
 			var vk = ConvertMouseButton(whichButton);
 			var posoverride = options.Contains("pos", StringComparison.OrdinalIgnoreCase);
 			bool d = false, u = false, na = false;
-			var optsplits = options.Split(Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-			for (var i = 0; i < optsplits.Length; i++)
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var opt = optsplits[i].ToLower();
+				var opt = options.AsSpan(r).Trim();
 
-				if (opt == "d")
-					d = true;
-				else if (opt == "u")
-					u = true;
-				else if (opt == "na")
-					na = true;
-				else if (Options.TryParse(opt, "x", ref ctrlx)) { }
-				else if (Options.TryParse(opt, "y", ref ctrly)) { }
+				if (opt.Length > 0)
+				{
+					if (opt.Equals("d", StringComparison.OrdinalIgnoreCase))
+						d = true;
+					else if (opt.Equals("u", StringComparison.OrdinalIgnoreCase))
+						u = true;
+					else if (opt.Equals("na", StringComparison.OrdinalIgnoreCase))
+						na = true;
+					else if (Options.TryParse(opt, "x", ref ctrlx)) { }
+					else if (Options.TryParse(opt, "y", ref ctrly)) { }
+				}
 			}
 
 			if (d)
@@ -216,14 +218,15 @@ namespace Keysharp.Core.Windows
 
 			if (ctrlorpos is string s && s.StartsWith("x", StringComparison.OrdinalIgnoreCase) && s.Contains(' ') && s.Contains('y', StringComparison.OrdinalIgnoreCase))
 			{
-				var possplits = s.Split(Spaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-				for (var i = 0; i < possplits.Length; i++)
+				foreach (Range r in s.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					var opt = possplits[i].ToLower();
+					var opt = s.AsSpan(r).Trim();
 
-					if (Options.TryParse(opt, "x", ref winx)) { }
-					else if (Options.TryParse(opt, "y", ref winy)) { }
+					if (opt.Length > 0)
+					{
+						if (Options.TryParse(opt, "x", ref winx)) { }
+						else if (Options.TryParse(opt, "y", ref winy)) { }
+					}
 				}
 			}
 
@@ -232,7 +235,7 @@ namespace Keysharp.Core.Windows
 
 			if (ctrlorpos.IsNullOrEmpty())//No control or coordinates, so just find the window.
 			{
-				item = Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
+				item = Window.SearchWindow([title, text, excludeTitle, excludeText], true);
 			}
 			else if (!posoverride)//Don't override, so try ctrlorpos first, and if it doesn't work, then try as an x/y.
 			{
@@ -260,7 +263,7 @@ namespace Keysharp.Core.Windows
 
 			if (getctrlbycoords)
 			{
-				item = Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
+				item = Window.SearchWindow([title, text, excludeTitle, excludeText], true);
 				var rect = new Point(winx, winx);
 				_ = WindowsAPI.ClientToScreen(item.Handle, ref rect);
 				var pah = new PointAndHwnd(rect);
@@ -493,7 +496,7 @@ namespace Keysharp.Core.Windows
 
 		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText)
 		{
-			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem item)
+			if (Window.SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem item)
 			{
 				var h = WindowsAPI.GetWindowThreadProcessId(item.Handle, out var pid);
 				var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
@@ -509,6 +512,7 @@ namespace Keysharp.Core.Windows
 
 				return info.hwndFocus.ToInt64();
 			}
+
 			return 0L;
 		}
 
@@ -847,15 +851,19 @@ namespace Keysharp.Core.Windows
 				var sel = false;
 				var countcol = false;
 				var col = int.MinValue;
-				var opts = Options.ParseOptions(options);
 
-				foreach (var opt in opts)
+				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 				{
-					if (string.Compare(opt, "focused", true) == 0) { focused = true; }
-					else if (string.Compare(opt, "count", true) == 0) { count = true; }
-					else if (string.Compare(opt, "selected", true) == 0) { sel = true; }
-					else if (string.Compare(opt, "col", true) == 0) { countcol = true; }
-					else if (Options.TryParse(opt, "col", ref col)) { col--; }
+					var opt = options.AsSpan(r).Trim();
+
+					if (opt.Length > 0)
+					{
+						if      (opt.Equals("focused", StringComparison.OrdinalIgnoreCase)) { focused = true; }
+						else if (opt.Equals("count", StringComparison.OrdinalIgnoreCase)) { count = true; }
+						else if (opt.Equals("selected", StringComparison.OrdinalIgnoreCase)) { sel = true; }
+						else if (opt.Equals("col", StringComparison.OrdinalIgnoreCase)) { countcol = true; }
+						else if (Options.TryParse(opt, "col", ref col)) { col--; }
+					}
 				}
 
 				if (Control.FromHandle(item.Handle) is ListView lv)
@@ -1104,7 +1112,7 @@ namespace Keysharp.Core.Windows
 
 		internal override void MenuSelect(object title, string text, string menu, string sub1, string sub2, string sub3, string sub4, string sub5, string sub6, string excludeTitle, string excludeText)
 		{
-			if (Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true) is WindowItem win)
+			if (Window.SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem win)
 			{
 				var sysMenu = menu == "0&";
 
@@ -1163,7 +1171,7 @@ namespace Keysharp.Core.Windows
 		{
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
-					   : Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
+					   : Window.SearchWindow([title, text, excludeTitle, excludeText], true);
 
 			if (item is WindowItem)
 			{
@@ -1181,7 +1189,7 @@ namespace Keysharp.Core.Windows
 			var wptr = wbuf != null ? wbuf.Ptr : wparam != null ? new IntPtr(wparam.ParseLong().Value) : IntPtr.Zero;
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
-					   : Window.SearchWindow(new object[] { title, text, excludeTitle, excludeText }, true);
+					   : Window.SearchWindow([title, text, excludeTitle, excludeText], true);
 			var thehandle = item.Handle;
 
 			if (lparam is string s)

@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 			for (var i = -1; i < offset; i++)
 				_ = e.MoveNext();
 
-			int[] levels = { 0, 0, 0 }; // parentheses, objects, arrays
+			int[] levels = [0, 0, 0]; // parentheses, objects, arrays
 			var position = offset;
 
 			if (!(e.Current is string))

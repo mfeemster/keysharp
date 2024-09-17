@@ -8,13 +8,13 @@ namespace Keysharp.Core
 		public KeysharpForm form;
 		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
 
-		internal static Type[] GuiTypes = new Type[]
-		{
-			typeof(Keysharp.Core.Gui),
-			typeof(Keysharp.Core.GuiControl),
-			typeof(Keysharp.Core.Menu),
-			typeof(System.Windows.Forms.Control)//Add native control and form types just to be safe.
-		};
+		internal static Type[] GuiTypes =
+			[
+				typeof(Keysharp.Core.Gui),
+				typeof(Keysharp.Core.GuiControl),
+				typeof(Keysharp.Core.Menu),
+				typeof(System.Windows.Forms.Control)//Add native control and form types just to be safe.
+			];
 
 		internal List<IFuncObj> closedHandlers;
 		internal List<IFuncObj> contextMenuChangedHandlers;
@@ -1567,9 +1567,9 @@ namespace Keysharp.Core
 
 		public void Opt(object obj)
 		{
-			var opt = obj.As();
+			var options = obj.As();
 
-			foreach (var split in Options.ParseOptions(opt))
+			foreach (var split in Options.ParseOptions(options))
 			{
 				var str = split.Substring(1);
 
@@ -1665,15 +1665,16 @@ namespace Keysharp.Core
 		{
 			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
-			int?[] pos = { null, null, null, null };
+			int?[] pos = [null, null, null, null];
 			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 
-			foreach (var opt in Options.ParseOptions(s))
+			foreach (Range r in s.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var mode = opt.ToLowerInvariant();
+				var opt = s.AsSpan(r).Trim();
+				var mode0 = char.ToLower(opt[0]);
 				var select = -1;
 
-				switch (mode[0])
+				switch (mode0)
 				{
 					case 'w': select = 0; break;
 
@@ -1686,32 +1687,39 @@ namespace Keysharp.Core
 
 				if (select == -1)
 				{
-					switch (mode)
+					switch (opt)
 					{
-						//case Core.Keyword_Center: center = true; break;
-						case Keywords.Keyword_AutoSize: auto = true; break;
+						case var b when opt.Equals(Keywords.Keyword_AutoSize, StringComparison.OrdinalIgnoreCase):
+							auto = true;
+							break;
 
-						case Keywords.Keyword_Maximize: max = true; break;
+						case var b when opt.Equals(Keywords.Keyword_Maximize, StringComparison.OrdinalIgnoreCase):
+							max = true;
+							break;
 
-						case Keywords.Keyword_Minimize: min = true; break;
+						case var b when opt.Equals(Keywords.Keyword_Minimize, StringComparison.OrdinalIgnoreCase):
+							min = true;
+							break;
 
-						case Keywords.Keyword_Restore:
+						case var b when opt.Equals(Keywords.Keyword_Restore, StringComparison.OrdinalIgnoreCase):
 							form.showWithoutActivation = false;
 							restore = true;
 							break;
 
-						case Keywords.Keyword_NoActivate:
-						case Keywords.Keyword_NA:
+						case var b when opt.Equals(Keywords.Keyword_NoActivate, StringComparison.OrdinalIgnoreCase):
+						case var b2 when opt.Equals(Keywords.Keyword_NA, StringComparison.OrdinalIgnoreCase):
 							form.showWithoutActivation = true;
 							restore = true;
 							break;
 
-						case Keywords.Keyword_Hide: hide = true; break;
+						case var b when opt.Equals(Keywords.Keyword_Hide, StringComparison.OrdinalIgnoreCase):
+							hide = true;
+							break;
 					}
 				}
 				else
 				{
-					var modeval = mode.AsSpan(1);
+					var modeval = opt.Slice(1);
 
 					if (modeval.Equals(Keywords.Keyword_Center, StringComparison.OrdinalIgnoreCase))
 					{
@@ -1909,7 +1917,6 @@ namespace Keysharp.Core
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
-			var opts = Options.ParseOptions(optionsstr);
 
 			if (type == "monthcal" && !string.IsNullOrEmpty(text))
 			{
@@ -1926,8 +1933,9 @@ namespace Keysharp.Core
 					options.datemultisel = true;
 			}
 
-			foreach (var opt in opts)
+			foreach (Range r in optionsstr.AsSpan().SplitAny(Keywords.Spaces))
 			{
+				var opt = optionsstr.AsSpan(r);
 				var tempbool = false;
 				var temp = 0;
 				var tempcolor = Color.Empty;
@@ -1936,7 +1944,7 @@ namespace Keysharp.Core
 				if (type == "datetime")
 				{
 					if (Options.TryParseDateTime(opt, "Choose", "yyyyMMdd", ref options.dtChoose)) { continue; }
-					else if (string.Compare(opt, "ChooseNone", true) == 0) { options.choosenone = true; continue; }
+					else if (opt.Equals("ChooseNone", StringComparison.OrdinalIgnoreCase)) { options.choosenone = true; continue; }
 					else if (opt == "1") { options.dtopt1 = true; continue; }
 					else if (opt == "2") { options.dtopt2 = true; continue; }
 				}
@@ -1961,8 +1969,8 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "t", ref options.t)) { options.tabstops.Add(options.t); }
 				else if (Options.TryParse(opt, "Redraw", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.redraw = tempbool; }
 				//Checkbox.
-				else if (string.Compare(opt, "Check3", true) == 0) { options.check3 = true; }//Needs to come before any option starting with a 'c'.
-				else if (string.Compare(opt, "CheckedGray ", true) == 0) { options.checkedgray = true; }
+				else if (opt.Equals("Check3", StringComparison.OrdinalIgnoreCase)) { options.check3 = true; }//Needs to come before any option starting with a 'c'.
+				else if (opt.Equals("CheckedGray ", StringComparison.OrdinalIgnoreCase)) { options.checkedgray = true; }
 				else if (Options.TryParse(opt, "Checked", ref temp, StringComparison.OrdinalIgnoreCase, true, 1)) { options.ischecked = temp; }
 				else if (Options.TryParse(opt, "Center", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.center = tempbool; }
 				else if (Options.TryParseString(opt, "Range", ref options.nudrange))
@@ -1986,7 +1994,7 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "Choose", ref options.ddlchoose)) { options.ddlchoose--; options.choose.Add(options.ddlchoose); }
 				//
 				else if (Options.TryParse(opt, "c", ref options.c)) { }
-				else if (string.Compare(opt, "Vertical", true) == 0) { options.vertical = true; }
+				else if (opt.Equals("Vertical", StringComparison.OrdinalIgnoreCase)) { options.vertical = true; }
 				else if (Options.TryParseString(opt, "v", ref options.name)) { }
 				else if (Options.TryParse(opt, "Disabled", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.enabled = !tempbool; }
 				else if (Options.TryParse(opt, "Hidden", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.visible = !tempbool; }
@@ -2002,18 +2010,18 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
 				else if (Options.TryParse(opt, "Left", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.leftj = tempbool; }
 				else if (Options.TryParse(opt, "Right", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rightj = tempbool; }
-				else if (string.Compare(opt, "Section", true) == 0) { options.section = true; }
+				else if (opt.Equals("Section", StringComparison.OrdinalIgnoreCase)) { options.section = true; }
 				else if (Options.TryParse(opt, "Tabstop", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.tabstop = tempbool; }
 				else if (Options.TryParse(opt, "Wrap", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wordwrap = tempbool; }
 				else if (Options.TryParse(opt, "VScroll", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.vscroll = tempbool; }
-				else if (string.Compare(opt, "-HScroll", true) == 0) { options.hscroll = false; }
+				else if (opt.Equals("-HScroll", StringComparison.OrdinalIgnoreCase)) { options.hscroll = false; }
 				else if (Options.TryParse(opt, "HScroll", ref options.hscrollamt, StringComparison.OrdinalIgnoreCase, true)) { }
 				else if (Options.TryParse(opt, "Increment", ref temp)) { options.nudinc = temp; }
 				else if (Options.TryParse(opt, "Hex", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.hex = tempbool; }
-				else if (string.Compare(opt, "BackgroundTrans", true) == 0) { options.bgtrans = true; }
-				else if (string.Compare(opt, "-Background", true) == 0) { options.bgcolor = Control.DefaultBackColor; }
-				else if (string.Compare(opt, "Background", true) == 0) { options.bgcolor = Control.DefaultBackColor; }
-				else if (string.Compare(opt, "BackgroundDefault", true) == 0) { options.bgcolor = Control.DefaultBackColor; }
+				else if (opt.Equals("BackgroundTrans", StringComparison.OrdinalIgnoreCase)) { options.bgtrans = true; }
+				else if (opt.Equals("-Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
+				else if (opt.Equals("Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
+				else if (opt.Equals("BackgroundDefault", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
 				else if (Options.TryParse(opt, "Background", ref tempcolor, StringComparison.OrdinalIgnoreCase, true)) { options.bgcolor = tempcolor; }
 				else if (Options.TryParse(opt, "Border", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.thinborder = tempbool; }
 				//Control specific.
@@ -2028,10 +2036,10 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "WantReturn", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantreturn = tempbool; }
 				else if (Options.TryParse(opt, "WantTab", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wanttab = tempbool; }
 				//GrouBox.
-				else if (string.Compare(opt, "Group", true) == 0) { options.group = true; }
+				else if (opt.Equals("Group", StringComparison.OrdinalIgnoreCase)) { options.group = true; }
 				//UpDown.
-				else if (string.Compare(opt, "Horz", true) == 0) { options.nudhorz = true; }
-				else if (string.Compare(opt, "Left", true) == 0) { options.nudleft = true; }
+				else if (opt.Equals("Horz", StringComparison.OrdinalIgnoreCase)) { options.nudhorz = true; }
+				else if (opt.Equals("Left", StringComparison.OrdinalIgnoreCase)) { options.nudleft = true; }
 				//16
 				//0x80
 				//None unit inc/dec
@@ -2047,15 +2055,15 @@ namespace Keysharp.Core
 				else if (Options.TryParse(opt, "Page", ref options.page)) { }
 				else if (Options.TryParse(opt, "Thick", ref options.thick)) { }
 				else if (Options.TryParse(opt, "TickInterval", ref options.tickinterval)) { }
-				else if (string.Compare(opt, "ToolTip", true) == 0) { options.tooltip = true; }
-				else if (string.Compare(opt, "ToolTipTop", true) == 0) { options.tooltipside = 0; }
-				else if (string.Compare(opt, "ToolTipLeft", true) == 0) { options.tooltipside = 1; }
-				else if (string.Compare(opt, "ToolTipBottom", true) == 0) { options.tooltipside = 2; }
-				else if (string.Compare(opt, "ToolTipRight", true) == 0) { options.tooltipside = 3; }
+				else if (opt.Equals("ToolTip", StringComparison.OrdinalIgnoreCase)) { options.tooltip = true; }
+				else if (opt.Equals("ToolTipTop", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 0; }
+				else if (opt.Equals("ToolTipLeft", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 1; }
+				else if (opt.Equals("ToolTipBottom", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 2; }
+				else if (opt.Equals("ToolTipRight", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 3; }
 				else if (Options.TryParse(opt, "Smooth", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.smooth = tempbool; }
 				else if (Options.TryParse(opt, "Buttons", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.buttons = tempbool; }
-				else if (string.Compare(opt, "Bottom", true) == 0) { options.bottom = true; }
-				else if (string.Compare(opt, "Top", true) == 0) { options.top = true; }
+				else if (opt.Equals("Bottom", StringComparison.OrdinalIgnoreCase)) { options.bottom = true; }
+				else if (opt.Equals("Top", StringComparison.OrdinalIgnoreCase)) { options.top = true; }
 				else if (Options.TryParse(opt, "ImageList", ref options.ilid)) { }
 				else if (Options.TryParse(opt, "Lines", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.lines = tempbool; }
 				else if (Options.TryParse(opt, "WantF2", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantf2 = tempbool; }

@@ -5,7 +5,7 @@
 	/// (<a href="https://semver.org">semver.org</a>).
 	/// </summary>
 
-	public sealed class SemVersion : IComparable<SemVersion>, IComparable, IEquatable<SemVersion>
+	public sealed partial class SemVersion : IComparable<SemVersion>, IComparable, IEquatable<SemVersion>
 
 	{
 		internal const string InvalidSemVersionStylesMessage = "An invalid SemVersionStyles value was used.";
@@ -15,17 +15,17 @@
 		private const string InvalidPatchVersionMessage = "Patch version must be greater than or equal to zero.";
 		private const string MetadataIdentifierIsDefaultMessage = "Metadata identifier cannot be default/null.";
 		private const string PrereleaseIdentifierIsDefaultMessage = "Prerelease identifier cannot be default/null.";
+		private static readonly Regex parseEx;
 
-		private static readonly Regex ParseEx =
-			new Regex(@"^(?<major>\d+)" +
-					  @"(?>\.(?<minor>\d+))?" +
-					  @"(?>\.(?<patch>\d+))?" +
-					  @"(?>\-(?<pre>[0-9A-Za-z\-\.]+))?" +
-					  @"(?>\+(?<metadata>[0-9A-Za-z\-\.]+))?$",
+		static SemVersion() => parseEx = ParseEx();
 
-					  RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
-
-					  TimeSpan.FromSeconds(0.5));
+		[GeneratedRegex(@"^(?<major>\d+)" +
+						@"(?>\.(?<minor>\d+))?" +
+						@"(?>\.(?<patch>\d+))?" +
+						@"(?>\-(?<pre>[0-9A-Za-z\-\.]+))?" +
+						@"(?>\+(?<metadata>[0-9A-Za-z\-\.]+))?$",
+						RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, 500)]
+		private static partial Regex ParseEx();
 
 		/// <remarks>
 		/// This exception is used with the <see cref="SemVersionParser.Parse"/>
@@ -661,7 +661,7 @@
 		[Obsolete("Method is obsolete. Use Parse() overload with SemVersionStyles instead.")]
 		public static SemVersion Parse(string version, bool strict = false)
 		{
-			var match = ParseEx.Match(version);
+			var match = parseEx.Match(version);
 
 			if (!match.Success)
 				throw new ArgumentException($"Invalid version '{version}'.", nameof(version));
@@ -794,7 +794,7 @@
 
 			if (version is null) return false;
 
-			var match = ParseEx.Match(version);
+			var match = parseEx.Match(version);
 
 			if (!match.Success) return false;
 

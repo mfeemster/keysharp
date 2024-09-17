@@ -128,8 +128,8 @@
 
 				if (!string.IsNullOrEmpty(ed))
 				{
-					var splits = ed.Split('%');
-					ed = splits.Length > 0 ? splits[0] : ed;
+					var prcIndex = ed.IndexOf('%');
+					ed = prcIndex != -1 ? ed.Substring(0, prcIndex) : ed;
 					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
 				}
 				else
@@ -378,6 +378,36 @@
 
 		public static void ShowDebug() => mainWindow?.ShowDebug();
 
+
+		//public static void TestSomething()
+		//{
+		//  char[] SpaceTab = " \t".ToCharArray();
+		//  SearchValues<char> SpaceTabSv = SearchValues.Create(SpaceTab);
+		//  //var splits = val.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		//  var width = int.MinValue;
+		//  var height = int.MinValue;
+		//  var icon = "";
+		//  object iconnumber = 0;
+		//  var filename = "";// splits.Last();
+		//  var val = "*w100 *h200 *icon2 C:\a filename.jpg";
+
+		//  //for (var i = 0; i < splits.Length - 1; i++)
+		//  foreach (Range r in val.AsSpan().SplitAny(Keywords.SpaceTabSv))
+		//  {
+		//      var opt = val.AsSpan(r).Trim();
+
+		//      if (Options.TryParse(opt, "*w", ref width)) { }
+		//      else if (Options.TryParse(opt, "*h", ref height)) { }
+		//      else if (Options.TryParseString(opt, "*icon", ref icon)) { iconnumber = ImageHelper.PrepareIconNumber(icon); }
+		//      else
+		//      {
+		//          filename = val.Substring(r.Start.Value);
+		//          break;
+		//      }
+		//  }
+		//}
+
+
 		/*
 		    internal static string GetVariableInfo()
 		    {
@@ -571,16 +601,19 @@
 
 		internal static int[] ParseVersionToInts(string ver)
 		{
+			var i = 0;
 			var vers = new int[] { 0, 0, 0, 0 };
-			var versplits = ver.Split('.', StringSplitOptions.RemoveEmptyEntries);
 
-			if (versplits.Length > 0)
+			foreach (Range r in ver.AsSpan().Split('.'))
 			{
-				for (var i = 0; i < 4; i++)
+				var split = ver.AsSpan(r).Trim();
+
+				if (split.Length > 0)
 				{
-					if (versplits.Length > i)
-						if (versplits[i].ParseInt(false) is int v)
-							vers[i] = v;
+					if (int.TryParse(split, out var v))
+						vers[i] = v;
+
+					i++;
 				}
 			}
 

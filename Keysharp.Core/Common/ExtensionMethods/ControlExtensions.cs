@@ -262,14 +262,17 @@
 			var family = obj1.As();
 			control.Font = Conversions.ParseFont(control.Font, options, family);
 			var c = Control.DefaultForeColor;
-			var opts = Options.ParseOptions(options);
 
-			foreach (var opt in opts)
-				if (Options.TryParse(opt, "c", ref c))
+			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			{
+				var opt = options.AsSpan(r).Trim();
+
+				if (opt.Length > 0 && Options.TryParse(opt, "c", ref c))
 				{
 					control.ForeColor = c;
 					break;
 				}
+			}
 		}
 
 		internal static void SetFormat(this DateTimePicker dtp, object obj)
