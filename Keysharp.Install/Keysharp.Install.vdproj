@@ -798,7 +798,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Scintilla.NET, Version=5.6.0.0, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Scintilla.NET, Version=5.6.1.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_39F421A5313726F65697DFBFE18A58FD"
@@ -1912,15 +1912,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Keysharp"
-        "ProductCode" = "8:{ECA96164-4943-445A-B1AC-754B5BF20181}"
-        "PackageCode" = "8:{FA9654B7-7E1A-4591-B239-D8BAA7B71B84}"
+        "ProductCode" = "8:{8FFF2AFB-E9F6-4E2B-9B90-6644DB113F8C}"
+        "PackageCode" = "8:{09477B2A-A08D-4AAA-863B-CD05821E2E89}"
         "UpgradeCode" = "8:{E99D4BE3-7101-4C11-8719-A75ED137BD66}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.0.7"
+        "ProductVersion" = "8:0.0.8"
         "Manufacturer" = "8:Keysharp"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

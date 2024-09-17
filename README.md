@@ -1,7 +1,7 @@
 # Keysharp #
 
 ## How do I get set up? ##
-* If .NET 8 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+* If .NET 9 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
 
 ### Installing on Windows ###
 * Download and run the Keysharp installer from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
@@ -16,7 +16,7 @@
 	
 ### Building from source on Windows ###
 * Download the latest version of [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/).
-	+ This should install .NET 8. If it doesn't, you need to install it manually from the link above.
+	+ This should install .NET 9. If it doesn't, you need to install it manually from the link above.
 * Open Keysharp.sln
 * Build all (building the installer is not necessary).
 * CD to bin\release\net8.0-windows

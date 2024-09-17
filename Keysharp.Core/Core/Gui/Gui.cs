@@ -1935,164 +1935,167 @@ namespace Keysharp.Core
 
 			foreach (Range r in optionsstr.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var opt = optionsstr.AsSpan(r);
 				var tempbool = false;
 				var temp = 0;
 				var tempcolor = Color.Empty;
 				var tempstr = "";
+				var opt = optionsstr.AsSpan(r).Trim();
 
-				if (type == "datetime")
+				if (opt.Length > 0)
 				{
-					if (Options.TryParseDateTime(opt, "Choose", "yyyyMMdd", ref options.dtChoose)) { continue; }
-					else if (opt.Equals("ChooseNone", StringComparison.OrdinalIgnoreCase)) { options.choosenone = true; continue; }
-					else if (opt == "1") { options.dtopt1 = true; continue; }
-					else if (opt == "2") { options.dtopt2 = true; continue; }
-				}
-				else if (type == "monthcal")
-				{
-					if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.datemultisel = true; continue; }
-				}
-				else
-				{
-					if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.multiline = tempbool; continue; }
-				}
-
-				if (Options.TryParse(opt, "r", ref options.rows)) { }
-				else if (Options.TryParse(opt, "w", ref options.width)) { }
-				else if (Options.TryParse(opt, "h", ref options.height)) { }
-				else if (Options.TryParse(opt, "x+", ref options.xplus)) { }
-				else if (Options.TryParse(opt, "y+", ref options.yplus)) { }
-				//else if (string.Compare(opt, "x+m", true) == 0) { options.xplusm = true; }
-				//else if (string.Compare(opt, "y+m", true) == 0) { options.yplusm = true; }
-				else if (Options.TryParse(opt, "x", ref options.x)) { }
-				else if (Options.TryParse(opt, "y", ref options.y)) { }
-				else if (Options.TryParse(opt, "t", ref options.t)) { options.tabstops.Add(options.t); }
-				else if (Options.TryParse(opt, "Redraw", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.redraw = tempbool; }
-				//Checkbox.
-				else if (opt.Equals("Check3", StringComparison.OrdinalIgnoreCase)) { options.check3 = true; }//Needs to come before any option starting with a 'c'.
-				else if (opt.Equals("CheckedGray ", StringComparison.OrdinalIgnoreCase)) { options.checkedgray = true; }
-				else if (Options.TryParse(opt, "Checked", ref temp, StringComparison.OrdinalIgnoreCase, true, 1)) { options.ischecked = temp; }
-				else if (Options.TryParse(opt, "Center", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.center = tempbool; }
-				else if (Options.TryParseString(opt, "Range", ref options.nudrange))
-				{
-					if (type == "datetime" || type == "monthcal")
+					if (type == "datetime")
 					{
-						Conversions.ParseRange(options.nudrange, out options.dtlow, out options.dthigh);
+						if (Options.TryParseDateTime(opt, "Choose", "yyyyMMdd", ref options.dtChoose)) { continue; }
+						else if (opt.Equals("ChooseNone", StringComparison.OrdinalIgnoreCase)) { options.choosenone = true; continue; }
+						else if (opt == "1") { options.dtopt1 = true; continue; }
+						else if (opt == "2") { options.dtopt2 = true; continue; }
 					}
-					else if (type == "updown" || type == "slider" || type == "progress")
+					else if (type == "monthcal")
 					{
-						var splits = options.nudrange.Split('-', StringSplitOptions.None);
-						var vals = Conversions.ParseRange(splits);
-
-						if (vals.Count > 0)
-							options.nudlow = vals[0];
-
-						if (vals.Count > 1)
-							options.nudhigh = vals[1];
+						if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.datemultisel = true; continue; }
 					}
+					else
+					{
+						if (Options.TryParse(opt, "Multi", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.multiline = tempbool; continue; }
+					}
+
+					if (Options.TryParse(opt, "r", ref options.rows)) { }
+					else if (Options.TryParse(opt, "w", ref options.width)) { }
+					else if (Options.TryParse(opt, "h", ref options.height)) { }
+					else if (Options.TryParse(opt, "x+", ref options.xplus)) { }
+					else if (Options.TryParse(opt, "y+", ref options.yplus)) { }
+					//else if (string.Compare(opt, "x+m", true) == 0) { options.xplusm = true; }
+					//else if (string.Compare(opt, "y+m", true) == 0) { options.yplusm = true; }
+					else if (Options.TryParse(opt, "x", ref options.x)) { }
+					else if (Options.TryParse(opt, "y", ref options.y)) { }
+					else if (Options.TryParse(opt, "t", ref options.t)) { options.tabstops.Add(options.t); }
+					else if (Options.TryParse(opt, "Redraw", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.redraw = tempbool; }
+					//Checkbox.
+					else if (opt.Equals("Check3", StringComparison.OrdinalIgnoreCase)) { options.check3 = true; }//Needs to come before any option starting with a 'c'.
+					else if (opt.Equals("CheckedGray ", StringComparison.OrdinalIgnoreCase)) { options.checkedgray = true; }
+					else if (Options.TryParse(opt, "Checked", ref temp, StringComparison.OrdinalIgnoreCase, true, 1)) { options.ischecked = temp; }
+					else if (Options.TryParse(opt, "Center", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.center = tempbool; }
+					else if (Options.TryParseString(opt, "Range", ref options.nudrange))
+					{
+						if (type == "datetime" || type == "monthcal")
+						{
+							Conversions.ParseRange(options.nudrange, out options.dtlow, out options.dthigh);
+						}
+						else if (type == "updown" || type == "slider" || type == "progress")
+						{
+							var splits = options.nudrange.Split('-', StringSplitOptions.None);
+							var vals = Conversions.ParseRange(splits);
+
+							if (vals.Count > 0)
+								options.nudlow = vals[0];
+
+							if (vals.Count > 1)
+								options.nudhigh = vals[1];
+						}
+					}
+					else if (Options.TryParse(opt, "Choose", ref options.ddlchoose)) { options.ddlchoose--; options.choose.Add(options.ddlchoose); }
+					//
+					else if (Options.TryParse(opt, "c", ref options.c)) { }
+					else if (opt.Equals("Vertical", StringComparison.OrdinalIgnoreCase)) { options.vertical = true; }
+					else if (Options.TryParseString(opt, "v", ref options.name)) { }
+					else if (Options.TryParse(opt, "Disabled", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.enabled = !tempbool; }
+					else if (Options.TryParse(opt, "Hidden", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.visible = !tempbool; }
+					else if (Options.TryParse(opt, "Autosize", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.autosize = tempbool; }
+					else if (Options.TryParse(opt, "wp", ref options.wp, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "hp", ref options.hp, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "xp", ref options.xp, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "yp", ref options.yp, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "xm", ref options.xm, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "ym", ref options.ym, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "xs", ref options.xs, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "ys", ref options.ys, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
+					else if (Options.TryParse(opt, "Left", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.leftj = tempbool; }
+					else if (Options.TryParse(opt, "Right", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rightj = tempbool; }
+					else if (opt.Equals("Section", StringComparison.OrdinalIgnoreCase)) { options.section = true; }
+					else if (Options.TryParse(opt, "Tabstop", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.tabstop = tempbool; }
+					else if (Options.TryParse(opt, "Wrap", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wordwrap = tempbool; }
+					else if (Options.TryParse(opt, "VScroll", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.vscroll = tempbool; }
+					else if (opt.Equals("-HScroll", StringComparison.OrdinalIgnoreCase)) { options.hscroll = false; }
+					else if (Options.TryParse(opt, "HScroll", ref options.hscrollamt, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "Increment", ref temp)) { options.nudinc = temp; }
+					else if (Options.TryParse(opt, "Hex", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.hex = tempbool; }
+					else if (opt.Equals("BackgroundTrans", StringComparison.OrdinalIgnoreCase)) { options.bgtrans = true; }
+					else if (opt.Equals("-Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
+					else if (opt.Equals("Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
+					else if (opt.Equals("BackgroundDefault", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
+					else if (Options.TryParse(opt, "Background", ref tempcolor, StringComparison.OrdinalIgnoreCase, true)) { options.bgcolor = tempcolor; }
+					else if (Options.TryParse(opt, "Border", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.thinborder = tempbool; }
+					//Control specific.
+					//Edit.
+					else if (Options.TryParse(opt, "limit", ref options.limit, StringComparison.OrdinalIgnoreCase, true)) { }
+					else if (Options.TryParse(opt, "Lowercase", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.lowercase = tempbool; }
+					else if (Options.TryParse(opt, "Uppercase", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.uppercase = tempbool; }
+					else if (Options.TryParse(opt, "Number", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.number = tempbool; }
+					else if (Options.TryParseString(opt, "Password", ref options.pwdch, StringComparison.OrdinalIgnoreCase)) { options.pwd = true; }
+					else if (Options.TryParse(opt, "ReadOnly", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rdonly = tempbool; }
+					else if (Options.TryParse(opt, "WantCtrlA", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantctrla = tempbool; }
+					else if (Options.TryParse(opt, "WantReturn", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantreturn = tempbool; }
+					else if (Options.TryParse(opt, "WantTab", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wanttab = tempbool; }
+					//GrouBox.
+					else if (opt.Equals("Group", StringComparison.OrdinalIgnoreCase)) { options.group = true; }
+					//UpDown.
+					else if (opt.Equals("Horz", StringComparison.OrdinalIgnoreCase)) { options.nudhorz = true; }
+					else if (opt.Equals("Left", StringComparison.OrdinalIgnoreCase)) { options.nudleft = true; }
+					//16
+					//0x80
+					//None unit inc/dec
+					//Button.
+					else if (Options.TryParse(opt, "Default", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.btndef = tempbool; }
+					//DropDownList.
+					else if (Options.TryParse(opt, "Sort", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.sort = tempbool; }
+					//ComboBox.
+					else if (Options.TryParse(opt, "Simple", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.cmbsimple = tempbool; }
+					else if (Options.TryParse(opt, "Invert", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.invert = tempbool; }
+					else if (Options.TryParse(opt, "Line", ref options.line)) { }
+					else if (Options.TryParse(opt, "NoTicks", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.noticks = tempbool; }
+					else if (Options.TryParse(opt, "Page", ref options.page)) { }
+					else if (Options.TryParse(opt, "Thick", ref options.thick)) { }
+					else if (Options.TryParse(opt, "TickInterval", ref options.tickinterval)) { }
+					else if (opt.Equals("ToolTip", StringComparison.OrdinalIgnoreCase)) { options.tooltip = true; }
+					else if (opt.Equals("ToolTipTop", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 0; }
+					else if (opt.Equals("ToolTipLeft", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 1; }
+					else if (opt.Equals("ToolTipBottom", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 2; }
+					else if (opt.Equals("ToolTipRight", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 3; }
+					else if (Options.TryParse(opt, "Smooth", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.smooth = tempbool; }
+					else if (Options.TryParse(opt, "Buttons", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.buttons = tempbool; }
+					else if (opt.Equals("Bottom", StringComparison.OrdinalIgnoreCase)) { options.bottom = true; }
+					else if (opt.Equals("Top", StringComparison.OrdinalIgnoreCase)) { options.top = true; }
+					else if (Options.TryParse(opt, "ImageList", ref options.ilid)) { }
+					else if (Options.TryParse(opt, "Lines", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.lines = tempbool; }
+					else if (Options.TryParse(opt, "WantF2", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantf2 = tempbool; }
+					//ListView.
+					else if (Options.TryParse(opt, "SortDesc", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.sortdesc = tempbool; }
+					else if (Options.TryParse(opt, "Grid", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.grid = tempbool; }
+					else if (Options.TryParse(opt, "Hdr", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.header = tempbool; }
+					else if (Options.TryParse(opt, "NoSortHdr", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.clickheader = !tempbool; }
+					else if (Options.TryParse(opt, "NoSort", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.sortheader = !tempbool; }
+					else if (Options.TryParse(opt, "Icon", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.LargeIcon; }
+					else if (Options.TryParse(opt, "Tile", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.Tile; }
+					else if (Options.TryParse(opt, "IconSmall", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.SmallIcon; }
+					else if (Options.TryParse(opt, "List", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.List; }
+					else if (Options.TryParse(opt, "Report", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.Details; }
+					//PictureBox.
+					else if (Options.TryParseString(opt, "Icon", ref tempstr)) { options.iconnumber = ImageHelper.PrepareIconNumber(tempstr); }
+					//Other.
+					else if (opt == "4") { options.opt4 = true; }
+					else if (opt == "8") { options.opt8 = true; }
+					else if (opt == "16") { options.opt16 = true; }
+					else if (Options.TryParse(opt, "+E", ref options.addexstyle)) { }
+					else if (Options.TryParse(opt, "E", ref options.addexstyle)) { }
+					else if (Options.TryParse(opt, "-E", ref options.remexstyle)) { }
+					else if (Options.TryParse(opt, "+LV", ref temp)) { options.addlvstyle |= temp; }
+					else if (Options.TryParse(opt, "LV", ref temp)) { options.addlvstyle |= temp; }
+					else if (Options.TryParse(opt, "-LV", ref temp)) { options.remlvstyle &= ~temp; }
+					else if (Options.TryParse(opt, "-", ref options.remstyle)) { }
+					else if (Options.TryParse(opt, "+", ref options.addstyle)) { }
+					else if (Options.TryParse(opt, "", ref options.addstyle)) { }
 				}
-				else if (Options.TryParse(opt, "Choose", ref options.ddlchoose)) { options.ddlchoose--; options.choose.Add(options.ddlchoose); }
-				//
-				else if (Options.TryParse(opt, "c", ref options.c)) { }
-				else if (opt.Equals("Vertical", StringComparison.OrdinalIgnoreCase)) { options.vertical = true; }
-				else if (Options.TryParseString(opt, "v", ref options.name)) { }
-				else if (Options.TryParse(opt, "Disabled", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.enabled = !tempbool; }
-				else if (Options.TryParse(opt, "Hidden", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.visible = !tempbool; }
-				else if (Options.TryParse(opt, "Autosize", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.autosize = tempbool; }
-				else if (Options.TryParse(opt, "wp", ref options.wp, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "hp", ref options.hp, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "xp", ref options.xp, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "yp", ref options.yp, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "xm", ref options.xm, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "ym", ref options.ym, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "xs", ref options.xs, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "ys", ref options.ys, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
-				else if (Options.TryParse(opt, "Left", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.leftj = tempbool; }
-				else if (Options.TryParse(opt, "Right", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rightj = tempbool; }
-				else if (opt.Equals("Section", StringComparison.OrdinalIgnoreCase)) { options.section = true; }
-				else if (Options.TryParse(opt, "Tabstop", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.tabstop = tempbool; }
-				else if (Options.TryParse(opt, "Wrap", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wordwrap = tempbool; }
-				else if (Options.TryParse(opt, "VScroll", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.vscroll = tempbool; }
-				else if (opt.Equals("-HScroll", StringComparison.OrdinalIgnoreCase)) { options.hscroll = false; }
-				else if (Options.TryParse(opt, "HScroll", ref options.hscrollamt, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "Increment", ref temp)) { options.nudinc = temp; }
-				else if (Options.TryParse(opt, "Hex", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.hex = tempbool; }
-				else if (opt.Equals("BackgroundTrans", StringComparison.OrdinalIgnoreCase)) { options.bgtrans = true; }
-				else if (opt.Equals("-Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
-				else if (opt.Equals("Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
-				else if (opt.Equals("BackgroundDefault", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
-				else if (Options.TryParse(opt, "Background", ref tempcolor, StringComparison.OrdinalIgnoreCase, true)) { options.bgcolor = tempcolor; }
-				else if (Options.TryParse(opt, "Border", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.thinborder = tempbool; }
-				//Control specific.
-				//Edit.
-				else if (Options.TryParse(opt, "limit", ref options.limit, StringComparison.OrdinalIgnoreCase, true)) { }
-				else if (Options.TryParse(opt, "Lowercase", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.lowercase = tempbool; }
-				else if (Options.TryParse(opt, "Uppercase", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.uppercase = tempbool; }
-				else if (Options.TryParse(opt, "Number", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.number = tempbool; }
-				else if (Options.TryParseString(opt, "Password", ref options.pwdch, StringComparison.OrdinalIgnoreCase)) { options.pwd = true; }
-				else if (Options.TryParse(opt, "ReadOnly", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rdonly = tempbool; }
-				else if (Options.TryParse(opt, "WantCtrlA", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantctrla = tempbool; }
-				else if (Options.TryParse(opt, "WantReturn", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantreturn = tempbool; }
-				else if (Options.TryParse(opt, "WantTab", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wanttab = tempbool; }
-				//GrouBox.
-				else if (opt.Equals("Group", StringComparison.OrdinalIgnoreCase)) { options.group = true; }
-				//UpDown.
-				else if (opt.Equals("Horz", StringComparison.OrdinalIgnoreCase)) { options.nudhorz = true; }
-				else if (opt.Equals("Left", StringComparison.OrdinalIgnoreCase)) { options.nudleft = true; }
-				//16
-				//0x80
-				//None unit inc/dec
-				//Button.
-				else if (Options.TryParse(opt, "Default", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.btndef = tempbool; }
-				//DropDownList.
-				else if (Options.TryParse(opt, "Sort", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.sort = tempbool; }
-				//ComboBox.
-				else if (Options.TryParse(opt, "Simple", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.cmbsimple = tempbool; }
-				else if (Options.TryParse(opt, "Invert", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.invert = tempbool; }
-				else if (Options.TryParse(opt, "Line", ref options.line)) { }
-				else if (Options.TryParse(opt, "NoTicks", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.noticks = tempbool; }
-				else if (Options.TryParse(opt, "Page", ref options.page)) { }
-				else if (Options.TryParse(opt, "Thick", ref options.thick)) { }
-				else if (Options.TryParse(opt, "TickInterval", ref options.tickinterval)) { }
-				else if (opt.Equals("ToolTip", StringComparison.OrdinalIgnoreCase)) { options.tooltip = true; }
-				else if (opt.Equals("ToolTipTop", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 0; }
-				else if (opt.Equals("ToolTipLeft", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 1; }
-				else if (opt.Equals("ToolTipBottom", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 2; }
-				else if (opt.Equals("ToolTipRight", StringComparison.OrdinalIgnoreCase)) { options.tooltipside = 3; }
-				else if (Options.TryParse(opt, "Smooth", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.smooth = tempbool; }
-				else if (Options.TryParse(opt, "Buttons", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.buttons = tempbool; }
-				else if (opt.Equals("Bottom", StringComparison.OrdinalIgnoreCase)) { options.bottom = true; }
-				else if (opt.Equals("Top", StringComparison.OrdinalIgnoreCase)) { options.top = true; }
-				else if (Options.TryParse(opt, "ImageList", ref options.ilid)) { }
-				else if (Options.TryParse(opt, "Lines", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.lines = tempbool; }
-				else if (Options.TryParse(opt, "WantF2", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.wantf2 = tempbool; }
-				//ListView.
-				else if (Options.TryParse(opt, "SortDesc", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.sortdesc = tempbool; }
-				else if (Options.TryParse(opt, "Grid", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.grid = tempbool; }
-				else if (Options.TryParse(opt, "Hdr", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.header = tempbool; }
-				else if (Options.TryParse(opt, "NoSortHdr", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.clickheader = !tempbool; }
-				else if (Options.TryParse(opt, "NoSort", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.sortheader = !tempbool; }
-				else if (Options.TryParse(opt, "Icon", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.LargeIcon; }
-				else if (Options.TryParse(opt, "Tile", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.Tile; }
-				else if (Options.TryParse(opt, "IconSmall", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.SmallIcon; }
-				else if (Options.TryParse(opt, "List", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.List; }
-				else if (Options.TryParse(opt, "Report", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { if (tempbool) options.lvview = View.Details; }
-				//PictureBox.
-				else if (Options.TryParseString(opt, "Icon", ref tempstr)) { options.iconnumber = ImageHelper.PrepareIconNumber(tempstr); }
-				//Other.
-				else if (opt == "4") { options.opt4 = true; }
-				else if (opt == "8") { options.opt8 = true; }
-				else if (opt == "16") { options.opt16 = true; }
-				else if (Options.TryParse(opt, "+E", ref options.addexstyle)) { }
-				else if (Options.TryParse(opt, "E", ref options.addexstyle)) { }
-				else if (Options.TryParse(opt, "-E", ref options.remexstyle)) { }
-				else if (Options.TryParse(opt, "+LV", ref temp)) { options.addlvstyle |= temp; }
-				else if (Options.TryParse(opt, "LV", ref temp)) { options.addlvstyle |= temp; }
-				else if (Options.TryParse(opt, "-LV", ref temp)) { options.remlvstyle &= ~temp; }
-				else if (Options.TryParse(opt, "-", ref options.remstyle)) { }
-				else if (Options.TryParse(opt, "+", ref options.addstyle)) { }
-				else if (Options.TryParse(opt, "", ref options.addstyle)) { }
 			}
 
 			return options;

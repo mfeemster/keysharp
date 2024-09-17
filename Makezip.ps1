@@ -23,5 +23,4 @@ Compress-Archive -LiteralPath `
 ,".\bin\release\$net\Keysharp.deps.json" `
 ,".\bin\release\$net\Keysharp.runtimeconfig.json" `
 ,".\bin\release\$net\Keyview.runtimeconfig.json" `
-,".\bin\release\$net\x64" `
 -DestinationPath ".\Keysharp_$AssemblyVersion.zip" -Force
