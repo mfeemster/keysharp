@@ -434,6 +434,6 @@ namespace Dyn
 				throw new ParseException($"Failed to compile: {code}.");
 		}
 
-		internal bool IsValidVariable(string variable) => provider.IsValidIdentifier(variable);
+		internal bool IsValidIdentifier(string variable) => provider.IsValidIdentifier(variable);
 	}
 }

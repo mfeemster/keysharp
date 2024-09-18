@@ -352,7 +352,7 @@ namespace Keysharp.Scripting
 					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
 				return false;
 
-			return Ch.IsValidVariable(token);
+			return Ch.IsValidIdentifier(token);
 		}
 
 		internal static bool IsKeyword(string code) => keywords.Contains(code);
