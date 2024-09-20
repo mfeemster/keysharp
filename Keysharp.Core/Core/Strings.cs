@@ -1182,28 +1182,6 @@ namespace Keysharp.Core
 			return semver1.CompareSortOrderTo(semver2);
 		}
 
-		/// <summary>
-		/// This appears to be the fastest known way to do this.
-		/// Gotten from: https://www.meziantou.net/comparing-implementations-with-benchmarkdotnet.htm
-		/// </summary>
-		/// <param name="bytes"></param>
-		/// <returns></returns>
-		internal static string BytesToHexString(byte[] bytes)
-		{
-			int b;
-			var c = new char[bytes.Length * 2];
-
-			for (var i = 0; i < bytes.Length; i++)
-			{
-				b = bytes[i] >> 4;
-				c[i * 2] = (char)(55 + b + (((b - 10) >> 31) & -7));
-				b = bytes[i] & 0xF;
-				c[i * 2 + 1] = (char)(55 + b + (((b - 10) >> 31) & -7));
-			}
-
-			return new string(c);
-		}
-
 		internal static bool Cisalnum(char c) => (c & 0x80) == 0 && char.IsLetterOrDigit(c);
 
 		internal static bool Cisalpha(char c) => (c & 0x80) == 0 && char.IsLetter(c);

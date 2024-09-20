@@ -48,7 +48,7 @@ namespace Keysharp.Core
 		{
 			var raw = ToByteArray(value);
 			var result = alg.ComputeHash(raw);
-			return Strings.BytesToHexString(result);
+			return Convert.ToHexString(result);
 		}
 
 		internal static byte[] ToByteArray(object value)

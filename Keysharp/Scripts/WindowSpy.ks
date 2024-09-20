@@ -20,7 +20,7 @@ WinSpyGui() {
 
     DllCall("shell32\SetCurrentProcessExplicitAppUserModelID", "wstr", "AutoHotkey.WindowSpy")
      
-    oGui := Gui("AlwaysOnTop Resize MinSize +DPIScale","Window Spy for AHKv2")
+    oGui := Gui("AlwaysOnTop Resize MinSize +DPIScale","Window Spy for Keysharp")
     oGui.OnEvent("Close","WinSpyClose")
     oGui.OnEvent("Size","WinSpySize")
   
