@@ -7,6 +7,7 @@ global using global::System.Drawing;
 global using global::System.Globalization;
 global using global::System.IO;
 global using global::System.Reflection;
+global using global::System.Runtime.InteropServices;
 global using global::System.Text;
 global using global::System.Threading;
 global using global::System.Threading.Tasks;
@@ -18,7 +19,7 @@ global using global::Keysharp.Core;
 global using global::Keysharp.Core.Common.Keyboard;
 
 #if WINDOWS
-    global using global::Keysharp.Core.Windows;
+	global using global::Keysharp.Core.Windows;
 #endif
 
 global using global::Keysharp.Scripting;

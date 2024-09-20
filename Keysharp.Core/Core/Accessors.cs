@@ -254,36 +254,33 @@
 			}
 			set
 			{
-				if (value != null)
-				{
 #if LINUX
 
-					if (value is ClipboardAll arr)
-						Env.RestoreClipboardAll(arr, 0L);
-					else if (value is string s && s?.Length == 0)
-					{
-						//Clipboard.Clear();//For some reason this doesn't work on linux. Bug reported here: https://github.com/DanielVanNoord/System.Windows.Forms/issues/17
-						Clipboard.SetDataObject("", true);
-					}
-					else
-						Clipboard.SetDataObject(value.ToString(), true);
+				if (value == null || (value is string s && s?.Length == 0))
+				{
+					//Clipboard.Clear();//For some reason this doesn't work on linux. Bug reported here: https://github.com/DanielVanNoord/System.Windows.Forms/issues/17
+					Clipboard.SetDataObject("", true);
+				}
+				else if (value is ClipboardAll arr)
+					Env.RestoreClipboardAll(arr, 0L);
+				else
+					Clipboard.SetDataObject(value.ToString(), true);
 
 #elif WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
-					{
-						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
+				if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
+				{
+					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
-						if (value is ClipboardAll arr)
-							Env.RestoreClipboardAll(arr, (long)arr.Size);
-						else if (value is string s && s?.Length == 0)
-							Clipboard.Clear();
-						else
-							Clipboard.SetDataObject(value.ToString(), true);
-					}
+					if (value == null || (value is string s && s?.Length == 0))
+						Env.MyClearClip();
+					else if (value is ClipboardAll arr)
+						Env.RestoreClipboardAll(arr, (long)arr.Size);
+					else
+						Clipboard.SetDataObject(value.ToString(), true);
+				}
 
 #endif
-				}
 			}
 		}
 
