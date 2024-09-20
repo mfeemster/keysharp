@@ -1,9 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
     <StartupObject>Keysharp.CompiledMain.program</StartupObject>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
     <Version>0.0.0.8</Version>
