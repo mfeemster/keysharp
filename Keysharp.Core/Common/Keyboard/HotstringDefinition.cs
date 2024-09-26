@@ -13,26 +13,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int HS_TURNED_OFF = 0x02;
 		internal const int MAX_HOTSTRING_LENGTH = 40;
 		internal const string MAX_HOTSTRING_LENGTH_STR = "40";      // Hard to imagine a need for more than this, and most are only a few chars long.
-		internal static string defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";//Should this be a platform specific newline instead of \r\n?//TODO
-		internal static uint enabledCount;      // Keep in sync with the above.
-		internal static bool hsCaseSensitive;
-		internal static bool hsConformToCase = true;
-		internal static bool hsDetectWhenInsideWord;
-		internal static bool hsDoBackspace = true;
-		internal static bool hsDoReset;
-		internal static bool hsEndCharRequired = true;
-		internal static int hsKeyDelay;
-		internal static bool hsOmitEndChar;
-		internal static int hsPriority;
-		internal static SendModes hsSendMode = SendModes.Input;
-		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
-		internal static bool hsSuspendExempt;
-		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
-
-		//internal static Dictionary<string, List<HotstringDefinition>> shsDkt = new Dictionary<string, List<HotstringDefinition>>(StringComparer.OrdinalIgnoreCase);     //Should probably eventually make this a dictionary of some sort to avoid iterating over the whole list on every keypress.//TODO
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
-
 		internal uint existingThreads, maxThreads;
 		internal IFuncObj funcObj;
 		internal IFuncObj hotCriterion;
@@ -42,10 +24,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal Keysharp.Core.Common.Keyboard.SendRawModes sendRaw;
 		internal string str, replacement;
 		internal int suspended;
-		protected internal static List<char> hsBuf = new List<char>(256);
-
-		[PublicForTestOnly]
-		public static string CurrentInputBuffer => new string(hsBuf.ToArray());
 
 		[PublicForTestOnly]
 		public bool Enabled { get; set; }
@@ -77,17 +55,17 @@ namespace Keysharp.Core.Common.Keyboard
 			hotCriterion = Threads.GetThreadVariables().hotCriterion;
 			suspended = _suspend;
 			maxThreads = Accessors.A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
-			priority = hsPriority;
-			keyDelay = hsKeyDelay;
-			sendMode = hsSendMode;  // And all these can vary too.
-			caseSensitive = hsCaseSensitive;
-			conformToCase = hsConformToCase;
-			doBackspace = hsDoBackspace;
-			omitEndChar = hsOmitEndChar;
-			sendRaw = _hasContinuationSection ? Keysharp.Core.Common.Keyboard.SendRawModes.RawText : hsSendRaw;
-			endCharRequired = hsEndCharRequired;
-			detectWhenInsideWord = hsDetectWhenInsideWord;
-			doReset = hsDoReset;
+			priority = HotstringManager.hsPriority;
+			keyDelay = HotstringManager.hsKeyDelay;
+			sendMode = HotstringManager.hsSendMode;  // And all these can vary too.
+			caseSensitive = HotstringManager.hsCaseSensitive;
+			conformToCase = HotstringManager.hsConformToCase;
+			doBackspace = HotstringManager.hsDoBackspace;
+			omitEndChar = HotstringManager.hsOmitEndChar;
+			sendRaw = _hasContinuationSection ? Keysharp.Core.Common.Keyboard.SendRawModes.RawText : HotstringManager.hsSendRaw;
+			endCharRequired = HotstringManager.hsEndCharRequired;
+			detectWhenInsideWord = HotstringManager.hsDetectWhenInsideWord;
+			doReset = HotstringManager.hsDoReset;
 			inputLevel = (uint)Accessors.A_InputLevel;
 			suspendExempt = Accessors.A_SuspendExempt.Ab();
 			constructedOK = false;
@@ -105,53 +83,7 @@ namespace Keysharp.Core.Common.Keyboard
 			constructedOK = true; // Done at the very end.
 		}
 
-		/// <summary>
-		/// Returns OK or FAIL.
-		/// Caller has ensured that aHotstringOptions is blank if there are no options.  Otherwise, aHotstringOptions
-		/// should end in a colon, which marks the end of the options list.  aHotstring is the hotstring itself
-		/// (e.g. "ahk"), which does not have to be unique, unlike aName, which was made unique by also including
-		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
-		/// Caller has also ensured that aHotstring is not blank.
-		/// </summary>
-		public static ResultType AddHotstring(string _name, IFuncObj _funcObj, string _options, string _hotstring
-											  , string _replacement, bool _hasContinuationSection, int _suspend = 0)
-		{
-			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
-
-			if (!hs.constructedOK)
-				return ResultType.Fail;
-
-			shs.Add(hs);
-
-			if (!Keysharp.Scripting.Script.isReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
-				++enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
-
-			return ResultType.Ok;
-		}
-
-		public static void ClearHotstrings()
-		{
-			hsBuf.Clear();
-			shs.Clear();
-		}
-
 		public override string ToString() => Name;
-
-		internal static string ClearBuf()
-		{
-			var str = new string(hsBuf.ToArray());
-			hsBuf.Clear();
-			return str;
-		}
-
-		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
-		{
-			foreach (var hs in shs)
-				if (hs.CompareHotstring(_hotstring, _caseSensitive, _detectWhenInsideWord, _hotCriterion))
-					return hs;
-
-			return null;
-		}
 
 		internal static void ParseOptions(string _options, ref int _priority, ref int _keyDelay, ref SendModes _sendMode
 										  , ref bool _caseSensitive, ref bool _conformToCase, ref bool _doBackspace, ref bool _omitEndChar, ref Keysharp.Core.Common.Keyboard.SendRawModes _sendRaw
@@ -261,50 +193,6 @@ namespace Keysharp.Core.Common.Keyboard
 						break;
 						// Otherwise: Ignore other characters, such as the digits that comprise the number after the P option.
 				}
-			}
-		}
-
-		internal static void SuspendAll(bool _suspend)
-		{
-			if (shs.Count < 1) // At least one part below relies on this check.
-				return;
-
-			int u;
-
-			if (_suspend) // Suspend all those that aren't exempt.
-			{
-				// Recalculating sEnabledCount might perform better in the average case since most aren't exempt.
-				for (u = 0, enabledCount = 0; u < shs.Count; ++u)
-					if (shs[u].suspendExempt)
-					{
-						shs[u].suspended &= ~HS_SUSPENDED;
-
-						if (shs[u].suspended == 0) // Not turned off.
-							++enabledCount;
-					}
-					else
-						shs[u].suspended |= HS_SUSPENDED;
-			}
-			else // Unsuspend all.
-			{
-				var previous_count = enabledCount;
-
-				// Recalculating enabledCount is probably best since we otherwise need to both remove HS_SUSPENDED
-				// and determine if the final suspension status has changed (i.e. no other bits were set).
-				for (enabledCount = 0, u = 0; u < shs.Count; ++u)
-				{
-					shs[u].suspended &= ~HS_SUSPENDED;
-
-					if (shs[u].suspended == 0) // Not turned off.
-						++enabledCount;
-				}
-
-				// v1.0.44.08: Added the following section.  Also, the HS buffer is reset, but only when hotstrings
-				// are newly enabled after having been entirely disabled.  This is because CollectInput() would not
-				// have been called in a long time, making the contents of g_HSBuf obsolete, which in turn might
-				// otherwise cause accidental firings based on old keystrokes coupled with new ones.
-				if (previous_count == 0 && enabledCount > 0)
-					hsBuf.Clear();
 			}
 		}
 

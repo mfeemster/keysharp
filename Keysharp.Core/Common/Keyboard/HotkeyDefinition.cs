@@ -600,12 +600,12 @@ namespace Keysharp.Core.Common.Keyboard
 			// stays in effect even when Suspend in ON.
 			var ts = Keysharp.Core.Keyboard.toggleStates;
 
-			if (HotstringDefinition.enabledCount != 0
+			if (HotstringManager.enabledCount != 0
 					|| Script.input != null // v1.0.91: Hook is needed for collecting input.
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Keysharp.Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringDefinition.enabledCount != 0))
+			if (Keysharp.Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
@@ -1368,7 +1368,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static void MaybeUninstallHook()
 		{
 			// Do some quick checks to avoid scanning all hotkeys unnecessarily:
-			if (Script.input != null || HotstringDefinition.enabledCount != 0 || ((int)whichHookAlways & KeyboardMouseSender.HookKeyboard) != 0)
+			if (Script.input != null || HotstringManager.enabledCount != 0 || ((int)whichHookAlways & KeyboardMouseSender.HookKeyboard) != 0)
 				return;
 
 			// Do more thorough checking to determine whether the hook is still needed:

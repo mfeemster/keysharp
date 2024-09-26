@@ -372,18 +372,18 @@
 		/// </summary>
 		public static string A_DDDD => DateTime.Now.ToString("dddd");
 
-		public static bool A_DefaultHotstringCaseSensitive => HotstringDefinition.hsCaseSensitive;
-		public static bool A_DefaultHotstringConformToCase => HotstringDefinition.hsConformToCase;
-		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringDefinition.hsDetectWhenInsideWord;
-		public static bool A_DefaultHotstringDoBackspace => HotstringDefinition.hsDoBackspace;
-		public static bool A_DefaultHotstringDoReset => HotstringDefinition.hsDoReset;
-		public static bool A_DefaultHotstringEndCharRequired => HotstringDefinition.hsEndCharRequired;
-		public static string A_DefaultHotstringEndChars => HotstringDefinition.defEndChars;
-		public static long A_DefaultHotstringKeyDelay => HotstringDefinition.hsKeyDelay;
-		public static bool A_DefaultHotstringOmitEndChar => HotstringDefinition.hsOmitEndChar;
-		public static long A_DefaultHotstringPriority => HotstringDefinition.hsPriority;
-		public static string A_DefaultHotstringSendMode => HotstringDefinition.hsSendMode.ToString();
-		public static string A_DefaultHotstringSendRaw => HotstringDefinition.hsSendRaw.ToString();
+		public static bool A_DefaultHotstringCaseSensitive => HotstringManager.hsCaseSensitive;
+		public static bool A_DefaultHotstringConformToCase => HotstringManager.hsConformToCase;
+		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringManager.hsDetectWhenInsideWord;
+		public static bool A_DefaultHotstringDoBackspace => HotstringManager.hsDoBackspace;
+		public static bool A_DefaultHotstringDoReset => HotstringManager.hsDoReset;
+		public static bool A_DefaultHotstringEndCharRequired => HotstringManager.hsEndCharRequired;
+		public static string A_DefaultHotstringEndChars => HotstringManager.defEndChars;
+		public static long A_DefaultHotstringKeyDelay => HotstringManager.hsKeyDelay;
+		public static bool A_DefaultHotstringOmitEndChar => HotstringManager.hsOmitEndChar;
+		public static long A_DefaultHotstringPriority => HotstringManager.hsPriority;
+		public static string A_DefaultHotstringSendMode => HotstringManager.hsSendMode.ToString();
+		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
 
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
@@ -1420,8 +1420,8 @@
 
 		public static object A_SuspendExempt
 		{
-			get => HotstringDefinition.hsSuspendExempt;
-			set => HotstringDefinition.hsSuspendExempt = value.Ab();
+			get => HotstringManager.hsSuspendExempt;
+			set => HotstringManager.hsSuspendExempt = value.Ab();
 		}
 
 		/// <summary>

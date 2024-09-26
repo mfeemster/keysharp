@@ -525,7 +525,7 @@
 			if (HotkeyDefinition.shk.Count > 0)
 				return true;
 
-			if (HotstringDefinition.shs.Count > 0)
+			if (HotstringManager.shs.Count > 0)
 				return true;
 
 			if (Keysharp.Core.Flow.timers.Count > 0)

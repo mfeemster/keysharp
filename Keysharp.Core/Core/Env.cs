@@ -713,6 +713,11 @@ namespace Keysharp.Core
 		}
 #if WINDOWS
 
+		/// <summary>
+		/// Remove this once .NET 9 is fixed.//TODO
+		/// </summary>
+		/// <param name="pDataObj"></param>
+		/// <returns></returns>
 		[DllImport("ole32.dll", ExactSpelling = true)]
 		public static extern int OleSetClipboard(System.Runtime.InteropServices.ComTypes.IDataObject? pDataObj);
 

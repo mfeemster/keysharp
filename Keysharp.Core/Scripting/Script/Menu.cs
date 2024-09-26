@@ -43,7 +43,7 @@
 			mainWindow.CheckedInvoke(() =>
 			{
 				Flow.Suspended = !Flow.Suspended;
-				HotstringDefinition.SuspendAll(Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
+				HotstringManager.SuspendAll(Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
 				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
 				suspendMenuItem.Checked = Flow.Suspended;
 				mainWindow.SuspendHotkeysToolStripMenuItem.Checked = Flow.Suspended;

@@ -529,7 +529,7 @@ namespace Keysharp.Core.Windows
 							return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant);
 				}
 
-				if ((HotstringDefinition.enabledCount > 0 && !isIgnored) || Script.input != null)
+				if ((HotstringManager.enabledCount > 0 && !isIgnored) || Script.input != null)
 					if (!CollectInput(ref kbd, vk, sc, keyUp, isIgnored, keyHistoryCurr, ref hsOut, ref caseConformMode, ref endChar)) // Key should be invisible (suppressed).
 						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hsOut, caseConformMode, endChar);
 
@@ -695,7 +695,7 @@ namespace Keysharp.Core.Windows
 			// Since above didn't return, this keystroke is being passed through rather than suppressed.
 			if (hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
 			{
-				HotstringDefinition.hsBuf.Clear();
+				HotstringManager.ClearBuf();
 			}
 
 			// In case CallNextHookEx() is high overhead or can sometimes take a long time to return,
@@ -1366,108 +1366,31 @@ namespace Keysharp.Core.Windows
 				// active window, if the active window changes, it seems best to reset the buffer
 				// to avoid misfires.
 				hsHwnd = activeWindow;
-				HotstringDefinition.hsBuf.Clear();
+				HotstringManager.ClearBuf();
 			}
+			else if (HotstringManager.hsBuf.Count > 90)
+				HotstringManager.hsBuf.RemoveRange(0, 45);
 
-			HotstringDefinition.hsBuf.Add(ch[0]);
+			HotstringManager.hsBuf.Add(ch[0]);
 
 			if (charCount > 1)
 				// MSDN: "This usually happens when a dead-key character (accent or diacritic) stored in the
 				// keyboard layout cannot be composed with the specified virtual key to form a single character."
-				HotstringDefinition.hsBuf.Add(ch[1]);
+				HotstringManager.hsBuf.Add(ch[1]);
 
-			if (HotstringDefinition.hsBuf.Count > 0)
+			if (HotstringManager.MatchHotstring() is HotstringDefinition hs)
 			{
-				int cphs, cpbuf, cpcaseStart, cpcaseEnd;
+				int cpcaseStart, cpcaseEnd;
 				int caseCapableCharacters;
-				var hsBufArr = HotstringDefinition.hsBuf.ToArray();//Use an array which ought to be faster for iterating than a list.
-				var hsBufCountm1 = hsBufArr.Length - 1;
-				var hsBufCountm2 = hsBufArr.Length - 2;
 				bool firstCharWithCaseIsUpper, firstCharWithCaseHasGoneBy;
-				var hasEndChar = HotstringDefinition.defEndChars.Contains(hsBufArr[hsBufArr.Length - 1]);
-				//var sw = new Stopwatch();
-				//sw.Start();
+				var hsBufSpan = (ReadOnlySpan<char>)CollectionsMarshal.AsSpan(HotstringManager.hsBuf);
+				var hsLength = hsBufSpan.Length;
+				var hsBufCountm1 = hsLength - 1;
+				var hsBufCountm2 = hsLength - 2;
+				var hasEndChar = HotstringManager.defEndChars.Contains(hsBufSpan[hsBufCountm1]);
 
-				// Searching through the hot strings in the original, physical order is the documented
-				// way in which precedence is determined, i.e. the first match is the only one that will
-				// be triggered.
-				for (var u = 0; u < HotstringDefinition.shs.Count; ++u)
+				if (HotInputLevelAllowsFiring(hs.inputLevel, ev.dwExtraInfo, ref keyHistoryCurr.eventType))
 				{
-					var hs = HotstringDefinition.shs[u];
-
-					if (hs.suspended != 0)
-						continue;
-
-					if (hs.endCharRequired)
-					{
-						if (hsBufArr.Length <= hs.str.Length) // Ensure the string is long enough for loop below.
-							continue;
-
-						if (!hasEndChar)
-							continue;
-
-						cpbuf = hsBufCountm2;// Init once for both loops. -2 to omit end-char.
-					}
-					else // No ending char required.
-					{
-						if (hsBufArr.Length < hs.str.Length) // Ensure the string is long enough for loop below.
-							continue;
-
-						cpbuf = hsBufCountm1;// Init once for both loops.
-					}
-
-					cphs = hs.str.Length - 1; // Init once for both loops.
-
-					// Check if this item is a match:
-					if (hs.caseSensitive)//Using fixed* doesn't seem to make a different in performance.
-					{
-						for (; cphs >= 0; --cpbuf, --cphs)
-							if (hsBufArr[cpbuf] != hs.str[cphs])
-								break;
-					}
-					else // case insensitive
-
-						// v1.0.43.03: Using CharLower vs. tolower seems the best default behavior (even though slower)
-						// so that languages in which the higher ANSI characters are common will see "Ä" == "ä", etc.
-						for (; cphs >= 0; --cpbuf, --cphs)
-							if (char.ToLower(hsBufArr[cpbuf]) != char.ToLower(hs.str[cphs])) // v1.0.43.04: Fixed crash by properly casting to UCHAR (via macro).
-								break;
-
-					// Check if one of the loops above found a matching hotstring (relies heavily on
-					// short-circuit boolean order):
-					if (cphs >= 0 // One of the loops above stopped early due discovering "no match"...
-							// ... or it did but the "?" option is not present to protect from the fact that
-							// what lies to the left of this hotstring abbreviation is an alphanumeric character:
-							|| !hs.detectWhenInsideWord && cpbuf >= 0 && IsHotstringWordChar(hsBufArr[cpbuf])
-							// ... v1.0.41: Or it's a perfect match but the right window isn't active or doesn't exist.
-							// In that case, continue searching for other matches in case the script contains
-							// hotstrings that would trigger simultaneously were it not for the "only one" rule.
-							|| (HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name) == 0L))
-						continue; // No match or not eligible to fire.
-
-					// v1.0.42: The following scenario defeats the ability to give criterion hotstrings
-					// precedence over non-criterion:
-					// A global/non-criterion hotstring is higher up in the file than some criterion hotstring,
-					// but both are eligible to fire at the same instant.  In v1.0.41, the global one would
-					// take precedence because it's higher up (and this behavior is preserved not just for
-					// backward compatibility, but also because it might be more flexible -- this is because
-					// unlike hotkeys, variants aren't stored under a parent hotstring, so we don't know which
-					// ones are exact dupes of each other (same options+abbreviation).  Thus, it would take
-					// extra code to determine this at runtime; and even if it were added, it might be
-					// more flexible not to do it; instead, to let the script determine (even by resorting to
-					// #HotIf NOT WinActive()) what precedence hotstrings have with respect to each other.
-					//////////////////////////////////////////////////////////////
-					// MATCHING HOTSTRING WAS FOUND (since above didn't continue).
-					//////////////////////////////////////////////////////////////
-					//sw.Stop();
-					//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring {hs.str} at index {u} took {sw.Elapsed.TotalMilliseconds}ms or {((sw.Elapsed.TotalMilliseconds / (u + 1)) * 1000):F4}us per hotstring.");
-
-					// Now that we have a match, see if its InputLevel is allowed. If not,
-					// consider the key ignored (rather than continuing to search for more matches).
-
-					if (!HotInputLevelAllowsFiring(hs.inputLevel, ev.dwExtraInfo, ref keyHistoryCurr.eventType))
-						break;
-
 					// Since default KeyDelay is 0, and since that is expected to be typical, it seems
 					// best to unconditionally post a message rather than trying to handle the backspacing
 					// and replacing here.  This is because a KeyDelay of 0 might be fairly slow at
@@ -1483,7 +1406,7 @@ namespace Keysharp.Core.Windows
 					{
 						// Find out what case the user typed the string in so that we can have the
 						// replacement produced in similar case:
-						cpcaseEnd = hsBufArr.Length;
+						cpcaseEnd = hsLength;
 
 						if (hs.endCharRequired)
 							--cpcaseEnd;
@@ -1493,18 +1416,22 @@ namespace Keysharp.Core.Windows
 						for (caseCapableCharacters = 0, firstCharWithCaseIsUpper = firstCharWithCaseHasGoneBy = false
 								, cpcaseStart = cpcaseEnd - hs.str.Length
 								; cpcaseStart < cpcaseEnd; ++cpcaseStart)
-							if (char.IsLower(hsBufArr[cpcaseStart]) || char.IsUpper(hsBufArr[cpcaseStart])) // A case-capable char.
+						{
+							char chStart = hsBufSpan[cpcaseStart];
+
+							if (char.IsLower(chStart) || char.IsUpper(chStart)) // A case-capable char.
 							{
 								if (!firstCharWithCaseHasGoneBy)
 								{
 									firstCharWithCaseHasGoneBy = true;
 
-									if (char.IsUpper(hsBufArr[cpcaseStart]))
+									if (char.IsUpper(chStart))
 										firstCharWithCaseIsUpper = true; // Override default.
 								}
 
 								++caseCapableCharacters;
 							}
+						}
 
 						if (caseCapableCharacters == 0) // All characters in the abbreviation are caseless.
 							caseConformMode = CaseConformModes.None;
@@ -1528,7 +1455,7 @@ namespace Keysharp.Core.Windows
 								// caseless characters such as the @ symbol do not disqualify an abbreviation
 								// from being considered "all uppercase":
 								for (cpcaseStart = cpcaseEnd - hs.str.Length; cpcaseStart < cpcaseEnd; ++cpcaseStart)
-									if (char.IsLower(hsBufArr[cpcaseStart])) // Use IsCharLower to better support chars from non-English languages.
+									if (char.IsLower(hsBufSpan[cpcaseStart])) // Use IsCharLower to better support chars from non-English languages.
 										break; // Any lowercase char disqualifies CASE_CONFORM_ALL_CAPS.
 
 								if (cpcaseStart == cpcaseEnd) // All case-possible characters are uppercase.
@@ -1583,7 +1510,7 @@ namespace Keysharp.Core.Windows
 					// 2) Two ending characters would appear in pre-1.0.43 versions: one where the user typed
 					//    it and one at the end, which is clearly incorrect.
 					hsOut = hs;
-					endChar = hs.endCharRequired ? hsBufArr[hsBufArr.Length - 1] : (char)0;
+					endChar = hs.endCharRequired ? hsBufSpan[hsBufCountm1] : (char)0;
 
 					// Clean up.
 					// The keystrokes to be sent by the other thread upon receiving the message prepared above
@@ -1603,9 +1530,9 @@ namespace Keysharp.Core.Windows
 						// sent by DoReplace() won't be captured (since it's "ignored input", which
 						// is why it's put into the buffer manually here):
 						if (hs.endCharRequired)
-							HotstringDefinition.hsBuf.RemoveRange(0, HotstringDefinition.hsBuf.Count - 1);
+							HotstringManager.hsBuf.RemoveRange(0, HotstringManager.hsBuf.Count - 1);
 						else
-							HotstringDefinition.hsBuf.Clear();
+							HotstringManager.ClearBuf();
 					}
 					else if (hs.doBackspace)
 					{
@@ -1615,10 +1542,10 @@ namespace Keysharp.Core.Windows
 						// active window.  A simpler way to understand is to realize that the buffer now
 						// contains (for recognition purposes, in its right side) the hotstring and its
 						// end char (if applicable), so remove both:
-						HotstringDefinition.hsBuf.RemoveRange(HotstringDefinition.hsBuf.Count - hs.str.Length, hs.str.Length);
+						HotstringManager.hsBuf.RemoveRange(HotstringManager.hsBuf.Count - hs.str.Length, hs.str.Length);
 
 						if (hs.endCharRequired)
-							HotstringDefinition.hsBuf.RemoveAt(HotstringDefinition.hsBuf.Count - 1);
+							HotstringManager.hsBuf.RemoveAt(HotstringManager.hsBuf.Count - 1);
 					}
 
 					// v1.0.38.04: Fixed the following mDoReset section by moving it beneath the above because
@@ -1631,11 +1558,9 @@ namespace Keysharp.Core.Windows
 					// There are probably many other uses for the reset option (albeit obscure, but they have
 					// been brought up in the forum at least twice).
 					if (hs.doReset)
-						HotstringDefinition.hsBuf.Clear(); // Further below, the buffer will be terminated to reflect this change.
-
-					break; // Somewhere above would have done "continue" if a match wasn't found.
-				} // for()
-			} // if buf not empty
+						HotstringManager.ClearBuf(); // Further below, the buffer will be terminated to reflect this change.
+				}//for each hotstring for this letter.
+			}//if hotstring buffer not empty.
 
 			return !suppressHotstringFinalChar;
 		}
@@ -1908,7 +1833,7 @@ namespace Keysharp.Core.Windows
 			// the Input command.  One reason for not monitoring ignored input is to avoid any chance of
 			// an infinite loop of keystrokes caused by one hotstring triggering itself directly or
 			// indirectly via a different hotstring:
-			if (HotstringDefinition.enabledCount != 0 && !isIgnored)
+			if (HotstringManager.enabledCount != 0 && !isIgnored)
 			{
 				switch (vk)
 				{
@@ -1923,8 +1848,8 @@ namespace Keysharp.Core.Windows
 
 						// Reset hotstring detection if the user seems to be navigating within an editor.  This is done
 						// so that hotstrings do not fire in unexpected places.
-						if (HotstringDefinition.hsBuf.Count > 0)
-							HotstringDefinition.hsBuf.Clear();
+						if (HotstringManager.hsBuf.Count > 0)
+							HotstringManager.ClearBuf();
 
 						break;
 
@@ -1936,8 +1861,8 @@ namespace Keysharp.Core.Windows
 						// that determines whether the backspace behaves like an unmodified backspace.  This solves the issue
 						// of the Input command collecting simulated backspaces as real characters rather than recognizing
 						// them as a means to erase the previous character in the buffer.
-						if (kbdMsSender.modifiersLRLogical == 0 && HotstringDefinition.hsBuf.Count > 0)
-							HotstringDefinition.hsBuf.RemoveAt(HotstringDefinition.hsBuf.Count - 1);
+						if (kbdMsSender.modifiersLRLogical == 0 && HotstringManager.hsBuf.Count > 0)
+							HotstringManager.hsBuf.RemoveAt(HotstringManager.hsBuf.Count - 1);
 
 						// Fall through to the check below in case this {BS} completed a dead key sequence.
 						break;
@@ -2164,7 +2089,7 @@ namespace Keysharp.Core.Windows
 
 			var char_type = new ushort[1];
 
-			if (GetStringTypeEx(0, CT_CTYPE3, ch.ToString(), 1, char_type))//Ignore localefor unicode by passing 0.
+			if (GetStringTypeEx(0, CT_CTYPE3, ch.ToString(), 1, char_type))//Ignore locale for unicode by passing 0.
 			{
 				// Nonspacing marks combine with the following character, so would visually
 				// appear to be part of the word.  This should fix detection of words beginning
@@ -4432,7 +4357,7 @@ namespace Keysharp.Core.Windows
 				// was removed (or Alt was released).  If the *classic* alt-tab menu isn't in use,
 				// this at least serves to reset altTabMenuIsVisible to false:
 				altTabMenuIsVisible = FindWindow("#32771", null) != IntPtr.Zero;
-				HotstringDefinition.hsBuf.Clear();
+				HotstringManager.ClearBuf();
 				hsHwnd = IntPtr.Zero; // It isn't necessary to determine the actual window/control at this point since the buffer is already empty.
 
 				if (resetKVKandKSC)

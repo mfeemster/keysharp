@@ -189,10 +189,10 @@ break_twice:;
 
 			if (string.Compare(name, "EndChars", true) == 0) // Equivalent to #Hotstring EndChars <action>
 			{
-				var old = HotstringDefinition.defEndChars;
+				var old = HotstringManager.defEndChars;
 
 				if (!string.IsNullOrEmpty(action))
-					HotstringDefinition.defEndChars = action;
+					HotstringManager.defEndChars = action;
 
 				return old;//Return the old value.
 			}
@@ -208,7 +208,7 @@ break_twice:;
 					{
 						Scripting.Script.hsResetUponMouseClick = val.Value;
 
-						if (Scripting.Script.hsResetUponMouseClick != previousValue && HotstringDefinition.enabledCount != 0) // No need if there aren't any hotstrings.
+						if (Scripting.Script.hsResetUponMouseClick != previousValue && HotstringManager.enabledCount != 0) // No need if there aren't any hotstrings.
 							HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // Install the hook if needed, or uninstall if no longer needed.
 					}
 				}
@@ -217,13 +217,15 @@ break_twice:;
 			}
 			else if (string.Compare(name, "Reset", true) == 0)
 			{
-				return HotstringDefinition.ClearBuf();
+				var str = HotstringManager.CurrentInputBuffer;
+				HotstringManager.ClearBuf();
+				return str;
 			}
 			else if (replacement == null && obj2 == null && name.Length > 0 && name[0] != ':') //Check if only one param was passed. Equivalent to #Hotstring <name>.
 			{
-				HotstringDefinition.ParseOptions(name, ref HotstringDefinition.hsPriority, ref HotstringDefinition.hsKeyDelay, ref HotstringDefinition.hsSendMode, ref HotstringDefinition.hsCaseSensitive
-												 , ref HotstringDefinition.hsConformToCase, ref HotstringDefinition.hsDoBackspace, ref HotstringDefinition.hsOmitEndChar, ref HotstringDefinition.hsSendRaw, ref HotstringDefinition.hsEndCharRequired
-												 , ref HotstringDefinition.hsDetectWhenInsideWord, ref HotstringDefinition.hsDoReset, ref xOption, ref HotstringDefinition.hsSuspendExempt);
+				HotstringDefinition.ParseOptions(name, ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
+												 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
+												 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref xOption, ref HotstringManager.hsSuspendExempt);
 				return null;
 			}
 
@@ -253,8 +255,8 @@ break_twice:;
 				throw new ValueError("Hotstring definition did not contain a hotstring.");
 
 			// Determine options which affect hotstring identity/uniqueness.
-			var caseSensitive = HotstringDefinition.hsCaseSensitive;
-			var detectInsideWord = HotstringDefinition.hsDetectWhenInsideWord;
+			var caseSensitive = HotstringManager.hsCaseSensitive;
+			var detectInsideWord = HotstringManager.hsDetectWhenInsideWord;
 			var un = false; var iun = 0; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
 			var executeAction = false;
 
@@ -278,7 +280,7 @@ break_twice:;
 
 			bool wasAlreadyEnabled;
 			var tv = Threads.GetThreadVariables();
-			var existing = HotstringDefinition.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, tv.hotCriterion);
+			var existing = HotstringManager.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, tv.hotCriterion);
 
 			if (existing != null)
 			{
@@ -326,10 +328,10 @@ break_twice:;
 				if (Accessors.A_IsSuspended)
 					initialSuspendState |= HotstringDefinition.HS_SUSPENDED;
 
-				if (HotstringDefinition.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == ResultType.Fail)
+				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == ResultType.Fail)
 					return null;
 
-				existing = HotstringDefinition.shs[HotstringDefinition.shs.Count - 1];
+				existing = HotstringManager.shs[HotstringManager.shs.Count - 1];
 				wasAlreadyEnabled = false; // Because it didn't exist.
 			}
 
@@ -344,13 +346,13 @@ break_twice:;
 				//  - a hotstring was created and enabled
 				//  - an existing disabled hotstring was just enabled
 				//  - an existing enabled hotstring was just disabled
-				var previouslyEnabled = HotstringDefinition.enabledCount;
-				HotstringDefinition.enabledCount = isenabled ? HotstringDefinition.enabledCount + 1 : HotstringDefinition.enabledCount - 1;
+				var previouslyEnabled = HotstringManager.enabledCount;
+				HotstringManager.enabledCount = isenabled ? HotstringManager.enabledCount + 1 : HotstringManager.enabledCount - 1;
 
-				if ((HotstringDefinition.enabledCount > 0) != (previouslyEnabled > 0)) // Change in status of whether the hotstring recognizer is needed.
+				if ((HotstringManager.enabledCount > 0) != (previouslyEnabled > 0)) // Change in status of whether the hotstring recognizer is needed.
 				{
 					if (isenabled)
-						HotstringDefinition.hsBuf.Clear();
+						HotstringManager.ClearBuf();
 
 					if (!isenabled || ht.kbdHook == IntPtr.Zero) // Hook may not be needed anymore || hook is needed but not present.
 						HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();

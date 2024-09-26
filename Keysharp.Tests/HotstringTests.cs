@@ -231,7 +231,7 @@ namespace Keysharp.Tests
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
 			btwtyped = false;
 			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
-			_ = Keysharp.Core.Common.Keyboard.HotstringDefinition.AddHotstring("::btw", Keysharp.Core.Misc.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
+			_ = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", Keysharp.Core.Misc.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.B);
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.T);
@@ -246,13 +246,12 @@ namespace Keysharp.Tests
 		public void ResetInputBuffer()
 		{
 			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
-			var tester = new HotstringDefinitionTester("tester", "");
-			tester.AddChars("asdf");
-			var origVal = HotstringDefinition.CurrentInputBuffer;
+			HotstringManager.AddChars("asdf");
+			var origVal = HotstringManager.CurrentInputBuffer;
 			Assert.AreEqual(origVal, "asdf");
 			origVal = Keysharp.Core.Keyboard.Hotstring("Reset") as string;
 			Assert.AreEqual(origVal, "asdf");
-			var newVal = HotstringDefinition.CurrentInputBuffer;
+			var newVal = HotstringManager.CurrentInputBuffer;
 			Assert.AreNotEqual(origVal, newVal);
 			Assert.AreEqual(newVal, "");
 		}
@@ -269,19 +268,11 @@ namespace Keysharp.Tests
 			Assert.AreEqual(Script.ResetUponMouseClick, newVal);
 			Assert.AreEqual(origVal, oldVal);
 		}
-	}
 
-	internal class HotstringDefinitionTester : HotstringDefinition
-	{
-		public HotstringDefinitionTester(string sequence, string replacement)
-			: base(sequence, replacement)
+		[NonParallelizable]
+		[Test, Category("Hotstring")]
+		public void AutoCorrect()
 		{
-		}
-
-		public void AddChars(string s)
-		{
-			foreach (var ch in s)
-				hsBuf.Add(ch);
 		}
 	}
 }

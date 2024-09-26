@@ -500,7 +500,7 @@ namespace Keysharp.Scripting
 					{
 						// Never use otb if text or raw mode is in effect for this hotstring.
 						// Either explicitly or via #hotstring.
-						var uses_text_or_raw_mode = HotstringDefinition.hsSendRaw != SendRawModes.NotRaw;
+						var uses_text_or_raw_mode = HotstringManager.hsSendRaw != SendRawModes.NotRaw;
 
 						for (var i = hotstringOptionsIndex; i < hotstringStartIndex; ++i)
 						{
