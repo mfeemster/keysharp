@@ -21,7 +21,7 @@
 			if (!runIfNull && (!control.IsHandleCreated || control.IsDisposed || control.Disposing))
 				return;
 
-			if (control.InvokeRequired || forceInvoke)
+			if ((control.InvokeRequired || forceInvoke) && control.IsHandleCreated && !control.IsDisposed && !control.Disposing)
 				_ = control.BeginInvoke(action);
 			else
 				action();
@@ -32,7 +32,7 @@
 			if (control == null || !control.IsHandleCreated || control.IsDisposed || control.Disposing)
 				return;
 
-			if (control.InvokeRequired)
+			if (control.InvokeRequired && control.IsHandleCreated && !control.IsDisposed && !control.Disposing)
 				_ = control.BeginInvoke(action);
 			else
 				action();
@@ -51,7 +51,7 @@
 			if (!runIfNull && (!control.IsHandleCreated || control.IsDisposed || control.Disposing))
 				return;
 
-			if (control.InvokeRequired)
+			if (control.InvokeRequired && control.IsHandleCreated && !control.IsDisposed && !control.Disposing)
 				control.Invoke(action);
 			else
 				action();
@@ -65,7 +65,7 @@
 			if (!runIfNull && (!control.IsHandleCreated || control.IsDisposed || control.Disposing))
 				return default;
 
-			if (control.InvokeRequired)
+			if (control.InvokeRequired && control.IsHandleCreated && !control.IsDisposed && !control.Disposing)
 				return (T)control.Invoke(action);//Linux needs the cast.
 			else
 				return action();

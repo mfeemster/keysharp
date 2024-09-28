@@ -32,66 +32,69 @@ namespace Keysharp.Core
 				var bw = new BinaryWriter(ms);
 				var dataObject = Clipboard.GetDataObject();
 
-				foreach (var format in dataObject.GetFormats())
+				if (dataObject != null)
 				{
-					var fi = ClipFormatStringToInt(format);
-
-					switch (fi)
+					foreach (var format in dataObject.GetFormats())
 					{
-						case WindowsAPI.CF_BITMAP:
-						case WindowsAPI.CF_ENHMETAFILE:
-						case WindowsAPI.CF_DSPENHMETAFILE:
-							continue;//These formats appear to be specific handle types, not always safe to call GlobalSize() for.
-					}
+						var fi = ClipFormatStringToInt(format);
 
-					if (fi == WindowsAPI.CF_TEXT || fi == WindowsAPI.CF_OEMTEXT || fi == dibToOmit)
-						continue;
+						switch (fi)
+						{
+							case WindowsAPI.CF_BITMAP:
+							case WindowsAPI.CF_ENHMETAFILE:
+							case WindowsAPI.CF_DSPENHMETAFILE:
+								continue;//These formats appear to be specific handle types, not always safe to call GlobalSize() for.
+						}
 
-					if (dibToOmit == 0)
-					{
-						if (fi == WindowsAPI.CF_DIB)
-							dibToOmit = WindowsAPI.CF_DIBV5;
-						else if (fi == WindowsAPI.CF_DIBV5)
-							dibToOmit = WindowsAPI.CF_DIB;
-					}
-				}
-
-				foreach (var format in dataObject.GetFormats())
-				{
-					var fi = ClipFormatStringToInt(format);
-					var nulldata = false;
-
-					switch (fi)
-					{
-						case WindowsAPI.CF_BITMAP:
-						case WindowsAPI.CF_ENHMETAFILE:
-						case WindowsAPI.CF_DSPENHMETAFILE:
-							// These formats appear to be specific handle types, not always safe to call GlobalSize() for.
+						if (fi == WindowsAPI.CF_TEXT || fi == WindowsAPI.CF_OEMTEXT || fi == dibToOmit)
 							continue;
+
+						if (dibToOmit == 0)
+						{
+							if (fi == WindowsAPI.CF_DIB)
+								dibToOmit = WindowsAPI.CF_DIBV5;
+							else if (fi == WindowsAPI.CF_DIBV5)
+								dibToOmit = WindowsAPI.CF_DIB;
+						}
 					}
 
-					if (fi == WindowsAPI.CF_TEXT || fi == WindowsAPI.CF_OEMTEXT || fi == dibToOmit)
-						continue;
-
-					var buf = GetClipboardData(fi, ref nulldata);
-
-					if (buf != null)
+					foreach (var format in dataObject.GetFormats())
 					{
+						var fi = ClipFormatStringToInt(format);
+						var nulldata = false;
+
+						switch (fi)
+						{
+							case WindowsAPI.CF_BITMAP:
+							case WindowsAPI.CF_ENHMETAFILE:
+							case WindowsAPI.CF_DSPENHMETAFILE:
+								// These formats appear to be specific handle types, not always safe to call GlobalSize() for.
+								continue;
+						}
+
+						if (fi == WindowsAPI.CF_TEXT || fi == WindowsAPI.CF_OEMTEXT || fi == dibToOmit)
+							continue;
+
+						var buf = GetClipboardData(fi, ref nulldata);
+
+						if (buf != null)
+						{
+						}
+						else if (nulldata)
+							buf = System.Array.Empty<byte>();//This format usually has null data.
+						else
+							continue;//GetClipboardData() failed: skip this format.
+
+						bw.Write(fi);
+						bw.Write(buf.Length);
+						bw.Write(buf);
 					}
-					else if (nulldata)
-						buf = System.Array.Empty<byte>();//This format usually has null data.
-					else
-						continue;//GetClipboardData() failed: skip this format.
 
-					bw.Write(fi);
-					bw.Write(buf.Length);
-					bw.Write(buf);
-				}
-
-				if (ms.Position > 0)
-				{
-					bw.Write(0);
-					return new ClipboardAll(ms.ToArray());
+					if (ms.Position > 0)
+					{
+						bw.Write(0);
+						return new ClipboardAll(ms.ToArray());
+					}
 				}
 			}
 
@@ -151,30 +154,6 @@ namespace Keysharp.Core
 			catch (Exception ex) { throw new OSError(ex); }
 
 #endif
-		}
-
-		public static string FindCommandLineArg(string arg, bool startswith = true)
-		{
-			if (startswith)
-				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
-			else
-				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
-		}
-
-		public static string FindCommandLineArgVal(string arg, bool startswith = true)
-		{
-			var args = Environment.GetCommandLineArgs();
-
-			for (var i = 0; i < args.Length; i++)
-			{
-				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && args[i].StartsWith(arg, StringComparison.OrdinalIgnoreCase))
-					if (i < args.Length - 1)
-						return args[i + 1];
-			}
-
-			return null;
 		}
 
 		public static void HandleCommandLineParams(string[] args) => Keysharp.Core.Accessors.A_Args.AddRange(args);
@@ -517,6 +496,30 @@ namespace Keysharp.Core
 
 		internal static int ClipFormatStringToInt(string fmt) => DataFormats.GetFormat(fmt) is DataFormats.Format d ? d.Id : 0;
 
+		internal static string FindCommandLineArg(string arg, bool startswith = true)
+		{
+			if (startswith)
+				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
+						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+			else
+				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
+						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+		}
+
+		internal static string FindCommandLineArgVal(string arg, bool startswith = true)
+		{
+			var args = Environment.GetCommandLineArgs();
+
+			for (var i = 0; i < args.Length; i++)
+			{
+				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && args[i].StartsWith(arg, StringComparison.OrdinalIgnoreCase))
+					if (i < args.Length - 1)
+						return args[i + 1];
+			}
+
+			return null;
+		}
+
 #if WINDOWS
 		/// <summary>
 		/// Gets the data on the clipboard in the specified format.
@@ -753,7 +756,7 @@ namespace Keysharp.Core
 
 #if LINUX
 	/// <summary>
-	/// Taken from: https://stackoverflow.com/questions/6262454/c-sharp-backing-up-and-restoring-clipboard
+	/// Gotten from: https://stackoverflow.com/questions/6262454/c-sharp-backing-up-and-restoring-clipboard
 	/// </summary>
 	public class ClipboardAll : KeysharpObject
 	{

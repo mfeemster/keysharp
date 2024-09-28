@@ -112,7 +112,7 @@
 		/// slower.
 		/// </summary>
 		/// <remarks>
-		/// This approach is based on https://stackoverflow.com/a/51099524/268898
+		/// Gotten from https://stackoverflow.com/a/51099524/268898
 		/// where the poster offers performance benchmarks showing this is the
 		/// fastest way to get a number of digits.
 		/// </remarks>

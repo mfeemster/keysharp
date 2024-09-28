@@ -157,7 +157,7 @@ namespace Keysharp.Core.Windows
 		/// AHK says this works for all layouts except one Ukrainian and one North Korean. See line 3940 of keyboard_mouse.cpp
 		/// Their solution for those two was far more complex than we'd like to implement here.
 		/// So we acknowledge those two layouts won't support AltGr correctly.
-		/// This implementation gotten from: https://stackoverflow.com/questions/54588823/detect-if-the-keyboard-layout-has-altgr-on-it-under-windows
+		/// Gotten from: https://stackoverflow.com/questions/54588823/detect-if-the-keyboard-layout-has-altgr-on-it-under-windows
 		/// </summary>
 		/// <param name="layout">The keyboard layout to examine</param>
 		/// <returns>True if the layout has AltGr, else false.</returns>

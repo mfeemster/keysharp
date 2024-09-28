@@ -109,7 +109,7 @@
 		}
 
 		/// <summary>
-		/// Taken loosely from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
+		/// Gotten from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
 		/// </summary>
 		/// <param name="source"></param>
 		/// <param name="ch1"></param>

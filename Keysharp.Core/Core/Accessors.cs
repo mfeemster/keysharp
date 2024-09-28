@@ -509,6 +509,8 @@
 			set => Threads.GetThreadVariables().formatNumeric = value.ToString();
 		}
 
+		public static bool A_HasExited => Keysharp.Core.Flow.hasExited;
+
 		public static object A_HotIfTimeout { get; set; } = 1000L;
 
 		public static object A_HotkeyInterval

@@ -17,7 +17,7 @@
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
 		internal static bool hsSuspendExempt;
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
-		internal static Dictionary<char, List<HotstringDefinition>> shsDkt = new Dictionary<char, List<HotstringDefinition>>(new CharNoCaseEqualityComp());
+		private static Dictionary<char, List<HotstringDefinition>> shsDkt = new Dictionary<char, List<HotstringDefinition>>(new CharNoCaseEqualityComp());
 		internal static List<char> hsBuf = new List<char>(256);
 
 		[PublicForTestOnly]
@@ -38,13 +38,13 @@
 		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
-		public static ResultType AddHotstring(string _name, IFuncObj _funcObj, string _options, string _hotstring
-											  , string _replacement, bool _hasContinuationSection, int _suspend = 0)
+		public static HotstringDefinition AddHotstring(string _name, IFuncObj _funcObj, string _options, string _hotstring
+				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
 
 			if (!hs.constructedOK)
-				return ResultType.Fail;
+				return null;
 
 			shs.Add(hs);
 			shsDkt.GetOrAdd(_hotstring[0]).Add(hs);
@@ -52,11 +52,8 @@
 			if (!Keysharp.Scripting.Script.isReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
 				++enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
 
-			return ResultType.Ok;
+			return hs;
 		}
-
-		//Need to bring hotstring searching here, minus any activation or platform specific processing.
-		//then make the dkt pvt and maybe even hsbuf.//TODO
 
 		public static void ClearHotstrings()
 		{
@@ -77,7 +74,8 @@
 			return null;
 		}
 
-		internal static HotstringDefinition MatchHotstring()
+		[PublicForTestOnly]
+		public static HotstringDefinition MatchHotstring()
 		{
 			var found = false;
 			HotstringDefinition hs = null;

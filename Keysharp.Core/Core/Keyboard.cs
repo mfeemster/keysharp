@@ -328,7 +328,7 @@ break_twice:;
 				if (Accessors.A_IsSuspended)
 					initialSuspendState |= HotstringDefinition.HS_SUSPENDED;
 
-				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == ResultType.Fail)
+				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == null)
 					return null;
 
 				existing = HotstringManager.shs[HotstringManager.shs.Count - 1];
@@ -502,6 +502,7 @@ break_twice:;
 
 		//We initially had these using BeginInvoke(), but that is wrong, because these will often be launched from threads in responde to a hotkey/string.
 		//The state of those threads needs to be preserved, but invoking will overwrite that state by putting the call on the main GUI thread.
+		//This is unlikely to be true anymore since we implemented the pseudo-thread functionality of AHK.
 		//So put them back to just straight calls, revisit if cross threading bugs occur.
 		//public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero), true, true);
 		//public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero), true, true);

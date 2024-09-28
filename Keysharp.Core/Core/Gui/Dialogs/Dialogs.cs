@@ -289,12 +289,15 @@ namespace Keysharp.Core
 				var temp = 0;
 				var opt = options.AsSpan(r).Trim();
 
-				if (Options.TryParse(opt, "w", ref temp)) { w = temp; }
-				else if (Options.TryParse(opt, "h", ref temp)) { h = temp; }
-				else if (Options.TryParse(opt, "x", ref temp)) { x = temp; }
-				else if (Options.TryParse(opt, "y", ref temp)) { y = temp; }
-				else if (Options.TryParse(opt, "t", ref temp)) { input.Timeout = temp; }
-				else if (Options.TryParseString(opt, "Password", ref pw, StringComparison.OrdinalIgnoreCase, true)) { input.PasswordChar = pw; }
+				if (opt.Length > 0)
+				{
+					if (Options.TryParse(opt, "w", ref temp)) { w = temp; }
+					else if (Options.TryParse(opt, "h", ref temp)) { h = temp; }
+					else if (Options.TryParse(opt, "x", ref temp)) { x = temp; }
+					else if (Options.TryParse(opt, "y", ref temp)) { y = temp; }
+					else if (Options.TryParse(opt, "t", ref temp)) { input.Timeout = temp; }
+					else if (Options.TryParseString(opt, "Password", ref pw, StringComparison.OrdinalIgnoreCase, true)) { input.PasswordChar = pw; }
+				}
 			}
 
 			input.Load += (oo, ee) =>

@@ -491,7 +491,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// From https://stackoverflow.com/questions/325931/getting-actual-file-name-with-proper-casing-on-windows-with-net
+		/// Gotten from https://stackoverflow.com/questions/325931/getting-actual-file-name-with-proper-casing-on-windows-with-net
 		/// </summary>
 		/// <param name="pathName"></param>
 		/// <returns></returns>

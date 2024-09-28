@@ -258,7 +258,7 @@ namespace Keysharp.Scripting
 				{
 					hotkeyFlagIndex = buf.FindFirstNotOf(SpaceTab, hotkeyFlagIndex);
 
-					//To use '{' as remap_dest, escape it!.
+					//To use '{' as remap_dest, escape it!
 					if (hotkeyFlagIndex >= 0 &&
 							hotkeyFlagIndex < buf.Length - 1 &&
 							buf[hotkeyFlagIndex] == Escape &&
@@ -758,7 +758,7 @@ namespace Keysharp.Scripting
 										return cmie;//Do not clear state here, we want to save it for future stacked hotkeys.
 									}
 								}
-								else if (nextBuf != "")//Read all lines until a return statement is found, then treat them all as a function by inserting braces and marking all variable references as global.
+								else// if (nextBuf != "")//Read all lines until a return statement is found, then treat them all as a function by inserting braces and marking all variable references as global.
 								{
 									var existingLineCount = lines.Count;
 									var np1 = nextIndex + 1;

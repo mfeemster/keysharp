@@ -2,6 +2,64 @@
 
 namespace Keysharp.Core.Common.Threading
 {
+	internal static class STATask
+	{
+		/// <summary>
+		/// Gotten from: https://stackoverflow.com/questions/56736803/set-clipboard-in-async-method
+		/// Similar to Task.Run(), except this creates a task that runs on a thread
+		/// in an STA apartment rather than Task's MTA apartment.
+		/// </summary>
+		/// <typeparam name="TResult">The return type of the task.</typeparam>
+		/// <param name="function">The work to execute asynchronously.</param>
+		/// <returns>A task object that represents the work queued to execute on an STA thread.</returns>
+
+		internal static Task<TResult> Run<TResult>([NotNull] Func<TResult> function)
+		{
+			var tcs = new TaskCompletionSource<TResult>();
+			var thread = new Thread(() =>
+			{
+				try
+				{
+					tcs.SetResult(function());
+				}
+				catch (Exception e)
+				{
+					tcs.SetException(e);
+				}
+			});
+			thread.SetApartmentState(ApartmentState.STA);
+			thread.Start();
+			return tcs.Task;
+		}
+
+		/// <summary>
+		/// Similar to Task.Run(), except this creates a task that runs on a thread
+		/// in an STA apartment rather than Task's MTA apartment.
+		/// </summary>
+		/// <param name="action">The work to execute asynchronously.</param>
+		/// <returns>A task object that represents the work queued to execute on an STA thread.</returns>
+
+		internal static Task Run([NotNull] Action action)
+		{
+			var tcs = new TaskCompletionSource<object>(); // Return type is irrelevant for an Action.
+			var thread = new Thread(() =>
+			{
+				try
+				{
+					action();
+					tcs.SetResult(null); // Irrelevant.
+				}
+				catch (Exception e)
+				{
+					tcs.SetException(e);
+				}
+			});
+			thread.SetApartmentState(ApartmentState.STA);
+			thread.Start();
+			return tcs.Task;
+		}
+	}
+
 	public static class Threads
 	{
 		private static ThreadVariableManager tvm = new ThreadVariableManager();
@@ -61,8 +119,8 @@ namespace Keysharp.Core.Common.Threading
 				var existingTv = GetThreadVariables();
 				existingTv.WaitForCriticalToFinish();//Cannot launch a new task while a critical one is running.
 				void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
-				tsk = Task.Factory.StartNew(() =>
-											//var t2 = Task.Run(() =>
+				//tsk = Task.Factory.StartNew(() =>
+				tsk = STATask.Run<object>(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);
@@ -104,11 +162,12 @@ namespace Keysharp.Core.Common.Threading
 					}
 
 					return ret;
-				},
+				});
+				//,
 				//This is needed to make a variety of functionality work inside of hotkey/string handlers.
 				//Such as clipboard and window functions.
-				CancellationToken.None, TaskCreationOptions.None,
-				SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current);
+				//CancellationToken.None, TaskCreationOptions.None,
+				//SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current);
 			}
 			//catch (AggregateException aex)
 			catch (Exception ex)

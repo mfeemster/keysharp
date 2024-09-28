@@ -115,15 +115,14 @@
 				{
 				}
 
-				try
-				{
-					if (string.IsNullOrEmpty(ed))
-						ed = Registrys.RegRead(@"HKCR\AutoHotkeyScript\Shell\Edit\Command") as string;
-				}
-				catch
-				{
-				}
-
+				//try
+				//{
+				//  if (string.IsNullOrEmpty(ed))
+				//      ed = Registrys.RegRead(@"HKCR\AutoHotkeyScript\Shell\Edit\Command") as string;
+				//}
+				//catch
+				//{
+				//}
 				object pid = null;
 
 				if (!string.IsNullOrEmpty(ed))
@@ -232,7 +231,7 @@
 
 				case eScriptInstance.Ignore:
 					if (Window.WinExist(name) != 0)
-						_ = Flow.ExitApp(Flow.ExitReasons.Single);
+						Flow.ExitApp(Flow.ExitReasons.Single);
 
 					break;
 
@@ -248,7 +247,7 @@
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
 							Window.WinClose(hwnd, "", 2);
 						else
-							_ = Flow.ExitApp(Flow.ExitReasons.Single);
+							Flow.ExitApp(Flow.ExitReasons.Single);
 					}
 
 					break;
@@ -555,7 +554,7 @@
 		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
 		{
 			if (!AnyPersistent())
-				_ = Flow.ExitApp((int)exitReason);
+				Flow.ExitApp((int)exitReason);
 		}
 
 		internal static bool InitHook()

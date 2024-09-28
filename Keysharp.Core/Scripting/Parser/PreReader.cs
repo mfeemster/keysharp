@@ -693,6 +693,9 @@ namespace Keysharp.Scripting
 						var prevLine = list[list.Count - 1];
 						var newLineStr = wasCont ? sb.ToString() : sb.ToString().Trim(Spaces);
 
+						if (!wasCont && newLineStr == "")//No need to add an empty line.
+							goto EndLine;
+
 						if (IsHotstringLabel(prevLine.Code))
 						{
 							StartNewLine(newLineStr);

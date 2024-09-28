@@ -472,14 +472,14 @@ namespace Keysharp.Scripting
 					_ = replaced.Append(ParenClose);
 					break;
 
-				case "sendevent":
-				case "sendinput":
-				case "sendplay":
-					_ = replaced.Append("Send");
-					_ = replaced.Append(Multicast);
-					_ = replaced.Append(SingleSpace);
-					_ = replaced.Append(param);
-					break;
+				//case "sendevent":
+				//case "sendinput":
+				//case "sendplay":
+				//  _ = replaced.Append("Send");
+				//  _ = replaced.Append(Multicast);
+				//  _ = replaced.Append(SingleSpace);
+				//  _ = replaced.Append(param);
+				//  break;
 
 				case "sendraw":
 					_ = replaced.Append("Send");

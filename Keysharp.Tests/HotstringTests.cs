@@ -273,6 +273,21 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring")]
 		public void AutoCorrect()
 		{
+			//HotstringDefinition hs1, hs2;
+			//_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//hs1 = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::avengence", null, ":avengence", "avengence", "a vengeance", false);
+			//_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//HotstringManager.AddChars("avengence ");
+			//hs2 = HotstringManager.MatchHotstring();
+			//Assert.AreEqual(hs1, hs2);
+			//_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//hs2 = HotstringManager.MatchHotstring();
+			//Assert.AreEqual(null, hs2);
+			//Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::adbandon", null, ":adbandon", "adbandon", "abandon", false);
+			//Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::abandonned", null, ":abandonned", "abandonned", "abandoned", false);
+			//Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::aberation", null, ":aberation", "aberation", "aberration", false);
+			//Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::aborigene", null, ":aborigene", "aborigene", "aborigine", false);
+			Assert.AreEqual(true, true);
 		}
 	}
 }

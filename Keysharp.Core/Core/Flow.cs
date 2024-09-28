@@ -8,7 +8,7 @@ namespace Keysharp.Core
 
 		internal static bool callingCritical;
 
-		internal static bool hasExited;
+		internal static volatile bool hasExited;
 
 		// Use some negative value unlikely to ever be passed explicitly:
 		internal static int IntervalUnspecified = int.MinValue + 303;
@@ -129,7 +129,16 @@ namespace Keysharp.Core
 		/// Terminates the program unconditionally.
 		/// </summary>
 		/// <param name="exitCode">An integer exit code to be passed to the caller of this program when it exits.</param>
-		public static bool ExitApp(object obj = null) => ExitAppInternal(ExitReasons.Exit, obj);
+		public static void ExitApp(object obj = null)
+		{
+			Script.mainWindow.CheckedInvoke(() =>
+			{
+				_ = ExitAppInternal(ExitReasons.Exit, obj);
+			}, true);
+
+			while (!Flow.hasExited)
+				Sleep(500);
+		}
 
 		public static void Init()
 		{
@@ -229,8 +238,17 @@ namespace Keysharp.Core
 		/// </summary>
 		public static void Reload()
 		{
-			if (!ExitAppInternal(ExitReasons.Reload))
-				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.y
+			//Just calling Application.Restart will trigger ExitAppInternal().
+			//So it doesn't need to be called directly. Further, it will cause problems if called
+			//so just let the natural chain of closing events handle it.
+			Script.mainWindow.CheckedBeginInvoke(() =>
+			{
+				Accessors.A_ExitReason = ExitReasons.Reload;
+				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.
+			}, true, true);
+
+			while (!hasExited)
+				Sleep(500);
 		}
 
 		public static void SetTimer(object obj0 = null, object obj1 = null, object obj2 = null)
@@ -392,6 +410,7 @@ namespace Keysharp.Core
 					catch
 					{
 					}
+
 					System.Threading.Thread.Sleep(10);
 				}
 			}
@@ -403,12 +422,13 @@ namespace Keysharp.Core
 				{
 					try
 					{
+						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
 					catch
 					{
 					}
-					
+
 					System.Threading.Thread.Sleep(10);
 				}
 			}

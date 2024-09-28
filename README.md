@@ -120,7 +120,10 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
-
+* `ExitApp()` will not immediately exit the script such that lines immediately after it will not execute. Instead, there will be a slight delay before this function is processed.
+	+ Instead of calling `ExitApp()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited`.
+* `Sleep()` will not do any sleeping if shutdown has been initiated.
+	
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
@@ -289,6 +292,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `A_DefaultHotstringSendMode` returns the default hotstring sending mode.
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
 	+ `A_DirSeparator` returns the directory separator character which is `\` on Windows and `/` elsewhere.
+	+ `A_HasExited` returns whether shutdown has been initiated.
 	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.

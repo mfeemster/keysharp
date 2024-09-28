@@ -42,7 +42,7 @@ namespace Keysharp.Scripting
 				{
 					var type = stack[i].GetMethod().DeclaringType;
 
-					if (type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
+					if (type != null && type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
 					{
 						var fields = type.GetFields(BindingFlags.Static |
 													BindingFlags.NonPublic |
