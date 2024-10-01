@@ -20,7 +20,7 @@ if (origVal != newVal)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 #hotstring *
 
 if (origVal != A_DefaultHotstringEndCharRequired)
@@ -427,16 +427,17 @@ if (newInt == A_DefaultHotstringPriority)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
+		
 ; Send mode Event.
 newSendMode := "Event"
 origSendMode := A_DefaultHotstringSendMode
 
-if (origSendMode == "Input")
+if (origSendMode == "InputThenPlay")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 #Hotstring SE
 
 if (origSendMode != A_DefaultHotstringSendMode)
@@ -448,7 +449,6 @@ if (newSendMode == A_DefaultHotstringSendMode)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
 
 ; Send mode Play.
 newSendMode := "Play"

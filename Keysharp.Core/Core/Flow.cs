@@ -135,8 +135,9 @@ namespace Keysharp.Core
 			{
 				_ = ExitAppInternal(ExitReasons.Exit, obj);
 			}, true);
+			var start = DateTime.Now;
 
-			while (!Flow.hasExited)
+			while (!Flow.hasExited && (DateTime.Now - start).TotalSeconds < 5)
 				Sleep(500);
 		}
 
@@ -246,8 +247,9 @@ namespace Keysharp.Core
 				Accessors.A_ExitReason = ExitReasons.Reload;
 				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.
 			}, true, true);
+			var start = DateTime.Now;
 
-			while (!hasExited)
+			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 				Sleep(500);
 		}
 

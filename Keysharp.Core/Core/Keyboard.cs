@@ -231,18 +231,18 @@ break_twice:;
 
 			// Parse the hotstring name.
 			var hotstringStart = "";
-			var hotstringOptions = ""; // Set default as "no options were specified for this hotstring".
+			ReadOnlySpan<char> hotstringOptions = ""; // Set default as "no options were specified for this hotstring".
 
 			if (name.Length > 1 && name[0] == ':')
 			{
 				if (name[1] != ':')
 				{
-					hotstringOptions = name.Substring(1); // Point it to the hotstring's option letters.
+					hotstringOptions = name.AsSpan(1); // Point it to the hotstring's option letters.
 					// The following relies on the fact that options should never contain a literal colon.
 					var tempindex = hotstringOptions.IndexOf(':');
 
 					if (tempindex != -1)
-						hotstringStart = hotstringOptions.Substring(tempindex + 1); // Points to the hotstring itself.
+						hotstringStart = hotstringOptions.Slice(tempindex + 1).ToString(); // Points to the hotstring itself.
 				}
 				else // Double-colon, so it's a hotstring if there's more after this (but this means no options are present).
 					if (name.Length > 2)
@@ -359,7 +359,7 @@ break_twice:;
 				}
 			}
 
-			return null;
+			return existing;
 		}
 
 		public static void KeyHistory(object obj0)

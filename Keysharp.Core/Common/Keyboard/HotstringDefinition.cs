@@ -21,7 +21,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal uint inputLevel;
 		internal int priority, keyDelay;
 		internal SendModes sendMode;
-		internal Keysharp.Core.Common.Keyboard.SendRawModes sendRaw;
+		internal SendRawModes sendRaw;
 		internal string str, replacement;
 		internal int suspended;
 
@@ -40,6 +40,17 @@ namespace Keysharp.Core.Common.Keyboard
 		[PublicForTestOnly]
 		public string Sequence { get; }
 
+		public bool CaseSensitive => caseSensitive;
+		public bool DoBackspace => doBackspace;
+		public bool OmitEndChar => omitEndChar;
+		public bool EndCharRequired => endCharRequired;
+		public bool DoReset => doReset;
+		public bool SuspendExempt => suspendExempt;
+		public long Priority => priority;
+		public long KeyDelay => keyDelay;
+		public SendModes SendMode => sendMode;
+		public SendRawModes SendRaw => sendRaw;
+
 		public HotstringDefinition(string sequence, string replacement)
 		{
 			Sequence = sequence;
@@ -47,7 +58,7 @@ namespace Keysharp.Core.Common.Keyboard
 			//EndChars = defEndChars;
 		}
 
-		internal HotstringDefinition(string _name, IFuncObj _funcObj, string _options, string _hotstring, string _replacement
+		internal HotstringDefinition(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring, string _replacement
 									 , bool _hasContinuationSection, int _suspend)
 
 		{
@@ -62,7 +73,7 @@ namespace Keysharp.Core.Common.Keyboard
 			conformToCase = HotstringManager.hsConformToCase;
 			doBackspace = HotstringManager.hsDoBackspace;
 			omitEndChar = HotstringManager.hsOmitEndChar;
-			sendRaw = _hasContinuationSection ? Keysharp.Core.Common.Keyboard.SendRawModes.RawText : HotstringManager.hsSendRaw;
+			sendRaw = _hasContinuationSection ? SendRawModes.RawText : HotstringManager.hsSendRaw;
 			endCharRequired = HotstringManager.hsEndCharRequired;
 			detectWhenInsideWord = HotstringManager.hsDetectWhenInsideWord;
 			doReset = HotstringManager.hsDoReset;
@@ -85,17 +96,20 @@ namespace Keysharp.Core.Common.Keyboard
 
 		public override string ToString() => Name;
 
-		internal static void ParseOptions(string _options, ref int _priority, ref int _keyDelay, ref SendModes _sendMode
-										  , ref bool _caseSensitive, ref bool _conformToCase, ref bool _doBackspace, ref bool _omitEndChar, ref Keysharp.Core.Common.Keyboard.SendRawModes _sendRaw
+		internal static void ParseOptions(ReadOnlySpan<char> _options, ref int _priority, ref int _keyDelay, ref SendModes _sendMode
+										  , ref bool _caseSensitive, ref bool _conformToCase, ref bool _doBackspace, ref bool _omitEndChar, ref SendRawModes _sendRaw
 										  , ref bool _endCharRequired, ref bool _detectWhenInsideWord, ref bool _doReset, ref bool _executeAction, ref bool _suspendExempt)
 		{
 			// In this case, colon rather than zero marks the end of the string.  However, the string
 			// might be empty so check for that too.  In addition, this is now called from
 			// IsDirective(), so that's another reason to check for normal string termination.
-			for (var i = 0; i < _options.Length && _options[i] != ':'; i++)
+			var colon = _options.IndexOf(':');
+			var opts = _options.Slice(0, colon == -1 ? _options.Length : colon);
+
+			for (var i = 0; i < opts.Length; i++)
 			{
-				var ch = char.ToUpper(_options[i]);
-				var next = _options.Length > i ? _options.AsSpan(i + 1) : "";
+				var ch = char.ToUpper(opts[i]);
+				var next = i < opts.Length - 1 ? opts.Slice(i + 1) : "";
 
 				switch (ch)
 				{
@@ -121,11 +135,18 @@ namespace Keysharp.Core.Common.Keyboard
 						{
 							_conformToCase = true;
 							_caseSensitive = false;
+							i++;
 						}
 						else if (next[0] == '1')
 						{
 							_conformToCase = false;
 							_caseSensitive = false;
+							i++;
+						}
+						else//It was just a 'C' followed by another option.
+						{
+							_conformToCase = false;  // No point in conforming if its case sensitive.
+							_caseSensitive = true;
 						}
 
 						break;
@@ -137,16 +158,26 @@ namespace Keysharp.Core.Common.Keyboard
 					// For options such as K & P: Use atoi() vs. ATOI() to avoid interpreting something like 0x01C
 					// as hex when in fact the C was meant to be an option letter:
 					case 'K':
-					{
-						if (int.TryParse(next, out var val))
-							_keyDelay = val;
-					}
-					break;
-
 					case 'P':
 					{
-						if (int.TryParse(next, out var val))
-							_priority = val;
+						var j = 0;
+						var sb = new StringBuilder();
+
+						while (j < next.Length && (next[j] == '-' || char.IsNumber(next[j])))
+						{
+							_ = sb.Append(next[j]);
+							j++;
+						}
+
+						if (int.TryParse(sb.ToString(), out var val))
+						{
+							if (ch == 'K')
+								_keyDelay = val;
+							else
+								_priority = val;
+						}
+
+						i += j;
 					}
 					break;
 
@@ -165,22 +196,42 @@ namespace Keysharp.Core.Common.Keyboard
 						if (next.Length > 0)
 						{
 							tempch = char.ToUpper(next[0]);
-							++i; // Skip over S's sub-letter (if any) to exclude it from  further consideration.
+
+							// Skip over S's sub-letter (if any) to exclude it from  further consideration.
+							switch (tempch)
+							{
+								// There is no means to choose SM_INPUT because it seems too rarely desired (since auto-replace
+								// hotstrings would then become interruptible, allowing the keystrokes of fast typists to get
+								// interspersed with the replacement text).
+								case 'I':
+									i++;
+									_sendMode = SendModes.InputThenPlay;
+									break;
+
+								case 'E':
+									i++;
+									_sendMode = SendModes.Event;
+									break;
+
+								case 'P':
+									i++;
+									_sendMode = SendModes.Play;
+									break;
+
+								default:
+									if (tempch == '0')
+									{
+										i++;
+										_suspendExempt = false;
+									}
+									else
+										_suspendExempt = true;
+
+									break;
+							}
 						}
-
-						switch (tempch)
-						{
-							// There is no means to choose SM_INPUT because it seems too rarely desired (since auto-replace
-							// hotstrings would then become interruptible, allowing the keystrokes of fast typists to get
-							// interspersed with the replacement text).
-							case 'I': _sendMode = SendModes.InputThenPlay; break;
-
-							case 'E': _sendMode = SendModes.Event; break;
-
-							case 'P': _sendMode = SendModes.Play; break;
-
-							default: _suspendExempt = tempch != '0'; break;
-						}
+						else
+							_suspendExempt = true;
 					}
 					break;
 
@@ -198,14 +249,14 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal bool AnyThreadsAvailable() => existingThreads < maxThreads;
 
-		internal bool CompareHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
+		internal bool CompareHotstring(ReadOnlySpan<char> _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
 		{
 			// hs.mEndCharRequired is not checked because although it affects the conditions for activating
 			// the hotstring, ::abbrev:: and :*:abbrev:: cannot co-exist (the latter would always take over).
 			return hotCriterion == _hotCriterion // Same #HotIf criterion.
 				   && caseSensitive == _caseSensitive // ::BTW:: and :C:BTW:: can co-exist.
 				   && detectWhenInsideWord == _detectWhenInsideWord // :?:ion:: and ::ion:: can co-exist.
-				   && (_caseSensitive ? str == _hotstring : string.Compare(str, _hotstring, true) == 0);// :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
+				   && (_caseSensitive ? _hotstring.SequenceEqual(str.AsSpan()) : MemoryExtensions.Equals(str.AsSpan(), _hotstring, StringComparison.OrdinalIgnoreCase));// :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
 		}
 
 		internal void DoReplace(CaseConformModes caseMode, char endChar)
@@ -333,7 +384,7 @@ namespace Keysharp.Core.Common.Keyboard
 			tv.sendLevel = oldSendLevel;
 		}
 
-		internal void ParseOptions(string aOptions)
+		internal void ParseOptions(ReadOnlySpan<char> aOptions)
 		{
 			var unused_X_option = false;
 			ParseOptions(aOptions, ref priority, ref keyDelay, ref sendMode, ref caseSensitive, ref conformToCase, ref doBackspace

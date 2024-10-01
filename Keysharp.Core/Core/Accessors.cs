@@ -1278,6 +1278,7 @@
 		public static string A_PriorHotkey => Keysharp.Scripting.Script.priorHotkeyName;
 
 		public static object A_Priority { get; set; } = 0L;
+
 		public static string A_PriorKey => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht ? ht.keyHistory.PriorKey() : "";
 
 		/// <summary>

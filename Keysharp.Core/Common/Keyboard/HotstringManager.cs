@@ -38,7 +38,7 @@
 		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
-		public static HotstringDefinition AddHotstring(string _name, IFuncObj _funcObj, string _options, string _hotstring
+		public static HotstringDefinition AddHotstring(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring
 				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);

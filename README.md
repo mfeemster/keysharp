@@ -120,8 +120,16 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
-* `ExitApp()` will not immediately exit the script such that lines immediately after it will not execute. Instead, there will be a slight delay before this function is processed.
-	+ Instead of calling `ExitApp()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited`.
+* `ExitApp()` and Reload() will not immediately exit the script such that lines appearing after it within a function will not execute.
+	+ Instead of calling `ExitApp()/Reload()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited` like so:
+```
+	ExitApp()
+	
+	if (!A_HasExited)
+	{
+		MsgBox("Exiting failed")
+	}
+```
 * `Sleep()` will not do any sleeping if shutdown has been initiated.
 	
 ###	Syntax: ###
@@ -162,6 +170,8 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ `Func()` or `FuncObj()` can still be used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
+* Callback functions do not require a `*` parameter to work. So `func()` and `func(*)` can both be used as callbacks.
+
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
 ```
 	myfunc(a, b, c?, d?)
