@@ -161,15 +161,11 @@ namespace Keysharp.Core.Common.Keyboard
 					case 'P':
 					{
 						var j = 0;
-						var sb = new StringBuilder();
 
 						while (j < next.Length && (next[j] == '-' || char.IsNumber(next[j])))
-						{
-							_ = sb.Append(next[j]);
 							j++;
-						}
 
-						if (int.TryParse(sb.ToString(), out var val))
+						if (int.TryParse(next.Slice(0, j), out var val))
 						{
 							if (ch == 'K')
 								_keyDelay = val;

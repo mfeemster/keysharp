@@ -498,8 +498,12 @@ namespace Keysharp.Scripting
 					break;
 
 				case "sendmode":
-					code = string.Empty;
-					break;
+				{
+					_ = replaced.Append("SendMode(");
+					_ = replaced.Append('\"' + parts[0].Trim('\"') + '\"');
+					_ = replaced.Append(')');
+				}
+				break;
 
 				case "setcapslockstate":
 				case "setnumlockstate":
