@@ -2293,7 +2293,7 @@ namespace Keysharp.Core.Windows
 
 				var ch = sub[keyIndex];
 
-				if (sendRaw == SendRawModes.NotRaw && sendKeyChars.IndexOf(ch) != -1)//  _tcschr(("^+!#{}"), *aKeys))
+				if (sendRaw == SendRawModes.NotRaw && sendKeyChars.Contains(ch))//  _tcschr(("^+!#{}"), *aKeys))
 				{
 					switch (ch)
 					{
@@ -2584,6 +2584,7 @@ namespace Keysharp.Core.Windows
 							{
 								// Include the trailing space in "ASC " to increase uniqueness (selectivity).
 								// Also, sending the ASC sequence to window doesn't work, so don't even try:
+								//GetBytes() should really work with spans but for some reason it doesn't.//.NET 9
 								SendASC(Encoding.ASCII.GetBytes(subspan.Slice(3).TrimStart().ToString()));
 								// Do this only once at the end of the sequence:
 								DoKeyDelay(); // It knows not to do the delay for SM_INPUT.

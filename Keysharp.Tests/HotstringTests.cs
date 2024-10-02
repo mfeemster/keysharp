@@ -280,6 +280,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring")]
 		public void HotstringParsing()
 		{
+			HotstringManager.ClearHotstrings();
 			Assert.IsTrue(TestScript("hotkey-hotstring-parsing", false));
 		}
 
@@ -289,6 +290,7 @@ namespace Keysharp.Tests
 		{
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
 			btwtyped = false;
+			HotstringManager.ClearHotstrings();
 			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
 			_ = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", Keysharp.Core.Misc.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
@@ -337,6 +339,7 @@ namespace Keysharp.Tests
 			string filename = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}HotstringTests.txt", Path.DirectorySeparatorChar);
 			var hotstrings = System.IO.File.ReadLines(filename);
 			var delimiters = new char[] { ',' };
+			HotstringManager.ClearHotstrings();
 			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
 
 			foreach (var hotstring in hotstrings)

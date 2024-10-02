@@ -55,6 +55,7 @@
 			return hs;
 		}
 
+		[PublicForTestOnly]
 		public static void ClearHotstrings()
 		{
 			hsBuf.Clear();

@@ -187,7 +187,7 @@ namespace Keysharp.Core
 		/// <param name="input">The string to check.</param>
 		/// <param name="needle">The substring to search for.</param>
 		/// <param name="caseSensitive"><c>true</c> to use a case sensitive comparison, <c>false</c> otherwise.</param>
-		/// <param name="index">The one-based starting character position, default 1, negative for reverse order.</param>
+		/// <param name="startingPos">The one-based starting character position, default 1, negative for reverse order.</param>
 		/// <param name="occurrence">The one-based nth occurrence to find.</param>
 		/// <returns>The one-based index of the position of <paramref name="needle"/> in <paramref name="input"/>.
 		/// A value of zero indicates no match.</returns>
@@ -196,20 +196,20 @@ namespace Keysharp.Core
 			var input = obj0.As();
 			var needle = obj1.As();
 			var comp = obj2.As();
-			var index = obj3.Ai(1);
+			var startPos = obj3.Ai(1);
 			var occurrence = obj4.Ai(1);
 
 			if (input != "")
 			{
 				if (string.IsNullOrEmpty(needle))
-					throw new Exception("Search string was empty");
+					throw new ValueError("Search string was empty");
 
 				var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
 				const int offset = 1;//Everything is 1-based indexing.
-				return index < 0
-					   ? offset + input.LastNthIndexOf(needle, index, occurrence, cs)
-					   : index == 0 || index > input.Length ? 0 :
-					   offset + input.NthIndexOf(needle, index - 1, occurrence, cs);
+				return startPos < 0
+					   ? offset + input.LastNthIndexOf(needle, startPos, occurrence, cs)
+					   : startPos == 0 || startPos > input.Length ? 0 :
+					   offset + input.NthIndexOf(needle, startPos - 1, occurrence, cs);
 			}
 
 			return 0L;

@@ -250,6 +250,7 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Maybe do reference variables just for static function calls:
 		-Might be possible: https://stackoverflow.com/questions/8779731/how-to-pass-a-parameter-as-a-reference-with-methodinfo-invoke
 	A program called Voice Macro for automation.
+	AHKv2 YAML spec: https://github.com/mark-wiemer-org/ahkpp/blob/main/language/ahk2.tmLanguage.yaml
 	
 Linux ideas/research:
 	In order to send events to another control, such as a button click, the protocol ias at-spi, which is also used for screen readers. You'd need to port this to C#:
