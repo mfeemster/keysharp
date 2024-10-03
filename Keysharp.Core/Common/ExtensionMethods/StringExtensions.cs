@@ -227,20 +227,24 @@
 			return -1;
 		}
 
-		internal static int FindFirstNotOf(this string source, string chars, int offset = 0)
-		{
-			if (source.Length == 0) return -1;
+		//internal static int FindFirstNotOf(this string source, string chars, int offset = 0)
+		//{
+		//  if (source.Length == 0) return -1;
 
-			if (chars.Length == 0) return -1;
+		//  if (chars.Length == 0) return -1;
 
-			for (var i = offset; i < source.Length; i++)
-				if (chars.IndexOf(source[i]) == -1)
-					return i;
+		//  for (var i = offset; i < source.Length; i++)
+		//      if (chars.IndexOf(source[i]) == -1)
+		//          return i;
 
-			return -1;
-		}
+		//  return -1;
+		//}
 
-		internal static int FindFirstNotOf(this string source, char[] chars, int offset = 0)
+		internal static int FindFirstNotOf(this string source, char[] chars, int offset = 0) =>
+		FindFirstNotOf(source.AsSpan(), chars, offset);
+
+
+		internal static int FindFirstNotOf(this ReadOnlySpan<char> source, char[] chars, int offset = 0)
 		{
 			if (source.Length == 0) return 0;// -1;
 
@@ -269,8 +273,8 @@
 			return i;
 		}
 
-		internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0) =>
-		source.AsSpan().FirstIndexOf(func, offset);
+		//internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0) =>
+		//source.AsSpan().FirstIndexOf(func, offset);
 
 		internal static int FirstIndexOf(this ReadOnlySpan<char> source, Func<char, bool> func, int offset = 0)
 		{
@@ -279,6 +283,33 @@
 					return i;
 
 			return -1;
+		}
+
+		internal static int IndexOf(this ReadOnlySpan<char> str, char search, int offset)
+		{
+			var val = str.Slice(offset).IndexOf(search);
+
+			if (val == -1)
+				return val;
+
+			return val + offset;
+		}
+
+		/// <summary>
+		/// .NET IndexOfAny() with an offset for string but not span. So implement it here.
+		/// </summary>
+		/// <param name="str">The string to search</param>
+		/// <param name="search">The characters to search for in the string</param>
+		/// <param name="offset">The offset to begin searching at</param>
+		/// <returns>The 0-based index of the first occurrence of any of the characters, else -1 if not found.</returns>
+		internal static int IndexOfAny(this ReadOnlySpan<char> str, SearchValues<char> search, int offset)
+		{
+			var val = str.Slice(offset).IndexOfAny(search);
+
+			if (val == -1)
+				return val;
+
+			return val + offset;
 		}
 
 		internal static bool IsBalanced(this string source, char ch1, char ch2)

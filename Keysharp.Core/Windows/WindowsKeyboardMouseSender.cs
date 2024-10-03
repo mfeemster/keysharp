@@ -1965,7 +1965,7 @@ namespace Keysharp.Core.Windows
 			var origLastPeekTime = Script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
 			var i = 0;
-			var sub = keys;
+			var sub = keys.AsSpan();
 			var ht = Script.HookThread;
 
 			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind"))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
@@ -1994,14 +1994,14 @@ namespace Keysharp.Core.Windows
 					}
 				}
 
-				sub = keySpan.Slice(i).ToString();
+				sub = keySpan.Slice(i);
 			}
 
 			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}"))
 			{
 				// Setting this early allows CapsLock and the Win+L workaround to be skipped:
 				sendRaw = SendRawModes.RawText;
-				sub = sub.Substring(6);
+				sub = sub.Slice(6);
 			}
 
 			var tv = Threads.GetThreadVariables();
@@ -2103,14 +2103,14 @@ namespace Keysharp.Core.Windows
 						int L_pos, brace_pos = 0;
 						var bracesub = sub;
 
-						for (waitForWinKeyRelease = false; (L_pos = bracesub.IndexOfAny(llChars, brace_pos)) != -1;)
+						for (waitForWinKeyRelease = false; (L_pos = bracesub.IndexOfAny(llCharsSv, brace_pos)) != -1;)
 						{
 							// Encountering a #L seems too rare, and the consequences too mild (or nonexistent), to
 							// justify the following commented-out section:
 							//if (L_pos > aKeys && L_pos[-1] == '#') // A simple check; it won't detect things like #+L.
 							//  brace_pos = L_pos + 1;
 							//else
-							brace_pos = bracesub.IndexOfAny(bracechars, L_pos + 1);
+							brace_pos = bracesub.IndexOfAny(bracecharsSv, L_pos + 1);
 
 							if (brace_pos == -1 || bracesub[brace_pos] == '{') // See comment below.
 							{
@@ -2350,7 +2350,7 @@ namespace Keysharp.Core.Windows
 									var braceTabIndex = sub.IndexOfAny(SpaceTab);
 
 									if (braceTabIndex != -1)
-										nextWord = sub.AsSpan(braceTabIndex).TrimStart();
+										nextWord = sub.Slice(braceTabIndex).TrimStart();
 
 									if (nextWord.Length > 0)// v1.0.48: Support "{} down}", "{} downtemp}" and "{} up}".
 									{
@@ -2370,7 +2370,7 @@ namespace Keysharp.Core.Windows
 								}
 							}
 
-							var subspan = sub.AsSpan(keyIndex, keyTextLength);
+							var subspan = sub.Slice(keyIndex, keyTextLength);
 
 							if (subspan.StartsWith("Click", StringComparison.OrdinalIgnoreCase))
 							{
@@ -2473,7 +2473,7 @@ namespace Keysharp.Core.Windows
 							if (repeatCount < 1L)
 								goto bracecaseend; // Gets rid of one level of indentation. Well worth it.
 
-							subspan = sub.AsSpan(1).TrimStart(SpaceTab).ToString();//Consider the entire string, minus the first {, below.
+							subspan = sub.Slice(1).TrimStart(SpaceTab);//Consider the entire string, minus the first {, below.
 
 							if (vk != 0 || sc != 0)
 							{
@@ -2674,8 +2674,6 @@ namespace Keysharp.Core.Windows
 						// common cases, and seems to only work in cases where {tab} would work just as well.
 						if (sub[keyIndex] == '\r' && sub[keyIndex + 1] == '\n') // Translate \r but ignore any trailing \n, since \r\n -> {Enter 2} is counter-intuitive.
 							keyIndex++;
-
-						//sub = sub.Substring(1);
 
 						switch (sub[keyIndex])
 						{
