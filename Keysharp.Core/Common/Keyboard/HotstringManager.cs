@@ -75,11 +75,14 @@
 			return null;
 		}
 
+		//static Stopwatch sw = new Stopwatch();
+
 		[PublicForTestOnly]
 		public static HotstringDefinition MatchHotstring()
 		{
 			var found = false;
 			HotstringDefinition hs = null;
+			//sw.Restart();
 
 			if (hsBuf.Count > 0)
 			{
@@ -89,8 +92,6 @@
 				var hsBufCountm2 = hsLength - 2;
 				var hasEndChar = defEndChars.Contains(hsBufSpan[hsBufCountm1]);
 				var ht = Script.HookThread;
-				//var sw = new Stopwatch();
-				//sw.Start();
 
 				for (var i = 0; !found && i < hsBuf.Count; i++)//Must loop forward to catch hotstrings in order.
 				{
@@ -113,6 +114,9 @@
 								if (hsLength <= hs.str.Length) // Ensure the string is long enough for loop below.
 									continue;
 
+								if (hsBufCountm1 - i > hs.str.Length)//Ensure the distance from i to the end is not greater than the hotstring length.
+									continue;
+
 								if (!hasEndChar)
 									continue;
 
@@ -121,6 +125,9 @@
 							else // No ending char required.
 							{
 								if (hsLength < hs.str.Length) // Ensure the string is long enough for loop below.
+									continue;
+
+								if (hsLength - i > hs.str.Length)//Ensure the distance from i to the end is not greater than the hotstring length.
 									continue;
 
 								cpbuf = hsBufCountm1;// Init once for both loops.
@@ -179,6 +186,8 @@
 				}
 			}
 
+			//sw.Stop();
+			//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring took {sw.Elapsed.TotalMilliseconds}ms.");
 			return found ? hs : null;
 		}
 

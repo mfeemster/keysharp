@@ -54,6 +54,7 @@ TODO/ENSURE THESE WORK:
 		Microsoft PowerShell code used for COM: https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/engine/COM/
 		NAudio: https://github.com/naudio/NAudio
 		Scintilla editor for .NET: https://github.com/desjarlais/Scintilla.NET
+		Linux raw device reading code: https://github.com/GrantByrne/Zapper
 			
 	You could possibly make Any and KeysharpObject be interfaces, that way objects which already have a System base class, like Exception, could also be considered KeysharpObject. However, this probably wont' work because you do need a data member for the ownprops.
 	

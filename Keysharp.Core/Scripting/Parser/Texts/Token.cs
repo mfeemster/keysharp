@@ -556,7 +556,7 @@ namespace Keysharp.Scripting
 						return true;
 				}
 
-				return flowOperators.Contains(word.ToString());//Need to remove this ToString() once they fix .NET 9.//TODO
+				return flowOperatorsAlt.Contains(word);
 			}
 
 			return false;

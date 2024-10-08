@@ -26,6 +26,8 @@ namespace Keysharp.Scripting
 			FlowUntil,//Could until { one : 1 } == x ever be done?
 			FlowWhile//Same: while { one : 1 } == x
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
+
 		private Parser parser;
 		private HashSet<string> defines = new HashSet<string>()
 		{
@@ -716,21 +718,18 @@ namespace Keysharp.Scripting
 						//might be contained within a variable name.
 						var newStartOpIndex = newLineSpan.IndexOfAny(SpaceTabOpenParenSv);
 						var newStartSubSpan = newStartOpIndex == -1 ? newLineSpan : newLineSpan.Slice(0, newStartOpIndex).Trim(Spaces);
-						var newStartSubSpanStr = newStartSubSpan.ToString();
 						//
 						var prevStartOpIndex = prevLineSpan.IndexOfAny(SpaceTabOpenParenSv);
 						var prevStartSubSpan = prevStartOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(0, prevStartOpIndex).Trim(Spaces);
-						var prevStartSubSpanStr = prevStartSubSpan.ToString();
 						//
 						var prevEndOpIndex = prevLineSpan.LastIndexOfAny(SpaceTabOpenParenSv);
 						var prevEndSubSpan = prevEndOpIndex == -1 ? prevLineSpan : prevLineSpan.Slice(prevEndOpIndex + 1).Trim(Spaces);
-						var prevEndSubSpanStr = prevEndSubSpan.ToString();
 
 						//Previous line was an empty if test without parens, don't join.
 						//if x =
 						//...
 						if (!lastNested
-								&& Parser.flowOperators.Contains(prevStartSubSpanStr)
+								&& Parser.flowOperatorsAlt.Contains(prevStartSubSpan)
 								&& prevLine.Code.EndsWith('='))
 						{
 							StartNewLine(newLineStr);
@@ -754,10 +753,11 @@ namespace Keysharp.Scripting
 								//Flow, don't join.
 								//x :=
 								//if (...)
-								if (Parser.flowOperators.Contains(newStartSubSpanStr)
-										|| Parser.propKeywords.Contains(newStartSubSpanStr)
-										|| string.Compare(newStartSubSpanStr, "static", true) == 0//Don't join assignments of static class or function variables with any others.
-										|| string.Compare(prevStartSubSpanStr, "static", true) == 0)
+								if (Parser.flowOperatorsAlt.Contains(newStartSubSpan)
+										|| Parser.propKeywordsAlt.Contains(newStartSubSpan)
+										|| MemoryExtensions.Equals(newStartSubSpan, "static", StringComparison.OrdinalIgnoreCase)//Don't join assignments of static class or function variables with any others.
+										|| MemoryExtensions.Equals(prevStartSubSpan, "static", StringComparison.OrdinalIgnoreCase)
+								   )
 								{
 									StartNewLine(newLineStr);
 								}
@@ -781,8 +781,8 @@ namespace Keysharp.Scripting
 									&& !prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
 									&& !newIsHotkey//Ensure same for new.
 									&& !prevIsDirective//Ensure previous line wasn't a directive.
-									&& ((wasVerbal = Parser.exprVerbalOperators.Contains(newStartSubSpanStr))
-										|| Parser.contExprOperatorsList.Contains(newStartSubSpanStr)
+									&& ((wasVerbal = Parser.exprVerbalOperatorsAlt.Contains(newStartSubSpan))
+										|| Parser.contExprOperatorsAlt.Contains(newStartSubSpan)
 										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
 							   )//Verbal operators must match the token, others can just be the start of the string.
 							{
@@ -797,12 +797,12 @@ namespace Keysharp.Scripting
 										&& !newIsHotkey//Ensure same for new.
 										&& !prevIsDirective//Ensure previous line wasn't a directive.
 										&& prevEndSubSpan.EndsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
-										&& ((wasVerbal = Parser.exprVerbalOperators.Contains(prevEndSubSpanStr))
-											|| Parser.contExprOperators.Contains(prevEndSubSpanStr)
+										&& ((wasVerbal = Parser.exprVerbalOperatorsAlt.Contains(prevEndSubSpan))
+											|| Parser.contExprOperatorsAlt.Contains(prevEndSubSpan)
 											|| prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
 								   )
 								{
-									if (prevEndSubSpanStr.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
+									if (prevEndSubSpan.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
 									{
 										StartNewLine(newLineStr);
 									}
@@ -813,8 +813,8 @@ namespace Keysharp.Scripting
 								}
 								else
 								{
-									var isPropLine = Parser.propKeywords.Contains(newStartSubSpanStr);
-									var wasPropLine = Parser.propKeywords.Contains(prevStartSubSpanStr);
+									var isPropLine = Parser.propKeywordsAlt.Contains(newStartSubSpan);
+									var wasPropLine = Parser.propKeywordsAlt.Contains(prevStartSubSpan);
 									var wasFuncDef = prevLine.Code.FindFirstNotInQuotes("(") != -1 && prevLine.Code.FindFirstNotInQuotes(")") != -1;
 
 									if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0)
@@ -825,7 +825,7 @@ namespace Keysharp.Scripting
 										//if (...) {
 										if (prevLineSpan.EndsWith(openBraceSpan)
 												&& (prevIsHotkey//::d {
-													|| otbFlowKeywords.Contains(prevStartSubSpanStr)//if (...) {
+													|| otbFlowKeywordsAlt.Contains(prevStartSubSpan)//if (...) {
 													|| wasPropLine//get {
 													|| wasFuncDef)//myfunc() {
 										   )
@@ -855,7 +855,7 @@ namespace Keysharp.Scripting
 									//if (...)//Previous line.
 									//{ x := 123//New line.
 									//...
-									if ((otbFlowKeywords.Contains(prevStartSubSpanStr) || wasFuncDef)
+									if ((otbFlowKeywordsAlt.Contains(prevStartSubSpan) || wasFuncDef)
 											&& !prevLineSpan.EndsWith(openBraceSpan)
 											&& newLineSpan.StartsWith(openBraceSpan)
 											&& newLineSpan.Length > 1)

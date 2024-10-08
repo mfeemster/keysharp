@@ -63,6 +63,7 @@ namespace Keysharp.Scripting
 			":",
 			"["
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> contExprOperatorsAlt = contExprOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static List<string> contExprOperatorsList = contExprOperators.ToList();
 		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
@@ -77,6 +78,7 @@ namespace Keysharp.Scripting
 			"not",
 			"or"
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> exprVerbalOperatorsAlt = exprVerbalOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static FrozenSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -105,6 +107,7 @@ namespace Keysharp.Scripting
 			//FlowSet,
 			Throw
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> flowOperatorsAlt = flowOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -149,6 +152,7 @@ namespace Keysharp.Scripting
 			FlowGet,
 			FlowSet
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal bool ErrorStdOut;
 		internal CodeStatementCollection initial = new CodeStatementCollection();
