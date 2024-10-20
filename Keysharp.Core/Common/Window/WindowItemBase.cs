@@ -350,7 +350,7 @@ namespace Keysharp.Core.Common.Window
 					return a.StartsWith(b, comp);
 
 				case "2":
-					return a.IndexOf(b, comp) != -1;
+					return a.Contains(b, comp);
 
 				case "3":
 					return a.Equals(b, comp);

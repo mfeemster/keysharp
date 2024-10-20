@@ -1235,7 +1235,7 @@
 				destex = srcext.Contains('.') ? ".*" : "*";
 
 			srcext = srcext.TrimStart('.');
-			return destfile.ReplaceFirst("*", srcfile) + (destex.IndexOf("*") != -1 ? destex.ReplaceFirst("*", srcext) : destex);
+			return destfile.ReplaceFirst("*", srcfile) + (destex.Contains('*') ? destex.ReplaceFirst("*", srcext) : destex);
 		}
 		private static void FileCopyMove(string source, string dest, bool flag, bool move)
 		{
@@ -1266,7 +1266,7 @@
 				try
 				{
 					var name = Path.GetFileName(f);
-					var dname = dfname.IndexOf('*') != -1 ? ExpandFilenameWildcard(name, dfname) : dfname;
+					var dname = dfname.Contains('*') ? ExpandFilenameWildcard(name, dfname) : dfname;
 					var s = Path.Combine(sdname, name);
 					var d = Path.Combine(ddname, dname);
 

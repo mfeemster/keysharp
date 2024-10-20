@@ -212,7 +212,7 @@
 		{
 			var matchFound = menuText.StartsWith(match, StringComparison.CurrentCultureIgnoreCase);
 
-			if (!matchFound && menuText.IndexOf('&') >= 0)
+			if (!matchFound && menuText.Contains('&'))
 			{
 				var tempsb = new StringBuilder(menuText.Length);
 

@@ -76,7 +76,7 @@ namespace Keysharp.Core.Common.Input
 
 			for (var i = 0; i < end; ++i)
 			{
-				if (EndChars.IndexOf(ch[i], CaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase) != -1)
+				if (EndChars.Contains(ch[i], CaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase))
 				{
 					EndByChar(ch[i]);
 					return;

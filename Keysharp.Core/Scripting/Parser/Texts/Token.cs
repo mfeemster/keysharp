@@ -323,7 +323,7 @@ namespace Keysharp.Scripting
 
 		internal static bool IsHotstringLabel(string code) => code.Length > 0 && code[0] == HotkeyBound&& code.Contains(HotkeySignal)&& code.Count(ch => ch == HotkeyBound) >= 4;
 
-		internal static bool IsIdentifier(char symbol) => char.IsLetterOrDigit(symbol) || VarExt.IndexOf(symbol) != -1;
+		internal static bool IsIdentifier(char symbol) => char.IsLetterOrDigit(symbol) || VarExt.Contains(symbol);
 
 		internal bool IsIdentifier(string token) => IsIdentifier(token, false);
 

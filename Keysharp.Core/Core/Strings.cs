@@ -932,7 +932,7 @@ namespace Keysharp.Core
 						{
 							var ch = input[i];
 
-							if (trim.IndexOf(ch) == -1)
+							if (!trim.Contains(ch))
 							{
 								list.Add(ch.ToString());
 								ct++;
@@ -947,7 +947,7 @@ namespace Keysharp.Core
 					else
 					{
 						foreach (var letter in input)
-							if (trim.IndexOf(letter) == -1)
+							if (!trim.Contains(letter))
 								list.Add(letter.ToString());
 					}
 

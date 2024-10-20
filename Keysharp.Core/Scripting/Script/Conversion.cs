@@ -250,7 +250,7 @@ namespace Keysharp.Scripting
 				var simple = t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(byte) || t == typeof(char);
 				var integer = simple || (t == typeof(double) && Math.IEEERemainder((double)input, 1) == 0);
 				var format = Keysharp.Core.Accessors.A_FormatNumeric as string;
-				var hex = format.IndexOf('x') != -1;
+				var hex = format.Contains('x');
 				const string hexpre = "0x";
 
 				if (integer)

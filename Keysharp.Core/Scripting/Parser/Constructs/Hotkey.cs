@@ -316,7 +316,7 @@ namespace Keysharp.Scripting
 						bool remapSourceIsCombo, remapSourceIsMouse, remapDestIsMouse, remapKeybdToMouse, remapWheel;
 						// These will be ignored in other stages if it turns out not to be a remap later below:
 						remapSourceVk = ht.TextToVK(tempcp1 = HotkeyDefinition.TextToModifiers(hotName, null), ref modifiersLR, false, true, kbLayout);//An earlier stage verified that it's a valid hotkey, though VK could be zero.
-						remapSourceIsCombo = tempcp1.IndexOf(HotkeyDefinition.COMPOSITE_DELIMITER) != -1;
+						remapSourceIsCombo = tempcp1.Contains(HotkeyDefinition.COMPOSITE_DELIMITER);
 						remapSourceIsMouse = ht.IsMouseVK(remapSourceVk);
 						remapDestIsMouse = ht.IsMouseVK(remapDestVk);
 						remapKeybdToMouse = !remapSourceIsMouse && remapDestIsMouse;

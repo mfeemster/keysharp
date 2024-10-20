@@ -89,7 +89,7 @@ namespace Keysharp.Scripting
 			if (IsPrimitiveObject(code, out var result))
 				return result is long l ? new CodeSnippetExpression($"{l}L") : new CodePrimitiveExpression(result);
 
-			if (code.IndexOf(Resolve) == -1)
+			if (!code.Contains(Resolve))
 				return new CodePrimitiveExpression(code);
 
 			if (!DynamicVars)

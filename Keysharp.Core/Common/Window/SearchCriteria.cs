@@ -62,7 +62,7 @@
 
 			var mixed = obj.ToString();
 
-			if (mixed.IndexOf(Keywords.Keyword_ahk, StringComparison.OrdinalIgnoreCase) == -1)
+			if (!mixed.Contains(Keywords.Keyword_ahk, StringComparison.OrdinalIgnoreCase))
 				return new SearchCriteria { Title = mixed };
 
 			var i = 0;

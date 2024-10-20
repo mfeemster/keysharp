@@ -397,7 +397,7 @@ namespace Keysharp.Tests
 				hs1 = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
 				System.Diagnostics.Debug.WriteLine(split0);
 
-				if (split0.IndexOf('*') == -1)
+				if (!split0.Contains('*'))
 					val = split3 + " ";
 				else
 					val = split3;
