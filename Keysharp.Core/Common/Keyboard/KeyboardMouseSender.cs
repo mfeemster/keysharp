@@ -76,6 +76,8 @@
 		internal uint modifiersLRLogicalNonIgnored = 0u;
 		internal uint modifiersLRNumpadMask = 0u;
 		internal uint modifiersLRPhysical = 0u;
+		internal uint modifiersLRLastPressed = 0u;
+		internal DateTime modifiersLRLastPressedTime = DateTime.Now;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
@@ -249,12 +251,12 @@
 
 			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 			// Turn it back off only if it wasn't ON before we started.
-			var blockinput_prev = Keysharp.Core.Keyboard.blockInput;
-			var do_selective_blockinput = (Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.Mouse
-										   || Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.SendAndMouse)
-										  && sendMode == Common.Keyboard.SendModes.Event;
+			var blockinputPrev = Keysharp.Core.Keyboard.blockInput;
+			var doSelectiveBlockinput = (Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.Mouse
+										 || Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.SendAndMouse)
+										&& sendMode == Common.Keyboard.SendModes.Event;
 
-			if (do_selective_blockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
+			if (doSelectiveBlockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
 				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 
 			switch (actionType)
@@ -275,15 +277,15 @@
 
 			if (sendMode != Common.Keyboard.SendModes.Event)
 			{
-				var final_key_delay = -1L; // Set default.
+				var finalKeyDelay = -1L; // Set default.
 
 				if (!abortArraySend && TotalEventCount() > 0)
-					SendEventArray(ref final_key_delay, 0); // Last parameter is ignored because keybd hook isn't removed for a pure-mouse SendInput.
+					SendEventArray(ref finalKeyDelay, 0); // Last parameter is ignored because keybd hook isn't removed for a pure-mouse SendInput.
 
-				CleanupEventArray(final_key_delay);
+				CleanupEventArray(finalKeyDelay);
 			}
 
-			if (do_selective_blockinput && !blockinput_prev)  // Turn it back off only if it was off before we started.
+			if (doSelectiveBlockinput && !blockinputPrev)  // Turn it back off only if it was off before we started.
 				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
 		}
 

@@ -193,16 +193,72 @@
 		/// OutExtension: The file's extension (e.g. TXT, DOC, or EXE). The dot is not included.
 		/// OutNameNoExt: The file name without its path, dot and extension.
 		/// OutDrive: The drive letter or server name of the file. If the file is on a local or mapped drive, the variable will be set to the drive letter followed by a colon (no backslash). If the file is on a network path (UNC), the variable will be set to the share name, e.g. \\Workstation01
+		/// If Path contains a colon-double-slash, such as in "https://domain.com" or "ftp://domain.com", OutDir is set to the protocol prefix + domain name + directory (e.g. https://domain.com/images) and
+		/// OutDrive is set to the protocol prefix + domain name (e.g. https://domain.com).
+		/// All other variables are set according to their definitions above.
 		/// </returns>
 		public static void SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt, ref object outDrive)
 		{
 			var path = obj.As();
-			var input = Path.GetFullPath(path);
-			outFileName = Path.GetFileName(input);
-			outDir = Path.GetDirectoryName(input);
-			outExtension = Path.GetExtension(input).Trim('.');
-			outNameNoExt = Path.GetFileNameWithoutExtension(input);
-			outDrive = Path.GetPathRoot(input);
+
+			if (path.Contains("://"))
+			{
+				var uri = new Uri(path);
+				outDrive = uri.Scheme + "://" + uri.Host;
+				var lastSlash = uri.LocalPath.LastIndexOf('/');
+				var localPath = uri.LocalPath;
+
+				if (lastSlash != -1)
+				{
+					var tempFilename = localPath.Substring(lastSlash + 1);
+
+					if (tempFilename.Contains('.'))
+					{
+						outFileName = tempFilename;
+						outExtension = Path.GetExtension(tempFilename).Trim('.');
+						outNameNoExt = Path.GetFileNameWithoutExtension(tempFilename);
+						localPath = localPath.Substring(0, lastSlash);
+					}
+					else
+						outFileName = outExtension = outNameNoExt = "";
+				}
+
+				outDir = (outDrive + localPath).TrimEnd('/');
+			}
+			else
+			{
+				var input = Path.GetFullPath(path);
+				outFileName = Path.GetFileName(input);
+				outExtension = Path.GetExtension(input).Trim('.');
+				outNameNoExt = Path.GetFileNameWithoutExtension(input);
+
+				if (path.StartsWith(@"\\"))
+				{
+					//There appear to be no built in methods to process UNC paths, so do it manually here.
+					var nextSlash = input.IndexOf('\\', 2);
+					var lastSlash = input.LastIndexOf('\\');
+
+					if (nextSlash == -1)
+						outDrive = path;
+					else
+						outDrive = input.Substring(0, nextSlash);
+
+					if (input.Contains('.'))
+					{
+						if (lastSlash == -1)
+							outDir = input;
+						else
+							outDir = input.AsSpan().Slice(0, lastSlash).TrimEnd('\\').ToString();
+					}
+					else
+						outDir = input.TrimEnd('\\');
+				}
+				else
+				{
+					outDir = Path.GetDirectoryName(input);
+					outDrive = Path.GetPathRoot(input);
+				}
+			}
 		}
 
 		internal static string PathHead(string path)

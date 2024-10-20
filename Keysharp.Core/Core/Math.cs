@@ -3,7 +3,7 @@
 	/// <summary>
 	/// Most functions here do not take variadic parameters so they can run as fast as possible.
 	/// Also, an attempt to cast the object argument to a double is first made because it's the
-	/// most common and fastest case. If it's not a double, ParseDouble() is used.
+	/// most common and fastest case. If it's not a double, Ad() is used.
 	/// </summary>
 	public static class Maths
 	{

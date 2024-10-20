@@ -41,9 +41,10 @@ namespace Keysharp.Scripting
 				{
 					switch (code[0])
 					{
-						case Greater:
-						case Less:
-						case Divide:
+						case Greater://>>=
+						case Less://<<=
+						case Divide:////=
+						case TernaryA://??=
 							return true;
 
 						default:
@@ -331,7 +332,7 @@ namespace Keysharp.Scripting
 			if (string.IsNullOrEmpty(token))
 				return false;
 
-			if (token[0] == TernaryA && (token.Length == 1 || token.Length == 2 && token[1] == TernaryA))
+			if (token == "?" || token == "??" || token == "??=")
 				return false;
 
 			foreach (var sym in token)
@@ -457,6 +458,7 @@ namespace Keysharp.Scripting
 					return true;
 
 				case NullTxt:
+				case Unset:
 					result = null;
 					return true;
 			}
@@ -575,8 +577,19 @@ namespace Keysharp.Scripting
 					continue;
 				else if (sym == TernaryA)
 				{
-					if (list.Count > 0 && list[list.Count - 1].ToString() == "?")
-						list[list.Count - 1] = "??";
+					var prevWasTernaryA = list.Count > 0 && list[list.Count - 1].ToString() == "?";
+					var nextIsEqual = i < code.Length - 1 && code[i + 1] == '=';
+
+					if (prevWasTernaryA)
+					{
+						if (nextIsEqual)
+						{
+							list[list.Count - 1] = "??=";
+							i++;
+						}
+						else
+							list[list.Count - 1] = "??";
+					}
 					else
 						list.Add("?");
 				}

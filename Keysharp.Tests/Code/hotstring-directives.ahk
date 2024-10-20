@@ -5,6 +5,9 @@ if (A_HotstringNoMouse)
 else
 	FileAppend, "fail", "*"
 
+; Reset to what it was for the sake of other tests in this class.
+Hotstring("MouseReset", true)
+
 #Hotstring EndChars -()[]{}':;"/\,.?!`n`s`t
 
 if (A_DefaultHotstringEndChars == "-()[]{}':;`"/\,.?!`n`s`t")

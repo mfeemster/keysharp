@@ -5,8 +5,8 @@
 	/// </summary>
 	internal class ImageFinder
 	{
-		private Bitmap sourceImage;
-		private int threads = Environment.ProcessorCount;
+		private readonly Bitmap sourceImage;
+		private readonly int threads = Environment.ProcessorCount;
 
 		public byte Variation { get; set; }
 

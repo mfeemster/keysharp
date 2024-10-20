@@ -13,7 +13,7 @@
 		private static Encoding fileEncoding = Encoding.Default;
 		private static bool? iconFrozen;
 		private static bool iconHidden;
-		private static string initialWorkingDir = Environment.CurrentDirectory;
+		private static readonly string initialWorkingDir = Environment.CurrentDirectory;
 		private static uint inputLevel;
 		private static long keyDelay = 10L;
 		private static long keyDelayPlay = -1L;
@@ -215,72 +215,83 @@
 		{
 			get
 			{
-#if WINDOWS
-
-				if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
+				//Even if we're on an STA thread, this can sometimes fail. So it's best to always
+				//make sure it's on the main thread.
+				var act = () =>
 				{
-					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
+#if WINDOWS
+
+					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
+					{
+						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 #endif
 
-					if (Clipboard.GetData(DataFormats.Text) is string text)
-						return text;
+						if (Clipboard.GetData(DataFormats.Text) is string text)
+							return text;
 
-					if (Clipboard.GetData(DataFormats.Html) is string html)
-						return html;
+						if (Clipboard.GetData(DataFormats.Html) is string html)
+							return html;
 
-					if (Clipboard.GetData(DataFormats.Rtf) is string rtf)
-						return rtf;
+						if (Clipboard.GetData(DataFormats.Rtf) is string rtf)
+							return rtf;
 
-					if (Clipboard.GetData(DataFormats.SymbolicLink) is string sym)
-						return sym;
+						if (Clipboard.GetData(DataFormats.SymbolicLink) is string sym)
+							return sym;
 
-					if (Clipboard.GetData(DataFormats.UnicodeText) is string uni)
-						return uni;
+						if (Clipboard.GetData(DataFormats.UnicodeText) is string uni)
+							return uni;
 
-					if (Clipboard.GetData(DataFormats.OemText) is string oem)
-						return oem;
+						if (Clipboard.GetData(DataFormats.OemText) is string oem)
+							return oem;
 
-					if (Clipboard.GetData(DataFormats.CommaSeparatedValue) is string csv)
-						return csv;
+						if (Clipboard.GetData(DataFormats.CommaSeparatedValue) is string csv)
+							return csv;
 
-					if (Clipboard.GetData(DataFormats.FileDrop) is string[] files)
-						return string.Join(Environment.NewLine, files);
+						if (Clipboard.GetData(DataFormats.FileDrop) is string[] files)
+							return string.Join(Environment.NewLine, files);
 
 #if WINDOWS
-				}
+					}
 
 #endif
-				return "";
+					return "";
+				};
+				var ret = "";
+				Script.mainWindow.CheckedInvoke(() => ret = act(), true);
+				return ret;
 			}
 			set
 			{
+				Script.mainWindow.CheckedInvoke(() =>
+				{
 #if LINUX
 
-				if (value == null || (value is string s && s?.Length == 0))
-				{
-					//Clipboard.Clear();//For some reason this doesn't work on linux. Bug reported here: https://github.com/DanielVanNoord/System.Windows.Forms/issues/17
-					Clipboard.SetDataObject("", true);
-				}
-				else if (value is ClipboardAll arr)
-					Env.RestoreClipboardAll(arr, 0L);
-				else
-					Clipboard.SetDataObject(value.ToString(), true);
+					if (value == null || (value is string s && s?.Length == 0))
+					{
+						//Clipboard.Clear();//For some reason this doesn't work on linux. Bug reported here: https://github.com/DanielVanNoord/System.Windows.Forms/issues/17
+						Clipboard.SetDataObject("", true);
+					}
+					else if (value is ClipboardAll arr)
+						Env.RestoreClipboardAll(arr, 0L);
+					else
+						Clipboard.SetDataObject(value.ToString(), true);
 
 #elif WINDOWS
 
-				if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
-				{
-					_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
+					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
+					{
+						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
-					if (value == null || (value is string s && s?.Length == 0))
-						Env.MyClearClip();
-					else if (value is ClipboardAll arr)
-						Env.RestoreClipboardAll(arr, (long)arr.Size);
-					else
-						Clipboard.SetDataObject(value.ToString(), true);
-				}
+						if (value == null || (value is string s && s?.Length == 0))
+							Env.MyClearClip();
+						else if (value is ClipboardAll arr)
+							Env.RestoreClipboardAll(arr, (long)arr.Size);
+						else
+							Clipboard.SetDataObject(value.ToString(), true);
+					}
 
 #endif
+				}, true);
 			}
 		}
 
@@ -525,7 +536,7 @@
 			set => hotkeyModifierTimeout = value.Al();
 		}
 
-		public static object A_HotstringNoMouse => Script.HotstringNoMouse;
+		public static object A_HotstringNoMouse => !Script.hsResetUponMouseClick;
 
 		/// <summary>
 		/// Current 2-digit hour (00-23) in 24-hour time (for example, 17 is 5pm).
@@ -687,11 +698,21 @@
 		/// </summary>
 		public static bool A_IsSuspended => Flow.Suspended;
 
-		//Need to make this work with threading model.//TODO
 		/// <summary>
 		/// Only for compatibility with AHK, C# programs are always unicode.
 		/// </summary>
 		public static bool A_IsUnicode => true;
+
+		/// <summary>
+		/// Returns either 0, 1, 2 or 3:
+		///     0: No keyboard hook is installed.
+		///     1: Only our keyboard hook is installed.
+		///     2: Only another keyboard hook is installed.
+		///     3: Ours and another keyboard hook are installed.
+		/// </summary>
+		public static long A_KeybdHookInstalled => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht
+		? (ht.HasKbdHook() ? 1L : 0L) | (ht.SystemHasAnotherKeybdHook() ? 2L : 0L)
+		: 0L;
 
 		/// <summary>
 		/// The delay that will occur after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
@@ -1222,6 +1243,17 @@
 			get => mouseDelayPlay;
 			set => mouseDelayPlay = ThreadAccessors.A_MouseDelayPlay = value.Al();
 		}
+
+		/// <summary>
+		/// Returns either 0, 1, 2 or 3:
+		///     0: No mouse hook is installed.
+		///     1: Only our mouse hook is installed.
+		///     2: Only another mouse hook is installed.
+		///     3: Ours and another mouse hook are installed.
+		/// </summary>
+		public static long A_MouseHookInstalled => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht
+		? (ht.HasMouseHook() ? 1L : 0L) | (ht.SystemHasAnotherMouseHook() ? 2L : 0L)
+		: 0L;
 
 		/// <summary>
 		/// Current 3-digit millisecond (000-999).

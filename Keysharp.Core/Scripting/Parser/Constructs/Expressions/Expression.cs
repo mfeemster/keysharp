@@ -1429,15 +1429,10 @@ namespace Keysharp.Scripting
 							var falseBranch = ParseExpression(codeLine, code, branch[1], create);
 							//CodeDOM does not have built in support for ternary operators. So we must manually create the code string for the ternary,
 							//then use a code snippet to hold the string. This is not ideal, but there is no other way.
-							var evalstr = Ch.CodeToString(eval);
-							var tbs = Ch.CodeToString(trueBranch);
-							var fbs = Ch.CodeToString(falseBranch);
-							parts[x] = new CodeSnippetExpression($"(_ = {evalstr} ? (object)({tbs}) : (object)({fbs}))");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+							parts[x] = MakeTernarySnippet(eval, trueBranch, falseBranch);
 							parts.RemoveRange(start, parts.Count - start);
-							//i++;//Tried, but not needed.
-							//continue;
 						}
-						else if (op == Script.Operator.NullAssign)
+						else if (op == Script.Operator.NullCoalesce)
 						{
 							if (x < 0)
 								throw new ParseException("Nullable assignment with no condition.", codeLine);
@@ -1447,13 +1442,14 @@ namespace Keysharp.Scripting
 							if (n >= parts.Count)
 								throw new ParseException("Nullable assignment with no right-hand operator.", codeLine);
 
-							var orMaybe = (CodeMethodInvokeExpression)InternalMethods.OrMaybe;
+							//This needs to directly use the c# null coalescing operator, instead of OrMaybe() to ensure that the
+							//right operand never gets called if the left operand is not null.
 							var leftExpr = VarMixedExpr(codeLine, parts[x]);
 							var rightSlice = parts.Slice(n, parts.Count - n);
 							var rightExpr = ParseExpression(codeLine, code, rightSlice, create);
-							_ = orMaybe.Parameters.Add(leftExpr);
-							_ = orMaybe.Parameters.Add(rightExpr);
-							parts[x] = orMaybe;
+							var xx = MakeTernarySnippet(new CodeBinaryOperatorExpression(leftExpr, CodeBinaryOperatorType.ValueEquality, nullPrimitive)
+														, rightExpr, leftExpr);
+							parts[x] = xx;
 							parts.RemoveRange(i, parts.Count - i);
 						}
 						else if (x == -1)
@@ -1542,9 +1538,30 @@ namespace Keysharp.Scripting
 								if (op == Script.Operator.Is)//When using "is", we pass the type as a string, which is then compared internally inside of IfLegacy().
 								{
 									if (py is CodeVariableReferenceExpression pycvre)
+									{
 										_ = invoke.Parameters.Add(new CodePrimitiveExpression(pycvre.VariableName));
+									}
 									else if (py is CodePrimitiveExpression pycpe)
-										_ = invoke.Parameters.Add(new CodePrimitiveExpression(pycpe.Value.ToString()));
+									{
+										if (pycpe.Value != null)
+										{
+											_ = invoke.Parameters.Add(new CodePrimitiveExpression(pycpe.Value.ToString()));
+										}
+										else
+										{
+											//Make an optimized case when checking for null/unset.
+											parts[x] = new CodeBinaryOperatorExpression(invoke.Parameters[1], CodeBinaryOperatorType.ValueEquality, nullPrimitive);
+											goto next;
+										}
+									}
+								}
+								else if ((op == Script.Operator.IdentityEquality
+										  || op == Script.Operator.ValueEquality)
+										 && py is CodePrimitiveExpression pycpe
+										 && pycpe.Value == null)
+								{
+									parts[x] = new CodeBinaryOperatorExpression(invoke.Parameters[1], CodeBinaryOperatorType.ValueEquality, nullPrimitive);
+									goto next;
 								}
 								else
 									_ = invoke.Parameters.Add(VarMixedExpr(codeLine, py));

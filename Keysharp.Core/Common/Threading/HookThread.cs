@@ -38,7 +38,6 @@ namespace Keysharp.Core.Common.Threading
 		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
 		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
-		internal bool hsResetUponMouseClick = true;
 		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender = null;
 		internal byte[] physicalKeyState = new byte[VK_ARRAY_COUNT];
 
@@ -394,6 +393,7 @@ namespace Keysharp.Core.Common.Threading
 	{
 		internal CaseConformModes caseMode = CaseConformModes.None;
 		internal char endChar = (char)0;
+		//Might want to add skipchars here.//TODO
 		internal HotstringDefinition hs = null;
 	}
 

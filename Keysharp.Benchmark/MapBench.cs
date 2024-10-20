@@ -58,9 +58,9 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MapWriteBenchmark
 	{
-		private Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
-		private List<string> strings = new List<string>();
+		private readonly Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private readonly Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
+		private readonly List<string> strings = new List<string>();
 
 		[Params(10000)]
 		public int Size { get; set; }

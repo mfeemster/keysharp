@@ -54,7 +54,7 @@ namespace Keysharp.Core.Common.Keyboard
 		private static uint throttledKeyCount;
 		private static DateTime timeNow;
 		private static DateTime timePrev = DateTime.MinValue;
-		private static HookType whichHookAlways = HookType.None;
+		private static readonly HookType whichHookAlways = HookType.None;
 		private static HookType whichHookNeeded = HookType.None;
 		internal bool Enabled { get; set; }
 		internal Options EnabledOptions { get; }
@@ -605,7 +605,7 @@ namespace Keysharp.Core.Common.Keyboard
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Keysharp.Core.Keyboard.blockMouseMove || (ht.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
+			if (Keysharp.Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
@@ -744,13 +744,13 @@ namespace Keysharp.Core.Common.Keyboard
 		/// v1.0.44: Caller has ensured that aFireWithNoSuppress is true if has already been decided and false if undecided.
 		/// Upon return, caller can assume that the value in it is now decided rather than undecided.
 		/// v1.0.42: Caller must not call this for AltTab hotkeys IDs, but this will always return NULL in such cases.
-		/// aHotkeyToFireUponRelease is sometimes modified for the caller here, as is *aSingleChar (if aSingleChar isn't NULL).
+		/// singleChar is sometimes modified for the caller here (if singleChar isn't NULL).
 		/// Caller has ensured that aHotkeyIDwithFlags contains a valid/existing hotkey ID.
 		/// Technically, aHotkeyIDwithMask can be with or without the flags in the high bits.
 		/// If present, they're removed.
 		/// </summary>
 		internal static HotkeyVariant CriterionFiringIsCertain(ref uint hotkeyIDwithFlags, bool _keyUp, ulong extraInfo
-				, ref uint _noSuppress, ref bool fireWithNoSuppress, ref char? singleChar)
+				, ref bool fireWithNoSuppress, ref char? singleChar)
 		{
 			// aHookAction isn't checked because this should never be called for alt-tab hotkeys (see other comments above).
 			var hotkeyId = hotkeyIDwithFlags & HOTKEY_ID_MASK;
@@ -868,19 +868,6 @@ namespace Keysharp.Core.Common.Keyboard
 			// Otherwise, this hotkey has no variants that can fire.  Caller wants a few things updated in that case.
 			if (!fireWithNoSuppress) // Caller hasn't yet determined its value with certainty.
 				fireWithNoSuppress = true; // Fix for v1.0.47.04: Added this line and the one above to fix the fact that a context-sensitive hotkey like "a UP::" would block the down-event of that key even when the right window/criteria aren't met.
-
-			// If this is a key-down hotkey:
-			// Leave aHotkeyToFireUponRelease set to whatever it was so that the criteria are
-			// evaluated later, at the time of release.  It seems more correct that way, though the actual
-			// change (hopefully improvement) in usability is unknown.
-			// Since the down-event of this key won't be suppressed, it seems best never to suppress the
-			// key-up hotkey (if it has one), if nothing else than to be sure the logical key state of that
-			// key as shown by GetAsyncKeyState() returns the correct value (for modifiers, this is even more
-			// important since them getting stuck down causes undesirable behavior).  If it doesn't have a
-			// key-up hotkey, the up-keystroke should wind up being non-suppressed anyway due to default
-			// processing).
-			if (!_keyUp)
-				_noSuppress |= NO_SUPPRESS_NEXT_UP_EVENT;  // Update output parameter for the caller.
 
 			if (singleChar.HasValue && singleChar != 'i') // 'i' takes precedence because it's used to detect when #InputLevel prevented the hotkey from firing, to prevent it from being suppressed.
 				singleChar = '#'; // '#' in KeyHistory to indicate this hotkey is disabled due to #HotIf WinActive/Exist() criterion.
@@ -1305,8 +1292,6 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static bool HK_TYPE_CAN_BECOME_KEYBD_HOOK(HotkeyTypeEnum type) => type == HotkeyTypeEnum.Normal;
 
 		internal static bool HK_TYPE_IS_HOOK(HotkeyTypeEnum type) => type > HotkeyTypeEnum.Normal&& type < HotkeyTypeEnum.Joystick;
-
-		internal static bool HOT_IF_REQUIRES_EVAL(HotCriterionEnum type) => type == HotCriterionEnum.IfCallback;
 
 		/// <summary>
 		/// This is a global function because it's used by both hotkeys and hotstrings.

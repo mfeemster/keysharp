@@ -153,14 +153,14 @@ namespace Keysharp.Core
 					for (var i = 0; i < HotkeyDefinition.shk.Count; ++i)
 					{
 						if (HotkeyDefinition.shk[i].Name == label)
-							continue;
-
-						for (var v = HotkeyDefinition.shk[i].firstVariant; v != null; v = v.nextVariant)
 						{
-							if (v.hotCriterion == tv.hotCriterion)
+							for (var v = HotkeyDefinition.shk[i].firstVariant; v != null; v = v.nextVariant)
 							{
-								fo = v.originalCallback;
-								goto break_twice;
+								if (v.hotCriterion == tv.hotCriterion)
+								{
+									fo = v.originalCallback;
+									goto break_twice;
+								}
 							}
 						}
 					}

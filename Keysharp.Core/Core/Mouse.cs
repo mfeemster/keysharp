@@ -28,17 +28,16 @@ namespace Keysharp.Core
 		/// </param>
 		public static void Click(object options)
 		{
-			var opts = options.As();
 			int x = 0, y = 0;
 			var vk = 0u;
-			var event_type = KeyEventTypes.KeyDown;
-			var repeat_count = 0L;
-			var move_offset = false;
+			var eventType = KeyEventTypes.KeyDown;
+			var repeatCount = 0L;
+			var moveOffset = false;
 			var ht = Script.HookThread;
-			ht.ParseClickOptions(opts, ref x, ref y, ref vk, ref event_type, ref repeat_count, ref move_offset);
+			ht.ParseClickOptions(options.As(), ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
-			ht.kbdMsSender.PerformMouseCommon(repeat_count < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
-											  , vk, x, y, 0, 0, repeat_count, event_type, ThreadAccessors.A_DefaultMouseSpeed, move_offset);//, true, true);
+			ht.kbdMsSender.PerformMouseCommon(repeatCount < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
+											  , vk, x, y, 0, 0, repeatCount, eventType, ThreadAccessors.A_DefaultMouseSpeed, moveOffset);//, true, true);
 		}
 
 		/// <summary>
@@ -186,7 +185,7 @@ namespace Keysharp.Core
 			var r = relative.As();
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSEMOVE, "", ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
-						 s, r, 1, "");//, true, true);
+						 s, r, 1, "");
 		}
 
 		public static void SetDefaultMouseSpeed(object speed) => Accessors.A_DefaultMouseSpeed = speed;
@@ -247,21 +246,19 @@ namespace Keysharp.Core
 			var ht = Script.HookThread;
 
 			if (actionType == Actions.ACT_MOUSEMOVE)
-			{
 				vk = 0;
-			}
-			else
-			{
-				if ((vk = ht.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
-					throw new ValueError($"Invalid mouse button type of {button}.");
-			}
+			else if ((vk = ht.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
+				throw new ValueError($"Invalid mouse button type of {button}.");
 
 			// v1.0.43: Seems harmless (due to rarity) to treat invalid button names as "Left" (keeping in
 			// mind that due to loadtime validation, invalid buttons are possible only when the button name is
 			// contained in a variable, e.g. MouseClick %ButtonName%.
 			var eventType = KeyEventTypes.KeyDownAndUp;  // Set defaults.
 
-			if (actionType == Actions.ACT_MOUSECLICK)
+			if (repeatCount < 0)
+				throw new ValueError($"Invalid repeat count of {repeatCount}. It must be >= 0.");
+
+			//if (actionType == Actions.ACT_MOUSECLICK)
 			{
 				if (downUp.Length > 0)
 				{
@@ -279,10 +276,13 @@ namespace Keysharp.Core
 							break;
 
 						default:
-							break;
+							throw new ValueError($"Invalid down/up value of {downUp[0]}. It must be 'u' or 'd'.");
 					}
 				}
 			}
+
+			if (!string.IsNullOrEmpty(relative) && relative != "R")
+				throw new ValueError($"Invalid relative value of {relative}. It must be empty or 'R'.");
 
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(actionType

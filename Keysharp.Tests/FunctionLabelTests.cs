@@ -3,7 +3,7 @@
 namespace Keysharp.Tests
 {
 	/// <summary>
-	/// Function tests don't need to also be wrapped in a funciton, so pass false.
+	/// Function tests don't need to also be wrapped in a function, so pass false to all.
 	/// </summary>
 	public class FunctionAndLabelTests : TestRunner
 	{
@@ -58,7 +58,7 @@ namespace Keysharp.Tests
 		[NonParallelizable]
 		[Test, Category("Function")]
 		public void ReturnFunc() => Assert.IsTrue(TestScript("func-return", false));
-		
+
 		[SetUp]
 		public void Setup()
 		{

@@ -7,7 +7,7 @@ namespace Keysharp.Scripting
 			internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
 			internal static DateTime startTime = DateTime.Now;
 			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
-			private static Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
+			private static readonly Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
 #if LINUX
 			private static Encoding enc1252 = Encoding.Default;
 #endif

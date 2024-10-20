@@ -110,7 +110,7 @@
 					if (string.Compare(tp.Text, text, true) == 0)
 						return tp;
 				}
-				else if (tp.Text.StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
+				else if (tp.Text.StartsWith(text, StringComparison.OrdinalIgnoreCase))
 					return tp;
 
 			return null;

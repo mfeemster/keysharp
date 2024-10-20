@@ -17,7 +17,7 @@
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
 		internal static bool hsSuspendExempt;
 		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
-		private static Dictionary<char, List<HotstringDefinition>> shsDkt = new Dictionary<char, List<HotstringDefinition>>(new CharNoCaseEqualityComp());
+		private static readonly Dictionary<char, List<HotstringDefinition>> shsDkt = new Dictionary<char, List<HotstringDefinition>>(new CharNoCaseEqualityComp());
 		internal static List<char> hsBuf = new List<char>(256);
 
 		[PublicForTestOnly]

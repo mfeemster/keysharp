@@ -20,6 +20,7 @@ namespace Keysharp.Scripting
 			//"%",
 			".=",
 			".",
+			"??=",
 			"??",
 			"?",
 			"+=",
@@ -105,7 +106,7 @@ namespace Keysharp.Scripting
 			FlowSwitch,
 			//FlowGet,
 			//FlowSet,
-			Throw
+			FlowThrow
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> flowOperatorsAlt = flowOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
@@ -140,7 +141,7 @@ namespace Keysharp.Scripting
 			FlowFinally,
 			FlowUntil,
 			FlowSwitch,
-			Throw
+			FlowThrow
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
@@ -163,9 +164,9 @@ namespace Keysharp.Scripting
 		private const string initParams = "initparams";
 		private const string mainClassName = "program";
 		private const string mainScope = "";
-		private static char[] directiveDelims = Spaces.Concat([Multicast]);
+		private static readonly char[] directiveDelims = Spaces.Concat([Multicast]);
 
-		private static FrozenSet<string> persistentTerms = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+		private static readonly FrozenSet<string> persistentTerms = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
 		{
 			"settimer",
 			"menu",
@@ -177,58 +178,58 @@ namespace Keysharp.Scripting
 			"persistent"
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
 
-		private Stack<bool> allGlobalVars = new Stack<bool>();
-		private tsmd allMethodCalls = new tsmd();
-		private Stack<bool> allStaticVars = new Stack<bool>();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
-		private CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
-		private HashSet<CodeSnippetExpression> assignSnippets = new ();
+		private readonly Stack<bool> allGlobalVars = new Stack<bool>();
+		private readonly tsmd allMethodCalls = new tsmd();
+		private readonly Stack<bool> allStaticVars = new Stack<bool>();
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
+		private readonly CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
+		private readonly HashSet<CodeSnippetExpression> assignSnippets = new ();
 		private bool blockOpen;
-		private Stack<CodeBlock> blocks = new ();
+		private readonly Stack<CodeBlock> blocks = new ();
 		private uint caseCount;
-		private CompilerHelper Ch;
+		private readonly CompilerHelper Ch;
 		private List<CodeLine> codeLines = new List<CodeLine>();
-		private Stack<List<string>> currentFuncParams = new Stack<List<string>>();
-		private Stack<CodeStatementCollection> elses = new ();
-		private Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
+		private readonly Stack<List<string>> currentFuncParams = new Stack<List<string>>();
+		private readonly Stack<CodeStatementCollection> elses = new ();
+		private readonly Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
 		private uint exCount;
 		private string fileName;
-		private tsmd getMethodCalls = new tsmd();
-		private tsmd getPropertyValueCalls = new tsmd();
-		private Stack<List<string>> globalFuncVars = new Stack<List<string>>();
-		private Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
+		private readonly tsmd getMethodCalls = new tsmd();
+		private readonly tsmd getPropertyValueCalls = new tsmd();
+		private readonly Stack<List<string>> globalFuncVars = new Stack<List<string>>();
+		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
 		private int internalID;
-		private List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
+		private readonly List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
 		private int labelCount;
 		private string lastHotkeyFunc = "";
 		private string lastHotstringFunc = "";
-		private Stack<List<string>> localFuncVars = new Stack<List<string>>();
+		private readonly Stack<List<string>> localFuncVars = new Stack<List<string>>();
 
-		private CodeMemberMethod main = new CodeMemberMethod()
+		private readonly CodeMemberMethod main = new CodeMemberMethod()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
 			Name = "Main"
 		};
 
-		private CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
+		private readonly CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
 		private bool memberVarsStatic = false;
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
-		private char[] ops = [Equal, Not, Greater, Less];
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
+		private readonly char[] ops = [Equal, Not, Greater, Less];
 		private CodeStatementCollection parent;
 		private CodeBlock parentBlock;
-		private CodeStatementCollection prepend = new CodeStatementCollection();
-		private Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
-		private tsmd setPropertyValueCalls = new tsmd();
-		private Stack<CodeBlock> singleLoops = new ();
-		private List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
-		private List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
-		private Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
+		private readonly CodeStatementCollection prepend = new CodeStatementCollection();
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
+		private readonly tsmd setPropertyValueCalls = new tsmd();
+		private readonly Stack<CodeBlock> singleLoops = new ();
+		private readonly List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
+		private readonly List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
+		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
 		private uint switchCount;
-		private Stack<CodeSwitchStatement> switches = new ();
-		private CodeTypeDeclaration targetClass;
-		private Stack<CodeTernaryOperatorExpression> ternaries = new ();
+		private readonly Stack<CodeSwitchStatement> switches = new ();
+		private readonly CodeTypeDeclaration targetClass;
+		private readonly Stack<CodeTernaryOperatorExpression> ternaries = new ();
 		private uint tryCount;
-		private Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+		private readonly Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
 
 		public Parser(CompilerHelper ch)
 		{
@@ -641,7 +642,7 @@ namespace Keysharp.Scripting
 
 							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
 							method.Parameters.Clear();
-							method.Parameters.Add(cdpeArgs);
+							_ = method.Parameters.Add(cdpeArgs);
 							newmeth = method;
 						}
 						else if (callmeth == null && string.Compare(method.Name, "Call", true) == 0)
@@ -652,6 +653,13 @@ namespace Keysharp.Scripting
 						else if (string.Compare(method.Name, "__Init", true) == 0)
 						{
 							method.Name = "__Init";
+						}
+						else if (string.Compare(method.Name, "__StaticInit", true) == 0)
+						{
+							method.Name = "__StaticInit";
+							method.Attributes = MemberAttributes.Private | MemberAttributes.Static;
+							method.Parameters.Clear();
+							_ = typeMethods.Key.Members.Add(method);
 						}
 						else
 							_ = typeMethods.Key.Members.Add(method);
@@ -703,7 +711,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) as CodeConstructor;
+					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
 
 					if (newmeth != null)
 					{
@@ -723,12 +731,19 @@ namespace Keysharp.Scripting
 							_ = thisconstructor.Statements.Add(new CodeSnippetExpression($"__New(args)"));
 
 						thisconstructor.Parameters.Clear();
-						thisconstructor.Parameters.Add(cdpeArgs);
+						_ = thisconstructor.Parameters.Add(cdpeArgs);
 						//Get param names and pass.
 						callmeth.Parameters.Clear();
 						callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
 						callmeth.Statements.Clear();
 						_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+					}
+
+					var thisStaticConstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeTypeConstructor cc) as CodeTypeConstructor;
+
+					if (thisStaticConstructor != null)
+					{
+						_ = thisStaticConstructor.Statements.Add(new CodeSnippetExpression($"__StaticInit()"));
 					}
 
 					if (baseType != "KeysharpObject" && thisconstructor != null)
@@ -742,7 +757,7 @@ namespace Keysharp.Scripting
 							if (ctdbase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
 							{
 								thisconstructor.BaseConstructorArgs.Clear();
-								thisconstructor.BaseConstructorArgs.Add(argsSnippet);
+								_ = thisconstructor.BaseConstructorArgs.Add(argsSnippet);
 								//var i = 0;
 								//for (; i < thisconstructor.Parameters.Count && i < ctm2.Parameters.Count; i++)//Iterate through all of the parameters in this class's constructor.
 								//  _ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
@@ -766,7 +781,7 @@ namespace Keysharp.Scripting
 										if (ctorparams.Length > 0)
 										{
 											thisconstructor.BaseConstructorArgs.Clear();
-											thisconstructor.BaseConstructorArgs.Add(argsSnippet);
+											_ = thisconstructor.BaseConstructorArgs.Add(argsSnippet);
 											//var i = 0;
 											//for (; i < thisconstructor.Parameters.Count && i < ctorparams.Length; i++)//Iterate through all of the parameters in this class's constructor.
 											//  _ = thisconstructor.BaseConstructorArgs.Add(new CodeSnippetExpression($"{thisconstructor.Parameters[i].Name}"));
@@ -865,6 +880,9 @@ namespace Keysharp.Scripting
 			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
 			Statements();
+
+			if (!Persistent)
+				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.SetReady));
 
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));

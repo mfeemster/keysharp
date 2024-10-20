@@ -5,7 +5,7 @@ namespace Keysharp.Core
 	public static partial class Screen
 	{
 		private static Size size1 = new (1, 1);
-		private static Dictionary<string, Regex> optsItems = new Dictionary<string, Regex>
+		private static readonly Dictionary<string, Regex> optsItems = new Dictionary<string, Regex>
 		{
 			{ Keyword_Icon, IconRegex() },
 			{ Keyword_Trans, TransRegex() },

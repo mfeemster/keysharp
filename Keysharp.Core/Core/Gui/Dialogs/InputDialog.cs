@@ -6,11 +6,11 @@ namespace Keysharp.Core
 	internal class InputDialog : Form
 	{
 		private const int CP_NOCLOSE_BUTTON = 0x200;
-		private Button btnCancel;
-		private Button btnOK;
-		private Label prompt;
+		private readonly Button btnCancel;
+		private readonly Button btnOK;
+		private readonly Label prompt;
 		private System.Windows.Forms.Timer timer;
-		private TextBox txtMessage;
+		private readonly TextBox txtMessage;
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Default { get; set; }
 

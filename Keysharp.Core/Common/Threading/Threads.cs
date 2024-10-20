@@ -62,7 +62,7 @@ namespace Keysharp.Core.Common.Threading
 
 	public static class Threads
 	{
-		private static ThreadVariableManager tvm = new ThreadVariableManager();
+		private static readonly ThreadVariableManager tvm = new ThreadVariableManager();
 
 		public static (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
@@ -101,10 +101,15 @@ namespace Keysharp.Core.Common.Threading
 					&& (DateTime.Now - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
 					&& !Flow.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
 			   )
+			{
 				// Once the thread becomes interruptible by any means, g->ThreadStartTime/UninterruptibleDuration
 				// can never matter anymore because only Critical (never "Thread Interrupt") can turn off the
 				// interruptibility again, and it resets g->UninterruptibleDuration.
 				tv.allowThreadToBeInterrupted = true; // Avoids issues with 49.7 day limit of 32-bit TickCount, and also helps performance future callers of this function (they can skip most of the checking above).
+
+				if (!tv.isCritical)
+					tv.peekFrequency = ThreadVariables.DefaultPeekFrequency;
+			}
 
 			return tv.allowThreadToBeInterrupted;
 		}

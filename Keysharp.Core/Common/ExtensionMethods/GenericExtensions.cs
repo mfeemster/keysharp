@@ -354,10 +354,12 @@ namespace System.Collections.Generic
 				//lock (ehLock)
 				{
 					var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+					var oldEventInfo = Accessors.A_EventInfo;
 					var (pushed, tv) = Threads.BeginThread();
 
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 					{
+						tv.eventInfo = oldEventInfo;
 						_ = Misc.TryCatch(() =>
 						{
 							if (inst is Control ctrl && ctrl.FindForm() is Form form)

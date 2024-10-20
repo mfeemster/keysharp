@@ -2,7 +2,7 @@
 {
 	public static class ImageLists
 	{
-		private static ConcurrentDictionary<long, ImageList> imageLists;
+		private static readonly ConcurrentDictionary<long, ImageList> imageLists;
 
 		static ImageLists()
 		{

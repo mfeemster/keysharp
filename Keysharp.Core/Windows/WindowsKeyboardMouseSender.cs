@@ -87,11 +87,11 @@ namespace Keysharp.Core.Windows
 		private static readonly int[] ctrls = [/*(int)Keys.ShiftKey, */(int)Keys.LShiftKey, (int)Keys.RShiftKey, /*(int)Keys.ControlKey,*/(int)Keys.LControlKey, (int)Keys.RControlKey, (int)Keys.Menu];
 
 		//private static readonly byte[] state = new byte[VKMAX];
-		private static IntPtr hookId = IntPtr.Zero;
+		private static readonly IntPtr hookId = IntPtr.Zero;
 
 		private static bool thisEventHasBeenLogged, thisEventIsScreenCoord;
-		private StringBuilder buf = new StringBuilder(4);
-		private List<CachedLayoutType> cachedLayouts = new List<CachedLayoutType>(10);
+		private readonly StringBuilder buf = new StringBuilder(4);
+		private readonly List<CachedLayoutType> cachedLayouts = new List<CachedLayoutType>(10);
 		//private bool dead;
 		//private List<uint> deadKeys;
 		//private bool ignore;
@@ -538,6 +538,44 @@ namespace Keysharp.Core.Windows
 				// down, so we saw the down event but not the up event.
 				var modifiersWronglyDown = modifiersLRLogical & ~modifiersLR;
 
+				// modifiers_wrongly_down can sometimes include modifiers that have only just been pressed
+				// but aren't yet reflected by IsKeyDownAsync().  This happens much more often if a keyboard
+				// hook is installed AFTER our own.  The following simple script was enough to reproduce this:
+				//  ~*RWin::GetKeyState("RWin", "P")
+				//  >#/::MsgBox  ; This hotkey sometimes or always failed to fire.
+				// The sequence of events was probably something like this:
+				//  - OS detects RWin down.
+				//  - OS calls other hook.
+				//  - Other hook calls ours via CallNextHookEx (meaning its thread is blocked
+				//    waiting for the call to return).
+				//  - Our hook updates key state, posts AHK_HOOK_HOTKEY and RETURNS IMMEDIATELY
+				//    (but the other hook is in another thread, so it doesn't resume immediately).
+				//  - Script thread receives AHK_HOOK_HOTKEY and fires hotkey.
+				//  - Hotkey calls Send or GetKeyState, triggering the section below, adjusting
+				//    g_modifiersLR_logical to match GetAsyncKeyState().
+				//  - Other hook's thread wakes up and returns.
+				//  - OS updates key state, so then GetAsyncKeyState() reports the correct state
+				//    and g_modifiersLR_logical is incorrect.
+				//  - RWin+/ doesn't fire the hotkey because the hook thinks RWin isn't down,
+				//    even though KeyHistory shows that it should be down.
+				// The issue occurred with maybe 50% frequency if the other hook was an AutoHotkey hook,
+				// and 100% frequency if the other hook was implemented by a script (which is slower).
+				// Only the last pressed modifier is excluded, since any other key-down or key-up being
+				// detected would usually mean that the previous call to the hook has finished (although
+				// the hook can be called recursively with artificial input).
+				if (modifiersLRLastPressed != 0 && ((DateTime.Now - modifiersLRLastPressedTime).TotalMilliseconds < 20))
+				{
+					if ((modifiersWronglyDown & modifiersLRLastPressed) != 0)
+					{
+						// It's logically down according to the hook, but not according to IsKeyDownAsync().
+						// Trust the hook in this case.
+						modifiersWronglyDown &= ~modifiersLRLastPressed;
+						// v2.0.12: Report that the modifier is down, consistent with g_modifiersLR_logical.
+						// This fixes an issue where Send erroneously releases modifiers in {Blind} mode.
+						modifiersLR |= modifiersLRLastPressed;
+					}
+				}
+
 				if (modifiersWronglyDown != 0)
 				{
 					// Adjust the physical and logical hook state to release the keys that are wrongly down.
@@ -898,8 +936,7 @@ namespace Keysharp.Core.Windows
 		{
 			// Check if one of the coordinates is missing, which can happen in cases where this was called from
 			// a source that didn't already validate it. Can't call Line::ValidateMouseCoords() because that accepts strings.
-			if ((x1 == CoordUnspecified && y1 != CoordUnspecified) || (x1 != CoordUnspecified && y1 == CoordUnspecified)
-					|| (x2 == CoordUnspecified && y2 != CoordUnspecified) || (x2 != CoordUnspecified && y2 == CoordUnspecified))
+			if ((x1 == CoordUnspecified ^ y1 == CoordUnspecified) || (x2 == CoordUnspecified ^ y2 == CoordUnspecified))
 				return;
 
 			// I asked Jon, "Have you discovered that insta-drags almost always fail?" and he said
@@ -1067,16 +1104,26 @@ namespace Keysharp.Core.Windows
 					// Since GetCursorPos() can't be called to find out a future cursor position, use the position
 					// tracked for SendInput (facilitates MouseClickDrag's R-option as well as Send{Click}'s).
 					if (sendInputCursorPos.X == CoordUnspecified) // Initial/starting value hasn't yet been set.
-						_ = GetCursorPos(out sendInputCursorPos); // Start it off where the cursor is now.
-
-					x += sendInputCursorPos.X;
-					y += sendInputCursorPos.Y;
+					{
+						if (GetCursorPos(out sendInputCursorPos)) // Start it off where the cursor is now.
+						{
+							x += sendInputCursorPos.X;
+							y += sendInputCursorPos.Y;
+						}
+					}
+					else
+					{
+						x += sendInputCursorPos.X;
+						y += sendInputCursorPos.Y;
+					}
 				}
 				else
 				{
-					_ = GetCursorPos(out cursor_pos); // None of this is done for playback mode since that mode already returned higher above.
-					x += cursor_pos.X;
-					y += cursor_pos.Y;
+					if (GetCursorPos(out cursor_pos)) // None of this is done for playback mode since that mode already returned higher above.
+					{
+						x += cursor_pos.X;
+						y += cursor_pos.Y;
+					}
 				}
 			}
 			else
@@ -1116,11 +1163,13 @@ namespace Keysharp.Core.Windows
 			// Since above didn't return, use the incremental mouse move to gradually move the cursor until
 			// it arrives at the destination coordinates.
 			// Convert the cursor's current position to mouse event coordinates (MOUSEEVENTF_ABSOLUTE).
-			_ = GetCursorPos(out cursor_pos);
-			DoIncrementalMouseMove(
-				MouseCoordToAbs(cursor_pos.X, screen_width), //Source/starting coords.
-				MouseCoordToAbs(cursor_pos.Y, screen_height),
-				x, y, speed);                             //Destination/ending coords.
+			if (GetCursorPos(out cursor_pos))
+			{
+				DoIncrementalMouseMove(
+					MouseCoordToAbs(cursor_pos.X, screen_width), //Source/starting coords.
+					MouseCoordToAbs(cursor_pos.Y, screen_height),
+					x, y, speed);                             //Destination/ending coords.
+			}
 		}
 
 		internal override int PbEventCount() => eventPb.Count;
@@ -1233,9 +1282,11 @@ namespace Keysharp.Core.Windows
 							// Since the user nor anything else can move the cursor during our playback, GetCursorPos()
 							// should accurately reflect the position set by any previous mouse-move done by this playback.
 							// This seems likely to be true even for DirectInput games, though hasn't been tested yet.
-							_ = GetCursorPos(out var cursor);
-							ev.paramL = (uint)cursor.X;
-							ev.paramH = (uint)cursor.Y;
+							if (GetCursorPos(out var cursor))
+							{
+								ev.paramL = (uint)cursor.X;
+								ev.paramH = (uint)cursor.Y;
+							}
 
 							if (hasCoordOffset) // The specified coordinates are offsets to be applied to the cursor's current position.
 							{
@@ -1662,10 +1713,11 @@ namespace Keysharp.Core.Windows
 						// is possible, it seems overly complex and it might impact performance more than it's
 						// worth given the rarity of the user changing physical key states during a SendInput
 						// and then wanting to explicitly retrieve that state via GetKeyState(Key, "P").
-						var mods_current = GetModifierLRState(true); // This also serves to correct the hook's logical modifiers, since hook was absent during the SendInput.
-						var mods_changed_physically_during_send = modsDuringSend ^ mods_current;
-						modifiersLRPhysical &= ~(mods_changed_physically_during_send & modsDuringSend); // Remove those that changed from down to up.
-						modifiersLRPhysical |= mods_changed_physically_during_send & mods_current; // Add those that changed from up to down.
+						var modsCurrent = GetModifierLRState(true); // This also serves to correct the hook's logical modifiers, since hook was absent during the SendInput.
+						var modsChangedPhysicallyDuringSend = modsDuringSend ^ modsCurrent;
+						modifiersLRPhysical &= ~(modsChangedPhysicallyDuringSend & modsDuringSend); // Remove those that changed from down to up.
+						modifiersLRPhysical |= modsChangedPhysicallyDuringSend & modsCurrent; // Add those that changed from up to down.
+						modifiersLRLogical = modifiersLRLogicalNonIgnored = modsCurrent; // Necessary for hotkeys to be recognized correctly if modifiers were sent.
 						Script.HookThread.hsHwnd = GetForegroundWindow(); // An item done by ResetHook() that seems worthwhile here.
 						// Most other things done by ResetHook() seem like they would do more harm than good to reset here
 						// because of the the time the hook is typically missing is very short, usually under 30ms.
@@ -1976,22 +2028,32 @@ namespace Keysharp.Core.Windows
 				// letters because avoiding that adds flexibility that couldn't be achieved otherwise.
 				// Thus, ^c::Send {Blind}c produces the same result when ^c is substituted for the final c.
 				// But Send {Blind}{LControl down} will generate the extra events even if ctrl already down.
+				var modMask = MODLR_MASK;
 				var keySpan = keys.AsSpan(6);
 
 				for (i = 0; i < keySpan.Length && keySpan[i] != '}'; ++i)
 				{
+					uint mod = 0;
+
 					switch (keySpan[i])
 					{
-						case '^': modsExcludedFromBlind |= MOD_LCONTROL | MOD_RCONTROL; break;
+						case '<': modMask = MODLR_LMASK; continue;
 
-						case '+': modsExcludedFromBlind |= MOD_LSHIFT | MOD_RSHIFT; break;
+						case '>': modMask = MODLR_RMASK; continue;
 
-						case '!': modsExcludedFromBlind |= MOD_LALT | MOD_RALT; break;
+						case '^': mod = MOD_LCONTROL | MOD_RCONTROL; break;
 
-						case '#': modsExcludedFromBlind |= MOD_LWIN | MOD_RWIN; break;
+						case '+': mod = MOD_LSHIFT | MOD_RSHIFT; break;
+
+						case '!': mod = MOD_LALT | MOD_RALT; break;
+
+						case '#': mod = MOD_LWIN | MOD_RWIN; break;
 
 						case '\0': return; // Just ignore the error.
 					}
+
+					modsExcludedFromBlind |= mod & modMask;
+					modMask = MODLR_MASK; // Reset for the next modifier.
 				}
 
 				sub = keySpan.Slice(i);
@@ -2150,13 +2212,10 @@ namespace Keysharp.Core.Windows
 			// the modifier to "down" even after the user "releases" it by some other means.
 			modifiersLRRemapped &= modsCurrent;
 			// Make a best guess of what the physical state of the keys is prior to starting (there's no way
-			// to be certain without the keyboard hook). Note: We only want those physical
-			// keys that are also logically down (it's possible for a key to be down physically
-			// but not logically such as when R-control, for example, is a suffix hotkey and the
-			// user is physically holding it down):
-			uint modsDownPhysicallyOrig,
-				 modsDownPhysicallyAndLogically,
-				 modsDownPhysicallyButNotLogicallyOrig;
+			// to be certain without the keyboard hook). Note: It's possible for a key to be down physically
+			// but not logically such as when RControl, for example, is a suffix hotkey and the user is
+			// physically holding it down.
+			uint modsDownPhysicallyOrig, modsDownPhysicallyButNotLogicallyOrig;
 
 			//if (hookId != IntPtr.Zero)
 			if (ht.HasKbdHook())
@@ -2164,7 +2223,6 @@ namespace Keysharp.Core.Windows
 				// Since hook is installed, use its more reliable tracking to determine which
 				// modifiers are down.
 				modsDownPhysicallyOrig = modifiersLRPhysical;
-				modsDownPhysicallyAndLogically = modifiersLRPhysical & modifiersLRLogical; // intersect
 				modsDownPhysicallyButNotLogicallyOrig = modifiersLRPhysical & ~modifiersLRLogical;
 			}
 			else // Use best-guess instead.
@@ -2180,27 +2238,37 @@ namespace Keysharp.Core.Windows
 					// are physically down:
 					modsDownPhysicallyOrig = 0;
 
-				modsDownPhysicallyAndLogically = modsDownPhysicallyOrig;
 				modsDownPhysicallyButNotLogicallyOrig = 0; // There's no way of knowing, so assume none.
 			}
 
 			// Any of the external modifiers that are down but NOT due to the hotkey are probably
 			// logically down rather than physically (perhaps from a prior command such as
-			// "Send, {CtrlDown}".  Since there's no way to be sure without the keyboard hook or some
-			// driver-level monitoring, it seems best to assume that
-			// they are logically vs. physically down.  This value contains the modifiers that
-			// we will not attempt to change (e.g. "Send, A" will not release the LWin
-			// before sending "A" if this value indicates that LWin is down).  The below sets
-			// the value to be all the down-keys in mods_current except any that are physically
-			// down due to the hotkey itself.  UPDATE: To improve the above, we now exclude from
+			// `Send "{CtrlDown}"`.  Since there's no way to be sure without the keyboard hook
+			// or some driver-level monitoring, it seems best to assume that they are logically
+			// vs. physically down.
+			// persistent_modifiers_for_this_SendKeys contains the modifiers that we will not
+			// attempt to change (e.g. `Send "A"` will not release LWin before sending "A" if
+			// this value indicates that LWin is down).
+			// This used to be = modifiersLR_current & ~modifiersLR_down_physically_and_logically,
+			// but v1.0.13 added g_modifiersLR_persistent to limit it to only mods which the script
+			// put into effect.  Old comment explains: [[ To improve the above, we now exclude from
 			// the set of persistent modifiers any that weren't made persistent by this script.
 			// Such a policy seems likely to do more good than harm as there have been cases where
 			// a modifier was detected as persistent just because A_HotkeyModifierTimeout expired
 			// while the user was still holding down the key, but then when the user released it,
 			// this logic here would think it's still persistent and push it back down again
 			// to enforce it as "always-down" during the send operation.  Thus, the key would
-			// basically get stuck down even after the send was over:
-			modifiersLRPersistent &= modsCurrent & ~modsDownPhysicallyAndLogically;
+			// basically get stuck down even after the send was over. ]]
+			// v2.0.13: The original bitmask ~modifiersLR_down_physically_and_logically is removed.
+			// It was originally described as "all the down-keys in mods_current except any that are
+			// physically down due to the hotkey itself".  For example, ^a::Send,b requires the user
+			// to hold Ctrl to activate the hotkey, so he probably doesn't want to send ^b.
+			// However, sModifiersLR_persistent achieves the purpose of preventing Ctrl from being
+			// sent in such cases, while the original bitmask only serves to prevent {Ctrl Down} from
+			// being persistent if the user happens to physically hold Ctrl (for any purpose).
+			// For example, when Send "{Shift Down}" and *KEY::Send "a" are used in combination,
+			// the result should be "A" regardless of whether KEY = Shift.
+			modifiersLRPersistent &= modsCurrent;
 			uint persistentModifiersForThisSendKeys;
 			var modsReleasedForSelectiveBlind = 0u;
 
@@ -3134,7 +3202,7 @@ namespace Keysharp.Core.Windows
 			var modifiersLRunion = modifiersLRnow | modifiersLRnew; // The set of keys that were or will be down.
 			var ctrlNotDown = (modifiersLRnow & (MOD_LCONTROL | MOD_RCONTROL)) == 0; // Neither CTRL key is down now.
 			var ctrlWillNotBeDown = (modifiersLRnew & (MOD_LCONTROL | MOD_RCONTROL)) == 0 // Nor will it be.
-									&& targetLayoutHasAltGr == ResultType.ConditionTrue && (modifiersLRnew & MOD_RALT) != 0; // Nor will it be pushed down indirectly due to AltGr.
+									&& !(targetLayoutHasAltGr == ResultType.ConditionTrue && ((modifiersLRnew & MOD_RALT) != 0)); // Nor will it be pushed down indirectly due to AltGr.
 			var ctrlNorShiftNorAltDown = ctrlNotDown                             // Neither CTRL key is down now.
 										 && (modifiersLRnow & (MOD_LSHIFT | MOD_RSHIFT | MOD_LALT | MOD_RALT)) == 0; // Nor is any SHIFT/ALT key.
 			var ctrlOrShiftOrAltWillBeDown = !ctrlWillNotBeDown             // CTRL will be down.
@@ -3871,8 +3939,8 @@ namespace Keysharp.Core.Windows
 				// Users of the below want them updated only for keybd_event() keystrokes (not PostMessage ones):
 				prevEventType = eventType;
 				prevVK = vk;
-				var tempTargetLayoutHasAltGr = callerIsKeybdHook ? LayoutHasAltGr(GetFocusedKeybdLayout(IntPtr.Zero)) : targetLayoutHasAltGr;
-				var hookableAltGr = (vk == VK_RMENU) && (tempTargetLayoutHasAltGr == ResultType.ConditionTrue) && !putEventIntoArray && ht.HasKbdHook();// hookId != IntPtr.Zero;
+				var tempTargetLayoutHasAltGr = (callerIsKeybdHook ? LayoutHasAltGr(GetFocusedKeybdLayout(IntPtr.Zero)) : targetLayoutHasAltGr) == ResultType.ConditionTrue; // i.e. not CONDITION_FALSE (which is nonzero) or FAIL (zero).
+				var hookableAltGr = (vk == VK_RMENU) && tempTargetLayoutHasAltGr && !putEventIntoArray && ht.HasKbdHook();// hookId != IntPtr.Zero;
 				// Calculated only once for performance (and avoided entirely if not needed):
 				bool? b = null;
 				var keyAsModifiersLR = putEventIntoArray ? ht.KeyToModifiersLR(vk, sc, ref b) : 0;
@@ -3928,7 +3996,7 @@ namespace Keysharp.Core.Windows
 
 					// The following is done to avoid an extraneous artificial {LCtrl Up} later on,
 					// since the keyboard driver should insert one in response to this {RAlt Up}:
-					if (targetLayoutHasAltGr != ResultType.Fail && sc == ScanCodes.RAlt)
+					if (targetLayoutHasAltGr == ResultType.ConditionTrue && sc == ScanCodes.RAlt)
 						eventModifiersLR &= ~MOD_LCONTROL;
 
 					if (doKeyHistory && ht.keyHistory is KeyHistory kh)

@@ -6,7 +6,7 @@ namespace Keysharp.Tests
 {
 	public class FileAndDirTests : TestRunner
 	{
-		private Lock syncroot = new ();
+		private readonly Lock syncroot = new ();
 
 		[Test, Category("FileAndDir")]
 		public void DirCopy()
@@ -1077,7 +1077,54 @@ groupkey13=groupval13
 #endif
 			Assert.AreEqual("txt", ext);
 			Assert.AreEqual("file1", namenoext);
-			Assert.IsTrue(TestScript("file-filesplitpath", true));
+			var url = "https://domain.com";
+			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("", filename);
+			Assert.AreEqual("https://domain.com", dir);
+			Assert.AreEqual("", ext);
+			Assert.AreEqual("", namenoext);
+			Assert.AreEqual("https://domain.com", drive);
+			//
+			url = "https://domain.com/images";
+			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("", filename);
+			Assert.AreEqual("https://domain.com/images", dir);
+			Assert.AreEqual("", ext);
+			Assert.AreEqual("", namenoext);
+			Assert.AreEqual("https://domain.com", drive);
+			//
+			url = "https://domain.com/images/afile.jpg";
+			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("afile.jpg", filename);
+			Assert.AreEqual("https://domain.com/images", dir);
+			Assert.AreEqual("jpg", ext);
+			Assert.AreEqual("afile", namenoext);
+			Assert.AreEqual("https://domain.com", drive);
+			//
+			fullpath = "\\\\machinename";
+			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("", filename);
+			Assert.AreEqual("\\\\machinename", dir);
+			Assert.AreEqual("", ext);
+			Assert.AreEqual("", namenoext);
+			Assert.AreEqual("\\\\machinename", drive);
+			//
+			fullpath = "\\\\machinename\\dir";
+			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("", filename);
+			Assert.AreEqual("\\\\machinename\\dir", dir);
+			Assert.AreEqual("", ext);
+			Assert.AreEqual("", namenoext);
+			Assert.AreEqual("\\\\machinename", drive);
+			//
+			fullpath = "\\\\machinename\\dir\\filename.txt";
+			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("filename.txt", filename);
+			Assert.AreEqual("\\\\machinename\\dir", dir);
+			Assert.AreEqual("txt", ext);
+			Assert.AreEqual("filename", namenoext);
+			Assert.AreEqual("\\\\machinename", drive);
+			Assert.IsTrue(TestScript("file-filesplitpath", false));
 		}
 	}
 }

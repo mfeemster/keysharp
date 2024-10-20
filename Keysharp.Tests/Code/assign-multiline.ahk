@@ -392,6 +392,42 @@ If (!c)
 else
 	FileAppend, "fail", "*"
 
+x := "asdf"
+y := "qwer"
+z := x
+. y
+
+If (z == "asdfqwer")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := ""
+z := x .
+y
+
+If (z == "asdfqwer")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 123.
+456
+
+If (x == 123.456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 0
+x := 123
+.456
+
+If (x == 123.456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 ProductIsAvailableInColor(a, b)
 {
 	return 123

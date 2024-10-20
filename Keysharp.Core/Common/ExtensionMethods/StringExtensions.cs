@@ -447,57 +447,6 @@
 			return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
 		}
 
-		internal static List<string> SplitWithDelimiter(this string aMatchList, char[] delims, bool append)
-		{
-			var match = new List<string>();
-
-			if (!string.IsNullOrEmpty(aMatchList))
-			{
-				var sb = new StringBuilder(16);
-
-				for (var i = 0; i < aMatchList.Length; i++)
-				{
-					if (!delims.Contains(aMatchList[i])) // Not a delim, so just copy it over.
-					{
-						_ = sb.Append(aMatchList[i]);
-						continue;
-					}
-
-					//Otherwise: it's a delim, which becomes the terminator of the previous key phrase unless
-					//it's a double delim, in which case it's considered to be part of the previous phrase
-					//rather than the next.
-					if (i < aMatchList.Length - 1 && aMatchList[i + 1] == aMatchList[i]) // double delim
-					{
-						if (append)
-						{
-							_ = sb.Append(aMatchList[i]);
-						}
-						else
-						{
-							match.Add(sb.ToString());
-							match.Add(aMatchList[i].ToString());
-							_ = sb.Clear();
-						}
-
-						i++;  // Omit the second delim of the pair, i.e. each pair becomes a single literal delim.
-						continue;
-					}
-
-					//Otherwise, this is a delimiting delim.
-					if (sb.Length > 0)
-					{
-						match.Add(sb.ToString());
-						_ = sb.Clear();
-					}
-				}
-
-				if (sb.Length > 0)
-					match.Add(sb.ToString());
-			}
-
-			return match;
-		}
-
 		internal static int StartsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
 		{
 			foreach (var start in strings)

@@ -80,7 +80,7 @@ namespace Keysharp.Core.COM
 		private ct.IConnectionPoint connection;
 		private int cookie;
 		private bool disposedValue;
-		private Guid interfaceID;
+		private readonly Guid interfaceID;
 		private readonly ct.ITypeInfo? typeInfo;
 
 		public ComObject Co { get; }

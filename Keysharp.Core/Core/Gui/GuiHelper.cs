@@ -374,7 +374,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// The Windows API funcitons have serious limitations when it comes to loading icons.
+		/// The Windows API functions have serious limitations when it comes to loading icons.
 		/// They can't load any of size 256 or larger, plus they are platform specific.
 		/// This loads the desired size and is cross platform.
 		/// Gotten from https://www.codeproject.com/Articles/26824/Extract-icons-from-EXE-or-DLL-files

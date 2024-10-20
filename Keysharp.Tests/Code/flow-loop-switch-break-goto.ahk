@@ -14,7 +14,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -33,7 +33,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -53,7 +53,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -73,7 +73,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -99,7 +99,7 @@ if (x == 999)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -125,7 +125,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -149,7 +149,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -174,7 +174,7 @@ if (x == 5)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -198,7 +198,7 @@ if (x == 999)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -225,7 +225,7 @@ if (x == 1)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -255,7 +255,7 @@ if (x == 1)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -289,7 +289,7 @@ if (x == 1)
 else
 	FileAppend, "fail", "*"
 
-if (A_Index == null)
+if (A_Index == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

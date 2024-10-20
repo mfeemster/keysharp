@@ -4,7 +4,7 @@ namespace Keysharp.Core
 {
 	public static class Env
 	{
-		private static IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
+		private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
 				.Select(f => f.Name);
 
 		/// <summary>
@@ -14,6 +14,7 @@ namespace Keysharp.Core
 		/// <returns></returns>
 		public static ClipboardAll ClipboardAll(object obj0 = null, object obj1 = null)
 		{
+			//Need to see if this should be put on the main thread like A_Clipboard.//TODO
 #if LINUX
 			return new ClipboardAll();
 #elif WINDOWS
@@ -104,7 +105,7 @@ namespace Keysharp.Core
 
 		public static bool ClipWait(object obj0 = null, object obj1 = null)
 		{
-			//Will need to see if this works in a cross platform way.//TODO
+			//Need to see if this should be put on the main thread like A_Clipboard.//TODO
 			var timeout = obj0.Ad(double.MinValue);
 			var type = obj1.Ab();
 			var checktime = timeout != double.MinValue;

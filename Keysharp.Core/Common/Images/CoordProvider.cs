@@ -5,7 +5,7 @@
 	/// </summary>
 	internal sealed class CoordProvider
 	{
-		private Lock locker = new ();
+		private readonly Lock locker = new ();
 		private Point mCurrent;
 		private bool mDone;
 		private Size mMaxMovement;

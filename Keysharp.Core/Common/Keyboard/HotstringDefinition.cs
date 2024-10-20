@@ -13,8 +13,10 @@ namespace Keysharp.Core.Common.Keyboard
 		internal const int HS_TURNED_OFF = 0x02;
 		internal const int MAX_HOTSTRING_LENGTH = 40;
 		internal const string MAX_HOTSTRING_LENGTH_STR = "40";      // Hard to imagine a need for more than this, and most are only a few chars long.
+
 		internal bool caseSensitive, conformToCase, doBackspace, omitEndChar, endCharRequired
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
+
 		internal uint existingThreads, maxThreads;
 		internal IFuncObj funcObj;
 		internal IFuncObj hotCriterion;
@@ -25,36 +27,45 @@ namespace Keysharp.Core.Common.Keyboard
 		internal string str, replacement;
 		internal int suspended;
 
+		public bool CaseSensitive => caseSensitive;
+
+		public bool DoBackspace => doBackspace;
+
+		public bool DoReset => doReset;
+
 		[PublicForTestOnly]
 		public bool Enabled { get; set; }
 
 		[PublicForTestOnly]
 		public Options EnabledOptions { get; set; }
 
+		public bool EndCharRequired => endCharRequired;
+
+		public long KeyDelay => keyDelay;
+
 		[PublicForTestOnly]
 		public string Name { get; set; }
 
+		public bool OmitEndChar => omitEndChar;
+
+		public long Priority => priority;
+
 		[PublicForTestOnly]
-		public string Replacement { get; set; } = string.Empty;
+		public string Replacement => replacement;
+
+		public SendModes SendMode => sendMode;
+
+		public SendRawModes SendRaw => sendRaw;
 
 		[PublicForTestOnly]
 		public string Sequence { get; }
 
-		public bool CaseSensitive => caseSensitive;
-		public bool DoBackspace => doBackspace;
-		public bool OmitEndChar => omitEndChar;
-		public bool EndCharRequired => endCharRequired;
-		public bool DoReset => doReset;
 		public bool SuspendExempt => suspendExempt;
-		public long Priority => priority;
-		public long KeyDelay => keyDelay;
-		public SendModes SendMode => sendMode;
-		public SendRawModes SendRaw => sendRaw;
 
-		public HotstringDefinition(string sequence, string replacement)
+		public HotstringDefinition(string sequence, string _replacement)
 		{
 			Sequence = sequence;
-			Replacement = replacement;
+			replacement = _replacement;
 			//EndChars = defEndChars;
 		}
 
@@ -379,6 +390,8 @@ namespace Keysharp.Core.Common.Keyboard
 			tv.keyDurationPlay = oldPressDurationPlay;
 			tv.sendLevel = oldSendLevel;
 		}
+
+		internal bool HotIfRequiresEval() => hotCriterion is IFuncObj;
 
 		internal void ParseOptions(ReadOnlySpan<char> aOptions)
 		{

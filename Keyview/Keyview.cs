@@ -38,23 +38,23 @@
 		/// </summary>
 		private const int NUMBER_MARGIN = 1;
 
-		private static string keywords1 = "true false this thishotkey super unset isset " + Keysharp.Scripting.Parser.GetKeywords();
-		private static string keywords2 = Keysharp.Scripting.Script.GetPublicStaticPropertyNames();
+		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Keysharp.Scripting.Parser.GetKeywords();
+		private static readonly string keywords2 = Keysharp.Scripting.Script.GetPublicStaticPropertyNames();
 		private readonly Button btnCopyFullCode = new Button();
 		private readonly CheckBox chkFullCode = new CheckBox();
 		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 		private readonly System.Windows.Forms.Timer timer = new Timer();
 		private readonly char[] trimend = ['\n', '\r'];
 		private readonly double updateFreqSeconds = 1;
-		private CompilerHelper ch = new CompilerHelper();
-		private CSharpStyler csStyler = new CSharpStyler();
+		private readonly CompilerHelper ch = new CompilerHelper();
+		private readonly CSharpStyler csStyler = new CSharpStyler();
 		private bool force = false;
 		private string fullCode = "";
 		private DateTime lastCompileTime = DateTime.Now;
 		private DateTime lastKeyTime = DateTime.Now;
 		private bool SearchIsOpen = false;
 		private string trimmedCode = "";
-		private string trimstr = "{}\t";
+		private readonly string trimstr = "{}\t";
 
 		public Keyview()
 		{
@@ -126,7 +126,17 @@
 
 		private void collapseAllToolStripMenuItem_Click(object sender, EventArgs e) => txtIn.FoldAll(FoldAction.Contract);
 
-		private void CopyFullCode_Click(object sender, EventArgs e) => Clipboard.SetText(fullCode);
+		private void CopyFullCode_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				Clipboard.SetText(fullCode);
+			}
+			catch (Exception ex)
+			{
+				_ = MessageBox.Show($"Copying code failed: {ex.Message}", "Keyview", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
 
 		private void copyToolStripMenuItem_Click(object sender, EventArgs e)
 		{

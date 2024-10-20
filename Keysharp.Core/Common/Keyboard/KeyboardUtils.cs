@@ -16,6 +16,9 @@
 		internal const uint MOD_WIN = 0x0008;
 		internal const uint MODLR_COUNT = 8;
 		internal const uint MODLR_MAX = 0xFF;
+		internal const uint MODLR_LMASK = MOD_LCONTROL | MOD_LALT | MOD_LSHIFT | MOD_LWIN;
+		internal const uint MODLR_RMASK = MOD_RCONTROL | MOD_RALT | MOD_RSHIFT | MOD_RWIN;
+		internal const uint MODLR_MASK = MODLR_LMASK | MODLR_RMASK;
 
 		internal static string[] SEND_MODES = ["Event", "Input", "Play", "InputThenPlay"]; // Must match the SendModes enum.
 

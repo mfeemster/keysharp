@@ -176,9 +176,8 @@ namespace Keysharp.Scripting
 						{
 							case "NOMOUSE":
 							{
-								var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "HotstringNoMouse");
-								var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(true));
-								initial.Insert(0, propset);
+								var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "Hotstring", [new CodePrimitiveExpression("MouseReset"), new CodePrimitiveExpression(false)]);
+								initial.Insert(0, new CodeExpressionStatement(cmie));
 							}
 							break;
 

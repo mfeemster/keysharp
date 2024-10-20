@@ -104,7 +104,7 @@ using static Keysharp.Scripting.Script.Operator;
 		/// </summary>
 		public static Assembly compiledasm;
 
-		private CodeGeneratorOptions cgo = new CodeGeneratorOptions
+		private readonly CodeGeneratorOptions cgo = new CodeGeneratorOptions
 		{
 			IndentString = "\t",
 			VerbatimOrder = true,
@@ -118,7 +118,7 @@ using static Keysharp.Scripting.Script.Operator;
 		/// </summary>
 		//CodeCompileUnit targetUnit;
 
-		private CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
+		private readonly CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
 		{
 			{
 				"CompilerDirectoryPath", Path.Combine(Environment.CurrentDirectory, "./roslyn")

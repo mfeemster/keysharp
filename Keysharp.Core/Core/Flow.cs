@@ -49,7 +49,7 @@ namespace Keysharp.Core
 					on = b.Value;
 
 					if (on)
-						freq = 16L;
+						freq = ThreadVariables.DefaultUninterruptiblePeekFrequency;
 				}
 			}
 
@@ -479,7 +479,7 @@ namespace Keysharp.Core
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
-			var exitCode = obj1.Al();
+			var exitCode = Script.isReadyToExecute ? obj1.Al() : (long)ExitReasons.Critical;
 			Accessors.A_ExitReason = obj0.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;

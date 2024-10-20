@@ -257,7 +257,33 @@
 			if (icon != "")
 				shortcut.IconLocation = $"{Path.GetFullPath(icon)}, {iconNumber}";
 
-			shortcut.Hotkey = shortcutKey != "" ? $"Ctrl+Alt+{shortcutKey}" : "";
+			var mods = "";
+			var i = 0;
+
+			for (; i < shortcutKey.Length; i++)
+			{
+				char ch = shortcutKey[i];
+
+				if (ch == '^')
+					mods += "Ctrl+";
+				else if (ch == '!')
+					mods += "Alt+";
+				else if (ch == '+')
+					mods += "Shift+";
+				else
+					break;
+			}
+
+			if (shortcutKey.Length > 0)
+			{
+				if (mods.Length == 0)// For backwards compatibility: if modifiers omitted, assume CTRL+ALT.
+					shortcut.Hotkey = $"Ctrl+Alt+{shortcutKey}";
+				else
+					shortcut.Hotkey = $"{mods}{shortcutKey.Substring(i)}";
+			}
+			else
+				shortcut.Hotkey = "";
+
 			shortcut.WindowStyle = (int)runState;
 			shortcut.Save();
 #endif
@@ -1049,7 +1075,7 @@
 					if (set == FileAttributes.None)
 						set = FileAttributes.Normal;
 					else if (set.HasFlag(FileAttributes.Normal) && set != FileAttributes.Normal)//It was Normal and something else.
-						set &= ~FileAttributes.Normal;//Remove normal because it can only be used alone. Just use the other bits.
+							set &= ~FileAttributes.Normal;//Remove normal because it can only be used alone. Just use the other bits.
 
 					if (System.IO.File.GetAttributes(path) != set)
 						failures++;

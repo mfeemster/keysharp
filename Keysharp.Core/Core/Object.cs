@@ -218,7 +218,7 @@
 
 		public virtual object __New(params object[] obj) => "";
 
-		//public void __Init() { }
+		protected static object __StaticInit() => "";
 
 		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
 
@@ -227,10 +227,10 @@
 
 	public class OwnPropsIterator : IEnumerator<(object, object)>
 	{
-		private bool getVal;
+		private readonly bool getVal;
 		private IEnumerator<KeyValuePair<object, object>> iter;
-		private Dictionary<object, object> map;
-		private KeysharpObject obj;
+		private readonly Dictionary<object, object> map;
+		private readonly KeysharpObject obj;
 
 		public (object, object) Current
 		{

@@ -351,7 +351,7 @@
 			{
 				var index = (int)o.L1() - 1;
 
-				if (o.Length > 1)
+				if (o.Length > 1 && o[1] != null)
 				{
 					var len = (int)o.Al(1);
 
@@ -457,7 +457,7 @@
 
 	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
-		private List<object> arr;
+		private readonly List<object> arr;
 		private int position = -1;
 
 		public (object, object) Current

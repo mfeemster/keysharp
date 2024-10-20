@@ -282,6 +282,49 @@ namespace Keysharp.Tests
 		{
 			HotstringManager.ClearHotstrings();
 			Assert.IsTrue(TestScript("hotkey-hotstring-parsing", false));
+			HotstringManager.ClearHotstrings();
+		}
+
+		[NonParallelizable]
+		[Test, Category("Hotstring")]
+		public void HotstringParsing2()
+		{
+			HotstringManager.ClearHotstrings();
+			var filename = string.Format("hotstring-parsing2", Path.DirectorySeparatorChar);
+			_ = TestScript(filename, false);
+			//After the script exits, the hotstrings are still kept in memory in the global list.
+			//So query them below to ensure they were properly parsed.
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("btw ");
+			var hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::btw");
+			Assert.AreEqual(hs.Replacement, "by the way");
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//
+			HotstringManager.AddChars("1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::1");
+			Assert.AreEqual(hs.Replacement, ":2");
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//
+			HotstringManager.AddChars("3 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::3");
+			Assert.AreEqual(hs.Replacement, "::4");
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//
+			HotstringManager.AddChars("5: ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::5:");
+			Assert.AreEqual(hs.Replacement, "6");
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			//
+			HotstringManager.AddChars("7: ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::7:");
+			Assert.AreEqual(hs.Replacement, ":8");
+			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
+			HotstringManager.ClearHotstrings();
 		}
 
 		[NonParallelizable]
@@ -294,6 +337,8 @@ namespace Keysharp.Tests
 			_ = Keysharp.Core.Keyboard.Hotstring("Reset");
 			_ = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", Keysharp.Core.Misc.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+			Assert.IsTrue(Accessors.A_KeybdHookInstalled == 1);
+			Assert.IsTrue(Accessors.A_MouseHookInstalled == 1);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.B);
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.T);
 			Keysharp.Scripting.Script.SimulateKeyPress((uint)System.Windows.Forms.Keys.W);
@@ -321,22 +366,24 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring")]
 		public void ResetOnMouseClick()
 		{
-			var newVal = true;
-			var origVal = Script.ResetUponMouseClick;
+			var newVal = false;
+			var origVal = Accessors.A_HotstringNoMouse;
 			Assert.AreEqual(origVal, false);
 			var oldVal = Keysharp.Core.Keyboard.Hotstring("MouseReset", newVal);
-			Assert.AreNotEqual(origVal, Script.ResetUponMouseClick);
-			Assert.AreEqual(Script.ResetUponMouseClick, newVal);
-			Assert.AreEqual(origVal, oldVal);
+			Assert.AreNotEqual(origVal, Accessors.A_HotstringNoMouse);
+			Assert.AreEqual(Accessors.A_HotstringNoMouse, !newVal);
+			Assert.AreEqual(origVal.Ab(), !oldVal.Ab());
+			//Reset to what it was for the sake of other tests in this class.
+			_ = Keysharp.Core.Keyboard.Hotstring("MouseReset", true);
 		}
 
 		[NonParallelizable]
 		[Test, Category("Hotstring")]
 		public void AutoCorrect()
 		{
-			string val = "";
+			var val = "";
 			HotstringDefinition hs1, hs2;
-			string filename = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}HotstringTests.txt", Path.DirectorySeparatorChar);
+			var filename = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}HotstringTests.txt", Path.DirectorySeparatorChar);
 			var hotstrings = System.IO.File.ReadLines(filename);
 			var delimiters = new char[] { ',' };
 			HotstringManager.ClearHotstrings();

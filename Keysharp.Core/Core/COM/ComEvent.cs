@@ -6,9 +6,9 @@ namespace Keysharp.Core.COM
 		internal Dispatcher dispatcher;
 		internal KeysharpObject sinkObj;
 		internal object[] thisArg;
-		private bool logAll;
-		private Dictionary<string, MethodPropertyHolder> methodMapper = new Dictionary<string, MethodPropertyHolder>(10, StringComparer.OrdinalIgnoreCase);
-		private string prefix;
+		private readonly bool logAll;
+		private readonly Dictionary<string, MethodPropertyHolder> methodMapper = new Dictionary<string, MethodPropertyHolder>(10, StringComparer.OrdinalIgnoreCase);
+		private readonly string prefix;
 
 		internal ComEvent(Dispatcher disp, object sink, bool log)
 		{

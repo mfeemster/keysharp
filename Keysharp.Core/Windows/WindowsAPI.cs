@@ -82,8 +82,8 @@ namespace Keysharp.Core.Windows
 		internal uint wMaxAxes;            /* maximum number of axes supported */
 		internal uint wNumAxes;            /* number of axes in use */
 		internal uint wMaxButtons;         /* maximum number of buttons supported */
-		private string szRegKey;/* registry key */
-		private string szOEMVxD; /* OEM VxD in use */
+		private readonly string szRegKey;/* registry key */
+		private readonly string szOEMVxD; /* OEM VxD in use */
 	}
 
 	[Serializable, StructLayoutAttribute(LayoutKind.Sequential)]
@@ -679,6 +679,10 @@ namespace Keysharp.Core.Windows
 		internal const int MK_XBUTTON1 = 0x0020;
 		internal const int MK_XBUTTON2 = 0x0040;
 
+		internal const int HOTKEYF_SHIFT = 0x01;
+		internal const int HOTKEYF_CONTROL = 0x02;
+		internal const int HOTKEYF_ALT = 0x04;
+
 		internal const int WS_EX_LAYERED = 0x80000;
 		internal const int WS_EX_TOPMOST = 8;
 		internal const int WS_EX_NOACTIVATE = 0x08000000;
@@ -1124,6 +1128,7 @@ namespace Keysharp.Core.Windows
 		public const uint GET_MODULE_HANDLE_EX_FLAG_PIN = 1;
 
 		internal const long ERROR_ALREADY_EXISTS = 183L;
+		internal const long ERROR_INVALID_HOOK_HANDLE = 1404L;
 
 		internal const string dwmapi = "dwmapi.dll",
 							  kernel32 = "kernel32.dll",

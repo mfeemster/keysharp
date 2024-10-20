@@ -5,7 +5,7 @@
 		internal ToolStripItem defaultItem;
 		protected long dummyHandle;
 		private static int menuCount = 0;
-		private Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
+		private readonly Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
 		public long ClickCount { get; set; } = 2;
 
 		public string Default
@@ -99,7 +99,7 @@
 				_ = menu.Items.Add(new ToolStripSeparator());
 
 			//_ = Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
-			_ = Add("&Reload This Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
+			_ = Add("&Reload Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
 
 			if (!Accessors.A_IsCompiled)
 			{
@@ -108,7 +108,7 @@
 					Keysharp.Scripting.Script.Edit();
 					return "";
 				});
-				_ = Add("&Edit This Script", new FuncObj(editfunc.Method, editfunc.Target));
+				_ = Add("&Edit Script", new FuncObj(editfunc.Method, editfunc.Target));
 			}
 
 			_ = menu.Items.Add(new ToolStripSeparator());
@@ -116,7 +116,7 @@
 			_ = Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 		}
 
-		public void Check(object obj) => Check(obj.As(), eCheckToggle.Check);
+		public bool Check(object obj) => Check(obj.As(), eCheckToggle.Check);
 
 		public void Delete(object obj)
 		{
@@ -144,9 +144,9 @@
 			}
 		}
 
-		public void Disable(object obj) => Enable(obj.As(), eCheckToggle.Uncheck);
+		public bool Disable(object obj) => Enable(obj.As(), eCheckToggle.Uncheck);
 
-		public void Enable(object obj) => Enable(obj.As(), eCheckToggle.Check);
+		public bool Enable(object obj) => Enable(obj.As(), eCheckToggle.Check);
 
 		public void HideItem(object obj) => MakeVisible(obj.As(), eCheckToggle.Uncheck);
 
@@ -206,13 +206,13 @@
 
 		public void ShowItem(object obj) => MakeVisible(obj.As(), eCheckToggle.Check);
 
-		public void ToggleCheck(object obj) => Check(obj.As(), eCheckToggle.Toggle);
+		public bool ToggleCheck(object obj) => Check(obj.As(), eCheckToggle.Toggle);
 
-		public void ToggleEnable(object obj) => Enable(obj.As(), eCheckToggle.Toggle);
+		public bool ToggleEnable(object obj) => Enable(obj.As(), eCheckToggle.Toggle);
 
 		public void ToggleItemVis(object obj) => MakeVisible(obj.As(), eCheckToggle.Toggle);
 
-		public void UnCheck(object obj) => Check(obj.As(), eCheckToggle.Uncheck);
+		public bool UnCheck(object obj) => Check(obj.As(), eCheckToggle.Uncheck);
 
 		internal void Tsmi_Click(object sender, EventArgs e)
 		{
@@ -363,7 +363,7 @@
 			return item;
 		}
 
-		private void Check(string s, eCheckToggle checktoggle)
+		private bool Check(string s, eCheckToggle checktoggle)
 		{
 			if (GetMenuItem(s) is ToolStripMenuItem item)
 			{
@@ -373,10 +373,14 @@
 					item.Checked = false;
 				else
 					item.Checked = !item.Checked;
+
+				return item.Checked;
 			}
+
+			return false;
 		}
 
-		private void Enable(string s, eCheckToggle checktoggle)
+		private bool Enable(string s, eCheckToggle checktoggle)
 		{
 			if (GetMenuItem(s) is ToolStripItem item)
 			{
@@ -386,7 +390,11 @@
 					item.Enabled = false;
 				else
 					item.Enabled = !item.Enabled;
+
+				return item.Enabled;
 			}
+
+			return false;
 		}
 
 		private void MakeVisible(string s, eCheckToggle vis)

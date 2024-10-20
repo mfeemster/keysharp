@@ -6,7 +6,7 @@ namespace Keysharp.Scripting
 	{
 		public static Font OurDefaultFont = new System.Drawing.Font("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
-		private bool success;
+		private readonly bool success;
 		private AboutBox about;
 		private bool callingInternalVars = false;
 

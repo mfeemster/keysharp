@@ -54,3 +54,18 @@ if (m.two = 789)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+x := 123
+
+if ((x ?? 456) == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := unset
+x ??= Array()
+
+if (x is Array)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

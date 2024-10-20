@@ -26,8 +26,8 @@
 		internal readonly Action<object, object> setPropFunc;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
 		private readonly bool isGuiType;
-		private int startVarIndex = -1;
-		private int stopVarIndexDistanceFromEnd;
+		private readonly int startVarIndex = -1;
+		private readonly int stopVarIndexDistanceFromEnd;
 
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }

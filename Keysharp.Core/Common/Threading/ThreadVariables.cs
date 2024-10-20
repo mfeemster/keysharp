@@ -9,6 +9,8 @@
 		internal System.Windows.Forms.Timer currentTimer;
 		internal string defaultGui;
 		internal long defaultMouseSpeed = 2L;
+		internal static long DefaultPeekFrequency = 5L;
+		internal static long DefaultUninterruptiblePeekFrequency = 16L;
 		internal bool detectHiddenText = true;
 		internal bool detectHiddenWindows;
 		internal Form dialogOwner;

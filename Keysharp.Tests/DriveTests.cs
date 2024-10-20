@@ -5,11 +5,11 @@ namespace Keysharp.Tests
 	public class DriveTests : TestRunner
 	{
 #if WINDOWS
-			string drive = "C:\\";
-			char driveStart = 'C';
+		readonly string drive = "C:\\";
+		readonly char driveStart = 'C';
 #else
-			string drive = "/dev";
-			char driveStart = '/';
+		string drive = "/dev";
+		char driveStart = '/';
 #endif
 
 		[Test, Category("Drive")]
@@ -53,7 +53,6 @@ namespace Keysharp.Tests
 #else
 			Assert.IsTrue(sys > 1 || sys == 0);//It will be some large hex number or 0 if there was no serial number.
 #endif
-			
 			Assert.IsTrue(TestScript("drive-getserial", true));
 		}
 

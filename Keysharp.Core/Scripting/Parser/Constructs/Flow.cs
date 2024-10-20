@@ -383,9 +383,18 @@ namespace Keysharp.Scripting
 
 							if (split != "")
 							{
-								var loopvarexpr = ParseSingleExpression(codeLine, split, true);//We do want to create the iteration loop vars as local function vars.
+								//Don't create iteration loop variables as global/local function variables, they have to be specially created manually below.
+								var loopvarexpr = ParseSingleExpression(codeLine, split, false);
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
 								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
+								//If this loop is inside of a class method that had declared all variables within it to be global,
+								//then the call to ParseSingleExpression() will not have created the iteration variable because it
+								//wrongly assumes it's global.
+								//So manually do it here.
+								var dkt = allVars[typeStack.Peek()].GetOrAdd(Scope);
+
+								if (!dkt.ContainsKey(loopvarstr))
+									dkt[loopvarstr] = nullPrimitive;
 							}
 							else
 								varlist.Add(split?.Length == 0 ? "_" : split);
@@ -561,6 +570,10 @@ namespace Keysharp.Scripting
 					{
 						Attributes = MemberAttributes.Public | MemberAttributes.Final
 					};
+					var staticConstructor = new CodeTypeConstructor
+					{
+						Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static
+					};
 
 					if (classparts.Length > 2 && string.Compare(classparts[1], "extends", true) == 0)
 					{
@@ -577,6 +590,7 @@ namespace Keysharp.Scripting
 					}
 
 					_ = classtype.Members.Add(constructor);
+					_ = classtype.Members.Add(staticConstructor);
 					var callmeth = new CodeMemberMethod
 					{
 						Name = "Call",
@@ -762,7 +776,7 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				case Throw:
+				case FlowThrow:
 				{
 					var ctes = new CodeThrowExceptionStatement();
 
@@ -772,6 +786,8 @@ namespace Keysharp.Scripting
 
 						if (IsPrimitiveObject(token, out var obj))
 							ctes.ToThrow = new CodeSnippetExpression($"Error({obj})");
+						else if (token.StartsWith('"') && token.EndsWith('"'))
+							ctes.ToThrow = new CodeSnippetExpression($"Error({token})");
 						else
 							ctes.ToThrow = ParseSingleExpression(codeLine, token, false);
 					}

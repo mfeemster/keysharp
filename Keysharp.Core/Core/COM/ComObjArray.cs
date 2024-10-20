@@ -3,7 +3,7 @@ namespace Keysharp.Core.COM
 {
 	public class ComArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
-		private System.Array arr;
+		private readonly System.Array arr;
 		private int position = -1;
 
 		public (object, object) Current

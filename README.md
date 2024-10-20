@@ -78,7 +78,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to `CreatWindowEx()`.
 	+ These long names may change from machine to machine, and may change for the same GUI if you edit its code.
 	+ There is an new `NetClassNN` property alongside `ClassNN`.
-	+ All GUI controls created in Keysharp are prefixed with the string "Keysharp", eg: `KeysharpButton`, `KeysharpEdit` etc...
+	+ The class names of all GUI controls created in Keysharp are prefixed with the string "Keysharp", eg: `KeysharpButton`, `KeysharpEdit` etc...
 	+ `NetClassNN` will give values like 'KeysharpButton6' (note that the final digit is the same for the `ClassNN` and the `NetClassNN`).
 	+ Due to the added simplicity, `NetClassNN` is preferred over `ClassNN` for WinForms controls created with Keysharp.
 	+ This is used internally in the index operator for the Gui class, where if a control with a matching `ClassNN` is not found, then controls are searched for their `NetClassNN` values.
@@ -103,10 +103,29 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `.\Keysharp.exe .\test.ahk | more > out.txt`
 * Menu items, whether shown or not, have no impact on threading.
 * `AddStandard()` detects menu items by string, instead of ID, because WinForms doesn't expose the ID.
+* `ControlMove()` and `ControlSetPos()` operate relative to their immediate parent, which may not be the main window if they are contained in a nested control.
 + Delays are not inserted after every window and control related call. Due to the design of Keysharp, this is not needed and causes out of order message processing bugs.
 	+ `SetWinDelay()`, `A_WinDelay`, `SetControlDelay` and `A_ControlDelay` exist but have no effect.
 * Static function variables are initialized on program startup, rather than the first time the function is called. This is because C# does not support static function variables.
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
+* Because `__Init()` and `__New()` are not static, a new special static function has been created named `__StaticInit()`. Simple static member variable initialization should be done inline. However, more complex initialization should be done inside of `__StaticInit()`. This function will be called exactly once.
+	+
+```
+	class myclass
+	{
+		static simplevar := 123
+		static complexvar :=
+						
+		static __StaticInit()
+		{
+			; Note, global is required because `this.` can't be used because this is a static function.
+			; Only static members may be accessed within this function.
+			global
+			complexvar := 456; complex initialization here
+		}
+	}
+```
+	+ If static variables are initialized in `__New()` instead of inline, then they won't contain valid values until an instance of the class is created. Further, they will be reinitialized for every instance of the class created.
 * The parameters for `__New()` in a class definition will be automatically passed to the base class in the order they are declared.
 	+ To change the values passed, or the order they are passed in, call `super.__New(arg1, arg2, ...)` in `__New()`.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
@@ -235,8 +254,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `Join(separator := ',') => String`
 	+ `MapTo(callback: (value [, index]) => Any) => Array`
 	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 when `a > b`.
-* A new function `Atan2(y, x) => Double`
-	+ AHK only supports `Atan(value)`.
 * Hyperbolic versions of the trigonometric functions:
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
@@ -274,6 +291,10 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		+ Use `AltSubmit` with `Submit()` to get the raw rich text.
 		+ Attempting to use `GuiControl.RichText` on any control other than `RichEdit` will throw an exception.
 * Loading icons from .NET DLLs is supported by passing the name of the icon resource in place of the icon number.
+	+ To set the tray icon to the built in suspended icon:
+		+ `TraySetIcon(A_KeysharpCorePath, "Keysharp_s.ico")`
+	+ To set a menu item to the same:
+		+ `parentMenu.SetIcon("Menu caption", A_KeysharpCorePath, "Keysharp_s.ico")`
 * A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
 	+ Uses the same arguments as `LoadPicture()`.
 	+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.

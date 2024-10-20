@@ -2,7 +2,7 @@
 {
 	public class CaseEqualityComp : IEqualityComparer<object>
 	{
-		private StringComparison compType;
+		private readonly StringComparison compType;
 
 		public CaseEqualityComp(eCaseSense caseSense)
 		{
@@ -408,7 +408,7 @@
 	public class MapKeyValueIterator : IEnumerator<(object, object)>
 	{
 		private IEnumerator<KeyValuePair<object, object>> iter;
-		private Dictionary<object, object> map;
+		private readonly Dictionary<object, object> map;
 
 		public (object, object) Current
 		{

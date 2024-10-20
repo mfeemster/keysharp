@@ -69,19 +69,12 @@ namespace Keysharp.Scripting
 					break;
 
 				case Is:
+					if (test == null)
+						return subject == null;
+
 					test = test.ToLowerInvariant();
 
-					if (subject != null)
-					{
-						var type = subject.GetType();
-
-						if (Keysharp.Scripting.Parser.IsTypeOrBase(type, test))
-						{
-							ret = true;
-							goto done;
-						}
-					}
-
+					//Put common cases first.
 					switch (test)
 					{
 						case Integer:
@@ -101,6 +94,20 @@ namespace Keysharp.Scripting
 
 						case "false":
 							return !ForceBool(subject);
+
+						case "null":
+							return subject == null;
+					}
+
+					if (subject != null)
+					{
+						var type = subject.GetType();
+
+						if (Keysharp.Scripting.Parser.IsTypeOrBase(type, test))
+						{
+							ret = true;
+							goto done;
+						}
 					}
 
 					switch (test)
@@ -663,7 +670,7 @@ namespace Keysharp.Scripting
 			TernaryB,
 
 			Is,
-			NullAssign,
+			NullCoalesce,
 		};
 
 		public delegate object ExpressionDelegate();

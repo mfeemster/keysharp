@@ -3,7 +3,7 @@
 	internal class ScopeHelper
 	{
 		public EventHandler<object> eh;
-		private object obj;
+		private readonly object obj;
 
 		public ScopeHelper(object o)
 		{

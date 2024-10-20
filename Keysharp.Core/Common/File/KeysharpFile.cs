@@ -6,17 +6,17 @@
 
 		internal int eolconv = 0;
 
-		private BinaryReader br;
+		private readonly BinaryReader br;
 
-		private BinaryWriter bw;
+		private readonly BinaryWriter bw;
 
 		private bool disposed = false;
 
-		private FileStream fs;
+		private readonly FileStream fs;
 
-		private TextReader tr;
+		private readonly TextReader tr;
 
-		private TextWriter tw;
+		private readonly TextWriter tw;
 
 		public long AtEOF
 		{

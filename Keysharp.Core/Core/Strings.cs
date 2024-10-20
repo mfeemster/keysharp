@@ -6,7 +6,7 @@ namespace Keysharp.Core
 	{
 		internal static Lock locker = new ();
 		internal static RegexEntry regdkt = new ();
-		private static object[] nullPlaceholder = [null];
+		private static readonly object[] nullPlaceholder = [null];
 
 		/// <summary>
 		/// Decodes a base 64 character string to binary data.

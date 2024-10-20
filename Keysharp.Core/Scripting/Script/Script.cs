@@ -3,7 +3,6 @@
 	public partial class Script
 	{
 		public static bool ForceKeybdHook;
-		public static bool HotstringNoMouse = false;
 		public static uint MaxThreadsPerHotkey = 1u;
 		public static uint MaxThreadsTotal = 12u;
 		public static bool NoTrayIcon = false;
@@ -16,8 +15,9 @@
 		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
-		internal static bool hsResetUponMouseClick = HotstringNoMouse;
+		internal static bool hsResetUponMouseClick = true;
 		internal static InputType input;
+		internal static int inputBeforeHotkeysCount;
 		internal static DateTime inputTimeoutAt = DateTime.Now;
 		internal static bool inputTimerExists;
 		internal static bool isReadyToExecute;
@@ -43,8 +43,6 @@
 		internal static int uninterruptibleTime = 17;
 		internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		private static IntPtr mainWindowHandle;
-
-		public static bool ResetUponMouseClick => hsResetUponMouseClick;
 
 		public static Variables Vars { get; private set; }
 
@@ -374,6 +372,8 @@
 		}
 
 		public static void SetName(string s) => scriptName = s;
+
+		public static void SetReady() => isReadyToExecute = true;
 
 		public static void ShowDebug() => mainWindow?.ShowDebug();
 

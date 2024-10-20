@@ -258,8 +258,8 @@
 
 	internal sealed class GdiHandleHolder : KeysharpObject
 	{
-		private bool disposeHandle = true;
-		private IntPtr handle;
+		private readonly bool disposeHandle = true;
+		private readonly IntPtr handle;
 
 		internal GdiHandleHolder(IntPtr h, bool d)
 		{

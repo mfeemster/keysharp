@@ -1,10 +1,22 @@
-
-
 b := false
 
 try
 {
 	throw Error("asdf")
+}
+catch
+	b := true
+
+if (b == true)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	throw "asdf"
 }
 catch
 	b := true
@@ -241,6 +253,22 @@ try
 	throw MethodError("tester")
 }
 catch MethodError as errex
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	throw 123
+}
+catch
 {
 	b := true
 }

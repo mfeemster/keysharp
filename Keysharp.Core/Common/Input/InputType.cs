@@ -2,10 +2,20 @@
 
 namespace Keysharp.Core.Common.Input
 {
+	internal class CollectInputState
+	{
+		internal IntPtr activeWindow;
+		internal char[] ch;
+		internal int charCount;
+		internal bool earlyCollected, used_dead_key_non_destructively;
+		internal IntPtr keyboardLayout;
+	};
+
 	internal class InputType//This is also Windows specific, and needs to eventually be made into a common base with derived OS specific classes.//TODO
 	{
 		internal static System.Windows.Forms.Timer inputTimer;
 		internal bool BackspaceIsUndo = true;
+		internal bool BeforeHotkeys;
 		internal string buffer = "";
 		internal int BufferLengthMax = 1023;
 		internal bool CaseSensitive;
@@ -33,17 +43,38 @@ namespace Keysharp.Core.Common.Input
 		internal bool TranscribeModifiedKeys;
 		internal bool VisibleText, VisibleNonText = true;
 
-		internal InputType(InputObject io, string aOptions, string aEndKeys, string aMatchList)
+		internal bool Early => BeforeHotkeys;
+
+		internal InputType(InputObject io, string options, string endKeys, string matchList)
 		{
 			ScriptObject = io;
-			ParseOptions(aOptions);
-			SetKeyFlags(aEndKeys);
-			match = aMatchList.SplitWithDelimiter(Keywords.Comma, true);
+			ParseOptions(options);
+			SetKeyFlags(endKeys);
+			var splits = matchList.Split(Keywords.Comma);
+
+			for (var i = 0; i < splits.Length; i++)
+			{
+				var split = splits[i];
+
+				if (split.Length > 0)
+				{
+					match.Add(split);
+				}
+				else if (match.Count > 1)//Empty entry, which means the preceding entry ended with a literal comma.
+				{
+					var s = match[match.Count - 1];
+					match[match.Count - 1] = s + ',';
+				}
+				else
+					match.Add(",");
+			}
 		}
 
 		internal void CollectChar(string ch, int charCount)
 		{
-			for (var i = 0; i < charCount; ++i)
+			var end = Math.Min(ch.Length, charCount);
+
+			for (var i = 0; i < end; ++i)
 			{
 				if (EndChars.IndexOf(ch[i], CaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase) != -1)
 				{
@@ -69,7 +100,7 @@ namespace Keysharp.Core.Common.Input
 				{
 					for (var i = 0; i < match.Count; ++i)
 					{
-						if (buffer.IndexOf(match[i], StringComparison.CurrentCulture) != -1)
+						if (buffer.Contains(match[i], StringComparison.CurrentCulture))
 						{
 							EndByMatch(i);
 							return;
@@ -80,7 +111,7 @@ namespace Keysharp.Core.Common.Input
 				{
 					for (var i = 0; i < match.Count; ++i)
 					{
-						if (buffer.IndexOf(match[i], StringComparison.OrdinalIgnoreCase) != -1)
+						if (buffer.Contains(match[i], StringComparison.OrdinalIgnoreCase))
 						{
 							EndByMatch(i);
 							return;
@@ -220,6 +251,18 @@ namespace Keysharp.Core.Common.Input
 
 		internal bool InProgress() => Status == InputStatusType.InProgress;
 
+		internal InputType InputFindLink(InputType input)
+		{
+			if (Script.input == input)
+				return Script.input;
+			else
+				for (var i = Script.input; input != null; i = i.Prev)
+					if (i.Prev == input)
+						return i.Prev;
+
+			return null;//input is not valid (faked AHK_INPUT_END message?) or not active.
+		}
+
 		internal InputType InputRelease()
 		{
 			var ht = Script.HookThread;
@@ -276,10 +319,52 @@ namespace Keysharp.Core.Common.Input
 			if (Timeout > 0)
 				SetTimeoutTimer();
 
+			// It is possible for &input to already be in the list if AHK_INPUT_END is still
+			// in the message queue, in which case it must be removed from its current position
+			// to prevent the list from looping back on itself.
+			InputUnlinkIfStopped(this);
 			Prev = Script.input;
 			Start();
 			Script.input = this; // Signal the hook to start the input.
+
+			if (BeforeHotkeys)
+				++Script.inputBeforeHotkeysCount;
+
 			HotkeyDefinition.InstallKeybdHook(); // Install the hook (if needed).
+		}
+
+		internal InputType InputUnlinkIfStopped(InputType input)
+		{
+			InputType temp = null;
+
+			if (input == null)
+				return null;
+
+			if (Script.input == input)
+			{
+				temp = Script.input;
+				Script.input = temp.Prev;
+			}
+			else
+			{
+				for (var i = Script.input; input != null; i = i.Prev)
+				{
+					if (i.Prev == input)
+					{
+						if (!input.InProgress())
+						{
+							temp = i.Prev;
+							Script.HookThread.WaitHookIdle();
+							i.Prev = input.Prev;
+						}
+					}
+				}
+			}
+
+			if (temp != null)
+				temp.Prev = null;//Prev has been detached, so the caller cannot use this to iterate.
+
+			return temp;
 		}
 
 		internal bool IsInteresting(ulong dwExtraInfo)
@@ -300,6 +385,10 @@ namespace Keysharp.Core.Common.Input
 
 					case 'C':
 						CaseSensitive = true;
+						break;
+
+					case 'H':
+						BeforeHotkeys = true;
 						break;
 
 					case 'I':
@@ -444,6 +533,7 @@ namespace Keysharp.Core.Common.Input
 						modifiersLR = 0u;  // Init prior to below.
 						vk = ht.TextToVK(singleCharString, ref modifiersLR, true, true, PlatformProvider.Manager.GetKeyboardLayout(0));
 						vkByNumber = false;
+						scByNumber = false;
 						break;
 				} // switch()
 
@@ -483,6 +573,10 @@ namespace Keysharp.Core.Common.Input
 				if (sc != 0 || scByNumber.IsTrue()) // Fixed for v1.1.33.02: Allow sc000 for setting/unsetting flags for any events that lack a scan code.
 				{
 					KeySC[sc] = (KeySC[sc] & ~flagsRemove) | flagsAdd;
+
+					// If specified by name, apply flag removal to this key's VK as well.
+					if (flagsRemove != 0 && !scByNumber.IsTrue() && (vk = ht.MapScToVk(sc)) != 0)
+						KeyVK[vk] &= ~flagsRemove;
 				}
 			} // for()
 
@@ -553,6 +647,10 @@ namespace Keysharp.Core.Common.Input
 			{
 				EndingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
 				Status = aReason;
+
+				if (BeforeHotkeys)
+					--Script.inputBeforeHotkeysCount;
+
 				// It's done this way rather than calling InputRelease() directly...
 				// ...so that we can rely on MsgSleep() to create a new thread for the OnEnd event.
 				// ...because InputRelease() can't be called by the hook thread.

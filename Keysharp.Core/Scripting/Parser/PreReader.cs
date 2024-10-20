@@ -6,11 +6,11 @@ namespace Keysharp.Scripting
 	internal class PreReader
 	{
 		private static int hotifcount;
-		private static char[] libBrackets = ['<', '>'];
-		private static string multiLineComments = new string(new[] { MultiComB, MultiComA });
+		private static readonly char[] libBrackets = ['<', '>'];
+		private static readonly string multiLineComments = new string(new[] { MultiComB, MultiComA });
 		private readonly List<string> includes = new List<string>();
 		private string includePath = "./";
-		private static FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+		private static readonly FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowCatch,
 			FlowClass,
@@ -28,8 +28,8 @@ namespace Keysharp.Scripting
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
-		private Parser parser;
-		private HashSet<string> defines = new HashSet<string>()
+		private readonly Parser parser;
+		private readonly HashSet<string> defines = new HashSet<string>()
 		{
 			"KEYSHARP",
 #if WINDOWS
@@ -38,7 +38,7 @@ namespace Keysharp.Scripting
 			"LINUX",
 #endif
 		};
-		private Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
+		private readonly Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
 		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
@@ -147,7 +147,12 @@ namespace Keysharp.Scripting
 					{
 						if (inMlComment)
 						{
-							if (ch == '/' && last == '*')
+							//Check for exiting a multiline comment,
+							//but also ensure the following doesn't end it by checking i != 0:
+							/*
+							    //nonsense
+							*/
+							if (ch == '/' && last == '*' && i != 0)
 							{
 								inMlComment = false;
 
@@ -690,6 +695,8 @@ namespace Keysharp.Scripting
 						}
 					}
 
+					//We've reached the end of a line and need to do some rather complex inspection of the current line and the previous one
+					//to determine if the two should be combined into a single line.
 					if (i == span.Length - 1 || span.Length == 0)//Span length will be 0 after a non quoted continuation section.
 					{
 						var prevLine = list[list.Count - 1];
@@ -786,7 +793,11 @@ namespace Keysharp.Scripting
 										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
 							   )//Verbal operators must match the token, others can just be the start of the string.
 							{
-								AddToPreviousLine(prevLine, wasVerbal ? " " + newLineStr : newLineStr);
+								//Do a special check here to ensure it wasn't a decimal number split into two lines like:
+								//123
+								//.456
+								var firstNonOp = newLineSpan.Slice(1).Trim();
+								AddToPreviousLine(prevLine, wasVerbal || (newLineStr.StartsWith('.') && !firstNonOp.IsEmpty && !char.IsDigit(firstNonOp[0])) ? " " + newLineStr : newLineStr);
 							}
 							else
 							{
@@ -808,7 +819,10 @@ namespace Keysharp.Scripting
 									}
 									else
 									{
-										AddToPreviousLine(prevLine, wasVerbal ? " " + newLineStr : newLineStr);
+										//Do a special check here to ensure it wasn't a decimal number split into two lines like:
+										//123.
+										//456
+										AddToPreviousLine(prevLine, wasVerbal || (prevEndSubSpan.EndsWith('.') && !char.IsDigit(newLineStr[0])) ? " " + newLineStr : newLineStr);
 									}
 								}
 								else

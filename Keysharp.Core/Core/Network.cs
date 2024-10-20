@@ -9,10 +9,7 @@ namespace Keysharp.Core
 		/// AHK difference: does not allow specifying flags other than 0.
 		/// </summary>
 		/// <param name="address">The URI (or URL) of the resource.</param>
-		/// <param name="filename">The file path to receive the downloaded data. An existing file will be overwritten.
-		/// Leave blank to return the data as a string.
-		/// </param>
-		/// <returns>The downloaded data if <paramref name="filename"/> is blank, otherwise an empty string.</returns>
+		/// <param name="filename">The file path to receive the downloaded data. An existing file will be overwritten.</param>
 		public static void Download(object obj0, object obj1)
 		{
 			var address = obj0.As();

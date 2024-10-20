@@ -14,6 +14,25 @@ namespace Keysharp.Scripting
 			return field;
 		}
 
+		/// <summary>
+		/// CodeDOM does not have built in support for ternary operators and creating our own derived class for it won't work.
+		/// So we must manually create the code string for the ternary,
+		/// then use a code snippet to hold the string. This is not ideal, but there is no other way.
+		/// This is needed to obtain the expected behavior where the false condition does not execute
+		/// if the evaluation is true.
+		/// </summary>
+		/// <param name="eval">The expression to evaluate.</param>
+		/// <param name="trueBranch">The expression to execute if eval is true.</param>
+		/// <param name="falseBranch">The expression to execute if eval is false.</param>
+		/// <returns>A snippet expression of the ternary operation using the passed in expressions.</returns>
+		internal CodeSnippetExpression MakeTernarySnippet(CodeExpression eval, CodeExpression trueBranch, CodeExpression falseBranch)
+		{
+			var evalstr = Ch.CodeToString(eval);
+			var tbs = Ch.CodeToString(trueBranch);
+			var fbs = Ch.CodeToString(falseBranch);
+			return new CodeSnippetExpression($"(_ = {evalstr} ? (object)({tbs}) : (object)({fbs}))");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+		}
+
 		internal static (bool, Script.Operator) OperatorFromString(string code)
 		{
 			var op = code;
@@ -201,7 +220,7 @@ namespace Keysharp.Scripting
 					return (true, Script.Operator.Concat);
 
 				case TernaryA:
-					return op.Length > 1 && op[1] == TernaryA ? (true, Script.Operator.NullAssign) : (true, Script.Operator.TernaryA);
+					return op.Length > 1 && op[1] == TernaryA ? (true, Script.Operator.NullCoalesce) : (true, Script.Operator.TernaryA);
 
 				default:
 					switch (code.ToLowerInvariant())
@@ -286,7 +305,7 @@ namespace Keysharp.Scripting
 
 				case Script.Operator.TernaryA:
 				case Script.Operator.TernaryB:
-				case Script.Operator.NullAssign:
+				case Script.Operator.NullCoalesce:
 					return -14;
 
 				case Script.Operator.Assign:

@@ -111,6 +111,7 @@
 		internal const string FlowReturn = "return";
 		internal const string FlowSet = "set";
 		internal const string FlowSwitch = "switch";
+		internal const string FlowThrow = "throw";
 		internal const string FlowTry = "try";
 		internal const string FlowUntil = "until";
 		internal const string FlowWhile = "while";
@@ -571,6 +572,7 @@
 		internal const char Not = '!';
 		internal const string NotTxt = "not";
 		internal const string NullTxt = "null";
+		internal const string Unset = "unset";
 		//internal const string CaseSensitiveEqual = "==";
 		//internal const string NotEqual = "!=";
 		internal const string OrTxt = "or";
@@ -597,7 +599,6 @@
 		//internal const string AssignBitXOR = "^" + Equal;
 		//internal const string AssignShiftLeft = "<<" + Equal;
 		//internal const string AssignShiftRight = ">>" + Equal;
-		internal const string Throw = "throw";
 		internal const string TrueTxt = "true";
 		internal const string VarExt = "#_@";//$?";
 		internal static readonly char[] BlockOpenAndSpace = [BlockOpen, SingleSpace];

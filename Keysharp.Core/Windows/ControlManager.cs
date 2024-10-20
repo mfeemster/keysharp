@@ -17,9 +17,9 @@ namespace Keysharp.Core.Windows
 
 			if (buf.StartsWith("M")) return VirtualKeys.VK_MBUTTON;
 
-			if (buf == "X1") return VirtualKeys.VK_XBUTTON1;
+			if (buf == "X1" || buf == "XButton1") return VirtualKeys.VK_XBUTTON1;
 
-			if (buf == "X2") return VirtualKeys.VK_XBUTTON2;
+			if (buf == "X2" || buf == "XButton2") return VirtualKeys.VK_XBUTTON2;
 
 			if (allowWheel)
 			{
@@ -501,8 +501,16 @@ namespace Keysharp.Core.Windows
 				var h = WindowsAPI.GetWindowThreadProcessId(item.Handle, out var pid);
 				var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
 
+				// Failure is most likely because the target thread has no input queue; i.e. target_window
+				// is a console window and the process which owns it has no input queue.  Controls cannot
+				// exist without an input queue, so a return value of 0 is appropriate in that case.
+				// A value of 0 is already ambiguous (window is not focused, or window itself is focused),
+				// and is most likely preferable to a thrown exception, so returning 0 in the unlikely event
+				// of some other failure seems acceptable.  There might be a possibility of a race condition
+				// between determining target_window and the window being destroyed, but checking for that
+				// doesn't seem useful since the window could be destroyed or deactivated after we return.
 				if (!WindowsAPI.GetGUIThreadInfo(h, out info))
-					throw new OSError("", $"Could not retrieve GUI thread info.");
+					return 0L;
 
 				//Use IsChild() to ensure the focused control actually belongs to this window.
 				//Otherwise, a HWND will be returned if any window in the same thread has focus,

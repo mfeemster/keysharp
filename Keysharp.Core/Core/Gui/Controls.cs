@@ -521,7 +521,7 @@ namespace Keysharp.Core
 	public class KeysharpPictureBox : PictureBox
 	{
 		private readonly int addstyle, removestyle;
-		private InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
+		private readonly InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
 		private bool scaleHeight;
 		private bool scaleWidth;
 

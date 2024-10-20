@@ -389,23 +389,23 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="targetWindow"></param>
 		/// <returns></returns>
-		internal static IntPtr SetForegroundWindowEx(WindowItemBase win)
+		internal static IntPtr SetForegroundWindowEx(WindowItemBase win, bool backgroundActivation = false)
 		{
 			if (win == null)
 				return IntPtr.Zero;
 
 			var targetWindow = win.Handle;
 			var mainid = Processes.MainThreadID;
-			var target_thread = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var procid);
+			var targetThread = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var procid);
 
-			if (target_thread != mainid && win.IsHung)//Calls to IsWindowHung should probably be avoided if the window belongs to our thread.
+			if (targetThread != mainid && win.IsHung)//Calls to IsWindowHung should probably be avoided if the window belongs to our thread.
 				return IntPtr.Zero;
 
-			var orig_foreground_wnd = WindowsAPI.GetForegroundWindow();
+			var origForegroundWnd = WindowsAPI.GetForegroundWindow();
 			var sender = Script.HookThread.kbdMsSender;
 
 			//Restore the window *before* checking if it is already active.
-			if (win.IsIconic)
+			if (win.IsIconic && !backgroundActivation)
 				// This might never return if targetWindow is a hung window.  But it seems better
 				// to do it this way than to use the PostMessage() method, which might not work
 				// reliably with apps that don't handle such messages in a standard way.
@@ -416,30 +416,30 @@ namespace Keysharp.Core.Windows
 				// does is post a message to its queue):
 				_ = WindowsAPI.ShowWindow(targetWindow, WindowsAPI.SW_RESTORE);
 
-			if (targetWindow == orig_foreground_wnd)//It's already the active window.
+			if (targetWindow == origForegroundWnd)//It's already the active window.
 				return targetWindow;
 
-			var new_foreground_wnd = IntPtr.Zero;
+			var newForegroundWnd = IntPtr.Zero;
 
 			//Try a simple approach first.
 			if (!Script.WinActivateForce)
 			{
-				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
+				newForegroundWnd = AttemptSetForeground(targetWindow, origForegroundWnd);
 
-				if (new_foreground_wnd != IntPtr.Zero)
-					return new_foreground_wnd;
+				if (newForegroundWnd != IntPtr.Zero)
+					return newForegroundWnd;
 			}
 
 			// Otherwise continue with the more drastic methods below.
-			bool is_attached_my_to_fore = false, is_attached_fore_to_target = false;
-			uint fore_thread = 0;
+			bool is_attached_my_to_fore = false, isAttachedForeToTarget = false;
+			uint foreThread = 0;
 
-			if (orig_foreground_wnd != IntPtr.Zero) // Might be NULL from above.
+			if (origForegroundWnd != IntPtr.Zero) // Might be NULL from above.
 			{
-				var foregroundwin = new WindowItem(orig_foreground_wnd);
+				var foregroundwin = new WindowItem(origForegroundWnd);
 				// Based on MSDN docs, these calls should always succeed due to the other
 				// checks done above (e.g. that none of the HWND's are NULL):
-				fore_thread = WindowsAPI.GetWindowThreadProcessId(orig_foreground_wnd, out var id);
+				foreThread = WindowsAPI.GetWindowThreadProcessId(origForegroundWnd, out var id);
 
 				// MY: Normally, it's suggested that you only need to attach the thread of the
 				// foreground window to our thread.  However, I've confirmed that doing all three
@@ -457,11 +457,11 @@ namespace Keysharp.Core.Windows
 				// Therefore, idAttachTo cannot equal idAttach.  Update: It appears that of the three,
 				// this first call does not offer any additional benefit, at least on XP, so not
 				// using it for now:
-				if (fore_thread != 0 && mainid != fore_thread && !foregroundwin.IsHung)
-					is_attached_my_to_fore = WindowsAPI.AttachThreadInput(mainid, fore_thread, true);
+				if (foreThread != 0 && mainid != foreThread && !foregroundwin.IsHung)
+					is_attached_my_to_fore = WindowsAPI.AttachThreadInput(mainid, foreThread, true);
 
-				if (fore_thread != 0 && target_thread != 0 && fore_thread != target_thread)//IsWindowHung(targetWindow) was called earlier.
-					is_attached_fore_to_target = WindowsAPI.AttachThreadInput(fore_thread, target_thread, true);
+				if (foreThread != 0 && targetThread != 0 && foreThread != targetThread)//IsWindowHung(targetWindow) was called earlier.
+					isAttachedForeToTarget = WindowsAPI.AttachThreadInput(foreThread, targetThread, true);
 			}
 
 			// The log showed that it never seemed to need more than two tries.  But there's
@@ -493,9 +493,9 @@ namespace Keysharp.Core.Windows
 					sender.SendKeyEvent(KeyEventTypes.KeyUp, VirtualKeys.VK_MENU, 0, IntPtr.Zero, false, KeyboardMouseSender.KeyBlockThis);//Porting these will be tough.
 				}
 
-				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
+				newForegroundWnd = AttemptSetForeground(targetWindow, origForegroundWnd);
 
-				if (new_foreground_wnd != IntPtr.Zero)
+				if (newForegroundWnd != IntPtr.Zero)
 					break;
 			}
 
@@ -506,7 +506,7 @@ namespace Keysharp.Core.Windows
 			// - Using SW_FORCEMINIMIZE instead of SW_MINIMIZE has at least one (and probably more)
 			// side effect: When the window is restored, at least via SW_RESTORE, it is no longer
 			// maximized even if it was before the minimize.  So don't use it.
-			if (new_foreground_wnd == IntPtr.Zero) // Not successful yet.
+			if (newForegroundWnd == IntPtr.Zero) // Not successful yet.
 			{
 				// Some apps may be intentionally blocking us by having called the API function
 				// LockSetForegroundWindow(), for which MSDN says "The system automatically enables
@@ -533,7 +533,7 @@ namespace Keysharp.Core.Windows
 				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, VirtualKeys.VK_MENU);
 				sender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, VirtualKeys.VK_MENU);
 				// Also replacing "2-alts" with "alt-tab" below, for now:
-				new_foreground_wnd = AttemptSetForeground(targetWindow, orig_foreground_wnd);
+				newForegroundWnd = AttemptSetForeground(targetWindow, origForegroundWnd);
 			}
 
 			// Very important to detach any threads whose inputs were attached above,
@@ -541,10 +541,10 @@ namespace Keysharp.Core.Windows
 			// for these particular windows may result in a hung thread or other
 			// undesirable effect:
 			if (is_attached_my_to_fore)
-				_ = WindowsAPI.AttachThreadInput(mainid, fore_thread, false);
+				_ = WindowsAPI.AttachThreadInput(mainid, foreThread, false);
 
-			if (is_attached_fore_to_target)
-				_ = WindowsAPI.AttachThreadInput(fore_thread, target_thread, false);
+			if (isAttachedForeToTarget)
+				_ = WindowsAPI.AttachThreadInput(foreThread, targetThread, false);
 
 			// Finally.  This one works, solving the problem of the MessageBox window
 			// having the input focus and being the foreground window, but not actually
@@ -560,7 +560,7 @@ namespace Keysharp.Core.Windows
 			// is a bit messed up, because when you dismiss the MessageBox, an unexpected
 			// window (probably the one two levels down) becomes active rather than the
 			// window that's only 1 level down in the z-order:
-			if (new_foreground_wnd != IntPtr.Zero) // success.
+			if (newForegroundWnd != IntPtr.Zero && !backgroundActivation) // success.
 			{
 				// Even though this is already done for the IE 5.5 "hack" above, must at
 				// a minimum do it here: The above one may be optional, not sure (safest
@@ -572,10 +572,9 @@ namespace Keysharp.Core.Windows
 				// this one enabled in case it does resolve IE 5.5 related issues and
 				// possible other issues:
 				_ = WindowsAPI.BringWindowToTop(targetWindow);
-				return new_foreground_wnd;//Return this rather than targetWindow because it's more appropriate.
 			}
-			else
-				return IntPtr.Zero;
+
+			return newForegroundWnd;//Return this rather than targetWindow because it's more appropriate.
 		}
 
 		internal override void ChildFindPoint(PointAndHwnd pah)
@@ -649,9 +648,9 @@ namespace Keysharp.Core.Windows
 			if (!IsSpecified)
 				return 0;
 
+			var i1 = 0;
 			var menuid = 0xFFFFFFFF;
 			IntPtr menu = IntPtr.Zero;
-			var i1 = 0;
 
 			if (items[0] == "0&")
 			{
@@ -714,9 +713,7 @@ namespace Keysharp.Core.Windows
 			var i = 0;
 
 			while (Exists && i++ < 5)
-			{
 				System.Threading.Thread.Sleep(0);
-			}
 
 			if (!Exists)
 				return true;
@@ -785,16 +782,16 @@ namespace Keysharp.Core.Windows
 			_ = WindowsAPI.SetForegroundWindow(targetWindow);
 			//Need to be able to set interrupt disable here which prevents both timers and hotkeys from firing while this sleep is happening.//TODO
 			Flow.Sleep(10);//The MsgSleep() function in AHK is massive. Unsure how to duplicate here, so just use regular thread sleep.
-			var new_fore_window = WindowsAPI.GetForegroundWindow();
+			var newForeWindow = WindowsAPI.GetForegroundWindow();
 
-			if (new_fore_window == targetWindow)
+			if (newForeWindow == targetWindow)
 				return targetWindow;
 
 			// The window we're trying to get to the foreground is the owner of the new foreground window.
 			// This is considered to be a success because a window that owns other windows can never be
 			// made the foreground window, at least if the windows it owns are visible.
-			return new_fore_window != foreWindow && targetWindow == WindowsAPI.GetWindow(new_fore_window, WindowsAPI.GW_OWNER)
-				   ? new_fore_window
+			return newForeWindow != foreWindow && targetWindow == WindowsAPI.GetWindow(newForeWindow, WindowsAPI.GW_OWNER)
+				   ? newForeWindow
 				   : IntPtr.Zero;
 		}
 	}

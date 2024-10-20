@@ -105,25 +105,27 @@ namespace Keysharp.Scripting
 
 			if (len == 1)
 			{
-				var position = (int)ForceLong(key);
-
 				//The most common is going to be a string, array, map or buffer.
 				if (item is string s)
 				{
+					var position = (int)ForceLong(key);
 					var actualindex = position < 0 ? s.Length + position : position - 1;
 					return s[actualindex];
 				}
 				else if (item is object[] objarr)//Used for indexing into variadic function params.
 				{
+					var position = (int)ForceLong(key);
 					var actualindex = position < 0 ? objarr.Length + position : position - 1;
 					return objarr[actualindex];
 				}
 				else if (item is Core.Buffer buf)
 				{
+					var position = (int)ForceLong(key);
 					return buf[position];
 				}
 				else if (item is System.Array array)
 				{
+					var position = (int)ForceLong(key);
 					var actualindex = position < 0 ? array.Length + position : position - 1;
 					return array.GetValue(actualindex);
 				}
@@ -131,6 +133,7 @@ namespace Keysharp.Scripting
 #if WINDOWS
 				else if (item is ComObjArray coa)
 				{
+					var position = (int)ForceLong(key);
 					var actualindex = position < 0 ? coa.array.Length + position : position;
 					return coa.array.GetValue(actualindex);
 				}

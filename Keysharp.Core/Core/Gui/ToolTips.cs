@@ -2,7 +2,7 @@
 {
 	public static class ToolTips
 	{
-		private static ToolTip[] persistentTooltips = new ToolTip[20];
+		private static readonly ToolTip[] persistentTooltips = new ToolTip[20];
 
 		public static object ToolTip(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
@@ -179,26 +179,38 @@
 				if (bmp != null)
 				{
 					var ptr = bmp.GetHicon();
-					var icon = temp as Icon;
 
-					if (icon == null)
-						icon = Icon.FromHandle(ptr);
-
-					if (icon != null)
+					try
 					{
-						Script.Tray.Icon = icon;
-						Accessors.A_IconFile = filename;
-						Accessors.A_IconNumber = obj1;
-					}
+						var icon = temp as Icon;
 
-					_ =  PlatformProvider.Manager.DestroyIcon(ptr);
+						if (icon == null)
+							icon = Icon.FromHandle(ptr);
+
+						if (icon != null)
+						{
+							Accessors.A_IconFile = filename;
+							Accessors.A_IconNumber = obj1;
+							Script.mainWindow.CheckedBeginInvoke(() =>
+							{
+								Script.Tray.Icon = Script.mainWindow.Icon = icon;
+							}, false, false);
+						}
+					}
+					finally
+					{
+						_ =  PlatformProvider.Manager.DestroyIcon(ptr);
+					}
 				}
 			}
 			else
 			{
 				Accessors.A_IconFile = "";
 				Accessors.A_IconNumber = 1;
-				Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+				Script.mainWindow.CheckedBeginInvoke(() =>
+				{
+					Script.Tray.Icon = Script.mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+				}, false, false);
 			}
 		}
 

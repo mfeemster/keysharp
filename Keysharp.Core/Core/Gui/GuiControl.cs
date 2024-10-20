@@ -16,7 +16,7 @@ namespace Keysharp.Core
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
-		private bool dpiscaling = true;
+		private readonly bool dpiscaling = true;
 		private IntPtr dummyHandle;
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
@@ -1702,7 +1702,7 @@ namespace Keysharp.Core
 
 				if (val is string s)
 				{
-					if (tc.FindTab(s, exact) is TabPage tp)
+					if (s.Length > 0 && tc.FindTab(s, exact) is TabPage tp)
 					{
 						Gui.CurrentTab = tp;
 						Gui.LastContainer = tp;

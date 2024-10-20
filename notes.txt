@@ -184,7 +184,7 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 	Send keys on linux with Mono: https://stackoverflow.com/questions/7823921/control-mouse-and-keyboard-from-c-sharp-mono-on-linux
 	https://www.autohotkey.com/boards/viewtopic.php?f=37&t=29689
 	https://www.alfredapp.com/
-	https://forum.keyboardmaestro.com/
+	https://www.keyboardmaestro.com/
 	https://autohotkey.com/board/topic/50354-ironahk-alpha-cross-platform-net-rewrite-of-autohotkey/
 	https://web.archive.org/web/20111026064713/http://www.ironahk.net/
 	https://www.autohotkey.com/boards/viewtopic.php?f=17&t=30931
@@ -204,7 +204,7 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 		https://github.com/BekoSan/ProductivityFunctions
 	A project that tried to use IronAHK to do automation in node.js: https://github.com/1j01/node-ahk
 	RobotJS: an automation project in JS: https://github.com/octalmage/robotjs
-	Messages in cosole apps: https://docs.microsoft.com/en-us/archive/msdn-magazine/2007/june/net-matters-handling-messages-in-console-apps
+	Messages in console apps: https://docs.microsoft.com/en-us/archive/msdn-magazine/2007/june/net-matters-handling-messages-in-console-apps
 	There is something called TVX, check it out sometime at www.autohotkey.com/forum/topic19021.html
 	Middle click scroll script for Notepad++: https://www.autohotkey.com/boards/viewtopic.php?p=34722&sid=9b2b27116d94f0552a149430d9ab623f#p34722
 	Another automation library: https://github.com/qgindi/LibreAutomate
@@ -247,14 +247,13 @@ INFO/FURTHER RESEARCH/OTHER PROJECTS:
 				Just iterate over the results returned by `ExecQuery()`.
 				
 	An apparently cross platform desktop automation library: https://github.com/lucassklp/Desktop.Robot
-	An event hook example library: https://github.com/Hema2-official/accprez/tree/main/Accprez
 	Maybe do reference variables just for static function calls:
 		-Might be possible: https://stackoverflow.com/questions/8779731/how-to-pass-a-parameter-as-a-reference-with-methodinfo-invoke
 	A program called Voice Macro for automation.
 	AHKv2 YAML spec: https://github.com/mark-wiemer-org/ahkpp/blob/main/language/ahk2.tmLanguage.yaml
 	
 Linux ideas/research:
-	In order to send events to another control, such as a button click, the protocol ias at-spi, which is also used for screen readers. You'd need to port this to C#:
+	In order to send events to another control, such as a button click, the protocol is at-spi, which is also used for screen readers. You'd need to port this to C#:
 		https://github.com/phil294/AHK_X11/blob/master/src/run/display/at-spi.cr
 			See if you can use this to listen to keystrokes globally.
 		https://github.com/phil294/AHK_X11/blob/evdev-wayland/src/run/display/evdev.cr

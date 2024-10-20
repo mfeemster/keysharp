@@ -146,7 +146,7 @@ namespace Keysharp.Benchmark
 	{
 		private Keysharp.Core.Array keysharparray = Keysharp.Core.Misc.Array();
 		private List<object> nativelist = new List<object>();
-		private object o = 123L;
+		private readonly object o = 123L;
 
 		[Params(1000000)]
 		public int Size { get; set; }

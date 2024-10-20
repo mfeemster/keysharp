@@ -92,3 +92,25 @@ If (not (y) = true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+x := 123
+
+if (not (x is null))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (not (x is unset))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (not (x = null))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (not (x == null))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

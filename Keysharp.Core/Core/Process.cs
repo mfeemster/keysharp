@@ -219,7 +219,7 @@ namespace Keysharp.Core
 				}
 				catch
 				{
-					return null;
+					//Keep searching, the process might have a name that is all digits with no extension.
 				}
 			}
 
@@ -313,9 +313,9 @@ namespace Keysharp.Core
 				}
 				else if (prc.StartInfo.UserName != null
 #if WINDOWS
-				 || prc.StartInfo.Domain != null
+						 || prc.StartInfo.Domain != null
 #endif
-				 )
+						)
 				{
 					prc.StartInfo.UseShellExecute = false;
 				}

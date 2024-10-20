@@ -152,7 +152,7 @@
 			ToolStripMenuItem menuItem = null;
 
 			//First get the top level menu.
-			if (topLevel.EndsWith('&') && int.TryParse(topLevel.Trim('&'), out var n) && n > 0)
+			if (topLevel.EndsWith('&') && int.TryParse(topLevel.AsSpan().Trim('&'), out var n) && n > 0)
 			{
 				n--;
 
@@ -180,7 +180,7 @@
 				if (item == null || item.Length == 0)
 					continue;
 
-				if (item.EndsWith('&') && int.TryParse(item.Trim('&'), out n) && n > 0)
+				if (item.EndsWith('&') && int.TryParse(item.AsSpan().Trim('&'), out n) && n > 0)
 				{
 					n--;
 
