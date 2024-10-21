@@ -1,6 +1,4 @@
-﻿using static Keysharp.Scripting.Keywords;
-
-namespace Keysharp.Core.Common.Window
+﻿namespace Keysharp.Core.Common.Window
 {
 	internal class PointAndHwnd
 	{
@@ -358,7 +356,7 @@ namespace Keysharp.Core.Common.Window
 				case Keyword_RegEx:
 				{
 					object outvar = null;
-					_ = Strings.RegExMatch(a, b, ref outvar, 1);
+					_ = Core.Strings.RegExMatch(a, b, ref outvar, 1);
 					RegExResults output = (RegExResults)outvar;
 					return output.Count > 0 && !string.IsNullOrEmpty(output[0]);
 				}

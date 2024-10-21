@@ -1,7 +1,6 @@
 using SearchOption = System.IO.SearchOption;
-using static Keysharp.Scripting.Keywords;
 
-namespace Keysharp.Core
+namespace Keysharp.Core.Common.Strings
 {
 	public static class Conversions
 	{

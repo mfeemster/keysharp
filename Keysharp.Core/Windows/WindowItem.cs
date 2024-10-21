@@ -1,6 +1,4 @@
 ﻿#if WINDOWS
-using static Keysharp.Scripting.Keywords;
-
 namespace Keysharp.Core.Windows
 {
 	/// <summary>

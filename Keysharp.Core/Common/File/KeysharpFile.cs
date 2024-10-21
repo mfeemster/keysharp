@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common.File
 {
 	public class KeysharpFile : IDisposable
 	{
@@ -100,7 +100,7 @@
 				}
 				else
 				{
-					if (File.Exists(filename))
+					if (System.IO.File.Exists(filename))
 						exists = true;
 
 					fs = new FileStream(filename, m, a, s);

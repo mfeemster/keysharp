@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common.Images
 {
 	/// <summary>
 	/// Create a global Instance of CoordProvider and use it multithreaded

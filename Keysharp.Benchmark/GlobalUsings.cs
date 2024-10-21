@@ -10,3 +10,6 @@ global using global::BenchmarkDotNet.Exporters;
 global using global::BenchmarkDotNet.Loggers;
 global using global::BenchmarkDotNet.Running;
 global using global::Keysharp.Core;
+global using global::Keysharp.Core.Common;
+global using global::Keysharp.Core.Common.Invoke;
+global using global::Keysharp.Core.Common.ObjectBase;

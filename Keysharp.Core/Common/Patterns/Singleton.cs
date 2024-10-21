@@ -20,25 +20,25 @@
 	/// generic for singletons
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	internal class Singleton<T> where T : new ()
-	{
-		public static T Instance => SingletonCreator.instance;
-		protected Singleton()
-		{
-			if (Instance != null)
-			{
-				throw (new Exception("You have tried to create a new singleton class where you should have instanced it. Replace your \"new class()\" with \"class.Instance\""));
-			}
-		}
-		private class SingletonCreator
-		{
-			internal static readonly T instance = new T();
+	//internal class Singleton<T> where T : new ()
+	//{
+	//  public static T Instance => SingletonCreator.instance;
+	//  protected Singleton()
+	//  {
+	//      if (Instance != null)
+	//      {
+	//          throw (new Exception("You have tried to create a new singleton class where you should have instanced it. Replace your \"new class()\" with \"class.Instance\""));
+	//      }
+	//  }
+	//  private class SingletonCreator
+	//  {
+	//      internal static readonly T instance = new T();
 
-			static SingletonCreator()
-			{
-			}
-		}
-	}
+	//      static SingletonCreator()
+	//      {
+	//      }
+	//  }
+	//}
 
 	/// <summary>
 	/// Gotten from https://stackoverflow.com/questions/537573/how-to-get-intptr-from-byte-in-c-sharp/537652 and

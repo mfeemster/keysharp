@@ -47,12 +47,20 @@ global using global::System.Windows.Forms;
 //Our usings.
 global using global::Keysharp.Core;
 global using global::Keysharp.Core.Common;
+global using global::Keysharp.Core.Common.Containers;
+global using global::Keysharp.Core.Common.Cryptography;
 global using global::Keysharp.Core.Common.ExtensionMethods;
+global using global::Keysharp.Core.Common.File;
+global using global::Keysharp.Core.Common.Images;
 global using global::Keysharp.Core.Common.Input;
+global using global::Keysharp.Core.Common.Invoke;
 global using global::Keysharp.Core.Common.Joystick;
 global using global::Keysharp.Core.Common.Keyboard;
+global using global::Keysharp.Core.Common.Mapper;
+global using global::Keysharp.Core.Common.ObjectBase;
 global using global::Keysharp.Core.Common.Patterns;
 global using global::Keysharp.Core.Common.Platform;
+global using global::Keysharp.Core.Common.Strings;
 global using global::Keysharp.Core.Common.Threading;
 global using global::Keysharp.Core.Common.Window;
 global using global::Keysharp.Scripting;
@@ -76,3 +84,6 @@ global using global::Semver.Utility;
 	global using global::Keysharp.Core.Linux.Proxies;
 	global using global::Keysharp.Core.Linux.X11;
 #endif
+
+//Static
+global using static global::Keysharp.Scripting.Keywords;

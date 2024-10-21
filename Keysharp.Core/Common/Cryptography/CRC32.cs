@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common.Cryptography
 {
 	/// <summary>
 	/// Adapted from http://tomkaminski.com/crc32-hashalgorithm-c-net
@@ -6,7 +6,7 @@
 	/// </summary>
 	internal class CRC32 : HashAlgorithm
 	{
-		public const uint seed = 0xffffffff;
+		private const uint seed = 0xffffffff;
 
 		private static readonly uint[] table =
 			[
@@ -68,7 +68,7 @@
 
 		public override int HashSize => 32;
 
-		public uint Value => (uint)((HashValue[0] << 24) | (HashValue[1] << 16) | (HashValue[2] << 8) | HashValue[3]);
+		public uint Value => (uint)(HashValue[0] << 24 | HashValue[1] << 16 | HashValue[2] << 8 | HashValue[3]);
 
 		public override void Initialize() => value = 0;
 
@@ -79,7 +79,7 @@
 			{
 				while (--length >= 0)
 				{
-					value = table[(value ^ buffer[start++]) & 0xFF] ^ (value >> 8);
+					value = table[(value ^ buffer[start++]) & 0xFF] ^ value >> 8;
 				}
 			}
 			value ^= seed;
@@ -89,9 +89,9 @@
 		{
 			HashValue =
 				[
-					(byte)((value >> 24) & 0xff),
-					(byte)((value >> 16) & 0xff),
-					(byte)((value >> 8) & 0xff),
+					(byte)(value >> 24 & 0xff),
+					(byte)(value >> 16 & 0xff),
+					(byte)(value >> 8 & 0xff),
 					(byte)(value & 0xff)
 				];
 			return HashValue;

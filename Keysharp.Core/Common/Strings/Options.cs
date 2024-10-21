@@ -1,6 +1,4 @@
-using static Keysharp.Scripting.Keywords;
-
-namespace Keysharp.Core
+namespace Keysharp.Core.Common.Strings
 {
 	internal static class Options
 	{

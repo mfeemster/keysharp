@@ -1,4 +1,4 @@
-namespace Keysharp.Core
+namespace Keysharp.Core.Common.Mouse
 {
 	//internal abstract class MouseController
 	//{

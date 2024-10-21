@@ -66,6 +66,11 @@ namespace Keysharp.CompiledMain
 	using System.Windows.Forms;
 	using Keysharp.Core;
 	using Keysharp.Core.Common;
+	using Keysharp.Core.Common.File;
+	using Keysharp.Core.Common.Invoke;
+	using Keysharp.Core.Common.ObjectBase;
+	using Keysharp.Core.Common.Strings;
+	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;

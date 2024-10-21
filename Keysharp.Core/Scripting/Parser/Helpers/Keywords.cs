@@ -2,7 +2,7 @@
 {
 	public class Keywords
 	{
-		public const bool Debug =
+		public const bool IsDebug =
 #if DEBUG
 			true
 #else

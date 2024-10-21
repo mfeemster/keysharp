@@ -1,6 +1,4 @@
-﻿using static Keysharp.Scripting.Keywords;
-
-namespace Keysharp.Core.Common.Mapper
+﻿namespace Keysharp.Core.Common.Mapper
 {
 	/// <summary>
 	/// Maps DriveTypes

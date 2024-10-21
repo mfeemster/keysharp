@@ -2,7 +2,6 @@
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
 using static Keysharp.Core.Windows.WindowsAPI;
-using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Windows
 {

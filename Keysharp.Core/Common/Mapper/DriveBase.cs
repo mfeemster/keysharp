@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common.Mapper
 {
 	internal abstract class DriveBase
 	{

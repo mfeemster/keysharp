@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core
+﻿namespace Keysharp.Core.Common.Strings
 {
 	public class StringBuffer : KeysharpObject
 	{

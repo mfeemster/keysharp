@@ -1,6 +1,5 @@
 ﻿using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
-using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Common.Keyboard
 {

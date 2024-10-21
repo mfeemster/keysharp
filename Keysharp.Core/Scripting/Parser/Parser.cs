@@ -1,4 +1,3 @@
-using static Keysharp.Scripting.Keywords;
 using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
 
@@ -281,6 +280,11 @@ namespace Keysharp.Scripting
 			mainNs.Imports.Add(new CodeNamespaceImport("System.Windows.Forms"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common"));
+			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common.File"));
+			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common.Invoke"));
+			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common.ObjectBase"));
+			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common.Strings"));
+			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common.Threading"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Scripting"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Array = Keysharp.Core.Array"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Buffer = Keysharp.Core.Buffer"));

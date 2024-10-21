@@ -17,7 +17,10 @@ global using global::System.Windows.Forms;
 global using global::NUnit.Framework;
 global using global::Keysharp.Core;
 global using global::Keysharp.Core.Common;
+global using global::Keysharp.Core.Common.Invoke;
 global using global::Keysharp.Core.Common.Keyboard;
+global using global::Keysharp.Core.Common.ObjectBase;
+global using global::Keysharp.Core.Common.Strings;
 
 #if WINDOWS
 	global using global::Keysharp.Core.Windows;

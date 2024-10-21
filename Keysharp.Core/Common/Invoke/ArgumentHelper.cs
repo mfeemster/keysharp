@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core
+﻿namespace Keysharp.Core.Common.Invoke
 {
 	internal class ArgumentHelper
 	{

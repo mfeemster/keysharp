@@ -1,5 +1,3 @@
-using static Keysharp.Scripting.Keywords;
-
 namespace Keysharp.Scripting
 {
 	[AttributeUsage(AttributeTargets.Assembly)]

@@ -1,22 +1,22 @@
 ﻿namespace Keysharp.Core.Common.Window
 {
-	public class SearchCriteria
+	internal class SearchCriteria
 	{
-		public bool Active { get; private set; }
-		public string ClassName { get; set; }
-		public string ExcludeText { get; set; }
-		public string ExcludeTitle { get; set; }
-		public string Group { get; set; }
-		public bool HasExcludes => !string.IsNullOrEmpty(ExcludeTitle) || !string.IsNullOrEmpty(ExcludeText);
-		public bool HasID => ID != IntPtr.Zero || PID != IntPtr.Zero;
-		public IntPtr ID { get; set; }
-		public bool IsEmpty => !HasID&& !HasExcludes&& string.IsNullOrEmpty(Group)&& string.IsNullOrEmpty(Title)&& string.IsNullOrEmpty(Text)&& string.IsNullOrEmpty(ClassName)&& string.IsNullOrEmpty(Path);
-		public string Path { get; set; }
-		public long PID { get; set; }
-		public string Text { get; set; }
-		public string Title { get; set; }
+		internal bool Active { get; private set; }
+		internal string ClassName { get; set; }
+		internal string ExcludeText { get; set; }
+		internal string ExcludeTitle { get; set; }
+		internal string Group { get; set; }
+		internal bool HasExcludes => !string.IsNullOrEmpty(ExcludeTitle) || !string.IsNullOrEmpty(ExcludeText);
+		internal bool HasID => ID != IntPtr.Zero || PID != IntPtr.Zero;
+		internal IntPtr ID { get; set; }
+		internal bool IsEmpty => !HasID&& !HasExcludes&& string.IsNullOrEmpty(Group)&& string.IsNullOrEmpty(Title)&& string.IsNullOrEmpty(Text)&& string.IsNullOrEmpty(ClassName)&& string.IsNullOrEmpty(Path);
+		internal string Path { get; set; }
+		internal long PID { get; set; }
+		internal string Text { get; set; }
+		internal string Title { get; set; }
 
-		public static SearchCriteria FromString(object obj)
+		internal static SearchCriteria FromString(object obj)
 		{
 			var criteria = new SearchCriteria();
 

@@ -1,4 +1,3 @@
-using static Keysharp.Scripting.Keywords;
 using static Keysharp.Scripting.Parser;
 
 namespace Keysharp.Scripting

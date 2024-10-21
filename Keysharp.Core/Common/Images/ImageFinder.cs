@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common.Images
 {
 	/// <summary>
 	/// Class which provides common search Methods to find a Color or a subimage in given Image.

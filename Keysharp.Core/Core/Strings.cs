@@ -1,4 +1,4 @@
-using static Keysharp.Scripting.Keywords;
+using Keysharp.Core.Common.Cryptography;
 
 namespace Keysharp.Core
 {

@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core.Common
+﻿namespace Keysharp.Core.Common.ObjectBase
 {
 	public class KeysharpObject : Any
 	{

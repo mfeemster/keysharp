@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core
+﻿namespace Keysharp.Core.Common.Strings
 {
 	/// <summary>
 	/// Human readable sorting from https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer

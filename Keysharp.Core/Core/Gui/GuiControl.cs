@@ -1,5 +1,4 @@
 ﻿using Label = System.Windows.Forms.Label;
-using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
