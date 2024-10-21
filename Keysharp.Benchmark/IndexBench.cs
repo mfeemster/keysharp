@@ -145,7 +145,7 @@ namespace Keysharp.Benchmark
 	public class ListAddBench
 	{
 		private Keysharp.Core.Array keysharparray = Collections.Array();
-		private List<object> nativelist = new List<object>();
+		private List<object> nativelist = [];
 		private readonly object o = 123L;
 
 		[Params(1000000)]
@@ -231,7 +231,7 @@ namespace Keysharp.Benchmark
 		{
 			Variables.InitGlobalVars();
 			Size = 1000000;
-			nativelist = new List<object>();
+			nativelist = [];
 			keysharparray = Collections.Array();
 		}
 	}

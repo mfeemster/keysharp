@@ -2,13 +2,13 @@
 {
 	internal class CodeSwitchStatement : CodeStatement
 	{
-		internal CodeStatementCollection AllStatements { get; } = new CodeStatementCollection();
-		internal Dictionary<string, CodeStatementCollection> CaseBodyStatements { get; } = new Dictionary<string, CodeStatementCollection>();
-		internal Dictionary<string, object> CaseExpressions { get; } = new Dictionary<string, object>();
+		internal CodeStatementCollection AllStatements { get; } = [];
+		internal Dictionary<string, CodeStatementCollection> CaseBodyStatements { get; } = [];
+		internal Dictionary<string, object> CaseExpressions { get; } = [];
 		internal StringComparison? CaseSense { get; } = null;
 		internal CodeConditionStatement Condition { get; } = new CodeConditionStatement();
 		internal CodeLabeledStatement DefaultLabelStatement { get; } = new CodeLabeledStatement();
-		internal CodeStatementCollection DefaultStatements { get; } = new CodeStatementCollection();
+		internal CodeStatementCollection DefaultStatements { get; } = [];
 		internal CodeLabeledStatement FinalLabelStatement { get; } = new CodeLabeledStatement();
 		internal string SwitchVar { get; }
 

@@ -5,7 +5,7 @@ namespace Keysharp.Core.Common.Platform
 		internal Stack<long> activated = new Stack<long>();
 		internal Stack<long> deactivated = new Stack<long>();
 		internal bool lastWasDeactivate = false;
-		internal List<SearchCriteria> sc = new List<SearchCriteria>();
+		internal List<SearchCriteria> sc = [];
 	}
 
 	/// <summary>

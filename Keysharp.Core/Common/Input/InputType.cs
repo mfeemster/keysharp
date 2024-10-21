@@ -32,7 +32,7 @@ namespace Keysharp.Core.Common.Input
 		internal bool FindAnywhere;
 		internal uint[] KeySC = new uint[HookThread.SC_ARRAY_COUNT];
 		internal uint[] KeyVK = new uint[HookThread.VK_ARRAY_COUNT];
-		internal List<string> match = new List<string>();
+		internal List<string> match = [];
 		internal uint MinSendLevel;
 		internal bool NotifyNonText;
 		internal InputType Prev;

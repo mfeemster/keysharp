@@ -31,7 +31,7 @@ namespace Keysharp.Scripting
 		{
 			Line = codeLine;
 			Method = method;
-			Statements = statements ?? new CodeStatementCollection();
+			Statements = statements ?? [];
 			Type = BlockType.Expect;
 			Kind = kind;
 			Parent = parent;

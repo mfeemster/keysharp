@@ -657,7 +657,7 @@ namespace Keysharp.Scripting
 						{
 							funcname = SetLastHotkeyFunc(hotName);
 							var method = LocalMethod(funcname);
-							var result = ParseFlow(new List<CodeLine>() { new CodeLine(fileName, index, replacement) }, 0);//This is for handling ::return
+							var result = ParseFlow([new CodeLine(fileName, index, replacement)], 0);//This is for handling ::return
 
 							if (result != null)
 							{

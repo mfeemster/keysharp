@@ -5,7 +5,7 @@
 		internal ToolStripItem defaultItem;
 		protected long dummyHandle;
 		private static int menuCount = 0;
-		private readonly Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
+		private readonly Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = [];
 
 		public long ClickCount { get; set; } = 2;
 

@@ -160,7 +160,7 @@ namespace Keysharp.Scripting
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal bool ErrorStdOut;
-		internal CodeStatementCollection initial = new CodeStatementCollection();
+		internal CodeStatementCollection initial = [];
 		internal string name = string.Empty;
 		internal bool NoTrayIcon;
 		internal bool Persistent;
@@ -183,21 +183,21 @@ namespace Keysharp.Scripting
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
 
 		private readonly Stack<bool> allGlobalVars = new Stack<bool>();
-		private readonly tsmd allMethodCalls = new tsmd();
+		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new Stack<bool>();
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
-		private readonly CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
-		private readonly HashSet<CodeSnippetExpression> assignSnippets = new ();
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = [];
+		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
+		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
 		private readonly CompilerHelper Ch;
 		private readonly Stack<List<string>> currentFuncParams = new Stack<List<string>>();
 		private readonly Stack<CodeStatementCollection> elses = new ();
 		private readonly Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
-		private readonly tsmd getMethodCalls = new tsmd();
-		private readonly tsmd getPropertyValueCalls = new tsmd();
+		private readonly tsmd getMethodCalls = [];
+		private readonly tsmd getPropertyValueCalls = [];
 		private readonly Stack<List<string>> globalFuncVars = new Stack<List<string>>();
-		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
-		private readonly List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
+		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = [];
+		private readonly List<CodeMethodInvokeExpression> invokes = [];
 		private readonly Stack<List<string>> localFuncVars = new Stack<List<string>>();
 
 		private readonly CodeMemberMethod main = new CodeMemberMethod()
@@ -207,22 +207,22 @@ namespace Keysharp.Scripting
 		};
 
 		private readonly CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
 		private readonly char[] ops = [Equal, Not, Greater, Less];
-		private readonly CodeStatementCollection prepend = new CodeStatementCollection();
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
-		private readonly tsmd setPropertyValueCalls = new tsmd();
+		private readonly CodeStatementCollection prepend = [];
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
+		private readonly tsmd setPropertyValueCalls = [];
 		private readonly Stack<CodeBlock> singleLoops = new ();
-		private readonly List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
-		private readonly List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
-		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
+		private readonly List<CodeMethodInvokeExpression> stackedHotkeys = [];
+		private readonly List<CodeMethodInvokeExpression> stackedHotstrings = [];
+		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = [];
 		private readonly Stack<CodeSwitchStatement> switches = new ();
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly Stack<CodeTernaryOperatorExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
 		private bool blockOpen;
 		private uint caseCount;
-		private List<CodeLine> codeLines = new List<CodeLine>();
+		private List<CodeLine> codeLines = [];
 		private uint exCount;
 		private string fileName;
 		private int internalID;
@@ -1036,10 +1036,10 @@ namespace Keysharp.Scripting
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
 			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
-			setPropertyValueCalls[ctd] = new slmd();
-			getPropertyValueCalls[ctd] = new slmd();
-			getMethodCalls[ctd] = new slmd();
-			allMethodCalls[ctd] = new slmd();
+			setPropertyValueCalls[ctd] = [];
+			getPropertyValueCalls[ctd] = [];
+			getMethodCalls[ctd] = [];
+			allMethodCalls[ctd] = [];
 			return ctd;
 		}
 

@@ -38,7 +38,7 @@ namespace Keysharp.Core.COM
 		internal const int CLSCTX_INPROC_SERVER16 = 0x8;
 		internal const int CLSCTX_REMOTE_SERVER = 0x10;
 		internal const int CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER; //16;
-		internal static HashSet<ComEvent> comEvents = new HashSet<ComEvent>();
+		internal static HashSet<ComEvent> comEvents = [];
 
 		//private static Dictionary<int,
 

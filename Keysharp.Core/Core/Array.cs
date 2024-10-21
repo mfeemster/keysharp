@@ -52,7 +52,7 @@
 		public override object __New(params object[] obj)
 		{
 			if (obj == null || obj.Length == 0)
-				array = new List<object>();
+				array = [];
 			else if (obj.Length == 1 && obj[0] is object[] objarr)
 				array = new List<object>(objarr);
 			else if (obj.Length == 1 && obj[0] is List<object> objlist)
@@ -61,7 +61,7 @@
 				array = c.Cast<object>().ToList();
 			else
 			{
-				array = new List<object>();
+				array = [];
 				Push(obj);
 			}
 

@@ -8,8 +8,8 @@ namespace Keysharp.Core
 		internal static bool blockInput;
 		internal static ToggleValueType blockInputMode = ToggleValueType.Default;
 		internal static bool blockMouseMove;
-		internal static Dictionary<string, HotkeyDefinition> hotkeys = new Dictionary<string, HotkeyDefinition>();
-		internal static Dictionary<string, HotstringDefinition> hotstrings = new Dictionary<string, HotstringDefinition>();
+		internal static Dictionary<string, HotkeyDefinition> hotkeys = [];
+		internal static Dictionary<string, HotstringDefinition> hotstrings = [];
 
 		/// <summary>
 		/// Disables or enables the user's ability to interact with the computer via keyboard and mouse.

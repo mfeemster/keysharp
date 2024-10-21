@@ -26,21 +26,21 @@ namespace Keysharp.Scripting
 		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 		private static int hotifcount;
 		private readonly Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
-		private readonly HashSet<string> defines = new HashSet<string>()
-		{
-			"KEYSHARP",
+		private readonly HashSet<string> defines =
+			[
+				"KEYSHARP",
 #if WINDOWS
-			"WINDOWS",
+				"WINDOWS",
 #elif LINUX
-			"LINUX",
+				"LINUX",
 #endif
-		};
-		private readonly List<string> includes = new List<string>();
+			];
+		private readonly List<string> includes = [];
 		private readonly Parser parser;
 		private string includePath = "./";
 		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
-		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
+		internal List<(string, bool)> PreloadedDlls { get; } = [];
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Force;
 
 		internal PreReader(Parser p) => parser = p;

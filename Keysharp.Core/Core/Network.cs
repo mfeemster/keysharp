@@ -79,9 +79,11 @@ namespace Keysharp.Core
 			for (var i = 0; i < ips.Length; i++)
 				ips[i] = entry.AddressList[0].ToString();
 
-			var info = new Dictionary<string, object>();
-			info.Add("Host", entry.HostName);
-			info.Add("Addresses", ips);
+			var info = new Dictionary<string, object>
+			{
+				{ "Host", entry.HostName },
+				{ "Addresses", ips }
+			};
 			return info;
 		}
 

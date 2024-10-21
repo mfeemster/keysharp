@@ -11,10 +11,10 @@
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
 		internal const int SLEEP_INTERVAL = 10;
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
-		internal static List<IFuncObj> ClipFunctions = new List<IFuncObj>();
-		internal static List<IFuncObj> hotCriterions = new List<IFuncObj>();
+		internal static List<IFuncObj> ClipFunctions = [];
+		internal static List<IFuncObj> hotCriterions = [];
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
-		internal static List<IFuncObj> hotExprs = new List<IFuncObj>();
+		internal static List<IFuncObj> hotExprs = [];
 		internal static bool hsResetUponMouseClick = true;
 		internal static InputType input;
 		internal static int inputBeforeHotkeysCount;
@@ -28,7 +28,7 @@
 		internal static MenuType menuIsVisible = MenuType.None;
 		internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		internal static List<IFuncObj> onErrorHandlers;
-		internal static List<IFuncObj> onExitHandlers = new List<IFuncObj>();
+		internal static List<IFuncObj> onExitHandlers = [];
 		internal static Icon pausedIcon;
 		internal static bool persistent;
 		internal static IntPtr playbackHook = IntPtr.Zero;

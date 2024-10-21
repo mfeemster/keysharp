@@ -35,7 +35,7 @@ namespace Keysharp.Core.Common.Threading
 		internal static int KSCM_SIZE = (int)((MODLR_MAX + 1) * SC_ARRAY_COUNT);
 		internal static int KVKM_SIZE = (int)((MODLR_MAX + 1) * VK_ARRAY_COUNT);
 		internal static string MouseMutexName = "Keysharp Mouse";
-		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
+		internal static Dictionary<uint, string> vkToKey = [];
 		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
 		internal KeyboardMouseSender kbdMsSender = null;

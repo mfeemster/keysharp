@@ -6,8 +6,8 @@ namespace Keysharp.Core
 	public class GuiControl : KeysharpObject
 	{
 		internal string typename;
-		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();
-		private readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
+		private readonly List<IFuncObj> clickHandlers = [];
+		private readonly List<IFuncObj> doubleClickHandlers = [];
 		private readonly bool dpiscaling = true;
 		private Control _control;
 		//Normal event handlers can't be used becaused they need to return a value.
@@ -866,7 +866,7 @@ namespace Keysharp.Core
 			{
 				var (rownumber, opts, cols) = obj.Is2();
 				var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
-				var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
+				var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : [];
 				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
 			}
 		}
@@ -951,7 +951,7 @@ namespace Keysharp.Core
 					if (rownumber < lv.Items.Count)
 					{
 						var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
-						var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
+						var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : [];
 						var start = Math.Max(0, rownumber - 1);
 						var end = rownumber == 0 ? lv.Items.Count : Math.Min(rownumber, lv.Items.Count);
 
@@ -1051,7 +1051,7 @@ namespace Keysharp.Core
 				if (e == "change")
 				{
 					if (changeHandlers == null)
-						changeHandlers = new List<IFuncObj>();
+						changeHandlers = [];
 
 					changeHandlers.ModifyEventHandlers(del, i);
 				}
@@ -1079,14 +1079,14 @@ namespace Keysharp.Core
 				else if (e == "focus")
 				{
 					if (focusHandlers == null)
-						focusHandlers = new List<IFuncObj>();
+						focusHandlers = [];
 
 					focusHandlers.ModifyEventHandlers(del, i);
 				}
 				else if (e == "losefocus")
 				{
 					if (lostFocusHandlers == null)
-						lostFocusHandlers = new List<IFuncObj>();
+						lostFocusHandlers = [];
 
 					lostFocusHandlers.ModifyEventHandlers(del, i);
 				}
@@ -1095,7 +1095,7 @@ namespace Keysharp.Core
 					if (_control is ListView lv)
 					{
 						if (columnClickHandlers == null)
-							columnClickHandlers = new List<IFuncObj>();
+							columnClickHandlers = [];
 
 						columnClickHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1105,7 +1105,7 @@ namespace Keysharp.Core
 					if (_control is TreeView || _control is ListView)
 					{
 						if (itemCheckHandlers == null)
-							itemCheckHandlers = new List<IFuncObj>();
+							itemCheckHandlers = [];
 
 						itemCheckHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1115,7 +1115,7 @@ namespace Keysharp.Core
 					if (_control is TreeView || _control is ListView)
 					{
 						if (itemEditHandlers == null)
-							itemEditHandlers = new List<IFuncObj>();
+							itemEditHandlers = [];
 
 						itemEditHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1125,7 +1125,7 @@ namespace Keysharp.Core
 					if (_control is TreeView)
 					{
 						if (itemExpandHandlers == null)
-							itemExpandHandlers = new List<IFuncObj>();
+							itemExpandHandlers = [];
 
 						itemExpandHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1135,7 +1135,7 @@ namespace Keysharp.Core
 					if (_control is ListView)
 					{
 						if (focusedItemChangedHandlers == null)
-							focusedItemChangedHandlers = new List<IFuncObj>();
+							focusedItemChangedHandlers = [];
 
 						focusedItemChangedHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1145,7 +1145,7 @@ namespace Keysharp.Core
 					if (_control is TreeView || _control is ListView)
 					{
 						if (selectedItemChangedHandlers == null)
-							selectedItemChangedHandlers = new List<IFuncObj>();
+							selectedItemChangedHandlers = [];
 
 						selectedItemChangedHandlers.ModifyEventHandlers(del, i);
 					}
@@ -1153,7 +1153,7 @@ namespace Keysharp.Core
 				else if (e == "contextmenu")
 				{
 					if (contextMenuChangedHandlers == null)
-						contextMenuChangedHandlers = new List<IFuncObj>();
+						contextMenuChangedHandlers = [];
 
 					if (!(_control is TextBox) && !(_control is MonthCalendar))
 						contextMenuChangedHandlers.ModifyEventHandlers(del, i);
@@ -1848,7 +1848,7 @@ namespace Keysharp.Core
 			var del = Functions.GetFuncObj(callback, Gui.form.eventObj, true);
 
 			if (handlers == null)
-				handlers = new Dictionary<int, List<IFuncObj>>();
+				handlers = [];
 
 			var h = handlers.GetOrAdd((int)code);
 			h.ModifyEventHandlers(del, addremove);

@@ -4,7 +4,7 @@
 	{
 		internal const string cdeclstr = "cdecl";
 		protected bool cdecl = false;
-		protected HashSet<GCHandle> gcHandles = new HashSet<GCHandle>();
+		protected HashSet<GCHandle> gcHandles = [];
 		protected ScopeHelper gcHandlesScope;
 		protected bool hasreturn = false;
 		protected string returnName = "";

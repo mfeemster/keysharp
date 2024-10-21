@@ -77,7 +77,7 @@
 		{
 			if (values == null || values.Length == 0)
 			{
-				map = new Dictionary<object, object>();
+				map = [];
 			}
 			else
 			{

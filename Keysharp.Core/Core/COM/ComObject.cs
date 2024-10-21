@@ -5,7 +5,7 @@ namespace Keysharp.Core.COM
 	{
 		internal static long F_OWNVALUE = 1;
 		internal static int MaxVtableLen = 16;
-		internal List<IFuncObj> handlers = new List<IFuncObj>();
+		internal List<IFuncObj> handlers = [];
 		internal object item;
 
 		public long Flags { get; set; }

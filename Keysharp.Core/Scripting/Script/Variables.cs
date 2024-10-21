@@ -4,7 +4,7 @@ namespace Keysharp.Scripting
 	{
 		public class Variables
 		{
-			internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
+			internal static List<(string, bool)> preloadedDlls = [];
 			internal static DateTime startTime = DateTime.Now;
 			private static readonly Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
 #if LINUX

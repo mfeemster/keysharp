@@ -21,9 +21,9 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MapReadBenchmark
 	{
-		private Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private Dictionary<object, object> dkt = [];
 		private Map map = Collections.Map(), mapScript = Collections.Map();
-		private List<string> strings = new List<string>();
+		private List<string> strings = [];
 
 		[Params(10000)]
 		public int Size { get; set; }
@@ -55,8 +55,8 @@ namespace Keysharp.Benchmark
 			Variables.InitGlobalVars();
 			map = Collections.Map();
 			mapScript = Collections.Map();
-			dkt = new Dictionary<object, object>();
-			strings = new List<string>();
+			dkt = [];
+			strings = [];
 
 			for (var i = 0; i < Size; i++)
 			{
@@ -72,9 +72,9 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MapWriteBenchmark
 	{
-		private readonly Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private readonly Dictionary<object, object> dkt = [];
 		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
-		private readonly List<string> strings = new List<string>();
+		private readonly List<string> strings = [];
 
 		[Params(10000)]
 		public int Size { get; set; }
@@ -84,8 +84,8 @@ namespace Keysharp.Benchmark
 			Variables.InitGlobalVars();
 			map = Collections.Map();
 			mapScript = Collections.Map();
-			dkt = new Dictionary<object, object>();
-			strings = new List<string>();
+			dkt = [];
+			strings = [];
 		}
 
 		[Benchmark]
@@ -126,22 +126,22 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class NestedMapPopulatorBenchmark
 	{
-		private List<string> strings = new List<string>();
-		private Dictionary<string, object> masterDkt = new Dictionary<string, object>();
+		private List<string> strings = [];
+		private Dictionary<string, object> masterDkt = [];
 
 		[Params(3)]
 		public int StringLength { get; set; }
 
 		public NestedMapPopulatorBenchmark()
 		{
-			masterDkt = new Dictionary<string, object>();
-			strings = new List<string>();
+			masterDkt = [];
+			strings = [];
 		}
 
 		[Benchmark]
 		public void PopulateNestedMap()
 		{
-			masterDkt = new Dictionary<string, object>();
+			masterDkt = [];
 
 			for (var c1 = 'a'; c1 < 'z'; c1++)
 			{
@@ -184,8 +184,8 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class NestedMapRetrieverBenchmark
 	{
-		private List<string> strings = new List<string>();
-		private Dictionary<string, object> masterDkt = new Dictionary<string, object>();
+		private List<string> strings = [];
+		private Dictionary<string, object> masterDkt = [];
 
 		[Params(3)]
 		public int StringLength { get; set; }
@@ -259,7 +259,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			masterDkt = new Dictionary<string, object>();
+			masterDkt = [];
 			strings = new List<string>((int)Math.Pow(26, 3));
 
 			for (var c1 = 'a'; c1 < 'z'; c1++)

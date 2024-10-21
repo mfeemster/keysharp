@@ -89,7 +89,7 @@ namespace Keysharp.Core.COM
 							var bstr = Marshal.StringToBSTR(s);
 
 							if (bstrs == null)
-								bstrs = new HashSet<nint>();
+								bstrs = [];
 
 							_ = bstrs.Add(bstr);
 							args[n] = bstr;

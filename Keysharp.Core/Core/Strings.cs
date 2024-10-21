@@ -5,7 +5,7 @@ namespace Keysharp.Core
 	public static class Strings
 	{
 		internal static Lock locker = new ();
-		internal static RegexEntry regdkt = new ();
+		internal static RegexEntry regdkt = [];
 		private static readonly object[] nullPlaceholder = [null];
 
 		/// <summary>
@@ -970,7 +970,7 @@ namespace Keysharp.Core
 				return new Array(output.Cast<object>().ToArray());
 			}
 
-			return new Array();
+			return [];
 		}
 
 		public static string StrTitle(object obj) => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(obj.As());

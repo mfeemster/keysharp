@@ -96,12 +96,12 @@ namespace Keysharp.Tests
 			thread = new Thread(() =>
 			{
 				Thread.Sleep(100);
-				Clipboard.SetFileDropList(new System.Collections.Specialized.StringCollection
-				{
-					"./testfile1.txt",
-					"./testfile2.txt",
-					"./testfile3.txt",
-				});
+				Clipboard.SetFileDropList(
+					[
+						"./testfile1.txt",
+						"./testfile2.txt",
+						"./testfile3.txt",
+					]);
 				tcs.SetResult(true);
 			});
 #if WINDOWS

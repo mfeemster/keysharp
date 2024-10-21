@@ -23,9 +23,9 @@
 		internal static string[] SEND_MODES = ["Event", "Input", "Play", "InputThenPlay"]; // Must match the SendModes enum.
 
 		internal static uint MakeLong(short lowPart, short highPart) => ((ushort)lowPart) | (uint)(highPart << 16);
-		internal static List<int> mouseList = new List<int>();
-		internal static List<int> keyboardList = new List<int>();
-		internal static List<int> kbMouseList = new List<int>();
+		internal static List<int> mouseList = [];
+		internal static List<int> keyboardList = [];
+		internal static List<int> kbMouseList = [];
 
 		static KeyboardUtils()
 		{

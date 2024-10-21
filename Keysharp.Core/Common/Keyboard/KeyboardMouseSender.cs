@@ -89,9 +89,9 @@
 
 		public KeyboardMouseSender()
 		{
-			hotkeys = new List<HotkeyDefinition>();
-			hotstrings = new List<HotstringDefinition>();
-			pressed = new Dictionary<Keys, bool>();
+			hotkeys = [];
+			hotstrings = [];
+			pressed = [];
 
 			foreach (int i in Enum.GetValues(typeof(Keys)))
 				_ = pressed.TryAdd((Keys)i, false);

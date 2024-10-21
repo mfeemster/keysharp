@@ -8,7 +8,7 @@ namespace Keysharp.Core
 		internal static Dictionary<string, MethodInfo> flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
-		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
+		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = [];
 		internal static sttd stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
@@ -26,14 +26,14 @@ namespace Keysharp.Core
 		[PublicForTestOnly]
 		public static void Clear()
 		{
-			staticFields = new Dictionary<Type, Dictionary<string, FieldInfo>>();
+			staticFields = [];
 			stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
 			stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			typeToStringMethods = new ttsd(sttcap / 5);
 			typeToStringProperties = new ttsd(sttcap / 5);
-			loadedAssemblies = new Dictionary<string, Assembly>();
+			loadedAssemblies = [];
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 			stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);

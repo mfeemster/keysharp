@@ -1009,7 +1009,7 @@ namespace Keysharp.Core
 
 	public class KeysharpToolStripStatusLabel : ToolStripStatusLabel
 	{
-		internal readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
+		internal readonly List<IFuncObj> doubleClickHandlers = [];
 
 		//No WndProc method to override because TSSL is not a Control.
 
@@ -1066,7 +1066,7 @@ namespace Keysharp.Core
 	public class KeysharpTreeView : TreeView
 	{
 		private readonly int addstyle, removestyle;
-		private readonly Dictionary<TreeNode, bool> expandStates = new Dictionary<TreeNode, bool>();
+		private readonly Dictionary<TreeNode, bool> expandStates = [];
 
 		protected override CreateParams CreateParams
 		{

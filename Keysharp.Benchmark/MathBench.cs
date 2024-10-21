@@ -5,12 +5,12 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class MathBench
 	{
-		private readonly Dictionary<object, object> dkt = new Dictionary<object, object>();
+		private readonly Dictionary<object, object> dkt = [];
 		private IFuncObj fo = Func("Cos");
 		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
-		private List<object> objvals = new List<object>();
+		private List<object> objvals = [];
 		private double totalCos;
-		private List<double> vals = new List<double>();
+		private List<double> vals = [];
 
 		[Params(100000)]
 		public int Size { get; set; }

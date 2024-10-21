@@ -64,7 +64,7 @@ namespace Keysharp.Scripting
 			var bracketLevel = 0;
 			var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
 			List<int> refIndexes = new List<int>(paren.Count);//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
-			List<object> arg = new List<object>();
+			List<object> arg = [];
 			List<List<object>> args = new List<List<object>>(paren.Count);
 
 			for (var i = 0; i < paren.Count; i++)
@@ -109,7 +109,7 @@ namespace Keysharp.Scripting
 							arg.Add("null");
 
 						args.Add(arg);
-						arg = new List<object>();
+						arg = [];
 						paramIndex++;
 					}
 					else if (lastisstar && p == "*")//p can be * if the param is just a variable reference, or if it's a function call whose result is to be expanded. Ex: func(func2(val)*)

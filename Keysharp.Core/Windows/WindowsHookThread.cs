@@ -18,7 +18,7 @@ namespace Keysharp.Core.Windows
 	internal class WindowsHookThread : HookThread
 	{
 		private static bool pendingDeadKeyInvisible;
-		private static List<DeadKeyRecord> pendingDeadKeys = new ();
+		private static List<DeadKeyRecord> pendingDeadKeys = [];
 		private static bool uwpAppFocused;
 		private static IntPtr uwpHwndChecked = IntPtr.Zero;
 		private readonly LowLevelKeyboardProc kbdHandlerDel;

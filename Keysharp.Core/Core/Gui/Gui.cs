@@ -18,7 +18,7 @@ namespace Keysharp.Core
 
 		internal List<IFuncObj> closedHandlers;
 		internal List<IFuncObj> contextMenuChangedHandlers;
-		internal Dictionary<object, object> controls = new Dictionary<object, object>();
+		internal Dictionary<object, object> controls = [];
 		internal List<IFuncObj> dropFilesHandlers;
 		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
@@ -1531,35 +1531,35 @@ namespace Keysharp.Core
 			if (e == "close")
 			{
 				if (closedHandlers == null)
-					closedHandlers = new List<IFuncObj>();
+					closedHandlers = [];
 
 				closedHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "contextmenu")
 			{
 				if (contextMenuChangedHandlers == null)
-					contextMenuChangedHandlers = new List<IFuncObj>();
+					contextMenuChangedHandlers = [];
 
 				contextMenuChangedHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "dropfiles")
 			{
 				if (dropFilesHandlers == null)
-					dropFilesHandlers = new List<IFuncObj>();
+					dropFilesHandlers = [];
 
 				dropFilesHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "escape")
 			{
 				if (escapeHandlers == null)
-					escapeHandlers = new List<IFuncObj>();
+					escapeHandlers = [];
 
 				escapeHandlers.ModifyEventHandlers(del, i);
 			}
 			else if (e == "size")
 			{
 				if (sizeHandlers == null)
-					sizeHandlers = new List<IFuncObj>();
+					sizeHandlers = [];
 
 				sizeHandlers.ModifyEventHandlers(del, i);
 			}
@@ -2298,7 +2298,7 @@ namespace Keysharp.Core
 			internal bool check3 = false;
 
 			internal bool checkedgray = false;
-			internal List<int> choose = new List<int>();
+			internal List<int> choose = [];
 			internal bool choosenone = false;
 			internal bool? clickheader;
 
@@ -2393,7 +2393,7 @@ namespace Keysharp.Core
 			internal bool? sortheader;
 			internal int t = int.MinValue;
 			internal bool? tabstop;
-			internal List<int> tabstops = new List<int>();
+			internal List<int> tabstops = [];
 			internal int thick = int.MinValue;
 			internal bool? thinborder;
 			internal int tickinterval = int.MinValue;

@@ -40,7 +40,7 @@
 			var del = Functions.GetFuncObj(e, null, true);
 
 			if (Script.onErrorHandlers == null)
-				Script.onErrorHandlers = new List<IFuncObj>();
+				Script.onErrorHandlers = [];
 
 			Script.onErrorHandlers.ModifyEventHandlers(del, i);
 		}

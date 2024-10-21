@@ -580,7 +580,7 @@ namespace Keysharp.Core.Windows
 				return new Array(listBoxContent);
 			}
 
-			return new Array();
+			return [];
 		}
 
 		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)

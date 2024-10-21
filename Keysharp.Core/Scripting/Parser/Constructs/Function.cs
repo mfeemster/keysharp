@@ -189,10 +189,10 @@ namespace Keysharp.Scripting
 			_ = CloseTopLabelBlock();
 			allGlobalVars.Push(false);
 			allStaticVars.Push(false);
-			globalFuncVars.Push(new List<string>());
-			localFuncVars.Push(new List<string>());
+			globalFuncVars.Push([]);
+			localFuncVars.Push([]);
 			staticFuncVars[typeStack.Peek()].Push(new Dictionary<string, CodeExpression>(StringComparer.OrdinalIgnoreCase));
-			currentFuncParams.Push(new List<string>());
+			currentFuncParams.Push([]);
 		}
 
 		private CodeMemberMethod LocalMethod(string name)
