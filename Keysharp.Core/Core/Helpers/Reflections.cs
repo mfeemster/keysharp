@@ -13,10 +13,10 @@ namespace Keysharp.Core
 		internal static sttd stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, Type> stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		internal static int sttcap = 1000;
 		internal static ttsd typeToStringMethods = new ttsd(sttcap / 5);
 		internal static ttsd typeToStringProperties = new ttsd(sttcap / 5);
-		internal static Dictionary<string, Type> stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
 
 		static Reflections() => Initialize();
 
@@ -337,9 +337,9 @@ namespace Keysharp.Core
 			return ct;
 		}
 
-		internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Count() > 0;
-
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
+
+		internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Count() > 0;
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 
@@ -445,7 +445,7 @@ namespace Keysharp.Core
 				}
 				catch (Exception ex)
 				{
-					Keysharp.Scripting.Script.OutputDebug(ex.Message);
+					Script.OutputDebug(ex.Message);
 				}
 			}
 

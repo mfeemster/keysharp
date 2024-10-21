@@ -38,8 +38,8 @@
 		/// </summary>
 		private const int NUMBER_MARGIN = 1;
 
-		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Keysharp.Scripting.Parser.GetKeywords();
-		private static readonly string keywords2 = Keysharp.Scripting.Script.GetPublicStaticPropertyNames();
+		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Parser.GetKeywords();
+		private static readonly string keywords2 = Script.GetPublicStaticPropertyNames();
 		private readonly Button btnCopyFullCode = new Button();
 		private readonly CheckBox chkFullCode = new CheckBox();
 		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
@@ -351,7 +351,7 @@
 		private void Keyview_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			timer.Stop();
-			System.IO.File.WriteAllText(lastrun, txtIn.Text);
+			File.WriteAllText(lastrun, txtIn.Text);
 		}
 
 		private void Keyview_Load(object sender, EventArgs e)
@@ -378,8 +378,8 @@
 			InitHotkeys();
 			//txtIn.StyleNeeded += TxtIn_StyleNeeded;
 
-			if (System.IO.File.Exists(lastrun))
-				txtIn.Text = System.IO.File.ReadAllText(lastrun);
+			if (File.Exists(lastrun))
+				txtIn.Text = File.ReadAllText(lastrun);
 
 			timer.Interval = 1000;
 			timer.Tick += Timer_Tick;
@@ -596,7 +596,7 @@
 						trimmedCode = sb.ToString().TrimEnd(trimend);
 						SetTxtOut(chkFullCode.Checked ? fullCode : trimmedCode);
 						txtOut.FirstVisibleLine = oldIndex;
-						System.IO.File.WriteAllText(lastrun, txtIn.Text);
+						File.WriteAllText(lastrun, txtIn.Text);
 					}
 					else
 					{
@@ -625,7 +625,7 @@
 				try
 				{
 					if (filenames.Length > 0)
-						txtIn.Text = System.IO.File.ReadAllText(filenames[0]);
+						txtIn.Text = File.ReadAllText(filenames[0]);
 				}
 				catch (Exception ex)
 				{
@@ -646,7 +646,7 @@
 		{
 			if (e.KeyCode == Keys.F5)
 				force = true;
-			else if (object.ReferenceEquals(sender, txtIn))
+			else if (ReferenceEquals(sender, txtIn))
 				lastKeyTime = DateTime.Now;
 		}
 

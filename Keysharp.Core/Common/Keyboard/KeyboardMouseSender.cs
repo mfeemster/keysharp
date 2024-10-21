@@ -72,15 +72,15 @@
 		internal bool abortArraySend = false;
 		internal int maxEvents = 0;
 		internal uint modifiersLRCtrlAltDelMask = 0u;
+		internal uint modifiersLRLastPressed = 0u;
+		internal DateTime modifiersLRLastPressedTime = DateTime.Now;
 		internal uint modifiersLRLogical = 0u;
 		internal uint modifiersLRLogicalNonIgnored = 0u;
 		internal uint modifiersLRNumpadMask = 0u;
 		internal uint modifiersLRPhysical = 0u;
-		internal uint modifiersLRLastPressed = 0u;
-		internal DateTime modifiersLRLastPressedTime = DateTime.Now;
+		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
-		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		private const int retention = 1024;
 		private readonly StringBuilder caser = new StringBuilder(32);
 		private readonly List<HotkeyDefinition> hotkeys;
@@ -227,7 +227,7 @@
 		internal abstract int PbEventCount();
 
 		internal void PerformMouseCommon(Actions actionType, uint vk, int x1, int y1, int x2, int y2,
-										 long repeatCount, Keysharp.Core.Common.Keyboard.KeyEventTypes eventType, long speed, bool relative)
+										 long repeatCount, KeyEventTypes eventType, long speed, bool relative)
 		{
 			// The maximum number of events, which in this case would be from a MouseClickDrag.  To be conservative
 			// (even though INPUT is a much larger struct than PlaybackEvent and SendInput doesn't use mouse-delays),
@@ -235,29 +235,29 @@
 			// Drag consists of at most:
 			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
 			const int MAX_PERFORM_MOUSE_EVENTS = 10;
-			var ht = Keysharp.Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			sendMode = ThreadAccessors.A_SendMode;
 
-			if (sendMode == Common.Keyboard.SendModes.Input || sendMode == Common.Keyboard.SendModes.InputThenPlay)
+			if (sendMode == SendModes.Input || sendMode == SendModes.InputThenPlay)
 			{
 				if (ht.SystemHasAnotherMouseHook()) // See similar section in SendKeys() for details.
-					sendMode = (sendMode == Common.Keyboard.SendModes.Input) ? Common.Keyboard.SendModes.Event : Common.Keyboard.SendModes.Play;
+					sendMode = (sendMode == SendModes.Input) ? SendModes.Event : SendModes.Play;
 				else
-					sendMode = Common.Keyboard.SendModes.Input; // Resolve early so that other sections don't have to consider SM_INPUT_FALLBACK_TO_PLAY a valid value.
+					sendMode = SendModes.Input; // Resolve early so that other sections don't have to consider SM_INPUT_FALLBACK_TO_PLAY a valid value.
 			}
 
-			if (sendMode != Common.Keyboard.SendModes.Event) // We're also responsible for setting sSendMode to SM_EVENT prior to returning.
+			if (sendMode != SendModes.Event) // We're also responsible for setting sSendMode to SM_EVENT prior to returning.
 				InitEventArray(MAX_PERFORM_MOUSE_EVENTS, 0);
 
 			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 			// Turn it back off only if it wasn't ON before we started.
-			var blockinputPrev = Keysharp.Core.Keyboard.blockInput;
-			var doSelectiveBlockinput = (Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.Mouse
-										 || Keysharp.Core.Keyboard.blockInputMode == Common.Keyboard.ToggleValueType.SendAndMouse)
-										&& sendMode == Common.Keyboard.SendModes.Event;
+			var blockinputPrev = Core.Keyboard.blockInput;
+			var doSelectiveBlockinput = (Core.Keyboard.blockInputMode == ToggleValueType.Mouse
+										 || Core.Keyboard.blockInputMode == ToggleValueType.SendAndMouse)
+										&& sendMode == SendModes.Event;
 
 			if (doSelectiveBlockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
-				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
+				_ = Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 
 			switch (actionType)
 			{
@@ -275,7 +275,7 @@
 					break;
 			}
 
-			if (sendMode != Common.Keyboard.SendModes.Event)
+			if (sendMode != SendModes.Event)
 			{
 				var finalKeyDelay = -1L; // Set default.
 
@@ -286,7 +286,7 @@
 			}
 
 			if (doSelectiveBlockinput && !blockinputPrev)  // Turn it back off only if it was off before we started.
-				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
+				_ = Core.Keyboard.ScriptBlockInput(false);
 		}
 
 		internal void ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)
@@ -344,7 +344,7 @@
 				char? dummy = null;
 				var criterion_found_hwnd = 0L;
 
-				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyboardMouseSender.KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
+				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
 					return;
 
 				if (!Threads.AnyThreadsAvailable())//First test global thread count.
@@ -480,7 +480,7 @@
 		/// <returns></returns>
 		internal ToggleValueType? ToggleVal(uint vk)
 		{
-			var key = (System.Windows.Forms.Keys)vk;
+			var key = (Keys)vk;
 
 			if (forceToggle != null) // Key is a toggleable key.
 			{

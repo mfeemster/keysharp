@@ -8,7 +8,7 @@ namespace Keysharp.Benchmark
 	public class IndexBench
 	{
 		private dynamic? dynamickeysharparray;
-		private Array keysharparray = Keysharp.Core.Misc.Array();
+		private Array keysharparray = Collections.Array();
 		private object[] nativearray = System.Array.Empty<object>();
 		private double[] nativedoublearray = System.Array.Empty<double>();
 		private double totalSum;
@@ -120,7 +120,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
+			Variables.InitGlobalVars();
 			totalSum = 0;
 			Size = 1000000;
 			nativearray = new object[Size];
@@ -144,7 +144,7 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	public class ListAddBench
 	{
-		private Keysharp.Core.Array keysharparray = Keysharp.Core.Misc.Array();
+		private Keysharp.Core.Array keysharparray = Collections.Array();
 		private List<object> nativelist = new List<object>();
 		private readonly object o = 123L;
 
@@ -182,7 +182,7 @@ namespace Keysharp.Benchmark
 			keysharparray.Clear();
 
 			for (var i = 0; i < Size; i++)
-				_ = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(keysharparray, "Add", 1), o);
+				_ = Invoke(GetMethodOrProperty(keysharparray, "Add", 1), o);
 
 			if (keysharparray.Count != Size)
 				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
@@ -195,7 +195,7 @@ namespace Keysharp.Benchmark
 			keysharparray.Capacity = Size;
 
 			for (var i = 0; i < Size; i++)
-				_ = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(keysharparray, "Add", 1), o);
+				_ = Invoke(GetMethodOrProperty(keysharparray, "Add", 1), o);
 
 			if (keysharparray.Count != Size)
 				throw new Exception($"Native list size of {keysharparray.Count} was not equal to Size {Size}.");
@@ -229,10 +229,10 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
+			Variables.InitGlobalVars();
 			Size = 1000000;
 			nativelist = new List<object>();
-			keysharparray = Keysharp.Core.Misc.Array();
+			keysharparray = Collections.Array();
 		}
 	}
 }

@@ -23,6 +23,7 @@ namespace Keysharp.Core
 			return devices;
 		}
 #endif
+
 		/// <summary>
 		/// Emits a tone from the PC speaker.
 		/// </summary>
@@ -42,8 +43,11 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		public static object SoundGetInterface(object obj0, object obj1 = null, object obj2 = null) => DoSound(SoundCommands.SoundGetInterface, obj0, obj1, obj2);
+
 #endif
+
 		public static object SoundGetMute(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetMute, obj0, obj1);
 
 		public static object SoundGetName(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetName, obj0, obj1);
@@ -65,6 +69,7 @@ namespace Keysharp.Core
 		/// <item><term>*64</term>: <description>asterisk (info)</description></item>
 		/// </list>
 #endif
+
 		/// </param>
 		/// <param name="wait"><c>true</c> to block the current thread until the sound has finished playing, false otherwise.</param>
 		public static void SoundPlay(object obj0, object obj1 = null)
@@ -102,7 +107,7 @@ namespace Keysharp.Core
 			{
 				var doWait = wait == "1" || string.Compare(wait, "WAIT", true) == 0;
 #if WINDOWS
-				var sound = new System.Media.SoundPlayer(filename);
+				var sound = new SoundPlayer(filename);
 
 				if (doWait)
 					sound.PlaySync();
@@ -282,6 +287,7 @@ namespace Keysharp.Core
 		}
 
 #elif WINDOWS
+
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
 			var soundSet = false;
@@ -512,6 +518,7 @@ namespace Keysharp.Core
 
 			return null;
 		}
+
 		private static bool FindComponent(MMDevice mmDev, SoundComponentSearch search)
 		{
 			search.count = 0;
@@ -534,6 +541,7 @@ namespace Keysharp.Core
 
 			return search.count == search.targetInstance;
 		}
+
 		private static bool FindComponent(IPart root, SoundComponentSearch search)
 		{
 			IPartsList partsList;
@@ -637,6 +645,7 @@ namespace Keysharp.Core
 
 			return false;
 		}
+
 		private static MMDevice GetDevice(object obj0)
 		{
 			var deviceEnum = new MMDeviceEnumerator();
@@ -695,25 +704,31 @@ namespace Keysharp.Core
 
 			return mmDev;
 		}
+
 		private class SoundComponentSearch
 		{
 			//Internal use/results:
 			internal object control;
+
 			internal int count;
 
 			//Internal use:
 			internal DataFlow dataFlow = DataFlow.Render;
+
 			internal bool ignoreRemainingSubunits;
 			internal string name;
 			internal SoundControlType targetControl;
 
 			//Parameters of search:
 			internal Guid targetIid;
+
 			internal int targetInstance;
 			internal string targetName;
 			// Valid only when target_control == SoundControlType::Name.
 		};
+
 #endif
+
 		private enum SoundCommands
 		{
 			SoundGetVolume = 0, SoundGetMute, SoundGetName

@@ -121,7 +121,7 @@ namespace Keysharp.Core
 						: !IsClipboardEmpty())
 					return true;
 
-				Keysharp.Core.Flow.Sleep(frequency);
+				Flow.Sleep(frequency);
 			}
 
 			return false;
@@ -157,7 +157,7 @@ namespace Keysharp.Core
 #endif
 		}
 
-		public static void HandleCommandLineParams(string[] args) => Keysharp.Core.Accessors.A_Args.AddRange(args);
+		public static void HandleCommandLineParams(string[] args) => Accessors.A_Args.AddRange(args);
 
 		/// <summary>
 		/// The clipboard object doesn't provide a way to determine if it's truly empty or not.
@@ -486,16 +486,16 @@ namespace Keysharp.Core
 			return 0L;
 #elif WINDOWS
 
-			if (obj is Keysharp.Core.Common.Platform.SystemMetric en)
-				return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics(en);
+			if (obj is SystemMetric en)
+				return WindowsAPI.GetSystemMetrics(en);
 
-			return Keysharp.Core.Windows.WindowsAPI.GetSystemMetrics((SystemMetric)obj.Ai());
+			return WindowsAPI.GetSystemMetrics((SystemMetric)obj.Ai());
 #else
 			return 0L;
 #endif
 		}
 
-		internal static int ClipFormatStringToInt(string fmt) => DataFormats.GetFormat(fmt) is DataFormats.Format d ? d.Id : 0;
+		internal static int ClipFormatStringToInt(string fmt) => GetFormat(fmt) is Format d ? d.Id : 0;
 
 		internal static string FindCommandLineArg(string arg, bool startswith = true)
 		{
@@ -522,6 +522,7 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		/// <summary>
 		/// Gets the data on the clipboard in the specified format.
 		/// Gotten from: http://pinvoke.net/default.aspx/user32/GetClipboardData.html
@@ -560,6 +561,7 @@ namespace Keysharp.Core
 
 			return null;
 		}
+
 #endif
 
 		//internal static DataFormats.Format IntToClipFormat(int i) => DataFormats.GetFormat(i);
@@ -666,6 +668,44 @@ namespace Keysharp.Core
 
 #endif
 
+#if WINDOWS
+
+		/// <summary>
+		/// Remove this once .NET 9 is fixed.//TODO
+		/// </summary>
+		/// <param name="pDataObj"></param>
+		/// <returns></returns>
+		[DllImport("ole32.dll", ExactSpelling = true)]
+		public static extern int OleSetClipboard(System.Runtime.InteropServices.ComTypes.IDataObject? pDataObj);
+
+		/// <summary>
+		/// Clipboard.Clear() breaks the Windows API clipboard functionality in .NET 9.
+		/// This hack is provided by Microsoft as a temporary replacement until it's fixed.
+		/// </summary>
+		internal static void MyClearClip()
+		{
+			if (Application.OleRequired() != ApartmentState.STA)
+			{
+				throw new ThreadStateException();
+			}
+
+			int hresult;
+			int retry = 10;
+
+			while ((hresult = OleSetClipboard(null)) != 0)
+			{
+				if (--retry < 0)
+				{
+					// clipboard is being used by something else
+					throw new InvalidOperationException();
+				}
+
+				Thread.Sleep(millisecondsTimeout: 100);
+			}
+		}
+
+#endif
+
 		internal static void RestoreClipboardAll(ClipboardAll clip, long length)
 		{
 			unsafe
@@ -711,49 +751,10 @@ namespace Keysharp.Core
 						_ = WindowsAPI.CloseClipboard();
 				}
 
-
 #endif
 			}
 		}
-#if WINDOWS
-
-		/// <summary>
-		/// Remove this once .NET 9 is fixed.//TODO
-		/// </summary>
-		/// <param name="pDataObj"></param>
-		/// <returns></returns>
-		[DllImport("ole32.dll", ExactSpelling = true)]
-		public static extern int OleSetClipboard(System.Runtime.InteropServices.ComTypes.IDataObject? pDataObj);
-
-		/// <summary>
-		/// Clipboard.Clear() breaks the Windows API clipboard functionality in .NET 9.
-		/// This hack is provided by Microsoft as a temporary replacement until it's fixed.
-		/// </summary>
-		internal static void MyClearClip()
-		{
-			if (Application.OleRequired() != ApartmentState.STA)
-			{
-				throw new ThreadStateException();
-			}
-
-			int hresult;
-			int retry = 10;
-
-			while ((hresult = OleSetClipboard(null)) != 0)
-			{
-				if (--retry < 0)
-				{
-					// clipboard is being used by something else
-					throw new InvalidOperationException();
-				}
-
-				Thread.Sleep(millisecondsTimeout: 100);
-			}
-		}
-
-#endif
 	}
-
 
 #if LINUX
 	/// <summary>
@@ -791,6 +792,7 @@ namespace Keysharp.Core
 		}
 	}
 #elif WINDOWS
+
 	public class ClipboardAll : Buffer
 	{
 		public ClipboardAll(byte[] obj)
@@ -798,6 +800,6 @@ namespace Keysharp.Core
 		{
 		}
 	}
-#endif
 
+#endif
 }

@@ -134,8 +134,8 @@ namespace Keysharp.Scripting
 			{
 				if (s != "")
 				{
-					if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-							int.TryParse(s.AsSpan(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ll))
+					if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+							int.TryParse(s.AsSpan(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ll))
 					{
 						return ll;
 					}
@@ -187,8 +187,8 @@ namespace Keysharp.Scripting
 			{
 				if (s != "")
 				{
-					if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-							long.TryParse(s.AsSpan(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ll))
+					if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+							long.TryParse(s.AsSpan(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ll))
 					{
 						return ll;
 					}
@@ -242,14 +242,14 @@ namespace Keysharp.Scripting
 				return Encoding.Unicode.GetString(arr);
 			else if (input is decimal m)
 				return m.ToString();
-			else if (input is Core.FuncObj fo)
+			else if (input is FuncObj fo)
 				return fo.Name;
 			else if (IsNumeric(input))
 			{
 				var t = input.GetType();
 				var simple = t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(byte) || t == typeof(char);
 				var integer = simple || (t == typeof(double) && Math.IEEERemainder((double)input, 1) == 0);
-				var format = Keysharp.Core.Accessors.A_FormatNumeric as string;
+				var format = Accessors.A_FormatNumeric as string;
 				var hex = format.Contains('x');
 				const string hexpre = "0x";
 
@@ -270,9 +270,9 @@ namespace Keysharp.Scripting
 
 				if (hex)
 				{
-					Keysharp.Core.Accessors.A_FormatNumeric = "X";
-					var result = d.ToString(Keysharp.Core.Accessors.A_FormatNumeric as string);
-					Keysharp.Core.Accessors.A_FormatNumeric = format;
+					Accessors.A_FormatNumeric = "X";
+					var result = d.ToString(Accessors.A_FormatNumeric as string);
+					Accessors.A_FormatNumeric = format;
 					return hexpre + result;
 				}
 
@@ -285,7 +285,7 @@ namespace Keysharp.Scripting
 						return (string)mi.Invoke(input, [input]);
 			}
 
-			if (input is Keysharp.Core.Map map)
+			if (input is Map map)
 			{
 				var buffer = new StringBuilder();
 				_ = buffer.Append(BlockOpen);
@@ -309,7 +309,7 @@ namespace Keysharp.Scripting
 						continue;
 					}
 
-					var obj = v is System.Array || v is Core.Map || v is Core.FuncObj;// Delegate;
+					var obj = v is System.Array || v is Map || v is FuncObj;// Delegate;
 
 					if (!obj)
 						_ = buffer.Append(StringBound);
@@ -323,7 +323,7 @@ namespace Keysharp.Scripting
 				_ = buffer.Append(BlockClose);
 				return buffer.ToString();
 			}
-			else if (input is Keysharp.Core.Array array)
+			else if (input is Core.Array array)
 			{
 				var buffer = new StringBuilder();
 				_ = buffer.Append(ArrayOpen);

@@ -10,10 +10,10 @@ namespace Keysharp.Core
 
 		internal static Type[] GuiTypes =
 			[
-				typeof(Keysharp.Core.Gui),
-				typeof(Keysharp.Core.GuiControl),
-				typeof(Keysharp.Core.Menu),
-				typeof(System.Windows.Forms.Control)//Add native control and form types just to be safe.
+				typeof(Gui),
+				typeof(GuiControl),
+				typeof(Menu),
+				typeof(Control)//Add native control and form types just to be safe.
 			];
 
 		internal List<IFuncObj> closedHandlers;
@@ -59,7 +59,7 @@ namespace Keysharp.Core
 					if (o is bool b)
 					{
 						f.lastfound = b;
-						Keysharp.Scripting.Script.HwndLastUsed = f.Hwnd;
+						Script.HwndLastUsed = f.Hwnd;
 					}
 				}
 			},
@@ -190,7 +190,7 @@ namespace Keysharp.Core
 			{
 				"Theme", (f, o) =>
 				{
-					Keysharp.Scripting.Script.OutputDebug("Themes are not supported", false);
+					Script.OutputDebug("Themes are not supported", false);
 				}
 			},
 			{
@@ -228,7 +228,7 @@ namespace Keysharp.Core
 			{
 				if (value is string s)
 				{
-					if (Keysharp.Core.Conversions.TryParseColor(s, out var c))
+					if (Conversions.TryParseColor(s, out var c))
 						form.BackColor = c;
 				}
 				else
@@ -328,7 +328,7 @@ namespace Keysharp.Core
 			allGuiHwnds[form.Handle.ToInt64()] = this;
 
 			if (lastfound)
-				Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
+				Script.HwndLastUsed = Hwnd;
 		}
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
@@ -345,7 +345,7 @@ namespace Keysharp.Core
 				{
 					eventObj = eventObj,
 					FormBorderStyle = FormBorderStyle.FixedSingle,//Default to a non-resizeable window, with the maximize box disabled.
-					Icon = Keysharp.Core.Properties.Resources.Keysharp_ico,
+					Icon = Properties.Resources.Keysharp_ico,
 					Name = $"Keysharp window {newCount}",
 					MaximizeBox = false,
 					SizeGripStyle = SizeGripStyle.Hide,
@@ -369,7 +369,7 @@ namespace Keysharp.Core
 				allGuiHwnds[form.Handle.ToInt64()] = this;
 
 				if (lastfound)
-					Keysharp.Scripting.Script.HwndLastUsed = Hwnd;
+					Script.HwndLastUsed = Hwnd;
 			}
 
 			return "";
@@ -748,7 +748,7 @@ namespace Keysharp.Core
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 					lv.GridLines = opts.grid.IsTrue();
 					lv.LabelEdit = opts.rdonly.IsFalse();
-					lv.View = opts.lvview ?? System.Windows.Forms.View.Details;
+					lv.View = opts.lvview ?? View.Details;
 
 					if (lv.LabelEdit && !opts.wantf2.IsFalse())//Note that checking !IsFalse() is not the same as IsTrue().
 						lv.KeyDown += Tv_Lv_KeyDown;
@@ -1010,13 +1010,13 @@ namespace Keysharp.Core
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 
 					if (opts.leftj.IsTrue())
-						kstc.Alignment = System.Windows.Forms.TabAlignment.Left;
+						kstc.Alignment = TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
-						kstc.Alignment = System.Windows.Forms.TabAlignment.Right;
+						kstc.Alignment = TabAlignment.Right;
 					else if (opts.bottom)
-						kstc.Alignment = System.Windows.Forms.TabAlignment.Bottom;
+						kstc.Alignment = TabAlignment.Bottom;
 					else if (opts.top)
-						kstc.Alignment = System.Windows.Forms.TabAlignment.Top;
+						kstc.Alignment = TabAlignment.Top;
 
 					if (opts.buttons.HasValue)
 						kstc.Appearance = TabAppearance.FlatButtons;
@@ -1036,7 +1036,7 @@ namespace Keysharp.Core
 					var ss = new KeysharpStatusStrip();
 					StatusBar = ss;
 					ss.AutoSize = false;
-					ss.ImageScalingSize = new System.Drawing.Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
+					ss.ImageScalingSize = new Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
 					ss.Dock = DockStyle.Bottom;//Docking must be used and must be on the bottom. Don't ever set form.AutoSize = true with this, they are incompatible.
 					ss.SizingGrip = false;
 
@@ -1367,7 +1367,7 @@ namespace Keysharp.Core
 					panel.Location = new Point(Math.Max(parent.Margin.Left, ctrl.Left), Math.Max(parent.Margin.Top, ctrl.Top));
 					parent.TagAndAdd(panel);
 					ctrl.Location = new Point(panel.Margin.Left, panel.Margin.Top);
-					panel.Size = new System.Drawing.Size(ctrl.Width + panel.Margin.Left + panel.Margin.Right, ctrl.Height + panel.Margin.Top + panel.Margin.Bottom);
+					panel.Size = new Size(ctrl.Width + panel.Margin.Left + panel.Margin.Right, ctrl.Height + panel.Margin.Top + panel.Margin.Bottom);
 					panel.AutoSize = true;
 					panel.TagAndAdd(holder);
 					LastContainer = panel;
@@ -1526,7 +1526,7 @@ namespace Keysharp.Core
 			var h = obj1;
 			var i = obj2.Al(1);
 			e = e.ToLower();
-			var del = Function.GetFuncObj(h, form.eventObj, true);
+			var del = Functions.GetFuncObj(h, form.eventObj, true);
 
 			if (e == "close")
 			{
@@ -1885,6 +1885,7 @@ namespace Keysharp.Core
 
 			return new Map(dkt);
 		}
+
 		public void UseGroup(object obj0 = null)
 		{
 			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
@@ -1892,13 +1893,15 @@ namespace Keysharp.Core
 			else
 				LastContainer = form;
 		}
+
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
-		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Keysharp.Scripting.Script.mainWindow && g.form.Visible);
+
+		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
 
 		internal static void DestroyAll()
 		{
 			//Destroy everything but the main window, which will destroy itself.
-			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Keysharp.Scripting.Script.mainWindow).ToArray())
+			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Script.mainWindow).ToArray())
 			{
 				try
 				{
@@ -1913,7 +1916,9 @@ namespace Keysharp.Core
 		}
 
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
+
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
+
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
@@ -2100,16 +2105,19 @@ namespace Keysharp.Core
 
 			return options;
 		}
+
 		internal static void SuppressCtrlAKeyDown(object o, KeyEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.SuppressKeyPress = true;
 		}
+
 		internal static void SuppressCtrlAPreviewKeyDown(object o, PreviewKeyDownEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.IsInputKey = true;
 		}
+
 		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			var control = form.ActiveControl;
@@ -2123,6 +2131,7 @@ namespace Keysharp.Core
 			else
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
 		}
+
 		internal void Form_DragDrop(object sender, DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -2132,6 +2141,7 @@ namespace Keysharp.Core
 				_ = dropFilesHandlers?.InvokeEventHandlers(this, form.ActiveControl, new Array(files), coords.X, coords.Y);
 			}
 		}
+
 		internal void Form_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			var handle = form.Handle.ToInt64();
@@ -2153,24 +2163,27 @@ namespace Keysharp.Core
 			}
 
 			//If there is nothing else keeping the program alive, and the program is not already exiting, close it.
-			if (!Keysharp.Scripting.Script.IsMainWindowClosing && !Keysharp.Scripting.Script.AnyPersistent())
+			if (!Script.IsMainWindowClosing && !Script.AnyPersistent())
 			{
 				Accessors.A_ExitReason = ExitReasons.Exit.ToString();
 				Script.mainWindow?.Close();
 			}
 		}
+
 		internal void Form_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
-				CallContextMenuChangeHandlers(true, System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+				CallContextMenuChangeHandlers(true, Cursor.Position.X, Cursor.Position.Y);
 			else if (e.KeyCode == Keys.Escape)
 				_ = escapeHandlers?.InvokeEventHandlers(this);
 		}
+
 		internal void Form_MouseDown(object sender, MouseEventArgs e)
 		{
 			if (e.Button == MouseButtons.Right)
 				CallContextMenuChangeHandlers(false, e.X, e.Y);
 		}
+
 		internal void Form_Resize(object sender, EventArgs e)
 		{
 			long state;
@@ -2184,6 +2197,7 @@ namespace Keysharp.Core
 
 			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
 		}
+
 		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.F2)
@@ -2194,6 +2208,7 @@ namespace Keysharp.Core
 					lv.SelectedItems[0].BeginEdit();
 			}
 		}
+
 		private void Form_Load(object sender, EventArgs e)
 		{
 			//form.Visible = false;
@@ -2264,10 +2279,10 @@ namespace Keysharp.Core
 			internal int addlvstyle = 0x20;
 			internal int addstyle = 0;
 			internal bool? altsubmit;
+			internal bool? autosize;
 			internal Color? bgcolor;
 			internal bool bgtrans = false;
 			internal bool bottom = false;
-			internal bool? autosize;
 
 			//Control specific.
 			//Button.

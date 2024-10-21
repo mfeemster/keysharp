@@ -6,6 +6,7 @@
 		protected long dummyHandle;
 		private static int menuCount = 0;
 		private readonly Dictionary<ToolStripItem, List<IFuncObj>> clickHandlers = new Dictionary<ToolStripItem, List<IFuncObj>>();
+
 		public long ClickCount { get; set; } = 2;
 
 		public string Default
@@ -42,6 +43,20 @@
 			dummyHandle = Handle;
 		}
 
+		public static object MenuFromHandle(object obj)
+		{
+			var handle = new IntPtr(obj.Al());
+			var menu = Control.FromHandle(handle);
+
+			if (menu != null)
+				return menu;
+
+			if ((menu = Control.FromHandle(handle)) != null)
+				return menu;
+
+			return "";
+		}
+
 		public static Menu New() => new Menu();
 
 		public ToolStripMenuItem Add(object obj0 = null, object obj1 = null, object obj2 = null)
@@ -61,7 +76,7 @@
 			var emptyfunc = new Func<object>(() => "");
 			var openfunc = new Func<object>(() =>
 			{
-				var mainWindow = Keysharp.Scripting.Script.mainWindow;
+				var mainWindow = Script.mainWindow;
 
 				if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
 				{
@@ -74,24 +89,24 @@
 			});
 			var reloadfunc = new Func<object>(() =>
 			{
-				Keysharp.Core.Flow.Reload();
+				Flow.Reload();
 				return "";
 			});
 			var suspend = new Func<object>(() =>
 			{
-				Keysharp.Scripting.Script.SuspendHotkeys();
+				Script.SuspendHotkeys();
 				return "";
 			});
 			var exitfunc = new Func<object>(() =>
 			{
-				_ = Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Menu);
+				_ = Flow.ExitAppInternal(Flow.ExitReasons.Menu);
 				return "";
 			});
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
-			Keysharp.Scripting.Script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
+			Script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
 
 			if (!Accessors.A_AllowMainWindow.Ab())
-				Keysharp.Scripting.Script.openMenuItem.Visible = false;
+				Script.openMenuItem.Visible = false;
 
 			//Need to fill in the event handlers for help and window spy when the proper functionality is implemented.//TODO
 			//_ = Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
@@ -105,14 +120,14 @@
 			{
 				var editfunc = new Func<object>(() =>
 				{
-					Keysharp.Scripting.Script.Edit();
+					Script.Edit();
 					return "";
 				});
 				_ = Add("&Edit Script", new FuncObj(editfunc.Method, editfunc.Target));
 			}
 
 			_ = menu.Items.Add(new ToolStripSeparator());
-			Keysharp.Scripting.Script.suspendMenuItem = Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
+			Script.suspendMenuItem = Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
 			_ = Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 		}
 
@@ -337,7 +352,7 @@
 					}
 				}
 				else
-					clickHandlers.GetOrAdd(item).ModifyEventHandlers(Function.GetFuncObj(funcorsub, null, true), 1);
+					clickHandlers.GetOrAdd(item).ModifyEventHandlers(Functions.GetFuncObj(funcorsub, null, true), 1);
 
 				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
 				{
@@ -349,13 +364,13 @@
 						var tempbool = false;
 
 						if (Options.TryParse(opt, "P", ref temp)) { }
-						else if (Options.TryParse(opt, "Radio", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
-						else if (Options.TryParse(opt, "Right", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true))
+						else if (Options.TryParse(opt, "Radio", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { }
+						else if (Options.TryParse(opt, "Right", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true))
 						{
-							item.TextAlign = tempbool ? System.Drawing.ContentAlignment.MiddleRight : System.Drawing.ContentAlignment.MiddleLeft;
+							item.TextAlign = tempbool ? ContentAlignment.MiddleRight : ContentAlignment.MiddleLeft;
 						}
-						else if (Options.TryParse(opt, "Break", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
-						else if (Options.TryParse(opt, "BarBreak", ref tempbool, System.StringComparison.OrdinalIgnoreCase, true, true)) { }
+						else if (Options.TryParse(opt, "Break", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { }
+						else if (Options.TryParse(opt, "BarBreak", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { }
 					}
 				}
 			}

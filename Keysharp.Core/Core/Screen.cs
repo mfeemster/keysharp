@@ -4,7 +4,6 @@ namespace Keysharp.Core
 {
 	public static partial class Screen
 	{
-		private static Size size1 = new (1, 1);
 		private static readonly Dictionary<string, Regex> optsItems = new Dictionary<string, Regex>
 		{
 			{ Keyword_Icon, IconRegex() },
@@ -13,6 +12,8 @@ namespace Keysharp.Core
 			{ "w", WidthRegex() },
 			{ "h", HeightRegex() }
 		};
+
+		private static Size size1 = new (1, 1);
 
 		public static Bitmap GetScreenClip(object obj0, object obj1, object obj2, object obj3, object obj4 = null)
 		{
@@ -264,6 +265,9 @@ namespace Keysharp.Core
 			}
 		}
 
+		[GeneratedRegex(@"\*h([-0-9]*)")]
+		private static partial Regex HeightRegex();
+
 		[GeneratedRegex(@"\*Icon([0-9a-zA-Z]*)")]
 		private static partial Regex IconRegex();
 
@@ -275,8 +279,5 @@ namespace Keysharp.Core
 
 		[GeneratedRegex(@"\*w([-0-9]*)")]
 		private static partial Regex WidthRegex();
-
-		[GeneratedRegex(@"\*h([-0-9]*)")]
-		private static partial Regex HeightRegex();
 	}
 }

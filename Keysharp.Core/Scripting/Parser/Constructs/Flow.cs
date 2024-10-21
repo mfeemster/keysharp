@@ -956,9 +956,9 @@ namespace Keysharp.Scripting
 				blockOpen = blockOpen || this.blockOpen;
 				var trimparens = code.Trim(BothParens);
 
-				if (trimparens.Equals("true", System.StringComparison.OrdinalIgnoreCase) || trimparens.Equals("1"))//Skip an if test call if we know it's a bool.
+				if (trimparens.Equals("true", StringComparison.OrdinalIgnoreCase) || trimparens.Equals("1"))//Skip an if test call if we know it's a bool.
 					return new CodePrimitiveExpression(true);
-				else if (trimparens.Equals("false", System.StringComparison.OrdinalIgnoreCase) || trimparens.Equals("0"))
+				else if (trimparens.Equals("false", StringComparison.OrdinalIgnoreCase) || trimparens.Equals("0"))
 					return new CodePrimitiveExpression(false);
 				else
 				{
@@ -1038,7 +1038,7 @@ namespace Keysharp.Scripting
 
 			var not = false;
 
-			if (parts[1].Equals(NotTxt, System.StringComparison.OrdinalIgnoreCase))
+			if (parts[1].Equals(NotTxt, StringComparison.OrdinalIgnoreCase))
 			{
 				not = true;
 				var sub = parts[2].Split(Spaces, 2);

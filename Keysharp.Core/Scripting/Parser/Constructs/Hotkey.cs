@@ -39,7 +39,7 @@ namespace Keysharp.Scripting
 			var hotstringExecute = false;
 			var suffixHasTilde = false;
 			var hookIsMandatory = false;
-			var ht = Keysharp.Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
 			string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
 			void ClearParserHotstringState()
@@ -224,7 +224,7 @@ namespace Keysharp.Scripting
 					// Note: Hotstrings can't suffer from this type of ambiguity because a leading colon or pair of
 					// colons makes them easier to detect.
 					var temp = buf.OmitTrailingWhitespace(hotkeyFlagIndex); // For maintainability.
-					var hotkeyValidity = HotkeyDefinition.TextInterpret(temp.TrimStart(Keywords.SpaceTab), null);
+					var hotkeyValidity = HotkeyDefinition.TextInterpret(temp.TrimStart(SpaceTab), null);
 
 					switch (hotkeyValidity)
 					{
@@ -420,7 +420,7 @@ namespace Keysharp.Scripting
 								// the mouse button (since that would be undesirable 90% of the time).  This is done
 								// by inserting a single extra IF-statement above the Send that produces the down-event:
 								var ks = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "GetKeyState", [new CodePrimitiveExpression(remapDest)]);
-								var ifelse = (CodeMethodInvokeExpression)Parser.InternalMethods.IfElse;
+								var ifelse = (CodeMethodInvokeExpression)InternalMethods.IfElse;
 								ifelse.Parameters.Add(ks);
 								_ = method.Statements.Add(new CodeConditionStatement(new CodeBinaryOperatorExpression(ifelse, CodeBinaryOperatorType.IdentityEquality, new CodePrimitiveExpression(false)), [new CodeExpressionStatement(send)]));
 							}

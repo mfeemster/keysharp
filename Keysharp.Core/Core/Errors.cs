@@ -1,5 +1,67 @@
 ﻿namespace Keysharp.Core
 {
+	public static class Errors
+	{
+		public static Error Error(params object[] obj) => new (obj);
+
+		public static bool ErrorOccurred(Error err)
+		{
+			if (Script.onErrorHandlers != null)
+			{
+				foreach (var handler in Script.onErrorHandlers)
+				{
+					var result = handler.Call(err, err.ExcType);
+
+					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1L)
+						return false;
+				}
+			}
+
+			if (err.ExcType == Keywords.Keyword_ExitApp)
+				_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical);
+
+			return err.ExcType != Keywords.Keyword_Return;//Don't report an error if it was just an exit from a thread.
+		}
+
+		public static IndexError IndexError(params object[] obj) => new (obj);
+
+		public static KeyError KeyError(params object[] obj) => new (obj);
+
+		public static MemberError MemberError(params object[] obj) => new (obj);
+
+		public static MemoryError MemoryError(params object[] obj) => new (obj);
+
+		public static MethodError MethodError(params object[] obj) => new (obj);
+
+		public static void OnError(object obj0, object obj1 = null)
+		{
+			var e = obj0;
+			var i = obj1.Al(1L);
+			var del = Functions.GetFuncObj(e, null, true);
+
+			if (Script.onErrorHandlers == null)
+				Script.onErrorHandlers = new List<IFuncObj>();
+
+			Script.onErrorHandlers.ModifyEventHandlers(del, i);
+		}
+
+		public static OSError OSError(params object[] obj) => new (obj);
+
+		public static PropertyError PropertyError(params object[] obj) => new (obj);
+
+		public static TargetError TargetError(params object[] obj) => new (obj);
+
+		public static TimeoutError TimeoutError(params object[] obj) => new (obj);
+
+		public static TypeError TypeError(params object[] obj) => new (obj);
+
+		public static UnsetItemError UnsetItemError(params object[] obj) => new (obj);
+
+		public static ValueError ValueError(params object[] obj) => new (obj);
+
+		public static ZeroDivisionError ZeroDivisionError(params object[] obj) => new (obj);
+	}
+
 	public class Error : KeysharpException
 	{
 		public Error(params object[] obj)
@@ -30,6 +92,7 @@
 
 		//Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
 		public string ExcType { get; set; } = Keywords.Keyword_Exit;
+
 		public string Extra { get; set; }
 		public string File { get; set; }
 		public long Line { get; set; }
@@ -102,7 +165,7 @@
 				if (firstIn != -1 && lastColon > firstIn)
 				{
 					var path = line.Substring(firstIn, lastColon - firstIn);
-					var filename = System.IO.Path.GetFileName(path);
+					var filename = Path.GetFileName(path);
 					lines[i] = line.Replace(path, filename).Replace(".cs:line", ".cs, line");
 				}
 			}

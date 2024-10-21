@@ -4,11 +4,25 @@
 
 namespace Keysharp.Benchmark
 {
+	/// <summary>
+	/// Duplicate of GenericExtensions.GetOrAdd<K, V>().
+	/// </summary>
+	public static class DictionaryExtensions
+	{
+		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k, Func<V> constructionFunc)
+		{
+			if (!dictionary.TryGetValue(k, out var val))
+				dictionary.Add(k, val = constructionFunc());
+
+			return val;
+		}
+	}
+
 	[MemoryDiagnoser]
 	public class MapReadBenchmark
 	{
 		private Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
+		private Map map = Collections.Map(), mapScript = Collections.Map();
 		private List<string> strings = new List<string>();
 
 		[Params(10000)]
@@ -38,9 +52,9 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
-			map = Keysharp.Core.Misc.Map();
-			mapScript = Keysharp.Core.Misc.Map();
+			Variables.InitGlobalVars();
+			map = Collections.Map();
+			mapScript = Collections.Map();
 			dkt = new Dictionary<object, object>();
 			strings = new List<string>();
 
@@ -59,7 +73,7 @@ namespace Keysharp.Benchmark
 	public class MapWriteBenchmark
 	{
 		private readonly Dictionary<object, object> dkt = new Dictionary<object, object>();
-		private readonly Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
+		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
 		private readonly List<string> strings = new List<string>();
 
 		[Params(10000)]
@@ -67,9 +81,9 @@ namespace Keysharp.Benchmark
 
 		public MapWriteBenchmark()
 		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
-			map = Keysharp.Core.Misc.Map();
-			mapScript = Keysharp.Core.Misc.Map();
+			Variables.InitGlobalVars();
+			map = Collections.Map();
+			mapScript = Collections.Map();
 			dkt = new Dictionary<object, object>();
 			strings = new List<string>();
 		}

@@ -21,7 +21,7 @@
 
 				if (tooltipInvokerForm == null)
 				{
-					tooltipInvokerForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != Keysharp.Scripting.Script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
+					tooltipInvokerForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != Script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
 
 					if (tooltipInvokerForm == null)
 						tooltipInvokerForm = Script.mainWindow;
@@ -75,7 +75,7 @@
 					{
 						//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 						//is active.
-						var temppt = System.Windows.Forms.Cursor.Position;
+						var temppt = Cursor.Position;
 						temppt.X += 10;
 						temppt.Y += 10;
 						var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -209,7 +209,7 @@
 				Accessors.A_IconNumber = 1;
 				Script.mainWindow.CheckedBeginInvoke(() =>
 				{
-					Script.Tray.Icon = Script.mainWindow.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
+					Script.Tray.Icon = Script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
 				}, false, false);
 			}
 		}

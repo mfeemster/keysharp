@@ -5,17 +5,17 @@
 		internal static ToolStripMenuItem openMenuItem;
 		internal static ToolStripMenuItem suspendMenuItem;
 		internal static NotifyIcon Tray;
-		internal static Keysharp.Core.Menu trayMenu;
+		internal static Menu trayMenu;
 
 		public static void CreateTrayMenu()
 		{
 			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
-			Processes.mainContext = System.Threading.SynchronizationContext.Current;//This must happen after the icon is created.
+			Processes.mainContext = SynchronizationContext.Current;//This must happen after the icon is created.
 
 			if (NoTrayIcon)
 				return;
 
-			trayMenu = new Keysharp.Core.Menu(Tray.ContextMenuStrip);
+			trayMenu = new Menu(Tray.ContextMenuStrip);
 			trayMenu.AddStandard();
 			trayIcon.Tag = trayMenu;
 			trayIcon.MouseClick += TrayIcon_MouseClick;
@@ -52,7 +52,7 @@
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)
 		{
-			if (sender is NotifyIcon ni && ni.Tag is Keysharp.Core.Menu mnu)
+			if (sender is NotifyIcon ni && ni.Tag is Menu mnu)
 				if (mnu.ClickCount == 1)
 					if (mnu.defaultItem is ToolStripItem tsi)
 						mnu.Tsmi_Click(tsi, new EventArgs());
@@ -60,7 +60,7 @@
 
 		private static void TrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
 		{
-			if (sender is NotifyIcon ni && ni.Tag is Keysharp.Core.Menu mnu)
+			if (sender is NotifyIcon ni && ni.Tag is Menu mnu)
 				if (mnu.ClickCount > 1)
 					if (mnu.defaultItem is ToolStripItem tsi)
 						mnu.Tsmi_Click(tsi, new EventArgs());

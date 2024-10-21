@@ -14,7 +14,7 @@ namespace Keysharp.Tests
 		{
 			var desktop = WindowsAPI.GetDesktopWindow();
 			var rect = new RECT();
-			var buf = Keysharp.Core.Misc.Buffer(16, 0);
+			var buf = Collections.Buffer(16, 0);
 			_ = Dll.DllCall("user32.dll\\GetWindowRect", "ptr", desktop, "ptr", buf);
 			_ = WindowsAPI.GetWindowRect(desktop, out rect);
 			var l = (long)NumGet(buf, 0, "UInt");
@@ -28,7 +28,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(rect.Bottom, b);
 			var str = "lower";
 			var len = str.Length;
-			var strbuf = Keysharp.Core.Misc.StringBuffer(str);
+			var strbuf = Strings.StringBuffer(str);
 			_ = Dll.DllCall("user32.dll\\CharUpperBuff", "ptr", strbuf, "UInt", len);
 			Assert.AreEqual(strbuf.ToString(), str.ToUpper());
 			Assert.IsTrue(TestScript("external-dllcall", true));

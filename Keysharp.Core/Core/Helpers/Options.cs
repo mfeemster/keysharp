@@ -2,9 +2,9 @@ using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core
 {
-	public static class Options
+	internal static class Options
 	{
-		public static bool? OnOff(object mode)
+		internal static bool? OnOff(object mode)
 		{
 			if (mode == null)
 				return false;
@@ -133,7 +133,7 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		internal static string[] ParseOptions(string options) => options.Split(Keywords.Spaces, StringSplitOptions.RemoveEmptyEntries);
+		internal static string[] ParseOptions(string options) => options.Split(Spaces, StringSplitOptions.RemoveEmptyEntries);
 
 		internal static Dictionary<string, string> ParseOptionsRegex(ref string options, Dictionary<string, Regex> items, bool remove = true)
 		{
@@ -167,8 +167,8 @@ namespace Keysharp.Core
 			if (int.TryParse(s, out x))
 				return true;
 
-			return s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-				   int.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out x);
+			return s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+				   int.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out x);
 		}, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref long result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, long def = default) =>
@@ -180,8 +180,8 @@ namespace Keysharp.Core
 			if (long.TryParse(s, out x))
 				return true;
 
-			return s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-				   long.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out x);
+			return s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+				   long.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out x);
 		}, ref result, comp, allowempty, def);
 
 		internal static bool TryParse(string opt, string prefix, ref float result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, float def = default) =>
@@ -200,7 +200,7 @@ namespace Keysharp.Core
 		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty);
 
 		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref Color result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false) =>
-		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => { return Conversions.TryParseColor(v.ToString(), out r); }, ref result, comp, allowempty, System.Windows.Forms.Control.DefaultForeColor);
+		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => { return Conversions.TryParseColor(v.ToString(), out r); }, ref result, comp, allowempty, Control.DefaultForeColor);
 
 		internal static bool TryParse(string opt, string prefix, ref bool result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, bool def = default) =>
 		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);

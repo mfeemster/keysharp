@@ -31,11 +31,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -71,6 +73,7 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void OnMouseUp(MouseEventArgs e)
 		{
 			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
@@ -84,6 +87,7 @@ namespace Keysharp.Core
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -109,11 +113,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -139,11 +145,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -155,6 +163,7 @@ namespace Keysharp.Core
 		internal bool IsNumeric { get; set; }
 
 #endif
+
 		protected override CreateParams CreateParams
 		{
 			get
@@ -177,11 +186,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #else
 
 		private void KeysharpEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
@@ -228,18 +239,18 @@ namespace Keysharp.Core
 		internal bool showWithoutActivation;
 		private bool beenShown = false;
 
-		[System.ComponentModel.Browsable(false)]
-		protected override bool ShowWithoutActivation => showWithoutActivation;
-
 		internal bool BeenShown => beenShown;
+
+		[Browsable(false)]
+		protected override bool ShowWithoutActivation => showWithoutActivation;
 
 		public KeysharpForm()
 		{
-			AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			AutoScaleDimensions = new SizeF(96F, 96F);
+			AutoScaleMode = AutoScaleMode.Dpi;
 			//See Gui.Show() for where the remainder of the properties get set, such as scaling values.
 			Font = MainWindow.OurDefaultFont;
-			StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			StartPosition = FormStartPosition.CenterScreen;
 			KeyPreview = true;
 			DoubleBuffered = true;
 			SetStyle(ControlStyles.StandardClick, true);
@@ -273,11 +284,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -303,11 +316,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -353,7 +368,7 @@ namespace Keysharp.Core
 					url = "https://" + url;
 
 #if WINDOWS
-				_ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+				_ = Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 #else
 				System.Diagnostics.Process proc = new System.Diagnostics.Process();
 				proc.EnableRaisingEvents = false;
@@ -368,11 +383,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -398,11 +415,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -412,7 +431,6 @@ namespace Keysharp.Core
 		private int sortColumn = -1;
 
 		public KeysharpListView() => ColumnClick += KeysharpListView_ColumnClick;
-
 
 #if LINUX
 		//Linux has a bug where it will not draw the headers if the control is not initially shown.
@@ -427,11 +445,13 @@ namespace Keysharp.Core
 #endif
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 
 		/// <summary>
@@ -476,11 +496,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -506,11 +528,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -582,11 +606,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -597,9 +623,8 @@ namespace Keysharp.Core
 	/// </summary>
 	public class KeysharpProgressBar : ProgressBar
 	{
-		private readonly int removestyle;
 		private readonly bool customColors = false;
-
+		private readonly int removestyle;
 		public int AddStyle { get; }
 
 		protected override CreateParams CreateParams
@@ -699,11 +724,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -735,11 +762,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -777,11 +806,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #else
 
 		private void KeysharpRichEdit_Validating(object sender, System.ComponentModel.CancelEventArgs e)
@@ -793,6 +824,7 @@ namespace Keysharp.Core
 			}
 		}
 #endif
+
 		private void KeysharpRichEdit_KeyPress(object sender, KeyPressEventArgs e)
 		{
 #if !WINDOWS
@@ -862,11 +894,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -949,11 +983,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 
 		/// <summary>
@@ -1017,11 +1053,13 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 
@@ -1061,11 +1099,13 @@ namespace Keysharp.Core
 		public void RemoveMarkForExpansion(TreeNode node) => _ = expandStates.Remove(node);
 
 #if WINDOWS
+
 		protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
 		}
+
 #endif
 	}
 }

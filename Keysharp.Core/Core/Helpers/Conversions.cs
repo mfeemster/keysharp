@@ -28,6 +28,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="time"></param>
 		/// <returns></returns>
+		[PublicForTestOnly]
 		public static DateTime ToDateTime(string time)
 		{
 			switch (time.Length)
@@ -192,6 +193,7 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		internal static RegistryValueKind GetRegistryType(string val)
 		{
 			switch (val)
@@ -257,7 +259,9 @@ namespace Keysharp.Core
 					return unk;
 			}
 		}
+
 #endif
+
 		internal static byte HighByte(int i) => (byte)((((ulong)i) >> 8) & 0xff);
 
 		internal static short HighWord(int i) => (short)((((ulong)i) >> 16) & 0xffff);
@@ -291,7 +295,7 @@ namespace Keysharp.Core
 			var weight = 400;
 			var quality = 0;
 
-			foreach (Range r in styles.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in styles.AsSpan().SplitAny(Spaces))
 			{
 				var opt = styles.AsSpan(r).Trim();
 
@@ -309,23 +313,23 @@ namespace Keysharp.Core
 
 					switch (opt)
 					{
-						case var b when opt.Equals(Keywords.Keyword_Bold, StringComparison.OrdinalIgnoreCase):
+						case var b when opt.Equals(Keyword_Bold, StringComparison.OrdinalIgnoreCase):
 							display |= FontStyle.Bold;
 							break;
 
-						case var b when opt.Equals(Keywords.Keyword_Italic, StringComparison.OrdinalIgnoreCase):
+						case var b when opt.Equals(Keyword_Italic, StringComparison.OrdinalIgnoreCase):
 							display |= FontStyle.Italic;
 							break;
 
-						case var b when opt.Equals(Keywords.Keyword_Strike, StringComparison.OrdinalIgnoreCase):
+						case var b when opt.Equals(Keyword_Strike, StringComparison.OrdinalIgnoreCase):
 							display |= FontStyle.Strikeout;
 							break;
 
-						case var b when opt.Equals(Keywords.Keyword_Underline, StringComparison.OrdinalIgnoreCase):
+						case var b when opt.Equals(Keyword_Underline, StringComparison.OrdinalIgnoreCase):
 							display |= FontStyle.Underline;
 							break;
 
-						case var b when opt.Equals(Keywords.Keyword_Norm, StringComparison.OrdinalIgnoreCase):
+						case var b when opt.Equals(Keyword_Norm, StringComparison.OrdinalIgnoreCase):
 							display = FontStyle.Regular;
 							break;
 					}
@@ -445,11 +449,6 @@ namespace Keysharp.Core
 
 			return i == 0 ? DateTime.MinValue : new DateTime((t[0] * 100) + t[1], t[2], t[3], t[4], t[5], t[6], cal);
 		}
-
-		internal struct FileSetAttribData
-		{
-			internal uint and_mask, xor_mask;
-		};
 
 		internal static FileAttributes ToFileAttribs(string set, FileAttributes attribs)
 		{
@@ -746,6 +745,11 @@ namespace Keysharp.Core
 
 			c = Color.FromName(name);
 			return c.IsKnownColor;
+		}
+
+		internal struct FileSetAttribData
+		{
+			internal uint and_mask, xor_mask;
 		}
 	}
 }

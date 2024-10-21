@@ -71,7 +71,7 @@
 		/// Convert a JSON string to a dictionary of string key and object value pairs.
 		/// </summary>
 		/// <param name="Source">The JSON string to evaluate.</param>
-		/// <returns>A <see cref="System.Collections.Generic.Dictionary&lt;TKey, TValue&gt;"/>.</returns>
+		/// <returns>A <see cref="Dictionary&lt;TKey, TValue&gt;"/>.</returns>
 		internal static Dictionary<string, object> Decode(string Source)
 		{
 			var data = new Dictionary<string, object>();

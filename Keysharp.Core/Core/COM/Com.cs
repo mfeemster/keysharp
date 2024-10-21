@@ -68,7 +68,7 @@ namespace Keysharp.Core.COM
 
 			switch (varType)
 			{
-				case vt_dispatch: t = typeof(System.Runtime.InteropServices.DispatchWrapper); break;
+				case vt_dispatch: t = typeof(DispatchWrapper); break;
 
 				//case VT_UNKNOWN: System.__ComObject or null if (punkVal == null)
 				case vt_error: t = typeof(uint); break;
@@ -97,7 +97,7 @@ namespace Keysharp.Core.COM
 
 				case vt_decimal: t = typeof(decimal); break;
 
-				case vt_date: t = typeof(System.DateTime); break;
+				case vt_date: t = typeof(DateTime); break;
 
 				case vt_bstr: t = typeof(string); break;
 

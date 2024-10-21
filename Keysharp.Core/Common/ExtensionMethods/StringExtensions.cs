@@ -1,19 +1,5 @@
 ﻿namespace System//Extension methods should be in the same namespace of the object they extend to make their use easy.
 {
-	public static class CharExtensions
-	{
-		internal static bool IsHex(this char c)
-		{
-			return (c >= '0' && c <= '9') ||
-				   (c >= 'a' && c <= 'f') ||
-				   (c >= 'A' && c <= 'F');
-		}
-
-		internal static bool IsIdentifierChar(this char c) => (uint)c > 0x7F || char.IsAsciiLetterOrDigit(c) || c == '_';
-
-		internal static bool IsLeadingIdentifierChar(this char c) => (uint)c > 0x7F || char.IsLetter(c) || c == '_';
-	}
-
 	public static class StringExtensions
 	{
 		/// <summary>
@@ -242,7 +228,6 @@
 
 		internal static int FindFirstNotOf(this string source, char[] chars, int offset = 0) =>
 		FindFirstNotOf(source.AsSpan(), chars, offset);
-
 
 		internal static int FindFirstNotOf(this ReadOnlySpan<char> source, char[] chars, int offset = 0)
 		{

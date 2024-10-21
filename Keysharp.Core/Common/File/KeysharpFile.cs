@@ -60,7 +60,7 @@
 			set => Seek(value);
 		}
 
-		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, System.Text.Encoding encoding, long eol)
+		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol)
 		{
 			var m = mode;
 			var a = access;
@@ -95,12 +95,12 @@
 					if (handle.HasValue)
 					{
 						exists = true;
-						fs = new FileStream(new Microsoft.Win32.SafeHandles.SafeFileHandle(new IntPtr(handle.Value), false), a, 4096);
+						fs = new FileStream(new SafeFileHandle(new IntPtr(handle.Value), false), a, 4096);
 					}
 				}
 				else
 				{
-					if (System.IO.File.Exists(filename))
+					if (File.Exists(filename))
 						exists = true;
 
 					fs = new FileStream(filename, m, a, s);

@@ -6,7 +6,6 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowManager : WindowManagerBase
 	{
-
 		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
 
 		/// <summary>
@@ -20,7 +19,7 @@ namespace Keysharp.Core.Windows
 				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
 				_ = WindowsAPI.EnumWindows(delegate (IntPtr hwnd, int lParam)
 				{
-					if (doHidden || Windows.WindowsAPI.IsWindowVisible(hwnd))
+					if (doHidden || WindowsAPI.IsWindowVisible(hwnd))
 						windows.Add(new WindowItem(hwnd));
 
 					return true;
@@ -87,6 +86,12 @@ namespace Keysharp.Core.Windows
 
 		internal override bool IsWindow(IntPtr handle) => WindowsAPI.IsWindow(handle);
 
+		internal override void MaximizeAll()
+		{
+			foreach (var window in AllWindows)
+				window.WindowState = FormWindowState.Maximized;
+		}
+
 		internal override void MinimizeAll()
 		{
 			var window = FindWindow(new SearchCriteria { ClassName = "Shell_TrayWnd" });
@@ -101,12 +106,6 @@ namespace Keysharp.Core.Windows
 			WindowItemBase.DoWinDelay();
 		}
 
-		internal override void MaximizeAll()
-		{
-			foreach (var window in AllWindows)
-				window.WindowState = FormWindowState.Maximized;
-		}
-
 		internal override WindowItemBase WindowFromPoint(Point location)
 		{
 			var ctrl = WindowsAPI.WindowFromPoint(location);
@@ -118,4 +117,5 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+
 #endif

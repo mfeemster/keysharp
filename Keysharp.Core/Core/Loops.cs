@@ -32,12 +32,12 @@ namespace Keysharp.Core
 
 				if (n != -1)
 				{
-					for (; info.index < n && !Keysharp.Core.Flow.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
+					for (; info.index < n && !Flow.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
 						yield return ++info.index;
 				}
 				else
 				{
-					while (!Keysharp.Core.Flow.hasExited)
+					while (!Flow.hasExited)
 						yield return ++info.index;
 				}
 
@@ -67,7 +67,7 @@ namespace Keysharp.Core
 			{
 				foreach (var (k, v) in map)
 				{
-					if (Keysharp.Core.Flow.hasExited)
+					if (Flow.hasExited)
 						break;
 
 					info.result = new[] { k, v };
@@ -81,7 +81,7 @@ namespace Keysharp.Core
 
 				while (enumerator.MoveNext())
 				{
-					if (Keysharp.Core.Flow.hasExited)
+					if (Flow.hasExited)
 						break;
 
 					info.result = new[] { null, enumerator.Current };
@@ -133,7 +133,7 @@ namespace Keysharp.Core
 
 			foreach (var file in GetFiles(dir, pattern, d, f, r))
 			{
-				if (Keysharp.Core.Flow.hasExited)
+				if (Flow.hasExited)
 					break;
 
 				info.file = file;
@@ -230,7 +230,7 @@ namespace Keysharp.Core
 					info.index++;
 					yield return result;
 
-					if (current == -1 || Keysharp.Core.Flow.hasExited)
+					if (current == -1 || Flow.hasExited)
 						break;
 				}
 			}
@@ -247,7 +247,7 @@ namespace Keysharp.Core
 
 				foreach (var part in parts)
 				{
-					if (Keysharp.Core.Flow.hasExited)
+					if (Flow.hasExited)
 						break;
 
 					info.result = part;
@@ -275,16 +275,16 @@ namespace Keysharp.Core
 			if (output.Length > 0)
 				info.filename = output;
 
-			if (!System.IO.File.Exists(input))
+			if (!File.Exists(input))
 				yield break;
 
-			using (var reader = System.IO.File.OpenText(input))
+			using (var reader = File.OpenText(input))
 			{
 				string line;
 
 				while ((line = reader.ReadLine()) != null)
 				{
-					if (Keysharp.Core.Flow.hasExited)
+					if (Flow.hasExited)
 						break;
 
 					info.line = line;
@@ -295,7 +295,9 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
+
 #if WINDOWS
+
 		/// <summary>
 		/// Retrieves the contents of the specified registry subkey, one item at a time.
 		/// </summary>
@@ -351,7 +353,7 @@ namespace Keysharp.Core
 				{
 					foreach (var val in GetSubKeys(info, subkey, k, v))
 					{
-						if (Keysharp.Core.Flow.hasExited)
+						if (Flow.hasExited)
 							break;
 
 						yield return val;
@@ -363,7 +365,7 @@ namespace Keysharp.Core
 					{
 						foreach (var valueName in subkey.GetValueNames().Reverse())
 						{
-							if (Keysharp.Core.Flow.hasExited)
+							if (Flow.hasExited)
 								break;
 
 							info.index++;
@@ -382,7 +384,7 @@ namespace Keysharp.Core
 					{
 						foreach (var subKeyName in subkey.GetSubKeyNames().Reverse())//AHK spec says the subkeys and values are returned in reverse.
 						{
-							if (Keysharp.Core.Flow.hasExited)
+							if (Flow.hasExited)
 								break;
 
 							using (var tempKey = subkey.OpenSubKey(subKeyName, false))
@@ -406,6 +408,7 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
+
 #endif
 
 		public static IEnumerator MakeBaseEnumerator(object obj)
@@ -497,7 +500,7 @@ namespace Keysharp.Core
 		/// <returns></returns>
 		internal static string GetExactPath(string pathName)
 		{
-			if (!(System.IO.File.Exists(pathName) || Directory.Exists(pathName)))
+			if (!(File.Exists(pathName) || Directory.Exists(pathName)))
 				return pathName;
 
 			var di = new DirectoryInfo(pathName);
@@ -601,7 +604,9 @@ namespace Keysharp.Core
 					break;
 			}
 		}
+
 #if WINDOWS
+
 		private static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
 		{
 			//try
@@ -693,6 +698,7 @@ namespace Keysharp.Core
 					out var l);
 			return l;
 		}
+
 #endif
 	}
 

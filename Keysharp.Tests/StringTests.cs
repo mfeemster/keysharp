@@ -350,7 +350,7 @@ namespace Keysharp.Tests
 			for (var i = 0; i < 10; i++)
 			{
 				var z = Strings.Sort(x, "D, n random");
-				Keysharp.Scripting.Script.OutputDebug(z);
+				Script.OutputDebug(z);
 				Assert.AreNotEqual(z, y);
 				y = z;
 			}
@@ -484,13 +484,13 @@ namespace Keysharp.Tests
 			y = Strings.StrLower(x);
 			Assert.AreEqual(y, "");
 			x = "ALL CAPS";
-			y = Strings.StrTitle(x);
+			y = StrTitle(x);
 			Assert.AreEqual(y, "ALL CAPS");
 			x = "all caps";
-			y = Strings.StrTitle(x);
+			y = StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			x = "All Caps";
-			y = Strings.StrTitle(x);
+			y = StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			Assert.IsTrue(TestScript("string-strlower", true));
 		}
@@ -498,7 +498,7 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void StrPutStrGet()
 		{
-			var buf1 = Keysharp.Core.Misc.Buffer(32);
+			var buf1 = Collections.Buffer(32);
 			var s = "tester";
 			//Unicode test.
 			var testlen = StrPut(s);
@@ -552,7 +552,7 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d";
 			var y = Strings.StrSplit(x, ",");
-			var exp = Keysharp.Core.Misc.Array(["a", "b", "c", "d"]);
+			var exp = Collections.Array(["a", "b", "c", "d"]);
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x);
@@ -567,27 +567,27 @@ namespace Keysharp.Tests
 			Assert.AreEqual(exp, y);
 			x = "abcd";
 			y = Strings.StrSplit(x, null, null, 1);
-			exp = Keysharp.Core.Misc.Array(["abcd"]);
+			exp = Collections.Array(["abcd"]);
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 2);
-			exp = Keysharp.Core.Misc.Array(["a", "bcd"]);
+			exp = Collections.Array(["a", "bcd"]);
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 3);
-			exp = Keysharp.Core.Misc.Array(["a", "b", "cd"]);
+			exp = Collections.Array(["a", "b", "cd"]);
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 4);
-			exp = Keysharp.Core.Misc.Array(["a", "b", "c", "d"]);
+			exp = Collections.Array(["a", "b", "c", "d"]);
 			Assert.AreEqual(exp, y);
 			y = Strings.StrSplit(x, null, null, 5);
-			exp = Keysharp.Core.Misc.Array(["a", "b", "c", "d"]);
+			exp = Collections.Array(["a", "b", "c", "d"]);
 			Assert.AreEqual(exp, y);
 			x = "a,b,c,d";
 			y = Strings.StrSplit(x, ",", null, 3);
-			exp = Keysharp.Core.Misc.Array(["a", "b", "c,d"]);
+			exp = Collections.Array(["a", "b", "c,d"]);
 			Assert.AreEqual(exp, y);
 			x = "	a, b-c _d	";
 			y = Strings.StrSplit(x, new string[] { ",", "-", "_" }, "\t ", 3);
-			exp = Keysharp.Core.Misc.Array(["a", "b", "c _d"]);
+			exp = Collections.Array(["a", "b", "c _d"]);
 			Assert.AreEqual(exp, y);
 			Assert.IsTrue(TestScript("string-strsplit", true));
 		}
@@ -608,13 +608,13 @@ namespace Keysharp.Tests
 			y = Strings.StrUpper(x);
 			Assert.AreEqual(y, "");
 			x = "ALL CAPS";
-			y = Strings.StrTitle(x);
+			y = StrTitle(x);
 			Assert.AreEqual(y, "ALL CAPS");
 			x = "all caps";
-			y = Strings.StrTitle(x);
+			y = StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			x = "All Caps";
-			y = Strings.StrTitle(x);
+			y = StrTitle(x);
 			Assert.AreEqual(y, "All Caps");
 			Assert.IsTrue(TestScript("string-strupper", true));
 		}

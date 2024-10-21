@@ -139,14 +139,14 @@ namespace Keysharp.Core
 									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 									pb.SetCustomAttribute(new CustomAttributeBuilder(
 															  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
-															  [System.Runtime.InteropServices.UnmanagedType.LPStr]));
+															  [UnmanagedType.LPStr]));
 								}
 								else if (helper.names[i] == "bstr")
 								{
 									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 									pb.SetCustomAttribute(new CustomAttributeBuilder(
 															  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
-															  [System.Runtime.InteropServices.UnmanagedType.BStr]));
+															  [UnmanagedType.BStr]));
 								}
 							}
 							else if (helper.args[i] is System.Array array)
@@ -155,9 +155,9 @@ namespace Keysharp.Core
 								var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
 								pb.SetCustomAttribute(new CustomAttributeBuilder(
 														  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
-														  [System.Runtime.InteropServices.UnmanagedType.SafeArray],
+														  [UnmanagedType.SafeArray],
 														  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
-														  [System.Runtime.InteropServices.VarEnum.VT_VARIANT]
+														  [VarEnum.VT_VARIANT]
 													  ));
 							}
 						}
@@ -182,7 +182,7 @@ namespace Keysharp.Core
 					{
 						var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
 
-						if (e.InnerException is Keysharp.Core.Error err)
+						if (e.InnerException is Error err)
 							inner += " " + err.Message;
 
 						var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}");
@@ -233,7 +233,7 @@ namespace Keysharp.Core
 				{
 					var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
 
-					if (e.InnerException is Keysharp.Core.Error err)
+					if (e.InnerException is Error err)
 						inner += " " + err.Message;
 
 					var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}");
@@ -346,7 +346,7 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					var val = Keysharp.Core.Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
+					var val = Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
 					address = val == IntPtr.Zero
 							  ? throw new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.")
 							  : val;
@@ -493,4 +493,5 @@ namespace Keysharp.Core
 		internal ModuleBuilder module;
 	}
 }
+
 #endif

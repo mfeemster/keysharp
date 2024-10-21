@@ -20,10 +20,10 @@
 
 			if (caseSense != null)
 			{
-				CaseSense = Keysharp.Core.Conversions.ParseComparisonOption(caseSense);
+				CaseSense = Conversions.ParseComparisonOption(caseSense);
 
-				if (CaseSense == System.StringComparison.CurrentCulture)
-					CaseSense = System.StringComparison.CurrentCultureIgnoreCase;
+				if (CaseSense == StringComparison.CurrentCulture)
+					CaseSense = StringComparison.CurrentCultureIgnoreCase;
 			}
 
 			SwitchVarTempName = $"ks_switchvar{switchCount}";

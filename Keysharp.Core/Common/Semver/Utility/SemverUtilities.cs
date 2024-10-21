@@ -183,7 +183,7 @@
 		/// <list type="bullet">
 		///   <item><description>Constructing the params array for <see cref="string.Split(char[])"/></description></item>
 		///   <item><description>Constructing the intermediate <see cref="T:string[]"/> returned by <see cref="string.Split(char[])"/></description></item>
-		///   <item><description><see cref="System.Linq.Enumerable.Select{TSource,TResult}(IEnumerable{TSource},Func{TSource,TResult})"/></description></item>
+		///   <item><description><see cref="Enumerable.Select{TSource,TResult}(IEnumerable{TSource},Func{TSource,TResult})"/></description></item>
 		///   <item><description>Not allocating list capacity based on the size</description></item>
 		/// </list>
 		/// Benchmarking shows this to be 30%+ faster and that may not reflect the whole benefit

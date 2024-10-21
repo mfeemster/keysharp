@@ -6,8 +6,8 @@
 		public static uint MaxThreadsPerHotkey = 1u;
 		public static uint MaxThreadsTotal = 12u;
 		public static bool NoTrayIcon = false;
-		public static bool WinActivateForce = false;
 		public static bool ValidateThenExit;
+		public static bool WinActivateForce = false;
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
 		internal const int SLEEP_INTERVAL = 10;
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
@@ -25,7 +25,8 @@
 		internal static MainWindow mainWindow;
 		internal static Gui mainWindowGui;
 		internal static int maxThreadsLimit = 0xFF;
-		internal static Keysharp.Core.Common.Keyboard.MenuType menuIsVisible = MenuType.None;
+		internal static MenuType menuIsVisible = MenuType.None;
+		internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		internal static List<IFuncObj> onErrorHandlers;
 		internal static List<IFuncObj> onExitHandlers = new List<IFuncObj>();
 		internal static Icon pausedIcon;
@@ -41,12 +42,11 @@
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
-		internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 		private static IntPtr mainWindowHandle;
 
 		public static Variables Vars { get; private set; }
 
-		internal static Keysharp.Core.Common.Threading.HookThread HookThread { get; private set; }
+		internal static HookThread HookThread { get; private set; }
 
 		internal static IntPtr HwndLastUsed
 		{
@@ -196,7 +196,7 @@
 						}
 						catch (Exception ex)
 						{
-							Keysharp.Scripting.Script.OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
+							OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
 						}
 					}
 
@@ -323,7 +323,7 @@
 		{
 			var text = obj0.As();
 			var clear = obj1.Ab();
-			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
+			Debug.WriteLine(text);//Will print only in debug mode.
 
 			//This will throw when running tests.
 			try
@@ -358,14 +358,14 @@
 			mainWindow.Activate();
 			_ = mainWindow.BeginInvoke(() =>
 			{
-				Misc.TryCatch(() =>
+				Flow.TryCatch(() =>
 				{
-					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
 					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
 					isReadyToExecute = true;
-					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+					Threads.EndThread(__pushed);
 				}, true);//Pop on exception because EndThread() above won't be called.
 			});
 			Application.Run(mainWindow);
@@ -376,7 +376,6 @@
 		public static void SetReady() => isReadyToExecute = true;
 
 		public static void ShowDebug() => mainWindow?.ShowDebug();
-
 
 		//public static void TestSomething()
 		//{
@@ -405,7 +404,6 @@
 		//      }
 		//  }
 		//}
-
 
 		/*
 		    internal static string GetVariableInfo()
@@ -518,7 +516,7 @@
 
 		internal static bool AnyPersistent()
 		{
-			if (Keysharp.Core.Gui.AnyExistingVisibleWindows())
+			if (Gui.AnyExistingVisibleWindows())
 				return true;
 
 			if (HotkeyDefinition.shk.Count > 0)
@@ -527,19 +525,19 @@
 			if (HotstringManager.shs.Count > 0)
 				return true;
 
-			if (Keysharp.Core.Flow.timers.Count > 0)
+			if (Flow.timers.Count > 0)
 				return true;
 
-			if (Script.ClipFunctions.Count > 0)
+			if (ClipFunctions.Count > 0)
 				return true;
 
 			if (totalExistingThreads > 0)
 				return true;
 
-			if (Keysharp.Core.Flow.persistentValueSetByUser)
+			if (Flow.persistentValueSetByUser)
 				return true;
 
-			if (Script.input != null)
+			if (input != null)
 			{
 				for (var input = Script.input; ; input = input.Prev)
 				{
@@ -551,7 +549,7 @@
 			return false;
 		}
 
-		internal static void ExitIfNotPersistent(Keysharp.Core.Flow.ExitReasons exitReason)
+		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason)
 		{
 			if (!AnyPersistent())
 				Flow.ExitApp((int)exitReason);
@@ -563,7 +561,7 @@
 				return false;
 
 #if WINDOWS
-			HookThread = new Keysharp.Core.Windows.WindowsHookThread();
+			HookThread = new WindowsHookThread();
 			return true;
 #elif LINUX
 			HookThread = new Keysharp.Core.Linux.LinuxHookThread();

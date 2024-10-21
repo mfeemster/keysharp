@@ -1,4 +1,5 @@
 ﻿#if WINDOWS
+
 namespace Keysharp.Core.COM
 {
 	public class ComArrayIndexValueIterator : IEnumerator<(object, object)>
@@ -68,7 +69,7 @@ namespace Keysharp.Core.COM
 
 		public int Add(object value) => ((IList)array).Add(value);
 
-		public void Clear() => ((IList)array).Clear();
+		public new void Clear() => ((IList)array).Clear();
 
 		public object Clone(object obj0) => array.Clone();
 
@@ -95,4 +96,5 @@ namespace Keysharp.Core.COM
 		public object this[int index] { get => ((IList)array)[index]; set => ((IList)array)[index] = value; }
 	}
 }
+
 #endif

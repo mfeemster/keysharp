@@ -1,4 +1,4 @@
-﻿using static Keysharp.Core.Misc;
+﻿using static Keysharp.Core.Types;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
@@ -16,7 +16,7 @@ namespace Keysharp.Tests
 		[Test, Category("Misc")]
 		public void MiscObject()
 		{
-			var a = Keysharp.Core.Misc.Array(10, 20, 30);
+			var a = Collections.Array(10, 20, 30);
 			var fo = a.GetMethod("Clear");
 			_ = fo.Call();
 			Assert.AreEqual(0L, a.Length);
@@ -31,8 +31,8 @@ namespace Keysharp.Tests
 		public void MiscIs()
 		{
 			var x = 1;
-			var o = Keysharp.Core.Misc.Array(10, 20, 30);
-			var map = Keysharp.Core.Misc.Map("one", 1, "two", 2, "three", 3);
+			var o = Collections.Array(10, 20, 30);
+			var map = Collections.Map("one", 1, "two", 2, "three", 3);
 			Assert.IsTrue(IsInteger(x) == 1);
 			x = -1;
 			Assert.IsTrue(IsInteger(x) == 1);

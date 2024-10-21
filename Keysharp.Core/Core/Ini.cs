@@ -20,11 +20,11 @@ namespace Keysharp.Core
 			var section = obj1.As();
 			var key = obj2.As();
 
-			if (!System.IO.File.Exists(file))
+			if (!File.Exists(file))
 				return;
 
 			if (section != "")
-				section = string.Format(Keywords.Keyword_IniSectionOpen + "{0}]", section);
+				section = string.Format(Keyword_IniSectionOpen + "{0}]", section);
 
 			try
 			{
@@ -61,11 +61,11 @@ namespace Keysharp.Core
 				writer.Flush();
 				var text = writer.ToString();
 
-				if (System.IO.File.Exists(file))
-					System.IO.File.Delete(file);
+				if (File.Exists(file))
+					File.Delete(file);
 
 				Files.FileAppend("", file, "unicode");
-				System.IO.File.WriteAllText(file, text);
+				File.WriteAllText(file, text);
 			}
 			catch (Exception ex)
 			{
@@ -90,7 +90,7 @@ namespace Keysharp.Core
 			var def = obj3.As();
 			var result = "";
 
-			if (!System.IO.File.Exists(file))
+			if (!File.Exists(file))
 				return "";
 
 			if (section != "")
@@ -154,7 +154,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				if (!System.IO.File.Exists(file))
+				if (!File.Exists(file))
 				{
 					writer.WriteLine(section);
 
@@ -215,11 +215,11 @@ namespace Keysharp.Core
 				writer.Flush();
 				var text = writer.ToString();
 
-				if (System.IO.File.Exists(file))
-					System.IO.File.Delete(file);
+				if (File.Exists(file))
+					File.Delete(file);
 
 				Files.FileAppend("", file, "unicode");
-				System.IO.File.WriteAllText(file, text);
+				File.WriteAllText(file, text);
 			}
 			catch (Exception ex)
 			{
@@ -233,7 +233,7 @@ namespace Keysharp.Core
 			OrderedDictionary kvdkt = null;
 			var inidkt = new OrderedDictionary(StringComparer.CurrentCultureIgnoreCase);
 
-			foreach (var line in System.IO.File.ReadLines(filename))
+			foreach (var line in File.ReadLines(filename))
 			{
 				var ln = line.Trim(TrimLine);
 

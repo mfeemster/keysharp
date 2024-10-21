@@ -63,7 +63,7 @@ namespace Keysharp.Core
 			layoutTable.GrowStyle = TableLayoutPanelGrowStyle.AddColumns;
 			_ = layoutTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 			layoutTable.AutoSize = true;
-			layoutTable.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+			layoutTable.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 			//
 			// Main Text
 			//
@@ -93,15 +93,15 @@ namespace Keysharp.Core
 			layoutTable.Controls.Add(pic, 0, 1);
 			layoutTable.Controls.Add(sub, 0, 2);
 			Controls.Add(layoutTable);
-			Size = new System.Drawing.Size(500, 400);
+			Size = new Size(500, 400);
 			StartPosition = FormStartPosition.CenterScreen;
 			FormBorderStyle = FormBorderStyle.FixedDialog;
 			MaximizeBox = false;
 			MinimizeBox = false;
 			ControlBox = true;
 			ShowInTaskbar = false;
-			AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			AutoSizeMode = AutoSizeMode.GrowAndShrink;
+			AutoScaleMode = AutoScaleMode.Dpi;
 			AutoSize = true;
 			ResumeLayout(true);
 		}

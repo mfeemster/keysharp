@@ -1,41 +1,12 @@
-﻿namespace Keysharp.Core
+﻿namespace Keysharp.Core.Common
 {
-	public class Any
-	{
-		public static string BaseExc = "Changing a class base property at runtime cannot be implemented in C#.";
-
-		public object Base => GetType().BaseType;//Documentation says this can be set, but C# doesn't support changing a base at runtime.
-
-		public (Type, object) super
-		{
-			get
-			{
-				return (GetType().BaseType, this);
-			}
-		}
-
-		public virtual IFuncObj GetMethod(object obj0 = null, object obj1 = null) => Function.GetMethod(this, obj0, obj1);
-
-		//public bool DefineProp(object obj0, object obj1)
-		//{
-		//  var name obj0.As();
-
-		//}
-
-		public long HasBase(object obj) => obj.GetType().IsAssignableFrom(GetType()) ? 1L : 0L;
-
-		public long HasMethod(object obj0 = null, object obj1 = null) => Function.HasMethod(this, obj0, obj1);
-
-		public long HasProp(object obj) => Function.HasProp(this, obj);
-
-		//public virtual string tostring() => ToString();
-	}
-
 	public class KeysharpObject : Any
 	{
-		protected internal Dictionary<string, OwnpropsMap> op;
+		protected internal Dictionary<string, OwnPropsMap> op;
 
 		public static KeysharpObject Object() => new KeysharpObject();
+
+		public virtual object __New(params object[] obj) => "";
 
 		public virtual object Clone()
 		{
@@ -47,12 +18,12 @@
 		{
 			var name = obj0.As().ToLower();
 
-			if (obj1 is Keysharp.Core.Map map)
+			if (obj1 is Map map)
 			{
 				if (op == null)
-					op = new Dictionary<string, OwnpropsMap>(new CaseEqualityComp(eCaseSense.Off));
+					op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
 
-				var mapCopy = new OwnpropsMap(this, map);
+				var mapCopy = new OwnPropsMap(this, map);
 				//if (mapCopy.map.TryGetValue("get", out var getprop) && getprop is FuncObj getfo)
 				//  mapCopy.map["get"] = getfo is BoundFunc ? getfo : getfo.Bind(this);
 				//if (mapCopy.map.TryGetValue("set", out var setprop) && setprop is FuncObj setfo)
@@ -80,17 +51,17 @@
 			return "";
 		}
 
-		public long GetCapacity() => throw new Keysharp.Core.Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+		public long GetCapacity() => throw new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
 
 		public object GetOwnPropDesc(object obj)
 		{
 			var name = obj.As().ToLower();
 
-			if (this is Keysharp.Core.Map map)
+			if (this is Map map)
 			{
 				if (map.map.TryGetValue(name, out var mapVal))
 				{
-					return new OwnpropsMap(this, Misc.Map(["Value", mapVal]));
+					return new OwnPropsMap(this, Collections.Map(["Value", mapVal]));
 				}
 			}
 
@@ -99,7 +70,7 @@
 
 			try
 			{
-				return Keysharp.Scripting.Script.GetPropertyValue(this, name);
+				return Script.GetPropertyValue(this, name);
 			}
 			catch
 			{
@@ -112,7 +83,7 @@
 		{
 			var name = obj.As().ToLower();
 
-			if (this is Keysharp.Core.Map map)
+			if (this is Map map)
 				if (map.map.ContainsKey(name))
 					return 1L;
 
@@ -125,9 +96,9 @@
 		public long OwnPropCount()
 		{
 			var ct = 0L;
-			var isMapOnly = GetType() == typeof(Keysharp.Core.Map);
+			var isMapOnly = GetType() == typeof(Map);
 
-			if (this is Keysharp.Core.Map map)
+			if (this is Map map)
 				ct += map.map.Count;
 
 			if (op != null)
@@ -150,7 +121,7 @@
 			var props = new Dictionary<object, object>();
 
 			if (!skipMap)
-				if (this is Keysharp.Core.Map map && map.map.Count > 0)
+				if (this is Map map && map.map.Count > 0)
 					foreach (var kv in map.map)
 						if (!getVals
 								|| kv.Value is not FuncObj fo
@@ -216,83 +187,10 @@
 			tabLevel--;
 		}
 
-		public virtual object __New(params object[] obj) => "";
+		public void SetBase(params object[] obj) => throw new Exception(BaseExc);
+
+		public long SetCapacity(object obj) => throw new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
 
 		protected static object __StaticInit() => "";
-
-		public void SetBase(params object[] obj) => throw new Exception(Any.BaseExc);
-
-		public long SetCapacity(object obj) => throw new Keysharp.Core.Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
-	}
-
-	public class OwnPropsIterator : IEnumerator<(object, object)>
-	{
-		private readonly bool getVal;
-		private IEnumerator<KeyValuePair<object, object>> iter;
-		private readonly Dictionary<object, object> map;
-		private readonly KeysharpObject obj;
-
-		public (object, object) Current
-		{
-			get
-			{
-				var kv = iter.Current;
-
-				if (getVal)
-				{
-					if (kv.Value is MethodPropertyHolder mph)
-						return (kv.Key, mph.callFunc(obj, null));
-					else if (kv.Value is FuncObj fo)//ParamLength was verified when this was created in OwnProps().
-						return (kv.Key, fo.Call(obj));
-					else
-						return (kv.Key, kv.Value);
-				}
-
-				return (kv.Key, null);
-			}
-		}
-
-		object IEnumerator.Current => Current;
-
-		public OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
-		{
-			obj = o;
-			map = m;
-			getVal = gv;
-			iter = map.GetEnumerator();
-		}
-
-		public void Call(ref object obj0) => (obj0, _) = Current;
-
-		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
-
-		public void Dispose() => Reset();
-
-		public bool MoveNext() => iter.MoveNext();
-
-		public void Reset() => iter = map.GetEnumerator();
-
-		private IEnumerator<(object, object)> GetEnumerator() => this;
-	}
-
-	public class OwnpropsMap : Keysharp.Core.Map
-	{
-		public KeysharpObject Parent { get; private set; }
-
-		public OwnpropsMap(KeysharpObject kso, Keysharp.Core.Map map)
-		{
-			Parent = kso;
-			Default = map.Default;
-			Capacity = map.Capacity;
-			CaseSense = "Off";
-
-			foreach (var kv in map.map)
-				this[kv.Key] = kv.Value;
-		}
-
-		public override object Clone()
-		{
-			return new OwnpropsMap(Parent, this);
-		}
 	}
 }

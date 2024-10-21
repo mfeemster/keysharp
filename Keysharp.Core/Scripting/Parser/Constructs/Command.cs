@@ -162,7 +162,7 @@ namespace Keysharp.Scripting
 				{
 					return ParseSingleExpression(codeLine, code, false);
 				}
-				catch (Keysharp.Core.ParseException)
+				catch (ParseException)
 				{
 					// soft failure for implicit expression mode only
 					if (explicitExpr)

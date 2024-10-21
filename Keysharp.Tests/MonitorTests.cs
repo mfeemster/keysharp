@@ -8,7 +8,7 @@ namespace Keysharp.Tests
 		public void MonitorGet()
 		{
 			object l = null, t = null, r = null, b = null;
-			var monget = Keysharp.Core.Monitor.MonitorGet(null, ref l, ref t, ref r, ref b);
+			var monget = Core.Monitor.MonitorGet(null, ref l, ref t, ref r, ref b);
 			Assert.IsTrue(l.Ai() >= 0);
 			Assert.IsTrue(r.Ai() >= 0);
 			Assert.IsTrue(t.Ai() >= 0);
@@ -20,7 +20,7 @@ namespace Keysharp.Tests
 		[Test, Category("Monitor")]
 		public void MonitorGetCount()
 		{
-			var ct = Keysharp.Core.Monitor.MonitorGetCount();
+			var ct = Core.Monitor.MonitorGetCount();
 			Assert.IsTrue(ct > 0);
 			Assert.IsTrue(TestScript("monitor-monitorgetcount", true));
 		}
@@ -29,10 +29,10 @@ namespace Keysharp.Tests
 		public void MonitorGetName()
 		{
 			var names = "";
-			var ct = Keysharp.Core.Monitor.MonitorGetCount();
+			var ct = Core.Monitor.MonitorGetCount();
 
 			for (var i = 1; i <= ct; i++)
-				names += Keysharp.Core.Monitor.MonitorGetName(i) + Keywords.newlineToUse;
+				names += Core.Monitor.MonitorGetName(i) + Keywords.newlineToUse;
 
 			Assert.IsTrue(names != "");
 			Assert.IsTrue(TestScript("monitor-monitorgetname", true));
@@ -41,7 +41,7 @@ namespace Keysharp.Tests
 		[Test, Category("Monitor")]
 		public void MonitorGetPrimary()
 		{
-			var ct = Keysharp.Core.Monitor.MonitorGetPrimary();
+			var ct = Core.Monitor.MonitorGetPrimary();
 			Assert.IsTrue(ct > 0);
 			Assert.IsTrue(TestScript("monitor-monitorgetprimary", true));
 		}
@@ -50,7 +50,7 @@ namespace Keysharp.Tests
 		public void MonitorGetWorkArea()
 		{
 			object l = null, t = null, r = null, b = null;
-			var monget = Keysharp.Core.Monitor.MonitorGetWorkArea(null, ref l, ref t, ref r, ref b);
+			var monget = Core.Monitor.MonitorGetWorkArea(null, ref l, ref t, ref r, ref b);
 			Assert.IsTrue(l.Ai() >= 0);
 			Assert.IsTrue(r.Ai() >= 0);
 			Assert.IsTrue(t.Ai() >= 0);

@@ -4,8 +4,8 @@ namespace Keysharp.Core
 	internal class DllArgumentHelper : ArgumentHelper
 	{
 		internal object[] args;
-		internal Type[] types;
 		internal string[] names;
+		internal Type[] types;
 
 		internal DllArgumentHelper(object[] parameters)
 			: base(parameters)
@@ -178,7 +178,7 @@ namespace Keysharp.Core
 									args[n] = pUnk;
 									_ = Marshal.Release(pUnk);
 								}
-								else if (p is Keysharp.Core.Array array)
+								else if (p is Array array)
 									SetupPointerArg(i, n, array.array);
 								else
 									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
@@ -227,4 +227,5 @@ namespace Keysharp.Core
 		}
 	}
 }
+
 #endif

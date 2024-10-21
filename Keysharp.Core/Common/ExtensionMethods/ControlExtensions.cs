@@ -131,6 +131,14 @@
 			return rtn;
 		}
 
+		internal static GuiControl GetGuiControl(this Control control)
+		{
+			if (control.Tag is GuiTag guiTag)
+				return guiTag.GuiControl;
+
+			return null;
+		}
+
 		/// <summary>
 		/// Gotten from here and fixed: https://www.codeproject.com/tips/264690/how-to-iterate-recursive-through-all-menu-items-in
 		/// </summary>
@@ -191,7 +199,7 @@
 #if LINUX
 			control.ResumeLayout();
 #elif WINDOWS
-			_ = Keysharp.Core.Windows.WindowsAPI.SendMessage(control.Handle, Keysharp.Core.Windows.WindowsAPI.WM_SETREDRAW, 1, 0);
+			_ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 1, 0);
 #endif
 			control.Refresh();
 		}
@@ -297,7 +305,7 @@
 #if LINUX
 			control.SuspendLayout();
 #elif WINDOWS
-			_ = Keysharp.Core.Windows.WindowsAPI.SendMessage(control.Handle, Keysharp.Core.Windows.WindowsAPI.WM_SETREDRAW, 0, 0);
+			_ = WindowsAPI.SendMessage(control.Handle, WindowsAPI.WM_SETREDRAW, 0, 0);
 #endif
 		}
 
@@ -305,7 +313,7 @@
 		{
 			if (control is TabControl tc && tc.TabPages.Count > 0)
 			{
-				if (tc.Alignment == System.Windows.Forms.TabAlignment.Top || tc.Alignment == System.Windows.Forms.TabAlignment.Bottom)
+				if (tc.Alignment == TabAlignment.Top || tc.Alignment == TabAlignment.Bottom)
 					return tc.GetTabRect(0).Height;//GetTabRect() works, tc.ItemSize.Height does not.
 			}
 
@@ -316,7 +324,7 @@
 		{
 			if (control is TabControl tc && tc.TabPages.Count > 0)
 			{
-				if (tc.Alignment == System.Windows.Forms.TabAlignment.Left || tc.Alignment == System.Windows.Forms.TabAlignment.Right)
+				if (tc.Alignment == TabAlignment.Left || tc.Alignment == TabAlignment.Right)
 					return tc.GetTabRect(0).Width;
 			}
 
@@ -333,14 +341,6 @@
 		{
 			((GuiTag)add.Control.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
 			control.Controls.Add(add.Control);
-		}
-
-		internal static GuiControl GetGuiControl(this Control control)
-		{
-			if (control.Tag is GuiTag guiTag)
-				return guiTag.GuiControl;
-
-			return null;
 		}
 
 		private static void GetMenuItems(ToolStripItem item, List<ToolStripItem> items)

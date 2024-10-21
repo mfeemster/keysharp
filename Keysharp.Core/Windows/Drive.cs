@@ -4,7 +4,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Implementation for native Windows Drive Operations
 	/// </summary>
-	internal class Drive : Common.DriveBase
+	internal class Drive : DriveBase
 	{
 		private static readonly string IOPathPrefix = @"\\.\";
 
@@ -61,7 +61,7 @@ namespace Keysharp.Core.Windows
 				{
 					//Eject the disk.
 					var returnedBytes = 0;
-					var ovl = new System.Threading.NativeOverlapped();
+					var ovl = new NativeOverlapped();
 					_ = WindowsAPI.DeviceIoControl(fileHandle, control,
 												   ref l, 0,
 												   ref lo, 0,
@@ -82,4 +82,5 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+
 #endif

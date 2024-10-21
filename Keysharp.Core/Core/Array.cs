@@ -110,15 +110,15 @@
 				if (startIndex <  0)
 				{
 					var i = array.Count + startIndex + 1;
-					list = ((IEnumerable<object>)array).Reverse().Skip(Math.Abs(startIndex + 1)).Where(x => Keysharp.Scripting.Script.ForceBool(ifo.Call(x, i--))).ToList();
+					list = ((IEnumerable<object>)array).Reverse().Skip(Math.Abs(startIndex + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList();
 				}
 				else
 				{
 					var i = startIndex - 1;
-					list = array.Skip(i).Where(x => Keysharp.Scripting.Script.ForceBool(ifo.Call(x, ++i))).ToList();
+					list = array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList();
 				}
 
-				return new Keysharp.Core.Array(list);
+				return new Array(list);
 			}
 
 			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
@@ -138,7 +138,7 @@
 					{
 						var startIndexPlus1 = startIndex + 1L;
 
-						if (Keysharp.Scripting.Script.ForceBool(ifo.Call(array[startIndex], startIndexPlus1)))
+						if (Script.ForceBool(ifo.Call(array[startIndex], startIndexPlus1)))
 							return startIndexPlus1;
 
 						startIndex--;
@@ -149,7 +149,7 @@
 				else
 				{
 					var i = startIndex - 1;
-					var found = array.FindIndex(i, x => Keysharp.Scripting.Script.ForceBool(ifo.Call(x, (long)++i)));
+					var found = array.FindIndex(i, x => Script.ForceBool(ifo.Call(x, (long)++i)));
 					return found != -1L ? found + 1L : 0L;
 				}
 			}
@@ -157,7 +157,7 @@
 			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
 		}
 
-		public object Get(long index) => this[Scripting.Script.ForceInt(index)];
+		public object Get(long index) => this[Script.ForceInt(index)];
 
 		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
 
@@ -211,7 +211,7 @@
 				List<object> list;
 				var i = startIndex - 1;
 				list = array.Skip(i).Select(x => ifo.Call(x, ++i)).ToList();
-				return new Keysharp.Core.Array(list);
+				return new Array(list);
 			}
 
 			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
@@ -455,7 +455,7 @@
 		}
 	}
 
-	public class ArrayIndexValueIterator : IEnumerator<(object, object)>
+	internal class ArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
 		private readonly List<object> arr;
 		private int position = -1;

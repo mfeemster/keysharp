@@ -215,7 +215,7 @@
 
 				for (var i = 1; i < o.Count; i++)
 				{
-					if (!Scripting.Script.IsNumeric(o[i]) || !Scripting.Script.IsNumeric(o[i - 1]))
+					if (!Script.IsNumeric(o[i]) || !Script.IsNumeric(o[i - 1]))
 						return string.Empty;
 
 					var x = Convert.ToDouble(o[i]);
@@ -249,7 +249,7 @@
 
 				for (var i = 1; i < o.Count; i++)
 				{
-					if (!Scripting.Script.IsNumeric(o[i]) || !Scripting.Script.IsNumeric(o[i - 1]))
+					if (!Script.IsNumeric(o[i]) || !Script.IsNumeric(o[i - 1]))
 						return string.Empty;
 
 					var x = Convert.ToDouble(o[i]);

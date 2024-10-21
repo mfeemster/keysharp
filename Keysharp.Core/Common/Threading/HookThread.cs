@@ -26,7 +26,7 @@ namespace Keysharp.Core.Common.Threading
 			SingleReader = true
 		});
 
-		internal static System.Threading.Mutex keybdMutex = null, mouseMutex = null;
+		internal static Mutex keybdMutex = null, mouseMutex = null;
 		internal static string KeybdMutexName = "Keysharp Keybd";
 		internal static Dictionary<string, uint> keyToSc = null;
 		internal static Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToScAlt;
@@ -38,7 +38,7 @@ namespace Keysharp.Core.Common.Threading
 		internal static Dictionary<uint, string> vkToKey = new Dictionary<uint, string>();
 		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
-		internal Keysharp.Core.Common.Keyboard.KeyboardMouseSender kbdMsSender = null;
+		internal KeyboardMouseSender kbdMsSender = null;
 		internal byte[] physicalKeyState = new byte[VK_ARRAY_COUNT];
 
 		// The prefix key that's currently down (i.e. in effect).
@@ -46,6 +46,8 @@ namespace Keysharp.Core.Common.Threading
 		// concern that such a count might accidentally wind up above zero (due to a key-up being missed somehow)
 		// and never come back down, thus penalizing performance until the program is restarted:
 		internal KeyType prefixKey = null;
+
+		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 
 		// Whether the alt-tab menu was shown by an AltTab hotkey or alt-tab was detected
 		// by the hook.  This might be inaccurate if the menu was displayed before the hook
@@ -55,7 +57,7 @@ namespace Keysharp.Core.Common.Threading
 		// depending on OS and the "AltTabSettings" registry value.
 		protected internal bool altTabMenuIsVisible = false;
 
-		protected internal System.Threading.Tasks.Task<System.Threading.Tasks.Task> channelReadThread;
+		protected internal Task<Task> channelReadThread;
 
 		protected internal uint channelThreadID = 0u;
 
@@ -69,6 +71,7 @@ namespace Keysharp.Core.Common.Threading
 		// we can ensure they are initialized by the keyboard init function every
 		// time it's called (currently it can be only called once):
 		protected internal bool disguiseNextMenu = false;
+
 		protected internal bool hookSynced = false;
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
 		protected internal IntPtr kbdHook = IntPtr.Zero;
@@ -80,7 +83,6 @@ namespace Keysharp.Core.Common.Threading
 		protected internal IntPtr mouseHook = IntPtr.Zero;
 		protected internal bool undisguisedMenuInEffect = false;
 		protected volatile bool running;
-		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
 
 		internal HookThread()
 		{
@@ -388,27 +390,6 @@ namespace Keysharp.Core.Common.Threading
 
 		protected internal abstract void Start();
 	}
-
-	internal class HotstringMsg
-	{
-		internal CaseConformModes caseMode = CaseConformModes.None;
-		internal char endChar = (char)0;
-		//Might want to add skipchars here.//TODO
-		internal HotstringDefinition hs = null;
-	}
-
-	internal class KeysharpMsg
-	{
-		//internal bool completed;
-		internal IntPtr hwnd = IntPtr.Zero;
-		internal IntPtr lParam = IntPtr.Zero;
-		internal uint message;
-		internal object obj;
-		//internal System.Drawing.Point pt;
-		//internal uint time;
-		internal IntPtr wParam = IntPtr.Zero;
-	}
-
 
 	// WM_USER (0x0400) is the lowest number that can be a user-defined message.  Anything above that is also valid.
 	// NOTE: Any msg about WM_USER will be kept buffered (unreplied-to) whenever the script is uninterruptible.

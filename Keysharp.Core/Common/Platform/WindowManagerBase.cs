@@ -19,8 +19,8 @@ namespace Keysharp.Core.Common.Platform
 
 		internal virtual WindowItemBase LastFound
 		{
-			get => CreateWindow(Keysharp.Scripting.Script.HwndLastUsed);
-			set => Keysharp.Scripting.Script.HwndLastUsed = value.Handle;
+			get => CreateWindow(Script.HwndLastUsed);
+			set => Script.HwndLastUsed = value.Handle;
 		}
 
 		internal abstract WindowItemBase CreateWindow(nint id);
@@ -55,8 +55,6 @@ namespace Keysharp.Core.Common.Platform
 
 			return found;
 		}
-
-		internal abstract bool IsWindow(IntPtr handle);
 
 		internal WindowItemBase FindWindow(object title, string text, string excludeTitle, string excludeText, bool last = false)
 		{
@@ -133,11 +131,13 @@ namespace Keysharp.Core.Common.Platform
 
 		internal abstract IntPtr GetForeGroundWindowHwnd();
 
+		internal abstract bool IsWindow(IntPtr handle);
+
+		internal abstract void MaximizeAll();
+
 		internal abstract void MinimizeAll();
 
 		internal abstract void MinimizeAllUndo();
-
-		internal abstract void MaximizeAll();
 
 		internal abstract WindowItemBase WindowFromPoint(Point location);
 	}

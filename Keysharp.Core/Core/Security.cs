@@ -9,7 +9,7 @@ namespace Keysharp.Core
 		/// <param name="key">The secret key.</param>
 		/// <param name="decrypt"><code>true</code> to decrypt the given <paramref name="value"/>, otherwise encrypt.</param>
 		/// <returns>The corresponding encrypted or decrypted data.</returns>
-		public static Keysharp.Core.Array AES(object value, object key, bool decrypt = false) => new Keysharp.Core.Array(Crypt.Encrypt(value, key, decrypt, System.Security.Cryptography.Aes.Create()));
+		public static Array AES(object value, object key, bool decrypt = false) => new Array(Crypt.Encrypt(value, key, decrypt, Aes.Create()));
 
 		/// <summary>
 		/// Calculates the CRC32 polynomial of an object.
@@ -19,7 +19,7 @@ namespace Keysharp.Core
 		public static long CRC32(object value)
 		{
 			var raw = Crypt.ToByteArray(value);
-			var alg = new Common.CRC32();
+			var alg = new CRC32();
 			_ = alg.ComputeHash(raw);
 			return alg.Value;
 		}
@@ -47,7 +47,7 @@ namespace Keysharp.Core
 			if (diff == 0 && !(min == 0 && max == 0))
 				return min;
 
-			var csp = System.Security.Cryptography.RandomNumberGenerator.Create();
+			var csp = RandomNumberGenerator.Create();
 			var rnd = new byte[4 * 3 + 1];
 			csp.GetBytes(rnd);
 			var s = new int[3];

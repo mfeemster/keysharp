@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Microsoft.CodeAnalysis;
 using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
+using Keysharp.Core;
 using Keysharp.Scripting;
 
 namespace Keysharp.Main
@@ -34,7 +35,7 @@ namespace Keysharp.Main
 					return Message("Invalid number of arguments: you must pass at least an input script filename as the first argument like so: Keysharp.exe myscript.ahk", true);
 				}
 
-				Keysharp.Core.Window.SetProcessDPIAware();
+				Window.SetProcessDPIAware();
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
 				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
@@ -113,14 +114,14 @@ namespace Keysharp.Main
 					var dirs = new string[]//Will need linux specific folders.//TODO
 					{
 						$"{Environment.CurrentDirectory}\\Keysharp.ahk",//Current executable dir.
-						$"{Keysharp.Core.Accessors.A_MyDocuments}\\Keysharp.ahk",//Documents.
+						$"{Accessors.A_MyDocuments}\\Keysharp.ahk",//Documents.
 						$"{Environment.CurrentDirectory}\\Keysharp.ks",
-						$"{Keysharp.Core.Accessors.A_MyDocuments}\\Keysharp.ks",
+						$"{Accessors.A_MyDocuments}\\Keysharp.ks",
 					};
 
 					foreach (var dir in dirs)
 					{
-						if (System.IO.File.Exists(dir))
+						if (File.Exists(dir))
 						{
 							script = dir;
 							break;
@@ -143,11 +144,11 @@ namespace Keysharp.Main
 				if (string.IsNullOrEmpty(script))
 					return Message("No script was specified, no text was read from stdin, and no script named keysharp.ahk was found in the current folder or your documents folder.", true);
 
-				if (!System.IO.File.Exists(script))
+				if (!File.Exists(script))
 					return Message($"Could not find the script file {script}.", true);
 
 #if DEBUG
-				Keysharp.Scripting.Script.OutputDebug($"Creating DOM from {script}");
+				Script.OutputDebug($"Creating DOM from {script}");
 #endif
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
 				string namenoext, path, scriptdir;
@@ -169,7 +170,7 @@ namespace Keysharp.Main
 					return HandleCompilerErrors(domerrs, script, path, "Compiling script to DOM");
 
 #if DEBUG
-				Keysharp.Scripting.Script.OutputDebug("Creating code from DOM.");
+				Script.OutputDebug("Creating code from DOM.");
 #endif
 				var (code, exc) = ch.CreateCodeFromDom(domunits);
 
@@ -202,7 +203,7 @@ namespace Keysharp.Main
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
 				//Message($"Before compiling, setting current dir to {Environment.CurrentDirectory}", false);
 #if DEBUG
-				Keysharp.Scripting.Script.OutputDebug("Compiling code.");
+				Script.OutputDebug("Compiling code.");
 #endif
 				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
 
@@ -226,8 +227,8 @@ namespace Keysharp.Main
 								var ver = GetLatestDotNetVersion();//Windows only.
 								var outputRuntimeConfigPath = Path.ChangeExtension(path, "runtimeconfig.json");
 								var currentRuntimeConfigPath = Path.ChangeExtension(exePath, "runtimeconfig.json");
-								System.IO.File.WriteAllBytes(path + ".dll", arr);
-								System.IO.File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+								File.WriteAllBytes(path + ".dll", arr);
+								File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
 								//var outputDepsConfigPath = Path.ChangeExtension(path, "deps.json");
 								//var currentDepsConfigPath = Path.ChangeExtension(loc, "deps.json");
 								//File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
@@ -255,8 +256,8 @@ namespace Keysharp.Main
 								//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
 
 								if (string.Compare(exeDir, scriptdir, true) != 0)
-									if (System.IO.File.Exists(ksCorePath))
-										System.IO.File.Copy(ksCorePath, Path.Combine(scriptdir, "Keysharp.Core.dll"), true);
+									if (File.Exists(ksCorePath))
+										File.Copy(ksCorePath, Path.Combine(scriptdir, "Keysharp.Core.dll"), true);
 							}
 							catch (Exception writeex)
 							{
@@ -284,7 +285,7 @@ namespace Keysharp.Main
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
 #if DEBUG
-				Keysharp.Scripting.Script.OutputDebug("Running compiled code.");
+				Script.OutputDebug("Running compiled code.");
 #endif
 				_ = main.Invoke(null, [args]);
 			}
@@ -299,7 +300,7 @@ namespace Keysharp.Main
 				_ = error.AppendLine();
 				_ = error.AppendLine(ex.StackTrace);
 				var msg = error.ToString();
-				var trace = $"{Keysharp.Core.Accessors.A_AppData}/Keysharp/execution_errors.txt";
+				var trace = $"{Accessors.A_AppData}/Keysharp/execution_errors.txt";
 
 				try
 				{
@@ -330,12 +331,13 @@ namespace Keysharp.Main
 #if LINUX
 			var dir = Directory.GetDirectories(@"/lib/dotnet/sdk/").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
 #elif WINDOWS
-			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x )).FirstOrDefault();
+			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x)).FirstOrDefault();
 #endif
 			return dir;
 		}
 
 #if WINDOWS
+
 		internal static void InstallToPath(string path)
 		{
 			var keyName = @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment";
@@ -352,6 +354,7 @@ namespace Keysharp.Main
 			var newPath = string.Join(';', oldPath.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(s => string.Compare(s, path, true) != 0));
 			Registry.LocalMachine.CreateSubKey(keyName).SetValue("PATH", newPath, RegistryValueKind.ExpandString);//Restore the old path to what it was without the passed in value included.
 		}
+
 #endif
 
 		private static int HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string path, string desc, string message = "")
@@ -412,7 +415,7 @@ namespace Keysharp.Main
 			else
 			{
 				_ = MessageBox.Show(text, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				Keysharp.Scripting.Script.OutputDebug(text);
+				Script.OutputDebug(text);
 			}
 
 			return error ? 1 : 0;

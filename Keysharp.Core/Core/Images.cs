@@ -23,13 +23,13 @@
 				}
 			}
 
-			var ext = System.IO.Path.GetExtension(filename).ToLower();
+			var ext = Path.GetExtension(filename).ToLower();
 
 			if (ext == ".cur")
 			{
 				using (var cur = new Cursor(filename))
 				{
-					Clipboard.SetImage(Keysharp.Core.Common.ImageHelper.ConvertCursorToBitmap(cur));
+					Clipboard.SetImage(ImageHelper.ConvertCursorToBitmap(cur));
 				}
 			}
 			else if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
@@ -73,7 +73,7 @@
 				}
 			}
 
-			var ext = System.IO.Path.GetExtension(filename).ToLower();
+			var ext = Path.GetExtension(filename).ToLower();
 			(Bitmap, object) ret;
 
 			if (ext == ".cur")

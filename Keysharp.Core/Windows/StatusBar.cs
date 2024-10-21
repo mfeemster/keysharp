@@ -6,7 +6,7 @@ namespace Keysharp.Core.Windows
 	/// Helper class to get status bar info from a window in another process.
 	/// Gotten from: http://www.pinvoke.net/default.aspx/user32/SB_GETTEXT.html and changed to use SendMessageTimeout().
 	/// </summary>
-	internal class StatusBar : Keysharp.Core.Common.Window.StatusBarBase
+	internal class StatusBar : StatusBarBase
 	{
 		internal StatusBar(IntPtr hWnd)
 			: base(hWnd)

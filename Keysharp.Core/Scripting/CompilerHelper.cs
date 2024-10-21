@@ -10,29 +10,30 @@
 		//System.Web.Configuration.WebConfigurationManager cfg = new System.Web.Configuration.WebConfigurationManager();
 		//Need to manually add the using static statements.
 #if WINDOWS
+
 		public static readonly string UsingStr =
 			@"using static Keysharp.Core.Accessors;
 using static Keysharp.Core.COM.Com;
-//using static Keysharp.Core.Common.Window.WindowItemBase;
+using static Keysharp.Core.Collections;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringManager;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;
-using static Keysharp.Core.Drive;
 using static Keysharp.Core.Dll;
+using static Keysharp.Core.Drive;
 using static Keysharp.Core.Env;
+using static Keysharp.Core.Errors;
 using static Keysharp.Core.External;
 using static Keysharp.Core.Files;
 using static Keysharp.Core.Flow;
-using static Keysharp.Core.Function;
+using static Keysharp.Core.Functions;
 using static Keysharp.Core.GuiHelper;
-using static Keysharp.Core.Images;
 using static Keysharp.Core.ImageLists;
+using static Keysharp.Core.Images;
 using static Keysharp.Core.Ini;
 using static Keysharp.Core.Input;
 using static Keysharp.Core.Keyboard;
-using static Keysharp.Core.KeysharpObject;
 using static Keysharp.Core.Loops;
 using static Keysharp.Core.Maths;
 using static Keysharp.Core.Menu;
@@ -40,7 +41,6 @@ using static Keysharp.Core.Misc;
 using static Keysharp.Core.Monitor;
 using static Keysharp.Core.Mouse;
 using static Keysharp.Core.Network;
-using static Keysharp.Core.Options;
 using static Keysharp.Core.Processes;
 using static Keysharp.Core.RealThreads;
 using static Keysharp.Core.Registrys;
@@ -50,53 +50,58 @@ using static Keysharp.Core.SimpleJson;
 using static Keysharp.Core.Sound;
 using static Keysharp.Core.Strings;
 using static Keysharp.Core.ToolTips;
+using static Keysharp.Core.Types;
 using static Keysharp.Core.Window;
 using static Keysharp.Core.Windows.WindowsAPI;
-using static Keysharp.Scripting.Script;
 using static Keysharp.Scripting.Script.Operator;
+using static Keysharp.Scripting.Script;
 ";
+
 #else
 		public static readonly string UsingStr =
 			@"using static Keysharp.Core.Accessors;
-		//using static Keysharp.Core.Common.Window.WindowItemBase;
-		using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
-		using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
-		using static Keysharp.Core.Common.Keyboard.HotstringManager;
-		using static Keysharp.Core.Dialogs;
-		using static Keysharp.Core.Dir;
-		using static Keysharp.Core.Drive;
-		using static Keysharp.Core.Env;
-		using static Keysharp.Core.External;
-		using static Keysharp.Core.Files;
-		using static Keysharp.Core.Flow;
-		using static Keysharp.Core.Function;
-		using static Keysharp.Core.GuiHelper;
-		using static Keysharp.Core.Images;
-		using static Keysharp.Core.ImageLists;
-		using static Keysharp.Core.Ini;
-		using static Keysharp.Core.Input;
-		using static Keysharp.Core.Keyboard;
-		using static Keysharp.Core.KeysharpObject;
-		using static Keysharp.Core.Loops;
-		using static Keysharp.Core.Maths;
-		using static Keysharp.Core.Menu;
-		using static Keysharp.Core.Misc;
-		using static Keysharp.Core.Monitor;
-		using static Keysharp.Core.Mouse;
-		using static Keysharp.Core.Network;
-		using static Keysharp.Core.Options;
-		using static Keysharp.Core.Processes;
-		using static Keysharp.Core.RealThreads;
-		using static Keysharp.Core.Screen;
-		using static Keysharp.Core.Security;
-		using static Keysharp.Core.SimpleJson;
-		using static Keysharp.Core.Strings;
-		using static Keysharp.Core.ToolTips;
-		using static Keysharp.Core.Window;
-		using static Keysharp.Scripting.Script;
-		using static Keysharp.Scripting.Script.Operator;
-		";
+using static Keysharp.Core.Collections;
+using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
+using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
+using static Keysharp.Core.Common.Keyboard.HotstringManager;
+using static Keysharp.Core.Dialogs;
+using static Keysharp.Core.Dir;
+//using static Keysharp.Core.Dll;
+using static Keysharp.Core.Drive;
+using static Keysharp.Core.Env;
+using static Keysharp.Core.Errors;
+using static Keysharp.Core.External;
+using static Keysharp.Core.Files;
+using static Keysharp.Core.Flow;
+using static Keysharp.Core.Functions;
+using static Keysharp.Core.GuiHelper;
+using static Keysharp.Core.ImageLists;
+using static Keysharp.Core.Images;
+using static Keysharp.Core.Ini;
+using static Keysharp.Core.Input;
+using static Keysharp.Core.Keyboard;
+using static Keysharp.Core.Loops;
+using static Keysharp.Core.Maths;
+using static Keysharp.Core.Menu;
+using static Keysharp.Core.Misc;
+using static Keysharp.Core.Monitor;
+using static Keysharp.Core.Mouse;
+using static Keysharp.Core.Network;
+using static Keysharp.Core.Processes;
+using static Keysharp.Core.RealThreads;
+using static Keysharp.Core.Screen;
+using static Keysharp.Core.Security;
+using static Keysharp.Core.SimpleJson;
+using static Keysharp.Core.Sound;
+using static Keysharp.Core.Strings;
+using static Keysharp.Core.ToolTips;
+using static Keysharp.Core.Types;
+using static Keysharp.Core.Window;
+using static Keysharp.Scripting.Script.Operator;
+using static Keysharp.Scripting.Script;
+";
 #endif
+
 		/// <summary>
 		/// Needed as a static here so it can be accessed in other areas of Keysharp.Core, such as in Accessors,
 		/// to determine if the executing code is a standalone executable, or a script that was compiled and ran through
@@ -111,13 +116,6 @@ using static Keysharp.Scripting.Script.Operator;
 			BracingStyle = "C"
 		};
 
-		private Parser parser;
-
-		/// <summary>
-		/// Define the compile unit to use for code generation.
-		/// </summary>
-		//CodeCompileUnit targetUnit;
-
 		private readonly CodeDomProvider provider = CodeDomProvider.CreateProvider("csharp", new Dictionary<string, string>
 		{
 			{
@@ -125,7 +123,12 @@ using static Keysharp.Scripting.Script.Operator;
 			}
 		});
 
+		private Parser parser;
 
+		/// <summary>
+		/// Define the compile unit to use for code generation.
+		/// </summary>
+		//CodeCompileUnit targetUnit;
 		public CompilerHelper()
 		{
 			parser = new Parser(this);
@@ -232,8 +235,8 @@ using static Keysharp.Scripting.Script.Operator;
 				var tree = SyntaxFactory.ParseSyntaxTree(code,
 						   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
-				var desktopDir = Path.GetDirectoryName(typeof(System.Windows.Forms.Form).GetTypeInfo().Assembly.Location);
-				var usings = new List<string>()//These aren't what show up in the output .cs file.
+				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
+				var usings = new List<string>()//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
 				{
 					"System",
 					"System.Collections",
@@ -316,8 +319,8 @@ using static Keysharp.Scripting.Script.Operator;
 			var units = new CodeCompileUnit[fileNames.Length];
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
-			var x = Keysharp.Core.Env.FindCommandLineArg("cp");
-			var (pushed, btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
+			var x = Env.FindCommandLineArg("cp");
+			var (pushed, btv) = Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
 
 			if (pushed)
 			{
@@ -335,7 +338,7 @@ using static Keysharp.Scripting.Script.Operator;
 				{
 					try
 					{
-						if (System.IO.File.Exists(fileNames[i]))
+						if (File.Exists(fileNames[i]))
 						{
 							Script.scriptName = fileNames[i];
 							units[i] = parser.Parse(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
@@ -346,7 +349,7 @@ using static Keysharp.Scripting.Script.Operator;
 							units[i] = parser.Parse(new StringReader(fileNames[i]), "*");//In memory.
 						}
 					}
-					catch (Keysharp.Core.ParseException e)
+					catch (ParseException e)
 					{
 						_ = errors.Add(new CompilerError(e.File, (int)e.Line, 0, "0", e.Message));
 					}
@@ -357,7 +360,7 @@ using static Keysharp.Scripting.Script.Operator;
 					finally { }
 				}
 
-				Keysharp.Core.Common.Threading.Threads.EndThread(pushed);
+				Threads.EndThread(pushed);
 			}
 
 			return (units, errors);
@@ -366,7 +369,7 @@ using static Keysharp.Scripting.Script.Operator;
 		public void PrintCompilerErrors(string s)
 		{
 			if (parser.ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)
-				Keysharp.Scripting.Script.OutputDebug(s);//For this to show on the command line, they need to pipe to more like: | more
+				Script.OutputDebug(s);//For this to show on the command line, they need to pipe to more like: | more
 			else
 				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
@@ -392,7 +395,6 @@ using static Keysharp.Scripting.Script.Operator;
 				MetadataReference.CreateFromFile(Path.Combine(coreDir, "mscorlib.dll")),
 				MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.dll")),
 				MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll"))
-
 			};
 			string finalCode = @"
 using System;

@@ -1,6 +1,4 @@
-﻿using static Keysharp.Core.Misc;
-
-namespace Keysharp.Core.Common.Keyboard
+﻿namespace Keysharp.Core.Common.Keyboard
 {
 	public class HotstringDefinition
 	{
@@ -271,7 +269,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var sb = new StringBuilder();//This might be able to be done more efficiently, but use sb unless performance issues show up.
 			var startOfReplacement = 0;
 			string sendBuf;
-			var ht = Keysharp.Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			if (doBackspace)
@@ -380,7 +378,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// another timeslice to ensure that AllowKeyToGoToSystem() actually takes effect on screen (SuppressThisKey()
 			// doesn't seem to have this problem).
 			if (!(doBackspace || omitEndChar) && sendMode != SendModes.Event) // The final character of the abbreviation (or its EndChar) was not suppressed by the hook.
-				System.Threading.Thread.Sleep(0);
+				Thread.Sleep(0);
 
 			kbdMouseSender.SendKeys(sendBuf, sendRaw, sendMode, IntPtr.Zero); // Send the backspaces and/or replacement.
 			// Restore original values.
@@ -425,7 +423,7 @@ namespace Keysharp.Core.Common.Keyboard
 				tv.sendLevel = inputLevel;
 				tv.hwndLastUsed = hwndCritFound;
 				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
-				var ok = Misc.TryCatch(() =>
+				var ok = Flow.TryCatch(() =>
 				{
 					ret = funcObj.Call(o);
 					//throw new Error("ASDf");
@@ -448,7 +446,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 			catch (Error ex)
 			{
-				_ = Keysharp.Core.Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
+				_ = Dialogs.MsgBox($"Exception thrown during hotstring handler.\n\n{ex}", null, (int)MessageBoxIcon.Hand);
 			}
 
 			return ResultType.Ok;

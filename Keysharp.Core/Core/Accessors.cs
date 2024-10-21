@@ -5,6 +5,7 @@
 		internal static long hotkeyModifierTimeout = 50L;
 		internal static long hotkeyThrottleInterval = 2000L;
 		internal static long maxHotkeysPerInterval = 2000L;
+		private static readonly string initialWorkingDir = Environment.CurrentDirectory;
 		private static bool allowMainWindow = true;
 		private static long controlDelay = 20L;
 		private static long defaultMouseSpeed = 2L;
@@ -13,7 +14,6 @@
 		private static Encoding fileEncoding = Encoding.Default;
 		private static bool? iconFrozen;
 		private static bool iconHidden;
-		private static readonly string initialWorkingDir = Environment.CurrentDirectory;
 		private static uint inputLevel;
 		private static long keyDelay = 10L;
 		private static long keyDelayPlay = -1L;
@@ -75,12 +75,12 @@
 				if (val.HasValue)
 				{
 					allowMainWindow = val.Value;
-					Keysharp.Scripting.Script.openMenuItem.Visible = val.Value;
+					Script.openMenuItem.Visible = val.Value;
 
-					if (!Accessors.A_AllowMainWindow.Ab())
-						Keysharp.Scripting.Script.openMenuItem.Visible = false;
+					if (!A_AllowMainWindow.Ab())
+						Script.openMenuItem.Visible = false;
 					else
-						Keysharp.Scripting.Script.trayMenu.Default = "&Open";
+						Script.trayMenu.Default = "&Open";
 				}
 			}
 		}
@@ -520,7 +520,7 @@
 			set => Threads.GetThreadVariables().formatNumeric = value.ToString();
 		}
 
-		public static bool A_HasExited => Keysharp.Core.Flow.hasExited;
+		public static bool A_HasExited => Flow.hasExited;
 
 		public static object A_HotIfTimeout { get; set; } = 1000L;
 
@@ -710,7 +710,7 @@
 		///     2: Only another keyboard hook is installed.
 		///     3: Ours and another keyboard hook are installed.
 		/// </summary>
-		public static long A_KeybdHookInstalled => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht
+		public static long A_KeybdHookInstalled => Script.HookThread is HookThread ht
 		? (ht.HasKbdHook() ? 1L : 0L) | (ht.SystemHasAnotherKeybdHook() ? 2L : 0L)
 		: 0L;
 
@@ -750,7 +750,7 @@
 			set => keyDurationPlay = ThreadAccessors.A_KeyDurationPlay = value.Al();
 		}
 
-		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Keysharp.Core.Accessors)).Location;
+		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Accessors)).Location;
 		public static string A_KeysharpPath => A_AhkPath;
 
 		/// <summary>
@@ -803,10 +803,10 @@
 		{
 			get
 			{
-				if (A_LoopFileFullPath is string s && (System.IO.File.Exists(s) || Directory.Exists(s)))
+				if (A_LoopFileFullPath is string s && (File.Exists(s) || Directory.Exists(s)))
 				{
 					var val = "";
-					var attr = System.IO.File.GetAttributes(s);
+					var attr = File.GetAttributes(s);
 
 					if (attr.HasFlag(FileAttributes.ReadOnly))
 						val += "R";
@@ -948,7 +948,7 @@
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return file != null && System.IO.File.Exists(file) ? new System.IO.FileInfo(file).Length : 0L;
+				return file != null && File.Exists(file) ? new FileInfo(file).Length : 0L;
 			}
 		}
 
@@ -970,7 +970,7 @@
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetLastAccessTime(file)) : "";
+				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(File.GetLastAccessTime(file)) : "";
 			}
 		}
 
@@ -982,7 +982,7 @@
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetCreationTime(file)) : "";
+				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(File.GetCreationTime(file)) : "";
 			}
 		}
 
@@ -994,7 +994,7 @@
 			get
 			{
 				var file = Loops.GetDirLoopFilename();
-				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(System.IO.File.GetLastWriteTime(file)) : "";
+				return !string.IsNullOrEmpty(file) ? Conversions.ToYYYYMMDDHH24MISS(File.GetLastWriteTime(file)) : "";
 			}
 		}
 
@@ -1251,7 +1251,7 @@
 		///     2: Only another mouse hook is installed.
 		///     3: Ours and another mouse hook are installed.
 		/// </summary>
-		public static long A_MouseHookInstalled => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht
+		public static long A_MouseHookInstalled => Script.HookThread is HookThread ht
 		? (ht.HasMouseHook() ? 1L : 0L) | (ht.SystemHasAnotherMouseHook() ? 2L : 0L)
 		: 0L;
 
@@ -1307,11 +1307,11 @@
 		/// <summary>
 		/// The key name of the previously executed hotkey or hotstring.
 		/// </summary>
-		public static string A_PriorHotkey => Keysharp.Scripting.Script.priorHotkeyName;
+		public static string A_PriorHotkey => Script.priorHotkeyName;
 
 		public static object A_Priority { get; set; } = 0L;
 
-		public static string A_PriorKey => Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht ? ht.keyHistory.PriorKey() : "";
+		public static string A_PriorKey => Script.HookThread is HookThread ht ? ht.keyHistory.PriorKey() : "";
 
 		/// <summary>
 		/// The Program Files directory (e.g. <code>C:\Program Files</code>).
@@ -1479,7 +1479,7 @@
 		/// <summary>
 		/// The key name of the most recently executed hotkey or hotstring.
 		/// </summary>
-		public static string A_ThisHotkey => Keysharp.Scripting.Script.thisHotkeyName;
+		public static string A_ThisHotkey => Script.thisHotkeyName;
 
 		/// <summary>
 		/// The name of the menu from which A_ThisMenuItem was selected.
@@ -1509,7 +1509,7 @@
 			get
 			{
 #if WINDOWS
-				var lii = Windows.LASTINPUTINFO.Default;
+				var lii = LASTINPUTINFO.Default;
 				return WindowsAPI.GetLastInputInfo(ref lii) ? Environment.TickCount - lii.dwTime : 0L;
 #else
 				return "xprintidle".Bash().Al();
@@ -1521,8 +1521,8 @@
 		{
 			get
 			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasKbdHook()
-					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputKeyboard).TotalMilliseconds
+				return Script.HookThread is HookThread ht && ht.HasKbdHook()
+					   ? (long)(DateTime.Now - Script.timeLastInputKeyboard).TotalMilliseconds
 					   : A_TimeIdle;
 			}
 		}
@@ -1531,8 +1531,8 @@
 		{
 			get
 			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasMouseHook()
-					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputMouse).TotalMilliseconds
+				return Script.HookThread is HookThread ht && ht.HasMouseHook()
+					   ? (long)(DateTime.Now - Script.timeLastInputMouse).TotalMilliseconds
 					   : A_TimeIdle;
 			}
 		}
@@ -1544,8 +1544,8 @@
 		{
 			get
 			{
-				return Keysharp.Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht && ht.HasEitherHook()
-					   ? (long)(DateTime.Now - Keysharp.Scripting.Script.timeLastInputPhysical).TotalMilliseconds
+				return Script.HookThread is HookThread ht && ht.HasEitherHook()
+					   ? (long)(DateTime.Now - Script.timeLastInputPhysical).TotalMilliseconds
 					   : A_TimeIdle;
 			}
 		}
@@ -1553,12 +1553,12 @@
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.
 		/// </summary>
-		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(Keysharp.Scripting.Script.priorHotkeyName) ? -1L : (long)(DateTime.Now - Keysharp.Scripting.Script.priorHotkeyStartTime).TotalMilliseconds;
+		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(Script.priorHotkeyName) ? -1L : (long)(DateTime.Now - Script.priorHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_ThisHotkey"/> was pressed. It will be -1 whenever <see cref="A_ThisHotkey"/> is blank.
 		/// </summary>
-		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Keysharp.Scripting.Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Keysharp.Scripting.Script.thisHotkeyStartTime).TotalMilliseconds;
+		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Script.thisHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// The current mode set by <code>SetTitleMatchMode</code>: <code>1</code>, <code>2</code>, <code>3</code>, or <code>RegEx</code>.
@@ -1618,7 +1618,7 @@
 		/// </summary>
 		public static long A_WDay => (int)DateTime.Now.DayOfWeek + 1;
 
-		public static object A_WinActivateForce => Keysharp.Scripting.Script.WinActivateForce;
+		public static object A_WinActivateForce => Script.WinActivateForce;
 
 		/// <summary>
 		/// The current delay set by <code>SetWinDelay</code>.

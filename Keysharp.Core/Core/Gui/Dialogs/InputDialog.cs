@@ -9,7 +9,7 @@ namespace Keysharp.Core
 		private readonly Button btnCancel;
 		private readonly Button btnOK;
 		private readonly Label prompt;
-		private System.Windows.Forms.Timer timer;
+		private Timer timer;
 		private readonly TextBox txtMessage;
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string Default { get; set; }

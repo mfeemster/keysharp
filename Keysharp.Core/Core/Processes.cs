@@ -4,7 +4,7 @@ namespace Keysharp.Core
 {
 	public static class Processes
 	{
-		public static System.Threading.SynchronizationContext mainContext;
+		public static SynchronizationContext mainContext;
 
 		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
 		internal static uint CurrentThreadID = 0u;
@@ -29,7 +29,7 @@ namespace Keysharp.Core
 				proc.Kill();
 				return proc.Id;
 			}
-			catch (System.ComponentModel.Win32Exception) { }
+			catch (Win32Exception) { }
 
 			return 0L;
 		}
@@ -88,7 +88,7 @@ namespace Keysharp.Core
 			var name = obj0.As();
 			var timeout = obj1.Ad(-1.0);
 			var t = timeout;
-			System.Diagnostics.Process proc;
+			Process proc;
 
 			if (t >= 0)
 				t = timeout * 1000;

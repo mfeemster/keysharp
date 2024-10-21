@@ -1,4 +1,4 @@
-﻿using static Keysharp.Core.Function;
+﻿using static Keysharp.Core.Functions;
 
 namespace Keysharp.Benchmark
 {
@@ -7,7 +7,7 @@ namespace Keysharp.Benchmark
 	{
 		private readonly Dictionary<object, object> dkt = new Dictionary<object, object>();
 		private IFuncObj fo = Func("Cos");
-		private readonly Map map = Keysharp.Core.Misc.Map(), mapScript = Keysharp.Core.Misc.Map();
+		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
 		private List<object> objvals = new List<object>();
 		private double totalCos;
 		private List<double> vals = new List<double>();
@@ -92,7 +92,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
+			Scripting.Script.Variables.InitGlobalVars();
 			totalCos = 0;
 			vals = new List<double>(Size);
 			objvals = new List<object>(Size);

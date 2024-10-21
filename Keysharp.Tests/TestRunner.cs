@@ -70,14 +70,14 @@ namespace Keysharp.Tests
 
 		protected string RunScript(string source, string name, bool execute, bool exeout)
 		{
-			Keysharp.Scripting.Script.OutputDebug(Environment.CurrentDirectory);
+			Script.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
 			var (domunits, domerrs) = ch.CreateDomFromFile(source);
 
 			if (domerrs.HasErrors)
 			{
 				foreach (CompilerError err in domerrs)
-					Keysharp.Scripting.Script.OutputDebug(err.ErrorText);
+					Script.OutputDebug(err.ErrorText);
 
 				return string.Empty;
 			}
@@ -86,7 +86,7 @@ namespace Keysharp.Tests
 
 			if (exc is Exception e)
 			{
-				Keysharp.Scripting.Script.OutputDebug(e.Message);
+				Script.OutputDebug(e.Message);
 				return string.Empty;
 			}
 
@@ -102,7 +102,7 @@ namespace Keysharp.Tests
 
 			if (compileexc != null)
 			{
-				Keysharp.Scripting.Script.OutputDebug(compileexc.Message);
+				Script.OutputDebug(compileexc.Message);
 				return string.Empty;
 			}
 			else if (results == null)
@@ -163,7 +163,7 @@ namespace Keysharp.Tests
 						_ = error.AppendLine();
 						_ = error.AppendLine(ex.StackTrace);
 						var msg = error.ToString();
-						Keysharp.Scripting.Script.OutputDebug(msg);
+						Script.OutputDebug(msg);
 						Console.Write("fail");
 						Assert.IsTrue(false);
 					}

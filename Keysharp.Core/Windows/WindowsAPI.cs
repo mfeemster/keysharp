@@ -42,7 +42,7 @@ namespace Keysharp.Core.Windows
 		internal uint code;
 	}
 
-	[StructLayoutAttribute(LayoutKind.Sequential)]
+	[StructLayout(LayoutKind.Sequential)]
 	internal struct LVITEM
 	{
 		internal uint mask;
@@ -56,7 +56,7 @@ namespace Keysharp.Core.Windows
 		internal IntPtr lParam;
 	}
 
-	[StructLayoutAttribute(LayoutKind.Sequential)]
+	[StructLayout(LayoutKind.Sequential)]
 	internal struct JOYCAPS
 	{
 		internal ushort wMid;
@@ -86,7 +86,7 @@ namespace Keysharp.Core.Windows
 		private readonly string szOEMVxD; /* OEM VxD in use */
 	}
 
-	[Serializable, StructLayoutAttribute(LayoutKind.Sequential)]
+	[Serializable, StructLayout(LayoutKind.Sequential)]
 	internal struct JOYINFOEX
 	{
 		internal static JOYINFOEX Default
@@ -225,7 +225,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Gotten from https://stackoverflow.com/questions/12777395/using-column-imagekey-in-a-listview-to-simulate-windows-explorer-style-sorting
 	/// </summary>
-	[StructLayoutAttribute(LayoutKind.Sequential)]
+	[StructLayout(LayoutKind.Sequential)]
 	internal struct LV_COLUMN
 	{
 		internal uint mask;
@@ -1142,9 +1142,9 @@ namespace Keysharp.Core.Windows
 							  oleacc = "oleacc.dll",
 							  oleaut = "oleaut32.dll";
 
-		internal static System.Drawing.Point ToPoint(this Keysharp.Core.Windows.RECT rect) => new System.Drawing.Point(rect.Left, rect.Top);
+		internal static Point ToPoint(this RECT rect) => new Point(rect.Left, rect.Top);
 
-		internal static Keysharp.Core.Map ToPos(this Keysharp.Core.Windows.RECT rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		internal static Map ToPos(this RECT rect, double scale = 1.0) => new Map(new Dictionary<object, object>()
 		{
 			{ "X", rect.Left * scale },
 			{ "Y", rect.Top * scale },
@@ -1204,7 +1204,7 @@ namespace Keysharp.Core.Windows
 				if ((DateTime.Now - dtStart).TotalMilliseconds > ms)
 					break;
 
-				Keysharp.Core.Flow.Sleep(100);
+				Flow.Sleep(100);
 			}
 
 			return open;
@@ -1312,7 +1312,7 @@ namespace Keysharp.Core.Windows
 			ref long OutBuffer,
 			int nOutBufferSize,
 			ref int pBytesReturned,
-			[In] ref System.Threading.NativeOverlapped lpOverlapped);
+			[In] ref NativeOverlapped lpOverlapped);
 
 		[DllImport(user32)]
 		internal static extern bool DestroyIcon(IntPtr handle);
@@ -2025,7 +2025,7 @@ namespace Keysharp.Core.Windows
 			// MSDN: "If the tab control does not have the TCS_BUTTONS style, changing the focus also changes
 			// the selected tab. In this case, the tab control sends the TCN_SELCHANGING and TCN_SELCHANGE
 			// notification codes to its parent window."
-			if (SendMessageTimeout(hwnd, WindowsAPI.TCM_SETCURFOCUS, (uint)tabIndex, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
+			if (SendMessageTimeout(hwnd, TCM_SETCURFOCUS, (uint)tabIndex, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 				return false;
 
 			// Tab controls with the TCS_BUTTONS style need additional work:

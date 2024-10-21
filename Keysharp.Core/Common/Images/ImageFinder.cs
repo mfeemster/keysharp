@@ -8,15 +8,15 @@
 		private readonly Bitmap sourceImage;
 		private readonly int threads = Environment.ProcessorCount;
 
-		public byte Variation { get; set; }
+		internal byte Variation { get; set; }
 
 		/// <summary>
 		/// Creates a new Image Finder Instance
 		/// </summary>
 		/// <param name="source">Source Image where to search in</param>
-		public ImageFinder(Bitmap source) => sourceImage = source;
+		internal ImageFinder(Bitmap source) => sourceImage = source;
 
-		public Point? Find(Bitmap findImage, long trans = -1)
+		internal Point? Find(Bitmap findImage, long trans = -1)
 		{
 			if (sourceImage == null || findImage == null)
 				throw new InvalidOperationException();
@@ -108,7 +108,7 @@
 			return ret;
 		}
 
-		public Point? Find(Color ColorId, bool ltr, bool ttb)
+		internal Point? Find(Color ColorId, bool ltr, bool ttb)
 		{
 			var findPixel = new PixelMask(ColorId, Variation);
 			var startrow = ttb ? 0 : sourceImage.Size.Height - 1;

@@ -13,7 +13,7 @@ namespace Keysharp.Tests
 			var screen = System.Windows.Forms.Screen.PrimaryScreen;
 			_ = GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp");
 			object x = null, y = null;
-			Keysharp.Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");//This implies this pattern won't be present before 1000,1000.
+			Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");//This implies this pattern won't be present before 1000,1000.
 
 			if (x is long lx && lx == 10 && y is long ly && ly == 10)
 				Assert.IsTrue(true);
@@ -35,7 +35,7 @@ namespace Keysharp.Tests
 			{
 				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
 				{
-					var pix = Keysharp.Core.Screen.PixelGetColor(j, i);
+					var pix = Core.Screen.PixelGetColor(j, i);
 					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.culture, out var ii));
 
 					if (ii != last && ii != white && ii != black)
@@ -63,14 +63,14 @@ namespace Keysharp.Tests
 			{
 				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
 				{
-					var pix = Keysharp.Core.Screen.PixelGetColor(j, i);
+					var pix = Core.Screen.PixelGetColor(j, i);
 					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.culture, out var ii));
 
 					if (ii != last && ii != white && ii != black)
 					{
 						object outX = null;
 						object outY = null;
-						var ret = Keysharp.Core.Screen.PixelSearch(ref outX, ref outY, j, i, j + 1, i + 1, pix);
+						var ret = Core.Screen.PixelSearch(ref outX, ref outY, j, i, j + 1, i + 1, pix);
 
 						if (ret == 1L && (long)outX == j && (long)outY == i)
 							goto pass;

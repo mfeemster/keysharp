@@ -1,10 +1,8 @@
-﻿using static Keysharp.Core.Misc;
-
-namespace Keysharp.Scripting
+﻿namespace Keysharp.Scripting
 {
 	public partial class MainWindow : KeysharpForm
 	{
-		public static Font OurDefaultFont = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+		public static Font OurDefaultFont = new Font("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool success;
 		private AboutBox about;
@@ -18,7 +16,7 @@ namespace Keysharp.Scripting
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool IsClosing { get; private set; }
 
-		internal System.Windows.Forms.ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
+		internal ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
 
 		public MainWindow()
 		{
@@ -98,7 +96,7 @@ namespace Keysharp.Scripting
 			this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
-				SetTextInternal(Keysharp.Scripting.Script.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
+				SetTextInternal(Script.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
 			});
 		}
 
@@ -145,7 +143,7 @@ namespace Keysharp.Scripting
 				break;
 
 				case WindowsAPI.WM_ENDSESSION:
-					_ = Core.Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Core.Flow.ExitReasons.LogOff : Core.Flow.ExitReasons.Shutdown);
+					_ = Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Flow.ExitReasons.LogOff : Flow.ExitReasons.Shutdown);
 					handled = true;
 					break;
 
@@ -153,7 +151,7 @@ namespace Keysharp.Scripting
 					//Sadly, we cannot make this method async, so this will just be fire and forget.
 					var tv = Threads.GetThreadVariables();
 					tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
-					Keysharp.Scripting.Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
+					Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
 					handled = true;
 					break;
 			}
@@ -181,9 +179,9 @@ namespace Keysharp.Scripting
 
 		private void clearDebugLogToolStripMenuItem_Click(object sender, EventArgs e) => txtDebug.Text = "";
 
-		private void editScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Script.Edit();
+		private void editScriptToolStripMenuItem_Click(object sender, EventArgs e) => Script.Edit();
 
-		private void exitToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.ExitAppInternal(Core.Flow.ExitReasons.Exit);
+		private void exitToolStripMenuItem_Click(object sender, EventArgs e) => Flow.ExitAppInternal(Flow.ExitReasons.Exit);
 
 		private TabPage GetTab(MainFocusedTab tab)
 		{
@@ -206,7 +204,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private System.Windows.Forms.TextBox GetText(MainFocusedTab tab)
+		private TextBox GetText(MainFocusedTab tab)
 		{
 			switch (tab)
 			{
@@ -227,9 +225,9 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, System.EventArgs e) => ListHotkeys();
+		private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, EventArgs e) => ListHotkeys();
 
-		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowHistory();
+		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, EventArgs e) => ShowHistory();
 
 		/// <summary>
 		/// This will get called if the user manually closes the main window,
@@ -248,7 +246,7 @@ namespace Keysharp.Scripting
 
 			IsClosing = true;
 
-			if (Keysharp.Core.Flow.ExitAppInternal(Keysharp.Core.Flow.ExitReasons.Close))
+			if (Flow.ExitAppInternal(Flow.ExitReasons.Close))
 			{
 				IsClosing = false;
 				e.Cancel = true;
@@ -263,7 +261,7 @@ namespace Keysharp.Scripting
 #elif LINUX
 			//gtkClipBoard.OwnerChange -= gtkClipBoard_OwnerChange;
 #endif
-			Keysharp.Core.Gui.DestroyAll();
+			Gui.DestroyAll();
 			about?.Close();
 		}
 
@@ -294,7 +292,7 @@ namespace Keysharp.Scripting
 				lastWindowState = WindowState;
 		}
 
-		private void refreshToolStripMenuItem_Click(object sender, System.EventArgs e)
+		private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (tcMain.SelectedTab == tpVars)
 				ShowInternalVars(true);
@@ -304,9 +302,9 @@ namespace Keysharp.Scripting
 				ShowHistory();
 		}
 
-		private void reloadScriptToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Core.Flow.Reload();
+		private void reloadScriptToolStripMenuItem_Click(object sender, EventArgs e) => Flow.Reload();
 
-		private void SetTextInternal(string text, MainFocusedTab tab, System.Windows.Forms.TextBox txt, bool focus)
+		private void SetTextInternal(string text, MainFocusedTab tab, TextBox txt, bool focus)
 		{
 			var lineHeight = TextRenderer.MeasureText("X", txtVars.Font).Height;
 			var linesPerPage = 1.0 * txtVars.ClientSize.Height / lineHeight;
@@ -327,24 +325,24 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private void suspendHotkeysToolStripMenuItem_Click(object sender, System.EventArgs e) => Keysharp.Scripting.Script.SuspendHotkeys();
+		private void suspendHotkeysToolStripMenuItem_Click(object sender, EventArgs e) => Script.SuspendHotkeys();
 
-		private void TpVars_HandleCreated(object sender, System.EventArgs e)
+		private void TpVars_HandleCreated(object sender, EventArgs e)
 		{
 			if (!callingInternalVars)
 				ShowInternalVars(false);
 		}
 
-		private void userManualToolStripMenuItem_Click(object sender, System.EventArgs e)
+		private void userManualToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			Keysharp.Core.Dialogs.MsgBox("This feature is not implemented");
+			Dialogs.MsgBox("This feature is not implemented");
 		}
 
-		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, System.EventArgs e) => ShowInternalVars(true);
+		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, EventArgs e) => ShowInternalVars(true);
 
-		private void windowSpyToolStripMenuItem_Click(object sender, System.EventArgs e)
+		private void windowSpyToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			var path = System.IO.Path.GetDirectoryName(Accessors.A_KeysharpPath);
+			var path = Path.GetDirectoryName(Accessors.A_KeysharpPath);
 #if WINDOWS
 			var exe = path + "/Keysharp.exe";
 #else
@@ -353,7 +351,7 @@ namespace Keysharp.Scripting
 			var opt = path + "/Scripts/WindowSpy.ks";
 			object pid = 0;
 			//Keysharp.Core.Dialogs.MsgBox(exe + "\r\n" + path + "\r\n" + opt);
-			_ = Core.Processes.Run("\"" + exe + "\"", path, "", ref pid, "\"" + opt + "\"");
+			_ = Processes.Run("\"" + exe + "\"", path, "", ref pid, "\"" + opt + "\"");
 		}
 
 		public enum MainFocusedTab

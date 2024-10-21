@@ -32,7 +32,7 @@ namespace Keysharp.Core
 			}
 
 			var iv = new byte[alg.IV.Length];
-			var hash = System.Security.Cryptography.SHA1.Create().ComputeHash(keyBytes, 0, iv.Length);
+			var hash = SHA1.Create().ComputeHash(keyBytes, 0, iv.Length);
 
 			for (var i = 0; i < Math.Min(iv.Length, hash.Length); i++)
 				iv[i] = hash[i];
@@ -63,18 +63,6 @@ namespace Keysharp.Core
 				return [];
 
 			throw new TypeError("Cannot serialize an object that was not either a string or byte[].");
-			/*
-			    var formatter = new BinaryFormatter();
-
-			    var writer = new MemoryStream();
-
-			    //For some reason this is obsolete, but no replacement has been provided, so we still use it.
-			    #pragma warning disable SYSLIB0011
-			    formatter.Serialize(writer, value);
-
-			    #pragma warning restore SYSLIB0001
-			    return writer.ToArray();
-			*/
 		}
 	}
 }

@@ -180,7 +180,7 @@ namespace Keysharp.Core.Common.Input
 
 		internal string GetEndReason(ref string keyBuf)
 		{
-			if (Script.HookThread is Keysharp.Core.Common.Threading.HookThread hook && hook.kbdMsSender != null)
+			if (Script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
 				switch (Status)
 				{
@@ -643,7 +643,7 @@ namespace Keysharp.Core.Common.Input
 
 		private void EndByReason(InputStatusType aReason)
 		{
-			if (Script.HookThread is Keysharp.Core.Common.Threading.HookThread hook && hook.kbdMsSender != null)
+			if (Script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
 				EndingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
 				Status = aReason;

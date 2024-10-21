@@ -318,7 +318,7 @@ namespace Keysharp.Scripting
 												if (variadic)
 												{
 													pdecl.Type = new CodeTypeReference(typeof(object[]));
-													_ = pdecl.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+													_ = pdecl.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(ParamArrayAttribute))));
 												}
 
 												_ = prop.Parameters.Add(pdecl);

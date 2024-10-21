@@ -5,11 +5,8 @@ namespace Keysharp.Scripting
 {
 	internal class PreReader
 	{
-		private static int hotifcount;
 		private static readonly char[] libBrackets = ['<', '>'];
 		private static readonly string multiLineComments = new string(new[] { MultiComB, MultiComA });
-		private readonly List<string> includes = new List<string>();
-		private string includePath = "./";
 		private static readonly FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowCatch,
@@ -26,9 +23,9 @@ namespace Keysharp.Scripting
 			FlowUntil,//Could until { one : 1 } == x ever be done?
 			FlowWhile//Same: while { one : 1 } == x
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
-
-		private readonly Parser parser;
+		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
+		private static int hotifcount;
+		private readonly Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
 		private readonly HashSet<string> defines = new HashSet<string>()
 		{
 			"KEYSHARP",
@@ -38,11 +35,14 @@ namespace Keysharp.Scripting
 			"LINUX",
 #endif
 		};
-		private readonly Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
+		private readonly List<string> includes = new List<string>();
+		private readonly Parser parser;
+		private string includePath = "./";
 		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = new List<(string, bool)>();
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Force;
+
 		internal PreReader(Parser p) => parser = p;
 
 		internal List<CodeLine> Read(TextReader source, string name)
@@ -91,11 +91,11 @@ namespace Keysharp.Scripting
 				{ "%A_UserName%", Accessors.A_UserName },
 				{ "%A_WinDir%", Accessors.A_WinDir },
 			};
-			includePath = name = System.IO.File.Exists(name) ? Path.GetFullPath(name) : "./";
+			includePath = name = File.Exists(name) ? Path.GetFullPath(name) : "./";
 
 			if (Env.FindCommandLineArgVal("include") is string cmdinc)
 			{
-				if (System.IO.File.Exists(cmdinc))
+				if (File.Exists(cmdinc))
 				{
 					if (!includes.Contains(cmdinc))
 					{
@@ -130,7 +130,7 @@ namespace Keysharp.Scripting
 					continue;
 
 				var commentIgnore = false;
-				var noCommentCode = Parser.StripComment(code);
+				var noCommentCode = StripComment(code);
 				var span = noCommentCode.AsSpan().Trim(Spaces);
 
 				if (span.Length == 0)
@@ -203,7 +203,7 @@ namespace Keysharp.Scripting
 
 								var sub = noCommentCode.Split(SpaceMultiDelim, 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 								var parts = new[] { sub[0], sub.Length > 1 ? sub[1] : string.Empty };
-								var p1 = Parser.StripComment(parts[1]).Trim(Spaces);
+								var p1 = StripComment(parts[1]).Trim(Spaces);
 								var numeric = int.TryParse(p1, out var value);
 								var includeOnce = false;
 								var upper = parts[0].Substring(1).ToUpperInvariant();
@@ -363,7 +363,7 @@ namespace Keysharp.Scripting
 
 											foreach (var dir in paths)
 											{
-												if (System.IO.File.Exists(dir))
+												if (File.Exists(dir))
 												{
 													found = true;
 
@@ -397,7 +397,7 @@ namespace Keysharp.Scripting
 											{
 												includePath = path;
 											}
-											else if (System.IO.File.Exists(path))
+											else if (File.Exists(path))
 											{
 												if (includeOnce && includes.Contains(path))
 													break;
@@ -621,7 +621,7 @@ namespace Keysharp.Scripting
 									}
 
 									var str = buf.ToString();
-									var result = Parser.MultilineString(str, lineNumber, name);
+									var result = MultilineString(str, lineNumber, name);
 									var lastlistitem = list[list.Count - 1];
 
 									if (lastlistitem.Code.EndsWith('\''))
@@ -736,7 +736,7 @@ namespace Keysharp.Scripting
 						//if x =
 						//...
 						if (!lastNested
-								&& Parser.flowOperatorsAlt.Contains(prevStartSubSpan)
+								&& flowOperatorsAlt.Contains(prevStartSubSpan)
 								&& prevLine.Code.EndsWith('='))
 						{
 							StartNewLine(newLineStr);
@@ -760,8 +760,8 @@ namespace Keysharp.Scripting
 								//Flow, don't join.
 								//x :=
 								//if (...)
-								if (Parser.flowOperatorsAlt.Contains(newStartSubSpan)
-										|| Parser.propKeywordsAlt.Contains(newStartSubSpan)
+								if (flowOperatorsAlt.Contains(newStartSubSpan)
+										|| propKeywordsAlt.Contains(newStartSubSpan)
 										|| MemoryExtensions.Equals(newStartSubSpan, "static", StringComparison.OrdinalIgnoreCase)//Don't join assignments of static class or function variables with any others.
 										|| MemoryExtensions.Equals(prevStartSubSpan, "static", StringComparison.OrdinalIgnoreCase)
 								   )
@@ -784,13 +784,13 @@ namespace Keysharp.Scripting
 							//x := 1//Previous line.
 							//+ 2//New line.
 
-							if (newStartSubSpan.StartsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
+							if (newStartSubSpan.StartsWithAnyOf(nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
 									&& !prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
 									&& !newIsHotkey//Ensure same for new.
 									&& !prevIsDirective//Ensure previous line wasn't a directive.
-									&& ((wasVerbal = Parser.exprVerbalOperatorsAlt.Contains(newStartSubSpan))
-										|| Parser.contExprOperatorsAlt.Contains(newStartSubSpan)
-										|| newStartSubSpan.StartsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
+									&& ((wasVerbal = exprVerbalOperatorsAlt.Contains(newStartSubSpan))
+										|| contExprOperatorsAlt.Contains(newStartSubSpan)
+										|| newStartSubSpan.StartsWithAnyOf(contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
 							   )//Verbal operators must match the token, others can just be the start of the string.
 							{
 								//Do a special check here to ensure it wasn't a decimal number split into two lines like:
@@ -807,10 +807,10 @@ namespace Keysharp.Scripting
 								if (!prevIsHotkey//Ensure previous line wasn't a hotkey because they start with characters that would be mistaken for operators, such as ! and ^.
 										&& !newIsHotkey//Ensure same for new.
 										&& !prevIsDirective//Ensure previous line wasn't a directive.
-										&& prevEndSubSpan.EndsWithAnyOf(Parser.nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
-										&& ((wasVerbal = Parser.exprVerbalOperatorsAlt.Contains(prevEndSubSpan))
-											|| Parser.contExprOperatorsAlt.Contains(prevEndSubSpan)
-											|| prevEndSubSpan.EndsWithAnyOf(Parser.contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
+										&& prevEndSubSpan.EndsWithAnyOf(nonContExprOperatorsList) == -1//Ensure we don't count ++ and -- as continuation operators.
+										&& ((wasVerbal = exprVerbalOperatorsAlt.Contains(prevEndSubSpan))
+											|| contExprOperatorsAlt.Contains(prevEndSubSpan)
+											|| prevEndSubSpan.EndsWithAnyOf(contExprOperatorsList) != -1)//Put AnyOf test last because it's the most expensive.
 								   )
 								{
 									if (prevEndSubSpan.EndsWith(':') && !lastNested && !prevLineSpan.Contains('?'))//Special check to differentiate labels, and also make sure it wasn't part of a ternary operator.
@@ -827,8 +827,8 @@ namespace Keysharp.Scripting
 								}
 								else
 								{
-									var isPropLine = Parser.propKeywordsAlt.Contains(newStartSubSpan);
-									var wasPropLine = Parser.propKeywordsAlt.Contains(prevStartSubSpan);
+									var isPropLine = propKeywordsAlt.Contains(newStartSubSpan);
+									var wasPropLine = propKeywordsAlt.Contains(prevStartSubSpan);
 									var wasFuncDef = prevLine.Code.FindFirstNotInQuotes("(") != -1 && prevLine.Code.FindFirstNotInQuotes(")") != -1;
 
 									if (prevParenlevels == 0 && prevBracelevels == 1 && prevBracketlevels == 0)
@@ -989,7 +989,7 @@ namespace Keysharp.Scripting
 				foreach (var codeLine in list)
 				{
 					var s = codeLine.Code;
-					Parser.Translate(codeLine, ref s);
+					Translate(codeLine, ref s);
 
 					if (s == null)
 						throw new ParseException($"Could not translate line {s}", codeLine);
@@ -1053,7 +1053,7 @@ namespace Keysharp.Scripting
 			{
 				var ch = code[i];
 
-				if (Parser.IsSpace(ch))
+				if (IsSpace(ch))
 					continue;
 
 				if (ch == '\'')

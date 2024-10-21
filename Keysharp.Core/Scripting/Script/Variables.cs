@@ -6,9 +6,9 @@ namespace Keysharp.Scripting
 		{
 			internal static List<(string, bool)> preloadedDlls = new List<(string, bool)>();
 			internal static DateTime startTime = DateTime.Now;
-			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
 			private static readonly Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
 #if LINUX
+			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
 			private static Encoding enc1252 = Encoding.Default;
 #endif
 			public bool AutoMark { get; set; }
@@ -22,14 +22,14 @@ namespace Keysharp.Scripting
 
 			public static void InitGlobalVars()
 			{
-				Keysharp.Core.Window.SetProcessDPIAware();
-				Keysharp.Core.Flow.Init();
+				Window.SetProcessDPIAware();
+				Flow.Init();
 #if LINUX
 				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
 				enc1252 = Encoding.GetEncoding(1252);
 #endif
-				Keysharp.Core.Processes.MainThreadID = mgr.CurrentThreadId();
-				Keysharp.Core.Processes.ManagedMainThreadID = System.Threading.Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
+				Processes.MainThreadID = mgr.CurrentThreadId();
+				Processes.ManagedMainThreadID = Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 				_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 				var stack = new StackTrace(false).GetFrames();
 				//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
@@ -103,7 +103,7 @@ namespace Keysharp.Scripting
 
 				Reflections.Initialize();//For some reason, the program will crash if these are delay initialized, so do them now.
 				SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
-				Application.AddMessageFilter(new Keysharp.Core.MessageFilter());
+				Application.AddMessageFilter(new MessageFilter());
 			}
 
 			public object GetVariable(string key)

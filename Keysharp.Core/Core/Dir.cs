@@ -71,7 +71,7 @@
 			try//This can throw if the directory doesn't exist.
 			{
 				foreach (var file in Drive.Glob(obj.As()))
-					return Conversions.FromFileAttribs(System.IO.File.GetAttributes(file));
+					return Conversions.FromFileAttribs(File.GetAttributes(file));
 			}
 			catch
 			{
@@ -101,7 +101,7 @@
 			var movein = false;
 
 			//If dest exists as a file, never copy.
-			if (System.IO.File.Exists(dest))
+			if (File.Exists(dest))
 				throw new Exception($"Cannot move {source} to {dest} because destination is a file.");
 
 			switch (flag.ToUpperInvariant())
@@ -308,7 +308,7 @@
 			{
 				var basename = Path.GetFileName(filepath);
 				var destfile = Path.Combine(destination, basename);
-				System.IO.File.Copy(filepath, destfile, overwrite);
+				File.Copy(filepath, destfile, overwrite);
 			}
 
 			foreach (var dirpath in Directory.GetDirectories(source))

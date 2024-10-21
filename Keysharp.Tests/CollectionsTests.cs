@@ -72,7 +72,7 @@ namespace Keysharp.Tests
 		[Test, Category("Collections")]
 		public void AssociativeArray()
 		{
-			var arr = Keysharp.Core.Misc.Dictionary(
+			var arr = Collections.Dictionary(
 						  [
 							  "one",
 							  "two",

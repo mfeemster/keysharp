@@ -405,10 +405,10 @@
 		}
 	}
 
-	public class MapKeyValueIterator : IEnumerator<(object, object)>
+	internal class MapKeyValueIterator : IEnumerator<(object, object)>
 	{
-		private IEnumerator<KeyValuePair<object, object>> iter;
 		private readonly Dictionary<object, object> map;
+		private IEnumerator<KeyValuePair<object, object>> iter;
 
 		public (object, object) Current
 		{

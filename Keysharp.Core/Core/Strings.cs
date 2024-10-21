@@ -76,7 +76,7 @@ namespace Keysharp.Core
 				{
 					if (!haslsys && splits[i].StartsWith("L"))
 					{
-						ci = new System.Globalization.CultureInfo(splits[i].Substring(1).ParseInt(false).Value, false);
+						ci = new CultureInfo(splits[i].Substring(1).ParseInt(false).Value, false);
 					}
 					else if (splits[i].StartsWith("D"))
 					{
@@ -477,7 +477,7 @@ namespace Keysharp.Core
 			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
 
 			if (obj2 != null)
-				function = Function.GetFuncObj(obj2, null, true);//If supplied, throw if bad.
+				function = Functions.GetFuncObj(obj2, null, true);//If supplied, throw if bad.
 
 			if (!string.IsNullOrEmpty(dopt))
 			{
@@ -533,7 +533,7 @@ namespace Keysharp.Core
 			var unique = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("u", StringComparison.OrdinalIgnoreCase)) ?? "");
 			var slashopt = splits.FirstOrDefault(s => s.Equals("\\", StringComparison.OrdinalIgnoreCase) || s.Equals("/", StringComparison.OrdinalIgnoreCase)) ?? "";
 			var slash = false;
-			var slashtype = System.IO.Path.DirectorySeparatorChar;
+			var slashtype = Path.DirectorySeparatorChar;
 
 			if (!string.IsNullOrEmpty(slashopt))
 			{
@@ -757,6 +757,8 @@ namespace Keysharp.Core
 
 		public static string String(object obj) => obj.As();
 
+		public static StringBuffer StringBuffer(object obj0, object obj1 = null) => new StringBuffer(obj0.As(), obj1.Ai(256));
+
 		/// <summary>
 		/// Returns the length of a string.
 		/// </summary>
@@ -860,7 +862,7 @@ namespace Keysharp.Core
 			var comp = obj3.As("Off");
 			var limit = obj4.Al(-1);
 
-			if (Strings.IsAnyBlank(input, search))
+			if (IsAnyBlank(input, search))
 			{
 				outputVarCount = 0L;
 				return "";
@@ -1171,7 +1173,7 @@ namespace Keysharp.Core
 
 		public static string Trim(object obj0, object obj1 = null) => obj0.As().Trim(obj1.As(" \t").ToCharArray());
 
-		public static long VarSetStrCapacity(params object[] obj) => throw new Keysharp.Core.Error("VarSetStrCapacity() not supported or necessary.");
+		public static long VarSetStrCapacity(params object[] obj) => throw new Error("VarSetStrCapacity() not supported or necessary.");
 
 		public static long VerCompare(object obj0, object obj1)
 		{
@@ -1217,184 +1219,6 @@ namespace Keysharp.Core
 		internal class RegexEntry : KeyedCollection<string, RegexWithTag>
 		{
 			protected override string GetKeyForItem(RegexWithTag item) => item.tag;
-		}
-	}
-
-	public class RegExResults : KeysharpObject, IEnumerable
-	{
-		private Match match;
-
-		public long Count => match.Groups.Count - 1;
-		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
-		public bool Success => match.Success;
-
-		public RegExResults(params object[] obj) => _ = __New(obj);
-
-		public static implicit operator long(RegExResults r) => r.Pos();
-
-		public override object __New(params object[] obj)
-		{
-			match = obj[0] as Match;
-			return "";
-		}
-
-		public IEnumerator GetEnumerator() => match.Groups.GetEnumerator();
-
-		public long Len(object obj)
-		{
-			var g = GetGroup(obj);
-			return g != null && g.Success ? g.Length : 0;
-		}
-
-		public string Name(object obj)
-		{
-			var g = GetGroup(obj);
-			return g != null && g.Success ? g.Name : "";
-		}
-
-		public long Pos(object obj = null)
-		{
-			var g = GetGroup(obj);
-			return g != null && g.Success ? g.Index + 1 : 0;
-		}
-
-		public override string ToString() => Pos().ToString();
-
-		private Group GetGroup(object obj)
-		{
-			var o = obj;
-
-			if (o == null)
-				return match;
-			else if (o is string s)
-				return match.Groups[s];
-			else
-			{
-				var index = Convert.ToInt32(o);
-
-				if (index == 0)
-					return match;
-				else if (index > 0 && index <= match.Groups.Count)
-					return match.Groups[index];
-			}
-
-			return null;
-		}
-
-		public string this[object obj]
-		{
-			get
-			{
-				var g = GetGroup(obj);
-				return g != null && g.Success ? g.Value : "";
-			}
-		}
-	}
-
-	/// <summary>
-	/// Human readable sorting from https://www.codeproject.com/Articles/22175/Sorting-Strings-for-Humans-with-IComparer
-	/// and slightly modified.
-	/// </summary>
-	internal partial class NaturalComparer : IComparer, IComparer<string>
-	{
-		private static readonly Regex regex;
-
-		static NaturalComparer() => regex = NaturalRegex();
-
-		public int Compare(string left, string right) => NaturalCompare(left, right);
-
-		public int Compare(object left, object right)
-		{
-			if (!(left is string s1))
-				throw new System.ArgumentException("Parameter type is not string", "left");
-
-			if (!(right is string s2))
-				throw new System.ArgumentException("Parameter type is not string", "right");
-
-			return Compare(s1, s2);
-		}
-
-		internal static int NaturalCompare(string left, string right)
-		{
-			// optimization: if left and right are the same object, then they compare as the same
-			if (left == right)
-			{
-				return 0;
-			}
-
-			var leftmatches = regex.Matches(left);
-			var rightmatches = regex.Matches(right);
-			var enrm = rightmatches.GetEnumerator();
-
-			foreach (Match lm in leftmatches)
-			{
-				if (!enrm.MoveNext())
-				{
-					// the right-hand string ran out first, so is considered "less-than" the left
-					return 1;
-				}
-
-				var rm = enrm.Current as Match;
-				var tokenresult = CompareTokens(lm.Captures[0].Value, rm.Captures[0].Value);
-
-				if (tokenresult != 0)
-				{
-					return tokenresult;
-				}
-			}
-
-			// the lefthand matches are exhausted;
-			// if there is more, then left was shorter, ie, lessthan
-			// if there's no more left in the righthand, then they were all equal
-			return enrm.MoveNext() ? -1 : 0;
-		}
-
-		private static int CompareTokens(string left, string right)
-		{
-			var leftisnum = double.TryParse(left, out var leftval);
-			var rightisnum = double.TryParse(right, out var rightval);
-
-			if (leftisnum)// numbers always sort in front of text
-			{
-				if (!rightisnum)
-					return -1;
-
-				if (leftval < rightval)// they're both numeric
-					return -1;
-
-				if (rightval < leftval)
-					return 1;
-
-				// if values are same, this might be due to leading 0s.
-				// Assuming this, the longest string would indicate more leading 0s
-				// which should be considered to have lower value
-				return Math.Sign(right.Length - left.Length);
-			}
-
-			// if the right's numeric but left isn't, then the right one must sort first
-			if (rightisnum)
-				return 1;
-
-			// otherwise do a straight text comparison
-			return string.Compare(left, right, StringComparison.CurrentCulture);//Spec says to use "locale" with "logical" sorting.
-		}
-
-		[GeneratedRegex(@"[\W\.]*([\w-[\d]]+|[\d]+)", RegexOptions.Compiled)]
-		private static partial Regex NaturalRegex();
-	}
-
-	internal class RegexWithTag : Regex
-	{
-		internal string tag;
-
-		internal RegexWithTag(string s)
-			: base(s)
-		{
-		}
-
-		internal RegexWithTag(string s, RegexOptions options)
-			: base(s, options)
-		{
 		}
 	}
 }

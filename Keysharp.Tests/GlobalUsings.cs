@@ -16,6 +16,7 @@ global using global::System.Windows.Forms;
 //Our usings.
 global using global::NUnit.Framework;
 global using global::Keysharp.Core;
+global using global::Keysharp.Core.Common;
 global using global::Keysharp.Core.Common.Keyboard;
 
 #if WINDOWS

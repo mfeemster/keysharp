@@ -50,7 +50,7 @@
 			}
 			else if (item is KeysharpObject kso && kso.op != null)
 			{
-				if (kso.op.TryGetValue(key, out var val) && val is OwnpropsMap map)
+				if (kso.op.TryGetValue(key, out var val) && val is OwnPropsMap map)
 				{
 					//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
 					if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifo1)//Call must come first.
@@ -131,7 +131,7 @@
 
 			if (item is KeysharpObject kso && kso.op != null)
 			{
-				if (kso.op.TryGetValue(namestr, out var val) && val is OwnpropsMap map)
+				if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap map)
 				{
 					if (map.map.TryGetValue("value", out var valval))
 						return valval;
@@ -243,20 +243,20 @@
 					//  ret = ifo2.Call(arr);
 					//  System.Array.Copy(arr, 1, parameters, 0, parameters.Length);//In case any params were references.
 					//}
-					if (mitup.Item1 is Keysharp.Core.Map)//Either Map or OwnpropsMap.
+					if (mitup.Item1 is Map)//Either Map or OwnpropsMap.
 					{
 						var lenIsZero = parameters.Length == 0;
 
 						if (lenIsZero)
 						{
 							var arr = new object[2];
-							arr[0] = mitup.Item1 is OwnpropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
 							ret = ifo2.Call(arr);
 						}
 						else
 						{
 							var arr = new object[parameters.Length + 1];
-							arr[0] = mitup.Item1 is OwnpropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
 							System.Array.Copy(parameters, 0, arr, 1, parameters.Length);
 							ret = ifo2.Call(arr);
 							System.Array.Copy(arr, 1, parameters, 0, parameters.Length);//In case any params were references.
@@ -306,14 +306,14 @@
 				}
 				else if (mitup.Item2 is IFuncObj ifo2)
 				{
-					if (mitup.Item1 is Keysharp.Core.Map)//Either Map or OwnpropsMap.
+					if (mitup.Item1 is Map)//Either Map or OwnpropsMap.
 					{
 						var lenIsZero = parameters.Length == 0;
 
 						if (lenIsZero)
 						{
 							var arr = new object[2];
-							arr[0] = mitup.Item1 is OwnpropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
 							ret = ifo2.Call(arr);
 						}
 						else
@@ -322,7 +322,7 @@
 								refs[i].index++;//Need to move the indices forward by one because of the additional parameter we'll add to the front below.
 
 							var arr = new object[parameters.Length + 1];
-							arr[0] = mitup.Item1 is OwnpropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
 							System.Array.Copy(parameters, 0, arr, 1, parameters.Length);
 							ret = ifo2.Call(arr);
 							parameters = arr;//For the reassign loop below, so the indices line up.
@@ -368,7 +368,7 @@
 
 			if ((kso = item as KeysharpObject) != null && kso.op != null)
 			{
-				if (kso.op.TryGetValue(namestr, out var val) && val is OwnpropsMap opm)
+				if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap opm)
 				{
 					if (opm.map.ContainsKey("value"))
 					{
@@ -414,14 +414,14 @@
 			}
 			else if (Marshal.IsComObject(item))
 			{
-				_ = item.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, [value]);
+				_ = item.GetType().InvokeMember(namestr, BindingFlags.SetProperty, null, item, [value]);
 				return value;
 			}
 
 #endif
 			else if (kso != null)//No property was present, so create one and assign the value to it.
 			{
-				_ = kso.DefineProp(namestr, Misc.Map("value", value));
+				_ = kso.DefineProp(namestr, Collections.Map("value", value));
 				return value;
 			}
 

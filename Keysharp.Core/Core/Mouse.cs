@@ -156,7 +156,7 @@ namespace Keysharp.Core
 			//and also better matches the control that Window Spy would think is under the cursor:
 			if ((mode & 0x01) == 0)
 			{
-				var pah = new Keysharp.Core.Common.Window.PointAndHwnd(pos);//Find topmost control containing point.
+				var pah = new PointAndHwnd(pos);//Find topmost control containing point.
 				parent.ChildFindPoint(pah);
 
 				if (pah.hwndFound != IntPtr.Zero)

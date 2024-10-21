@@ -193,7 +193,7 @@ namespace Keysharp.Core.Windows
 			var posoverride = options.Contains("pos", StringComparison.OrdinalIgnoreCase);
 			bool d = false, u = false, na = false;
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in options.AsSpan().SplitAny(Spaces))
 			{
 				var opt = options.AsSpan(r).Trim();
 
@@ -218,7 +218,7 @@ namespace Keysharp.Core.Windows
 
 			if (ctrlorpos is string s && s.StartsWith("x", StringComparison.OrdinalIgnoreCase) && s.Contains(' ') && s.Contains('y', StringComparison.OrdinalIgnoreCase))
 			{
-				foreach (Range r in s.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in s.AsSpan().SplitAny(Spaces))
 				{
 					var opt = s.AsSpan(r).Trim();
 
@@ -860,13 +860,13 @@ namespace Keysharp.Core.Windows
 				var countcol = false;
 				var col = int.MinValue;
 
-				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in options.AsSpan().SplitAny(Spaces))
 				{
 					var opt = options.AsSpan(r).Trim();
 
 					if (opt.Length > 0)
 					{
-						if      (opt.Equals("focused", StringComparison.OrdinalIgnoreCase)) { focused = true; }
+						if (opt.Equals("focused", StringComparison.OrdinalIgnoreCase)) { focused = true; }
 						else if (opt.Equals("count", StringComparison.OrdinalIgnoreCase)) { count = true; }
 						else if (opt.Equals("selected", StringComparison.OrdinalIgnoreCase)) { sel = true; }
 						else if (opt.Equals("col", StringComparison.OrdinalIgnoreCase)) { countcol = true; }
@@ -1193,7 +1193,7 @@ namespace Keysharp.Core.Windows
 		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout)
 		{
 			long ret;
-			var wbuf = Reflections.SafeGetProperty<Keysharp.Core.Buffer>(wparam, "Ptr");
+			var wbuf = Reflections.SafeGetProperty<Buffer>(wparam, "Ptr");
 			var wptr = wbuf != null ? wbuf.Ptr : wparam != null ? new IntPtr(wparam.ParseLong().Value) : IntPtr.Zero;
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
@@ -1225,7 +1225,7 @@ namespace Keysharp.Core.Windows
 			}
 			else
 			{
-				var lbuf = Reflections.SafeGetProperty<Keysharp.Core.Buffer>(lparam, "Ptr");
+				var lbuf = Reflections.SafeGetProperty<Buffer>(lparam, "Ptr");
 				var lptr = lbuf != null ? lbuf.Ptr : new IntPtr(lparam.ParseLong().Value);
 
 				if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, lptr, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)

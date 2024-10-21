@@ -1,6 +1,4 @@
-﻿using MethodInvoker = System.Windows.Forms.MethodInvoker;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static class GuiHelper
 	{
@@ -18,20 +16,7 @@ namespace Keysharp.Core
 			set => Threads.GetThreadVariables().dialogOwner = value;
 		}
 
-		public static Icon GetIcon(string source, int n)
-		{
-#if WINDOWS
-			var prc = System.Diagnostics.Process.GetCurrentProcess().Handle;
-			var icon = WindowsAPI.ExtractIcon(prc, source, n);
-
-			if (icon != IntPtr.Zero)
-				return Icon.FromHandle(icon);
-
-			return Icon.ExtractAssociatedIcon(source);
-#else
-			return null;
-#endif
-		}
+		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new (obj0, obj1, obj2);
 
 		public static object GuiCtrlFromHwnd(object obj)
 		{
@@ -47,7 +32,7 @@ namespace Keysharp.Core
 			var hwnd = obj0.Al();
 			var recurse = obj1.Ab();
 
-			if (Gui.allGuiHwnds.TryGetValue(hwnd, out var gui))
+			if (Core.Gui.allGuiHwnds.TryGetValue(hwnd, out var gui))
 				return gui;
 
 			if (recurse)
@@ -56,7 +41,7 @@ namespace Keysharp.Core
 				{
 					while (c.Parent is Control cp)
 					{
-						if (Gui.allGuiHwnds.TryGetValue(cp.Handle.ToInt64(), out gui))
+						if (Core.Gui.allGuiHwnds.TryGetValue(cp.Handle.ToInt64(), out gui))
 							return gui;
 
 						c = cp;
@@ -67,35 +52,9 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		internal static void AddOrInsertListViewItem(ListView lv, GuiHelper.ListViewOptions lvo, List<string> strs, int insert)
-		{
-			var item = new ListViewItem();
+		public static Menu Menu() => new ();
 
-			while (item.SubItems.Count < lv.Columns.Count)
-				_ = item.SubItems.Add("");
-
-			for (int i = 0, j = lvo.colstart; i < strs.Count && j < item.SubItems.Count; i++, j++)
-				item.SubItems[j].Text = strs[i];
-
-			_ = insert >= 0 ? lv.Items.Insert(Math.Min(insert, lv.Items.Count), item) : lv.Items.Add(item);
-			ApplyListViewOptions(lv, item, lvo);
-
-			if (lv.Items.Count == 1)//Resize on the first item, don't do it for subsequent items because it takes too long. It will be done again when setting opts to +Redraw.
-				lv.SetListViewColumnSizes();
-		}
-
-		internal static void ApplyListViewOptions(ListView lv, ListViewItem item, ListViewOptions lvo)
-		{
-			item.Focused = lvo.focused;
-			item.Selected = lvo.select;
-			item.Checked = lvo.ischecked;
-
-			if (lvo.vis)
-				item.EnsureVisible();
-
-			if (lvo.icon >= 0 && lv.SmallImageList != null && lvo.icon < lv.SmallImageList.Images.Count)
-				item.ImageIndex = lvo.icon;
-		}
+		public static MenuBar MenuBar() => new ();
 
 		internal static bool CallMessageHandler(Control control, ref Message m)
 		{
@@ -111,6 +70,21 @@ namespace Keysharp.Core
 			}
 
 			return false;
+		}
+
+		internal static Icon GetIcon(string source, int n)
+		{
+#if WINDOWS
+			var prc = Process.GetCurrentProcess().Handle;
+			var icon = WindowsAPI.ExtractIcon(prc, source, n);
+
+			if (icon != IntPtr.Zero)
+				return Icon.FromHandle(icon);
+
+			return Icon.ExtractAssociatedIcon(source);
+#else
+			return null;
+#endif
 		}
 
 		internal static Bitmap GetScreen(Rectangle rect)
@@ -165,97 +139,10 @@ namespace Keysharp.Core
 			return pre.Length == 0 ? id : pre;
 		}
 
-		internal static void ParseAndApplyListViewColumnOptions(ColumnHeader col, string options)
-		{
-			var lvco = ParseListViewColumnOptions(options);
-			var lv = col.ListView as KeysharpListView;
-
-			if (lvco.width.HasValue)
-				col.Width = lvco.width.Value;
-
-			if (lvco.auto.HasValue)
-				lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-
-			if (lvco.autohdr.HasValue)
-				lv.SetListViewColumnSizes();
-
-			if (lvco.icon.HasValue)
-				col.ImageIndex = lvco.icon.Value == 0 ? -1 : lvco.icon.Value;
-
-#if WINDOWS
-
-			if (lvco.iconright.HasValue)
-			{
-				var colflags = new LV_COLUMN();
-				colflags.mask = WindowsAPI.LVCF_FMT;
-				_ = WindowsAPI.SendLVColMessage(lv.Handle, WindowsAPI.LVM_GETCOLUMN, (uint)col.Index, ref colflags);
-				// Set the new format flags
-				colflags.mask = WindowsAPI.LVCF_FMT | WindowsAPI.LVCF_IMAGE;
-
-				if (lvco.iconright.Value)
-					colflags.fmt |= WindowsAPI.LVCFMT_IMAGE | WindowsAPI.LVCFMT_BITMAP_ON_RIGHT;
-				else
-					colflags.fmt |= WindowsAPI.LVCFMT_IMAGE & ~WindowsAPI.LVCFMT_BITMAP_ON_RIGHT;
-
-				_ = WindowsAPI.SendLVColMessage(lv.Handle, WindowsAPI.LVM_SETCOLUMN, (uint)col.Index, ref colflags);
-			}
-
-#endif
-
-			if (lvco.inttype.HasValue)
-			{
-				lv.ListViewItemSorter = lvco.inttype.Value ? new ListViewIntegerComparer(col) : new ListViewCaseInsensitiveComparer(col);
-				col.TextAlign = HorizontalAlignment.Right;
-			}
-
-			if (lvco.floattype.HasValue)
-			{
-				lv.ListViewItemSorter = lvco.floattype.Value ? new ListViewFloatComparer(col) : new ListViewCaseInsensitiveComparer(col);
-				col.TextAlign = HorizontalAlignment.Right;
-			}
-
-			if (lvco.texttype.IsTrue())
-				lv.ListViewItemSorter = new ListViewCaseInsensitiveComparer(col);
-
-			//Note that due to a limitation in the underlying control, the first column will always be left aligned.
-			if (lvco.center.HasValue)//These will also change the alignment of the header, but unsure how to separate the two.
-				col.TextAlign = lvco.center.Value ? HorizontalAlignment.Center : HorizontalAlignment.Left;
-
-			if (lvco.left.HasValue)
-				col.TextAlign = lvco.left.Value ? HorizontalAlignment.Left : HorizontalAlignment.Right;
-
-			if (lvco.right.HasValue)
-				col.TextAlign = lvco.right.Value ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-
-			if (lvco.casesensitive.IsTrue())
-				lv.ListViewItemSorter = new ListViewCaseSensitiveComparer(col);
-			else if (lvco.caselocale.IsTrue())
-				lv.ListViewItemSorter = new ListViewCaseLocaleComparer(col);
-			else if (lvco.logical.IsTrue())
-				lv.ListViewItemSorter = new ListViewLogicalComparer(col);
-			else
-				lv.ListViewItemSorter = new ListViewCaseInsensitiveComparer(col);
-
-			if (lvco.desc.HasValue)
-				lv.Sorting = lvco.desc.Value ? SortOrder.Descending : SortOrder.Ascending;
-
-			if (lvco.nosort.HasValue)
-				lv.Sorting = lvco.nosort.Value ? SortOrder.None : SortOrder.Descending;
-
-			if (lvco.sort.IsTrue())
-				lv.Sorting = SortOrder.Ascending;
-
-			if (lvco.sortdesc.IsTrue())
-				lv.Sorting = SortOrder.Descending;
-
-			if (lvco.uni.HasValue)
-				lv.uni = lvco.uni.Value;
-		}
-
 		internal static (string, List<Tuple<int, int, Tuple<string, string>>>) ParseLinkLabelText(string txt)
 		{
 			var sb = new StringBuilder(txt.Length);
-			var splits = txt.Split(["<a", "</a>" ], StringSplitOptions.RemoveEmptyEntries);//Do not trim splits here.
+			var splits = txt.Split(["<a", "</a>"], StringSplitOptions.RemoveEmptyEntries);//Do not trim splits here.
 			var links = new List<Tuple<int, int, Tuple<string, string>>>();
 			var quotes = new char[] { '\'', '\"' };
 
@@ -304,75 +191,6 @@ namespace Keysharp.Core
 			return (newtxt, links);
 		}
 
-		internal static ListViewColumnOptions ParseListViewColumnOptions(string options)
-		{
-			var lvco = new ListViewColumnOptions();
-
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
-			{
-				var opt = options.AsSpan(r).Trim();
-
-				if (opt.Length > 0)
-				{
-					var temp = 0;
-					var b = false;
-
-					if (int.TryParse(opt, out var width)) { lvco.width = width; }
-					else if (Options.TryParse(opt, "AutoHdr", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.autohdr = b; }
-					else if (Options.TryParse(opt, "Auto", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.auto = b; }
-					else if (opt.Equals("-Icon", StringComparison.OrdinalIgnoreCase)) { lvco.icon = 0; }
-					else if (Options.TryParse(opt, "IconRight", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.iconright = b; }
-					else if (Options.TryParse(opt, "Icon", ref temp)) { lvco.icon = temp; }
-					else if (Options.TryParse(opt, "Float", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.floattype = b; }
-					else if (Options.TryParse(opt, "Integer", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.inttype = b; }
-					else if (Options.TryParse(opt, "Text", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.texttype = b; }
-					else if (Options.TryParse(opt, "Center", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.center = b; }
-					else if (Options.TryParse(opt, "Left", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.left = b; }
-					else if (Options.TryParse(opt, "Right", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.right = b; }
-					else if (Options.TryParse(opt, "CaseLocale", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.caselocale = b; }
-					else if (Options.TryParse(opt, "Case", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.casesensitive = b; }
-					else if (Options.TryParse(opt, "Desc", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.desc = b; }
-					else if (Options.TryParse(opt, "Logical", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.logical = b; }
-					else if (Options.TryParse(opt, "NoSort", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.nosort = b; }
-					else if (Options.TryParse(opt, "SortDesc", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.sortdesc = b; }
-					else if (Options.TryParse(opt, "Sort", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.sort = b; }
-					else if (Options.TryParse(opt, "Uni", ref b, StringComparison.OrdinalIgnoreCase, true, true)) { lvco.uni = b; }
-				}
-			}
-
-			return lvco;
-		}
-
-		internal static ListViewOptions ParseListViewOptions(string options)
-		{
-			var lvo = new ListViewOptions();
-
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
-			{
-				var opt = options.AsSpan(r).Trim();
-
-				if (opt.Length > 0)
-				{
-					var temp = 0;
-
-					if (Options.TryParse(opt, "Check", ref lvo.ischecked, StringComparison.OrdinalIgnoreCase, true, true)) { }
-					else if (Options.TryParse(opt, "Focus", ref lvo.focused, StringComparison.OrdinalIgnoreCase, true, true)) { }
-					else if (Options.TryParse(opt, "Select", ref lvo.select, StringComparison.OrdinalIgnoreCase, true, true)) { }
-					else if (Options.TryParse(opt, "Col", ref temp)) { lvo.colstart = temp - 1; }
-					else if (Options.TryParse(opt, "Icon", ref lvo.icon)) { }
-					else if (opt.Equals("Vis", StringComparison.OrdinalIgnoreCase)) { lvo.vis = true; }
-				}
-			}
-
-			return lvo;
-		}
-
-		internal static void SetListViewColumnSizes(this ListView lv, int width = -2)
-		{
-			foreach (ColumnHeader col in lv.Columns)
-				col.Width = width;
-		}
-
 		/// <summary>
 		/// The Windows API functions have serious limitations when it comes to loading icons.
 		/// They can't load any of size 256 or larger, plus they are platform specific.
@@ -391,7 +209,7 @@ namespace Keysharp.Core
 				// Get an .ico file in memory, then split it into separate icons.
 				byte[] src = null;
 
-				using (var stream = new System.IO.MemoryStream())
+				using (var stream = new MemoryStream())
 				{
 					icon.Save(stream);
 					src = stream.ToArray();
@@ -445,93 +263,6 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static TreeNode TV_FindNode(TreeView parent, long id)
-		{
-			if (id == 0)
-				return parent.TopNode;
-
-			var match = parent.Nodes.Find(id.ToString(), true);
-			return match.Length == 0 ? null : match[0];
-		}
-
-		internal static long TV_NodeOptions(TreeNode node, long parent, string options, bool modify)
-		{
-			var ret = node.Handle.ToInt64();
-
-			if (string.IsNullOrEmpty(options))
-				return ret;
-
-			if (node.TreeView is KeysharpTreeView tv)
-			{
-				var bold = false;
-				var ischecked = 0;
-				var expanded = 0;
-				var icon = int.MinValue;
-
-				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
-				{
-					var opt = options.AsSpan(r).Trim();
-
-					if (opt.Length > 0)
-					{
-						if (opt.Equals("-Bold", StringComparison.OrdinalIgnoreCase)) { node.NodeFont = new Font(tv.Font, FontStyle.Regular); }
-						else if (Options.TryParse(opt, "Bold", ref bold)) { node.NodeFont = new Font(tv.Font, bold ? FontStyle.Bold : FontStyle.Regular); }
-						else if (opt.Equals("-Check", StringComparison.OrdinalIgnoreCase)) { node.Checked = false; }
-						else if (Options.TryParse(opt, "Check", ref ischecked, StringComparison.OrdinalIgnoreCase, true)) { node.Checked = ischecked != 0; }
-						else if (opt.Equals("-Expand", StringComparison.OrdinalIgnoreCase)) { node.Collapse(); tv.RemoveMarkForExpansion(node); }
-						else if (Options.TryParse(opt, "Expand", ref expanded, StringComparison.OrdinalIgnoreCase, true, 1))
-						{
-							if (expanded != 0)
-							{
-								if (modify)
-								{
-									if (node.Nodes.Count == 0)
-										ret = 0;
-									else
-										node.Expand();
-								}
-
-								tv.MarkForExpansion(node);
-							}
-							else
-							{
-								node.Collapse();
-								tv.RemoveMarkForExpansion(node);
-							}
-						}
-						else if (opt.Equals("Select ", StringComparison.OrdinalIgnoreCase)) { tv.SelectedNode = node; }
-						else if (opt.Equals("Vis", StringComparison.OrdinalIgnoreCase)) { node.EnsureVisible(); }
-						else if (opt.Equals("VisFirst", StringComparison.OrdinalIgnoreCase)) { node.EnsureVisible(); tv.TopNode = node; }
-						else if (Options.TryParse(opt, "Icon", ref icon))
-						{
-							if (tv.ImageList != null)
-							{
-								if (icon < tv.ImageList.Images.Count)
-								{
-									node.ImageIndex = icon - 1;
-									node.SelectedImageIndex = node.ImageIndex;
-								}
-								else
-								{
-									node.ImageIndex = -1;
-									node.SelectedImageIndex = node.ImageIndex;
-								}
-							}
-						}
-						else if (opt.Equals("Sort", StringComparison.OrdinalIgnoreCase))
-						{
-							if (node.NextNode == null)
-								ret = 0;
-							else
-								_ = tv.BeginInvoke(new MethodInvoker(tv.Sort));//BeginInvoke() is needed to avoid an infinte loop: https://stackoverflow.com/questions/808696/c-sharp-windows-form-treeview-sort-after-labeledit
-						}
-					}
-				}
-			}
-
-			return ret;
-		}
-
 		private static Control GuiControlGetFocused(Control parent)
 		{
 			foreach (Control child in parent.Controls)
@@ -575,181 +306,5 @@ namespace Keysharp.Core
 		//      e.Handled = true;
 		//  }
 		//}
-		internal class ListViewColumnOptions
-		{
-			public bool? auto;
-			public bool? autohdr;
-			public bool? caselocale;
-			public bool? casesensitive;
-			public bool? center;
-			public bool? desc;
-			public bool? floattype;
-			public int? icon;
-			public bool? iconright;
-			public bool? inttype;
-			public bool? left;
-			public bool? logical;
-			public bool? nosort;
-			public bool? right;
-			public bool? sort;
-			public bool? sortdesc;
-			public bool? texttype;
-			public bool? uni;
-			public int? width;
-		}
-
-		internal abstract class ListViewComparer : System.Collections.IComparer
-		{
-			protected ColumnHeader col;
-
-			public ListViewComparer()
-			{
-			}
-
-			public ListViewComparer(ColumnHeader column) => col = column;
-
-			public abstract int Compare(object x, object y);
-
-			public int SortOrder() => col.ListView.Sorting == System.Windows.Forms.SortOrder.Descending ? -1 : 1;
-		}
-
-		internal class ListViewOptions
-		{
-			public int colstart = 0;
-			public bool focused = false;
-			public int icon = int.MinValue;
-			public bool ischecked = false;
-			public bool select = false;
-			public bool vis = false;
-		}
-
-		private class ListViewCaseInsensitiveComparer : ListViewComparer
-		{
-			public ListViewCaseInsensitiveComparer(ColumnHeader column)
-				: base(column)
-			{
-			}
-
-			public override int Compare(object l, object r) =>
-			l is ListViewItem x&& r is ListViewItem y&& col.Index < x.SubItems.Count&& col.Index < y.SubItems.Count
-			? SortOrder()* string.Compare(x.SubItems[col.Index].Text, y.SubItems[col.Index].Text, true)
-			: 0;
-		}
-
-		private class ListViewCaseLocaleComparer : ListViewComparer
-		{
-			public ListViewCaseLocaleComparer(ColumnHeader column)
-				: base(column)
-			{
-			}
-
-			public override int Compare(object l, object r) =>
-			l is ListViewItem x&& r is ListViewItem y&& col.Index < x.SubItems.Count&& col.Index < y.SubItems.Count
-			? SortOrder()* string.Compare(x.SubItems[col.Index].Text, y.SubItems[col.Index].Text, StringComparison.CurrentCultureIgnoreCase)
-			: 0;
-		}
-
-		private class ListViewCaseSensitiveComparer : ListViewComparer
-		{
-			public ListViewCaseSensitiveComparer(ColumnHeader column)
-				: base(column)
-			{
-			}
-
-			public override int Compare(object l, object r) =>
-			l is ListViewItem x&& r is ListViewItem y&& col.Index < x.SubItems.Count&& col.Index < y.SubItems.Count
-			? SortOrder()* string.Compare(x.SubItems[col.Index].Text, y.SubItems[col.Index].Text, StringComparison.Ordinal)
-			: 0;
-		}
-
-		private class ListViewFloatComparer : ListViewComparer
-		{
-			public ListViewFloatComparer(ColumnHeader column)
-				: base(column)
-			{
-			}
-
-			public override int Compare(object l, object r)
-			{
-				if (l is ListViewItem x && r is ListViewItem y && col.Index < x.SubItems.Count && col.Index < y.SubItems.Count)
-					if (double.TryParse(x.SubItems[col.Index].Text, out var i1) && double.TryParse(y.SubItems[col.Index].Text, out var i2))
-						return (i1 < i2 ? -1 : i1 > i2 ? 1 : 0) * SortOrder();
-
-				return 0;
-			}
-		}
-
-		private class ListViewIntegerComparer : ListViewComparer
-		{
-			public ListViewIntegerComparer(ColumnHeader column)
-				: base(column)
-			{
-			}
-
-			public override int Compare(object l, object r)
-			{
-				if (l is ListViewItem x && r is ListViewItem y && col.Index < x.SubItems.Count && col.Index < y.SubItems.Count)
-				{
-					var i1 = x.SubItems[col.Index].Text.ParseLong(false);
-					var i2 = y.SubItems[col.Index].Text.ParseLong(false);
-					return (i1 < i2 ? -1 : i1 > i2 ? 1 : 0) * SortOrder();
-				}
-
-				return 0;
-			}
-		}
-
-		private class ListViewLogicalComparer : ListViewComparer
-		{
-			public ListViewLogicalComparer(ColumnHeader column)
-				: base(column)
-			{
-			}
-
-			public override int Compare(object l, object r) =>
-			l is ListViewItem x&& r is ListViewItem y&& col.Index < x.SubItems.Count&& col.Index < y.SubItems.Count
-			? SortOrder()* NaturalComparer.NaturalCompare(x.SubItems[col.Index].Text, y.SubItems[col.Index].Text)
-			: 0;
-		}
-	}
-
-	public class MessageFilter : IMessageFilter
-	{
-		public bool PreFilterMessage(ref Message m)
-		{
-			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
-			{
-				var tv = Threads.GetThreadVariables();
-
-				if (!Threads.AnyThreadsAvailable() || tv.priority > 0)
-					return false;
-
-				if (monitor.instanceCount >= monitor.maxInstances)
-					return false;
-
-#if WINDOWS
-				Script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
-#endif
-				var now = DateTime.Now;
-				Script.lastPeekTime = now;
-				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
-				monitor.instanceCount++;
-				object res = null;
-
-				try
-				{
-					res = monitor.funcs.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
-				}
-				finally
-				{
-					monitor.instanceCount--;
-				}
-
-				if (res != null && res.IsNotNullOrEmpty())
-					return true;
-			}
-
-			return false;
-		}
 	}
 }

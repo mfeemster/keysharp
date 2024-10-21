@@ -325,37 +325,6 @@ namespace Keysharp.Scripting
 
 		internal static bool IsIdentifier(char symbol) => char.IsLetterOrDigit(symbol) || VarExt.Contains(symbol);
 
-		internal bool IsIdentifier(string token) => IsIdentifier(token, false);
-
-		internal bool IsIdentifier(string token, bool dynamic)
-		{
-			if (string.IsNullOrEmpty(token))
-				return false;
-
-			if (token == "?" || token == "??" || token == "??=")
-				return false;
-
-			foreach (var sym in token)
-			{
-				if (!IsIdentifier(sym))
-				{
-					if (dynamic && sym == Resolve)
-						continue;
-
-					return false;
-				}
-			}
-
-			if (double.TryParse(token, out var _))//Need to ensure it's not a number, because identifiers can't be numbers.
-				return false;
-
-			if (token.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
-				return false;
-
-			return (dynamic && token.Contains(Resolve)) || string.Compare(token, "this", StringComparison.OrdinalIgnoreCase) == 0 || Ch.IsValidIdentifier(token);
-		}
-
 		internal static bool IsKeyword(string code) => keywords.Contains(code);
 
 		internal static bool IsKeyword(char symbol)
@@ -399,26 +368,6 @@ namespace Keysharp.Scripting
 					default:
 						return false;
 				}
-			}
-
-			return false;
-		}
-
-		internal bool IsLegacyIf(string code)
-		{
-			var part = code.TrimStart(Spaces).Split(Spaces, 3);
-
-			if (part.Length < 2 || !IsIdentifier(part[0]))
-				return false;
-
-			switch (part[1].ToLowerInvariant())
-			{
-				case NotTxt:
-				case BetweenTxt:
-				case InTxt:
-				case ContainsTxt:
-				case IsTxt:
-					return true;
 			}
 
 			return false;
@@ -544,17 +493,15 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		internal bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
-
 		internal bool IsFlowOperator(string code)
 		{
-			foreach (Range r in code.AsSpan().SplitAny(Keywords.FlowDelimiters2))
+			foreach (Range r in code.AsSpan().SplitAny(FlowDelimiters2))
 			{
 				var word = code.AsSpan(r);
 
 				if (Scope.Length > 0)
 				{
-					if (word.Equals(Keywords.FunctionStatic, StringComparison.OrdinalIgnoreCase))
+					if (word.Equals(FunctionStatic, StringComparison.OrdinalIgnoreCase))
 						return true;
 				}
 
@@ -563,6 +510,59 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
+
+		internal bool IsIdentifier(string token) => IsIdentifier(token, false);
+
+		internal bool IsIdentifier(string token, bool dynamic)
+		{
+			if (string.IsNullOrEmpty(token))
+				return false;
+
+			if (token == "?" || token == "??" || token == "??=")
+				return false;
+
+			foreach (var sym in token)
+			{
+				if (!IsIdentifier(sym))
+				{
+					if (dynamic && sym == Resolve)
+						continue;
+
+					return false;
+				}
+			}
+
+			if (double.TryParse(token, out var _))//Need to ensure it's not a number, because identifiers can't be numbers.
+				return false;
+
+			if (token.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
+				return false;
+
+			return (dynamic && token.Contains(Resolve)) || string.Compare(token, "this", StringComparison.OrdinalIgnoreCase) == 0 || Ch.IsValidIdentifier(token);
+		}
+
+		internal bool IsLegacyIf(string code)
+		{
+			var part = code.TrimStart(Spaces).Split(Spaces, 3);
+
+			if (part.Length < 2 || !IsIdentifier(part[0]))
+				return false;
+
+			switch (part[1].ToLowerInvariant())
+			{
+				case NotTxt:
+				case BetweenTxt:
+				case InTxt:
+				case ContainsTxt:
+				case IsTxt:
+					return true;
+			}
+
+			return false;
+		}
+
+		internal bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
 
 		internal List<object> SplitTokens(CodeLine codeLine, string code)
 		{

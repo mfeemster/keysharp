@@ -1193,7 +1193,7 @@ namespace Keysharp.Core.Windows
 
 		#region IEnumerable Members
 
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
 		}
@@ -1213,7 +1213,7 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		internal MMDeviceEnumerator()
 		{
-			if (System.Environment.OSVersion.Version.Major < 6)
+			if (Environment.OSVersion.Version.Major < 6)
 			{
 				throw new NotSupportedException("This functionality is only supported on Windows Vista or newer.");
 			}

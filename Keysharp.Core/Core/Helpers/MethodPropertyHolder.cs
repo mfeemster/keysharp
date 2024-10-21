@@ -1,22 +1,5 @@
 ﻿namespace Keysharp.Core
 {
-	public class ComMethodPropertyHolder : MethodPropertyHolder
-	{
-		public string Name { get; private set; }
-
-		public ComMethodPropertyHolder(string name)
-			: base(null, null)
-		{
-			Name = name;
-			callFunc = (inst, obj) =>
-			{
-				var t = inst.GetType();
-				var m = t.GetMember(Name);
-				return inst.GetType().InvokeMember(Name, BindingFlags.InvokeMethod, null, inst, obj);
-			};
-		}
-	}
-
 	public class MethodPropertyHolder
 	{
 		public Func<object, object[], object> callFunc;
@@ -43,7 +26,7 @@
 			{
 				parameters = mi.GetParameters();
 				ParamLength = parameters.Length;
-				isGuiType = Keysharp.Core.Gui.IsGuiType(mi.DeclaringType);
+				isGuiType = Gui.IsGuiType(mi.DeclaringType);
 
 				for (var i = 0; i < parameters.Length; i++)
 				{
@@ -69,13 +52,13 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+								var oldHandle = Script.HwndLastUsed;
 
 								if (ctrl != null && ctrl.FindForm() is Form form)
-									Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+									Script.HwndLastUsed = form.Handle;
 
 								ret = mi.Invoke(inst, null);
-								Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 							return ret;
 						};
@@ -137,13 +120,13 @@
 								var ctrl = inst.GetControl();
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+									var oldHandle = Script.HwndLastUsed;
 
 									if (ctrl != null && ctrl.FindForm() is Form form)
-										Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+										Script.HwndLastUsed = form.Handle;
 
 									ret = mi.Invoke(inst, newobj);
-									Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+									Script.HwndLastUsed = oldHandle;
 								}, true);//This can be null if called before a Gui object is fully initialized.
 							}
 
@@ -194,13 +177,13 @@
 									var ctrl = inst.GetControl();
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+										var oldHandle = Script.HwndLastUsed;
 
 										if (ctrl != null && ctrl.FindForm() is Form form)
-											Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+											Script.HwndLastUsed = form.Handle;
 
 										ret = mi.Invoke(inst, obj);
-										Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+										Script.HwndLastUsed = oldHandle;
 									}, true);//This can be null if called before a Gui object is fully initialized.
 								}
 							}
@@ -223,13 +206,13 @@
 									var ctrl = inst.GetControl();
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+										var oldHandle = Script.HwndLastUsed;
 
 										if (ctrl != null && ctrl.FindForm() is Form form)
-											Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+											Script.HwndLastUsed = form.Handle;
 
 										ret = mi.Invoke(inst, newobj);
-										Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+										Script.HwndLastUsed = oldHandle;
 									}, true);//This can be null if called before a Gui object is fully initialized.
 								}
 
@@ -244,7 +227,7 @@
 			}
 			else if (pi != null)
 			{
-				isGuiType = Keysharp.Core.Gui.IsGuiType(pi.DeclaringType);
+				isGuiType = Gui.IsGuiType(pi.DeclaringType);
 				parameters = pi.GetIndexParameters();
 				ParamLength = parameters.Length;
 
@@ -260,13 +243,13 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+								var oldHandle = Script.HwndLastUsed;
 
 								if (ctrl != null && ctrl.FindForm() is Form form)
-									Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+									Script.HwndLastUsed = form.Handle;
 
 								ret = pi.GetValue(null);
-								Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 
 							if (ret is int i)
@@ -279,13 +262,13 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+								var oldHandle = Script.HwndLastUsed;
 
 								if (ctrl != null && ctrl.FindForm() is Form form)
-									Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+									Script.HwndLastUsed = form.Handle;
 
 								pi.SetValue(null, obj);
-								Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
@@ -319,13 +302,13 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+								var oldHandle = Script.HwndLastUsed;
 
 								if (ctrl != null && ctrl.FindForm() is Form form)
-									Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+									Script.HwndLastUsed = form.Handle;
 
 								ret = pi.GetValue(inst);
-								Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 
 							if (ret is int i)
@@ -338,13 +321,13 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Keysharp.Scripting.Script.HwndLastUsed;
+								var oldHandle = Script.HwndLastUsed;
 
 								if (ctrl != null && ctrl.FindForm() is Form form)
-									Keysharp.Scripting.Script.HwndLastUsed = form.Handle;
+									Script.HwndLastUsed = form.Handle;
 
 								pi.SetValue(inst, obj);
-								Keysharp.Scripting.Script.HwndLastUsed = oldHandle;
+								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}

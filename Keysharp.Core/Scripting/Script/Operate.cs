@@ -29,7 +29,7 @@ namespace Keysharp.Scripting
 			{
 				case Between:
 				{
-					var z = test.IndexOf(And, System.StringComparison.OrdinalIgnoreCase);
+					var z = test.IndexOf(And, StringComparison.OrdinalIgnoreCase);
 
 					if (z == -1)
 						z = variable.Length;
@@ -51,7 +51,7 @@ namespace Keysharp.Scripting
 					{
 						var sub = test.AsSpan(r);
 
-						if (varspan.Equals(sub, System.StringComparison.OrdinalIgnoreCase))
+						if (varspan.Equals(sub, StringComparison.OrdinalIgnoreCase))
 							ret = true;
 					}
 
@@ -62,7 +62,7 @@ namespace Keysharp.Scripting
 					{
 						var sub = test.AsSpan(r);
 
-						if (varspan.IndexOf(sub, System.StringComparison.OrdinalIgnoreCase) != -1)
+						if (varspan.IndexOf(sub, StringComparison.OrdinalIgnoreCase) != -1)
 							ret = true;
 					}
 
@@ -103,7 +103,7 @@ namespace Keysharp.Scripting
 					{
 						var type = subject.GetType();
 
-						if (Keysharp.Scripting.Parser.IsTypeOrBase(type, test))
+						if (Parser.IsTypeOrBase(type, test))
 						{
 							ret = true;
 							goto done;
@@ -249,8 +249,6 @@ namespace Keysharp.Scripting
 		}
 
 		public static BoolResult IfTest(object result) => new BoolResult(ForceBool(result), result);
-
-		public static object OrMaybe(object left, object right) => Keysharp.Core.Misc.IsSet(left) == 1L ? left : right;
 
 		public static bool IsNumeric(Type type) =>
 		type == typeof(long)
@@ -624,6 +622,8 @@ namespace Keysharp.Scripting
 		}
 
 		public static int OperateZero(object expression) => 0;
+
+		public static object OrMaybe(object left, object right) => Types.IsSet(left) == 1L ? left : right;
 
 		public enum Operator
 		{

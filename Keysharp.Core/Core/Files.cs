@@ -35,11 +35,11 @@
 							{
 								case var b when split.Equals("ascii", StringComparison.OrdinalIgnoreCase):
 								case var b2 when split.Equals("us-ascii", StringComparison.OrdinalIgnoreCase):
-									encoding = System.Text.Encoding.ASCII;
+									encoding = Encoding.ASCII;
 									break;
 
 								case var b when split.Equals("utf-8", StringComparison.OrdinalIgnoreCase):
-									encoding = System.Text.Encoding.UTF8;
+									encoding = Encoding.UTF8;
 									break;
 
 								case var b when split.Equals("utf-8-raw", StringComparison.OrdinalIgnoreCase):
@@ -48,7 +48,7 @@
 
 								case var b when split.Equals("utf-16", StringComparison.OrdinalIgnoreCase):
 								case var b2 when split.Equals("unicode", StringComparison.OrdinalIgnoreCase):
-									encoding = System.Text.Encoding.Unicode;
+									encoding = Encoding.Unicode;
 									break;
 
 								case var b when split.Equals("utf-16-raw", StringComparison.OrdinalIgnoreCase):
@@ -102,7 +102,7 @@
 					if (text is string s)
 					{
 						if (s == "fail")
-							Keysharp.Scripting.Script.OutputDebug(s);
+							Script.OutputDebug(s);
 
 						if (raw)
 							//sw.Write(Encoding.Unicode.GetBytes(s));
@@ -114,11 +114,11 @@
 					}
 					else if (tw is StreamWriter sw)
 					{
-						if (text is Keysharp.Core.Array arr)//Most common will be array.
+						if (text is Array arr)//Most common will be array.
 						{
 							sw.BaseStream.Write(arr.ToByteArray().ToArray());
 						}
-						else if (text is Keysharp.Core.Buffer buf)
+						else if (text is Buffer buf)
 						{
 							var len = (int)(long)buf.Size;
 							unsafe
@@ -338,7 +338,7 @@
 				var filename = Path.GetFileName(s);
 
 				foreach (var file in dir.EnumerateFiles(filename))
-					return Conversions.FromFileAttribs(System.IO.File.GetAttributes(file.FullName));
+					return Conversions.FromFileAttribs(File.GetAttributes(file.FullName));
 			}
 			catch
 			{
@@ -355,10 +355,10 @@
 
 			try
 			{
-				if (Directory.Exists(s) || System.IO.File.Exists(s))
-					return Conversions.FromFileAttribs(System.IO.File.GetAttributes(s));
+				if (Directory.Exists(s) || File.Exists(s))
+					return Conversions.FromFileAttribs(File.GetAttributes(s));
 				else if (s?.Length == 0)
-					return Conversions.FromFileAttribs(System.IO.File.GetAttributes(Accessors.A_LoopFileFullPath));
+					return Conversions.FromFileAttribs(File.GetAttributes(Accessors.A_LoopFileFullPath));
 			}
 			catch (Exception ex)
 			{
@@ -682,7 +682,7 @@
 			if (file?.Length == 0)
 				file = Accessors.A_LoopFileFullPath;
 
-			if (!System.IO.File.Exists(file))
+			if (!File.Exists(file))
 				return "";
 
 			var date = new DateTime();
@@ -766,7 +766,7 @@
 			var ienc = enc.ParseInt(false);
 
 			if (ienc.HasValue)
-				encoding = System.Text.Encoding.GetEncoding(ienc.Value);
+				encoding = Encoding.GetEncoding(ienc.Value);
 			else if (enc != "")
 				encoding = GetEncoding(enc);
 
@@ -939,7 +939,7 @@
 			{
 				try
 				{
-					var temparr = max == -1 ? System.IO.File.ReadAllBytes(filename) : new BinaryReader(System.IO.File.OpenRead(filename)).ReadBytes(max);
+					var temparr = max == -1 ? File.ReadAllBytes(filename) : new BinaryReader(File.OpenRead(filename)).ReadBytes(max);
 					output = new Buffer(temparr);
 				}
 				catch (Exception ex)
@@ -965,7 +965,7 @@
 						}
 					}
 					else
-						text = System.IO.File.ReadAllText(filename);
+						text = File.ReadAllText(filename);
 				}
 				catch (Exception ex)
 				{
@@ -1007,7 +1007,7 @@
 					//This appears to be not implemented in mono:
 					//https://github.com/mono/mono-basic/blob/master/vbruntime/Microsoft.VisualBasic/Microsoft.VisualBasic.FileIO/FileSystemOperation.vb
 					//May need some type of system call for non-windows OS.
-					Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+					FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
 #endif
 			}
@@ -1038,6 +1038,7 @@
 				throw new OSError(ex);
 			}
 		}
+
 		/// <summary>
 		/// Changes the attributes of one or more files or folders. Wildcards are supported.
 		/// </summary>
@@ -1069,15 +1070,15 @@
 			{
 				try
 				{
-					var set = Conversions.ToFileAttribs(attributes, System.IO.File.GetAttributes(path));
-					System.IO.File.SetAttributes(path, set);
+					var set = Conversions.ToFileAttribs(attributes, File.GetAttributes(path));
+					File.SetAttributes(path, set);
 
 					if (set == FileAttributes.None)
 						set = FileAttributes.Normal;
 					else if (set.HasFlag(FileAttributes.Normal) && set != FileAttributes.Normal)//It was Normal and something else.
 							set &= ~FileAttributes.Normal;//Remove normal because it can only be used alone. Just use the other bits.
 
-					if (System.IO.File.GetAttributes(path) != set)
+					if (File.GetAttributes(path) != set)
 						failures++;
 				}
 				catch (Exception)
@@ -1089,6 +1090,7 @@
 			if (failures != 0)
 				throw new Error($"Failed {failures} times setting file attributes.", "", failures);
 		}
+
 		/// <summary>
 		/// Changes the datetime stamp of one or more files or folders. Wildcards are supported.
 		/// </summary>
@@ -1147,20 +1149,20 @@
 					{
 						case 'm':
 						case 'M':
-							System.IO.File.SetLastWriteTime(path, time);
-							set = System.IO.File.GetLastWriteTime(path);
+							File.SetLastWriteTime(path, time);
+							set = File.GetLastWriteTime(path);
 							break;
 
 						case 'c':
 						case 'C':
-							System.IO.File.SetCreationTime(path, time);
-							set = System.IO.File.GetCreationTime(path);
+							File.SetCreationTime(path, time);
+							set = File.GetCreationTime(path);
 							break;
 
 						case 'a':
 						case 'A':
-							System.IO.File.SetLastAccessTime(path, time);
-							set = System.IO.File.GetLastAccessTime(path);
+							File.SetLastAccessTime(path, time);
+							set = File.GetLastAccessTime(path);
 							break;
 
 						default:
@@ -1176,32 +1178,33 @@
 			if (failures != 0)
 				throw new Error($"Failed {failures} times setting file time.", "", failures);
 		}
+
 		internal static Encoding GetEncoding(object s)
 		{
 			var val = s.ToString().ToLowerInvariant();
 			Encoding tempenc;
 
 			if (val.StartsWith("cp"))
-				return System.Text.Encoding.GetEncoding(val.Substring(2).ParseInt().Value);
+				return Encoding.GetEncoding(val.Substring(2).ParseInt().Value);
 
 			if (int.TryParse(val, out var cp))
-				return System.Text.Encoding.GetEncoding(cp);
+				return Encoding.GetEncoding(cp);
 
 			switch (val)
 			{
 				case "ascii":
 				case "us-ascii":
-					return System.Text.Encoding.ASCII;
+					return Encoding.ASCII;
 
 				case "utf-8":
-					return System.Text.Encoding.UTF8;
+					return Encoding.UTF8;
 
 				case "utf-8-raw":
 					return new UTF8Encoding(false);//No byte order mark.
 
 				case "utf-16":
 				case "unicode":
-					return System.Text.Encoding.Unicode;
+					return Encoding.Unicode;
 
 				case "utf-16-raw":
 					return new UnicodeEncoding(false, false);//Little endian, no byte order mark.
@@ -1209,15 +1212,16 @@
 
 			try
 			{
-				tempenc = System.Text.Encoding.GetEncoding(val);
+				tempenc = Encoding.GetEncoding(val);
 				return tempenc;
 			}
 			catch
 			{
 			}
 
-			return System.Text.Encoding.Unicode;
+			return Encoding.Unicode;
 		}
+
 		/// <summary>
 		/// Expand wildcards in a filename and extension.
 		/// </summary>
@@ -1237,6 +1241,7 @@
 			srcext = srcext.TrimStart('.');
 			return destfile.ReplaceFirst("*", srcfile) + (destex.Contains('*') ? destex.ReplaceFirst("*", srcext) : destex);
 		}
+
 		private static void FileCopyMove(string source, string dest, bool flag, bool move)
 		{
 			var failures = 0;
@@ -1274,9 +1279,9 @@
 						continue;
 
 					if (move)
-						System.IO.File.Move(s, d, flag);
+						File.Move(s, d, flag);
 					else
-						System.IO.File.Copy(s, d, flag);
+						File.Copy(s, d, flag);
 				}
 				catch { failures++; }
 			}

@@ -15,7 +15,7 @@ namespace Keysharp.Core.Windows
 	/// windows-specific into the base class to reduce duplication.
 	/// Of course leave any windows-specific methods here.
 	/// </summary>
-	internal class WindowsHookThread : Keysharp.Core.Common.Threading.HookThread
+	internal class WindowsHookThread : HookThread
 	{
 		private static bool pendingDeadKeyInvisible;
 		private static List<DeadKeyRecord> pendingDeadKeys = new ();
@@ -23,14 +23,6 @@ namespace Keysharp.Core.Windows
 		private static IntPtr uwpHwndChecked = IntPtr.Zero;
 		private readonly LowLevelKeyboardProc kbdHandlerDel;
 		private readonly LowLevelMouseProc mouseHandlerDel;
-
-		private class DeadKeyRecord
-		{
-			internal uint vk;
-			internal uint sc;
-			internal uint modLR;
-			internal uint caps;
-		}
 
 		static WindowsHookThread()
 		{
@@ -428,7 +420,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (HasKbdHook() && ((int)hooksActiveOrig & (int)HookType.Keyboard) == 0) // The keyboard hook has been newly added.
 				{
-					keybdMutex = new System.Threading.Mutex(false, KeybdMutexName, out _); // Create-or-open this mutex and have it be unowned.
+					keybdMutex = new Mutex(false, KeybdMutexName, out _); // Create-or-open this mutex and have it be unowned.
 				}
 				else if (!HasKbdHook() && ((int)hooksActiveOrig & (int)HookType.Keyboard) != 0)  // The keyboard hook has been newly removed.
 				{
@@ -438,7 +430,7 @@ namespace Keysharp.Core.Windows
 
 				if (HasKbdHook() && ((int)hooksActiveOrig & (int)HookType.Mouse) == 0) // The mouse hook has been newly added.
 				{
-					mouseMutex = new System.Threading.Mutex(false, MouseMutexName); // Create-or-open this mutex and have it be unowned.
+					mouseMutex = new Mutex(false, MouseMutexName); // Create-or-open this mutex and have it be unowned.
 				}
 				else if (!HasKbdHook() && ((int)hooksActiveOrig & (int)HookType.Mouse) != 0)  // The mouse hook has been newly removed.
 				{
@@ -468,7 +460,7 @@ namespace Keysharp.Core.Windows
 		/// neutral one.
 		/// </summary>
 		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc,
-							  bool keyUp, ulong extraInfo, CollectInputState state, Keysharp.Core.Common.Keyboard.KeyHistoryItem keyHistoryCurr,
+							  bool keyUp, ulong extraInfo, CollectInputState state, KeyHistoryItem keyHistoryCurr,
 							  uint hotkeyIDToPost, HotkeyVariant variant)
 		{
 			HotstringDefinition hsOut = null;
@@ -718,7 +710,7 @@ namespace Keysharp.Core.Windows
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 					wParam = new IntPtr(hotkeyIDToPost),
-					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)),
+					lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)input_level)),
 					obj = variant
 				});
 				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyIDToPost, KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)); // v1.0.43.03: sc is posted currently only to support the number of wheel turns (to store in A_EventInfo).
@@ -731,7 +723,7 @@ namespace Keysharp.Core.Windows
 					{
 						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
-						lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level))
+						lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)input_level))
 						//Do not pass the variant.
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK], KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level));
@@ -1572,6 +1564,226 @@ namespace Keysharp.Core.Windows
 			return !suppressHotstringFinalChar;
 		}
 
+		internal bool CollectInput(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, bool keyUp, bool isIgnored
+								   , CollectInputState state, KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut
+								   , ref CaseConformModes caseConformMode, ref char endChar
+								  )
+		// Caller is responsible for having initialized aHotstringWparamToPost to HOTSTRING_INDEX_INVALID.
+		// Returns true if the caller should treat the key as visible (non-suppressed).
+		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
+		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
+		// neutral one.
+		{
+			if (!state.earlyCollected && !EarlyCollectInput(ref ev, vk, sc, keyUp, isIgnored, state, keyHistoryCurr))
+				return false;
+
+			if (keyUp)
+				return CollectKeyUp(ref ev, vk, sc, false);
+
+			int charCount = state.charCount;
+			var activeWindow = state.activeWindow;
+			var activeWindowKeybdLayout = state.keyboardLayout;
+			var ch = state.ch;
+			var sb = new StringBuilder(8);
+
+			if (!CollectInputHook(ref ev, vk, sc, ch, charCount, false))
+				return false; // Suppress.
+
+			// Hotstrings monitor neither ignored input nor input that is invisible due to suppression by
+			// the Input command.  One reason for not monitoring ignored input is to avoid any chance of
+			// an infinite loop of keystrokes caused by one hotstring triggering itself directly or
+			// indirectly via a different hotstring:
+			if (HotstringManager.enabledCount != 0 && !isIgnored)
+			{
+				switch (vk)
+				{
+					case VK_LEFT:
+					case VK_RIGHT:
+					case VK_DOWN:
+					case VK_UP:
+					case VK_NEXT:
+					case VK_PRIOR:
+					case VK_HOME:
+					case VK_END:
+
+						// Reset hotstring detection if the user seems to be navigating within an editor.  This is done
+						// so that hotstrings do not fire in unexpected places.
+						if (HotstringManager.hsBuf.Count > 0)
+							HotstringManager.ClearBuf();
+
+						break;
+
+					case VK_BACK:
+
+						// v1.0.21: Only true (unmodified) backspaces are recognized by the below.  Another reason to do
+						// this is that ^backspace has a native function (delete word) different than backspace in many editors.
+						// Fix for v1.0.38: Below now uses kbdMsSender.modifiersLR_logical vs. physical because it's the logical state
+						// that determines whether the backspace behaves like an unmodified backspace.  This solves the issue
+						// of the Input command collecting simulated backspaces as real characters rather than recognizing
+						// them as a means to erase the previous character in the buffer.
+						if (kbdMsSender.modifiersLRLogical == 0 && HotstringManager.hsBuf.Count > 0)
+							HotstringManager.hsBuf.RemoveAt(HotstringManager.hsBuf.Count - 1);
+
+						// Fall through to the check below in case this {BS} completed a dead key sequence.
+						break;
+				}
+
+				if (charCount > 0
+						&& !CollectHotstring(ref ev, ch, charCount, activeWindow, keyHistoryCurr,
+											 ref hsOut, ref caseConformMode, ref endChar))
+				{
+					var ignored = new StringBuilder(8);
+
+					if (state.used_dead_key_non_destructively)
+					{
+						// There's still a dead key in the keyboard layout's internal buffer, and it's supposed to apply to
+						// this keystroke which we're suppressing.  Flush it out, otherwise a hotstring like the following
+						// would insert an extra accent character:
+						//   :*:jsá::jsmith@somedomain.com
+						_ = ignored.Clear();
+						ignored.Capacity = 8;
+
+						while (ToUnicodeOrAsciiEx(VK_DECIMAL, 0, physicalKeyState, ignored, 1, activeWindowKeybdLayout) == -1) ;
+					}
+
+					return false; // Suppress.
+				}
+			}
+
+			return true; // Visible.
+		}
+
+		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, char[] ch, int charCount, bool early)
+		{
+			var input = Script.input;
+
+			for (; input != null; input = input.Prev)
+			{
+				if (!(input.Early == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress()))
+					continue;
+
+				var keyFlags = input.KeyVK[vk] | input.KeySC[sc];
+				// aCharCount is negative for dead keys, which are treated as text but not collected.
+				var treatAsText = charCount != 0 && (keyFlags & INPUT_KEY_IGNORE_TEXT) == 0;
+				var collectChars = treatAsText && charCount > 0;
+				// Determine visibility based on options and whether the key produced text.
+				// Negative aCharCount (dead key) is treated as text in this context.
+				bool visible;
+
+				if ((keyFlags & INPUT_KEY_VISIBILITY_MASK) != 0)
+					visible = (keyFlags & INPUT_KEY_VISIBLE) != 0;
+				else if (kvk[vk].asModifiersLR != 0 || kvk[vk].forceToggle != null)
+					visible = true; // Do not suppress modifiers or toggleable keys unless specified by KeyOpt().
+				else
+					visible = treatAsText ? input.VisibleText : input.VisibleNonText;
+
+				if ((keyFlags & END_KEY_ENABLED) != 0) // A terminating keystroke has now occurred unless the shift state isn't right.
+				{
+					var end_if_shift_is_down = (keyFlags & END_KEY_WITH_SHIFT) != 0;
+					var end_if_shift_is_not_down = (keyFlags & END_KEY_WITHOUT_SHIFT) != 0;
+					var shift_is_down = (kbdMsSender.modifiersLRLogical & (MOD_LSHIFT | MOD_RSHIFT)) != 0;
+
+					if (shift_is_down ? end_if_shift_is_down : end_if_shift_is_not_down)
+					{
+						// The shift state is correct to produce the desired end-key.
+						input.EndByKey(vk, sc, input.KeySC[sc] != 0 && (sc != 0 || input.KeyVK[vk] == 0), shift_is_down && !end_if_shift_is_not_down);
+
+						if (!visible)
+							break;
+
+						continue;
+					}
+				}
+
+				// Collect before backspacing, so if VK_BACK was preceded by a dead key, we delete it instead of the
+				// previous char.  For example, {vkDE}{BS} on the US-Intl layout produces '\b (but we discarded \b).
+				if (collectChars)
+					input.CollectChar(new string(ch), charCount);
+
+				// Fix for v2.0: Shift is allowed as it generally has no effect on the native function of Backspace.
+				// This is probably connected with the fact that Shift+BS is also transcribed to `b, which we don't want.
+				if (vk == VK_BACK && input.BackspaceIsUndo
+						&& (kbdMsSender.modifiersLRLogical & ~(MOD_LSHIFT | MOD_RSHIFT)) == 0)
+				{
+					if (input.buffer.Length != 0)
+						input.buffer = input.buffer.Substring(0, input.buffer.Length - 1);
+
+					if ((keyFlags & INPUT_KEY_VISIBILITY_MASK) == 0)// If +S and +V haven't been applied to Backspace...
+						visible = input.VisibleText; // Override VisibleNonText.
+
+					// Fall through to the check below in case this {BS} completed a dead key sequence.
+				}
+
+				if (input.NotifyNonText)
+				{
+					// These flags enable key-up events to be classified as text or non-text based on
+					// whether key-down produced text.
+					if (treatAsText)
+						input.KeyVK[vk] |= INPUT_KEY_IS_TEXT;
+					else
+						input.KeyVK[vk] &= ~INPUT_KEY_IS_TEXT; // In case keyboard layout has changed or similar.
+				}
+
+				// Posting the notifications after CollectChar() might reduce the odds of a race condition.
+				if (((keyFlags & INPUT_KEY_NOTIFY) != 0 || (input.NotifyNonText && !treatAsText))
+						&& input.ScriptObject != null && input.ScriptObject.OnKeyDown != null)
+				{
+					// input is passed because the alternative would require the main thread to
+					// iterate through the Input chain and determine which ones should be notified.
+					// This would mean duplicating much of the logic that's used here, and would be
+					// complicated by the possibility of an Input being terminated while OnKeyDown
+					// is being executed (and thereby breaking the list).
+					// This leaves room only for the bare essential parameters: aVK and aSC.
+					_ = channel.Writer.TryWrite(new KeysharpMsg()
+					{
+						message = (uint)UserMessages.AHK_INPUT_KEYDOWN,
+						obj = input,
+						lParam = new IntPtr(vk),
+						wParam = new IntPtr(sc)
+					});
+					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_KEYDOWN, input, (uint)((sc << 16) | vk));
+				}
+
+				// Seems best to not collect dead key chars by default; if needed, OnDeadChar
+				// could be added, or the script could mark each dead key for OnKeyDown.
+				if (collectChars && input.ScriptObject != null && input.ScriptObject.OnChar != null)
+				{
+					_ = channel.Writer.TryWrite(new KeysharpMsg()
+					{
+						message = (uint)UserMessages.AHK_INPUT_CHAR,
+						obj = input,
+						lParam = new IntPtr(ch[0]),
+						wParam = ch.Length > 1 ? new IntPtr(ch[1]) : IntPtr.Zero
+					});
+					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_CHAR, input, (uint)((ch[1] << 16) | ch[0]));
+				}
+
+				if (!visible)
+				{
+					if (charCount < 0 && treatAsText && input.InProgress())
+					{
+						// This dead key is being treated as text but will be suppressed, so to get the correct
+						// result, we will need to replay the dead key sequence when the next key is collected.
+						pendingDeadKeyInvisible = true;
+					}
+
+					break;
+				}
+			}
+
+			if (input != null) // Early break (invisible input).
+			{
+				if (sc != 0)
+					input.KeySC[sc] |= INPUT_KEY_DOWN_SUPPRESSED;
+				else
+					input.KeyVK[vk] |= INPUT_KEY_DOWN_SUPPRESSED;
+
+				return false;
+			}
+
+			return true;
+		}
+
 		internal bool CollectKeyUp(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, bool early)
 		// Caller is responsible for having initialized aHotstringWparamToPost to HOTSTRING_INDEX_INVALID.
 		// Returns true if the caller should treat the key as visible (non-suppressed).
@@ -1611,6 +1823,34 @@ namespace Keysharp.Core.Windows
 			}
 
 			return true;
+		}
+
+		internal override uint ConvertMouseButton(ReadOnlySpan<char> buf, bool allowWheel = true)
+		{
+			if (buf.Length == 0 || buf.StartsWith("Left", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("L", StringComparison.OrdinalIgnoreCase))
+				return VK_LBUTTON; // Some callers rely on this default when buf is empty.
+
+			if (buf.StartsWith("Right", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("R", StringComparison.OrdinalIgnoreCase)) return VK_RBUTTON;
+
+			if (buf.StartsWith("Middle", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("M", StringComparison.OrdinalIgnoreCase)) return VK_MBUTTON;
+
+			if (buf.StartsWith("X1", StringComparison.OrdinalIgnoreCase)) return VK_XBUTTON1;
+
+			if (buf.StartsWith("X2", StringComparison.OrdinalIgnoreCase)) return VK_XBUTTON2;
+
+			if (allowWheel)
+			{
+				if (buf.StartsWith("WheelUp", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WU", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_UP;
+
+				if (buf.StartsWith("WheelDown", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WD", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_DOWN;
+
+				// Lexikos: Support horizontal scrolling in Windows Vista and later.
+				if (buf.StartsWith("WheelLeft", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WL", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_LEFT;
+
+				if (buf.StartsWith("WheelRight", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WR", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_RIGHT;
+			}
+
+			return 0;
 		}
 
 		internal bool EarlyCollectInput(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, bool keyUp, bool isIgnored
@@ -1789,7 +2029,7 @@ namespace Keysharp.Core.Windows
 					// but then changed to using VK_DECIMAL and apparently never explained either choice.  Still, VK_DECIMAL
 					// seems like a safe choice for clearing the state; probably any key which produces text will work, but
 					// the loop is needed in case of an unconventional layout which makes VK_DECIMAL itself a dead key.
-					while (ToUnicodeOrAsciiEx(VK_DECIMAL, 0, keyState, ignored, flags, activeWindowKeybdLayout) == -1);
+					while (ToUnicodeOrAsciiEx(VK_DECIMAL, 0, keyState, ignored, flags, activeWindowKeybdLayout) == -1) ;
 				}
 
 				if (charCount > 0)
@@ -1858,254 +2098,6 @@ namespace Keysharp.Core.Windows
 				return false; // Suppress.
 
 			return true;//Visible.
-		}
-
-		internal bool CollectInput(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, bool keyUp, bool isIgnored
-								   , CollectInputState state, KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut
-								   , ref CaseConformModes caseConformMode, ref char endChar
-								  )
-		// Caller is responsible for having initialized aHotstringWparamToPost to HOTSTRING_INDEX_INVALID.
-		// Returns true if the caller should treat the key as visible (non-suppressed).
-		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
-		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
-		// neutral one.
-		{
-			if (!state.earlyCollected && !EarlyCollectInput(ref ev, vk, sc, keyUp, isIgnored, state, keyHistoryCurr))
-				return false;
-
-			if (keyUp)
-				return CollectKeyUp(ref ev, vk, sc, false);
-
-			int charCount = state.charCount;
-			var activeWindow = state.activeWindow;
-			var activeWindowKeybdLayout = state.keyboardLayout;
-			var ch = state.ch;
-			var sb = new StringBuilder(8);
-
-			if (!CollectInputHook(ref ev, vk, sc, ch, charCount, false))
-				return false; // Suppress.
-
-			// Hotstrings monitor neither ignored input nor input that is invisible due to suppression by
-			// the Input command.  One reason for not monitoring ignored input is to avoid any chance of
-			// an infinite loop of keystrokes caused by one hotstring triggering itself directly or
-			// indirectly via a different hotstring:
-			if (HotstringManager.enabledCount != 0 && !isIgnored)
-			{
-				switch (vk)
-				{
-					case VK_LEFT:
-					case VK_RIGHT:
-					case VK_DOWN:
-					case VK_UP:
-					case VK_NEXT:
-					case VK_PRIOR:
-					case VK_HOME:
-					case VK_END:
-
-						// Reset hotstring detection if the user seems to be navigating within an editor.  This is done
-						// so that hotstrings do not fire in unexpected places.
-						if (HotstringManager.hsBuf.Count > 0)
-							HotstringManager.ClearBuf();
-
-						break;
-
-					case VK_BACK:
-
-						// v1.0.21: Only true (unmodified) backspaces are recognized by the below.  Another reason to do
-						// this is that ^backspace has a native function (delete word) different than backspace in many editors.
-						// Fix for v1.0.38: Below now uses kbdMsSender.modifiersLR_logical vs. physical because it's the logical state
-						// that determines whether the backspace behaves like an unmodified backspace.  This solves the issue
-						// of the Input command collecting simulated backspaces as real characters rather than recognizing
-						// them as a means to erase the previous character in the buffer.
-						if (kbdMsSender.modifiersLRLogical == 0 && HotstringManager.hsBuf.Count > 0)
-							HotstringManager.hsBuf.RemoveAt(HotstringManager.hsBuf.Count - 1);
-
-						// Fall through to the check below in case this {BS} completed a dead key sequence.
-						break;
-				}
-
-				if (charCount > 0
-						&& !CollectHotstring(ref ev, ch, charCount, activeWindow, keyHistoryCurr,
-											 ref hsOut, ref caseConformMode, ref endChar))
-				{
-					var ignored = new StringBuilder(8);
-
-					if (state.used_dead_key_non_destructively)
-					{
-						// There's still a dead key in the keyboard layout's internal buffer, and it's supposed to apply to
-						// this keystroke which we're suppressing.  Flush it out, otherwise a hotstring like the following
-						// would insert an extra accent character:
-						//   :*:jsá::jsmith@somedomain.com
-						_ = ignored.Clear();
-						ignored.Capacity = 8;
-
-						while (ToUnicodeOrAsciiEx(VK_DECIMAL, 0, physicalKeyState, ignored, 1, activeWindowKeybdLayout) == -1);
-					}
-
-					return false; // Suppress.
-				}
-			}
-
-			return true; // Visible.
-		}
-
-		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, char[] ch, int charCount, bool early)
-		{
-			var input = Script.input;
-
-			for (; input != null; input = input.Prev)
-			{
-				if (!(input.Early == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress()))
-					continue;
-
-				var keyFlags = input.KeyVK[vk] | input.KeySC[sc];
-				// aCharCount is negative for dead keys, which are treated as text but not collected.
-				var treatAsText = charCount != 0 && (keyFlags & INPUT_KEY_IGNORE_TEXT) == 0;
-				var collectChars = treatAsText && charCount > 0;
-				// Determine visibility based on options and whether the key produced text.
-				// Negative aCharCount (dead key) is treated as text in this context.
-				bool visible;
-
-				if ((keyFlags & INPUT_KEY_VISIBILITY_MASK) != 0)
-					visible = (keyFlags & INPUT_KEY_VISIBLE) != 0;
-				else if (kvk[vk].asModifiersLR != 0 || kvk[vk].forceToggle != null)
-					visible = true; // Do not suppress modifiers or toggleable keys unless specified by KeyOpt().
-				else
-					visible = treatAsText ? input.VisibleText : input.VisibleNonText;
-
-				if ((keyFlags & END_KEY_ENABLED) != 0) // A terminating keystroke has now occurred unless the shift state isn't right.
-				{
-					var end_if_shift_is_down = (keyFlags & END_KEY_WITH_SHIFT) != 0;
-					var end_if_shift_is_not_down = (keyFlags & END_KEY_WITHOUT_SHIFT) != 0;
-					var shift_is_down = (kbdMsSender.modifiersLRLogical & (MOD_LSHIFT | MOD_RSHIFT)) != 0;
-
-					if (shift_is_down ? end_if_shift_is_down : end_if_shift_is_not_down)
-					{
-						// The shift state is correct to produce the desired end-key.
-						input.EndByKey(vk, sc, input.KeySC[sc] != 0 && (sc != 0 || input.KeyVK[vk] == 0), shift_is_down && !end_if_shift_is_not_down);
-
-						if (!visible)
-							break;
-
-						continue;
-					}
-				}
-
-				// Collect before backspacing, so if VK_BACK was preceded by a dead key, we delete it instead of the
-				// previous char.  For example, {vkDE}{BS} on the US-Intl layout produces '\b (but we discarded \b).
-				if (collectChars)
-					input.CollectChar(new string(ch), charCount);
-
-				// Fix for v2.0: Shift is allowed as it generally has no effect on the native function of Backspace.
-				// This is probably connected with the fact that Shift+BS is also transcribed to `b, which we don't want.
-				if (vk == VK_BACK && input.BackspaceIsUndo
-						&& (kbdMsSender.modifiersLRLogical & ~(MOD_LSHIFT | MOD_RSHIFT)) == 0)
-				{
-					if (input.buffer.Length != 0)
-						input.buffer = input.buffer.Substring(0, input.buffer.Length - 1);
-
-					if ((keyFlags & INPUT_KEY_VISIBILITY_MASK) == 0)// If +S and +V haven't been applied to Backspace...
-						visible = input.VisibleText; // Override VisibleNonText.
-
-					// Fall through to the check below in case this {BS} completed a dead key sequence.
-				}
-
-				if (input.NotifyNonText)
-				{
-					// These flags enable key-up events to be classified as text or non-text based on
-					// whether key-down produced text.
-					if (treatAsText)
-						input.KeyVK[vk] |= INPUT_KEY_IS_TEXT;
-					else
-						input.KeyVK[vk] &= ~INPUT_KEY_IS_TEXT; // In case keyboard layout has changed or similar.
-				}
-
-				// Posting the notifications after CollectChar() might reduce the odds of a race condition.
-				if (((keyFlags & INPUT_KEY_NOTIFY) != 0 || (input.NotifyNonText && !treatAsText))
-						&& input.ScriptObject != null && input.ScriptObject.OnKeyDown != null)
-				{
-					// input is passed because the alternative would require the main thread to
-					// iterate through the Input chain and determine which ones should be notified.
-					// This would mean duplicating much of the logic that's used here, and would be
-					// complicated by the possibility of an Input being terminated while OnKeyDown
-					// is being executed (and thereby breaking the list).
-					// This leaves room only for the bare essential parameters: aVK and aSC.
-					_ = channel.Writer.TryWrite(new KeysharpMsg()
-					{
-						message = (uint)UserMessages.AHK_INPUT_KEYDOWN,
-						obj = input,
-						lParam = new IntPtr(vk),
-						wParam = new IntPtr(sc)
-					});
-					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_KEYDOWN, input, (uint)((sc << 16) | vk));
-				}
-
-				// Seems best to not collect dead key chars by default; if needed, OnDeadChar
-				// could be added, or the script could mark each dead key for OnKeyDown.
-				if (collectChars && input.ScriptObject != null && input.ScriptObject.OnChar != null)
-				{
-					_ = channel.Writer.TryWrite(new KeysharpMsg()
-					{
-						message = (uint)UserMessages.AHK_INPUT_CHAR,
-						obj = input,
-						lParam = new IntPtr(ch[0]),
-						wParam = ch.Length > 1 ? new IntPtr(ch[1]) : IntPtr.Zero
-					});
-					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_CHAR, input, (uint)((ch[1] << 16) | ch[0]));
-				}
-
-				if (!visible)
-				{
-					if (charCount < 0 && treatAsText && input.InProgress())
-					{
-						// This dead key is being treated as text but will be suppressed, so to get the correct
-						// result, we will need to replay the dead key sequence when the next key is collected.
-						pendingDeadKeyInvisible = true;
-					}
-
-					break;
-				}
-			}
-
-			if (input != null) // Early break (invisible input).
-			{
-				if (sc != 0)
-					input.KeySC[sc] |= INPUT_KEY_DOWN_SUPPRESSED;
-				else
-					input.KeyVK[vk] |= INPUT_KEY_DOWN_SUPPRESSED;
-
-				return false;
-			}
-
-			return true;
-		}
-
-		internal override uint ConvertMouseButton(ReadOnlySpan<char> buf, bool allowWheel = true)
-		{
-			if (buf.Length == 0 || buf.StartsWith("Left", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("L", StringComparison.OrdinalIgnoreCase))
-				return VK_LBUTTON; // Some callers rely on this default when buf is empty.
-
-			if (buf.StartsWith("Right", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("R", StringComparison.OrdinalIgnoreCase)) return VK_RBUTTON;
-
-			if (buf.StartsWith("Middle", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("M", StringComparison.OrdinalIgnoreCase)) return VK_MBUTTON;
-
-			if (buf.StartsWith("X1", StringComparison.OrdinalIgnoreCase)) return VK_XBUTTON1;
-
-			if (buf.StartsWith("X2", StringComparison.OrdinalIgnoreCase)) return VK_XBUTTON2;
-
-			if (allowWheel)
-			{
-				if (buf.StartsWith("WheelUp", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WU", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_UP;
-
-				if (buf.StartsWith("WheelDown", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WD", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_DOWN;
-
-				// Lexikos: Support horizontal scrolling in Windows Vista and later.
-				if (buf.StartsWith("WheelLeft", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WL", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_LEFT;
-
-				if (buf.StartsWith("WheelRight", StringComparison.OrdinalIgnoreCase) || buf.StartsWith("WR", StringComparison.OrdinalIgnoreCase)) return VK_WHEEL_RIGHT;
-			}
-
-			return 0;
 		}
 
 		internal override bool IsHotstringWordChar(char ch)
@@ -2195,101 +2187,6 @@ namespace Keysharp.Core.Windows
 			Script.timeLastInputPhysical = Script.timeLastInputKeyboard = DateTime.Now;
 			return true;
 		}
-
-		/// <summary>
-		/// Convert the given virtual key / scan code to its equivalent bitwise modLR value.
-		/// Callers rely upon the fact that we convert a neutral key such as VK_SHIFT into MOD_LSHIFT,
-		/// not the bitwise combo of MOD_LSHIFT|MOD_RSHIFT.
-		/// v1.0.43: VK_SHIFT should yield MOD_RSHIFT if the caller explicitly passed the right vs. left scan code.
-		/// The SendPlay method relies on this to properly release AltGr, such as after "SendPlay @" in German.
-		/// Other things may also rely on it because it is more correct.
-		/// </summary>
-		/// <param name="vk"></param>
-		/// <param name="sc"></param>
-		/// <param name="pIsNeutral"></param>
-		/// <returns></returns>
-		//internal override uint KeyToModifiersLR(uint vk, uint sc, ref bool? isNeutral)
-		//{
-		//  if (vk == 0 && sc == 0)
-		//      return 0;
-
-		//  if (vk != 0) // Have vk take precedence over any non-zero sc.
-		//  {
-		//      switch (vk)
-		//      {
-		//          case VK_SHIFT:
-		//              if (sc == SC_RSHIFT)
-		//                  return MOD_RSHIFT;
-
-		//              //else aSC is omitted (0) or SC_LSHIFT.  Either way, most callers would probably want that considered "neutral".
-		//              if (isNeutral != null)
-		//                  isNeutral = true;
-
-		//              return MOD_LSHIFT;
-
-		//          case VK_LSHIFT: return MOD_LSHIFT;
-
-		//          case VK_RSHIFT: return MOD_RSHIFT;
-
-		//          case VK_CONTROL:
-		//              if (sc == SC_RCONTROL)
-		//                  return MOD_RCONTROL;
-
-		//              //else aSC is omitted (0) or SC_LCONTROL.  Either way, most callers would probably want that considered "neutral".
-		//              if (isNeutral != null)
-		//                  isNeutral = true;
-
-		//              return MOD_LCONTROL;
-
-		//          case VK_LCONTROL: return MOD_LCONTROL;
-
-		//          case VK_RCONTROL: return MOD_RCONTROL;
-
-		//          case VK_MENU:
-		//              if (sc == SC_RALT)
-		//                  return MOD_RALT;
-
-		//              //else aSC is omitted (0) or SC_LALT.  Either way, most callers would probably want that considered "neutral".
-		//              if (isNeutral != null)
-		//                  isNeutral = true;
-
-		//              return MOD_LALT;
-
-		//          case VK_LMENU: return MOD_LALT;
-
-		//          case VK_RMENU: return MOD_RALT;
-
-		//          case VK_LWIN: return MOD_LWIN;
-
-		//          case VK_RWIN: return MOD_RWIN;
-
-		//          default:
-		//              return 0;
-		//      }
-		//  }
-
-		//  // If above didn't return, rely on the scan code instead, which is now known to be non-zero.
-		//  switch (sc)
-		//  {
-		//      case SC_LSHIFT: return MOD_LSHIFT;
-
-		//      case SC_RSHIFT: return MOD_RSHIFT;
-
-		//      case SC_LCONTROL: return MOD_LCONTROL;
-
-		//      case SC_RCONTROL: return MOD_RCONTROL;
-
-		//      case SC_LALT: return MOD_LALT;
-
-		//      case SC_RALT: return MOD_RALT;
-
-		//      case SC_LWIN: return MOD_LWIN;
-
-		//      case SC_RWIN: return MOD_RWIN;
-		//  }
-
-		//  return 0;
-		//}
 
 		/// <summary>
 		/// v1.0.38.06: The keyboard and mouse hooks now call this common function to reduce code size and improve
@@ -4561,7 +4458,7 @@ namespace Keysharp.Core.Windows
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 					wParam = new IntPtr(hotkeyIDToPost),//Would be so much better to eventually pass around object references rather than array indexes.//TODO
-					lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
+					lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
 					obj = variant
 				});
 
@@ -4575,7 +4472,7 @@ namespace Keysharp.Core.Windows
 					{
 						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
 						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
-						lParam = new IntPtr(KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)inputLevel))
+						lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel))
 						//Do not pass the variant.
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK], KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level));
@@ -4842,6 +4739,20 @@ namespace Keysharp.Core.Windows
 			return false;
 		}
 
+		internal override void Unhook()
+		{
+			// PostQuitMessage() might be needed to prevent hang-on-exit.  Once this is done, no message boxes or
+			// other dialogs can be displayed.  MSDN: "The exit value returned to the system must be the wParam
+			// parameter of the WM_QUIT message."  In our case, PostQuitMessage() should announce the same exit code
+			// that we will eventually call exit() with:
+			//Original did these, but HookThread.Stop() will take care of it before this is called.
+			//WindowsAPI.PostQuitMessage(exitCode);
+			AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
+
+			if (Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
+				_ = UnhookWindowsHookEx(Script.playbackHook);
+		}
+
 		/// <summary>
 		/// Caller has ensured that vk has been translated from neutral to left/right if necessary.
 		/// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -4968,20 +4879,6 @@ namespace Keysharp.Core.Windows
 					kbdMsSender.modifiersLRLastPressedTime = DateTime.Now;
 				}
 			} // vk is a modifier key.
-		}
-
-		internal override void Unhook()
-		{
-			// PostQuitMessage() might be needed to prevent hang-on-exit.  Once this is done, no message boxes or
-			// other dialogs can be displayed.  MSDN: "The exit value returned to the system must be the wParam
-			// parameter of the WM_QUIT message."  In our case, PostQuitMessage() should announce the same exit code
-			// that we will eventually call exit() with:
-			//Original did these, but HookThread.Stop() will take care of it before this is called.
-			//WindowsAPI.PostQuitMessage(exitCode);
-			AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
-
-			if (Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
-				_ = WindowsAPI.UnhookWindowsHookEx(Script.playbackHook);
 		}
 
 		/// <summary>
@@ -5269,7 +5166,7 @@ namespace Keysharp.Core.Windows
 
 									break;
 
-								case (uint)WindowsAPI.WM_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
+								case (uint)WM_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								{
 									Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, msg.obj as HotkeyVariant, msg.message);
@@ -5315,7 +5212,7 @@ namespace Keysharp.Core.Windows
 									//return 0;
 									if (tv.priority == 0 && Threads.AnyThreadsAvailable())
 									{
-										if (msg.obj is Keysharp.Core.Common.Input.InputType it
+										if (msg.obj is InputType it
 												&& it.InputRelease() is InputType inputHook
 												&& inputHook.ScriptObject is InputObject so)
 										{
@@ -5560,12 +5457,12 @@ namespace Keysharp.Core.Windows
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
 		//}
-		private bool SystemHasAnotherdHook(ref System.Threading.Mutex existingMutex, string name)
+		private bool SystemHasAnotherdHook(ref Mutex existingMutex, string name)
 		{
 			if (existingMutex != null)
 				existingMutex.Close(); // But don't set it to NULL because we need its value below as a flag.
 
-			var mutex = new System.Threading.Mutex(false, name, out var _); // Create() vs. Open() has enough access to open the mutex if it exists.
+			var mutex = new Mutex(false, name, out var _); // Create() vs. Open() has enough access to open the mutex if it exists.
 			var last_error = GetLastError();
 
 			// Don't check g_KeybdHook because in the case of aChangeIsTemporary, it might be NULL even though
@@ -5576,6 +5473,14 @@ namespace Keysharp.Core.Windows
 				mutex.Close();  // This facilitates other instances of the program getting the proper last_error value.
 
 			return last_error == ERROR_ALREADY_EXISTS;
+		}
+
+		private class DeadKeyRecord
+		{
+			internal uint caps;
+			internal uint modLR;
+			internal uint sc;
+			internal uint vk;
 		}
 	}
 
@@ -5599,4 +5504,5 @@ namespace Keysharp.Core.Windows
 		, GUI_EVENT_WM_COMMAND = GUI_EVENT_NAMED_COUNT
 	};
 }
+
 #endif

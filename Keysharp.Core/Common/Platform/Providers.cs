@@ -4,31 +4,9 @@
 	{
 		internal static ControlManagerBase Manager { get; } =
 #if WINDOWS
-			new Windows.ControlManager()
+			new ControlManager()
 #elif LINUX
 			new Linux.ControlManager()
-#endif
-		;
-	}
-
-	internal static class WindowProvider
-	{
-		internal static WindowManagerBase Manager { get; } =
-#if WINDOWS
-			new Windows.WindowManager()
-#elif LINUX
-			new Linux.WindowManager()
-#endif
-		;
-	}
-
-	internal static class PlatformProvider
-	{
-		internal static PlatformManagerBase Manager { get; } =
-#if WINDOWS
-			new Windows.PlatformManager()
-#elif LINUX
-			new Linux.PlatformManager()
 #endif
 		;
 	}
@@ -50,6 +28,17 @@
 		}
 	}
 
+	internal static class PlatformProvider
+	{
+		internal static PlatformManagerBase Manager { get; } =
+#if WINDOWS
+			new PlatformManager()
+#elif LINUX
+			new Linux.PlatformManager()
+#endif
+		;
+	}
+
 	internal static class StatusBarProvider
 	{
 		/// <summary>
@@ -60,10 +49,21 @@
 		internal static StatusBarBase CreateStatusBar(IntPtr hwnd)
 		{
 #if WINDOWS
-			return new Windows.StatusBar(hwnd);
+			return new StatusBar(hwnd);
 #elif LINUX
 			return new Linux.StatusBar(hwnd);
 #endif
 		}
+	}
+
+	internal static class WindowProvider
+	{
+		internal static WindowManagerBase Manager { get; } =
+#if WINDOWS
+			new WindowManager()
+#elif LINUX
+			new Linux.WindowManager()
+#endif
+		;
 	}
 }

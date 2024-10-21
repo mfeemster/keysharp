@@ -15,7 +15,7 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowLoop()
 		{
-			Keysharp.Core.Flow.Init();
+			Flow.Init();
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);
@@ -55,7 +55,7 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowLoopReg()
 		{
-			Keysharp.Core.Flow.Init();
+			Flow.Init();
 
 			try
 			{
@@ -76,7 +76,7 @@ namespace Keysharp.Tests
 			//
 			Registrys.RegWrite("stringone\nstringtwo\nstringthree", "REG_MULTI_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
-			Assert.AreEqual(Keysharp.Core.Misc.Array("stringone", "stringtwo", "stringthree"), val);
+			Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
 			//
 			Registrys.RegWrite(1, "REG_DWORD", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
@@ -88,12 +88,12 @@ namespace Keysharp.Tests
 			//
 			Registrys.RegWrite("AABBCCDD", "REG_BINARY", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
-			Assert.AreEqual(Keysharp.Core.Misc.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
+			Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
 			//
 			var i = 0;
 
 			//
-			foreach (var reg in Loops.LoopRegistry(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr"))
+			foreach (var reg in LoopRegistry(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr"))
 			{
 				val = Registrys.RegRead(null, null, "testdefault");
 
@@ -120,21 +120,21 @@ namespace Keysharp.Tests
 				}
 				else if (i == 3)
 				{
-					Assert.AreEqual(Keysharp.Core.Misc.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
+					Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
 					Assert.AreEqual("REG_BINARY", Accessors.A_LoopRegType);
 					Assert.AreEqual("bin1", Accessors.A_LoopRegName);
 					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);
 				}
 				else if (i == 4)
 				{
-					Assert.AreEqual(Keysharp.Core.Misc.Array("stringone", "stringtwo", "stringthree"), val);
+					Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
 					Assert.AreEqual("KEY", Accessors.A_LoopRegType);
 					Assert.AreEqual("ks_sub1", Accessors.A_LoopRegName);
 					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1", Accessors.A_LoopRegKey);
 				}
 				else if (i == 5)
 				{
-					Assert.AreEqual(Keysharp.Core.Misc.Array("stringone", "stringtwo", "stringthree"), val);
+					Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
 					Assert.AreEqual("REG_MULTI_SZ", Accessors.A_LoopRegType);
 					Assert.AreEqual("", Accessors.A_LoopRegName);
 					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1", Accessors.A_LoopRegKey);
@@ -197,7 +197,7 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowWhile()
 		{
-			Keysharp.Core.Flow.Init();
+			Flow.Init();
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);

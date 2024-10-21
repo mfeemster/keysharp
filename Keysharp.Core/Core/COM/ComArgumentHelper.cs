@@ -3,10 +3,9 @@ namespace Keysharp.Core.COM
 {
 	internal class ComArgumentHelper : ArgumentHelper
 	{
+		internal static char[] pointerChars = [' ', '*', 'p', 'P'];
 		internal nint[] args;
 		internal HashSet<nint> bstrs;
-		internal static char[] pointerChars = [' ', '*', 'p', 'P'];
-
 		internal ComArgumentHelper(object[] parameters)
 			: base(parameters)
 		{

@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Flow;
+﻿using Keysharp.Core.Common;
+using static Keysharp.Core.Flow;
 using static Keysharp.Core.Loops;
 using static Keysharp.Scripting.Script;
 using static Keysharp.Scripting.Script.Operator;
@@ -127,7 +128,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Keysharp.Scripting.Script.Variables.InitGlobalVars();
+			Variables.InitGlobalVars();
 			Size = 1000000;
 			totalSum = Size;
 			cl = new myclass();

@@ -592,7 +592,7 @@ namespace Keysharp.Scripting
 						}
 						else
 						{
-							var span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(parts);
+							var span = CollectionsMarshal.AsSpan(parts);
 							var paren = ExtractRange(parts, n, n + ParseBalancedArray(span.Slice(i)));
 							parts.RemoveAt(n);
 
@@ -619,7 +619,7 @@ namespace Keysharp.Scripting
 							{
 								var argi = 0;
 								var paramExprs = new List<CodeExpression>();
-								var parenspan = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(paren);
+								var parenspan = CollectionsMarshal.AsSpan(paren);
 
 								while (argi < paren.Count)
 								{
@@ -868,7 +868,7 @@ namespace Keysharp.Scripting
 					{
 						var assignIndex = parts.FindIndex(0, parts.Count, o => o is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign);
 						var cmieIndex = parts.FindIndex(0, parts.Count, o => o is CodeMethodInvokeExpression cmie);
-						var ctrpaa = new CodeTypeReference(typeof(System.ParamArrayAttribute));
+						var ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
 						var cad = new CodeAttributeDeclaration(ctrpaa);
 						var cmd = new CodeMemberMethod
 						{

@@ -2,12 +2,19 @@
 {
 	public static class ObjectExtensions
 	{
-		/// <summary>
-		/// V2 version name of Enum().
-		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
-		public static IEnumerator __Enum(this IEnumerable obj, params object[] values) => obj.GetEnumerator();
+		public static bool Ab(this object obj, bool def = default) => obj != null ? obj.ParseBool() ?? def : def;
+
+		public static double Ad(this object obj, double def = default) => obj != null ? obj.ParseDouble().Value : def;
+
+		public static float Af(this object obj, float def = default) => obj != null ? obj.ParseFloat().Value : def;
+
+		public static int Ai(this object obj, int def = default) => obj != null ? obj.ParseInt().Value : def;
+
+		public static long Al(this object obj, long def = default) => obj != null ? obj.ParseLong().Value : def;
+
+		public static string As(this object obj, string def = "") => obj != null ? obj.ToString() : def;
+
+		public static uint Aui(this object obj, uint def = default) => obj != null ? obj.ParseUInt().Value : def;
 
 		public static T CastTo<T>(this object o) => (T)o;
 
@@ -26,20 +33,20 @@
 			if (y == null) throw new ArgumentNullException("y");
 
 			var oldLen = x.Length;
-			Array.Resize<T>(ref x, x.Length + y.Length);
+			Array.Resize(ref x, x.Length + y.Length);
 			Array.Copy(y, 0, x, oldLen, y.Length);
 			return x;
 		}
 
-		public static System.Windows.Forms.Control GetControl(this object obj)
+		public static Control GetControl(this object obj)
 		{
-			if (obj is Keysharp.Core.Gui gui)
+			if (obj is Gui gui)
 				return gui.form;
-			else if (obj is Keysharp.Core.GuiControl ctrl)
+			else if (obj is GuiControl ctrl)
 				return ctrl.Control;
-			else if (obj is Keysharp.Core.Menu menu)
+			else if (obj is Menu menu)
 				return menu.GetMenu();
-			else if (obj is System.Windows.Forms.Control control)//Final check in the event it's some kind of native control or form.
+			else if (obj is Control control)//Final check in the event it's some kind of native control or form.
 				return control;
 
 			return null;
@@ -51,9 +58,11 @@
 
 		public static bool IsAlmostZero(this double d, double tolerance) => d > -tolerance&& d < tolerance;
 
+		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& ((result.ParseLong(false) is long l&& l != 0) || result.ParseBool().IsTrue() || (result is string s&& s != ""));
+
 		public static bool IsFalse(this bool? b) => b.HasValue&& !b.Value;
 
-		public static bool IsKeysharpGui(this object obj) => obj is Keysharp.Core.Gui || obj is Keysharp.Core.GuiControl || obj is Keysharp.Core.Menu;
+		public static bool IsKeysharpGui(this object obj) => obj is Gui || obj is GuiControl || obj is Menu;
 
 		public static bool IsNotNullOrEmpty(this object obj) => obj != null&& !(obj is string s&& s?.Length == 0);
 
@@ -61,22 +70,19 @@
 
 		public static bool IsTrue(this bool? b) => b.HasValue&& b.Value;
 
-		//public static IList L(this object[] obj) => obj.Length > 0 && obj[0] is IList oo ? oo : obj;
 		public static IList L(this object[] obj) => obj.Flatten().Cast<object>().ToList();
 
 		public static IList L(this IEnumerable obj) => obj.Flatten().Cast<object>().ToList();
-
-		//public static IList L(this ReadOnlyMemory<object> obj) => System.Runtime.InteropServices.MemoryMarshal.ToEnumerable(obj).Flatten().Cast<object>().ToList();
 
 		public static bool? ParseBool(this object obj)
 		{
 			if (obj is bool b)
 				return b;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseBool();
 
-			return Keysharp.Core.Options.OnOff(obj);
+			return Options.OnOff(obj);
 		}
 
 		public static decimal? ParseDecimal(this object obj, bool doconvert = true, bool requiredot = false)
@@ -87,7 +93,7 @@
 			if (obj is long l)
 				return l;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseDecimal(doconvert, requiredot);
 
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
@@ -122,7 +128,7 @@
 			if (obj is long l)
 				return l;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseDouble(doconvert, requiredot);
 
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
@@ -157,7 +163,7 @@
 			if (obj is long l)
 				return l;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseFloat(doconvert, requiredot);
 
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
@@ -192,7 +198,7 @@
 			if (obj is long l)
 				return (int)l;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseInt(doconvert);
 
 			var s = obj.ToString().AsSpan();
@@ -215,8 +221,8 @@
 				s = s.Slice(1);
 			}
 
-			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-					int.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
+			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+					int.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii))
 				return neg ? -ii : ii;
 
 			if (donoprefixhex)
@@ -231,7 +237,7 @@
 			if (obj is long l)
 				return l;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseLong(doconvert);
 
 			var s = obj.ToString().AsSpan();
@@ -254,8 +260,8 @@
 				s = s.Slice(1);
 			}
 
-			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-					long.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
+			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+					long.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii))
 				return neg ? -ii : ii;
 
 			if (donoprefixhex)
@@ -265,14 +271,14 @@
 			return doconvert ? Convert.ToInt64(obj) : new long? ();
 		}
 
-		public static object ParseObject(this object obj) => obj is Keysharp.Scripting.BoolResult br ? br.o : obj;
+		public static object ParseObject(this object obj) => obj is BoolResult br ? br.o : obj;
 
 		public static uint? ParseUInt(this object obj, bool doconvert = true, bool donoprefixhex = true)
 		{
 			if (obj is uint i)
 				return i;
 
-			if (obj is Keysharp.Scripting.BoolResult br)
+			if (obj is BoolResult br)
 				return br.o.ParseUInt(doconvert);
 
 			var s = obj.ToString().AsSpan();
@@ -287,8 +293,8 @@
 				if (uint.TryParse(s.Slice(0, s.Length - 1), out i))
 					return i;
 
-			if (s.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
-					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out var ii))
+			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii))
 				return ii;
 
 			if (donoprefixhex)

@@ -110,7 +110,7 @@
 			task = null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = Keysharp.Scripting.Script.uninterruptibleTime;
+			uninterruptibleDuration = Script.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
 			controlDelay = Accessors.A_ControlDelay.Al();
 			coords = null;

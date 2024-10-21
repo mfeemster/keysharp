@@ -69,7 +69,7 @@
 		public override int GetHashCode() => Value.GetHashCode();
 	}
 
-	public static class GraphicsExtensions
+	internal static class GraphicsExtensions
 	{
 		internal static bool CompareWithVar(this FastColor col, FastColor match, int variation)
 		{
@@ -106,7 +106,7 @@
 			return bmp2;
 		}
 
-		internal static Keysharp.Core.Map ToPos(this Rectangle rect, double scale = 1.0) => new Keysharp.Core.Map(new Dictionary<object, object>()
+		internal static Map ToPos(this Rectangle rect, double scale = 1.0) => new Map(new Dictionary<object, object>()
 		{
 			{ "X", rect.Left * scale },
 			{ "Y", rect.Top * scale },

@@ -7,10 +7,10 @@ namespace Keysharp.Core.Common.Window
 		internal double distanceFound = 0.0;
 		internal IntPtr hwndFound = IntPtr.Zero;
 		internal bool ignoreDisabled = false;
-		internal System.Drawing.Point pt;
-		internal System.Drawing.Rectangle rectFound = new ();
+		internal Point pt;
+		internal Rectangle rectFound = new ();
 
-		internal PointAndHwnd(System.Drawing.Point p) => pt = p;
+		internal PointAndHwnd(Point p) => pt = p;
 	}
 
 	/// <summary>
@@ -127,7 +127,7 @@ namespace Keysharp.Core.Common.Window
 			{
 				try
 				{
-					var proc = System.Diagnostics.Process.GetProcessById((int)PID);
+					var proc = Process.GetProcessById((int)PID);
 					return proc.MainModule.FileName;
 				}
 				catch
@@ -147,7 +147,7 @@ namespace Keysharp.Core.Common.Window
 
 				try
 				{
-					var proc = System.Diagnostics.Process.GetProcessById((int)PID);
+					var proc = Process.GetProcessById((int)PID);
 					filename = proc.MainModule.ModuleName;
 				}
 				catch
@@ -201,9 +201,9 @@ namespace Keysharp.Core.Common.Window
 		/// <param name="location"></param>
 		internal abstract void ClickRight(Point? location = null);
 
-		internal abstract System.Drawing.Point ClientToScreen();
+		internal abstract Point ClientToScreen();
 
-		internal virtual void ClientToScreen(ref System.Drawing.Point pt) => pt = ClientToScreen();
+		internal virtual void ClientToScreen(ref Point pt) => pt = ClientToScreen();
 
 		internal abstract bool Close();
 
@@ -336,7 +336,7 @@ namespace Keysharp.Core.Common.Window
 		private static void DoDelay(long delay)
 		{
 			if (delay >= 0)
-				Keysharp.Core.Flow.Sleep(delay);
+				Flow.Sleep(delay);
 		}
 
 		private static bool TitleCompare(string a, string b, StringComparison comp = StringComparison.CurrentCulture)
@@ -376,7 +376,7 @@ namespace Keysharp.Core.Common.Window
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					return false;
 
-				Keysharp.Core.Flow.Sleep(Delay);
+				Flow.Sleep(Delay);
 			}
 
 			return true;

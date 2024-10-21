@@ -102,25 +102,25 @@
 		public object OnChar
 		{
 			get => onChar;
-			set => onChar = Keysharp.Core.Function.GetFuncObj(value, null, true);
+			set => onChar = Functions.GetFuncObj(value, null, true);
 		}
 
 		public object OnEnd
 		{
 			get => onEnd;
-			set => onEnd = Keysharp.Core.Function.GetFuncObj(value, null, true);
+			set => onEnd = Functions.GetFuncObj(value, null, true);
 		}
 
 		public object OnKeyDown
 		{
 			get => onKeyDown;
-			set => onKeyDown = Keysharp.Core.Function.GetFuncObj(value, null, true);
+			set => onKeyDown = Functions.GetFuncObj(value, null, true);
 		}
 
 		public object OnKeyUp
 		{
 			get => onKeyUp;
-			set => onKeyUp = Keysharp.Core.Function.GetFuncObj(value, null, true);
+			set => onKeyUp = Functions.GetFuncObj(value, null, true);
 		}
 
 		public object Timeout
@@ -251,7 +251,7 @@
 			var tickStart = DateTime.Now;
 
 			while (input.InProgress() && (DateTime.Now - tickStart).TotalMilliseconds < ms)
-				Keysharp.Core.Flow.Sleep(20);
+				Flow.Sleep(20);
 		}
 	}
 }

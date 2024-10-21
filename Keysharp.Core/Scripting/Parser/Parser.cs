@@ -64,6 +64,7 @@ namespace Keysharp.Scripting
 			":",
 			"["
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> contExprOperatorsAlt = contExprOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static List<string> contExprOperatorsList = contExprOperators.ToList();
@@ -79,6 +80,7 @@ namespace Keysharp.Scripting
 			"not",
 			"or"
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> exprVerbalOperatorsAlt = exprVerbalOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static FrozenSet<string> flowOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -108,6 +110,7 @@ namespace Keysharp.Scripting
 			//FlowSet,
 			FlowThrow
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> flowOperatorsAlt = flowOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -153,6 +156,7 @@ namespace Keysharp.Scripting
 			FlowGet,
 			FlowSet
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal bool ErrorStdOut;
@@ -184,25 +188,16 @@ namespace Keysharp.Scripting
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = new Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>>();
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = new CodeAttributeDeclarationCollection();
 		private readonly HashSet<CodeSnippetExpression> assignSnippets = new ();
-		private bool blockOpen;
 		private readonly Stack<CodeBlock> blocks = new ();
-		private uint caseCount;
 		private readonly CompilerHelper Ch;
-		private List<CodeLine> codeLines = new List<CodeLine>();
 		private readonly Stack<List<string>> currentFuncParams = new Stack<List<string>>();
 		private readonly Stack<CodeStatementCollection> elses = new ();
 		private readonly Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
-		private uint exCount;
-		private string fileName;
 		private readonly tsmd getMethodCalls = new tsmd();
 		private readonly tsmd getPropertyValueCalls = new tsmd();
 		private readonly Stack<List<string>> globalFuncVars = new Stack<List<string>>();
 		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = new Dictionary<CodeGotoStatement, CodeBlock>();
-		private int internalID;
 		private readonly List<CodeMethodInvokeExpression> invokes = new List<CodeMethodInvokeExpression>();
-		private int labelCount;
-		private string lastHotkeyFunc = "";
-		private string lastHotstringFunc = "";
 		private readonly Stack<List<string>> localFuncVars = new Stack<List<string>>();
 
 		private readonly CodeMemberMethod main = new CodeMemberMethod()
@@ -212,11 +207,8 @@ namespace Keysharp.Scripting
 		};
 
 		private readonly CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
-		private bool memberVarsStatic = false;
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = new Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>>();
 		private readonly char[] ops = [Equal, Not, Greater, Less];
-		private CodeStatementCollection parent;
-		private CodeBlock parentBlock;
 		private readonly CodeStatementCollection prepend = new CodeStatementCollection();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = new Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>>();
 		private readonly tsmd setPropertyValueCalls = new tsmd();
@@ -224,12 +216,24 @@ namespace Keysharp.Scripting
 		private readonly List<CodeMethodInvokeExpression> stackedHotkeys = new List<CodeMethodInvokeExpression>();
 		private readonly List<CodeMethodInvokeExpression> stackedHotstrings = new List<CodeMethodInvokeExpression>();
 		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = new Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>>();
-		private uint switchCount;
 		private readonly Stack<CodeSwitchStatement> switches = new ();
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly Stack<CodeTernaryOperatorExpression> ternaries = new ();
-		private uint tryCount;
 		private readonly Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+		private bool blockOpen;
+		private uint caseCount;
+		private List<CodeLine> codeLines = new List<CodeLine>();
+		private uint exCount;
+		private string fileName;
+		private int internalID;
+		private int labelCount;
+		private string lastHotkeyFunc = "";
+		private string lastHotstringFunc = "";
+		private bool memberVarsStatic = false;
+		private CodeStatementCollection parent;
+		private CodeBlock parentBlock;
+		private uint switchCount;
+		private uint tryCount;
 
 		public Parser(CompilerHelper ch)
 		{
@@ -276,6 +280,7 @@ namespace Keysharp.Scripting
 			mainNs.Imports.Add(new CodeNamespaceImport("System.Threading.Tasks"));
 			mainNs.Imports.Add(new CodeNamespaceImport("System.Windows.Forms"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core"));
+			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Core.Common"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Keysharp.Scripting"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Array = Keysharp.Core.Array"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Buffer = Keysharp.Core.Buffer"));
@@ -616,7 +621,7 @@ namespace Keysharp.Scripting
 				});
 			}
 
-			var ctrpaa = new CodeTypeReference(typeof(System.ParamArrayAttribute));
+			var ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
 			var cad = new CodeAttributeDeclaration(ctrpaa);
 			var cdpeArgs = new CodeParameterDeclarationExpression(typeof(object[]), "args");
 			_ = cdpeArgs.CustomAttributes.Add(cad);

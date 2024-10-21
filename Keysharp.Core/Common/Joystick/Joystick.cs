@@ -146,7 +146,7 @@
 			if (joy == JoyControls.Invalid) // Currently never called this way.
 				return false; // And leave aToken set to blank.
 
-			var joyIsButton = Joystick.IsJoystickButton(joy);
+			var joyIsButton = IsJoystickButton(joy);
 			var jc = new JOYCAPS();
 
 			if (!joyIsButton && joy != JoyControls.Pov)

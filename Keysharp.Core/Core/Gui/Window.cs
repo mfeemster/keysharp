@@ -518,7 +518,7 @@ namespace Keysharp.Core
 
 		public static long WinGetStyle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Style : 0L);
 
-		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : [ "" ]));
+		public static string WinGetText(params object[] obj) => DoDelayedFunc(() => string.Join(Keywords.Keyword_Linefeed, SearchWindow(obj, true) is WindowItem win ? win.Text : [""]));
 
 		public static string WinGetTitle(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.Title : "");
 
@@ -571,13 +571,13 @@ namespace Keysharp.Core
 
 		public static void WinMaximize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Maximized));
 
+		public static void WinMaximizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MaximizeAll);
+
 		public static void WinMinimize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Minimized));
 
 		public static void WinMinimizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MinimizeAll);
 
 		public static void WinMinimizeAllUndo(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MinimizeAllUndo);
-
-		public static void WinMaximizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MaximizeAll);
 
 		public static void WinMove(params object[] obj)
 		{
@@ -622,6 +622,7 @@ namespace Keysharp.Core
 		public static void WinSetExStyle(params object[] obj) => WinSetStyleHelper(obj, true);
 
 #if WINDOWS
+
 		public static void WinSetRegion(params object[] obj)
 		{
 			var (options, title, text, excludeTitle, excludeText) = obj.S1O1S3();
@@ -706,6 +707,7 @@ namespace Keysharp.Core
 
 			WindowItemBase.DoWinDelay();
 		}
+
 #endif
 
 		public static void WinSetStyle(params object[] obj) => WinSetStyleHelper(obj, false);
@@ -860,6 +862,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
+
 #if LINUX
 		[PublicForTestOnly]
 		public static long zzzLinuxTester(params object[] obj)

@@ -192,7 +192,7 @@ namespace Keysharp.Scripting
 
 				//Now get the value portion, which comes after the : char.
 				var subs = new List<List<object>>();
-				var span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(parts);
+				var span = CollectionsMarshal.AsSpan(parts);
 				var tempparts = ParseObjectValue(span.Slice(i));
 
 				if (splits.Count > 0)

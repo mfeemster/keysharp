@@ -6,7 +6,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Concrete implementation of WindowItem for the Windows platfrom.
 	/// </summary>
-	internal class WindowItem : Common.Window.WindowItemBase
+	internal class WindowItem : WindowItemBase
 	{
 		private static bool triedKeyUp = false;
 
@@ -328,26 +328,6 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		/// <summary>
-		/// Left-Clicks on this window/control
-		/// </summary>
-		/// <param name="location"></param>
-		internal override void Click(Point? location = null)
-		{
-			SendMouseEvent((uint)MOUSEEVENTF.LEFTDOWN, location);
-			SendMouseEvent((uint)MOUSEEVENTF.LEFTUP, location);
-		}
-
-		/// <summary>
-		/// Right-Clicks on this window/control
-		/// </summary>
-		/// <param name="location"></param>
-		internal override void ClickRight(Point? location = null)
-		{
-			SendMouseEvent((uint)MOUSEEVENTF.RIGHTDOWN, location);
-			SendMouseEvent((uint)MOUSEEVENTF.RIGHTUP, location);
-		}
-
 		internal override bool Visible
 		{
 			get => IsSpecified&& WindowsAPI.IsWindowVisible(Handle);
@@ -622,7 +602,7 @@ namespace Keysharp.Core.Windows
 					if (updateIt)
 					{
 						pah.hwndFound = hwnd;
-						pah.rectFound = new System.Drawing.Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top); // And at least one caller uses this returned rect.
+						pah.rectFound = new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top); // And at least one caller uses this returned rect.
 						pah.distanceFound = distance;
 					}
 				}
@@ -631,9 +611,29 @@ namespace Keysharp.Core.Windows
 			}, 0);
 		}
 
-		internal override System.Drawing.Point ClientToScreen()
+		/// <summary>
+		/// Left-Clicks on this window/control
+		/// </summary>
+		/// <param name="location"></param>
+		internal override void Click(Point? location = null)
 		{
-			var pt = new System.Drawing.Point();
+			SendMouseEvent((uint)MOUSEEVENTF.LEFTDOWN, location);
+			SendMouseEvent((uint)MOUSEEVENTF.LEFTUP, location);
+		}
+
+		/// <summary>
+		/// Right-Clicks on this window/control
+		/// </summary>
+		/// <param name="location"></param>
+		internal override void ClickRight(Point? location = null)
+		{
+			SendMouseEvent((uint)MOUSEEVENTF.RIGHTDOWN, location);
+			SendMouseEvent((uint)MOUSEEVENTF.RIGHTUP, location);
+		}
+
+		internal override Point ClientToScreen()
+		{
+			var pt = new Point();
 			_ = WindowsAPI.ClientToScreen(Handle, ref pt);
 			var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 			pt.X = (int)(scale * pt.X);
@@ -713,7 +713,7 @@ namespace Keysharp.Core.Windows
 			var i = 0;
 
 			while (Exists && i++ < 5)
-				System.Threading.Thread.Sleep(0);
+				Thread.Sleep(0);
 
 			if (!Exists)
 				return true;
@@ -796,4 +796,5 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+
 #endif

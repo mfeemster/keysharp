@@ -7,11 +7,11 @@ namespace Keysharp.Tests
 		[Test, Category("Sound")]
 		public void SoundBeep()
 		{
-			Keysharp.Core.Sound.SoundBeep();
-			Keysharp.Core.Sound.SoundBeep(700, 500);
-			Keysharp.Core.Sound.SoundBeep(800, 500);
-			Keysharp.Core.Sound.SoundBeep(900, 500);
-			Keysharp.Core.Sound.SoundBeep(1000, 500);
+			Sound.SoundBeep();
+			Sound.SoundBeep(700, 500);
+			Sound.SoundBeep(800, 500);
+			Sound.SoundBeep(900, 500);
+			Sound.SoundBeep(1000, 500);
 			Assert.IsTrue(TestScript("sound-soundbeep", true));
 		}
 	}

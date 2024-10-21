@@ -4,6 +4,7 @@ namespace Keysharp.Core
 	{
 		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
 		internal static readonly ToggleStates toggleStates = new ToggleStates();
+
 		internal static bool blockInput;
 		internal static ToggleValueType blockInputMode = ToggleValueType.Default;
 		internal static bool blockMouseMove;
@@ -54,6 +55,7 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		public static bool CaretGetPos(ref long outputVarX, ref long outputVarY)
 		{
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
@@ -90,6 +92,7 @@ namespace Keysharp.Core
 			outputVarY = pt.Y;
 			return true;
 		}
+
 #endif
 
 		public static string GetKeyName(object obj) => GetKeyNamePrivate(obj.As(), 0) as string;
@@ -106,8 +109,8 @@ namespace Keysharp.Core
 		{
 			var keyname = obj0.As();
 			var mode = obj1.As();
-			var ht = Scripting.Script.HookThread;
-			Keysharp.Core.Common.Joystick.JoyControls joy;
+			var ht = Script.HookThread;
+			JoyControls joy;
 			uint? joystickid = 0u;
 			uint? dummy = null;
 			var vk = ht.TextToVK(keyname, ref dummy, false, true, PlatformProvider.Manager.GetKeyboardLayout(0));
@@ -145,7 +148,7 @@ namespace Keysharp.Core
 
 			if (obj1 != null)
 			{
-				fo = Function.GetFuncObj(obj1, null);//Don't throw on failure because returning null is a valid action.
+				fo = Functions.GetFuncObj(obj1, null);//Don't throw on failure because returning null is a valid action.
 				var tv = Threads.GetThreadVariables();
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
@@ -182,7 +185,7 @@ break_twice:;
 		{
 			var name = obj0.As();
 			var replacement = obj1;
-			var ht = Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var xOption = false;
 			var action = replacement as string;
@@ -198,7 +201,7 @@ break_twice:;
 			}
 			else if (string.Compare(name, "MouseReset", true) == 0) // "MouseReset, true" seems more intuitive than "NoMouse, false"
 			{
-				var previousValue = Scripting.Script.hsResetUponMouseClick;
+				var previousValue = Script.hsResetUponMouseClick;
 
 				if (replacement != null)
 				{
@@ -206,9 +209,9 @@ break_twice:;
 
 					if (val != null)
 					{
-						Scripting.Script.hsResetUponMouseClick = val.Value;
+						Script.hsResetUponMouseClick = val.Value;
 
-						if (Scripting.Script.hsResetUponMouseClick != previousValue && HotstringManager.enabledCount != 0) // No need if there aren't any hotstrings.
+						if (Script.hsResetUponMouseClick != previousValue && HotstringManager.enabledCount != 0) // No need if there aren't any hotstrings.
 							HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // Install the hook if needed, or uninstall if no longer needed.
 					}
 				}
@@ -268,7 +271,7 @@ break_twice:;
 			if (replacement != null)
 			{
 				if (xOption)
-					ifunc = Function.GetFuncObj(replacement, null);
+					ifunc = Functions.GetFuncObj(replacement, null);
 				else if (executeAction)
 					throw new ValueError("The 'X' option must be used together with a function object.");
 			}
@@ -368,11 +371,11 @@ break_twice:;
 			{
 				var max = Math.Clamp(obj0.Al(), 0, 500);
 
-				if (Scripting.Script.HookThread is Keysharp.Core.Common.Threading.HookThread ht)
+				if (Script.HookThread is HookThread ht)
 				{
 					if (ht.HasEitherHook())
 					{
-						_ = ht.PostMessage(new Keysharp.Core.Common.Threading.KeysharpMsg()
+						_ = ht.PostMessage(new KeysharpMsg()
 						{
 							message = (uint)UserMessages.AHK_HOOK_SET_KEYHISTORY,
 							wParam = new IntPtr(max)
@@ -382,11 +385,11 @@ break_twice:;
 						ht.keyHistory = new KeyHistory((int)max);
 				}
 			}
-			else if (Scripting.Script.mainWindow != null)
+			else if (Script.mainWindow != null)
 			{
-				Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
+				Script.mainWindow.CheckedBeginInvoke(() =>
 				{
-					Scripting.Script.mainWindow.ShowHistory();
+					Script.mainWindow.ShowHistory();
 				});
 			}
 		}
@@ -420,7 +423,7 @@ break_twice:;
 			KeyStateTypes keyStateType;
 			var joy = JoyControls.Invalid;
 			uint? joystickId = 0;
-			var ht = Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			uint? modLR = null;
 
@@ -487,9 +490,9 @@ break_twice:;
 				}
 
 				// Must cast to int or any negative result will be lost due to DWORD type:
-				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Scripting.Script.SLEEP_INTERVAL_HALF)
+				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Script.SLEEP_INTERVAL_HALF)
 				{
-					Flow.Sleep(Scripting.Script.SLEEP_INTERVAL);
+					Flow.Sleep(Script.SLEEP_INTERVAL);
 					//MsgSleep() might not even be needed if we use real threads//TODO
 					//if (Keysharp.Scripting.Script.MsgSleep(Keysharp.Scripting.Script.INTERVAL_UNSPECIFIED)) // INTERVAL_UNSPECIFIED performs better.
 					//{
@@ -510,19 +513,19 @@ break_twice:;
 		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero), true, true);
 		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
 
-		public static void Send(object obj) => Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+		public static void Send(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
 
-		public static void SendEvent(object obj) => Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+		public static void SendEvent(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
 
-		public static void SendInput(object obj) => Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+		public static void SendInput(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
 
 		public static void SendLevel(object obj) => Accessors.A_SendLevel = obj;
 
 		public static void SendMode(object obj) => Accessors.A_SendMode = obj;
 
-		public static void SendPlay(object obj) => Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+		public static void SendPlay(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
 
-		public static void SendText(object obj) => Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+		public static void SendText(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
 
 		public static void SetCapsLockState(object obj) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
 
@@ -581,7 +584,7 @@ break_twice:;
 
 		internal static string GetKeyNameHelper(uint vk, uint sc, string def = "not found")
 		{
-			var ht = Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var buf = ""; // Set default.
 
 			if (vk == 0 && sc == 0)
@@ -636,7 +639,7 @@ break_twice:;
 		/// <returns>true if down, else false</returns>
 		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
 		{
-			var ht = Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			if (vk == 0) // Assume "up" if indeterminate.
@@ -685,7 +688,7 @@ break_twice:;
 
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
-			var ht = Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var vk = 0u;
 			var sc = 0u;
@@ -731,7 +734,7 @@ break_twice:;
 		private static void SetToggleState(uint vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Conversions.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);
-			var ht = Scripting.Script.HookThread;
+			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			switch (toggle)

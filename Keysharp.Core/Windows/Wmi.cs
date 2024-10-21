@@ -45,4 +45,5 @@ namespace Keysharp.Core.Windows
 		}
 	}
 }
+
 #endif

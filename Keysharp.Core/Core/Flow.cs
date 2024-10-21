@@ -1,3 +1,4 @@
+using static Keysharp.Core.Errors;
 using Timer = System.Timers.Timer;
 
 namespace Keysharp.Core
@@ -137,7 +138,7 @@ namespace Keysharp.Core
 			}, true);
 			var start = DateTime.Now;
 
-			while (!Flow.hasExited && (DateTime.Now - start).TotalSeconds < 5)
+			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 				Sleep(500);
 		}
 
@@ -147,13 +148,13 @@ namespace Keysharp.Core
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsTrueAndRunning(object obj) => !hasExited&& Keysharp.Scripting.Script.ForceBool(obj);
+		public static bool IsTrueAndRunning(object obj) => !hasExited&& Script.ForceBool(obj);
 
 		/// <summary>
 		/// Specifies a label to run automatically when the program exits.
 		/// </summary>
 		/// <param name="label">The name of a label. Leave blank to remove an existing label, if any.</param>
-		public static void OnExit(object obj0, object obj1 = null) => Script.onExitHandlers.ModifyEventHandlers(Function.GetFuncObj(obj0, null, true), obj1.Al(1L));
+		public static void OnExit(object obj0, object obj1 = null) => Script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(obj0, null, true), obj1.Al(1L));
 
 		/// <summary>
 		/// Specifies a function to call automatically when the program receives the specified message.
@@ -172,7 +173,7 @@ namespace Keysharp.Core
 			else if (maxInstances < 0)
 				monitor.maxInstances = (int)(-maxInstances);
 
-			monitor.funcs.ModifyEventHandlers(Function.GetFuncObj(obj1, null, true), maxInstances);
+			monitor.funcs.ModifyEventHandlers(Functions.GetFuncObj(obj1, null, true), maxInstances);
 
 			if (maxInstances == 0 && monitor.funcs.Count == 0)
 				_ = GuiHelper.onMessageHandlers.TryRemove(msg, out var _);
@@ -270,7 +271,7 @@ namespace Keysharp.Core
 				if (cachedFuncObj.TryGetValue(s, out var tempfunc))
 					func = tempfunc;
 				else
-					cachedFuncObj[s] = func = Keysharp.Core.Misc.FuncObj(s);
+					cachedFuncObj[s] = func = Functions.FuncObj(s);
 			}
 
 			if (function != null && func == null)
@@ -353,7 +354,7 @@ namespace Keysharp.Core
 					{
 						t.Enabled = false;
 
-						var remove = !Misc.TryCatch(() =>
+						var remove = !TryCatch(() =>
 						{
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
 							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
@@ -373,7 +374,7 @@ namespace Keysharp.Core
 					}
 				}
 			};
-			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(timer.Start, true);
+			Script.mainWindow.CheckedInvoke(timer.Start, true);
 		}
 
 		/// <summary>
@@ -403,7 +404,7 @@ namespace Keysharp.Core
 			}
 			else if (delay == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
-				while (!hasExited && Keysharp.Scripting.Script.input != null && Keysharp.Scripting.Script.input.InProgress())
+				while (!hasExited && Script.input != null && Script.input.InProgress())
 				{
 					try
 					{
@@ -450,10 +451,10 @@ namespace Keysharp.Core
 		public static void Suspend(object obj)
 		{
 			var state = Conversions.ConvertOnOffToggle(obj.As());
-			Suspended = state == Common.Keyboard.ToggleValueType.Toggle ? !Suspended : (state == Common.Keyboard.ToggleValueType.On);
+			Suspended = state == ToggleValueType.Toggle ? !Suspended : (state == ToggleValueType.On);
 
 			if (!(bool)Accessors.A_IconFrozen && !Script.NoTrayIcon)
-				Script.Tray.Icon = Suspended ? Keysharp.Core.Properties.Resources.Keysharp_s_ico : Keysharp.Core.Properties.Resources.Keysharp_ico;
+				Script.Tray.Icon = Suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
 		}
 
 		public static void Thread(object obj0, object obj1 = null, object obj2 = null)
@@ -470,7 +471,7 @@ namespace Keysharp.Core
 			}
 			else if (string.Compare(subFunc, "interrupt", true) == 0)
 			{
-				Keysharp.Scripting.Script.uninterruptibleTime = obj1.Ai(Keysharp.Scripting.Script.uninterruptibleTime);
+				Script.uninterruptibleTime = obj1.Ai(Script.uninterruptibleTime);
 			}
 		}
 
@@ -493,13 +494,13 @@ namespace Keysharp.Core
 				return true;
 			}
 			else
-				Keysharp.Scripting.Script.onExitHandlers.Clear();
+				Script.onExitHandlers.Clear();
 
 			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
 			AllowInterruption = allowInterruption_prev;
-			Keysharp.Core.Common.Keyboard.HotkeyDefinition.AllDestruct();
+			HotkeyDefinition.AllDestruct();
 
-			if (Script.HookThread is Common.Threading.HookThread ht)
+			if (Script.HookThread is HookThread ht)
 				ht.Stop();
 
 			StopMainTimer();
@@ -511,7 +512,7 @@ namespace Keysharp.Core
 			//If this gets stuck in a loop it means we have a thread imbalance/mismatch somewhere.
 			//We added them, but never removed. While seemingly dangerous to have, it's a handy
 			//way to know we've found a bug.
-			while (Keysharp.Scripting.Script.totalExistingThreads > 1)
+			while (Script.totalExistingThreads > 1)
 				Sleep(200);
 
 			if (!Script.IsMainWindowClosing)
@@ -561,6 +562,54 @@ namespace Keysharp.Core
 			{
 				mainTimer.Stop();
 				mainTimer = null;
+			}
+		}
+
+		internal static bool TryCatch(Action action, bool pop)
+		{
+			try
+			{
+				action();
+				return true;
+			}
+			catch (Error kserr)
+			{
+				if (pop)
+					Threads.EndThread(true);
+
+				if (ErrorOccurred(kserr))
+				{
+					var (__pushed, __btv) = Threads.BeginThread();
+					Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					Threads.EndThread(__pushed);
+				}
+
+				return false;
+			}
+			catch (Exception mainex)
+			{
+				if (pop)
+					Threads.EndThread(true);
+
+				var ex = mainex.InnerException ?? mainex;
+
+				if (ex is Error kserr)
+				{
+					if (ErrorOccurred(kserr))
+					{
+						var (__pushed, __btv) = Threads.BeginThread();
+						Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+						Threads.EndThread(__pushed);
+					}
+				}
+				else
+				{
+					var (__pushed, __btv) = Threads.BeginThread();
+					Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					Threads.EndThread(__pushed);
+				}
+
+				return false;
 			}
 		}
 

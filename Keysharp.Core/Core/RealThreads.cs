@@ -6,14 +6,14 @@
 		{
 			lock (obj0)
 			{
-				var funcObj = Function.GetFuncObj(obj1, null, true);
+				var funcObj = Functions.GetFuncObj(obj1, null, true);
 				return funcObj.Call(args);
 			}
 		}
 
 		public static object StartRealThread(object obj, params object[] args)
 		{
-			var funcObj = Function.GetFuncObj(obj, null, true);
+			var funcObj = Functions.GetFuncObj(obj, null, true);
 			var tsk = Task.Run(() => funcObj.Call(args));
 			return new RealThread(tsk);
 		}
@@ -30,7 +30,7 @@
 
 		public object ContinueWith(object obj, params object[] args)
 		{
-			var fo = Function.GetFuncObj(obj, null, true);
+			var fo = Functions.GetFuncObj(obj, null, true);
 			var rt = task.ContinueWith((to) => fo.Call(args));
 			return new RealThread(rt);
 		}

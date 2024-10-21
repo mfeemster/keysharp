@@ -1,7 +1,6 @@
-﻿using static Keysharp.Core.Misc;
-using static Keysharp.Scripting.Keywords;
-using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+﻿using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.VirtualKeys;
+using static Keysharp.Scripting.Keywords;
 
 namespace Keysharp.Core.Common.Keyboard
 {
@@ -50,11 +49,11 @@ namespace Keysharp.Core.Common.Keyboard
 		internal HotkeyTypeEnum type = HotkeyTypeEnum.Normal;
 		internal uint vk;
 		internal bool vkWasSpecifiedByNumber;
+		private static readonly HookType whichHookAlways = HookType.None;
 		private static bool dialogIsDisplayed;
 		private static uint throttledKeyCount;
 		private static DateTime timeNow;
 		private static DateTime timePrev = DateTime.MinValue;
-		private static readonly HookType whichHookAlways = HookType.None;
 		private static HookType whichHookNeeded = HookType.None;
 		internal bool Enabled { get; set; }
 		internal Options EnabledOptions { get; }
@@ -297,7 +296,7 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			if (obj0 != null)
 			{
-				var funcobj = Function.GetFuncObj(obj0, null, true);
+				var funcobj = Functions.GetFuncObj(obj0, null, true);
 				var cp = FindHotkeyIfExpr(funcobj);
 
 				if (cp == null && funcobj != null)
@@ -598,14 +597,14 @@ namespace Keysharp.Core.Common.Keyboard
 			// But do this part outside of the above block because these values may have changed since
 			// this function was first called.  By design, the Num/Scroll/CapsLock AlwaysOn/Off setting
 			// stays in effect even when Suspend in ON.
-			var ts = Keysharp.Core.Keyboard.toggleStates;
+			var ts = Core.Keyboard.toggleStates;
 
 			if (HotstringManager.enabledCount != 0
 					|| Script.input != null // v1.0.91: Hook is needed for collecting input.
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Keysharp.Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
+			if (Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
@@ -1158,7 +1157,7 @@ namespace Keysharp.Core.Common.Keyboard
 							// Otherwise: Ignore other characters, such as the digits that comprise the number after the T option.
 					}
 
-					while (i < options.Length && IsSpace(options[i]) == 0)
+					while (i < options.Length && Types.IsSpace(options[i]) == 0)
 						i++;
 				}
 			}
@@ -1867,7 +1866,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// is still polled even when some joystick hotkeys are disabled.  UPDATE: In v1.0.42, Suspend
 				// is checked upon receipt of the message, not here upon sending.
 				if (hk.type == HotkeyTypeEnum.Joystick && hk.vk == joystickID
-						&& (buttonsNewlyDown & (0x01 << (int)(hk.sc - (uint)Joystick.JoyControls.Button1))) != 0) // This hotkey's button is among those newly pressed.
+						&& (buttonsNewlyDown & (0x01 << (int)(hk.sc - (uint)JoyControls.Button1))) != 0) // This hotkey's button is among those newly pressed.
 				{
 					// Criteria are checked, and variant determined, upon arrival of message rather than when sending
 					// ("suspend" is also checked then).  This is because joystick button presses are never hidden
@@ -2129,7 +2128,7 @@ namespace Keysharp.Core.Common.Keyboard
 				tv.hwndLastUsed = new IntPtr(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
 				object ret = null;
-				var ok = Misc.TryCatch(() =>
+				var ok = Flow.TryCatch(() =>
 				{
 					ret = variant.callback.Call(o);
 					//throw new Error("ASDf");
@@ -2178,7 +2177,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// in which case we would want SendKeys() to take note of these modifiers even
 				// if it was called from an ExecUntil() other than ours here:
 				KeyboardMouseSender.thisHotkeyModifiersLR = modifiersConsolidatedLR;
-				Keysharp.Scripting.Script.SetHotNamesAndTimes(Name);
+				Script.SetHotNamesAndTimes(Name);
 				//This is the thread count for this particular hotkey only and must come before the thread is actually launched.
 				//It will be decremented within the VariadicFunction above after the callback is called.
 				_ = Interlocked.Increment(ref variant.existingThreads);
@@ -2202,7 +2201,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// for example, be used to register the naked SHIFT key.  So what we do here saves the
 			// user from having to specify +SHIFT in the script:
 			var modifiersToRegister = modifiers;
-			var key = (System.Windows.Forms.Keys)vk;
+			var key = (Keys)vk;
 
 			switch (key)
 			{
@@ -2373,9 +2372,9 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;
 		}
 
-		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Active;
+		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Active;
 
-		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Keysharp.Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Exists;
+		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Exists;
 
 		private static bool HotIfWinNotActivePrivate(object title, object text, object hotkey) => !HotIfWinActivePrivate(title, text, hotkey);
 
@@ -2385,7 +2384,7 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			if (obj0 != null || obj1 != null)
 			{
-				var mi = typeof(HotkeyDefinition).GetMethod(funcname, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+				var mi = typeof(HotkeyDefinition).GetMethod(funcname, BindingFlags.NonPublic | BindingFlags.Static);
 				var fo = new FuncObj(mi);
 				var bf = fo.Bind(obj0 ?? "", obj1 ?? "");//Must not pass null so that the logic in BoundFunc.Call() works.
 

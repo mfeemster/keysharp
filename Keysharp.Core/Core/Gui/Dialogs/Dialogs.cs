@@ -15,7 +15,6 @@ namespace Keysharp.Core
 		internal static Guid userprofile = new Guid("5E6C858F-0E22-4760-9AFE-EA3317B67173");//User profile root (~/).
 		internal static Guid userprofiles = new Guid("0762D272-C50A-4BB0-A382-697DCD729B80");//User profiles (/home).
 
-		// TODO: organise Dialogs.cs
 		/// <summary>
 		/// Displays a standard dialog that allows the user to select a folder.
 		/// The list of known supported CLSID GUIDS is here: https://docs.microsoft.com/en-us/previous-versions//bb762584(v=vs.85)
@@ -71,13 +70,13 @@ namespace Keysharp.Core
 
 #endif
 			}
-			else if (Keysharp.Core.Options.TryParseString(startingFolder, "*", ref str))
+			else if (Options.TryParseString(startingFolder, "*", ref str))
 				select.SelectedPath = str;
 			else if (startingFolder.Length != 0)
 				select.SelectedPath = startingFolder;
 
 			nFolderDialogs++;
-			var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
+			var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
 			nFolderDialogs--;
 			return selected == DialogResult.OK ? select.SelectedPath : "";
 		}
@@ -176,7 +175,7 @@ namespace Keysharp.Core
 					InitialDirectory = Path.GetDirectoryName(rootdir),
 					FileName = Path.GetFileName(rootdir)
 				};
-				var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? saveas.ShowDialog() : saveas.ShowDialog(GuiHelper.DialogOwner), true);
+				var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? saveas.ShowDialog() : saveas.ShowDialog(GuiHelper.DialogOwner), true);
 				files = selected == DialogResult.OK ? saveas.FileName : "";
 			}
 			else
@@ -193,7 +192,7 @@ namespace Keysharp.Core
 						Description = title,
 						ShowNewFolderButton = true
 					};
-					var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
+					var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
 					files = selected == DialogResult.OK ? select.SelectedPath : "";
 				}
 				else
@@ -211,7 +210,7 @@ namespace Keysharp.Core
 						InitialDirectory = Path.GetDirectoryName(rootdir),
 						FileName = Path.GetFileName(rootdir)
 					};
-					var selected = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? open.ShowDialog() : open.ShowDialog(GuiHelper.DialogOwner), true);
+					var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? open.ShowDialog() : open.ShowDialog(GuiHelper.DialogOwner), true);
 					files = selected == DialogResult.OK
 							? multi ? new Array(open.FileNames.Cast<object>().ToArray()) : open.FileName
 							: multi ? new Array() : "";
@@ -309,7 +308,7 @@ namespace Keysharp.Core
 				input.Top = y != int.MinValue ? y : (((wb.Ai() - wt.Ai()) / 2) - (input.Height / 2));
 			};
 			nFileDialogs++;
-			Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() =>
+			Script.mainWindow.CheckedInvoke(() =>
 			{
 				if (GuiHelper.DialogOwner != null)
 					_ = input.ShowDialog(GuiHelper.DialogOwner);
@@ -442,7 +441,7 @@ namespace Keysharp.Core
 				//System modal dialogs are no longer supported in Windows.
 			}
 
-			if (Scripting.Script.IsNumeric(obj2))
+			if (Script.IsNumeric(obj2))
 			{
 				HandleNumericOptions(obj2.Ai());
 			}
@@ -575,7 +574,7 @@ namespace Keysharp.Core
 				if (owner != null)
 					_ = owner.Invoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
 				else
-					ret = Keysharp.Scripting.Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString(), true);
+					ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString(), true);
 
 				nMessageBoxes--;
 				return ret;

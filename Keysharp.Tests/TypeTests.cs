@@ -31,9 +31,9 @@ namespace Keysharp.Tests
 #elif WINDOWS
 			Assert.IsTrue(typeof(Keysharp.Core.ClipboardAll).IsAssignableTo(typeof(Keysharp.Core.Buffer)));
 #endif
-			Assert.IsTrue(typeof(Keysharp.Core.Buffer).IsAssignableTo(typeof(Keysharp.Core.KeysharpObject)));
-			Assert.IsTrue(typeof(Keysharp.Core.Array).IsAssignableTo(typeof(Keysharp.Core.KeysharpObject)));
-			Assert.IsTrue(typeof(Keysharp.Core.Map).IsAssignableTo(typeof(Keysharp.Core.KeysharpObject)));
+			Assert.IsTrue(typeof(Keysharp.Core.Buffer).IsAssignableTo(typeof(Keysharp.Core.Common.KeysharpObject)));
+			Assert.IsTrue(typeof(Keysharp.Core.Array).IsAssignableTo(typeof(Keysharp.Core.Common.KeysharpObject)));
+			Assert.IsTrue(typeof(Keysharp.Core.Map).IsAssignableTo(typeof(Keysharp.Core.Common.KeysharpObject)));
 		}
 	}
 }

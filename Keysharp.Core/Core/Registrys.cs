@@ -184,9 +184,9 @@ namespace Keysharp.Core
 
 					if (val is string vs)
 					{
-						if (regtype == Microsoft.Win32.RegistryValueKind.Binary)
+						if (regtype == RegistryValueKind.Binary)
 							val = Conversions.StringToByteArray(vs);
-						else if (regtype == Microsoft.Win32.RegistryValueKind.MultiString)
+						else if (regtype == RegistryValueKind.MultiString)
 							val = vs.Split('\n');
 					}
 
@@ -204,4 +204,5 @@ namespace Keysharp.Core
 		internal static RegistryView GetRegView() => ThreadAccessors.A_RegView.Al() == 32L ? RegistryView.Registry32 : RegistryView.Registry64;
 	}
 }
+
 #endif

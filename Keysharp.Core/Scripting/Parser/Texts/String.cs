@@ -5,6 +5,7 @@ namespace Keysharp.Scripting
 	public partial class Parser
 	{
 		internal static string EscapedString(string code, bool resolve) => EscapedString(code.AsSpan(), resolve);
+
 		internal static string EscapedString(ReadOnlySpan<char> code, bool resolve)
 		{
 			if (code.Length == 0)
@@ -86,7 +87,7 @@ namespace Keysharp.Scripting
 
 				var span = line.AsSpan(1).Trim();
 
-				foreach (Range r in span.SplitAny(Keywords.SpacesSv))
+				foreach (Range r in span.SplitAny(SpacesSv))
 				{
 					var option = span[r];
 
@@ -128,7 +129,7 @@ namespace Keysharp.Scripting
 								default:
 									const string joinOpt = "join";
 
-									if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, System.StringComparison.OrdinalIgnoreCase))
+									if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, StringComparison.OrdinalIgnoreCase))
 										join = option.Slice(joinOpt.Length).ToString().Replace("`s", " ");
 									else
 										throw new ParseException(ExMultiStr, lineNumber, code, name);

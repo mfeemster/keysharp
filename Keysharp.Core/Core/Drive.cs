@@ -48,6 +48,7 @@ namespace Keysharp.Core
 #if !WINDOWS
 			var list = new List<string>(drives.Length);
 #endif
+
 			for (var i = 0; i < drives.Length; i++)
 			{
 				if (type.HasValue)
@@ -59,6 +60,7 @@ namespace Keysharp.Core
 						if (drives[i].DriveType == type.Value)
 #if WINDOWS
 							matchingDevices += drives[i].Name[0];
+
 #else
 							list.Add(drives[i].Name);
 #endif
@@ -71,12 +73,13 @@ namespace Keysharp.Core
 				else
 				{
 #if WINDOWS
-							matchingDevices += drives[i].Name[0];
+					matchingDevices += drives[i].Name[0];
 #else
-							list.Add(drives[i].Name);
+					list.Add(drives[i].Name);
 #endif
 				}
 			}
+
 #if WINDOWS
 			return matchingDevices;
 #else
@@ -90,7 +93,7 @@ namespace Keysharp.Core
 		/// <param name="path">Path of drive to receive information from.</param>
 		/// <returns>The serial number of the drive</returns>
 		public static long DriveGetSerial(object obj)
-		=> Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As())).Serial;
+		=> DriveProvider.CreateDrive(new DriveInfo(obj.As())).Serial;
 
 		/// <summary>
 		/// Retrieves the free disk space of a drive, in megabytes.
@@ -118,7 +121,7 @@ namespace Keysharp.Core
 		/// <returns>The status of the CD drive</returns>
 		public static string DriveGetStatusCD(object obj)
 		{
-			var drive = Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As().TrimEnd('\\')));
+			var drive = DriveProvider.CreateDrive(new DriveInfo(obj.As().TrimEnd('\\')));
 			return drive.StatusCD;
 		}
 
@@ -133,7 +136,7 @@ namespace Keysharp.Core
 		/// Prevents the eject feature of the specified drive from working.
 		/// </summary>
 		/// <param name="path">Path of drive to lock.</param>
-		public static void DriveLock(object obj) => Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As())).Lock();
+		public static void DriveLock(object obj) => DriveProvider.CreateDrive(new DriveInfo(obj.As())).Lock();
 
 		/// <summary>
 		/// Retracts the specified CD drive.
@@ -151,7 +154,7 @@ namespace Keysharp.Core
 			var drv = obj0.As();
 			var label = obj1.As();
 			var di = new DriveInfo(drv);
-			var drive = Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(di);
+			var drive = DriveProvider.CreateDrive(di);
 			drive.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
 		}
 
@@ -159,7 +162,7 @@ namespace Keysharp.Core
 		/// Restores the eject feature of the specified drive.
 		/// </summary>
 		/// <param name="path">Path of drive to unlock.</param>
-		public static void DriveUnlock(object obj) => Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(obj.As())).UnLock();
+		public static void DriveUnlock(object obj) => DriveProvider.CreateDrive(new DriveInfo(obj.As())).UnLock();
 
 		/// <summary>
 		/// adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
@@ -168,7 +171,7 @@ namespace Keysharp.Core
 		/// <returns></returns>
 		internal static IEnumerable<string> Glob(string glob)
 		{
-			if (System.IO.File.Exists(glob) || Directory.Exists(glob))
+			if (File.Exists(glob) || Directory.Exists(glob))
 			{
 				yield return glob;
 				yield break;
@@ -203,33 +206,22 @@ namespace Keysharp.Core
 
 		private static void DriveHelper(string dr, bool b)
 		{
-			Keysharp.Core.Common.DriveBase drive;
+			DriveBase drive;
 
 			if (dr.Length == 0)
 			{
 				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom).ToList();
 				drive = allDrives.Count > 0
-						? Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
+						? DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
 						: throw new Error("Failed to find any CDROM or DVD drives.");
 			}
 			else
-				drive = Keysharp.Core.Common.Platform.DriveProvider.CreateDrive(new DriveInfo(dr));
+				drive = DriveProvider.CreateDrive(new DriveInfo(dr));
 
 			if (b)
 				drive.Eject();
 			else
 				drive.Retract();
 		}
-	}
-
-	public class ShortcutOutput
-	{
-		public string OutArgs { get; set; }
-		public string OutDescription { get; set; }
-		public string OutDir { get; set; }
-		public string OutIcon { get; set; }
-		public string OutIconNum { get; set; }
-		public long OutRunState { get; set; }
-		public string OutTarget { get; set; }
 	}
 }

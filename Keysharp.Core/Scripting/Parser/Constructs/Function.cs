@@ -176,7 +176,7 @@ namespace Keysharp.Scripting
 		internal bool IsLocalMethodReference(string name)
 		{
 			foreach (var method in methods[targetClass])
-				if (method.Key.Equals(name, System.StringComparison.OrdinalIgnoreCase))
+				if (method.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
 					return true;
 
 			return false;
@@ -277,7 +277,7 @@ namespace Keysharp.Scripting
 					else if (variadic)
 					{
 						cpde.Type = new CodeTypeReference(typeof(object[]));
-						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(System.ParamArrayAttribute))));
+						_ = cpde.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(ParamArrayAttribute))));
 					}
 
 					names.Add(cpde);
@@ -372,7 +372,7 @@ namespace Keysharp.Scripting
 			if (code.Length == 0)
 				return null;
 
-			var cs = System.StringComparison.OrdinalIgnoreCase;
+			var cs = StringComparison.OrdinalIgnoreCase;
 
 			if (code.Equals(TrueTxt, cs) || code.Equals(FalseTxt, cs) || code.Equals(NullTxt, cs))
 				return code;

@@ -8,15 +8,14 @@ namespace Keysharp.Core
 		internal string typename;
 		private readonly List<IFuncObj> clickHandlers = new List<IFuncObj>();
 		private readonly List<IFuncObj> doubleClickHandlers = new List<IFuncObj>();
+		private readonly bool dpiscaling = true;
 		private Control _control;
-
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
-		private readonly bool dpiscaling = true;
 		private IntPtr dummyHandle;
 		private List<IFuncObj> focusedItemChangedHandlers;
 		private List<IFuncObj> focusHandlers;
@@ -24,10 +23,7 @@ namespace Keysharp.Core
 		private List<IFuncObj> itemEditHandlers;
 		private List<IFuncObj> itemExpandHandlers;
 		private List<IFuncObj> lostFocusHandlers;
-
-		//private int mousecount = 0;
 		private Dictionary<int, List<IFuncObj>> notifyHandlers;
-
 		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
 
@@ -71,6 +67,25 @@ namespace Keysharp.Core
 		}
 
 		public KeysharpForm ParentForm => _control.FindParent<KeysharpForm>();
+
+		public object RichText
+		{
+			get
+			{
+				if (_control is RichTextBox rtf)
+					return Strings.NormalizeEol(rtf.Rtf);
+
+				return "";
+				//throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
+			}
+			set
+			{
+				if (_control is RichTextBox rtf)
+					rtf.Rtf = Strings.NormalizeEol(value);
+				else
+					throw new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.");
+			}
+		}
 
 		public object Text
 		{
@@ -144,25 +159,6 @@ namespace Keysharp.Core
 		}
 
 		public string Type => typename;
-
-		public object RichText
-		{
-			get
-			{
-				if (_control is RichTextBox rtf)
-					return Strings.NormalizeEol(rtf.Rtf);
-
-				return "";
-				//throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
-			}
-			set
-			{
-				if (_control is RichTextBox rtf)
-					rtf.Rtf = Strings.NormalizeEol(value);
-				else
-					throw new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.");
-			}
-		}
 
 		public object Value
 		{
@@ -269,7 +265,7 @@ namespace Keysharp.Core
 					cmb.SelectedIndex = ival - 1;
 				else if (_control is ListBox lb)
 				{
-					if (value is Keysharp.Core.Array ar)
+					if (value is Array ar)
 					{
 						lb.ClearSelected();
 
@@ -324,7 +320,7 @@ namespace Keysharp.Core
 						object iconnumber = 0;
 						var filename = "";
 
-						foreach (Range r in val.AsSpan().SplitAny(Keywords.SpaceTabSv))
+						foreach (Range r in val.AsSpan().SplitAny(SpaceTabSv))
 						{
 							var opt = val.AsSpan(r).Trim();
 
@@ -497,11 +493,11 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					var top = GuiHelper.TV_FindNode(tv, parent);
+					var top = TreeViewHelper.TV_FindNode(tv, parent);
 					nodes = top == null ? tv.Nodes : top.Nodes;
 				}
 
-				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in options.AsSpan().SplitAny(Spaces))
 				{
 					var opt = options.AsSpan(r).Trim();
 
@@ -522,13 +518,13 @@ namespace Keysharp.Core
 				tv.DelayedExpandParent(node);
 				var id = node.Handle.ToInt64();
 				node.Name = id.ToString();
-				return GuiHelper.TV_NodeOptions(node, parent, options, false);
+				return TreeViewHelper.TV_NodeOptions(node, parent, options, false);
 			}
 			else if (_control is ListView lv)
 			{
-				var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
+				var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 				var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
-				GuiHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
+				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 			}
 			else if (_control is ListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
 				lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
@@ -636,7 +632,7 @@ namespace Keysharp.Core
 						tv.Nodes.Clear();
 						return 1L;
 					}
-					else if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
+					else if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
 					{
 						node.Remove();
 						return 1L;
@@ -688,7 +684,7 @@ namespace Keysharp.Core
 				var id = obj0.Al();
 				var attr = obj1.As();
 
-				if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
+				if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
 					if (Options.OptionContains(attr, Keyword_Expand, Keyword_Expanded, Keyword_Expand[0].ToString()) && node.IsExpanded)
 						return node.Handle.ToInt64();
@@ -707,7 +703,7 @@ namespace Keysharp.Core
 			if (_control is TreeView tv)
 			{
 				var id = obj.Al();
-				var node = GuiHelper.TV_FindNode(tv, id);
+				var node = TreeViewHelper.TV_FindNode(tv, id);
 				return node == null ? 0 : node.Nodes.Count == 0 ? 0L : node.FirstNode.Handle.ToInt64();
 			}
 
@@ -749,7 +745,7 @@ namespace Keysharp.Core
 					if (id == 0)
 						return tv.Nodes.Count == 0 ? 0L : tv.Nodes[0].Handle.ToInt64();
 
-					var node = GuiHelper.TV_FindNode(tv, id);
+					var node = TreeViewHelper.TV_FindNode(tv, id);
 					return node == null || node.NextNode == null ? 0L : node.NextNode.Handle.ToInt64();
 				}
 
@@ -762,7 +758,7 @@ namespace Keysharp.Core
 					goto none;
 				}
 
-				for (var i = id == 0 ? 1 : GuiHelper.TV_FindNode(tv, id).Index + 1; i < tv.Nodes.Count; i++)//Add one because it's supposed to look for the "next" node.
+				for (var i = id == 0 ? 1 : TreeViewHelper.TV_FindNode(tv, id).Index + 1; i < tv.Nodes.Count; i++)//Add one because it's supposed to look for the "next" node.
 				{
 					if (check && !tv.Nodes[i].Checked)
 						continue;
@@ -804,7 +800,7 @@ namespace Keysharp.Core
 			if (_control is TreeView tv)
 			{
 				var id = obj.Al();
-				return GuiHelper.TV_FindNode(tv, id);
+				return TreeViewHelper.TV_FindNode(tv, id);
 			}
 
 			return null;
@@ -815,7 +811,7 @@ namespace Keysharp.Core
 			if (_control is TreeView tv)
 			{
 				var id = obj.Al();
-				var node = GuiHelper.TV_FindNode(tv, id);
+				var node = TreeViewHelper.TV_FindNode(tv, id);
 				return node == null || node.Parent == null || !(node.Parent is TreeNode) ? 0L : node.Parent.Handle.ToInt64();
 			}
 
@@ -829,7 +825,7 @@ namespace Keysharp.Core
 			if (_control is TreeView tv)
 			{
 				var id = obj.Al();
-				var node = GuiHelper.TV_FindNode(tv, id);
+				var node = TreeViewHelper.TV_FindNode(tv, id);
 				return node == null || node.PrevNode == null ? 0L : node.PrevNode.Handle.ToInt64();
 			}
 
@@ -843,7 +839,7 @@ namespace Keysharp.Core
 			if (_control is TreeView tv)
 			{
 				var id = obj0.Al();
-				var node = GuiHelper.TV_FindNode(tv, id);
+				var node = TreeViewHelper.TV_FindNode(tv, id);
 
 				if (node != null)
 					return node.Text;
@@ -869,9 +865,9 @@ namespace Keysharp.Core
 			if (_control is ListView lv)//Note that this index might not actually be where the row is shown, due to sorting.
 			{
 				var (rownumber, opts, cols) = obj.Is2();
-				var lvo = opts is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
+				var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 				var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
-				GuiHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
+				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
 			}
 		}
 
@@ -920,7 +916,7 @@ namespace Keysharp.Core
 				else
 					_ = lv.Columns.Add(header);
 
-				GuiHelper.ParseAndApplyListViewColumnOptions(header, options);
+				ListViewHelper.ParseAndApplyListViewColumnOptions(header, options);
 				return index + 1L;
 			}
 
@@ -933,7 +929,7 @@ namespace Keysharp.Core
 			{
 				var (id, options, name) = obj.Ls2();
 
-				if (GuiHelper.TV_FindNode(tv, id) is TreeNode node)
+				if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
 					if (options?.Length == 0 && name?.Length == 0)
 					{
@@ -943,7 +939,7 @@ namespace Keysharp.Core
 					else if (name != "")
 						node.Text = name;
 
-					return GuiHelper.TV_NodeOptions(node, node.Parent != null ? node.Parent.Handle.ToInt64() : 0L, options, true);
+					return TreeViewHelper.TV_NodeOptions(node, node.Parent != null ? node.Parent.Handle.ToInt64() : 0L, options, true);
 				}
 			}
 			else if (_control is ListView lv)
@@ -954,7 +950,7 @@ namespace Keysharp.Core
 
 					if (rownumber < lv.Items.Count)
 					{
-						var lvo = opts is string options ? GuiHelper.ParseListViewOptions(options) : new GuiHelper.ListViewOptions();
+						var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 						var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : new List<string>();
 						var start = Math.Max(0, rownumber - 1);
 						var end = rownumber == 0 ? lv.Items.Count : Math.Min(rownumber, lv.Items.Count);
@@ -966,7 +962,7 @@ namespace Keysharp.Core
 							for (int i = 0, j = lvo.colstart; i < strs.Count && j < item.SubItems.Count; i++, j++)
 								item.SubItems[j].Text = strs[i];
 
-							GuiHelper.ApplyListViewOptions(lv, item, lvo);
+							ListViewHelper.ApplyListViewOptions(lv, item, lvo);
 						}
 
 						return 1L;
@@ -1011,7 +1007,7 @@ namespace Keysharp.Core
 					if (coltitle != "")
 						col.Text = coltitle;
 
-					GuiHelper.ParseAndApplyListViewColumnOptions(col, opts);
+					ListViewHelper.ParseAndApplyListViewColumnOptions(col, opts);
 					return 1L;
 				}
 			}
@@ -1035,10 +1031,10 @@ namespace Keysharp.Core
 				_control.Left = (int)Math.Round(x * scale);
 
 			if (width != long.MinValue)//Add extra if the control has scrollbars, even if they are not visible.
-				_control.Width = (int)Math.Round(width * scale) - (hasScrollBars ? System.Windows.Forms.SystemInformation.VerticalScrollBarWidth : 0);
+				_control.Width = (int)Math.Round(width * scale) - (hasScrollBars ? SystemInformation.VerticalScrollBarWidth : 0);
 
 			if (height != long.MinValue)//Unsure if it's needed here too.
-				_control.Height = (int)Math.Round(height * scale) - (hasScrollBars ? System.Windows.Forms.SystemInformation.HorizontalScrollBarHeight : 0);
+				_control.Height = (int)Math.Round(height * scale) - (hasScrollBars ? SystemInformation.HorizontalScrollBarHeight : 0);
 		}
 
 		public void OnCommand(object obj0, object obj1, object obj2 = null) => HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref commandHandlers);
@@ -1048,7 +1044,7 @@ namespace Keysharp.Core
 			var e = obj0.As().ToLower();
 			var h = obj1;
 			var i = obj2.Al(1);
-			var del = Function.GetFuncObj(h, Gui.form.eventObj, true);
+			var del = Functions.GetFuncObj(h, Gui.form.eventObj, true);
 
 			if (del != null)
 			{
@@ -1752,43 +1748,6 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal object InvokeMessageHandlers(ref Message m)
-		{
-#if WINDOWS
-
-			if (m.Msg == WindowsAPI.WM_NOTIFY || m.Msg == WindowsAPI.WM_REFLECT + WindowsAPI.WM_NOTIFY)
-			{
-				if (notifyHandlers != null)
-				{
-					var nmhdr = (NMHDR)Marshal.PtrToStructure(m.LParam, typeof(NMHDR));
-
-					if (notifyHandlers.TryGetValue((int)nmhdr.code, out var handler))
-					{
-						var ret = handler?.InvokeEventHandlers(this, nmhdr);
-						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
-						return true;
-					}
-				}
-			}
-			else if (m.Msg == WindowsAPI.WM_COMMAND)
-			{
-				if (commandHandlers != null)
-				{
-					var val = (int)m.WParam;
-
-					if (commandHandlers.TryGetValue(val, out var handler))
-					{
-						var ret = handler?.InvokeEventHandlers(this);
-						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
-						return true;
-					}
-				}
-			}
-
-#endif
-			return null;
-		}
-
 		internal void _control_Click(object sender, EventArgs e)
 		{
 			if (_control is TreeView tv)
@@ -1886,7 +1845,7 @@ namespace Keysharp.Core
 
 		internal void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
-			var del = Function.GetFuncObj(callback, Gui.form.eventObj, true);
+			var del = Functions.GetFuncObj(callback, Gui.form.eventObj, true);
 
 			if (handlers == null)
 				handlers = new Dictionary<int, List<IFuncObj>>();
@@ -1899,6 +1858,43 @@ namespace Keysharp.Core
 		{
 			if (_control is HotkeyBox)
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
+		}
+
+		internal object InvokeMessageHandlers(ref Message m)
+		{
+#if WINDOWS
+
+			if (m.Msg == WindowsAPI.WM_NOTIFY || m.Msg == WindowsAPI.WM_REFLECT + WindowsAPI.WM_NOTIFY)
+			{
+				if (notifyHandlers != null)
+				{
+					var nmhdr = (NMHDR)Marshal.PtrToStructure(m.LParam, typeof(NMHDR));
+
+					if (notifyHandlers.TryGetValue((int)nmhdr.code, out var handler))
+					{
+						var ret = handler?.InvokeEventHandlers(this, nmhdr);
+						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
+						return true;
+					}
+				}
+			}
+			else if (m.Msg == WindowsAPI.WM_COMMAND)
+			{
+				if (commandHandlers != null)
+				{
+					var val = (int)m.WParam;
+
+					if (commandHandlers.TryGetValue(val, out var handler))
+					{
+						var ret = handler?.InvokeEventHandlers(this);
+						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
+						return true;
+					}
+				}
+			}
+
+#endif
+			return null;
 		}
 
 		internal void Lb_SelectedIndexChanged(object sender, EventArgs e)

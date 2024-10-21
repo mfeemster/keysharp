@@ -25,7 +25,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Concrete implementation of KeyboardMouseSender for the Windows platfrom.
 	/// </summary>
-	internal class WindowsKeyboardMouseSender : Keysharp.Core.Common.Keyboard.KeyboardMouseSender
+	internal class WindowsKeyboardMouseSender : KeyboardMouseSender
 	{
 		internal static bool firstCallForThisEvent;
 
@@ -64,7 +64,7 @@ namespace Keysharp.Core.Windows
 		internal uint prevVK;
 
 		// Tracks this script's own lifetime/persistent modifiers (the ones it caused to be persistent and thus is responsible for tracking).
-		internal System.Drawing.Point sendInputCursorPos;
+		internal Point sendInputCursorPos;
 
 		internal IntPtr targetKeybdLayout;
 
@@ -840,7 +840,7 @@ namespace Keysharp.Core.Windows
 								&& (parentUnderCursor = GetNonChildParent(childUnderCursor)) != IntPtr.Zero // WM_NCHITTEST below probably requires parent vs. child.
 								&& GetWindowThreadProcessId(parentUnderCursor, out _) == Processes.MainThreadID) // It's one of our thread's windows.
 						{
-							var hitTest = SendMessage(parentUnderCursor, WM_NCHITTEST, 0, KeyboardUtils.MakeLong((short)point.X, (short)point.Y));
+							var hitTest = SendMessage(parentUnderCursor, WM_NCHITTEST, 0, MakeLong((short)point.X, (short)point.Y));
 
 							if (vk == VK_LBUTTON && (hitTest == HTCLOSE || hitTest == HTMAXBUTTON // Title bar buttons: Close, Maximize.
 													 || hitTest == HTMINBUTTON || hitTest == HTHELP) // Title bar buttons: Minimize, Help.
@@ -1095,7 +1095,7 @@ namespace Keysharp.Core.Windows
 
 			// The playback mode returned from above doesn't need these flags added because they're ignored for clicks:
 			eventFlags |= (uint)MOUSEEVENTF.MOVE | (uint)MOUSEEVENTF.ABSOLUTE;//Done here for caller, for easier maintenance.
-			System.Drawing.Point cursor_pos;
+			Point cursor_pos;
 
 			if (moveOffset)  // We're moving the mouse cursor relative to its current position.
 			{
@@ -4213,4 +4213,5 @@ namespace Keysharp.Core.Windows
 		*/
 	}
 }
+
 #endif

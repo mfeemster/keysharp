@@ -23,7 +23,6 @@
 	internal class Singleton<T> where T : new ()
 	{
 		public static T Instance => SingletonCreator.instance;
-		// ctor
 		protected Singleton()
 		{
 			if (Instance != null)
