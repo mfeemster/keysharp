@@ -4,11 +4,11 @@
 	{
 		public static Map Object(params object[] obj)
 		{
-			if (obj.Length == 0)
-				return new Map();
-
 			var dkt = new Map();
-			dkt.Set(obj);
+
+			if (obj.Length != 0)
+				dkt.Set(obj);
+
 			return dkt;
 		}
 

@@ -76,7 +76,8 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
-		/// <param name="obj">The data to initialize the buffer with. This can take several different forms:
+		/// <param name="obj">The optional data to initialize the <see cref="Buffer"/> with. This can be:
+		///     empty: Ptr remains null.
 		///     byte[]: Copied one byte at a time to the pointer.
 		///     Array: Convert each element to a byte and copy one at a time to the pointer.
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
@@ -84,35 +85,42 @@
 		/// <returns>Empty string, unused.</returns>
 		public override object __New(params object[] obj)
 		{
-			var obj0 = obj[0];
-
-			if (obj0 is byte[] bytearray)//This will sometimes be passed internally within the library.
+			if (obj == null || obj.Length == 0)
 			{
-				Size = bytearray.Length;
-
-				for (var i = 0; i < bytearray.Length; i++)
-					Marshal.WriteByte(Ptr, i, bytearray[i]);
+				Size = 0;
 			}
-			else if (obj0 is Array array)
+			else
 			{
-				var ct = array.array.Count;
-				Size = ct;
+				var obj0 = obj[0];
 
-				for (var i = 0; i < ct; i++)
-					Marshal.WriteByte(Ptr, i, (byte)Script.ForceLong(array.array[i]));//Access the underlying ArrayList directly for performance.
-			}
-			else//This will be called by the user.
-			{
-				var bytecount = obj0.Al(0);
-				var fill = obj.Length > 1 ? obj[1].Al(long.MinValue) : long.MinValue;
-				Size = bytecount;//Performs the allocation.
-
-				if (fill != long.MinValue && bytecount > 0)
+				if (obj0 is byte[] bytearray)//This will sometimes be passed internally within the library.
 				{
-					var val = (byte)(fill & 255);
+					Size = bytearray.Length;
 
-					for (var i = 0; i < bytecount; i++)
-						Marshal.WriteByte(Ptr, i, val);
+					for (var i = 0; i < bytearray.Length; i++)
+						Marshal.WriteByte(Ptr, i, bytearray[i]);
+				}
+				else if (obj0 is Array array)
+				{
+					var ct = array.array.Count;
+					Size = ct;
+
+					for (var i = 0; i < ct; i++)
+						Marshal.WriteByte(Ptr, i, (byte)Script.ForceLong(array.array[i]));//Access the underlying ArrayList directly for performance.
+				}
+				else//This will be called by the user.
+				{
+					var bytecount = obj0.Al(0);
+					var fill = obj.Length > 1 ? obj[1].Al(long.MinValue) : long.MinValue;
+					Size = bytecount;//Performs the allocation.
+
+					if (fill != long.MinValue && bytecount > 0)
+					{
+						var val = (byte)(fill & 255);
+
+						for (var i = 0; i < bytecount; i++)
+							Marshal.WriteByte(Ptr, i, val);
+					}
 				}
 			}
 

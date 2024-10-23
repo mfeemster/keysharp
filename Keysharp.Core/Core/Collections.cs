@@ -1,7 +1,15 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for collection-related functions.
+	/// </summary>
 	public static class Collections
 	{
+		/// <summary>
+		/// Creates an <see cref="Array"/> object using the passed in object.
+		/// </summary>
+		/// <param name="obj">Optionally empty, else pass to the <see cref="Array"/> constructor.</param>
+		/// <returns>A new <see cref="Array"/> object.</returns>
 		public static Array Array(params object[] obj)
 		{
 			if (obj == null || obj.Length == 0)
@@ -16,8 +24,27 @@
 				return new Array(obj);
 		}
 
-		public static Buffer Buffer(object obj0, object obj1 = null) => new (obj0, obj1);
+		/// <summary>
+		/// Creates a new <see cref="Buffer"/> object.
+		/// </summary>
+		/// <param name="byteCount">The number of bytes to allocate. Corresponds to Buffer.Size.
+		/// If omitted, the Buffer is created with a null (zero) Ptr and zero Size.
+		/// This can optionally be a byte[] or an <see cref="Array"/> object.
+		/// </param>
+		/// <param name="fillByte">Specify a number between 0 and 255 to set each byte in the buffer to that number.
+		/// This should generally be omitted in cases where the buffer will be written into without first being read,
+		/// as it has a time-cost proportionate to the number of bytes.
+		/// If omitted, the memory of the buffer is not initialized; the value of each byte is arbitrary.
+		/// </param>
+		/// <returns>A new <see cref="Buffer"/> object.</returns>
+		public static Buffer Buffer(object byteCount = null, object fillByte = null) => new (byteCount, fillByte);
 
+		/// <summary>
+		/// Creates a new <see cref="Map"/> object.
+		/// </summary>
+		/// <param name="keys">The keys to insert.</param>
+		/// <param name="values">The values to insert.</param>
+		/// <returns>A new <see cref="Map"/> object consisting of the optional key,value pairs.</returns>
 		public static Map Dictionary(object[] keys, object[] values)
 		{
 			var table = new Map();
@@ -39,6 +66,16 @@
 			return table;
 		}
 
+		/// <summary>
+		/// Creates a new <see cref="Map"/> object.
+		/// </summary>
+		/// <param name="obj">The optional data to initialize the <see cref="Map"/> with. This can be:
+		///     An existing <see cref="Map"/> object.
+		///     An <see cref="Array"/> of key,value pairs.
+		///     An existing Dictionary<string, object> object.
+		///     An object[] of key,value pairs.
+		/// </param>
+		/// <returns>A new <see cref="Map"/> object.</returns>
 		public static Map Map(params object[] obj) => Objects.Object(obj);
 	}
 }
