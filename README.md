@@ -245,6 +245,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 				
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
+* Buffer includes an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
 * Add new methods to `Array`:
 	+ `Add(value) => Integer` : Adds a single element to the array.
 		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.

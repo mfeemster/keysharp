@@ -122,7 +122,7 @@
 		///     List<object>: assigns the list directly to the underlying list.
 		///     ICollection: adds each element to the underlying list.
 		/// </param>
-		/// <returns>An empty string meant to be ignored.</returns>
+		/// <returns>Empty string, unused.</returns>
 		public override object __New(params object[] values)
 		{
 			if (values == null || values.Length == 0)
@@ -190,8 +190,8 @@
 		/// Note this does not remove the element from the array, it just sets it to null.
 		/// </summary>
 		/// <param name="index">The index to set to null.</param>
-		/// <exception cref="ValueError">A ValueError exception is thrown if Index is out of range.</exception>
 		/// <returns>The removed value.</returns>
+		/// <exception cref="ValueError">A ValueError exception is thrown if Index is out of range.</exception>
 		public object Delete(object index)
 		{
 			var i = index.Ai() - 1;
@@ -214,8 +214,8 @@
 		/// <param name="startIndex">The start index to begin applying the filter callback to. If the value is negative, the
 		/// array is iterated from the end toward the beginning. Default: 1.
 		/// </param>
-		/// <exception cref="Error">An Error exception is thrown if callback is not of type FuncObj or if startIndex is out of bounds.</exception>
 		/// <returns>A new Array object consisting of all elements for which the filter callback returned true.</returns>
+		/// <exception cref="Error">An Error exception is thrown if callback is not of type FuncObj or if startIndex is out of bounds.</exception>
 		public Array Filter(object callback, object startIndex = null)
 		{
 			var index = startIndex.Ai(1);
@@ -256,9 +256,9 @@
 		/// </summary>
 		/// <param name="callback">The callback to apply to each element, which takes the form of (value, index) => bool.</param>
 		/// <param name="startIndex">The start index to begin the search at. Default: 1.</param>
+		/// <returns>The index of the first element for which callback returned true, else -1 if not found.</returns>
 		/// <exception cref="Error">An Error exception is thrown if callback is not of type FuncObj.</exception>
 		/// <exception cref="ValueError">An ValueError exception is thrown if startIndex is out of bounds.</exception>
-		/// <returns>The index of the first element for which callback returned true, else -1 if not found.</returns>
 		public long FindIndex(object callback, object startIndex = null)
 		{
 			var index = startIndex.Ai(1);
@@ -314,9 +314,9 @@
 		/// </summary>
 		/// <param name="index">The array index to retrieve the value from.</param>
 		/// <param name="default">The default value to return if a non empty value is contained at the given index.</param>
+		/// <returns>The object at the given index, or a default if the value at the index is unset.</returns>
 		/// <exception cref="IndexError">An IndexError exception is thrown if index is zero or out of range.</exception>
 		/// <exception cref="UnsetItemError">An UnsetItemError exception is thrown if the item is null and no defaults were supplied.</exception>
-		/// <returns>The object at the given index, or a default if the value at the index is unset.</returns>
 		public object Get(object index, object @default = null)
 		{
 			object val;
@@ -432,9 +432,9 @@
 		/// </summary>
 		/// <param name="callback">The callback to apply to each element, which takes the form of (value, index) => newValue.</param>
 		/// <param name="startIndex">The index to start iterating at. Default: 1.</param>
+		/// <returns>A new Array object consisting of the output of callback applied to all elements starting at startIndex.</returns>
 		/// <exception cref="Error">An exception is thrown if callback is not of type FuncObj.</exception>
 		/// <exception cref="ValueError">A ValueError exception is thrown if startIndex is out of bounds.</exception>
-		/// <returns>A new Array object consisting of the output of callback applied to all elements starting at startIndex.</returns>
 		public Array MapTo(object callback, object startIndex = null)
 		{
 			if (callback is IFuncObj ifo)
@@ -496,8 +496,8 @@
 		/// <summary>
 		/// Removes and returns the last array element.
 		/// </summary>
-		/// <exception cref="Error">An Error exception is thrown if the array is empty.</exception>
 		/// <returns>The last element.</returns>
+		/// <exception cref="Error">An Error exception is thrown if the array is empty.</exception>
 		public object Pop()
 		{
 			if (array.Count < 1)
@@ -615,8 +615,8 @@
 		/// </summary>
 		/// <param name="index">The index to begin removing at.</param>
 		/// <param name="length">The number of items to remove. Default: 1.</param>
-		/// <exception cref="ValueError">A ValueError exception is thrown if index or index + length is out of bounds.</exception>
 		/// <returns>The item removed if length equals 1, else unset.</returns>
+		/// <exception cref="ValueError">A ValueError exception is thrown if index or index + length is out of bounds.</exception>
 		public object RemoveAt(params object[] values)
 		{
 			var o = values;
@@ -655,8 +655,8 @@
 		/// <param name="callback">The callback to use for sorting which takes the form (left, right) => int. It must
 		/// return -1 if left is less than right, 0 if left equals right, otherwise 1.
 		/// </param>
-		/// <exception cref="Error">An exception is thrown if callback is not of type FuncObj.</exception>
 		/// <returns>An <see cref="Array"/></returns>
+		/// <exception cref="Error">An exception is thrown if callback is not of type FuncObj.</exception>
 		public Array Sort(object callback)
 		{
 			if (callback is IFuncObj ifo)
