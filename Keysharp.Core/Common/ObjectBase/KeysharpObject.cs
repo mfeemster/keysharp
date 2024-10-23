@@ -8,10 +8,15 @@
 
 		public virtual object __New(params object[] obj) => "";
 
+		/// <summary>
+		/// Return a cloned copy of the object.
+		/// Just calling MemberwiseClone() is sufficient to clone all of the properties as well
+		/// as the OwnProps object op.
+		/// </summary>
+		/// <returns>A cloned copy of the object.</returns>
 		public virtual object Clone()
 		{
 			return MemberwiseClone();
-			//If ownprops are implemented, might need to add extra code for those.
 		}
 
 		public KeysharpObject DefineProp(object obj0, object obj1)

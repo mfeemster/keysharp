@@ -1,222 +1,464 @@
 ﻿namespace Keysharp.Core
 {
-	public class Array : KeysharpObject, IEnumerable<(object, object)>, ICollection, IList
+	/// <summary>
+	/// Array class that wraps a List<object>.
+	/// Internally the list uses 0-based indexing, however the public interface expects 1-based indexing.
+	/// A negative index can be used to address elements in reverse, so -1 is the last element, -2 is the second last element, and so on.
+	/// </summary>
+	//public class Array : KeysharpObject, IEnumerable<(object, object)>, ICollection, IList
+	public class Array : KeysharpObject, IEnumerable<(object, object)>, IList
 	{
+		/// <summary>
+		/// The underlying object that holds the values.
+		/// </summary>
 		internal List<object> array;
 
+		/// <summary>
+		/// Retrieves or sets the current capacity of the array.
+		/// The capacity is an integer representing the maximum number of elements the array should be able to contain
+		/// before it must be automatically expanded. If setting a value less than Length, elements are removed.
+		/// </summary>
 		public object Capacity
 		{
 			get => (long)array.Capacity;
 
 			set
 			{
-				var val = value.ParseInt().Value;
-				array.Capacity = val < array.Capacity ? array.Count : val;
+				var val = value.Ai();
+
+				if (val < array.Count)
+				{
+					Length = val;//Will truncate.
+					array.Capacity = val;
+				}
+				else
+					array.Capacity = val;
 			}
 		}
 
+		/// <summary>
+		/// Returns the length of the array.
+		/// </summary>
 		public int Count => array.Count;
 
-		public bool IsFixedSize => ((IList)array).IsFixedSize;
+		/// <summary>
+		/// Gets or sets the default value returned when an element with no value is requested.
+		/// </summary>
+		public object Default { get; set; }
 
-		public bool IsReadOnly => ((IList)array).IsReadOnly;
+		/// <summary>
+		/// The implementation for IList.IsFixedSize which returns array.IsFixedSize.
+		/// </summary>
+		bool IList.IsFixedSize => ((IList)array).IsFixedSize;
 
+		/// <summary>
+		/// The implementation for IList.IsReadOnly which returns array.IsReadOnly.
+		/// </summary>
+		bool IList.IsReadOnly => ((IList)array).IsReadOnly;
+
+		/// <summary>
+		/// Retrieves or sets the length of an array.
+		/// The length includes elements which have no value.
+		/// Increasing the length changes which indices are considered valid,
+		/// but the new elements have no value (as indicated by Has).
+		/// Decreasing the length truncates the array.
+		/// </summary>
 		public object Length
 		{
 			get => (long)array.Count;
 
 			set
 			{
-				var i = value.ParseInt(true).Value;
+				var i = value.Ai();
 
 				if (i > array.Count)
 				{
 					if (array.Capacity < i)
 						array.Capacity = i;
 
-					for (var ii = 0; ii < i; ii++)
-						if (ii >= array.Count)
-							array.Add(null);
+					for (var ii = array.Count; ii < i; ii++)
+						array.Add(null);
 				}
+				else if (i < array.Count)
+					array.RemoveRange(i, array.Count - i);
 			}
 		}
 
+		/// <summary>
+		/// The implementation for ICollection.IsSynchronized which returns array.IsSynchronized.
+		/// </summary>
 		bool ICollection.IsSynchronized => ((ICollection)array).IsSynchronized;
 
+		/// <summary>
+		/// The implementation for ICollection.SyncRoot which returns array.SyncRoot.
+		/// </summary>
 		object ICollection.SyncRoot => ((ICollection)array).SyncRoot;
 
-		public Array(params object[] obj) => _ = __New(obj);
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Array"/> class.
+		/// </summary>
+		/// <param name="values">An array of values to initialize the array with.
+		/// This can be one of several values:
+		///     null: creates an empty array.
+		///     object[]: adds each element to the underlying list.
+		///     List<object>: assigns the list directly to the underlying list.
+		///     ICollection: adds each element to the underlying list.
+		/// </param>
+		public Array(params object[] values) => _ = __New(values);
 
+		/// <summary>
+		/// Gets the enumerator object which returns a position,value tuple for each element
+		/// </summary>
+		/// <returns><![CDATA[IEnumerator<(object, object)>]]></returns>
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
-		public override object __New(params object[] obj)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Array"/> class.
+		/// </summary>
+		/// <param name="values">An array of values to initialize the array with.
+		/// This can be one of several values:
+		///     null: creates an empty array.
+		///     object[]: adds each element to the underlying list.
+		///     List<object>: assigns the list directly to the underlying list.
+		///     ICollection: adds each element to the underlying list.
+		/// </param>
+		/// <returns>An empty string meant to be ignored.</returns>
+		public override object __New(params object[] values)
 		{
-			if (obj == null || obj.Length == 0)
+			if (values == null || values.Length == 0)
 				array = [];
-			else if (obj.Length == 1 && obj[0] is object[] objarr)
+			else if (values.Length == 1 && values[0] is object[] objarr)
 				array = new List<object>(objarr);
-			else if (obj.Length == 1 && obj[0] is List<object> objlist)
+			else if (values.Length == 1 && values[0] is List<object> objlist)
 				array = objlist;
-			else if (obj.Length == 1 && obj[0] is ICollection c)
+			else if (values.Length == 1 && values[0] is ICollection c)
 				array = c.Cast<object>().ToList();
 			else
 			{
 				array = [];
-				Push(obj);
+				Push(values);
 			}
 
 			return "";
 		}
 
+		/// <summary>
+		/// The implementation for IList.Add() which adds a single element to the end of the array.
+		/// This is more efficient than using Push() because the parameter
+		/// is not variadic.
+		/// </summary>
+		/// <param name="value">The value to add</param>
+		/// <returns>The length of the array after value has been added.</returns>
 		public int Add(object value)
 		{
 			array.Add(value);
 			return array.Count;
 		}
 
-		public void AddRange(ICollection c) => array.AddRange(c.Cast<object>());
-
-		public void Clear() => array.Clear();
-
-		public override object Clone() => new Array(array.ToArray());
-
-		public bool Contains(object value) => array.Contains(value);
-
-		//public long Count(params object[] values) => array.Count;
-		public void CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
-
-		public object Delete(object obj)
+		/// <summary>
+		/// Adds a range of elements to the end of the array.
+		/// </summary>
+		/// <param name="c">An ICollection of elements to add.</param>
+		public long AddRange(ICollection c)
 		{
-			var index = obj.Ai() - 1;
-
-			if (index < array.Count)
-			{
-				var ob = array[index];
-				array[index] = null;
-				return ob;
-			}
-
-			return null;
+			array.AddRange(c.Cast<object>());
+			return array.Count;
 		}
 
-		public Array Filter(object obj, object index = null)
-		{
-			var startIndex = index.Ai(1);
+		/// <summary>
+		/// Clears all elements from the array.
+		/// </summary>
+		public void Clear() => array.Clear();
 
-			if (obj is IFuncObj ifo)
+		/// <summary>
+		/// Returns whether the passed in object is contained in the array.
+		/// </summary>
+		/// <param name="value">The value to search for.</param>
+		/// <returns>True if the value was found, else false.</returns>
+		public bool Contains(object value) => array.Contains(value);
+
+		/// <summary>
+		/// The implementation for ICollection.CopyTo() which copies the elements
+		/// of the this array to the passed in array, starting at the passed in index.
+		/// </summary>
+		/// <param name="array">The array to copy elements to.</param>
+		/// <param name="index">The index to start copying from.</param>
+		void ICollection.CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
+
+		/// <summary>
+		/// Removes the value of an array element, leaving the index without a value.
+		/// Note this does not remove the element from the array, it just sets it to null.
+		/// </summary>
+		/// <param name="index">The index to set to null.</param>
+		/// <exception cref="ValueError">A ValueError exception is thrown if Index is out of range.</exception>
+		/// <returns>The removed value.</returns>
+		public object Delete(object index)
+		{
+			var i = index.Ai() - 1;
+
+			if (i < array.Count)
+			{
+				var ob = array[i];
+				array[i] = null;
+				return ob;
+			}
+			else
+				throw new ValueError($"Invalid deletion index of {index.Ai()}.");
+		}
+
+		/// <summary>
+		/// Applies a filter to each element of the array and returns a new array
+		/// consisting of all elements for which the filter callback returned true.
+		/// </summary>
+		/// <param name="callback">The filter callback to apply to each element, which takes the form of (value, index) => bool.</param>
+		/// <param name="startIndex">The start index to begin applying the filter callback to. If the value is negative, the
+		/// array is iterated from the end toward the beginning. Default: 1.
+		/// </param>
+		/// <exception cref="Error">An Error exception is thrown if callback is not of type FuncObj or if startIndex is out of bounds.</exception>
+		/// <returns>A new Array object consisting of all elements for which the filter callback returned true.</returns>
+		public Array Filter(object callback, object startIndex = null)
+		{
+			var index = startIndex.Ai(1);
+
+			if (callback is IFuncObj ifo)
 			{
 				List<object> list;
 
-				if (startIndex <  0)
+				if (index < 0)
 				{
-					var i = array.Count + startIndex + 1;
-					list = ((IEnumerable<object>)array).Reverse().Skip(Math.Abs(startIndex + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList();
+					var i = array.Count + index + 1;
+
+					if (i >= 0 && i <= array.Count)
+						list = ((IEnumerable<object>)array).Reverse().Skip(Math.Abs(index + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList();
+					else
+						throw new ValueError($"Invalid find start index of {index}.");
 				}
 				else
 				{
-					var i = startIndex - 1;
-					list = array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList();
+					var i = index - 1;
+
+					if (i >= 0 && i < array.Count)
+						list = array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList();
+					else
+						throw new ValueError($"Invalid find start index of {index}.");
 				}
 
 				return new Array(list);
 			}
 
-			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
+			throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
 		}
 
-		public long FindIndex(object obj, object index = null)
+		/// <summary>
+		/// Returns the index of the first element for which the specified callback returns true,
+		/// starting at startIndex.
+		/// If startIndex is negative, start the search from the end of the array and move toward the beginning.
+		/// </summary>
+		/// <param name="callback">The callback to apply to each element, which takes the form of (value, index) => bool.</param>
+		/// <param name="startIndex">The start index to begin the search at. Default: 1.</param>
+		/// <exception cref="Error">An Error exception is thrown if callback is not of type FuncObj.</exception>
+		/// <exception cref="ValueError">An ValueError exception is thrown if startIndex is out of bounds.</exception>
+		/// <returns>The index of the first element for which callback returned true, else -1 if not found.</returns>
+		public long FindIndex(object callback, object startIndex = null)
 		{
-			var startIndex = index.Ai(1);
+			var index = startIndex.Ai(1);
 
-			if (obj is IFuncObj ifo)
+			if (callback is IFuncObj ifo)
 			{
-				if (startIndex <  0)
+				if (index <  0)
 				{
-					startIndex = array.Count + startIndex;
+					var i = array.Count + index;
 
-					while (startIndex >= 0)
+					if (i >= 0 && i < array.Count)
 					{
-						var startIndexPlus1 = startIndex + 1L;
+						while (i >= 0)
+						{
+							var startIndexPlus1 = i + 1L;
 
-						if (Script.ForceBool(ifo.Call(array[startIndex], startIndexPlus1)))
-							return startIndexPlus1;
+							if (Script.ForceBool(ifo.Call(array[i], startIndexPlus1)))
+								return startIndexPlus1;
 
-						startIndex--;
+							i--;
+						}
+
+						return 0L;
 					}
-
-					return -1L;
+					else
+						throw new ValueError($"Invalid find start index of {startIndex.Ai(1)}.");
 				}
 				else
 				{
-					var i = startIndex - 1;
-					var found = array.FindIndex(i, x => Script.ForceBool(ifo.Call(x, (long)++i)));
-					return found != -1L ? found + 1L : 0L;
+					var i = index - 1;
+
+					if (i >= 0 && i < array.Count)
+					{
+						var found = array.FindIndex(i, x => Script.ForceBool(ifo.Call(x, (long)++i)));
+						return found != -1L ? found + 1L : 0L;
+					}
+					else
+						throw new ValueError($"Invalid find start index of {index}.");
 				}
 			}
 
-			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
+			throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
 		}
 
-		public object Get(long index) => this[Script.ForceInt(index)];
+		/// <summary>
+		/// Returns the value at a given index, or a default value.
+		/// This method does the following:
+		///     Throw an IndexError if index is zero or out of range.
+		///     Return the value at index, if there is one (see Has).
+		///     Return the value of the default parameter, if specified.
+		///     Return the value of this.Default, if defined.
+		///     Throw an UnsetItemError.
+		/// </summary>
+		/// <param name="index">The array index to retrieve the value from.</param>
+		/// <param name="default">The default value to return if a non empty value is contained at the given index.</param>
+		/// <exception cref="IndexError">An IndexError exception is thrown if index is zero or out of range.</exception>
+		/// <exception cref="UnsetItemError">An UnsetItemError exception is thrown if the item is null and no defaults were supplied.</exception>
+		/// <returns>The object at the given index, or a default if the value at the index is unset.</returns>
+		public object Get(object index, object @default = null)
+		{
+			object val;
+			var i = index.Ai(1);
 
+			if ((i = TranslateIndex(i)) != -1)
+				val = array[i];
+			else
+				throw new IndexError($"Invalid retrieval index of {i}.");
+
+			if (val != null)
+				return val;
+			else if (@default != null)
+				return @default;
+			else if (Default != null)
+				return Default;
+			else
+				throw new UnsetItemError($"array[{i}], default and Array.Default were all unset/null.");
+		}
+
+		/// <summary>
+		/// The implementation for IEnumerable<(object, object)>.GetEnumerator() which returns an ArrayIndexValueIterator.
+		/// </summary>
+		/// <returns><![CDATA[IEnumerator<(object, object)>]]>The ArrayIndexValueIterator.</returns>
 		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
 
-		public bool Has(object obj)
-		{
-			var index = obj.Ai() - 1;
-			return index < array.Count ? array[index] != null : false;
-		}
-
-		public int IndexOf(object value) => array.IndexOf(value) + 1;
-
-		public long IndexOf(object value, object index)
+		/// <summary>
+		/// Returns a non-zero number if the index is valid and there is a value at that position.
+		/// </summary>
+		/// <param name="index">The index in the array to examine.</param>
+		/// <returns>1 if the index is valid and there is a valid value stored there, else 0.</returns>
+		public long Has(object index)
 		{
 			var i = index.Ai(1);
-			return i < 0 ? array.LastIndexOf(value, array.Count + i) + 1 : array.IndexOf(value, i - 1) + 1;
+
+			if ((i = TranslateIndex(i)) != -1)
+				return array[i] != null ? 1L : 0L;
+			else
+				return 0L;
 		}
 
-		public void Insert(int index, object value) => ((IList)array).Insert(index, value);
+		/// <summary>
+		/// Implementation of IList.IndexOf() which just calls IndexOf(value, 1).
+		/// </summary>
+		/// <param name="value">The value to search for.</param>
+		/// <returns>The index that value was found at, else 0 if none was found.</returns>
+		public int IndexOf(object value) => (int)IndexOf(value, 1L);
 
+		/// <summary>
+		/// Returns the index of the first item in the array
+		/// which equals value, starting at startIndex.
+		/// If startIndex is negative, start the search from the end of the array and move toward the beginning.
+		/// </summary>
+		/// <param name="value">The value to search for.</param>
+		/// <param name="startIndex">The index to start searching at. Default: 1.</param>
+		/// <returns>The index that value was found at, else 0 if none was found.</returns>
+		public long IndexOf(object value, object startIndex = null)
+		{
+			var i = startIndex.Ai(1);
+			var abs = Math.Abs(i);
+
+			if (abs > 0 && abs <= array.Count)//Don't use TranslateIndex() here because it would do the logic twice.
+				return i < 0 ? array.LastIndexOf(value, array.Count + i) + 1 : array.IndexOf(value, i - 1) + 1;
+			else
+				return 0L;
+		}
+
+		/// <summary>
+		/// Implementation of IList.Insert() which just calls InsertAt().
+		/// </summary>
+		/// <param name="index">The index to insert at.</param>
+		/// <param name="value">The value to insert at the given index.</param>
+		public void Insert(int index, object value) => InsertAt(index, value);
+
+		/// <summary>
+		/// Inserts one or more values at a given position.
+		/// </summary>
+		/// <param name="index">The index to insert at. Specifying an index of 0 is the same as specifying Length + 1.</param>
+		/// <param name="values">The values to insert at the given index.</param>
+		/// <exception cref="ValueError">A ValueError exception is thrown if index is out of bounds.</exception>
 		public void InsertAt(params object[] values)
 		{
 			var o = values;
 
 			if (o.Length > 1)
 			{
-				var index = o.I1() - 1;
+				int index;
+				var i = o.I1();
 
-				for (var i = 1; i < values.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
-				{
-					//if (values[i] is ICollection ie)
-					//{
-					//  array.InsertRange(index, ie);
-					//  index += ie.Count;
-					//}
-					//else
-					{
-						array.Insert(index++, values[i]);
-					}
-				}
+				if (i == 0)//Can't use TranslateIndex() here because the index is slightly different for inserting.
+					index = array.Count;
+				else if (i > 0 && i <= array.Count + 1)
+					index = i - 1;
+				else if (i < 0 && i >= -array.Count)
+					index = array.Count + i;
+				else
+					throw new ValueError($"Invalid insertion index of {i}.");
+
+				for (i = 1; i < values.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
+					array.Insert(index++, values[i]);
 			}
 		}
 
-		public string Join(object obj = null) => string.Join(obj.As(","), array);
+		/// <summary>
+		/// Joins together the string representation of all array elements, separated by separator.
+		/// </summary>
+		/// <param name="separator">The separator to use. Default: comma.</param>
+		/// <returns>A string consisting of the string representation of all array elements, separated by separator.</returns>
+		public string Join(object separator = null) => string.Join(separator.As(","), array);
 
-		public Array MapTo(object obj, object index = null)
+		/// <summary>
+		/// Maps each element of the array into a new array, where the mapping performs some operation.
+		/// </summary>
+		/// <param name="callback">The callback to apply to each element, which takes the form of (value, index) => newValue.</param>
+		/// <param name="startIndex">The index to start iterating at. Default: 1.</param>
+		/// <exception cref="Error">An exception is thrown if callback is not of type FuncObj.</exception>
+		/// <exception cref="ValueError">A ValueError exception is thrown if startIndex is out of bounds.</exception>
+		/// <returns>A new Array object consisting of the output of callback applied to all elements starting at startIndex.</returns>
+		public Array MapTo(object callback, object startIndex = null)
 		{
-			var startIndex = index.Ai(1);
-
-			if (obj is IFuncObj ifo)
+			if (callback is IFuncObj ifo)
 			{
-				List<object> list;
-				var i = startIndex - 1;
-				list = array.Skip(i).Select(x => ifo.Call(x, ++i)).ToList();
-				return new Array(list);
+				var index = TranslateIndex(startIndex.Ai(1));
+
+				if (index >= 0 && index < array.Count)
+				{
+					List<object> list;
+					var i = index;
+					list = array.Skip(index).Select(x => ifo.Call(x, ++i)).ToList();
+					return new Array(list);
+				}
+				else
+					throw new ValueError($"Invalid mapping start index of {startIndex.Ai(1)}.");
 			}
 
-			throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
+			throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
 		}
 
+		/// <summary>
+		/// Returns the element with the greatest numerical value.
+		/// </summary>
+		/// <returns>The found element, else empty string.</returns>
 		public object MaxIndex()
 		{
 			var val = long.MinValue;
@@ -232,6 +474,10 @@
 			return val != long.MinValue ? val : string.Empty;
 		}
 
+		/// <summary>
+		/// Returns the element with the least numerical value.
+		/// </summary>
+		/// <returns>The found element, else empty string.</returns>
 		public object MinIndex()
 		{
 			var val = long.MaxValue;
@@ -247,10 +493,15 @@
 			return val != long.MaxValue ? val : string.Empty;
 		}
 
+		/// <summary>
+		/// Removes and returns the last array element.
+		/// </summary>
+		/// <exception cref="Error">An Error exception is thrown if the array is empty.</exception>
+		/// <returns>The last element.</returns>
 		public object Pop()
 		{
 			if (array.Count < 1)
-				throw new Error($"Array was empty in {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Cannot pop an empty array.");
 
 			var index = array.Count - 1;
 			var val = array[index];
@@ -258,6 +509,12 @@
 			return val;
 		}
 
+		/// <summary>
+		/// Print every element in the array to the passed in StringBuffer.
+		/// </summary>
+		/// <param name="name">The name to use for this object.</param>
+		/// <param name="sbuf">The StringBuffer to print to.</param>
+		/// <param name="tabLevel">The tab level to use when printing.</param>
 		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
 		{
 			var sb = sbuf.sb;
@@ -339,31 +596,52 @@
 			tabLevel--;
 		}
 
+		/// <summary>
+		/// Appends values to the end of an array.
+		/// </summary>
+		/// <param name="values">One or more values to append.</param>
 		public void Push(params object[] values) => array.AddRange(values);
 
+		/// <summary>
+		/// Implementation of IList.Remove() which removes the first occurrence of value
+		/// from the array.
+		/// </summary>
+		/// <param name="value">The value to remove.</param>
 		public void Remove(object value) => array.Remove(value);
 
-		public object RemoveAt(params object[] values)//This must be variadic to properly resolve ahead of the interface method RemoveAt().
+		/// <summary>
+		/// Removes one or more items from the array and returns the removed item.
+		/// This must be variadic to properly resolve ahead of the interface method IList.RemoveAt().
+		/// </summary>
+		/// <param name="index">The index to begin removing at.</param>
+		/// <param name="length">The number of items to remove. Default: 1.</param>
+		/// <exception cref="ValueError">A ValueError exception is thrown if index or index + length is out of bounds.</exception>
+		/// <returns>The item removed if length equals 1, else unset.</returns>
+		public object RemoveAt(params object[] values)
 		{
 			var o = values;
 
 			if (array.Count > 0 && o.Length > 0)
 			{
-				var index = (int)o.L1() - 1;
+				var index = o.I1();
+				int i;
+
+				if ((i = TranslateIndex(index)) == -1)
+					throw new ValueError($"Invalid removal index of {index}.");
 
 				if (o.Length > 1 && o[1] != null)
 				{
 					var len = (int)o.Al(1);
 
-					if (index + len <= array.Count)
-						array.RemoveRange(index, len);
-
-					return null;
+					if (i + len <= array.Count)
+						array.RemoveRange(i, len);
+					else
+						throw new ValueError($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.");
 				}
-				else if (index < array.Count)
+				else if (i < array.Count)
 				{
-					var ob = array[index];
-					array.RemoveAt(index);
+					var ob = array[i];
+					array.RemoveAt(i);
 					return ob;
 				}
 			}
@@ -371,17 +649,29 @@
 			return null;
 		}
 
-		public Array Sort(object obj)
+		/// <summary>
+		/// Sorts the array in place.
+		/// </summary>
+		/// <param name="callback">The callback to use for sorting which takes the form (left, right) => int. It must
+		/// return -1 if left is less than right, 0 if left equals right, otherwise 1.
+		/// </param>
+		/// <exception cref="Error">An exception is thrown if callback is not of type FuncObj.</exception>
+		/// <returns>An <see cref="Array"/></returns>
+		public Array Sort(object callback)
 		{
-			if (obj is IFuncObj ifo)
+			if (callback is IFuncObj ifo)
 			{
 				array.Sort(new FuncObjComparer(ifo));
 				return this;
 			}
 			else
-				throw new Error($"Passed in object of type {obj.GetType()} was not a FuncObj.");
+				throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
 		}
 
+		/// <summary>
+		/// Returns the string representation of all elements in the array.
+		/// </summary>
+		/// <returns>The string representation.</returns>
 		public override string ToString()
 		{
 			if (array.Count > 0)
@@ -412,36 +702,67 @@
 				return "[]";
 		}
 
+		/// <summary>
+		/// The implementation for IEnumerable.GetEnumerator() which just calls __Enum(),
+		/// </summary>
+		/// <returns><![CDATA[IEnumerator<(object, object)>]]></returns>
 		IEnumerator IEnumerable.GetEnumerator() => __Enum();
 
-		void IList.RemoveAt(int index) => RemoveAt([index]);//The explicit IList qualifier is necessary or else this will show up as a duplicate function.
+		/// <summary>
+		/// The implementation for IList.RemoveAt() which just calls RemoveAt(),
+		/// The explicit IList qualifier is necessary or else this will show up as a duplicate function.
+		/// </summary>
+		/// <param name="index">The index.</param>
+		void IList.RemoveAt(int index) => RemoveAt([index]);
 
-		public object this[object idx]
+		/// <summary>
+		/// Translates a 1-based index which allows negative nubmers to a 0-based positive only index.
+		/// </summary>
+		/// <param name="i">The index to translate.</param>
+		/// <returns>The translated index, else -1 if out of bounds.</returns>
+		private int TranslateIndex(int i)
+		{
+			if (i > 0 && i <= array.Count)
+				return i - 1;
+			else if (i < 0 && i >= -array.Count)
+				return array.Count + i;
+			else
+				return -1;
+		}
+
+		/// <summary>
+		/// Indexer which retrieves or sets the value of an array element.
+		/// </summary>
+		/// <param name="index">The index to get or set.</param>
+		/// <returns>The value at the index.</returns>
+		/// <exception cref="IndexError">An IndexError exception is thrown if index is zero or out of range.</exception>
+		public object this[object index]
 		{
 			get
 			{
-				var index = idx.Ai();
+				var i = index.Ai();
 
-				if (index > 0)
-					return array[index - 1];
-				else if (index < 0)
-					return array[array.Count + index];
+				if ((i = TranslateIndex(i)) != -1)
+					return array[i];
 				else
-					throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+					throw new IndexError($"Invalid retrieval index of {i}.");
 			}
 			set
 			{
-				var index = idx.Ai();
+				var i = index.Ai();
 
-				if (index > 0)
-					array[index - 1] = value;
-				else if (index < 0)
-					array[array.Count + index] = value;
+				if ((i = TranslateIndex(i)) != -1)
+					array[i] = value;
 				else
-					throw new IndexError($"Invalid index of {index} in {new StackFrame(0).GetMethod().Name}");
+					throw new IndexError($"Invalid set index of {i}.");
 			}
 		}
 
+		/// <summary>
+		/// The implementation for IList.[] which just calls this[].
+		/// </summary>
+		/// <param name="index">The index to get or set.</param>
+		/// <returns>The value at the index.</returns>
 		object IList.this[int index]
 		{
 			get
@@ -455,11 +776,25 @@
 		}
 	}
 
+	/// <summary>
+	/// A two component iterator for Array which returns the value and the 1-based index the
+	/// value was at as a tuple.
+	/// </summary>
 	internal class ArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
+		/// <summary>
+		/// The internal array to be iterated over.
+		/// </summary>
 		private readonly List<object> arr;
+
+		/// <summary>
+		/// The current 0-based position the iterator is at.
+		/// </summary>
 		private int position = -1;
 
+		/// <summary>
+		/// Gets the index,value tuple at the current iterator position.
+		/// </summary>
 		public (object, object) Current
 		{
 			get
@@ -475,36 +810,84 @@
 			}
 		}
 
+		/// <summary>
+		/// IEnumerator.Current implementation that just returns Current.
+		/// </summary>
 		object IEnumerator.Current => Current;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ArrayIndexValueIterator"/> class.
+		/// </summary>
+		/// <param name="a">The List<object> to iterate over.</param>
 		public ArrayIndexValueIterator(List<object> a)
 		{
 			arr = a;
 		}
 
-		public void Call(ref object obj0) => (obj0, _) = Current;
+		/// <summary>
+		/// Calls Current and places the position value in the passed in object reference.
+		/// </summary>
+		/// <param name="pos">A reference to the position value.</param>
+		public void Call(ref object pos) => (pos, _) = Current;
 
-		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
+		/// <summary>
+		/// Calls Current and places the position value in pos and the value in val.
+		/// </summary>
+		/// <param name="pos">A reference to the position value.</param>
+		/// <param name="val">A reference to the object value.</param>
+		public void Call(ref object pos, ref object val) => (pos, val) = Current;
 
+		/// <summary>
+		/// The implementation for IComparer.Dispose() which internally resets the iterator.
+		/// </summary>
 		public void Dispose() => Reset();
 
+		/// <summary>
+		/// Moves the iterator to the next position.
+		/// </summary>
+		/// <returns>A <see cref="bool"/>True if the iterator position has not moved past the last element, else false.</returns>
 		public bool MoveNext()
 		{
 			position++;
 			return position < arr.Count;
 		}
 
+		/// <summary>
+		/// Resets the iterator.
+		/// </summary>
 		public void Reset() => position = -1;
 
+		/// <summary>
+		/// Gets the enumerator which is just this.
+		/// </summary>
+		/// <returns><![CDATA[IEnumerator<(object, object)>]]>this</returns>
 		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 
+	/// <summary>
+	/// A comparer which uses an IFuncObj to compare two objects.
+	/// This is used Array.Sort().
+	/// </summary>
 	internal class FuncObjComparer : IComparer<object>
 	{
+		/// <summary>
+		/// The function object to use in the comparison.
+		/// </summary>
 		private readonly IFuncObj ifo;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FuncObjComparer"/> class.
+		/// </summary>
+		/// <param name="f">The IFuncObj to use in the comparison.</param>
 		public FuncObjComparer(IFuncObj f) => ifo = f;
 
+		/// <summary>
+		/// The implementation for IComparer.Compare() which internally calls the
+		/// underlying IFuncObj to do the comparison.
+		/// </summary>
+		/// <param name="left">The left object to compare.</param>
+		/// <param name="right">The right object to compare.</param>
+		/// <returns>An <see cref="int"/>-1 if left is less than right, 0 if left equals right, otherwise 1.</returns>
 		public int Compare(object left, object right) => ifo.Call(left, right).Ai();
 	}
 }

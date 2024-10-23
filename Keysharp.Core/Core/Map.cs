@@ -36,7 +36,7 @@
 
 		public long Capacity
 		{
-			get => map.EnsureCapacity(0);
+			get => map.Capacity;
 			set => map.EnsureCapacity((int)value);
 		}
 
@@ -64,7 +64,9 @@
 		}
 
 		public int Count => map.Count;
+
 		public object Default { get; set; }
+
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
 
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
@@ -103,23 +105,6 @@
 		}
 
 		public void Clear() => map.Clear();
-
-		public override object Clone()
-
-		{
-			var newmap = new Map()
-			{
-				Default = Default,
-				Capacity = Capacity,
-				CaseSense = CaseSense
-							//Need to copy ownprops here too.//TODO
-			};
-
-			foreach (var kv in map)
-				newmap[kv.Key] = kv.Value;
-
-			return newmap;
-		}
 
 		public bool Contains(object item) => map.ContainsKey(item);
 

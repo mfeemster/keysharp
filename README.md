@@ -246,14 +246,21 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 				
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
 * Add new methods to `Array`:
-	+ `Add(value) => Integer` which should be more efficient than `Push(values*)` when adding a single item because it is not variadic. It also returns the length of the array after the add completes.
-	+ `Filter(callback: (value [, index]) => Boolean) => Array`
-	+ `FindIndex(callback: (value [, index]) => Boolean, start_index := 1) => Integer`
-		+ If `start_index` is less than 0 then do a reverse lookup.
-	+ `IndexOf(val_to_find, start_index := 1) => Integer`
-	+ `Join(separator := ',') => String`
-	+ `MapTo(callback: (value [, index]) => Any) => Array`
-	+ `Sort(callback: (a, b) => Integer) => $this`. Sort in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 when `a > b`.
+	+ `Add(value) => Integer` : Adds a single element to the array.
+		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.
+	+ `Filter(callback: (value [, index]) => Boolean) => Array`: Applies a filter to each element of the array and returns a new array consisting of all elements for which the filter callback returned true.
+	+ `FindIndex(callback: (value [, index]) => Boolean, startIndex := 1) => Integer`: Returns the index of the first element for which the specified callback returns true, starting at `startIndex`. Returns 0 if value is not found.
+		+ If `startIndex` is negative, start the search from the end of the array and move toward the beginning.
+	+ `IndexOf(value, startIndex := 1) => Integer`: Returns the index of the first item in the array which equals value, starting at `startIndex`. Returns 0 if value is not found.
+		+ If `startIndex` is negative, start the search from the end of the array and move toward the beginning.
+	+ `Join(separator := ',') => String`: Joins together the string representation of all array elements, separated by `separator`.
+	+ `MapTo(callback: (value [, index]) => Any, startIndex := 1) => Array`: Maps each element of the array, starting at `startIndex`, into a new array where the mapping performs some operation.
+```
+		lam := (x, i) => x * i
+		arr := [10, 20, 30]
+		arr2 := arr.MapTo(lam)
+```
+	+ `Sort(callback: (a, b) => Integer) => this`: Sorts the array in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 otherwise.
 * Hyperbolic versions of the trigonometric functions:
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
@@ -405,7 +412,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `#if symbol` is used to enable a section of code if symbol is defined.
 	+ By default, the following are defined:
 		+ `WINDOWS` if you are running the script on Microsoft Windows.
-		+ `LINUX` if you are running on linux.
+		+ `LINUX` if you are running the script on linux.
 		+ `KEYSHARP`
 	+ `#else` can be used to take an alternate path if the preceding `#if` evaluates to false.
 	+ `#elif symbol` can be used to evaluate another symbol if the preceding `#if` or `#elif` evaluate to false.

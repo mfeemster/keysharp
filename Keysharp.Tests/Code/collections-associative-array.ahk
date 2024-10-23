@@ -101,7 +101,14 @@ if (val = 1)
 else
 	FileAppend, "fail", "*"
 
-m := { "one" : 1, "two" : 2, "three" : 3 }
+m := Map()
+m.CaseSense := "Off"
+m.Default := 999
+m.Capacity := 100
+m["one"] := 1
+m["two"] := 2
+m["three"] := 3
+
 val := m.Has("two")
 
 if (val == true)
@@ -109,7 +116,65 @@ if (val == true)
 else
 	FileAppend, "fail", "*"
 
+m.DefineProp("a", {
+		value: 123
+	})
+
+m.DefineProp("b", {
+		value: 456
+	})
+
+m.DefineProp("c", {
+		value: 789
+	})
+
 m2 := m.Clone()
+
+if (m2.CaseSense == "Off")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m2.Default == 999)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m.Capacity == m2.Capacity) ; Won't be exactly 100, so just compare to each other. Testing shows the value is 107.
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m2["one"] == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (m2["two"] == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (m2["three"] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m2.a == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (m2.b == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m2.c == 789)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
 len := m2.Count
 
 if (len == 3)
