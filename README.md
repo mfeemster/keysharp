@@ -132,7 +132,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
 	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
-	+ `ObjOwnProps()` takes an optional second parameter as a boolean (default: `false`). Passing `True` means return name and value, passing `False` or empty means return name only.
+	+ `obj.OwnProps()/ObjOwnProps()` take an optional second/third parameter as a boolean (default: `True`). Pass `True` to only return the properties defined by the user, else `False` to also return properties defined internally by Keysharp.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
 * `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
