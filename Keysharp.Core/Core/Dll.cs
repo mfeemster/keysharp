@@ -1,53 +1,82 @@
 #if WINDOWS
+
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for DLL-related functions.
+	/// </summary>
 	public static class Dll
 	{
+		/// <summary>
+		/// Calling DllCall() requires creating a dynamic assembly, module, type, and method. Then the type is finally created.
+		/// Doing all of these take significant time.
+		/// Sadly, an existing assembly/module/type cannot have new methods created on it once the initial creation is done.
+		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.
+		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
+		/// </summary>
 		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ConcurrentDictionary<string, DllCache>();
 
-		public static DelegateHolder CallbackCreate(object obj0, object obj1 = null, object obj2 = null)
+		/// <summary>
+		/// Creates a machine-code address that when called, redirects the call to a function in the script.
+		/// </summary>
+		/// <param name="function">
+		/// A function object to call automatically whenever Address is called. The function also receives the parameters that were passed to Address.
+		/// A closure or bound function can be used to differentiate between multiple callbacks which all call the same script function.
+		/// The callback retains a reference to the function object, and releases it when the script calls CallbackFree.
+		/// </param>
+		/// <param name="options">
+		/// If blank or omitted, a new thread will be started each time Function is called, the standard calling convention will be used, and the parameters will be passed individually to Function. Otherwise, specify one or more of the following options. Separate each option from the next with a space (e.g. "C Fast").
+		///     Fast or F: Avoids starting a new thread each time Function is called.Although this performs better, it must be avoided whenever the thread from which Address is called varies (e.g.when the callback is triggered by an incoming message). This is because Function will be able to change global settings such as A_LastError and the last-found window for whichever thread happens to be running at the time it is called. For more information, see Remarks.
+		///     CDecl or C: Makes Address conform to the "C" calling convention. This is typically omitted because the standard calling convention is much more common for callbacks. This option is ignored by 64-bit versions of AutoHotkey, which use the x64 calling convention.
+		///     &: Causes the address of the parameter list (a single integer) to be passed to Function instead of the individual parameters.Parameter values can be retrieved by using NumGet. When using the standard 32-bit calling convention, ParamCount must specify the size of the parameter list in DWORDs(the number of bytes divided by 4).
+		/// </param>
+		/// <param name="paramCount">
+		/// If omitted, it defaults to Function.MinParams, which is usually the number of mandatory parameters in the definition of Function.
+		/// Otherwise, specify the number of parameters that Address's caller will pass to it.
+		/// In either case, ensure that the caller passes exactly this number of parameters.
+		/// </param>
+		/// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.
+		/// This is typically passed to an external function via DllCall or placed in a struct using NumPut, but can also be called directly by DllCall.
+		/// </returns>
+		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
 		{
-			var options = obj1.As();
+			var o = options.As();
 			//obj2/paramcount is unused.
-			return new DelegateHolder(obj0, options.Contains('f', StringComparison.OrdinalIgnoreCase), options.Contains('&'));
-		}
-
-		public static void CallbackFree(object obj0)
-		{
-			if (obj0 is DelegateHolder dh)
-				dh.Clear();
+			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));
 		}
 
 		/// <summary>
-		/// Calls an unmanaged function in a DLL.
+		/// Frees the specified callback by internally setting it to null.
+		/// </summary>
+		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
+		public static void CallbackFree(object address) => (address as DelegateHolder)?.Clear();
+
+		/// <summary>
+		/// Calls a function inside a DLL, such as a standard Windows API function.
 		/// </summary>
 		/// <param name="function">
-		/// <para>The path to the function, e.g. <c>C:\path\to\my.dll</c>. The ".dll" file extension can be omitted.</para>
-		/// <para>If an absolute path is not specified on Windows the function will search the following system libraries (in order):
-		/// User32.dll, Kernel32.dll, ComCtl32.dll, or Gdi32.dll.</para>
+		/// The DLL or EXE file name followed by a backslash and the name of the function.
+		/// For example: "MyDLL\MyFunction" (the file extension ".dll" is the default when omitted).
+		/// If an absolute path isn't specified, DllFile is assumed to be in the system's PATH or A_WorkingDir.
+		/// DllFile may be omitted when calling a function that resides in User32.dll, Kernel32.dll, ComCtl32.dll, or Gdi32.dll.
+		/// For example, "User32\IsWindowVisible" produces the same result as "IsWindowVisible".
+		/// If no function can be found by the given name, a "W" (Unicode) suffix is automatically appended.
+		/// For example, "MessageBox" is the same as "MessageBoxW".
+		/// This parameter may also consist solely of an integer, which is interpreted as the address of the function to call. Sources of such addresses include COM and CallbackCreate.
+		/// If this parameter is an object, the value of the object's Ptr property is used. If no such property exists, a PropertyError is thrown.
 		/// </param>
-		/// <param name="parameters">The type and argument list.</param>
-		/// <returns>The value returned by the function.</returns>
-		/// <remarks>
-		/// <para><see cref="ErrorLevel"/> will be set to one of the following:</para>
-		/// <list type="bullet">
-		/// <item><term>0</term>: <description>success</description></item>
-		/// <item><term>-3</term>: <description>file could not be accessed</description></item>
-		/// <item><term>-4</term>: <description>function could not be found</description></item>
-		/// </list>
-		/// <para>The following types can be used:</para>
-		/// <list type="bullet">
-		/// <item><term><c>str</c></term>: <description>a string</description></item>
-		/// <item><term><c>int64</c></term>: <description>a 64-bit integer</description></item>
-		/// <item><term><c>int</c></term>: <description>a 32-bit integer</description></item>
-		/// <item><term><c>short</c></term>: <description>a 16-bit integer</description></item>
-		/// <item><term><c>char</c></term>: <description>an 8-bit integer</description></item>
-		/// <item><term><c>float</c></term>: <description>a 32-bit floating point number</description></item>
-		/// <item><term><c>double</c></term>: <description>a 64-bit floating point number</description></item>
-		/// <item><term><c>*</c> or <c>P</c> suffix</term>: <description>pass the specified type by address</description></item>
-		/// <item><term><c>U</c> prefix</term>: <description>use unsigned values for numeric types</description></item>
-		/// </list>
-		/// </remarks>
+		/// <param name="parameters">Type1, Arg1
+		/// Each of these pairs represents a single parameter to be passed to the function. The number of pairs is unlimited for normal DLL calls and is limited to 16 for COM calls.
+		/// The argument types can be: Str, WStr, AStr, Int64, Int, Short, Char, Float, Double, Ptr or HRESULT (a 32-bit integer).
+		/// Append an asterisk (with optional preceding space) to any of the above types to cause the address of the argument to be passed rather than the value itself.
+		/// Prepend the letter U to any of the integer types above to interpret it as an unsigned integer (UInt64, UInt, UShort, and UChar).
+		/// Strictly speaking, this is necessary only for return values and asterisk variables because it does not matter whether an argument passed by value is unsigned or signed (except for Int64).
+		/// </param>
+		/// <returns>DllCall returns the actual value returned by Function.
+		/// If Function is of a type that does not return a value, the result is an undefined value of the specified return type (integer by default).</returns>
+		/// <exception cref="Error">An Error exception is thrown if there is any problem creating the dynamic assembly/function or calling it.</exception>
+		/// <exception cref="OSError">A OSError exception is thrown if the return type was HRESULT and the return value was negative.</exception>
+		/// <exception cref="TypeError">A TypeError exception is thrown if any of the arguments was required to have a .Ptr member, but none was found.</exception>
 		public static object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
@@ -116,6 +145,7 @@ namespace Keysharp.Core
 					{
 						//Caching this would be ideal, but it doesn't seem possible because you can't modify the type after it's created.
 						//Creating the assembly, module, type and method take about 4-7ms, so it's not too big of a deal.
+						//The best we can do is the caching above in dllCache.
 						var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.RunAndCollect);
 						var module = assembly.DefineDynamicModule("module");
 						var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
@@ -185,8 +215,10 @@ namespace Keysharp.Core
 						if (e.InnerException is Error err)
 							inner += " " + err.Message;
 
-						var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}");
-						error.Extra = "0x" + Accessors.A_LastError.ToString("X");
+						var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
+						{
+							Extra = "0x" + Accessors.A_LastError.ToString("X")
+						};
 						throw error;
 					}
 				}
@@ -236,96 +268,17 @@ namespace Keysharp.Core
 					if (e.InnerException is Error err)
 						inner += " " + err.Message;
 
-					var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}");
-					error.Extra = "0x" + Accessors.A_LastError.ToString("X");
+					var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
+					{
+						Extra = "0x" + Accessors.A_LastError.ToString("X")
+					};
 					throw error;
 				}
 			}
 			else if (function is DelegateHolder dh)
 			{
-				//var ptrs = new IntPtr[31];
-				//var helper = new DllArgumentHelper(parameters);
 				var helper = new ComArgumentHelper(parameters);
-				//unsafe
-				//{
-				//  //fixed (object* pin = args)
-				//  {
-				//      for (var i = 0; i < helper.args.Length && i < ptrs.Length; i++)
-				//      {
-				//          if (helper.types[i] == typeof(float))
-				//          {
-				//              var f = (float)helper.args[i];
-				//              int* iref = (int*)&f;
-				//              ptrs[i] = new IntPtr(*iref);
-				//          }
-				//          else if (helper.types[i] == typeof(double))
-				//          {
-				//              var d = (double)helper.args[i];
-				//              long* lref = (long*)&d;
-				//              ptrs[i] = new IntPtr(*lref);
-				//          }
-				//          else if (helper.types[i] == typeof(long))
-				//          {
-				//              var l = (long)helper.args[i];
-				//              ptrs[i] = new IntPtr(l);
-				//          }
-				//          else if (helper.types[i] == typeof(IntPtr))
-				//          {
-				//              ptrs[i] = (IntPtr)helper.args[i];
-				//          }
-				//          else if (helper.types[i] == typeof(string))
-				//          {
-				//              var str = helper.args[i] as string;
-				//              fixed (char* p = str)//If the string moves after this is assigned, the program will likely crash. Unsure what else to do.//TODO
-				//              {
-				//                  ptrs[i] = new IntPtr(p);
-				//              }
-				//          }
-				//          else if (helper.types[i] == typeof(ulong))
-				//          {
-				//              var ul = (ulong)helper.args[i];
-				//              ptrs[i] = new IntPtr((long)ul);
-				//          }
-				//          else if (helper.types[i] == typeof(int))
-				//          {
-				//              var ii = (int)helper.args[i];
-				//              ptrs[i] = new IntPtr((long)ii);
-				//          }
-				//          else if (helper.types[i] == typeof(uint))
-				//          {
-				//              var ui = (uint)helper.args[i];
-				//              ptrs[i] = new IntPtr(ui);
-				//          }
-				//          else if (helper.types[i] == typeof(short))
-				//          {
-				//              var s = (short)helper.args[i];
-				//              ptrs[i] = new IntPtr(s);
-				//          }
-				//          else if (helper.types[i] == typeof(ushort))
-				//          {
-				//              var us = (ushort)helper.args[i];
-				//              ptrs[i] = new IntPtr(us);
-				//          }
-				//          else if (helper.types[i] == typeof(char))
-				//          {
-				//              var c = (char)helper.args[i];
-				//              ptrs[i] = new IntPtr(c);
-				//          }
-				//          else if (helper.types[i] == typeof(sbyte))
-				//          {
-				//              var sb = (sbyte)helper.args[i];
-				//              ptrs[i] = new IntPtr(sb);
-				//          }
-				//          else if (helper.types[i] == typeof(byte))
-				//          {
-				//              var b = (byte)helper.args[i];
-				//              ptrs[i] = new IntPtr(b);
-				//          }
-				//      }
-				//  }
-				//}
 				return dh.DelegatePlaceholderArr(helper.args);
-				//return dh.DelegatePlaceholderArr(ptrs);
 			}
 			else if (function is Delegate del)
 			{
@@ -352,60 +305,33 @@ namespace Keysharp.Core
 							  : val;
 				}
 
-				//if (address > 0)//Nothing in this block works and the code below is the remnants of various attempts.
+				try
 				{
-					try
-					{
-						//var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("KeysharpDynamicMethods"), AssemblyBuilderAccess.RunAndCollect);
-						//var module = assembly.DefineDynamicModule("KeysharpDynamicModule");
-						//var container = module.DefineType("KeysharpDynamicContainer", TypeAttributes.Public | TypeAttributes.UnicodeClass);
-						//var typeBuilder = module.DefineType("KeysharpDynamicType", TypeAttributes.Public);
-						//var methodBuilder = typeBuilder.DefineMethod(
-						//                      "mymethodname",
-						//                      MethodAttributes.Public | MethodAttributes.Static,
-						//                      helper.returnType,
-						//                      helper.types);
-						//var tp = typeBuilder.CreateType();
-						//var definition = methodBuilder.GetGenericMethodDefinition();
-						//var methodInfo = tp.GetMethod("mymethodname");
-						//MsgBox("Your Dynamic Method: {0};", methodInfo.ToString());
-						//var value = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate)).Method.Invoke(null, helper.args);
-						//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Delegate));
-						//var delType = Expression.GetFuncType(helper.types.Concat(new[] { helper.returnType}));
-						var comHelper = new ComArgumentHelper(parameters);
-						var val = CallDel(address, comHelper.args);
-						//var delType = Expression.GetDelegateType(helper.types.Concat(new[] { helper.ReturnType }));
-						//var ptrdel = GetDelegateForFunctionPointerFix(new IntPtr(address), delType);
-						//System.Runtime.CompilerServices.
-						//System.Linq.Expressions.Compiler.DelegateHelpers.MakeNewCustomDelegate
-						//var ptrdel = Marshal.GetDelegateForFunctionPointer(new IntPtr(address), typeof(Action));
-						//var value = ptrdel.DynamicInvoke(helper.args.Length == 0 ? null : helper.args);
-						//var value = ptrdel.Method.Invoke(null, args);
-						return val;
-					}
-					catch (Exception e)
-					{
-						var error = new Error($"An error occurred when calling {function}(): {e.Message}");
-						error.Extra = "0x" + Accessors.A_LastError.ToString("X");
-						throw error;
-					}
+					var comHelper = new ComArgumentHelper(parameters);
+					var val = CallDel(address, comHelper.args);
+					return val;
 				}
-				//else if (address <= 0)
-				//{
-				//  throw new ValueError($"Function argument of type {function.GetType()} was treated as an address and had a value of {address}. It must greater than 0.");
-				//}
-				//else// if (function is float || function is double || function is decimal)
-				//{
-				//  throw new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.");
-				//}
+				catch (Exception e)
+				{
+					var error = new Error($"An error occurred when calling {function}(): {e.Message}")
+					{
+						Extra = "0x" + Accessors.A_LastError.ToString("X")
+					};
+					throw error;
+				}
 			}
 		}
 
-		internal static string GetDllCallId(string name, string path, DllArgumentHelper helper)
-		{
-			return $"{name}{path}{helper.ReturnType}{string.Join(',', helper.names)}-{string.Join(',', helper.types.Select(t => t.Name))}";
-		}
-
+		/// <summary>
+		/// A private helper to wrap invoking a COM method with a specific number of arguments.
+		/// This is done because there is no way to dynamically create and COM call in C# at runtime without knowing the COM ID ahead of time.
+		/// Since it can only be done at compile time, we have to provide specific function signatures from 0
+		/// to 16 parameters, then call the appropriate one based on how many arguments are specificed when called.
+		/// All arguments are considered IntPtr internally.
+		/// </summary>
+		/// <param name="vtbl">The vtbl of the COM object.</param>
+		/// <param name="args">The argument list.</param>
+		/// <returns>An <see cref="IntPtr"/> which contains the return value of the COM call.</returns>
 		private static IntPtr CallDel(IntPtr vtbl, IntPtr[] args)
 		{
 			switch (args.Length)
@@ -481,15 +407,55 @@ namespace Keysharp.Core
 
 			return IntPtr.Zero;
 		}
+
+		/// <summary>
+		/// Compose a string that uniquely identifies a call to a DLL function with specific arguments.
+		/// This is used as a key to the dllCache dictionary to optimize performance.
+		/// </summary>
+		/// <param name="name">The name of the function.</param>
+		/// <param name="path">The path to the DLL the function resides in.</param>
+		/// <param name="helper">The helper which contains the argument types and names.</param>
+		/// <returns>A string which uniquely identifies a DLL call.</returns>
+		private static string GetDllCallId(string name, string path, DllArgumentHelper helper)
+		{
+			return $"{name}{path}{helper.ReturnType}{string.Join(',', helper.names)}-{string.Join(',', helper.types.Select(t => t.Name))}";
+		}
 	}
 
+	/// <summary>
+	/// A cached DLL assembly/module/type/method to be reused when
+	/// the same function is repeatedly called with the same number and type of arguments.
+	/// </summary>
 	internal class DllCache
 	{
+		/// <summary>
+		/// The assembly to cache.
+		/// </summary>
 		internal AssemblyBuilder assembly;
+
+		/// <summary>
+		/// The container to cache.
+		/// </summary>
 		internal TypeBuilder container;
+
+		/// <summary>
+		/// The created type to cache.
+		/// </summary>
 		internal Type created;
+
+		/// <summary>
+		/// The pinvoke method to cache.
+		/// </summary>
 		internal MethodBuilder invoke;
+
+		/// <summary>
+		/// The created pinvoke method from the type to cache.
+		/// </summary>
 		internal MethodInfo method;
+
+		/// <summary>
+		/// The created dynamic module to cache.
+		/// </summary>
 		internal ModuleBuilder module;
 	}
 }
