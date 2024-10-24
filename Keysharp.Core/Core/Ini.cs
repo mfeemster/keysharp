@@ -1,6 +1,7 @@
 namespace Keysharp.Core
 {
 	/// <summary>
+	/// Public interface for Ini-related functions.
 	/// Although the Windows API does provide functions for manipulating INI files, they are not cross platform.
 	/// So the code here provides cross platform INI manipulation functions in pure C#.
 	/// </summary>
@@ -9,39 +10,40 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Deletes a value from a standard format .ini file.
 		/// </summary>
-		/// <param name="file">The name of the file.</param>
-		/// <param name="section">The section name.</param>
-		/// <param name="key">The key name. If omitted, the entire <paramref name="section"/> will be deleted.</param>
-		public static void IniDelete(object obj0, object obj1, object obj2 = null)
+		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
+		/// <param name="key">If omitted, the entire section will be deleted. Otherwise, specify the key name in the .ini file.</param>
+		/// <exception cref="Error">An Error exception is thrown if any file errors occur.</exception>
+		public static void IniDelete(object filename, object section, object key = null)
 		{
-			var file = obj0.As();
-			var section = obj1.As();
-			var key = obj2.As();
+			var file = filename.As();
+			var s = section.As();
+			var k = key.As();
 
 			if (!File.Exists(file))
 				return;
 
-			if (section != "")
-				section = string.Format(Keyword_IniSectionOpen + "{0}]", section);
+			if (s != "")
+				s = string.Format(Keyword_IniSectionOpen + "{0}]", s);
 
 			try
 			{
-				var haskey = !string.IsNullOrEmpty(key);
-				var hassec = !string.IsNullOrEmpty(section);
+				var haskey = !string.IsNullOrEmpty(k);
+				var hassec = !string.IsNullOrEmpty(s);
 				var sb = new StringBuilder(1024);
 				var writer = new StringWriter();
 				var inidkt = IniLoad(file);
 
 				if (hassec && haskey)
 				{
-					if (inidkt.Contains(section))
+					if (inidkt.Contains(s))
 					{
-						var secdkt = inidkt[section] as OrderedDictionary;
-						secdkt.Remove(key);
+						var secdkt = inidkt[s] as OrderedDictionary;
+						secdkt.Remove(k);
 					}
 				}
 				else if (hassec)
-					inidkt.Remove(section);
+					inidkt.Remove(s);
 
 				foreach (DictionaryEntry kv in inidkt)
 				{
@@ -74,28 +76,27 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Reads a value from a standard format .ini file.
 		/// </summary>
-		/// <param name="result">The variable to store the result.</param>
-		/// <param name="file">The name of the file.</param>
-		/// <param name="section">The section name.</param>
-		/// <param name="key">The key name.</param>
-		/// <param name="error">The value to store in <paramref name="result"/> if the specified <paramref name="key"/> is not found.
-		/// By default this is "ERROR".</param>
-		public static string IniRead(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
+		/// <param name="key">The key name in the .ini file.</param>
+		/// <param name="default">If omitted, an OSError is thrown on failure. Otherwise, specify the value to return on failure, such as if the requested key, section or file is not found.</param>
+		/// <exception cref="OSError">An OSError exception is thrown if the key can't be found and no default is supplied.</exception>
+		public static string IniRead(object filename, object section = null, object key = null, object @default = null)
 		{
-			var file = obj0.As();
-			var section = obj1.As();
-			var key = obj2.As();
-			var def = obj3.As();
+			var file = filename.As();
+			var s = section.As();
+			var k = key.As();
+			var def = @default.As();
 			var result = "";
 
 			if (!File.Exists(file))
 				return "";
 
-			if (section != "")
-				section = $"[{section}]";
+			if (s != "")
+				s = $"[{s}]";
 
-			var haskey = !string.IsNullOrEmpty(key);
-			var hassec = !string.IsNullOrEmpty(section);
+			var haskey = !string.IsNullOrEmpty(k);
+			var hassec = !string.IsNullOrEmpty(s);
 			var sb = new StringBuilder(1024);
 			var inidkt = IniLoad(file);
 
@@ -106,21 +107,21 @@ namespace Keysharp.Core
 			}
 			else if (haskey && hassec)
 			{
-				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(section, StringComparer.CurrentCultureIgnoreCase);
+				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(s, StringComparer.CurrentCultureIgnoreCase);
 
-				if (secdkt.Contains(key))
+				if (secdkt.Contains(k))
 				{
-					var val = secdkt.GetOrAdd<string, string, string>(key, def);
+					var val = secdkt.GetOrAdd<string, string, string>(k, def);
 					_ = sb.Append(val);
 				}
 				else if (def.Length > 0)
 					_ = sb.Append(def);
 				else
-					throw new OSError($"Failed to find key {key} in section {section} in INI file {file}.");
+					throw new OSError($"Failed to find key {k} in section {s} in INI file {file}.");
 			}
 			else if (hassec)
 			{
-				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(section, StringComparer.CurrentCultureIgnoreCase);
+				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(s, StringComparer.CurrentCultureIgnoreCase);
 
 				foreach (DictionaryEntry kv in secdkt)
 					if (((string)kv.Key)[0] != '#')
@@ -134,52 +135,56 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Writes a value to a standard format .ini file.
 		/// </summary>
-		/// <param name="value">The string or number that will be written to the right of <paramref name="key"/>'s equal sign (=).</param>
-		/// <param name="file">The name of the file.</param>
-		/// <param name="section">The section name.</param>
-		/// <param name="key">The key name.</param>
-		/// <remarks><see cref="Accessors.A_ErrorLevel"/> is set to <c>1</c> if there was a problem or <c>0</c> otherwise.</remarks>
-		public static void IniWrite(object obj0, object obj1, object obj2, object obj3 = null)
+		/// <param name="value">The string or number that will be written to the right of <paramref name="key"/>'s equal sign (=).
+		/// or
+		/// The complete content of a section to write to the .ini file, excluding the [SectionName] header.
+		/// Key must be omitted. Pairs must not contain any blank lines. If the section already exists, everything up to the last key=value pair is overwritten. Pairs can contain lines without an equal sign (=), but this may produce inconsistent results. Comments can be written to the file but are stripped out when they are read back by IniRead.
+		/// </param>
+		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
+		/// <param name="key">The key name in the .ini file.</param>
+		/// <exception cref="OSError">An OSError exception is thrown on failure.</exception>
+		public static void IniWrite(object value, object filename, object section, object key = null)
 		{
-			var value = obj0.As();
-			var file = obj1.As();
-			var section = obj2.As();
-			var key = obj3.As();
-			var within = string.IsNullOrEmpty(section);
-			section = string.Format("[{0}]", section ?? string.Empty);
-			var haskey = !string.IsNullOrEmpty(key);
+			var v = value.As();
+			var file = filename.As();
+			var s = section.As();
+			var k = key.As();
+			var within = string.IsNullOrEmpty(s);
+			s = string.Format("[{0}]", s ?? string.Empty);
+			var haskey = !string.IsNullOrEmpty(k);
 			var writer = new StringWriter();
 
 			try
 			{
 				if (!File.Exists(file))
 				{
-					writer.WriteLine(section);
+					writer.WriteLine(s);
 
 					if (haskey)
-						writer.WriteLine($"{key}={value}");
+						writer.WriteLine($"{k}={v}");
 					else
-						writer.WriteLine(value);
+						writer.WriteLine(v);
 				}
 				else
 				{
 					var inidkt = IniLoad(file);
 
-					if (section != "")
+					if (s != "")
 					{
-						var kvdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(section, StringComparer.CurrentCultureIgnoreCase);
+						var kvdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(s, StringComparer.CurrentCultureIgnoreCase);
 
 						if (haskey)
 						{
-							kvdkt[key] = value;
+							kvdkt[k] = v;
 						}
 						else
 						{
 							kvdkt.Clear();//Documentation seems to suggest it should overwrite all in the specified section.
 
-							foreach (Range r in value.AsSpan().SplitAny(TrimLine))
+							foreach (Range r in v.AsSpan().SplitAny(TrimLine))
 							{
-								var pair = value.AsSpan(r).Trim();
+								var pair = v.AsSpan(r).Trim();
 
 								if (pair.Length > 0)
 								{
@@ -225,13 +230,18 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static OrderedDictionary IniLoad(object obj)
+		/// <summary>
+		/// Private helper to load an Ini file.
+		/// </summary>
+		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <returns>An OrderedDictionary with all of the file data in it.</returns>
+		private static OrderedDictionary IniLoad(object filename)
 		{
-			var filename = obj.As();
+			var f = filename.As();
 			OrderedDictionary kvdkt = null;
 			var inidkt = new OrderedDictionary(StringComparer.CurrentCultureIgnoreCase);
 
-			foreach (var line in File.ReadLines(filename))
+			foreach (var line in File.ReadLines(f))
 			{
 				var ln = line.Trim(TrimLine);
 

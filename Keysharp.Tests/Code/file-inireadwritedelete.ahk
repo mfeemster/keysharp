@@ -57,6 +57,37 @@ if ("groupkey12=groupval12" . A_NewLine . "groupkey13=groupval13" . A_NewLine ==
 else
    	FileAppend, "fail", "*"
 
+b := false
+
+try
+{
+    val := IniRead("./testini2.ini", "sectiontwo", "thiskeydoesntexist")
+}
+catch
+{
+    b := true
+}
+
+if (b)
+  	FileAppend, "pass", "*"
+else
+   	FileAppend, "fail", "*"
+    
+b := false
+
+try
+{
+    val := IniRead("./testini2.ini", "sectiontwo", "thiskeydoesntexist", 123)
+}
+catch
+{
+    b := true
+}
+
+if (!b && val == 123)
+  	FileAppend, "pass", "*"
+else
+   	FileAppend, "fail", "*"
 
 IniDelete("./testini2.ini", "sectiontwo")
 val := IniRead("./testini2.ini", "sectiontwo")
