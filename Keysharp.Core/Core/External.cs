@@ -1,35 +1,38 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for External-related functions.
+	/// </summary>
 	public static class External
 	{
 		/// <summary>
-		/// Returns a binary number stored at the specified address in memory.
+		/// Returns the binary number stored at the specified address+offset.
 		/// </summary>
-		/// <param name="address">The address in memory.</param>
-		/// <param name="offset">The offset from <paramref name="address"/>.</param>
-		/// <param name="type">Any type outlined in <see cref="DllCall"/>.</param>
-		/// <returns>The value stored at the address.</returns>
-		public static object NumGet(object obj0, object obj1, object obj2 = null)
+		/// <param name="address">A Buffer-like object or memory address.</param>
+		/// <param name="offset">If blank or omitted (or when using 2-parameter mode), it defaults to 0. Otherwise, specify an offset in bytes which is added to Source to determine the source address.</param>
+		/// <param name="type">One of the following strings: UInt, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr</param>
+		/// <returns>The binary number at the specified address+offset.</returns>
+		/// <exception cref="TypeError">A TypeError exception is thrown the address could not be determined.</exception>
+		public static object NumGet(object source, object offset, object type = null)
 		{
-			var address = obj0;
-			object offset = null;
-			string type;
+			var address = source;
+			int off;
+			string t;
 
-			if (obj2 == null)
+			if (type == null)
 			{
-				offset = 0;
-				type = obj1.As("UInt");
+				off = 0;
+				t = offset.As("UInt");
 			}
 			else
 			{
-				offset = obj1 is IntPtr ip ? ip.ToInt32() : obj1.Ai();
-				type = obj2.As("UInt");
+				off = offset is IntPtr ip ? ip.ToInt32() : offset.Ai();
+				t = type.As("UInt");
 			}
 
 			IntPtr addr;
-			var off = (int)offset;
 			var buf = address as Buffer;
-			type = type.ToLower();
+			t = t.ToLower();
 
 			if (buf != null)
 				addr = buf.Ptr;
@@ -43,13 +46,13 @@
 				addr = new IntPtr(i);
 
 #if WINDOWS
-			else if (type == "ptr" && address is ComObject co)
+			else if (t == "ptr" && address is ComObject co)
 			{
 				var pUnk = Marshal.GetIUnknownForObject(co.Ptr);
 				addr = pUnk;//Don't dererference here, it'll be done below.
 				_ = Marshal.Release(pUnk);
 			}
-			else if (type == "ptr" && Marshal.IsComObject(address))
+			else if (t == "ptr" && Marshal.IsComObject(address))
 			{
 				var pUnk = Marshal.GetIUnknownForObject(address);
 				addr = pUnk;//Ditto.
@@ -64,7 +67,7 @@
 
 #endif
 
-			switch (type)
+			switch (t)
 			{
 				case "uint":
 					if (buf != null && (off + 4 > (long)buf.Size))
@@ -135,6 +138,15 @@
 			}
 		}
 
+		/// <summary>
+		/// Stores one or more numbers in binary format at the specified address+offset.
+		/// </summary>
+		/// <param name="type">One of the following strings: UInt, UInt64, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr.</param>
+		/// <param name="number">The number to store.</param>
+		/// <param name="target">A Buffer-like object or memory address.</param>
+		/// <param name="offset">If omitted, it defaults to 0. Otherwise, specify an offset in bytes which is added to Target to determine the target address.</param>
+		/// <returns>The address to the right of the last item written.</returns>
+		/// <exception cref="IndexError">An IndexError is thrown if the offset exceeds the bounds of the memory or if it couldn't be determined.</exception>
 		public static long NumPut(params object[] obj)
 		{
 			IntPtr addr = IntPtr.Zero;
@@ -142,7 +154,7 @@
 			var offset = 0;
 			int lastPairIndex;
 			var offsetSpecified = !((obj.Length & 1) == 1);
-			object target = null;
+			object target;
 
 			if (offsetSpecified)
 			{
