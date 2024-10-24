@@ -225,6 +225,10 @@ namespace Keysharp.Core.Linux.X11
 		[DllImport(libCName)]
 		internal static extern uint geteuid();
 
+		[DllImport(libCName)]
+		[System.Security.SuppressUnmanagedCodeSecurity]
+		internal static extern int errno();//Untested//TODO
+
 		[DllImport(libPthreadName)]
 		internal static extern ulong pthread_self();
 

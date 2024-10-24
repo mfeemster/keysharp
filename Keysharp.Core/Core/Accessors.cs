@@ -758,10 +758,17 @@
 		/// </summary>
 		public static long A_Language => Thread.CurrentThread.CurrentCulture.LCID;
 
+#if WINDOWS
 		/// <summary>
-		/// The result from Windows <code>GetLastError()</code> function.
+		/// The result from the Windows <code>GetLastError()</code> function.
 		/// </summary>
 		public static long A_LastError => Marshal.GetLastWin32Error();
+#else
+		/// <summary>
+		/// The result from the linux <code>errno()</code> function.
+		/// </summary>
+		public static long A_LastError => XLib.errno();
+#endif
 
 		/// <summary>
 		/// The current element of a loop.

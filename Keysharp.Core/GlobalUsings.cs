@@ -22,6 +22,7 @@ global using global::System.Drawing.Drawing2D;
 global using global::System.Drawing.Imaging;
 global using global::System.Globalization;
 global using global::System.IO;
+global using global::System.IO.Compression;
 global using global::System.Linq;
 global using global::System.Net;
 global using global::System.Net.Http;
@@ -43,6 +44,7 @@ global using global::System.Threading;
 global using global::System.Threading.Channels;
 global using global::System.Threading.Tasks;
 global using global::System.Windows.Forms;
+
 
 //Our usings.
 global using global::Keysharp.Core;

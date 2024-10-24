@@ -29,7 +29,28 @@ namespace Keysharp.Tests
 			if (Directory.Exists("./DirCopy2"))
 				Directory.Delete("./DirCopy2", true);
 
-			Assert.IsTrue(TestScript("file-dircopy", true));
+			dir = string.Concat(path, "DirCopy/DirCopy.zip");
+			Dir.DirCopy(dir, "./DirCopy2", true);
+			Assert.IsTrue(File.Exists("./DirCopy2/file1.txt"));
+			Assert.IsTrue(File.Exists("./DirCopy2/file2.txt"));
+			Assert.IsTrue(File.Exists("./DirCopy2/file3txt"));
+			var b = false;
+
+			try
+			{
+				Dir.DirCopy(dir, "./DirCopy2", false);
+			}
+			catch
+			{
+				b = true;
+			}
+
+			Assert.IsTrue(b);
+
+			if (Directory.Exists("./DirCopy2"))
+				Directory.Delete("./DirCopy2", true);
+
+			Assert.IsTrue(TestScript("file-dircopy", false));
 		}
 
 		[Test, Category("FileAndDir")]

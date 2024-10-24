@@ -5,7 +5,7 @@ if (DirExist("./FileSetAttrib"))
 
 dir := "../../../Keysharp.Tests/Code/DirCopy"
 DirCreate("./FileSetAttrib")
-DirCopy(dir, "./FileSetAttrib")
+DirCopy(dir, "./FileSetAttrib", true)
 
 if (DirExist("./FileSetAttrib"))
  	FileAppend, "pass", "*"

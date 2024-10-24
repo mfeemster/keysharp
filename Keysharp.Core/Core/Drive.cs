@@ -165,7 +165,7 @@ namespace Keysharp.Core
 		public static void DriveUnlock(object obj) => DriveProvider.CreateDrive(new DriveInfo(obj.As())).UnLock();
 
 		/// <summary>
-		/// adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
+		/// Adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
 		/// </summary>
 		/// <param name="glob"></param>
 		/// <returns></returns>
