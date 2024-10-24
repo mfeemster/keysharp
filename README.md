@@ -109,7 +109,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Static function variables are initialized on program startup, rather than the first time the function is called. This is because C# does not support static function variables.
 * The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
 * Because `__Init()` and `__New()` are not static, a new special static function has been created named `__StaticInit()`. Simple static member variable initialization should be done inline. However, more complex initialization should be done inside of `__StaticInit()`. This function will be called exactly once.
-	+
 ```
 	class myclass
 	{
@@ -250,16 +249,16 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `Add(value) => Integer` : Adds a single element to the array.
 		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.
 	+ `Filter(callback: (value [, index]) => Boolean) => Array`: Applies a filter to each element of the array and returns a new array consisting of all elements for which the filter callback returned true.
-	+ `FindIndex(callback: (value [, index]) => Boolean, startIndex := 1) => Integer`: Returns the index of the first element for which the specified callback returns true, starting at `startIndex`. Returns 0 if value is not found.
-		+ If `startIndex` is negative, start the search from the end of the array and move toward the beginning.
+	+ `FindIndex(callback: (value [, index]) => Boolean, startIndex := 1) => Integer`: Returns the index of the first element for which the specified callback returns true, starting at `startIndex`. Returns 0 if callback never returned true.
+		+ If `startIndex` is negative, the search starts from the end of the array and moves toward the beginning.
 	+ `IndexOf(value, startIndex := 1) => Integer`: Returns the index of the first item in the array which equals value, starting at `startIndex`. Returns 0 if value is not found.
-		+ If `startIndex` is negative, start the search from the end of the array and move toward the beginning.
+		+ If `startIndex` is negative, the search starts from the end of the array and moves toward the beginning.
 	+ `Join(separator := ',') => String`: Joins together the string representation of all array elements, separated by `separator`.
 	+ `MapTo(callback: (value [, index]) => Any, startIndex := 1) => Array`: Maps each element of the array, starting at `startIndex`, into a new array where the mapping performs some operation.
 ```
-		lam := (x, i) => x * i
-		arr := [10, 20, 30]
-		arr2 := arr.MapTo(lam)
+	lam := (x, i) => x * i
+	arr := [10, 20, 30]
+	arr2 := arr.MapTo(lam)
 ```
 	+ `Sort(callback: (a, b) => Integer) => this`: Sorts the array in place. The callback should use the usual logic of returning -1 when `a < b`, 0 when `a == b` and 1 otherwise.
 * Hyperbolic versions of the trigonometric functions:
