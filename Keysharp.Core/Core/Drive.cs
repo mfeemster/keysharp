@@ -1,43 +1,53 @@
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for Drive-related functions.
+	/// </summary>
 	public static class Drive
 	{
-		//private static Keysharp.Core.Common.Drive
 		/// <summary>
-		/// Ejects the specified CD drive.
+		/// Ejects or retracts the tray of the specified CD/DVD drive.
+		/// It can also eject a removable drive.
 		/// </summary>
-		/// <param name="path">Path of the CD drive to eject.</param>
-		public static void DriveEject(object obj) => DriveHelper(obj.As(), true);
+		/// <param name="drive">
+		/// If omitted, it defaults to the first CD/DVD drive found by iterating from A to Z (an exception is thrown if no drive is found). Otherwise, specify the drive letter optionally followed by a colon or a colon and backslash. For example, "D", "D:" or "D:\".
+		/// This can also be a device path in the form "\\?\Volume{...}", which can be discovered by running mountvol at the command line.In this case the drive is not required to be assigned a drive letter.
+		/// </param>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static void DriveEject(object drive = null) => DriveHelper(drive.As(), true);
 
 		/// <summary>
-		/// Retrieves the capacity of a drive, in megabytes.
+		/// Returns the total capacity of the drive which contains the specified path, in megabytes.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The capacity of the drive in megabytes</returns>
-		public static long DriveGetCapacity(object obj) => new DriveInfo(obj.As()).TotalSize / 1024 / 1024;
+		/// <param name="path">Any path contained by the drive (might also work on UNC paths and mapped drives).</param>
+		/// <returns>The capacity of the drive in megabytes.</returns>
+		public static long DriveGetCapacity(object path) => new DriveInfo(path.As()).TotalSize / 1024 / 1024;
 
 		/// <summary>
-		/// Retrieves the file system name of a drive.
+		/// Returns the type of the specified drive's file system.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The name of the file system of the drive</returns>
-		public static string DriveGetFileSystem(object obj) => new DriveInfo(obj.As()).DriveFormat;
+		/// <param name="drive">The drive letter followed by a colon and an optional backslash, or a UNC name such as "\server1\share1".</param>
+		/// <returns>The type of Drive's file system.
+		/// The possible values are defined by the system; they include (but are not limited to) the following:
+		/// NTFS, FAT32, FAT, CDFS (typically indicates a CD), or UDF (typically indicates a DVD).</returns>
+		public static string DriveGetFileSystem(object drive) => new DriveInfo(drive.As()).DriveFormat;
 
 		/// <summary>
-		/// Retrieves the label of a drive.
+		/// Returns the volume label of the specified drive.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The label of the drive</returns>
-		public static string DriveGetLabel(object obj) => new DriveInfo(obj.As()).VolumeLabel;
+		/// <param name="drive">The drive letter followed by a colon and an optional backslash, or a UNC name such as "\server1\share1".</param>
+		/// <returns>The drive's volume label.</returns>
+		public static string DriveGetLabel(object drive) => new DriveInfo(drive.As()).VolumeLabel;
 
 		/// <summary>
 		/// Returns a string of letters, one character for each drive letter in the system.
 		/// </summary>
-		/// <param name="type">If omitted, all drive types are retrieved. Otherwise, specify one of the following words to retrieve only a specific type of drive: CDROM, REMOVABLE, FIXED, NETWORK, RAMDISK, UNKNOWN.</param>
-		/// <returns>The drive ltters of the system</returns>
-		public static string DriveGetList(object obj = null)
+		/// <param name="driveType">If omitted, all drive types are retrieved.
+		/// Otherwise, specify one of the following words to retrieve only a specific type of drive: CDROM, REMOVABLE, FIXED, NETWORK, RAMDISK, UNKNOWN.</param>
+		/// <returns>The drive letters in the system, depending on DriveType. For example: ACDEZ.</returns>
+		public static string DriveGetList(object driveType = null)
 		{
-			var drivetype = obj.As();
+			var drivetype = driveType.As();
 			var matchingDevices = "";
 			DriveType? type = null;
 
@@ -88,87 +98,165 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Retrieves the serial number of a drive.
+		/// Returns the volume serial number of the specified drive.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The serial number of the drive</returns>
-		public static long DriveGetSerial(object obj)
-		=> DriveProvider.CreateDrive(new DriveInfo(obj.As())).Serial;
+		/// <param name="drive">The drive letter followed by a colon and an optional backslash, or a UNC name such as "\server1\share1".</param>
+		/// <returns>The drive's volume serial number.</returns>
+		public static long DriveGetSerial(object drive)
+		=> DriveProvider.CreateDrive(new DriveInfo(drive.As())).Serial;
 
 		/// <summary>
-		/// Retrieves the free disk space of a drive, in megabytes.
+		/// Returns the free disk space of the drive which contains the specified path, in megabytes.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The free drive space in megabytes</returns>
-		public static long DriveGetSpaceFree(object obj) => new DriveInfo(obj.As()).TotalFreeSpace / (1024 * 1024);
+		/// <param name="path">Any path contained by the drive (might also work on UNC paths and mapped drives).</param>
+		/// <returns>The free disk space of the drive which contains Path, in megabytes (rounded down to the nearest megabyte).</returns>
+		public static long DriveGetSpaceFree(object path) => new DriveInfo(path.As()).TotalFreeSpace / (1024 * 1024);
 
 		/// <summary>
-		/// Retrieves the status of a drive.
+		/// Returns the status of the drive which contains the specified path.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The status of the drive</returns>
-		public static string DriveGetStatus(object obj)
+		/// <param name="path">Any path contained by the drive (might also work on UNC paths and mapped drives).</param>
+		/// <returns>The status of the drive which contains path:
+		/// Unknown: Might indicate unformatted/RAW file system.
+		/// Ready: This is the most common.
+		/// NotReady: Typical for removable drives that don't contain media.
+		/// Invalid: Path does not exist or is a network drive that is presently inaccessible, etc.
+		/// </returns>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static string DriveGetStatus(object path)
 		{
-			var drv = new DriveInfo(obj.As().TrimEnd('\\'));
-			var val = drv.DriveFormat;//Will throw DriveNotFoundException on invalid paths.
-			return drv.IsReady ? "Ready" : "NotReady";
+			try
+			{
+				var drv = new DriveInfo(path.As().TrimEnd('\\'));
+				var val = drv.DriveFormat;//Will throw DriveNotFoundException on invalid paths.
+				return drv.IsReady ? "Ready" : "NotReady";
+			}
+			catch (Exception e)
+			{
+				throw new Error($"Failed to get drive status: {e.Message}.");
+			}
 		}
 
 		/// <summary>
-		/// Retrieves the status of a CD drive
+		/// Returns the media status of the specified CD/DVD drive.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The status of the CD drive</returns>
-		public static string DriveGetStatusCD(object obj)
+		/// <param name="drive">If omitted, the default CD/DVD drive will be used. Otherwise, specify the drive letter followed by a colon.</param>
+		/// <returns>The drive's media status:
+		/// not ready: The drive is not ready to be accessed, perhaps due to being engaged in a write operation. Known limitation: "not ready" also occurs when the drive contains a DVD rather than a CD.
+		/// open: The drive contains no disc, or the tray is ejected.
+		/// playing: The drive is playing a disc.
+		/// paused: The previously playing audio or video is now paused.
+		/// seeking: The drive is seeking.
+		/// stopped: The drive contains a CD but is not currently accessing it.
+		/// </returns>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static string DriveGetStatusCD(object drive = null)
 		{
-			var drive = DriveProvider.CreateDrive(new DriveInfo(obj.As().TrimEnd('\\')));
-			return drive.StatusCD;
+			try
+			{
+				var d = GetRemovableDrive(drive.As().TrimEnd('\\'));
+				return d.StatusCD;
+			}
+			catch (Exception e)
+			{
+				throw new Error($"Failed to get CD drive status: {e.Message}.");
+			}
 		}
 
 		/// <summary>
-		/// Retrieves the type of a drive.
+		/// Returns the type of the drive which contains the specified path.
 		/// </summary>
-		/// <param name="path">Path of drive to receive information from.</param>
-		/// <returns>The type of the drive</returns>
-		public static string DriveGetType(object obj) => Common.Mapper.MappingService.Instance.DriveType.LookUpKeysharpType(new DriveInfo(obj.As()).DriveType);
+		/// <param name="path">Any path contained by the drive (might also work on UNC paths and mapped drives).</param>
+		/// <returns>The  type of the drive which contains Path:
+		/// Unknown, Removable, Fixed, Network, CDROM, or RAMDisk.
+		/// If Path is invalid (e.g. because the drive does not exist), the return value is an empty string.</returns>
+		public static string DriveGetType(object path) => Common.Mapper.MappingService.Instance.DriveType.LookUpKeysharpType(new DriveInfo(path.As()).DriveType);
 
 		/// <summary>
 		/// Prevents the eject feature of the specified drive from working.
 		/// </summary>
-		/// <param name="path">Path of drive to lock.</param>
-		public static void DriveLock(object obj) => DriveProvider.CreateDrive(new DriveInfo(obj.As())).Lock();
+		/// <param name="drive">The drive letter followed by a colon and an optional
+		/// backslash (might also work on UNC paths and mapped drives).</param>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static void DriveLock(object drive) => DriveProvider.CreateDrive(new DriveInfo(drive.As())).Lock();
 
 		/// <summary>
-		/// Retracts the specified CD drive.
+		/// Ejects or retracts the tray of the specified CD/DVD drive. DriveEject can also eject a removable drive.
 		/// </summary>
-		/// <param name="path">Path of the CD drive to retract.</param>
-		public static void DriveRetract(object obj) => DriveHelper(obj.As(), false);
+		/// <param name="drive">
+		/// If omitted, it defaults to the first CD/DVD drive found by iterating from A to Z (an exception is thrown if no drive is found). Otherwise, specify the drive letter optionally followed by a colon or a colon and backslash. For example, "D", "D:" or "D:\".
+		/// This can also be a device path in the form "\\?\Volume{...}", which can be discovered by running mountvol at the command line.In this case the drive is not required to be assigned a drive letter.
+		/// </param>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static void DriveRetract(object drive) => DriveHelper(drive.As(), false);
 
 		/// <summary>
-		/// Sets the label of a drive. This needs administrator privileges to run.
+		/// Changes the volume label of the specified drive.
+		/// This needs administrator privileges to run.
 		/// </summary>
-		/// <param name="path">Path of drive to write information to.</param>
-		/// <param name="label">The label to set the drive to.</param>
-		public static void DriveSetLabel(object obj0, object obj1 = null)
+		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
+		/// <param name="newLabel">If omitted, the drive will have no label. Otherwise, specify the new label to set.</param>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static void DriveSetLabel(object drive, object newLabel = null)
 		{
-			var drv = obj0.As();
-			var label = obj1.As();
-			var di = new DriveInfo(drv);
-			var drive = DriveProvider.CreateDrive(di);
-			drive.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
+			var label = newLabel.As();
+			var di = new DriveInfo(drive.As());
+			var d = DriveProvider.CreateDrive(di);
+			d.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
 		}
 
 		/// <summary>
 		/// Restores the eject feature of the specified drive.
 		/// </summary>
-		/// <param name="path">Path of drive to unlock.</param>
-		public static void DriveUnlock(object obj) => DriveProvider.CreateDrive(new DriveInfo(obj.As())).UnLock();
+		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		public static void DriveUnlock(object drive) => DriveProvider.CreateDrive(new DriveInfo(drive.As())).UnLock();
 
 		/// <summary>
+		/// Private helper to either eject or retract a removable drive.
+		/// </summary>
+		/// <param name="dr">The drive to operate on.</param>
+		/// <param name="b">Eject if true, else retract..</param>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		private static void DriveHelper(string drive, bool b)
+		{
+			DriveBase d = GetRemovableDrive(drive);
+
+			if (b)
+				d.Eject();
+			else
+				d.Retract();
+		}
+
+		/// <summary>
+		/// Private helper to retrieve a removable drive.
+		/// </summary>
+		/// <param name="dr">The drive to retrieve. If empty, retrieve the first detected removable drive.</param>
+		/// <returns>The detected drive.</returns>
+		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		private static DriveBase GetRemovableDrive(string dr)
+		{
+			DriveBase drive;
+
+			if (dr.Length == 0)
+			{
+				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom || drive.DriveType == DriveType.Removable).ToList();
+				drive = allDrives.Count > 0
+						? DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
+						: throw new Error("Failed to find any CDROM or DVD drives.");
+			}
+			else
+				drive = DriveProvider.CreateDrive(new DriveInfo(dr));
+
+			return drive;
+		}
+
+		/// <summary>
+		/// Internal helper to implement globbing which will return files matching a pattern.
 		/// Adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
 		/// </summary>
-		/// <param name="glob"></param>
-		/// <returns></returns>
+		/// <param name="glob">The pattern to match.</param>
+		/// <returns>All files matching the specified pattern.</returns>
 		internal static IEnumerable<string> Glob(string glob)
 		{
 			if (File.Exists(glob) || Directory.Exists(glob))
@@ -183,7 +271,14 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static IEnumerable<string> Glob(string head, string tail)
+		/// <summary>
+		/// Private helper to implement globbing which will return files matching a pattern.
+		/// Adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
+		/// </summary>
+		/// <param name="head">The directory prefix to examine.</param>
+		/// <param name="tail">The pattern to search for.</param>
+		/// <returns>The list of files/folders matching the pattern specified in tail.</returns>
+		private static IEnumerable<string> Glob(string head, string tail)
 		{
 			if (Dir.PathTail(tail) == tail)
 			{
@@ -202,26 +297,6 @@ namespace Keysharp.Core
 					}
 				}
 			}
-		}
-
-		private static void DriveHelper(string dr, bool b)
-		{
-			DriveBase drive;
-
-			if (dr.Length == 0)
-			{
-				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom).ToList();
-				drive = allDrives.Count > 0
-						? DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
-						: throw new Error("Failed to find any CDROM or DVD drives.");
-			}
-			else
-				drive = DriveProvider.CreateDrive(new DriveInfo(dr));
-
-			if (b)
-				drive.Eject();
-			else
-				drive.Retract();
 		}
 	}
 }

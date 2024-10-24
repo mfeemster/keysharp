@@ -88,7 +88,7 @@
 				foreach (var file in Drive.Glob(filePattern.As()))
 					return Conversions.FromFileAttribs(File.GetAttributes(file));
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				//Swallow the exception since we still want to return an empty string even if it doesn't exist.
 			}
@@ -165,8 +165,6 @@
 		/// <returns>The drive portion of the path without the backslash.</returns>
 		public static string PathHead(string path)
 		{
-			const int root = 2;
-
 			if (path.StartsWith(pathStart))
 			{
 				var dirSep = Path.DirectorySeparatorChar;

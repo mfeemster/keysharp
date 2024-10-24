@@ -71,7 +71,7 @@ namespace Keysharp.Core.Windows
 			}
 			catch
 			{
-				throw new Exception(Marshal.GetLastWin32Error().ToString());
+				throw new OSError(Marshal.GetLastWin32Error().ToString());
 			}
 			finally
 			{
