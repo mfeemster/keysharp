@@ -2234,7 +2234,7 @@ namespace Keysharp.Core.Windows
 							wnd.CheckedBeginInvoke(() =>
 							{
 								keyHistoryCurr.targetWindow = wnd.Text;
-							});
+							}, false, false);
 						}
 
 						// v1.0.44.12: The reason for the above is that clicking a window's close or minimize button

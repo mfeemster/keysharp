@@ -95,7 +95,7 @@
 						var nn = 1; // Class NN counter
 
 						// now we must know the postion of our "control"
-						foreach (var c in parent.GetAllControlsRecusrvive<Control>())
+						foreach (var c in parent.GetAllControlsRecursive<Control>())
 						{
 							if (c.GetType().Name == className)
 							{

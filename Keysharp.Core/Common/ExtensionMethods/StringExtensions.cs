@@ -1,21 +1,24 @@
-﻿namespace System//Extension methods should be in the same namespace of the object they extend to make their use easy.
+﻿namespace System
 {
+	/// <summary>
+	/// Extension methods for the System.String classes.
+	/// </summary>
 	public static class StringExtensions
 	{
 		/// <summary>
-		/// Provide an easy way to iterate through the lines of a string without using as much memory as string.Split().
+		/// Provides an easy way to iterate through the lines of a string without using as much memory as string.Split().
 		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper
 		/// </summary>
-		/// <param name="input">The string whose lines will be traversed</param>
+		/// <param name="str">The string whose lines will be traversed</param>
 		/// <returns>Each line one at a time as an element in an enumerable</returns>
-		public static IEnumerable<string> SplitLines(this string input)
+		public static IEnumerable<string> SplitLines(this string str)
 		{
-			if (string.IsNullOrEmpty(input))
+			if (string.IsNullOrEmpty(str))
 			{
 				yield break;
 			}
 
-			using (var reader = new StringReader(input))
+			using (var reader = new StringReader(str))
 			{
 				string line;
 
@@ -26,7 +29,14 @@
 			}
 		}
 
-		public static string TrimNofAny(this string str, string any, int n)
+		/// <summary>
+		/// Trims a given number of characters from a list from the beginning of a string.
+		/// </summary>
+		/// <param name="str">The string to trim.</param>
+		/// <param name="any">The list of characters to trim.</param>
+		/// <param name="n">The number of characters to trim.</param>
+		/// <returns>The trimmed string.</returns>
+		public static string TrimNofAnyFromStart(this string str, string any, int n)
 		{
 			var i = 0;
 			var chars = any.ToCharArray();
@@ -39,12 +49,17 @@
 					break;
 			}
 
-			return str.Substring(i);
+			return i == 0 ? str : str.Substring(i);
 		}
 
-		internal static bool AllHex(this string source)
+		/// <summary>
+		/// Determines if all characters within a string are hexadecimal.
+		/// </summary>
+		/// <param name="str">The string to examine.</param>
+		/// <returns>True if all characters were hexadecimal, else false.</returns>
+		internal static bool AllHex(this string str)
 		{
-			foreach (var ch in source)
+			foreach (var ch in str)
 				if (!ch.IsHex())
 					return false;
 
@@ -95,28 +110,28 @@
 		}
 
 		/// <summary>
+		/// Finds the first index in a string where a non-quoted imbalance of the two specified characters occurs.
 		/// Gotten from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
 		/// </summary>
-		/// <param name="source"></param>
-		/// <param name="ch1"></param>
-		/// <param name="ch2"></param>
-		/// <returns></returns>
-		internal static int FindFirstImbalanced(this string source, char ch1, char ch2)
+		/// <param name="str">The string to examine.</param>
+		/// <param name="ch1">The left character to balance.</param>
+		/// <param name="ch2">The right character to balance.</param>
+		/// <returns>The index of the first imbalanced character, else -1 if no imbalance occurred.</returns>
+		internal static int FindFirstImbalanced(this string str, char ch1, char ch2)
 		{
-			int temp;
-			var stack = new Stack<int>();
 			var escape = false;
 			var inquote = false;
+			var stack = new Stack<int>();
 
-			for (var i = 0; i < source.Length; i++)
+			for (var i = 0; i < str.Length; i++)
 			{
-				var ch = source[i];
+				var ch = str[i];
 
 				if (ch == '\'')
 				{
 					if (!inquote)
 					{
-						if (i == 0 || source[i - 1] != '`')
+						if (i == 0 || str[i - 1] != '`')
 							inquote = true;
 					}
 				}
@@ -124,12 +139,12 @@
 				{
 					if (!inquote)
 					{
-						if (i == 0 || source[i - 1] != '`')
+						if (i == 0 || str[i - 1] != '`')
 							inquote = true;
 					}
 					else
 					{
-						if (i == 0 || source[i - 1] != '`' || !escape)//Checking escape accounts for ``.
+						if (i == 0 || str[i - 1] != '`' || !escape)//Checking escape accounts for ``.
 							inquote = false;
 					}
 				}
@@ -157,7 +172,7 @@
 
 			var ret = -1;
 
-			while (stack.TryPop(out temp))
+			while (stack.TryPop(out int temp))
 			{
 				ret = temp;
 			}
@@ -165,20 +180,27 @@
 			return ret;
 		}
 
-		internal static int FindFirstNotInQuotes(this string source, string s)
+		/// <summary>
+		/// Finds the index of the first occurrence of a string in another string
+		/// which is not inside quotes.
+		/// </summary>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="s">The string to search for inside of str.</param>
+		/// <returns>The index of the first occurrence of s inside of str outside of quotes, else -1 if not found.</returns>
+		internal static int FindFirstNotInQuotes(this string str, string s)
 		{
 			var escape = false;
 			var inquote = false;
 
-			for (var i = 0; i < source.Length; i++)
+			for (var i = 0; i < str.Length; i++)
 			{
-				var ch = source[i];
+				var ch = str[i];
 
 				if (ch == '\'')
 				{
 					if (!inquote)
 					{
-						if (i == 0 || source[i - 1] != '`')
+						if (i == 0 || str[i - 1] != '`')
 							inquote = true;
 					}
 				}
@@ -186,12 +208,12 @@
 				{
 					if (!inquote)
 					{
-						if (i == 0 || source[i - 1] != '`')
+						if (i == 0 || str[i - 1] != '`')
 							inquote = true;
 					}
 					else
 					{
-						if (i == 0 || source[i - 1] != '`' || !escape)//Checking escape accounts for ``.
+						if (i == 0 || str[i - 1] != '`' || !escape)//Checking escape accounts for ``.
 							inquote = false;
 					}
 				}
@@ -203,7 +225,7 @@
 
 				if (!inquote)
 				{
-					if (source.Substring(i).StartsWith(s, StringComparison.OrdinalIgnoreCase))
+					if (str.Substring(i).StartsWith(s, StringComparison.OrdinalIgnoreCase))
 					{
 						return i;
 					}
@@ -226,33 +248,47 @@
 		//  return -1;
 		//}
 
-		internal static int FindFirstNotOf(this string source, char[] chars, int offset = 0) =>
-		FindFirstNotOf(source.AsSpan(), chars, offset);
+		/// <summary>
+		///
+		/// </summary>
+		/// <param name="str"></param>
+		/// <param name="chars"></param>
+		/// <param name="offset"></param>
+		/// <returns></returns>
+		internal static int FindFirstNotOf(this string str, char[] chars, int offset = 0) =>
+		FindFirstNotOf(str.AsSpan(), chars, offset);
 
-		internal static int FindFirstNotOf(this ReadOnlySpan<char> source, char[] chars, int offset = 0)
+		/// <summary>
+		///
+		/// </summary>
+		/// <param name="str"></param>
+		/// <param name="chars"></param>
+		/// <param name="offset"></param>
+		/// <returns></returns>
+		internal static int FindFirstNotOf(this ReadOnlySpan<char> str, char[] chars, int offset = 0)
 		{
-			if (source.Length == 0) return 0;// -1;
+			if (str.Length == 0) return 0;// -1;
 
 			if (chars.Length == 0) return 0;// -1;
 
-			for (var i = offset; i < source.Length; i++)
-				if (!chars.Contains(source[i]))
+			for (var i = offset; i < str.Length; i++)
+				if (!chars.Contains(str[i]))
 					return i;
 
-			return source.Length;// -1;
+			return str.Length;// -1;
 		}
 
 		/// <summary>
 		/// Returns the remainder of the string, starting at the character which is not valid in an identifier (var, func, or obj.key name).
 		/// </summary>
-		/// <param name="buf"></param>
+		/// <param name="str"></param>
 		/// <returns></returns>
-		internal static int FindIdentifierEnd(this string buf)
+		internal static int FindIdentifierEnd(this string str)
 		{
 			var i = 0;
 
-			for (; i < buf.Length; i++)
-				if (!buf[i].IsIdentifierChar())
+			for (; i < str.Length; i++)
+				if (!str[i].IsIdentifierChar())
 					return i;
 
 			return i;
@@ -261,10 +297,10 @@
 		//internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0) =>
 		//source.AsSpan().FirstIndexOf(func, offset);
 
-		internal static int FirstIndexOf(this ReadOnlySpan<char> source, Func<char, bool> func, int offset = 0)
+		internal static int FirstIndexOf(this ReadOnlySpan<char> str, Func<char, bool> func, int offset = 0)
 		{
-			for (var i = offset; i < source.Length; i++)
-				if (func(source[i]))
+			for (var i = offset; i < str.Length; i++)
+				if (func(str[i]))
 					return i;
 
 			return -1;
@@ -297,11 +333,11 @@
 			return val + offset;
 		}
 
-		internal static bool IsBalanced(this string source, char ch1, char ch2)
+		internal static bool IsBalanced(this string str, char ch1, char ch2)
 		{
 			int ct1 = 0, ct2 = 0;
 
-			foreach (var ch in source)
+			foreach (var ch in str)
 				if (ch == ch1)
 					ct1++;
 				else if (ch == ch2)
@@ -363,17 +399,17 @@
 			return pos;
 		}
 
-		internal static bool OcurredInBalance(this string source, string s1, char ch1, char ch2)
+		internal static bool OcurredInBalance(this string str, string s1, char ch1, char ch2)
 		{
 			var b = 0;
-			var index = source.IndexOf(s1);
+			var index = str.IndexOf(s1);
 
 			if (index == -1)
 				return false;
 
-			for (int i = 0; i < source.Length; i++)
+			for (int i = 0; i < str.Length; i++)
 			{
-				char ch = source[i];
+				char ch = str[i];
 
 				if (ch == ch1)
 					b++;
@@ -387,12 +423,12 @@
 			return false;
 		}
 
-		internal static string OmitTrailingWhitespace(this string input, int marker) => input.AsSpan(0, marker).TrimEnd(Keywords.SpaceTab).ToString();
+		internal static string OmitTrailingWhitespace(this string str, int marker) => str.AsSpan(0, marker).TrimEnd(Keywords.SpaceTab).ToString();
 
-		internal static string RemoveAfter(this string input, string token)
+		internal static string RemoveAfter(this string str, string token)
 		{
-			var index = input.IndexOf(token);
-			return index > 0 ? input.Substring(0, index) : input;
+			var index = str.IndexOf(token);
+			return index > 0 ? str.Substring(0, index) : str;
 		}
 
 		internal static string RemoveAll(this string str, string chars)
@@ -422,14 +458,14 @@
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/141045/how-do-i-replace-the-first-instance-of-a-string-in-net
 		/// </summary>
-		/// <param name="text"></param>
+		/// <param name="str"></param>
 		/// <param name="search"></param>
 		/// <param name="replace"></param>
 		/// <returns></returns>
-		internal static string ReplaceFirst(this string text, string search, string replace, StringComparison comparison = StringComparison.Ordinal)
+		internal static string ReplaceFirst(this string str, string search, string replace, StringComparison comparison = StringComparison.Ordinal)
 		{
-			var pos = text.IndexOf(search, comparison);
-			return pos < 0 ? text : text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
+			var pos = str.IndexOf(search, comparison);
+			return pos < 0 ? str : str.Substring(0, pos) + replace + str.Substring(pos + search.Length);
 		}
 
 		internal static int StartsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
@@ -441,14 +477,14 @@
 			return -1;
 		}
 
-		internal static ReadOnlySpan<char> TrimEndAlpha(this string s)
+		internal static ReadOnlySpan<char> TrimEndAlpha(this string str)
 		{
-			var len = s.Length;
+			var len = str.Length;
 
-			while (len > 0 && char.IsLetter(s[len - 1]))
+			while (len > 0 && char.IsLetter(str[len - 1]))
 				len--;
 
-			return s.AsSpan(0, len);
+			return str.AsSpan(0, len);
 		}
 
 		internal static string TrimEndOf(this string str, string trim, bool ignoreCase = true) =>

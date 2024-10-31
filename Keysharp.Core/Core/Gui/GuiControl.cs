@@ -1729,21 +1729,21 @@ namespace Keysharp.Core
 		internal static void GetPosHelper(Control control, bool scaling, bool client, ref object x, ref object y, ref object w, ref object h)
 		{
 			var rect = client ? control.ClientRectangle : control.Bounds;
-			var map = rect.ToPos(!scaling ? 1.0 : Accessors.A_ScaledScreenDPI).map;
 
-			if (map.Count == 4)
+			if (!scaling)
 			{
-				x = map["X"];
-				y = map["Y"];
-				w = map["Width"];
-				h = map["Height"];
+				x = rect.X;
+				y = rect.Y;
+				w = rect.Width;
+				h = rect.Height;
 			}
 			else
 			{
-				x = 0L;
-				y = 0L;
-				w = 0L;
-				h = 0L;
+				var scale = Accessors.A_ScaledScreenDPI;
+				x = rect.X * scale;
+				y = rect.Y * scale;
+				w = rect.Width * scale;
+				h = rect.Height * scale;
 			}
 		}
 

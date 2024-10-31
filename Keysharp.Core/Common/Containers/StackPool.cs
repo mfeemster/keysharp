@@ -63,7 +63,7 @@
 			return new T();
 		}
 		/// <summary>
-		/// Return an object to the stack and optionally clear it before returning.
+		/// Returns an object to the stack and optionally clear it before returning.
 		/// </summary>
 		/// <param name="val">The object to return.</param>
 		/// <param name="clear">True to call the Clear() interface method before returning, else false.</param>

@@ -1,26 +1,83 @@
 ﻿namespace System.Collections
 {
+	/// <summary>
+	/// Extensions methods for various collection classes.
+	/// </summary>
 	public static class SystemCollectionsExtensions
 	{
 		/// <summary>
 		/// V2 version name of Enum().
 		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
+		/// <param name="obj">The object to retrieve an enumerator for.</param>
+		/// <returns>The enumerator for obj.</returns>
 		public static IEnumerator __Enum(this IEnumerable obj, params object[] values) => obj.GetEnumerator();
 
-		public static bool Ab(this IList obj, int index, bool def = default) => obj.Count > index && obj[index] != null ? Options.OnOff(obj[index]) ?? def : def;
+		/// <summary>
+		/// Converts an element of a list to a boolean.
+		/// This treats 0, "", false, and off as false.
+		/// and 1, true and on as true.
+		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
+		/// </summary>
+		/// <param name="obj">The list whose element will be converted.</param>
+		/// <param name="index">The index in the list to convert.</param>
+		/// <param name="def">A default value to return if the conversion failed, the item is null or the index is out of bounds. Default: false.</param>
+		/// <returns>The element at the specified list index as a boolean.</returns>
+		public static bool Ab(this IList obj, int index, bool def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseBool() ?? def : def;
 
+		/// <summary>
+		/// Converts an element of a list to a double.
+		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
+		/// </summary>
+		/// <param name="obj">The list whose element will be converted.</param>
+		/// <param name="index">The index in the list to convert.</param>
+		/// <param name="def">A default value to return if the conversion failed, the item is null or the index is out of bounds. Default: 0.</param>
+		/// <returns>The element at the specified list index as a double.</returns>
 		public static double Ad(this IList obj, int index, double def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseDouble().Value : def;
 
+		/// <summary>
+		/// Converts an element of a list to a int.
+		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
+		/// </summary>
+		/// <param name="obj">The list whose element will be converted.</param>
+		/// <param name="index">The index in the list to convert.</param>
+		/// <param name="def">A default value to return if the conversion failed, the item is null or the index is out of bounds. Default: 0.</param>
+		/// <returns>The element at the specified list index as a int.</returns>
 		public static int Ai(this IList obj, int index, int def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseInt().Value : def;
 
+		/// <summary>
+		/// Converts an element of a list to a long.
+		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
+		/// </summary>
+		/// <param name="obj">The list whose element will be converted.</param>
+		/// <param name="index">The index in the list to convert.</param>
+		/// <param name="def">A default value to return if the conversion failed, the item is null or the index is out of bounds. Default: 0.</param>
+		/// <returns>The element at the specified list index as a long.</returns>
 		public static long Al(this IList obj, int index, long def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseLong().Value : def;
 
+		/// <summary>
+		/// Retrieves the element of a list if index is in bounds, else def.
+		/// </summary>
+		/// <param name="obj">The list whose element will be retrieved.</param>
+		/// <param name="index">The index in the list to retrieve.</param>
+		/// <param name="def">A default value to return if the index is out of bounds. Default: null.</param>
+		/// <returns>The element at the specified list index.</returns>
 		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index] : def;
 
+		/// <summary>
+		/// Converts an element of a list to a string.
+		/// If obj[index] is null or the index is out of bounds, def is returned.
+		/// </summary>
+		/// <param name="obj">The list whose element will be converted.</param>
+		/// <param name="index">The index in the list to convert.</param>
+		/// <param name="def">A default value to return if the item is null or the index is out of bounds. Default: "".</param>
+		/// <returns>The element at the specified list index as a string.</returns>
 		public static string As(this IList obj, int index, string def = "") => obj.Count > index && obj[index] != null ? obj[index].ToString() : def;
 
+		/// <summary>
+		/// Recursively traverses the elements of enumerable and returns each element.
+		/// </summary>
+		/// <param name="enumerable">The enumerable to traverse.</param>
+		/// <returns>Each element of the enumerable, including nested elements.</returns>
 		public static IEnumerable Flatten(this IEnumerable enumerable)
 		{
 			if (enumerable is IEnumerable<(object, object)> io)//Iterators for array and map will be this.
@@ -53,8 +110,24 @@
 			}
 		}
 
-		public static int I1(this IList obj, int def1 = 0) => obj.Ai(0, def1);
+		/// <summary>
+		/// Converts the first element of a list to an integer.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the element from.</param>
+		/// <param name="def">A default value to return if the retrieval fails.</param>
+		/// <returns>The first element of the list as an integer, else def</returns>
+		public static int I1(this IList obj, int def = 0) => obj.Ai(0, def);
 
+		/// <summary>
+		/// Converts the first 5 elements of a list to an int, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default string.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <returns>An int, object, string, string, string tuple.</returns>
 		public static (int, object, string, string, string) I1O1S3(this IList obj, int def1 = 0, object def2 = null, string def3 = "", string def4 = "", string def5 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -65,6 +138,17 @@
 			return (r1, r2, r3, r4, r5);
 		}
 
+		/// <summary>
+		/// Converts the first 6 elements of a list to an int, object, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default object.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <param name="def6">Default string.</param>
+		/// <returns>An int, object, object, string, string, string tuple.</returns>
 		public static (int, object, object, string, string, string) I1O2S3(this IList obj, int def1 = default, object def2 = null, object def3 = null, string def4 = "", string def5 = "", string def6 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -76,6 +160,20 @@
 			return (r1, r2, r3, r4, r5, r6);
 		}
 
+		/// <summary>
+		/// Converts the first 9 elements of a list to an int, object, object, object, object, string, string, string, int tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default object.</param>
+		/// <param name="def4">Default object.</param>
+		/// <param name="def5">Default object.</param>
+		/// <param name="def6">Default string.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <param name="def9">Default int.</param>
+		/// <returns>An int, object, object, object, object, string, string, string, int tuple.</returns>
 		public static (int, object, object, object, object, string, string, string, int) I1O4S3I1(this IList obj, int def1 = 0, object def2 = null, object def3 = null, object def4 = null, object def5 = null, string def6 = "", string def7 = "", string def8 = "", int def9 = 0)
 		{
 			var r1 = obj.Ai(0, def1);
@@ -90,6 +188,19 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8, r9);
 		}
 
+		/// <summary>
+		/// Converts the first 8 elements of a list to an int, int, int, object, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default int.</param>
+		/// <param name="def3">Default int.</param>
+		/// <param name="def4">Default object.</param>
+		/// <param name="def5">Default object.</param>
+		/// <param name="def6">Default string.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <returns>An int, int, int, object, object, string, string, string tuple.</returns>
 		public static (int, int, int, object, object, string, string, string) I3O2S3(this IList obj, int def1 = 0, int def2 = 0, int def3 = 0, object def4 = null, object def5 = null, string def6 = "", string def7 = "", string def8 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -103,6 +214,19 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8);
 		}
 
+		/// <summary>
+		/// Converts the first 8 elements of a list to an int, int, int, int, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default int.</param>
+		/// <param name="def3">Default int.</param>
+		/// <param name="def4">Default int.</param>
+		/// <param name="def5">Default object.</param>
+		/// <param name="def6">Default string.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <returns>An int, int, int, int, object, string, string, string tuple.</returns>
 		public static (int, int, int, int, object, string, string, string) I4O1S3(this IList obj, int def1 = default, int def2 = default, int def3 = default, int def4 = default, object def5 = null, string def6 = "", string def7 = "", string def8 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -116,6 +240,20 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8);
 		}
 
+		/// <summary>
+		/// Converts the first 9 elements of a list to an int, int, int, int, object, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default int.</param>
+		/// <param name="def3">Default int.</param>
+		/// <param name="def4">Default int.</param>
+		/// <param name="def5">Default object.</param>
+		/// <param name="def6">Default object.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <param name="def9">Default string.</param>
+		/// <returns>An int, int, int, int, object, object, string, string, string tuple.</returns>
 		public static (int, int, int, int, object, object, string, string, string) I4O2S3(this IList obj, int def1 = default, int def2 = default, int def3 = default, int def4 = default, object def5 = null, object def6 = null, string def7 = "", string def8 = "", string def9 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -130,6 +268,14 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8, r9);
 		}
 
+		/// <summary>
+		/// Converts the first 3 elements of a list to an int, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default int.</param>
+		/// <param name="def2">Default string.</param>
+		/// <param name="def3">Default string.</param>
+		/// <returns>An int, string, string tuple.</returns>
 		public static (int, string, string) Is2(this IList obj, int def1 = default, string def2 = "", string def3 = "")
 		{
 			var r1 = obj.Ai(0, def1);
@@ -138,8 +284,22 @@
 			return (r1, r2, r3);
 		}
 
+		/// <summary>
+		/// Converts the first element of a list to a long.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the element from.</param>
+		/// <param name="def">Default long.</param>
+		/// <returns>A long.</returns>
 		public static long L1(this IList obj, long def = default) => obj.Al(0, def);
 
+		/// <summary>
+		/// Converts the first 3 elements of a list to a long, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default long.</param>
+		/// <param name="def2">Default string.</param>
+		/// <param name="def3">Default string.</param>
+		/// <returns>A long, string, string tuple.</returns>
 		public static (long, string, string) Ls2(this IList obj, long def1 = default, string def2 = "", string def3 = "")
 		{
 			var r1 = obj.Al(0, def1);
@@ -148,12 +308,30 @@
 			return (r1, r2, r3);
 		}
 
-		public static object O1(this IList obj, object def1 = null)
-		{
-			var r1 = obj.Ao(0, def1);
-			return r1;
-		}
+		/// <summary>
+		/// Converts the first element of a list to an object.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the element from.</param>
+		/// <param name="def">Default object.</param>
+		/// <returns>An object.</returns>
+		public static object O1(this IList obj, object def = null) => obj.Ao(0, def);
 
+		/// <summary>
+		/// Converts the first 11 elements of a list to an object, string, string, string, string, string, string, string, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default object.</param>
+		/// <param name="def2">Default string.</param>
+		/// <param name="def3">Default string.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <param name="def6">Default string.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <param name="def9">Default string.</param>
+		/// <param name="def10">Default string.</param>
+		/// <param name="def11">Default string.</param>
+		/// <returns>An object, string, string, string, string, string, string, string, string, string, string tuple.</returns>
 		public static (object, string, string, string, string, string, string, string, string, string, string) O1S10(this IList obj, object def1 = null, string def2 = "", string def3 = "", string def4 = "", string def5 = "", string def6 = "", string def7 = "", string def8 = "", string def9 = "", string def10 = "", string def11 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -170,6 +348,16 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11);
 		}
 
+		/// <summary>
+		/// Converts the first 5 elements of a list to an object, string, double, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default object.</param>
+		/// <param name="def2">Default string.</param>
+		/// <param name="def3">Default double.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <returns>An object, string, double, string, string tuple.</returns>
 		public static (object, string, double, string, string) O1S1D1S2(this IList obj, object def1 = null, string def2 = "", double def3 = default, string def4 = "", string def5 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -180,6 +368,15 @@
 			return (r1, r2, r3, r4, r5);
 		}
 
+		/// <summary>
+		/// Converts the first 4 elements of a list to an object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default object.</param>
+		/// <param name="def2">Default string.</param>
+		/// <param name="def3">Default string.</param>
+		/// <param name="def4">Default string.</param>
+		/// <returns>An object, string, string, string tuple.</returns>
 		public static (object, string, string, string) O1S3(this IList obj, object def1 = null, string def2 = "", string def3 = "", string def4 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -189,6 +386,19 @@
 			return (r1, r2, r3, r4);
 		}
 
+		/// <summary>
+		/// Converts the first 8 elements of a list to an object, object, string, string, int, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default object.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default string.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default int.</param>
+		/// <param name="def6">Default string.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <returns>An object, object, string, string, int, string, string, string tuple.</returns>
 		public static (object, object, string, string, int, string, string, string) O2S2I1S3(this IList obj, object def1 = null, object def2 = null, string def3 = "", string def4 = "", int def5 = 0, string def6 = "", string def7 = "", string def8 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -202,6 +412,16 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8);
 		}
 
+		/// <summary>
+		/// Converts the first 5 elements of a list to an object, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default object.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default string.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <returns>An object, object, string, string, string tuple.</returns>
 		public static (object, object, string, string, string) O2S3(this IList obj, object def1 = null, object def2 = null, string def3 = "", string def4 = "", string def5 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -212,6 +432,17 @@
 			return (r1, r2, r3, r4, r5);
 		}
 
+		/// <summary>
+		/// Converts the first 6 elements of a list to an object, object, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default object.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default object.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <param name="def6">Default string.</param>
+		/// <returns>An object, object, object, string, string, string tuple.</returns>
 		public static (object, object, object, string, string, string) O3S3(this IList obj, object def1 = null, object def2 = null, object def3 = null, string def4 = "", string def5 = "", string def6 = "")
 		{
 			var r1 = obj.Ao(0, def1);
@@ -223,8 +454,27 @@
 			return (r1, r2, r3, r4, r5, r6);
 		}
 
+		/// <summary>
+		/// Converts the first element of a list to a string.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the element from.</param>
+		/// <param name="def">Default string.</param>
+		/// <returns>A string.</returns>
 		public static string S1(this IList obj, string def = "") => obj.As(0, def);
 
+		/// <summary>
+		/// Converts the first 8 elements of a list to an string, double, int, object, string, int, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default string.</param>
+		/// <param name="def2">Default double.</param>
+		/// <param name="def3">Default int.</param>
+		/// <param name="def4">Default object.</param>
+		/// <param name="def5">Default string.</param>
+		/// <param name="def6">Default int.</param>
+		/// <param name="def7">Default string.</param>
+		/// <param name="def8">Default string.</param>
+		/// <returns>A string, double, int, object, string, int, string, string tuple.</returns>
 		public static (string, double, int, object, string, int, string, string) S1D1I1O1S1I1S3(this IList obj, string def1 = "", double def2 = default, int def3 = default, object def4 = default, string def5 = "", int def6 = default, string def7 = "", string def8 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -238,6 +488,16 @@
 			return (r1, r2, r3, r4, r5, r6, r7, r8);
 		}
 
+		/// <summary>
+		/// Converts the first 5 elements of a list to an  string, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default string.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default string.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <returns>A string, object, string, string, string tuple.</returns>
 		public static (string, object, string, string, string) S1O1S3(this IList obj, string def1 = "", object def2 = null, string def3 = "", string def4 = "", string def5 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -248,6 +508,17 @@
 			return (r1, r2, r3, r4, r5);
 		}
 
+		/// <summary>
+		/// Converts the first 6 elements of a list to an  string, object, object, string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default string.</param>
+		/// <param name="def2">Default object.</param>
+		/// <param name="def3">Default object.</param>
+		/// <param name="def4">Default string.</param>
+		/// <param name="def5">Default string.</param>
+		/// <param name="def6">Default string.</param>
+		/// <returns>A string, object, object, string, string, string tuple.</returns>
 		public static (string, object, object, string, string, string) S1O2S3(this IList obj, string def1 = "", object def2 = null, object def3 = null, string def4 = "", string def5 = "", string def6 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -259,6 +530,13 @@
 			return (r1, r2, r3, r4, r5, r6);
 		}
 
+		/// <summary>
+		/// Converts the first 2 elements of a list to a string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default string.</param>
+		/// <param name="def2">Default string.</param>
+		/// <returns>A string, string tuple.</returns>
 		public static (string, string) S2(this IList obj, string def1 = "", string def2 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -266,6 +544,14 @@
 			return (r1, r2);
 		}
 
+		/// <summary>
+		/// Converts the first 3 elements of a list to a string, string, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default string.</param>
+		/// <param name="def2">Default string.</param>
+		/// <param name="def3">Default string.</param>
+		/// <returns>A string, string, string tuple.</returns>
 		public static (string, string, string) S3(this IList obj, string def1 = "", string def2 = "", string def3 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -274,6 +560,14 @@
 			return (r1, r2, r3);
 		}
 
+		/// <summary>
+		/// Converts the first 3 elements of a list to a string, long, string tuple.
+		/// </summary>
+		/// <param name="obj">The list to retrieve the elements from.</param>
+		/// <param name="def1">Default string.</param>
+		/// <param name="def2">Default long.</param>
+		/// <param name="def3">Default string.</param>
+		/// <returns>A string, long, string tuple.</returns>
 		public static (string, long, string) Sls(this IList obj, string def1 = "", long def2 = default, string def3 = "")
 		{
 			var r1 = obj.As(0, def1);
@@ -282,6 +576,12 @@
 			return (r1, r2, r3);
 		}
 
+		/// <summary>
+		/// Convert an IList into an IEnumerable<byte>.
+		/// This will attempt to convert each element to a byte, which could be slow.
+		/// </summary>
+		/// <param name="list">The list whose elements will be converted.</param>
+		/// <returns>An IEnumerable<byte>.</returns>
 		public static IEnumerable<byte> ToByteArray(this IList list)
 		{
 			IList<byte> arr;
@@ -290,7 +590,7 @@
 				arr = bb;
 			else if (list is IList<double> bd)//If values are passed directly, they'll be of type double.
 				arr = bd.Select(value => (byte)Convert.ToInt32(value)).ToList();
-			else if (list is Keysharp.Core.Array array)
+			else if (list is Keysharp.Core.Array array)//Attempt to convert, slower.
 			{
 				arr = new List<byte>(list.Count);
 
@@ -317,37 +617,5 @@
 
 			return arr;
 		}
-
-		//public static IEnumerable<object> Flatten(this Memory<object> enumerable)
-		//{
-		//  if (enumerable is IEnumerable<(object, object)> io)//Iterators for array and map will be this.
-		//  {
-		//      foreach (var el in io)
-		//      {
-		//          var element = el.Item2;
-
-		//          if (element is IEnumerable candidate && !(element is string))
-		//          {
-		//              foreach (var nested in Flatten(candidate))
-		//                  yield return nested;
-		//          }
-		//          else
-		//              yield return element;
-		//      }
-		//  }
-		//  else
-		//  {
-		//      foreach (var element in enumerable)
-		//      {
-		//          if (element is IEnumerable candidate && !(element is string))
-		//          {
-		//              foreach (var nested in Flatten(candidate))
-		//                  yield return nested;
-		//          }
-		//          else
-		//              yield return element;
-		//      }
-		//  }
-		//}
 	}
 }

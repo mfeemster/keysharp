@@ -69,8 +69,18 @@
 		public override int GetHashCode() => Value.GetHashCode();
 	}
 
+	/// <summary>
+	/// Extension methods for various graphics classes.
+	/// </summary>
 	internal static class GraphicsExtensions
 	{
+		/// <summary>
+		/// Determines whether one FastColor matches another within a specified range.
+		/// </summary>
+		/// <param name="col">The first color to compare.</param>
+		/// <param name="match">The second color to compare.</param>
+		/// <param name="variation">The range of difference allowable for each color. If 0, an exact match is required.</param>
+		/// <returns>True if a match was found, else false.</returns>
 		internal static bool CompareWithVar(this FastColor col, FastColor match, int variation)
 		{
 			if (col.A == 0)
@@ -85,6 +95,13 @@
 			return r && g && b;
 		}
 
+		/// <summary>
+		/// Resizes a bitmap to a new width and height.
+		/// </summary>
+		/// <param name="bmp">The bitmap to resize.</param>
+		/// <param name="width">The new width to use. Use a number less than 0 to maintain the aspect ratio.</param>
+		/// <param name="height">The new height to use. Use a number less than 0 to maintain the aspect ratio.</param>
+		/// <returns>A new bitmap with the specified size.</returns>
 		internal static Bitmap Resize(this Bitmap bmp, int width, int height)
 		{
 			//AHK used these formulas and rounded.
@@ -105,13 +122,5 @@
 
 			return bmp2;
 		}
-
-		internal static Map ToPos(this Rectangle rect, double scale = 1.0) => new Map(new Dictionary<object, object>()
-		{
-			{ "X", rect.Left * scale },
-			{ "Y", rect.Top * scale },
-			{ "Width", rect.Width * scale },
-			{ "Height", rect.Height * scale },
-		});
 	}
 }

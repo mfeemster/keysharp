@@ -46,7 +46,7 @@
 		}
 
 		/// <summary>
-		/// Push a new object onto the stack.
+		/// Pushes a new object onto the stack.
 		/// </summary>
 		/// <param name="obj">The object to push onto the stack.</param>
 		/// <returns>True if the object was pushed, else false if there was no available space.</returns>
@@ -65,7 +65,7 @@
 		}
 
 		/// <summary>
-		/// Return the most recent element in the stack if it exists.
+		/// Returns the most recent element in the stack if it exists.
 		/// In the unlikely case this is called on another thread between the Increment() and Decrement()
 		/// calls in Push(), and all available space in the list has been used,
 		/// it will return null.
@@ -78,7 +78,7 @@
 		}
 
 		/// <summary>
-		/// Remove and return the most recent element in the stack if it exists.
+		/// Removes and return the most recent element in the stack if it exists.
 		/// </summary>
 		/// <param name="obj">A reference to the object which will hold the popped element.
 		/// This will be null if no element was popped.

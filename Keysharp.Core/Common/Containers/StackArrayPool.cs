@@ -45,7 +45,7 @@
 		public T[] Rent() => collection.TryPop(out var obj) ? obj : (new T[arraySize]);
 
 		/// <summary>
-		/// Return an array to the stack.
+		/// Returns an array to the stack.
 		/// Note that the array size must match the size specified in the constructor, otherwise
 		/// it will not be pushed back onto the stack.
 		/// It still may be cleared in this case.

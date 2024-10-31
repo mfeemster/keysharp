@@ -1,5 +1,8 @@
 ﻿namespace System.Collections.Generic
 {
+	/// <summary>
+	/// Extensions methods for various generic collection classes.
+	/// </summary>
 	internal static class SystemCollectionsGenericExtensions
 	{
 		//internal static IEnumerable<T> Flatten<T>(this IEnumerable<T> enumerable)
@@ -16,12 +19,26 @@
 		//  }
 		//}
 
+		/// <summary>
+		/// Adds a range of items to a HashSet<typeparamref name="T"/>.
+		/// </summary>
+		/// <typeparam name="T">The type of element the collections contain.</typeparam>
+		/// <param name="hash">The HashSet<typeparamref name="T"/> to add the items to.</param>
+		/// <param name="add">The IEnumerable<typeparamref name="T"/> whose items will be added to hash.</param>
 		internal static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> add) where T : class, new ()
 		{
 			foreach (var item in add)
 				_ = hash.Add(item);
 		}
 
+		/// <summary>
+		/// Adds a new item of type <typeparamref name="T"/> to a list of type <typeparamref name="T"/> if
+		/// the item is not already contained in the list.
+		/// </summary>
+		/// <typeparam name="T">The type of elements the list contains.</typeparam>
+		/// <param name="list">The list to add an item to.</param>
+		/// <param name="t">The item to add.</param>
+		/// <returns>True if list did not contain t, else false.</returns>
 		internal static bool AddUnique<T>(this IList<T> list, T t)
 		{
 			if (!list.Contains(t))
@@ -33,6 +50,14 @@
 			return false;
 		}
 
+		/// <summary>
+		/// Appends the elements of one dictionary to another dictionary.
+		/// </summary>
+		/// <typeparam name="T">The type of the dictionary keys.</typeparam>
+		/// <typeparam name="T2">The type of the dictionary values.</typeparam>
+		/// <param name="dkt1">The dictionary to add items to.</param>
+		/// <param name="dkt2">The dictionary whose items will be added to dkt1.</param>
+		/// <returns>dkt1 after all items have been added.</returns>
 		internal static Dictionary<T, T2> Append<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
 		{
 			foreach (var kv in dkt2)
@@ -41,17 +66,15 @@
 			return dkt1;
 		}
 
-		internal static Type GetEnumeratedType<T>(this IEnumerable<T> e) => typeof(T);
-
 		/// <summary>
-		/// Retrieve an element from a dictionary if it exists, else add it and return
+		/// Retrieves an element from a dictionary if it exists, else adds it and returns
 		/// the newly added element.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary</typeparam>
-		/// <typeparam name="V">The value type of the dictionary</typeparam>
-		/// <param name="dictionary">The dictionary to get or add from</param>
-		/// <param name="k">The key value to look up</param>
-		/// <returns>The existing or newly added element</returns>
+		/// <typeparam name="K">The key type of the dictionary.</typeparam>
+		/// <typeparam name="V">The value type of the dictionary.</typeparam>
+		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <param name="k">The key value to look up.</param>
+		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k) where V : new ()
 		{
 			if (!dictionary.TryGetValue(k, out var val))
@@ -61,15 +84,15 @@
 		}
 
 		/// <summary>
-		/// Retrieve an element from a dictionary if it exists, else add it with the passed in value and return
+		/// Retrieves an element from a dictionary if it exists, else adds it with the passed in value and returns
 		/// the newly added element.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary</typeparam>
-		/// <typeparam name="V">The value type of the dictionary</typeparam>
-		/// <param name="dictionary">The dictionary to get or add from</param>
-		/// <param name="k">The key value to look up</param>
-		/// <param name="v">The value to add if it doesn't exist</param>
-		/// <returns>The existing or newly added element</returns>
+		/// <typeparam name="K">The key type of the dictionary.</typeparam>
+		/// <typeparam name="V">The value type of the dictionary.</typeparam>
+		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <param name="k">The key value to look up.</param>
+		/// <param name="v">The value to add if it doesn't exist.</param>
+		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k, V v)
 		{
 			if (!dictionary.TryGetValue(k, out var val))
@@ -82,18 +105,18 @@
 		}
 
 		/// <summary>
-		/// Retrieve an element from a dictionary if it exists, else add it and return
+		/// Retrieves an element from a dictionary if it exists, else adds it and returns
 		/// the newly added element.
 		/// This differs from the function above in that it takes a Func to allocate the new element.
 		/// This is needed because we cannot pass arguments to a generic type constructor without
 		/// using reflection.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary</typeparam>
-		/// <typeparam name="V">The value type of the dictionary</typeparam>
-		/// <param name="dictionary">The dictionary to get or add from</param>
-		/// <param name="k">The key value to look up</param>
-		/// <param name="constructionFunc">The construction function.</param>
-		/// <returns>The existing or newly added element</returns>
+		/// <typeparam name="K">The key type of the dictionary.</typeparam>
+		/// <typeparam name="V">The value type of the dictionary.</typeparam>
+		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <param name="k">The key value to look up.</param>
+		/// <param name="constructionFunc">The construction function which returns a newly constructed object of type <typeparamref name="V"/>.</param>
+		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k, Func<V> constructionFunc)
 		{
 			if (!dictionary.TryGetValue(k, out var val))
@@ -102,18 +125,30 @@
 			return val;
 		}
 
-		internal static V GetOrAdd<K, V>(this OrderedDictionary dictionary, K k) where V : class, new ()
-		{
-			if (!dictionary.Contains(k))
-			{
-				var v = new V();
-				dictionary.Add(k, v);
-				return v;
-			}
+		//internal static V GetOrAdd<K, V>(this OrderedDictionary dictionary, K k) where V : class, new ()
+		//{
+		//  if (!dictionary.Contains(k))
+		//  {
+		//      var v = new V();
+		//      dictionary.Add(k, v);
+		//      return v;
+		//  }
 
-			return (V)dictionary[k];
-		}
+		//  return (V)dictionary[k];
+		//}
 
+		/// <summary>
+		/// Retrieves an element from an OrderedDictionary if it exists, else adds it and returns
+		/// the newly added element.
+		/// This uses reflection to pass the argument p1 to a generic type constructor.
+		/// </summary>
+		/// <typeparam name="K">The key type of the dictionary.</typeparam>
+		/// <typeparam name="V">The value type of the dictionary.</typeparam>
+		/// <typeparam name="P1">The type of the parameter to pass to the constructor of type <typeparamref name="V"/>.</typeparam>
+		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <param name="k">The key value to look up.</param>
+		/// <param name="p1">The parameter to pass to the constructor for a new object of type <typeparamref name="V"/>.</param>
+		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V, P1>(this OrderedDictionary dictionary, K k, P1 p1) where V : class
 		{
 			if (!dictionary.Contains(k))
@@ -138,6 +173,13 @@
 			return dictionary[k] as V;
 		}
 
+		/// <summary>
+		/// Invoke all event handlers in a list with each being called in its own pseudo-thread.
+		/// If any event handler returns a non-empty result, no further calls are made.
+		/// </summary>
+		/// <param name="handlers">The list of event handlers to call.</param>
+		/// <param name="obj">The parameters to pass to each event handler.</param>
+		/// <returns>The result of the last event handler that was called.</returns>
 		internal static object InvokeEventHandlers(this IEnumerable<IFuncObj> handlers, params object[] obj)
 		{
 			object result = null;
@@ -184,9 +226,17 @@
 			return result;
 		}
 
-		internal static Dictionary<T, T2> Merge<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
+		/// <summary>
+		/// Creates and returns a new dictionary whose contents are those of both dictionaries.
+		/// </summary>
+		/// <typeparam name="K">The key type of the dictionaries.</typeparam>
+		/// <typeparam name="V">The value type of the dictionaries.</typeparam>
+		/// <param name="dkt1">The first dictionary to add to the new dictionary.</param>
+		/// <param name="dkt2">The second dictionary to add to the new dictionary.</param>
+		/// <returns>The newly created dictionary containing the elements from the two dictionaries.</returns>
+		internal static Dictionary<K, V> Merge<K, V>(this Dictionary<K, V> dkt1, Dictionary<K, V> dkt2)
 		{
-			var merged = new Dictionary<T, T2>();
+			var merged = new Dictionary<K, V>();
 
 			foreach (var kv in dkt1)
 				merged.Add(kv.Key, kv.Value);
@@ -197,6 +247,16 @@
 			return merged;
 		}
 
+		/// <summary>
+		/// Add, insert or remove an event handler from a list of event handlers.
+		/// </summary>
+		/// <param name="handlers">The list of event handlers to modify.</param>
+		/// <param name="fo">The event handler to add, insert or remove from the list.</param>
+		/// <param name="i">An integer specifying which action to take:
+		///     0: Remove any event handler whose name matches fo.Name.
+		///     1: Add fo to the list.
+		///    -1: Remove fo from the list.
+		/// </param>
 		internal static void ModifyEventHandlers(this List<IFuncObj> handlers, IFuncObj fo, long i)
 		{
 			if (i > 0)
@@ -207,8 +267,20 @@
 				_ = handlers.RemoveAll(d => d.Name == fo.Name);
 		}
 
+		/// <summary>
+		/// Return the top element of a Stack<typeparamref name="T"/> if it exists, else null.
+		/// </summary>
+		/// <typeparam name="T">The type of elements in stack.</typeparam>
+		/// <param name="stack">The Stack to examine.</param>
+		/// <returns>The top element in stack if it exists, else null.</returns>
 		internal static T PeekOrNull<T>(this Stack<T> stack) where T : class => stack.TryPeek(out var result) ? result : null;
 
+		/// <summary>
+		/// Remove and return the top element of a Stack<typeparamref name="T"/> if it exists, else null.
+		/// </summary>
+		/// <typeparam name="T">The type of elements in stack.</typeparam>
+		/// <param name="stack">The Stack to examine.</param>
+		/// <returns>The top element in stack if it exists, else null.</returns>
 		internal static T PopOrNull<T>(this Stack<T> stack) where T : class => stack.TryPop(out var result) ? result : null;
 	}
 }

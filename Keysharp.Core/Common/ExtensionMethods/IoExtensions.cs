@@ -1,7 +1,16 @@
 ﻿namespace System.IO
 {
+	/// <summary>
+	/// Extension methods for various System.IO classes.
+	/// </summary>
 	public static class SystemIoExtensions
 	{
+		/// <summary>
+		/// Reads a line from a BinaryReader at the current position.
+		/// Because this examines one character at a time, it will be slow.
+		/// </summary>
+		/// <param name="reader">The BinaryReader to read a line from.</param>
+		/// <returns>The line read from reader.</returns>
 		internal static string ReadLine(this BinaryReader reader)
 		{
 			var result = new StringBuilder();
@@ -23,7 +32,8 @@
 				switch (ch)
 				{
 					case '\r':
-						if (reader.PeekChar() == '\n') _ = reader.ReadChar();
+						if (reader.PeekChar() == '\n')
+							_ = reader.ReadChar();
 
 						foundEndOfLine = true;
 						break;

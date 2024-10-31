@@ -320,7 +320,7 @@ namespace Keysharp.Core
 				form = kf;
 
 				//This is wrong and needs to add things recursively and keep a count.
-				foreach (var ctrl in form.GetAllControlsRecusrvive<Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
+				foreach (var ctrl in form.GetAllControlsRecursive<Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
 					ctrl.Tag = new GuiControl(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
 			}
 

@@ -90,17 +90,17 @@ namespace Keysharp.Core.Windows
 				{
 					form.Invoke(() =>
 					{
-						foreach (var ctrl in form.GetAllControlsRecusrvive<Control>())
+						foreach (var ctrl in form.GetAllControlsRecursive<Control>())
 							_ = childs.Add(ctrl.Handle);//HashSet takes care of avoiding dupes.
 					});
 				}
 
-				var childlist = new List<WindowItemBase>(childs.Count);
+				var childList = new List<WindowItemBase>(childs.Count);
 
 				foreach (var handle in childs)
-					childlist.Add(new WindowItem(handle));
+					childList.Add(new WindowItem(handle));
 
-				return childlist;
+				return childList;
 			}
 		}
 

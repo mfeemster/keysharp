@@ -591,7 +591,7 @@
 						var sb = new StringBuilder(code.Length);
 
 						foreach (var line in code.SplitLines())
-							_ = sb.AppendLine(line.TrimNofAny(trimstr, 2));
+							_ = sb.AppendLine(line.TrimNofAnyFromStart(trimstr, 2));
 
 						trimmedCode = sb.ToString().TrimEnd(trimend);
 						SetTxtOut(chkFullCode.Checked ? fullCode : trimmedCode);
