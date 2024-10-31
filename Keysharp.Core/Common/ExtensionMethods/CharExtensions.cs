@@ -1,7 +1,7 @@
 ﻿namespace System
 {
 	/// <summary>
-	/// Extensions methods for the char type.
+	/// Extension methods for the char type.
 	/// </summary>
 	public static class CharExtensions
 	{

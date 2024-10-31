@@ -1,7 +1,7 @@
 ﻿namespace System.Collections.Generic
 {
 	/// <summary>
-	/// Extensions methods for various generic collection classes.
+	/// Extension methods for various generic collection classes.
 	/// </summary>
 	internal static class SystemCollectionsGenericExtensions
 	{

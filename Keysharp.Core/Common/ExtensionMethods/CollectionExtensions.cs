@@ -1,7 +1,7 @@
 ﻿namespace System.Collections
 {
 	/// <summary>
-	/// Extensions methods for various collection classes.
+	/// Extension methods for various collection classes.
 	/// </summary>
 	public static class SystemCollectionsExtensions
 	{
