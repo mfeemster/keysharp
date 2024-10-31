@@ -1,7 +1,7 @@
 ﻿namespace System
 {
 	/// <summary>
-	/// Extension methods for the System.String classes.
+	/// Extension methods for the System.String class.
 	/// </summary>
 	public static class StringExtensions
 	{
@@ -14,18 +14,14 @@
 		public static IEnumerable<string> SplitLines(this string str)
 		{
 			if (string.IsNullOrEmpty(str))
-			{
 				yield break;
-			}
 
 			using (var reader = new StringReader(str))
 			{
 				string line;
 
 				while ((line = reader.ReadLine()) != null)
-				{
 					yield return line;
-				}
 			}
 		}
 
@@ -68,6 +64,7 @@
 
 #if LINUX
 		/// <summary>
+		/// Runs a string as a Bash command.
 		/// Gotten from: https://stackoverflow.com/questions/54325155/how-to-get-hard-disk-serial-number-compatible-with-linux-windows
 		/// </summary>
 		/// <param name="cmd">The Bash command to run</param>
@@ -100,6 +97,13 @@
 		}
 #endif
 
+		/// <summary>
+		/// Determines whether a string ends with any of a list of strings.
+		/// The search is case insensitive.
+		/// </summary>
+		/// <param name="str">The string to search.</param>
+		/// <param name="strings">The list of strings to search the end of the string for.</param>
+		/// <returns>True if any of the strings in strings were found at the end of str.</returns>
 		internal static int EndsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
 		{
 			foreach (var end in strings)
@@ -110,7 +114,7 @@
 		}
 
 		/// <summary>
-		/// Finds the first index in a string where a non-quoted imbalance of the two specified characters occurs.
+		/// Returns the index of the first occurence in a string where a non-quoted imbalance of the two specified characters occurs.
 		/// Gotten from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
@@ -173,15 +177,13 @@
 			var ret = -1;
 
 			while (stack.TryPop(out int temp))
-			{
 				ret = temp;
-			}
 
 			return ret;
 		}
 
 		/// <summary>
-		/// Finds the index of the first occurrence of a string in another string
+		/// Returns the index of the first occurrence of a substring in another string
 		/// which is not inside quotes.
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
@@ -249,22 +251,20 @@
 		//}
 
 		/// <summary>
-		///
+		/// <see cref="FindFirstNotOf" />
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="chars"></param>
-		/// <param name="offset"></param>
-		/// <returns></returns>
 		internal static int FindFirstNotOf(this string str, char[] chars, int offset = 0) =>
 		FindFirstNotOf(str.AsSpan(), chars, offset);
 
 		/// <summary>
-		///
+		/// Returns the index of the first character in a string which is not contained in a list of characters.
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="chars"></param>
-		/// <param name="offset"></param>
-		/// <returns></returns>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="chars">The list of characters to search the string for the absence of.</param>
+		/// <param name="offset">The offset to begin searching at. Default: 0.</param>
+		/// <returns>0 if str or chars are empty, else the index of the first character not contained in chars.
+		/// If every character is contained in chars, then the str.Length is returned.
+		/// </returns>
 		internal static int FindFirstNotOf(this ReadOnlySpan<char> str, char[] chars, int offset = 0)
 		{
 			if (str.Length == 0) return 0;// -1;
@@ -279,10 +279,10 @@
 		}
 
 		/// <summary>
-		/// Returns the remainder of the string, starting at the character which is not valid in an identifier (var, func, or obj.key name).
+		/// Returns the index of the first occurence of a character that is not an valid identifier character (var, func, or obj.key name).
 		/// </summary>
-		/// <param name="str"></param>
-		/// <returns></returns>
+		/// <param name="str">The string to examine.</param>
+		/// <returns>The index after an identifier is found.</returns>
 		internal static int FindIdentifierEnd(this string str)
 		{
 			var i = 0;
@@ -297,6 +297,14 @@
 		//internal static int FirstIndexOf(this string source, Func<char, bool> func, int offset = 0) =>
 		//source.AsSpan().FirstIndexOf(func, offset);
 
+		/// <summary>
+		/// Returns the index of the first character in the string for which func returns true, optionally
+		/// starting at a specified index.
+		/// </summary>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="func">The Func to call for every character.</param>
+		/// <param name="offset">The index to start searching at. Default: 0.</param>
+		/// <returns>The first index for which func returns true, else -1.</returns>
 		internal static int FirstIndexOf(this ReadOnlySpan<char> str, Func<char, bool> func, int offset = 0)
 		{
 			for (var i = offset; i < str.Length; i++)
@@ -306,23 +314,28 @@
 			return -1;
 		}
 
+		/// <summary>
+		/// Wrapper around searching for a character in a string starting at an offset.
+		/// For some reason the built-in IndexOf() doesn't support searching from an offset.
+		/// </summary>
+		/// <param name="str">The string to search.</param>
+		/// <param name="search">The character to search for.</param>
+		/// <param name="offset">The offset to start searching at.</param>
+		/// <returns>The index from the beginning of the string that search was found, else -1.</returns>
 		internal static int IndexOf(this ReadOnlySpan<char> str, char search, int offset)
 		{
 			var val = str.Slice(offset).IndexOf(search);
-
-			if (val == -1)
-				return val;
-
-			return val + offset;
+			return val == -1 ? val : val + offset;
 		}
 
 		/// <summary>
-		/// .NET IndexOfAny() with an offset for string but not span. So implement it here.
+		/// Wrapper around searching for a SearchValues in a string starting at an offset.
+		/// For some reason the built-in IndexOf() doesn't support searching from an offset.
 		/// </summary>
-		/// <param name="str">The string to search</param>
-		/// <param name="search">The characters to search for in the string</param>
-		/// <param name="offset">The offset to begin searching at</param>
-		/// <returns>The 0-based index of the first occurrence of any of the characters, else -1 if not found.</returns>
+		/// <param name="str">The string to search.</param>
+		/// <param name="search">The SearchValues to search for.</param>
+		/// <param name="offset">The offset to start searching at.</param>
+		/// <returns>The index from the beginning of the string that search was found, else -1.</returns>
 		internal static int IndexOfAny(this ReadOnlySpan<char> str, SearchValues<char> search, int offset)
 		{
 			var val = str.Slice(offset).IndexOfAny(search);
@@ -333,6 +346,13 @@
 			return val + offset;
 		}
 
+		/// <summary>
+		/// Determines whether two characters occur in equal number within a string.
+		/// </summary>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="ch1">The first character to search for.</param>
+		/// <param name="ch2">The second character to search for.</param>
+		/// <returns>True if ch1 and ch2 occur in str in equal number, else false.</returns>
 		internal static bool IsBalanced(this string str, char ch1, char ch2)
 		{
 			int ct1 = 0, ct2 = 0;
@@ -347,14 +367,8 @@
 		}
 
 		/// <summary>
-		/// Reverse vesion of NthIndexOf().
+		/// Reverse vesion of <see cref="NthIndexOf()"/>.
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="substr"></param>
-		/// <param name="pos"></param>
-		/// <param name="n"></param>
-		/// <param name="comp"></param>
-		/// <returns></returns>
 		internal static int LastNthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
 		{
 			pos = str.Length + pos + 1;
@@ -368,13 +382,15 @@
 		}
 
 		/// <summary>
+		/// Returns the index of the nth occurrence of a substring within a string, starting at a specified index.
 		/// Gotten from https://stackoverflow.com/questions/186653/get-the-index-of-the-nth-occurrence-of-a-string
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="substr"></param>
-		/// <param name="n"></param>
-		/// <param name="comp"></param>
-		/// <returns></returns>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="substr">The string to search for n occurences of within str.</param>
+		/// <param name="pos">The index in str to start searching for substr at.</param>
+		/// <param name="n">The number of occurrences of substr to search for.</param>
+		/// <param name="comp">The type of comparison to perform.</param>
+		/// <returns>The position of the nth occurrence of substr within str, starting at pos. If n occurrences are not found, -1 is returned.</returns>
 		internal static int NthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
 		{
 			pos--;
@@ -387,6 +403,14 @@
 			return pos;
 		}
 
+		/// <summary>
+		/// Returns the index of the nth occurrence of a list of characters within a string, starting at a specified index.
+		/// </summary>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="substr">The list of characters to compare each character in str against for n occurences within str.</param>
+		/// <param name="pos">The index in str to start searching for substr at.</param>
+		/// <param name="n">The number of occurrences of substr to search for.</param>
+		/// <returns>The position of the nth occurrence of any char within substr within str, starting at pos. If n occurrences are not found, -1 is returned.</returns>
 		internal static int NthIndexOfAny(this string str, char[] substr, int pos, int n)
 		{
 			pos--;
@@ -399,54 +423,54 @@
 			return pos;
 		}
 
-		internal static bool OcurredInBalance(this string str, string s1, char ch1, char ch2)
-		{
-			var b = 0;
-			var index = str.IndexOf(s1);
+		//internal static bool OcurredInBalance(this string str, string s1, char ch1, char ch2)
+		//{
+		//  var b = 0;
+		//  var index = str.IndexOf(s1);
 
-			if (index == -1)
-				return false;
+		//  if (index == -1)
+		//      return false;
 
-			for (int i = 0; i < str.Length; i++)
-			{
-				char ch = str[i];
+		//  for (int i = 0; i < str.Length; i++)
+		//  {
+		//      char ch = str[i];
 
-				if (ch == ch1)
-					b++;
-				else if (ch == ch2)
-					b--;
+		//      if (ch == ch1)
+		//          b++;
+		//      else if (ch == ch2)
+		//          b--;
 
-				if (i == index)
-					return b == 0;
-			}
+		//      if (i == index)
+		//          return b == 0;
+		//  }
 
-			return false;
-		}
+		//  return false;
+		//}
 
-		internal static string OmitTrailingWhitespace(this string str, int marker) => str.AsSpan(0, marker).TrimEnd(Keywords.SpaceTab).ToString();
+		/// <summary>
+		/// Removes the trailing spaces and tabs of a string starting after a specified index.
+		/// </summary>
+		/// <param name="str">The string to trim.</param>
+		/// <param name="index">The index after which trimming will occur.</param>
+		/// <returns>The trimmed string.</returns>
+		internal static string OmitTrailingWhitespace(this string str, int index) => str.AsSpan(0, index).TrimEnd(Keywords.SpaceTab).ToString();
 
-		internal static string RemoveAfter(this string str, string token)
-		{
-			var index = str.IndexOf(token);
-			return index > 0 ? str.Substring(0, index) : str;
-		}
+		//internal static string RemoveAfter(this string str, string token)
+		//{
+		//  var index = str.IndexOf(token);
+		//  return index > 0 ? str.Substring(0, index) : str;
+		//}
 
+		/// <summary>
+		/// Removes all instances of a specified list of characters from a string.
+		/// </summary>
+		/// <param name="str">The string to remove characters from.</param>
+		/// <param name="chars">The characters to remove from the string.</param>
+		/// <returns>A new string with none of the characters in chars in it.</returns>
 		internal static string RemoveAll(this string str, string chars)
 		{
-			var buffer = new char[str.Length];
 			var idx = 0;
-
-			foreach (var c in str)
-				if (!chars.Contains(c))
-					buffer[idx++] = c;
-
-			return new string(buffer, 0, idx);
-		}
-
-		internal static string RemoveAll(this string str, char[] chars)
-		{
 			var buffer = new char[str.Length];
-			var idx = 0;
 
 			foreach (var c in str)
 				if (!chars.Contains(c))
@@ -456,18 +480,45 @@
 		}
 
 		/// <summary>
+		/// Removes all instances of a specified list of characters from a string.
+		/// </summary>
+		/// <param name="str">The string to remove characters from.</param>
+		/// <param name="chars">The characters to remove from the string.</param>
+		/// <returns>A new string with none of the characters in chars in it.</returns>
+		internal static string RemoveAll(this string str, char[] chars)
+		{
+			var idx = 0;
+			var buffer = new char[str.Length];
+
+			foreach (var c in str)
+				if (!chars.Contains(c))
+					buffer[idx++] = c;
+
+			return new string(buffer, 0, idx);
+		}
+
+		/// <summary>
+		/// Search for the first instance of a substring within a string, and replace it with another string.
 		/// Gotten from https://stackoverflow.com/questions/141045/how-do-i-replace-the-first-instance-of-a-string-in-net
 		/// </summary>
-		/// <param name="str"></param>
-		/// <param name="search"></param>
-		/// <param name="replace"></param>
-		/// <returns></returns>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="search">The string to search str for.</param>
+		/// <param name="replace">The string to replace seach with.</param>
+		/// <param name="comparison">The type of comparison to perform. Default: ordinal.</param>
+		/// <returns>A new string consisting of the original with search replaced with replace, if search was found, else str.</returns>
 		internal static string ReplaceFirst(this string str, string search, string replace, StringComparison comparison = StringComparison.Ordinal)
 		{
 			var pos = str.IndexOf(search, comparison);
 			return pos < 0 ? str : str.Substring(0, pos) + replace + str.Substring(pos + search.Length);
 		}
 
+		/// <summary>
+		/// Determines whether a string starts with any of a list of strings and returns the length of the first match if found, else -1.
+		/// The search is case insensitive.
+		/// </summary>
+		/// <param name="str">The string to examine.</param>
+		/// <param name="strings">The list of strings to check if str starts with.</param>
+		/// <returns>The length of the first matched string, else -1.</returns>
 		internal static int StartsWithAnyOf(this ReadOnlySpan<char> str, IEnumerable<string> strings)
 		{
 			foreach (var start in strings)
@@ -477,6 +528,11 @@
 			return -1;
 		}
 
+		/// <summary>
+		/// Trims all alpha characters from the end of a string.
+		/// </summary>
+		/// <param name="str">The string to trim.</param>
+		/// <returns>The trimmed string.</returns>
 		internal static ReadOnlySpan<char> TrimEndAlpha(this string str)
 		{
 			var len = str.Length;
@@ -487,14 +543,21 @@
 			return str.AsSpan(0, len);
 		}
 
+		/// <summary>
+		/// Trims a string from the end of another string.
+		/// </summary>
+		/// <param name="str">The string to trim the end of.</param>
+		/// <param name="trim">The string to trim from the end of str.</param>
+		/// <param name="ignoreCase">True to ignore case, else false.</param>
+		/// <returns>The trimmed string.</returns>
 		internal static string TrimEndOf(this string str, string trim, bool ignoreCase = true) =>
 		str.EndsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		? str.Substring(0, str.LastIndexOf(trim))
 		: str;
 
-		internal static string TrimStartOf(this string str, string trim, bool ignoreCase = true) =>
-		str.StartsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
-		? str.Substring(trim.Length)
-		: str;
+		//internal static string TrimStartOf(this string str, string trim, bool ignoreCase = true) =>
+		//str.StartsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
+		//? str.Substring(trim.Length)
+		//: str;
 	}
 }
