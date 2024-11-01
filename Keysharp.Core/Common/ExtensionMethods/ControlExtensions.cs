@@ -3,18 +3,18 @@
 	/// <summary>
 	/// Extension methods for various WinForms Control classes.
 	/// By using extension methods, it relieves us of having to write some of these methods twice.
-	/// For example, SetFont() exists on Gui as well as on GuiControl. Rather than implement that function
+	/// For example, SetFont() exists on <see cref="Gui"/> as well as on <see cref="GuiControl"/>. Rather than implement that function
 	/// in both classes, we just implement it once here as an extension for Control, then expose a wrapper in each of these classes
 	/// which just passes the arguments to the extension method here, which gets called on either the underlying form or control member.
 	/// </summary>
 	internal static class ControlExtensions
 	{
 		/// <summary>
-		/// Calls an Action inside of BeginInvoke() with various checks/options.
+		/// Calls an <see cref="Action"/> inside of BeginInvoke() with various checks/options.
 		/// Before invoking on the control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>
-		/// <param name="control">The Control to call BeginInvoke() on.</param>
-		/// <param name="action">The Action to invoke.</param>
+		/// <param name="control">The <see cref="Control"/> to call BeginInvoke() on.</param>
+		/// <param name="action">The <see cref="Action"/> to invoke.</param>
 		/// <param name="runIfNull">True to call action inline if control is null, else don't call action.</param>
 		/// <param name="forceInvoke">True to call BeginInvoke() on control, even if it's not required.</param>
 		internal static void CheckedBeginInvoke(this Control control, Action action, bool runIfNull, bool forceInvoke)
@@ -37,11 +37,11 @@
 		}
 
 		/// <summary>
-		/// Calls an Action inside of Invoke() with various checks/options.
-		/// Before invoking on the control, ensure it's not null, has been created and is not disposing/disposed.
+		/// Calls an <see cref="Action"/> inside of Invoke() with various checks/options.
+		/// Before invoking on control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>
-		/// <param name="control">The Control to call Invoke() on.</param>
-		/// <param name="action">The Action to invoke.</param>
+		/// <param name="control">The <see cref="Control"/> to call Invoke() on.</param>
+		/// <param name="action">The <see cref="Action"/> to invoke.</param>
 		/// <param name="runIfNull">True to call action inline if control is null, else don't call action.</param>
 		internal static void CheckedInvoke(this Control control, Action action, bool runIfNull)
 		{
@@ -63,11 +63,11 @@
 		}
 
 		/// <summary>
-		/// Calls a Func<typeparamref name="T"/> inside of Invoke() with various checks/options.
-		/// Before invoking on the control, ensure it's not null, has been created and is not disposing/disposed.
+		/// Calls a <see cref="Func{T}"/> inside of Invoke() with various checks/options.
+		/// Before invoking on control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>
-		/// <param name="control">The Control to call Invoke() on.</param>
-		/// <param name="action">The Func to invoke.</param>
+		/// <param name="control">The <see cref="Control"/> to call Invoke() on.</param>
+		/// <param name="action">The <see cref="Func{T}"/> to invoke.</param>
 		/// <param name="runIfNull">True to call action inline if control is null, else don't call action.</param>
 		/// <returns>The result of action, of type <typeparamref name="T"/>.</returns>
 		internal static T CheckedInvoke<T>(this Control control, Func<T> action, bool runIfNull)
@@ -85,10 +85,10 @@
 		}
 
 		/// <summary>
-		/// Finds the parent of a control whose type matches <typeparamref name="T"/>.
+		/// Finds the parent of a <see cref="Control"/> whose type matches <typeparamref name="T"/>.
 		/// </summary>
-		/// <typeparam name="T">The type of the parent control to match.</typeparam>
-		/// <param name="control">The control whose parent is to be found.</param>
+		/// <typeparam name="T">The type of the parent <see cref="Control"/> to match.</typeparam>
+		/// <param name="control">The <see cref="Control"/> whose parent is to be found.</param>
 		/// <returns>The first parent matching type <typeparamref name="T"/>, else null.</returns>
 		internal static T FindParent<T>(this Control control) where T : Control
 		{
@@ -106,11 +106,11 @@
 		}
 
 		/// <summary>
-		/// Finds all parents of a control whose type matches <typeparamref name="T"/>.
+		/// Finds all parents of a <see cref="Control"/> whose type matches <typeparamref name="T"/>.
 		/// </summary>
-		/// <typeparam name="T">The type of the parent controls to match.</typeparam>
-		/// <param name="control">The control whose parents are to be found.</param>
-		/// <returns>A HashSet<typeparamref name="T"/> of parents whose type matched <typeparamref name="T"/>.</returns>
+		/// <typeparam name="T">The type of the parent <see cref="Control"/>s to match.</typeparam>
+		/// <param name="control">The <see cref="Control"/> whose parents are to be found.</param>
+		/// <returns>A <see cref="HashSet{T}"/> of parents whose type matched <typeparamref name="T"/>.</returns>
 		internal static HashSet<T> FindParents<T>(this Control control) where T : Control
 		{
 			var parent = control.Parent;
@@ -128,10 +128,10 @@
 		}
 
 		/// <summary>
-		/// Finds the first tab within a TabControl whose text matches text.
+		/// Finds the first tab within a <see cref="TabControl"/> whose text matches text.
 		/// The search is case insensitive.
 		/// </summary>
-		/// <param name="tc">The TabControl to search.</param>
+		/// <param name="tc">The <see cref="TabControl"/> to search.</param>
 		/// <param name="text">The text to match.</param>
 		/// <param name="exact">True to match the entire text of a tab, else only match the start of the text.</param>
 		/// <returns>The matching tab if found, else null.</returns>
@@ -150,11 +150,11 @@
 		}
 
 		/// <summary>
-		/// Returns a collection of all child controls of a Control whose type matches <typeparamref name="T"/>, recursively.
+		/// Returns a collection of all child controls of a <see cref="Control"/> whose type matches <typeparamref name="T"/>, recursively.
 		/// </summary>
 		/// <typeparam name="T">The type of the controls to find.</typeparam>
-		/// <param name="control">The Control whose children will be matched.</param>
-		/// <returns>A HashSet<typeparamref name="T"/> of children whose type matched <typeparamref name="T"/>.</returns>
+		/// <param name="control">The <see cref="Control"/> whose children will be matched.</param>
+		/// <returns>A <see cref="HashSet{T}"/> of children whose type matched <typeparamref name="T"/>.</returns>
 		internal static HashSet<T> GetAllControlsRecursive<T>(this Control control) where T : class, new ()
 		{
 			var rtn = new HashSet<T>();
@@ -171,18 +171,18 @@
 		}
 
 		/// <summary>
-		/// Returns the Tag member of a Control as a GuiControl.
+		/// Returns the Tag member of a <see cref="Control"/> as a <see cref="GuiControl"/>.
 		/// </summary>
-		/// <param name="control">The Control whose Tag member will be returned.</param>
-		/// <returns>A GuiControl if the Tag member was a GuiTag, else null.</returns>
+		/// <param name="control">The <see cref="Control"/> whose Tag member will be returned.</param>
+		/// <returns>A <see cref="GuiControl"/> if the Tag member was a <see cref="GuiTag">, else null.</returns>
 		internal static GuiControl GetGuiControl(this Control control) => control.Tag is GuiTag guiTag ? guiTag.GuiControl : null;
 
 		/// <summary>
-		/// Returns all child ToolStripItems of a ToolStrip, recursively.
+		/// Returns all child <see cref="ToolStripItem"/>s of a <see cref="ToolStrip"/>, recursively.
 		/// Gotten from here and fixed: https://www.codeproject.com/tips/264690/how-to-iterate-recursive-through-all-menu-items-in
 		/// </summary>
-		/// <param name="menuStrip">The ToolStrip whose child items will be returned.</param>
-		/// <returns>The child items of the ToolStrip.</returns>
+		/// <param name="menuStrip">The <see cref="ToolStrip"/> whose child items will be returned.</param>
+		/// <returns>The child items of the <see cref="ToolStrip"/>.</returns>
 		internal static List<ToolStripItem> GetItems(this ToolStrip menuStrip)
 		{
 			var myItems = new List<ToolStripItem>();
@@ -223,9 +223,9 @@
 		//}
 
 		/// <summary>
-		/// Resume drawing of a Control.
+		/// Resume drawing of a <see cref="Control"/>.
 		/// </summary>
-		/// <param name="control">The Control to resume drawing for.</param>
+		/// <param name="control">The <see cref="Control"/> to resume drawing for.</param>
 		internal static void ResumeDrawing(this Control control)
 		{
 #if LINUX
@@ -237,11 +237,11 @@
 		}
 
 		/// <summary>
-		/// Finds the right most and bottom most child controls of a Control.
+		/// Finds the right most and bottom most child controls of a <see cref="Control"/>.
 		/// The .Right and .Bottom properties of the controls are used to identify the controls.
 		/// </summary>
-		/// <param name="control">The Control whose children will be traversed.</param>
-		/// <returns>A Control,Control tuple containing the right and bottom most child controls of the Control.
+		/// <param name="control">The <see cref="Control"/> whose children will be traversed.</param>
+		/// <returns>A <see cref="Control"/>,<see cref="Control"/> tuple containing the right and bottom most child controls of the <see cref="Control"/>.
 		/// null,null if none found.
 		/// </returns>
 		internal static (Control, Control) RightBottomMost(this Control control)
@@ -276,10 +276,10 @@
 		}
 
 		/// <summary>
-		/// Selects or deselects a ListBox item based on a text match.
+		/// Selects or deselects a <see cref="ListBox"/> item based on a text match.
 		/// If no match is found, all existing selections are cleared.
 		/// </summary>
-		/// <param name="lb">The ListBox whose item will be selected or deselected.</param>
+		/// <param name="lb">The <see cref="ListBox"/> whose item will be selected or deselected.</param>
 		/// <param name="text">The text of the item to match.</param>
 		/// <param name="clear">True to deselect the item. Default: false.</param>
 		internal static void SelectItem(this ListBox lb, string text, bool clear = false)
@@ -302,10 +302,10 @@
 		}
 
 		/// <summary>
-		/// Selects or deselects a ComboBox item based on a text match.
+		/// Selects or deselects a <see cref="ComboBox"/> item based on a text match.
 		/// If no match is found, the existing selection is cleared.
 		/// </summary>
-		/// <param name="cb">The ComboBox whose item will be selected or deselected.</param>
+		/// <param name="cb">The <see cref="ComboBox"/> whose item will be selected or deselected.</param>
 		/// <param name="text">The text of the item to match.</param>
 		/// <param name="clear">True to deselect the item. Default: false.</param>
 		internal static void SelectItem(this ComboBox cb, string text, bool clear = false)
@@ -319,9 +319,9 @@
 		}
 
 		/// <summary>
-		/// Sets the font of a control.
+		/// Sets the font of a <see cref="Control"/>.
 		/// </summary>
-		/// <param name="control">The Control whose font will be set.</param>
+		/// <param name="control">The <see cref="Control"/> whose font will be set.</param>
 		/// <param name="options">The font options.</param>
 		/// <param name="family">The font family.</param>
 		internal static void SetFont(this Control control, object options = null, object family = null)
@@ -344,9 +344,9 @@
 		}
 
 		/// <summary>
-		/// Sets the format of a DateTimePicker control.
+		/// Sets the format of a <see cref="DateTimePicker"/> control.
 		/// </summary>
-		/// <param name="dtp">The DateTimePicker whose format will be set.</param>
+		/// <param name="dtp">The <see cref="DateTimePicker"/> whose format will be set.</param>
 		/// <param name="format">The format to use, such as "shortdate", "longdate", "time" or "".</param>
 		internal static void SetFormat(this DateTimePicker dtp, object format)
 		{
@@ -366,9 +366,9 @@
 		}
 
 		/// <summary>
-		/// Suspends drawing for a Control.
+		/// Suspends drawing for a <see cref="Control"/>.
 		/// </summary>
-		/// <param name="control">The Control to suspend drawing for.</param>
+		/// <param name="control">The <see cref="Control"/> to suspend drawing for.</param>
 		internal static void SuspendDrawing(this Control control)
 		{
 #if LINUX
@@ -379,12 +379,12 @@
 		}
 
 		/// <summary>
-		/// Returns the height of the tabs of a TabControl.
-		/// Returns 0 if the tabs are not on the top or bottom of the control.
-		/// This uses GetTabRect() rather than TabControl.ItemSize.Height because the latter
+		/// Returns the height of the tabs of a <see cref="TabControl"/>.
+		/// Returns 0 if the tabs are not on the top or bottom of the <see cref="Control"/>.
+		/// This uses GetTabRect() rather than <see cref="TabControl"/>.ItemSize.Height because the latter
 		/// doesn't work.
 		/// </summary>
-		/// <param name="control">The TabControl whose tab height will be returned.</param>
+		/// <param name="control">The <see cref="TabControl"/> whose tab height will be returned.</param>
 		/// <returns>The height of the tabs if found, else 0.</returns>
 		internal static int TabHeight(this TabControl control)
 		{
@@ -398,12 +398,12 @@
 		}
 
 		/// <summary>
-		/// Returns the width of the tabs of a TabControl.
+		/// Returns the width of the tabs of a <see cref="TabControl"/>.
 		/// Returns 0 if the tabs are not on the left or right of the control.
-		/// This uses GetTabRect() rather than TabControl.ItemSize.Width because the latter
+		/// This uses GetTabRect() rather than <see cref="TabControl"/>.ItemSize.Width because the latter
 		/// doesn't work.
 		/// </summary>
-		/// <param name="control">The TabControl whose tab width will be returned.</param>
+		/// <param name="control">The <see cref="TabControl"/> whose tab width will be returned.</param>
 		/// <returns>The width of the tabs if found, else 0.</returns>
 		internal static int TabWidth(this TabControl control)
 		{
@@ -417,15 +417,15 @@
 		}
 
 		/// <summary>
-		/// Tags a Control by setting its Tag property to a GuiTag object
+		/// Tags a <see cref="Control"/> by setting its Tag property to a <see cref="GuiTag"/> object
 		/// with its Index property set to the current count of child controls
 		/// of its parent.
 		/// This is used in cases where the index of each control must be known and preserved
-		/// because the Controls collection of child controls of a Control are not necessarily
+		/// because the Controls collection of child controls of a <see cref="Control"/> are not necessarily
 		/// stored in the order they were added.
 		/// </summary>
-		/// <param name="control">The Control to add a newly tagged Control to.</param>
-		/// <param name="add">The Control to tag and add to control.</param>
+		/// <param name="control">The <see cref="Control"/> to add a newly tagged <see cref="Control"/> to.</param>
+		/// <param name="add">The <see cref="Control"/> to tag and add to control.</param>
 		internal static void TagAndAdd(this Control control, Control add)
 		{
 			add.Tag = new GuiTag { Index = control.Controls.Count };
@@ -433,14 +433,14 @@
 		}
 
 		/// <summary>
-		/// Tags a GuiControl by setting the Index property of its Tag property to the current count of child controls
+		/// Tags a <see cref="GuiControl"/> by setting the Index property of its Tag property to the current count of child controls
 		/// of its parent.
-		/// This is used in cases where the index of each control must be known and preserved
-		/// because the Controls collection of child controls of a Control are not necessarily
+		/// This is used in cases where the index of each <see cref="Control"/> must be known and preserved
+		/// because the Controls collection of child controls of a <see cref="Control"/> are not necessarily
 		/// stored in the order they were added.
 		/// </summary>
-		/// <param name="control">The Control to add a newly tagged GuiControl to.</param>
-		/// <param name="add">The GuiControl to tag and add to control.</param>
+		/// <param name="control">The <see cref="Control"/> to add a newly tagged <see cref="GuiControl"/> to.</param>
+		/// <param name="add">The <see cref="GuiControl"/> to tag and add to control.</param>
 		internal static void TagAndAdd(this Control control, GuiControl add)
 		{
 			((GuiTag)add.Control.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
@@ -448,10 +448,10 @@
 		}
 
 		/// <summary>
-		/// Recursively adds all child menu items of a ToolStripItem to the passed in list.
+		/// Recursively adds all child menu items of a <see cref="ToolStripItem"/> to the passed in list.
 		/// </summary>
-		/// <param name="item">The ToolStripMenuItem whose DropDownItems property will be traversed.</param>
-		/// <param name="items">All list of all recursively found ToolStripMenuItem.DropDownItems which are of type ToolStripMenuItem.</param>
+		/// <param name="item">The <see cref="ToolStripMenuItem"/> whose DropDownItems property will be traversed.</param>
+		/// <param name="items">All list of all recursively found ToolStripMenuItem.DropDownItems which are of type <see cref="ToolStripMenuItem"/>.</param>
 		private static void GetMenuItems(ToolStripItem item, List<ToolStripItem> items)
 		{
 			items.Add(item);

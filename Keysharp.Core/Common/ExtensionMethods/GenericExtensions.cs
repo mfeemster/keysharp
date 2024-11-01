@@ -20,11 +20,11 @@
 		//}
 
 		/// <summary>
-		/// Adds a range of items to a HashSet<typeparamref name="T"/>.
+		/// Adds a range of items to a <see cref="HashSet{T}"/>.
 		/// </summary>
 		/// <typeparam name="T">The type of element the collections contain.</typeparam>
-		/// <param name="hash">The HashSet<typeparamref name="T"/> to add the items to.</param>
-		/// <param name="add">The IEnumerable<typeparamref name="T"/> whose items will be added to hash.</param>
+		/// <param name="hash">The <see cref="HashSet{T}"/> to add the items to.</param>
+		/// <param name="add">The <see cref="IEnumerable{T}"/> whose items will be added to hash.</param>
 		internal static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> add) where T : class, new ()
 		{
 			foreach (var item in add)
@@ -51,14 +51,14 @@
 		}
 
 		/// <summary>
-		/// Appends the elements of one dictionary to another dictionary.
+		/// Appends the elements of one <see cref="Dictionary{K,V}"/> to another <see cref="Dictionary{K,V}"/>.
 		/// </summary>
-		/// <typeparam name="T">The type of the dictionary keys.</typeparam>
-		/// <typeparam name="T2">The type of the dictionary values.</typeparam>
-		/// <param name="dkt1">The dictionary to add items to.</param>
-		/// <param name="dkt2">The dictionary whose items will be added to dkt1.</param>
+		/// <typeparam name="K">The type of the <see cref="Dictionary{K,V}"/> keys.</typeparam>
+		/// <typeparam name="V">The type of the <see cref="Dictionary{K,V}"/> values.</typeparam>
+		/// <param name="dkt1">The <see cref="Dictionary{K,V}"/> to add items to.</param>
+		/// <param name="dkt2">The <see cref="Dictionary{K,V}"/> whose items will be added to dkt1.</param>
 		/// <returns>dkt1 after all items have been added.</returns>
-		internal static Dictionary<T, T2> Append<T, T2>(this Dictionary<T, T2> dkt1, Dictionary<T, T2> dkt2)
+		internal static Dictionary<K, V> Append<K, V>(this Dictionary<K, V> dkt1, Dictionary<K, V> dkt2)
 		{
 			foreach (var kv in dkt2)
 				_ = dkt1.TryAdd(kv.Key, kv.Value);
@@ -67,12 +67,12 @@
 		}
 
 		/// <summary>
-		/// Retrieves an element from a dictionary if it exists, else adds it and returns
+		/// Retrieves an element from a <see cref="Dictionary{K,V}"/> if it exists, else adds it and returns
 		/// the newly added element.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary.</typeparam>
-		/// <typeparam name="V">The value type of the dictionary.</typeparam>
-		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <typeparam name="V">The value type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <param name="dictionary">The <see cref="Dictionary{K,V}"/> to get from or add to.</param>
 		/// <param name="k">The key value to look up.</param>
 		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k) where V : new ()
@@ -84,12 +84,12 @@
 		}
 
 		/// <summary>
-		/// Retrieves an element from a dictionary if it exists, else adds it with the passed in value and returns
+		/// Retrieves an element from a <see cref="Dictionary{K,V}"/> if it exists, else adds it with the passed in value and returns
 		/// the newly added element.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary.</typeparam>
-		/// <typeparam name="V">The value type of the dictionary.</typeparam>
-		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <typeparam name="V">The value type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <param name="dictionary">The <see cref="Dictionary{K,V}"/> to get from or add to.</param>
 		/// <param name="k">The key value to look up.</param>
 		/// <param name="v">The value to add if it doesn't exist.</param>
 		/// <returns>The existing or newly added element.</returns>
@@ -105,15 +105,15 @@
 		}
 
 		/// <summary>
-		/// Retrieves an element from a dictionary if it exists, else adds it and returns
+		/// Retrieves an element from a <see cref="Dictionary{K,V}"/> if it exists, else adds it and returns
 		/// the newly added element.
 		/// This differs from the function above in that it takes a Func to allocate the new element.
 		/// This is needed because we cannot pass arguments to a generic type constructor without
 		/// using reflection.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary.</typeparam>
-		/// <typeparam name="V">The value type of the dictionary.</typeparam>
-		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <typeparam name="V">The value type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <param name="dictionary">The <see cref="Dictionary{K,V}"/> to get from or add to.</param>
 		/// <param name="k">The key value to look up.</param>
 		/// <param name="constructionFunc">The construction function which returns a newly constructed object of type <typeparamref name="V"/>.</param>
 		/// <returns>The existing or newly added element.</returns>
@@ -138,14 +138,14 @@
 		//}
 
 		/// <summary>
-		/// Retrieves an element from an OrderedDictionary if it exists, else adds it and returns
+		/// Retrieves an element from an <see cref="OrderedDictionary"/> if it exists, else adds it and returns
 		/// the newly added element.
 		/// This uses reflection to pass the argument p1 to a generic type constructor.
 		/// </summary>
-		/// <typeparam name="K">The key type of the dictionary.</typeparam>
-		/// <typeparam name="V">The value type of the dictionary.</typeparam>
+		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <typeparam name="V">The value type of the <see cref="Dictionary{K,V}"/>.</typeparam>
 		/// <typeparam name="P1">The type of the parameter to pass to the constructor of type <typeparamref name="V"/>.</typeparam>
-		/// <param name="dictionary">The dictionary to get from or add to.</param>
+		/// <param name="dictionary">The <see cref="Dictionary{K,V}"/> to get from or add to.</param>
 		/// <param name="k">The key value to look up.</param>
 		/// <param name="p1">The parameter to pass to the constructor for a new object of type <typeparamref name="V"/>.</param>
 		/// <returns>The existing or newly added element.</returns>
@@ -227,13 +227,13 @@
 		}
 
 		/// <summary>
-		/// Creates and returns a new dictionary whose contents are those of both dictionaries.
+		/// Creates and returns a new <see cref="Dictionary{K,V}"/> whose contents are those of both dictionaries.
 		/// </summary>
 		/// <typeparam name="K">The key type of the dictionaries.</typeparam>
 		/// <typeparam name="V">The value type of the dictionaries.</typeparam>
-		/// <param name="dkt1">The first dictionary to add to the new dictionary.</param>
-		/// <param name="dkt2">The second dictionary to add to the new dictionary.</param>
-		/// <returns>The newly created dictionary containing the elements from the two dictionaries.</returns>
+		/// <param name="dkt1">The first <see cref="Dictionary{K,V}"/> to add to the new <see cref="Dictionary{K,V}"/>.</param>
+		/// <param name="dkt2">The second <see cref="Dictionary{K,V}"/> to add to the new <see cref="Dictionary{K,V}"/>.</param>
+		/// <returns>The newly created <see cref="Dictionary{K,V}"/> containing the elements from the two dictionaries.</returns>
 		internal static Dictionary<K, V> Merge<K, V>(this Dictionary<K, V> dkt1, Dictionary<K, V> dkt2)
 		{
 			var merged = new Dictionary<K, V>();
@@ -268,18 +268,18 @@
 		}
 
 		/// <summary>
-		/// Return the top element of a Stack<typeparamref name="T"/> if it exists, else null.
+		/// Return the top element of a <see cref="Stack{T}"/> if it exists, else null.
 		/// </summary>
 		/// <typeparam name="T">The type of elements in stack.</typeparam>
-		/// <param name="stack">The Stack to examine.</param>
+		/// <param name="stack">The <see cref="Stack{T}"/> to examine.</param>
 		/// <returns>The top element in stack if it exists, else null.</returns>
 		internal static T PeekOrNull<T>(this Stack<T> stack) where T : class => stack.TryPeek(out var result) ? result : null;
 
 		/// <summary>
-		/// Remove and return the top element of a Stack<typeparamref name="T"/> if it exists, else null.
+		/// Remove and return the top element of a <see cref="Stack{T}"/> if it exists, else null.
 		/// </summary>
 		/// <typeparam name="T">The type of elements in stack.</typeparam>
-		/// <param name="stack">The Stack to examine.</param>
+		/// <param name="stack">The <see cref="Stack{T}"/> to examine.</param>
 		/// <returns>The top element in stack if it exists, else null.</returns>
 		internal static T PopOrNull<T>(this Stack<T> stack) where T : class => stack.TryPop(out var result) ? result : null;
 	}

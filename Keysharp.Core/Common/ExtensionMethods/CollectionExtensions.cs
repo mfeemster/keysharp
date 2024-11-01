@@ -13,7 +13,7 @@
 		public static IEnumerator __Enum(this IEnumerable obj, params object[] values) => obj.GetEnumerator();
 
 		/// <summary>
-		/// Converts an element of a list to a boolean.
+		/// Converts an element of an <see cref="IList"/> to a boolean.
 		/// This treats 0, "", false, and off as false.
 		/// and 1, true and on as true.
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
@@ -25,7 +25,7 @@
 		public static bool Ab(this IList obj, int index, bool def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseBool() ?? def : def;
 
 		/// <summary>
-		/// Converts an element of a list to a double.
+		/// Converts an element of an <see cref="IList"/> to a double.
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -35,7 +35,7 @@
 		public static double Ad(this IList obj, int index, double def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseDouble().Value : def;
 
 		/// <summary>
-		/// Converts an element of a list to a int.
+		/// Converts an element of an <see cref="IList"/> to a int.
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -45,7 +45,7 @@
 		public static int Ai(this IList obj, int index, int def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseInt().Value : def;
 
 		/// <summary>
-		/// Converts an element of a list to a long.
+		/// Converts an element of an <see cref="IList"/> to a long.
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -55,7 +55,7 @@
 		public static long Al(this IList obj, int index, long def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseLong().Value : def;
 
 		/// <summary>
-		/// Retrieves the element of a list if index is in bounds, else def.
+		/// Retrieves the element of an <see cref="IList"/> if index is in bounds, else def.
 		/// </summary>
 		/// <param name="obj">The list whose element will be retrieved.</param>
 		/// <param name="index">The index in the list to retrieve.</param>
@@ -64,7 +64,7 @@
 		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index] : def;
 
 		/// <summary>
-		/// Converts an element of a list to a string.
+		/// Converts an element of an <see cref="IList"/> to a string.
 		/// If obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -74,10 +74,30 @@
 		public static string As(this IList obj, int index, string def = "") => obj.Count > index && obj[index] != null ? obj[index].ToString() : def;
 
 		/// <summary>
-		/// Recursively traverses the elements of enumerable and returns each element.
+		/// Concatenates one array of type <typeparamref name="T"/> to another.
 		/// </summary>
-		/// <param name="enumerable">The enumerable to traverse.</param>
-		/// <returns>Each element of the enumerable, including nested elements.</returns>
+		/// <typeparam name="T">The type of element the collections contain.</typeparam>
+		/// <param name="x">The array to append the elements of y to.</param>
+		/// <param name="y">The array whose elements will be appended to x.</param>
+		/// <returns>x</returns>
+		/// <exception cref="Error">Throws an Error exception if either array is null.</exception>
+		public static T[] Concat<T>(this T[] x, T[] y)
+		{
+			if (x == null) throw new Error("x is null");
+
+			if (y == null) throw new Error("y is null");
+
+			var oldLen = x.Length;
+			Array.Resize(ref x, x.Length + y.Length);
+			Array.Copy(y, 0, x, oldLen, y.Length);
+			return x;
+		}
+
+		/// <summary>
+		/// Recursively traverses the elements of an <see cref="IEnumerable"/> and returns each element.
+		/// </summary>
+		/// <param name="enumerable">The <see cref="IEnumerable"/> to traverse.</param>
+		/// <returns>Each element of the <see cref="IEnumerable"/>, including nested elements.</returns>
 		public static IEnumerable Flatten(this IEnumerable enumerable)
 		{
 			if (enumerable is IEnumerable<(object, object)> io)//Iterators for array and map will be this.
@@ -111,7 +131,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first element of a list to an integer.
+		/// Converts the first element of an <see cref="IList"/> to an integer.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the element from.</param>
 		/// <param name="def">A default value to return if the retrieval fails.</param>
@@ -119,7 +139,7 @@
 		public static int I1(this IList obj, int def = 0) => obj.Ai(0, def);
 
 		/// <summary>
-		/// Converts the first 5 elements of a list to an int, object, string, string, string tuple.
+		/// Converts the first 5 elements of an <see cref="IList"/> to an int, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -139,7 +159,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 6 elements of a list to an int, object, object, string, string, string tuple.
+		/// Converts the first 6 elements of an <see cref="IList"/> to an int, object, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -161,7 +181,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 9 elements of a list to an int, object, object, object, object, string, string, string, int tuple.
+		/// Converts the first 9 elements of an <see cref="IList"/> to an int, object, object, object, object, string, string, string, int tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -189,7 +209,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 8 elements of a list to an int, int, int, object, object, string, string, string tuple.
+		/// Converts the first 8 elements of an <see cref="IList"/> to an int, int, int, object, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -215,7 +235,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 8 elements of a list to an int, int, int, int, object, string, string, string tuple.
+		/// Converts the first 8 elements of an <see cref="IList"/> to an int, int, int, int, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -241,7 +261,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 9 elements of a list to an int, int, int, int, object, object, string, string, string tuple.
+		/// Converts the first 9 elements of an <see cref="IList"/> to an int, int, int, int, object, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -269,7 +289,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 3 elements of a list to an int, string, string tuple.
+		/// Converts the first 3 elements of an <see cref="IList"/> to an int, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default int.</param>
@@ -285,7 +305,21 @@
 		}
 
 		/// <summary>
-		/// Converts the first element of a list to a long.
+		/// Returns a recursively flattened array of objects as an <see cref="IList"/>.
+		/// </summary>
+		/// <param name="obj">The array of objects to flatten.</param>
+		/// <returns>The recursively flattened array as an <see cref="IList"/>.</returns>
+		public static IList L(this object[] obj) => obj.Flatten().Cast<object>().ToList();
+
+		/// <summary>
+		/// Returns a recursively flattened <see cref="IEnumerable"/> of objects as an <see cref="IList"/>.
+		/// </summary>
+		/// <param name="obj">The <see cref="IEnumerable"/> of objects to flatten.</param>
+		/// <returns>The recursively flattened <see cref="IEnumerable"/> as an <see cref="IList"/>.</returns>
+		//public static IList L(this IEnumerable obj) => obj.Flatten().Cast<object>().ToList();
+
+		/// <summary>
+		/// Converts the first element of an <see cref="IList"/> to a long.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the element from.</param>
 		/// <param name="def">Default long.</param>
@@ -293,7 +327,7 @@
 		public static long L1(this IList obj, long def = default) => obj.Al(0, def);
 
 		/// <summary>
-		/// Converts the first 3 elements of a list to a long, string, string tuple.
+		/// Converts the first 3 elements of an <see cref="IList"/> to a long, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default long.</param>
@@ -309,7 +343,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first element of a list to an object.
+		/// Converts the first element of an <see cref="IList"/> to an object.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the element from.</param>
 		/// <param name="def">Default object.</param>
@@ -317,7 +351,7 @@
 		public static object O1(this IList obj, object def = null) => obj.Ao(0, def);
 
 		/// <summary>
-		/// Converts the first 11 elements of a list to an object, string, string, string, string, string, string, string, string, string, string tuple.
+		/// Converts the first 11 elements of an <see cref="IList"/> to an object, string, string, string, string, string, string, string, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default object.</param>
@@ -349,7 +383,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 5 elements of a list to an object, string, double, string, string tuple.
+		/// Converts the first 5 elements of an <see cref="IList"/> to an object, string, double, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default object.</param>
@@ -369,7 +403,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 4 elements of a list to an object, string, string, string tuple.
+		/// Converts the first 4 elements of an <see cref="IList"/> to an object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default object.</param>
@@ -387,7 +421,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 8 elements of a list to an object, object, string, string, int, string, string, string tuple.
+		/// Converts the first 8 elements of an <see cref="IList"/> to an object, object, string, string, int, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default object.</param>
@@ -413,7 +447,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 5 elements of a list to an object, object, string, string, string tuple.
+		/// Converts the first 5 elements of an <see cref="IList"/> to an object, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default object.</param>
@@ -433,7 +467,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 6 elements of a list to an object, object, object, string, string, string tuple.
+		/// Converts the first 6 elements of an <see cref="IList"/> to an object, object, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default object.</param>
@@ -455,7 +489,14 @@
 		}
 
 		/// <summary>
-		/// Converts the first element of a list to a string.
+		/// Returns an array of objects as an <see cref="IList"/>.
+		/// </summary>
+		/// <param name="obj">The array of objects to convert to an <see cref="IList"/>.</param>
+		/// <returns>A new <see cref="IList"/> which contains the elements from obj.</returns>
+		public static IList Pl(this object[] obj) => obj.Select(x => x).ToList();
+
+		/// <summary>
+		/// Converts the first element of an <see cref="IList"/> to a string.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the element from.</param>
 		/// <param name="def">Default string.</param>
@@ -463,7 +504,7 @@
 		public static string S1(this IList obj, string def = "") => obj.As(0, def);
 
 		/// <summary>
-		/// Converts the first 8 elements of a list to an string, double, int, object, string, int, string, string tuple.
+		/// Converts the first 8 elements of an <see cref="IList"/> to an string, double, int, object, string, int, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default string.</param>
@@ -489,7 +530,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 5 elements of a list to an  string, object, string, string, string tuple.
+		/// Converts the first 5 elements of an <see cref="IList"/> to an  string, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default string.</param>
@@ -509,7 +550,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 6 elements of a list to an  string, object, object, string, string, string tuple.
+		/// Converts the first 6 elements of an <see cref="IList"/> to an  string, object, object, string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default string.</param>
@@ -531,7 +572,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 2 elements of a list to a string, string tuple.
+		/// Converts the first 2 elements of an <see cref="IList"/> to a string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default string.</param>
@@ -545,7 +586,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 3 elements of a list to a string, string, string tuple.
+		/// Converts the first 3 elements of an <see cref="IList"/> to a string, string, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default string.</param>
@@ -561,7 +602,7 @@
 		}
 
 		/// <summary>
-		/// Converts the first 3 elements of a list to a string, long, string tuple.
+		/// Converts the first 3 elements of an <see cref="IList"/> to a string, long, string tuple.
 		/// </summary>
 		/// <param name="obj">The list to retrieve the elements from.</param>
 		/// <param name="def1">Default string.</param>
@@ -577,11 +618,11 @@
 		}
 
 		/// <summary>
-		/// Convert an IList into an IEnumerable<byte>.
+		/// Converts an <see cref="IList"/> into an <see cref="IEnumerable{byte}"/>.
 		/// This will attempt to convert each element to a byte, which could be slow.
 		/// </summary>
-		/// <param name="list">The list whose elements will be converted.</param>
-		/// <returns>An IEnumerable<byte>.</returns>
+		/// <param name="list">The <see cref="IList"/> whose elements will be converted.</param>
+		/// <returns>An <see cref="IEnumerable{byte}"/>.</returns>
 		public static IEnumerable<byte> ToByteArray(this IList list)
 		{
 			IList<byte> arr;

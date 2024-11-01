@@ -75,7 +75,7 @@
 	internal static class GraphicsExtensions
 	{
 		/// <summary>
-		/// Determines whether one FastColor matches another within a specified range.
+		/// Determines whether one <see cref="FastColor"/> matches another within a specified range.
 		/// </summary>
 		/// <param name="col">The first color to compare.</param>
 		/// <param name="match">The second color to compare.</param>
@@ -96,12 +96,12 @@
 		}
 
 		/// <summary>
-		/// Resizes a bitmap to a new width and height.
+		/// Resizes a <see cref="Bitmap"> to a new width and height.
 		/// </summary>
-		/// <param name="bmp">The bitmap to resize.</param>
+		/// <param name="bmp">The <see cref="Bitmap"> to resize.</param>
 		/// <param name="width">The new width to use. Use a number less than 0 to maintain the aspect ratio.</param>
 		/// <param name="height">The new height to use. Use a number less than 0 to maintain the aspect ratio.</param>
-		/// <returns>A new bitmap with the specified size.</returns>
+		/// <returns>A new <see cref="Bitmap"> with the specified size.</returns>
 		internal static Bitmap Resize(this Bitmap bmp, int width, int height)
 		{
 			//AHK used these formulas and rounded.

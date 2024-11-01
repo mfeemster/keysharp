@@ -7,10 +7,10 @@
 	{
 		/// <summary>
 		/// Provides an easy way to iterate through the lines of a string without using as much memory as string.Split().
-		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper
+		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper.
 		/// </summary>
-		/// <param name="str">The string whose lines will be traversed</param>
-		/// <returns>Each line one at a time as an element in an enumerable</returns>
+		/// <param name="str">The string whose lines will be traversed.</param>
+		/// <returns>Each line one at a time as an element in an enumerable.</returns>
 		public static IEnumerable<string> SplitLines(this string str)
 		{
 			if (string.IsNullOrEmpty(str))
@@ -95,6 +95,7 @@
 			else
 				return "";
 		}
+
 #endif
 
 		/// <summary>
@@ -114,7 +115,7 @@
 		}
 
 		/// <summary>
-		/// Returns the index of the first occurence in a string where a non-quoted imbalance of the two specified characters occurs.
+		/// Returns the index of the first occurrence in a string where a non-quoted imbalance of the two specified characters occurs.
 		/// Gotten from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
@@ -251,7 +252,7 @@
 		//}
 
 		/// <summary>
-		/// <see cref="FindFirstNotOf" />
+		/// String wrapper around <see cref="FindFirstNotOf"/>.
 		/// </summary>
 		internal static int FindFirstNotOf(this string str, char[] chars, int offset = 0) =>
 		FindFirstNotOf(str.AsSpan(), chars, offset);
@@ -279,7 +280,7 @@
 		}
 
 		/// <summary>
-		/// Returns the index of the first occurence of a character that is not an valid identifier character (var, func, or obj.key name).
+		/// Returns the index of the first occurrence of a character that is not an valid identifier character (var, func, or obj.key name).
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
 		/// <returns>The index after an identifier is found.</returns>
@@ -329,11 +330,11 @@
 		}
 
 		/// <summary>
-		/// Wrapper around searching for a SearchValues in a string starting at an offset.
+		/// Wrapper around searching for a <see cref="SearchValues"/> in a string starting at an offset.
 		/// For some reason the built-in IndexOf() doesn't support searching from an offset.
 		/// </summary>
 		/// <param name="str">The string to search.</param>
-		/// <param name="search">The SearchValues to search for.</param>
+		/// <param name="search">The <see cref="SearchValues"/> to search for.</param>
 		/// <param name="offset">The offset to start searching at.</param>
 		/// <returns>The index from the beginning of the string that search was found, else -1.</returns>
 		internal static int IndexOfAny(this ReadOnlySpan<char> str, SearchValues<char> search, int offset)
@@ -367,7 +368,7 @@
 		}
 
 		/// <summary>
-		/// Reverse vesion of <see cref="NthIndexOf()"/>.
+		/// Reverse version of <see cref="NthIndexOf()"/>.
 		/// </summary>
 		internal static int LastNthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
 		{
@@ -386,7 +387,7 @@
 		/// Gotten from https://stackoverflow.com/questions/186653/get-the-index-of-the-nth-occurrence-of-a-string
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
-		/// <param name="substr">The string to search for n occurences of within str.</param>
+		/// <param name="substr">The string to search for n occurrences of within str.</param>
 		/// <param name="pos">The index in str to start searching for substr at.</param>
 		/// <param name="n">The number of occurrences of substr to search for.</param>
 		/// <param name="comp">The type of comparison to perform.</param>
@@ -407,7 +408,7 @@
 		/// Returns the index of the nth occurrence of a list of characters within a string, starting at a specified index.
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
-		/// <param name="substr">The list of characters to compare each character in str against for n occurences within str.</param>
+		/// <param name="substr">The list of characters to compare each character in str against for n occurrences within str.</param>
 		/// <param name="pos">The index in str to start searching for substr at.</param>
 		/// <param name="n">The number of occurrences of substr to search for.</param>
 		/// <returns>The position of the nth occurrence of any char within substr within str, starting at pos. If n occurrences are not found, -1 is returned.</returns>
@@ -503,7 +504,7 @@
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
 		/// <param name="search">The string to search str for.</param>
-		/// <param name="replace">The string to replace seach with.</param>
+		/// <param name="replace">The string to replace search with.</param>
 		/// <param name="comparison">The type of comparison to perform. Default: ordinal.</param>
 		/// <returns>A new string consisting of the original with search replaced with replace, if search was found, else str.</returns>
 		internal static string ReplaceFirst(this string str, string search, string replace, StringComparison comparison = StringComparison.Ordinal)

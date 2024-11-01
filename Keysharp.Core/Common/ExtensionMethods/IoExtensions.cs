@@ -6,10 +6,10 @@
 	public static class SystemIoExtensions
 	{
 		/// <summary>
-		/// Reads a line from a BinaryReader at the current position.
+		/// Reads a line from a <see cref="BinaryReader"/> at the current position.
 		/// Because this examines one character at a time, it will be slow.
 		/// </summary>
-		/// <param name="reader">The BinaryReader to read a line from.</param>
+		/// <param name="reader">The <see cref="BinaryReader"/> to read a line from.</param>
 		/// <returns>The line read from reader.</returns>
 		internal static string ReadLine(this BinaryReader reader)
 		{

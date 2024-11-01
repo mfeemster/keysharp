@@ -17,9 +17,9 @@
 	}
 
 	/// <summary>
-	/// A wrapper class for a for an object pool which uses a SlimStack of objects of type T.
+	/// A wrapper class for a for an object pool which uses a <see cref="SlimStack"/> of objects of type <typeparamref name="T"/>.
 	/// The intended usage is for the caller to rent an object from the pool, then return it when done.
-	/// Since the underlying SlimStack object is thread-safe, so is this class, hence the prefix "Concurrent" in the name.
+	/// Since the underlying <see cref="SlimStack"/> object is thread-safe, so is this class, hence the prefix "Concurrent" in the name.
 	/// The objects are all created in the constructor.
 	/// </summary>
 	/// <typeparam name="T"/>
@@ -27,7 +27,7 @@
 		where T : class, IClearable, new ()
 	{
 		/// <summary>
-		/// The SlimStack which holds the objects of type T.
+		/// The <see cref="SlimStack"/> which holds the objects of type <typeparamref name="T"/>.
 		/// </summary>
 		private readonly SlimStack<T> collection;
 		/// <summary>
@@ -51,7 +51,7 @@
 		/// If there are no free elements in the stack, a new object is returned which
 		/// is just allocated regularly on the heap.
 		/// </summary>
-		/// <returns>An object of type T.</returns>
+		/// <returns>An object of type <typeparamref name="T"/>.</returns>
 		public T Rent()
 		{
 			if (collection.TryPop(out var obj))
@@ -63,7 +63,7 @@
 			return new T();
 		}
 		/// <summary>
-		/// Returns an object to the stack and optionally clear it before returning.
+		/// Returns an object to the stack and optionally clears it before returning by calling its Clear() interface method.
 		/// </summary>
 		/// <param name="val">The object to return.</param>
 		/// <param name="clear">True to call the Clear() interface method before returning, else false.</param>

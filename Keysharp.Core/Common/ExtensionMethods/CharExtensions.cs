@@ -6,10 +6,10 @@
 	public static class CharExtensions
 	{
 		/// <summary>
-		/// Checks if is hex.
+		/// Checks if a character is hex.
 		/// </summary>
-		/// <param name="c">The C.</param>
-		/// <returns>A bool</returns>
+		/// <param name="c">The character to examine.</param>
+		/// <returns>True if hex, else false.</returns>
 		internal static bool IsHex(this char c)
 		{
 			return (c >= '0' && c <= '9') ||
@@ -18,17 +18,17 @@
 		}
 
 		/// <summary>
-		/// Checks if is identifier char.
+		/// Checks if a character can be used in an identifier.
 		/// </summary>
-		/// <param name="c">The C.</param>
-		/// <returns>A bool</returns>
+		/// <param name="c">The character to examine.</param>
+		/// <returns>True if c is a valid identifier character, else false.</returns>
 		internal static bool IsIdentifierChar(this char c) => (uint)c > 0x7F || char.IsAsciiLetterOrDigit(c) || c == '_';
 
 		/// <summary>
-		/// Checks if is leading identifier char.
+		/// Checks if a character is one that an identifier can start with.
 		/// </summary>
-		/// <param name="c">The C.</param>
-		/// <returns>A bool</returns>
+		/// <param name="c">The character to examine.</param>
+		/// <returns>True if c is a character that an identifier can start with.</returns>
 		internal static bool IsLeadingIdentifierChar(this char c) => (uint)c > 0x7F || char.IsLetter(c) || c == '_';
 	}
 }

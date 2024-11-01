@@ -26,7 +26,7 @@
 		//}
 
 		/// <summary>
-		/// Determines whether a <see cref="CodeExpression"/> is a CodeBinaryOperatorExpression or if its UserData
+		/// Determines whether a <see cref="CodeExpression"/> is a <see cref="CodeBinaryOperatorExpression"/> or if its UserData
 		/// property contained one.
 		/// </summary>
 		/// <param name="expr">The expression to examine.</param>
@@ -46,7 +46,7 @@
 		}
 
 		/// <summary>
-		/// Determines whether a <see cref="CodeExpression"/> is a CodeBinaryOperatorExpression and its Operator
+		/// Determines whether a <see cref="CodeExpression"/> is a <see cref="CodeBinaryOperatorExpression"/> and its Operator
 		/// property is Assign.
 		/// </summary>
 		/// <param name="expr">The expression to examine.</param>
