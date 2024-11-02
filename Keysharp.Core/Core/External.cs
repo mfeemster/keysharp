@@ -1,18 +1,20 @@
 ﻿namespace Keysharp.Core
 {
 	/// <summary>
-	/// Public interface for External-related functions.
+	/// Public interface for external-related functions.
 	/// </summary>
 	public static class External
 	{
 		/// <summary>
 		/// Returns the binary number stored at the specified address+offset.
 		/// </summary>
-		/// <param name="address">A Buffer-like object or memory address.</param>
-		/// <param name="offset">If blank or omitted (or when using 2-parameter mode), it defaults to 0. Otherwise, specify an offset in bytes which is added to Source to determine the source address.</param>
+		/// <param name="address">A <see cref="Buffer"/>-like object or memory address.</param>
+		/// <param name="offset">If blank or omitted (or when using 2-parameter mode), it defaults to 0.<br/>
+		/// Otherwise, specify an offset in bytes which is added to source to determine the source address.
+		/// </param>
 		/// <param name="type">One of the following strings: UInt, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr</param>
 		/// <returns>The binary number at the specified address+offset.</returns>
-		/// <exception cref="TypeError">A TypeError exception is thrown the address could not be determined.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown the address could not be determined.</exception>
 		public static object NumGet(object source, object offset, object type = null)
 		{
 			var address = source;
@@ -143,10 +145,10 @@
 		/// </summary>
 		/// <param name="type">One of the following strings: UInt, UInt64, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr.</param>
 		/// <param name="number">The number to store.</param>
-		/// <param name="target">A Buffer-like object or memory address.</param>
+		/// <param name="target">A <see cref="Buffer"/>-like object or memory address.</param>
 		/// <param name="offset">If omitted, it defaults to 0. Otherwise, specify an offset in bytes which is added to Target to determine the target address.</param>
 		/// <returns>The address to the right of the last item written.</returns>
-		/// <exception cref="IndexError">An IndexError is thrown if the offset exceeds the bounds of the memory or if it couldn't be determined.</exception>
+		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if the offset exceeds the bounds of the memory or if it couldn't be determined.</exception>
 		public static long NumPut(params object[] obj)
 		{
 			IntPtr addr = IntPtr.Zero;

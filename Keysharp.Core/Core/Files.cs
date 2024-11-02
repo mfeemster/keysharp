@@ -1,33 +1,54 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for file-related functions.
+	/// </summary>
 	public static class Files
 	{
 		/// <summary>
 		/// Writes text to the end of a file, creating it first if necessary.
 		/// </summary>
-		/// <param name="text">The text to append to <paramref name="file"/>.</param>
-		/// <param name="filename">The name of the file to be appended.
-		/// <list type="bullet">
-		/// <item><term>Binary mode</term>: <description>to append in binary mode rather than text mode, prepend an asterisk.</description></item>
-		/// <item><term>Standard output (stdout)</term>: <description>specifying an asterisk (*) causes <paramref name="text"/> to be written to the console.</description></item>
-		/// </list>
+		/// <param name="text">If blank or omitted, filename will be created as an empty file (but if the file already exists, its modification time will be updated).<br/>
+		/// Otherwise, specify the text or raw binary data to append to the file.<br/>
+		/// A <see cref="Buffer"/>-like object may be passed to append raw binary data.<br/>
+		/// If a file is created, a byte order mark (BOM) is written only if "UTF-8" or "UTF-16" has been specified within options.<br/>
+		/// The default encoding is ignored and the data contained by the object is written as-is, regardless of options.<br/>
+		/// Any object which implements Ptr and Size properties may be used.
 		/// </param>
-		public static void FileAppend(object obj0, object obj1 = null, object obj2 = null)
+		/// <param name="filename">the name of the file to use<br/>
+		/// If omitted, the output file of the innermost enclosing file-reading loop will be used (if available).<br/>
+		/// Otherwise, specify the name of the file to be appended, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// The destination directory must already exist.<br/>
+		/// Standard Output (stdout): Specifying an asterisk (*) for filename causes Text to be sent to standard output (stdout).<br/>
+		/// Specifying two asterisks (**) for filename causes Text to be sent to the standard error stream (stderr).
+		/// </param>
+		/// <param name="options">Zero or more of the following strings. Separate each option from the next with a single space or tab.<br/>
+		/// Encoding: Specify any of the encoding names accepted by FileEncoding (excluding the empty string) to use that encoding if the file<br/>
+		/// lacks a UTF-8 or UTF-16 byte order mark. If omitted, it defaults to <see cref="A_FileEncoding"/> (unless Text is an object, in which case no byte order mark is written).
+		/// RAW: Specify the word RAW (case-insensitive) to write the exact bytes contained by Text to the file as-is, without any conversion.<br/>
+		/// This option overrides any previously specified encoding and vice versa.<br/>
+		/// If text is not an object, the data size is always a multiple of 2 bytes due to the use of UTF-16 strings.<br/>
+		/// `n (a linefeed character): Inserts a carriage return (`r) before each linefeed (`n) if one is not already present.<br/>
+		/// In other words, it translates from `n to `r`n. This translation typically does not affect performance.<br/>
+		/// If this option is not used, line endings within text are not changed.
+		/// </param>
+		/// <exception cref="OSError">Throws an <see cref="OSError"/> if any errors occur.</exception>
+		public static void FileAppend(object text, object filename = null, object options = null)
 		{
 			try
 			{
-				var text = obj0;
-				var filename = obj1.As();
+				var t = text;
+				var file = filename.As();
 				var encoding = ThreadAccessors.A_FileEncodingRaw;
 				var raw = false;
 				var crlf = false;
 				TextWriter tw = null;
 
-				if (obj2.As() is string options)
+				if (options.As() is string opts)
 				{
-					foreach (Range r in options.AsSpan().SplitAny(Keywords.SpaceTabSv))
+					foreach (Range r in opts.AsSpan().SplitAny(Keywords.SpaceTabSv))
 					{
-						var split = options.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
+						var split = opts.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
 
 						if (split.Length > 0)
 						{
@@ -68,7 +89,7 @@
 					}
 				}
 
-				if (string.IsNullOrEmpty(filename))
+				if (string.IsNullOrEmpty(file))
 				{
 					var info = Loops.Peek(LoopType.File);
 
@@ -90,16 +111,16 @@
 						}
 					}
 				}
-				else if (filename == "*")
+				else if (file == "*")
 					tw = Console.Out;
-				else if (filename == "**")
+				else if (file == "**")
 					tw = Console.Error;
 				else
-					tw = new StreamWriter(filename, true, encoding);
+					tw = new StreamWriter(file, true, encoding);
 
 				if (tw != null)
 				{
-					if (text is string s)
+					if (t is string s)
 					{
 						if (s == "fail")
 							Script.OutputDebug(s);
@@ -114,11 +135,11 @@
 					}
 					else if (tw is StreamWriter sw)
 					{
-						if (text is Array arr)//Most common will be array.
+						if (t is Array arr)//Most common will be array.
 						{
 							sw.BaseStream.Write(arr.ToByteArray().ToArray());
 						}
-						else if (text is Buffer buf)
+						else if (t is Buffer buf)
 						{
 							var len = (int)(long)buf.Size;
 							unsafe
@@ -128,17 +149,17 @@
 								sw.BaseStream.Write(bytes);
 							}
 						}
-						else if (text is byte[] ib)
+						else if (t is byte[] ib)
 						{
 							sw.BaseStream.Write(ib);
 						}
-						else if (text is IList il)//It was some other type of container, rare.
+						else if (t is IList il)//It was some other type of container, rare.
 						{
 							sw.BaseStream.Write(il.ToByteArray().ToArray());
 						}
 					}
 
-					if (!string.IsNullOrEmpty(filename) && !filename.StartsWith("*"))
+					if (!string.IsNullOrEmpty(file) && !file.StartsWith("*"))
 						tw.Close();
 				}
 			}
@@ -151,67 +172,115 @@
 		/// <summary>
 		/// Copies one or more files.
 		/// </summary>
-		/// <param name="source">The name of a single file or folder, or a wildcard pattern.</param>
-		/// <param name="destination">The name or pattern of the destination.</param>
-		/// <param name="flag">
-		/// <list type="bullet">
-		/// <item><term>0</term>: <description>(default) do not overwrite existing files</description></item>
-		/// <item><term>1</term>: <description>overwrite existing files</description></item>
-		/// </list>
+		/// <param name="source">The name of a single file or folder, or a wildcard pattern such as "C:\Temp\*.tmp".<br/>
+		/// sourcePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
+		/// <param name="destination">The name or pattern of the destination, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// If present, the first asterisk (*) in the filename is replaced with the source filename excluding its extension,<br/>
+		/// while the first asterisk after the last full stop (.) is replaced with the source file's extension.<br/>
+		/// If an asterisk is present but the extension is omitted, the source file's extension is used.<br/>
+		/// To perform a simple copy -- retaining the existing file name(s) -- specify only the folder name.
 		/// </param>
-		public static void FileCopy(object obj0, object obj1, object obj2 = null)
-		{
-			var source = obj0.As();
-			var dest = obj1.As();
-			var flag = obj2.Ab();
-			FileCopyMove(source, dest, flag, false);
-		}
+		/// <param name="overwrite">If omitted, it defaults to 0. Otherwise, specify one of the following numbers to indicate whether to overwrite files if they already exist:<br/>
+		/// 0: Do not overwrite existing files. The operation will fail and have no effect if DestPattern already exists as a file or directory.
+		/// 1: Overwrite existing files. However, any files or subfolders inside destPattern that do not have a counterpart in sourcePattern will not be deleted.
+		/// </param>
+		/// <exception cref="Error">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
+		public static void FileCopy(object sourcePattern, object destPattern, object overwrite = null) => FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), false);
 
 		/// <summary>
 		/// Creates a shortcut to a file.
-		/// https://www.fluxbytes.com/csharp/create-shortcut-programmatically-in-c/
+#if WINDOWS
+		/// Gotten from: https://www.fluxbytes.com/csharp/create-shortcut-programmatically-in-c/
+#else
+		/// If any of workingDir, args, description or icon are not empty, then it is assumed this is a desktop shortcut.<br/>
+		/// Otherwise, this assumes the caller wanted a symlink.<br/>
+		/// Note that when supplying either the target or the link file to a symlink, you must use the full path and not shorthand like ~/ for your home folder.<br/>
+		/// The arguments for iconNumber and runState are ignored.
+#endif
 		/// </summary>
-		/// <param name="target">Path to the shortcut file.</param>
-		/// <param name="link">The file referenced by the shortcut.</param>
-		/// <param name="workingDir">The working directory.</param>
-		/// <param name="args">Arguments to start <paramref name="link"/> with.</param>
-		/// <param name="description">A summary of the shortcut.</param>
-		/// <param name="icon"></param>
-		/// <param name="shortcutKey">A hotkey activator.</param>
-		/// <param name="iconNumber"></param>
-		/// <param name="runState">The window state for the target program the shortcut refers to:
-		/// 1 - Normal (this is the default)
-		/// 3 - Maximized
-		/// 7 - Minimized
+		/// <param name="target">Name of the file that the shortcut refers to, which should include an absolute path unless the file is integrated with the system (e.g. Notepad.exe).<br/>
+		/// The file does not have to exist at the time the shortcut is created.
 		/// </param>
-		public static void FileCreateShortcut(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null, object obj5 = null, object obj6 = null, object obj7 = null, object obj8 = null)
+		/// <param name="linkFile">Name of the shortcut file to be created, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// Be sure to include the .lnk extension on Windows.<br/>
+		/// The destination directory must already exist. If the file already exists, it will be overwritten.</param>
+		/// <param name="workingDir">If blank or omitted, linkFile will have a blank "Start in" field and the system will provide a default working directory when the shortcut is launched.<br/>
+		/// Otherwise, specify the directory that will become target's current working directory when the shortcut is launched.
+		/// </param>
+		/// <param name="args">If blank or omitted, target will be launched without parameters.<br/>
+		/// Otherwise, specify the parameters that will be passed to target when it is launched.<br/>
+		/// Separate parameters with spaces. If a parameter contains spaces, enclose it in double quotes.
+		/// </param>
+		/// <param name="description">If blank or omitted, linkFile will have no description.<br/>
+		/// Otherwise, specify comments that describe the shortcut (used by the OS to display a tooltip, etc...).
+		/// </param>
+		/// <param name="icon">If blank or omitted, linkFile will have target's icon.<br/>
+		/// Otherwise, specify the full path and name of the icon to be displayed for linkFile.<br/>
+		/// It must either be an .ICO file or the very first icon of an EXE or DLL file.
+		/// </param>
+#if WINDOWS
+		/// <param name="shortcutKey">If blank or omitted, linkFile will have no shortcut key.<br/>
+		/// Otherwise, specify a single letter, number, or the name of a single key from the key list (mouse buttons and other non-standard keys might not be supported).<br/>
+		/// Do not include modifier symbols. Currently, all shortcut keys are created as Ctrl+Alt shortcuts.<br/>
+		/// For example, if the letter B is specified for this parameter, the shortcut key will be Ctrl+Alt+B.
+		/// </param>
+		/// <param name="iconNumber">If omitted, it defaults to 1.<br/>
+		/// Otherwise, specify the number of the icon to be used in iconFile.<br/>
+		/// For example, 2 is the second icon.
+		/// </param>
+		/// <param name="runState">If omitted, it defaults to 1. Otherwise, specify one of the following digits to launch Target minimized or maximized:<br/>
+		/// 1: Normal (this is the default)<br/>
+		/// 3: Maximized<br/>
+		/// 7: Minimized
+		/// </param>
+#else
+		/// <param name="shortcutType">If blank or omitted, the shortcut will be of type Application.<br/>
+		/// Otherwise, specify a number to indicate the type of target the shortcut is for:<br/>
+		/// 1: Application<br/>
+		/// 2: Link<br/>
+		/// 3: Directory<br/>
+		/// Verbatim text<br/>
+		/// </param>
+		/// <param name="iconNumber">Ignored</param>
+		/// <param name="runState">Ignored</param>
+		/// </param>
+#endif
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if any errors occur.</exception>
+		public static void FileCreateShortcut(object target, object linkFile, object workingDir = null, object args = null, object description = null,
+											  object iconFile = null,
+#if WINDOWS
+											  object shortcutKey = null,
+#else
+											  object shortcutType = null,
+#endif
+											  object iconNumber = null, object runState = null)
 		{
-			var target = obj0.As();
-			var link = obj1.As();
-			var workingDir = obj2.As();
-			var args = obj3.As();
-			var description = obj4.As();
-			var icon = obj5.As();
+			var t = target.As();
+			var l = linkFile.As();
+			var w = workingDir.As();
+			var a = args.As();
+			var d = description.As();
+			var icon = iconFile.As();
 
-			if (target == "")
+			if (t == "")
 				throw new ValueError("Shortcut target cannot be an empty string.");
 
 #if LINUX
-			var type = obj6.As();
-			target = Path.GetFullPath(target);
+			var type = shortcutKey.As();
+			t = Path.GetFullPath(t);
 
-			if (workingDir != "" || args != "" || description != "" || icon != "")
+			if (w != "" || a != "" || d != "" || icon != "")
 			{
 				var creator = new ShortcutCreator();
 				icon = Path.GetFullPath(icon);
 				creator.Add("Icon", icon);
-				creator.Add("Path", workingDir);
-				creator.Add("Comment", description);
+				creator.Add("Path", w);
+				creator.Add("Comment", d);
 
-				if (args != "")
-					creator.Add("Exec", target + " " + args);
+				if (a != "")
+					creator.Add("Exec", t + " " + a);
 				else
-					creator.Add("Exec", target);
+					creator.Add("Exec", t);
 
 				if (type != "")
 				{
@@ -234,35 +303,35 @@
 				else//Was not specified, so just assume it's of type Application.
 					creator.Add("Type", "Application");
 
-				creator.Save(link);
-				$"chmod +x '{link}'".Bash();
+				creator.Save(l);
+				$"chmod +x '{l}'".Bash();
 			}
 			else
-				$"ln -sf '{target}' '{link}'".Bash();
+				$"ln -sf '{t}' '{l}'".Bash();
 
 #elif WINDOWS
-			var shortcutKey = obj6.As();
-			var iconNumber = obj7.Al(0);
-			var runState = obj8.Al(1);
+			var sc = shortcutKey.As();
+			var iconNum = iconNumber.Al(0);
+			var state = runState.Al(1);
 			var shell = new IWshRuntimeLibrary.WshShell();
-			var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(Path.GetFullPath(link));
-			shortcut.TargetPath = Path.GetFullPath(target);
+			var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(Path.GetFullPath(l));
+			shortcut.TargetPath = Path.GetFullPath(t);
 
-			if (workingDir != "")
-				shortcut.WorkingDirectory = Path.GetFullPath(workingDir);
+			if (w != "")
+				shortcut.WorkingDirectory = Path.GetFullPath(w);
 
-			shortcut.Arguments = args;
-			shortcut.Description = description;
+			shortcut.Arguments = a;
+			shortcut.Description = d;
 
 			if (icon != "")
-				shortcut.IconLocation = $"{Path.GetFullPath(icon)}, {iconNumber}";
+				shortcut.IconLocation = $"{Path.GetFullPath(icon)}, {iconNum}";
 
 			var mods = "";
 			var i = 0;
 
-			for (; i < shortcutKey.Length; i++)
+			for (; i < sc.Length; i++)
 			{
-				char ch = shortcutKey[i];
+				char ch = sc[i];
 
 				if (ch == '^')
 					mods += "Ctrl+";
@@ -274,28 +343,31 @@
 					break;
 			}
 
-			if (shortcutKey.Length > 0)
+			if (sc.Length > 0)
 			{
 				if (mods.Length == 0)// For backwards compatibility: if modifiers omitted, assume CTRL+ALT.
-					shortcut.Hotkey = $"Ctrl+Alt+{shortcutKey}";
+					shortcut.Hotkey = $"Ctrl+Alt+{sc}";
 				else
-					shortcut.Hotkey = $"{mods}{shortcutKey.Substring(i)}";
+					shortcut.Hotkey = $"{mods}{sc.Substring(i)}";
 			}
 			else
 				shortcut.Hotkey = "";
 
-			shortcut.WindowStyle = (int)runState;
+			shortcut.WindowStyle = (int)state;
 			shortcut.Save();
 #endif
 		}
 
 		/// <summary>
-		/// Deletes one or more files.
+		/// Deletes one or more files permanently.
 		/// </summary>
-		/// <param name="pattern">The name of a file or a wildcard pattern.</param>
-		public static void FileDelete(object obj)
+		/// <param name="filePattern">The name of a single file or a wildcard pattern such as "C:\Temp\*.tmp".<br/>
+		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
+		/// </param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
+		public static void FileDelete(object filePattern)
 		{
-			var s = obj.As();
+			var s = filePattern.As();
 			var path = Path.GetDirectoryName(s);
 			var dir = new DirectoryInfo(path?.Length == 0 ? "./" : path);
 			var filename = Path.GetFileName(s);
@@ -317,19 +389,58 @@
 				throw new Error($"Failed {failures} times moving or copying files.", "", failures);
 		}
 
-		public static string FileDirName(object obj) => Path.GetDirectoryName(Path.GetFullPath(obj.As()));
+		/// <summary>
+		/// Returns the full path to the directory of the specified filename.<br/>
+		/// Ex: C:\dir1\dir2\file.txt => C:\dir1\dir2
+		/// </summary>
+		/// <param name="filename">The filename to examine.</param>
+		/// <returns>The full path to the directory of the specified filename, without the trailing directory separator.</returns>
+		public static string FileDirName(object filename) => Path.GetDirectoryName(Path.GetFullPath(filename.As()));
 
-		public static void FileEncoding(object obj)
+		/// <summary>
+		/// Sets the default encoding for <see cref="FileRead"/>, <see cref="LoopRead"/>, <see cref="FileAppend"/>, and <see cref="FileOpen"/>.
+		/// </summary>
+		/// <param name="encoding">Specify one of the following values:<br/>
+		/// CP0 or empty string: The system default ANSI code page.See remarks below.<br/>
+		/// UTF-8: Unicode UTF-8, equivalent to CP65001.<br/>
+		/// UTF-8-RAW: As above, but no byte order mark is written when a new file is created.<br/>
+		/// UTF-16: Unicode UTF-16 with little endian byte order, equivalent to CP1200.<br/>
+		/// UTF-16-RAW: As above, but no byte order mark is written when a new file is created.<br/>
+		/// CPnnn: A code page with numeric identifier nnn. See Code Page Identifiers.<br/>
+		/// nnn: A numeric code page identifier.
+		/// </param>
+		public static void FileEncoding(object encoding)
 		{
-			var s = obj.As();
+			var s = encoding.As();
 
 			if (s != "")
 				Accessors.A_FileEncoding = s;
 		}
 
-		public static string FileExist(object obj)
+		/// <summary>
+		/// Checks for the existence of a file or folder and returns its attributes.
+		/// </summary>
+		/// <param name="filePattern">The path, filename, or file pattern to check.<br/>
+		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
+		/// <returns>
+		/// The attributes of the first matching file or folder.<br/>
+		/// This string is a subset of RASHNDOCTL, where each letter means the following:<br/>
+		/// R: READONLY<br/>
+		/// A: ARCHIVE<br/>
+		/// S: SYSTEM<br/>
+		/// H: HIDDEN<br/>
+		/// N: NORMAL<br/>
+		/// D: DIRECTORY<br/>
+		/// O: OFFLINE<br/>
+		/// C: COMPRESSED<br/>
+		/// T: TEMPORARY<br/>
+		/// L: REPARSE_POINT(typically a symbolic link)<br/>
+		/// If the file has no attributes(rare), "X" is returned.<br/>
+		/// If no file or folder is found, an empty string is returned.
+		/// </returns>
+		public static string FileExist(object filePattern)
 		{
-			var s = obj.As();
+			var s = filePattern.As();
 
 			try
 			{
@@ -347,11 +458,34 @@
 			return string.Empty;
 		}
 
-		public static string FileFullPath(object obj) => Path.GetFullPath(obj.As());
+		/// <summary>
+		/// Returns the full path of a filename which is assumed to be relative to <see cref="A_WorkingDir"/> if an absolute path isn't specified.
+		/// </summary>
+		/// <param name="filename">The filename to examine.</param>
+		/// <returns>The full path to filename.</returns>
+		public static string FileFullPath(object filename) => Path.GetFullPath(filename.As());
 
-		public static string FileGetAttrib(object obj)
+		/// <summary>
+		/// Reports whether a file or folder is read-only, hidden, etc.
+		/// </summary>
+		/// <param name="filename">If omitted, the current file of the innermost enclosing file loop will be used.<br/>
+		/// Otherwise, specify the name of the target file, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
+		/// <returns>the attributes of the file or folder. This string is a subset of RASHNDOCTL, where each letter means the following:<br/>
+		/// R: READONLY<br/>
+		/// A: ARCHIVE<br/>
+		/// S: SYSTEM<br/>
+		/// H: HIDDEN<br/>
+		/// N: NORMAL<br/>
+		/// D: DIRECTORY<br/>
+		/// O: OFFLINE<br/>
+		/// C: COMPRESSED<br/>
+		/// T: TEMPORARY<br/>
+		/// L: REPARSE_POINT(typically a symbolic link)<br/>
+		/// </returns>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
+		public static string FileGetAttrib(object filename)
 		{
-			var s = obj.As();
+			var s = filename.As();
 
 			try
 			{
@@ -368,6 +502,9 @@
 			return string.Empty;
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj)
 		{
 			object outTarget = null;
@@ -387,6 +524,9 @@
 							ref outRunState);
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget)
 		{
@@ -406,6 +546,9 @@
 							ref outRunState);
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
 										   ref object outDir)
@@ -425,6 +568,9 @@
 							ref outRunState);
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
 										   ref object outDir,
@@ -444,6 +590,9 @@
 							ref outRunState);
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
 										   ref object outDir,
@@ -463,6 +612,9 @@
 							ref outRunState);
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
 										   ref object outDir,
@@ -482,6 +634,9 @@
 							ref outRunState);
 		}
 
+		/// <summary>
+		/// <see cref="FileGetShortcut"/>
+		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
 										   ref object outDir,
@@ -501,27 +656,82 @@
 							ref outRunState);
 		}
 
+#if WINDOWS
 		/// <summary>
-		/// Retrieves information about a shortcut file.
+		/// Retrieves information about a shortcut file.<br/>
 		/// </summary>
-		/// <param name="link"></param>
-		/// <param name="target"></param>
-		/// <param name="workingDir"></param>
-		/// <param name="args"></param>
-		/// <param name="description"></param>
-		/// <param name="icon"></param>
-		/// <param name="iconNumber"></param>
-		/// <param name="runState"></param>
-		public static void FileGetShortcut(object obj,
+		/// <param name="linkFile">Name of the shortcut file to be analyzed, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// Be sure to include the .lnk extension.
+		/// </param>
+		/// <param name="outTarget">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's target (not including any arguments it might have).
+		/// </param>
+		/// <param name="outDir">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's working directory.
+		/// </param>
+		/// <param name="outArgs">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's parameters (blank if none).
+		/// </param>
+		/// <param name="outDescription">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's comments (blank if none).
+		/// </param>
+		/// <param name="outIcon">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the filename of the shortcut's icon (blank if none).
+		/// </param>
+		/// <param name="outIconNum">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's icon number within the icon file (blank if none).<br/>
+		/// This value is most often 1, which means the first icon.
+		/// </param>
+		/// <param name="outRunState"></param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
+#else
+		/// <summary>
+		/// Retrieves information about a shortcut file.<br/>
+		/// Takes different action based on whether it's a simple symlink or a full desktop shortcut.<br/>
+		/// If it's a symlink, then only the outTarget field will be populated and all others will be blank.<br/>
+		/// If it's a full desktop shortcut, then the following mapping will be used to populate the passed in reference variables:<br/>
+		/// outTarget=Exec including any arguments<br/>
+		/// outDir=Path<br/>
+		/// outArgs=Exec text after first space<br/>
+		/// outDescription=Comment<br/>
+		/// outIcon=Icon<br/>
+		/// outIconNum=Type<br/>
+		/// outRunState is ignored<br/>
+		/// </summary>
+		/// <param name="linkFile">Name of the shortcut file to be analyzed, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// </param>
+		/// <param name="outTarget">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's target and any arguments it might have.</param>
+		/// <param name="outDir">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's working directory.
+		/// </param>
+		/// <param name="outArgs">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's parameters (blank if none).
+		/// </param>
+		/// <param name="outDescription">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's comments (blank if none).</param>
+		/// <param name="outIcon">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the filename of the shortcut's icon (blank if none).
+		/// </param>
+		/// <param name="outType">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the shortcut's type.</param>
+		/// <param name="outRunState">Ignored</param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
+#endif
+		public static void FileGetShortcut(object linkFile,
 										   ref object outTarget,
 										   ref object outDir,
 										   ref object outArgs,
 										   ref object outDescription,
 										   ref object outIcon,
+#if WINDOWS
 										   ref object outIconNum,
+#else
+										   ref object outType,
+#endif
 										   ref object outRunState)
 		{
-			var link = Path.GetFullPath(obj.As());
+			var link = Path.GetFullPath(linkFile.As());
 #if LINUX
 			var dest = $"readlink -f '{link}'".Bash();
 
@@ -532,7 +742,7 @@
 				outDir = sc.Get("Path");
 				outDescription = sc.Get("Comment");
 				outIcon = sc.Get("Icon");
-				outIconNum = sc.Get("Type");
+				outType = sc.Get("Type");
 
 				if (outTarget is string s && s.Length > 0)
 				{
@@ -562,7 +772,7 @@
 				outArgs = "";
 				outDescription = "";
 				outIcon = "";
-				outIconNum = "";
+				outType = "";
 			}
 
 			outRunState = "";
@@ -601,21 +811,24 @@
 		/// <summary>
 		/// Retrieves the size of a file.
 		/// </summary>
-		/// <param name="result">The name of the variable in which to store the retrieved size.</param>
-		/// <param name="file">The name of the target file.</param>
-		/// <param name="units">
-		/// <para>If present, this parameter causes the result to be returned in units other than bytes:</para>
-		/// <list type="bullet">
-		/// <item><term>K</term>: <description>kilobytes</description></item>
-		/// <item><term>M</term>: <description>megabytes</description></item>
-		/// <item><term>G</term>: <description>gigabytes</description></item>
-		/// </list>
+		/// <param name="filename">If omitted, the current file of the innermost enclosing file loop will be used.<br/>
+		/// Otherwise, specify the name of the target file, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
 		/// </param>
-		public static long FileGetSize(object obj0 = null, object obj1 = null)
+		/// <param name="units">If blank or omitted, it defaults to B.<br/>
+		/// Otherwise, specify one of the following letters to cause the result to be returned in specific units:<br/>
+		/// B: Bytes<br/>
+		/// K: Kilobytes<br/>
+		/// M: Megabytes<br/>
+		/// G: Gigabytes<br/>
+		/// T: Terabytes<br/>
+		/// </param>
+		/// <returns>The size of the specified file rounded down to the nearest whole number.</returns>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static long FileGetSize(object filename = null, object units = null)
 		{
 			long result;
-			var file = obj0.As();
-			var units = obj1.As();
+			var file = filename.As();
+			var u = units.As();
 
 			if (file?.Length == 0)
 				file = Accessors.A_LoopFileFullPath;
@@ -625,9 +838,9 @@
 				var scale = 1024L;
 				var size = (new FileInfo(file)).Length;
 
-				if (!string.IsNullOrEmpty(units))
+				if (!string.IsNullOrEmpty(u))
 				{
-					switch (units[0])
+					switch (u[0])
 					{
 						case 'k':
 						case 'K':
@@ -664,60 +877,71 @@
 		/// <summary>
 		/// Retrieves the datetime stamp of a file or folder.
 		/// </summary>
-		/// <param name="result">The name of the variable in which to store the retrieved date-time in format YYYYMMDDHH24MISS in local time.</param>
-		/// <param name="file">The name of the target file or folder.</param>
-		/// <param name="time">
-		/// <para>Which timestamp to retrieve:</para>
-		/// <list type="bullet">
-		/// <item><term>M</term>: <description>(default) modification time</description></item>
-		/// <item><term>C</term>: <description>reation time</description></item>
-		/// <item><term>A</term>: <description>last access time</description></item>
-		/// </list>
+		/// <param name="filename">If omitted, the current file of the innermost enclosing file loop will be used.<br/>
+		/// Otherwise, specify the name of the target file or folder, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
 		/// </param>
-		public static string FileGetTime(object obj0 = null, object obj1 = null)
+		/// <param name="whichTime">If blank or omitted, it defaults to M.<br/>
+		/// Otherwise, specify one of the following letters to set which timestamp should be retrieved:<br/>
+		/// M: Modification time
+		/// C: Creation time
+		/// A: Last access time
+		/// </param>
+		/// <returns>A string of digits in the YYYYMMDDHH24MISS format. The time is your own local time, not UTC/GMT.</returns>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static string FileGetTime(object filename = null, object whichTime = null)
 		{
-			var file = obj0.As();
-			var time = obj1.As("M");
-
-			if (file?.Length == 0)
-				file = Accessors.A_LoopFileFullPath;
-
-			if (!File.Exists(file))
-				return "";
-
-			var date = new DateTime();
-			var info = new FileInfo(file);
-
-			switch (time[0])
+			try
 			{
-				case 'c':
-				case 'C':
-					date = info.CreationTime;
-					break;
+				var file = filename.As();
+				var time = whichTime.As("M");
 
-				case 'a':
-				case 'A':
-					date = info.LastAccessTime;
-					break;
+				if (file?.Length == 0)
+					file = Accessors.A_LoopFileFullPath;
 
-				case 'm':
-				case 'M':
-				default:
-					date = info.LastWriteTime;
-					break;
+				if (!File.Exists(file))
+					return "";
+
+				var date = new DateTime();
+				var info = new FileInfo(file);
+
+				switch (time[0])
+				{
+					case 'c':
+					case 'C':
+						date = info.CreationTime;
+						break;
+
+					case 'a':
+					case 'A':
+						date = info.LastAccessTime;
+						break;
+
+					case 'm':
+					case 'M':
+					default:
+						date = info.LastWriteTime;
+						break;
+				}
+
+				return Conversions.ToYYYYMMDDHH24MISS(date);
 			}
-
-			return Conversions.ToYYYYMMDDHH24MISS(date);
+			catch (Exception ex)
+			{
+				throw new OSError(ex);
+			}
 		}
 
 		/// <summary>
-		/// Retrieves the version information of a file.
+		/// Retrieves the version of a file.
 		/// </summary>
-		/// <param name="obj">The name of the target file.</param>
+		/// <param name="filename">If omitted, the current file of the innermost enclosing file loop will be used.<br/>
+		/// Otherwise, specify the name of the target file.
+		/// </param>
 		/// <returns>This function returns the version number of the specified file.</returns>
-		public static string FileGetVersion(object obj)
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static string FileGetVersion(object filename)
 		{
-			var file = obj.As();
+			var file = filename.As();
 			var result = "";
 
 			if (file?.Length == 0)
@@ -736,39 +960,58 @@
 			return result;
 		}
 
+		/// <summary>
+		/// Unsupported functionality which always throws an exception.
+		/// </summary>
+		/// <exception cref="Error">An <see cref="Error"/> is always thrown.</exception>
 		public static string FileInstall(object obj0, object obj1, object obj2 = null) => throw new Error("Compiling files into an executable is not supported in Keysharp");
 
 		/// <summary>
 		/// Moves or renames one or more files.
 		/// </summary>
-		/// <param name="source">The name of a single file or a wildcard pattern.</param>
-		/// <param name="destination">The name or pattern of the destination.</param>
-		/// <param name="flag">
-		/// <list type="bullet">
-		/// <item><term>0</term>: <description>(default) do not overwrite existing files</description></item>
-		/// <item><term>1</term>: <description>overwrite existing files</description></item>
-		/// </list>
+		/// <param name="sourcePattern">The name of a single file or a wildcard pattern such as "C:\Temp\*.tmp".<br/>
+		/// sourcePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
 		/// </param>
-		public static void FileMove(object obj0, object obj1, object obj2 = null)
-		{
-			var source = obj0.As();
-			var dest = obj1.As();
-			var flag = obj2.Ab();
-			FileCopyMove(source, dest, flag, true);
-		}
+		/// <param name="destPattern">The name or pattern of the destination, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
+		/// <param name="overwrite">If omitted, it defaults to 0.<br/>
+		/// Otherwise, specify one of the following numbers to indicate whether to overwrite files if they already exist:<br/>
+		/// 0: Do not overwrite existing files.The operation will fail and have no effect if destPattern already exists as a file or directory.<br/>
+		/// 1: Overwrite existing files. However, any files or subfolders inside destPattern that do not have a counterpart in sourcePattern will not be deleted.
+		/// </param>
+		public static void FileMove(object sourcePattern, object destPattern, object overwrite = null) => FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), true);
 
-		public static KeysharpFile FileOpen(object obj0, object obj1, object obj2 = null)
+		/// <summary>
+		/// Opens a file to read specific content from it and/or to write new content into it.
+		/// </summary>
+		/// <param name="filename">The path of the file to open, which is assumed to be in A_WorkingDir if an absolute path isn't specified.<br/>
+		/// Specify an asterisk(or two) as shown below to open the standard input/output/error stream:<br/>
+		/// FileOpen("*", "r") ; for stdin<br/>
+		/// FileOpen("*", "w") ; for stdout<br/>
+		/// FileOpen("**", "w") ; for stderr<br/>
+		/// </param>
+		/// <param name="flags">Either a string of characters indicating the desired access mode followed by other options (with optional spaces or tabs in between);<br/>
+		/// or a combination (sum) of numeric flags.
+		/// </param>
+		/// <param name="encoding">If omitted, the default encoding (as set by FileEncoding or CP0 otherwise) will be used.<br/>
+		/// If blank, it defaults to CP0 (the system default ANSI code page).<br/>
+		/// Otherwise, specify the encoding or code page to use for text I/O, e.g. "UTF-8", "UTF-16", "CP936" or 936.<br/>
+		/// If the file contains a UTF-8 or UTF-16 byte order mark(BOM), or if the h(handle) flag is used,<br/>
+		/// this parameter and the default encoding will be ignored, unless the file is being opened with write-only access (i.e.the previous contents of the file are being discarded).
+		/// </param>
+		/// <returns>A new KeysharpFile object encapsulating the open handle to the file.</returns>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static KeysharpFile FileOpen(object filename, object flags, object encoding = null)
 		{
-			var filename = obj0.As();
-			var flags = obj1.As();
-			var enc = obj2.As();
-			var encoding = ThreadAccessors.A_FileEncodingRaw;
-			var ienc = enc.ParseInt(false);
+			var file = filename.As();
+			var f = flags.As();
+			var e = encoding.As();
+			var enc = ThreadAccessors.A_FileEncodingRaw;
+			var ienc = e.ParseInt(false);
 
 			if (ienc.HasValue)
-				encoding = Encoding.GetEncoding(ienc.Value);
-			else if (enc != "")
-				encoding = GetEncoding(enc);
+				enc = Encoding.GetEncoding(ienc.Value);
+			else if (e != "")
+				enc = GetEncoding(e);
 
 			var mode = FileMode.Open;
 			var access = FileAccess.ReadWrite;
@@ -776,10 +1019,10 @@
 			var shareset = false;
 			var eolconv = 0;
 
-			foreach (Range r in flags.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in f.AsSpan().SplitAny(Keywords.Spaces))
 			{
 				var i = 0;
-				var flag = flags.AsSpan(r).Trim();
+				var flag = f.AsSpan(r).Trim();
 
 				if (flag.Length > 0)
 				{
@@ -805,7 +1048,7 @@
 					}
 					else if (flag.Equals("h", StringComparison.OrdinalIgnoreCase))
 					{
-						filename = "h*" + filename;
+						file = "h*" + file;
 					}
 					else if (flag.Equals("\n", StringComparison.OrdinalIgnoreCase) || (int.TryParse(flag, out i) && i == 4))
 					{
@@ -878,7 +1121,7 @@
 
 			try
 			{
-				return new KeysharpFile(filename, mode, access, share, encoding, eolconv);
+				return new KeysharpFile(file, mode, access, share, enc, eolconv);
 			}
 			catch (Exception ex)
 			{
@@ -887,33 +1130,44 @@
 		}
 
 		/// <summary>
-		/// Read the contents of a file.
+		/// Retrieves the contents of a file.
 		/// </summary>
-		/// <param name="OutputVar">The name of the variable in which to store the retrieved content.</param>
-		/// <param name="filename">
-		/// <para>The file path, optionally preceded by one or more of the following options:</para>
-		/// <list type="bullet">
-		/// <item><term>*c</term>: <description>treat the source as binary rather than text, <paramref name="OutputVar"/> will be a byte array.</description></item>
-		/// <item><term>*m<c>n</c></term>: <description>stop reading at <c>n</c> bytes.</description></item>
-		/// <item><term>*t</term>: <description>replace all occurrences of <c>`r`n</c> with <c>`n</c>. This option is ignored in binary mode.</description></item>
-		/// </list>
+		/// <param name="filename">The name of the file to read, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
+		/// <param name="options">Zero or more of the following strings. Separate each option from the next with a single space or tab.<br/>
+		/// For example: "`n m5000 UTF-8"<br/>
+		/// Encoding: Specify any of the encoding names accepted by FileEncoding (excluding the empty string) to use that encoding<br/>
+		/// if the file lacks a UTF-8 or UTF-16 byte order mark. If omitted, it defaults to <see cref="A_FileEncoding"/>.<br/>
+		/// RAW: Specify the word RAW (case-insensitive) to read the file's content as raw binary data and return a Buffer object instead of a string.<br/>
+		/// This option overrides any previously specified encoding and vice versa.<br/>
+		/// m1024: If this option is omitted, the entire file is loaded unless there is insufficient memory,<br/>
+		/// in which case an error message is shown and the thread exits (but Try can be used to avoid this).<br/>
+		/// Otherwise, replace 1024 with a decimal or hexadecimal number of bytes.If the file is larger than this, only its leading part is loaded.<br/>
+		/// Note: This might result in the last line ending in a naked carriage return (`r) rather than `r`n.<br/>
+		/// `n (a linefeed character): Replaces any/all occurrences of carriage return & linefeed (`r`n) with linefeed (`n).<br/>
+		/// However, this translation reduces performance and is usually not necessary.<br/>
+		/// For example, text containing `r`n is already in the right format to be added to a Gui Edit control.<br/>
 		/// </param>
-		public static object FileRead(object obj0, object obj1 = null)
+		/// <returns>The contents of the specified file.<br/>
+		/// The return value is a <see cref="Buffer"/> object if the RAW option is in effect and the file can be opened; otherwise, it is a string.<br/>
+		/// If the file does not exist or cannot be opened for any other reason, an empty string is returned.
+		/// </returns>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static object FileRead(object filename, object options = null)
 		{
 			object output = null;
-			var filename = obj0.As();
-			var options = obj1.As();
+			var file = filename.As();
+			var opts = options.As();
 			var enc = ThreadAccessors.A_FileEncodingRaw;
 
-			if (string.IsNullOrEmpty(filename))
+			if (string.IsNullOrEmpty(file))
 				return "";
 
 			var max = -1;
 			bool binary = false, nocrlf = false;
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.SpaceTabSv))
+			foreach (Range r in opts.AsSpan().SplitAny(Keywords.SpaceTabSv))
 			{
-				var split = options.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
+				var split = opts.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
 
 				if (split.Length > 0)
 				{
@@ -939,7 +1193,7 @@
 			{
 				try
 				{
-					var temparr = max == -1 ? File.ReadAllBytes(filename) : new BinaryReader(File.OpenRead(filename)).ReadBytes(max);
+					var temparr = max == -1 ? File.ReadAllBytes(file) : new BinaryReader(File.OpenRead(file)).ReadBytes(max);
 					output = new Buffer(temparr);
 				}
 				catch (Exception ex)
@@ -955,7 +1209,7 @@
 				{
 					if (max != -1)
 					{
-						using (var fs = new FileStream(filename, FileMode.Open))
+						using (var fs = new FileStream(file, FileMode.Open))
 						{
 							using (var br = new BinaryReader(fs))
 							{
@@ -965,7 +1219,7 @@
 						}
 					}
 					else
-						text = File.ReadAllText(filename);
+						text = File.ReadAllText(file);
 				}
 				catch (Exception ex)
 				{
@@ -987,15 +1241,17 @@
 		/// <summary>
 		/// Sends a file or directory to the recycle bin, if possible.
 		/// </summary>
-		/// <param name="FilePattern">
-		/// <para>The name of a single file or a wildcard pattern such as C:\Temp\*.tmp. FilePattern is assumed to be in %A_WorkingDir% if an absolute path isn't specified.</para>
-		/// <para>To recycle an entire directory, provide its name without a trailing backslash.</para>
+		/// <param name="filePattern">
+		/// The name of a single file or a wildcard pattern such as C:\Temp\*.tmp.<br/>
+		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// To recycle an entire directory, provide its name without a trailing backslash.
 		/// </param>
-		public static void FileRecycle(object obj)
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static void FileRecycle(object filePattern)
 		{
 			try
 			{
-				var s = obj.As();
+				var s = filePattern.As();
 				var path = Path.GetDirectoryName(s);
 				var dir = new DirectoryInfo(path);
 				var filename = Path.GetFileName(s);
@@ -1004,9 +1260,6 @@
 #elif WINDOWS
 
 				foreach (var file in dir.EnumerateFiles(filename))
-					//This appears to be not implemented in mono:
-					//https://github.com/mono/mono-basic/blob/master/vbruntime/Microsoft.VisualBasic/Microsoft.VisualBasic.FileIO/FileSystemOperation.vb
-					//May need some type of system call for non-windows OS.
 					FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
 #endif
@@ -1020,10 +1273,11 @@
 		/// <summary>
 		/// Empties the recycle bin.
 		/// </summary>
-		/// <param name="Root">If omitted, the recycle bin for all drives is emptied. Otherwise, specify a drive letter such as C:\</param>
-		public static void FileRecycleEmpty(object obj = null)
+		/// <param name="driveLetter">If omitted, the recycle bin for all drives is emptied. Otherwise, specify a drive letter such as C:\</param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static void FileRecycleEmpty(object driveLetter = null)
 		{
-			var s = obj.As();
+			var s = driveLetter.As();
 
 			try
 			{
@@ -1039,28 +1293,47 @@
 			}
 		}
 
+
+
 		/// <summary>
 		/// Changes the attributes of one or more files or folders. Wildcards are supported.
 		/// </summary>
-		/// <param name="attributes">The attributes to change (see Remarks).</param>
-		/// <param name="filePattern">
-		/// <para>The name of a single file or folder, or a wildcard pattern such as C:\Temp\*.tmp. FilePattern is assumed to be in %A_WorkingDir% if an absolute path isn't specified.</para>
-		/// <para>If omitted, the current file of the innermost enclosing File-Loop will be used instead.</para>
-		/// <param name="mode">Zero or more of the following letters:
-		/// <list type="">
-		/// <item>d: Include directories (folders).</item>
-		/// <item>f: Include files. If both F and D are omitted, files are included but not folders.</item>
-		/// <item>r: Subfolders are recursed into so that files and folders contained therein are operated upon if they match FilePattern. All subfolders will be recursed into, not just those whose names match FilePattern. If R is omitted, files and folders in subfolders are not included.</item>
-		/// </list>
+		/// <param name="attributes">
+		/// The attributes to change. For example, "+HA-R".<br/>
+		/// To easily turn on, turn off or toggle attributes, prefix one or more of the following attribute letters with a plus(+), minus(-) or caret(^) symbol, respectively:<br/>
+		/// R: READONLY<br/>
+		/// A: ARCHIVE<br/>
+		/// S: SYSTEM<br/>
+		/// H: HIDDEN<br/>
+		/// N: NORMAL (this is valid only when used without any other attributes)<br/>
+		/// O: OFFLINE<br/>
+		/// T: TEMPORARY<br/>
+		/// If no symbol precedes the attribute letters, the file's attributes are replaced with the given attributes.<br/>
+		/// To remove all attributes, use "N" on its own.
 		/// </param>
-		public static void FileSetAttrib(object obj0, object obj1 = null, object obj2 = null)
+		/// <param name="filePattern">
+		/// If omitted, the current file of the innermost enclosing file loop will be used.<br/>
+		/// Otherwise, specify the name of a single file or folder, or a wildcard pattern such as "C:\Temp\*.tmp".<br/>
+		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
+		/// </param>
+		/// <param name="mode">
+		/// If blank or omitted, only files are operated upon and subdirectories are not recursed into.<br/>
+		/// Otherwise, specify one or more of the following letters:<br/>
+		/// D: Include directories (folders).<br/>
+		/// F: Include files.If both F and D are omitted, files are included but not folders.<br/>
+		/// R: Subfolders are recursed into so that files and folders contained therein are operated upon if they match filePattern.<br/>
+		/// All subfolders will be recursed into, not just those whose names match filePattern.<br/>
+		/// If R is omitted, files and folders in subfolders are not included.
+		/// </param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
+		public static void FileSetAttrib(object attributes, object filePattern = null, object mode = null)
 		{
-			var attributes = obj0.As();
-			var file = obj1.As(Accessors.A_LoopFileFullPath);
-			var mode = obj2.As();
-			var dodirs = mode.Contains('d', StringComparison.OrdinalIgnoreCase);
-			var dofiles = mode.Contains('f', StringComparison.OrdinalIgnoreCase);
-			var recurse = mode.Contains('r', StringComparison.OrdinalIgnoreCase);
+			var attr = attributes.As();
+			var file = filePattern.As(Accessors.A_LoopFileFullPath);
+			var m = mode.As();
+			var dodirs = m.Contains('d', StringComparison.OrdinalIgnoreCase);
+			var dofiles = m.Contains('f', StringComparison.OrdinalIgnoreCase);
+			var recurse = m.Contains('r', StringComparison.OrdinalIgnoreCase);
 			var failures = 0;
 
 			if (!dodirs && !dofiles)
@@ -1070,7 +1343,7 @@
 			{
 				try
 				{
-					var set = Conversions.ToFileAttribs(attributes, File.GetAttributes(path));
+					var set = Conversions.ToFileAttribs(attr, File.GetAttributes(path));
 					File.SetAttributes(path, set);
 
 					if (set == FileAttributes.None)
@@ -1094,41 +1367,39 @@
 		/// <summary>
 		/// Changes the datetime stamp of one or more files or folders. Wildcards are supported.
 		/// </summary>
-		/// <param name="YYYYMMDDHH24MISS">If blank or omitted, it defaults to the current time. Otherwise, specify the time to use for the operation (see Remarks for the format). Years prior to 1601 are not supported.</param>
-		/// <param name="FilePattern">
-		/// <para>The name of a single file or folder, or a wildcard pattern such as C:\Temp\*.tmp. FilePattern is assumed to be in %A_WorkingDir% if an absolute path isn't specified.</para>
-		/// <para>If omitted, the current file of the innermost enclosing File-Loop will be used instead.</para>
+		/// <param name="yyyymmddhh24miss">If blank or omitted, it defaults to the current time.<br/>
+		/// Otherwise, specify the time to use for the operation (see Remarks for the format).<br/>
+		/// Years prior to 1601 are not supported.
 		/// </param>
-		/// <param name="WhichTime">Which timestamp to set:
-		/// <list type="">
-		/// <item>M = Modification time (this is the default if the parameter is blank or omitted)</item>
-		/// <item>C = Creation time</item>
-		/// <item>A = Last access time </item>
-		/// </list>
+		/// <param name="filePattern">
+		/// If omitted, the current file of the innermost enclosing file loop will be used.<br/>
+		/// Otherwise, specify the name of a single file or folder, or a wildcard pattern such as "C:\Temp\*.tmp".<br/>
+		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
 		/// </param>
-		/// <param name="OperateOnFolders">
-		/// <list type="">
-		/// <item>0 (default) Folders are not operated upon (only files).</item>
-		/// <item>1 All files and folders that match the wildcard pattern are operated upon.</item>
-		/// <item>2 Only folders are operated upon (no files).</item>
-		/// <para>Note: If FilePattern is a single folder rather than a wildcard pattern, it will always be operated upon regardless of this setting.</para>
-		/// </list>
+		/// <param name="whichTime">If blank or omitted, it defaults to M.<br/>
+		/// Otherwise, specify one of the following letters to set which timestamp should be changed:<br/>
+		/// M: Modification time<br/>
+		/// C: Creation time<br/>
+		/// A: Last access time
 		/// </param>
-		/// <param name="Recurse">
-		/// <list type="">
-		/// <item>0 (default) Subfolders are not recursed into.</item>
-		/// <item>1 Subfolders are recursed into so that files and folders contained therein are operated upon if they match FilePattern. All subfolders will be recursed into, not just those whose names match FilePattern. However, files and folders with a complete path name longer than 259 characters are skipped over as though they do not exist. Such files are rare because normally, the operating system does not allow their creation.</item>
-		/// </list>
+		/// <param name="mode">If blank or omitted, only files are operated upon and subdirectories are not recursed into.<br/>
+		/// Otherwise, specify one or more of the following letters:<br/>
+		/// D: Include directories.<br/>
+		/// F: Include files. If both F and D are omitted, files are included but not folders.<br/>
+		/// R: Subfolders are recursed into so that files and folders contained therein are operated upon if they match FilePattern.<br/>
+		/// All subfolders will be recursed into, not just those whose names match filePattern.<br/>
+		/// If R is omitted, files and folders in subfolders are not included.
 		/// </param>
-		public static void FileSetTime(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
+		public static void FileSetTime(object yyyymmddhh24miss = null, object filePattern = null, object whichTime = null, object mode = null)
 		{
-			var YYYYMMDDHH24MISS = obj0.As();
-			var file = obj1.As();
-			var whichtime = obj2.As("M");
-			var mode = obj3.As();
-			var dodirs = mode.Contains('d', StringComparison.OrdinalIgnoreCase);
-			var dofiles = mode.Contains('f', StringComparison.OrdinalIgnoreCase);
-			var recurse = mode.Contains('r', StringComparison.OrdinalIgnoreCase);
+			var YYYYMMDDHH24MISS = yyyymmddhh24miss.As();
+			var file = filePattern.As();
+			var whichtime = whichTime.As("M");
+			var m = mode.As();
+			var dodirs = m.Contains('d', StringComparison.OrdinalIgnoreCase);
+			var dofiles = m.Contains('f', StringComparison.OrdinalIgnoreCase);
+			var recurse = m.Contains('r', StringComparison.OrdinalIgnoreCase);
 			var failures = 0;
 
 			if (!dodirs && !dofiles)
@@ -1179,6 +1450,11 @@
 				throw new Error($"Failed {failures} times setting file time.", "", failures);
 		}
 
+		/// <summary>
+		/// Internal helper for retrieving an <see cref="Encoding"/> object from options specified as a string.
+		/// </summary>
+		/// <param name="s">The encoding options.</param>
+		/// <returns>A new <see cref="Encoding"/> object created based on the options specified in s.</returns>
 		internal static Encoding GetEncoding(object s)
 		{
 			var val = s.ToString().ToLowerInvariant();
@@ -1223,9 +1499,9 @@
 		}
 
 		/// <summary>
-		/// Expand wildcards in a filename and extension.
+		/// Internal helper for expanding wildcards in a filename and extension.
 		/// </summary>
-		/// <param name="source">The source filename, with wildcards</param>
+		/// <param name="source">The source filename, with wildcards.</param>
 		/// <param name="dest">The destination filename, with wildcards to be expanded.</param>
 		/// <returns>The expanded destination string if any wildcards were present, else the destination string as it was passed in.</returns>
 		private static string ExpandFilenameWildcard(string source, string dest)
@@ -1242,6 +1518,14 @@
 			return destfile.ReplaceFirst("*", srcfile) + (destex.Contains('*') ? destex.ReplaceFirst("*", srcext) : destex);
 		}
 
+		/// <summary>
+		/// Internal helper for copying or moving a file.
+		/// </summary>
+		/// <param name="source">The source file.</param>
+		/// <param name="dest">The destination file.</param>
+		/// <param name="flag">Whether to overwrite an existing file in the destination.</param>
+		/// <param name="move">True to move, else copy the file to the destination.</param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static void FileCopyMove(string source, string dest, bool flag, bool move)
 		{
 			var failures = 0;
@@ -1292,6 +1576,9 @@
 	}
 
 #if LINUX
+	/// <summary>
+	/// Helper class to create a shortcut on linux.
+	/// </summary>
 	internal class ShortcutCreator
 	{
 		private Dictionary<string, string> fields = new Dictionary<string, string>()
