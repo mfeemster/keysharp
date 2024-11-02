@@ -253,9 +253,9 @@
 		/// <param name="handlers">The list of event handlers to modify.</param>
 		/// <param name="fo">The event handler to add, insert or remove from the list.</param>
 		/// <param name="i">An integer specifying which action to take:<br/>
-		///     0: Remove any event handler whose name matches fo.Name.<br/>
 		///     1: Add fo to the list.<br/>
-		///    -1: Remove fo from the list.
+		///    -1: Remove fo from the list.<br/>
+		///     0: Remove any event handler whose name matches fo.Name.
 		/// </param>
 		internal static void ModifyEventHandlers(this List<IFuncObj> handlers, IFuncObj fo, long i)
 		{
