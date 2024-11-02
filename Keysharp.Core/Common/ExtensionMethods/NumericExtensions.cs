@@ -1,5 +1,8 @@
 ﻿namespace System
 {
+	/// <summary>
+	/// Extension methods for various numerical types.
+	/// </summary>
 	public static class NumericExtensions
 	{
 		/// <summary>

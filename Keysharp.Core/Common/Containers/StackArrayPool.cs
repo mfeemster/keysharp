@@ -1,10 +1,10 @@
 ﻿namespace Keysharp.Core.Common.Containers
 {
 	/// <summary>
-	/// A wrapper class for an array pool which uses a SlimStack of object arrays whose elements are of type <typeparamref name="T"/>.
-	/// The intended usage is for the caller to rent an array from the pool, then return it when done.
-	/// This differs from <see cref="ArrayPool"/> in that each array is the same size as that passed to the constructor.
-	/// Since the underlying <see cref="SlimStack"/> object is thread-safe, so is this class, hence the prefix "Concurrent" in the name.
+	/// A wrapper class for an array pool which uses a SlimStack of object arrays whose elements are of type <typeparamref name="T"/>.<br/>
+	/// The intended usage is for the caller to rent an array from the pool, then return it when done.<br/>
+	/// This differs from <see cref="ArrayPool"/> in that each array is the same size as that passed to the constructor.<br/>
+	/// Since the underlying <see cref="SlimStack"/> object is thread-safe, so is this class, hence the prefix "Concurrent" in the name.<br/>
 	/// The arrays aren't actually created until the moment they are first rented.
 	/// </summary>
 	/// <typeparam name="T"/>
@@ -37,7 +37,7 @@
 		}
 
 		/// <summary>
-		/// Rents an array from the stack.
+		/// Rents an array from the stack.<br/>
 		/// If there are no free elements in the stack, a new array is returned which
 		/// is just allocated regularly on the heap.
 		/// </summary>
@@ -45,9 +45,9 @@
 		public T[] Rent() => collection.TryPop(out var obj) ? obj : (new T[arraySize]);
 
 		/// <summary>
-		/// Returns an array to the stack.
+		/// Returns an array to the stack.<br/>
 		/// Note that the array size must match the size specified in the constructor, otherwise
-		/// it will not be pushed back onto the stack.
+		/// it will not be pushed back onto the stack.<br/>
 		/// It still may be cleared in this case.
 		/// </summary>
 		/// <param name="array">The array to return.</param>

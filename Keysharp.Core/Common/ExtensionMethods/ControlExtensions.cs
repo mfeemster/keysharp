@@ -1,16 +1,16 @@
 ﻿namespace System.Windows.Forms
 {
 	/// <summary>
-	/// Extension methods for various WinForms Control classes.
-	/// By using extension methods, it relieves us of having to write some of these methods twice.
-	/// For example, SetFont() exists on <see cref="Gui"/> as well as on <see cref="GuiControl"/>. Rather than implement that function
-	/// in both classes, we just implement it once here as an extension for Control, then expose a wrapper in each of these classes
+	/// Extension methods for various WinForms Control classes.<br/>
+	/// By using extension methods, it relieves us of having to write some of these methods twice.<br/>
+	/// For example, SetFont() exists on <see cref="Gui"/> as well as on <see cref="GuiControl"/>. Rather than implement that function<br/>
+	/// in both classes, we just implement it once here as an extension for Control, then expose a wrapper in each of these classes<br/>
 	/// which just passes the arguments to the extension method here, which gets called on either the underlying form or control member.
 	/// </summary>
 	internal static class ControlExtensions
 	{
 		/// <summary>
-		/// Calls an <see cref="Action"/> inside of BeginInvoke() with various checks/options.
+		/// Calls an <see cref="Action"/> inside of <see cref="Control.BeginInvoke"/> with various checks/options.<br/>
 		/// Before invoking on the control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> to call BeginInvoke() on.</param>
@@ -37,7 +37,7 @@
 		}
 
 		/// <summary>
-		/// Calls an <see cref="Action"/> inside of Invoke() with various checks/options.
+		/// Calls an <see cref="Action"/> inside of <see cref="Control.Invoke"/> with various checks/options.<br/>
 		/// Before invoking on control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> to call Invoke() on.</param>
@@ -63,7 +63,7 @@
 		}
 
 		/// <summary>
-		/// Calls a <see cref="Func{T}"/> inside of Invoke() with various checks/options.
+		/// Calls a <see cref="Func{T}"/> inside of <see cref="Control.Invoke"/> with various checks/options.<br/>
 		/// Before invoking on control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> to call Invoke() on.</param>
@@ -128,7 +128,7 @@
 		}
 
 		/// <summary>
-		/// Finds the first tab within a <see cref="TabControl"/> whose text matches text.
+		/// Finds the first tab within a <see cref="TabControl"/> whose text matches text.<br/>
 		/// The search is case insensitive.
 		/// </summary>
 		/// <param name="tc">The <see cref="TabControl"/> to search.</param>
@@ -237,7 +237,7 @@
 		}
 
 		/// <summary>
-		/// Finds the right most and bottom most child controls of a <see cref="Control"/>.
+		/// Finds the right most and bottom most child controls of a <see cref="Control"/>.<br/>
 		/// The .Right and .Bottom properties of the controls are used to identify the controls.
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> whose children will be traversed.</param>
@@ -276,7 +276,7 @@
 		}
 
 		/// <summary>
-		/// Selects or deselects a <see cref="ListBox"/> item based on a text match.
+		/// Selects or deselects a <see cref="ListBox"/> item based on a text match.<br/>
 		/// If no match is found, all existing selections are cleared.
 		/// </summary>
 		/// <param name="lb">The <see cref="ListBox"/> whose item will be selected or deselected.</param>
@@ -302,7 +302,7 @@
 		}
 
 		/// <summary>
-		/// Selects or deselects a <see cref="ComboBox"/> item based on a text match.
+		/// Selects or deselects a <see cref="ComboBox"/> item based on a text match.<br/>
 		/// If no match is found, the existing selection is cleared.
 		/// </summary>
 		/// <param name="cb">The <see cref="ComboBox"/> whose item will be selected or deselected.</param>
@@ -379,9 +379,9 @@
 		}
 
 		/// <summary>
-		/// Returns the height of the tabs of a <see cref="TabControl"/>.
-		/// Returns 0 if the tabs are not on the top or bottom of the <see cref="Control"/>.
-		/// This uses GetTabRect() rather than <see cref="TabControl"/>.ItemSize.Height because the latter
+		/// Returns the height of the tabs of a <see cref="TabControl"/>.<br/>
+		/// Returns 0 if the tabs are not on the top or bottom of the <see cref="Control"/>.<br/>
+		/// This uses <see cref="TabControl.GetTabRect"/> rather than <see cref="TabControl.ItemSize"/>.Height because the latter
 		/// doesn't work.
 		/// </summary>
 		/// <param name="control">The <see cref="TabControl"/> whose tab height will be returned.</param>
@@ -398,9 +398,9 @@
 		}
 
 		/// <summary>
-		/// Returns the width of the tabs of a <see cref="TabControl"/>.
-		/// Returns 0 if the tabs are not on the left or right of the control.
-		/// This uses GetTabRect() rather than <see cref="TabControl"/>.ItemSize.Width because the latter
+		/// Returns the width of the tabs of a <see cref="TabControl"/>.<br/>
+		/// Returns 0 if the tabs are not on the left or right of the control.<br/>
+		/// This uses <see cref="TabControl.GetTabRect"/> rather than <see cref="TabControl.ItemSize"/>.Width because the latter
 		/// doesn't work.
 		/// </summary>
 		/// <param name="control">The <see cref="TabControl"/> whose tab width will be returned.</param>
@@ -417,10 +417,9 @@
 		}
 
 		/// <summary>
-		/// Tags a <see cref="Control"/> by setting its Tag property to a <see cref="GuiTag"/> object
-		/// with its Index property set to the current count of child controls
-		/// of its parent.
-		/// This is used in cases where the index of each control must be known and preserved
+		/// Tags a <see cref="Control"/> by setting its Tag property to a <see cref="GuiTag"/> object<br/>
+		/// with its Index property set to the current count of child controls of its parent.<br/>
+		/// This is used in cases where the index of each control must be known and preserved<br/>
 		/// because the Controls collection of child controls of a <see cref="Control"/> are not necessarily
 		/// stored in the order they were added.
 		/// </summary>
@@ -434,9 +433,9 @@
 
 		/// <summary>
 		/// Tags a <see cref="GuiControl"/> by setting the Index property of its Tag property to the current count of child controls
-		/// of its parent.
-		/// This is used in cases where the index of each <see cref="Control"/> must be known and preserved
-		/// because the Controls collection of child controls of a <see cref="Control"/> are not necessarily
+		/// of its parent.<br/>
+		/// This is used in cases where the index of each <see cref="Control"/> must be known and preserved<br/>
+		/// because the Controls collection of child controls of a <see cref="Control"/> are not necessarily<br/>
 		/// stored in the order they were added.
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> to add a newly tagged <see cref="GuiControl"/> to.</param>
@@ -451,7 +450,7 @@
 		/// Recursively adds all child menu items of a <see cref="ToolStripItem"/> to the passed in list.
 		/// </summary>
 		/// <param name="item">The <see cref="ToolStripMenuItem"/> whose DropDownItems property will be traversed.</param>
-		/// <param name="items">All list of all recursively found ToolStripMenuItem.DropDownItems which are of type <see cref="ToolStripMenuItem"/>.</param>
+		/// <param name="items">All list of all recursively found <see cref="ToolStripMenuItem.DropDownItems"/> which are of type <see cref="ToolStripMenuItem"/>.</param>
 		private static void GetMenuItems(ToolStripItem item, List<ToolStripItem> items)
 		{
 			items.Add(item);

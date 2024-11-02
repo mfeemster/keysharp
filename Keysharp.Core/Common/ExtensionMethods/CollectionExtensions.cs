@@ -13,9 +13,9 @@
 		public static IEnumerator __Enum(this IEnumerable obj, params object[] values) => obj.GetEnumerator();
 
 		/// <summary>
-		/// Converts an element of an <see cref="IList"/> to a boolean.
-		/// This treats 0, "", false, and off as false.
-		/// and 1, true and on as true.
+		/// Converts an element of an <see cref="IList"/> to a boolean.<br/>
+		/// This treats 0, "", false, and off as false.<br/>
+		/// and 1, true and on as true.<br/>
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -25,7 +25,7 @@
 		public static bool Ab(this IList obj, int index, bool def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseBool() ?? def : def;
 
 		/// <summary>
-		/// Converts an element of an <see cref="IList"/> to a double.
+		/// Converts an element of an <see cref="IList"/> to a double.<br/>
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -35,7 +35,7 @@
 		public static double Ad(this IList obj, int index, double def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseDouble().Value : def;
 
 		/// <summary>
-		/// Converts an element of an <see cref="IList"/> to a int.
+		/// Converts an element of an <see cref="IList"/> to a int.<br/>
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -45,7 +45,7 @@
 		public static int Ai(this IList obj, int index, int def = default) => obj.Count > index && obj[index] != null ? obj[index].ParseInt().Value : def;
 
 		/// <summary>
-		/// Converts an element of an <see cref="IList"/> to a long.
+		/// Converts an element of an <see cref="IList"/> to a long.<br/>
 		/// If the conversion fails, obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -64,7 +64,7 @@
 		public static object Ao(this IList obj, int index, object def = null) => obj.Count > index ? obj[index] : def;
 
 		/// <summary>
-		/// Converts an element of an <see cref="IList"/> to a string.
+		/// Converts an element of an <see cref="IList"/> to a string.<br/>
 		/// If obj[index] is null or the index is out of bounds, def is returned.
 		/// </summary>
 		/// <param name="obj">The list whose element will be converted.</param>
@@ -618,7 +618,7 @@
 		}
 
 		/// <summary>
-		/// Converts an <see cref="IList"/> into an <see cref="IEnumerable{byte}"/>.
+		/// Converts an <see cref="IList"/> into an <see cref="IEnumerable{byte}"/>.<br/>
 		/// This will attempt to convert each element to a byte, which could be slow.
 		/// </summary>
 		/// <param name="list">The <see cref="IList"/> whose elements will be converted.</param>

@@ -1,5 +1,8 @@
 #if WINDOWS
 
+using Microsoft.VisualBasic;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace Keysharp.Core
 {
 	/// <summary>
@@ -8,41 +11,44 @@ namespace Keysharp.Core
 	public static class Dll
 	{
 		/// <summary>
-		/// Calling DllCall() requires creating a dynamic assembly, module, type, and method. Then the type is finally created.
-		/// Doing all of these take significant time.
-		/// Sadly, an existing assembly/module/type cannot have new methods created on it once the initial creation is done.
-		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.
+		/// Calling <see cref="DllCall"/> requires creating a dynamic assembly, module, type, and method.<br/>
+		/// Then an instance the type is finally created.<br/>
+		/// Doing all of these take significant time.<br/>
+		/// Sadly, an existing assembly/module/type cannot have new methods created on it once the initial creation is done.<br/>
+		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
 		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ConcurrentDictionary<string, DllCache>();
 
 		/// <summary>
-		/// Creates a machine-code address that when called, redirects the call to a function in the script.
+		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
+		/// Passing string pointers to <see cref="DllCall"/> when passing a created callback is strongly recommended against.<br/>
+		/// This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
 		/// </summary>
 		/// <param name="function">
-		/// A function object to call automatically whenever Address is called. The function also receives the parameters that were passed to Address.
-		/// A closure or bound function can be used to differentiate between multiple callbacks which all call the same script function.
-		/// The callback retains a reference to the function object, and releases it when the script calls CallbackFree.
+		/// A function object to call automatically whenever the <see cref="DelegateHolder"/> is called, optionally passing arguments.<br/>
+		/// A closure or bound function can be used to differentiate between multiple callbacks which all call the same script function.<br/>
+		/// The callback retains a reference to the function object, and releases it when the script calls <see cref="CallbackFree"/>.
 		/// </param>
 		/// <param name="options">
-		/// If blank or omitted, a new thread will be started each time Function is called, the standard calling convention will be used, and the parameters will be passed individually to Function. Otherwise, specify one or more of the following options. Separate each option from the next with a space (e.g. "C Fast").
-		///     Fast or F: Avoids starting a new thread each time Function is called.Although this performs better, it must be avoided whenever the thread from which Address is called varies (e.g.when the callback is triggered by an incoming message). This is because Function will be able to change global settings such as A_LastError and the last-found window for whichever thread happens to be running at the time it is called. For more information, see Remarks.
-		///     CDecl or C: Makes Address conform to the "C" calling convention. This is typically omitted because the standard calling convention is much more common for callbacks. This option is ignored by 64-bit versions of AutoHotkey, which use the x64 calling convention.
-		///     &: Causes the address of the parameter list (a single integer) to be passed to Function instead of the individual parameters.Parameter values can be retrieved by using NumGet. When using the standard 32-bit calling convention, ParamCount must specify the size of the parameter list in DWORDs(the number of bytes divided by 4).
+		/// If blank or omitted, a new thread will be started each time function is called, the standard calling convention will be used, and the parameters will be passed individually to function.<br/>
+		/// Otherwise, specify one or more of the following options. Separate each option from the next with a space (e.g. "C Fast").<br/>
+		///     Fast or F: Avoids starting a new thread each time function is called.Although this performs better, it must be avoided whenever the thread from which Address is called varies (e.g.when the callback is triggered by an incoming message).<br/>
+		///     This is because function will be able to change global settings such as <see cref="A_LastError"/> and the last-found window for whichever thread happens to be running at the time it is called.<br/>
+		///     <![CDATA[&]]>: Causes the address of the parameter list (a single integer) to be passed to function instead of the individual parameters. Parameter values can be retrieved by using <see cref="External.NumGet"/>.<br/>
 		/// </param>
 		/// <param name="paramCount">
-		/// If omitted, it defaults to Function.MinParams, which is usually the number of mandatory parameters in the definition of Function.
-		/// Otherwise, specify the number of parameters that Address's caller will pass to it.
+		/// If omitted, it defaults to 0, which is usually the number of mandatory parameters in the definition of function.<br/>
+		/// Otherwise, specify the number of parameters that Address's caller will pass to it.<br/>
 		/// In either case, ensure that the caller passes exactly this number of parameters.
 		/// </param>
-		/// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.
-		/// This is typically passed to an external function via DllCall or placed in a struct using NumPut, but can also be called directly by DllCall.
+		/// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.<br/>
+		/// This is typically passed to an external function via <see cref="DllCall"/> or placed in a struct using <see cref="NumPut"/>, but can also be called directly by <see cref="DllCall"/>.
 		/// </returns>
 		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
 		{
 			var o = options.As();
-			//obj2/paramcount is unused.
-			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));
+			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
 		}
 
 		/// <summary>
@@ -55,28 +61,35 @@ namespace Keysharp.Core
 		/// Calls a function inside a DLL, such as a standard Windows API function.
 		/// </summary>
 		/// <param name="function">
-		/// The DLL or EXE file name followed by a backslash and the name of the function.
-		/// For example: "MyDLL\MyFunction" (the file extension ".dll" is the default when omitted).
-		/// If an absolute path isn't specified, DllFile is assumed to be in the system's PATH or A_WorkingDir.
-		/// DllFile may be omitted when calling a function that resides in User32.dll, Kernel32.dll, ComCtl32.dll, or Gdi32.dll.
-		/// For example, "User32\IsWindowVisible" produces the same result as "IsWindowVisible".
-		/// If no function can be found by the given name, a "W" (Unicode) suffix is automatically appended.
-		/// For example, "MessageBox" is the same as "MessageBoxW".
-		/// This parameter may also consist solely of an integer, which is interpreted as the address of the function to call. Sources of such addresses include COM and CallbackCreate.
-		/// If this parameter is an object, the value of the object's Ptr property is used. If no such property exists, a PropertyError is thrown.
+		/// The DLL or EXE file name followed by a backslash and the name of the function.<br/>
+		/// For example: "MyDLL\MyFunction" (the file extension ".dll" is the default when omitted).<br/>
+		/// If an absolute path isn't specified, DllFile is assumed to be in the system's PATH or <see cref="A_WorkingDir"/>.
+		/// DllFile may be omitted when calling a function that resides in User32.dll, Kernel32.dll, ComCtl32.dll, or Gdi32.dll.<br/>
+		/// For example, "User32\IsWindowVisible" produces the same result as "IsWindowVisible".<br/>
+		/// If no function can be found by the given name, a "W" (Unicode) suffix is automatically appended.<br/>
+		/// For example, "MessageBox" is the same as "MessageBoxW".<br/>
+		/// This parameter may also consist solely of an integer, which is interpreted as the address of the function to call. Sources of such addresses include COM and <see cref="CallbackCreate"/>.<br/>
+		/// If this parameter is an object, the value of the object's Ptr property is used. If no such property exists, a <see cref="PropertyError"/> is thrown.
+		/// As an alternative to passing a <see cref="Buffer"/> object with type Ptr to a function which will allocate and place string data into the buffer, pass <see cref="StringBuffer"/> object to hold the new string.
+		///     This relieves the caller of having to call <see cref="StrGet"/> on the new string data.
+		/// Also use Ptr and <see cref="StringBuffer"/> for double pointer parameters such as LPTSTR*.
+		/// When using type Str for string data the function will modify, but not reallocate, the passed in string argument must be<br/>
+		/// passed by <![CDATA[&]]> reference.<br/>
+		///     This is also supported for strings passed as AStr.
+		/// <see cref="StrGet"/> must be called to retrieve any memory allocated and returned inside of function.
 		/// </param>
-		/// <param name="parameters">Type1, Arg1
-		/// Each of these pairs represents a single parameter to be passed to the function. The number of pairs is unlimited for normal DLL calls and is limited to 16 for COM calls.
-		/// The argument types can be: Str, WStr, AStr, Int64, Int, Short, Char, Float, Double, Ptr or HRESULT (a 32-bit integer).
-		/// Append an asterisk (with optional preceding space) to any of the above types to cause the address of the argument to be passed rather than the value itself.
-		/// Prepend the letter U to any of the integer types above to interpret it as an unsigned integer (UInt64, UInt, UShort, and UChar).
-		/// Strictly speaking, this is necessary only for return values and asterisk variables because it does not matter whether an argument passed by value is unsigned or signed (except for Int64).
+		/// <param name="parameters">Type1, Arg1<br/>
+		/// Each of these pairs represents a single parameter to be passed to the function. The number of pairs is unlimited for normal DLL calls and is limited to 16 for COM calls.<br/>
+		/// The argument types can be: Str, WStr, AStr, Int64, Int, Short, Char, Float, Double, Ptr or HRESULT (a 32-bit integer).<br/>
+		/// Append an asterisk (with optional preceding space) to any of the above types to cause the address of the argument to be passed rather than the value itself.<br/>
+		/// Prepend the letter U to any of the integer types above to interpret it as an unsigned integer (UInt64, UInt, UShort, and UChar).<br/>
+		/// Strictly speaking, this is necessary only for return values and asterisk variables because it does not matter whether an argument passed by value is unsigned or signed (except for Int64).<br/>
 		/// </param>
-		/// <returns>DllCall returns the actual value returned by Function.
-		/// If Function is of a type that does not return a value, the result is an undefined value of the specified return type (integer by default).</returns>
-		/// <exception cref="Error">An Error exception is thrown if there is any problem creating the dynamic assembly/function or calling it.</exception>
-		/// <exception cref="OSError">A OSError exception is thrown if the return type was HRESULT and the return value was negative.</exception>
-		/// <exception cref="TypeError">A TypeError exception is thrown if any of the arguments was required to have a .Ptr member, but none was found.</exception>
+		/// <returns>The actual value returned by function.<br/>
+		/// If function is of a type that does not return a value, the result is an undefined value of the specified return type (integer by default).</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if there is any problem creating the dynamic assembly/function or calling it.</exception>
+		/// <exception cref="OSError">A <see cref="OSError"/> exception is thrown if the return type was HRESULT and the return value was negative.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if any of the arguments was required to have a .Ptr member, but none was found.</exception>
 		public static object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
@@ -323,11 +336,11 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// A private helper to wrap invoking a COM method with a specific number of arguments.
-		/// This is done because there is no way to dynamically create and COM call in C# at runtime without knowing the COM ID ahead of time.
-		/// Since it can only be done at compile time, we have to provide specific function signatures from 0
-		/// to 16 parameters, then call the appropriate one based on how many arguments are specificed when called.
-		/// All arguments are considered IntPtr internally.
+		/// A private helper to wrap invoking a COM method with a specific number of arguments.<br/>
+		/// This is done because there is no way to dynamically create and COM call in C# at runtime without knowing the COM ID ahead of time.<br/>
+		/// Since it can only be done at compile time, we have to provide specific function signatures from 0 to 16 parameters,<br/>
+		/// then call the appropriate one based on how many arguments are specificed when called.<br/>
+		/// All arguments are considered <see cref="IntPtr"/> internally.
 		/// </summary>
 		/// <param name="vtbl">The vtbl of the COM object.</param>
 		/// <param name="args">The argument list.</param>
@@ -410,7 +423,7 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Compose a string that uniquely identifies a call to a DLL function with specific arguments.
-		/// This is used as a key to the dllCache dictionary to optimize performance.
+		/// This is used as a key to the <see cref="dllCache"/> dictionary to optimize performance.
 		/// </summary>
 		/// <param name="name">The name of the function.</param>
 		/// <param name="path">The path to the DLL the function resides in.</param>

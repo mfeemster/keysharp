@@ -1,7 +1,7 @@
 ﻿namespace System.Drawing
 {
 	/// <summary>
-	/// An improved color structure that allows the values to be set after construction.
+	/// An improved color structure that allows the values to be set after construction.<br/>
 	/// Gotten from https://codereview.stackexchange.com/questions/98605/color-structure-with-single-field-for-multiple-properties
 	/// </summary>
 	[StructLayout(LayoutKind.Explicit)]

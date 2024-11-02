@@ -106,8 +106,8 @@
 
 		/// <summary>
 		/// Retrieves an element from a <see cref="Dictionary{K,V}"/> if it exists, else adds it and returns
-		/// the newly added element.
-		/// This differs from the function above in that it takes a Func to allocate the new element.
+		/// the newly added element.<br/>
+		/// This differs from the function above in that it takes a Func to allocate the new element.<br/>
 		/// This is needed because we cannot pass arguments to a generic type constructor without
 		/// using reflection.
 		/// </summary>
@@ -139,7 +139,7 @@
 
 		/// <summary>
 		/// Retrieves an element from an <see cref="OrderedDictionary"/> if it exists, else adds it and returns
-		/// the newly added element.
+		/// the newly added element.<br/>
 		/// This uses reflection to pass the argument p1 to a generic type constructor.
 		/// </summary>
 		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
@@ -174,7 +174,7 @@
 		}
 
 		/// <summary>
-		/// Invoke all event handlers in a list with each being called in its own pseudo-thread.
+		/// Invoke all event handlers in a list with each being called in its own pseudo-thread.<br/>
 		/// If any event handler returns a non-empty result, no further calls are made.
 		/// </summary>
 		/// <param name="handlers">The list of event handlers to call.</param>
@@ -252,9 +252,9 @@
 		/// </summary>
 		/// <param name="handlers">The list of event handlers to modify.</param>
 		/// <param name="fo">The event handler to add, insert or remove from the list.</param>
-		/// <param name="i">An integer specifying which action to take:
-		///     0: Remove any event handler whose name matches fo.Name.
-		///     1: Add fo to the list.
+		/// <param name="i">An integer specifying which action to take:<br/>
+		///     0: Remove any event handler whose name matches fo.Name.<br/>
+		///     1: Add fo to the list.<br/>
 		///    -1: Remove fo from the list.
 		/// </param>
 		internal static void ModifyEventHandlers(this List<IFuncObj> handlers, IFuncObj fo, long i)

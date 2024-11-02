@@ -19,7 +19,7 @@
 	+ This should install .NET 9. If it doesn't, you need to install it manually from the link above.
 * Open Keysharp.sln
 * Build all (building the installer is not necessary).
-* CD to bin\release\net8.0-windows
+* CD to bin\release\net9.0-windows
 * Run `.\Keysharp.exe yourtestfile.ahk`
 	
 ## Overview ##
@@ -62,11 +62,11 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects will need to be created passing the name of the function as a string to `Func()`. They are not all created automatically on script startup.
-	+ This is done by calling `Func("FunctionName" [, object, paramCount])`.
-* Exception classes aren't, and can't be, derived from KeysharpObject.
-	+ That is because for the Exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
+	+ This is done by calling `Func("functionName" [, object, paramCount])`.
+* Exception classes aren't, and can't be, derived from `KeysharpObject`.
+	+ That is because for the exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
-	+ The `ParamCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
+	+ The `paramCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
 	+ Passing string pointers to `DllCall()` when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
 	+ Usage of the created callback will be extremely inefficient, so usage of `CallbackCreate()` is discouraged.
 * Deleting a tab via `GuiCtrl.Delete()` does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.

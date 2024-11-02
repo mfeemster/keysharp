@@ -6,14 +6,16 @@ namespace Keysharp.Core
 	public static class Drive
 	{
 		/// <summary>
-		/// Ejects or retracts the tray of the specified CD/DVD drive.
+		/// Ejects the tray of the specified CD/DVD drive.<br/>
 		/// It can also eject a removable drive.
 		/// </summary>
 		/// <param name="drive">
-		/// If omitted, it defaults to the first CD/DVD drive found by iterating from A to Z (an exception is thrown if no drive is found). Otherwise, specify the drive letter optionally followed by a colon or a colon and backslash. For example, "D", "D:" or "D:\".
-		/// This can also be a device path in the form "\\?\Volume{...}", which can be discovered by running mountvol at the command line.In this case the drive is not required to be assigned a drive letter.
+		/// If omitted, it defaults to the first CD/DVD drive found by iterating from A to Z (an exception is thrown if no drive is found).<br/>
+		/// Otherwise, specify the drive letter optionally followed by a colon or a colon and backslash. For example, "D", "D:" or "D:\".<br/>
+		/// This can also be a device path in the form "\\?\Volume{...}", which can be discovered by running mountvol at the command line.<br/>
+		/// In this case the drive is not required to be assigned a drive letter.
 		/// </param>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static void DriveEject(object drive = null) => DriveHelper(drive.As(), true);
 
 		/// <summary>
@@ -27,9 +29,10 @@ namespace Keysharp.Core
 		/// Returns the type of the specified drive's file system.
 		/// </summary>
 		/// <param name="drive">The drive letter followed by a colon and an optional backslash, or a UNC name such as "\server1\share1".</param>
-		/// <returns>The type of Drive's file system.
-		/// The possible values are defined by the system; they include (but are not limited to) the following:
-		/// NTFS, FAT32, FAT, CDFS (typically indicates a CD), or UDF (typically indicates a DVD).</returns>
+		/// <returns>The type of Drive's file system.<br/>
+		/// The possible values are defined by the system; they include (but are not limited to) the following:<br/>
+		/// NTFS, FAT32, FAT, CDFS (typically indicates a CD), or UDF (typically indicates a DVD).
+		/// </returns>
 		public static string DriveGetFileSystem(object drive) => new DriveInfo(drive.As()).DriveFormat;
 
 		/// <summary>
@@ -42,8 +45,9 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Returns a string of letters, one character for each drive letter in the system.
 		/// </summary>
-		/// <param name="driveType">If omitted, all drive types are retrieved.
-		/// Otherwise, specify one of the following words to retrieve only a specific type of drive: CDROM, REMOVABLE, FIXED, NETWORK, RAMDISK, UNKNOWN.</param>
+		/// <param name="driveType">If omitted, all drive types are retrieved.<br/>
+		/// Otherwise, specify one of the following words to retrieve only a specific type of drive: CDROM, REMOVABLE, FIXED, NETWORK, RAMDISK, UNKNOWN.
+		/// </param>
 		/// <returns>The drive letters in the system, depending on DriveType. For example: ACDEZ.</returns>
 		public static string DriveGetList(object driveType = null)
 		{
@@ -116,13 +120,13 @@ namespace Keysharp.Core
 		/// Returns the status of the drive which contains the specified path.
 		/// </summary>
 		/// <param name="path">Any path contained by the drive (might also work on UNC paths and mapped drives).</param>
-		/// <returns>The status of the drive which contains path:
-		/// Unknown: Might indicate unformatted/RAW file system.
-		/// Ready: This is the most common.
-		/// NotReady: Typical for removable drives that don't contain media.
+		/// <returns>The status of the drive which contains path:<br/>
+		/// Unknown: Might indicate unformatted/RAW file system.<br/>
+		/// Ready: This is the most common.<br/>
+		/// NotReady: Typical for removable drives that don't contain media.<br/>
 		/// Invalid: Path does not exist or is a network drive that is presently inaccessible, etc.
 		/// </returns>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static string DriveGetStatus(object path)
 		{
 			try
@@ -141,15 +145,15 @@ namespace Keysharp.Core
 		/// Returns the media status of the specified CD/DVD drive.
 		/// </summary>
 		/// <param name="drive">If omitted, the default CD/DVD drive will be used. Otherwise, specify the drive letter followed by a colon.</param>
-		/// <returns>The drive's media status:
-		/// not ready: The drive is not ready to be accessed, perhaps due to being engaged in a write operation. Known limitation: "not ready" also occurs when the drive contains a DVD rather than a CD.
-		/// open: The drive contains no disc, or the tray is ejected.
-		/// playing: The drive is playing a disc.
-		/// paused: The previously playing audio or video is now paused.
-		/// seeking: The drive is seeking.
+		/// <returns>The drive's media status:<br/>
+		/// not ready: The drive is not ready to be accessed, perhaps due to being engaged in a write operation. Known limitation: "not ready" also occurs when the drive contains a DVD rather than a CD.<br/>
+		/// open: The drive contains no disc, or the tray is ejected.<br/>
+		/// playing: The drive is playing a disc.<br/>
+		/// paused: The previously playing audio or video is now paused.<br/>
+		/// seeking: The drive is seeking.<br/>
 		/// stopped: The drive contains a CD but is not currently accessing it.
 		/// </returns>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static string DriveGetStatusCD(object drive = null)
 		{
 			try
@@ -167,36 +171,38 @@ namespace Keysharp.Core
 		/// Returns the type of the drive which contains the specified path.
 		/// </summary>
 		/// <param name="path">Any path contained by the drive (might also work on UNC paths and mapped drives).</param>
-		/// <returns>The  type of the drive which contains Path:
-		/// Unknown, Removable, Fixed, Network, CDROM, or RAMDisk.
-		/// If Path is invalid (e.g. because the drive does not exist), the return value is an empty string.</returns>
+		/// <returns>The  type of the drive which contains Path:<br/>
+		/// Unknown, Removable, Fixed, Network, CDROM, or RAMDisk.<br/>
+		/// If Path is invalid (e.g. because the drive does not exist), the return value is an empty string.
+		/// </returns>
 		public static string DriveGetType(object path) => Common.Mapper.MappingService.Instance.DriveType.LookUpKeysharpType(new DriveInfo(path.As()).DriveType);
 
 		/// <summary>
 		/// Prevents the eject feature of the specified drive from working.
 		/// </summary>
-		/// <param name="drive">The drive letter followed by a colon and an optional
-		/// backslash (might also work on UNC paths and mapped drives).</param>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static void DriveLock(object drive) => DriveProvider.CreateDrive(new DriveInfo(drive.As())).Lock();
 
 		/// <summary>
-		/// Ejects or retracts the tray of the specified CD/DVD drive. DriveEject can also eject a removable drive.
+		/// Retracts the tray of the specified CD/DVD drive.
 		/// </summary>
 		/// <param name="drive">
-		/// If omitted, it defaults to the first CD/DVD drive found by iterating from A to Z (an exception is thrown if no drive is found). Otherwise, specify the drive letter optionally followed by a colon or a colon and backslash. For example, "D", "D:" or "D:\".
-		/// This can also be a device path in the form "\\?\Volume{...}", which can be discovered by running mountvol at the command line.In this case the drive is not required to be assigned a drive letter.
+		/// If omitted, it defaults to the first CD/DVD drive found by iterating from A to Z (an exception is thrown if no drive is found).<br/>
+		/// Otherwise, specify the drive letter optionally followed by a colon or a colon and backslash. For example, "D", "D:" or "D:\".<br/>
+		/// This can also be a device path in the form "\\?\Volume{...}", which can be discovered by running mountvol at the command line.<br/>
+		/// In this case the drive is not required to be assigned a drive letter.
 		/// </param>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static void DriveRetract(object drive) => DriveHelper(drive.As(), false);
 
 		/// <summary>
-		/// Changes the volume label of the specified drive.
+		/// Changes the volume label of the specified drive.<br/>
 		/// This needs administrator privileges to run.
 		/// </summary>
 		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
 		/// <param name="newLabel">If omitted, the drive will have no label. Otherwise, specify the new label to set.</param>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static void DriveSetLabel(object drive, object newLabel = null)
 		{
 			var label = newLabel.As();
@@ -209,7 +215,7 @@ namespace Keysharp.Core
 		/// Restores the eject feature of the specified drive.
 		/// </summary>
 		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static void DriveUnlock(object drive) => DriveProvider.CreateDrive(new DriveInfo(drive.As())).UnLock();
 
 		/// <summary>
@@ -217,7 +223,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="dr">The drive to operate on.</param>
 		/// <param name="b">Eject if true, else retract..</param>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		private static void DriveHelper(string drive, bool b)
 		{
 			DriveBase d = GetRemovableDrive(drive);
@@ -233,7 +239,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="dr">The drive to retrieve. If empty, retrieve the first detected removable drive.</param>
 		/// <returns>The detected drive.</returns>
-		/// <exception cref="Error">An Error exception is thrown if any failure is detected.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		private static DriveBase GetRemovableDrive(string dr)
 		{
 			DriveBase drive;
@@ -252,7 +258,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Internal helper to implement globbing which will return files matching a pattern.
+		/// Internal helper to implement globbing which will return files matching a pattern.<br/>
 		/// Adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
 		/// </summary>
 		/// <param name="glob">The pattern to match.</param>
@@ -272,7 +278,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Private helper to implement globbing which will return files matching a pattern.
+		/// Private helper to implement globbing which will return files matching a pattern.<br/>
 		/// Adapted from http://stackoverflow.com/questions/398518/how-to-implement-glob-in-c
 		/// </summary>
 		/// <param name="head">The directory prefix to examine.</param>
@@ -283,18 +289,14 @@ namespace Keysharp.Core
 			if (Dir.PathTail(tail) == tail)
 			{
 				foreach (var path in Directory.GetFiles(head, tail))
-				{
 					yield return path;
-				}
 			}
 			else
 			{
 				foreach (var dir in Directory.GetDirectories(head, Dir.PathHead(tail)))
 				{
 					foreach (var path in Glob(Path.Combine(head, dir), Dir.PathTail(tail)))
-					{
 						yield return path;
-					}
 				}
 			}
 		}

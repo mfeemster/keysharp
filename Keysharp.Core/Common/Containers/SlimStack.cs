@@ -1,10 +1,9 @@
 ﻿namespace Keysharp.Core.Common.Containers
 {
 	/// <summary>
-	/// This class is meant to be a highly optimized and stripped down version of the built in Stack collection type.
-	/// It does not resize and is meant to be used in a scenario where the stack is known to never exceed
-	/// a given size.
-	/// Usage is thread-safe because it internally uses Interlocked.Increment()/Decrement() to keep track
+	/// This class is meant to be a highly optimized and stripped down version of the built in Stack collection type.<br/>
+	/// It does not resize and is meant to be used in a scenario where the stack is known to never exceed a given size.<br/>
+	/// Usage is thread-safe because it internally uses <see cref="Interlocked.Increment"/> and <see cref="Interlocked.Decrement"/> to keep track
 	/// of the stack index.
 	/// </summary>
 	/// <typeparam name="T">The type of object to hold in each element of the stack.</typeparam>
@@ -31,7 +30,7 @@
 		public int Index => index;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SlimStack"/> class.
+		/// Initializes a new instance of the <see cref="SlimStack"/> class.<br/>
 		/// All stack elements start off as null.
 		/// </summary>
 		/// <param name="s">The maximum size of the stack.</param>
@@ -65,9 +64,9 @@
 		}
 
 		/// <summary>
-		/// Returns the most recent element in the stack if it exists.
-		/// In the unlikely case this is called on another thread between the Increment() and Decrement()
-		/// calls in Push(), and all available space in the list has been used,
+		/// Returns the most recent element in the stack if it exists.<br/>
+		/// In the unlikely case this is called on another thread between the <see cref="Interlocked.Increment"/> and <see cref="Interlocked.Decrement"/>
+		/// calls in <see cref="Push"/>,<br/>and all available space in the list has been used,
 		/// it will return null.
 		/// </summary>
 		/// <returns>The most recent element, else null if empty.</returns>

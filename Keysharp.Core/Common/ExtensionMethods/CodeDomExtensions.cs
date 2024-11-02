@@ -6,10 +6,10 @@
 	internal static class CodeDomExtensions
 	{
 		/// <summary>
-		/// Returns the Expression property of a <see cref="CodeObject"/> if it was a CodeExpressionStatement.
+		/// Returns the Expression property of a <see cref="CodeObject"/> if it was a <see cref="CodeExpressionStatement"/>.
 		/// </summary>
-		/// <param name="co">The CodeObject to examine.</param>
-		/// <returns>A CodeExpression if the cast succeeded, else co cast as a CodeExpression.</returns>
+		/// <param name="co">The <see cref="CodeObject"/> to examine.</param>
+		/// <returns>A <see cref="CodeExpression"/> if the cast succeeded, else co cast as a <see cref="CodeExpression"/>.</returns>
 		internal static CodeExpression GetExpr(this CodeObject co) => co is CodeExpressionStatement ces ? ces.Expression : co as CodeExpression;
 
 		//internal static CodeBinaryOperatorExpression IsAssignExpr(this CodeExpression expr) => expr is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign ? cboe : null;

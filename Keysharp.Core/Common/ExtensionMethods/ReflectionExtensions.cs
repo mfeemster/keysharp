@@ -6,7 +6,7 @@
 	public static class ReflectionExtensions
 	{
 		/// <summary>
-		/// Invokes a <see cref="MethodInfo"/> with special checks using the Control.CheckedInvoke() extension method.
+		/// Invokes a <see cref="MethodInfo"/> with special checks using the Control.CheckedInvoke() extension method.<br/>
 		/// If inst is not of type <see cref="Control"/>, then mi.Invoke() is called.
 		/// </summary>
 		/// <param name="mi">The <see cref="MethodInfo"/> to invoke.</param>

@@ -74,7 +74,7 @@
 		/// </summary>
 		/// <param name="obj">The object to cast.</param>
 		/// <param name="type">The type to cast obj to.</param>
-		/// <returns>obj cased to type.</returns>
+		/// <returns>obj casted to type.</returns>
 		public static object CastToReflected(this object obj, Type type)
 		{
 			var methodInfo = typeof(ObjectExtensions).GetMethod(nameof(CastTo), BindingFlags.Static | BindingFlags.Public);
@@ -149,10 +149,9 @@
 		}
 
 		/// <summary>
-		/// Attempts various methods for converting an object to a decimal value.
-		/// This will first attempt direct casting because it's the most efficient and the
-		/// most likely scenario. String parsing will be attempted after that, then
-		/// using the <see cref="Convert"/> class as a final attempt.
+		/// Attempts various methods for converting an object to a decimal value.<br/>
+		/// This will first attempt direct casting because it's the most efficient and the most likely scenario.<br/>
+		/// String parsing will be attempted after that, then using the <see cref="Convert"/> class as a final attempt.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
@@ -194,10 +193,9 @@
 		}
 
 		/// <summary>
-		/// Attempts various methods for converting an object to a double value.
-		/// This will first attempt direct casting because it's the most efficient and the
-		/// most likely scenario. String parsing will be attempted after that, then
-		/// using the <see cref="Convert"/> class as a final attempt.
+		/// Attempts various methods for converting an object to a double value.<br/>
+		/// This will first attempt direct casting because it's the most efficient and the most likely scenario.<br/>
+		/// String parsing will be attempted after that, then using the <see cref="Convert"/> class as a final attempt.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
@@ -239,10 +237,9 @@
 		}
 
 		/// <summary>
-		/// Attempts various methods for converting an object to a float value.
-		/// This will first attempt direct casting because it's the most efficient and the
-		/// most likely scenario. String parsing will be attempted after that, then
-		/// using the <see cref="Convert"/> class as a final attempt.
+		/// Attempts various methods for converting an object to a float value.<br/>
+		/// This will first attempt direct casting because it's the most efficient and the most likely scenario.<br/>
+		/// String parsing will be attempted after that, then using the <see cref="Convert"/> class as a final attempt.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
@@ -284,10 +281,9 @@
 		}
 
 		/// <summary>
-		/// Attempts various methods for converting an object to a int value.
-		/// This will first attempt direct casting because it's the most efficient and the
-		/// most likely scenario. String parsing will be attempted after that, then
-		/// using the <see cref="Convert"/> class as a final attempt.
+		/// Attempts various methods for converting an object to a int value.<br/>
+		/// This will first attempt direct casting because it's the most efficient and the most likely scenario.<br/>
+		/// String parsing will be attempted after that, then using the <see cref="Convert"/> class as a final attempt.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
@@ -336,10 +332,9 @@
 		}
 
 		/// <summary>
-		/// Attempts various methods for converting an object to a long value.
-		/// This will first attempt direct casting because it's the most efficient and the
-		/// most likely scenario. String parsing will be attempted after that, then
-		/// using the <see cref="Convert"/> class as a final attempt.
+		/// Attempts various methods for converting an object to a long value.<br/>
+		/// This will first attempt direct casting because it's the most efficient and the most likely scenario.<br/>
+		/// String parsing will be attempted after that, then using the <see cref="Convert"/> class as a final attempt.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
@@ -392,10 +387,9 @@
 		public static object ParseObject(this object obj) => obj is BoolResult br ? br.o : obj;
 
 		/// <summary>
-		/// Attempts various methods for converting an object to a uint value.
-		/// This will first attempt direct casting because it's the most efficient and the
-		/// most likely scenario. String parsing will be attempted after that, then
-		/// using the <see cref="Convert"/> class as a final attempt.
+		/// Attempts various methods for converting an object to a uint value.<br/>
+		/// This will first attempt direct casting because it's the most efficient and the most likely scenario.<br/>
+		/// String parsing will be attempted after that, then using the <see cref="Convert"/> class as a final attempt.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>

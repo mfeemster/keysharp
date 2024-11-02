@@ -6,8 +6,8 @@
 	public static class StringExtensions
 	{
 		/// <summary>
-		/// Provides an easy way to iterate through the lines of a string without using as much memory as string.Split().
-		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net from user Steve Cooper.
+		/// Provides an easy way to iterate through the lines of a string without using as much memory as <see cref="string.Split"/>.<br/>
+		/// Taken from https://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net.
 		/// </summary>
 		/// <param name="str">The string whose lines will be traversed.</param>
 		/// <returns>Each line one at a time as an element in an enumerable.</returns>
@@ -64,7 +64,7 @@
 
 #if LINUX
 		/// <summary>
-		/// Runs a string as a Bash command.
+		/// Runs a string as a Bash command.<br/>
 		/// Gotten from: https://stackoverflow.com/questions/54325155/how-to-get-hard-disk-serial-number-compatible-with-linux-windows
 		/// </summary>
 		/// <param name="cmd">The Bash command to run</param>
@@ -99,7 +99,7 @@
 #endif
 
 		/// <summary>
-		/// Determines whether a string ends with any of a list of strings.
+		/// Determines whether a string ends with any of a list of strings.<br/>
 		/// The search is case insensitive.
 		/// </summary>
 		/// <param name="str">The string to search.</param>
@@ -115,7 +115,7 @@
 		}
 
 		/// <summary>
-		/// Returns the index of the first occurrence in a string where a non-quoted imbalance of the two specified characters occurs.
+		/// Returns the index of the first occurrence in a string where a non-quoted imbalance of the two specified characters occurs.<br/>
 		/// Gotten from https://stackoverflow.com/questions/4588695/algorithm-to-locate-unbalanced-parentheses-in-a-string
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
@@ -184,8 +184,7 @@
 		}
 
 		/// <summary>
-		/// Returns the index of the first occurrence of a substring in another string
-		/// which is not inside quotes.
+		/// Returns the index of the first occurrence of a substring in another string which is not inside quotes.
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
 		/// <param name="s">The string to search for inside of str.</param>
@@ -316,7 +315,7 @@
 		}
 
 		/// <summary>
-		/// Wrapper around searching for a character in a string starting at an offset.
+		/// Wrapper around searching for a character in a string starting at an offset.<br/>
 		/// For some reason the built-in IndexOf() doesn't support searching from an offset.
 		/// </summary>
 		/// <param name="str">The string to search.</param>
@@ -330,7 +329,7 @@
 		}
 
 		/// <summary>
-		/// Wrapper around searching for a <see cref="SearchValues"/> in a string starting at an offset.
+		/// Wrapper around searching for a <see cref="SearchValues"/> in a string starting at an offset.<br/>
 		/// For some reason the built-in IndexOf() doesn't support searching from an offset.
 		/// </summary>
 		/// <param name="str">The string to search.</param>
@@ -368,7 +367,7 @@
 		}
 
 		/// <summary>
-		/// Reverse version of <see cref="NthIndexOf()"/>.
+		/// Reverse version of <see cref="NthIndexOf"/>.
 		/// </summary>
 		internal static int LastNthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
 		{
@@ -383,7 +382,7 @@
 		}
 
 		/// <summary>
-		/// Returns the index of the nth occurrence of a substring within a string, starting at a specified index.
+		/// Returns the index of the nth occurrence of a substring within a string, starting at a specified index.<br/>
 		/// Gotten from https://stackoverflow.com/questions/186653/get-the-index-of-the-nth-occurrence-of-a-string
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
@@ -499,7 +498,7 @@
 		}
 
 		/// <summary>
-		/// Search for the first instance of a substring within a string, and replace it with another string.
+		/// Search for the first instance of a substring within a string, and replace it with another string.<br/>
 		/// Gotten from https://stackoverflow.com/questions/141045/how-do-i-replace-the-first-instance-of-a-string-in-net
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
@@ -514,7 +513,7 @@
 		}
 
 		/// <summary>
-		/// Determines whether a string starts with any of a list of strings and returns the length of the first match if found, else -1.
+		/// Determines whether a string starts with any of a list of strings and returns the length of the first match if found, else -1.<br/>
 		/// The search is case insensitive.
 		/// </summary>
 		/// <param name="str">The string to examine.</param>

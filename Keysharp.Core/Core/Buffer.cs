@@ -1,8 +1,9 @@
 ﻿namespace Keysharp.Core
 {
 	/// <summary>
-	/// Encapsulates a block of memory for use with advanced techniques such as DllCall, structures, StrPut and raw file I/O.
-	/// Buffer objects are typically created by calling Buffer(), but can also be returned by FileRead with the "RAW" option.
+	/// Encapsulates a block of memory for use with advanced techniques such as DllCall, structures, StrPut and raw file I/O.<br/>
+	/// Buffer objects are typically created by calling <see cref="Collections.Buffer"/>,<br/>
+	/// but can also be returned by <see cref="Files.FileRead"/> with the "RAW" option.
 	/// </summary>
 	public class Buffer : KeysharpObject, IDisposable
 	{
@@ -22,10 +23,10 @@
 		public IntPtr Ptr { get; private set; }
 
 		/// <summary>
-		/// Gets or sets the size of the buffer.
-		/// If value is greater than the existing size, a new buffer is created with length == value and
-		/// the existing data in the old buffer is copied to the beginning of the new buffer. The old
-		/// buffer is then deleted.
+		/// Gets or sets the size of the buffer.<br/>
+		/// If value is greater than the existing size, a new buffer is created with length == value and<br/>
+		/// the existing data in the old buffer is copied to the beginning of the new buffer.<br/>
+		/// The old buffer is then deleted.
 		/// </summary>
 		public object Size
 		{
@@ -60,13 +61,13 @@
 		}
 
 		/// <summary>
-		/// Calls __New() to initialize a new instance of the <see cref="Buffer"/> class.
+		/// Calls <see cref="__New"/> to initialize a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
 		/// <param name="obj">The data to initially store in the buffer</param>
 		public Buffer(params object[] obj) => __New(obj);
 
 		/// <summary>
-		/// Destructor that manually calls Dispose() to free the raw memory contained in the buffer.
+		/// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
 		/// </summary>
 		~Buffer()
 		{
@@ -76,10 +77,10 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
-		/// <param name="obj">The optional data to initialize the <see cref="Buffer"/> with. This can be:
-		///     empty: Ptr remains null.
-		///     byte[]: Copied one byte at a time to the pointer.
-		///     Array: Convert each element to a byte and copy one at a time to the pointer.
+		/// <param name="obj">The optional data to initialize the <see cref="Buffer"/> with. This can be:<br/>
+		///     empty: Ptr remains null.<br/>
+		///     byte[]: Copied one byte at a time to the pointer.<br/>
+		///     <see cref="Array"/>: Convert each element to a byte and copy one at a time to the pointer.<br/>
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
@@ -143,7 +144,7 @@
 		}
 
 		/// <summary>
-		/// The implementation for IDisposable.Dispose() which just calls Dispose(true).
+		/// The implementation for <see cref="IDisposable.Dispose"/> which just calls Dispose(true).
 		/// </summary>
 		void IDisposable.Dispose()
 		{
@@ -156,7 +157,7 @@
 		/// </summary>
 		/// <param name="index">The index to get a byte from.</param>
 		/// <returns>The value at the index.</returns>
-		/// <exception cref="IndexError">An IndexError exception is thrown if index is zero or out of range.</exception>
+		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if index is zero or out of range.</exception>
 		public long this[long index]
 		{
 			get

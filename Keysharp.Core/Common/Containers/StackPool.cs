@@ -6,20 +6,20 @@
 	public interface IClearable
 	{
 		/// <summary>
-		/// Clear the object.
+		/// Clears the object.
 		/// </summary>
 		void Clear();
 
 		/// <summary>
-		/// Initialize the object.
+		/// Initializes the object.
 		/// </summary>
 		void Init();
 	}
 
 	/// <summary>
-	/// A wrapper class for a for an object pool which uses a <see cref="SlimStack"/> of objects of type <typeparamref name="T"/>.
-	/// The intended usage is for the caller to rent an object from the pool, then return it when done.
-	/// Since the underlying <see cref="SlimStack"/> object is thread-safe, so is this class, hence the prefix "Concurrent" in the name.
+	/// A wrapper class for a for an object pool which uses a <see cref="SlimStack"/> of objects of type <typeparamref name="T"/>.<br/>
+	/// The intended usage is for the caller to rent an object from the pool, then return it when done.<br/>
+	/// Since the underlying <see cref="SlimStack"/> object is thread-safe, so is this class, hence the prefix "Concurrent" in the name.<br/>
 	/// The objects are all created in the constructor.
 	/// </summary>
 	/// <typeparam name="T"/>
@@ -46,8 +46,8 @@
 				_ = collection.Push(new T());
 		}
 		/// <summary>
-		/// Rents an object from the stack.
-		/// If an object was successfully rented, its Init() interface method will be called before returning.
+		/// Rents an object from the stack.<br/>
+		/// If an object was successfully rented, its <see cref="IClearable.Init"/> interface method will be called before returning.<br/>
 		/// If there are no free elements in the stack, a new object is returned which
 		/// is just allocated regularly on the heap.
 		/// </summary>
@@ -63,10 +63,10 @@
 			return new T();
 		}
 		/// <summary>
-		/// Returns an object to the stack and optionally clears it before returning by calling its Clear() interface method.
+		/// Returns an object to the stack and optionally clears it before returning by calling its <see cref="IClearable.Clear"/> interface method.
 		/// </summary>
 		/// <param name="val">The object to return.</param>
-		/// <param name="clear">True to call the Clear() interface method before returning, else false.</param>
+		/// <param name="clear">True to call the <see cref="IClearable.Clear"/> interface method before returning, else false.</param>
 		/// <returns>True if returned, else false.</returns>
 		public bool Return(T val, bool clear = true)
 		{
