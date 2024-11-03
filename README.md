@@ -165,8 +165,8 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Also use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
 	+ When using type `Str` for string data the function will modify, but not reallocate, the passed in string argument must be passed by `&` reference. `msvcrt.dll\_wcsrev()` is one such example.
 		+ This is also supported for strings passed as `AStr`.
-	* Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
-	+ `StrGet(DllCall("GetCommandLine", "ptr"))`
+	+ Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
+		+ `StrGet(DllCall("GetCommandLine", "ptr"))`
 		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
 	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
@@ -271,7 +271,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * A new function `WinMaximizeAll()` to maximize all windows.
 * A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText])` to determine whether a window will always stay on top of other windows.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
-	+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, &OutputVarPID, Args])`.
+	+ The new signature is: `Run/RunWait(target [, workingDir, options, &outputVarPID, args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
 * `Menu` supports several new methods:
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
@@ -285,7 +285,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
-* `SubStr()` uses a default of 1 for the second parameter, `StartingPos`, to relieve the user of always having to specify it.
+* `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the user of always having to specify it.
 * New string functions:
 	+ `NormalizeEol(str, eol) => String` to take in a string and make all line endings match the value passed in, or the default for the current environment.
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
@@ -403,13 +403,13 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		+ `lockobj` must be initialized to some value, such as an empty string.
 * `FuncObj()`, `IsFunc()`, `Any.HasProp()` and `ObjBindMethod()` take a new optional parameter which specifies the parameter count of the method to search for.
 	+ The new signatures are:
-		+ `ObjBindMethod(Obj [, ParamCount , Method, Params])`
-		+ `FuncObj(Name, Object [, ParamCount])`
-		+ `IsFunc(FunctionName [, ParamCount])`
-		+ `Any.HasProp(PropName [, ParamCount])`
+		+ `ObjBindMethod(obj [, paramCount , method, params])`
+		+ `FuncObj(name, object [, paramCount])`
+		+ `IsFunc(functionName [, paramCount])`
+		+ `Any.HasProp(propName [, paramCount])`
 			+ The only properties which can have parameters are the `__Item[]` indexer properties.
 	+ This is needed to resolve the proper overloaded method.
-	+ Omit `ParamCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
+	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
 * `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
 * Preprocessor directives are supported using the familiar syntax of C#.
 	+ `#if symbol` is used to enable a section of code if symbol is defined.
@@ -466,7 +466,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Renaming Keysharp.exe to run a specific script by default will not work.
 * Double click handlers for buttons are not supported.
 * Spin boxes with paired buddy controls are not supported. Just use the regular spin box in C#.
-* `IL_Create()` only takes one parameter: `LargeIcons`. `InitialCount` and `GrowCount` are no longer needed because memory is handled internally.
+* `IL_Create()` only takes one parameter: `largeIcons`. `initialCount` and `growCount` are no longer needed because memory is handled internally.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
 * `PixelGetColor()` ignores the `mode` parameter.
 * The `3` and `5` options for `DirSelect()` don't apply in C#.

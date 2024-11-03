@@ -1,28 +1,58 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for ImageList-related functions and classes.
+	/// </summary>
 	public static class ImageLists
 	{
+		/// <summary>
+		/// Dictionary that holds all image lists in the script.
+		/// </summary>
 		private static readonly ConcurrentDictionary<long, ImageList> imageLists;
 
+		/// <summary>
+		/// Static constructor that initializes one instance of the dictionary.
+		/// </summary>
 		static ImageLists()
 		{
 			if (imageLists == null)
 				imageLists = new ConcurrentDictionary<long, ImageList>();
 		}
 
-		public static long IL_Add(object obj0, object obj1, object obj2 = null, object obj3 = null)
+		/// <summary>
+		/// Adds an icon or picture to the specified <see cref="ImageList"/>.
+		/// </summary>
+		/// <param name="imageListID">The ID number returned from a previous call to <see cref="IL_Create"/>.</param>
+		/// <param name="picFileName">When called with 2 or 3 arguments, this is the icon filename and behaves like so:<br/>
+		/// The name of an icon (.ICO), cursor (.CUR), or animated cursor (.ANI) file<br/>
+		/// (animated cursors will not actually be animated when displayed in a ListView), or an icon handle such as "HICON:" handle.<br/>
+		/// Other sources of icons include the following types of files: EXE, DLL, CPL, SCR, and other types that contain icon resources.<br/>
+		/// When called with 4 arguments, this is the picture file name:<br/>
+		/// The name of a non-icon image such as BMP, GIF, JPG, PNG, TIF, Exif, WMF, and EMF, or a bitmap handle such as "HBITMAP:" handle.
+		/// </param>
+		/// <param name="maskColor">When called with 2 or 3 arguments, this is the icon number and behaves as so:<br/>
+		/// If omitted, it defaults to 1 (the first icon group). Otherwise, specify the number of the icon group to be used in the file.<br/>
+		/// If the number is negative, its absolute value is assumed to be the resource ID of an icon within an executable file.<br/>
+		/// When called with 4 arguments, this is the image mask color:<br/>
+		/// The mask/transparency color number. 0xFFFFFF (the color white) might be best for most pictures.
+		/// </param>
+		/// <param name="resize">If true, the picture is scaled to become a single icon.<br/>
+		/// If false, the picture is divided up into however many icons can fit into its actual width.
+		/// </param>
+		/// <returns>On success, it returns the new icon's index (1 is the first icon, 2 is the second, and so on), else 0.</returns>
+		public static long IL_Add(object imageListID, object picFileName, object maskColor = null, object resize = null)
 		{
-			var id = obj0.Al();
-			var filename = obj1.As();
-			var iconnumber = ImageHelper.PrepareIconNumber(obj2);
-			var resizeNonIcon = obj3.Ab();
+			var id = imageListID.Al();
+			var filename = picFileName.As();
+			var iconnumber = ImageHelper.PrepareIconNumber(maskColor);
+			var resizeNonIcon = resize.Ab();
 			var il = imageLists.GetOrAdd(id);
 
 			if (ImageHelper.LoadImage(filename, 0, 0, iconnumber).Item1 is Bitmap bmp)
 			{
 				if (!ImageHelper.IsIcon(filename))
 				{
-					var color = Color.FromArgb(obj2.Ai());
+					var color = Color.FromArgb(maskColor.Ai());
 
 					if (!resizeNonIcon)
 					{
@@ -44,34 +74,40 @@
 		}
 
 		/// <summary>
-		/// Creates a new ImageList.
+		/// Creates a new <see cref="ImageList"/> that is initially empty.
 		/// </summary>
-		/// <returns>The unique ID of the ImageList.</returns>
-		public static long IL_Create(object obj = null)
+		/// <param name="largeIcons">True to use the large icon size, else use small icons.</param>
+		/// <returns>On success, returns the unique ID of the <see cref="ImageList"/>, else 0.</returns>
+		public static long IL_Create(object largeIcons = null)
 		{
-			var largeIcons = obj.Ab();
+			var li = largeIcons.Ab();
 			var il = new ImageList
 			{
-				ImageSize = !largeIcons ? SystemInformation.SmallIconSize : SystemInformation.IconSize
+				ImageSize = !li ? SystemInformation.SmallIconSize : SystemInformation.IconSize
 			};//initialCount and growCount are unused. Memory is handled internally.
 			var ptr = il.Handle.ToInt64();
-			return imageLists.TryAdd(ptr, il) ? ptr : 0;
+			return imageLists.TryAdd(ptr, il) ? ptr : 0L;
 		}
 
 		/// <summary>
-		/// Deletes an ImageList.
+		/// Deletes the specified <see cref="ImageList"/>.
 		/// </summary>
-		/// <param name="id">The ImageList ID.</param>
-		/// <returns><c>1</c> if the specified ImageList was deleted, <c>0</c> otherwise.</returns>
-		public static long IL_Destroy(object obj) => imageLists.TryRemove(obj.Al(), out _) ? 1L : 0L;
+		/// <param name="imageListID">The <see cref="ImageList"/> ID.</param>
+		/// <returns>On success, it function returns 1, else 0.</returns>
+		public static long IL_Destroy(object imageListID) => imageLists.TryRemove(imageListID.Al(), out _) ? 1L : 0L;
 
 		/// <summary>
-		/// Gets an ImageList based on the ID that was returned when it was created.
+		/// Internal helper which gets an <see cref="ImageList"/> based on the ID that was returned when it was created.
 		/// </summary>
-		/// <param name="id">The ID of the ImageList to retrieve</param>
-		/// <returns>The ImageList if found, else null.</returns>
-		internal static ImageList IL_Get(long id) => imageLists.TryGetValue(id, out var il) ? il : null;
+		/// <param name="imageListID">The ID of the <see cref="ImageList"/> to retrieve</param>
+		/// <returns>The <see cref="ImageList"/> if found, else null.</returns>
+		internal static ImageList IL_Get(long imageListID) => imageLists.TryGetValue(imageListID, out var il) ? il : null;
 
+		/// <summary>
+		/// Internal helper which gets the ID of the specified image list.
+		/// </summary>
+		/// <param name="il">The <see cref="ImageList"/> whose ID will be returned.</param>
+		/// <returns>The ID of the <see cref="ImageList"/> if found, else false.</returns>
 		internal static long IL_GetId(ImageList il)
 		{
 			if (il != null)
