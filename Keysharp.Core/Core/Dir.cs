@@ -422,8 +422,8 @@
 		}
 
 		/// <summary>
-		/// Gotten from: https://social.msdn.microsoft.com/forums/windows/en-US/b43cc316-ab96-49cb-8e3b-6de48fbc3453/how-to-move-a-folder-from-one-volume-drive-to-another-in-vbnet<br/>
 		/// Move source folder to dest if on the same drive. Copy then delete the source if on a different drive.
+		/// Gotten from: https://social.msdn.microsoft.com/forums/windows/en-US/b43cc316-ab96-49cb-8e3b-6de48fbc3453/how-to-move-a-folder-from-one-volume-drive-to-another-in-vbnet<br/>
 		/// </summary>
 		/// <param name="source">Source folder to copy</param>
 		/// <param name="dest">Destination to copy source to</param>
