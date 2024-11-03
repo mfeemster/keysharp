@@ -8,7 +8,7 @@
 		/// <summary>
 		/// Returns the binary number stored at the specified address+offset.
 		/// </summary>
-		/// <param name="address">A <see cref="Buffer"/>-like object or memory address.</param>
+		/// <param name="source">A <see cref="Buffer"/>-like object or memory address.</param>
 		/// <param name="offset">If blank or omitted (or when using 2-parameter mode), it defaults to 0.<br/>
 		/// Otherwise, specify an offset in bytes which is added to source to determine the source address.
 		/// </param>

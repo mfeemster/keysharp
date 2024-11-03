@@ -467,6 +467,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Double click handlers for buttons are not supported.
 * Spin boxes with paired buddy controls are not supported. Just use the regular spin box in C#.
 * `IL_Create()` only takes one parameter: `largeIcons`. `initialCount` and `growCount` are no longer needed because memory is handled internally.
+* `LoadPicture()` does not accept a `GDI+` argument as an option.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
 * `PixelGetColor()` ignores the `mode` parameter.
 * The `3` and `5` options for `DirSelect()` don't apply in C#.

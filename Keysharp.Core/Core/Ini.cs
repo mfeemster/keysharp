@@ -1,8 +1,8 @@
 namespace Keysharp.Core
 {
 	/// <summary>
-	/// Public interface for Ini-related functions.
-	/// Although the Windows API does provide functions for manipulating INI files, they are not cross platform.
+	/// Public interface for Ini-related functions.<br/>
+	/// Although the Windows API does provide functions for manipulating INI files, they are not cross platform.<br/>
 	/// So the code here provides cross platform INI manipulation functions in pure C#.
 	/// </summary>
 	public static class Ini
@@ -10,10 +10,10 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Deletes a value from a standard format .ini file.
 		/// </summary>
-		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <param name="filename">The name of the .ini file, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
 		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
 		/// <param name="key">If omitted, the entire section will be deleted. Otherwise, specify the key name in the .ini file.</param>
-		/// <exception cref="Error">An Error exception is thrown if any file errors occur.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any file errors occur.</exception>
 		public static void IniDelete(object filename, object section, object key = null)
 		{
 			var file = filename.As();
@@ -76,11 +76,11 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Reads a value from a standard format .ini file.
 		/// </summary>
-		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <param name="filename">The name of the .ini file, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
 		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
 		/// <param name="key">The key name in the .ini file.</param>
-		/// <param name="default">If omitted, an OSError is thrown on failure. Otherwise, specify the value to return on failure, such as if the requested key, section or file is not found.</param>
-		/// <exception cref="OSError">An OSError exception is thrown if the key can't be found and no default is supplied.</exception>
+		/// <param name="default">If omitted, an <see cref="OSError"/> is thrown on failure. Otherwise, specify the value to return on failure, such as if the requested key, section or file is not found.</param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if the key can't be found and no default is supplied.</exception>
 		public static string IniRead(object filename, object section = null, object key = null, object @default = null)
 		{
 			var file = filename.As();
@@ -137,13 +137,15 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="value">The string or number that will be written to the right of <paramref name="key"/>'s equal sign (=).
 		/// or
-		/// The complete content of a section to write to the .ini file, excluding the [SectionName] header.
-		/// Key must be omitted. Pairs must not contain any blank lines. If the section already exists, everything up to the last key=value pair is overwritten. Pairs can contain lines without an equal sign (=), but this may produce inconsistent results. Comments can be written to the file but are stripped out when they are read back by IniRead.
+		/// The complete content of a section to write to the .ini file, excluding the [SectionName] header.<br/>
+		/// Key must be omitted. Pairs must not contain any blank lines. If the section already exists, everything up to the last key=value pair is overwritten.<br/>
+		/// Pairs can contain lines without an equal sign (=), but this may produce inconsistent results.<br/>
+		/// Comments can be written to the file but are stripped out when they are read back by <see cref="IniRead"/>.
 		/// </param>
-		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
+		/// <param name="filename">The name of the .ini file, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
 		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
 		/// <param name="key">The key name in the .ini file.</param>
-		/// <exception cref="OSError">An OSError exception is thrown on failure.</exception>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
 		public static void IniWrite(object value, object filename, object section, object key = null)
 		{
 			var v = value.As();
@@ -231,10 +233,10 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Private helper to load an Ini file.
+		/// Private helper to load an .ini file.
 		/// </summary>
-		/// <param name="filename">The name of the .ini file, which is assumed to be in A_WorkingDir if an absolute path isn't specified.</param>
-		/// <returns>An OrderedDictionary with all of the file data in it.</returns>
+		/// <param name="filename">The name of the .ini file, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
+		/// <returns>An <see cref="OrderedDictionary"/> with all of the file data in it.</returns>
 		private static OrderedDictionary IniLoad(object filename)
 		{
 			var f = filename.As();

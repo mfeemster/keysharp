@@ -1,17 +1,32 @@
 #if WINDOWS
+using Microsoft.VisualBasic.ApplicationServices;
+using Microsoft.VisualBasic.Devices;
+using System.Windows.Forms;
+using System.Xml.Linq;
+
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for registry-related functions.
+	/// </summary>
 	public static class Registrys
 	{
 		/// <summary>
 		/// Deletes a value from the registry.
 		/// </summary>
-		/// <param name="KeyName">The full name of the registry key</param>
-		/// <param name="ValueName">The name of the value to delete. If blank or omitted, the key's default value will be deleted.</param>
-		public static void RegDelete(object obj0 = null, object obj1 = null)
+		/// <param name="keyName">This must start with HKEY_LOCAL_MACHINE (or HKLM), HKEY_USERS (or HKU), HKEY_CURRENT_USER (or HKCU), HKEY_CLASSES_ROOT (or HKCR), or HKEY_CURRENT_CONFIG (or HKCC).<br/>
+		/// To access a remote registry, prepend the computer name and a backslash, e.g. "\\workstation01\HKLM".<br/>
+		/// KeyName can be omitted only if a registry loop is running, in which case it defaults to the key of the current loop item.If the item is a subkey, the full name of that subkey is used by default.<br/>
+		/// If the item is a value, ValueName defaults to the name of that value, but can be overridden.
+		/// </param>
+		/// <param name="valueName">If blank or omitted, the key's default value will be deleted (except as noted above), which is the value displayed as "(Default)" by RegEdit.<br/>
+		/// Otherwise, specify the name of the value to delete.
+		/// </param>
+		/// <exception cref="OSError">Throws an <see cref="OSError"/> exception on failure.</exception>
+		public static void RegDelete(object keyName = null, object valueName = null)
 		{
-			var keyname = obj0.As();
-			var valname = obj1.As();
+			var keyname = keyName.As();
+			var valname = valueName.As();
 
 			try
 			{
@@ -26,7 +41,7 @@ namespace Keysharp.Core
 						if (t == "KEY")
 						{
 						}
-						else if (t != "" && valname?.Length == 0)//Wasn't overriden with passed in parameter.
+						else if (t != "" && valname?.Length == 0)//Wasn't overridden with passed in parameter.
 							valname = Accessors.A_LoopRegName;
 					}
 				}

@@ -503,7 +503,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj)
 		{
@@ -525,7 +525,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget)
@@ -547,7 +547,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
@@ -569,7 +569,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
@@ -591,7 +591,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
@@ -613,7 +613,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,
@@ -635,7 +635,7 @@
 		}
 
 		/// <summary>
-		/// <see cref="FileGetShortcut"/>
+		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static void FileGetShortcut(object obj,
 										   ref object outTarget,

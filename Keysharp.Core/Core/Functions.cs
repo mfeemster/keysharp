@@ -33,7 +33,7 @@
 		public static IFuncObj FuncObj(object funcName, object obj = null, object paramCount = null) => new FuncObj(funcName.As(), obj, paramCount);
 
 		/// <summary>
-		/// Get a method of an object.
+		/// Gets a method of an object.
 		/// </summary>
 		/// <param name="value">The object to find the method on. Can't be a ComObject.</param>
 		/// <param name="name">If omitted, validation is performed on value itself and value is returned if successful.<br/>
@@ -124,7 +124,7 @@
 		/// Retrieves the value's base object.
 		/// </summary>
 		/// <param name="obj">The object whose base will be retrieved.</param>
-		/// <returns>The name of the obj's base.</returns>
+		/// <returns>The name of the object's base.</returns>
 		public static string ObjGetBase(object obj) => obj.GetType().BaseType.Name;
 
 		/// <summary>
