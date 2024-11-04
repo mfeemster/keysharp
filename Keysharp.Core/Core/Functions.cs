@@ -1,7 +1,7 @@
 ﻿namespace Keysharp.Core
 {
 	/// <summary>
-	/// Public interface for function/reflection-related functions and classes.
+	/// Public interface for function object and function reflection-related functions.
 	/// </summary>
 	public static class Functions
 	{
@@ -14,7 +14,7 @@
 		/// <param name="obj">The object to call the method on. Default: null for static functions.</param>
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a function.</returns>
-		/// <exception cref="MethodError">Throws a <see cref="MethodError"/> exception if the method cannot be found.</exception>
+		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null)
 		{
 			var name = funcName.As();
@@ -40,7 +40,7 @@
 		/// Otherwise, specify the name of the method to retrieve.
 		/// </param>
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <exception cref="MethodError">Throws a <see cref="MethodError"/> exception if the method cannot be found.</exception>
+		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
 		public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
 		{
@@ -119,13 +119,6 @@
 
 			return null;
 		}
-
-		/// <summary>
-		/// Retrieves the value's base object.
-		/// </summary>
-		/// <param name="obj">The object whose base will be retrieved.</param>
-		/// <returns>The name of the object's base.</returns>
-		public static string ObjGetBase(object obj) => obj.GetType().BaseType.Name;
 
 		/// <summary>
 		/// Internal helper to get a function object which supports different ways of identifying such.

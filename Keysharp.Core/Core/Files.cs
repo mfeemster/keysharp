@@ -32,7 +32,7 @@
 		/// In other words, it translates from `n to `r`n. This translation typically does not affect performance.<br/>
 		/// If this option is not used, line endings within text are not changed.
 		/// </param>
-		/// <exception cref="OSError">Throws an <see cref="OSError"/> if any errors occur.</exception>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
 		public static void FileAppend(object text, object filename = null, object options = null)
 		{
 			try
