@@ -1,8 +1,4 @@
 #if WINDOWS
-
-using Microsoft.VisualBasic;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace Keysharp.Core
 {
 	/// <summary>

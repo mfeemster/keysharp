@@ -305,9 +305,11 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		+ `TraySetIcon(A_KeysharpCorePath, "Keysharp_s.ico")`
 	+ To set a menu item to the same:
 		+ `parentMenu.SetIcon("Menu caption", A_KeysharpCorePath, "Keysharp_s.ico")`
-* A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
-	+ Uses the same arguments as `LoadPicture()`.
-	+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
+* New clipboard functions:
+	+ `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
+		+ Uses the same arguments as `LoadPicture()`.
+		+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
+	+ `IsClipboardEmpty() => Boolean` returns whether the clipboard is truly empty.
 * When sending a string through `SendMessage()` using the `WM_COPYDATA` message type, the caller is no longer responsible for creating the special `COPYDATA` struct.
 	+ Instead, just pass `WM_COPYDATA (0x4A)` as the message type and the string as the `lparam`, and `SendMessage()` will handle it internally.
 * A new function `Collect()` which calls `GC.Collect()` to force a memory collection.
@@ -340,8 +342,12 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
 	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
 	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
+	+ `A_TotalScreenHeight` returns the total height in pixels of the virtual screen.
+	+ `A_TotalScreenWidth` returns the total width in pixels of the virtual screen.
 	+ `A_UseHook` returns the value `n` specified with `#UseHook n`.
 	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
+	+ `A_WorkAreaHeight` returns the height of the working area of the primary screen.
+	+ `A_WorkAreaWidth` returns the width of the working area of the primary screen.
 * `Log(number, base := 10)` is by default base 10, but it can accept a double as the second parameter to specify a custom base.
 * In `SetTimer()`:
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
@@ -403,10 +409,10 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		+ `lockobj` must be initialized to some value, such as an empty string.
 * `FuncObj()`, `IsFunc()`, `Any.HasProp()` and `ObjBindMethod()` take a new optional parameter which specifies the parameter count of the method to search for.
 	+ The new signatures are:
-		+ `ObjBindMethod(obj [, paramCount , method, params])`
-		+ `FuncObj(name, object [, paramCount])`
-		+ `IsFunc(functionName [, paramCount])`
-		+ `Any.HasProp(propName [, paramCount])`
+		+ `ObjBindMethod(obj [, paramCount , method, params]) => FuncObj`
+		+ `FuncObj(name, object [, paramCount]) => FuncObj`
+		+ `IsFunc(functionName [, paramCount]) => Integer`
+		+ `Any.HasProp(propName [, paramCount]) => Integer`
 			+ The only properties which can have parameters are the `__Item[]` indexer properties.
 	+ This is needed to resolve the proper overloaded method.
 	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
@@ -467,6 +473,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Double click handlers for buttons are not supported.
 * Spin boxes with paired buddy controls are not supported. Just use the regular spin box in C#.
 * `IL_Create()` only takes one parameter: `largeIcons`. `initialCount` and `growCount` are no longer needed because memory is handled internally.
+* `LoadPicture()` does not accept a `GDI+` argument as an option.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
 * `PixelGetColor()` ignores the `mode` parameter.
 * The `3` and `5` options for `DirSelect()` don't apply in C#.

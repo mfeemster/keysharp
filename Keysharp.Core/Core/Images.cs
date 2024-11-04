@@ -1,19 +1,36 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for image-related functions.
+	/// </summary>
 	public static class Images
 	{
-		public static void CopyImageToClipboard(object obj0, object obj1 = null)
+		/// <summary>
+		/// Copies an image to a clipboard.
+		/// </summary>
+		/// <param name="filename">The filename of the picture, which is usually assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// If the name of a DLL or EXE file is given without a path, it may be loaded from the directory of the current executable or a system directory.
+		/// </param>
+		/// <param name="options">If blank or omitted, it defaults to no options. Otherwise, specify a string of one or more of the following options,<br/>
+		/// each separated from the next with a space or tab:<br/>
+		/// Wn and Hn: The width and height to load the image at, where n is an integer. If one dimension is omitted or -1, it is calculated automatically based on the other dimension,<br/>
+		/// preserving aspect ratio. If both are omitted, the image's original size is used. If either dimension is 0, the original size is used for that dimension.<br/>
+		/// For example: "w80 h50", "w48 h-1" or "w48" (preserve aspect ratio), "h0 w100" (use original height but override width).<br/>
+		/// Iconn: Indicates which icon to load from a file with multiple icons (generally an EXE or DLL file). For example, "Icon2" loads the file's second icon.<br/>
+		/// Any supported image format can be converted to an icon by specifying "Icon1".
+		/// </param>
+		public static void CopyImageToClipboard(object filename, object options = null)
 		{
-			var filename = obj0.As();
-			var options = obj1.As();
+			var file = filename.As();
+			var opts = options.As();
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";
 			object iconnumber = 0;
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in opts.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var opt = options.AsSpan(r).Trim();
+				var opt = opts.AsSpan(r).Trim();
 
 				if (opt.Length > 0)
 				{
@@ -23,37 +40,62 @@
 				}
 			}
 
-			var ext = Path.GetExtension(filename).ToLower();
+			var ext = Path.GetExtension(file).ToLower();
 
 			if (ext == ".cur")
 			{
-				using (var cur = new Cursor(filename))
+				using (var cur = new Cursor(file))
 				{
 					Clipboard.SetImage(ImageHelper.ConvertCursorToBitmap(cur));
 				}
 			}
-			else if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
+			else if (ImageHelper.LoadImage(file, width, height, iconnumber).Item1 is Bitmap bmp)
 			{
 				Clipboard.SetImage(new Bitmap(bmp));
 			}
 		}
 
-		public static object LoadPicture(object obj0)
+		/// <summary>
+		/// <see cref="LoadPicture(object, object, ref object)"/>
+		/// </summary>
+		public static object LoadPicture(object filename)
 		{
 			object obj = null;
-			return LoadPicture(obj0, null, ref obj);
+			return LoadPicture(filename, null, ref obj);
 		}
 
-		public static object LoadPicture(object obj0, object obj1)
+		/// <summary>
+		/// <see cref="LoadPicture(object, object, ref object)"/>
+		/// </summary>
+		public static object LoadPicture(object filename, object options)
 		{
 			object obj = null;
-			return LoadPicture(obj0, obj1, ref obj);
+			return LoadPicture(filename, options, ref obj);
 		}
 
-		public static object LoadPicture(object obj0, object obj1, ref object obj2)
+		/// <summary>
+		/// Loads a picture from file and returns a bitmap or icon handle.
+		/// </summary>
+		/// <param name="filename">The filename of the picture, which is usually assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// If the name of a DLL or EXE file is given without a path, it may be loaded from the directory of the current executable or a system directory.
+		/// </param>
+		/// <param name="options">If blank or omitted, it defaults to no options. Otherwise, specify a string of one or more of the following options,<br/>
+		/// each separated from the next with a space or tab:<br/>
+		/// Wn and Hn: The width and height to load the image at, where n is an integer. If one dimension is omitted or -1, it is calculated automatically based on the other dimension,<br/>
+		/// preserving aspect ratio. If both are omitted, the image's original size is used. If either dimension is 0, the original size is used for that dimension.<br/>
+		/// For example: "w80 h50", "w48 h-1" or "w48" (preserve aspect ratio), "h0 w100" (use original height but override width).<br/>
+		/// Iconn: Indicates which icon to load from a file with multiple icons (generally an EXE or DLL file). For example, "Icon2" loads the file's second icon.<br/>
+		/// Any supported image format can be converted to an icon by specifying "Icon1".
+		/// </param>
+		/// <param name="outImageType">If omitted, the corresponding value will not be stored, and the return value will always be a bitmap handle (icons/cursors are converted if necessary)<br/>
+		/// because reliably using or deleting an icon/cursor/bitmap handle requires knowing which type it is.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store a number indicating the type of handle being returned: 0 (IMAGE_BITMAP), 1 (IMAGE_ICON) or 2 (IMAGE_CURSOR).
+		/// </param>
+		/// <returns>A bitmap or icon handle depending on whether a picture or icon is specified and whether the &outImageType parameter is present or not.</returns>
+		public static object LoadPicture(object filename, object options, ref object outImageType)
 		{
-			var filename = obj0.As();
-			var options = obj1.As();
+			var file = filename.As();
+			var opts = options.As();
 			var handle = IntPtr.Zero;
 			var width = int.MinValue;
 			var height = int.MinValue;
@@ -61,9 +103,9 @@
 			object iconnumber = 0;
 			var disposeHandle = false;
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in opts.AsSpan().SplitAny(Keywords.Spaces))
 			{
-				var opt = options.AsSpan(r).Trim();
+				var opt = opts.AsSpan(r).Trim();
 
 				if (opt.Length > 0)
 				{
@@ -73,35 +115,35 @@
 				}
 			}
 
-			var ext = Path.GetExtension(filename).ToLower();
+			var ext = Path.GetExtension(file).ToLower();
 			(Bitmap, object) ret;
 
 			if (ext == ".cur")
 			{
-				var cur = new Cursor(filename);
+				var cur = new Cursor(file);
 				handle = cur.Handle;
-				obj2 = 2L;
+				outImageType = 2L;
 			}
-			else if ((ret = ImageHelper.LoadImage(filename, width, height, iconnumber)).Item1 is Bitmap bmp)
+			else if ((ret = ImageHelper.LoadImage(file, width, height, iconnumber)).Item1 is Bitmap bmp)
 			{
 				//Calling GetHbitmap() and GetHicon() creates a persistent handle that keeps the bitmap in memory, and must be destroyed later.
 				if (ret.Item2 is Icon ic)
 				{
 					handle = ic.Handle;
 					disposeHandle = false;
-					obj2 = 1L;
+					outImageType = 1L;
 				}
-				else if (ImageHelper.IsIcon(filename))
+				else if (ImageHelper.IsIcon(file))
 				{
 					handle = ret.Item1.GetHicon();
 					disposeHandle = true;
-					obj2 = 1L;
+					outImageType = 1L;
 				}
 				else
 				{
 					handle = bmp.GetHbitmap();
 					disposeHandle = true;
-					obj2 = 0L;
+					outImageType = 0L;
 				}
 			}
 

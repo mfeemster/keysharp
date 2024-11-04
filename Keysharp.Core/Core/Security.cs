@@ -1,5 +1,8 @@
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for security/cryptographic-related functions.
+	/// </summary>
 	public static class Security
 	{
 		/// <summary>

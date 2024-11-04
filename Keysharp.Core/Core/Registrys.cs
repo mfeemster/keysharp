@@ -1,17 +1,29 @@
 #if WINDOWS
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for registry-related functions.
+	/// </summary>
 	public static class Registrys
 	{
 		/// <summary>
 		/// Deletes a value from the registry.
 		/// </summary>
-		/// <param name="KeyName">The full name of the registry key</param>
-		/// <param name="ValueName">The name of the value to delete. If blank or omitted, the key's default value will be deleted.</param>
-		public static void RegDelete(object obj0 = null, object obj1 = null)
+		/// <param name="keyName">The full name of the registry key, e.g. "HKLM\Software\SomeApplication".<br/>
+		/// This must start with HKEY_LOCAL_MACHINE (or HKLM), HKEY_USERS (or HKU), HKEY_CURRENT_USER (or HKCU), HKEY_CLASSES_ROOT (or HKCR), or HKEY_CURRENT_CONFIG (or HKCC).<br/>
+		/// To access a remote registry, prepend the computer name and a backslash, e.g. "\\workstation01\HKLM".<br/>
+		/// keyName can be omitted only if a registry loop is running, in which case it defaults to the key of the current loop item.<br/>
+		/// If the item is a subkey, the full name of that subkey is used by default.<br/>
+		/// If the item is a value, valueName defaults to the name of that value, but can be overridden.
+		/// </param>
+		/// <param name="valueName">If blank or omitted, the key's default value will be deleted (except as noted above), which is the value displayed as "(Default)" by RegEdit.<br/>
+		/// Otherwise, specify the name of the value to delete.
+		/// </param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static void RegDelete(object keyName = null, object valueName = null)
 		{
-			var keyname = obj0.As();
-			var valname = obj1.As();
+			var keyname = keyName.As();
+			var valname = valueName.As();
 
 			try
 			{
@@ -26,7 +38,7 @@ namespace Keysharp.Core
 						if (t == "KEY")
 						{
 						}
-						else if (t != "" && valname?.Length == 0)//Wasn't overriden with passed in parameter.
+						else if (t != "" && valname?.Length == 0)//Wasn't overridden with passed in parameter.
 							valname = Accessors.A_LoopRegName;
 					}
 				}
@@ -40,17 +52,23 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error deleting registry key {keyname} and value {valname}.");
+				throw new OSError(ex, $"Error deleting registry key {keyname} and value {valname}");
 			}
 		}
 
 		/// <summary>
 		/// Deletes a key from the registry.
 		/// </summary>
-		/// <param name="KeyName">They full path of the key to delete</param>
-		public static void RegDeleteKey(object obj0 = null)
+		/// <param name="keyName">The full name of the registry key, e.g. "HKLM\Software\SomeApplication".<br/>
+		/// This must start with HKEY_LOCAL_MACHINE (or HKLM), HKEY_USERS (or HKU), HKEY_CURRENT_USER (or HKCU), HKEY_CLASSES_ROOT (or HKCR), or HKEY_CURRENT_CONFIG (or HKCC).<br/>
+		/// To access a remote registry, prepend the computer name and a backslash, e.g. "\\workstation01\HKLM".<br/>
+		/// keyName can be omitted only if a registry loop is running, in which case it defaults to the key of the current loop item.<br/>
+		/// If the item is a subkey, the full name of that subkey is used by default.<br/>
+		/// </param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static void RegDeleteKey(object keyName = null)
 		{
-			var keyname = obj0.As();
+			var keyname = keyName.As();
 
 			try
 			{
@@ -63,21 +81,32 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error deleting registry key {keyname}.");
+				throw new OSError(ex, $"Error deleting registry key {keyname}");
 			}
 		}
 
 		/// <summary>
 		/// Reads a value from the registry.
 		/// </summary>
-		/// <param name="KeyName">The name of the key</param>
-		/// <param name="ValueName">The name of the value to retrieve. If omitted, Subkey's default value will be retrieved, which is the value displayed as "(Default)" by RegEdit. If there is no default value (that is, if RegEdit displays "value not set"), OutputVar is made blank and Accessors.A_ErrorLevel is set to 1.</param>
-		/// <returns>The value retrieved. If the value cannot be retrieved, the variable is made blank and Accessors.A_ErrorLevel is set to 1.</returns>
-		public static object RegRead(object obj0 = null, object obj1 = null, object obj2 = null)
+		/// <param name="keyName">The full name of the registry key, e.g. "HKLM\Software\SomeApplication".<br/>
+		/// This must start with HKEY_LOCAL_MACHINE (or HKLM), HKEY_USERS (or HKU), HKEY_CURRENT_USER (or HKCU), HKEY_CLASSES_ROOT (or HKCR), or HKEY_CURRENT_CONFIG (or HKCC).<br/>
+		/// To access a remote registry, prepend the computer name and a backslash, e.g. "\\workstation01\HKLM".<br/>
+		/// keyName can be omitted only if a registry loop is running, in which case it defaults to the key of the current loop item.<br/>
+		/// If the item is a subkey, the full name of that subkey is used by default.<br/>
+		/// If the item is a value, valueName defaults to the name of that value, but can be overridden.
+		/// </param>
+		/// <param name="valueName">If blank or omitted, the key's default value will be retrieved (except as noted above), which is the value displayed as "(Default)" by RegEdit.<br/>
+		/// Otherwise, specify the name of the value to retrieve.<br/>
+		/// If there is no default value (that is, if RegEdit displays "value not set"), an <see cref="OSError"/> exception is thrown.
+		/// </param>
+		/// <param name="valueName">If omitted, an <see cref="OSError"/> is thrown instead of returning a default value. Otherwise, specify the value to return if the specified key or value does not exist.</param>
+		/// <returns>The value retrieved. If the value cannot be retrieved, the variable is made blank and <see cref="Accessors.A_ErrorLevel"/> is set to 1.</returns>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static object RegRead(object keyName = null, object valueName = null, object @default = null)
 		{
-			var keyname = obj0.As();
-			var valname = obj1.As();
-			var def = obj2.As();
+			var keyname = keyName.As();
+			var valname = valueName.As();
+			var def = @default.As();
 
 			try
 			{
@@ -92,7 +121,7 @@ namespace Keysharp.Core
 						if (t == "KEY")
 						{
 						}
-						else if (t != "" && valname?.Length == 0)//Wasn't overriden with passed in parameter.
+						else if (t != "" && valname?.Length == 0)//Wasn't overridden with passed in parameter.
 							valname = Accessors.A_LoopRegName;
 					}
 				}
@@ -124,23 +153,34 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error reading registry key {keyname} and value {valname}.");
+				throw new OSError(ex, $"Error reading registry key {keyname} and value {valname}");
 			}
 		}
 
 		/// <summary>
 		/// Writes a value to the registry.
 		/// </summary>
-		/// <param name="Value">The value to be written. If omitted, it will default to an empty (blank) string, or 0, depending on ValueType.</param>
-		/// <param name="ValueType">Must be either REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD, or REG_BINARY.</param>
-		/// <param name="KeyName">Full path of the registry key, including the remote computer if needed.</param>
-		/// <param name="ValueName">The name of the value that will be written to. If blank or omitted, Subkey's default value will be used, which is the value displayed as "(Default)" by RegEdit.</param>
-		public static void RegWrite(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <param name="value">The value to be written.</param>
+		/// <param name="valueType">Must be either REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD, or REG_BINARY.<br/>
+		/// valueType can be omitted only if keyName is omitted and the current registry loop item is a value, as noted below.
+		/// </param>
+		/// <param name="keyName">The full name of the registry key, e.g. "HKLM\Software\SomeApplication".<br/>
+		/// This must start with HKEY_LOCAL_MACHINE (or HKLM), HKEY_USERS (or HKU), HKEY_CURRENT_USER (or HKCU), HKEY_CLASSES_ROOT (or HKCR), or HKEY_CURRENT_CONFIG (or HKCC).<br/>
+		/// To access a remote registry, prepend the computer name and a backslash, e.g. "\\workstation01\HKLM".<br/>
+		/// keyName can be omitted only if a registry loop is running, in which case it defaults to the key of the current loop item.<br/>
+		/// If the item is a subkey, the full name of that subkey is used by default.<br/>
+		/// If the item is a value, valueType and valueName default to the type and name of that value, but can be overridden.
+		/// </param>
+		/// <param name="valueName">If blank or omitted, the key's default value will be used (except as noted above), which is the value displayed as "(Default)" by RegEdit.<br/>
+		/// Otherwise, specify the name of the value that will be written to.
+		/// </param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
+		public static void RegWrite(object value, object valueType = null, object keyName = null, object valueName = null)
 		{
-			var val = obj0;
-			var valtype = obj1.As();
-			var keyname = obj2.As();
-			var valname = obj3.As();
+			var val = value;
+			var valtype = valueType.As();
+			var keyname = keyName.As();
+			var valname = valueName.As();
 
 			try
 			{
@@ -159,7 +199,7 @@ namespace Keysharp.Core
 							{
 								valtype = t;//In this case, value type should be gotten from the current loop.
 
-								if (valname?.Length == 0)//Wasn't overriden with passed in parameter.
+								if (valname?.Length == 0)//Wasn't overridden with passed in parameter.
 									valname = Accessors.A_LoopRegName;
 							}
 						}
@@ -195,12 +235,23 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error writing registry key {keyname} and value {valname}.");
+				throw new OSError(ex, $"Error writing registry key {keyname} and value {valname}");
 			}
 		}
 
-		public static void SetRegView(object obj) => Accessors.A_RegView = obj;
+		/// <summary>
+		/// Sets the registry view used by <see cref="RegRead"/>, <see cref="RegWrite"/>, <see cref="RegDelete"/>, <see cref="RegDeleteKey"/> and <see cref="Loops.LoopRegistry"/>,<br/>
+		/// allowing them in a 32-bit script to access the 64-bit registry view and vice versa.
+		/// </summary>
+		/// <param name="regView">Specify 32 to view the registry as a 32-bit application would, or 64 to view the registry as a 64-bit application would.<br/>
+		/// Specify the word Default to restore normal behavior.
+		/// </param>
+		public static void SetRegView(object regView) => Accessors.A_RegView = regView;
 
+		/// <summary>
+		/// Internal helper to return the registry view for the currently selected mode, 32 or 64 bit.
+		/// </summary>
+		/// <returns>The <see cref="RegistryView"> for the currently selected mode.</returns>
 		internal static RegistryView GetRegView() => ThreadAccessors.A_RegView.Al() == 32L ? RegistryView.Registry32 : RegistryView.Registry64;
 	}
 }

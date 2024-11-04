@@ -351,6 +351,11 @@
 		private void Keyview_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			timer.Stop();
+			var dir = Path.GetDirectoryName(lastrun);
+
+			if (!Directory.Exists(dir))
+				Directory.CreateDirectory(dir);
+
 			File.WriteAllText(lastrun, txtIn.Text);
 		}
 

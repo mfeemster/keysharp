@@ -345,7 +345,7 @@ namespace Keysharp.Scripting
 
 											if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 											{
-												paths.Add($"{includePath}\\{p1}");//Folder relative to the script file, or as overriden.
+												paths.Add($"{includePath}\\{p1}");//Folder relative to the script file, or as overridden.
 												paths.Add($"{Accessors.A_MyDocuments}\\AutoHotkey\\{LibDir}\\{p1}");//User library.
 												paths.Add($"{Accessors.A_KeysharpPath}\\{LibDir}\\{p1}");//Executable folder, standard library.
 											}
