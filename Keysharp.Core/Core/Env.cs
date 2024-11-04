@@ -8,22 +8,27 @@ namespace Keysharp.Core
 				.Select(f => f.Name);
 
 		/// <summary>
-		/// Gotten from AHK.
+		/// Creates an object containing everything on the clipboard (such as pictures and formatting).
+		/// Omit both parameters to retrieve the current contents of the clipboard.<br/>
+		/// Otherwise, specify one or both parameters to create an object containing the given binary clipboard data.
 		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
-		public static ClipboardAll ClipboardAll(object obj0 = null, object obj1 = null)
+		/// <param name="data">A Buffer-like object or a pure integer which is the address of the binary data.<br/>
+		/// The data must be in a specific format, so typically originates from a previous call to ClipboardAll.
+		/// </param>
+		/// <param name="size">The number of bytes of data to use. This is optional when data is an object.</param>
+		/// <returns>A <see cref="ClipboardAll"/> object containing the clipboard data.</returns>
+		public static ClipboardAll ClipboardAll(object data = null, object size = null)
 		{
 			//Need to see if this should be put on the main thread like A_Clipboard.//TODO
 #if LINUX
 			return new ClipboardAll();
 #elif WINDOWS
-			var data = obj0;
-			var size = obj1.Al(long.MinValue);
+			var d = data;
+			var s = size.Al(long.MinValue);
 
-			if (data is ClipboardAll a)
+			if (d is ClipboardAll a)
 			{
-				RestoreClipboardAll(a, size != long.MinValue ? size : (long)a.Size);
+				RestoreClipboardAll(a, s != long.MinValue ? s : (long)a.Size);
 				return a;
 			}
 
@@ -103,14 +108,26 @@ namespace Keysharp.Core
 #endif
 		}
 
-		public static bool ClipWait(object obj0 = null, object obj1 = null)
+		/// <summary>
+		/// Waits until the clipboard contains data.
+		/// </summary>
+		/// <param name="tiemout">If omitted, the function will wait indefinitely. Otherwise, it will wait no longer than this many seconds.<br/>
+		/// To wait for a fraction of a second, specify a floating-point number, for example, 0.25 to wait for a maximum of 250 milliseconds.
+		/// </param>
+		/// <param name="waitFor">If omitted, it defaults to 0 (wait only for text or files).<br/>
+		/// Otherwise, specify one of the following numbers to indicate what to wait for:<br/>
+		/// 0: The function is more selective, waiting specifically for text or files to appear("text" includes anything that would produce text when you paste into Notepad).<br/>
+		/// 1: The function waits for data of any kind to appear on the clipboard.
+		/// </param>
+		/// <returns>True if it did not time out, else false.</returns>
+		public static bool ClipWait(object tiemout = null, object waitFor = null)
 		{
 			//Need to see if this should be put on the main thread like A_Clipboard.//TODO
-			var timeout = obj0.Ad(double.MinValue);
-			var type = obj1.Ab();
-			var checktime = timeout != double.MinValue;
+			var to = tiemout.Ad(double.MinValue);
+			var type = waitFor.Ab();
+			var checktime = to != double.MinValue;
 			var frequency = 100;
-			var time = checktime ? (long)(Math.Abs(timeout) * 1000) : long.MaxValue;
+			var time = checktime ? (long)(Math.Abs(to) * 1000) : long.MaxValue;
 
 			for (var i = 0L; !checktime || i < time; i += frequency)
 			{
@@ -128,18 +145,28 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Retrieves an environment variable.
+		/// Retrieves the value of the specified environment variable.
 		/// </summary>
 		/// <param name="name">The name of the environment variable to retrieve.</param>
 		/// <returns>The value of the specified environment variable if it exists, else empty string.</returns>
-		public static string EnvGet(object obj) => Environment.GetEnvironmentVariable(obj.As()) ?? string.Empty;
+		public static string EnvGet(object name) => Environment.GetEnvironmentVariable(name.As()) ?? string.Empty;
 
 		/// <summary>
-		/// Writes a value to a variable contained in the environment.
+		/// Writes a value to the specified environment variable.
 		/// </summary>
-		/// <param name="name">Name of the environment variable to use, e.g. <c>PATH</c>.</param>
-		/// <param name="value">Value to set the environment variable to.</param>
-		public static void EnvSet(object obj0, object obj1 = null) => Environment.SetEnvironmentVariable(obj0.As(), obj1 as string);
+		/// <param name="name">The name of the environment variable.</param>
+		/// <param name="value">If omitted, the environment variable will be deleted. Otherwise, specify the value to write.</param>
+		public static void EnvSet(object name, object value = null)
+		{
+			try
+			{
+				Environment.SetEnvironmentVariable(name.As(), value as string);
+			}
+			catch (Exception ex)
+			{
+				throw new OSError(ex, $@"Error setting environment variable {name} to value ""{value}"".");
+			}
+		}
 
 		/// <summary>
 		/// Notifies the operating system and all running applications that environment variables have changed.
@@ -152,39 +179,58 @@ namespace Keysharp.Core
 
 			//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
 			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
-			catch (Exception ex) { throw new OSError(ex); }
+			catch (Exception ex) { throw new OSError(ex, "Error updating environment variables."); }
 
 #endif
 		}
 
+		/// <summary>
+		/// Assign command line arguments to <see cref="A_Args"/>.
+		/// This should never be called directly by a script.<br/>
+		/// Instead, it's used by the parser in the generated C# code.
+		/// </summary>
+		/// <param name="args">The command line arguments to process.</param>
 		public static void HandleCommandLineParams(string[] args) => Accessors.A_Args.AddRange(args);
 
 		/// <summary>
-		/// The clipboard object doesn't provide a way to determine if it's truly empty or not.
-		/// This method taken from: https://www.codeproject.com/questions/1089557/check-with-csharp-if-the-clipboard-is-really-empty
+		/// The clipboard object doesn't provide a way to determine if it's truly empty or not.<br/>
+		/// Gotten from: https://www.codeproject.com/questions/1089557/check-with-csharp-if-the-clipboard-is-really-empty <br/>
 		/// attempts to provide such functionality.
 		/// </summary>
 		/// <returns>True if empty, else false.</returns>
 		public static bool IsClipboardEmpty() => !dataFormats.Any(Clipboard.ContainsData);
 
-		public static void OnClipboardChange(object obj0, object obj1 = null)
+		/// <summary>
+		/// Registers a function to be called automatically whenever the clipboard's content changes.
+		/// </summary>
+		/// <param name="callback">The callback to call, which has a single parameter specifying which data type the clipboard contains.<br/>
+		/// 0: Clipboard is now empty.<br/>
+		/// 1: Clipboard contains something that can be expressed as text(this includes files copied from an Explorer window).<br/>
+		/// 2: Clipboard contains something entirely non-text such as a picture.<br/>
+		/// </param>
+		/// <param name="addRemove">If omitted, it defaults to 1. Otherwise, specify one of the following numbers:<br/>
+		///  1: Call the callback after any previously registered callbacks.<br/>
+		/// -1: Call the callback before any previously registered callbacks.<br/>
+		///  0: Do not call the callback.
+		/// </param>
+		/// <exception cref="TypeError"></exception>
+		public static void OnClipboardChange(object callback, object addRemove = null)
 		{
-			if (obj0 is IFuncObj fo)
-				Script.ClipFunctions.ModifyEventHandlers(fo, obj1.Al(1));
+			if (callback is IFuncObj fo)
+				Script.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
 			else
 				throw new TypeError("Object passed to OnClipboardChange() was not a function object.");
 		}
 
 		/// <summary>
-		/// Retrieves screen resolution, multi-monitor info, dimensions of system objects, and other system properties.
+		/// Retrieves dimensions of system objects, and other system properties.
 		/// </summary>
-		/// <param name="output">The variable to store the result.</param>
-		/// <param name="command"></param>
-		/// <param name="param"></param>
-		public static object SysGet(object obj)
+		/// <param name="property">The variable to store the result.</param>
+		/// <returns>This function returns the value of the specified system property.</returns>
+		public static object SysGet(object property)
 		{
 #if LINUX
-			var sm = obj is Keysharp.Core.Common.Platform.SystemMetric en ? en : (SystemMetric)obj.Ai();
+			var sm = property is Keysharp.Core.Common.Platform.SystemMetric en ? en : (SystemMetric)property.Ai();
 
 			switch (sm)
 			{
@@ -486,20 +532,31 @@ namespace Keysharp.Core
 			return 0L;
 #elif WINDOWS
 
-			if (obj is SystemMetric en)
+			if (property is SystemMetric en)
 				return WindowsAPI.GetSystemMetrics(en);
 
-			return WindowsAPI.GetSystemMetrics((SystemMetric)obj.Ai());
+			return WindowsAPI.GetSystemMetrics((SystemMetric)property.Ai());
 #else
 			return 0L;
 #endif
 		}
 
+		/// <summary>
+		/// Internal helper to convert a clipboard integer format to a string.
+		/// </summary>
+		/// <param name="fmt">The format to convert.</param>
+		/// <returns>The string representation of the specified clipboard format.</returns>
 		internal static int ClipFormatStringToInt(string fmt) => GetFormat(fmt) is Format d ? d.Id : 0;
 
-		internal static string FindCommandLineArg(string arg, bool startswith = true)
+		/// <summary>
+		/// Internal helper to search the command line arguments for a specified string.
+		/// </summary>
+		/// <param name="arg">The argument to search for.</param>
+		/// <param name="startsWith">True to require the argument to start with arg, else it must contain arg.</param>
+		/// <returns>The matched argument if found, else null.</returns>
+		internal static string FindCommandLineArg(string arg, bool startsWith = true)
 		{
-			if (startswith)
+			if (startsWith)
 				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
@@ -507,7 +564,14 @@ namespace Keysharp.Core
 						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
-		internal static string FindCommandLineArgVal(string arg, bool startswith = true)
+		/// <summary>
+		/// Internal helper to search the command line argument values for a specified string.
+		/// </summary>
+		/// <param name="arg">The argument to search for.</param>
+		/// <param name="startsWith">True to require the argument to start with arg, else it must contain arg.</param>
+		/// <returns>The matched argument if found, else null.</returns>
+		/// <returns>The matched value if found, else null.</returns>
+		internal static string FindCommandLineArgVal(string arg, bool startsWith = true)
 		{
 			var args = Environment.GetCommandLineArgs();
 
@@ -524,13 +588,13 @@ namespace Keysharp.Core
 #if WINDOWS
 
 		/// <summary>
-		/// Gets the data on the clipboard in the specified format.
+		/// Internal helper to get the data on the clipboard in the specified format.
 		/// Gotten from: http://pinvoke.net/default.aspx/user32/GetClipboardData.html
 		/// </summary>
-		/// <param name="format"></param>
-		/// <param name="nulldata"></param>
-		/// <returns></returns>
-		internal static byte[] GetClipboardData(int format, ref bool nulldata)
+		/// <param name="format">The numerical format of the data to retireve.</param>
+		/// <param name="nullData">True if null data is ok, else false.</param>
+		/// <returns>The retrieved data as a byte array, else null on error.</returns>
+		internal static byte[] GetClipboardData(int format, ref bool nullData)
 		{
 			if (format != 0)
 			{
@@ -541,7 +605,7 @@ namespace Keysharp.Core
 
 					try
 					{
-						var clipdata = WindowsAPI.GetClipboardData(format, ref nulldata);//Get pointer to clipboard data in the selected format.
+						var clipdata = WindowsAPI.GetClipboardData(format, ref nullData);//Get pointer to clipboard data in the selected format.
 						var length = (int)WindowsAPI.GlobalSize(clipdata);
 						gLock = WindowsAPI.GlobalLock(clipdata);
 						buf = new byte[length];
@@ -563,8 +627,6 @@ namespace Keysharp.Core
 		}
 
 #endif
-
-		//internal static DataFormats.Format IntToClipFormat(int i) => DataFormats.GetFormat(i);
 
 #if LINUX
 		/// <summary>
@@ -705,7 +767,11 @@ namespace Keysharp.Core
 		}
 
 #endif
-
+		/// <summary>
+		/// Internal helper to restore data contained in a <see cref="ClipboardAll"/> object to the clipboard.
+		/// </summary>
+		/// <param name="clip">The object whose data will be restored.</param>
+		/// <param name="length">The length of the data to restore.</param>
 		internal static void RestoreClipboardAll(ClipboardAll clip, long length)
 		{
 			unsafe
@@ -793,8 +859,16 @@ namespace Keysharp.Core
 	}
 #elif WINDOWS
 
+	/// <summary>
+	/// A class that represents clipboard data.
+	/// This is just a thin derivation of <see cref="Buffer"/>.
+	/// </summary>
 	public class ClipboardAll : Buffer
 	{
+		/// <summary>
+		/// Constructor that just passes the data to the base.
+		/// </summary>
+		/// <param name="obj">The data to pass to the base.</param>
 		public ClipboardAll(byte[] obj)
 			: base(obj)
 		{

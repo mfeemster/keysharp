@@ -305,9 +305,11 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		+ `TraySetIcon(A_KeysharpCorePath, "Keysharp_s.ico")`
 	+ To set a menu item to the same:
 		+ `parentMenu.SetIcon("Menu caption", A_KeysharpCorePath, "Keysharp_s.ico")`
-* A new function `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
-	+ Uses the same arguments as `LoadPicture()`.
-	+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
+* New clipboard functions:
+	+ `CopyImageToClipboard(filename [,options])` is supported which copies an image to the clipboard.
+		+ Uses the same arguments as `LoadPicture()`.
+		+ This is a fully separate copy and does not share any handle, or perform any file locking with the original image being read.
+	+ `IsClipboardEmpty() => Boolean` returns whether the clipboard is truly empty.
 * When sending a string through `SendMessage()` using the `WM_COPYDATA` message type, the caller is no longer responsible for creating the special `COPYDATA` struct.
 	+ Instead, just pass `WM_COPYDATA (0x4A)` as the message type and the string as the `lparam`, and `SendMessage()` will handle it internally.
 * A new function `Collect()` which calls `GC.Collect()` to force a memory collection.
@@ -407,10 +409,10 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		+ `lockobj` must be initialized to some value, such as an empty string.
 * `FuncObj()`, `IsFunc()`, `Any.HasProp()` and `ObjBindMethod()` take a new optional parameter which specifies the parameter count of the method to search for.
 	+ The new signatures are:
-		+ `ObjBindMethod(obj [, paramCount , method, params])`
-		+ `FuncObj(name, object [, paramCount])`
-		+ `IsFunc(functionName [, paramCount])`
-		+ `Any.HasProp(propName [, paramCount])`
+		+ `ObjBindMethod(obj [, paramCount , method, params]) => FuncObj`
+		+ `FuncObj(name, object [, paramCount]) => FuncObj`
+		+ `IsFunc(functionName [, paramCount]) => Integer`
+		+ `Any.HasProp(propName [, paramCount]) => Integer`
 			+ The only properties which can have parameters are the `__Item[]` indexer properties.
 	+ This is needed to resolve the proper overloaded method.
 	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
