@@ -64,6 +64,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Whether the script's main window is allowed to be opened via the tray icon.
+		/// </summary>
 		public static object A_AllowMainWindow
 		{
 			get => allowMainWindow;
@@ -85,10 +88,15 @@
 			}
 		}
 
+		/// <summary>
+		/// Whether timers are allowed to operate in the script. Default: true.
+		/// </summary>
 		public static object A_AllowTimers { get; set; } = true;
 
 		/// <summary>
-		/// The full path and name of the folder containing the current user's application-specific data. For example: <code>C:\Documents and Settings\Username\Application Data</code>
+		/// The full path and name of the folder containing the current user's application-specific data.<br/>
+		/// For example on Windows: C:\Documents and Settings\Username\Application Data<br/>
+		/// Linux: ~/
 		/// </summary>
 		public static string A_AppData =>
 #if WINDOWS
@@ -103,6 +111,9 @@
 		/// </summary>
 		public static string A_AppDataCommon => Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
 
+		/// <summary>
+		/// An <see cref="Array"/> containing the command line arguments used to run the script.
+		/// </summary>
 		public static Array A_Args { get; internal set; } = [];
 
 		/// <summary>
@@ -211,6 +222,9 @@
 		/// </summary>
 		public static string A_CaretY => "";
 
+		/// <summary>
+		/// The data on the clipboard.
+		/// </summary>
 		public static object A_Clipboard
 		{
 			get
@@ -295,8 +309,14 @@
 			}
 		}
 
+		/// <summary>
+		/// The time in milliseconds to wait when reading the clipboard before a timeout is triggered.
+		/// </summary>
 		public static object A_ClipboardTimeout { get; set; } = 1000L;
 
+		/// <summary>
+		/// The command line string used to run the script.
+		/// </summary>
 		public static string A_CommandLine
 		{
 			get
@@ -339,7 +359,12 @@
 		/// </summary>
 		public static string A_ComputerName => Environment.MachineName;
 
+#if WINDOWS
+		/// <summary>
+		/// Contains the contents of the COMSPEC environment variable, which is the full path to the command line executable.
+		/// </summary>
 		public static string A_ComSpec => Environment.GetEnvironmentVariable("COMSPEC");
+#endif
 
 		/// <summary>
 		/// The delay in milliseconds that will occur after each control-modifying command.
@@ -350,14 +375,36 @@
 			set => controlDelay = ThreadAccessors.A_ControlDelay = value.Al();
 		}
 
+		/// <summary>
+		/// The coordinate mode for positioning the caret.
+		/// </summary>
 		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
+
+		/// <summary>
+		/// The coordinate mode for positioning menus.
+		/// </summary>
 		public static string A_CoordModeMenu => Mouse.Coords.Menu.ToString();
+
+		/// <summary>
+		/// The coordinate mode for positioning the mouse.
+		/// </summary>
 		public static string A_CoordModeMouse => Mouse.Coords.Mouse.ToString();
+
+		/// <summary>
+		/// The coordinate mode for positioning pixels.
+		/// </summary>
 		public static string A_CoordModePixel => Mouse.Coords.Pixel.ToString();
+
+		/// <summary>
+		/// The coordinate mode for positioning tooltips.
+		/// </summary>
 		public static string A_CoordModeToolTip => Mouse.Coords.Tooltip.ToString();
 
 		/// <summary>
-		/// The type of mouse cursor currently being displayed. It will be one of the following words: AppStarting, Arrow, Cross, Help, IBeam, Icon, No, Size, SizeAll, SizeNESW, SizeNS, SizeNWSE, SizeWE, UpArrow, Wait, Unknown. The acronyms used with the size-type cursors are compass directions, e.g. NESW = NorthEast+SouthWest. The hand-shaped cursors (pointing and grabbing) are classfied as Unknown.
+		/// The type of mouse cursor currently being displayed. It will be one of the following words:<br/>
+		/// AppStarting, Arrow, Cross, Help, IBeam, Icon, No, Size, SizeAll, SizeNESW, SizeNS, SizeNWSE, SizeWE, UpArrow, Wait, Unknown.<br/>
+		/// The acronyms used with the size-type cursors are compass directions, e.g. NESW = NorthEast+SouthWest.<br/>
+		/// The hand-shaped cursors (pointing and grabbing) are classified as Unknown.
 		/// </summary>
 		public static string A_Cursor =>
 		Cursor.Current is Cursor cur ?
@@ -374,26 +421,73 @@
 		public static string A_DD => A_MDay;
 
 		/// <summary>
-		/// Current day of the week's 3-letter abbreviation in the current user's language, e.g. <code>Sun</code>.
+		/// Current day of the week's 3-letter abbreviation in the current user's language, e.g. Sun.
 		/// </summary>
 		public static string A_DDD => DateTime.Now.ToString("ddd");
 
 		/// <summary>
-		/// Current day of the week's full name in the current user's language, e.g. <code>Sunday</code>.
+		/// Current day of the week's full name in the current user's language, e.g. Sunday.
 		/// </summary>
 		public static string A_DDDD => DateTime.Now.ToString("dddd");
 
+		/// <summary>
+		/// The default case sensitivity of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringCaseSensitive => HotstringManager.hsCaseSensitive;
+
+		/// <summary>
+		/// The default case conformity of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringConformToCase => HotstringManager.hsConformToCase;
+
+		/// <summary>
+		/// The default inside word detection of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringManager.hsDetectWhenInsideWord;
+
+		/// <summary>
+		/// The default backspacing of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringDoBackspace => HotstringManager.hsDoBackspace;
+
+		/// <summary>
+		/// The default recognizer reset mode of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringDoReset => HotstringManager.hsDoReset;
+
+		/// <summary>
+		/// The default end char mode of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringEndCharRequired => HotstringManager.hsEndCharRequired;
+
+		/// <summary>
+		/// The default end chars of hotstrings.
+		/// </summary>
 		public static string A_DefaultHotstringEndChars => HotstringManager.defEndChars;
+
+		/// <summary>
+		/// The default end chars of hotstrings.
+		/// </summary>
 		public static long A_DefaultHotstringKeyDelay => HotstringManager.hsKeyDelay;
+
+		/// <summary>
+		/// The default end char omission mode of hotstrings.
+		/// </summary>
 		public static bool A_DefaultHotstringOmitEndChar => HotstringManager.hsOmitEndChar;
+
+		/// <summary>
+		/// The default priority of hotstrings.
+		/// </summary>
 		public static long A_DefaultHotstringPriority => HotstringManager.hsPriority;
+
+		/// <summary>
+		/// The default send mode of hotstrings.
+		/// </summary>
 		public static string A_DefaultHotstringSendMode => HotstringManager.hsSendMode.ToString();
+
+		/// <summary>
+		/// The default send raw mode of hotstrings.
+		/// </summary>
 		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
 
 		/// <summary>
@@ -475,6 +569,9 @@
 			set => Threads.GetThreadVariables().eventInfo = value;
 		}
 
+		/// <summary>
+		/// The default file encoding setting.
+		/// </summary>
 		public static object A_FileEncoding
 		{
 			get
@@ -520,22 +617,38 @@
 			set => Threads.GetThreadVariables().formatNumeric = value.ToString();
 		}
 
+		/// <summary>
+		/// Whether the script has exited yet.
+		/// </summary>
 		public static bool A_HasExited => Flow.hasExited;
 
+		/// <summary>
+		/// The timeout used for checking if a window exists during a #HotIf check.
+		/// </summary>
 		public static object A_HotIfTimeout { get; set; } = 1000L;
 
+		/// <summary>
+		/// The rate in milliseconds of hotkey activations beyond which a warning dialog will be displayed.
+		/// </summary>
 		public static object A_HotkeyInterval
 		{
 			get => hotkeyThrottleInterval;
 			set => hotkeyThrottleInterval = value.Al();
 		}
 
+		/// <summary>
+		/// How long after a hotkey is pressed that its modifier keys are assumed to still be held down.<br/>
+		/// This is used by Send to determine whether to push the modifier keys back down after having temporarily released them.
+		/// </summary>
 		public static object A_HotkeyModifierTimeout
 		{
 			get => hotkeyModifierTimeout;
 			set => hotkeyModifierTimeout = value.Al();
 		}
 
+		/// <summary>
+		/// Whether mouse clicks reset the hotstring recognizer.
+		/// </summary>
 		public static object A_HotstringNoMouse => !Script.hsResetUponMouseClick;
 
 		/// <summary>
@@ -624,8 +737,15 @@
 			}
 		}
 
+		/// <summary>
+		/// The script's initial working directory, which is determined by how it was launched.<br/>
+		/// For example, if it was run via shortcut -- such as on the Start Menu -- its initial working directory is determined by the "Start in" field within the shortcut's properties.
+		/// </summary>
 		public static string A_InitialWorkingDir => initialWorkingDir;
 
+		/// <summary>
+		/// The default input level to use for subsequently created hotkeys and hotstrings.
+		/// </summary>
 		public static object A_InputLevel
 		{
 			get => inputLevel;
@@ -650,10 +770,13 @@
 			}
 		}
 
+		/// <summary>
+		/// Whether the script is running on a 64-bit operating system. Always true.
+		/// </summary>
 		public static bool A_Is64bitOS => true;
 
 		/// <summary>
-		/// <code>true</code> if the current user has administrator rights, <code>false</code> otherwise.
+		/// true if the current user has administrator rights, false otherwise.
 		/// </summary>
 		public static bool A_IsAdmin
 		{
@@ -669,7 +792,7 @@
 		}
 
 		/// <summary>
-		/// <code>true</code> if the current executing assembly is a compiled script, <code>false</code> otherwise;
+		/// true if the current executing assembly is a compiled script, false otherwise;
 		/// </summary>
 		public static bool A_IsCompiled
 		{
@@ -694,7 +817,7 @@
 		}
 
 		/// <summary>
-		/// <code>true</code> if the script is suspended, <code>false</code> otherwise;
+		/// true if the script is suspended, false otherwise;
 		/// </summary>
 		public static bool A_IsSuspended => Flow.Suspended;
 
@@ -750,7 +873,14 @@
 			set => keyDurationPlay = ThreadAccessors.A_KeyDurationPlay = value.Al();
 		}
 
+		/// <summary>
+		/// The path to Keysharp.Core.Dll
+		/// </summary>
 		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Accessors)).Location;
+
+		/// <summary>
+		/// <see cref="A_AhkPath"/>.
+		/// </summary>
 		public static string A_KeysharpPath => A_AhkPath;
 
 		/// <summary>
@@ -760,12 +890,12 @@
 
 #if WINDOWS
 		/// <summary>
-		/// The result from the Windows <code>GetLastError()</code> function.
+		/// The result from the Windows GetLastError() function.
 		/// </summary>
 		public static long A_LastError => Marshal.GetLastWin32Error();
 #else
 		/// <summary>
-		/// The result from the linux <code>errno()</code> function.
+		/// The result from the linux errno() function.
 		/// </summary>
 		public static long A_LastError => XLib.errno();
 #endif
@@ -1006,7 +1136,7 @@
 		}
 
 		/// <summary>
-		/// The current object key in an each-loop.
+		/// The current object key in a fpr-each loop.
 		/// </summary>
 		public static object A_LoopKey
 		{
@@ -1037,7 +1167,7 @@
 		}
 
 		/// <summary>
-		/// Contains the contents of the current line excluding the carriage return and linefeed (`r`n) that marks the end of the line.
+		/// The contents of the current line in a file read loop excluding the carriage return and linefeed (`r`n) that marks the end of the line.
 		/// </summary>
 		public static string A_LoopReadLine
 		{
@@ -1064,7 +1194,8 @@
 #if WINDOWS
 
 		/// <summary>
-		/// The name of the root key being accessed (HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, or HKEY_CURRENT_CONFIG). For remote registry access, this value will not include the computer name.
+		/// The name of the registry loop root key being accessed (HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, or HKEY_CURRENT_CONFIG).<br/>
+		/// For remote registry access, this value will not include the computer name.
 		/// </summary>
 		public static string A_LoopRegKey
 		{
@@ -1089,7 +1220,8 @@
 		}
 
 		/// <summary>
-		/// Name of the currently retrieved item, which can be either a value name or the name of a subkey. Value names displayed by Windows RegEdit as "(Default)" will be retrieved if a value has been assigned to them, but A_LoopRegName will be blank for them.
+		/// The name of the currently retrieved registry loop item, which can be either a value name or the name of a subkey.<br/>
+		/// Value names displayed by Windows RegEdit as "(Default)" will be retrieved if a value has been assigned to them, but <see cref="A_LoopRegName"/> will be blank for them.
 		/// </summary>
 		public static string A_LoopRegName
 		{
@@ -1114,7 +1246,8 @@
 		}
 
 		/// <summary>
-		/// The time the current subkey or any of its values was last modified. Format YYYYMMDDHH24MISS. This variable will be empty if the currently retrieved item is not a subkey (i.e. A_LoopRegType is not the word KEY) or if the operating system is Win9x (since Win9x does not track this info).
+		/// The time the current registry loop subkey or any of its values was last modified. Format YYYYMMDDHH24MISS.<br/>
+		/// This variable will be empty if the currently retrieved item is not a subkey (i.e. <see cref="A_LoopRegType" is not the word KEY).
 		/// </summary>
 		public static object A_LoopRegTimeModified
 		{
@@ -1139,7 +1272,9 @@
 		}
 
 		/// <summary>
-		/// The type of the currently retrieved item, which is one of the following words: KEY (i.e. the currently retrieved item is a subkey not a value), REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD, REG_QWORD, REG_BINARY, REG_LINK, REG_RESOURCE_LIST, REG_FULL_RESOURCE_DESCRIPTOR, REG_RESOURCE_REQUIREMENTS_LIST, REG_DWORD_BIG_ENDIAN (probably rare on most Windows hardware). It will be empty if the currently retrieved item is of an unknown type.
+		/// The type of the currently retrieved registry loop item, which is one of the following words:<br/>
+		/// KEY (i.e. the currently retrieved item is a subkey not a value), REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD, REG_QWORD, REG_BINARY, REG_LINK, REG_RESOURCE_LIST, REG_FULL_RESOURCE_DESCRIPTOR, REG_RESOURCE_REQUIREMENTS_LIST, REG_DWORD_BIG_ENDIAN (probably rare on most Windows hardware).<br/>
+		/// It will be empty if the currently retrieved item is of an unknown type.
 		/// </summary>
 		public static string A_LoopRegType
 		{
@@ -1163,6 +1298,10 @@
 			}
 		}
 
+		/// <summary>
+		/// The name of the registry loop value being accessed.<br/>
+		/// For remote registry access, this value will not include the computer name.
+		/// </summary>
 		public static object A_LoopRegValue
 		{
 			get
@@ -1187,14 +1326,30 @@
 
 #endif
 
+		/// <summary>
+		/// The maximum number of hotkeys that can be pressed within the interval without triggering a warning dialog.
+		/// </summary>
 		public static object A_MaxHotkeysPerInterval
 		{
 			get => maxHotkeysPerInterval;
 			set => maxHotkeysPerInterval = value.Al();
 		}
 
+		/// <summary>
+		/// The maximum simultaneously running threads allowed in a script.
+		/// </summary>
 		public static object A_MaxThreads => Script.MaxThreadsTotal;
+
+		/// <summary>
+		/// The value specified by #MaxThreadsBuffer.
+		/// Causes some or all hotkeys to buffer rather than ignore keypresses when their #MaxThreadsPerHotkey limit has been reached.
+		/// </summary>
 		public static object A_MaxThreadsBuffer { get; set; }
+
+		/// <summary>
+		/// The value specified by #MaxThreadsPerHotkey.
+		/// The maximum number of simultaneous threads per hotkey or hotstring.
+		/// </summary>
 		public static object A_MaxThreadsPerHotkey { get; set; } = 1L;
 
 		/// <summary>
@@ -1202,6 +1357,9 @@
 		/// </summary>
 		public static string A_MDay => DateTime.Now.ToString("dd");
 
+		/// <summary>
+		/// The key that is used to mask Win or Alt keyup events.
+		/// </summary>
 		public static object A_MenuMaskKey
 		{
 			get => menuMaskKey;
@@ -1219,12 +1377,12 @@
 		public static string A_MM => A_Mon;
 
 		/// <summary>
-		/// Current month's abbreviation in the current user's language, e.g. <code>Jul</code>.
+		/// Current month's abbreviation in the current user's language, e.g. Jul.
 		/// </summary>
 		public static string A_MMM => DateTime.Now.ToString("MMM");
 
 		/// <summary>
-		/// Current month's full name in the current user's language, e.g. <code>July</code>.
+		/// Current month's full name in the current user's language, e.g. July.
 		/// </summary>
 		public static string A_MMMM => DateTime.Now.ToString("MMMM");
 
@@ -1278,6 +1436,10 @@
 		/// </summary>
 		public static string A_NewLine => Environment.NewLine;
 
+		/// <summary>
+		/// The value specified by #NoTrayIcon.
+		/// Disables the showing of a tray icon.
+		/// </summary>
 		public static bool A_NoTrayIcon => Script.NoTrayIcon;
 
 		/// <summary>
@@ -1291,15 +1453,19 @@
 		public static string A_NowUTC => Conversions.ToYYYYMMDDHH24MISS(DateTime.Now.ToUniversalTime());
 
 		/// <summary>
-		/// The type of Operating System being run, e.g. <code>WIN32_WINDOWS</code> for Windows 95/98/ME or <code>WIN32_NT</code> for Windows NT4/2000/XP/2003/Vista.
+		/// The type of Operating System being run, e.g. WIN32_WINDOWS for Windows 95/98/ME or WIN32_NT for Windows NT4/2000/XP/2003/Vista.
 		/// </summary>
 		public static string A_OSType => Conversions.ToOSType(Environment.OSVersion.Platform);
 
 		/// <summary>
-		/// The Operating System version, e.g. <code>WIN_VISTA</code>, <code>WIN_2003</code>, <code>WIN_XP</code>, <code>WIN_2000</code>, <code>WIN_NT4</code>, <code>WIN_95</code>, <code>WIN_98</code>, <code>WIN_ME</code>.
+		/// The Operating System version, e.g. WIN_VISTA, WIN_2003, WIN_XP, WIN_2000, WIN_NT4, WIN_95, WIN_98, WIN_ME.
 		/// </summary>
 		public static string A_OSVersion => Environment.OSVersion.VersionString;
 
+		/// <summary>
+		/// Thread peek frequency in milliseconds.
+		/// Unused because Keysharp is compiled and not interpreted.
+		/// </summary>
 		public static object A_PeekFrequency
 		{
 			get => peekFrequency;
@@ -1316,12 +1482,19 @@
 		/// </summary>
 		public static string A_PriorHotkey => Script.priorHotkeyName;
 
+		/// <summary>
+		/// The default priority to use for each thread.
+		/// </summary>
 		public static object A_Priority { get; set; } = 0L;
 
+		/// <summary>
+		/// The last key typed.
+		/// All input generated by the script is excluded.
+		/// </summary>
 		public static string A_PriorKey => Script.HookThread is HookThread ht ? ht.keyHistory.PriorKey() : "";
 
 		/// <summary>
-		/// The Program Files directory (e.g. <code>C:\Program Files</code>).
+		/// The full path and name of the Program Files directory (e.g. C:\Program Files).
 		/// </summary>
 		public static string A_ProgramFiles => Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
@@ -1335,10 +1508,16 @@
 		/// </summary>
 		public static string A_ProgramsCommon => Environment.GetFolderPath(Environment.SpecialFolder.Startup);
 
+		/// <summary>
+		/// The size in bytes of a pointer, always 8.
+		/// </summary>
 		public static long A_PtrSize => 8L;
 
 #if WINDOWS
 
+		/// <summary>
+		/// The current registry view, either 32 or 64.
+		/// </summary>
 		public static object A_RegView
 		{
 			get => regView;
@@ -1370,9 +1549,20 @@
 			}
 		}
 
+		/// <summary>
+		/// The height of the primary monitor in pixels.
+		/// </summary>
 		public static long A_ScreenHeight => System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
+
+		/// <summary>
+		/// The width of the primary monitor in pixels.
+		/// </summary>
 		public static long A_ScreenWidth => System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
 
+		/// <summary>
+		/// The directory the script is running in.
+		/// This will be the location of the executable if it's a compiled script.
+		/// </summary>
 		public static string A_ScriptDir
 		{
 			get
@@ -1386,6 +1576,9 @@
 			}
 		}
 
+		/// <summary>
+		/// The full path of the script location.
+		/// </summary>
 		public static string A_ScriptFullPath => A_IsCompiled ? A_AhkPath : Script.scriptName;
 
 		/// <summary>
@@ -1393,6 +1586,9 @@
 		/// </summary>
 		public static long A_ScriptHwnd => Script.MainWindowHandle.ToInt64();
 
+		/// <summary>
+		/// The file name of the script.
+		/// </summary>
 		public static string A_ScriptName => Path.GetFileName(Script.scriptName);
 
 		/// <summary>
@@ -1400,6 +1596,10 @@
 		/// </summary>
 		public static string A_Sec => DateTime.Now.ToString("ss");
 
+		/// <summary>
+		/// The send level to use when sending keys.<br/>
+		/// The range is 0-100.
+		/// </summary>
 		public static object A_SendLevel
 		{
 			get => sendLevel;
@@ -1411,6 +1611,10 @@
 			}
 		}
 
+		/// <summary>
+		/// The send mode to use for sending keys.<br/>
+		/// Possible values are Event, Input, Play, and InputThenPlay.
+		/// </summary>
 		public static object A_SendMode
 		{
 			get => sendMode.ToString();
@@ -1447,6 +1651,9 @@
 		/// </summary>
 		public static string A_StartupCommon => Environment.GetFolderPath(Environment.SpecialFolder.Startup);
 
+		/// <summary>
+		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.
+		/// </summary>
 		public static object A_StoreCapsLockMode
 		{
 			get => storeCapsLockMode;
@@ -1460,6 +1667,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Whether the script is exempt from being able to be suspended.
+		/// </summary>
 		public static object A_SuspendExempt
 		{
 			get => HotstringManager.hsSuspendExempt;
@@ -1481,6 +1691,9 @@
 		/// </summary>
 		public static string A_TempFile => Path.GetTempFileName();
 
+		/// <summary>
+		/// The name of the function currently being executed.
+		/// </summary>
 		public static string A_ThisFunc => new StackFrame(1).GetMethod().Name;
 
 		/// <summary>
@@ -1524,6 +1737,10 @@
 			}
 		}
 
+		/// <summary>
+		/// If the keyboard hook is installed, this is the number of milliseconds that have elapsed since the system last received physical keyboard input.<br/>
+		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
+		/// </summary>
 		public static long A_TimeIdleKeyboard
 		{
 			get
@@ -1534,6 +1751,10 @@
 			}
 		}
 
+		/// <summary>
+		/// If the mouse hook is installed, this is the number of milliseconds that have elapsed since the system last received physical mouse input.<br/>
+		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
+		/// </summary>
 		public static long A_TimeIdleMouse
 		{
 			get
@@ -1545,7 +1766,10 @@
 		}
 
 		/// <summary>
-		/// Same as above but ignores artificial keystrokes and/or mouse clicks whenever the corresponding hook (keyboard or mouse) is installed. If neither hook is installed, this variable is equivalent to A_TimeIdle. If only one hook is present, only that one type of artificial input will be ignored. A_TimeIdlePhysical may be more useful than A_TimeIdle for determining whether the user is truly present.
+		/// Similar to above but ignores artificial keystrokes and/or mouse clicks whenever the corresponding hook (keyboard or mouse) is installed;<br/>
+		/// that is, it responds only to physical events. (This prevents simulated keystrokes and mouse clicks from falsely indicating that a user is present.)<br/>
+		/// If neither hook is installed, this variable is equivalent to <see cref="A_TimeIdle"/>.<br/>
+		/// If only one hook is installed, only its type of physical input affects A_TimeIdlePhysical (the other/non-installed hook's input, both physical and artificial, has no effect).
 		/// </summary>
 		public static long A_TimeIdlePhysical
 		{
@@ -1568,7 +1792,7 @@
 		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Script.thisHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
-		/// The current mode set by <code>SetTitleMatchMode</code>: <code>1</code>, <code>2</code>, <code>3</code>, or <code>RegEx</code>.
+		/// The current mode set by <see cref="SetTitleMatchMode"/>: 1, 2, 3, or RegEx.
 		/// </summary>
 		public static object A_TitleMatchMode
 		{
@@ -1593,7 +1817,7 @@
 		}
 
 		/// <summary>
-		/// The current match speed (<code>fast</code> or <code>slow</code>) set by <code>SetTitleMatchMode</code>.
+		/// The current match speed (fast or slow) set by <see cref="SetTitleMatchMode"/>.
 		/// </summary>
 		public static object A_TitleMatchModeSpeed
 		{
@@ -1610,9 +1834,24 @@
 			}
 		}
 
+		/// <summary>
+		/// The total height in pixels of the virtual screen.
+		/// </summary>
 		public static long A_TotalScreenHeight => SystemInformation.VirtualScreen.Height;
+
+		/// <summary>
+		/// The total width in pixels of the virtual screen.
+		/// </summary>
 		public static long A_TotalScreenWidth => SystemInformation.VirtualScreen.Width;
+
+		/// <summary>
+		/// The current tray menu object.
+		/// </summary>
 		public static Menu A_TrayMenu => Script.trayMenu;
+
+		/// <summary>
+		/// The value specified by #UseHook.
+		/// </summary>
 		public static object A_UseHook { get; set; }
 
 		/// <summary>
@@ -1625,10 +1864,13 @@
 		/// </summary>
 		public static long A_WDay => (int)DateTime.Now.DayOfWeek + 1;
 
+		/// <summary>
+		/// Whether #WinActivateForce was specified.
+		/// </summary>
 		public static object A_WinActivateForce => Script.WinActivateForce;
 
 		/// <summary>
-		/// The current delay set by <code>SetWinDelay</code>.
+		/// The current delay set by <see cref="SetWinDelay"/>.
 		/// </summary>
 		public static object A_WinDelay
 		{
@@ -1636,12 +1878,21 @@
 			set => winDelay = ThreadAccessors.A_WinDelay = value.Al();
 		}
 
+#if WINDOWS
 		/// <summary>
-		/// The Windows directory. For example: <code>C:\Windows</code>.
+		/// The Windows directory. For example: C:\Windows.
 		/// </summary>
 		public static string A_WinDir => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+#endif
 
+		/// <summary>
+		/// The height of the working area of the primary screen.
+		/// </summary>
 		public static long A_WorkAreaHeight => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height;
+
+		/// <summary>
+		/// The width of the working area of the primary screen.
+		/// </summary>
 		public static long A_WorkAreaWidth => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width;
 
 		/// <summary>
@@ -1671,7 +1922,7 @@
 		public static long A_Year => DateTime.Now.Year;
 
 		/// <summary>
-		/// Current year and week number (e.g. <code>200453</code>) according to ISO 8601.
+		/// Current year and week number (e.g. 200453) according to ISO 8601.
 		/// </summary>
 		public static string A_YWeek
 		{
@@ -1689,7 +1940,14 @@
 		/// </summary>
 		public static long A_YYYY => A_Year;
 
+		/// <summary>
+		/// The numeric value for False, 0.
+		/// </summary>
 		public static long False => 0L;
+
+		/// <summary>
+		/// The numeric value for True, 1.
+		/// </summary>
 		public static long True => 1L;
 
 		/// <summary>
@@ -1701,6 +1959,9 @@
 			set;
 		} = "";
 
+		/// <summary>
+		/// Internal helper to get/set whether the script's icon is frozen due to <see cref="TraySetIcon"/>.
+		/// </summary>
 		internal static object A_IconFrozen
 		{
 			get => iconFrozen ?? (iconFrozen = false).Value;
@@ -1708,41 +1969,64 @@
 		}
 
 		/// <summary>
-		/// Helper to provide the DPI as a percentage.
+		/// Internal helper to provide the DPI as a percentage.
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
 
 		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
 
+		/// <summary>
+		/// Internal helper to get the executing assembly.
+		/// </summary>
+		/// <returns>If compiled, the entry assembly, else the executing assembly.</returns>
 		internal static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 	}
 
+	/// <summary>
+	/// Thread specific variables.
+	/// </summary>
 	internal static class ThreadAccessors
 	{
+		/// <summary>
+		/// The delay for control-modifying functions, in milliseconds. For details, see <see cref="SetControlDelay"/>.
+		/// Unused, because no control delays are needed.
+		/// </summary>
 		internal static long A_ControlDelay
 		{
 			get => Threads.GetThreadVariables().controlDelay;
 			set => Threads.GetThreadVariables().controlDelay = value;
 		}
 
+		/// <summary>
+		/// The default mouse speed, an integer from 0 (fastest) to 100 (slowest).
+		/// </summary>
 		internal static long A_DefaultMouseSpeed
 		{
 			get => Threads.GetThreadVariables().defaultMouseSpeed;
 			set => Threads.GetThreadVariables().defaultMouseSpeed = value;
 		}
 
+		/// <summary>
+		/// Whether invisible text in a window is "seen" for the purpose of finding the window.
+		/// </summary>
 		internal static bool A_DetectHiddenText
 		{
 			get => Threads.GetThreadVariables().detectHiddenText;
 			set => Threads.GetThreadVariables().detectHiddenText = value;
 		}
 
+		/// <summary>
+		/// Whether to detect hidden windows.
+		/// </summary>
 		internal static bool A_DetectHiddenWindows
 		{
 			get => Threads.GetThreadVariables().detectHiddenWindows;
 			set => Threads.GetThreadVariables().detectHiddenWindows = value;
 		}
 
+		/// <summary>
+		/// The default file encoding to use.
+		/// </summary>
 		internal static object A_FileEncoding
 		{
 			get
@@ -1769,44 +2053,68 @@
 			}
 		}
 
+		/// <summary>
+		/// Wrapper to retrieve the file encoding as an <see cref="Encoding"/> object.
+		/// </summary>
 		internal static Encoding A_FileEncodingRaw => Threads.GetThreadVariables().fileEncoding;
 
+		/// <summary>
+		/// The delay in milliseconds between SendEvent keystrokes.
+		/// </summary>
 		internal static long A_KeyDelay
 		{
 			get => Threads.GetThreadVariables().keyDelay;
 			set => Threads.GetThreadVariables().keyDelay = value;
 		}
 
+		/// <summary>
+		/// The delay in milliseconds between SendPlay keystrokes.
+		/// </summary>
 		internal static long A_KeyDelayPlay
 		{
 			get => Threads.GetThreadVariables().keyDelayPlay;
 			set => Threads.GetThreadVariables().keyDelayPlay = value;
 		}
 
+		/// <summary>
+		/// The delay in milliseconds between SendEvent key down and key release.
+		/// </summary>
 		internal static long A_KeyDuration
 		{
 			get => Threads.GetThreadVariables().keyDuration;
 			set => Threads.GetThreadVariables().keyDuration = value;
 		}
 
+		/// <summary>
+		/// The delay in milliseconds between SendPlay key down and key release.
+		/// </summary>
 		internal static long A_KeyDurationPlay
 		{
 			get => Threads.GetThreadVariables().keyDurationPlay;
 			set => Threads.GetThreadVariables().keyDurationPlay = value;
 		}
 
+		/// <summary>
+		/// The delay in milliseconds between SendPlay mouse events.
+		/// </summary>
 		internal static long A_MouseDelay
 		{
 			get => Threads.GetThreadVariables().mouseDelay;
 			set => Threads.GetThreadVariables().mouseDelay = value;
 		}
 
+		/// <summary>
+		/// The delay in milliseconds between SendEvent mouse events.
+		/// </summary>
 		internal static long A_MouseDelayPlay
 		{
 			get => Threads.GetThreadVariables().mouseDelayPlay;
 			set => Threads.GetThreadVariables().mouseDelayPlay = value;
 		}
 
+		/// <summary>
+		/// Thread peek frequency in milliseconds.
+		/// Unused because Keysharp is compiled and not interpreted.
 		internal static long A_PeekFrequency
 		{
 			get => Threads.GetThreadVariables().peekFrequency;
@@ -1814,7 +2122,9 @@
 		}
 
 #if WINDOWS
-
+		/// <summary>
+		/// The current registry view, either 32 or 64.
+		/// </summary>
 		internal static long A_RegView
 		{
 			get => Threads.GetThreadVariables().regView;
@@ -1823,24 +2133,38 @@
 
 #endif
 
+		/// <summary>
+		/// The send level to use when sending keys.<br/>
+		/// The range is 0-100.
+		/// </summary>
 		internal static uint A_SendLevel
 		{
 			get => Threads.GetThreadVariables().sendLevel;
 			set => Threads.GetThreadVariables().sendLevel = value;
 		}
 
+		/// <summary>
+		/// The send mode to use for sending keys.<br/>
+		/// Possible values are Event, Input, Play, and InputThenPlay.
+		/// </summary>
 		internal static SendModes A_SendMode
 		{
 			get => Threads.GetThreadVariables().sendMode;
 			set => Threads.GetThreadVariables().sendMode = value;
 		}
 
+		/// <summary>
+		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.
+		/// </summary>
 		internal static bool A_StoreCapsLockMode
 		{
 			get => Threads.GetThreadVariables().storeCapsLockMode;
 			set => Threads.GetThreadVariables().storeCapsLockMode = value;
 		}
 
+		/// <summary>
+		/// The current delay set by <see cref="SetWinDelay"/>.
+		/// </summary>
 		internal static long A_WinDelay
 		{
 			get => Threads.GetThreadVariables().winDelay;

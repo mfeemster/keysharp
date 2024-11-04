@@ -340,8 +340,12 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
 	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
 	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
+	+ `A_TotalScreenHeight` returns the total height in pixels of the virtual screen.
+	+ `A_TotalScreenWidth` returns the total width in pixels of the virtual screen.
 	+ `A_UseHook` returns the value `n` specified with `#UseHook n`.
 	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
+	+ `A_WorkAreaHeight` returns the height of the working area of the primary screen.
+	+ `A_WorkAreaWidth` returns the width of the working area of the primary screen.
 * `Log(number, base := 10)` is by default base 10, but it can accept a double as the second parameter to specify a custom base.
 * In `SetTimer()`:
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.

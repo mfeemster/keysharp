@@ -15,6 +15,8 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Used by the parser to generate code to handle reference arguments to method calls on objects.
 		/// This is not needed for static function calls with reference arguments.
+		/// This should never be needed to be manually called by a script.
+		/// It is only used by the parser when generating C# code.
 		/// </summary>
 		/// <param name="i">The index of the arguments passed for the current method call.</param>
 		/// <param name="o">The value to pass to the function.</param>

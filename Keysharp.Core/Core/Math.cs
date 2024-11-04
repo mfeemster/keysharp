@@ -37,7 +37,7 @@
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < -1 || n > 1)
-				throw new Error($"ACos() argument of {n} was not between -1 and 1 {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"ACos() argument of {n} was not between -1 and 1.");
 
 			return Math.Acos(n);
 		}
@@ -52,7 +52,7 @@
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < -1 || n > 1)
-				throw new Error($"ASin() argument of {n} was not between -1 and 1 {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"ASin() argument of {n} was not between -1 and 1.");
 
 			return Math.Asin(n);
 		}
@@ -172,7 +172,7 @@
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < 0)
-				throw new Error($"Ln() argument {n} was negative {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Ln() argument {n} was negative.");
 
 			return Math.Log(n);
 		}
@@ -189,7 +189,7 @@
 			var b = obj1.Ad(double.MinValue);
 
 			if (n < 0)
-				throw new Error($"Log() argument {n} was negative {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Log() argument {n} was negative.");
 
 			if (b != double.MinValue)
 				return b == 10 ? Math.Log10(n) : Math.Log(n, b);
@@ -282,7 +282,7 @@
 				var divisor = obj1.Ad();
 
 				if (divisor == 0)
-					throw new ZeroDivisionError($"Mod() divisor argument of {divisor} was 0 {new StackFrame(0).GetMethod().Name}");
+					throw new ZeroDivisionError($"Mod() divisor argument of {divisor} was 0.");
 
 				//return Math.IEEERemainder(dividend, divisor);
 				return dividend % divisor;
@@ -293,7 +293,7 @@
 				var divisor = obj1.Al();
 
 				if (divisor == 0)
-					throw new Error($"Mod() divisor argument of {divisor} was 0 {new StackFrame(0).GetMethod().Name}");
+					throw new Error($"Mod() divisor argument of {divisor} was 0.");
 
 				return dividend % divisor;
 			}
@@ -413,7 +413,7 @@
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < 0)
-				throw new Error($"Sqrt() argument of {n} was negative {new StackFrame(0).GetMethod().Name}");
+				throw new Error($"Sqrt() argument of {n} was negative.");
 
 			return Math.Sqrt(n);
 		}
