@@ -1,5 +1,8 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for image-related functions.
+	/// </summary>
 	public static class Images
 	{
 		/// <summary>
