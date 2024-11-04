@@ -69,9 +69,9 @@ namespace Keysharp.Core.Windows
 												   ref ovl);
 				}
 			}
-			catch
+			catch (Exception ex)
 			{
-				throw new OSError(Marshal.GetLastWin32Error().ToString());
+				throw new OSError(ex, "Error ejecting, retracting, locking or unlocking the drive.");
 			}
 			finally
 			{

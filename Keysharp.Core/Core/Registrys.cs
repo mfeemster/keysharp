@@ -40,7 +40,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error deleting registry key {keyname} and value {valname}.");
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error deleting registry key {keyname}.");
 			}
 		}
 
@@ -124,7 +124,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error reading registry key {keyname} and value {valname}.");
 			}
 		}
 
@@ -195,7 +195,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error writing registry key {keyname} and value {valname}.");
 			}
 		}
 

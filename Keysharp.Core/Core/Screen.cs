@@ -141,7 +141,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, "Error searching the screen for an image.");
 			}
 
 			if (location.HasValue)
@@ -245,7 +245,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, "Error searching a region of the screen for a pixel color.");
 			}
 
 			if (location.HasValue)

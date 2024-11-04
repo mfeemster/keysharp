@@ -35,10 +35,11 @@
 		/// <exception cref="OSError">Throws an <see cref="OSError"/> if any errors occur.</exception>
 		public static void FileAppend(object text, object filename = null, object options = null)
 		{
+			var file = filename.As();
+
 			try
 			{
 				var t = text;
-				var file = filename.As();
 				var encoding = ThreadAccessors.A_FileEncodingRaw;
 				var raw = false;
 				var crlf = false;
@@ -165,7 +166,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error appending text to file {file}");
 			}
 		}
 
@@ -496,7 +497,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error getting file attributes for file {s}");
 			}
 
 			return string.Empty;
@@ -802,7 +803,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error getting shortcut information for {link}");
 			}
 
 #endif
@@ -868,7 +869,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error getting file size for file {file}");
 			}
 
 			return result;
@@ -890,9 +891,10 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
 		public static string FileGetTime(object filename = null, object whichTime = null)
 		{
+			var file = filename.As();
+
 			try
 			{
-				var file = filename.As();
 				var time = whichTime.As("M");
 
 				if (file?.Length == 0)
@@ -927,7 +929,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error getting file time for file {file}");
 			}
 		}
 
@@ -942,22 +944,19 @@
 		public static string FileGetVersion(object filename)
 		{
 			var file = filename.As();
-			var result = "";
-
-			if (file?.Length == 0)
-				file = Accessors.A_LoopFileFullPath;
 
 			try
 			{
+				if (file?.Length == 0)
+					file = Accessors.A_LoopFileFullPath;
+
 				var info = FileVersionInfo.GetVersionInfo(file);
-				result = info.FileVersion;
+				return info.FileVersion;
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error getting file version for file {file}");
 			}
-
-			return result;
 		}
 
 		/// <summary>
@@ -1125,7 +1124,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error opening file {file}");
 			}
 		}
 
@@ -1198,7 +1197,7 @@
 				}
 				catch (Exception ex)
 				{
-					throw new OSError(ex);
+					throw new OSError(ex, $"Error reading file {file}");
 				}
 			}
 			else
@@ -1223,7 +1222,7 @@
 				}
 				catch (Exception ex)
 				{
-					throw new OSError(ex);
+					throw new OSError(ex, $"Error reading file {file}");
 				}
 
 				if (max != -1)
@@ -1249,9 +1248,10 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
 		public static void FileRecycle(object filePattern)
 		{
+			var s = filePattern.As();
+
 			try
 			{
-				var s = filePattern.As();
 				var path = Path.GetDirectoryName(s);
 				var dir = new DirectoryInfo(path);
 				var filename = Path.GetFileName(s);
@@ -1266,7 +1266,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error recycling file(s) with pattern {s}");
 			}
 		}
 
@@ -1289,7 +1289,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error emptying recycle bin for drive {s}");
 			}
 		}
 

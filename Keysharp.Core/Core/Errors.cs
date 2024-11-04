@@ -393,6 +393,7 @@
 		public OSError(params object[] obj)
 			: base(obj)
 		{
+#if WINDOWS
 			var e = obj.Length > 0 ? obj[0] as Exception : null;
 			Win32Exception w32ex = null;
 
@@ -402,6 +403,9 @@
 
 			Number = w32ex != null ? w32ex.ErrorCode : Accessors.A_LastError;
 			message = new Win32Exception((int)Number).Message;
+#else
+			Number = Accessors.A_LastError;
+#endif
 		}
 	}
 

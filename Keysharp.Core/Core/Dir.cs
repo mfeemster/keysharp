@@ -40,7 +40,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error creating directory {dirName}");
 			}
 		}
 
@@ -61,7 +61,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex.Message);
+				throw new OSError(ex, $"Error creating directory {dirName}");
 			}
 		}
 
@@ -125,7 +125,7 @@
 
 			//If dest exists as a file, never copy.
 			if (File.Exists(d))
-				throw new OSError($"Cannot move {s} to {d} because destination is a file.");
+				throw new OSError("", $"Cannot move {s} to {d} because destination is a file.");
 
 			switch (flag.ToUpperInvariant())
 			{
@@ -149,10 +149,10 @@
 			}
 
 			if (rename && Directory.Exists(d))
-				throw new OSError($"Cannot rename {s} to {d} because it already exists.");
+				throw new OSError("", $"Cannot rename {s} to {d} because it already exists.");
 
 			if (!Directory.Exists(s))
-				throw new OSError($"Cannot move {s} to {d} because source does not exist.");
+				throw new OSError("", $"Cannot move {s} to {d} because source does not exist.");
 
 			if (movein && Directory.Exists(d))
 				d = Path.Combine(d, Path.GetFileName(s.TrimEnd(Path.DirectorySeparatorChar)));
@@ -375,7 +375,7 @@
 			catch (IOException ioe)
 			{
 				if (!overwrite)
-					throw new OSError($"Failed to create directory {dest}: {ioe.Message}");
+					throw new OSError("", $"Failed to create directory {dest}: {ioe.Message}");
 			}
 
 			try
@@ -417,7 +417,7 @@
 			}
 			catch (Exception e)
 			{
-				throw new OSError($"Failed to copy directory {source} to {dest}: {e.Message}");
+				throw new OSError("", $"Failed to copy directory {source} to {dest}: {e.Message}");
 			}
 		}
 

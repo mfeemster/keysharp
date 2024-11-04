@@ -215,7 +215,7 @@ namespace Keysharp.Core
 								var val1 = lines0.AsSpan(val1Index + 1, (firstPercent - val1Index) - 1);
 
 								if (!double.TryParse(val1, out prc1))
-									throw new OSError($"Could not parse first volume value of {val1}.");
+									throw new OSError("", $"Could not parse first volume value of {val1}.");
 							}
 						}
 
@@ -228,7 +228,7 @@ namespace Keysharp.Core
 								var val2 = lines0.AsSpan(val2Index + 1, (lastPercent - val2Index) - 1);
 
 								if (!double.TryParse(val2, out prc2))
-									throw new OSError($"Could not parse second volume value of {val2}.");
+									throw new OSError("", $"Could not parse second volume value of {val2}.");
 							}
 						}
 

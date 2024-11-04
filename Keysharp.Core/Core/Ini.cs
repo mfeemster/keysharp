@@ -117,7 +117,7 @@ namespace Keysharp.Core
 				else if (def.Length > 0)
 					_ = sb.Append(def);
 				else
-					throw new OSError($"Failed to find key {k} in section {s} in INI file {file}.");
+					throw new OSError("", $"Failed to find key {k} in section {s} in INI file {file}.");
 			}
 			else if (hassec)
 			{
@@ -226,7 +226,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex);
+				throw new OSError(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.");
 			}
 		}
 

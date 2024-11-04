@@ -272,9 +272,7 @@ namespace Keysharp.Core
 			}
 
 			foreach (var path in Glob(Dir.PathHead(glob) + Path.DirectorySeparatorChar, Dir.PathTail(glob)))
-			{
 				yield return path;
-			}
 		}
 
 		/// <summary>
