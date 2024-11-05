@@ -77,7 +77,7 @@
 
 					if (!fast)
 						Threads.EndThread(btv.Item1);
-				}, !fast);//Pop on exception because the Pop above won't be called.
+				}, !fast);//Pop on exception because EndThread() above won't be called.
 			}
 
 			if (val is int i)

@@ -776,7 +776,7 @@
 		public static bool A_Is64bitOS => true;
 
 		/// <summary>
-		/// true if the current user has administrator rights, false otherwise.
+		/// True if the current user has administrator rights, false otherwise.
 		/// </summary>
 		public static bool A_IsAdmin
 		{
@@ -792,7 +792,7 @@
 		}
 
 		/// <summary>
-		/// true if the current executing assembly is a compiled script, false otherwise;
+		/// True if the current executing assembly is a compiled script, false otherwise;
 		/// </summary>
 		public static bool A_IsCompiled
 		{
@@ -805,7 +805,7 @@
 		}
 
 		/// <summary>
-		/// <c>1</c> if the current thread is marked as critical, <c>0</c> otherwise.
+		/// 1 if the current thread is marked as critical, else 0.
 		/// </summary>
 		public static long A_IsCritical
 		{
@@ -817,7 +817,7 @@
 		}
 
 		/// <summary>
-		/// true if the script is suspended, false otherwise;
+		/// True if the script's hotkeys and hotstrings are suspended, else false.
 		/// </summary>
 		public static bool A_IsSuspended => Flow.Suspended;
 

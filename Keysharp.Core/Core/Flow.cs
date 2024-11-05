@@ -3,47 +3,55 @@ using Timer = System.Timers.Timer;
 
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for flow-related functions.
+	/// </summary>
 	public static class Flow
 	{
 		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ConcurrentDictionary<string, IFuncObj>();
-
 		internal static bool callingCritical;
-
 		internal static volatile bool hasExited;
-
-		// Use some negative value unlikely to ever be passed explicitly:
-		internal static int IntervalUnspecified = int.MinValue + 303;
-
+		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
 		internal static ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer>();
+
+		/// <summary>
+		/// Whether a thread can be interrupted/preempted by subsequent thread.
+		/// </summary>
 		internal static bool AllowInterruption { get; set; } = true;
 
 		/// <summary>
-		/// Is the Script currently suspended?
+		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.
 		/// </summary>
 		internal static bool Suspended { get; set; }
 
+
+
 		/// <summary>
-		/// Prevents the current thread from being interrupted by other
+		/// Prevents the current thread from being interrupted by other threads, or enables it to be interrupted.
 		/// </summary>
-		/// <param name="mode">
-		/// <list type="bullet">
-		/// <item><term>On</term>: <description>give the current thread the highest priority.</description></item>
-		/// <item><term>Off</term>: <description>resets the current thread priority to normal.</description></item>
-		/// </list>
+		/// <param name="onOffNumeric">
+		/// If blank or omitted, it defaults to On. Otherwise, specify one of the following:<br/>
+		///     On: The current thread is made critical, meaning that it cannot be interrupted by another thread.<br/>
+		///     Off: The current thread immediately becomes interruptible, regardless of the settings of Thread Interrupt.<br/>
+		///         See Critical Off for details.<br/>
+		///     (Numeric): Specify a positive number to turn on Critical but also change the number of milliseconds between checks of the internal message queue.<br/>
+		///             See Message Check Interval for details.<br/>
+		///         Specifying 0 turns off Critical.<br/>
+		///         Specifying -1 turns on Critical but disables message checks.<br/>
 		/// </param>
-		public static object Critical(object obj = null)
+		public static object Critical(object onOffNumeric = null)
 		{
 			callingCritical = true;
 			var tv = Threads.GetThreadVariables();
-			var on = obj == null;
-			long freq = !on ? (obj.ParseLong(false) ?? 0L) : 0L;
+			var on = onOffNumeric == null;
+			long freq = !on ? (onOffNumeric.ParseLong(false) ?? 0L) : 0L;
 
 			if (!on)
 			{
-				var b = Options.OnOff(obj.As());
+				var b = Options.OnOff(onOffNumeric.As());
 
 				if (b != null)
 				{
@@ -70,7 +78,7 @@ namespace Keysharp.Core
 			//     - Integer other than 0.
 			// Everything else is considered to be "Off", including "Off", any non-blank string that
 			// doesn't start with a non-zero number, and zero itself.
-			tv.isCritical = obj == null // i.e. omitted or blank is the same as "ON". See comments above.
+			tv.isCritical = onOffNumeric == null // i.e. omitted or blank is the same as "ON". See comments above.
 							|| on
 							|| freq > 0L; // Non-zero integer also turns it on. Relies on short-circuit boolean order.
 
@@ -101,6 +109,10 @@ namespace Keysharp.Core
 			return ret;
 		}
 
+		/// <summary>
+		/// Iterates through all timers in existence and returns the number of them which are enabled.
+		/// </summary>
+		/// <returns>The number of currently enabled timers.</returns>
 		public static long EnabledTimerCount()
 		{
 			var ct = 0L;
@@ -113,13 +125,14 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Exits the current thread or the entire program if non-persistent.
+		/// Exits the current thread or the entire script if non-persistent.
+		/// The exit is achieved by throwing an exception which will be caught in the catch
+		/// clause that wraps all threads.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void Exit(object obj = null)
+		public static void Exit(object exitCode = null)
 		{
-			var exitCode = obj.Al();
-			Accessors.A_ExitReason = exitCode;
+			Accessors.A_ExitReason = exitCode.Al();
 			throw new Error("Exiting thread")
 			{
 				ExcType = Keywords.Keyword_Return
@@ -127,14 +140,17 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Terminates the program unconditionally.
+		/// Terminates the script unconditionally.
+		/// This is equivalent to choosing "Exit" from the script's tray menu or main menu.
 		/// </summary>
-		/// <param name="exitCode">An integer exit code to be passed to the caller of this program when it exits.</param>
-		public static void ExitApp(object obj = null)
+		/// <param name="exitCode">If omitted, it defaults to 0 (zero is traditionally used to indicate success).<br/>
+		/// Otherwise, specify an integer between -2147483648 and 2147483647 that is returned to its caller when the script exits.<br/>
+		/// This code is accessible to any program that spawned the script, such as another script (via RunWait) or a batch (.bat) file.</param>
+		public static void ExitApp(object exitCode = null)
 		{
 			Script.mainWindow.CheckedInvoke(() =>
 			{
-				_ = ExitAppInternal(ExitReasons.Exit, obj);
+				_ = ExitAppInternal(ExitReasons.Exit, exitCode);
 			}, true);
 			var start = DateTime.Now;
 
@@ -142,94 +158,82 @@ namespace Keysharp.Core
 				Sleep(500);
 		}
 
+		/// <summary>
+		/// Initializes the flow state of the script.
+		/// This is used internally and is only public so tests can access it.
+		/// </summary>
+		[PublicForTestOnly]
 		public static void Init()
 		{
 			hasExited = false;
 		}
 
+		/// <summary>
+		/// Returns whether the passed in value is true and the script is running.
+		/// This is used in the generated code to evaluate loop variables.
+		/// </summary>
+		/// <param name="obj">The value to examine.</param>
+		/// <returns>True if the value is true and the script is running, else false.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool IsTrueAndRunning(object obj) => !hasExited&& Script.ForceBool(obj);
 
 		/// <summary>
-		/// Specifies a label to run automatically when the program exits.
+		/// Registers a function to be called automatically whenever the script exits.
 		/// </summary>
-		/// <param name="label">The name of a label. Leave blank to remove an existing label, if any.</param>
-		public static void OnExit(object obj0, object obj1 = null) => Script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(obj0, null, true), obj1.Al(1L));
+		/// <param name="callback">The function to call, which accepts two parameters<br/>
+		/// 1: The exit reason (one of the words from the table below).<br/>
+		/// 2: The exit code passed to <see cref="Exit"/> or <see cref="ExitApp"/>.<br/>
+		/// </param>
+		/// <param name="addRemove">If omitted, it defaults to 1. Otherwise, specify one of the following numbers:<br/>
+		///     1: Call the callback after any previously registered callbacks.<br/>
+		///    -1: Call the callback before any previously registered callbacks.<br/>
+		///     0: Remove the callback if it was already contained in the list.
+		/// </param>
+		public static void OnExit(object callback, object addRemove = null) => Script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
 
 		/// <summary>
-		/// Specifies a function to call automatically when the program receives the specified message.
+		/// Registers a function to be called automatically whenever the script receives the specified message.
 		/// </summary>
-		/// <param name="number">The number of the message to monitor.</param>
-		/// <param name="function">The name of a function to call whenever the specified message is received.</param>
-		/// <param name="maxThreads">The maximum number of concurrent threads to launch per message number.</param>
-		public static void OnMessage(object obj0, object obj1, object obj2 = null)
+		/// <param name="msgNumber">The number of the message to monitor or query, which should be between 0 and 4294967295 (0xFFFFFFFF).</param>
+		/// <param name="callback">The name of a function to call whenever the specified message is received.<br/>
+		/// The callback accepts four parameters as follows:<br/>
+		///     The message's WPARAM value.<br/>
+		///     The message's LPARAM value.<br/>
+		///     The message number, which is useful in cases where a callback monitors more than one message.<br/>
+		///     The HWND(unique ID) of the window or control to which the message was sent.The HWND can be used directly in a WinTitle parameter.
+		/// </param>
+		/// <param name="maxThreads">If omitted, it defaults to 1, meaning the callback is limited to one thread at a time.<br/>
+		/// This is usually best because otherwise, the script would process messages out of chronological order whenever the callback interrupts itself.
+		/// </param>
+		public static void OnMessage(object msgNumber, object callback, object maxThreads = null)
 		{
-			var msg = obj0.Al();
-			var maxInstances = obj2.Al(1);
+			var msg = msgNumber.Al();
+			var mt = maxThreads.Al(1);
 			var monitor = GuiHelper.onMessageHandlers.GetOrAdd(msg);
 
-			if (maxInstances > 0)
-				monitor.maxInstances = Math.Clamp((int)maxInstances, 1, MsgMonitor.MAX_INSTANCES);
-			else if (maxInstances < 0)
-				monitor.maxInstances = (int)(-maxInstances);
+			if (mt > 0)
+				monitor.maxInstances = Math.Clamp((int)mt, 1, MsgMonitor.MAX_INSTANCES);
+			else if (mt < 0)
+				monitor.maxInstances = (int)(-mt);
 
-			monitor.funcs.ModifyEventHandlers(Functions.GetFuncObj(obj1, null, true), maxInstances);
+			monitor.funcs.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), mt);
 
-			if (maxInstances == 0 && monitor.funcs.Count == 0)
+			if (mt == 0 && monitor.funcs.Count == 0)
 				_ = GuiHelper.onMessageHandlers.TryRemove(msg, out var _);
 		}
 
 		/// <summary>
-		/// Pauses the current thread.
+		/// Prevents the script from exiting automatically when its last thread completes, allowing it to stay running in an idle state.
 		/// </summary>
-		/// <param name="mode">
-		/// <list type="bullet">
-		/// <item><term>Toggle</term> (default): <description>pauses the current thread unless the thread beneath it is paused, in which case the underlying thread is unpaused.</description></item>
-		/// <item><term>On</term>: <description>pauses the current thread.</description></item>
-		/// <item><term>Off</term>: <description>if the thread beneath the current thread is paused, it will be in an unpaused state when resumed.</description></item>
-		/// </list>
+		/// <param name="persist">If omitted, it defaults to true.<br/>
+		/// If true, the script will be kept running after all threads have exited,<br/>
+		/// even if none of the other conditions for keeping the script running are met.<br/>
+		/// If false, the default behaviour is restored.
 		/// </param>
-		/// <param name="parentThread">
-		/// <list type="bullet">
-		/// <item><term>0</term>: <description>pause the current thread.</description></item>
-		/// <item><term>1</term>: <description>marks the thread beneath the current thread as paused so that when it resumes, it will finish the command it was running (if any) and then enter a paused state. If there is no thread beneath the current thread, the program itself is paused, which prevents timers from running.</description></item>
-		/// </list>
-		/// </param>
-		/*
-		    public static void Pause(object obj)
-		    {
-		    var mode = obj.As();
-		    var thread = System.Threading.Thread.CurrentThread;
-		    var state = Options.OnOff(mode);
-
-		    if (state == null && mode.Equals(Core.Keyword_Toggle, System.StringComparison.OrdinalIgnoreCase))
-		        state = !(thread.ThreadState == ThreadState.Suspended || thread.ThreadState == ThreadState.SuspendRequested);
-
-		    //Should figure out the right way to do this.//TODO
-		    //#pragma warning disable 612, 618
-
-		    if (state == true)
-		    {
-		        if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-		            Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_p_ico;
-
-		        thread.Suspend();
-		    }
-		    else if (state == false)
-		    {
-		        thread.Resume();
-
-		        if (!(bool)Accessors.A_IconFrozen && !Parser.NoTrayIcon)
-		            Script.Tray.Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
-		    }
-
-		    //#pragma warning restore 612, 618
-		    }
-		*/
-
-		public static object Persistent(object obj = null)
+		/// <returns>The previous persistence boolean value.</returns>
+		public static object Persistent(object persist = null)
 		{
-			var b = obj.Ab(true);
+			var b = persist.Ab(true);
 			var old = Script.persistent;
 			Script.persistent = persistentValueSetByUser = b;
 			return old;
@@ -254,19 +258,42 @@ namespace Keysharp.Core
 				Sleep(500);
 		}
 
-		public static void SetTimer(object obj0 = null, object obj1 = null, object obj2 = null)
+
+		/// <summary>
+		/// Causes a function to be called automatically and repeatedly at a specified time interval.
+		/// </summary>
+		/// <param name="function">The function object to call.<br/>
+		/// The callback accepts two parameters as follows:<br/>
+		///     The function object itself.<br/>
+		///     The date/time the timer was triggered as a YYYYMMDDHH24MISS string.<br/>
+		/// </param>
+		/// <param name="period">If omitted and the timer does not exist, it will be created with a period of 250.<br/>
+		/// If omitted and the timer already exists, it will be reset at its former period unless Priority is specified.<br/>
+		/// Otherwise, the absolute value of this parameter is used as the approximate number of milliseconds that must pass before<br/>
+		/// the timer is executed. The timer will be automatically reset. It can be set to repeat automatically or run only once:<br/>
+		///     If Period is greater than 0, the timer will automatically repeat until it is explicitly disabled by the script.<br/>
+		///     If Period is less than 0, the timer will run only once.For example, specifying -100 would call Function 100 ms from now then delete the timer as though SetTimer Function, 0 had been used.<br/>
+		///     If Period is 0, the timer is marked for deletion. If a thread started by this timer is still running, the timer is deleted after the thread finishes (unless it has been reenabled);<br/>
+		///         otherwise, it is deleted immediately. In any case, the timer's previous Period and Priority are not retained.
+		/// </param>
+		/// <param name="priority">If omitted, it defaults to 0. Otherwise, specify an integer between 0 and 4<br/>
+		/// to indicate this timer's thread priority. See <see cref="Threads"/> for details.<br/>
+		/// To change the priority of an existing timer without affecting it in any other way, omit Period.
+		/// </param>
+		/// <exception cref="TypeError"></exception>
+		public static void SetTimer(object function = null, object period = null, object priority = null)
 		{
-			var function = obj0;
-			var period = obj1.Al(long.MaxValue);
-			var priority = obj2.Al();
-			var once = period < 0;
+			var f = function;
+			var p = period.Al(long.MaxValue);
+			var pri = priority.Al();
+			var once = p < 0;
 			IFuncObj func = null;
 			System.Windows.Forms.Timer timer = null;
 
 			if (once)
-				period = -period;
+				p = -p;
 
-			if (function is string s)//Make sure they don't keep adding the same function object via string.
+			if (f is string s)//Make sure they don't keep adding the same function object via string.
 			{
 				if (cachedFuncObj.TryGetValue(s, out var tempfunc))
 					func = tempfunc;
@@ -274,21 +301,21 @@ namespace Keysharp.Core
 					cachedFuncObj[s] = func = Functions.FuncObj(s);
 			}
 
-			if (function != null && func == null)
+			if (f != null && func == null)
 			{
-				func = function is FuncObj fo ?
-					   fo : throw new TypeError($"Parameter {function} of type {function.GetType()} was not a string or a function object.");
+				func = f is FuncObj fo ?
+					   fo : throw new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.");
 			}
 
 			if (func != null && timers.TryGetValue(func, out timer))
 			{
 			}
-			else if (function == null)
+			else if (f == null)
 				timer = Threads.GetThreadVariables().currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
 
 			if (timer != null)
 			{
-				if (period == 0)
+				if (p == 0)
 				{
 					if (func == null)
 					{
@@ -306,9 +333,9 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					if (period == long.MaxValue)
+					if (p == long.MaxValue)
 					{
-						if (priority != timer.Tag.Al())//Period omitted and timer existed, but priority was specified, so just update the priority.
+						if (pri != timer.Tag.Al())//Period omitted and timer existed, but priority was specified, so just update the priority.
 						{
 							timer.Tag = priority;
 						}
@@ -319,19 +346,19 @@ namespace Keysharp.Core
 						}
 					}
 					else
-						timer.Interval = (int)period;
+						timer.Interval = (int)p;
 
 					return;
 				}
 			}
-			else if (period != 0)
+			else if (p != 0)
 			{
-				if (period == long.MaxValue)//Period omitted and timer didn't exist, so create one with a 250ms interval.
-					period = 250;
+				if (p == long.MaxValue)//Period omitted and timer didn't exist, so create one with a 250ms interval.
+					p = 250;
 
 				_ = timers.TryAdd(func, timer = new System.Windows.Forms.Timer());
 				timer.Tag = (int)priority;
-				timer.Interval = (int)period;
+				timer.Interval = (int)p;
 			}
 			else//They tried to stop a timer that didn't exist
 				return;
@@ -361,7 +388,7 @@ namespace Keysharp.Core
 							tv.currentTimer = timer;
 							var ret = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
 							Threads.EndThread(btv.Item1);
-						}, true);
+						}, true);//Pop on exception because EndThread() above won't be called.
 
 						if (once || remove)
 						{
@@ -380,19 +407,19 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
-		/// <param name="Delay">The amount of time to pause in milliseconds.</param>
-		public static void Sleep(object obj = null)
+		/// <param name="delay">The amount of time to pause in milliseconds.</param>
+		public static void Sleep(object delay = null)
 		{
-			var delay = obj.Al(-1L);
+			var d = delay.Al(-1L);
 
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
-			if (delay == 0L)
+			if (d == 0L)
 			{
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
 				System.Threading.Thread.Sleep(0);
 			}
-			else if (delay == -1L)
+			else if (d == -1L)
 			{
 				try
 				{
@@ -402,7 +429,7 @@ namespace Keysharp.Core
 				{
 				}
 			}
-			else if (delay == -2)//Sleep indefinitely until all InputHooks are finished.
+			else if (d == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
 				while (!hasExited && Script.input != null && Script.input.InProgress())
 				{
@@ -419,7 +446,7 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				var stop = DateTime.Now.AddMilliseconds(delay);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
+				var stop = DateTime.Now.AddMilliseconds(d);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
 				while (DateTime.Now < stop && !hasExited)
 				{
@@ -440,54 +467,66 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Disables or enables all or selected hotkeys.
 		/// </summary>
-		/// <param name="mode">
-		/// <list type="bullet">
-		/// <item><term>On</term>: <description>suspends all hotkeys.</description></item>
-		/// <item><term>Off</term>: <description>re-enables all hotkeys.</description></item>
-		/// <item><term>Toggle</term> (default): <description>changes to the opposite of its previous state.</description></item>
-		/// <item><term>Permit</term>: <description>marks the current subroutine as being exempt from suspension.</description></item>
-		/// </list>
+		/// <param name="newState">
+		/// If omitted, it defaults to -1. Otherwise, specify one of the following values:<br/>
+		///     1: Suspends all hotkeys and hotstrings except those explained the Remarks section.<br/>
+		///     0: Re-enables the hotkeys and hotstrings that were disable above.<br/>
+		///    -1: Changes to the opposite of its previous state (On or Off).
 		/// </param>
-		public static void Suspend(object obj)
+		public static void Suspend(object newState)
 		{
-			var state = Conversions.ConvertOnOffToggle(obj.As());
+			var state = Conversions.ConvertOnOffToggle(newState.As());
 			Suspended = state == ToggleValueType.Toggle ? !Suspended : (state == ToggleValueType.On);
 
 			if (!(bool)Accessors.A_IconFrozen && !Script.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
 		}
 
-		public static void Thread(object obj0, object obj1 = null, object obj2 = null)
+		/// <summary>
+		/// Sets the priority or interruptibility of threads. It can also temporarily disable all timers.<br/>
+		/// The subFunction, Value1, and Value2 parameters are dependent upon each other and their usage is described below.
+		/// </summary>
+		/// <param name="subFunction">Specify one of the following:<br/>
+		///     NoTimers: Prevents interruptions from any timers until the current thread either ends, executes Thread "NoTimers", false, or is interrupted by another thread that allows timers (in which case timers can interrupt the interrupting thread until it finishes).<br/>
+		///     Priority: Changes the priority level of the current thread.<br/>
+		///     Interrupt: Changes the duration of interruptibility for newly launched threads.
+		/// </param>
+		/// <param name="val1">Has a different meaning depending on subFunction:
+		///     NoTimers: True to disallow timers, else false to allow timers.  Default: true.<br/>
+		///     Priority: The thread priority as an integer in the range -2147483648 and 2147483647.<br/>
+		///     Interrupt: The time in milliseconds that each newly launched thread is uninterruptible. Default: 17.
+		/// </param>
+		public static void Thread(object subFunction, object value1 = null)
 		{
-			var subFunc = obj0.As();
+			var sf = subFunction.As();
 
-			if (string.Compare(subFunc, "notimers", true) == 0)
-			{
-				Accessors.A_AllowTimers = !(Options.OnOff(obj1.As()) ?? false);
-			}
-			else if (string.Compare(subFunc, "priority", true) == 0)
-			{
-				Threads.GetThreadVariables().priority = obj1.Al();
-			}
-			else if (string.Compare(subFunc, "interrupt", true) == 0)
-			{
-				Script.uninterruptibleTime = obj1.Ai(Script.uninterruptibleTime);
-			}
+			if (string.Compare(sf, "notimers", true) == 0)
+				Accessors.A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
+			else if (string.Compare(sf, "priority", true) == 0)
+				Threads.GetThreadVariables().priority = value1.Al();
+			else if (string.Compare(sf, "interrupt", true) == 0)
+				Script.uninterruptibleTime = value1.Ai(Script.uninterruptibleTime);
 		}
 
-		internal static bool ExitAppInternal(ExitReasons obj0, object obj1 = null)
+		/// <summary>
+		/// Internal helper to handle exiting the script.
+		/// </summary>
+		/// <param name="exitReason">The <see cref="ExitReason"/> for exiting the script.</param>
+		/// <param name="exitCode">The exit code to return from the script when it exits.</param>
+		/// <returns>True if exiting was interrupted by a non empty callback return value, else false.</returns>
+		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null)
 		{
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
-			var exitCode = Script.isReadyToExecute ? obj1.Al() : (long)ExitReasons.Critical;
-			Accessors.A_ExitReason = obj0.ToString();
+			var ec = Script.isReadyToExecute ? exitCode.Ai() : (int)ExitReasons.Critical;
+			Accessors.A_ExitReason = exitReason.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;
 			var result = Script.onExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
 
 			//If it wasn't a critical shutdown and any exit handlers returned a non empty value, abort the exit.
-			if (obj0 >= ExitReasons.None && result.IsCallbackResultNonEmpty())
+			if (exitReason >= ExitReasons.None && result.IsCallbackResultNonEmpty())
 			{
 				Accessors.A_ExitReason = "";
 				AllowInterruption = allowInterruption_prev;
@@ -534,11 +573,15 @@ namespace Keysharp.Core
 				}, true);
 			}
 
-			Environment.ExitCode = (int)exitCode;
+			Environment.ExitCode = ec;
 			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 			return false;
 		}
 
+		/// <summary>
+		/// Internal helper to create and start the main timer.
+		/// This is used whenever a joystick hook is present.
+		/// </summary>
 		internal static void SetMainTimer()
 		{
 			if (mainTimer == null)
@@ -549,13 +592,21 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal static void SleepWithoutInterruption(object obj = null)
+		/// <summary>
+		/// Internal helper to call <see cref="Sleep"/> in between the toggling of <see cref="AllowInterruption"/> off then back oin.
+		/// </summary>
+		/// <param name="duration">The time in milliseconds to sleep for.</param>
+		internal static void SleepWithoutInterruption(object duration = null)
 		{
 			AllowInterruption = false;
-			Sleep(obj);
+			Sleep(duration);
 			AllowInterruption = true;
 		}
 
+		/// <summary>
+		/// Internal helper to stop the main timer and set it to null.
+		/// This is used when exiting the script.
+		/// </summary>
 		internal static void StopMainTimer()
 		{
 			if (mainTimer != null)
@@ -565,6 +616,17 @@ namespace Keysharp.Core
 			}
 		}
 
+		/// <summary>
+		/// Internal helper to wrap an <see cref="Action"/> within a try/catch block.<br/>
+		/// This is done because the try/catch blocks have a lot of scaffolding code that is needed for handling<br/>
+		/// threads and error conditions and it would be very verbose and unmaintainable to repeat it everywhere.
+		/// </summary>
+		/// <param name="action">The action to perform in the try block.</param>
+		/// <param name="pop">True to pop the current thread by calling <see cref="Threads.EndThread(bool, bool)"/> when an exception is caught.<br/>
+		/// Pass true for this when the action internally calls <see cref="Threads.BeginThread(bool)"/> before executing code that<br/>
+		/// could potentially thrown an exception.
+		/// </param>
+		/// <returns>True if no errors occurred, else false if any catch blocks were reached.</returns>
 		internal static bool TryCatch(Action action, bool pop)
 		{
 			try
@@ -613,6 +675,9 @@ namespace Keysharp.Core
 			}
 		}
 
+		/// <summary>
+		/// The various reasons for exiting the script.
+		/// </summary>
 		internal enum ExitReasons
 		{
 			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, Single

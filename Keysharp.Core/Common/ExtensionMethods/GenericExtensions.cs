@@ -216,7 +216,7 @@
 							}
 
 							Threads.EndThread(true);
-						}, true);//Pop on exception because the Pop above won't be called.
+						}, true);//Pop on exception because EndThread() above won't be called.
 					}
 
 					Script.HwndLastUsed = oldHandle;

@@ -353,6 +353,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
 	+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
 	+ Timers are not disabled when the program menu is shown.
+* A new timer function `EnabledTimerCount()` which returns the number of currently enabled timers in existence.
 * Using an underscore `_` to discard the result of an expression is supported the same way it is in C# like:
 	+ `_ := myfunc()`
 * `super` is not restricted to being used within a class's code. It can be accessed outside of the class like so:
@@ -486,7 +487,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `OnMessage()` doesn't observe any of the behavior mentioned in the documentation regarding the message check interval because it's implemented in a different way.
 	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
-	+ The pause menu item has been removed.
+	+ The pause menu item and `Pause()` function have been removed.
 * `ObjAddRef()` and `ObjPtrAddRef()` do not have an effect for non-COM objects. Instead, use the following:
 	+ `newref := theobj ; adds 1 to the reference count`
 	+ `newref := "" ; subtracts 1 from the reference count`
@@ -503,7 +504,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
 * The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
 	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
-* When passing `"Interrupt"` as the second argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
+* When passing `"Interrupt"` as the first argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
 * Tooltips do not automatically disappear when clicking on them.
 
 ## Code acknowledgements ##
