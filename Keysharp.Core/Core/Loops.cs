@@ -2,16 +2,30 @@ using EnumerationOptions = System.IO.EnumerationOptions;
 
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for loops-related functions.
+	/// </summary>
 	public static class Loops
 	{
 		/// <summary>
-		/// LoopStack is marked as [ThreadStatic] because it must actually be thread safe for real threads.
+		/// The stack which keeps track of all loops currently running in the script.<br/>
+		/// This is marked as [ThreadStatic] because it must actually be thread safe for real threads.
 		/// </summary>
 		[ThreadStatic]
 		private static Stack<LoopInfo> loopStack;
 
+		/// <summary>
+		/// Getter for the <see cref="loopStack"/> member.<br/>
+		/// This lazy initializes it for each thread.
+		/// </summary>
 		internal static Stack<LoopInfo> LoopStack => loopStack ?? (loopStack = new Stack<LoopInfo>());
 
+		/// <summary>
+		/// Increments the loop counter variable for the current loop.<br/>
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		/// <returns>The newly incremented count of the most recent loop, else 0 if no loops.</returns>
 		public static long Inc()
 		{
 			var s = LoopStack;
@@ -19,10 +33,10 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Perform a series of commands repeatedly: either the specified number of times or until break is encountered.
+		/// Performs one or more statements repeatedly: either the specified number of times or until break is encountered.
 		/// </summary>
-		/// <param name="n">How many times (iterations) to perform the loop.</param>
-		/// <returns></returns>
+		/// <param name="n">How many times (iterations) to perform the loop. -1 to iterate indefinitely.</param>
+		/// <returns>Yield return an <see cref="IEnumerable"/> which allows the caller can run the loop.</returns>
 		public static IEnumerable Loop(object obj)
 		{
 			if (!(obj is string ss) || ss != string.Empty)
@@ -45,71 +59,35 @@ namespace Keysharp.Core
 				//function may exit prematurely if the caller does a goto or break out
 				//of the loop. In which case, all code below the yield return statement
 				//would not get executed. So the burden is shifted to the caller to pop.
+				//Problem: What if an exception gets thrown in the loop? Pop() will never get called.
 			}
 		}
 
-		/// <summary>
-		/// Retrieves each element of an array with its key if any.
-		/// </summary>
-		/// <param name="array">An array or object.</param>
-		/// <returns>The current element.</returns>
-		public static IEnumerable LoopEach(object array)
-		{
-			if (array == null)
-				yield break;
-
-			var info = new LoopInfo { type = LoopType.Each };
-			var s = LoopStack;
-			s.Push(info);
-			var type = array.GetType();
-
-			if (array is Map map)
-			{
-				foreach (var (k, v) in map)
-				{
-					if (Flow.hasExited)
-						break;
-
-					info.result = new[] { k, v };
-					info.index++;
-					yield return info.result;
-				}
-			}
-			else if (typeof(IEnumerable).IsAssignableFrom(type))
-			{
-				var enumerator = ((IEnumerable)array).GetEnumerator();
-
-				while (enumerator.MoveNext())
-				{
-					if (Flow.hasExited)
-						break;
-
-					info.result = new[] { null, enumerator.Current };
-					info.index++;
-					yield return info.result;
-				}
-			}
-
-			_ = s.Pop();
-		}
 
 		/// <summary>
 		/// Retrieves the specified files or folders, one at a time.
 		/// </summary>
-		/// <param name="path">The name of a single file or folder, or a wildcard pattern.</param>
-		/// <param name="mode">One of the following digits, or blank to use the default:
-		/// <list>
-		/// <item><code>D</code> Include directories (folders).</item>
-		/// <item><code>F</code> Include files. If both F and D are omitted, files are included but not folders.</item>
-		/// <item><code>R</code> Recurse into subdirectories (subfolders). All subfolders will be recursed into, not just those whose names match FilePattern. If R is omitted, files and folders in subfolders are not included.</item>
-		/// </list>
+		/// <param name="filePattern">The name of a single file or folder, or a wildcard pattern such as "C:\Temp\*.tmp".<br/>
+		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// Both asterisks and question marks are supported as wildcards.<br/>
+		/// A match occurs when the pattern appears in either the file's long/normal name or its 8.3 short name (on Windows).<br/>
+		/// If this parameter is a single file or folder (i.e. no wildcards) and Mode includes R, more than one match will be<br/>
+		/// found if the specified file name appears in more than one of the folders being searched.
 		/// </param>
-		public static IEnumerable LoopFile(object obj0, object obj1 = null)
+		/// <param name="mode">If blank or omitted, only files are included and subdirectories are not recursed into.<br/>
+		/// Otherwise, specify one or more of the following letters:<br/>
+		///     D: Include directories (folders).<br/>
+		///     F: Include files. If both F and D are omitted, files are included but not folders.<br/>
+		///     R: Recurse into subdirectories (subfolders). All subfolders will be recursed into, not just those whose names match filePattern.<br/>
+		/// If R is omitted, files and folders in subfolders are not included.<br/>
+		/// </param>
+		/// <returns>Yield return an <see cref="IEnumerable"/> for each file/folder so the caller can run the loop.</returns>
+		public static IEnumerable LoopFile(object filePattern, object mode = null)
 		{
 			bool d = false, f = true, r = false;
 			var info = Push(LoopType.Directory);
-			var path = obj0.As();
-			var mode = obj1.As();
+			var path = filePattern.As();
+			var m = mode.As();
 			//Dialogs.MsgBox(Path.GetFullPath(path));
 			//Dialogs.MsgBox(Accessors.A_WorkingDir);
 
@@ -117,11 +95,11 @@ namespace Keysharp.Core
 			if (!path.StartsWith("\\\\") && !char.IsLetter(path[0]) && path[0] != '.' && path[0] != '/')
 				path = "." + Path.DirectorySeparatorChar + path;
 
-			if (!string.IsNullOrEmpty(mode))
+			if (!string.IsNullOrEmpty(m))
 			{
-				d = mode.Contains('d', StringComparison.OrdinalIgnoreCase);
-				f = mode.Contains('f', StringComparison.OrdinalIgnoreCase);
-				r = mode.Contains('r', StringComparison.OrdinalIgnoreCase);
+				d = m.Contains('d', StringComparison.OrdinalIgnoreCase);
+				f = m.Contains('f', StringComparison.OrdinalIgnoreCase);
+				r = m.Contains('r', StringComparison.OrdinalIgnoreCase);
 			}
 
 			if (!d && !f)
@@ -144,6 +122,12 @@ namespace Keysharp.Core
 			//Caller must call Pop() after the loop exits.
 		}
 
+		/// <summary>
+		/// Returns the loop counter variable for the current loop.<br/>
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		/// <returns>The count of the most recent loop, else 0 if no loops.</returns>
 		public static long LoopIndex()
 		{
 			var s = LoopStack;
@@ -153,26 +137,25 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Retrieves substrings (fields) from a string, one at a time.
 		/// </summary>
-		/// <param name="input">The string to parse.</param>
-		/// <param name="delimiters">One of the following:
-		/// <list>
-		/// <item>the word <code>CSV</code> to parse in comma seperated value format;</item>
-		/// <item>a sequence of characters to treat as delimiters;</item>
-		/// <item>blank to parse each character of the string.</item>
-		/// </list>
+		/// <param name="input">The string to analyze.</param>
+		/// <param name="delimiterChars">If blank or omitted, each character of the input string will be treated as a separate substring.<br/>
+		/// If this parameter is "CSV", the string will be parsed in standard comma separated value format.<br/>
+		/// Otherwise, specify one or more characters (case-sensitive), each of which is used to determine where the boundaries between substrings occur.
 		/// </param>
-		/// <param name="omit">An optional list of characters (case sensitive) to exclude from the beginning and end of each substring.</param>
-		/// <returns></returns>
-		public static IEnumerable LoopParse(object obj0, object obj1 = null, object obj2 = null)
+		/// <param name="omitChars">If blank or omitted, no characters will be excluded. Otherwise, specify a list of characters (case-sensitive) to exclude from the beginning and end of each substring.<br/>
+		/// If delimiterChars is blank, omitChars indicates which characters should be excluded from consideration (the loop will not see them).
+		/// </param>
+		/// <returns>Yield return an <see cref="IEnumerable"/> for each string so the caller can run the loop.</returns>
+		public static IEnumerable LoopParse(object input, object delimiterChars = null, object omitChars = null)
 		{
-			var input = obj0.As();
-			var delimiters = obj1.As();
-			var omit = obj2.As();
+			var i = input.As();
+			var delimiters = delimiterChars.As();
+			var omit = omitChars.As();
 			var info = Push(LoopType.Parse);
 
 			if (delimiters.ToLowerInvariant() == Keywords.Keyword_CSV)
 			{
-				var reader = new StringReader(input);
+				var reader = new StringReader(i);
 				var part = new StringBuilder();
 				bool str = false, next = false;
 
@@ -241,9 +224,9 @@ namespace Keysharp.Core
 				var remove = omit.ToCharArray();
 
 				if (string.IsNullOrEmpty(delimiters))
-					parts = input.ToCharArray().Select(x => x.ToString().Trim(remove)).Where(x => x != string.Empty).ToArray();
+					parts = i.ToCharArray().Select(x => x.ToString().Trim(remove)).Where(x => x != string.Empty).ToArray();
 				else
-					parts = input.Split(delimiters.ToCharArray(), StringSplitOptions.None).Select(x => x.Trim(remove)).Where(x => x != string.Empty).ToArray();
+					parts = i.Split(delimiters.ToCharArray(), StringSplitOptions.None).Select(x => x.Trim(remove)).Where(x => x != string.Empty).ToArray();
 
 				foreach (var part in parts)
 				{
@@ -262,13 +245,17 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Retrieves the lines in a text file, one at a time.
 		/// </summary>
-		/// <param name="input">The name of the text file whose contents will be read by the loop</param>
-		/// <param name="output">The optional name of the file to be kept open for the duration of the loop. If "*", then write to standard output.</param>
-		/// <returns>Yield return each line in the input file</returns>
-		public static IEnumerable LoopRead(object obj0, object obj1 = null)
+		/// <param name="inputFile">The name of the text file whose contents will be read by the loop, which is assumed to be in <see cref="A_WorkingDir"/><br/>
+		/// if an absolute path isn't specified.<br/>
+		/// The file's lines may end in carriage return and linefeed (`r`n), just linefeed (`n), or just carriage return (`r).</param>
+		/// <param name="outputFile">The optional name of the file to be kept open for the duration of the loop<br/>
+		/// which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// If "*", then write to standard output.</param>
+		/// <returns>Yield return an <see cref="IEnumerable"/> for each line in the input file so the caller can run the loop.</returns>
+		public static IEnumerable LoopRead(object inputFile, object outputFile = null)
 		{
-			var input = obj0.As();
-			var output = obj1.As();
+			var input = inputFile.As();
+			var output = outputFile.As();
 			var info = Push(LoopType.File);
 			//Dialogs.MsgBox(Path.GetFullPath(input));
 
@@ -296,40 +283,32 @@ namespace Keysharp.Core
 			//Caller must call Pop() after the loop exits.
 		}
 
-#if WINDOWS
 
+
+#if WINDOWS
 		/// <summary>
 		/// Retrieves the contents of the specified registry subkey, one item at a time.
 		/// </summary>
-		/// <param name="root">Must be either:
-		/// HKEY_LOCAL_MACHINE (or HKLM)
-		/// HKEY_USERS (or HKU)
-		/// HKEY_CURRENT_USER (or HKCU)
-		/// HKEY_CLASSES_ROOT (or HKCR)
-		/// HKEY_CURRENT_CONFIG (or HKCC)
-		/// HKEY_PERFORMANCE_DATA (or HKPD)
+		/// <param name="keyName">The full name of the registry key, e.g. "HKLM\Software\SomeApplication".<br/>
+		/// This must start with HKEY_LOCAL_MACHINE(or HKLM), HKEY_USERS(or HKU), HKEY_CURRENT_USER(or HKCU), HKEY_CLASSES_ROOT(or HKCR), or HKEY_CURRENT_CONFIG(or HKCC).<br/>
+		/// To access a remote registry, prepend the computer name and a backslash, e.g. "\\workstation01\HKLM".
 		/// </param>
-		/// <param name="key">The name of the key (e.g. Software\SomeApplication). If blank or omitted, the contents of RootKey will be retrieved.</param>
-		/// <param name="subkeys">
-		/// <list>
-		/// <item><code>1</code> subkeys contained within Key are not retrieved (only the values);</item>
-		/// <item><code>1</code> all values and subkeys are retrieved;</item>
-		/// <item><code>2</code> only the subkeys are retrieved (not the values).</item>
-		/// </list>
-		/// </param>
-		/// <param name="recurse"><code>1</code> to recurse into subkeys, <code>0</code> otherwise.</param>
-		/// <returns></returns>
-		public static IEnumerable LoopRegistry(object obj0, object obj1 = null)
+		/// <param name="mode">If blank or omitted, only values are included and subkeys are not recursed into. Otherwise, specify one or more of the following letters:<br/>
+		///     K: Include keys.<br/>
+		///     V: Include values. Values are also included if both K and V are omitted.<br/>
+		///     R: Recurse into subkeys. If R is omitted, keys and values within subkeys of KeyName are not included.</param>
+		/// <returns>Yield return an <see cref="IEnumerable"/> for each registry item so the caller can run the loop.</returns>
+		public static IEnumerable LoopRegistry(object keyName, object mode = null)
 		{
 			bool k = false, v = true, r = false;
-			var keyname = obj0.As();
-			var mode = obj1.As();
+			var keyname = keyName.As();
+			var m = mode.As();
 
-			if (!string.IsNullOrEmpty(mode))
+			if (!string.IsNullOrEmpty(m))
 			{
-				k = mode.Contains('k', StringComparison.OrdinalIgnoreCase);
-				v = mode.Contains('v', StringComparison.OrdinalIgnoreCase);
-				r = mode.Contains('r', StringComparison.OrdinalIgnoreCase);
+				k = m.Contains('k', StringComparison.OrdinalIgnoreCase);
+				v = m.Contains('v', StringComparison.OrdinalIgnoreCase);
+				r = m.Contains('r', StringComparison.OrdinalIgnoreCase);
 			}
 
 			if (!k && !v)
@@ -411,6 +390,14 @@ namespace Keysharp.Core
 
 #endif
 
+		/// <summary>
+		/// Gets an enumerator out of either an <see cref="IEnumerable"/> or an <see cref="IEnumerator"/>.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		/// <param name="obj">The object to get the enumerator for.</param>
+		/// <returns>An <see cref="IEnumerator"/> for the object.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is not an <see cref="IEnumerable"/> or an <see cref="IEnumerator"/>.</exception>
 		public static IEnumerator MakeBaseEnumerator(object obj)
 		{
 			if (obj is IEnumerable ie)
@@ -421,6 +408,19 @@ namespace Keysharp.Core
 				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.");
 		}
 
+		/// <summary>
+		/// Gets an enumerator out of various collection types.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		/// <param name="obj">The object to get the enumerator for.</param>
+		/// <returns>An <see cref="IEnumerator{object,object}"/> for the object.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is null or is not any of:<br/>
+		///     <see cref="IEnumerable{object,object}"/><br/>
+		///     <see cref="IEnumerator{object,object}"/><br/>
+		///     <see cref="object[]"/><br/>
+		///     <see cref="IEnumerable"/><br/>
+		/// </exception>
 		public static IEnumerator<(object, object)> MakeEnumerator(object obj)
 		{
 			if (obj is IEnumerable<(object, object)> ie0)
@@ -437,6 +437,13 @@ namespace Keysharp.Core
 				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, objecT>.");
 		}
 
+		/// <summary>
+		/// Removes the current loop from the stack.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// If the loop type was <see cref="LoopType.File"/>, the file is closed before returning.
+		/// </summary>
+		/// <returns>The popped loop if any, else null.</returns>
 		public static LoopInfo Pop()
 		{
 			var s = LoopStack;
@@ -448,6 +455,13 @@ namespace Keysharp.Core
 			return info;
 		}
 
+		/// <summary>
+		/// Pushes a new loop onto the stack.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		/// <param name="t">The type of loop to push. Default: <see cref="LoopType.Normal"/>.</param>
+		/// <returns>The newly pushed loop object.</returns>
 		public static LoopInfo Push(LoopType t = LoopType.Normal)
 		{
 			var info = new LoopInfo { type = t };
@@ -455,6 +469,10 @@ namespace Keysharp.Core
 			return info;
 		}
 
+		/// <summary>
+		/// Internal helper to get the most recent loop of type <see cref="LoopType.Directory"/>.
+		/// </summary>
+		/// <returns>The most recent directory loop if found, else null.</returns>
 		internal static LoopInfo GetDirLoop()
 		{
 			var s = LoopStack;
@@ -474,6 +492,10 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		/// <summary>
+		/// Internal helper to get the filename of the most recent loop of type <see cref="LoopType.Directory"/>.
+		/// </summary>
+		/// <returns>The filename of the most recent directory loop if found, else null.</returns>
 		internal static string GetDirLoopFilename()
 		{
 			var s = LoopStack;
@@ -494,10 +516,11 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Internal helper to get a full path with exact casing.
 		/// Gotten from https://stackoverflow.com/questions/325931/getting-actual-file-name-with-proper-casing-on-windows-with-net
 		/// </summary>
-		/// <param name="pathName"></param>
-		/// <returns></returns>
+		/// <param name="pathName">The path to examine.</param>
+		/// <returns>The properly cased full path to pathName.</returns>
 		internal static string GetExactPath(string pathName)
 		{
 			if (!(File.Exists(pathName) || Directory.Exists(pathName)))
@@ -517,6 +540,11 @@ namespace Keysharp.Core
 			}
 		}
 
+		/// <summary>
+		/// Return the 8.3 short path on Windows.
+		/// </summary>
+		/// <param name="filename">The long path to get a short path for.</param>
+		/// <returns>The shortpath of filename.</returns>
 		internal static string GetShortPath(string filename)
 		{
 #if WINDOWS
@@ -528,6 +556,10 @@ namespace Keysharp.Core
 #endif
 		}
 
+		/// <summary>
+		/// Returns the most recent loop item without removing it.
+		/// </summary>
+		/// <returns>The most recent loop item if found, else null.</returns>
 		internal static LoopInfo Peek() => LoopStack.PeekOrNull();
 
 		internal static LoopInfo Peek(LoopType looptype)
@@ -539,6 +571,15 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		/// <summary>
+		/// Internal helper to recursively traverse a file path based on a pattern.
+		/// </summary>
+		/// <param name="path">See parameters for <see cref="LoopFile"/>.</param>
+		/// <param name="pattern">See parameters for <see cref="LoopFile"/>.</param>
+		/// <param name="d">See parameters for <see cref="LoopFile"/>.</param>
+		/// <param name="f">See parameters for <see cref=See parameters An Yield return aref="LoopFile"/>."IEnumerable{string}"/>.</pa of the filesram>
+		/// <param name="r">See parameters for <see cref=See parameters An Yield return aref="LoopFile"/>."IEnumerable{string}"/>.</pa of the filesram>
+		/// <returns>Yield return an <see cref="IEnumerable{string}"/> of the files and folders found.</returns>
 		private static IEnumerable<string> GetFiles(string path, string pattern, bool d, bool f, bool r)
 		{
 			var queue = new Queue<string>();
@@ -607,6 +648,14 @@ namespace Keysharp.Core
 
 #if WINDOWS
 
+		/// <summary>
+		/// Internal helper to get registry subkeys.
+		/// </summary>
+		/// <param name="info">The current loop object.</param>
+		/// <param name="key">The key to examine.</param>
+		/// <param name="k">Whether to get keys.</param>
+		/// <param name="v">Whether to get values.</param>
+		/// <returns>An <see cref="IEnumerable"/> of the registry keys and values.</returns>
 		private static IEnumerable GetSubKeys(LoopInfo info, RegistryKey key, bool k, bool v)
 		{
 			//try
@@ -657,6 +706,12 @@ namespace Keysharp.Core
 			//}
 		}
 
+		/// <summary>
+		/// Internal helper to get registry values as strings.
+		/// </summary>
+		/// <param name="info">The current loop object.</param>
+		/// <param name="key">They key to get values for.</param>
+		/// <returns>An <see cref="IEnumerable"/> of the values as strings.</returns>
 		private static IEnumerable ProcessRegValues(LoopInfo info, RegistryKey key)
 		{
 			var valuenames = key.GetValueNames();
@@ -680,6 +735,13 @@ namespace Keysharp.Core
 			}
 		}
 
+		/// <summary>
+		/// Internal helper to return information about a registry key.
+		/// The information will be placed in the <see cref="StringBuilder"/> member
+		/// of the current thread.
+		/// </summary>
+		/// <param name="regkey">The registry key to query.</param>
+		/// <returns>Non negative number on success, else negative.</returns>
 		private static long QueryInfoKey(RegistryKey regkey)
 		{
 			var tv = Threads.GetThreadVariables();
@@ -702,6 +764,11 @@ namespace Keysharp.Core
 #endif
 	}
 
+	/// <summary>
+	/// Class to facilitate loops.
+	/// This should never be called directly by the user and instead is used<br/>
+	/// in the generated C# code.
+	/// </summary>
 	public class LoopInfo
 	{
 		public object file;
@@ -716,14 +783,12 @@ namespace Keysharp.Core
 		public object regVal;
 		public object result;
 		public TextWriter sw;
-
 		public LoopType type = LoopType.Normal;
-
-		public LoopInfo()
-		{
-		}
 	}
 
+	/// <summary>
+	/// Enum for the various types of supported loops.
+	/// </summary>
 	public enum LoopType
 	{
 		Normal,
@@ -733,6 +798,6 @@ namespace Keysharp.Core
 		Directory,
 		Parse,
 		File,
-		Each,
+		Each
 	}
 }

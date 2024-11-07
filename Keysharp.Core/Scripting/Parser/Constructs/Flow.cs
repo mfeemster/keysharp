@@ -271,10 +271,6 @@ namespace Keysharp.Scripting
 								break;
 #endif
 
-							case "EACH":
-								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopEach;
-								break;
-
 							case "FILES":
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopFile;
 								break;
