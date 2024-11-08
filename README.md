@@ -418,6 +418,18 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ This is needed to resolve the proper overloaded method.
 	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
 * `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
+* New function `Mail(recipients, subject, message, options)` to send an email.
+	+ `recipients`: A list of receivers of the message.
+	+ `subject`: Subject of the message.
+	+ `message`: Message body.
+	+ `options`: A `Map` with any the following optional key/value pairs:
+		+ "attachments": A string or `Array` of strings of file paths to send as attachments.
+		+ "bcc": A string or `Array` of strings of blind carbon copy recipients.
+		+ "cc": A string or `Array` of strings of carbon copy recipients.
+		+ "from": A string of comma separated from address.
+		+ "replyto": A string of comma separated reply address.
+		+ "host": The SMTP client hostname and port string in the form "hostname:port".
+		+ "header": A string of additional header information.
 * Preprocessor directives are supported using the familiar syntax of C#.
 	+ `#if symbol` is used to enable a section of code if symbol is defined.
 	+ By default, the following are defined:

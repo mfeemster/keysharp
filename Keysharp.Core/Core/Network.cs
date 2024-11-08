@@ -1,17 +1,25 @@
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for network-related functions.
+	/// </summary>
 	public static class Network
 	{
 		/// <summary>
 		/// Downloads a resource from the internet.
 		/// AHK difference: does not allow specifying flags other than 0.
 		/// </summary>
-		/// <param name="address">The URI (or URL) of the resource.</param>
-		/// <param name="filename">The file path to receive the downloaded data. An existing file will be overwritten.</param>
-		public static void Download(object obj0, object obj1)
+		/// <param name="address">URL of the file to download.<br/>
+		/// For example, "https://someorg.org" might retrieve the welcome page for that organization.
+		/// </param>
+		/// <param name="filename">Specify the name of the file to be created locally, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// Any existing file will be overwritten by the new file.<br/>
+		/// </param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
+		public static void Download(object url, object filename)
 		{
-			var address = obj0.As();
-			var filename = obj1.As();
+			var address = url.As();
+			var file = filename.As();
 			var flags = -1;
 
 			if (address.StartsWith('*'))
@@ -43,7 +51,7 @@ namespace Keysharp.Core
 
 						using (var response = await client.GetStreamAsync(address))
 						{
-							using (var fs = new FileStream(filename, FileMode.Create))
+							using (var fs = new FileStream(file, FileMode.Create))
 							{
 								await response.CopyToAsync(fs);
 								return true;
@@ -51,38 +59,12 @@ namespace Keysharp.Core
 						}
 					}
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					throw;//Do not pass ex because it will reset the stack information.
+					throw new Error(ex.Message);
 				}
 			});
 			t.Wait();
-		}
-
-		/// <summary>
-		/// Resolves a host name or IP address.
-		/// </summary>
-		/// <param name="name">The host name.</param>
-		/// <returns>A dictionary with the following key/value pairs:
-		/// <list type="bullet">
-		/// <item><term>Host</term>: <description>the host name.</description></item>
-		/// <item><term>Addresses</term>: <description>the list of IP addresses.</description></item>
-		/// </list>
-		/// </returns>
-		public static Dictionary<string, object> GetHostEntry(string name)
-		{
-			var entry = Dns.GetHostEntry(name);
-			var ips = new string[entry.AddressList.Length];
-
-			for (var i = 0; i < ips.Length; i++)
-				ips[i] = entry.AddressList[0].ToString();
-
-			var info = new Dictionary<string, object>
-			{
-				{ "Host", entry.HostName },
-				{ "Addresses", ips }
-			};
-			return info;
 		}
 
 		/// <summary>
@@ -91,24 +73,25 @@ namespace Keysharp.Core
 		/// <param name="recipients">A list of receivers of the message.</param>
 		/// <param name="subject">Subject of the message.</param>
 		/// <param name="message">Message body.</param>
-		/// <param name="options">A dictionary with any the following optional key/value pairs:
-		/// <list type="bullet">
-		/// <item><term>Attachments</term>: <description>a list of file paths to send as attachments.</description></item>
-		/// <item><term>Bcc</term>: <description>a list of blind carbon copy recipients.</description></item>
-		/// <item><term>CC</term>: <description>a list of carbon copy recipients.</description></item>
-		/// <item><term>From</term>: <description>the from address.</description></item>
-		/// <item><term>ReplyTo</term>: <description>the reply address.</description></item>
-		/// <item><term>Host</term>: <description>the SMTP client hostname and port.</description></item>
-		/// <item><term>(Header)</term>: <description>any additional header and corresponding value.</description></item>
-		/// </list>
+		/// <param name="options">A <see cref="Map"/> with any the following optional key/value pairs:<br/>
+		/// attachments: A string or <see cref="Array"/> of strings of file paths to send as attachments.<br/>
+		/// bcc: A string or <see cref="Array"/> of strings of blind carbon copy recipients.<br/>
+		/// cc: A string or <see cref="Array"/> of strings of carbon copy recipients.<br/>
+		/// from: A string of comma separated from address.<br/>
+		/// replyto: A string of comma separated reply address.<br/>
+		/// host: The SMTP client hostname and port string in the form "hostname:port".<br/>
+		/// header: A string of additional header information.
 		/// </param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
 		public static void Mail(object recipients, string subject, string message, Map options = null)
 		{
 			var msg = new MailMessage { Subject = subject, Body = message };
 			msg.From = new MailAddress(string.Concat(Environment.UserName, "@", Environment.UserDomainName));
 
-			if (recipients is string S)
-				msg.To.Add(new MailAddress(S));
+			if (recipients is string s)
+			{
+				msg.To.Add(new MailAddress(s));
+			}
 			else if (recipients is IEnumerable enumerable)
 			{
 				foreach (var item in enumerable)
@@ -133,8 +116,8 @@ namespace Keysharp.Core
 
 				string[] value;
 
-				if (val is string s)
-					value = [s];
+				if (val is string s2)
+					value = [s2];
 				//else if (val is string[] sa)//Probably would never be a raw array of strings.
 				//  value = sa;
 				else if (val is Array arr)
@@ -211,6 +194,34 @@ namespace Keysharp.Core
 			}
 		}
 
+		/// <summary>
+		/// Returns an <see cref="Array"/> of the system's IPv4 addresses.
+		/// </summary>
+		/// <returns>An <see cref="Array"/> where each element is an IPv4 address string such as "192.168.0.1".</returns>
 		public static Array SysGetIPAddresses() => Accessors.A_IPAddress;
+
+		/// <summary>
+		/// Internal helper which resolves a host name or IP address.
+		/// </summary>
+		/// <param name="name">The host name to resolve.</param>
+		/// <returns>A <see cref="Dictionary{string, object}"/> with the following key/value pairs:<br/>
+		///     Host: The host name.<br/>
+		///     Addresses: The list of IP addresses.
+		/// </returns>
+		internal static Dictionary<string, object> GetHostEntry(string name)
+		{
+			var entry = Dns.GetHostEntry(name);
+			var ips = new string[entry.AddressList.Length];
+
+			for (var i = 0; i < ips.Length; i++)
+				ips[i] = entry.AddressList[0].ToString();
+
+			var info = new Dictionary<string, object>
+			{
+				{ "Host", entry.HostName },
+				{ "Addresses", ips }
+			};
+			return info;
+		}
 	}
 }
