@@ -391,7 +391,7 @@ namespace Keysharp.Scripting
 				case Operator.RegEx:
 				{
 					object outvar = null;
-					_ = Strings.RegExMatch(ForceString(left), ForceString(right), ref outvar, 1);
+					_ = RegEx.RegExMatch(ForceString(left), ForceString(right), ref outvar, 1);
 					return outvar;
 				}
 

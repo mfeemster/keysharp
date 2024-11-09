@@ -287,7 +287,9 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the user of always having to specify it.
 * New string functions:
-	+ `NormalizeEol(str, eol) => String` to take in a string and make all line endings match the value passed in, or the default for the current environment.
+	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
+	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
+	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
 	+ 'Join(separator, params*) => String` to join each parameter together as a string, separated by `separator`.
 		+ Pass params as `params*` if it's a collection.

@@ -635,7 +635,7 @@
 			{
 				arr = new List<byte>(list.Count);
 
-				foreach (var (val, index) in array)
+				foreach (var (index, val) in array)
 				{
 					if (val is byte b)
 						arr.Add(b);

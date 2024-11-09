@@ -1,54 +1,141 @@
-using Keysharp.Core.Common.Cryptography;
-
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for strings-related functions.
+	/// </summary>
 	public static class Strings
 	{
-		internal static Lock locker = new ();
-		internal static RegexEntry regdkt = [];
 		private static readonly object[] nullPlaceholder = [null];
 
 		/// <summary>
-		/// Decodes a base 64 character string to binary data.
+		/// Decodes a Base64 character string to an <see cref="Array"/> of binary data.
 		/// </summary>
-		/// <param name="s">The base 64 string to decode.</param>
-		/// <returns>A binary byte array of the given sequence.</returns>
-		public static byte[] Base64Decode(string s) => Convert.FromBase64String(s);
+		/// <param name="str">The Base64 string to decode.</param>
+		/// <returns>The decoded Base64 string as an <see cref="Array"/> of bytes.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
+		public static Array Base64Decode(object str)
+		{
+			var s = str.As();
+
+			try
+			{
+				return new (Convert.FromBase64String(s));
+			}
+			catch (Exception ex)
+			{
+				throw new Error($"Error decoding base64 string {s}: {ex.Message}");
+			}
+		}
 
 		/// <summary>
-		/// Encodes binary data to a base 64 character string.
+		/// Encodes binary data to a Base64 character string.
 		/// </summary>
 		/// <param name="value">The data to encode.</param>
-		/// <returns>A base 64 string representation of the given binary data.</returns>
+		/// <returns>A Base64 string representation of the given binary data.</returns>
 		public static string Base64Encode(object value) => Convert.ToBase64String(Crypt.ToByteArray(value));
 
 		/// <summary>
-		/// Returns the single character corresponding to a Unicode value.
+		/// Returns the string corresponding to number.<br/>
+		/// This is always a single Unicode character, but for practical reasons,<br/>
+		/// Unicode supplementary characters (where number is in the range 0x10000 to 0x10FFFF) are counted as two characters.
 		/// </summary>
-		/// <param name="n">A Unicode value.</param>
-		/// <returns>A Unicode character whose value is <paramref name="n"/>.</returns>
-		public static string Chr(object obj) => ((char)obj.Al()).ToString();
+		/// <param name="number">A Unicode value.</param>
+		/// <returns>The string corresponding to number. This is always a single Unicode character.</returns>
+		public static string Chr(object number) => char.ConvertFromUtf32(number.Ai());
 
-		public static long EndsWith(object obj0, object obj1, object obj2 = null) => obj0.As().EndsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
+		/// <summary>
+		/// Determines if a string ends with a given string, using the current culture.
+		/// </summary>
+		/// <param name="str">The string to examine the end of.</param>
+		/// <param name="str2">The string to search for.</param>
+		/// <param name="ignoreCase">True to ignore case, else case sensitive. Default: case sensitive.</param>
+		/// <returns>1 if str ended with str2, else 0.</returns>
+		public static long EndsWith(object str, object str2, object ignoreCase = null) => str.As().EndsWith(str2.As(), ignoreCase.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
 
 		/// <summary>
 		/// Formats a string using the same syntax used by string.Format(), except it uses 1-based indexing.
 		/// Traditional AHK formatting syntax is not supported.
+		/// <see cref="https://learn.microsoft.com/en-us/dotnet/api/system.string.format"/>
 		/// </summary>
-		/// <param name="obj"></param>
-		/// <returns></returns>
-		public static string Format(object obj0, params object[] obj) => string.Format(obj0.As(), nullPlaceholder.Concat(obj));
+		/// <param name="str">The format string.</param>
+		/// <param name="args">The arguments to pass to the format string.</param>
+		/// <returns>The newly formatted string.</returns>
+		public static string Format(object str, params object[] args) => string.Format(str.As(), nullPlaceholder.Concat(args));
 
 		/// <summary>
 		/// Transforms a YYYYMMDDHH24MISS timestamp into the specified date/time format.
 		/// </summary>
-		/// <param name="stamp">Leave this parameter blank to use the current local date and time.
-		/// Otherwise, specify all or the leading part of a timestamp in the YYYYMMDDHH24MISS format.</param>
+		/// <param name="stamp">If blank or omitted, it defaults to the current local date and time.<br/>
+		/// Otherwise, specify all or the leading part of a timestamp in the YYYYMMDDHH24MISS format.
+		/// </param>
 		/// <param name="format">
-		/// <para>If omitted, it defaults to the time followed by the long date,
-		/// both of which will be formatted according to the current user's locale.</para>
-		/// <para>Otherwise, specify one or more of the date-time formats,
-		/// along with any literal spaces and punctuation in between.</para>
+		/// If blank or omitted, it defaults to the time followed by the long date, both of which will be<br/>
+		/// formatted according to the current user's locale. For example: 4:55 PM Saturday, November 27, 2004.<br/>
+		/// Otherwise, specify one or more of the date-time formats from the tables below, along with any literal spaces<br/>
+		/// and punctuation in between (commas do not need to be escaped; they can be used normally).<br/>
+		/// Date formats:
+		///     d    : Day of the month without leading zero (1 – 31).<br/>
+		///     dd   : Day of the month with leading zero(01 – 31).<br/>
+		///     ddd  : Abbreviated name for the day of the week (e.g.Mon) in the current user's language.<br/>
+		///     dddd : Full name for the day of the week (e.g.Monday) in the current user's language.<br/>
+		///     M    : Month without leading zero (1 – 12).<br/>
+		///     MM   : Month with leading zero (01 – 12).<br/>
+		///     MMM  : Abbreviated month name (e.g.Jan) in the current user's language.<br/>
+		///     MMMM : Full month name (e.g.January) in the current user's language.<br/>
+		///     y    : Year without century, without leading zero (0 – 99).<br/>
+		///     yy   : Year without century, with leading zero (00 – 99).<br/>
+		///     yyyy : Year with century.For example: 2005.<br/>
+		///     gg   : Period/era string for the current user's locale (blank if none).<br/>
+		/// Time formats:
+		///     h   : Hours without leading zero; 12-hour format (1 – 12).<br/>
+		///     hh  : Hours with leading zero; 12-hour format (01 – 12).<br/>
+		///     H   : Hours without leading zero; 24-hour format (0 – 23).<br/>
+		///     HH  : Hours with leading zero; 24-hour format (00 – 23).<br/>
+		///     m   : Minutes without leading zero (0 – 59).<br/>
+		///     mm  : Minutes with leading zero (00 – 59).<br/>
+		///     s   : Seconds without leading zero (0 – 59).<br/>
+		///     ss  : Seconds with leading zero (00 – 59).<br/>
+		///     t   : Single character time marker, such as A or P (depends on locale).<br/>
+		///     tt  : Multi-character time marker, such as AM or PM (depends on locale).<br/>
+		/// Standalone formats:
+		///     (Blank)   : Leave Format blank to produce the time followed by the long date. For example, in some locales it might appear as 4:55 PM Saturday, November 27, 2004.<br/>
+		///     Time      : Time representation for the current user's locale, such as 5:26 PM.<br/>
+		///     ShortDate : Short date representation for the current user's locale, such as 02/29/04.<br/>
+		///     LongDate  : Long date representation for the current user's locale, such as Friday, April 23, 2004.<br/>
+		///     YearMonth : Year and month format for the current user's locale, such as February, 2004.<br/>
+		///     YDay      : Day of the year without leading zeros(1 – 366).<br/>
+		///     YDay0     : Day of the year with leading zeros(001 – 366).<br/>
+		///     WDay      : Day of the week (1 – 7). Sunday is 1.<br/>
+		///     YWeek     : The ISO 8601 full year and week number.For example: 200453.<br/>
+		///     If the week containing January 1st has four or more days in the new year, it is considered week 1.<br/>
+		///     Otherwise, it is the last week of the previous year, and the next week is week 1.<br/>
+		///     Consequently, both January 4th and the first Thursday of January are always in week 1.<br/>
+		/// Additional options:
+		///     The following options can appear inside the YYYYMMDDHH24MISS parameter immediately after the timestamp<br/>
+		///     (if there is no timestamp, they may be used alone).<br/>
+		///     R: Reverse. Have the date come before the time (meaningful only when Format is blank).<br/>
+		///     Ln: If this option is not present, the current user's locale is used to format the string.<br/>
+		///     To use the system's locale instead, specify LSys. To use a specific locale, specify the letter L followed by a<br/>
+		///     hexadecimal or decimal locale identifier (LCID).<br/>
+		///     Dn: Date options. Specify for n one of the following numbers:<br/>
+		///     0          : Force the default options to be used. This also causes the short date to be in effect.<br/>
+		///     1          : Use short date (meaningful only when Format is blank; not compatible with 2 and 8).<br/>
+		///     2          : Use long date (meaningful only when Format is blank; not compatible with 1 and 8).<br/>
+		///     4          : Use alternate calendar (if any).<br/>
+		///     8          : Use Year-Month format (meaningful only when Format is blank; not compatible with 1 and 2).<br/>
+		///     0x10       : Add marks for left-to-right reading order layout.<br/>
+		///     0x20       : Add marks for right-to-left reading order layout.<br/>
+		///     0x80000000 : Do not obey any overrides the user may have in effect for the system's default date format.<br/>
+		///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.<br/>
+		/// Tn: Time options. Specify for n one of the following numbers:<br/>
+		///     0          : Force the default options to be used.This also causes minutes and seconds to be shown.<br/>
+		///     1          : Omit minutes and seconds.<br/>
+		///     2          : Omit seconds.<br/>
+		///     4          : Omit time marker (e.g.AM/PM).<br/>
+		///     8          : Always use 24-hour time rather than 12-hour time.<br/>
+		///     12         : Combination of the above two.<br/>
+		///     0x80000000 : Do not obey any overrides the user may have in effect for the system's default time format.<br/>
+		///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.
 		/// </param>
 		/// <returns>The formatted date/time string</returns>
 		public static string FormatTime(object obj0 = null, object obj1 = null)
@@ -182,48 +269,89 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Returns the position of the first or last occurrence of the specified substring within a string.
+		/// Searches for a given occurrence of a string, from the left or the right.
 		/// </summary>
-		/// <param name="input">The string to check.</param>
-		/// <param name="needle">The substring to search for.</param>
-		/// <param name="caseSensitive"><c>true</c> to use a case sensitive comparison, <c>false</c> otherwise.</param>
-		/// <param name="startingPos">The one-based starting character position, default 1, negative for reverse order.</param>
-		/// <param name="occurrence">The one-based nth occurrence to find.</param>
-		/// <returns>The one-based index of the position of <paramref name="needle"/> in <paramref name="input"/>.
-		/// A value of zero indicates no match.</returns>
-		public static long InStr(object obj0, object obj1, object obj2 = null, object obj3 = null, object obj4 = null)
+		/// <param name="haystack">The string whose content is searched.</param>
+		/// <param name="needle">The string to search for.</param>
+		/// <param name="caseSensitive">If omitted, it defaults to Off. Otherwise, specify one of the following values:<br/>
+		///     On or 1 (true)  : The search is case-sensitive.<br/>
+		///     Off or 0 (false): The search is not case-sensitive, i.e.the letters A-Z are considered identical to their lowercase counterparts.<br/>
+		///     Locale          : The search is not case-sensitive according to the rules of the current user's locale.<br/>
+		///     For example, most English and Western European locales treat not only the letters A-Z as identical to their lowercase counterparts,<br/>
+		///     but also non-ASCII letters like Ä and Ü as identical to theirs.
+		/// </param>
+		/// <param name="startingPos">If omitted, the entire string is searched.<br/>
+		/// Otherwise, specify the position at which to start the search, where 1 is the first character, 2 is the second character, and so on.<br/>
+		/// Negative values count from the end of haystack, so -1 is the last character, -2 is the second-last, and so on.<br/>
+		/// If occurrence is omitted, a negative startingPos causes the search to be conducted from right to left.<br/>
+		/// However, startingPos has no effect on the direction of the search if occurrence is specified.<br/>
+		/// If the absolute value of StartingPos is greater than the length of Haystack, 0 is returned.
+		/// </param>
+		/// <param name="occurrence">
+		/// If omitted, it defaults to the first match in haystack.<br/>
+		/// The search is conducted from right to left if startingPos is negative; otherwise it is conducted from left to right.<br/>
+		/// If occurrence is positive, the search is always conducted from left to right.<br/>
+		/// Specify 2 for Occurrence to return the position of the second match, 3 for the third match, etc.<br/>
+		/// If occurrence is negative, the search is always conducted from right to left.<br/>
+		/// For example, -2 searches for the second occurrence from the right.
+		/// </param>
+		/// <returns>This function returns the position of an occurrence of the string needle in the string haystack.<br/>
+		/// Position 1 is the first character; this is because 0 is synonymous with "false", making it an intuitive "not found" indicator.<br/>
+		/// Regardless of the values of startingPos or Occurrence, the return value is always relative to the first character of Haystack.
+		/// </returns>
+		public static long InStr(object haystack, object needle, object caseSensitive = null, object startingPos = null, object occurrence = null)
 		{
-			var input = obj0.As();
-			var needle = obj1.As();
-			var comp = obj2.As();
-			var startPos = obj3.Ai(1);
-			var occurrence = obj4.Ai(1);
+			var input = haystack.As();
+			var n = needle.As();
+			var comp = caseSensitive.As();
+			var startPos = startingPos.Ai(1);
+			var o = occurrence.Ai(1);
 
 			if (input != "")
 			{
-				if (string.IsNullOrEmpty(needle))
+				if (string.IsNullOrEmpty(n))
 					throw new ValueError("Search string was empty");
 
 				var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
 				const int offset = 1;//Everything is 1-based indexing.
 				return startPos < 0
-					   ? offset + input.LastNthIndexOf(needle, startPos, occurrence, cs)
+					   ? offset + input.LastNthIndexOf(n, startPos, o, cs)
 					   : startPos == 0 || startPos > input.Length ? 0 :
-					   offset + input.NthIndexOf(needle, startPos - 1, occurrence, cs);
+					   offset + input.NthIndexOf(n, startPos - 1, o, cs);
 			}
 
 			return 0L;
 		}
 
-		public static string Join(object sep, params object[] obj) => string.Join(sep.ToString(), obj);
+		/// <summary>
+		/// Joins together the string representation of all array elements, separated by the specified separator.
+		/// </summary>
+		/// <param name="sep">The separator to use between each item.</param>
+		/// <param name="args">The parameters to join together as a string.</param>
+		/// <returns>The newly joined string of all arguments separated by the specified separator.</returns>
+		public static string Join(object sep, params object[] args) => string.Join(sep.ToString(), args);
 
-		public static string LTrim(object obj0, object obj1 = null) => obj0.As().TrimStart(obj1.As(" \t").ToCharArray());
+		/// <summary>
+		/// Trims characters from the beginning of a string.
+		/// </summary>
+		/// <param name="str">Any string value or variable. Numbers are not supported.</param>
+		/// <param name="omitChars">If omitted, spaces and tabs will be removed.<br/>
+		/// Otherwise, specify a list of characters (case-sensitive) to exclude from the beginning of the specified string.
+		/// </param>
+		/// <returns>Returns the trimmed version of the specified string.</returns>
+		public static string LTrim(object str, object omitChars = null) => str.As().TrimStart(omitChars.As(" \t").ToCharArray());
 
-		public static string NormalizeEol(object obj0, object obj1 = null)
+		/// <summary>
+		/// Makes all line endings in a string match the value passed in, or the default for the current environment.
+		/// </summary>
+		/// <param name="str">The string whose line endings will be normalized.</param>
+		/// <param name="endOfLine">The line ending character to use. Default: newline for the current environment.</param>
+		/// <returns>A new copy of the string with all line endings set to the specified value.</returns>
+		public static string NormalizeEol(object str, object endOfLine = null)
 		{
 			const string CR = "\r", LF = "\n", CRLF = "\r\n";
-			var text = obj0.As();
-			var eol = obj1.As(Environment.NewLine);
+			var text = str.As();
+			var eol = endOfLine.As(Environment.NewLine);
 
 			switch (eol)
 			{
@@ -243,241 +371,121 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Returns the ordinal value (numeric character code) of the first character in the specified string.
 		/// </summary>
-		/// <param name="str">A string.</param>
-		/// <returns>The Unicode value.
-		/// If <paramref name="str"/> is empty, <c>0</c> is returned.</returns>
-		public static long Ord(object obj)
+		/// <param name="str">The string whose ordinal value is retrieved.</param>
+		/// <returns>
+		/// The ordinal value of the string, or 0 if String is empty.<br/>
+		/// If the string begins with a Unicode supplementary character, returns the corresponding Unicode character code (a number between 0x10000 and 0x10FFFF).<br/>
+		/// Otherwise returns a value in the range 0 to 0xFFFF (for Unicode).
+		/// </returns>
+		public static long Ord(object str)
 		{
-			var str = obj.As();
-			return string.IsNullOrEmpty(str) ? 0L : str[0];
+			var s = str.As();
+			return !string.IsNullOrEmpty(s) ? char.ConvertToUtf32(s, 0) : 0L;
 		}
-
-		public static long RegExMatch(object obj0, object obj1)
-		{
-			object outvar = null;
-			return RegExMatch(obj0, obj1, ref outvar, null);
-		}
-
-		public static long RegExMatch(object obj0, object obj1, ref object outvar) => RegExMatch(obj0, obj1, ref outvar, null);
 
 		/// <summary>
-		/// Determines whether a string contains a pattern (regular expression).
+		/// Trims characters from the end of a string.
 		/// </summary>
-		/// <param name="input">The input string.</param>
-		/// <param name="needle">The pattern to search for, which is a regular expression.</param>
-		/// <param name="outputvar">The RegEx object to store the results in.</param>
-		/// <param name="index">The one-based starting character position.
-		/// If this is less than one it is considered an offset from the end of the string.</param>
-		/// <returns>The RegExResults object which contains the matches, if any.</returns>
-		public static long RegExMatch(object obj0, object obj1, ref object outvar, object obj2)
-		{
-			var input = obj0.As();
-			var needle = obj1.As();
-			var index = obj2.Ai(1);
-			var reverse = index < 1;
-			var str = needle + reverse;
-			RegexWithTag exp = null;
-
-			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
-			{
-				if (!regdkt.TryGetValue(str, out exp))
-				{
-					try
-					{
-						exp = Conversions.ParseRegEx(needle, reverse);//This will not throw PCRE style errors like the documentation says.
-					}
-					catch (Exception ex)
-					{
-						throw new Error("Regular expression compile error", "", ex.Message);
-					}
-
-					exp.tag = str;
-					regdkt.Add(exp);
-
-					while (regdkt.Count > 100)
-						regdkt.RemoveAt(0);
-				}
-			}
-
-			if (index < 0)
-			{
-				index = input.Length + index + 1;
-
-				if (index < 0)
-					index = input.Length;
-			}
-			else
-				index = Math.Min(Math.Max(0, index - 1), input.Length);
-
-			try
-			{
-				var res = new RegExResults(exp.Match(input, index));
-				outvar = res;
-				return res.Pos();
-			}
-			catch (Exception ex)
-			{
-				throw new Error("Regular expression execution error", "", ex.Message);
-			}
-		}
-
-		public static string RegExReplace(object obj0, object obj1, object obj2 = null)
-		{
-			object outputVarCount = null;
-			return RegExReplace(obj0, obj1, obj2, ref outputVarCount);
-		}
-
-		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount) => RegExReplace(obj0, obj1, obj2, ref outputVarCount, null, null);
-
-		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount, object obj3) => RegExReplace(obj0, obj1, obj2, ref outputVarCount, obj3, null);
+		/// <param name="str">Any string value or variable. Numbers are not supported.</param>
+		/// <param name="omitChars">If omitted, spaces and tabs will be removed.<br/>
+		/// Otherwise, specify a list of characters (case-sensitive) to exclude from the endof the specified string.
+		/// </param>
+		/// <returns>Returns the trimmed version of the specified string.</returns>
+		public static string RTrim(object str, object omitChars = null) => str.As().TrimEnd(omitChars.As(" \t").ToCharArray());
 
 		/// <summary>
-		/// Replaces occurrences of a pattern (regular expression) inside a string.
+		/// Arranges a variable's contents in alphabetical, numerical, or random order (optionally removing duplicates).
 		/// </summary>
-		/// <param name="input">The input string.</param>
-		/// <param name="needle">The pattern to search for, which is a regular expression.</param>
-		/// <param name="replace">The string to replace <paramref name="needle"/>.</param>
-		/// <param name="count">The variable to store the number of replacements that occurred.</param>
-		/// <param name="limit">The maximum number of replacements to perform.
-		/// If this is below one all matches will be replaced.</param>
-		/// <param name="index">The one-based starting character position.
-		/// If this is less than one it is considered an offset from the end of the string.</param>
-		/// <returns>A version of Haystack whose contents have been replaced by the operation. If no replacements are needed, Haystack is returned unaltered.</returns>
-		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount, object obj3, object obj4)
+		/// <param name="str">The string to sort.</param>
+		/// <param name="options">If blank or omitted, str will be sorted in ascending alphabetical order (case-insensitive),<br/>
+		/// using a linefeed (`n) as separator. Otherwise, specify a string of one or more options from the options section below<br/>
+		/// (in any order, with optional spaces in between).
+		/// C, C1 or COn: Case-sensitive sort (ignored if the N option is also present).<br/>
+		/// <br/>
+		/// C0 or COff: Case-insensitive sort.<br/>
+		/// The uppercase letters A-Z are considered identical to their lowercase counterparts for the purpose of the sort.<br/>
+		/// This is the default mode if none of the other case sensitivity options are used.<br/>
+		/// <br/>
+		/// CL or CLocale: Case-insensitive sort based on the current user's locale.<br/>
+		/// For example, most English and Western European locales treat the letters A-Z and ANSI letters like Ä and Ü as identical<br/> to their lowercase counterparts.<br/>
+		/// This method also uses a "word sort", which treats hyphens and apostrophes in such a way that words like "coop" and "co-op" stay together.<br/>
+		/// Depending on the content of the items being sorted, the performance will be 1 to 8 times worse than the default method of insensitivity.<br/>
+		/// <br/>
+		/// CLogical: Like CLocale, but digits in the strings are considered as numerical content rather than text.<br/>
+		/// For example, "A2" is considered less than "A10". However, if two numbers differ only by the presence of a leading zero,<br/>
+		/// the string with leading zero may be considered less than the other string. The exact behavior may differ between OS versions.<br/>
+		/// <br/>
+		/// Dx: Specifies x as the delimiter character, which determines where each item begins and ends.<br/>
+		/// The delimiter is always case-sensitive. If this option is not present, x defaults to linefeed (`n). In most cases this will work<br/>
+		/// even if lines end with CR+LF (`r`n), but the carriage return (`r) is included in comparisons and therefore affects the sort order.<br/>
+		/// For example, "B`r`nA" will sort as expected, but "A`r`nA`t`r`nB" will place A`t`r before A`r.<br/>
+		/// <br/>
+		/// N: Numeric sort. Each item is assumed to be a number rather than a<br/>
+		/// string (for example, if this option is not present, the string 233 is considered to be less than the string 40 due to alphabetical ordering).<br/>
+		/// Both decimal and hexadecimal strings (e.g. 0xF1) are considered to be numeric.<br/>
+		/// Strings that do not start with a number are considered to be zero for the purpose of the sort.<br/>
+		/// Numbers are treated as 64-bit floating point values so that the decimal portion of each number (if any) is taken into account.<br/>
+		/// <br/>
+		/// Pn: Sorts items based on character position n (do not use hexadecimal for n).<br/>
+		/// If this option is not present, n defaults to 1, which is the position of the first character.<br/>
+		/// The sort compares each string to the others starting at its nth character.<br/>
+		/// If n is greater than the length of any string, that string is considered to be blank for the purpose of the sort.<br/>
+		/// When used with option N (numeric sort), the string's character position is used, which is not necessarily the same as<br/>
+		/// the number's digit position.<br/>
+		/// <br/>
+		/// R: Sorts in reverse order (alphabetically or numerically depending on the other options).<br/>
+		/// <br/>
+		/// Random: Sorts in random order. This option causes all other options except D, Z, and U to be ignored<br/>
+		/// (though N, C, and CL still affect how duplicates are detected). Examples:<br/>
+		/// <br/>
+		/// MyVar := Sort(MyVar, "Random")<br/>
+		/// MyVar := Sort(MyVar, "Random Z D|")<br/>
+		/// U: Removes duplicate items from the list so that every item is unique.<br/>
+		/// If the C option is in effect, the case of items must match for them to be considered identical.<br/>
+		/// If the N option is in effect, an item such as 2 would be considered a duplicate of 2.0.<br/>
+		/// If either the P or \ (backslash) option is in effect, the entire item must be a duplicate,<br/>
+		/// not just the substring that is used for sorting.<br/>
+		/// If the Random option or custom sorting is in effect, duplicates are removed only if they appear adjacent to each other<br/>
+		/// as a result of the sort. For example, when "A|B|A" is sorted randomly, the result could contain either one or two A's.<br/>
+		/// <br/>
+		/// Z: To understand this option, consider a variable that contains "RED`nGREEN`nBLUE`n".<br/>
+		/// If the Z option is not present, the last linefeed (`n) is considered to be part of the last item,<br/>
+		/// and thus there are only 3 items. But by specifying Z, the last `n (if present) will be considered to<br/>
+		/// delimit a blank item at the end of the list, and thus there are 4 items (the last being blank).<br/>
+		/// <br/>
+		/// \: Sorts items based on the substring that follows the last backslash in each.<br/>
+		/// If an item has no backslash, the entire item is used as the substring.<br/>
+		/// This option is useful for sorting bare filenames (i.e. excluding their paths), such as the example below,<br/>
+		/// in which the AAA.txt line is sorted above the BBB.txt line because their directories are ignored for the purpose of the sort:<br/>
+		/// <br/>
+		/// C:\BBB\AAA.txt<br/>
+		/// C:\AAA\BBB.txt<br/>
+		/// <br/>
+		/// Note: Options N and P are ignored when the \ (backslash) option is present.
+		/// </param>
+		/// <param name="callback">If omitted, no custom sorting will be performed.<br/>
+		/// Otherwise, specify the name of a function or function object to call that compares any two items in the list.<br/>
+		/// The callback accepts three parameters and can be defined as follows:<br/>
+		///     The first item.<br/>
+		///     The second item.<br/>
+		///     The offset (in characters) of the second item from the first as seen in the original/unsorted list (see examples).
+		/// You can omit one or more parameters from the end of the callback's parameter list if the corresponding information is not needed,<br/>
+		/// but in this case an asterisk must be specified as the final parameter, e.g. MyCallback(param1, *).<br/>
+		/// When the callback deems the first parameter to be greater than the second, it should return a positive integer;<br/>
+		/// when it deems the two parameters to be equal, it should return 0, "", or nothing; otherwise, it should return a negative integer.
+		/// </param>
+		/// <returns>The sorted version of the specified string.</returns>
+		public static string Sort(object str, object options = null, object callback = null)
 		{
-			var input = obj0.As();
-			var needle = obj1.As();
-			var replace = obj2.As();
-			var limit = obj3.Ai(-1);
-			var index = obj4.Ai(1);
-			var n = 0;
-			var reverse = index < 1;
-			var str = needle + reverse;
-			RegexWithTag exp = null;
-
-			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
-			{
-				if (!regdkt.TryGetValue(str, out exp))
-				{
-					try
-					{
-						exp = Conversions.ParseRegEx(needle, reverse);
-					}
-					catch (ArgumentException ex)
-					{
-						throw new Error("Regular expression compile error", "", ex.Message);
-					}
-
-					exp.tag = str;
-					regdkt.Add(exp);
-
-					while (regdkt.Count > 100)
-						regdkt.RemoveAt(0);
-				}
-			}
-
-			if (limit < 1)
-				limit = int.MaxValue;
-
-			if (index < 0)
-			{
-				index = input.Length + index + 1;
-
-				if (index < 0)
-					index = input.Length;
-			}
-			else
-				index = Math.Min(Math.Max(0, index - 1), input.Length);
-
-			string match(Match hit)
-			{
-				n++;
-				return hit.Result(replace);
-			}
-
-			try
-			{
-				var result = exp.Replace(input, match, limit, index);
-				outputVarCount = (long)n;
-				return result;
-			}
-			catch (Exception ex)
-			{
-				throw new Error("Regular expression execution error", "", ex.Message);
-			}
-		}
-
-		public static string RTrim(object obj0, object obj1 = null) => obj0.As().TrimEnd(obj1.As(" \t").ToCharArray());
-
-		/// <summary>
-		/// Arranges a variable's contents in alphabetical, numerical, or random order optionally removing duplicates.
-		/// </summary>
-		/// <param name="input">The variable whose contents to use as the input.</param>
-		/// <param name="options">See the remarks.</param>
-		/// <remarks>
-		/// <list type="table">
-		/// <listheader>
-		/// <term>Name</term>
-		/// <description>Description</description>
-		/// </listheader>
-		/// <item>
-		/// <term>C</term>
-		/// <description>Case sensitive.</description>
-		/// </item>
-		/// <item>
-		/// <term>CL</term>
-		/// <description>Case sensitive based on current user's locale.</description>
-		/// </item>
-		/// <item>
-		/// <term>D<c>x</c></term>
-		/// <description>Specifies <c>x</c> as the delimiter character which is <c>`n</c> by default.</description>
-		/// </item>
-		/// <item>
-		/// <term>F <c>name</c></term>
-		/// <description>Use the return value of the specified function for comparing two items.</description>
-		/// </item>
-		/// <item>
-		/// <term>N</term>
-		/// <description>Numeric sorting.</description>
-		/// </item>
-		/// <item>
-		/// <term>P<c>n</c></term>
-		/// <description>Sorts items based on character position <c>n</c>.</description>
-		/// </item>
-		/// <item>
-		/// <term>R</term>
-		/// <description>Sort in reverse order.</description>
-		/// </item>
-		/// <item>
-		/// <term>Random</term>
-		/// <description>Sort in random order.</description>
-		/// </item>
-		/// <item>
-		/// <term>U</term>
-		/// <description>Remove any duplicate items.</description>
-		/// </item>
-		/// <item>
-		/// <term>Z</term>
-		/// <description>Considers a trailing delimiter as a boundary which otherwise would be ignored.</description>
-		/// </item>
-		/// <item>
-		/// <term>\</term>
-		/// <description>File path sorting.</description>
-		/// </item>
-		/// </list>
-		/// </remarks>
-		public static string Sort(object obj0, object obj1 = null, object obj2 = null)
-		{
-			var input = obj0.As();
-			var options = obj1.As();
-			var splits = options.Split(' ');
-			var opts = Options.KeyValues(string.Join(",", splits), true, ['f']);
+			var input = str.As();
+			var opts = options.As();
+			var splits = opts.Split(' ');
 			IFuncObj function = null;
 			var split = '\n';
 			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
 
-			if (obj2 != null)
-				function = Functions.GetFuncObj(obj2, null, true);//If supplied, throw if bad.
+			if (callback != null)
+				function = Functions.GetFuncObj(callback, null, true);//If supplied, throw if bad.
 
 			if (!string.IsNullOrEmpty(dopt))
 			{
@@ -661,13 +669,42 @@ namespace Keysharp.Core
 			return string.Join(split.ToString(), list);
 		}
 
-		public static long StartsWith(object obj0, object obj1, object obj2 = null) => obj0.As().StartsWith(obj1.As(), obj2.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
+		/// <summary>
+		/// Determines if a string starts with a given string, using the current culture.
+		/// </summary>
+		/// <param name="str">The string to examine the start of.</param>
+		/// <param name="str2">The string to search for.</param>
+		/// <param name="ignoreCase">True to ignore case, else case sensitive. Default: case sensitive.</param>
+		/// <returns>1 if str started with str2, else 0.</returns>
+		public static long StartsWith(object str, object str2, object ignoreCase = null) => str.As().StartsWith(str2.As(), ignoreCase.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
 
-		public static long StrCompare(object obj0, object obj1, object obj2 = null)
+		/// <summary>
+		/// Compares two strings alphabetically.
+		/// </summary>
+		/// <param name="str1">The first string to be compared.</param>
+		/// <param name="str2">The second string to be compared.</param>
+		/// <param name="caseSense">If omitted, it defaults to Off. Otherwise, specify one of the following values:<br/>
+		///     On or 1 (true): The comparison is case-sensitive.<br/>
+		///     Off or 0 (false): The comparison is not case-sensitive, i.e. the letters A-Z are considered identical to their lowercase counterparts.<br/>
+		///     Locale: The comparison is not case-sensitive according to the rules of the current user's locale.<br/>
+		///     For example, most English and Western European locales treat not only the letters A-Z as identical to their lowercase counterparts,<br/>
+		///     but also non-ASCII letters like Ä and Ü as identical to theirs.<br/>
+		///     Locale is 1 to 8 times slower than Off depending on the nature of the strings being compared.<br/>
+		///     Logical: Like Locale, but digits in the strings are considered as numerical content rather than text.<br/>
+		///     For example, "A2" is considered less than "A10". However, if two numbers differ only by the presence of a leading zero,<br/>
+		///     the string with leading zero may be considered less than the other string.
+		/// </param>
+		/// <returns>
+		/// To indicate the relationship between str1 and str2, this function returns one of the following:<br/>
+		///     0, if str1 is identical to str2.<br/>
+		///     a positive integer, if str1 is greater than str2.<br/>
+		///     a negative integer, if str1 is less than str2.
+		/// </returns>
+		public static long StrCompare(object str1, object str2, object caseSense = null)
 		{
-			var s1 = obj0.As();
-			var s2 = obj1.As();
-			var s3 = obj2.As();
+			var s1 = str1.As();
+			var s2 = str2.As();
+			var s3 = caseSense.As();
 
 			if (s1 != "" || s2 != "")
 			{
@@ -687,38 +724,53 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static string StrGet(object obj0, object obj1 = null, object obj2 = null)
+		/// <summary>
+		/// Copies a string from a memory address or buffer, optionally converting it from a given code page.
+		/// </summary>
+		/// <param name="source">A <see cref="Buffer"/>-like object containing the string, or the memory address of the string.</param>
+		/// <param name="length">If omitted (or when using 2-parameter mode), it defaults to the current length of the string,<br/>
+		/// provided the string is null-terminated. Otherwise, specify the maximum number of characters to read.
+		/// </param>
+		/// <param name="enc">If omitted, the string is simply copied without any conversion taking place.<br/>
+		/// Otherwise, specify the source encoding; for example, "UTF-8", "UTF-16" or "CP936".<br/>
+		/// For numeric identifiers, the prefix "CP" can be omitted only in 3-parameter mode.<br/>
+		/// Specify an empty string or "CP0" to use the system default ANSI code page.
+		/// </param>
+		/// <returns>This function returns the copied or converted string. If the source encoding was specified correctly,<br/>
+		/// the return value always uses the native encoding.
+		/// </returns>
+		/// <exception cref="ValueError">Throws a <see cref="ValueError"/> exception if source is null or 0.</exception>
+		public static string StrGet(object source, object length = null, object enc = null)
 		{
-			var s = obj2 as string;
-			var hasThree = obj2 != null;
+			var hasThree = enc != null;
 			var encoding = Encoding.Unicode;
 			var len = long.MinValue;
 
 			if (hasThree)
 			{
-				len = obj1.Al(long.MinValue);
-				encoding = Files.GetEncoding(s);
+				len = length.Al(long.MinValue);
+				encoding = Files.GetEncoding(enc.As());
 			}
 			else//Second argument could have been either length or encoding.
 			{
-				var l = obj1 != null ? obj1.ParseLong(false) : long.MinValue;
+				var l = length != null ? length.ParseLong(false) : long.MinValue;
 
 				if (l != null)
 					len = l.Value;
-				else if (obj1 is string encstr)
+				else if (length is string encstr)
 					encoding = Files.GetEncoding(encstr);
 				else
 					encoding = Encoding.Unicode;
 			}
 
 			var ptr = IntPtr.Zero;
-			var buf = obj0 as Buffer;
+			var buf = source as Buffer;
 
 			if (buf != null)
 				ptr = buf.Ptr;
-			else if (obj0 is long l)
+			else if (source is long l)
 				ptr = new IntPtr(l);
-			else if (obj0 is IntPtr p)
+			else if (source is IntPtr p)
 				ptr = p;
 
 			if (ptr == IntPtr.Zero)
@@ -755,27 +807,62 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static string String(object obj) => obj.As();
-
-		public static StringBuffer StringBuffer(object obj0, object obj1 = null) => new StringBuffer(obj0.As(), obj1.Ai(256));
+		/// <summary>
+		/// Converts a value to a string.
+		/// </summary>
+		/// <param name="value">The value to convert.</param>
+		/// <returns>The result of converting value to a string, or value itself if it was a string.</returns>
+		public static string String(object value) => value.As();
 
 		/// <summary>
-		/// Returns the length of a string.
+		/// Creates a <see cref="StringBuffer"/> object.
+		/// This should be used in place of pointers when calling a raw API function that takes a pointer argument
+		/// which will be written to.
 		/// </summary>
-		/// <param name="input">The input string.</param>
-		/// <returns>The total length of the string, including any invisbile characters such as null.</returns>
-		public static long StrLen(object obj) => obj.As().Length;
+		/// <param name="str">An initial value to place inside of the buffer. Default: empty.</param>
+		/// <param name="capacity">An initial capacity for the <see cref="StringBuffer"/>'s internal buffer. Default: 256.</param>
+		/// <returns>The newly created <see cref="StringBuffer"/>.</returns>
+		public static StringBuffer StringBuffer(object str = null, object capacity = null) => new StringBuffer(str.As(), capacity.Ai(256));
+
+		/// <summary>
+		/// Retrieves the count of how many characters are in a string.
+		/// </summary>
+		/// <param name="str">The string whose contents will be measured.</param>
+		/// <returns>The length of the specified string.</returns>
+		public static long StrLen(object str) => str.As().Length;
 
 		/// <summary>
 		/// Converts a string to lowercase.
 		/// </summary>
-		/// <param name="input">The string to convert to lower</param>
-		/// <param name="title"><c>true</c> to use title casing, <c>false</c> otherwise.</param>
-		/// <returns>The converted string.</returns>
-		public static string StrLower(object obj) => obj.As().ToLowerInvariant();
+		/// <param name="str">The string to convert to lowercase.</param>
+		/// <returns>The newly converted version of the string.</returns>
+		public static string StrLower(object str) => str.As().ToLowerInvariant();
 
+		/// <summary>
+		/// Unsupported.
+		/// </summary>
+		/// <param name="obj">Ignored</param>
+		/// <returns>None</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static long StrPtr(object obj) => throw new Error("Cannot take the address of a string in C#, so just use the string as is.");
 
+		/// <summary>
+		/// Copies a string to a memory address or buffer, optionally converting it to a given code page.
+		/// </summary>
+		/// <param name="str">Any string. If a number is given, it is automatically converted to a string.</param>
+		/// <param name="target">A Buffer-like object or memory address to which the string will be written.</param>
+		/// <param name="length">The maximum number of characters to write, including the null-terminator if required.</param>
+		/// <param name="encoding">If omitted, the string is simply copied or measured without any conversion taking place.<br/>
+		/// Otherwise, specify the target encoding; for example, "UTF-8", "UTF-16" or "CP936".<br/>
+		/// For numeric identifiers, the prefix "CP" can be omitted only in 4-parameter mode.<br/>
+		/// Specify an empty string or "CP0" to use the system default ANSI code page.
+		/// </param>
+		/// <returns>In 4- or 3-parameter mode, this function returns the number of bytes written.<br/>
+		/// In 2-parameter mode, this function returns the required buffer size in bytes, including space for the null-terminator.
+		/// </returns>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> is thrown if invalid parameters are detected,<br/>
+		/// such as if the converted string would be longer than allowed by length or target.Size.
+		/// </exception>
 		public static long StrPut(params object[] obj)//Leave this as variadic because the parameter scheme is complex.
 		{
 			if (obj.Length > 0 && obj[0] != null)
@@ -832,6 +919,9 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
+		/// <summary>
+		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
+		/// </summary>
 		public static string StrReplace(object obj0, object obj1, object obj2 = null, object obj3 = null)
 		{
 			object obj4 = null;
@@ -839,6 +929,9 @@ namespace Keysharp.Core
 			return StrReplace(obj0, obj1, obj2, obj3, ref outputVarCount, obj4);
 		}
 
+		/// <summary>
+		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
+		/// </summary>
 		public static string StrReplace(object obj0, object obj1, object obj2, object obj3, ref object outputVarCount)
 		{
 			object obj4 = null;
@@ -848,19 +941,31 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Replaces the specified substring with a new string.
 		/// </summary>
-		/// <param name="input">The variable whose contents to use as the input.</param>
-		/// <param name="search">The substring to search for.</param>
-		/// <param name="replace">The string to replace <paramref name="search"/>.</param>
-		/// <param name="outvarcount">The variable name to store the number of replacements in, if not empty.</param>
-		/// <param name="limit">The maximum number of replacements to make.</param>
-		/// <returns>The modified string.</returns>
-		public static string StrReplace(object obj0, object obj1, object obj2, object obj3, ref object outputVarCount, object obj4)
+		/// <param name="haystack">The string whose content is searched and replaced.</param>
+		/// <param name="needle">The string to search for.</param>
+		/// <param name="replaceText">If blank or omitted, needle will be replaced with blank (empty),<br/>
+		/// meaning it will be omitted from the return value.<br/>
+		/// Otherwise, specify the string to replace Needle with.
+		/// </param>
+		/// <param name="caseSense">If omitted, it defaults to Off. Otherwise, specify one of the following values:
+		/// On or 1 (true): The search is case-sensitive.
+		/// Off or 0 (false): The search is not case-sensitive, i.e.the letters A-Z are considered identical to their lowercase counterparts.
+		/// Locale: The search is not case-sensitive according to the rules of the current user's locale.<br/>
+		/// For example, most English and Western European locales treat not only the letters A-Z as identical to their lowercase counterparts, but also non-ASCII letters like Ä and Ü as identical to theirs. Locale is 1 to 8 times slower than Off depending on the nature of the strings being compared.
+		/// </param>
+		/// <param name="outvarcount">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the number of replacements that occurred (0 if none).</param>
+		/// <param name="limit">If omitted, it defaults to -1, which replaces all occurrences of the pattern found in haystack.<br/>
+		/// Otherwise, specify the maximum number of replacements to allow.
+		/// </param>
+		/// <returns>The newly modified string.</returns>
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, ref object outputVarCount, object limit)
 		{
-			var input = obj0.As();
-			var search = obj1.As();
-			var replace = obj2.As();
-			var comp = obj3.As("Off");
-			var limit = obj4.Al(-1);
+			var input = haystack.As();
+			var search = needle.As();
+			var replace = replaceText.As();
+			var comp = caseSense.As("Off");
+			var lim = limit.Al(-1);
 
 			if (IsAnyBlank(input, search))
 			{
@@ -875,7 +980,7 @@ namespace Keysharp.Core
 
 			while (z < input.Length &&
 					(z = input.IndexOf(search, z, compare)) != -1 &&
-					(limit < 0 || ct < limit))
+					(lim < 0 || ct < lim))
 			{
 				if (n < z)
 					_ = buf.Append(input, n, z - n);
@@ -896,33 +1001,44 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Separates a string into an array of substrings using the specified delimiters.
 		/// </summary>
-		/// <param name="output">The variable to store the result.</param>
-		/// <param name="input">The variable whose contents to use as the input.</param>
-		/// <param name="delimiters">One or more characters (case sensitive), each of which is used to determine
-		/// where the boundaries between substrings occur in <paramref name="input"/>.
-		/// If this is blank each character of <paramref name="input"/> will be treated as a substring.</param>
-		/// <param name="trim">An optional list of characters (case sensitive) to exclude from the beginning and end of each array element.</param>
-		public static Array StrSplit(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <param name="str">The string to split.</param>
+		/// <param name="delimiters">If blank or omitted, each character of the input string will be treated as a separate substring.<br/>
+		/// Otherwise, specify either a single string or an array of strings(case-sensitive),<br/>
+		/// each of which is used to determine where the boundaries between substrings occur.<br/>
+		/// Since the delimiters are not considered to be part of the substrings themselves, they are never included in the returned array.<br/>
+		/// Also, if there is nothing between a pair of delimiters within the input string, the corresponding array element will be blank.
+		/// </param>
+		/// <param name="omitChars">If blank or omitted, no characters will be excluded.<br/>
+		/// Otherwise, specify a list of characters (case-sensitive) to exclude from the beginning and end of each array element.<br/>
+		/// For example, if omitChars is " `t", spaces and tabs will be removed from the beginning and end (but not the middle) of every element.<br/>
+		/// If delimiters is blank, omitChars indicates which characters should be excluded from the array.
+		/// </param>
+		/// <param name="maxParts">If omitted, it defaults to -1, which means "no limit". Otherwise, specify the maximum number of substrings to return.<br/>
+		/// If non-zero, the string is split a maximum of MaxParts-1 times and the remainder of the string is returned<br/>
+		/// in the last substring (excluding any leading or trailing omitChars).
+		/// </param>
+		/// <returns>This function returns an array containing the substrings of the specified string.</returns>
+		public static Array StrSplit(object str, object delimiters = null, object omitChars = null, object maxParts = null)
 		{
-			string delimiters = string.Empty, trim = string.Empty;
+			string del = string.Empty, trim = string.Empty;
 
-			if (obj0 is string input)
+			if (str is string input)
 			{
-				var count = obj3.Ai(-1);
+				var count = maxParts.Ai(-1);
 
-				if (obj1 is string d)
-					delimiters = d;
-				else if (obj1 is IList il)
+				if (delimiters is string d)
+					del = d;
+				else if (delimiters is IList il)
 					foreach (var id in il.Flatten())
 						delimiters += id.ToString();
 
-				if (obj2 is string t)
+				if (omitChars is string t)
 					trim = t;
-				else if (obj2 is IList il)
+				else if (omitChars is IList il)
 					foreach (var id in il.Flatten())
 						trim += id.ToString();
 
-				if (delimiters.Length == 0)
+				if (del.Length == 0)
 				{
 					var list = new List<string>(input.Length);
 
@@ -956,7 +1072,7 @@ namespace Keysharp.Core
 					return new Array(list.Cast<object>().ToArray());
 				}
 
-				var cha = delimiters.ToCharArray();
+				var cha = del.ToCharArray();
 				var output = count > 0 ? input.Split(cha, count, StringSplitOptions.None) : input.Split(cha, StringSplitOptions.None);
 
 				if (trim.Length != 0)
@@ -973,30 +1089,40 @@ namespace Keysharp.Core
 			return [];
 		}
 
-		public static string StrTitle(object obj) => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(obj.As());
+		/// <summary>
+		/// Converts a string to title case.
+		/// </summary>
+		/// <param name="str">The string to convert to title case.</param>
+		/// <returns>The newly converted version of the string.</returns>
+		public static string StrTitle(object str) => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(str.As());
 
 		/// <summary>
 		/// Converts a string to uppercase.
 		/// </summary>
-		/// <param name="input">The string to convert to upper</param>
-		/// <param name="title"><c>true</c> to use title casing, <c>false</c> otherwise.</param>
-		/// <returns>The converted string.</returns>
-		public static string StrUpper(object obj) => obj.As().ToUpperInvariant();
+		/// <param name="str">The string to convert to uppercase.</param>
+		/// <returns>The newly converted version of the string.</returns>
+		public static string StrUpper(object str) => str.As().ToUpperInvariant();
 
 		/// <summary>
 		/// Retrieves one or more characters from the specified position in a string.
 		/// </summary>
-		/// <param name="input">The string to use.</param>
-		/// <param name="index">The one-based starting character position.
-		/// If this is less than one it is considered an offset from the end of the string.</param>
-		/// <param name="length">The maximum number of characters to retrieve.
-		/// Leave this parameter blank to return the entire leading part of the string.
-		/// Specify a negative value to omit that many characters from the end of the string.</param>
-		/// <returns>The new substring.</returns>
-		public static string SubStr(object obj0, object obj1 = null, object obj2 = null)
+		/// <param name="str">The string whose content is copied. This may contain binary zero.</param>
+		/// <param name="startingPos">Specify 1 to start at the first character, 2 to start at the second, and so on.<br/>
+		/// If startingPos is 0 or beyond String's length, an empty string is returned.<br/>
+		/// Specify a negative startingPos to start at that position from the right.<br/>
+		/// For example, -1 extracts the last character and -2 extracts the two last characters.<br/>
+		/// If startingPos tries to go beyond the left end of the string, the extraction starts at the first character.
+		/// </param>
+		/// <param name="length">If omitted, it defaults to "all characters". Otherwise, specify the maximum number of characters to retrieve<br/>
+		/// (fewer than the maximum are retrieved whenever the remaining part of the string is too short).<br/>
+		/// You can also specify a negative Length to omit that many characters from the end of the returned<br/>
+		/// string (an empty string is returned if all or too many characters are omitted).
+		/// </param>
+		/// <returns>This function returns the requested substring of the specified string.</returns>
+		public static string SubStr(object str, object startingPos = null, object obj2 = null)
 		{
-			var input = obj0.As();
-			var index = obj1.Ai(1);
+			var input = str.As();
+			var index = startingPos.Ai(1);
 			var length = obj2.Ai(int.MaxValue);
 
 			if (string.IsNullOrEmpty(input) || length == 0 || index == 0 || index > input.Length)
@@ -1025,181 +1151,90 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Performs miscellaneous math functions, bitwise operations, and tasks such as ASCII to Unicode conversion.
-		/// This function is obsolete, please use the related newer syntax.
-		/// <seealso cref="Asc"/>
-		/// <seealso cref="Chr"/>
-		/// <seealso cref="Mod"/>
-		/// <seealso cref="Exp"/>
-		/// <seealso cref="Sqrt"/>
-		/// <seealso cref="Log"/>
-		/// <seealso cref="Ln"/>
-		/// <seealso cref="Round"/>
-		/// <seealso cref="Ceil"/>
-		/// <seealso cref="Floor"/>
-		/// <seealso cref="Abs"/>
-		/// <seealso cref="Sin"/>
-		/// <seealso cref="Cos"/>
-		/// <seealso cref="Tan"/>
-		/// <seealso cref="ASin"/>
-		/// <seealso cref="ACos"/>
-		/// <seealso cref="ATan"/>
-		/// <seealso cref="Floor"/>
-		/// <seealso cref="Floor"/>
+		/// Trims characters from the beginning and end of a string.
 		/// </summary>
-		[Obsolete]
-		public static void Transform(ref string OutputVar, string Cmd, string Value1, string Value2)
-		{
-			OutputVar = string.Empty;
-
-			switch (Cmd.Trim().ToLowerInvariant())
-			{
-				case Keyword_Unicode:
-					OutputVar = Value1 ?? Clipboard.GetText();
-					break;
-
-				case Keyword_Asc:
-					OutputVar = char.GetNumericValue(Value1, 0).ToString();
-					break;
-
-				case Keyword_Chr:
-					OutputVar = char.ConvertFromUtf32(int.Parse(Value1));
-					break;
-
-				case Keyword_Deref:
-					// TODO: dereference transform
-					break;
-
-				case "html":
-					OutputVar = Value1
-								.Replace("\"", "&quot;")
-								.Replace("&", "&amp;")
-								.Replace("<", "&lt;")
-								.Replace(">", "&gt;")
-								.Replace("\n", "<br/>\n");
-					break;
-
-				case Keyword_Mod:
-					OutputVar = (double.Parse(Value1) % double.Parse(Value2)).ToString();
-					break;
-
-				case Keyword_Pow:
-					OutputVar = Math.Pow(double.Parse(Value1), double.Parse(Value2)).ToString();
-					break;
-
-				case Keyword_Exp:
-					OutputVar = Math.Pow(double.Parse(Value1), Math.E).ToString();
-					break;
-
-				case Keyword_Sqrt:
-					OutputVar = Math.Sqrt(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Log:
-					OutputVar = Math.Log10(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Ln:
-					OutputVar = Math.Log(double.Parse(Value1), Math.E).ToString();
-					break;
-
-				case Keyword_Round:
-					var p = int.Parse(Value2);
-					OutputVar = Math.Round(double.Parse(Value1), p == 0 ? 1 : p).ToString();
-					break;
-
-				case Keyword_Ceil:
-					OutputVar = Math.Ceiling(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Floor:
-					OutputVar = Math.Floor(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Abs:
-					var d = double.Parse(Value1);
-					OutputVar = (d < 0 ? d * -1 : d).ToString();
-					break;
-
-				case Keyword_Sin:
-					OutputVar = Math.Sin(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Cos:
-					OutputVar = Math.Cos(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Tan:
-					OutputVar = Math.Tan(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Asin:
-					OutputVar = Math.Asin(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Acos:
-					OutputVar = Math.Acos(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_Atan:
-					OutputVar = Math.Atan(double.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_BitNot:
-					OutputVar = (~int.Parse(Value1)).ToString();
-					break;
-
-				case Keyword_BitAnd:
-					OutputVar = (int.Parse(Value1) & int.Parse(Value2)).ToString();
-					break;
-
-				case Keyword_BitOr:
-					OutputVar = (int.Parse(Value1) | int.Parse(Value2)).ToString();
-					break;
-
-				case Keyword_BitXor:
-					OutputVar = (int.Parse(Value1) ^ int.Parse(Value2)).ToString();
-					break;
-
-				case Keyword_BitShiftLeft:
-					OutputVar = (int.Parse(Value1) << int.Parse(Value2)).ToString();
-					break;
-
-				case Keyword_BitShiftRight:
-					OutputVar = (int.Parse(Value1) >> int.Parse(Value2)).ToString();
-					break;
-			}
-		}
-
+		/// <param name="str">Any string value or variable. Numbers are not supported.</param>
+		/// <param name="omitChars">If omitted, spaces and tabs will be removed.<br/>
+		/// Otherwise, specify a list of characters (case-sensitive) to exclude from the beginning and end of the specified string.
+		/// </param>
+		/// <returns>Returns the trimmed version of the specified string.</returns>
 		public static string Trim(object obj0, object obj1 = null) => obj0.As().Trim(obj1.As(" \t").ToCharArray());
 
+		/// <summary>
+		/// Unsupported.
+		/// </summary>
+		/// <param name="obj">Ignored</param>
+		/// <returns>None</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static long VarSetStrCapacity(params object[] obj) => throw new Error("VarSetStrCapacity() not supported or necessary.");
 
-		public static long VerCompare(object obj0, object obj1)
+		/// <summary>
+		/// Compares two version strings.
+		/// </summary>
+		/// <param name="versionA">The first version string to be compared.</param>
+		/// <param name="versionB">The second version string to be compared, optionally prefixed with one of the following operators: <, <=, >, >= or =.</param>
+		/// <returns>If versionB begins with an operator symbol, this function returns 1 (true) or 0 (false).<br/>
+		/// Otherwise, this function returns one of the following to indicate the relationship between versionA and versionB:<br/>
+		///     0 if versionA is equal to versionB.<br/>
+		///     a positive integer if versionA is greater than versionB.<br/>
+		///     a negative integer if versionA is less than versionB.<br/>
+		/// </returns>
+		public static long VerCompare(object versionA, object versionB)
 		{
-			var v1 = obj0.As();
-			var v2 = obj1.As();
+			var v1 = versionA.As();
+			var v2 = versionB.As();
 			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
 			var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
 			return semver1.CompareSortOrderTo(semver2);
 		}
 
+		/// <summary>
+		/// Internal helpers used deep in the keyboard hook to examine certain types of characters.
+		/// </summary>
+		/// <param name="c">The character to examine.</param>
+		/// <returns>bool</returns>
 		internal static bool Cisalnum(char c) => (c & 0x80) == 0 && char.IsLetterOrDigit(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cisalpha(char c) => (c & 0x80) == 0 && char.IsLetter(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cisdigit(char c) => (c & 0x80) == 0 && char.IsDigit(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cislower(char c) => (c & 0x80) == 0 && char.IsLower(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cisprint(char c) => (c & 0x80) == 0 && !char.IsControl(c) || char.IsWhiteSpace(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cisspace(char c) => (c & 0x80) == 0 && char.IsWhiteSpace(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cisupper(char c) => (c & 0x80) == 0 && char.IsUpper(c);
 
+		/// <summary>
+		/// See above.
+		/// </summary>
 		internal static bool Cisxdigit(char c) => (c & 0x80) == 0 && c.IsHex();
 
+		/// <summary>
+		/// Examines an array of strings, checking if any are null or empty.
+		/// </summary>
+		/// <param name="args">The array of strings to examine.</param>
+		/// <returns>True if any were null or empty, else false.</returns>
 		internal static bool IsAnyBlank(params string[] args)
 		{
 			foreach (var str in args)
@@ -1209,16 +1244,16 @@ namespace Keysharp.Core
 			return false;
 		}
 
+		/// <summary>
+		/// Returns whether a character is a space or a tab.
+		/// </summary>
+		/// <param name="c">The character to examine.</param>
+		/// <returns>True if the character was a space or a tab.</returns>
 		internal static bool IsSpaceOrTab(char c) => c == ' ' || c == '\t';
 
 		/// <summary>
 		/// An internal optimized version of StrCompare().
 		/// </summary>
 		internal static int StrCmp(string left, string right, bool caseSensitive) => string.Compare(left, right, caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
-
-		internal class RegexEntry : KeyedCollection<string, RegexWithTag>
-		{
-			protected override string GetKeyForItem(RegexWithTag item) => item.tag;
-		}
 	}
 }

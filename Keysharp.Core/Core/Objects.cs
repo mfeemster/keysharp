@@ -62,15 +62,15 @@
 		/// <summary>
 		/// Unsupported.
 		/// </summary>
-		/// <param name="obj">Ignored.</param>
+		/// <param name="obj">Ignored</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static void ObjSetBase(params object[] obj) => throw new Error(Any.BaseExc);
 
 		/// <summary>
 		/// Unsupported.
 		/// </summary>
-		/// <param name="obj0">Ignored.</param>
-		/// <param name="obj1">Ignored.</param>
+		/// <param name="obj0">Ignored</param>
+		/// <param name="obj1">Ignored</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static object ObjSetCapacity(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.SetCapacity(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");

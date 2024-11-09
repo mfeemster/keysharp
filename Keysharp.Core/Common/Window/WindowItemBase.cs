@@ -356,7 +356,7 @@
 				case Keyword_RegEx:
 				{
 					object outvar = null;
-					_ = Core.Strings.RegExMatch(a, b, ref outvar, 1);
+					_ = Core.RegEx.RegExMatch(a, b, ref outvar, 1);
 					RegExResults output = (RegExResults)outvar;
 					return output.Count > 0 && !string.IsNullOrEmpty(output[0]);
 				}
