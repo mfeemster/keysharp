@@ -2,6 +2,9 @@ using static System.Windows.Forms.DataFormats;
 
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for environment-related functions.
+	/// </summary>
 	public static class Env
 	{
 		private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)

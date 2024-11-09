@@ -1,5 +1,8 @@
 ﻿namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public static properties which mostly start with A_.
+	/// </summary>
 	public static class Accessors
 	{
 		internal static long hotkeyModifierTimeout = 50L;

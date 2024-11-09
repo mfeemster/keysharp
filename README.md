@@ -168,6 +168,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
 		+ `StrGet(DllCall("GetCommandLine", "ptr"))`
 		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
+* `ImageSearch()` takes an options string as a fifth parameter, rather than inserted in the string before the `imageFile` parameter.
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
 	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
 		+ To negate the result of a power operation, use parentheses: `-(x**y)`.
@@ -189,7 +190,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ `Func()` or `FuncObj()` can still be used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
 * Callback functions do not require a `*` parameter to work. So `func()` and `func(*)` can both be used as callbacks.
-
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
 ```
 	myfunc(a, b, c?, d?)
@@ -265,6 +265,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
 	+ `Tanh(value) => Double`
+* New function `RandomSeed(Integer)` to reinitialize the random number generator for the current thread with a specified numerical seed.
 * New file functions:
 	+ `FileDirName(filename) => String` to return the full path to filename, without the actual filename or trailing directory separator character.
 	+ `FileFullPath(filename) => String` to return the full path to filename.

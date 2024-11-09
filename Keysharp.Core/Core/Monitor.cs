@@ -59,7 +59,7 @@
 		/// <param name="right">The right bounding coordinate of the specified monitor.</param>
 		/// <param name="bottom">The bottom bounding coordinate of the specified monitor.</param>
 		/// <returns>The monitor number which is the same as n unless n was omitted.</returns>
-		public static object MonitorGet(object n, ref object l, ref object t, ref object r, ref object b)
+		public static object MonitorGet(object n, ref object left, ref object top, ref object right, ref object bottom)
 		{
 			var monitorIndex = n.Al(-1L);
 			System.Windows.Forms.Screen screen;
@@ -69,10 +69,10 @@
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			l  = (long)screen.Bounds.Left;
-			t  = (long)screen.Bounds.Top;
-			r  = (long)screen.Bounds.Right;
-			b  = (long)screen.Bounds.Bottom;
+			left  = (long)screen.Bounds.Left;
+			top  = (long)screen.Bounds.Top;
+			right  = (long)screen.Bounds.Right;
+			bottom  = (long)screen.Bounds.Bottom;
 			return monitorIndex > 0L ? monitorIndex : 1L;
 		}
 

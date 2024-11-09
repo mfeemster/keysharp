@@ -1030,7 +1030,7 @@ namespace Keysharp.Core
 					del = d;
 				else if (delimiters is IList il)
 					foreach (var id in il.Flatten())
-						delimiters += id.ToString();
+						del += id.ToString();
 
 				if (omitChars is string t)
 					trim = t;

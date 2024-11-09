@@ -1,12 +1,16 @@
 ﻿namespace Keysharp.Core
 {
 	/// <summary>
+	/// Public interface for math-related functions.
 	/// Most functions here do not take variadic parameters so they can run as fast as possible.
 	/// Also, an attempt to cast the object argument to a double is first made because it's the
 	/// most common and fastest case. If it's not a double, Ad() is used.
 	/// </summary>
 	public static class Maths
 	{
+		/// <summary>
+		/// Internal helper to get a random number generator for the current thread.
+		/// </summary>
 		private static Random RandomGenerator
 		{
 			get
@@ -32,6 +36,7 @@
 		/// </summary>
 		/// <param name="n">A number representing a cosine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that 0 ≤ θ ≤ π.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
 		public static double ACos(object obj)
 		{
 			var n = obj is double d ? d : obj.Ad();
@@ -47,6 +52,7 @@
 		/// </summary>
 		/// <param name="n">A number representing a sine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
 		public static double ASin(object obj)
 		{
 			var n = obj is double d ? d : obj.Ad();
@@ -92,11 +98,18 @@
 		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
 		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
 
-		public static string DateAdd(object obj0, object obj1, object obj2)
+		/// <summary>
+		/// Adds or subtracts time from a date-time value.
+		/// </summary>
+		/// <param name="dateTime">A date-time stamp in the YYYYMMDDHH24MISS format.</param>
+		/// <param name="time">The amount of time to add, as an integer or floating-point number. Specify a negative number to perform subtraction.</param>
+		/// <param name="timeUnits">The meaning of the Time parameter. TimeUnits may be one of the following strings (or just the first letter): Seconds, Minutes, Hours or Days.</param>
+		/// <returns>The new date-time value as a string of digits in the YYYYMMDDHH24MISS format.</returns>
+		public static string DateAdd(object dateTime, object time, object timeUnits)
 		{
-			var s1 = obj0.As();
-			var t = obj1.Ad();
-			var units = obj2.As();
+			var s1 = dateTime.As();
+			var t = time.Ad();
+			var units = timeUnits.As();
 
 			if (s1.Length == 0)
 				s1 = Accessors.A_Now;
@@ -115,11 +128,24 @@
 			return Conversions.ToYYYYMMDDHH24MISS(d1);
 		}
 
-		public static long DateDiff(object obj0, object obj1, object obj2)
+		/// <summary>
+		/// Compares two date-time values and returns the difference.
+		/// </summary>
+		/// <param name="dateTime1">Date-time stamps in the YYYYMMDDHH24MISS format.<br/>
+		/// If either is an empty string, the current local date and time (A_Now) is used.
+		/// </param>
+		/// <param name="dateTime2">See <paramref name="dateTime1"/>.</param>
+		/// <param name="timeUnits">Units to measure the difference in.<br/>
+		/// timeUnits may be one of the following strings (or just the first letter): Seconds, Minutes, Hours or Days.
+		/// </param>
+		/// <returns>The difference between the two timestamps, in the units specified by timeUnits.<br/>
+		/// If dateTime1 is earlier than dateTime2, a negative number is returned.
+		/// </returns>
+		public static long DateDiff(object dateTime1, object dateTime2, object timeUnits)
 		{
-			var s1 = obj0.As();
-			var s2 = obj1.As();
-			var units = obj2.As();
+			var s1 = dateTime1.As();
+			var s2 = dateTime2.As();
+			var units = timeUnits.As();
 
 			if (s1.Length == 0)
 				s1 = Accessors.A_Now;
@@ -167,6 +193,7 @@
 		/// </summary>
 		/// <param name="n">A number whose logarithm is to be found.</param>
 		/// <returns>The natural logarithm of <paramref name="n"/> if it's positive, else an exception is thrown.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
 		public static double Ln(object obj)
 		{
 			var n = obj is double d ? d : obj.Ad();
@@ -183,6 +210,7 @@
 		/// <param name="n">A number whose logarithm is to be found.</param>
 		/// <param name="b">The base of the logarithm. If unspecified this is <c>10</c>.</param>
 		/// <returns>The logarithm of <paramref name="n"/> to base <paramref name="b"/> if n is positive, else an exception is thrown.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
 		public static double Log(object obj0, object obj1 = null)
 		{
 			var n = obj0.Ad(double.MinValue);
@@ -274,6 +302,7 @@
 		/// <param name="dividend">The dividend.</param>
 		/// <param name="divisor">The divisor.</param>
 		/// <returns>The remainder after dividing <paramref name="dividend"/> by <paramref name="divisor"/>.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the divisor == 0.</exception>
 		public static object Mod(object obj0, object obj1)
 		{
 			if (obj0 is double || obj1 is double)
@@ -299,15 +328,23 @@
 			}
 		}
 
-		public static object Number(object obj0)
+		/// <summary>
+		/// Converts a numeric string to a pure integer or floating-point number.
+		/// </summary>
+		/// <param name="value">The value to convert.</param>
+		/// <returns>The result of converting Value to a pure integer or floating-point number, or value itself if it is<br/>
+		/// already an Integer or Float value.
+		/// </returns>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the value cannot be converted.</exception>
+		public static object Number(object value)
 		{
-			if (obj0 is long l)
+			if (value is long l)
 				return l;
-			else if (obj0 is double d)
+			else if (value is double d)
 				return d;
 			else
 			{
-				var s = obj0.As();
+				var s = value.As();
 
 				if (s.Contains('.'))
 				{
@@ -324,7 +361,7 @@
 						return val.Value;
 				}
 
-				throw new TypeError($"Could not convert {obj0.As()} to an integer or float.");
+				throw new TypeError($"Could not convert {s} to an integer or float.");
 			}
 		}
 
@@ -373,6 +410,10 @@
 			return r.NextDouble(lower, upper);
 		}
 
+		/// <summary>
+		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
+		/// </summary>
+		/// <param name="obj">The numerical seed to create the random number generator with.</param>
 		public static void RandomSeed(object obj) => Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
 
 		/// <summary>
@@ -408,6 +449,7 @@
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The positive square root of <paramref name="n"/> if positive, else an exception is thrown.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the value is negative.</exception>
 		public static double Sqrt(object obj)
 		{
 			var n = obj is double d ? d : obj.Ad();
