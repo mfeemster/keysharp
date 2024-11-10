@@ -1,22 +1,40 @@
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for process-related functions.
+	/// </summary>
 	public static class Processes
 	{
 		public static SynchronizationContext mainContext;
 
 		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
 		internal static uint CurrentThreadID = 0u;
+
 		internal static uint MainThreadID;
 		internal static int ManagedMainThreadID;
 		internal static string runDomain;
 		internal static SecureString runPassword;
 		internal static string runUser;
-
 		private const int LoopFrequency = 50;
 
-		public static long ProcessClose(object obj)
+		/// <summary>
+		/// Forces the first matching process to close.
+		/// </summary>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process<br/>
+		/// (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function.<br/>
+		/// Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>.<br/>
+		/// <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g.notepad.exe or winword.exe.<br/>
+		/// Since a name might match multiple running processes, only the first process will be operated upon.<br/>
+		/// The name is not case-sensitive.
+		/// </param>
+		/// <returns>The Process ID (PID) of the specified process. If a matching process is not found or cannot be manipulated, zero is returned.</returns>
+		public static long ProcessClose(object pidOrName)
 		{
-			var name = obj.As();
+			var name = pidOrName.As();
 			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);//Will handle name string or pid int.
 
 			if (proc == null)
@@ -32,18 +50,55 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static long ProcessExist(object obj = null)
+		/// <summary>
+		///Checks if the specified process exists.
+		/// </summary>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process<br/>
+		/// (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function.<br/>
+		/// Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>.<br/>
+		/// <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g.notepad.exe or winword.exe.<br/>
+		/// Since a name might match multiple running processes, only the first process will be operated upon.<br/>
+		/// The name is not case-sensitive.
+		/// </param>
+		/// <returns>The Process ID (PID) of the specified process. If there is no matching process, zero is returned.</returns>
+		public static long ProcessExist(object pidOrName = null)
 		{
-			var name = obj.As();
+			var name = pidOrName.As();
 			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);
 			return proc != null ? proc.Id : 0L;
 		}
 
-		public static long ProcessSetPriority(object obj0, object obj1 = null)
+		/// <summary>
+		/// Changes the priority level of the first matching process.
+		/// </summary>
+		/// <param name="level">Specify one of the following words or letters:<br/>
+		///     Low(or L)<br/>
+		///     BelowNormal(or B)<br/>
+		///     Normal(or N)<br/>
+		///     AboveNormal(or A)<br/>
+		///     High(or H)<br/>
+		///     Realtime(or R)<br/>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process<br/>
+		/// (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function.<br/>
+		/// Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>.<br/>
+		/// <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g.notepad.exe or winword.exe.<br/>
+		/// Since a name might match multiple running processes, only the first process will be operated upon.<br/>
+		/// The name is not case-sensitive.
+		/// </param>
+		/// <returns>Returns the Process ID (PID) of the specified process. If a matching process is not found or cannot be manipulated, zero is returned.</returns>
+		public static long ProcessSetPriority(object level, object pidOrName = null)
 		{
-			var level = obj0.As();
-			var name = obj1.As();
-			var arg = level.ToLowerInvariant();
+			var lvl = level.As();
+			var name = pidOrName.As();
+			var arg = lvl.ToLowerInvariant();
 			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);
 
 			if (proc != null)
@@ -81,15 +136,31 @@ namespace Keysharp.Core
 			return 0;
 		}
 
-		public static long ProcessWait(object obj0, object obj1 = null)
+		/// <summary>
+		/// Waits for the specified process to exist.
+		/// </summary>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process<br/>
+		/// (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function.<br/>
+		/// Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>.<br/>
+		/// <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g.notepad.exe or winword.exe.<br/>
+		/// Since a name might match multiple running processes, only the first process will be operated upon.<br/>
+		/// The name is not case-sensitive.
+		/// </param>
+		/// <param name="timeout">If omitted, the function will wait indefinitely. Otherwise, specify the number of seconds (can contain a decimal point) to wait before timing out.</param>
+		/// <returns>The Process ID (PID) of the discovered process. If the function times out, zero is returned.</returns>
+		public static long ProcessWait(object pidOrName, object timeout = null)
 		{
-			var name = obj0.As();
-			var timeout = obj1.Ad(-1.0);
-			var t = timeout;
+			var name = pidOrName.As();
+			var time = timeout.Ad(-1.0);
+			var t = time;
 			Process proc;
 
 			if (t >= 0)
-				t = timeout * 1000;
+				t = time * 1000;
 
 			var start = DateTime.Now;
 
@@ -104,18 +175,34 @@ namespace Keysharp.Core
 			return proc != null ? proc.Id : 0;
 		}
 
-		public static long ProcessWaitClose(object obj0, object obj1 = null)
+		/// <summary>
+		/// Waits for all matching processes to close.
+		/// </summary>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process<br/>
+		/// (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function.<br/>
+		/// Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>.<br/>
+		/// <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g.notepad.exe or winword.exe.<br/>
+		/// Since a name might match multiple running processes, only the first process will be operated upon.<br/>
+		/// The name is not case-sensitive.
+		/// </param>
+		/// <param name="timeout">If omitted, the function will wait indefinitely. Otherwise, specify the number of seconds (can contain a decimal point) to wait before timing out.</param>
+		/// <returns></returns>
+		public static long ProcessWaitClose(object pidOrName, object timeout = null)
 		{
-			var name = obj0.As();
-			var timeout = obj1.Ad(-1.0);
+			var name = pidOrName.As();
+			var time = timeout.Ad(-1.0);
 			var proc = FindProcess(name);
 
 			if (proc != null)
 			{
 				var pid = proc.Id;
 
-				if (timeout >= 0)
-					_ = proc.WaitForExit((int)(timeout * 1000));
+				if (time >= 0)
+					_ = proc.WaitForExit((int)(time * 1000));
 				else
 					proc.WaitForExit();
 
@@ -126,18 +213,33 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Overload that is needed because ref parameters can't be optional.
+		/// <see cref="Run(object, object, object, ref object, object)"/>
 		/// </summary>
-		/// <param name="target"></param>
-		/// <param name="workingDir"></param>
-		/// <param name="options"></param>
-		/// <returns></returns>
 		public static long Run(object target, object workingDir = null, object options = null)
 		{
 			object pid = null;
 			return Run(target, workingDir, options, ref pid, null);
 		}
 
+		/// <summary>
+		/// Runs an external program. Unlike <see cref="Run"/>, <see cref="RunWait"/> will wait until the program finishes before continuing.
+		/// </summary>
+		/// <param name="target">A document, URL, executable file (.exe, .com, .bat, etc.), shortcut (.lnk), CLSID, or system verb to launch (see remarks).</param>
+		/// <param name="workingDir">If blank or omitted, the script's own working directory <see cref="A_WorkingDir"/> will be used.<br/>
+		/// Otherwise, specify the initial working directory to be used by the new process.
+		/// </param>
+		/// <param name="options">If blank or omitted, target will be launched normally. Otherwise, specify one or more of the following options:<br/>
+		///     Max: launch maximized<br/>
+		///     Min: launch minimized<br/>
+		///     Hide: launch hidden(cannot be used in combination with either of the above)
+		/// </param>
+		/// <param name="outputVarPID">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify a reference to the output variable in which to store the newly launched program's unique Process ID (PID).
+		/// </param>
+		/// <param name="args">The arguments to pass to the program.</param>
+		/// <returns>Unlike <see cref="Run"/>, <see cref="RunWait"/> will wait until target is closed or exits,<br/>
+		/// at which time the return value will be the program's exit code.
+		/// </returns>
 		public static long Run(object target, object workingDir, object options, ref object outputVarPID, object args = null)
 		{
 			return RunInternal(target.As(), workingDir.As(), options.As(), ref outputVarPID, args.As());
@@ -145,11 +247,14 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Specifies a set of user credentials to use for all subsequent uses of <see cref="Run"/>.
+		/// Leave all parameters blank to use no credentials.
 		/// </summary>
-		/// <param name="user">The username.</param>
-		/// <param name="password">The password.</param>
-		/// <param name="domain">The user domain.</param>
-		/// <remarks>Leave all parameters blank to use no credentials.</remarks>
+		/// <param name="user">If this and the other parameters are all omitted, the RunAs feature will be turned off,<br/>
+		/// which restores <see cref="Run"/> and <see cref="RunWait"/> to their default behavior.<br/>
+		/// Otherwise, specify the username under which new processes will be created.
+		/// </param>
+		/// <param name="password">If blank or omitted, it defaults to a blank password. Otherwise, specify the User's password.</param>
+		/// <param name="domain">If blank or omitted, a local account will be used. Otherwise, specify User's domain. If that fails to work, try using @YourComputerName.</param>
 		public static void RunAs(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var user = obj0.As();
@@ -174,18 +279,19 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Overload that is needed because ref parameters can't be optional.
+		/// <see cref="RunWait(object, object, object, ref object, object)"/>.
 		/// </summary>
-		/// <param name="target"></param>
-		/// <param name="workingDir"></param>
-		/// <param name="options"></param>
-		/// <returns></returns>
 		public static long RunWait(object target, object workingDir = null, object options = null)
 		{
 			object pid = null;
 			return RunWait(target, workingDir, options, ref pid, null);
 		}
 
+		/// <summary>
+		/// Runs an external program.<br/>
+		/// Unlike Run, <see cref="RunWait"/> will wait until the program finishes before continuing.
+		/// <see cref="Run"/>.
+		/// </summary>
 		public static long RunWait(object target, object workingDir, object options, ref object outputVarPID, object args = null)
 		{
 			return RunInternal(target.As(), workingDir.As(), options.As(), ref outputVarPID, args.As(), true);
@@ -193,20 +299,26 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Shuts down, restarts, or logs off the system.
-		/// <param name="code">A combination of the following codes:
-		/// <list type="bullet">
-		/// <item><term>0</term>: <description>logoff</description></item>
-		/// <item><term>1</term>: <description>shutdown - appears not to work</description></item>
-		/// <item><term>2</term>: <description>reboot</description></item>
-		/// <item><term>4</term>: <description>force</description></item>
-		/// <item><term>8</term>: <description>power down</description></item>
-		/// </list>
+		/// <param name="code">A combination (sum) of the following numbers:<br/>
+		/// 0: Logoff<br/>
+		/// 1: Shutdown<br/>
+		/// 2: Reboot<br/>
+		/// 4: Force<br/>
+		/// 8: Power down<br/>
+		/// Add the required values together.<br/>
+		/// For example, to shutdown and power down the flag would be 9 (shutdown + power down = 1 + 8 = 9).<br/>
+		/// The "Force" value (4) forces all open applications to close.<br/>
+		/// It should only be used in an emergency because it may cause any open applications to lose data.<br/>
+		/// The "Power down" value (8) shuts down the system and turns off the power.
 		/// </param>
 		/// </summary>
 		public static void Shutdown(object obj) => _ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
 
-		//internal static int MsgFilterMax() => Threads.IsInterruptible() ? 0 : WindowsAPI.WM_HOTKEY - 1;
-
+		/// <summary>
+		/// Internal helper to find a process by name or ID.
+		/// </summary>
+		/// <param name="name">The name or ID of the process to find.</param>
+		/// <returns>The <see cref="Process"/> object if found, else null.</returns>
 		private static Process FindProcess(string name)
 		{
 			if (int.TryParse(name, out var id))
@@ -237,6 +349,10 @@ namespace Keysharp.Core
 			}
 		}
 
+		/// <summary>
+		/// Internal helper to run a process. <see cref="Run"/>, <see cref="RunAs"/>, <see cref="RunWait"/>
+		/// </summary>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, string args, bool wait = false)
 		{
 			var pid = 0;
