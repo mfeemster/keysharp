@@ -1,5 +1,8 @@
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for sound-related functions.
+	/// </summary>
 	public static class Sound
 	{
 #if LINUX
@@ -27,13 +30,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Emits a tone from the PC speaker.
 		/// </summary>
-		/// <param name="frequency">The frequency of the sound which should be between 37 and 32767.
-		/// If omitted, the frequency will be 523.</param>
-		/// <param name="duration">The duration of the sound in ms. If omitted, the duration will be 150.</param>
-		public static void SoundBeep(object obj0 = null, object obj1 = null)
+		/// <param name="frequency">If omitted, it defaults to 523. Otherwise, specify the frequency of the sound, a number between 37 and 32767.</param>
+		/// <param name="duration">If omitted, it defaults to 150. Otherwise, specify the duration of the sound, in milliseconds.</param>
+		public static void SoundBeep(object frequency = null, object duration = null)
 		{
-			var freq = obj0.Ai(523);
-			var time = obj1.Ai(150);
+			var freq = frequency.Ai(523);
+			var time = duration.Ai(150);
 #if LINUX
 			var seconds = time / 1000.0;
 			$"speaker-test -t sine -f {freq} -l 1 & sleep {seconds} && kill -9 $!".Bash();
@@ -44,43 +46,84 @@ namespace Keysharp.Core
 
 #if WINDOWS
 
-		public static object SoundGetInterface(object obj0, object obj1 = null, object obj2 = null) => DoSound(SoundCommands.SoundGetInterface, obj0, obj1, obj2);
+		/// <summary>
+		/// Retrieves a native COM interface of a sound device or component.
+		/// </summary>
+		/// <param name="id">An interface identifier (GUID) in the form "{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}".</param>
+		/// <param name="component">If blank or omitted, an interface implemented by the device itself will be retrieved. Otherwise, specify the component's display name and/or index, e.g. 1, "Line in" or "Line in:2".</param>
+		/// <param name="device">If blank or omitted, it defaults to the system's default device for playback<br/>
+		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
+		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
+		/// </param>
+		/// <returns>The COM interface for the specified sound interface.</returns>
+		public static object SoundGetInterface(object id, object component = null, object device = null) => DoSound(SoundCommands.SoundGetInterface, id, component, device);
 
 #endif
 
-		public static object SoundGetMute(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetMute, obj0, obj1);
+		/// <summary>
+		/// Retrieves a mute setting of a sound device.
+		/// </summary>
+		/// <param name="component">If blank or omitted, it defaults to the master mute setting. Otherwise, specify the component's display name and/or index, e.g. 1, "Line in" or "Line in:2".</param>
+		/// <param name="device">If blank or omitted, it defaults to the system's default device for playback<br/>
+		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
+		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
+		/// </param>
+		/// <returns>0 for unmuted, else 1.</returns>
+		public static object SoundGetMute(object component = null, object device = null) => DoSound(SoundCommands.SoundGetMute, component, device);
 
-		public static object SoundGetName(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetName, obj0, obj1);
+		/// <summary>
+		/// Retrieves the name of a sound device or component.
+		/// </summary>
+		/// <param name="component">If blank or omitted, it defaults to the master mute setting. Otherwise, specify the component's display name and/or index, e.g. 1, "Line in" or "Line in:2".</param>
+		/// <param name="device">If blank or omitted, it defaults to the system's default device for playback<br/>
+		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
+		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
+		/// </param>
+		/// <returns>The name of the device or component, which can be empty.</returns>
+		public static object SoundGetName(object component = null, object device = null) => DoSound(SoundCommands.SoundGetName, component, device);
 
-		public static object SoundGetVolume(object obj0 = null, object obj1 = null) => DoSound(SoundCommands.SoundGetVolume, obj0, obj1);
+		/// <summary>
+		/// Retrieves a volume setting of a sound device.
+		/// </summary>
+		/// <param name="component">If blank or omitted, it defaults to the master mute setting. Otherwise, specify the component's display name and/or index, e.g. 1, "Line in" or "Line in:2".</param>
+		/// <param name="device">If blank or omitted, it defaults to the system's default device for playback<br/>
+		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
+		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
+		/// </param>
+		/// <returns>A floating point number between 0.0 and 100.0.</returns>
+		public static object SoundGetVolume(object component = null, object device = null) => DoSound(SoundCommands.SoundGetVolume, component, device);
 
 		/// <summary>
 		/// Plays a sound, video, or other supported file type.
 		/// </summary>
 		/// <param name="filename">
-		/// <para>The name of the file to be played.</para>
+		/// The name of the file to be played, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
 #if WINDOWS
-		/// <para>To produce standard system sounds, specify an asterisk followed by a number as shown below.</para>
-		/// <list type="bullet">
-		/// <item><term>*-1</term>: <description>simple beep</description></item>
-		/// <item><term>*16</term>: <description>hand (stop/error)</description></item>
-		/// <item><term>*32</term>: <description>question</description></item>
-		/// <item><term>*48</term>: <description>exclamation</description></item>
-		/// <item><term>*64</term>: <description>asterisk (info)</description></item>
-		/// </list>
+		/// To produce standard system sounds, specify an asterisk followed by a number as shown below (note that the Wait parameter has no effect in this mode):<br/>
+		/// *-1: simple beep<br/>
+		/// *16: hand (stop/error)<br/>
+		/// *32: question<br/>
+		/// *48: exclamation<br/>
+		/// *64: asterisk (info)<br/>
 #endif
-
 		/// </param>
-		/// <param name="wait"><c>true</c> to block the current thread until the sound has finished playing, false otherwise.</param>
-		public static void SoundPlay(object obj0, object obj1 = null)
+		/// <param name="wait">If blank or omitted, it defaults to 0 (false). Otherwise, specify one of the following values:<br/>
+		///     0 (false): The current thread will move on to the next statement(s) while the file is playing.<br/>
+		///     1 (true) or Wait: The current thread waits until the file is finished playing before continuing.<br/>
+		///     Even while waiting, new threads can be launched via hotkey, custom menu item, or timer.<br/>
+		///     Known limitation: If the Wait parameter is not used, the system might consider the playing file to<br/>
+		///     be "in use" until the script closes or until another file is played(even a nonexistent file).<br/>
+		/// </param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
+		public static void SoundPlay(object filename, object wait = null)
 		{
-			var filename = obj0.As();
-			var wait = obj1.As();
+			var file = filename.As();
+			var w = wait.As();
 #if WINDOWS
 
-			if (filename.Length > 1 && filename[0] == '*')
+			if (file.Length > 1 && file[0] == '*')
 			{
-				if (!int.TryParse(filename.AsSpan(1), out var n))
+				if (!int.TryParse(file.AsSpan(1), out var n))
 				{
 					return;
 				}
@@ -105,9 +148,9 @@ namespace Keysharp.Core
 
 			try
 			{
-				var doWait = wait == "1" || string.Compare(wait, "WAIT", true) == 0;
+				var doWait = w == "1" || string.Compare(w, "WAIT", true) == 0;
 #if WINDOWS
-				var sound = new SoundPlayer(filename);
+				var sound = new SoundPlayer(file);
 
 				if (doWait)
 					sound.PlaySync();
@@ -124,9 +167,36 @@ namespace Keysharp.Core
 			}
 		}
 
-		public static void SoundSetMute(object obj0, object obj1 = null, object obj2 = null) => _ = DoSound(SoundCommands.SoundSetMute, obj0, obj1, obj2);
+		/// <summary>
+		/// Changes a mute setting of a sound device.
+		/// </summary>
+		/// <param name="newSetting">One of the following values:<br/>
+		///     1 or True: turns on the setting.<br/>
+		///     0 or False: turns off the setting.<br/>
+		///    -1: toggles the setting(sets it to the opposite of its current state).
+		/// </param>
+		/// <param name="component">If blank or omitted, it defaults to the master mute setting. Otherwise, specify the component's display name and/or index, e.g. 1, "Line in" or "Line in:2".</param>
+		/// <param name="device">If blank or omitted, it defaults to the system's default device for playback<br/>
+		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
+		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
+		/// </param>
+		public static void SoundSetMute(object newSetting, object component = null, object device = null) => _ = DoSound(SoundCommands.SoundSetMute, newSetting, component, device);
 
-		public static void SoundSetVolume(object obj0, object obj1 = null, object obj2 = null) => _ = DoSound(SoundCommands.SoundSetVolume, obj0, obj1, obj2);
+
+		/// <summary>
+		/// Changes a volume setting of a sound device.
+		/// </summary>
+		/// <param name="newSetting">A string containing a percentage number between -100 and 100 inclusive.<br/>
+		/// If the number begins with a plus or minus sign, the current setting will be adjusted up or down by the indicated amount.<br/>
+		/// Otherwise, the setting will be set explicitly to the level indicated by newSetting.<br/>
+		/// If the percentage number begins with a minus sign or is unsigned, it does not need to be enclosed in quotation marks.
+		/// </param>
+		/// <param name="component">If blank or omitted, it defaults to the master mute setting. Otherwise, specify the component's display name and/or index, e.g. 1, "Line in" or "Line in:2".</param>
+		/// <param name="device">If blank or omitted, it defaults to the system's default device for playback<br/>
+		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
+		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
+		/// </param>
+		public static void SoundSetVolume(object newSetting, object component = null, object device = null) => _ = DoSound(SoundCommands.SoundSetVolume, newSetting, component, device);
 
 #if LINUX
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
@@ -288,19 +358,29 @@ namespace Keysharp.Core
 
 #elif WINDOWS
 
+		/// <summary>
+		/// Internal helper to help with various sound processing commands.
+		/// </summary>
+		/// <param name="soundCmd">The sound command to perform.</param>
+		/// <param name="obj0">The sound component to operate on, or the value to use.</param>
+		/// <param name="obj1">The sound device to operate on, or the sound component.</param>
+		/// <param name="obj2">The sound device to operate on.</param>
+		/// <returns>Various values depending on the sound command being processed.</returns>
+		/// <exception cref="TargetError">A <see cref="TargetError"/> exception is thrown if the component/device cannot not found.</exception>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the channels, levels or range cannot not found.</exception>
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
 			var soundSet = false;
 			var search = new SoundComponentSearch();
-			var component = obj0;
-			var device = obj1;
+			var comp = obj0;
+			var dev = obj1;
 
 			if (soundCmd >= SoundCommands.SoundSetVolume)
 			{
 				soundSet = true;
 				search.targetControl = (SoundControlType)((int)soundCmd - (int)SoundCommands.SoundSetVolume);
-				component = obj1;
-				device = obj2;
+				comp = obj1;
+				dev = obj2;
 			}
 			else
 			{
@@ -319,12 +399,12 @@ namespace Keysharp.Core
 
 				case SoundControlType.IID:
 					search.targetIid = new Guid(obj0.As());
-					component = obj1;
-					device = obj2;
+					comp = obj1;
+					dev = obj2;
 					break;
 			}
 
-			float settingScalar = 0.0f;
+			var settingScalar = 0.0f;
 
 			if (soundSet)
 				settingScalar = Math.Clamp((float)(obj0.Ad() * 0.01), -1.0f, 1.0f);
@@ -333,12 +413,12 @@ namespace Keysharp.Core
 			var resultBool = false;
 			var valStr = obj0 == null ? "" : obj0.ToString();
 			var adjust = valStr.Length > 0 && (valStr[0] == '-' || valStr[0] == '+');
-			var mmDev = GetDevice(device);
+			var mmDev = GetDevice(dev);
 
 			if (mmDev == null)
-				throw new TargetError($"Component {component}, device {device} not found.");
+				throw new TargetError($"Component {comp}, device {dev} not found.");
 
-			if (component == null || component.ToString().Length == 0)//Component is Master (omitted).
+			if (comp == null || comp.ToString().Length == 0)//Component is Master (omitted).
 			{
 				if (search.targetControl == SoundControlType.IID)
 				{
@@ -394,12 +474,12 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				if (component is int i || component is long l)
+				if (comp is int i || comp is long l)
 				{
 					search.targetName = "";
-					search.targetInstance = component.Ai();
+					search.targetInstance = comp.Ai();
 				}
-				else if (component is string cs && cs != "")
+				else if (comp is string cs && cs != "")
 				{
 					var splits = search.targetName.Split(':');
 
@@ -417,7 +497,7 @@ namespace Keysharp.Core
 
 				if (!FindComponent(mmDev, search))
 				{
-					throw new Error($"Component {component} not found.");
+					throw new TargetError($"Component {comp} not found.");
 				}
 				else if (search.targetControl == SoundControlType.IID)
 				{
@@ -519,6 +599,12 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		/// <summary>
+		/// Internal helper to determine whether a specific device exists.
+		/// </summary>
+		/// <param name="mmDev">The device to search for.</param>
+		/// <param name="search">The type of search to do.</param>
+		/// <returns>True if found, else false.</returns>
 		private static bool FindComponent(MMDevice mmDev, SoundComponentSearch search)
 		{
 			search.count = 0;
@@ -542,6 +628,12 @@ namespace Keysharp.Core
 			return search.count == search.targetInstance;
 		}
 
+		/// <summary>
+		/// Internal helper to determine whether a specific component exists.
+		/// </summary>
+		/// <param name="root">The root of the device hierarchy.</param>
+		/// <param name="search">The type of search to do.</param>
+		/// <returns>True if found, else false.</returns>
 		private static bool FindComponent(IPart root, SoundComponentSearch search)
 		{
 			IPartsList partsList;
@@ -646,6 +738,11 @@ namespace Keysharp.Core
 			return false;
 		}
 
+		/// <summary>
+		/// Internal helper to get a device from a string description or a number.
+		/// </summary>
+		/// <param name="obj0">The name or number of the device to search for.</param>
+		/// <returns>The device if found, else null.</returns>
 		private static MMDevice GetDevice(object obj0)
 		{
 			var deviceEnum = new MMDeviceEnumerator();
@@ -705,6 +802,9 @@ namespace Keysharp.Core
 			return mmDev;
 		}
 
+		/// <summary>
+		/// Internal helper to aid in searching for devices and components.
+		/// </summary>
 		private class SoundComponentSearch
 		{
 			//Internal use/results:
@@ -729,6 +829,9 @@ namespace Keysharp.Core
 
 #endif
 
+		/// <summary>
+		/// Enum for specifying different sound operations which will be passed to <see cref="DoSound(SoundCommands, object, object, object)"/>
+		/// </summary>
 		private enum SoundCommands
 		{
 			SoundGetVolume = 0, SoundGetMute, SoundGetName
@@ -738,6 +841,9 @@ namespace Keysharp.Core
 			, SoundSetVolume, SoundSetMute
 		}
 
+		/// <summary>
+		/// Enum for specifying different sound control types.
+		/// </summary>
 		private enum SoundControlType
 		{
 			Volume,
