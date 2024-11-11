@@ -785,7 +785,7 @@
 		private int position = -1;
 
 		/// <summary>
-		/// Gets the index,value tuple at the current iterator position.
+		/// The implementation for <see cref="IEnumerator.Current"/> which gets the index,value tuple at the current iterator position.
 		/// </summary>
 		public (object, object) Current
 		{
@@ -835,7 +835,7 @@
 		public void Dispose() => Reset();
 
 		/// <summary>
-		/// Moves the iterator to the next position.
+		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.
 		/// </summary>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
 		public bool MoveNext()
@@ -845,7 +845,7 @@
 		}
 
 		/// <summary>
-		/// Resets the iterator.
+		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
 		public void Reset() => position = -1;
 
