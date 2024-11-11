@@ -8,12 +8,12 @@
 	public class Array : KeysharpObject, IEnumerable<(object, object)>, IList
 	{
 		/// <summary>
-		/// The underlying object that holds the values.
+		/// The underlying <see cref="List"/> that holds the values.
 		/// </summary>
 		internal List<object> array;
 
 		/// <summary>
-		/// Retrieves or sets the current capacity of the array.<br/>
+		/// Gets or sets the current capacity of the array.<br/>
 		/// The capacity is an integer representing the maximum number of elements the array should be able to contain<br/>
 		/// before it must be automatically expanded. If setting a value less than Length, elements are removed.
 		/// </summary>
@@ -56,7 +56,7 @@
 		bool IList.IsReadOnly => ((IList)array).IsReadOnly;
 
 		/// <summary>
-		/// Retrieves or sets the length of an array.<br/>
+		/// Get or sets the length of an array.<br/>
 		/// The length includes elements which have no value.<br/>
 		/// Increasing the length changes which indices are considered valid,
 		/// but the new elements have no value (as indicated by Has).<br/>
@@ -95,14 +95,8 @@
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
+		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		/// <param name="values">An array of values to initialize the array with.<br/>
-		/// This can be one of several values:<br/>
-		///     null: creates an empty array.<br/>
-		///     object[]: adds each element to the underlying list.<br/>
-		///     <see cref="List{object}"/>: assigns the list directly to the underlying list.<br/>
-		///     <see cref="ICollection"/>: adds each element to the underlying list.
-		/// </param>
 		public Array(params object[] values) => _ = __New(values);
 
 		/// <summary>
@@ -181,7 +175,7 @@
 		/// of the this array to the passed in <see cref="System.Array"/>, starting at the passed in index.
 		/// </summary>
 		/// <param name="array">The <see cref="System.Array"/> to copy elements to.</param>
-		/// <param name="index">The index to start copying from.</param>
+		/// <param name="index">The index to start copying to.</param>
 		void ICollection.CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
 
 		/// <summary>

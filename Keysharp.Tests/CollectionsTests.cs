@@ -132,6 +132,21 @@ namespace Keysharp.Tests
 					Assert.IsTrue(false);
 			}
 
+			System.Array sa = new object[6];
+			arr.CopyTo(sa, 0);
+			Assert.AreEqual(sa.GetValue(0), "one");
+			Assert.AreEqual(sa.GetValue(1), 1L);
+			Assert.AreEqual(sa.GetValue(2), "two");
+			Assert.AreEqual(sa.GetValue(3), 2L);
+			Assert.AreEqual(sa.GetValue(4), "three");
+			Assert.AreEqual(sa.GetValue(5), 3L);
+			//
+			sa = new object[3];
+			arr.CopyTo(sa, 0);
+			Assert.AreEqual(sa.GetValue(0), "one");
+			Assert.AreEqual(sa.GetValue(1), 1L);
+			Assert.AreEqual(sa.GetValue(2), "two");
+			//
 			Assert.AreEqual(arr.ToString(), "{\"one\": 1, \"two\": 2, \"three\": 3}");
 			Assert.IsTrue(TestScript("collections-associative-array", true));
 		}
