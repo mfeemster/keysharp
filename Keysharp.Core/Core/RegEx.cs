@@ -11,16 +11,16 @@
 		/// <summary>
 		/// <see cref="RegExMatch(object, object, ref object, object)"/>
 		/// </summary>
-		public static long RegExMatch(object obj0, object obj1)
+		public static long RegExMatch(object haystack, object needle)
 		{
 			object outvar = null;
-			return RegExMatch(obj0, obj1, ref outvar, null);
+			return RegExMatch(haystack, needle, ref outvar, null);
 		}
 
 		/// <summary>
 		/// <see cref="RegExMatch(object, object, ref object, object)"/>
 		/// </summary>
-		public static long RegExMatch(object obj0, object obj1, ref object outvar) => RegExMatch(obj0, obj1, ref outvar, null);
+		public static long RegExMatch(object haystack, object needle, ref object outvar) => RegExMatch(haystack, needle, ref outvar, null);
 
 		/// <summary>
 		/// Determines whether a string contains a pattern (regular expression).
@@ -104,21 +104,21 @@
 		/// <summary>
 		/// <see cref="RegExReplace(object, object, object, ref object, object, object)"/>
 		/// </summary>
-		public static string RegExReplace(object obj0, object obj1, object obj2 = null)
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement = null)
 		{
 			object outputVarCount = null;
-			return RegExReplace(obj0, obj1, obj2, ref outputVarCount);
+			return RegExReplace(haystack, needleRegEx, replacement, ref outputVarCount);
 		}
 
 		/// <summary>
 		/// <see cref="RegExReplace(object, object, object, ref object, object, object)"/>
 		/// </summary>
-		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount) => RegExReplace(obj0, obj1, obj2, ref outputVarCount, null, null);
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount) => RegExReplace(haystack, needleRegEx, replacement, ref outputVarCount, null, null);
 
 		/// <summary>
 		/// <see cref="RegExReplace(object, object, object, ref object, object, object)"/>
 		/// </summary>
-		public static string RegExReplace(object obj0, object obj1, object obj2, ref object outputVarCount, object obj3) => RegExReplace(obj0, obj1, obj2, ref outputVarCount, obj3, null);
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit) => RegExReplace(haystack, needleRegEx, replacement, ref outputVarCount, limit, null);
 
 		/// <summary>
 		/// Replaces occurrences of a pattern (regular expression) inside a string.

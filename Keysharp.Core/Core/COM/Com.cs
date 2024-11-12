@@ -49,12 +49,12 @@ namespace Keysharp.Core.COM
 				ref Guid uuid,
 				[MarshalAs(UnmanagedType.IUnknown)] out object rReturnedComObject);
 
-		public static object ComObjActive(object progId) => GetActiveObject(progId.As());
+		public static object ComObjActive(object clsid) => GetActiveObject(clsid.As());
 
-		public static object ComObjArray(object obj0, object obj1, params object[] args)
+		public static object ComObjArray(object varType, object count1, params object[] args)
 		{
-			var varType = obj0.Ai();//Need a switch statement on type.
-			var dim1Size = obj1.Ai();
+			var vt = varType.Ai();//Need a switch statement on type.
+			var dim1Size = count1.Ai();
 			var lengths = new int[args != null ? args.Length + 1 : 1];
 			var t = typeof(object);
 
@@ -66,7 +66,7 @@ namespace Keysharp.Core.COM
 			for (var i = 0; i < args.Length; i++)
 				lengths[i + 1] = args[i].Ai();
 
-			switch (varType)
+			switch (vt)
 			{
 				case vt_dispatch: t = typeof(DispatchWrapper); break;
 
@@ -119,9 +119,9 @@ namespace Keysharp.Core.COM
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
-		public static void ComObjConnect(object obj0, object obj1 = null, object obj2 = null)
+		public static void ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
 		{
-			if (obj0 is ComObject co)
+			if (comObj is ComObject co)
 			{
 				if (co.VarType != vt_dispatch && co.VarType != vt_unknown)// || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
 				{
@@ -136,18 +136,18 @@ namespace Keysharp.Core.COM
 					ev.dispatcher.Dispose();
 				}
 
-				if (obj1 != null)//obj1 not being null means add it.
-					_ = comEvents.Add(new ComEvent(new Dispatcher(co), obj1, obj2 != null ? obj2.Ab() : false));
+				if (prefixOrSink != null)//obj1 not being null means add it.
+					_ = comEvents.Add(new ComEvent(new Dispatcher(co), prefixOrSink, debug != null ? debug.Ab() : false));
 			}
 		}
 
-		public static object ComObject(object obj0, object obj1 = null)//progId, string iid)
+		public static object ComObject(object clsid, object iid = null)//progId, string iid)
 		{
-			var cls = obj0.As();
-			var iidStr = obj1.As();
+			var cls = clsid.As();
+			var iidStr = iid.As();
 			var hr = 0;
 			var clsId = Guid.Empty;
-			var iid = Guid.Empty;
+			var id = Guid.Empty;
 
 			while (true)
 			{
@@ -168,26 +168,26 @@ namespace Keysharp.Core.COM
 
 				if (iidStr.Length > 0)
 				{
-					hr = CLSIDFromString(iidStr, out iid);
+					hr = CLSIDFromString(iidStr, out id);
 
 					if (hr < 0)
 						break;
 				}
 				else
-					iid = IID_IDispatch;
+					id = IID_IDispatch;
 
-				hr = CoCreateInstance(ref clsId, null, CLSCTX_SERVER, ref iid, out var inst);
+				hr = CoCreateInstance(ref clsId, null, CLSCTX_SERVER, ref id, out var inst);
 
 				if (hr < 0)
 					break;
 
 				//If it was a specific interface, make sure we are pointing to that interface, otherwise the vtable
 				//will be off in ComCall() and the program will crash.
-				if (iid != Guid.Empty && iid != Dispatcher.IID_IDispatch)
+				if (id != Guid.Empty && id != Dispatcher.IID_IDispatch)
 				{
 					var iptr = Marshal.GetIUnknownForObject(inst);
 
-					if (Marshal.QueryInterface(iptr, in iid, out var ptr) >= 0)
+					if (Marshal.QueryInterface(iptr, in id, out var ptr) >= 0)
 						inst = ptr;
 
 					_ = Marshal.Release(iptr);
@@ -196,105 +196,105 @@ namespace Keysharp.Core.COM
 				return new ComObject()
 				{
 					Ptr = inst,
-					VarType = iid == IID_IDispatch ? vt_dispatch : vt_unknown
+					VarType = id == IID_IDispatch ? vt_dispatch : vt_unknown
 				};
 			}
 
 			return null;//Should be a call to ComError() here.//TODO
 		}
 
-		public static object ComObjFlags(object obj0, object obj1 = null, object obj2 = null)
+		public static object ComObjFlags(object comObj, object newFlags = null, object mask = null)
 		{
-			if (obj0 is ComObject co)
+			if (comObj is ComObject co)
 			{
-				var flags = obj1 != null ? obj1.Al() : 0L;
-				var mask = obj2 != null ? obj2.Al() : 0L;
+				var flags = newFlags != null ? newFlags.Al() : 0L;
+				var m = mask != null ? mask.Al() : 0L;
 
-				if (obj1 == null && obj2 == null)
+				if (newFlags == null && mask == null)
 				{
 					if (flags < 0)
 					{
 						flags = 0;
-						mask = -flags;
+						m = -flags;
 					}
 					else
-						mask = flags;
+						m = flags;
 				}
 
-				co.Flags = (co.Flags & ~mask) | (flags & mask);
+				co.Flags = (co.Flags & ~m) | (flags & m);
 				return co.Flags;
 			}
 
 			return 0L;
 		}
 
-		public static ComObject ComObjFromPtr(object obj0)
+		public static ComObject ComObjFromPtr(object dispPtr)
 		{
-			if (obj0 is IntPtr ip)
-				obj0 = Marshal.GetObjectForIUnknown(ip);
-			else if (obj0 is long l)
-				obj0 = Marshal.GetObjectForIUnknown(new IntPtr(l));
+			if (dispPtr is IntPtr ip)
+				dispPtr = Marshal.GetObjectForIUnknown(ip);
+			else if (dispPtr is long l)
+				dispPtr = Marshal.GetObjectForIUnknown(new IntPtr(l));
 
-			if (obj0 is IDispatch id)
+			if (dispPtr is IDispatch id)
 				return new ComObject(vt_dispatch, id);
-			else if (Marshal.IsComObject(obj0))
-				return new ComObject(vt_unknown, obj0);
+			else if (Marshal.IsComObject(dispPtr))
+				return new ComObject(vt_unknown, dispPtr);
 
-			throw new ValueError($"Passed in value {obj0} of type {obj0.GetType()} was not of type IDispatch.");
+			throw new ValueError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.");
 		}
 
-		public static object ComObjGet(object progId) => Marshal.BindToMoniker(progId.As());
+		public static object ComObjGet(object name) => Marshal.BindToMoniker(name.As());
 
-		public static object ComObjQuery(object obj0, object obj1 = null, object obj2 = null)
+		public static object ComObjQuery(object comObj, object sidiid = null, object iid = null)
 		{
 			object ptr;
 
-			if (obj0 is ComObject co)
+			if (comObj is ComObject co)
 				ptr = co.Ptr;
-			else if (Marshal.IsComObject(obj0))
-				ptr = obj0;
-			else if (obj0 is IntPtr ip)
+			else if (Marshal.IsComObject(comObj))
+				ptr = comObj;
+			else if (comObj is IntPtr ip)
 				ptr = Marshal.GetObjectForIUnknown(ip);
-			else if (obj0 is long l)
+			else if (comObj is long l)
 				ptr = Marshal.GetObjectForIUnknown(new IntPtr(l));
 			else
-				throw new ValueError($"The passed in object {obj0} of type {obj0.GetType()} was not a ComObject or a raw COM interface.");
+				throw new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.");
 
-			if (obj1 != null && obj2 != null)
+			if (sidiid != null && iid != null)
 			{
-				var sidstr = obj1.As();
-				var iidstr = obj2.As();
+				var sidstr = sidiid.As();
+				var iidstr = iid.As();
 
-				if (CLSIDFromString(sidstr, out var sid) >= 0 && CLSIDFromString(iidstr, out var iid) >= 0)
+				if (CLSIDFromString(sidstr, out var sid) >= 0 && CLSIDFromString(iidstr, out var id) >= 0)
 				{
 					if (ptr is IServiceProvider isp)
 					{
-						_ = isp.QueryService(ref sid, ref iid, out var ppv);
+						_ = isp.QueryService(ref sid, ref id, out var ppv);
 
 						if (ppv != IntPtr.Zero)
 						{
 							var ob = Marshal.GetObjectForIUnknown(ppv);
-							return new ComObject(iid == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
+							return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
 						}
 					}
 				}
 			}
-			else if (obj1 != null)
+			else if (sidiid != null)
 			{
-				var iidstr = obj1.As();
+				var iidstr = sidiid.As();
 
-				if (CLSIDFromString(iidstr, out var iid) >= 0)
+				if (CLSIDFromString(iidstr, out var id) >= 0)
 				{
 					var iptr = Marshal.GetIUnknownForObject(ptr);
 
-					if (Marshal.QueryInterface(iptr, in iid, out var ppv) >= 0)
+					if (Marshal.QueryInterface(iptr, in id, out var ppv) >= 0)
 					{
 						_ = Marshal.Release(iptr);
 
 						if (ppv != IntPtr.Zero)
 						{
 							var ob = Marshal.GetObjectForIUnknown(ppv);
-							return new ComObject(iid == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
+							return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
 						}
 					}
 
@@ -302,14 +302,14 @@ namespace Keysharp.Core.COM
 				}
 			}
 
-			throw new Error($"Unable to get COM interface with arguments {obj1}, {obj2}.");
+			throw new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.");
 		}
 
-		public static object ComObjType(object obj, object name = null)
+		public static object ComObjType(object comObj, object infoType = null)
 		{
-			var s = name.As().ToLower();
+			var s = infoType.As().ToLower();
 
-			if (obj is ComObject co)
+			if (comObj is ComObject co)
 			{
 				System.Runtime.InteropServices.ComTypes.ITypeInfo typeInfo = null;
 
@@ -361,81 +361,81 @@ namespace Keysharp.Core.COM
 			return null;
 		}
 
-		public static object ComObjValue(object obj0)
+		public static object ComObjValue(object comObj)
 		{
-			if (obj0 is ComObject co)
+			if (comObj is ComObject co)
 			{
 				return co.Ptr;
 			}
-			else if (obj0 is IntPtr ip)
+			else if (comObj is IntPtr ip)
 			{
 				return ip.ToInt64();
 			}
 			else//Unsure if this logic even makes sense.
 			{
-				var gch = GCHandle.Alloc(obj0, GCHandleType.Pinned);
+				var gch = GCHandle.Alloc(comObj, GCHandleType.Pinned);
 				var val = gch.AddrOfPinnedObject();
 				gch.Free();
 				return val;
 			}
 		}
 
-		public static ComObject ComValue(object obj0, object obj1, object obj2 = null) => new ComObject(obj0, obj1, obj2);
+		public static ComObject ComValue(object varType, object value, object flags = null) => new ComObject(varType, value, flags);
 
-		public static object ObjAddRef(object obj0)
+		public static object ObjAddRef(object ptr)
 		{
 			var unk = IntPtr.Zero;
 
-			if (obj0 is ComObject co)
-				obj0 = co.Ptr;
-			else if (obj0 is IntPtr ip)
-				obj0 = ip;
+			if (ptr is ComObject co)
+				ptr = co.Ptr;
+			else if (ptr is IntPtr ip)
+				ptr = ip;
 
-			if (obj0 is IntPtr ip2)
+			if (ptr is IntPtr ip2)
 			{
 				unk = ip2;
 			}
 			else
 			{
-				unk = Marshal.GetIUnknownForObject(obj0);
+				unk = Marshal.GetIUnknownForObject(ptr);
 				_ = Marshal.Release(unk);//Need this or else it will add 2.
 			}
 
 			return (long)Marshal.AddRef(unk);
 		}
 
-		public static object ObjRelease(object obj0)
+		public static object ObjRelease(object ptr)
 		{
-			if (obj0 is ComObject co)
-				obj0 = co.Ptr;
-			else if (obj0 is IntPtr ip)
-				obj0 = ip;
+			if (ptr is ComObject co)
+				ptr = co.Ptr;
+			else if (ptr is IntPtr ip)
+				ptr = ip;
 
-			if (obj0 is IntPtr ip2)
-				obj0 = Marshal.GetObjectForIUnknown(ip2);
+			if (ptr is IntPtr ip2)
+				ptr = Marshal.GetObjectForIUnknown(ip2);
 
-			return (long)Marshal.ReleaseComObject(obj0);
+			return (long)Marshal.ReleaseComObject(ptr);
 		}
 
 		/// <summary>
 		/// Gotten loosely from https://social.msdn.microsoft.com/Forums/vstudio/en-US/cbb92470-979c-4d9e-9555-f4de7befb42e/how-to-directly-access-the-virtual-method-table-of-a-com-interface-pointer?forum=csharpgeneral
 		/// </summary>
-		public static object ComCall(object obj0, object obj1, params object[] parameters)
+		public static object ComCall(object index, object comObj, params object[] parameters)
 		{
-			var index = obj0.Ai();
-			var indexPlus1 = index + 1;//Index is zero based, so add 1.
+			var idx = index.Ai();
+			var indexPlus1 = idx + 1;//Index is zero based, so add 1.
 
-			if (index < 0)
-				throw new ValueError($"Index value of {index} was less than zero.");
+			if (idx < 0)
+				throw new ValueError($"Index value of {idx} was less than zero.");
 
 			object ptr = null;
 			var pUnk = IntPtr.Zero;
 
-			if (obj1 is ComObject co)
+			if (comObj is ComObject co)
 				ptr = co.Ptr;
-			else if (Marshal.IsComObject(obj1))
-				ptr = obj1;
-			else if (obj1 is IntPtr ip)
+			else if (Marshal.IsComObject(comObj))
+				ptr = comObj;
+			else if (comObj is IntPtr ip)
 				ptr = ip;
 			else
 				throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
@@ -450,7 +450,7 @@ namespace Keysharp.Core.COM
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ComArgumentHelper(parameters);
-			var ret = CallDel(pUnk, Marshal.ReadIntPtr(IntPtr.Add(pVtbl, index * sizeof(IntPtr))), helper.args);
+			var ret = CallDel(pUnk, Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
 
 			for (int p = 0, a = 0; p < parameters.Length; p += 2, a++)
 			{
@@ -517,39 +517,39 @@ namespace Keysharp.Core.COM
 					return del0(objPtr);
 
 				case 1:
-					var del1 = (Del1)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del1));
+					var del1 = (Del01)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del01));
 					return del1(objPtr, args[0]);
 
 				case 2:
-					var del2 = (Del2)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del2));
+					var del2 = (Del02)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del02));
 					return del2(objPtr, args[0], args[1]);
 
 				case 3:
-					var del3 = (Del3)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del3));
+					var del3 = (Del03)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del03));
 					return del3(objPtr, args[0], args[1], args[2]);
 
 				case 4:
-					var del4 = (Del4)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del4));
+					var del4 = (Del04)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del04));
 					return del4(objPtr, args[0], args[1], args[2], args[3]);
 
 				case 5:
-					var del5 = (Del5)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del5));
+					var del5 = (Del05)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del05));
 					return del5(objPtr, args[0], args[1], args[2], args[3], args[4]);
 
 				case 6:
-					var del6 = (Del6)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del6));
+					var del6 = (Del06)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del06));
 					return del6(objPtr, args[0], args[1], args[2], args[3], args[4], args[5]);
 
 				case 7:
-					var del7 = (Del7)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del7));
+					var del7 = (Del07)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del07));
 					return del7(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 
 				case 8:
-					var del8 = (Del8)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del8));
+					var del8 = (Del08)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del08));
 					return del8(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 
 				case 9:
-					var del9 = (Del9)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del9));
+					var del9 = (Del09)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del09));
 					return del9(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
 
 				case 10:

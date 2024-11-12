@@ -50,14 +50,14 @@ namespace Keysharp.Core.COM
 
 		public int VarType { get; set; }
 
-		public ComObject(object varType, object val, object flags = null)
+		public ComObject(object varType, object value, object flags = null)
 		{
 			var vt = (int)varType.Al();
-			var co = ValueToVarType(val, vt, true);
+			var co = ValueToVarType(value, vt, true);
 			VarType = vt;
 			Flags = flags != null ? flags.Al() : 0L;
 
-			if (VarType == Com.vt_bstr && val is not long)
+			if (VarType == Com.vt_bstr && value is not long)
 				Flags |= F_OWNVALUE;
 
 			Ptr = co.Ptr;
@@ -223,7 +223,23 @@ namespace Keysharp.Core.COM
 
 	internal delegate IntPtr Del0(IntPtr a);
 
-	internal delegate IntPtr Del1(IntPtr a, IntPtr a0);
+	internal delegate IntPtr Del01(IntPtr a, IntPtr a0);
+
+	internal delegate IntPtr Del02(IntPtr a, IntPtr a0, IntPtr a1);
+
+	internal delegate IntPtr Del03(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2);
+
+	internal delegate IntPtr Del04(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3);
+
+	internal delegate IntPtr Del05(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4);
+
+	internal delegate IntPtr Del06(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5);
+
+	internal delegate IntPtr Del07(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6);
+
+	internal delegate IntPtr Del08(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7);
+
+	internal delegate IntPtr Del09(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8);
 
 	internal delegate IntPtr Del10(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9);
 
@@ -242,22 +258,6 @@ namespace Keysharp.Core.COM
 	internal delegate IntPtr Del17(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14, IntPtr a15, IntPtr a16);
 
 	internal delegate IntPtr Del18(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14, IntPtr a15, IntPtr a16, IntPtr a17);
-
-	internal delegate IntPtr Del2(IntPtr a, IntPtr a0, IntPtr a1);
-
-	internal delegate IntPtr Del3(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2);
-
-	internal delegate IntPtr Del4(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3);
-
-	internal delegate IntPtr Del5(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4);
-
-	internal delegate IntPtr Del6(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5);
-
-	internal delegate IntPtr Del7(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6);
-
-	internal delegate IntPtr Del8(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7);
-
-	internal delegate IntPtr Del9(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8);
 
 	internal delegate IntPtr DelNone();
 }

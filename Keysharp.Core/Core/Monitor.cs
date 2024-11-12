@@ -10,8 +10,8 @@
 		/// </summary>
 		public static object MonitorGet()
 		{
-			object l = null, t = null, r = null, b = null;
-			return MonitorGet(null, ref l, ref t, ref r, ref b);
+			object left = null, top = null, right = null, bottom = null;
+			return MonitorGet(null, ref left, ref top, ref right, ref bottom);
 		}
 
 		/// <summary>
@@ -19,35 +19,35 @@
 		/// </summary>
 		public static object MonitorGet(object obj)
 		{
-			object l = null, t = null, r = null, b = null;
-			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+			object left = null, top = null, right = null, bottom = null;
+			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
 		}
 
 		/// <summary>
 		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, ref object l)
+		public static object MonitorGet(object obj, ref object left)
 		{
-			object t = null, r = null, b = null;
-			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+			object top = null, right = null, bottom = null;
+			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
 		}
 
 		/// <summary>
 		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, ref object l, ref object t)
+		public static object MonitorGet(object obj, ref object left, ref object top)
 		{
-			object r = null, b = null;
-			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+			object right = null, bottom = null;
+			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
 		}
 
 		/// <summary>
 		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, ref object l, ref object t, ref object r)
+		public static object MonitorGet(object obj, ref object left, ref object top, ref object right)
 		{
-			object b = null;
-			return MonitorGet(obj, ref l, ref t, ref r, ref b);
+			object bottom = null;
+			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
 		}
 
 		/// <summary>

@@ -255,15 +255,15 @@ namespace Keysharp.Core
 		/// </param>
 		/// <param name="password">If blank or omitted, it defaults to a blank password. Otherwise, specify the User's password.</param>
 		/// <param name="domain">If blank or omitted, a local account will be used. Otherwise, specify User's domain. If that fails to work, try using @YourComputerName.</param>
-		public static void RunAs(object obj0 = null, object obj1 = null, object obj2 = null)
+		public static void RunAs(object user = null, object password = null, object domain = null)
 		{
-			var user = obj0.As();
-			var password = obj1.As();
-			var domain = obj2.As();
-			runUser = user;
-			runDomain = domain;
+			var u = user.As();
+			var p = password.As();
+			var d = domain.As();
+			runUser = u;
+			runDomain = d;
 
-			if (string.IsNullOrEmpty(password))
+			if (string.IsNullOrEmpty(p))
 			{
 				runPassword = null;
 			}
@@ -271,7 +271,7 @@ namespace Keysharp.Core
 			{
 				runPassword = new SecureString();
 
-				foreach (var sym in password)
+				foreach (var sym in p)
 					runPassword.AppendChar(sym);
 
 				runPassword.MakeReadOnly();

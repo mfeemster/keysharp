@@ -138,22 +138,22 @@ namespace Keysharp.Core
 		///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.
 		/// </param>
 		/// <returns>The formatted date/time string</returns>
-		public static string FormatTime(object obj0 = null, object obj1 = null)
+		public static string FormatTime(object stamp = null, object format = null)
 		{
-			var stamp = obj0.As();
-			var format = obj1.As();
+			var s = stamp.As();
+			var f = format.As();
 			DateTime time;
 			var output = string.Empty;
-			var splits = stamp.Split(' ');
+			var splits = s.Split(' ');
 			var ci = CultureInfo.CurrentCulture;
 
-			if (stamp?.Length == 0)
+			if (s?.Length == 0)
 			{
 				time = DateTime.Now;
 			}
 			else
 			{
-				stamp = splits[0];
+				s = splits[0];
 				var haslsys = splits.Contains("LSys");
 
 				if (haslsys)
@@ -185,7 +185,7 @@ namespace Keysharp.Core
 
 				try
 				{
-					time = Conversions.ToDateTime(stamp, ci.Calendar);
+					time = Conversions.ToDateTime(s, ci.Calendar);
 				}
 				catch
 				{
@@ -194,26 +194,26 @@ namespace Keysharp.Core
 				}
 			}
 
-			if (format != string.Empty)
+			if (f != string.Empty)
 			{
-				var fl = format.ToLowerInvariant();
+				var fl = f.ToLowerInvariant();
 
 				switch (fl)
 				{
 					case Keyword_Time:
-						format = "h:mm tt";
+						f = "h:mm tt";
 						break;
 
 					case Keyword_ShortDate:
-						format = "d";
+						f = "d";
 						break;
 
 					case Keyword_LongDate:
-						format = "D";
+						f = "D";
 						break;
 
 					case Keyword_YearMonth:
-						format = "Y";
+						f = "Y";
 						break;
 
 					case Keyword_YDay:
@@ -236,29 +236,29 @@ namespace Keysharp.Core
 					}
 
 					default:
-						if (format.Contains('\''))
+						if (f.Contains('\''))
 						{
-							format = format.Replace("'", "\"");
-							format = format.Replace("\"\"\"\"", "\\'");
+							f = f.Replace("'", "\"");
+							f = f.Replace("\"\"\"\"", "\\'");
 						}
 
 						break;
 				}
 
 				if (fl.Length == 1)
-					format = "%" + format;
+					f = "%" + f;
 			}
 			else
 			{
 				if (splits.Contains("R"))
-					format = "f";
+					f = "f";
 				else
-					format = "h:mm tt dddd, MMMM d, yyyy";
+					f = "h:mm tt dddd, MMMM d, yyyy";
 			}
 
 			try
 			{
-				output = time.ToString(format, ci);
+				output = time.ToString(f, ci);
 			}
 			catch
 			{
@@ -922,20 +922,20 @@ namespace Keysharp.Core
 		/// <summary>
 		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
 		/// </summary>
-		public static string StrReplace(object obj0, object obj1, object obj2 = null, object obj3 = null)
+		public static string StrReplace(object haystack, object needle, object replaceText = null, object caseSense = null)
 		{
 			object obj4 = null;
 			object outputVarCount = null;
-			return StrReplace(obj0, obj1, obj2, obj3, ref outputVarCount, obj4);
+			return StrReplace(haystack, needle, replaceText, caseSense, ref outputVarCount, obj4);
 		}
 
 		/// <summary>
 		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
 		/// </summary>
-		public static string StrReplace(object obj0, object obj1, object obj2, object obj3, ref object outputVarCount)
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, ref object outputVarCount)
 		{
 			object obj4 = null;
-			return StrReplace(obj0, obj1, obj2, obj3, ref outputVarCount, obj4);
+			return StrReplace(haystack, needle, replaceText, caseSense, ref outputVarCount, obj4);
 		}
 
 		/// <summary>
@@ -1158,7 +1158,7 @@ namespace Keysharp.Core
 		/// Otherwise, specify a list of characters (case-sensitive) to exclude from the beginning and end of the specified string.
 		/// </param>
 		/// <returns>Returns the trimmed version of the specified string.</returns>
-		public static string Trim(object obj0, object obj1 = null) => obj0.As().Trim(obj1.As(" \t").ToCharArray());
+		public static string Trim(object str, object omitChars = null) => str.As().Trim(omitChars.As(" \t").ToCharArray());
 
 		/// <summary>
 		/// Unsupported.

@@ -354,39 +354,39 @@ namespace Keysharp.Core
 					return del1(args[0]);
 
 				case 2:
-					var del2 = (Del1)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del1));
+					var del2 = (Del01)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del01));
 					return del2(args[0], args[1]);
 
 				case 3:
-					var del3 = (Del2)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del2));
+					var del3 = (Del02)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del02));
 					return del3(args[0], args[1], args[2]);
 
 				case 4:
-					var del4 = (Del3)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del3));
+					var del4 = (Del03)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del03));
 					return del4(args[0], args[1], args[2], args[3]);
 
 				case 5:
-					var del5 = (Del4)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del4));
+					var del5 = (Del04)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del04));
 					return del5(args[0], args[1], args[2], args[3], args[4]);
 
 				case 6:
-					var del6 = (Del5)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del5));
+					var del6 = (Del05)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del05));
 					return del6(args[0], args[1], args[2], args[3], args[4], args[5]);
 
 				case 7:
-					var del7 = (Del6)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del6));
+					var del7 = (Del06)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del06));
 					return del7(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 
 				case 8:
-					var del8 = (Del7)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del7));
+					var del8 = (Del07)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del07));
 					return del8(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 
 				case 9:
-					var del9 = (Del8)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del8));
+					var del9 = (Del08)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del08));
 					return del9(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
 
 				case 10:
-					var del10 = (Del9)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del9));
+					var del10 = (Del09)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del09));
 					return del10(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
 
 				case 11:
