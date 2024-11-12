@@ -16,15 +16,26 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Disables or enables the user's ability to interact with the computer via keyboard and mouse.
 		/// </summary>
-		/// <param name="Mode">
-		/// <list type="bullet">
-		/// <item>On: the user is prevented from interacting with the computer (mouse and keyboard input has no effect).</item>
-		/// <item>Off: input is re-enabled.</item>
-		/// </list>
+		/// <param name="value">Different operations will be taken depending on the specified value:<br/>
+		/// OnOff: This mode blocks all user inputs unconditionally. Specify one of the following values:<br/>
+		///     On or 1 (true): The user is prevented from interacting with the computer(mouse and keyboard input has no effect).<br/>
+		///     Off or 0 (false): Input is re-enabled.<br/>
+		/// <br/>
+		/// SendMouse: This mode only blocks user inputs while specific send and/or mouse functions are in progress. Specify one of the following words:
+		///     Send: The user's keyboard and mouse input is ignored while a SendEvent is in progress (including Send and SendText if SendMode "Event" has been used). This prevents the user's keystrokes from disrupting the flow of simulated keystrokes. When the Send finishes, input is re-enabled (unless still blocked by a previous use of BlockInput "On").
+		///     Mouse: The user's keyboard and mouse input is ignored while a Click, MouseMove, MouseClick, or MouseClickDrag is in progress (the traditional SendEvent mode only). This prevents the user's mouse movements and clicks from disrupting the simulated mouse events.When the mouse action finishes, input is re-enabled(unless still blocked by a previous use of BlockInput "On").
+		///     SendAndMouse: A combination of the above two modes.
+		///     Default: Turns off both the Send and the Mouse modes, but does not change the current state of input blocking.For example, if BlockInput "On" is currently in effect, using BlockInput "Default" will not turn it off.
+		/// <br/>
+		/// MouseMove: This mode only blocks the mouse cursor movement. Specify one of the following words:<br/>
+		///     MouseMove: The mouse cursor will not move in response to the user's physical movement of the mouse (DirectInput applications are a possible exception).<br/>
+		///         When a script first uses this function, the mouse hook is installed (if it is not already).<br/>
+		///         The mouse hook will stay installed until the next use of the Suspend or Hotkey function, at which time it is removed if not required by any hotkeys or hotstrings (see #Hotstring NoMouse).<br/>
+		///     MouseMoveOff: Allows the user to move the mouse cursor.<br/>
 		/// </param>
-		public static void BlockInput(object obj)
+		public static void BlockInput(object value)
 		{
-			var mode = obj.As();
+			var mode = value.As();
 			var toggle = ConvertBlockInput(mode);
 
 			switch (toggle)
@@ -58,6 +69,19 @@ namespace Keysharp.Core
 
 #if WINDOWS
 
+		/// <summary>
+		/// Retrieves the current position of the caret (text insertion point).
+		/// </summary>
+		/// <param name="outputVarX">If omitted, the corresponding value will not be stored.<br/>
+		/// Otherwise, specify references to the output variables in which to store the X and Y coordinates.<br/>
+		/// The retrieved coordinates are relative to the active window's client area unless overridden by<br/>
+		/// using <see cref="CoordMode"/> or <see cref="A_CoordModeCaret"/>.
+		/// </param>
+		/// <param name="outputVarY">See <paramref name="outputVarX"/>.</param>
+		/// <returns>If there is no active window or the caret position cannot be determined, returns 0 (false)<br/>
+		/// and the output variables are made blank. It returns 1 (true) if the system returned a caret position,<br/>
+		/// but this does not necessarily mean a caret is visible.
+		/// </returns>
 		public static bool CaretGetPos(ref long outputVarX, ref long outputVarY)
 		{
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
@@ -95,17 +119,46 @@ namespace Keysharp.Core
 			return true;
 		}
 
+
 #endif
-
-		public static string GetKeyName(object obj) => GetKeyNamePrivate(obj.As(), 0) as string;
-
-		public static long GetKeySC(object obj) => (long)GetKeyNamePrivate(obj.As(), 1);
+		/// <summary>
+		/// Retrieves the name/text of a key.
+		/// </summary>
+		/// <param name="keyName">This can be just about any single character from the keyboard or one<br/>
+		/// of the key names from the key list. Examples: B, 5, LWin, RControl, Alt, Enter, Escape.<br/>
+		/// Alternatively, this can be an explicit virtual key code such as vkFF, an explicit scan code<br/>
+		/// such as sc01D, or a combination of VK and SC (in that order) such as vk1Bsc001.<br/>
+		/// Note that these codes must be in hexadecimal.
+		/// </param>
+		/// <returns>The name of the specified key, or blank if the key is invalid or unnamed.</returns>
+		public static string GetKeyName(object keyName) => GetKeyNamePrivate(keyName.As(), 0) as string;
 
 		/// <summary>
-		/// Unlike the GetKeyState command -- which returns D for down and U for up -- this function returns (1) if the key is down and (0) if it is up.
-		/// If <paramref name="KeyName"/> is invalid, an empty string is returned.
+		/// Retrieves the scan code of a key.
 		/// </summary>
-		/// <param name="KeyName">Use autohotkey definition or virtual key starting from "VK"</param>
+		/// <param name="keyName">Any single character or one of the key names from the key list.<br/>
+		/// Examples: B, 5, LWin, RControl, Alt, Enter, Escape.<br/>
+		/// Alternatively, this can be an explicit virtual key code such as vkFF, an explicit scan code such as sc01D,<br/>
+		/// or a combination of VK and SC (in that order) such as vk1Bsc001.Note that these codes must be in hexadecimal.
+		/// </param>
+		/// <returns>Returns the scan code of the specified key, or 0 if the key is invalid or has no scan code.</returns>
+		public static long GetKeySC(object keyName) => (long)GetKeyNamePrivate(keyName.As(), 1);
+
+
+		/// <summary>
+		/// Returns 1 (true) or 0 (false) depending on whether the specified keyboard key or mouse/controller<br/>
+		/// button is down or up. Also retrieves controller status.
+		/// </summary>
+		/// <param name="KeyName">This can be just about any single character from the keyboard or one of
+		/// the key names from the key list, such as a mouse/controller button.<br/>
+		/// Examples: B, 5, LWin, RControl, Alt, Enter, Escape, LButton, MButton, Joy1.<br/>
+		/// Alternatively, an explicit virtual key code such as vkFF may be specified.<br/>
+		/// This is useful in the rare case where a key has no name. The code of such a key can be<br/>
+		/// determined by following the steps at the bottom of the key list page.<br/>
+		/// Note that this code must be in hexadecimal.<br/>
+		/// Known limitation: This function cannot differentiate between two keys which share the same<br/>
+		/// virtual key code, such as Left and NumpadLeft.
+		/// </param>
 		/// <param name="Mode"></param>
 		public static object GetKeyState(object obj0, object obj1 = null)
 		{
@@ -138,19 +191,51 @@ namespace Keysharp.Core
 			return ScriptGetKeyState(vk, keystatetype); // 1 for down and 0 for up.
 		}
 
-		public static long GetKeyVK(object obj) => (long)GetKeyNamePrivate(obj.As(), 2);
+		/// <summary>
+		/// Retrieves the virtual key code of a key.
+		/// </summary>
+		/// <param name="keyName">Any single character or one of the key names from the key list.<br/>
+		/// Examples: B, 5, LWin, RControl, Alt, Enter, Escape.<br/>
+		/// Alternatively, this can be an explicit virtual key code such as vkFF, an explicit scan code<br/>
+		/// such as sc01D, or a combination of VK and SC (in that order) such as vk1Bsc001.<br/>
+		/// Note that these codes must be in hexadecimal.
+		/// </param>
+		/// <returns>The virtual key code of the specified key, or 0 if the key is invalid or has no virtual key code.</returns>
+		public static long GetKeyVK(object keyName) => (long)GetKeyNamePrivate(keyName.As(), 2);
 
-		public static void Hotkey(object obj0, object obj1 = null, object obj2 = null)
+		/// <summary>
+		/// Creates, modifies, enables, or disables a hotkey while the script is running.
+		/// </summary>
+		/// <param name="keyName">Name of the hotkey's activation key, including any modifier symbols. For example, specify #c for the Win+C hotkey.</param>
+		/// <param name="action">If omitted and KeyName already exists as a hotkey, its action will not be changed.<br/>
+		/// This is useful to change only the hotkey's Options. Otherwise, specify a callback, a hotkey name without<br/>
+		/// trailing colons, or one of the special values listed below.
+		///     On: The hotkey becomes enabled. No action is taken if the hotkey is already On.
+		///     Off: The hotkey becomes disabled.No action is taken if the hotkey is already Off.
+		///     Toggle: The hotkey is set to the opposite state (enabled or disabled).
+		///     AltTab(and others) : These are special Alt-Tab hotkey actions that are described here.
+		/// </param>
+		/// <param name="options">A string of zero or more of the following options with optional spaces in between. For example: "On B0".
+		///     On: Enables the hotkey if it is currently disabled.
+		///     Off: Disables the hotkey if it is currently enabled. This is typically used to create a hotkey in an initially-disabled state.
+		///     B or B0: Specify the letter B to buffer the hotkey as described in #MaxThreadsBuffer. Specify B0 (B with the number 0) to disable this type of buffering.
+		///     Pn: Specify the letter P followed by the hotkey's thread priority. If the P option is omitted when creating a hotkey, 0 will be used.
+		///     S or S0: Specify the letter S to make the hotkey exempt from Suspend, which allows the hotkey to be used to turn Suspend off. Specify S0 (S with the number 0) to remove the exemption, allowing the hotkey to be suspended.
+		///     Tn: Specify the letter T followed by a the number of threads to allow for this hotkey as described in #MaxThreadsPerHotkey. For example: T5.
+		///     In (InputLevel): Specify the letter I (or i) followed by the hotkey's input level. For example: I1.
+		/// </param>
+		/// <exception cref="Error">Throws an <see cref="Error"/> exception if an invalid function object or name is specified.</exception>
+		public static void Hotkey(object keyName, object action = null, object options = null)
 		{
-			var keyname = obj0.As();
-			var label = obj1.As();
-			var options = obj2.As();
+			var keyname = keyName.As();
+			var label = action.As();
+			var opt = options.As();
 			IFuncObj fo = null;
 			var hook_action = 0u;
 
-			if (obj1 != null)
+			if (action != null)
 			{
-				fo = Functions.GetFuncObj(obj1, null);//Don't throw on failure because returning null is a valid action.
+				fo = Functions.GetFuncObj(action, null);//Don't throw on failure because returning null is a valid action.
 				var tv = Threads.GetThreadVariables();
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
@@ -180,9 +265,31 @@ break_twice:;
 					hook_action = HotkeyDefinition.ConvertAltTab(label, true);
 			}
 
-			_ = HotkeyDefinition.Dynamic(keyname, options, fo, hook_action);
+			_ = HotkeyDefinition.Dynamic(keyname, opt, fo, hook_action);
 		}
 
+		/// <summary>
+		/// Creates, modifies, enables, or disables a hotstring while the script is running.
+		/// </summary>
+		/// <param name="obj0">This can be a hotstring trigger string, or new options or a sub function.
+		/// Hotstring: The hotstring's trigger string, preceded by the usual colons and option characters. For example, "::btw" or ":*:]d".
+		/// NewOptions: To set new default options for subsequently created hotstrings, pass the options to the<br/>
+		///     Hotstring function without any leading or trailing colon. For example: Hotstring "T".<br/>
+		/// SubFunction:
+		///     EndChars: Retrieves or modifies the set of characters used as ending characters by the hotstring recognizer.<br/>
+		///     MouseReset: Retrieves or modifies the global setting which controls whether mouse clicks reset the hotstring recognizer.<br/>
+		///     Reset: Immediately resets the hotstring recognizer.
+		/// </param>
+		/// <param name="obj1">If omitted and string already exists as a hotstring, its replacement will<br/>
+		/// not be changed. This is useful to change only the hotstring's options, or to turn it on or off.<br/>
+		/// Otherwise, specify the replacement string or a callback.
+		/// If replacement is a function, it is called(as a new thread) when the hotstring triggers.
+		/// The callback accepts one parameter which is the hotstring name that triggered it.
+		/// </param>
+		/// <param name="obj2">OnOffToggle or the value to pass to the sub function.</param>
+		/// <returns>If changing a value, returns the previous value, else returns the HotstringDefinition for the specified hostring.</returns>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the hotstring name is invalid.</exception>
+		/// <exception cref="TargetError">A <see cref="TargetError"/> exception is thrown if the hotstring cannot be found.</exception>
 		public static object Hotstring(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var name = obj0.As();
@@ -367,11 +474,19 @@ break_twice:;
 			return existing;
 		}
 
-		public static void KeyHistory(object obj0)
+		/// <summary>
+		/// Displays script info and a history of the most recent keystrokes and mouse clicks.
+		/// </summary>
+		/// <param name="maxEvents">If omitted, the script's main window will be shown, equivalent to selecting<br/>
+		/// the "View->Key history" menu item. Otherwise, specify the maximum number of keyboard and mouse events<br/>
+		/// that can be recorded for display in the window (limit 500).<br/>
+		/// The key history is also reset, but the main window is not shown or refreshed.
+		/// Specify 0 to disable key history entirely.</param>
+		public static void KeyHistory(object maxEvents)
 		{
-			if (obj0 != null)
+			if (maxEvents != null)
 			{
-				var max = Math.Clamp(obj0.Al(), 0, 500);
+				var max = Math.Clamp(maxEvents.Al(), 0, 500);
 
 				if (Script.HookThread is HookThread ht)
 				{
@@ -397,26 +512,36 @@ break_twice:;
 		}
 
 		/// <summary>
-		/// Waits for a key or mouse/joystick button to be released or pressed down.
+		/// Waits for a key or mouse/controller button to be released or pressed down.
 		/// </summary>
-		/// <param name="KeyName">
-		/// <para>This can be just about any single character from the keyboard or one of the key names from the key list, such as a mouse/joystick button. Joystick attributes other than buttons are not supported.</para>
-		/// <para>An explicit virtual key code such as vkFF may also be specified. This is useful in the rare case where a key has no name and produces no visible character when pressed. Its virtual key code can be determined by following the steps at the bottom fo the key list page.</para>
+		/// <param name="keyName">
+		/// This can be just about any single character from the keyboard or one of the key names from the key list,<br/>
+		/// such as a mouse/controller button. Controller attributes other than buttons are not supported.<br/>
+		/// An explicit virtual key code such as vkFF may also be specified.<br/>
+		/// This is useful in the rare case where a key has no name and produces no visible character when pressed.<br/>
+		/// Its virtual key code can be determined by following the steps at the bottom of the key list page.
 		/// </param>
 		/// <param name="options">
-		/// <para>If this parameter is blank, the command will wait indefinitely for the specified key or mouse/joystick button to be physically released by the user. However, if the keyboard hook is not installed and KeyName is a keyboard key released artificially by means such as the Send command, the key will be seen as having been physically released. The same is true for mouse buttons when the mouse hook is not installed.</para>
-		/// <para>Options: A string of one or more of the following letters (in any order, with optional spaces in between):</para>
-		/// <list type="">
-		/// <item>D: Wait for the key to be pushed down.</item>
-		/// <item>L: Check the logical state of the key, which is the state that the OS and the active window believe the key to be in (not necessarily the same as the physical state). This option is ignored for joystick buttons.</item>
-		/// <item>T: Timeout (e.g. T3). The number of seconds to wait before timing out and setting Accessors.A_ErrorLevel to 1. If the key or button achieves the specified state, the command will not wait for the timeout to expire. Instead, it will immediately set Accessors.A_ErrorLevel to 0 and the script will continue executing.</item>
-		/// </list>
-		/// <para>The timeout value can be a floating point number such as 2.5, but it should not be a hexadecimal value such as 0x03.</para>
+		/// If blank or omitted, the function will wait indefinitely for the specified key or mouse/controller<br/>
+		/// button to be physically released by the user.<br/>
+		/// However, if the keyboard hook is not installed and keyName is a keyboard key released artificially<br/>
+		/// by means such as the <see cref="Send"/> function, the key will be seen as having been physically released.<br/>
+		/// The same is true for mouse buttons when the mouse hook is not installed.<br/>
+		/// Otherwise, specify a string of one or more of the following options(in any order, with optional spaces in between):<br/>
+		///     D: Wait for the key to be pushed down.<br/>
+		///     L: Check the logical state of the key, which is the state that the OS and the active window believe<br/>
+		///         the key to be in (not necessarily the same as the physical state).<br/>
+		///         This option is ignored for controller buttons.<br/>
+		///     T: Timeout (e.g.T3). The number of seconds to wait before timing out and returning 0.<br/>
+		///         If the key or button achieves the specified state, the function will not wait for the timeout to expire.<br/>
+		///         Instead, it will immediately return 1.
 		/// </param>
-		public static bool KeyWait(object obj0, object obj1 = null)
+		/// <returns>0 (false) if the function timed out or 1 (true) otherwise.</returns>
+		/// <exception cref="ValueError">Throws a <see cref="ValueError"/> exception if an invalid joystick button is specified.</exception>
+		public static bool KeyWait(object keyName, object options = null)
 		{
-			var keyname = obj0.As();
-			var options = obj1.As();
+			var keyname = keyName.As();
+			var opts = options.As();
 			bool waitIndefinitely;
 			int sleepDuration;
 			DateTime startTime;
@@ -444,9 +569,9 @@ break_twice:;
 			waitIndefinitely = true;
 			sleepDuration = 0;
 
-			for (var i = 0; i < options.Length; ++i)
+			for (var i = 0; i < opts.Length; ++i)
 			{
-				switch (char.ToUpper(options[i]))
+				switch (char.ToUpper(opts[i]))
 				{
 					case 'D':
 						waitForKeyDown = true;
@@ -464,10 +589,10 @@ break_twice:;
 						var numstr = "";
 						var cc = CultureInfo.CurrentCulture;
 
-						for (var numi = i + 1; numi < options.Length; numi++)
+						for (var numi = i + 1; numi < opts.Length; numi++)
 						{
-							if (char.IsDigit(options[numi]) || options[numi] == cc.NumberFormat.NumberDecimalSeparator[0])
-								numstr += options[numi];
+							if (char.IsDigit(opts[numi]) || opts[numi] == cc.NumberFormat.NumberDecimalSeparator[0])
+								numstr += opts[numi];
 							else
 								break;
 						}
@@ -515,34 +640,110 @@ break_twice:;
 		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero), true, true);
 		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
 
-		public static void Send(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+		/// <summary>
+		/// Sends simulated keystrokes and mouse clicks to the active window.
+		/// By default, Send is synonymous with <see cref="SendInput"/>; but it can be made a synonym for <see cref="SendEvent"/> or <see cref="SendPlay"/> via <see cref="SendMode"/>.
+		/// </summary>
+		/// <param name="keys">The sequence of keys to send.</param>
+		public static void Send(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
 
-		public static void SendEvent(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+		/// <summary>
+		/// SendEvent sends keystrokes using the Windows keybd_event function (search Microsoft Docs for details).<br/>
+		/// The rate at which keystrokes are sent is determined by <see cref="SetKeyDelay"/>.<br/>
+		/// <see cref="SendMode"/> can be used to make Send synonymous with <see cref="SendEvent"/> or <see cref="SendPlay"/>.
+		/// </summary>
+		public static void SendEvent(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
 
-		public static void SendInput(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+		/// <summary>
+		/// <see cref="SendInput"/> and <see cref="SendPlay"/> use the same syntax as <see cref="SendEvent"/> but are generally faster and more reliable.<br/>
+		/// In addition, they buffer any physical keyboard or mouse activity during the send, which prevents the<br/>
+		/// user's keystrokes from being interspersed with those being sent.<br/>
+		/// <see cref="SendMode"/> can be used to make <see cref="Send"/> synonymous with <see cref="SendInput"/> or <see cref="SendPlay"/>.
+		/// </summary>
+		public static void SendInput(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
 
-		public static void SendLevel(object obj) => Accessors.A_SendLevel = obj;
-
-		public static void SendMode(object obj) => Accessors.A_SendMode = obj;
-
-		public static void SendPlay(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
-
-		public static void SendText(object obj) => Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
-
-		public static void SetCapsLockState(object obj) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, obj.As());//Shouldn't have windows code in a common location.//TODO
-
-		public static void SetKeyDelay(object obj0 = null, object obj1 = null, object obj2 = null)
+		/// <summary>
+		/// Controls which artificial keyboard and mouse events are ignored by hotkeys and hotstrings.
+		/// </summary>
+		/// <param name="level">An integer between 0 and 100.</param>
+		/// <returns>The previous setting; an integer between 0 and 100.</returns>
+		public static object SendLevel(object level)
 		{
-			var play = obj2.As().ToLowerInvariant();
-			var isPlay = play == "play";
+			var old = Accessors.A_SendLevel;
+			Accessors.A_SendLevel = level;
+			return old;
+		}
+
+		/// <summary>
+		/// Makes Send synonymous with <see cref="SendEvent"/> or <see cref="SendPlay"/> rather than the default (<see cref="SendInput"/>).<br/>
+		/// Also makes <see cref="Click"/> and <see cref="MouseMove"/>/<see cref="Click"/>/<see cref="Drag"/> use the specified method.
+		/// </summary>
+		/// <param name="mode">Event, Input, InputThenPlay or Play.</param>
+		/// <returns>The previous setting; either Event, Input, InputThenPlay or Play.</returns>
+		public static object SendMode(object mode)
+		{
+			var old = Accessors.A_SendMode;
+			Accessors.A_SendMode = mode;
+			return old;
+		}
+
+		/// <summary>
+		/// <see cref="SendInput"/> and <see cref="SendPlay"/> use the same syntax as <see cref="SendEvent"/> but are generally faster and more reliable.<br/>
+		/// In addition, they buffer any physical keyboard or mouse activity during the send, which prevents the<br/>
+		/// user's keystrokes from being interspersed with those being sent.<br/>
+		/// <see cref="SendMode"/> can be used to make <see cref="Send"/> synonymous with <see cref="SendInput"/> or <see cref="SendPlay"/>.
+		/// </summary>
+		public static void SendPlay(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+
+		/// <summary>
+		/// Similar to <see cref="Send"/>, except that all characters in Keys are interpreted and sent literally. See Text mode for details.
+		/// </summary>
+		public static void SendText(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+
+		/// <summary>
+		/// Sets the state of CapsLock. Can also force the key to stay on or off.
+		/// </summary>
+		/// <param name="state">
+		/// If blank or omitted, the AlwaysOn/Off attribute of the key is removed (if present).<br/>
+		/// Otherwise, specify one of the following values:<br/>
+		///     On or 1 (true): Turns on the key and removes the AlwaysOn/Off attribute of the key (if present).<br/>
+		///     Off or 0 (false): Turns off the key and removes the AlwaysOn/Off attribute of the key (if present).<br/>
+		///     AlwaysOn: Forces the key to stay on permanently.<br/>
+		///     AlwaysOff: Forces the key to stay off permanently.
+		/// </param>
+		public static void SetCapsLockState(object state) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
+
+		/// <summary>
+		/// Sets the delay that will occur after each keystroke sent by <see cref="Send"/> or <see cref="ControlSend"/>.
+		/// </summary>
+		/// <param name="delay">If omitted, the current delay is retained. Otherwise, specify the time in milliseconds.<br/>
+		/// Specify -1 for no delay at all or 0 for the smallest possible delay<br/>
+		/// (however, if the Play parameter is present, both 0 and -1 produce no delay).
+		/// </param>
+		/// <param name="pressDuration">Certain games and other specialized applications may require a delay<br/>
+		/// inside each keystroke; that is, after the press of the key but before its release.<br/>
+		/// If omitted, the current press duration is retained.Otherwise, specify the time in milliseconds.<br/>
+		/// Specify -1 for no delay at all or 0 for the smallest possible delay<br/>
+		/// (however, if the Play parameter is present, both 0 and -1 produce no delay).<br/>
+		/// Note: PressDuration also produces a delay after any change to the modifier key<br/>
+		/// state (Ctrl, Alt, Shift, and Win) needed to support the keys being sent.
+		/// </param>
+		/// <param name="play">If blank or omitted, the delay and press duration are applied to the traditional <see cref="SendEvent"/><br/>
+		/// mode. Otherwise, specify the word Play to apply both to the <see cref="SendPlay"/> mode.<br/>
+		/// If a script never uses this parameter, both are always -1 for <see cref="SendPlay"/>.
+		/// </param>
+		public static void SetKeyDelay(object delay = null, object pressDuration = null, object play = null)
+		{
+			var p = play.As().ToLowerInvariant();
+			var isPlay = p == "play";
 			var del = isPlay ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay;
 			var dur = isPlay ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration;
 
-			if (obj0 != null)
-				del = obj0.Al();
+			if (delay != null)
+				del = delay.Al();
 
-			if (obj1 != null)
-				dur = obj1.Al();
+			if (pressDuration != null)
+				dur = pressDuration.Al();
 
 			if (isPlay)
 			{
@@ -556,34 +757,65 @@ break_twice:;
 			}
 		}
 
-		public static void SetNumLockState(object obj) => SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+		/// <summary>
+		/// See <see cref="SetCapsLockState"/>, but for NumLock.
+		/// </summary>
+		public static void SetNumLockState(object state) => SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
 
-		public static void SetScrollLockState(object obj) => SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, obj.As());//Shouldn't have windows code in a common location.//TODO
+		/// <summary>
+		/// See <see cref="SetLockState"/>, but for ScrollLock.
+		/// </summary>
+		public static void SetScrollLockState(object state) => SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
 
-		public static void SetStoreCapsLockMode(object obj) => Accessors.A_StoreCapsLockMode = obj;
-
-		internal static ToggleValueType ConvertBlockInput(string buf)
+		/// <summary>
+		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.
+		/// </summary>
+		/// <param name="mode">If true, CapsLock will be restored to its former value if Send needed to change<br/>
+		/// it temporarily for its operation.<br/>
+		/// If false, the state of CapsLock is not changed at all.<br/>
+		/// As a result, <see cref="Send"/> will invert the case of the characters if CapsLock happens to be ON during the operation.
+		/// </param>
+		public static object SetStoreCapsLockMode(object mode)
 		{
-			var toggle = Conversions.ConvertOnOff(buf);
+			var old = Accessors.A_StoreCapsLockMode;
+			Accessors.A_StoreCapsLockMode = mode;
+			return old;
+		}
+
+		/// <summary>
+		/// Internal helper to convert an input mode from a string to a <see cref="ToggleValueType"/>.
+		/// </summary>
+		/// <param name="mode">The string name of the input mode.</param>
+		/// <returns>The <see cref="ToggleValueType"/> equivalent of the mode string.</returns>
+		internal static ToggleValueType ConvertBlockInput(string mode)
+		{
+			var toggle = Conversions.ConvertOnOff(mode);
 
 			if (toggle != ToggleValueType.Invalid)
 				return toggle;
 
-			if (string.Compare(buf, "Send", true) == 0) return ToggleValueType.Send;
+			if (string.Compare(mode, "Send", true) == 0) return ToggleValueType.Send;
 
-			if (string.Compare(buf, "Mouse", true) == 0) return ToggleValueType.Mouse;
+			if (string.Compare(mode, "Mouse", true) == 0) return ToggleValueType.Mouse;
 
-			if (string.Compare(buf, "SendAndMouse", true) == 0) return ToggleValueType.SendAndMouse;
+			if (string.Compare(mode, "SendAndMouse", true) == 0) return ToggleValueType.SendAndMouse;
 
-			if (string.Compare(buf, "Default", true) == 0) return ToggleValueType.Default;
+			if (string.Compare(mode, "Default", true) == 0) return ToggleValueType.Default;
 
-			if (string.Compare(buf, "MouseMove", true) == 0) return ToggleValueType.MouseMove;
+			if (string.Compare(mode, "MouseMove", true) == 0) return ToggleValueType.MouseMove;
 
-			if (string.Compare(buf, "MouseMoveOff", true) == 0) return ToggleValueType.MouseMoveOff;
+			if (string.Compare(mode, "MouseMoveOff", true) == 0) return ToggleValueType.MouseMoveOff;
 
 			return ToggleValueType.Invalid;
 		}
 
+		/// <summary>
+		/// Internal helper to get the name of a key.
+		/// </summary>
+		/// <param name="vk">The virtual key code.</param>
+		/// <param name="sc">The scan code.</param>
+		/// <param name="def">The default value to use if the conversion failed.</param>
+		/// <returns>The name of the key as specified by vk and sc. Else def if the conversion failed.</returns>
 		internal static string GetKeyNameHelper(uint vk, uint sc, string def = "not found")
 		{
 			var ht = Script.HookThread;
@@ -612,10 +844,10 @@ break_twice:;
 		}
 
 		/// <summary>
-		/// Always returns OK for caller convenience.
+		/// Internal helper to blocks keyboard and mouse input from reaching the script.
 		/// </summary>
-		/// <param name="enable"></param>
-		/// <returns></returns>
+		/// <param name="enable">True to block, else false to unblock.</param>
+		/// <returns>Always returns OK for caller convenience.</returns>
 		internal static ResultType ScriptBlockInput(bool enable)
 		{
 			// Always turn input ON/OFF even if g_BlockInput says its already in the right state.  This is because
@@ -634,10 +866,10 @@ break_twice:;
 		}
 
 		/// <summary>
-		///
+		/// Internal helper to get the state of a key.
 		/// </summary>
-		/// <param name="vk"></param>
-		/// <param name="keyStateType"></param>
+		/// <param name="vk">The key to examine.</param>
+		/// <param name="keyStateType">The type of state to examine: toggle or physical.</param>
 		/// <returns>true if down, else false</returns>
 		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
 		{
@@ -688,6 +920,12 @@ break_twice:;
 			return ht.IsKeyDown(vk);
 		}
 
+		/// <summary>
+		/// Internal helper to get the name of a key in different ways depending on the calling context.
+		/// </summary>
+		/// <param name="keyname">The name of the key to examine.</param>
+		/// <param name="callid">The calling context. 0, 1 or 2.</param>
+		/// <returns>A string or integer representation of the key.</returns>
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
 			var ht = Script.HookThread;
@@ -712,27 +950,12 @@ break_twice:;
 			return "";
 		}
 
-		private static bool HotkeyPrecondition(string[,] win)
-		{
-			if (!string.IsNullOrEmpty(win[0, 0]) || !string.IsNullOrEmpty(win[0, 1]))
-				if (Window.WinActive(win[0, 0], win[0, 1], string.Empty, string.Empty) == 0)
-					return false;
-
-			if (!string.IsNullOrEmpty(win[1, 0]) || !string.IsNullOrEmpty(win[1, 1]))
-				if (Window.WinExist(win[1, 0], win[1, 1], string.Empty, string.Empty) == 0)
-					return false;
-
-			if (!string.IsNullOrEmpty(win[2, 0]) || !string.IsNullOrEmpty(win[2, 1]))
-				if (Window.WinActive(win[2, 0], win[2, 1], string.Empty, string.Empty) != 0)
-					return false;
-
-			if (!string.IsNullOrEmpty(win[3, 0]) || !string.IsNullOrEmpty(win[3, 1]))
-				if (Window.WinExist(win[3, 0], win[3, 1], string.Empty, string.Empty) != 0)
-					return false;
-
-			return true;
-		}
-
+		/// <summary>
+		/// Internal helper to toggle a key state.
+		/// </summary>
+		/// <param name="vk">The virtual key code of the key to toggle.</param>
+		/// <param name="forceLock">Whether to lock the the key as always down or always off.</param>
+		/// <param name="toggleText">The type of toggling to do: On, Off, AlwaysOn, AlwaysOff.</param>
 		private static void SetToggleState(uint vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Conversions.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);
@@ -772,6 +995,9 @@ break_twice:;
 		}
 	}
 
+	/// <summary>
+	/// Internal static holder to keep track of the toggle state of caps/num/scroll lock.
+	/// </summary>
 	internal class ToggleStates
 	{
 		internal ToggleValueType forceCapsLock = ToggleValueType.Neutral;
