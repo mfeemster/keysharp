@@ -1,5 +1,4 @@
 ﻿#if WINDOWS
-using static Keysharp.Core.Misc;
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.ScanCodes;
@@ -634,9 +633,9 @@ namespace Keysharp.Core.Windows
 						//  LAlt (true) + LWin = both disguised (false).
 						//  LWin (true) + LAlt = both disguised (false).
 						if ((modLR & (MOD_LWIN | MOD_RWIN)) != 0)
-							undisguisedMenuInEffect = ((kbdMsSender.modifiersLRLogical & ~(MOD_LWIN | MOD_RWIN)) == 0); // If any other modifier is down, disguise is already in effect.
+							undisguisedMenuInEffect = (kbdMsSender.modifiersLRLogical & ~(MOD_LWIN | MOD_RWIN)) == 0; // If any other modifier is down, disguise is already in effect.
 						else if ((modLR & (MOD_LALT | MOD_RALT)) != 0)
-							undisguisedMenuInEffect = ((kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0); // If Ctrl is down (including if this Alt is AltGr), disguise is already in effect.
+							undisguisedMenuInEffect = (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0; // If Ctrl is down (including if this Alt is AltGr), disguise is already in effect.
 						else // Shift or Ctrl: pressing either serves to disguise any previous Alt or Win.
 							undisguisedMenuInEffect = false;
 					}
@@ -701,48 +700,7 @@ namespace Keysharp.Core.Windows
 			// able to launch a script subroutine before the hook thread can finish updating its key state.
 			// Search on AHK_HOOK_HOTKEY in this file for more comments.
 			var resultToReturn = CallNextHookEx(hook, code, new IntPtr(param), ref kbd);
-
-			if (hotkeyIDToPost != HotkeyDefinition.HOTKEY_ID_INVALID)
-			{
-				var input_level = InputLevelFromInfo(extraInfo);
-				_ = channel.Writer.TryWrite(new KeysharpMsg()
-				{
-					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-					wParam = new IntPtr(hotkeyIDToPost),
-					lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)input_level)),
-					obj = variant
-				});
-				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyIDToPost, KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)); // v1.0.43.03: sc is posted currently only to support the number of wheel turns (to store in A_EventInfo).
-
-				if (keyUp && hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK] != HotkeyDefinition.HOTKEY_ID_INVALID)
-				{
-					// This is a key-down hotkey being triggered by releasing a prefix key.
-					// There's also a corresponding key-up hotkey, so fire it too:
-					_ = channel.Writer.TryWrite(new KeysharpMsg()
-					{
-						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
-						lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)input_level))
-						//Do not pass the variant.
-					});
-					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK], KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level));
-				}
-			}
-
-			if (hsOut != null)
-			{
-				_ = channel.Writer.TryWrite(new KeysharpMsg()
-				{
-					message = (uint)UserMessages.AHK_HOTSTRING,
-					obj = new HotstringMsg()
-					{
-						hs = hsOut,
-						caseMode = caseConformMode,
-						endChar = endChar
-					}
-				});
-			}
-
+			SendHotkeyMessages(keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hsOut, caseConformMode, endChar);
 			return resultToReturn.ToInt64();
 		}
 
@@ -1084,20 +1042,20 @@ namespace Keysharp.Core.Windows
 					modifiersMerged = thisHk.modifiers;
 
 					if (thisHk.modifiersLR != 0)
-						modifiersMerged |= kbdMsSender.ConvertModifiersLR(thisHk.modifiersLR);
+						modifiersMerged |= ConvertModifiersLR(thisHk.modifiersLR);
 
 					// Fixed for v1.1.27.00: Calculate the modifiersLR bits which are NOT allowed to be set.
 					// This fixes <^A erroneously taking over <>^A, and reduces the work that must be done
 					// on each iteration of the loop below.
 					modifiersLRExcluded = thisHk.allowExtraModifiers ? 0
-										  : ~(thisHk.modifiersLR | kbdMsSender.ConvertModifiers(thisHk.modifiers));
+										  : ~(thisHk.modifiersLR | ConvertModifiers(thisHk.modifiers));
 
 					for (modifiersLR = 0; modifiersLR <= MODLR_MAX; ++modifiersLR)  // For each possible LR value.
 					{
 						if ((modifiersLR & modifiersLRExcluded) != 0) // Checked first to avoid the ConvertModifiersLR call in many cases.
 							continue;
 
-						modifiers = kbdMsSender.ConvertModifiersLR(modifiersLR);
+						modifiers = ConvertModifiersLR(modifiersLR);
 
 						// Below is true if modifiersLR is a superset of i's modifier value.  In other words,
 						// modifiersLR has the minimum required keys.  It may also have some extraneous keys,
@@ -1155,7 +1113,7 @@ namespace Keysharp.Core.Windows
 								if (((prevHk.allowExtraModifiers ? MODLR_MAX : prevHk.modifiersConsolidatedLR) & modifiersLRExcluded) == 0
 										&& (thisHk.modifiersLR & ~prevHk.modifiersLR) == 0
 										&& ((thisHk.modifiers & ~prevHk.modifiers) == 0
-											|| (thisHk.modifiers & ~kbdMsSender.ConvertModifiersLR(prevHk.modifiersConsolidatedLR)) == 0))
+											|| (thisHk.modifiers & ~ConvertModifiersLR(prevHk.modifiersConsolidatedLR)) == 0))
 								{
 									hotkeyUp[prevHkId] = thisHk.idWithFlags;
 									doCascade = false;  // Every place the down-hotkey ID already appears, it will point to this same key-up hotkey.
@@ -1955,8 +1913,6 @@ namespace Keysharp.Core.Windows
 				uwpAppFocused = string.Compare(className.ToString(), "ApplicationFrameWindow", true) == 0;
 			}
 
-			//var keyState = new byte[physicalKeyState.Length];
-			//System.Array.Copy(physicalKeyState, keyState, physicalKeyState.Length);
 			int charCount;
 			var ch = new char[3];
 			var sb = new StringBuilder(8);
@@ -1982,7 +1938,7 @@ namespace Keysharp.Core.Windows
 					for (int i = 0; i < pendingDeadKeys.Count; ++i)
 					{
 						var dead_key = pendingDeadKeys[i];
-						WindowsKeyboardMouseSender.AdjustKeyState(keyState, dead_key.modLR);
+						AdjustKeyState(keyState, dead_key.modLR);
 						keyState[VK_CAPITAL] = (byte)dead_key.caps;
 						_ = sb.Clear();
 						sb.Capacity = 8;
@@ -2002,7 +1958,7 @@ namespace Keysharp.Core.Windows
 				var flags = interfere ? 1u : 3u;
 				var scanCode = ev.scanCode | (interfere ? 0u : 0x8000u);
 				// Provide the correct logical modifier and CapsLock state for any translation below.
-				WindowsKeyboardMouseSender.AdjustKeyState(keyState, kbdMsSender.modifiersLRLogical);
+				AdjustKeyState(keyState, kbdMsSender.modifiersLRLogical);
 				keyState[VK_CAPITAL] = (byte)(IsKeyToggledOn(VK_CAPITAL) ? 1 : 0);
 				_ = sb.Clear();
 				sb.Capacity = 8;
@@ -4450,54 +4406,13 @@ namespace Keysharp.Core.Windows
 			// than the main thread is not enough to prevent the main thread from getting a timeslice
 			// before the hook thread gets back another (at least on some systems, perhaps due to their
 			// system settings of the same ilk as "favor background processes").
-			if (hotkeyIDToPost != HotkeyDefinition.HOTKEY_ID_INVALID)
-			{
-				var inputLevel = InputLevelFromInfo(extraInfo);
-				_ = channel.Writer.TryWrite(new KeysharpMsg()
-				{
-					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-					wParam = new IntPtr(hotkeyIDToPost),//Would be so much better to eventually pass around object references rather than array indexes.//TODO
-					lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
-					obj = variant
-				});
-
-				//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyIDToPost, KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level)); // v1.0.43.03: sc is posted currently only to support the number of wheel turns (to store in A_EventInfo).
-
-				if (keyUp && hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK] != HotkeyDefinition.HOTKEY_ID_INVALID)
-				{
-					// This is a key-down hotkey being triggered by releasing a prefix key.
-					// There's also a corresponding key-up hotkey, so fire it too:
-					_ = channel.Writer.TryWrite(new KeysharpMsg()
-					{
-						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
-						lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel))
-						//Do not pass the variant.
-					});
-					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_HOOK_HOTKEY, hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK], KeyboardUtils.MakeLong((short)keyHistoryCurr.sc, (short)input_level));
-				}
-			}
-
-			if (hs != null)
-			{
-				_ = channel.Writer.TryWrite(new KeysharpMsg()
-				{
-					message = (uint)UserMessages.AHK_HOTSTRING,
-					obj = new HotstringMsg()
-					{
-						hs = hs,
-						caseMode = caseConformMode,
-						endChar = endChar
-					}
-				});
-			}
-
+			SendHotkeyMessages(keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hs, caseConformMode, endChar);
 			return 1;
 		}
 
-		internal override bool SystemHasAnotherKeybdHook() => SystemHasAnotherdHook(ref keybdMutex, KeybdMutexName);
+		internal override bool SystemHasAnotherKeybdHook() => SystemHasAnotherHook(ref keybdMutex, KeybdMutexName);
 
-		internal override bool SystemHasAnotherMouseHook() => SystemHasAnotherdHook(ref mouseMutex, MouseMutexName);
+		internal override bool SystemHasAnotherMouseHook() => SystemHasAnotherHook(ref mouseMutex, MouseMutexName);
 
 		internal override uint TextToSC(ReadOnlySpan<char> text, ref bool? specifiedByNumber)
 		{
@@ -4934,7 +4849,7 @@ namespace Keysharp.Core.Windows
 
 				if (dead_vk != 0)
 				{
-					WindowsKeyboardMouseSender.AdjustKeyState(keyState, modLR.Value);
+					AdjustKeyState(keyState, modLR.Value);
 					_ = ToUnicodeOrAsciiEx(dead_vk, 0, keyState, chNotUsed, 0, keybdLayout);
 				}
 
@@ -5359,10 +5274,6 @@ namespace Keysharp.Core.Windows
 			return problem_activating_hooks;
 		}
 
-		//protected internal override void DeregisterKeyboardHook()
-		//{
-		//_ = WindowsAPI.UnhookWindowsHookEx(kbdHook);
-		//}
 		private IntPtr LowLevelKeybdHandler(int code, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)
 		{
 			if (code != HC_ACTION)  // MSDN docs specify that both LL keybd & mouse hook should return in this case.
@@ -5386,7 +5297,7 @@ namespace Keysharp.Core.Windows
 			// Note: Some scan codes are shared by more than one key (e.g. Numpad7 and NumpadHome).  This is why
 			// the keyboard hook must be able to handle hotkeys by either their virtual key or their scan code.
 			// i.e. if sc were always used in preference to vk, we wouldn't be able to distinguish between such keys.
-			var keyUp = (wParamVal == WM_KEYUP || wParamVal == WM_SYSKEYUP);
+			var keyUp = wParamVal == WM_KEYUP || wParamVal == WM_SYSKEYUP;
 			var vk = lParam.vkCode;
 			var sc = lParam.scanCode;
 
@@ -5452,11 +5363,53 @@ namespace Keysharp.Core.Windows
 			return LowLevelCommon(kbdHook, code, wParamVal, ref lParam, ref tempstruct, vk, sc, keyUp, lParam.dwExtraInfo, lParam.flags);
 		}
 
+		private void SendHotkeyMessages(bool keyUp, ulong extraInfo, KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, HotkeyVariant variant, HotstringDefinition hs, CaseConformModes caseConformMode, char endChar)
+		{
+			if (hotkeyIDToPost != HotkeyDefinition.HOTKEY_ID_INVALID)
+			{
+				var inputLevel = InputLevelFromInfo(extraInfo);
+				_ = channel.Writer.TryWrite(new KeysharpMsg()
+				{
+					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
+					wParam = new IntPtr(hotkeyIDToPost),//Would be so much better to eventually pass around object references rather than array indexes.//TODO
+					lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
+					obj = variant
+				});
+
+				if (keyUp && hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK] != HotkeyDefinition.HOTKEY_ID_INVALID)
+				{
+					// This is a key-down hotkey being triggered by releasing a prefix key.
+					// There's also a corresponding key-up hotkey, so fire it too:
+					_ = channel.Writer.TryWrite(new KeysharpMsg()
+					{
+						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
+						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
+						lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel))
+						//Do not pass the variant.
+					});
+				}
+			}
+
+			if (hs != null)
+			{
+				_ = channel.Writer.TryWrite(new KeysharpMsg()
+				{
+					message = (uint)UserMessages.AHK_HOTSTRING,
+					obj = new HotstringMsg()
+					{
+						hs = hs,
+						caseMode = caseConformMode,
+						endChar = endChar
+					}
+				});
+			}
+		}
+
 		//protected internal override void DeregisterMouseHook()
 		//{
 		//  _ = WindowsAPI.UnhookWindowsHookEx(mouseHook);
 		//}
-		private bool SystemHasAnotherdHook(ref Mutex existingMutex, string name)
+		private bool SystemHasAnotherHook(ref Mutex existingMutex, string name)
 		{
 			if (existingMutex != null)
 				existingMutex.Close(); // But don't set it to NULL because we need its value below as a flag.

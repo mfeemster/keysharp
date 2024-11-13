@@ -56,9 +56,7 @@ namespace Keysharp.Core.Common.Threading
 		// keeping in mind that there are at least 3 different window classes to check,
 		// depending on OS and the "AltTabSettings" registry value.
 		protected internal bool altTabMenuIsVisible = false;
-
 		protected internal Task<Task> channelReadThread;
-
 		protected internal uint channelThreadID = 0u;
 
 		// Whether to disguise the next up-event for lwin/rwin to suppress Start Menu.
@@ -71,7 +69,6 @@ namespace Keysharp.Core.Common.Threading
 		// we can ensure they are initialized by the keyboard init function every
 		// time it's called (currently it can be only called once):
 		protected internal bool disguiseNextMenu = false;
-
 		protected internal bool hookSynced = false;
 		protected internal List<uint> hotkeyUp = new List<uint>(256);
 		protected internal IntPtr kbdHook = IntPtr.Zero;

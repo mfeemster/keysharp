@@ -105,7 +105,7 @@ namespace Keysharp.Core.Common.Keyboard
 					if (is_neutral.Value)
 						// Since the action-key is a neutral modifier (not left or right specific),
 						// turn off any neutral modifiers that may be on:
-						modifiers &= ~kbdMouseSender.ConvertModifiersLR(modifiers_lr);
+						modifiers &= ~ConvertModifiersLR(modifiers_lr);
 					else
 						modifiersLR &= ~modifiers_lr;
 				}
@@ -264,7 +264,7 @@ namespace Keysharp.Core.Common.Keyboard
 					modifiersConsolidatedLR = modifiersLR;
 
 					if (modifiers != 0)
-						modifiersConsolidatedLR |= kbdMouseSender.ConvertModifiers(modifiers);
+						modifiersConsolidatedLR |= ConvertModifiers(modifiers);
 				}
 			} // if (mType != HK_JOYSTICK)
 
@@ -824,7 +824,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// hotkey", or "the uppermost variant among all eclipsed wildcards that is eligible to fire".
 				// UPDATE: This now uses a linked list of hotkeys which share the same suffix key, in the order of
 				// sort_most_general_before_least, which might solve the concern about precedence.
-				var modifiers = kbdMouseSender.ConvertModifiersLR(kbdMouseSender.modifiersLRLogicalNonIgnored); // Neutral modifiers.
+				var modifiers = ConvertModifiersLR(kbdMouseSender.modifiersLRLogicalNonIgnored); // Neutral modifiers.
 
 				for (var candidateId = hk.nextHotkey; candidateId != HOTKEY_ID_INVALID;)
 				{
@@ -1249,8 +1249,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static uint FindPairedHotkey(uint firstID, uint modsLR, bool keyUp)
 		{
-			var ht = Script.HookThread;
-			var modifiers = ht.kbdMsSender.ConvertModifiersLR(modsLR); // Neutral modifiers.
+			var modifiers = ConvertModifiersLR(modsLR); // Neutral modifiers.
 
 			for (var candidateId = firstID; candidateId != HOTKEY_ID_INVALID;)
 			{
@@ -1632,7 +1631,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// modifiers from left-right to neutral.  But exclude right-side modifiers (except RWin) so that
 					// things like AltGr are more precisely handled (the implications of this policy could use
 					// further review).  Currently, right-Alt (via AltGr) is the only possible right-side key.
-					thisHotkey.modifiers |= kbdMouseSender.ConvertModifiersLR(modifiersLR.Value & (MOD_RWIN | MOD_LWIN | MOD_LCONTROL | MOD_LALT | MOD_LSHIFT));
+					thisHotkey.modifiers |= ConvertModifiersLR(modifiersLR.Value & (MOD_RWIN | MOD_LWIN | MOD_LCONTROL | MOD_LALT | MOD_LSHIFT));
 					thisHotkey.modifiersLR |= modifiersLR.Value & (MOD_RSHIFT | MOD_RALT | MOD_RCONTROL); // Not MOD_RWIN since it belongs above.
 				}
 			}

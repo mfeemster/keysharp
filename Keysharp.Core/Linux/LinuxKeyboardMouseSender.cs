@@ -98,10 +98,6 @@ namespace Keysharp.Core.Linux
 		internal override void CleanupEventArray(long finalKeyDelay)
 		{ }
 
-		internal override uint ConvertModifiers(uint modifiers) => 0;
-
-		internal override uint ConvertModifiersLR(uint modifiersLR) => 0;
-
 		internal override void DoMouseDelay()
 		{ }
 

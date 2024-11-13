@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Keyboard
+﻿using static Keysharp.Core.Common.Keyboard.VirtualKeys;
+
+namespace Keysharp.Core.Common.Keyboard
 {
 	internal static class KeyboardUtils
 	{
@@ -70,6 +72,61 @@
 			kbMouseList.AddRange(mouseList);
 #endif
 		}
+
+		internal static void AdjustKeyState(byte[] keyState, uint modifiersLR)//Unsure if this should be in the base. Can it be cross platform?
+		// Caller has ensured that aKeyState is a 256-BYTE array of key states, in the same format used
+		// by GetKeyboardState() and ToAsciiEx().
+		{
+			var sd = KeyboardMouseSender.StateDown;
+			keyState[VK_LSHIFT] = (byte)((modifiersLR & MOD_LSHIFT) != 0 ? sd : 0);
+			keyState[VK_RSHIFT] = (byte)((modifiersLR & MOD_RSHIFT) != 0 ? sd : 0);
+			keyState[VK_LCONTROL] = (byte)((modifiersLR & MOD_LCONTROL) != 0 ? sd : 0);
+			keyState[VK_RCONTROL] = (byte)((modifiersLR & MOD_RCONTROL) != 0 ? sd : 0);
+			keyState[VK_LMENU] = (byte)((modifiersLR & MOD_LALT) != 0 ? sd : 0);
+			keyState[VK_RMENU] = (byte)((modifiersLR & MOD_RALT) != 0 ? sd : 0);
+			keyState[VK_LWIN] = (byte)((modifiersLR & MOD_LWIN) != 0 ? sd : 0);
+			keyState[VK_RWIN] = (byte)((modifiersLR & MOD_RWIN) != 0 ? sd : 0);
+			// Update the state of neutral keys only after the above, in case both keys of the pair were wrongly down:
+			keyState[VK_SHIFT] = (byte)((keyState[VK_LSHIFT] != 0 || keyState[VK_RSHIFT] != 0) ? sd : 0);
+			keyState[VK_CONTROL] = (byte)((keyState[VK_LCONTROL] != 0 || keyState[VK_RCONTROL] != 0) ? sd : 0);
+			keyState[VK_MENU] = (byte)((keyState[VK_LMENU] != 0 || keyState[VK_RMENU] != 0) ? sd : 0);
+		}
+
+		/// <summary>
+		/// Convert the input param to a modifiersLR value and return it.
+		/// </summary>
+		/// <param name="modifiers"></param>
+		/// <returns></returns>
+		internal static uint ConvertModifiers(uint modifiers)
+		{
+			var modifiersLR = 0u;
+
+			if ((modifiers & MOD_WIN) != 0) modifiersLR |= MOD_LWIN | MOD_RWIN;
+
+			if ((modifiers & MOD_ALT) != 0) modifiersLR |= MOD_LALT | MOD_RALT;
+
+			if ((modifiers & MOD_CONTROL) != 0) modifiersLR |= MOD_LCONTROL | MOD_RCONTROL;
+
+			if ((modifiers & MOD_SHIFT) != 0) modifiersLR |= MOD_LSHIFT | MOD_RSHIFT;
+
+			return modifiersLR;
+		}
+
+		internal static uint ConvertModifiersLR(uint modifiersLR)
+		{
+			var modifiers = 0u;
+
+			if ((modifiersLR & (MOD_LWIN | MOD_RWIN)) != 0) modifiers |= MOD_WIN;
+
+			if ((modifiersLR & (MOD_LALT | MOD_RALT)) != 0) modifiers |= MOD_ALT;
+
+			if ((modifiersLR & (MOD_LSHIFT | MOD_RSHIFT)) != 0) modifiers |= MOD_SHIFT;
+
+			if ((modifiersLR & (MOD_LCONTROL | MOD_RCONTROL)) != 0) modifiers |= MOD_CONTROL;
+
+			return modifiers;
+		}
+
 	}
 
 	[Flags]
@@ -214,7 +271,7 @@
 
 	internal static class ScanCodes
 	{
-		internal const uint NumpadEnter = 0x11C;
+		internal const uint NumpadEnter = 0x11C;//These will likely need to be different on linux.//TODO
 		internal const uint Insert = 0x152;
 		internal const uint Delete = 0x153;
 		internal const uint Home = 0x147;
@@ -299,7 +356,7 @@
 	/// </summary>
 	internal static class VirtualKeys
 	{
-		internal const uint VK_LBUTTON = 0x01;
+		internal const uint VK_LBUTTON = 0x01;//These will likely need to be different on linux.//TODO
 		internal const uint VK_RBUTTON = 0x02;
 		internal const uint VK_CANCEL = 0x03;
 		internal const uint VK_MBUTTON = 0x04;//NOT contiguous with L & RBUTTON

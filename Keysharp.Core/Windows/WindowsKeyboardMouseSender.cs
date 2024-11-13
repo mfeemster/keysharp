@@ -27,49 +27,32 @@ namespace Keysharp.Core.Windows
 	internal class WindowsKeyboardMouseSender : KeyboardMouseSender
 	{
 		internal static bool firstCallForThisEvent;
-
 		internal static bool inBlindMode;
-
 		internal static int MaxInitialEventsPB = 1500;
-
 		internal static int MaxInitialEventsSI = 500;
-
 		internal static uint menuMaskKeySC = ScanCodes.LControl;
-
 		internal static uint menuMaskKeyVK = VK_CONTROL;
-
 		internal static DateTime thisHotkeyStartTime = DateTime.Now;
-
 		internal int currentEvent;
-
 		internal uint eventModifiersLR;
-
 		internal List<PlaybackEvent> eventPb = new List<PlaybackEvent>(MaxInitialEventsPB);
-
 		internal List<INPUT> eventSi = new List<INPUT>(MaxInitialEventsSI);
 
 		// sizeof(INPUT) == 28 as of 2006. Since Send is called so often, and since most Sends are short, reducing the load on the stack is also a deciding factor for these.
 		// sizeof(PlaybackEvent) == 8, so more events are justified before resorting to malloc().
 		internal uint hooksToRemoveDuringSendInput;
-
 		internal uint modifiersLRPersistent;
-
 		internal uint modifiersLRRemapped;
-
 		internal uint prevEventModifierDown;
-
 		internal KeyEventTypes prevEventType;
-
 		internal uint prevVK;
 
 		// Tracks this script's own lifetime/persistent modifiers (the ones it caused to be persistent and thus is responsible for tracking).
 		internal Point sendInputCursorPos;
-
 		internal IntPtr targetKeybdLayout;
 
 		// Set by SendKeys() for use by the functions it calls directly and indirectly.
 		internal ResultType targetLayoutHasAltGr;
-
 		internal long workaroundHitTest;
 
 		//Tracks/predicts cursor position as SendInput array is built.
@@ -87,7 +70,6 @@ namespace Keysharp.Core.Windows
 
 		//private static readonly byte[] state = new byte[VKMAX];
 		private static readonly IntPtr hookId = IntPtr.Zero;
-
 		private static bool thisEventHasBeenLogged, thisEventIsScreenCoord;
 		private readonly StringBuilder buf = new StringBuilder(4);
 		private readonly List<CachedLayoutType> cachedLayouts = new List<CachedLayoutType>(10);
@@ -98,24 +80,6 @@ namespace Keysharp.Core.Windows
 		//private WindowsAPI.LowLevelKeyboardProc proc;
 
 		private DateTime thisEventTime;
-
-		internal static void AdjustKeyState(byte[] keyState, uint modifiersLR)//Unsure if this should be in the base. Can it be cross platform?
-		// Caller has ensured that aKeyState is a 256-BYTE array of key states, in the same format used
-		// by GetKeyboardState() and ToAsciiEx().
-		{
-			keyState[VK_LSHIFT] = (byte)((modifiersLR & MOD_LSHIFT) != 0 ? StateDown : 0);
-			keyState[VK_RSHIFT] = (byte)((modifiersLR & MOD_RSHIFT) != 0 ? StateDown : 0);
-			keyState[VK_LCONTROL] = (byte)((modifiersLR & MOD_LCONTROL) != 0 ? StateDown : 0);
-			keyState[VK_RCONTROL] = (byte)((modifiersLR & MOD_RCONTROL) != 0 ? StateDown : 0);
-			keyState[VK_LMENU] = (byte)((modifiersLR & MOD_LALT) != 0 ? StateDown : 0);
-			keyState[VK_RMENU] = (byte)((modifiersLR & MOD_RALT) != 0 ? StateDown : 0);
-			keyState[VK_LWIN] = (byte)((modifiersLR & MOD_LWIN) != 0 ? StateDown : 0);
-			keyState[VK_RWIN] = (byte)((modifiersLR & MOD_RWIN) != 0 ? StateDown : 0);
-			// Update the state of neutral keys only after the above, in case both keys of the pair were wrongly down:
-			keyState[VK_SHIFT] = (byte)((keyState[VK_LSHIFT] != 0 || keyState[VK_RSHIFT] != 0) ? StateDown : 0);
-			keyState[VK_CONTROL] = (byte)((keyState[VK_LCONTROL] != 0 || keyState[VK_RCONTROL] != 0) ? StateDown : 0);
-			keyState[VK_MENU] = (byte)((keyState[VK_LMENU] != 0 || keyState[VK_RMENU] != 0) ? StateDown : 0);
-		}
 
 		/// <summary>
 		/// Loads and reads the keyboard layout DLL to determine if it has AltGr.
@@ -234,41 +198,6 @@ namespace Keysharp.Core.Windows
 			// prior to our caller toggling capslock back on , to avoid the capslock keystroke from going into the array.
 			sendMode = SendModes.Event;
 			DoKeyDelay(finalKeyDelay); // Do this only after resetting sSendMode above.  Should be okay for mouse events too.
-		}
-
-		/// <summary>
-		/// Convert the input param to a modifiersLR value and return it.
-		/// </summary>
-		/// <param name="modifiers"></param>
-		/// <returns></returns>
-		internal override uint ConvertModifiers(uint modifiers)
-		{
-			var modifiersLR = 0u;
-
-			if ((modifiers & MOD_WIN) != 0) modifiersLR |= MOD_LWIN | MOD_RWIN;
-
-			if ((modifiers & MOD_ALT) != 0) modifiersLR |= MOD_LALT | MOD_RALT;
-
-			if ((modifiers & MOD_CONTROL) != 0) modifiersLR |= MOD_LCONTROL | MOD_RCONTROL;
-
-			if ((modifiers & MOD_SHIFT) != 0) modifiersLR |= MOD_LSHIFT | MOD_RSHIFT;
-
-			return modifiersLR;
-		}
-
-		internal override uint ConvertModifiersLR(uint modifiersLR)
-		{
-			var modifiers = 0u;
-
-			if ((modifiersLR & (MOD_LWIN | MOD_RWIN)) != 0) modifiers |= MOD_WIN;
-
-			if ((modifiersLR & (MOD_LALT | MOD_RALT)) != 0) modifiers |= MOD_ALT;
-
-			if ((modifiersLR & (MOD_LSHIFT | MOD_RSHIFT)) != 0) modifiers |= MOD_SHIFT;
-
-			if ((modifiersLR & (MOD_LCONTROL | MOD_RCONTROL)) != 0) modifiers |= MOD_CONTROL;
-
-			return modifiers;
 		}
 
 		/// <summary>
@@ -3635,7 +3564,7 @@ namespace Keysharp.Core.Windows
 			// to both directions (ON and OFF) since it seems likely to be needed for them all.
 			bool ourThreadIsForeground;
 
-			if (ourThreadIsForeground = (GetWindowThreadProcessId(GetForegroundWindow(), out var _) == Processes.MainThreadID)) // GetWindowThreadProcessId() tolerates a NULL hwnd.
+			if (ourThreadIsForeground = GetWindowThreadProcessId(GetForegroundWindow(), out var _) == Processes.MainThreadID) // GetWindowThreadProcessId() tolerates a NULL hwnd.
 				Flow.SleepWithoutInterruption(-1);
 
 			if (vk == VK_CAPITAL && toggleValue == ToggleValueType.Off && Script.HookThread.IsKeyToggledOn(vk))
@@ -3815,7 +3744,7 @@ namespace Keysharp.Core.Windows
 				// active because the user doesn't need it; also for some games maybe).
 				sc = ht.MapVkToSc(vk);
 
-			var scLowByte = (sc & 0xFF);
+			var scLowByte = sc & 0xFF;
 			var eventFlags = ((sc >> 8) & 0xFF) != 0 ? KEYEVENTF_EXTENDEDKEY : 0u;
 
 			// v1.0.43: Apparently, the journal playback hook requires neutral modifier keystrokes
