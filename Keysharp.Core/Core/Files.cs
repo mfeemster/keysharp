@@ -267,7 +267,7 @@
 				throw new ValueError("Shortcut target cannot be an empty string.");
 
 #if LINUX
-			var type = shortcutKey.As();
+			var type = shortcutType.As();
 			t = Path.GetFullPath(t);
 
 			if (w != "" || a != "" || d != "" || icon != "")

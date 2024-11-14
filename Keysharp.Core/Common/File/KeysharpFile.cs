@@ -95,7 +95,7 @@
 					if (handle.HasValue)
 					{
 						exists = true;
-						fs = new FileStream(new SafeFileHandle(new IntPtr(handle.Value), false), a, 4096);
+						fs = new FileStream(new Microsoft.Win32.SafeHandles.SafeFileHandle(new IntPtr(handle.Value), false), a, 4096);
 					}
 				}
 				else

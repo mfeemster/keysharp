@@ -27,7 +27,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(typeof(Keysharp.Core.ValueError).IsAssignableTo(typeof(Keysharp.Core.Error)));
 			Assert.IsTrue(typeof(Keysharp.Core.ZeroDivisionError).IsAssignableTo(typeof(Keysharp.Core.Error)));
 #if LINUX
-			Assert.IsTrue(typeof(Keysharp.Core.ClipboardAll).IsAssignableTo(typeof(Keysharp.Core.ObjectBase.KeysharpObject)));
+			Assert.IsTrue(typeof(Keysharp.Core.ClipboardAll).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
 #elif WINDOWS
 			Assert.IsTrue(typeof(Keysharp.Core.ClipboardAll).IsAssignableTo(typeof(Keysharp.Core.Buffer)));
 #endif

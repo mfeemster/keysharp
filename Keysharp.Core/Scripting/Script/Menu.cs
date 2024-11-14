@@ -5,7 +5,7 @@
 		internal static ToolStripMenuItem openMenuItem;
 		internal static ToolStripMenuItem suspendMenuItem;
 		internal static NotifyIcon Tray;
-		internal static Menu trayMenu;
+		internal static Keysharp.Core.Menu trayMenu;
 
 		public static void CreateTrayMenu()
 		{
@@ -15,7 +15,7 @@
 			if (NoTrayIcon)
 				return;
 
-			trayMenu = new Menu(Tray.ContextMenuStrip);
+			trayMenu = new (Tray.ContextMenuStrip);
 			trayMenu.AddStandard();
 			trayIcon.Tag = trayMenu;
 			trayIcon.MouseClick += TrayIcon_MouseClick;
@@ -52,7 +52,7 @@
 
 		private static void TrayIcon_MouseClick(object sender, MouseEventArgs e)
 		{
-			if (sender is NotifyIcon ni && ni.Tag is Menu mnu)
+			if (sender is NotifyIcon ni && ni.Tag is Keysharp.Core.Menu mnu)
 				if (mnu.ClickCount == 1)
 					if (mnu.defaultItem is ToolStripItem tsi)
 						mnu.Tsmi_Click(tsi, new EventArgs());
@@ -60,7 +60,7 @@
 
 		private static void TrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
 		{
-			if (sender is NotifyIcon ni && ni.Tag is Menu mnu)
+			if (sender is NotifyIcon ni && ni.Tag is Keysharp.Core.Menu mnu)
 				if (mnu.ClickCount > 1)
 					if (mnu.defaultItem is ToolStripItem tsi)
 						mnu.Tsmi_Click(tsi, new EventArgs());

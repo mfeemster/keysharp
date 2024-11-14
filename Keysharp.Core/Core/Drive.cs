@@ -195,7 +195,7 @@ namespace Keysharp.Core
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static void DriveRetract(object drive) => DriveHelper(drive.As(), false);
-
+#if WINDOWS
 		/// <summary>
 		/// Changes the volume label of the specified drive.<br/>
 		/// This needs administrator privileges to run.
@@ -210,7 +210,7 @@ namespace Keysharp.Core
 			var d = DriveProvider.CreateDrive(di);
 			d.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
 		}
-
+#endif
 		/// <summary>
 		/// Restores the eject feature of the specified drive.
 		/// </summary>

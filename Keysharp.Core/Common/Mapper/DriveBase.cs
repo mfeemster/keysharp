@@ -6,12 +6,13 @@
 
 		internal abstract long Serial { get; }
 
+#if WINDOWS
 		internal string VolumeLabel
 		{
 			get => drive.VolumeLabel;
 			set => drive.VolumeLabel = value;
 		}
-
+#endif
 		internal abstract string StatusCD { get; }
 
 		internal DriveBase(DriveInfo udrive) => drive = udrive;

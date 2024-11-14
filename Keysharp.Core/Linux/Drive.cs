@@ -1,12 +1,11 @@
 ﻿#if LINUX
-using System.Xml.Linq;
 
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
 	/// Concrete implementation of Drive for the linux platfrom.
 	/// </summary>
-	internal class Drive : Common.DriveBase
+	internal class Drive : DriveBase
 	{
 		internal override long Serial
 		{

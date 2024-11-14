@@ -900,7 +900,7 @@
 		/// <summary>
 		/// The result from the linux errno() function.
 		/// </summary>
-		public static long A_LastError => XLib.errno();
+		public static long A_LastError => Xlib.errno();
 #endif
 
 		/// <summary>

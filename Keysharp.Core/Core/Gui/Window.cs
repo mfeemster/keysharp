@@ -867,6 +867,7 @@ namespace Keysharp.Core
 		[PublicForTestOnly]
 		public static long zzzLinuxTester(params object[] obj)
 		{
+			return 1L;
 		}
 #endif
 

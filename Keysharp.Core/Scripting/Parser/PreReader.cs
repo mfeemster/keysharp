@@ -67,7 +67,9 @@ namespace Keysharp.Scripting
 				{ "%A_AppData%", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) },
 				{ "%A_AppDataCommon%", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) },
 				{ "%A_ComputerName%", Accessors.A_ComputerName },
+#if WINDOWS
 				{ "%A_ComSpec%", Accessors.A_ComSpec },
+#endif
 				{ "%A_Desktop%", Accessors.A_Desktop },
 				{ "%A_DesktopCommon%", Accessors.A_DesktopCommon },
 				{ "%A_IsCompiled%", Accessors.A_IsCompiled.ToString() },
@@ -88,7 +90,9 @@ namespace Keysharp.Scripting
 				{ "%A_Tab%", Accessors.A_Tab },
 				{ "%A_Temp%", Accessors.A_Temp },
 				{ "%A_UserName%", Accessors.A_UserName },
+#if WINDOWS
 				{ "%A_WinDir%", Accessors.A_WinDir },
+#endif
 			};
 			includePath = name = File.Exists(name) ? Path.GetFullPath(name) : "./";
 

@@ -8,13 +8,15 @@ namespace Keysharp.Tests
 
 		[DllImport("ole32.dll", ExactSpelling = true)]
 		public static extern int OleSetClipboard(System.Runtime.InteropServices.ComTypes.IDataObject? pDataObj);
-
+#endif
 		/// <summary>
 		/// Clipboard.Clear() breaks the Windows API clipboard functionality in .NET 9.
 		/// This hack is provided by Microsoft as a temporary replacement until it's fixed.
 		/// </summary>
 		internal static void MyClearClip()
 		{
+#if WINDOWS
+
 			if (Application.OleRequired() != ApartmentState.STA)
 			{
 				throw new ThreadStateException();
@@ -33,9 +35,11 @@ namespace Keysharp.Tests
 
 				Thread.Sleep(millisecondsTimeout: 100);
 			}
+#else
+			Clipboard.Clear();
+#endif
 		}
 
-#endif
 		[Test, Category("Env"), NonParallelizable]
 #if WINDOWS
 		[Apartment(ApartmentState.STA)]

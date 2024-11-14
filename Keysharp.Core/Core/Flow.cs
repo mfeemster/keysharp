@@ -337,7 +337,7 @@ namespace Keysharp.Core
 					{
 						if (pri != timer.Tag.Al())//Period omitted and timer existed, but priority was specified, so just update the priority.
 						{
-							timer.Tag = priority;
+							timer.Tag = pri;
 						}
 						else//Period omitted, timer did exist, and priority was omitted so reset it at its current interval.
 						{
@@ -357,7 +357,7 @@ namespace Keysharp.Core
 					p = 250;
 
 				_ = timers.TryAdd(func, timer = new System.Windows.Forms.Timer());
-				timer.Tag = (int)priority;
+				timer.Tag = (int)pri;
 				timer.Interval = (int)p;
 			}
 			else//They tried to stop a timer that didn't exist

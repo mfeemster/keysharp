@@ -25,7 +25,9 @@
 					tcs.SetException(e);
 				}
 			});
+#if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
+#endif
 			thread.Start();
 			return tcs.Task;
 		}
@@ -52,7 +54,9 @@
 					tcs.SetException(e);
 				}
 			});
+#if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
+#endif
 			thread.Start();
 			return tcs.Task;
 		}
