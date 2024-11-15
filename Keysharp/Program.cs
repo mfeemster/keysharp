@@ -111,12 +111,12 @@ namespace Keysharp.Main
 
 				if (string.IsNullOrEmpty(script))
 				{
-					var dirs = new string[]//Will need linux specific folders.//TODO
+					var dirs = new string[]
 					{
-						$"{Environment.CurrentDirectory}\\Keysharp.ahk",//Current executable dir.
-						$"{Accessors.A_MyDocuments}\\Keysharp.ahk",//Documents.
-						$"{Environment.CurrentDirectory}\\Keysharp.ks",
-						$"{Accessors.A_MyDocuments}\\Keysharp.ks",
+						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ahk",//Current executable dir.
+						$"{Accessors.A_MyDocuments}{Path.DirectorySeparatorChar}Keysharp.ahk",//Documents.
+						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ks",
+						$"{Accessors.A_MyDocuments}{Path.DirectorySeparatorChar}Keysharp.ks",
 					};
 
 					foreach (var dir in dirs)
