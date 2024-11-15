@@ -732,44 +732,6 @@ namespace Keysharp.Core
 		internal static bool NetworkUp() => "ip link show".Bash().Contains("state up", StringComparison.OrdinalIgnoreCase);
 
 #endif
-
-#if WINDOWS
-
-		/// <summary>
-		/// Remove this once .NET 9 is fixed.//TODO
-		/// </summary>
-		/// <param name="pDataObj"></param>
-		/// <returns></returns>
-		[DllImport("ole32.dll", ExactSpelling = true)]
-		public static extern int OleSetClipboard(System.Runtime.InteropServices.ComTypes.IDataObject? pDataObj);
-
-		/// <summary>
-		/// Clipboard.Clear() breaks the Windows API clipboard functionality in .NET 9.
-		/// This hack is provided by Microsoft as a temporary replacement until it's fixed.
-		/// </summary>
-		internal static void MyClearClip()
-		{
-			if (Application.OleRequired() != ApartmentState.STA)
-			{
-				throw new ThreadStateException();
-			}
-
-			int hresult;
-			int retry = 10;
-
-			while ((hresult = OleSetClipboard(null)) != 0)
-			{
-				if (--retry < 0)
-				{
-					// clipboard is being used by something else
-					throw new InvalidOperationException();
-				}
-
-				Thread.Sleep(millisecondsTimeout: 100);
-			}
-		}
-
-#endif
 		/// <summary>
 		/// Internal helper to restore data contained in a <see cref="ClipboardAll"/> object to the clipboard.
 		/// </summary>

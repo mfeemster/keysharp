@@ -300,7 +300,7 @@
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
 						if (value == null || (value is string s && s?.Length == 0))
-							Env.MyClearClip();
+							Clipboard.Clear();
 						else if (value is ClipboardAll arr)
 							Env.RestoreClipboardAll(arr, (long)arr.Size);
 						else
