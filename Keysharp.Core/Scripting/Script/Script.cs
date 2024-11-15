@@ -190,8 +190,9 @@
 					{
 						try
 						{
+							//OutputDebug($"GetVars(): getting prop: {prop.Name}");
 							var val = prop.GetValue(null);
-							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;//If you ever want to see the types, add this back in.
+							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;
 							_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
 						}
 						catch (Exception ex)

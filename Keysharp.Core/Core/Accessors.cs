@@ -891,17 +891,10 @@
 		/// </summary>
 		public static long A_Language => Thread.CurrentThread.CurrentCulture.LCID;
 
-#if WINDOWS
 		/// <summary>
 		/// The result from the Windows GetLastError() function.
 		/// </summary>
-		public static long A_LastError => Marshal.GetLastWin32Error();
-#else
-		/// <summary>
-		/// The result from the linux errno() function.
-		/// </summary>
-		public static long A_LastError => Xlib.errno();
-#endif
+		public static long A_LastError => Marshal.GetLastWin32Error();//This apparently works on linux too.
 
 		/// <summary>
 		/// The current element of a loop.
