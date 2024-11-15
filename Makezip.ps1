@@ -5,22 +5,45 @@ $Assembly = [System.Reflection.Assembly]::Load($DLLBytes)
 $AssemblyVersion = $Assembly.GetName().Version.ToString()
 
 Copy-Item ".\Keysharp.Install\Release\Keysharp.msi" -Destination ".\Keysharp_$AssemblyVersion.msi" -Force
-Compress-Archive -LiteralPath `
- ".\bin\release\$net\Keysharp.Core.dll" `
-,".\bin\release\$net\Keysharp.exe" `
-,".\bin\release\$net\Keysharp.dll" `
-,".\bin\release\$net\Keyview.exe" `
-,".\bin\release\$net\Keyview.dll" `
-,".\bin\release\$net\Interop.IWshRuntimeLibrary.dll" `
-,".\bin\release\$net\Microsoft.CodeAnalysis.CSharp.dll" `
-,".\bin\release\$net\Microsoft.CodeAnalysis.dll" `
-,".\bin\release\$net\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll" `
-,".\bin\release\$net\Microsoft.Extensions.DependencyModel.dll" `
-,".\bin\release\$net\Microsoft.NET.HostModel.dll" `
-,".\bin\release\$net\Scintilla.NET.dll" `
-,".\bin\release\$net\System.Management.dll" `
-,".\bin\release\$net\Keysharp.Core.deps.json" `
-,".\bin\release\$net\Keysharp.deps.json" `
-,".\bin\release\$net\Keysharp.runtimeconfig.json" `
-,".\bin\release\$net\Keyview.runtimeconfig.json" `
--DestinationPath ".\Keysharp_$AssemblyVersion.zip" -Force
+
+# Compress-Archive is severely deficient because it doesn't allow for specifying specific paths within the zip file.
+# So directly call the underlying .NET compression libraries.
+# Gotten from: https://stackoverflow.com/a/52395011
+# Load the .NET assembly
+Add-Type -Assembly 'System.IO.Compression'
+Add-Type -Assembly 'System.IO.Compression.FileSystem'
+
+# Must be used for relative file locations with .NET functions instead of Set-Location:
+[System.IO.Directory]::SetCurrentDirectory('.\')
+
+# Create the zip file and open it:
+$zfile = ".\Keysharp_$AssemblyVersion.zip"
+$z = [System.IO.Compression.ZipFile]::Open($zfile, [System.IO.Compression.ZipArchiveMode]::Create)
+
+# Add a compressed file to the zip file:
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.Core.dll", "Keysharp.Core.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.exe", "Keysharp.exe")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.dll", "Keysharp.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keyview.exe", "Keyview.exe")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keyview.dll", "Keyview.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Interop.IWshRuntimeLibrary.dll", "Interop.IWshRuntimeLibrary.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.CodeAnalysis.CSharp.dll", "Microsoft.CodeAnalysis.CSharp.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.CodeAnalysis.dll", "Microsoft.CodeAnalysis.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll", "Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.Extensions.DependencyModel.dll", "Microsoft.Extensions.DependencyModel.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.NET.HostModel.dll", "Microsoft.NET.HostModel.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Scintilla.NET.dll", "Scintilla.NET.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\System.Management.dll", "System.Management.dll")
+
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.Core.deps.json", "Keysharp.Core.deps.json")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.deps.json", "Keysharp.deps.json")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.runtimeconfig.json", "Keysharp.runtimeconfig.json")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keyview.runtimeconfig.json", "Keyview.runtimeconfig.json")
+
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\runtimes\win-x64\native\Lexilla.dll", "runtimes\win-x64\native\Lexilla.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\runtimes\win-x64\native\Scintilla.dll", "runtimes\win-x64\native\Scintilla.dll")
+
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Scripts\WindowSpy.ks", "Scripts\WindowSpy.ks")
+
+# Close the file
+$z.Dispose()
