@@ -1000,10 +1000,10 @@ gb2_CZ_Btn4 := MyGui.Add("Button", "x10 y+5 w200 h25", "Click Win+R, show dropdo
 gb2_CZ_Btn4.OnEvent("Click", "Click_CB")
 
 gb2_CZ_Btn5 := MyGui.Add("Button", "x10 y+5", "Show ListBox items")
-gb2_CZ_Btn5.OnEvent("Click", "Click_CB_Items")
+gb2_CZ_Btn5.OnEvent("Click", "Click_LB_Items")
 
 gb2_CZ_Btn6 := MyGui.Add("Button", "x+5 yp", "Show ComboBox items")
-gb2_CZ_Btn6.OnEvent("Click", "Click_LB_Items")
+gb2_CZ_Btn6.OnEvent("Click", "Click_CB_Items")
 
 gb2_CZ_Btn7 := MyGui.Add("Button", "x10 y+5", "Show ComboBox dropdown")
 gb2_CZ_Btn7.OnEvent("Click", "Click_CB_Show_Dropdown")
@@ -1489,14 +1489,14 @@ GetPix() {
 	MyColorText.SetFont(ColorString)
 }
 
-Click_CB_Items()
+Click_LB_Items()
 {
 	global CZ_ListBox
 	items := ControlGetItems(CZ_ListBox)
 	MsgBox(items.Join("`n"))
 }
 
-Click_LB_Items()
+Click_CB_Items()
 {
 	global gb2_CZ_CB
 	items := ControlGetItems(gb2_CZ_CB)
@@ -1768,44 +1768,51 @@ The 'Run' dialog will open.
 MyGui.Add("Text", "x0 y+20 w700", "_____________________________________________________________________________________________________________")
 HotkeySectionTopText := MyGui.Add("Text", "x10 y+5 w600", "HOTKEY TESTS`nHold F1 to slow mouse, release to restore.")
 HotkeySectionTopText.SetFont("cBlue s14")
-FuncBtnOne := MyGui.Add("Button", "x10 y+5", "FuncObj")
+FuncBtnOne := MyGui.Add("Button", "x10 y+5", "FuncObj Bind Tests")
 FuncBtnOne.OnEvent("Click", "DoTricks")
 
-FuncBtnTwo := MyGui.Add("Button", "x90 yp", "RCtrl and RShift -> AltTab")
+FuncBtnTwo := MyGui.Add("Button", "x130 yp", "RCtrl+RShift -> AltTab")
 FuncBtnTwo.OnEvent("Click", "StupidTrickTwo")
 
-FuncBtnThree := MyGui.Add("Button", "x250 yp", "Hotkey Off")
+FuncBtnThree := MyGui.Add("Button", "x265 yp", "RCtrl+RShift -> AltTab`nHotkey Off")
 FuncBtnThree.OnEvent("Click", "StupidTrickThree")
 
-FuncBtnFour := MyGui.Add("Button", "x340 yp", "RCtrl and RShift -> AltTab`nwith FuncObj")
+FuncBtnFour := MyGui.Add("Button", "x400 yp", "RCtrl+RShift -> AltTab`nwith FuncObj")
 FuncBtnFour.OnEvent("Click", "FuncObjTest")
 
-FuncBtnFive := MyGui.Add("Button", "x10 y+30 w150", "Toggle AltTab Hotkey`nOn or Off")
+FuncBtnFive := MyGui.Add("Button", "x535 yp w150", "Toggle RCtrl+RShift ->`nAltTab Hotkey On or Off")
 FuncBtnFive.OnEvent("Click", "ToggleHotkey")
 
-FuncBtnSix := MyGui.Add("Button", "x170 yp w150", "From .INI`nRCtrl+LShift = AltTab")
+FuncBtnSix := MyGui.Add("Button", "x10 y+10 w150", "From .INI`nRCtrl+LShift -> AltTab")
 FuncBtnSix.OnEvent("Click", "GrabFromIni")
 
-FuncBtnSeven := MyGui.Add("Button", "x340 yp w150", "Toggle Hotkey from .INI")
+FuncBtnSeven := MyGui.Add("Button", "x160 yp w150", "Toggle Hotkey from .INI")
 FuncBtnSeven.OnEvent("Click", "ToggleFromIni")
 
 ; ┌────────────────────┐
 ; │  Hotkey functions  │
 ; └────────────────────┘
+boundText := ""
 
 RealFn(a, b, c:="c") {
-	MsgBox(a ", " b, "A bound function test")
+	global boundText
+	MsgBox(boundText . "`n" . a . ", " . b, "A bound function test")
 }
 	
 DoTricks() {
+	global boundText
 	RealFn := FuncObj("RealFn")
 
 	fn := RealFn.Bind(1)  ; Bind first parameter only
+	boundText := "Bind 1 to first param, call (2), shows 1, 2"
 	fn(2)      ; Shows "1, 2"
+	boundText := "Bind 1 to first param, call (3), shows 1, 3"
 	fn.Call(3) ; Shows "1, 3"
 
 	fn := RealFn.Bind( , 1)  ; Bind second parameter only
+	boundText := "Bind 1 to second param, call (2), shows 2, 1"
 	fn(2)      ; Shows "2, 1"
+	boundText := "Bind 1 to second param, call (3), shows 3, 1"
 	fn.Call(3) ; Shows "3, 1"
 	;fn(, 4)    ; Error: 'a' was omitted
 }
@@ -1967,14 +1974,10 @@ SelectByString()
 	MenuSelect(MyGui, "KEYSHARP TESTS", "Menu Icon Test", "My Submenu", "Item B")
 }
 
-#if WINDOWS
 MinimizeBySystemMenu()
 {
-	; MenuSelect(MyGui, "KEYSHARP TESTS", "0&", "Minimize")
-	A_Clipboard := "echo Hello, world!`r"
-	MenuSelect "ahk_exe cmd.exe",, "0&", "Edit", "Paste"
+	MenuSelect(MyGui, "KEYSHARP TESTS", "0&", "Minimize")
 }
-#endif
 
 ; ┌─────────────────┐
 ; │  TreeView Edit  │
@@ -2104,7 +2107,9 @@ LoadPic() {
 #if WINDOWS
 DestroyPic()
 {
+	global MyFirstPic
 	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
+	MyFirstPic := ""
 }
 #endif
 
@@ -2438,6 +2443,7 @@ DllGetWindowRect()
 {
 	Run "Notepad"
 	WinWait "Untitled - Notepad"  ; This also sets the "last found window" for use with WinExist below.
+	Sleep(1000)
 	Rect := Buffer(16)  ; A RECT is a struct consisting of four 32-bit integers (i.e. 4*4=16).
 	win := WinExist()
 	DllCall("GetWindowRect", "Ptr", win, "Ptr", Rect)  ; WinExist returns an Hwnd.

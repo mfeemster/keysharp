@@ -42,7 +42,7 @@ namespace Keysharp.Core.COM
 
 		//private static Dictionary<int,
 
-		[DllImport(WindowsAPI.ole32)]
+		[DllImport(WindowsAPI.ole32, CharSet = CharSet.Unicode)]
 		public static extern int CoCreateInstance(ref Guid clsid,
 				[MarshalAs(UnmanagedType.IUnknown)] object inner,
 				uint context,
@@ -593,7 +593,7 @@ namespace Keysharp.Core.COM
 		}
 
 
-		[DllImport(WindowsAPI.oleaut)]
+		[DllImport(WindowsAPI.oleaut, CharSet = CharSet.Unicode)]
 		internal static extern int VariantChangeTypeEx([MarshalAs(UnmanagedType.Struct)] out object pvargDest,
 				[In, MarshalAs(UnmanagedType.Struct)] ref object pvarSrc, int lcid, short wFlags, [MarshalAs(UnmanagedType.I2)] short vt);
 
@@ -620,7 +620,7 @@ namespace Keysharp.Core.COM
 			return obj;
 		}
 
-		[DllImport(WindowsAPI.oleaut, PreserveSig = false)]
+		[DllImport(WindowsAPI.oleaut, CharSet = CharSet.Unicode, PreserveSig = false)]
 		private static extern void GetActiveObject(ref Guid rclsid, IntPtr pvReserved, [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
 	}
 }

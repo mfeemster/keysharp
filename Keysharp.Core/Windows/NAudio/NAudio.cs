@@ -1476,10 +1476,10 @@ namespace Keysharp.Core.Windows
 
 	internal class PropVariantNative
 	{
-		[DllImport("ole32.dll")]
+		[DllImport("ole32.dll", CharSet = CharSet.Unicode)]
 		internal static extern int PropVariantClear(ref PropVariant pvar);
 
-		[DllImport("ole32.dll")]
+		[DllImport("ole32.dll", CharSet = CharSet.Unicode)]
 		internal static extern int PropVariantClear(IntPtr pvar);
 	}
 

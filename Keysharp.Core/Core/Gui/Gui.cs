@@ -1671,65 +1671,69 @@ namespace Keysharp.Core
 			foreach (Range r in s.AsSpan().SplitAny(Keywords.Spaces))
 			{
 				var opt = s.AsSpan(r).Trim();
-				var mode0 = char.ToLower(opt[0]);
-				var select = -1;
 
-				switch (mode0)
+				if (opt.Length > 0)
 				{
-					case 'w': select = 0; break;
+					var mode0 = char.ToLower(opt[0]);
+					var select = -1;
 
-					case 'h': select = 1; break;
-
-					case 'x': select = 2; break;
-
-					case 'y': select = 3; break;
-				}
-
-				if (select == -1)
-				{
-					switch (opt)
+					switch (mode0)
 					{
-						case var b when opt.Equals(Keywords.Keyword_AutoSize, StringComparison.OrdinalIgnoreCase):
-							auto = true;
-							break;
+						case 'w': select = 0; break;
 
-						case var b when opt.Equals(Keywords.Keyword_Maximize, StringComparison.OrdinalIgnoreCase):
-							max = true;
-							break;
+						case 'h': select = 1; break;
 
-						case var b when opt.Equals(Keywords.Keyword_Minimize, StringComparison.OrdinalIgnoreCase):
-							min = true;
-							break;
+						case 'x': select = 2; break;
 
-						case var b when opt.Equals(Keywords.Keyword_Restore, StringComparison.OrdinalIgnoreCase):
-							form.showWithoutActivation = false;
-							restore = true;
-							break;
-
-						case var b when opt.Equals(Keywords.Keyword_NoActivate, StringComparison.OrdinalIgnoreCase):
-						case var b2 when opt.Equals(Keywords.Keyword_NA, StringComparison.OrdinalIgnoreCase):
-							form.showWithoutActivation = true;
-							restore = true;
-							break;
-
-						case var b when opt.Equals(Keywords.Keyword_Hide, StringComparison.OrdinalIgnoreCase):
-							hide = true;
-							break;
+						case 'y': select = 3; break;
 					}
-				}
-				else
-				{
-					var modeval = opt.Slice(1);
 
-					if (modeval.Equals(Keywords.Keyword_Center, StringComparison.OrdinalIgnoreCase))
+					if (select == -1)
 					{
-						//if (select == 2)
-						//  cX = true;
-						//else
-						//  cY = true;
+						switch (opt)
+						{
+							case var b when opt.Equals(Keywords.Keyword_AutoSize, StringComparison.OrdinalIgnoreCase):
+								auto = true;
+								break;
+
+							case var b when opt.Equals(Keywords.Keyword_Maximize, StringComparison.OrdinalIgnoreCase):
+								max = true;
+								break;
+
+							case var b when opt.Equals(Keywords.Keyword_Minimize, StringComparison.OrdinalIgnoreCase):
+								min = true;
+								break;
+
+							case var b when opt.Equals(Keywords.Keyword_Restore, StringComparison.OrdinalIgnoreCase):
+								form.showWithoutActivation = false;
+								restore = true;
+								break;
+
+							case var b when opt.Equals(Keywords.Keyword_NoActivate, StringComparison.OrdinalIgnoreCase):
+							case var b2 when opt.Equals(Keywords.Keyword_NA, StringComparison.OrdinalIgnoreCase):
+								form.showWithoutActivation = true;
+								restore = true;
+								break;
+
+							case var b when opt.Equals(Keywords.Keyword_Hide, StringComparison.OrdinalIgnoreCase):
+								hide = true;
+								break;
+						}
 					}
-					else if (modeval.Length != 0 && int.TryParse(modeval, out var n))
-						pos[select] = n;
+					else
+					{
+						var modeval = opt.Slice(1);
+
+						if (modeval.Equals(Keywords.Keyword_Center, StringComparison.OrdinalIgnoreCase))
+						{
+							//if (select == 2)
+							//  cX = true;
+							//else
+							//  cY = true;
+						}
+						else if (modeval.Length != 0 && int.TryParse(modeval, out var n))
+							pos[select] = n;
+					}
 				}
 			}
 

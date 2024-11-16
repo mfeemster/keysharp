@@ -24,7 +24,7 @@ namespace Keysharp.Core
 		/// If all components are omitted, a single left click is performed at the mouse cursor's current position.<br/>
 		/// The components can appear in any order except ClickCount, which must occur somewhere to the right of Coords, if present.<br/>
 		///     Coords: If omitted, the cursor's current position is used. Otherwise, specify the X and Y coordinates to which the mouse cursor is moved prior to clicking.<br/>
-		///     For example, Click "100 200" clicks the left mouse button at a specific position. Coordinates are relative to the active window's client area unless CoordMode<br/>
+		///     For example, Click "100 200" clicks the left mouse button at a specific position. Coordinates are relative to the active window's client area unless <see cref="CoordMode"/><br/>
 		///     was used to change that.<br/>
 		///     WhichButton: If omitted, it defaults to Left (the left mouse button). Otherwise, specify Left, Right, Middle (or just the first letter of each of these);<br/>
 		///     or X1(fourth button) or X2(fifth button). For example, Click "Right" clicks the right mouse button at the mouse cursor's current position.<br/>
@@ -81,7 +81,9 @@ namespace Keysharp.Core
 			var mode = relativeTo.As(Keyword_Screen);
 			CoordModeType rel;
 
-			if (Options.IsOption(mode, Keyword_Relative))
+			if (relativeTo is CoordModeType cmt)
+				rel = cmt;
+			else if (Options.IsOption(mode, Keyword_Relative))
 				rel = CoordModeType.Window;
 			else if (Options.IsOption(mode, Keyword_Client))
 				rel = CoordModeType.Client;
@@ -99,31 +101,33 @@ namespace Keysharp.Core
 				case Keyword_ToolTip:
 					prev = Coords.Tooltip;
 					Coords.Tooltip = rel;
-					return prev;
+					break;
 
 				case Keyword_Pixel:
 					prev = Coords.Pixel;
 					Coords.Pixel = rel;
-					return prev;
+					break;
 
 				case Keyword_Mouse:
 					prev = Coords.Mouse;
 					Coords.Mouse = rel;
-					return prev;
+					break;
 
 				case Keyword_Caret:
 					prev = Coords.Caret;
 					Coords.Caret = rel;
-					return prev;
+					break;
 
 				case Keyword_Menu:
 					prev = Coords.Menu;
 					Coords.Menu = rel;
-					return prev;
+					break;
 
 				default:
 					throw new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().");
 			}
+
+			return prev;
 		}
 
 		/// <summary>
@@ -136,7 +140,7 @@ namespace Keysharp.Core
 		///     Specify WheelLeft(or WL) or WheelRight(or WR) to push the wheel left or right, respectively.ClickCount is the number of notches to turn the wheel.
 		/// </param>
 		/// <param name="x">If omitted, the cursor's current position is used. Otherwise, specify the X and Y coordinates to which the mouse cursor is moved prior to clicking.<br/>
-		/// Coordinates are relative to the active window's client area unless CoordMode was used to change that.
+		/// Coordinates are relative to the active window's client area unless <see cref="CoordMode"/> was used to change that.
 		/// </param>
 		/// <param name="y">See <paramref name="x"/>.</param>
 		/// <param name="clickCount">If omitted, it defaults to 1. Otherwise, specify the number of times to click the mouse button or turn the mouse wheel.</param>
@@ -175,7 +179,7 @@ namespace Keysharp.Core
 		/// the physical positions of the buttons are swapped but the effect stays the same.
 		/// </param>
 		/// <param name="x1">Specify the X and Y coordinates of the drag's starting position (the mouse will be moved to these coordinates right before the drag is started).<br/>
-		/// Coordinates are relative to the active window's client area unless CoordMode was used to change that.<br/>
+		/// Coordinates are relative to the active window's client area unless <see cref="CoordMode"/> was used to change that.<br/>
 		/// If both X1 and Y1 are omitted, the mouse cursor's current position is used.
 		/// </param>
 		/// <param name="y1">See <paramref name="x1"/>.</param>
@@ -209,7 +213,7 @@ namespace Keysharp.Core
 		/// Retrieves the current position of the mouse cursor, and optionally which window and control it is hovering over.
 		/// </summary>
 		/// <param name="outputVarX">If omitted, the corresponding value will not be stored. Otherwise, specify references to the output variables in which to store the X and Y coordinates.<br/>
-		/// The retrieved coordinates are relative to the active window's client area unless CoordMode was used to change to screen coordinates.
+		/// The retrieved coordinates are relative to the active window's client area unless <see cref="CoordMode"/> was used to change to screen coordinates.
 		/// </param>
 		/// <param name="outputVarY">See <paramref name="outputVarX"/>.</param>
 		/// <param name="outputVarWin">If omitted, the corresponding value will not be stored.<br/>
@@ -231,8 +235,8 @@ namespace Keysharp.Core
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
-			PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);
-			outputVarX = (long)(pos.X - aX);
+			PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
+			outputVarX = (long)(pos.X - aX);//Convert the mouse position in screen coordinates to window coordinates.
 			outputVarY = (long)(pos.Y - aY);
 			var child = WindowProvider.Manager.WindowFromPoint(pos);
 
@@ -324,7 +328,7 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Internal helper to adjust a point from being relative to the active window to relative to the top left of the screen.
-		/// The adjustment will only be done if the current mouse coordinate mode is <see cref="CoordModeType.Window"/>.
+		/// The adjustment will only be done if the current mouse coordinate mode is <see cref="CoordModeType.Window"/> or <see cref="CoordModeType.Client"/>.
 		/// </summary>
 		/// <param name="x">The x point to adjust.</param>
 		/// <param name="y">The y point to adjust.</param>
@@ -336,11 +340,17 @@ namespace Keysharp.Core
 				x += rect.Left;
 				y += rect.Top;
 			}
+			else if (Coords.Mouse == CoordModeType.Client)
+			{
+				var pt = WindowProvider.Manager.ActiveWindow.ClientToScreen();
+				x += pt.X;
+				y += pt.Y;
+			}
 		}
 
 		/// <summary>
 		/// Internal helper to adjust a rect from being relative to the active window to relative to the top left of the screen.
-		/// The adjustment will only be done if the current mouse coordinate mode is <see cref="CoordModeType.Window"/>.
+		/// The adjustment will only be done if the current mouse coordinate mode is <see cref="CoordModeType.Window"/> or <see cref="CoordModeType.Client"/>.
 		/// </summary>
 		/// <param name="x1">The left of the rect to adjust.</param>
 		/// <param name="y1">The top of the rect to adjust.</param>
@@ -355,6 +365,14 @@ namespace Keysharp.Core
 				y1 += rect.Top;
 				x2 += rect.Left;
 				y2 += rect.Top;
+			}
+			else if (Coords.Mouse == CoordModeType.Client)
+			{
+				var pt = WindowProvider.Manager.ActiveWindow.ClientToScreen();
+				x1 += pt.X;
+				y1 += pt.Y;
+				x2 += pt.X;
+				y2 += pt.Y;
 			}
 		}
 

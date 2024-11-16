@@ -567,10 +567,11 @@ namespace Keysharp.Core.Windows
 
 				var cnt = (int)WindowsAPI.SendMessage(item.Handle, msg, 0, 0);
 				var listBoxContent = new List<object>(cnt);
+				var sb = new StringBuilder(256);
 
 				for (var i = 0; i < cnt; i++)
 				{
-					var sb = new StringBuilder(256);
+					_ = sb.Clear();
 					_ = WindowsAPI.SendMessage(item.Handle, x_msg, i, sb);
 					listBoxContent.Add(sb.ToString());
 				}
