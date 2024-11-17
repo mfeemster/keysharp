@@ -76,9 +76,9 @@ namespace Keysharp.Core
 
 		public static void ControlShowDropDown(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlShowDropDown);
 
-		public static void DetectHiddenText(params object[] obj) => Accessors.A_DetectHiddenText = obj.O1();
+		public static object DetectHiddenText(params object[] obj) => Accessors.A_DetectHiddenText = obj.O1();
 
-		public static void DetectHiddenWindows(params object[] obj) => Accessors.A_DetectHiddenWindows = obj.O1();
+		public static object DetectHiddenWindows(params object[] obj) => Accessors.A_DetectHiddenWindows = obj.O1();
 
 		public static long EditGetCurrentCol(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.EditGetCurrentCol);
 

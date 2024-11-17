@@ -903,7 +903,8 @@ namespace Keysharp.Scripting
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
 			//_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));
 			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{reader.SingleInstance}"));
-			_ = initial.Add(new CodeExpressionStatement(inst));
+			var condInst = new CodeConditionStatement(inst, new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));
+			_ = initial.Add(condInst);
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.SetName(name)"));
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.Variables.InitGlobalVars()"));
 

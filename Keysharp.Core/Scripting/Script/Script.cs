@@ -209,16 +209,19 @@
 			return sbuf.sb.ToString();
 		}
 
-		public static void HandleSingleInstance(string name, eScriptInstance inst)
+		public static bool HandleSingleInstance(string name, eScriptInstance inst)
 		{
 			if (name.Length == 0 || name == "*")//Happens when running in Keyview.
-				return;
+				return false;
 
 			if (Env.FindCommandLineArg("force") != null || Env.FindCommandLineArg("f") != null)
 				inst = eScriptInstance.Off;
 
 			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
 				inst = eScriptInstance.Force;
+
+			var exit = false;
+			var oldDetect = Window.DetectHiddenWindows(true);
 
 			switch (inst)
 			{
@@ -230,7 +233,7 @@
 
 				case eScriptInstance.Ignore:
 					if (Window.WinExist(name) != 0)
-						Flow.ExitApp(Flow.ExitReasons.Single);
+						exit = true;
 
 					break;
 
@@ -246,11 +249,14 @@
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
 							Window.WinClose(hwnd, "", 2);
 						else
-							Flow.ExitApp(Flow.ExitReasons.Single);
+							exit = true;
 					}
 
 					break;
 			}
+
+			_ = Window.DetectHiddenWindows(oldDetect);
+			return exit;
 		}
 
 		public static string ListKeyHistory()
