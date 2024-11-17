@@ -33,6 +33,7 @@ namespace Keysharp.Main
 				Window.SetProcessDPIAware();
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
+				var exeName = Path.GetFileNameWithoutExtension(exePath);
 				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var nsname = typeof(Program).Namespace;
 				var codeout = false;
@@ -108,8 +109,8 @@ namespace Keysharp.Main
 				{
 					var dirs = new string[]
 					{
-						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ahk",//Current executable dir.
-						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ks"
+						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}{exeName}.ahk",//Current executable dir.
+						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}{exeName}.ks"
 					};
 
 					foreach (var dir in dirs)
