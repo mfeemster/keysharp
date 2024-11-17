@@ -1,5 +1,3 @@
-
-
 compfunc(x, y, z)
 {
 	return StrCompare(x, y)
@@ -64,6 +62,18 @@ if ("e,d,c,b,a,Z,Y,X,F,E,D,C,B,A" = y)
 else
 	FileAppend, "fail", "*"
 	
+IntegerSort(a1, a2, *)
+{
+    return a1 - a2
+}
+
+x := "5,3,7,9,1,13,999,-4"
+y := Sort(x, "D,", "IntegerSort")
+
+if ("-4,1,3,5,7,9,13,999" = y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 x := "200,100,300,500,600,111,222,1010"
 y := Sort(x, "D, n")
@@ -82,7 +92,7 @@ Loop 10
 	else
 		FileAppend, "fail", "*"
 	
- 	y := z
+	y := z
 }
 
 y := Sort(x, "D, n r")

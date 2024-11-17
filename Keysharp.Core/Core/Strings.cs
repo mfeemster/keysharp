@@ -576,10 +576,12 @@ namespace Keysharp.Core
 					try { value = function.Call(args); }
 					catch (Exception) { }
 
-					if (value is int i)
-						return i;
-					else if (value is long l)
+					if (value is long l)
 						return (int)l;
+					else if (value is int i)
+						return i;
+					else if (value is double d)
+						return (int)d;
 					else
 						return 0;
 				});
