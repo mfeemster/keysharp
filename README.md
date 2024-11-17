@@ -61,8 +61,24 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line".
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
-* Function objects will need to be created passing the name of the function as a string to `Func()`. They are not all created automatically on script startup.
-	+ This is done by calling `Func("functionName" [, object, paramCount])`.
+* Function objects behave differently in a few ways.
+	+ The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
+	+ Function objects will need to be created by passing the name of the function as a string to `Func()`. They are not all created automatically on script startup.
+	+ This can be done by passing the name of the desired function as a string, and optionally an object and a parameter count like so:
+		+ `Func("functionName" [, object, paramCount])`.
+	+ Each call to these functions returns a new unique function object. For a given function, it's best to create one object and reference that throughout the script.
+	+ For functions which take a function object as a parameter, you can just pass the string name of the function rather than having to call `Func()` like so:
+```
+	Func1()
+	{
+	}
+	
+	FuncThatTakesFuncObj(p1)
+	{
+	}
+	
+	FuncThatTakesFuncObj("Func1") ; Just pass the name of the function.
+```
 * Exception classes aren't, and can't be, derived from `KeysharpObject`.
 	+ That is because for the exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
@@ -187,9 +203,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Dynamic variable references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 * `Goto` statements cannot use any type of variable. They must be labels known at compile time and function just like goto statements in C#.
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
-* The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
-	+ `Func()` or `FuncObj()` can still be used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
-	+ Each call to these functions returns a new unique function object. So for a given function, it's best to create one object and reference that throughout the script.
 * Callback functions do not require a `*` parameter to work. So `func()` and `func(*)` can both be used as callbacks.
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
 ```
