@@ -99,6 +99,27 @@
 #endif
 
 		/// <summary>
+		/// String wrapper around <see cref="BeginInts"/>.
+		/// </summary>
+		internal static ReadOnlySpan<char> BeginInts(this string str) =>
+		BeginInts(str.AsSpan());
+
+		/// <summary>
+		/// Returns all characters that are digits, starting from the beginning of a string.
+		/// </summary>
+		/// <param name="str">The string to return the leading digits for.</param>
+		/// <returns>A string consisting only of digits, empty if none.</returns>
+		internal static ReadOnlySpan<char> BeginInts(this ReadOnlySpan<char> str)
+		{
+			var i = 0;
+
+			while (i < str.Length && char.IsDigit(str[i]))
+				i++;
+
+			return str.Slice(0, i);
+		}
+
+		/// <summary>
 		/// Determines whether a string ends with any of a list of strings.<br/>
 		/// The search is case insensitive.
 		/// </summary>

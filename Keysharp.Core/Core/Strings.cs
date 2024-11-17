@@ -477,26 +477,105 @@ namespace Keysharp.Core
 		/// <returns>The sorted version of the specified string.</returns>
 		public static string Sort(object str, object options = null, object callback = null)
 		{
+			IFuncObj function = null;
 			var input = str.As();
 			var opts = options.As();
 			var splits = opts.Split(' ');
-			IFuncObj function = null;
+			var numeric = false;
+			var random = false;
+			var reverse = false;
+			var slash = false;
+			var slashtype = Path.DirectorySeparatorChar;
+			var sortAt = 1;
 			var split = '\n';
-			var dopt = splits.FirstOrDefault(s => s.StartsWith("d", StringComparison.OrdinalIgnoreCase)) ?? "";
+			var unique = false;
+			var withcase = false;
+			var withlocale = false;
+			var zopt = false;
+
+			for (var i = 0; i < opts.Length; i++)
+			{
+				var c = char.ToLower(opts[i]);
+
+				switch (c)
+				{
+					case ' ':
+						continue;
+
+					case 'c':
+						if (i < opts.Length - 1)
+						{
+							if (char.ToLower(opts[i + 1]) == 'l')
+								withlocale = true;
+
+							i++;
+						}
+
+						if (!withlocale)
+							withcase = true;
+
+						break;
+
+					case 'd':
+						if (i < opts.Length - 1)
+						{
+							split = opts[i + 1];
+							i++;
+						}
+
+						break;
+
+					case 'p':
+						if (i < opts.Length - 1)
+						{
+							var digits = opts.AsSpan(i + 1).BeginInts();
+
+							if (int.TryParse(digits, out var pp))
+								sortAt = pp;
+
+							i += digits.Length;
+						}
+
+						break;
+
+					case 'n':
+						numeric = true;
+						break;
+
+					case 'r':
+						if (opts.AsSpan(i).StartsWith("random", StringComparison.OrdinalIgnoreCase))
+						{
+							i += "random".Length;
+							random = true;
+						}
+						else
+							reverse = true;
+
+						break;
+
+					case 'u':
+						unique = true;
+						break;
+
+					case '/':
+					case '\\':
+						slash = true;
+						slashtype = c;
+						break;
+
+					case 'z':
+						zopt = true;
+						break;
+
+					default:
+						break;
+				}
+			}
 
 			if (callback != null)
 				function = Functions.GetFuncObj(callback, null, true);//If supplied, throw if bad.
 
-			if (!string.IsNullOrEmpty(dopt))
-			{
-				var ddelim = dopt.AsSpan(1);
-
-				if (ddelim.Length > 0)
-					split = ddelim[0];
-			}
-
-			var zopt = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("z", StringComparison.OrdinalIgnoreCase)) ?? "");
-			var list = input.Split(new[] { split }, zopt ? StringSplitOptions.None : StringSplitOptions.RemoveEmptyEntries);
+			var list = input.Split([split], zopt ? StringSplitOptions.None : StringSplitOptions.RemoveEmptyEntries);
 
 			if (split == '\n')
 			{
@@ -509,46 +588,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			var withcase = false;
-			var withlocale = false;
-			var copt = splits.FirstOrDefault(s => s.StartsWith("c", StringComparison.OrdinalIgnoreCase)) ?? "";
-
-			if (!string.IsNullOrEmpty(copt))
-			{
-				var cdelim = copt.AsSpan(1);
-
-				if (cdelim.Length > 0 && cdelim.Equals("l", StringComparison.OrdinalIgnoreCase))
-					withlocale = true;
-				else
-					withcase = true;
-			}
-
-			var numeric = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.StartsWith("n", StringComparison.OrdinalIgnoreCase)) ?? "");
-			var sortAt = 1;
-			var popt = splits.FirstOrDefault(s => s.StartsWith("p", StringComparison.OrdinalIgnoreCase)) ?? "";
-
-			if (!string.IsNullOrEmpty(popt))
-			{
-				var pdelim = popt.AsSpan(1);
-
-				if (pdelim.Length > 0 && int.TryParse(pdelim, out var pp))
-					sortAt = pp;
-			}
-
 			sortAt = Math.Max(0, sortAt - 1);
-			var reverse = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("r", StringComparison.OrdinalIgnoreCase)) ?? "");
-			var random = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals(Keyword_Random, StringComparison.OrdinalIgnoreCase)) ?? "");
-			var unique = !string.IsNullOrEmpty(splits.FirstOrDefault(s => s.Equals("u", StringComparison.OrdinalIgnoreCase)) ?? "");
-			var slashopt = splits.FirstOrDefault(s => s.Equals("\\", StringComparison.OrdinalIgnoreCase) || s.Equals("/", StringComparison.OrdinalIgnoreCase)) ?? "";
-			var slash = false;
-			var slashtype = Path.DirectorySeparatorChar;
-
-			if (!string.IsNullOrEmpty(slashopt))
-			{
-				slash = true;
-				slashtype = slashopt[0];
-			}
-
 			var compl = withlocale ? StringComparison.CurrentCultureIgnoreCase : StringComparison.OrdinalIgnoreCase;
 			var comp = withcase ? StringComparison.Ordinal : compl;
 

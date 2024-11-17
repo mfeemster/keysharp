@@ -355,7 +355,8 @@ namespace Keysharp.Tests
 				y = z;
 			}
 
-			y = Strings.Sort(x, "D, n r");
+			//Test options without spaces between them.
+			y = Strings.Sort(x, "D,nr");
 			Assert.AreEqual("1010,600,500,300,222,200,111,100", y);
 			x = "RED\nGREEN\nBLUE\n";
 			y = Strings.Sort(x);
@@ -363,19 +364,19 @@ namespace Keysharp.Tests
 			y = Strings.Sort(x, "z");
 			Assert.AreEqual("\nBLUE\nGREEN\nRED", y);
 			x = "C:\\AAA\\BBB.txt,C:\\BBB\\AAA.txt";
-			y = Strings.Sort(x, "D, \\");
+			y = Strings.Sort(x, "D,\\");
 			Assert.AreEqual("C:\\BBB\\AAA.txt,C:\\AAA\\BBB.txt", y);
 			x = "/usr/bin/AAA/BBB.txt,/usr/bin/BBB/AAA.txt";
-			y = Strings.Sort(x, "D, /");
+			y = Strings.Sort(x, "D,/");
 			Assert.AreEqual("/usr/bin/BBB/AAA.txt,/usr/bin/AAA/BBB.txt", y);
 			x = "co-op,comp,coop";
-			y = Strings.Sort(x, "D, CL");
+			y = Strings.Sort(x, "D,CL");
 			Assert.AreEqual("comp,co-op,coop", y);
 			x = "Ä,Ü,A,a,B,b,u,U";
-			y = Strings.Sort(x, "D, CL");
+			y = Strings.Sort(x, "D,CL");
 			Assert.AreEqual("A,a,Ä,B,b,u,U,Ü", y);
 			x = "AZB,BYX,CWM,LMN";
-			y = Strings.Sort(x, "D, P2");
+			y = Strings.Sort(x, "D,P2");
 			Assert.AreEqual("LMN,CWM,BYX,AZB", y);
 			Assert.IsTrue(TestScript("string-sort", true));
 		}
