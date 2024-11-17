@@ -40,7 +40,7 @@ namespace Keysharp.Scripting
 		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = [];
-		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Force;
+		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Prompt;
 
 		internal PreReader(Parser p) => parser = p;
 
@@ -511,6 +511,7 @@ namespace Keysharp.Scripting
 												break;
 
 											default:
+												SingleInstance = eScriptInstance.Force;
 												break;
 										}
 									}
