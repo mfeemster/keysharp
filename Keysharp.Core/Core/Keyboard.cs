@@ -711,7 +711,7 @@ break_twice:;
 		///     AlwaysOn: Forces the key to stay on permanently.<br/>
 		///     AlwaysOff: Forces the key to stay off permanently.
 		/// </param>
-		public static void SetCapsLockState(object state) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
+		public static void SetCapsLockState(object state = null) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
 
 		/// <summary>
 		/// Sets the delay that will occur after each keystroke sent by <see cref="Send"/> or <see cref="ControlSend"/>.
@@ -760,12 +760,12 @@ break_twice:;
 		/// <summary>
 		/// See <see cref="SetCapsLockState"/>, but for NumLock.
 		/// </summary>
-		public static void SetNumLockState(object state) => SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
+		public static void SetNumLockState(object state = null) => SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
 
 		/// <summary>
-		/// See <see cref="SetLockState"/>, but for ScrollLock.
+		/// See <see cref="SetCapsLockState"/>, but for ScrollLock.
 		/// </summary>
-		public static void SetScrollLockState(object state) => SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
+		public static void SetScrollLockState(object state = null) => SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
 
 		/// <summary>
 		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.

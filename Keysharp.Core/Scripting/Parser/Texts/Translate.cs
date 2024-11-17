@@ -503,18 +503,6 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				case "setcapslockstate":
-				case "setnumlockstate":
-				case "setscrolllockstate":
-					_ = replaced.Append("SetLockState");
-					_ = replaced.Append(Multicast);
-					_ = replaced.Append(SingleSpace);
-					_ = replaced.Append(cmd, 3, cmd.Length - 3 - 5);
-					_ = replaced.Append(Multicast);
-					_ = replaced.Append(SingleSpace);
-					_ = replaced.Append(param);
-					break;
-
 				case "leftclick":
 				case "mouseclick":
 					_ = replaced.Append("Click");
