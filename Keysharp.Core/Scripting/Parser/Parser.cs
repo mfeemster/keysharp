@@ -901,7 +901,6 @@ namespace Keysharp.Scripting
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Env.HandleCommandLineParams(args)"));
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
-			//_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{(name == "*" ? "Off" : SingleInstance)}"));
 			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{reader.SingleInstance}"));
 			var condInst = new CodeConditionStatement(inst, new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));
 			_ = initial.Add(condInst);

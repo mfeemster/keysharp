@@ -189,6 +189,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ `Func()` or `FuncObj()` can still be used to create an instance of `FuncObj`, by passing the name of the desired function as a string, and optionally an object and a parameter count.
+	+ Each call to these functions returns a new unique function object. So for a given function, it's best to create one object and reference that throughout the script.
 * Callback functions do not require a `*` parameter to work. So `func()` and `func(*)` can both be used as callbacks.
 * Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
 ```
