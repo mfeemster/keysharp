@@ -308,10 +308,12 @@ namespace Keysharp.Scripting
 				_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
 				_ = inv.Parameters.Add(new CodeSnippetExpression("UserMainCode"));
 				_ = main.Statements.Add(new CodeExpressionStatement(inv));
+				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 			}
 			else
 			{
 				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "UserMainCode"));
+				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", [new CodePrimitiveExpression(-2L)]));
 			}
 

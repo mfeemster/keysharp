@@ -47,6 +47,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference SetPropertyValue => new MethodReference(typeof(Script), "SetPropertyValue");
 			internal static MethodReference SetReady => new MethodReference(typeof(Script), "SetReady");
 			internal static MethodReference StringConcat => new MethodReference(typeof(string), "Concat", [typeof(object)]);
+			internal static MethodReference WaitThreads => new MethodReference(typeof(Script), "WaitThreads");
 		}
 	}
 }

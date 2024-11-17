@@ -519,6 +519,7 @@ namespace Keysharp.Core
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
+			Dialogs.CloseMessageBoxes();
 			var ec = Script.isReadyToExecute ? exitCode.Ai() : (int)ExitReasons.Critical;
 			Accessors.A_ExitReason = exitReason.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
@@ -546,13 +547,6 @@ namespace Keysharp.Core
 
 			foreach (var kv in timers)
 				kv.Value.Stop();
-
-			//Check against 1 instead of 0, because this may be launched in a thread as a result of a hotkey.
-			//If this gets stuck in a loop it means we have a thread imbalance/mismatch somewhere.
-			//We added them, but never removed. While seemingly dangerous to have, it's a handy
-			//way to know we've found a bug.
-			while (Script.totalExistingThreads > 1)
-				Sleep(200);
 
 			if (!Script.IsMainWindowClosing)
 			{

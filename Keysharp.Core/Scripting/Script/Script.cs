@@ -515,6 +515,16 @@
 			}
 		}
 
+		public static void WaitThreads()
+		{
+			//Check against 1 instead of 0, because this may be launched in a thread as a result of a hotkey.
+			//If this gets stuck in a loop it means we have a thread imbalance/mismatch somewhere.
+			//We added them, but never removed. While seemingly dangerous to have, it's a handy
+			//way to know we've found a bug.
+			while (totalExistingThreads > 1)
+				Flow.Sleep(200);
+		}
+
 		internal static bool AnyPersistent()
 		{
 			if (Gui.AnyExistingVisibleWindows())

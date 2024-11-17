@@ -581,6 +581,23 @@ namespace Keysharp.Core
 			}
 		}
 
+		internal static void CloseMessageBoxes()
+		{
+			//Will need a way to do this on linux.//TODO
+			var tempn = nMessageBoxes;
+
+			while (tempn > 0)
+			{
+				IntPtr wnd;
+
+				if ((wnd = WindowsAPI.FindWindow("#32770", null)) != IntPtr.Zero)
+				{
+					_ = WindowsAPI.SendMessage(wnd, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+					tempn--;
+				}
+			}
+		}
+
 		public class DialogResultReturn
 		{
 			public string Result { get; set; }
