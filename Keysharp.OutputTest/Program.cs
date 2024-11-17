@@ -29,6 +29,7 @@ using static Keysharp.Core.Mouse;
 using static Keysharp.Core.Network;
 using static Keysharp.Core.Processes;
 using static Keysharp.Core.RealThreads;
+using static Keysharp.Core.RegEx;
 using static Keysharp.Core.Registrys;
 using static Keysharp.Core.Screen;
 using static Keysharp.Core.Security;
@@ -87,11 +88,17 @@ namespace Keysharp.CompiledMain
 				string name = "*";
 				Keysharp.Scripting.Script.Variables.InitGlobalVars();
 				Keysharp.Scripting.Script.SetName(name);
-				Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force);
+
+				if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force))
+				{
+					return 0;
+				}
+
 				Keysharp.Core.Env.HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
 				Keysharp.Scripting.Script.SetReady();
 				UserMainCode();
+				Keysharp.Scripting.Script.WaitThreads();
 				Keysharp.Core.Flow.Sleep(-2);
 				Keysharp.Core.Flow.ExitApp(0);
 				return 0;

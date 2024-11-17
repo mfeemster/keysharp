@@ -30,11 +30,6 @@ namespace Keysharp.Main
 
 			try
 			{
-				if (args.Length == 0)
-				{
-					return Message("Invalid number of arguments: you must pass at least an input script filename as the first argument like so: Keysharp.exe myscript.ahk", true);
-				}
-
 				Window.SetProcessDPIAware();
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
@@ -114,9 +109,7 @@ namespace Keysharp.Main
 					var dirs = new string[]
 					{
 						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ahk",//Current executable dir.
-						$"{Accessors.A_MyDocuments}{Path.DirectorySeparatorChar}Keysharp.ahk",//Documents.
-						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ks",
-						$"{Accessors.A_MyDocuments}{Path.DirectorySeparatorChar}Keysharp.ks",
+						$"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}Keysharp.ks"
 					};
 
 					foreach (var dir in dirs)
