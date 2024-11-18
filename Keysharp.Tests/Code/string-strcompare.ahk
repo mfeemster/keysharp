@@ -44,7 +44,28 @@ if (z = 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+z := StrCompare(x, y, 0L)
+
+if (z = 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 	
+z := StrCompare(x, y, "off")
+
+if (z = 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := StrCompare(x, y, false)
+
+if (z = 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 x := "b"
 y := "A"
 z := StrCompare(x, y)
@@ -62,7 +83,21 @@ if (z < 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+z := StrCompare(x, y, "on")
+
+if (z < 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 	
+z := StrCompare(x, y, true)
+
+if (z < 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 x := "A11"
 y := "A100"
 z := StrCompare(x, y, 1)

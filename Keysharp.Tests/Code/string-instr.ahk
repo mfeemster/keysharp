@@ -1,5 +1,3 @@
-
-
 x := "the string to searchz"
 y := "the"
 z := InStr(x, y)
@@ -28,6 +26,34 @@ else
 z := InStr(x, y, "on")
 
 if (z = 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, true)
+
+if (z = 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, 0)
+
+if (z = x.Length)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, "of")
+
+if (z = x.Length)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, false)
+
+if (z = x.Length)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

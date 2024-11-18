@@ -276,11 +276,13 @@ namespace Keysharp.Core.Common.Strings
 			switch (option.ToString().Trim().ToLowerInvariant())
 			{
 				case "1":
+				case TrueTxt:
 				case Keyword_On: return StringComparison.Ordinal;
 
 				case Keyword_Locale: return StringComparison.CurrentCulture;
 
 				case "0":
+				case FalseTxt:
 				case Keyword_Off:
 				default: return StringComparison.OrdinalIgnoreCase;
 			}

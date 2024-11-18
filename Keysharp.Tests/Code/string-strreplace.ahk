@@ -63,9 +63,44 @@ if (y = "")
 else
 	FileAppend, "fail", "*"
 
+y := StrReplace(x, "a", "A", 1)
+
+if (y = "A,b,c,d,e,f")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 y := StrReplace(x, "a", "A", "On")
 
 if (y = "A,b,c,d,e,f")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := StrReplace(x, "a", "A", true)
+
+if (y = "A,b,c,d,e,f")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := StrReplace(x, "A", "1", 0)
+
+if (y = "1,b,c,d,e,f")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := StrReplace(x, "A", "1", "Off")
+
+if (y = "1,b,c,d,e,f")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := StrReplace(x, "A", "1", false)
+
+if (y = "1,b,c,d,e,f")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
