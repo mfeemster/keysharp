@@ -37,6 +37,9 @@
 		{
 			var file = filename.As();
 
+			//if (text.ToString() != "pass")
+			//	Console.WriteLine(text);
+
 			try
 			{
 				var t = text;

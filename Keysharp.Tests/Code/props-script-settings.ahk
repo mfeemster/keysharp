@@ -108,19 +108,19 @@ else
 
 SetTitleMatchMode, 2 ; Reset it back for the function version of this test.
 SetTitleMatchMode, "fast"
-
+	
 if (!A_DetectHiddenWindows) 
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 DetectHiddenWindows, 0
 
 if (!A_DetectHiddenWindows)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 DetectHiddenWindows, 1
 
 if (A_DetectHiddenWindows) 
@@ -141,7 +141,7 @@ if (A_DetectHiddenWindows)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+				
 DetectHiddenWindows, "dummy"
 
 if (A_DetectHiddenWindows) 

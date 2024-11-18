@@ -89,7 +89,7 @@
 				if (Count > 0)
 					throw new PropertyError("Attempted to change case sensitivity of a map which was not empty.");
 
-				var oldval = caseSense;
+				var oldVal = caseSense;
 				var str = value.ToLower();
 				var val = Options.OnOff(str);
 
@@ -98,7 +98,7 @@
 				else if (str == "locale")
 					caseSense = eCaseSense.Locale;
 
-				if (caseSense != oldval)
+				if (caseSense != oldVal)
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 			}
 		}

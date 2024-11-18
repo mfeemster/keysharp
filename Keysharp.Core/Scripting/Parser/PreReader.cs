@@ -991,16 +991,7 @@ namespace Keysharp.Scripting
 				lineNumber = list[0].LineNumber;
 
 				foreach (var codeLine in list)
-				{
-					var s = codeLine.Code;
-					Translate(codeLine, ref s);
-
-					if (s == null)
-						throw new ParseException($"Could not translate line {s}", codeLine);
-
-					codeLine.Code = s;
 					codeLine.LineNumber = lineNumber++;
-				}
 			}
 
 			return list;
