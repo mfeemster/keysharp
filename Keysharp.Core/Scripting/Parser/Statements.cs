@@ -279,7 +279,7 @@
 								var prop = new CodeMemberProperty
 								{
 									Attributes = MemberAttributes.Public | MemberAttributes.Final,
-									Type = new CodeTypeReference(typeof(object)),
+									Type = objTypeRef,
 									Name = copy//No need to check here for whether it's a valid identifier, because that was done by IsProperty() in GetToken().
 								};
 
@@ -311,7 +311,7 @@
 													pstr = p.TrimEnd('*');
 												}
 
-												var pdecl = new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(object)), pstr.ToString());
+												var pdecl = new CodeParameterDeclarationExpression(objTypeRef, pstr.ToString());
 
 												if (variadic)
 												{

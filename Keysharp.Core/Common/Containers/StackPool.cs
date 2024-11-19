@@ -3,6 +3,7 @@
 	/// <summary>
 	/// Interface for an object which can be initialized and cleared.
 	/// </summary>
+	[PublicForTestOnly]
 	public interface IClearable
 	{
 		/// <summary>
@@ -23,6 +24,7 @@
 	/// The objects are all created in the constructor.
 	/// </summary>
 	/// <typeparam name="T"/>
+	[PublicForTestOnly]
 	public class ConcurrentStackPool<T>
 		where T : class, IClearable, new ()
 	{

@@ -68,3 +68,24 @@ If (a == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Test class members that are initialized using the value of other members.
+; Purposely declare them in reverse alphabetical order to make sure they are
+; created in the exact order specified.
+class membersrefeachother
+{
+    zz := 8080
+    ii := zz * 2
+}
+
+classobj := membersrefeachother()
+
+if (classobj.zz == 8080)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (classobj.ii == 16160)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

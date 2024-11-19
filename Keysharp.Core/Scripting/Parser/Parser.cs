@@ -67,7 +67,6 @@ namespace Keysharp.Scripting
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> contExprOperatorsAlt = contExprOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static List<string> contExprOperatorsList = contExprOperators.ToList();
-		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
 
 		/// <summary>
 		/// The order of these is critically important. Items that start with the same character must go from longest to shortest.
@@ -147,8 +146,9 @@ namespace Keysharp.Scripting
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
-
-		internal static CodePrimitiveExpression nullPrimitive = new CodePrimitiveExpression(null);
+		internal static CodePrimitiveExpression nullPrimitive = new (null);
+		internal static CodeTypeReference objTypeRef = new (typeof(object));
+		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -184,7 +184,7 @@ namespace Keysharp.Scripting
 		private readonly Stack<bool> allGlobalVars = new Stack<bool>();
 		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new Stack<bool>();
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, SortedDictionary<string, CodeExpression>>> allVars = [];
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
 		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
@@ -634,7 +634,7 @@ namespace Keysharp.Scripting
 
 			foreach (var typeMethods in methods)
 			{
-				CodeMemberMethod newmeth = null, callmeth = null;
+				CodeMemberMethod newmeth = null, callmeth = null, initmeth = null;
 
 				if (typeMethods.Key != targetClass)
 				{
@@ -645,7 +645,9 @@ namespace Keysharp.Scripting
 					{
 						if (newmeth == null && string.Compare(method.Name, "__New", true) == 0)//__New() and Call() have already been added.
 						{
-							method.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+							//New must be virtual for classes derived from a built-in type and
+							//be declared override for classes derived from user-defined types.
+							method.Attributes = MemberAttributes.Public;
 							method.Name = "__New";//Ensure it's properly cased.
 
 							for (var i = method.Parameters.Count - 1; i >= 0; i--)
@@ -664,6 +666,7 @@ namespace Keysharp.Scripting
 						else if (string.Compare(method.Name, "__Init", true) == 0)
 						{
 							method.Name = "__Init";
+							initmeth = method;
 						}
 						else if (string.Compare(method.Name, "__StaticInit", true) == 0)
 						{
@@ -723,14 +726,31 @@ namespace Keysharp.Scripting
 					}
 
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
+					var userDefinedBase = FindUserDefinedType(baseType);
+					var extendsUserType = userDefinedBase != null;
 
+					//To properly support the calling hierarchy of __New(), it must be declared differently
+					//depending on where in the hierarchy the class is defined.
 					if (newmeth != null)
 					{
+						//__New() will be virtual by default, which we only want to be the case for the first level down
+						//from built-in classes. After that, they must be decalred as override.
+						if (extendsUserType)
+							newmeth.Attributes |= MemberAttributes.Override;
+
 						_ = typeMethods.Key.Members.Add(newmeth);
-						newmeth.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression("__Init()")));
 					}
-					else
-						_ = thisconstructor.Statements.Add(new CodeSnippetExpression("__Init()"));
+					else if (userDefinedBase == null)
+					{
+						//If deriving from a built-in class, then __New() must be defined as a virtual method at this level
+						newmeth = new CodeMemberMethod();
+						newmeth.Attributes = MemberAttributes.Public;//Virtual by default.
+						newmeth.Name = "__New";
+						newmeth.ReturnType = objTypeRef;
+						_ = newmeth.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
+						_ = newmeth.Parameters.Add(cdpeArgs);
+						_ = typeMethods.Key.Members.Add(newmeth);
+					}
 
 					//The lines relating to args and __New() work whether any params were declared or not.
 					if (thisconstructor != null)
@@ -738,16 +758,37 @@ namespace Keysharp.Scripting
 						var ctorParams = origNewParams.Select(p => p.Name).ToArray();
 						var newparamnames = string.Join(", ", ctorParams);
 
-						if (baseType == "KeysharpObject")
-							_ = thisconstructor.Statements.Add(new CodeSnippetExpression($"__New(args)"));
+						//First call Init() in the constructor if it was derived from a built-in type.
+						//Because it's declared virtual, this will call to the most derived type,
+						//then cascade the calls back down.
+						//Next, do the same with __New().
+						//Manually declared __New() methods in classes that derive from user-defined types
+						//should manually call super.__New().
+						//Note that classes which define __New() and are one level derived from built-in types
+						//don't need to call super.__New() because the built-in class will call it automatically
+						//because __New() is not virtual at the built-in type level.
+						if (userDefinedBase == null)
+						{
+							if (newmeth != null)
+								_ = thisconstructor.Statements.Add(new CodeSnippetExpression("__New(args)"));
+						}
 
 						thisconstructor.Parameters.Clear();
 						_ = thisconstructor.Parameters.Add(cdpeArgs);
 						//Get param names and pass.
 						callmeth.Parameters.Clear();
-						callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
 						callmeth.Statements.Clear();
-						_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+
+						if (origNewParams.Count > 0)
+						{
+							callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
+							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+						}
+						else
+						{
+							_ = callmeth.Parameters.Add(cdpeArgs);
+							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}(args)"));
+						}
 					}
 
 					var thisStaticConstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeTypeConstructor cc) as CodeTypeConstructor;
@@ -761,11 +802,11 @@ namespace Keysharp.Scripting
 					{
 						var rawBaseTypeName = "";
 
-						if (FindUserDefinedType(baseType) is CodeTypeDeclaration ctdbase)
+						if (userDefinedBase != null)
 						{
-							rawBaseTypeName = ctdbase.Name;
+							rawBaseTypeName = userDefinedBase.Name;
 
-							if (ctdbase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
+							if (userDefinedBase.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor) is CodeConstructor ctm2)
 							{
 								thisconstructor.BaseConstructorArgs.Clear();
 								_ = thisconstructor.BaseConstructorArgs.Add(argsSnippet);
@@ -922,7 +963,7 @@ namespace Keysharp.Scripting
 			{
 				Attributes = MemberAttributes.Public | MemberAttributes.Static,
 				Name = "UserMainCode",
-				ReturnType = new CodeTypeReference(typeof(object))
+				ReturnType = objTypeRef
 			};
 
 			if (!Persistent)
@@ -982,12 +1023,25 @@ namespace Keysharp.Scripting
 
 							var isstatic = globalvar.Value.UserData.Contains("isstatic");
 							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
-							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
+							//If the property existed in a base class and is a simple assignment in this class, then assume
+							//they meant to reference the base property rather than create a new one.
+							(bool, string) bn;
+
+							//Determine if the variable name matched a property defined in a base class.
+							//Note this is not done for static variables because those are always assumed to be new declarations.
+							if (!isstatic && (bn = PropExistsInTypeOrBase(typekv.Key.BaseTypes[0].BaseType, name, 0)).Item1)
 							{
-								Name = name,
-								Text = isstatic ? $"\t\t\tpublic static object {name} {{ get; set; }} = {init};"
-									   : $"\t\t\tpublic object {name} {{ get; set; }}"
-							});
+								name = bn.Item2;
+							}
+							else
+							{
+								_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
+								{
+									Name = name,
+									Text = isstatic ? $"\t\t\tpublic static object {name} {{ get; set; }} = {init};"
+										   : $"\t\t\tpublic object {name} {{ get; set; }}"
+								});
+							}
 
 							if (init.Length > 0 && !isstatic)
 							{
@@ -1040,7 +1094,7 @@ namespace Keysharp.Scripting
 
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
-			allVars[ctd] = new Dictionary<string, SortedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
+			allVars[ctd] = new Dictionary<string, OrderedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = [];
 			getPropertyValueCalls[ctd] = [];
@@ -1114,7 +1168,7 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
-		private bool PropExistsInBuiltInClass(string baseType, string p, int paramCount)
+		private (bool, PropertyInfo) PropExistsInBuiltInClass(string baseType, string p, int paramCount)
 		{
 			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
 			{
@@ -1123,18 +1177,20 @@ namespace Keysharp.Scripting
 				{
 					if (string.Compare(typekv.Key.Name, baseType, true) == 0)
 					{
-						if (PropExistsInTypeOrBase(typekv.Key, p, paramCount))
-							return true;
+						var bpi = PropExistsInTypeOrBase(typekv.Key, p, paramCount);
+
+						if (bpi.Item1)
+							return bpi;
 						else
 							break;
 					}
 				}
 			}
 
-			return false;
+			return (false, null);
 		}
 
-		private bool PropExistsInTypeOrBase(string t, string p, int paramCount)
+		private (bool, string) PropExistsInTypeOrBase(string t, string p, int paramCount)
 		{
 			if (properties.Count > 0)
 			{
@@ -1151,22 +1207,37 @@ namespace Keysharp.Scripting
 							if (typekv.Value.TryGetValue(p, out var tempList))//If the property existed in the type, return.
 								foreach (var prop in tempList)
 									if (prop.Parameters.Count == paramCount)
-										return true;
+										return (true, prop.Name);
+
+							//Wasn't found in fully declared properties, but simple assignments at the class namespace level are later treated as properties, so check those.
+							var ctd = allVars.FirstOrDefault(kv => kv.Key.Name == t);
+
+							if (ctd.Key != null)
+							{
+								foreach (var scopekv in ctd.Value.Where(kv => kv.Key.Length == 0))//Only want variables (properties) declared at class scope.
+								{
+									if (scopekv.Value.TryGetValue(p, out var ce))
+									{
+										return (true, p);
+									}
+								}
+							}
 
 							//Wasn't found in this type, so check its base.
 							if (typekv.Key.BaseTypes.Count > 0)
 							{
 								t = typekv.Key.BaseTypes[0].BaseType;
-
 								//The base might have been a user defined type, or a built in type. Check built in type first.
 								//Ex: subclass : theclass : Array
-								if (PropExistsInBuiltInClass(t, p, paramCount))
-									return true;
+								var bpi = PropExistsInBuiltInClass(t, p, paramCount);
+
+								if (bpi.Item1)
+									return (bpi.Item1, bpi.Item2.Name);
 
 								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
 							}
 							else
-								return false;
+								return (false, null);
 						}
 					}
 
@@ -1174,18 +1245,20 @@ namespace Keysharp.Scripting
 					//Ex: theclass : Array
 					if (!anyFound)
 					{
-						if (PropExistsInBuiltInClass(t, p, paramCount))
-							return true;
+						var bpi = PropExistsInBuiltInClass(t, p, paramCount);
+
+						if (bpi.Item1)
+							return (bpi.Item1, bpi.Item2.Name);
 						else
 							break;
 					}
 				}
 			}
 
-			return false;
+			return (false, "");
 		}
 
-		private bool PropExistsInTypeOrBase(Type t, string p, int paramCount)
+		private (bool, PropertyInfo) PropExistsInTypeOrBase(Type t, string p, int paramCount)
 		{
 			while (t != null)
 			{
@@ -1194,12 +1267,12 @@ namespace Keysharp.Scripting
 				foreach (var prop in props)
 					if (prop.GetIndexParameters().Length == paramCount)
 						if (string.Compare(prop.Name, p, true) == 0)
-							return true;
+							return (true, prop);
 
 				t = t.BaseType;
 			}
 
-			return false;
+			return (false, null);
 		}
 
 		private void SetLineIndexes()

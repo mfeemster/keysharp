@@ -34,6 +34,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(typeof(Keysharp.Core.Buffer).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
 			Assert.IsTrue(typeof(Keysharp.Core.Array).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
 			Assert.IsTrue(typeof(Keysharp.Core.Map).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
+			Assert.IsTrue(typeof(Keysharp.Core.Common.File.KeysharpFile).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
 		}
 	}
 }

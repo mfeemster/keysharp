@@ -1,24 +1,24 @@
 ﻿namespace Keysharp.Core.Common.File
 {
-	public class KeysharpFile : IDisposable
+	public class KeysharpFile : KeysharpObject, IDisposable
 	{
 		internal Encoding enc;
 
 		internal int eolconv = 0;
 
-		private readonly BinaryReader br;
+		private BinaryReader br;
 
-		private readonly BinaryWriter bw;
+		private BinaryWriter bw;
 
 		private bool disposed = false;
 
-		private readonly FileStream fs;
+		private FileStream fs;
 
-		private readonly TextReader tr;
+		private TextReader tr;
 
-		private readonly TextWriter tw;
+		private TextWriter tw;
 
-		public long AtEOF
+		public object AtEOF
 		{
 			get
 			{
@@ -31,21 +31,21 @@
 			}
 		}
 
-		public string Encoding
+		public object Encoding
 		{
 			get => enc.BodyName;
 			set => enc = Files.GetEncoding(value);
 		}
 
-		public long Handle => fs != null ? fs.SafeFileHandle.DangerousGetHandle().ToInt64() : 0;
+		public object Handle => fs != null ? fs.SafeFileHandle.DangerousGetHandle().ToInt64() : 0L;
 
-		public long Length
+		public object Length
 		{
 			get => fs != null ? fs.Length : 0L;
-			set => fs?.SetLength(value);
+			set => fs?.SetLength(value.Al());
 		}
 
-		public long Pos
+		public object Pos
 		{
 			get
 			{
@@ -60,13 +60,14 @@
 			set => Seek(value);
 		}
 
-		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol)
+		public object __New(params object[] values)
 		{
-			var m = mode;
-			var a = access;
-			var s = share;
-			enc = encoding;
-			eolconv = (int)eol;
+			var filename = values[0].As();
+			var m = (FileMode)values[1];
+			var a = (FileAccess)values[2];
+			var s = (FileShare)values[3];
+			enc = (Encoding)values[4];
+			eolconv = (int)values[5].Al();
 
 			if (filename == "*")
 			{
@@ -139,7 +140,11 @@
 					}
 				}
 			}
+
+			return "";
 		}
+
+		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) => __New(filename, mode, access, share, encoding, eol);
 
 		~KeysharpFile() => Dispose(false);
 

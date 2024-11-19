@@ -195,7 +195,7 @@ namespace Keysharp.Scripting
 
 		private CodeMemberMethod LocalMethod(string name)
 		{
-			var method = new CodeMemberMethod { Name = name, ReturnType = new CodeTypeReference(typeof(object)) };
+			var method = new CodeMemberMethod { Name = name, ReturnType = objTypeRef };
 			method.Attributes = MemberAttributes.Public | MemberAttributes.Final;
 
 			if (typeStack.PeekOrNull() == targetClass)

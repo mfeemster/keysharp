@@ -4,11 +4,11 @@
 	{
 		internal StringBuilder sb;
 
-		public StringBuffer(params object[] obj) => _ = __New(obj);
+		public StringBuffer(params object[] obj) => __New(obj);
 
 		public static implicit operator string(StringBuffer s) => s.sb.ToString();
 
-		public override object __New(params object[] obj)
+		public object __New(params object[] obj)
 		{
 			var str = obj.Length > 0 ? obj[0].ToString() : "";
 			var capacity = obj.Length > 1 ? obj[1].Ai() : 256;

@@ -150,7 +150,7 @@
 
 		public InputObject(params object[] obj) => _ = __New(obj);
 
-		public override object __New(params object[] obj)
+		public object __New(params object[] obj)
 		{
 			var options = obj[0].ToString();
 			var endKeys = obj[1].ToString();

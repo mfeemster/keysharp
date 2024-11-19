@@ -4,9 +4,14 @@
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
 
-		public static KeysharpObject Object() => new KeysharpObject();
+		public static KeysharpObject Object() => new ();
 
-		public virtual object __New(params object[] obj) => "";
+		public KeysharpObject()
+		{
+			__Init();
+		}
+
+		public object __New(params object[] obj) => "";
 
 		/// <summary>
 		/// Return a cloned copy of the object.
@@ -195,6 +200,13 @@
 		public void SetBase(params object[] obj) => throw new Exception(BaseExc);
 
 		public long SetCapacity(object obj) => throw new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+
+		/// <summary>
+		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
+		/// </summary>
+		protected virtual void __Init()
+		{
+		}
 
 		protected static object __StaticInit() => "";
 	}

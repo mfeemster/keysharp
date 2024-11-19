@@ -55,7 +55,7 @@ namespace Keysharp.Core.Common.Invoke
 			CacheAllPropertiesAndFields();
 			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
-						.Where(t => t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
+						.Where(t => t.GetCustomAttribute<PublicForTestOnly>() == null && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
 							   && t.Namespace != "Keysharp.Core.Properties"
 							   && t.IsClass && t.IsPublic);
 			var tl = types;

@@ -50,18 +50,7 @@ namespace Keysharp.Core.COM
 
 		public int VarType { get; set; }
 
-		public ComObject(object varType, object value, object flags = null)
-		{
-			var vt = (int)varType.Al();
-			var co = ValueToVarType(value, vt, true);
-			VarType = vt;
-			Flags = flags != null ? flags.Al() : 0L;
-
-			if (VarType == Com.vt_bstr && value is not long)
-				Flags |= F_OWNVALUE;
-
-			Ptr = co.Ptr;
-		}
+		public ComObject(object varType, object value, object flags = null) => __New(varType, value, flags);
 
 		internal ComObject()
 		{
@@ -73,6 +62,23 @@ namespace Keysharp.Core.COM
 				_ = Marshal.ReleaseComObject(Ptr);
 			else if (Ptr is IntPtr ip)
 				_ = Marshal.Release(ip);
+		}
+
+		public object __New(params object[] values)
+		{
+			var varType = values[0];
+			var value = values[1];
+			var flags = values.Length > 2 ? values[2] : null;
+			var vt = (int)varType.Al();
+			var co = ValueToVarType(value, vt, true);
+			VarType = vt;
+			Flags = flags != null ? flags.Al() : 0L;
+
+			if (VarType == Com.vt_bstr && value is not long)
+				Flags |= F_OWNVALUE;
+
+			Ptr = co.Ptr;
+			return "";
 		}
 
 		public void CallEvents()

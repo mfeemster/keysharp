@@ -21,10 +21,11 @@ namespace Keysharp.Scripting
 				{
 					var tempscope = Scope;//Cache because the property does a lot of work.
 					var staticscopedvar = tempscope + scopeChar + toplevelvar;
+					var currType = typeStack.Peek();
 					_ = allGlobalVars.TryPeek(out var allglobal);
 					_ = allStaticVars.TryPeek(out var allstat);
 					_ = localFuncVars.TryPeek(out var l);
-					_ = staticFuncVars[typeStack.Peek()].TryPeek(out var stat);
+					_ = staticFuncVars[currType].TryPeek(out var stat);
 					_ = currentFuncParams.TryPeek(out var f);
 					allglobal |= globalFuncVars.TryPeek(out var gg) && gg.Contains(toplevelvar);
 					var explicitLocal = l != null && l.Contains(toplevelvar);
@@ -56,21 +57,38 @@ namespace Keysharp.Scripting
 							}
 							else if (!isparam && !isstatic/* && islocal*/)
 							{
-								var dkt = allVars[typeStack.Peek()].GetOrAdd(tempscope);
+								var dkt = allVars[currType].GetOrAdd(tempscope);
 
 								if (!dkt.ContainsKey(toplevelvar))//Ensure it hasn't been declared and initialized yet.
 									dkt[toplevelvar] = nullPrimitive;
 							}
 							else if (!isparam && allglobal)
 							{
-								var dkt = allVars[typeStack.Peek()].GetOrAdd("");
+								var dkt = allVars[currType].GetOrAdd("");
 
 								if (!dkt.ContainsKey(toplevelvar))
 									dkt[toplevelvar] = nullPrimitive;
 							}
 						}
 
-						return isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);
+						var expr = isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);
+
+						//Must take special action to case correct all global varaible references inside of classes.
+						//Because if they are referring to a property in a base class, which is a built-in class, then
+						//the case will not match.
+						//User defined base types don't need this because all of their properties are lowercase.
+						if (InClassDefinition() && allglobal && expr is CodeVariableReferenceExpression cvre)// && !create
+						{
+							if (currType.BaseTypes.Count > 0)//Every class should derive from something.
+							{
+								var bpi = PropExistsInBuiltInClass(currType.BaseTypes[0].BaseType, cvre.VariableName, 0);//Determine if the variable name matched a property defined in a base class that was a built-in type.
+
+								if (bpi.Item1)
+									cvre.VariableName = bpi.Item2.Name;
+							}
+						}
+
+						return expr;
 					}
 					else
 						return VarRef(toplevelvar, true);//Dyn vars only work with global static vars, not local function vars.
@@ -187,7 +205,7 @@ namespace Keysharp.Scripting
 				case "a_thislabel":
 				{
 					if (blocks.Count == 0)
-						return new CodePrimitiveExpression(string.Empty);
+						return emptyStringPrimitive;
 
 					var all = blocks.ToArray();
 
@@ -196,7 +214,7 @@ namespace Keysharp.Scripting
 							return new CodePrimitiveExpression(all[i].Name);
 				}
 
-				return new CodePrimitiveExpression(string.Empty);
+				return emptyStringPrimitive;
 
 				default:
 					return VarId(codeLine, name, create, dyn);

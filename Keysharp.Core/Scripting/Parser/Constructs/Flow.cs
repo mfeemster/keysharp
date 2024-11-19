@@ -597,8 +597,9 @@ namespace Keysharp.Scripting
 					var initmeth = new CodeMemberMethod
 					{
 						Name = "__Init",
-						Attributes = MemberAttributes.Private
+						Attributes = MemberAttributes.Family | MemberAttributes.Override
 					};
+					initmeth.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression("base.__Init()")));
 					_ = classtype.Members.Add(initmeth);
 					methods[typeStack.Peek()][initmeth.Name] = initmeth;
 					var nameprop = new CodeMemberProperty

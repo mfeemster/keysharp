@@ -1,6 +1,6 @@
 ﻿namespace Keysharp.Scripting
 {
-	public class Keywords
+	public static class Keywords
 	{
 		public const bool IsDebug =
 #if DEBUG

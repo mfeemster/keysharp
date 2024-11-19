@@ -7,6 +7,8 @@
 	/// </summary>
 	public class Array : KeysharpObject, IEnumerable<(object, object)>, IList
 	{
+		private int capacity = 64;
+
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.
 		/// </summary>
@@ -19,26 +21,31 @@
 		/// </summary>
 		public object Capacity
 		{
-			get => (long)array.Capacity;
+			get => array != null ? (long)array.Capacity : 0L;
 
 			set
 			{
 				var val = value.Ai();
 
-				if (val < array.Count)
+				if (array != null)
 				{
-					Length = val;//Will truncate.
-					array.Capacity = val;
+					if (val < array.Count)
+					{
+						Length = val;//Will truncate.
+						array.Capacity = capacity = val;
+					}
+					else
+						array.Capacity = capacity = val;
 				}
 				else
-					array.Capacity = val;
+					capacity = val;//Save for later in case this is set by a derived class before the array is initialized.
 			}
 		}
 
 		/// <summary>
 		/// Returns the length of the array.
 		/// </summary>
-		public int Count => array.Count;
+		public int Count => array != null ? array.Count : 0;
 
 		/// <summary>
 		/// Gets or sets the default value returned when an element with no value is requested.
@@ -64,22 +71,25 @@
 		/// </summary>
 		public object Length
 		{
-			get => (long)array.Count;
+			get => array != null ? (long)array.Count : 0L;
 
 			set
 			{
 				var i = value.Ai();
 
-				if (i > array.Count)
+				if (array != null)
 				{
-					if (array.Capacity < i)
-						array.Capacity = i;
+					if (i > array.Count)
+					{
+						if (array.Capacity < i)
+							array.Capacity = i;
 
-					for (var ii = array.Count; ii < i; ii++)
-						array.Add(null);
+						for (var ii = array.Count; ii < i; ii++)
+							array.Add(null);
+					}
+					else if (i < array.Count)
+						array.RemoveRange(i, array.Count - i);
 				}
-				else if (i < array.Count)
-					array.RemoveRange(i, array.Count - i);
 			}
 		}
 
@@ -116,19 +126,27 @@
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public override object __New(params object[] values)
+		public object __New(params object[] values)
 		{
+			array = new List<object>(capacity);
+
 			if (values == null || values.Length == 0)
-				array = [];
+			{
+			}
 			else if (values.Length == 1 && values[0] is object[] objarr)
-				array = new List<object>(objarr);
+			{
+				array.AddRange(objarr);
+			}
 			else if (values.Length == 1 && values[0] is List<object> objlist)
-				array = objlist;
+			{
+				array.AddRange(objlist);
+			}
 			else if (values.Length == 1 && values[0] is ICollection c)
-				array = c.Cast<object>().ToList();
+			{
+				array.AddRange(c.Cast<object>().ToList());
+			}
 			else
 			{
-				array = [];
 				Push(values);
 			}
 

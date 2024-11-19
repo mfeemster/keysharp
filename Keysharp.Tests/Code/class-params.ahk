@@ -200,26 +200,26 @@ class testsubclassnoargs extends testclassthreeargs
 	}
 }
 
-testclassobj := testclassthreeargs(1, 2, 3)
+testclassobj := testclassthreeargs(4, 5, 6)
 testsubclassobj := testsubclassnoargs()
 
 val := testclassobj.a
 
-If (val == 1)
+If (val == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 val := testclassobj.b
 
-If (val == 2)
+If (val == 5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 	
 val := testclassobj.c
 
-If (val == 3)
+If (val == 6)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -255,6 +255,29 @@ else
 val := testsubclassobj.c
 
 If (val == "")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+testsubclassobj := testsubclassnoargs(7, 8, 9) ; No constructor parameters defined in the subclass, so just forward them to the base.
+
+val := testsubclassobj.a
+
+If (val == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := testsubclassobj.b
+
+If (val == 8)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := testsubclassobj.c
+
+If (val == 9)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

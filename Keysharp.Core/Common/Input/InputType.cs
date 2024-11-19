@@ -347,7 +347,7 @@ namespace Keysharp.Core.Common.Input
 			}
 			else
 			{
-				for (var i = Script.input; input != null; i = i.Prev)
+				for (var i = Script.input; i != null; i = i.Prev)
 				{
 					if (i.Prev == input)
 					{

@@ -3,16 +3,15 @@
 	public class RegExResults : KeysharpObject, IEnumerable
 	{
 		private Match match;
+		public object Count => match.Groups.Count - 1L;
+		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
+		public object Success => match.Success;
 
-		public long Count => match.Groups.Count - 1;
-		public string Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
-		public bool Success => match.Success;
-
-		public RegExResults(params object[] obj) => _ = __New(obj);
+		public RegExResults(params object[] obj) => __New(obj);
 
 		public static implicit operator long(RegExResults r) => r.Pos();
 
-		public override object __New(params object[] obj)
+		public object __New(params object[] obj)
 		{
 			match = obj[0] as Match;
 			return "";

@@ -54,8 +54,12 @@
 	{
 		public KeysharpObject Parent { get; private set; }
 
-		public OwnPropsMap(KeysharpObject kso, Map map)
+		public OwnPropsMap(KeysharpObject kso, Map map) => __New(kso, map);
+
+		public object __New(params object[] values)
 		{
+			var kso = (KeysharpObject)values[0];
+			var map = (Map)values[1];
 			Parent = kso;
 			Default = map.Default;
 			Capacity = map.Capacity;
@@ -63,6 +67,8 @@
 
 			foreach (var kv in map.map)
 				this[kv.Key] = kv.Value;
+
+			return "";
 		}
 
 		public override object Clone()

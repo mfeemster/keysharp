@@ -358,7 +358,7 @@
 					object outvar = null;
 					_ = Core.RegEx.RegExMatch(a, b, ref outvar, 1);
 					RegExResults output = (RegExResults)outvar;
-					return output.Count > 0 && !string.IsNullOrEmpty(output[0]);
+					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);
 				}
 			}
 

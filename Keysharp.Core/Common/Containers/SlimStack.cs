@@ -7,6 +7,7 @@
 	/// of the stack index.
 	/// </summary>
 	/// <typeparam name="T">The type of object to hold in each element of the stack.</typeparam>
+	[PublicForTestOnly]
 	public class SlimStack<T> where T : class
 	{
 		/// <summary>

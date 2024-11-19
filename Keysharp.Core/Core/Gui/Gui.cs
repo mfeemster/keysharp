@@ -308,10 +308,7 @@ namespace Keysharp.Core
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public Gui(object obj0 = null, object obj1 = null, object obj2 = null)
-		{
-			__New(obj0, obj1, obj2);
-		}
+		public Gui(object obj0 = null, object obj1 = null, object obj2 = null) => __New(obj0, obj1, obj2);
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
@@ -333,7 +330,7 @@ namespace Keysharp.Core
 
 		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
 
-		public override object __New(params object[] obj)
+		public object __New(params object[] obj)
 		{
 			if (form == null)//Don't allow derived classes to init twice.
 			{

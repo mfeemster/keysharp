@@ -384,7 +384,7 @@ namespace Keysharp.Core
 
 		public GuiControl(params object[] obj) => _ = __New(obj);
 
-		public override object __New(params object[] obj)
+		public object __New(params object[] obj)
 		{
 			var gui = obj[0] as Gui;
 			var control = obj[1] as Control;

@@ -71,32 +71,35 @@
 		/// <summary>
 		/// Gets or sets the capacity of the map.
 		/// </summary>
-		public long Capacity
+		public object Capacity
 		{
-			get => map.Capacity;
-			set => map.EnsureCapacity((int)value);
+			get => map != null ? map.Capacity : 0L;
+			set => map?.EnsureCapacity(value.Ai());
 		}
 
 		/// <summary>
 		/// Gets or sets the case sensitivity comparison mode for string keys.
 		/// </summary>
-		public string CaseSense
+		public object CaseSense
 		{
 			get => caseSense.ToString();
 
 			set
 			{
-				if (Count > 0)
-					throw new PropertyError("Attempted to change case sensitivity of a map which was not empty.");
-
 				var oldVal = caseSense;
-				var str = value.ToLower();
+				var str = value.ToString().ToLower();
 				var val = Options.OnOff(str);
 
 				if (val != null)
 					caseSense = val.IsTrue() ? eCaseSense.On : eCaseSense.Off;
 				else if (str == "locale")
 					caseSense = eCaseSense.Locale;
+
+				if (map == null)
+					return;
+
+				if (Count > 0)
+					throw new PropertyError("Attempted to change case sensitivity of a map which was not empty.");
 
 				if (caseSense != oldVal)
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -106,7 +109,7 @@
 		/// <summary>
 		/// Gets the number of elements in the map.
 		/// </summary>
-		public int Count => map.Count;
+		public int Count => map != null ? map.Count : 0;
 
 		/// <summary>
 		/// Gets or sets the default value to use when retrieving a value for a key that doesn't exist.
@@ -146,7 +149,7 @@
 		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public override object __New(params object[] values)
+		public object __New(params object[] values)
 		{
 			if (values == null || values.Length == 0)
 			{
@@ -169,6 +172,7 @@
 					}
 				}
 
+				map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 				Set(values);
 			}
 

@@ -3,7 +3,7 @@
 	/// <summary>
 	/// Public interface for class/object reflection-related functions.
 	/// </summary>
-	public class Types
+	public static class Types
 	{
 		/// <summary>
 		/// Returns 1 if the specified value is derived from the specified base object, else 0.

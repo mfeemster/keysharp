@@ -797,9 +797,12 @@ namespace Keysharp.Core
 		IDataObject dataObject = Clipboard.GetDataObject();
 		string[] formats;
 
-		public ClipboardAll()
+		public ClipboardAll() => __New();
+
+		public object __New(params object[] values)
 		{
 			Save();
+			return "";
 		}
 
 		internal void Save()

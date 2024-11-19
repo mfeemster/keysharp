@@ -49,6 +49,19 @@ if (z == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+z := ""
+
+switch x
+{
+	default:
+		z := 1
+}
+
+if (z == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 z := ""
 

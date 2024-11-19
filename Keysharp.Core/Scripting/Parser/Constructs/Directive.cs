@@ -276,7 +276,7 @@ namespace Keysharp.Scripting
 		}
 	}
 
-	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Interface)]
 	public sealed class PublicForTestOnly : Attribute
 	{
 		public PublicForTestOnly()

@@ -19,9 +19,38 @@ class testclass
 
 class testsubclass extends testclass
 {
-	a := 321
+	_a := 321
+
+	a
+	{
+		get
+		{
+			return _a
+		}
+
+		set
+		{
+			global _a := value
+		}
+	}
+
 	static b := 654
-	c := 999
+
+	_c := 999
+
+	c
+	{
+		get
+		{
+			return _c
+		}
+
+		set
+		{
+			global _c := value
+		}
+	}
+
 	static d := 2000
 	
 	setbasea()
@@ -580,6 +609,29 @@ if (val == 10)
 else
 	FileAppend, "fail", "*"
 
+	
+class myarrayclass6 extends Array
+{
+	; Special test which references a property defined in the base built-in Array type.
+	; The reason this is special is that it must be properly cased by the parser to compile.
+	doublecount
+	{
+		get
+		{
+			global
+			return count * 2 ; Meant to refer to the base Array.Count property.
+		}
+	}
+}
+
+mac := myarrayclass6(1, 2, 3, 4)
+val := mac.doublecount
+
+if (val == 8)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 class myinitclass
 {
 	p1 := 123
@@ -645,6 +697,123 @@ msc.super.basefunc()
 val := msc.x
 
 if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; Test subclasses that derive from built in types and access the base properties before either class is fully initialized.
+; This ensures the initialization chain of __Init() and __New() work properly.
+
+class bigarr extends Array
+{
+	Capacity := 10000
+}
+
+mybigarr := bigarr(1, 2, 3)
+
+If (mybigarr is Array)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (mybigarr is bigarr)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (mybigarr.Capacity == 10000)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (mybigarr[1] == 1 && mybigarr[2] == 2 && mybigarr[3] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+class Mapi extends Map {
+	CaseSense := false
+	DerivedDefault := ""
+
+	__New()
+	{
+		global
+		DerivedDefault := Default
+	}
+}
+
+cim := Mapi("a", 1, "B", 2)
+
+if (cim is Map)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (cim is Mapi)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (cim["A"] == 1 && cim["b"] == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+class dupepropsbase
+{
+	a := 123
+}
+
+class dupepropssub extends dupepropsbase
+{
+	_a := 999
+
+	a
+	{
+		get => _a
+		set => _a := value
+	}
+
+	getglobala()
+	{
+		global
+		return a
+	}
+
+	getthisa()
+	{
+		return this.a
+	}
+
+	getsupera()
+	{
+		return super.a
+	}
+}
+
+classobj := dupepropssub()
+
+if (classobj.a == 999)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (classobj.super.a == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (classobj.getglobala() == 999)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (classobj.getthisa() == 999)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (classobj.getsupera() == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

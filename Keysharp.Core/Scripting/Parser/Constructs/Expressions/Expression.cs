@@ -471,7 +471,7 @@ namespace Keysharp.Scripting
 						//else
 						//  parts[i] = new CodePrimitiveExpression(result);
 					}
-					else if (IsIdentifier(part, true) && !IsKeyword(part))
+					else if (IsIdentifier(part, true) && (!IsKeyword(part) || string.Compare(part, "default", true) == 0))//Hack to allow for default because a subclass derived from Map might need to access its Default property.
 					{
 						var s = i < parts.Count - 1 && parts[i + 1] is string s1 ? s1 : "";
 						var varexpr = Reflections.flatPublicStaticProperties.TryGetValue(part, out var pi)
@@ -663,7 +663,7 @@ namespace Keysharp.Scripting
 						CodeMethodInvokeExpression invoke = null;
 
 						//Special processing is needed to convert an expression passed to a HotIf() to a separate function, then pass it with FuncObj().
-						//Do not do this if a FuncObj is already being passed, whcih will be the case when #HotIf is found in the preprocessing stage.
+						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
 						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
 						{
 							var hotiffuncname = $"HotIf_{PreReader.NextHotIfCount}";
@@ -870,7 +870,7 @@ namespace Keysharp.Scripting
 						var cad = new CodeAttributeDeclaration(ctrpaa);
 						var cmd = new CodeMemberMethod
 						{
-							ReturnType = new CodeTypeReference(typeof(object)),
+							ReturnType = objTypeRef,
 							Attributes = InClassDefinition() ? MemberAttributes.Public | MemberAttributes.Final : MemberAttributes.Public | MemberAttributes.Static
 						};
 						void AddParts(CodeMemberMethod cmd)
@@ -1527,7 +1527,7 @@ namespace Keysharp.Scripting
 								if (LaxExpressions && parts[i] is Script.Operator soi
 										&& soi == Script.Operator.Concat
 										&& parts[x] as CodeBinaryOperatorType? == CodeBinaryOperatorType.Assign)
-									_ = invoke.Parameters.Add(new CodePrimitiveExpression(string.Empty));
+									_ = invoke.Parameters.Add(emptyStringPrimitive);
 								else
 									_ = invoke.Parameters.Add(VarMixedExpr(codeLine, parts[x]));
 
