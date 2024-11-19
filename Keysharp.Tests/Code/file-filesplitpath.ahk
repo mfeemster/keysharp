@@ -46,6 +46,18 @@ else
 		FileAppend, "pass", "*"
 	else
 		FileAppend, "fail", "*"
+
+	SplitPath("C:\Windows", &filename, &dir, &ext, &namenoext, &drive)
+
+	if (StrLower("c:") == StrLower(drive))
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	if (StrLower("c:") == StrLower(dir))
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
 #else
 	if (StrLower("/home/" . A_UserName . "/Dev/Keysharp/Keysharp.Tests/Code/DirCopy") == StrLower(dir))
 		FileAppend, "pass", "*"

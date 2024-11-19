@@ -1088,16 +1088,19 @@ groupkey13=groupval13
 			object drive = null;
 			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
 			Assert.AreEqual("file1.txt", filename);
+			Assert.AreEqual("txt", ext);
+			Assert.AreEqual("file1", namenoext);
 #if WINDOWS
 			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToString().ToLower());//This will be different on other dev machines.
 			Assert.AreEqual("D:", drive);
+			Keysharp.Core.Dir.SplitPath("C:\\Windows", ref filename, ref dir, ref ext, ref namenoext, ref drive);
+			Assert.AreEqual("C:", drive);
+			Assert.AreEqual("C:", dir);
 #else
 			var user = Accessors.A_UserName;
 			Assert.AreEqual($"/home/{user}/Dev/Keysharp/Keysharp.Tests/Code/DirCopy".ToLower(), dir.ToString().ToLower());
 			Assert.AreEqual("/", drive);
 #endif
-			Assert.AreEqual("txt", ext);
-			Assert.AreEqual("file1", namenoext);
 			var url = "https://domain.com";
 			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
 			Assert.AreEqual("", filename);
