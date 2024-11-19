@@ -312,6 +312,14 @@ namespace Keysharp.Core
 				if (string.IsNullOrEmpty(n))
 					throw new ValueError("Search string was empty");
 
+				// 1   1 =>  1
+				//-1   1 =>  1
+				// 1  -1 => -1
+				//-1  -1 => -1
+				//Ensure the sign of startPos equals the sign of o.
+				if (occurrence != null)
+					startPos *= Math.Sign(startPos) * Math.Sign(o);
+
 				var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
 				const int offset = 1;//Everything is 1-based indexing.
 				return startPos < 0

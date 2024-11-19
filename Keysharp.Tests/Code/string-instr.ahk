@@ -74,6 +74,35 @@ if (z = 15)
 else
 	FileAppend, "fail", "*"
 
+z := InStr(x, y, 0, -1, 2)
+
+if (z = 15)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+
+z := InStr(x, y, 0,, -2)
+
+if (z = 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, 0, -8)
+
+if (z = 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, 0, 1, -1)
+
+if (z = 15)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 y := "z"
 z := InStr(x, y, 0, -1)
 
@@ -82,18 +111,39 @@ if (z = 21)
 else
 	FileAppend, "fail", "*"
 
+z := InStr(x, y, 0,, -1)
+
+if (z = 21)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 y := "h"
-z := InStr(x, y, 0, -1, 2)
+z := InStr(x, y, 0, -1, -2)
 
 if (z = 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
+z := InStr(x, y, 0, -1, 2)
+
+if (z = 20)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 y := "t"
-z := InStr(x, y, 0, -1, 3)
+z := InStr(x, y, 0, -1, -3)
 
 if (z = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := InStr(x, y, 0, -1, 3)
+
+if (z = 12)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

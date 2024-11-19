@@ -393,6 +393,7 @@
 		internal static int LastNthIndexOf(this string str, string substr, int pos, int n, StringComparison comp)
 		{
 			pos = str.Length + pos + 1;
+			n = Math.Abs(n);
 
 			do
 			{
