@@ -216,16 +216,6 @@
 		}
 
 		/// <summary>
-		/// The current X coordinate of the caret (text insertion point). The coordinates are relative to the active window unless CoordMode is used to make them relative to the entire screen. If there is no active window or the caret position cannot be determined, these variables are blank.
-		/// </summary>
-		public static string A_CaretX => "";
-
-		/// <summary>
-		/// The current Y coordinate of the caret (text insertion point). The coordinates are relative to the active window unless CoordMode is used to make them relative to the entire screen. If there is no active window or the caret position cannot be determined, these variables are blank.
-		/// </summary>
-		public static string A_CaretY => "";
-
-		/// <summary>
 		/// The data on the clipboard.
 		/// </summary>
 		public static object A_Clipboard
