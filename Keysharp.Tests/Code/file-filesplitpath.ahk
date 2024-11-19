@@ -42,7 +42,7 @@ else
 	else
 		FileAppend, "fail", "*"
 
-	if (StrLower("D:\") == StrLower(drive))
+	if (StrLower("D:") == StrLower(drive))
 		FileAppend, "pass", "*"
 	else
 		FileAppend, "fail", "*"

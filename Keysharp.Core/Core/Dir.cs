@@ -328,7 +328,7 @@
 				else
 				{
 					outDir = Path.GetDirectoryName(input);
-					outDrive = Path.GetPathRoot(input);
+					outDrive = Path.GetPathRoot(input).TrimEnd('\\');
 				}
 			}
 		}

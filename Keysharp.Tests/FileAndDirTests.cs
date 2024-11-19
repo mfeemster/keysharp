@@ -1090,7 +1090,7 @@ groupkey13=groupval13
 			Assert.AreEqual("file1.txt", filename);
 #if WINDOWS
 			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToString().ToLower());//This will be different on other dev machines.
-			Assert.AreEqual("D:\\", drive);
+			Assert.AreEqual("D:", drive);
 #else
 			var user = Accessors.A_UserName;
 			Assert.AreEqual($"/home/{user}/Dev/Keysharp/Keysharp.Tests/Code/DirCopy".ToLower(), dir.ToString().ToLower());
