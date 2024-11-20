@@ -11,8 +11,7 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowIf() => Assert.IsTrue(TestScript("flow-if", true));
 
-		[NonParallelizable]
-		[Test, Category("Flow")]
+		[Test, Category("Flow"), NonParallelizable]
 		public void FlowLoop()
 		{
 			Flow.Init();
@@ -193,8 +192,7 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowUntil() => Assert.IsTrue(TestScript("flow-until", true));
 
-		[NonParallelizable]
-		[Test, Category("Flow")]
+		[Test, Category("Flow"), NonParallelizable]
 		public void FlowWhile()
 		{
 			Flow.Init();

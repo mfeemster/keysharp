@@ -15,8 +15,72 @@ namespace Keysharp.Tests
 			return string.Empty;
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
+		public void AutoCorrect()
+		{
+			var val = "";
+			HotstringDefinition hs1, hs2;
+			var filename = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}HotstringTests.txt", Path.DirectorySeparatorChar);
+			var hotstrings = File.ReadLines(filename);
+			var delimiters = new char[] { ',' };
+			HotstringManager.ClearHotstrings();
+			_ = Keyboard.Hotstring("Reset");
+
+			foreach (var hotstring in hotstrings)
+			{
+				var splits = hotstring.Split(delimiters, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+				var split0 = splits[0].Substring(splits[0].IndexOf('(') + 1).Trim('"');
+				var split3 = splits[3].Trim('"');
+				hs1 = HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
+				Debug.WriteLine(split0);
+
+				if (!split0.Contains('*'))
+					val = split3 + " ";
+				else
+					val = split3;
+
+				HotstringManager.AddChars(val);
+				hs2 = HotstringManager.MatchHotstring();//Test as is.
+				Assert.AreEqual(hs1, hs2);
+				//
+				_ = Keyboard.Hotstring("Reset");
+				HotstringManager.AddChars(Guid.NewGuid() + " " + val);//Test with text before it.
+				hs2 = HotstringManager.MatchHotstring();
+				Assert.AreEqual(hs1, hs2);
+				_ = Keyboard.Hotstring("Reset");
+				hs2 = HotstringManager.MatchHotstring();
+				Assert.AreEqual(null, hs2);
+				//Need to ensure the other tests with ? and * work.
+				var opts = split0.Substring(1, split0.IndexOf(':', 1) - 1);
+				var newOptsName = ":*B0OSZRK123P10:" + split3;//Change options except for ? and C.
+
+				//Still need to do the rest of the autocorrect file here.//TODO
+				if (opts.Contains('?'))
+					_ = Keyboard.Hotstring("?");
+				else
+					_ = Keyboard.Hotstring("?0");
+
+				if (opts.Contains('C'))
+					_ = Keyboard.Hotstring("C");
+				else
+					_ = Keyboard.Hotstring("C0");
+
+				var found = Keyboard.Hotstring(newOptsName) as HotstringDefinition;
+				Assert.IsNotNull(found);
+				Assert.AreEqual(found.EndCharRequired, false);
+				Assert.AreEqual(found.DoBackspace, false);
+				Assert.AreEqual(found.OmitEndChar, true);
+				Assert.AreEqual(found.SuspendExempt, true);
+				Assert.AreEqual(found.DoReset, true);
+				Assert.AreEqual(found.SendRaw, SendRawModes.Raw);
+				Assert.AreEqual(found.KeyDelay, 123L);
+				Assert.AreEqual(found.Priority, 10L);
+				_ = Keyboard.Hotstring("?0");
+				_ = Keyboard.Hotstring("C0");
+			}
+		}
+
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void ChangeDefaultOptions()
 		{
 			//End char required.
@@ -242,8 +306,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(Accessors.A_DefaultHotstringPriority, 10L);
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void ChangeEndChars()
 		{
 			var newVal = "newendchars";
@@ -255,8 +318,26 @@ namespace Keysharp.Tests
 			Assert.AreEqual(origVal, oldVal);
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
+		public void CreateHotstring()
+		{
+			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
+			btwtyped = false;
+			HotstringManager.ClearHotstrings();
+			_ = Keyboard.Hotstring("Reset");
+			_ = HotstringManager.AddHotstring("::btw", Functions.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
+			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+			Assert.IsTrue(Accessors.A_KeybdHookInstalled == 1);
+			Assert.IsTrue(Accessors.A_MouseHookInstalled == 1);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.
+			Script.SimulateKeyPress((uint)Keys.B);
+			Script.SimulateKeyPress((uint)Keys.T);
+			Script.SimulateKeyPress((uint)Keys.W);
+			Script.SimulateKeyPress((uint)Keys.Enter);
+			Thread.Sleep(2000);
+			Assert.AreEqual(btwtyped, true);
+		}
+
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringDirectives()
 		{
 			//First reset everything back to the default state because other tests will have changed them.
@@ -276,8 +357,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("hotstring-directives", false));
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringParsing()
 		{
 			HotstringManager.ClearHotstrings();
@@ -285,8 +365,7 @@ namespace Keysharp.Tests
 			HotstringManager.ClearHotstrings();
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringParsing2()
 		{
 			HotstringManager.ClearHotstrings();
@@ -327,28 +406,37 @@ namespace Keysharp.Tests
 			HotstringManager.ClearHotstrings();
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
-		public void CreateHotstring()
+		[Test, Category("Hotstring"), NonParallelizable]
+		public void InputHookOptions()
 		{
-			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
-			btwtyped = false;
-			HotstringManager.ClearHotstrings();
-			_ = Keyboard.Hotstring("Reset");
-			_ = HotstringManager.AddHotstring("::btw", Functions.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
-			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
-			Assert.IsTrue(Accessors.A_KeybdHookInstalled == 1);
-			Assert.IsTrue(Accessors.A_MouseHookInstalled == 1);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.
-			Script.SimulateKeyPress((uint)Keys.B);
-			Script.SimulateKeyPress((uint)Keys.T);
-			Script.SimulateKeyPress((uint)Keys.W);
-			Script.SimulateKeyPress((uint)Keys.Enter);
-			Thread.Sleep(2000);
-			Assert.AreEqual(btwtyped, true);
+			var ih = Input.InputHook("B C H I10 M L1 T2 V * E");
+			Assert.AreEqual(ih.BackspaceIsUndo, false);
+			Assert.AreEqual(ih.CaseSensitive, true);
+			Assert.AreEqual(ih.BeforeHotkeys, true);
+			Assert.AreEqual(ih.MinSendLevel, 10u);
+			Assert.AreEqual(ih.TranscribeModifiedKeys, true);
+			Assert.AreEqual(ih.BufferLengthMax, 1);
+			Assert.AreEqual(ih.Timeout, 2);
+			Assert.AreEqual(ih.VisibleText, true);
+			Assert.AreEqual(ih.VisibleNonText, true);
+			Assert.AreEqual(ih.FindAnywhere, true);
+			Assert.AreEqual(ih.EndCharMode, true);
+			//
+			ih = Input.InputHook("BCHI10ML123T2V*E");
+			Assert.AreEqual(ih.BackspaceIsUndo, false);
+			Assert.AreEqual(ih.CaseSensitive, true);
+			Assert.AreEqual(ih.BeforeHotkeys, true);
+			Assert.AreEqual(ih.MinSendLevel, 10u);
+			Assert.AreEqual(ih.TranscribeModifiedKeys, true);
+			Assert.AreEqual(ih.BufferLengthMax, 123);
+			Assert.AreEqual(ih.Timeout, 2);
+			Assert.AreEqual(ih.VisibleText, true);
+			Assert.AreEqual(ih.VisibleNonText, true);
+			Assert.AreEqual(ih.FindAnywhere, true);
+			Assert.AreEqual(ih.EndCharMode, true);
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void ResetInputBuffer()
 		{
 			_ = Keyboard.Hotstring("Reset");
@@ -362,8 +450,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(newVal, "");
 		}
 
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void ResetOnMouseClick()
 		{
 			var newVal = false;
@@ -375,72 +462,6 @@ namespace Keysharp.Tests
 			Assert.AreEqual(origVal.Ab(), !oldVal.Ab());
 			//Reset to what it was for the sake of other tests in this class.
 			_ = Keyboard.Hotstring("MouseReset", true);
-		}
-
-		[NonParallelizable]
-		[Test, Category("Hotstring")]
-		public void AutoCorrect()
-		{
-			var val = "";
-			HotstringDefinition hs1, hs2;
-			var filename = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}HotstringTests.txt", Path.DirectorySeparatorChar);
-			var hotstrings = File.ReadLines(filename);
-			var delimiters = new char[] { ',' };
-			HotstringManager.ClearHotstrings();
-			_ = Keyboard.Hotstring("Reset");
-
-			foreach (var hotstring in hotstrings)
-			{
-				var splits = hotstring.Split(delimiters, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-				var split0 = splits[0].Substring(splits[0].IndexOf('(') + 1).Trim('"');
-				var split3 = splits[3].Trim('"');
-				hs1 = HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
-				Debug.WriteLine(split0);
-
-				if (!split0.Contains('*'))
-					val = split3 + " ";
-				else
-					val = split3;
-
-				HotstringManager.AddChars(val);
-				hs2 = HotstringManager.MatchHotstring();//Test as is.
-				Assert.AreEqual(hs1, hs2);
-				//
-				_ = Keyboard.Hotstring("Reset");
-				HotstringManager.AddChars(Guid.NewGuid() + " " + val);//Test with text before it.
-				hs2 = HotstringManager.MatchHotstring();
-				Assert.AreEqual(hs1, hs2);
-				_ = Keyboard.Hotstring("Reset");
-				hs2 = HotstringManager.MatchHotstring();
-				Assert.AreEqual(null, hs2);
-				//Need to ensure the other tests with ? and * work.
-				var opts = split0.Substring(1, split0.IndexOf(':', 1) - 1);
-				var newOptsName = ":*B0OSZRK123P10:" + split3;//Change options except for ? and C.
-
-				//Still need to do the rest of the autocorrect file here.//TODO
-				if (opts.Contains('?'))
-					_ = Keyboard.Hotstring("?");
-				else
-					_ = Keyboard.Hotstring("?0");
-
-				if (opts.Contains('C'))
-					_ = Keyboard.Hotstring("C");
-				else
-					_ = Keyboard.Hotstring("C0");
-
-				var found = Keyboard.Hotstring(newOptsName) as HotstringDefinition;
-				Assert.IsNotNull(found);
-				Assert.AreEqual(found.EndCharRequired, false);
-				Assert.AreEqual(found.DoBackspace, false);
-				Assert.AreEqual(found.OmitEndChar, true);
-				Assert.AreEqual(found.SuspendExempt, true);
-				Assert.AreEqual(found.DoReset, true);
-				Assert.AreEqual(found.SendRaw, SendRawModes.Raw);
-				Assert.AreEqual(found.KeyDelay, 123L);
-				Assert.AreEqual(found.Priority, 10L);
-				_ = Keyboard.Hotstring("?0");
-				_ = Keyboard.Hotstring("C0");
-			}
 		}
 	}
 }

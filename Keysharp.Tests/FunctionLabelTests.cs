@@ -7,68 +7,52 @@ namespace Keysharp.Tests
 	/// </summary>
 	public class FunctionAndLabelTests : TestRunner
 	{
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void AllGlobalInFunc() => Assert.IsTrue(TestScript("func-all-global", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void AllLocalInFunc() => Assert.IsTrue(TestScript("func-all-local", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void BoundFunc() => Assert.IsTrue(TestScript("func-bound", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void CombinedParamsInFunc() => Assert.IsTrue(TestScript("func-combined-params", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void DefParamsInFunc() => Assert.IsTrue(TestScript("func-def-params", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void DynVarsInFunc() => Assert.IsTrue(TestScript("func-dyn-vars", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void FatArrowFunc() => Assert.IsTrue(TestScript("func-fat-arrow", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void GlobalLocalInFunc() => Assert.IsTrue(TestScript("func-global-local", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void GlobalLocalStaticInFunc() => Assert.IsTrue(TestScript("func-global-local-static", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void GlobalStaticInFunc() => Assert.IsTrue(TestScript("func-global-static", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void LabelInFunc() => Assert.IsTrue(TestScript("func-label", true));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void LocalStaticInFunc() => Assert.IsTrue(TestScript("func-local-static", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void OptParamsInFunc() => Assert.IsTrue(TestScript("func-opt-params", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void ParamsInFunc() => Assert.IsTrue(TestScript("func-params", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void RefParamsInFunc() => Assert.IsTrue(TestScript("func-ref-params", false));
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void ReturnFunc() => Assert.IsTrue(TestScript("func-return", false));
 
 		[SetUp]
@@ -80,8 +64,7 @@ namespace Keysharp.Tests
 			Reflections.Initialize();
 		}
 
-		[NonParallelizable]
-		[Test, Category("Function")]
+		[Test, Category("Function"), NonParallelizable]
 		public void VarParamsInFunc() => Assert.IsTrue(TestScript("func-var-params", false));
 	}
 }

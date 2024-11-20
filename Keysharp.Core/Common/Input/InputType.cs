@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+﻿using System;
+using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 
 namespace Keysharp.Core.Common.Input
 {
@@ -14,40 +15,40 @@ namespace Keysharp.Core.Common.Input
 	internal class InputType//This is also Windows specific, and needs to eventually be made into a common base with derived OS specific classes.//TODO
 	{
 		internal static System.Windows.Forms.Timer inputTimer;
-		internal bool BackspaceIsUndo = true;
-		internal bool BeforeHotkeys;
+		internal bool backspaceIsUndo = true;
+		internal bool beforeHotkeys;
 		internal string buffer = "";
-		internal int BufferLengthMax = 1023;
-		internal bool CaseSensitive;
-		internal bool EndCharMode;
-		internal string EndChars = "";
-		internal uint EndCharsMax;
-		internal bool EndingBySC;
-		internal char EndingChar;
-		internal int EndingMatchIndex;
-		internal uint EndingMods;
-		internal bool EndingRequiredShift;
-		internal uint EndingSC;
-		internal uint EndingVK;
-		internal bool FindAnywhere;
-		internal uint[] KeySC = new uint[HookThread.SC_ARRAY_COUNT];
-		internal uint[] KeyVK = new uint[HookThread.VK_ARRAY_COUNT];
+		internal int bufferLengthMax = 1023;
+		internal bool caseSensitive;
+		internal bool endCharMode;
+		internal string endChars = "";
+		internal uint endCharsMax;
+		internal bool endingBySC;
+		internal char endingChar;
+		internal int endingMatchIndex;
+		internal uint endingMods;
+		internal bool endingRequiredShift;
+		internal uint endingSC;
+		internal uint endingVK;
+		internal bool findAnywhere;
+		internal uint[] keySC = new uint[HookThread.SC_ARRAY_COUNT];
+		internal uint[] keyVK = new uint[HookThread.VK_ARRAY_COUNT];
 		internal List<string> match = [];
-		internal uint MinSendLevel;
-		internal bool NotifyNonText;
-		internal InputType Prev;
-		internal InputObject ScriptObject;
-		internal InputStatusType Status = InputStatusType.Off;
-		internal int Timeout;
-		internal DateTime TimeoutAt;
-		internal bool TranscribeModifiedKeys;
-		internal bool VisibleText, VisibleNonText = true;
+		internal uint minSendLevel;
+		internal bool notifyNonText;
+		internal InputType prev;
+		internal InputObject scriptObject;
+		internal InputStatusType status = InputStatusType.Off;
+		internal int timeout;
+		internal DateTime timeoutAt;
+		internal bool transcribeModifiedKeys;
+		internal bool visibleText, visibleNonText = true;
 
-		internal bool Early => BeforeHotkeys;
+		internal bool BeforeHotkeys => beforeHotkeys;
 
 		internal InputType(InputObject io, string options, string endKeys, string matchList)
 		{
-			ScriptObject = io;
+			scriptObject = io;
 			ParseOptions(options);
 			SetKeyFlags(endKeys);
 			var splits = matchList.Split(Keywords.Comma);
@@ -76,13 +77,13 @@ namespace Keysharp.Core.Common.Input
 
 			for (var i = 0; i < end; ++i)
 			{
-				if (EndChars.Contains(ch[i], CaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase))
+				if (endChars.Contains(ch[i], caseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase))
 				{
 					EndByChar(ch[i]);
 					return;
 				}
 
-				if (buffer.Length == BufferLengthMax)
+				if (buffer.Length == bufferLengthMax)
 				{
 					if (buffer.Length == 0) // For L0, collect nothing but allow OnChar, etc.
 						return;
@@ -94,9 +95,9 @@ namespace Keysharp.Core.Common.Input
 			}
 
 			// Check if the buffer now matches any of the key phrases, if there are any:
-			if (FindAnywhere)
+			if (findAnywhere)
 			{
-				if (CaseSensitive)
+				if (caseSensitive)
 				{
 					for (var i = 0; i < match.Count; ++i)
 					{
@@ -121,7 +122,7 @@ namespace Keysharp.Core.Common.Input
 			}
 			else // Exact match is required
 			{
-				if (CaseSensitive)
+				if (caseSensitive)
 				{
 					for (var i = 0; i < match.Count; ++i)
 					{
@@ -147,24 +148,24 @@ namespace Keysharp.Core.Common.Input
 			}
 
 			// Otherwise, no match found.
-			if (buffer.Length >= BufferLengthMax)
+			if (buffer.Length >= bufferLengthMax)
 				EndByLimit();
 		}
 
 		internal void EndByChar(char ch)
 		{
-			EndingChar = ch;
+			endingChar = ch;
 			// The other EndKey related fields are ignored when Char is non-zero.
 			EndByReason(InputStatusType.TerminatedByEndKey);
 		}
 
 		internal void EndByKey(uint vk, uint sc, bool bySC, bool requiredShift)
 		{
-			EndingVK = vk;
-			EndingSC = sc;
-			EndingBySC = bySC;
-			EndingRequiredShift = requiredShift;
-			EndingChar = (char)0; // Must be zero if the above are to be used.
+			endingVK = vk;
+			endingSC = sc;
+			endingBySC = bySC;
+			endingRequiredShift = requiredShift;
+			endingChar = (char)0; // Must be zero if the above are to be used.
 			EndByReason(InputStatusType.TerminatedByEndKey);
 		}
 
@@ -172,7 +173,7 @@ namespace Keysharp.Core.Common.Input
 
 		internal void EndByMatch(int matchIndex)
 		{
-			EndingMatchIndex = matchIndex;
+			endingMatchIndex = matchIndex;
 			EndByReason(InputStatusType.TerminatedByMatch);
 		}
 
@@ -182,7 +183,7 @@ namespace Keysharp.Core.Common.Input
 		{
 			if (Script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
-				switch (Status)
+				switch (status)
 				{
 					case InputStatusType.TimedOut:
 						return "Timeout";
@@ -197,11 +198,11 @@ namespace Keysharp.Core.Common.Input
 						if (keyName == null)
 							return "EndKey";
 
-						if (EndingChar != '\0')
+						if (endingChar != '\0')
 						{
-							keyName = EndingChar.ToString();
+							keyName = endingChar.ToString();
 						}
-						else if (EndingRequiredShift)
+						else if (endingRequiredShift)
 						{
 							// Since the only way a shift key can be required in our case is if it's a key whose name
 							// is a single char (such as a shifted punctuation mark), use a diff. method to look up the
@@ -216,7 +217,7 @@ namespace Keysharp.Core.Common.Input
 							var sb = new StringBuilder();
 							state[(int)Keys.ShiftKey] |= 0x80; // Indicate that the neutral shift key is down for conversion purposes.
 							var active_window_keybd_layout = hook.kbdMsSender.GetFocusedKeybdLayout(IntPtr.Zero);
-							var count = PlatformProvider.Manager.ToUnicodeEx(EndingVK, hook.MapVkToSc(EndingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
+							var count = PlatformProvider.Manager.ToUnicodeEx(endingVK, hook.MapVkToSc(endingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
 										, sb, 2, Script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
 							keyName = keyName.Substring(0, count);
 						}
@@ -224,14 +225,14 @@ namespace Keysharp.Core.Common.Input
 						{
 							keyName = "";
 
-							if (EndingBySC)
-								keyName = hook.SCtoKeyName(EndingSC, false);
+							if (endingBySC)
+								keyName = hook.SCtoKeyName(endingSC, false);
 
 							if (keyName?.Length == 0)
-								keyName = hook.VKtoKeyName(EndingVK, !EndingBySC);
+								keyName = hook.VKtoKeyName(endingVK, !endingBySC);
 
 							if (keyName?.Length == 0)
-								keyName = "sc" + EndingSC.ToString("X3");
+								keyName = "sc" + endingSC.ToString("X3");
 						}
 
 						keyBuf = keyName;
@@ -249,16 +250,16 @@ namespace Keysharp.Core.Common.Input
 			return "";
 		}
 
-		internal bool InProgress() => Status == InputStatusType.InProgress;
+		internal bool InProgress() => status == InputStatusType.InProgress;
 
 		internal InputType InputFindLink(InputType input)
 		{
 			if (Script.input == input)
 				return Script.input;
 			else
-				for (var i = Script.input; input != null; i = i.Prev)
-					if (i.Prev == input)
-						return i.Prev;
+				for (var i = Script.input; input != null; i = i.prev)
+					if (i.prev == input)
+						return i.prev;
 
 			return null;//input is not valid (faked AHK_INPUT_END message?) or not active.
 		}
@@ -271,18 +272,18 @@ namespace Keysharp.Core.Common.Input
 			// Otherwise, removal of aInput from the chain will end input collection.
 			if (Script.input == this)
 			{
-				Script.input = Prev;
+				Script.input = prev;
 			}
 			else
 			{
-				for (var input = Script.input; ; input = input.Prev)
+				for (var input = Script.input; ; input = input.prev)
 				{
 					if (input == null)
 						return null; // aInput is not valid (faked AHK_INPUT_END message?) or not active.
 
-					if (input.Prev == this)
+					if (input.prev == this)
 					{
-						input.Prev = Prev;
+						input.prev = prev;
 						break;
 					}
 				}
@@ -290,13 +291,13 @@ namespace Keysharp.Core.Common.Input
 
 			// Ensure any pending use of aInput by the hook is finished.
 			ht.WaitHookIdle();
-			Prev = null;
+			prev = null;
 
-			if (ScriptObject != null)
+			if (scriptObject != null)
 			{
 				HotkeyDefinition.MaybeUninstallHook();
 
-				if (ScriptObject.OnEnd != null)
+				if (scriptObject.OnEnd != null)
 					return this; // Return for caller to call OnEnd and Release.
 
 				//Original called Release() on ScriptObject, and the comments specifically differentiate between that and setting to null.
@@ -316,18 +317,18 @@ namespace Keysharp.Core.Common.Input
 		{
 			// Set or update the timeout timer if needed.  The timer proc takes care to end
 			// only those inputs which are due, and will reset or kill the timer as needed.
-			if (Timeout > 0)
+			if (timeout > 0)
 				SetTimeoutTimer();
 
 			// It is possible for &input to already be in the list if AHK_INPUT_END is still
 			// in the message queue, in which case it must be removed from its current position
 			// to prevent the list from looping back on itself.
 			InputUnlinkIfStopped(this);
-			Prev = Script.input;
+			prev = Script.input;
 			Start();
 			Script.input = this; // Signal the hook to start the input.
 
-			if (BeforeHotkeys)
+			if (beforeHotkeys)
 				++Script.inputBeforeHotkeysCount;
 
 			HotkeyDefinition.InstallKeybdHook(); // Install the hook (if needed).
@@ -343,26 +344,26 @@ namespace Keysharp.Core.Common.Input
 			if (Script.input == input)
 			{
 				temp = Script.input;
-				Script.input = temp.Prev;
+				Script.input = temp.prev;
 			}
 			else
 			{
-				for (var i = Script.input; i != null; i = i.Prev)
+				for (var i = Script.input; i != null; i = i.prev)
 				{
-					if (i.Prev == input)
+					if (i.prev == input)
 					{
 						if (!input.InProgress())
 						{
-							temp = i.Prev;
+							temp = i.prev;
 							Script.HookThread.WaitHookIdle();
-							i.Prev = input.Prev;
+							i.prev = input.prev;
 						}
 					}
 				}
 			}
 
 			if (temp != null)
-				temp.Prev = null;//Prev has been detached, so the caller cannot use this to iterate.
+				temp.prev = null;//Prev has been detached, so the caller cannot use this to iterate.
 
 			return temp;
 		}
@@ -370,7 +371,7 @@ namespace Keysharp.Core.Common.Input
 		internal bool IsInteresting(ulong dwExtraInfo)
 		{
 			char? ch = null;
-			return MinSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring(MinSendLevel - 1, dwExtraInfo, ref ch);
+			return minSendLevel == 0 ? true : KeyboardMouseSender.HotInputLevelAllowsFiring(minSendLevel - 1, dwExtraInfo, ref ch);
 		}
 
 		internal void ParseOptions(string options)
@@ -380,54 +381,54 @@ namespace Keysharp.Core.Common.Input
 				switch (char.ToUpper(options[i]))
 				{
 					case 'B':
-						BackspaceIsUndo = false;
+						backspaceIsUndo = false;
 						break;
 
 					case 'C':
-						CaseSensitive = true;
+						caseSensitive = true;
 						break;
 
 					case 'H':
-						BeforeHotkeys = true;
+						beforeHotkeys = true;
 						break;
 
 					case 'I':
-						MinSendLevel = (options[i + 1] <= '9' && options[i + 1] >= '0') ? options[i + 1].ParseUInt(false).Value : 1u;
+						minSendLevel = (options[i + 1] <= '9' && options[i + 1] >= '0') ? uint.Parse(options.AsSpan(i + 1).BeginNums()) : 1u;
 						break;
 
 					case 'M':
-						TranscribeModifiedKeys = true;
+						transcribeModifiedKeys = true;
 						break;
 
 					case 'L':
 						// Use atoi() vs. ATOI() to avoid interpreting something like 0x01C as hex
 						// when in fact the C was meant to be an option letter:
-						BufferLengthMax = options[i + 1].ParseInt(false).Value;
+						bufferLengthMax = int.Parse(options.AsSpan(i + 1).BeginNums());
 
-						if (BufferLengthMax < 0)
-							BufferLengthMax = 0;
+						if (bufferLengthMax < 0)
+							bufferLengthMax = 0;
 
 						break;
 
 					case 'T':
 						var sub = options.AsSpan(i + 1);
-						Timeout = sub.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? (int.Parse(sub.Slice(2)) * 1000) : (int)(double.Parse(sub) * 1000);
+						timeout = (int)(double.Parse(sub.BeginNums(true)) * 1000);
 						break;
 
 					case 'V':
-						VisibleText = true;
-						VisibleNonText = true;
+						visibleText = true;
+						visibleNonText = true;
 						break;
 
 					case '*':
-						FindAnywhere = true;
+						findAnywhere = true;
 						break;
 
 					case 'E':
 						// Interpret single-character keys as characters rather than converting them to VK codes.
 						// This tends to work better when using multiple keyboard layouts, but changes behavior:
 						// for instance, an end char of "." cannot be triggered while holding Alt.
-						EndCharMode = true;
+						endCharMode = true;
 						break;
 				}
 			}
@@ -443,7 +444,7 @@ namespace Keysharp.Core.Common.Input
 			//TCHAR* end_pos, single_char_string[2];
 			var endPos = 0;
 			var singleCharString = "";
-			var endcharMode = endKeyMode && EndCharMode;
+			var endcharMode = endKeyMode && endCharMode;
 			var vk = 0u;
 			var sc = 0u;
 			var vkByNumber = false;
@@ -549,20 +550,20 @@ namespace Keysharp.Core.Common.Input
 						// punctuation chars, which are the ones that we want to be
 						// distinguished between shifted and unshifted:
 						if ((modifiersLR & (MOD_LSHIFT | MOD_RSHIFT)) != 0)
-							KeyVK[vk] |= HookThread.END_KEY_WITH_SHIFT;
+							keyVK[vk] |= HookThread.END_KEY_WITH_SHIFT;
 						else
-							KeyVK[vk] |= HookThread.END_KEY_WITHOUT_SHIFT;
+							keyVK[vk] |= HookThread.END_KEY_WITHOUT_SHIFT;
 					}
 					else
 					{
-						KeyVK[vk] = (KeyVK[vk] & ~flagsRemove) | flagsAdd;
+						keyVK[vk] = (keyVK[vk] & ~flagsRemove) | flagsAdd;
 						// Apply flag removal to this key's SC as well.  This is primarily
 						// to support combinations like {All} +E, {LCtrl}{RCtrl} -E.
 						uint temp_sc;
 
 						if (flagsRemove != 0 && !vkByNumber && (temp_sc = ht.MapVkToSc(vk)) != 0)
 						{
-							KeySC[temp_sc] &= ~flagsRemove; // But apply aFlagsAdd only by VK.
+							keySC[temp_sc] &= ~flagsRemove; // But apply aFlagsAdd only by VK.
 							// Since aFlagsRemove implies ScriptObject != NULL and !vk_by_number
 							// was also checked, that implies vk_to_sc(vk, true) was already called
 							// and did not find a secondary SC.
@@ -572,18 +573,18 @@ namespace Keysharp.Core.Common.Input
 
 				if (sc != 0 || scByNumber.IsTrue()) // Fixed for v1.1.33.02: Allow sc000 for setting/unsetting flags for any events that lack a scan code.
 				{
-					KeySC[sc] = (KeySC[sc] & ~flagsRemove) | flagsAdd;
+					keySC[sc] = (keySC[sc] & ~flagsRemove) | flagsAdd;
 
 					// If specified by name, apply flag removal to this key's VK as well.
 					if (flagsRemove != 0 && !scByNumber.IsTrue() && (vk = ht.MapScToVk(sc)) != 0)
-						KeyVK[vk] &= ~flagsRemove;
+						keyVK[vk] &= ~flagsRemove;
 				}
 			} // for()
 
 			if (singleCharCount != 0)  // See single_char_count++ above for comments.
 			{
-				if (singleCharCount > EndCharsMax)
-					EndCharsMax = singleCharCount;
+				if (singleCharCount > endCharsMax)
+					endCharsMax = singleCharCount;
 
 				for (var i = 0; i < keys.Length; ++i)
 				{
@@ -599,7 +600,7 @@ namespace Keysharp.Core.Common.Input
 								endPos++;
 
 							if (endPos == i + 2)
-								EndChars += keys[i + 1]; // Copy the single character from between the braces.
+								endChars += keys[i + 1]; // Copy the single character from between the braces.
 
 							i = endPos; // Skip '{key'.  Loop does ++src to skip the '}'.
 						}
@@ -607,23 +608,23 @@ namespace Keysharp.Core.Common.Input
 					else if (ch == '}')// Otherwise, just ignore the '{'.
 						continue;
 
-					EndChars += keys[i];
+					endChars += keys[i];
 				}
 			}
-			else if (endKeyMode && EndCharsMax == 0) // single_char_count is false
+			else if (endKeyMode && endCharsMax == 0) // single_char_count is false
 			{
-				EndChars = "";
+				endChars = "";
 			}
 		}
 
 		internal void SetTimeoutTimer()
 		{
 			var now = DateTime.Now;
-			TimeoutAt = now.AddMilliseconds(Timeout);
+			timeoutAt = now.AddMilliseconds(timeout);
 
-			if (!Script.inputTimerExists || Timeout < (Script.inputTimeoutAt - now).TotalMilliseconds)
+			if (!Script.inputTimerExists || timeout < (Script.inputTimeoutAt - now).TotalMilliseconds)
 			{
-				Script.inputTimeoutAt = TimeoutAt;
+				Script.inputTimeoutAt = timeoutAt;
 
 				if (inputTimer == null)
 				{
@@ -631,13 +632,13 @@ namespace Keysharp.Core.Common.Input
 					inputTimer.Tick += InputTimer_Tick;
 				}
 
-				inputTimer.Interval = Timeout;
+				inputTimer.Interval = timeout;
 				inputTimer.Start();
 				Script.inputTimerExists = true;
 			}
 		}
 
-		internal void Start() => Status = InputStatusType.InProgress;
+		internal void Start() => status = InputStatusType.InProgress;
 
 		internal void Stop() => EndByReason(InputStatusType.Off);
 
@@ -645,10 +646,10 @@ namespace Keysharp.Core.Common.Input
 		{
 			if (Script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
-				EndingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
-				Status = aReason;
+				endingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
+				status = aReason;
 
-				if (BeforeHotkeys)
+				if (beforeHotkeys)
 					--Script.inputBeforeHotkeysCount;
 
 				// It's done this way rather than calling InputRelease() directly...
@@ -669,11 +670,11 @@ namespace Keysharp.Core.Common.Input
 			inputTimer.Stop();
 			var newTimerPeriod = 0;
 
-			for (var input = Script.input; input != null; input = input.Prev)
+			for (var input = Script.input; input != null; input = input.prev)
 			{
-				if (input.Timeout != 0 && input.InProgress())
+				if (input.timeout != 0 && input.InProgress())
 				{
-					var timeLeft = (int)(input.TimeoutAt - DateTime.Now).TotalMilliseconds;
+					var timeLeft = (int)(input.timeoutAt - DateTime.Now).TotalMilliseconds;
 
 					if (timeLeft <= 0)
 						input.EndByTimeout();

@@ -610,8 +610,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("file-filemove", true));
 		}
 
-		[NonParallelizable]
-		[Test, Category("FileAndDir")]
+		[Test, Category("FileAndDir"), NonParallelizable]
 		public void FileOpen()
 		{
 			//Can't really test console in/out/err with * and ** here, but in manual testing it appears to work.
@@ -862,8 +861,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("file-fileread", true));
 		}
 
-		[NonParallelizable]
-		[Test, Category("FileAndDir")]
+		[Test, Category("FileAndDir"), NonParallelizable]
 		public void FileRecycle()
 		{
 			lock (syncroot)
@@ -891,8 +889,7 @@ namespace Keysharp.Tests
 			}
 		}
 
-		[NonParallelizable]
-		[Test, Category("FileAndDir")]
+		[Test, Category("FileAndDir"), NonParallelizable]
 		public void FileRecycleEmpty()
 		{
 			lock (syncroot)

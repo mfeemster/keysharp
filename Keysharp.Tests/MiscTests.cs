@@ -5,28 +5,6 @@ namespace Keysharp.Tests
 {
 	public partial class Misctests : TestRunner
 	{
-		[NonParallelizable]
-		[Test, Category("Misc")]
-		public void SimplePass() => Assert.IsTrue(TestScript("misc-pass", false));
-
-		[NonParallelizable]
-		[Test, Category("Misc")]
-		public void MiscSyntax() => Assert.IsTrue(TestScript("misc-syntax", false));
-
-		[Test, Category("Misc")]
-		public void MiscObject()
-		{
-			var a = Collections.Array(10, 20, 30);
-			var fo = a.GetMethod("Clear");
-			_ = fo.Call();
-			Assert.AreEqual(0L, a.Length);
-			Assert.IsTrue(new KeysharpObject().HasBase(new Any()) == 1L);
-			Assert.IsTrue(TestScript("misc-object", true));
-		}
-
-		[Test, Category("Misc"), NonParallelizable]
-		public void MiscTimer() => Assert.IsTrue(TestScript("misc-timer", false));
-
 		[Test, Category("Misc")]
 		public void MiscIs()
 		{
@@ -184,5 +162,25 @@ namespace Keysharp.Tests
 			//
 			Assert.IsTrue(TestScript("misc-is", true));
 		}
+
+		[Test, Category("Misc")]
+		public void MiscObject()
+		{
+			var a = Collections.Array(10, 20, 30);
+			var fo = a.GetMethod("Clear");
+			_ = fo.Call();
+			Assert.AreEqual(0L, a.Length);
+			Assert.IsTrue(new KeysharpObject().HasBase(new Any()) == 1L);
+			Assert.IsTrue(TestScript("misc-object", true));
+		}
+
+		[Test, Category("Misc"), NonParallelizable]
+		public void MiscSyntax() => Assert.IsTrue(TestScript("misc-syntax", false));
+
+		[Test, Category("Misc"), NonParallelizable]
+		public void MiscTimer() => Assert.IsTrue(TestScript("misc-timer", false));
+
+		[Test, Category("Misc"), NonParallelizable]
+		public void SimplePass() => Assert.IsTrue(TestScript("misc-pass", false));
 	}
 }

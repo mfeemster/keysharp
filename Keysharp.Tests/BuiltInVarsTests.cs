@@ -49,12 +49,10 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("props-date-time", true));
 		}
 
-		[NonParallelizable]
-		[Test, Category("BuiltInVars")]
+		[Test, Category("BuiltInVars"), NonParallelizable]
 		public void PropsScriptProperties() => Assert.IsTrue(TestScript("props-script-properties", false));
 
-		[NonParallelizable]
-		[Test, Category("BuiltInVars")]
+		[Test, Category("BuiltInVars"), NonParallelizable]
 		public void PropsScriptSettings() => Assert.IsTrue(TestScript("props-script-settings", false));
 
 		[Test, Category("BuiltInVars")]

@@ -1614,12 +1614,12 @@ namespace Keysharp.Core.Windows
 		{
 			var input = Script.input;
 
-			for (; input != null; input = input.Prev)
+			for (; input != null; input = input.prev)
 			{
-				if (!(input.Early == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress()))
+				if (!(input.BeforeHotkeys == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress()))
 					continue;
 
-				var keyFlags = input.KeyVK[vk] | input.KeySC[sc];
+				var keyFlags = input.keyVK[vk] | input.keySC[sc];
 				// aCharCount is negative for dead keys, which are treated as text but not collected.
 				var treatAsText = charCount != 0 && (keyFlags & INPUT_KEY_IGNORE_TEXT) == 0;
 				var collectChars = treatAsText && charCount > 0;
@@ -1632,7 +1632,7 @@ namespace Keysharp.Core.Windows
 				else if (kvk[vk].asModifiersLR != 0 || kvk[vk].forceToggle != null)
 					visible = true; // Do not suppress modifiers or toggleable keys unless specified by KeyOpt().
 				else
-					visible = treatAsText ? input.VisibleText : input.VisibleNonText;
+					visible = treatAsText ? input.visibleText : input.visibleNonText;
 
 				if ((keyFlags & END_KEY_ENABLED) != 0) // A terminating keystroke has now occurred unless the shift state isn't right.
 				{
@@ -1643,7 +1643,7 @@ namespace Keysharp.Core.Windows
 					if (shift_is_down ? end_if_shift_is_down : end_if_shift_is_not_down)
 					{
 						// The shift state is correct to produce the desired end-key.
-						input.EndByKey(vk, sc, input.KeySC[sc] != 0 && (sc != 0 || input.KeyVK[vk] == 0), shift_is_down && !end_if_shift_is_not_down);
+						input.EndByKey(vk, sc, input.keySC[sc] != 0 && (sc != 0 || input.keyVK[vk] == 0), shift_is_down && !end_if_shift_is_not_down);
 
 						if (!visible)
 							break;
@@ -1659,31 +1659,31 @@ namespace Keysharp.Core.Windows
 
 				// Fix for v2.0: Shift is allowed as it generally has no effect on the native function of Backspace.
 				// This is probably connected with the fact that Shift+BS is also transcribed to `b, which we don't want.
-				if (vk == VK_BACK && input.BackspaceIsUndo
+				if (vk == VK_BACK && input.backspaceIsUndo
 						&& (kbdMsSender.modifiersLRLogical & ~(MOD_LSHIFT | MOD_RSHIFT)) == 0)
 				{
 					if (input.buffer.Length != 0)
 						input.buffer = input.buffer.Substring(0, input.buffer.Length - 1);
 
 					if ((keyFlags & INPUT_KEY_VISIBILITY_MASK) == 0)// If +S and +V haven't been applied to Backspace...
-						visible = input.VisibleText; // Override VisibleNonText.
+						visible = input.visibleText; // Override VisibleNonText.
 
 					// Fall through to the check below in case this {BS} completed a dead key sequence.
 				}
 
-				if (input.NotifyNonText)
+				if (input.notifyNonText)
 				{
 					// These flags enable key-up events to be classified as text or non-text based on
 					// whether key-down produced text.
 					if (treatAsText)
-						input.KeyVK[vk] |= INPUT_KEY_IS_TEXT;
+						input.keyVK[vk] |= INPUT_KEY_IS_TEXT;
 					else
-						input.KeyVK[vk] &= ~INPUT_KEY_IS_TEXT; // In case keyboard layout has changed or similar.
+						input.keyVK[vk] &= ~INPUT_KEY_IS_TEXT; // In case keyboard layout has changed or similar.
 				}
 
 				// Posting the notifications after CollectChar() might reduce the odds of a race condition.
-				if (((keyFlags & INPUT_KEY_NOTIFY) != 0 || (input.NotifyNonText && !treatAsText))
-						&& input.ScriptObject != null && input.ScriptObject.OnKeyDown != null)
+				if (((keyFlags & INPUT_KEY_NOTIFY) != 0 || (input.notifyNonText && !treatAsText))
+						&& input.scriptObject != null && input.scriptObject.OnKeyDown != null)
 				{
 					// input is passed because the alternative would require the main thread to
 					// iterate through the Input chain and determine which ones should be notified.
@@ -1703,7 +1703,7 @@ namespace Keysharp.Core.Windows
 
 				// Seems best to not collect dead key chars by default; if needed, OnDeadChar
 				// could be added, or the script could mark each dead key for OnKeyDown.
-				if (collectChars && input.ScriptObject != null && input.ScriptObject.OnChar != null)
+				if (collectChars && input.scriptObject != null && input.scriptObject.OnChar != null)
 				{
 					_ = channel.Writer.TryWrite(new KeysharpMsg()
 					{
@@ -1731,9 +1731,9 @@ namespace Keysharp.Core.Windows
 			if (input != null) // Early break (invisible input).
 			{
 				if (sc != 0)
-					input.KeySC[sc] |= INPUT_KEY_DOWN_SUPPRESSED;
+					input.keySC[sc] |= INPUT_KEY_DOWN_SUPPRESSED;
 				else
-					input.KeyVK[vk] |= INPUT_KEY_DOWN_SUPPRESSED;
+					input.keyVK[vk] |= INPUT_KEY_DOWN_SUPPRESSED;
 
 				return false;
 			}
@@ -1748,13 +1748,13 @@ namespace Keysharp.Core.Windows
 		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		// neutral one.
 		{
-			for (var input = Script.input; input != null; input = input.Prev)
+			for (var input = Script.input; input != null; input = input.prev)
 			{
-				if (input.Early == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress())
+				if (input.BeforeHotkeys == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress())
 				{
-					if (input.ScriptObject != null && input.ScriptObject.OnKeyUp != null
-							&& (((input.KeySC[sc] | input.KeyVK[vk]) & INPUT_KEY_NOTIFY) != 0
-								|| (input.NotifyNonText && (input.KeyVK[vk] & INPUT_KEY_IS_TEXT) == 0)))
+					if (input.scriptObject != null && input.scriptObject.OnKeyUp != null
+							&& (((input.keySC[sc] | input.keyVK[vk]) & INPUT_KEY_NOTIFY) != 0
+								|| (input.notifyNonText && (input.keyVK[vk] & INPUT_KEY_IS_TEXT) == 0)))
 					{
 						_ = channel.Writer.TryWrite(new KeysharpMsg()
 						{
@@ -1765,15 +1765,15 @@ namespace Keysharp.Core.Windows
 						});
 					}
 
-					if ((input.KeySC[sc] & INPUT_KEY_DOWN_SUPPRESSED) != 0)
+					if ((input.keySC[sc] & INPUT_KEY_DOWN_SUPPRESSED) != 0)
 					{
-						input.KeySC[sc] &= ~INPUT_KEY_DOWN_SUPPRESSED;
+						input.keySC[sc] &= ~INPUT_KEY_DOWN_SUPPRESSED;
 						return false;
 					}
 
-					if ((input.KeyVK[vk] & INPUT_KEY_DOWN_SUPPRESSED) != 0)
+					if ((input.keyVK[vk] & INPUT_KEY_DOWN_SUPPRESSED) != 0)
 					{
-						input.KeyVK[vk] &= ~INPUT_KEY_DOWN_SUPPRESSED;
+						input.keyVK[vk] &= ~INPUT_KEY_DOWN_SUPPRESSED;
 						return false;
 					}
 				}
@@ -1860,7 +1860,7 @@ namespace Keysharp.Core.Windows
 				// normally be excluded from the input (except those rare ones that have only SHIFT as a modifier).
 				// Note that ToAsciiEx() will translate ^i to a tab character, !i to plain i, and many other modified
 				// letters as just the plain letter key, which we don't want.
-				for (var input = Script.input; input != null; input = input.Prev)
+				for (var input = Script.input; input != null; input = input.prev)
 				{
 					if (input == null) // No inputs left, and none were found that meet the conditions below.
 					{
@@ -1869,7 +1869,7 @@ namespace Keysharp.Core.Windows
 					}
 
 					// Transcription is done only once for all layers, so do this if any layer requests it:
-					if (input.TranscribeModifiedKeys && input.InProgress() && input.IsInteresting(ev.dwExtraInfo))
+					if (input.transcribeModifiedKeys && input.InProgress() && input.IsInteresting(ev.dwExtraInfo))
 						break;
 				}
 			}
@@ -5128,7 +5128,7 @@ namespace Keysharp.Core.Windows
 									{
 										if (msg.obj is InputType it
 												&& it.InputRelease() is InputType inputHook
-												&& inputHook.ScriptObject is InputObject so)
+												&& inputHook.scriptObject is InputObject so)
 										{
 											if (so.OnEnd is IFuncObj ifo)
 											{
@@ -5151,21 +5151,21 @@ namespace Keysharp.Core.Windows
 									InputType input_hook;
 									var inputHookParam = msg.obj as InputType;
 
-									for (input_hook = Script.input; input_hook != null && input_hook != inputHookParam; input_hook = input_hook.Prev)
+									for (input_hook = Script.input; input_hook != null && input_hook != inputHookParam; input_hook = input_hook.prev)
 									{
 									}
 
 									if (input_hook == null)
 										continue;
 
-									if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.ScriptObject.OnKeyDown
-											: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.ScriptObject.OnKeyUp
-											: input_hook.ScriptObject.OnChar) is IFuncObj ifo
+									if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.scriptObject.OnKeyDown
+											: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.scriptObject.OnKeyUp
+											: input_hook.scriptObject.OnChar) is IFuncObj ifo
 											&& Threads.AnyThreadsAvailable())
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
-												   new object[] { input_hook.ScriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
-												   : [input_hook.ScriptObject, lParamVal, wParamVal];
+												   new object[] { input_hook.scriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
+												   : [input_hook.scriptObject, lParamVal, wParamVal];
 										Threads.LaunchInThread(0, false, false, ifo, args, true);
 									}
 									else

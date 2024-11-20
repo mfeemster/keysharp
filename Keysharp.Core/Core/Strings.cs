@@ -536,7 +536,7 @@ namespace Keysharp.Core
 					case 'p':
 						if (i < opts.Length - 1)
 						{
-							var digits = opts.AsSpan(i + 1).BeginInts();
+							var digits = opts.AsSpan(i + 1).BeginNums();
 
 							if (int.TryParse(digits, out var pp))
 								sortAt = pp;

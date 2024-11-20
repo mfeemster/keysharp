@@ -556,7 +556,7 @@
 
 			if (input != null)
 			{
-				for (var input = Script.input; ; input = input.Prev)
+				for (var input = Script.input; ; input = input.prev)
 				{
 					if (input != null)
 						return true;

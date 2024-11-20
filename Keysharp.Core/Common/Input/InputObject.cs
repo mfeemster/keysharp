@@ -7,21 +7,39 @@
 
 		public object BackspaceIsUndo
 		{
-			get => input.BackspaceIsUndo;
-			set => input.BackspaceIsUndo = value.Ab();
+			get => input.backspaceIsUndo;
+			set => input.backspaceIsUndo = value.Ab();
+		}
+
+		public object BeforeHotkeys
+		{
+			get => input.beforeHotkeys;
+			set => input.beforeHotkeys = value.Ab();
+		}
+
+		public object BufferLengthMax
+		{
+			get => input.bufferLengthMax;
+			set => input.bufferLengthMax = value.Ai();
 		}
 
 		public object CaseSensitive
 		{
-			get => input.CaseSensitive;
-			set => input.CaseSensitive = value.Ab();
+			get => input.caseSensitive;
+			set => input.caseSensitive = value.Ab();
+		}
+
+		public object EndCharMode
+		{
+			get => input.endCharMode;
+			set => input.endCharMode = value.Ab();
 		}
 
 		public string EndKey
 		{
 			get
 			{
-				if (input.Status == InputStatusType.TerminatedByEndKey)
+				if (input.status == InputStatusType.TerminatedByEndKey)
 				{
 					var str = "";
 					_ = input.GetEndReason(ref str);
@@ -39,7 +57,7 @@
 				var sb = new StringBuilder(8);
 
 				for (var i = 0; i < 8; ++i)
-					if ((input.EndingMods & (1 << i)) != 0)
+					if ((input.endingMods & (1 << i)) != 0)
 					{
 						_ = sb.Append(KeyboardMouseSender.ModLRString[i * 2]);
 						_ = sb.Append(KeyboardMouseSender.ModLRString[(i * 2) + 1]);
@@ -60,8 +78,8 @@
 
 		public object FindAnywhere
 		{
-			get => input.FindAnywhere;
-			set => input.FindAnywhere = value.Ab();
+			get => input.findAnywhere;
+			set => input.findAnywhere = value.Ab();
 		}
 
 		public bool InProgress => input.InProgress();
@@ -72,15 +90,15 @@
 		{
 			get
 			{
-				return input.Status == InputStatusType.TerminatedByMatch && input.EndingMatchIndex < input.match.Count
-					   ? input.match[input.EndingMatchIndex]
+				return input.status == InputStatusType.TerminatedByMatch && input.endingMatchIndex < input.match.Count
+					   ? input.match[input.endingMatchIndex]
 					   : "";
 			}
 		}
 
 		public object MinSendLevel
 		{
-			get => (long)input.MinSendLevel;
+			get => (long)input.minSendLevel;
 
 			set
 			{
@@ -89,14 +107,14 @@
 				if (val < 0 || val > 101)
 					throw new ValueError($"Cannot set InputObject.MinSendLevel to a value outside of the range 0 - 101 ({value}).");
 
-				input.MinSendLevel = (uint)val;
+				input.minSendLevel = (uint)val;
 			}
 		}
 
 		public object NotifyNonText
 		{
-			get => input.NotifyNonText;
-			set => input.NotifyNonText = value.Ab();
+			get => input.notifyNonText;
+			set => input.notifyNonText = value.Ab();
 		}
 
 		public object OnChar
@@ -125,27 +143,33 @@
 
 		public object Timeout
 		{
-			get => input.Timeout / 1000.0;
+			get => input.timeout / 1000.0;
 
 			set
 			{
-				input.Timeout = (int)(value.ParseDouble() * 1000);
+				input.timeout = (int)(value.ParseDouble() * 1000);
 
-				if (input.InProgress() && input.Timeout > 0)
+				if (input.InProgress() && input.timeout > 0)
 					input.SetTimeoutTimer();
 			}
 		}
 
+		public object TranscribeModifiedKeys
+		{
+			get => input.transcribeModifiedKeys;
+			set => input.transcribeModifiedKeys = value.Ab();
+		}
+
 		public object VisibleNonText
 		{
-			get => input.VisibleNonText;
-			set => input.VisibleNonText = value.Ab();
+			get => input.visibleNonText;
+			set => input.visibleNonText = value.Ab();
 		}
 
 		public object VisibleText
 		{
-			get => input.VisibleText;
-			set => input.VisibleText = value.Ab();
+			get => input.visibleText;
+			set => input.visibleText = value.Ab();
 		}
 
 		public InputObject(params object[] obj) => _ = __New(obj);
@@ -220,11 +244,11 @@
 			{
 				// Could optimize by using memset() when remove_flags == 0xFF, but that doesn't seem
 				// worthwhile since this mode is already faster than SetKeyFlags() with a single key.
-				for (var i = 0; i < input.KeyVK.Length; ++i)
-					input.KeyVK[i] = (input.KeyVK[i] & ~removeFlags) | addFlags;
+				for (var i = 0; i < input.keyVK.Length; ++i)
+					input.keyVK[i] = (input.keyVK[i] & ~removeFlags) | addFlags;
 
-				for (var i = 0; i < input.KeySC.Length; ++i)
-					input.KeySC[i] = (input.KeySC[i] & ~removeFlags) | addFlags;
+				for (var i = 0; i < input.keySC.Length; ++i)
+					input.keySC[i] = (input.keySC[i] & ~removeFlags) | addFlags;
 			}
 
 			input.SetKeyFlags(keys, false, removeFlags, addFlags);

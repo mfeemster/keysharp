@@ -99,21 +99,22 @@
 #endif
 
 		/// <summary>
-		/// String wrapper around <see cref="BeginInts"/>.
+		/// String wrapper around <see cref="BeginNums"/>.
 		/// </summary>
-		internal static ReadOnlySpan<char> BeginInts(this string str) =>
-		BeginInts(str.AsSpan());
+		internal static ReadOnlySpan<char> BeginNums(this string str, bool allowDecimal = false) =>
+		BeginNums(str.AsSpan(), allowDecimal);
 
 		/// <summary>
 		/// Returns all characters that are digits, starting from the beginning of a string.
 		/// </summary>
 		/// <param name="str">The string to return the leading digits for.</param>
+		/// <param name="allowDecimal">True to allow decimals, else false for integers only.</param>
 		/// <returns>A string consisting only of digits, empty if none.</returns>
-		internal static ReadOnlySpan<char> BeginInts(this ReadOnlySpan<char> str)
+		internal static ReadOnlySpan<char> BeginNums(this ReadOnlySpan<char> str, bool allowDecimal = false)
 		{
 			var i = 0;
 
-			while (i < str.Length && char.IsDigit(str[i]))
+			while (i < str.Length && (char.IsDigit(str[i]) || (allowDecimal && str[i] == '.')))
 				i++;
 
 			return str.Slice(0, i);
