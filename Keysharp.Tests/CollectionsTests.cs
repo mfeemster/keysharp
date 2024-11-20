@@ -169,5 +169,12 @@ namespace Keysharp.Tests
 
 			Assert.IsTrue(TestScript("collections-buffer", true));
 		}
+
+		[SetUp]
+		public void Setup()
+		{
+			Reflections.Clear();
+			Reflections.Initialize();
+		}
 	}
 }

@@ -6,7 +6,7 @@ if (y = 123)
 else
 	FileAppend, "fail", "*"
 
-func(p)
+nafunc(p)
 {
 	if ((p ?? 456) == 456)
 		FileAppend, "pass", "*"
@@ -14,7 +14,7 @@ func(p)
 		FileAppend, "fail", "*"
 }
 
-func()
+nafunc()
 
 z :=
 y := z ?? 456
@@ -26,7 +26,7 @@ else
 
 tot := 0
 
-func2(a, b, c)
+nafunc2(a, b, c)
 {
 	global tot
 	tot += a(1)
@@ -34,7 +34,7 @@ func2(a, b, c)
 	tot += c(3)
 }
 
-func2((o) => o ?? 11, (o) => o ?? 22, (o) => o ?? 33)
+nafunc2((o) => o ?? 11, (o) => o ?? 22, (o) => o ?? 33)
 
 If (tot == 26)
 	FileAppend, "pass", "*"

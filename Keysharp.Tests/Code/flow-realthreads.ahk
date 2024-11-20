@@ -3,18 +3,18 @@ tharr := []
 tharr.Length := 100
 tot := 0
 
-AddTot(o)
+rtAddTot(o)
 {
 	global tot
 	tot += o
 }
 
-func1(obj)
+rtfunc1(obj)
 {
-	LockRun(lockit, (o) => AddTot(o), obj)
+	LockRun(lockit, (o) => rtAddTot(o), obj)
 }
 
-fo := FuncObj("func1")
+fo := FuncObj("rtfunc1")
 
 Loop 100
 {
@@ -37,7 +37,7 @@ tharr := []
 tharr.Length := 100
 tot := 0
 
-SumTot()
+rtSumTot()
 {
 	ct := 0
     
@@ -49,12 +49,12 @@ SumTot()
 	return ct
 }
 
-func2()
+rtfunc2()
 {
-	return SumTot()
+	return rtSumTot()
 }
 
-fo := FuncObj("func2")
+fo := FuncObj("rtfunc2")
 
 Loop 100
 {

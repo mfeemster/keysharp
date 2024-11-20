@@ -84,5 +84,12 @@ namespace Keysharp.Tests
 
 		[Test, Category("Operator"), NonParallelizable]
 		public void NullAssign() => Assert.IsTrue(TestScript("op-null-assign", false));
+
+		[SetUp]
+		public void Setup()
+		{
+			Reflections.Clear();
+			Reflections.Initialize();
+		}
 	}
 }
