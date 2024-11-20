@@ -21,6 +21,14 @@ namespace Keysharp.Tests
 
 		[NonParallelizable]
 		[Test, Category("Function")]
+		public void CombinedParamsInFunc() => Assert.IsTrue(TestScript("func-combined-params", false));
+
+		[NonParallelizable]
+		[Test, Category("Function")]
+		public void DefParamsInFunc() => Assert.IsTrue(TestScript("func-def-params", false));
+
+		[NonParallelizable]
+		[Test, Category("Function")]
 		public void DynVarsInFunc() => Assert.IsTrue(TestScript("func-dyn-vars", false));
 
 		[NonParallelizable]
@@ -49,6 +57,10 @@ namespace Keysharp.Tests
 
 		[NonParallelizable]
 		[Test, Category("Function")]
+		public void OptParamsInFunc() => Assert.IsTrue(TestScript("func-opt-params", false));
+
+		[NonParallelizable]
+		[Test, Category("Function")]
 		public void ParamsInFunc() => Assert.IsTrue(TestScript("func-params", false));
 
 		[NonParallelizable]
@@ -67,5 +79,9 @@ namespace Keysharp.Tests
 			Reflections.Clear();
 			Reflections.Initialize();
 		}
+
+		[NonParallelizable]
+		[Test, Category("Function")]
+		public void VarParamsInFunc() => Assert.IsTrue(TestScript("func-var-params", false));
 	}
 }

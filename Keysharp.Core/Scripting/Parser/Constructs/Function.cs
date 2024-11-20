@@ -225,7 +225,7 @@ namespace Keysharp.Scripting
 
 				x = i;// name
 
-				while (i < code.Length && (code[i] == '&' || code[i] == '*' || IsIdentifier(code[i]))) i++;
+				while (i < code.Length && (code[i] == '&' || code[i] == '*' || code[i] == '?' || IsIdentifier(code[i]))) i++;
 
 				if (x == i)
 				{

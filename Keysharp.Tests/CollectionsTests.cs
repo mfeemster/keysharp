@@ -5,7 +5,7 @@ namespace Keysharp.Tests
 {
 	public class CollectionsTests : TestRunner
 	{
-		[Test, Category("Collections")]
+		[Test, Category("Collections"), NonParallelizable]
 		public void Array()
 		{
 			var arr = new Keysharp.Core.Array(
