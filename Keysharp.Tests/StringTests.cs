@@ -365,6 +365,9 @@ namespace Keysharp.Tests
 			Assert.AreEqual("A,B,C,D,E,F,X,Y,Z,a,b,c,d,e", y);
 			y = Strings.Sort(x, "D, c r");
 			Assert.AreEqual("e,d,c,b,a,Z,Y,X,F,E,D,C,B,A", y);
+			x = "0.1,0.2,0.001,-9.0,-0.1";
+			y = Strings.Sort(x, "N D,");
+			Assert.AreEqual("-9.0,-0.1,0.001,0.1,0.2", y);
 			x = "200,100,300,500,600,111,222,1010";
 			y = Strings.Sort(x, "D, n");
 			Assert.AreEqual("100,111,200,222,300,500,600,1010", y);
