@@ -4,8 +4,6 @@
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
 
-		public static KeysharpObject Object() => new ();
-
 		public KeysharpObject()
 		{
 			__Init();

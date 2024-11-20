@@ -42,6 +42,13 @@ if (val = 2)
 else
 	FileAppend, "fail", "*"
 	
+val := m.TWO
+
+if (val = 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 val := m.three
 
 if (val = 3)
@@ -414,6 +421,13 @@ else
 	FileAppend, "fail", "*"
 
 val := m["one"][1]
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := m["ONE"][1]
 
 if (val == 123)
 	FileAppend, "pass", "*"

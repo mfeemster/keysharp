@@ -151,31 +151,7 @@
 		/// <returns>Empty string, unused.</returns>
 		public object __New(params object[] values)
 		{
-			if (values == null || values.Length == 0)
-			{
-				map = [];
-			}
-			else
-			{
-				if (values.Length == 1)
-				{
-					if (values[0] is Map m)
-					{
-						map = m.map;
-						caseSense = m.caseSense;
-						return "";
-					}
-					else if (values[0] is Dictionary<object, object> dkt)
-					{
-						map = dkt;
-						return "";
-					}
-				}
-
-				map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-				Set(values);
-			}
-
+			Set(values);
 			return "";
 		}
 
@@ -417,32 +393,62 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
 		public void Set(params object[] values)
 		{
-			if (values.Length == 1)
+			if (values == null || values.Length == 0)
 			{
-				if (values[0] is Array temp)
-				{
-					var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
-					_ = map.EnsureCapacity(count);
-
-					for (var i = 0; i < count - 1; i += 2)
-						Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
-				}
-				else if (values[0] is Dictionary<string, object> tempm)
-				{
-					_ = map.EnsureCapacity(tempm.Count);
-
-					foreach (var kv in tempm)
-						Insert(kv.Key, kv.Value);
-				}
+				if (map == null)
+					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 				else
-					throw new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.");
+					map.Clear();
 			}
 			else
 			{
-				var count = (values.Length / 2) * 2;
+				if (values.Length == 1)
+				{
+					if (values[0] is Map m)
+					{
+						map = m.map;
+						caseSense = m.caseSense;
+						return;
+					}
+					else if (values[0] is Dictionary<object, object> dkt)
+					{
+						map = dkt;
+					}
+					else if (values[0] is Array temp)
+					{
+						var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 
-				for (var i = 0; i < count; i += 2)
-					Insert(values[i], values[i + 1]);
+						if (map == null)
+							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+
+						_ = map.EnsureCapacity(count);
+
+						for (var i = 0; i < count - 1; i += 2)
+							Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
+					}
+					else if (values[0] is Dictionary<string, object> tempm)
+					{
+						if (map == null)
+							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+
+						_ = map.EnsureCapacity(tempm.Count);
+
+						foreach (var kv in tempm)
+							Insert(kv.Key, kv.Value);
+					}
+					else
+						throw new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.");
+				}
+				else
+				{
+					var count = (values.Length / 2) * 2;
+
+					if (map == null)
+						map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+
+					for (var i = 0; i < count; i += 2)
+						Insert(values[i], values[i + 1]);
+				}
 			}
 		}
 		/// <summary>

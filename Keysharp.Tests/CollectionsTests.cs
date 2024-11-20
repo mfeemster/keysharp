@@ -72,16 +72,11 @@ namespace Keysharp.Tests
 		[Test, Category("Collections")]
 		public void AssociativeArray()
 		{
-			var arr = Collections.Dictionary(
+			var arr = Keysharp.Core.Objects.Object(
 						  [
-							  "one",
-							  "two",
-							  "three"
-						  ],
-						  [
-							  1L,
-							  2L,
-							  3L
+							  "one", 1L,
+							  "two", 2L,
+							  "three", 3L
 						  ]);
 
 			foreach (var (k, v) in (IEnumerable<(object, object)>)arr)
@@ -148,7 +143,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(sa.GetValue(2), "two");
 			//
 			Assert.AreEqual(arr.ToString(), "{\"one\": 1, \"two\": 2, \"three\": 3}");
-			Assert.IsTrue(TestScript("collections-associative-array", true));
+			Assert.IsTrue(TestScript("collections-map", true));
 		}
 
 		[Test, Category("Collections")]

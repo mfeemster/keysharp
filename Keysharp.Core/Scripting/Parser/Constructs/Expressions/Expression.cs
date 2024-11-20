@@ -497,10 +497,9 @@ namespace Keysharp.Scripting
 						//So temporarily remove it here and restore it below.
 						var n = i + 1;
 						var paren = ExtractRange(parts, n, Set(parts, i, codeLine));
-						var invoke = (CodeMethodInvokeExpression)InternalMethods.Dictionary;
-						ParseObject(codeLine, code, paren, out var keys, out var values, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
-						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), keys));
-						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), values));
+						var invoke = (CodeMethodInvokeExpression)InternalMethods.Object;
+						ParseObject(codeLine, code, paren, out var kvs, create);//Might want this to always be false, because it would seem weird to create variable here inside of the arguments passed to Map().
+						_ = invoke.Parameters.Add(new CodeArrayCreateExpression(typeof(object), kvs));
 						parts[i] = invoke;
 						parts.RemoveAt(n);
 						i--;

@@ -105,7 +105,7 @@ namespace Keysharp.Scripting
 			return i - 1;
 		}
 
-		private void ParseObject(CodeLine codeLine, string code, List<object> parts, out CodeExpression[] keys, out CodeExpression[] values, bool create)
+		private void ParseObject(CodeLine codeLine, string code, List<object> parts, out CodeExpression[] kvs, bool create)
 		{
 			var names = new List<CodeExpression>();
 			var entries = new List<CodeExpression>();
@@ -217,8 +217,9 @@ namespace Keysharp.Scripting
 				entries.Add(value ?? nullPrimitive);
 			}
 
-			keys = names.ToArray();
-			values = entries.ToArray();
+			//Interleave the two arrays.
+			kvs = names.Zip(entries, (f, s) => new[] { f, s })
+				  .SelectMany(f => f).ToArray();
 		}
 
 		private object[] ParseObjectValue(Span<object> parts)

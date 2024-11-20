@@ -42,33 +42,6 @@
 		/// <summary>
 		/// Creates a new <see cref="Map"/> object.
 		/// </summary>
-		/// <param name="keys">The keys to insert.</param>
-		/// <param name="values">The values to insert.</param>
-		/// <returns>A new <see cref="Map"/> object consisting of the optional key,value pairs.</returns>
-		public static Map Dictionary(object[] keys, object[] values)
-		{
-			var table = new Map();
-
-			for (var i = 0; i < keys.Length; i++)
-			{
-				var name = keys[i];
-				var entry = i < values.Length ? values[i] : null;
-
-				if (entry == null)
-				{
-					if (table.Has(name))
-						_ = table.Delete(name);
-				}
-				else
-					table[name] = entry;
-			}
-
-			return table;
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Map"/> object.
-		/// </summary>
 		/// <param name="obj">The optional data to initialize the <see cref="Map"/> with. This can be:<br/>
 		///     An existing <see cref="Map"/> object.<br/>
 		///     An <see cref="Array"/> of key,value pairs.<br/>
