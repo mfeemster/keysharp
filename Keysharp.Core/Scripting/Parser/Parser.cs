@@ -6,6 +6,7 @@ namespace Keysharp.Scripting
 	public partial class Parser : ICodeParser
 	{
 		public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+		public static readonly CultureInfo inv = CultureInfo.InvariantCulture;
 
 		internal const string scopeChar = "_";
 		internal const string varsPropertyName = "Vars";

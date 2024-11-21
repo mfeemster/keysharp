@@ -728,7 +728,7 @@ namespace Keysharp.Core.Common.Strings
 
 			if (isnum)
 			{
-				if (uint.TryParse(name, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var val))
+				if (uint.TryParse(name, NumberStyles.HexNumber, Parser.inv, out var val))
 				{
 					if (name.Length <= 6)
 						val |= 0xFF000000;

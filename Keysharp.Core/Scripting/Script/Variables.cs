@@ -24,6 +24,8 @@ namespace Keysharp.Scripting
 			{
 				Window.SetProcessDPIAware();
 				Flow.Init();
+				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 #if LINUX
 				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
 				enc1252 = Encoding.GetEncoding(1252);

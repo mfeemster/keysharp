@@ -171,7 +171,7 @@
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
 				return i;
 
-			var s = obj.ToString().AsSpan();
+			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new decimal? ();
@@ -215,7 +215,7 @@
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
 				return i;
 
-			var s = obj.ToString().AsSpan();
+			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new double? ();
@@ -259,7 +259,7 @@
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
 				return i;
 
-			var s = obj.ToString().AsSpan();
+			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new float? ();
@@ -300,7 +300,7 @@
 			if (obj is BoolResult br)
 				return br.o.ParseInt(doconvert);
 
-			var s = obj.ToString().AsSpan();
+			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new int? ();
@@ -321,11 +321,11 @@
 			}
 
 			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
-					int.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii))
+					int.TryParse(s.Slice(2), NumberStyles.HexNumber, Parser.inv, out var ii))
 				return neg ? -ii : ii;
 
 			if (donoprefixhex)
-				if (int.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out ii))
+				if (int.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
 					return neg ? -ii : ii;
 
 			return doconvert ? Convert.ToInt32(obj) : new int? ();
@@ -348,7 +348,7 @@
 			if (obj is BoolResult br)
 				return br.o.ParseLong(doconvert);
 
-			var s = obj.ToString().AsSpan();
+			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new long? ();
@@ -369,11 +369,11 @@
 			}
 
 			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
-					long.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii))
+					long.TryParse(s.Slice(2), NumberStyles.HexNumber, Parser.inv, out var ii))
 				return neg ? -ii : ii;
 
 			if (donoprefixhex)
-				if (long.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out ii))
+				if (long.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
 					return neg ? -ii : ii;
 
 			return doconvert ? Convert.ToInt64(obj) : new long? ();
@@ -403,7 +403,7 @@
 			if (obj is BoolResult br)
 				return br.o.ParseUInt(doconvert);
 
-			var s = obj.ToString().AsSpan();
+			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new uint? ();
@@ -416,11 +416,11 @@
 					return i;
 
 			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
-					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ii))
+					uint.TryParse(s.Slice(2), NumberStyles.HexNumber, Parser.inv, out var ii))
 				return ii;
 
 			if (donoprefixhex)
-				if (uint.TryParse(s, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out ii))
+				if (uint.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
 					return ii;
 
 			return doconvert ? Convert.ToUInt32(obj) : new uint? ();

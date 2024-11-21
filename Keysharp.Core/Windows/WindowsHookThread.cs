@@ -4127,16 +4127,9 @@ namespace Keysharp.Core.Windows
 					// Parameters can occur in almost any order to enhance usability (at the cost of
 					// slightly diminishing the ability to unambiguously add more parameters in the future).
 					// Seems okay to support floats because ATOI() will just omit the decimal portion.
-					var d = 0.0;
-					var decok = false;
-					var intok = int.TryParse(opt, out var i);
-
-					if (!intok)
-						decok = double.TryParse(opt, out d);
-
-					if (intok || decok)
+					if (double.TryParse(opt, NumberStyles.Float, Parser.inv, out var d))
 					{
-						var val = intok ? i : (int)d;
+						var val = (int)d;
 
 						// Any numbers present must appear in the order: X, Y, RepeatCount
 						// (optionally with other options between them).

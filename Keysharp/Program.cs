@@ -12,6 +12,7 @@ using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
 using Keysharp.Core;
 using Keysharp.Scripting;
+using System.Globalization;
 
 namespace Keysharp.Main
 {
@@ -31,6 +32,8 @@ namespace Keysharp.Main
 			try
 			{
 				Window.SetProcessDPIAware();
+				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
 				var exeName = Path.GetFileNameWithoutExtension(exePath);

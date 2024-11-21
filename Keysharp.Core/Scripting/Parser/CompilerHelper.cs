@@ -330,7 +330,7 @@ using static Keysharp.Scripting.Script;
 
 				if (x != null)
 				{
-					x = x.Trim(Keywords.DashSlash);
+					x = x.Trim(DashSlash);
 
 					if (x.Length > 2 && int.TryParse(x.AsSpan().Slice(2), out var codepage))
 						enc = Encoding.GetEncoding(codepage);
