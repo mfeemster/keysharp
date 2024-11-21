@@ -84,7 +84,7 @@ namespace Keysharp.Scripting
 						goto case Xdigit;
 
 						case Xdigit:
-							if (variable.Length > 3 && variable[0] == '0' && (variable[1] == 'x' || variable[1] == 'X'))
+							if (variable.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
 								variable = variable.Substring(2);
 
 							break;

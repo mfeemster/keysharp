@@ -100,9 +100,9 @@
 			long? val;
 
 			if (value is string s)
-				val = s.Trim().ParseLong(false);
+				val = s.Trim().ParseLong(false, false);
 			else
-				val = o.ParseLong(false);
+				val = o.ParseLong(false, false);
 
 			return val.HasValue ? 1L : 0L;
 		}

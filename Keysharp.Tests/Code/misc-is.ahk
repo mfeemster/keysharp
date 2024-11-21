@@ -170,6 +170,26 @@ if (IsNumber(a) == 0)
 else
 	FileAppend, "fail", "*"
 
+if (IsNumber("A") == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (IsNumber("ABCDEF") == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (IsNumber("0xA") == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (IsNumber("0xABCDEF") == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 if (IsObject(0) == 0)
 	FileAppend, "pass", "*"
 else

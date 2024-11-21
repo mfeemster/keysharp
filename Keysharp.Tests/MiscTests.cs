@@ -33,6 +33,14 @@ namespace Keysharp.Tests
 			s = "+1234.1234";
 			Assert.IsTrue(IsInteger(s) == 0);
 			Assert.IsTrue(IsInteger(o) == 0);
+			s = "A";
+			Assert.IsTrue(IsInteger(s) == 0);
+			s = "ABCDEF";
+			Assert.IsTrue(IsInteger(s) == 0);
+			s = "0xA";
+			Assert.IsTrue(IsInteger(s) == 1);
+			s = "0xABCDEF";
+			Assert.IsTrue(IsInteger(s) == 1);
 			//
 			d = 1.234;
 			Assert.IsTrue(IsFloat(d) == 1);
