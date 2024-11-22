@@ -201,6 +201,12 @@
                         <Property Name="DisplayName" Value="Buffer" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.CollectionsTests.Map" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Map" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
@@ -698,6 +704,30 @@
                         <Property Name="DisplayName" Value="ReturnFunc" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FunctionAndLabelTests.VarParamsInFunc" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="VarParamsInFunc" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FunctionAndLabelTests.OptParamsInFunc" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="OptParamsInFunc" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FunctionAndLabelTests.CombinedParamsInFunc" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="CombinedParamsInFunc" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FunctionAndLabelTests.DefParamsInFunc" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="DefParamsInFunc" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
@@ -1107,6 +1137,12 @@
                         <Property Name="DisplayName" Value="UnaryMinus" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.OperatorTests.Is" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Is" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
@@ -1272,6 +1308,12 @@
                       <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.StringTests.VerCompare" />
                       <Rule Match="Any">
                         <Property Name="DisplayName" Value="VerCompare" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.StringTests.Base64DecodeEncode" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Base64DecodeEncode" />
                       </Rule>
                     </Rule>
                   </Rule>

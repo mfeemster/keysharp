@@ -471,6 +471,10 @@ namespace Keysharp.Scripting
 						//else
 						//  parts[i] = new CodePrimitiveExpression(result);
 					}
+					else if (i > 0 && parts[i - 1] is Script.Operator sois && sois == Script.Operator.Is)
+					{
+						parts[i] = new CodeVariableReferenceExpression(part);//Will be reprocessed below.
+					}
 					else if (IsIdentifier(part, true) && (!IsKeyword(part) || string.Compare(part, "default", true) == 0))//Hack to allow for default because a subclass derived from Map might need to access its Default property.
 					{
 						var s = i < parts.Count - 1 && parts[i + 1] is string s1 ? s1 : "";

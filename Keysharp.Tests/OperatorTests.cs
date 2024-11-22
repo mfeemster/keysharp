@@ -85,6 +85,9 @@ namespace Keysharp.Tests
 		[Test, Category("Operator"), NonParallelizable]
 		public void NullAssign() => Assert.IsTrue(TestScript("op-null-assign", false));
 
+		[Test, Category("Operator"), NonParallelizable]
+		public void Is() => Assert.IsTrue(TestScript("op-is", true));
+
 		[SetUp]
 		public void Setup()
 		{

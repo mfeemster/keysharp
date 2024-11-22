@@ -70,7 +70,7 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Collections")]
-		public void AssociativeArray()
+		public void Map()
 		{
 			var arr = Keysharp.Core.Objects.Object(
 						  [

@@ -78,27 +78,28 @@ namespace Keysharp.Scripting
 					switch (test)
 					{
 						case Integer:
+							ret = IsInteger(subject);
+							goto done;
+
+						case Float:
+							ret = IsFloat(subject);
+							goto done;
+
 						case Number:
-							variable = variable.Trim().TrimStart(Keywords.PlusMinus);
+							ret = IsInteger(subject) || IsFloat(subject);
+							goto done;
 
-						goto case Xdigit;
+						case "string":
+							ret = subject is string;
+							goto done;
 
-						case Xdigit:
-							if (variable.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-								variable = variable.Substring(2);
-
-							break;
-
-						case "true":
-							return ForceBool(subject);
-
-						case "false":
-							return !ForceBool(subject);
-
+						case "unset":
 						case "null":
-							return subject == null;
+							ret = subject == null;
+							goto done;
 					}
 
+					//Traverse class hierarchy to see if there is a match.
 					if (subject != null)
 					{
 						var type = subject.GetType();
@@ -110,138 +111,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					switch (test)
-					{
-						case Float:
-							if (!variable.Contains('.'))
-							{
-								ret = false;
-								goto done;
-							}
-
-						goto case Number;
-
-						case Number:
-						{
-							var dot = false;
-
-							foreach (var sym in variable)
-							{
-								if (sym == '.')
-								{
-									if (dot)
-									{
-										ret = false;
-										goto done;
-									}
-
-									dot = true;
-								}
-								else if (!char.IsDigit(sym))
-								{
-									ret = false;
-									goto done;
-								}
-							}
-
-							ret = true;
-							goto done;
-						}
-
-						case Digit:
-							foreach (var sym in variable)
-								if (!char.IsDigit(sym))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-
-						case Integer:
-						case Xdigit:
-						{
-							foreach (var sym in variable)
-								if (!(char.IsDigit(sym) || (sym > 'a' - 1 && sym < 'f' + 1) || (sym > 'A' - 1 && sym < 'F' + 1)))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-						}
-
-						case Alpha:
-							foreach (var sym in variable)
-								if (!char.IsLetter(sym))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-
-						case Upper:
-							foreach (var sym in variable)
-								if (!char.IsUpper(sym))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-
-						case Lower:
-							foreach (var sym in variable)
-								if (!char.IsLower(sym))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-
-						case Alnum:
-							foreach (var sym in variable)
-								if (!char.IsLetterOrDigit(sym))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-
-						case Space:
-							foreach (var sym in variable)
-								if (!char.IsWhiteSpace(sym))
-								{
-									ret = false;
-									goto done;
-								}
-
-							ret = true;
-							goto done;
-
-						case Time:
-							if (!IsNumeric(variable))
-							{
-								ret = false;
-								goto done;
-							}
-
-							ret = ForceLong(variable) < 99991231125959;
-							goto done;
-
-						default:
-							ret = false;
-							goto done;
-					}
+					break;
 			}
 
 			done:
@@ -249,20 +119,6 @@ namespace Keysharp.Scripting
 		}
 
 		public static BoolResult IfTest(object result) => new BoolResult(ForceBool(result), result);
-
-		public static bool IsNumeric(Type type) =>
-		type == typeof(long)
-		|| type == typeof(double)
-		|| type == typeof(int)
-		|| type == typeof(uint)
-		|| type == typeof(ulong)
-		|| type == typeof(float)
-		|| type == typeof(decimal)
-		|| type == typeof(byte)
-		|| type == typeof(sbyte)
-		;
-
-		public static bool IsNumeric(object value) => value != null&& IsNumeric(value.GetType());
 
 		public static object Operate(Operator op, object left, object right)
 		{
@@ -624,6 +480,36 @@ namespace Keysharp.Scripting
 		public static int OperateZero(object expression) => 0;
 
 		public static object OrMaybe(object left, object right) => Types.IsSet(left) == 1L ? left : right;
+
+		internal static bool IsFloat(object obj) =>
+		obj is double ||
+		obj is float ||
+		obj is decimal;
+
+		internal static bool IsInteger(object obj) =>
+		obj is long ||
+		obj is int ||
+		obj is ulong ||
+		obj is uint ||
+		obj is short ||
+		obj is ushort ||
+		obj is char ||
+		obj is sbyte ||
+		obj is byte;
+
+		internal static bool IsNumeric(Type type) =>
+		type == typeof(long)
+		|| type == typeof(double)
+		|| type == typeof(int)
+		|| type == typeof(uint)
+		|| type == typeof(ulong)
+		|| type == typeof(float)
+		|| type == typeof(decimal)
+		|| type == typeof(byte)
+		|| type == typeof(sbyte)
+		;
+
+		internal static bool IsNumeric(object value) => value != null&& IsNumeric(value.GetType());
 
 		public enum Operator
 		{
