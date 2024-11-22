@@ -235,7 +235,7 @@ using static Keysharp.Scripting.Script;
 			try
 			{
 				var tree = SyntaxFactory.ParseSyntaxTree(code,
-						   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
+						   new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
 				var usings = new List<string>()//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
@@ -412,7 +412,7 @@ namespace Dyn
 	}
 }";
 			var tree = SyntaxFactory.ParseSyntaxTree(finalCode,
-					   new CSharpParseOptions(LanguageVersion.CSharp8, DocumentationMode.None, SourceCodeKind.Regular));
+					   new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
 			var ms = new MemoryStream();
 			var compilation = CSharpCompilation.Create("DynamicCode")
 							  .WithOptions(
