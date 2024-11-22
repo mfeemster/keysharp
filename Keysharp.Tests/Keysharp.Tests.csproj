@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <LangVersion>preview</LangVersion>
     <IsPackable>false</IsPackable>
     <OutputType>WinExe</OutputType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>

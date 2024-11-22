@@ -535,6 +535,8 @@ namespace Keysharp.Scripting
 
 								cmie.Parameters.AddRange(newParams.ToArray());
 							}
+
+							HandlePartialVariadicParams(cmie, cmm);
 						}
 						else if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
 						{
@@ -589,6 +591,8 @@ namespace Keysharp.Scripting
 
 									cmie.Parameters.AddRange(newParams.ToArray());
 								}
+
+								HandlePartialVariadicParams(cmie, mph2.mi);
 							}
 						}
 
@@ -1336,9 +1340,9 @@ namespace Keysharp.Scripting
 			var lastisstar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
 
 			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceeded by a C# .. spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
 			//CodeDOM has no support for such so it must all be done via snippets.
-			if (lastisstar)
+			if (lastisstar && pces.Count() > 1)
 			{
 				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
 				var finalArgStr = $"[{string.Join(',', argStrings)}]";
@@ -1358,9 +1362,9 @@ namespace Keysharp.Scripting
 			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
 
 			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceeded by a C# .. spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
 			//CodeDOM has no support for such so it must all be done via snippets.
-			if (lastDeclIsStar && lastCalledIsStar)
+			if (lastDeclIsStar && lastCalledIsStar && pces.Count() > 1)
 			{
 				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
 				var finalArgStr = $"[{string.Join(',', argStrings)}]";
@@ -1369,6 +1373,73 @@ namespace Keysharp.Scripting
 			}
 		}
 
+		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
+		{
+			//Method that was declared.
+			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
+			var cpde = pdes.LastOrDefault();
+			var lastDeclIsStar = cpde != null && cpde.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute");
+			//Method as it was called.
+			var pces = cmie.Parameters.Cast<CodeExpression>();
+			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
+			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+
+			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
+			//CodeDOM has no support for such so it must all be done via snippets.
+			if (lastDeclIsStar && lastCalledIsStar)
+			{
+				var indexOfDeclStar = pdes.Count() - 1;
+				var indexOfCalledStar = pces.Count() - 1;
+
+				if ((cmie.Parameters.Count - indexOfDeclStar) > 1)
+				{
+					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
+					var callVariadic = pces.Skip(indexOfDeclStar);
+					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
+					var finalArgStr = $"[{string.Join(',', argStrings)}]";
+
+					while (cmie.Parameters.Count > indexOfDeclStar)
+						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
+
+					_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
+				}
+			}
+		}
+
+		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, MethodInfo mi)
+		{
+			//Method that was declared.
+			var mip = mi.GetParameters();
+			var pi = mip.LastOrDefault();
+			var lastDeclIsStar = pi != null && pi.CustomAttributes.Any(cad => cad.AttributeType == typeof(ParamArrayAttribute));
+			//Method as it was called.
+			var pces = cmie.Parameters.Cast<CodeExpression>();
+			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
+			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+
+			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
+			//CodeDOM has no support for such so it must all be done via snippets.
+			if (lastDeclIsStar && lastCalledIsStar)
+			{
+				var indexOfDeclStar = mip.Length - 1;
+				var indexOfCalledStar = pces.Count() - 1;
+
+				if ((cmie.Parameters.Count - indexOfDeclStar) > 1)
+				{
+					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
+					var callVariadic = pces.Skip(indexOfDeclStar);
+					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
+					var finalArgStr = $"[{string.Join(',', argStrings)}]";
+
+					while (cmie.Parameters.Count > indexOfDeclStar)
+						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
+
+					_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
+				}
+			}
+		}
 
 		private bool VarExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{

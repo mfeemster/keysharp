@@ -9,7 +9,6 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <LangVersion>preview</LangVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
     <AssemblyName>Keysharp.Core</AssemblyName>
