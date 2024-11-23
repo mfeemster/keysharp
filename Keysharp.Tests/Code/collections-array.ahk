@@ -759,3 +759,88 @@ if (val is unset && arr.Length == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+sumarray(arr)
+{
+	temp := 0
+	
+	for n in arr
+	{
+		temp += n
+	}
+
+	return temp
+}
+
+arr := [1, 2, 3]
+arr2 := [arr*]
+total := sumarray(arr2)
+
+if (total == 6 && arr2.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [1, arr*]
+total := sumarray(arr2)
+
+if (total == 7 && arr2.Length == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [arr*, 1]
+total := sumarray(arr2)
+
+if (total == 7 && arr2.Length == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [arr*, 1]
+total := sumarray(arr2)
+
+if (total == 7 && arr2.Length == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [1, arr*, 1]
+total := sumarray(arr2)
+
+if (total == 8 && arr2.Length == 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+arr2 := [1, 2, arr*, 1, 2]
+total := sumarray(arr2)
+
+if (total == 12 && arr2.Length == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [arr*, arr*]
+total := sumarray(arr2)
+
+if (total == 12 && arr2.Length == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [arr*, arr*, arr*]
+total := sumarray(arr2)
+
+if (total == 18 && arr2.Length == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr2 := [1, arr*, 2, arr*, 3, arr*, 4]
+total := sumarray(arr2)
+
+if (total == 28 && arr2.Length == 13)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

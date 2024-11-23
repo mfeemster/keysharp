@@ -621,6 +621,7 @@ namespace Keysharp.Scripting
 								var argi = 0;
 								var paramExprs = new List<CodeExpression>();
 								var parenspan = CollectionsMarshal.AsSpan(paren);
+								var isVariadic = false;
 
 								while (argi < paren.Count)
 								{
@@ -630,18 +631,34 @@ namespace Keysharp.Scripting
 									if (temprange.Length > 0)
 									{
 										var temparr = temprange.ToArray();
-										var tempcode = string.Join("", temparr.Select((p) => p.ToString()));
-										var tempexpr = ParseMultiExpression(codeLine, tempcode, temparr, create);
-										paramExprs.AddRange(tempexpr);
+
+										if (temparr.Length == 2 && temparr[1].ToString() == "*")
+										{
+											isVariadic = true;
+											paramExprs.Add(new CodeSnippetExpression($"..FlattenParam({temparr[0]})"));
+										}
+										else
+										{
+											var tempcode = string.Join("", temparr.Select((p) => p.ToString()));
+											var tempexpr = ParseMultiExpression(codeLine, tempcode, temparr, create);
+											paramExprs.AddRange(tempexpr);
+										}
 									}
 
 									argi += tempi + 1;//Account for the comma.
 								}
 
-								if (paren.Count > 0 && paren[paren.Count - 1].ToString() == ",")
-									paramExprs.Add(nullPrimitive);
+								if (isVariadic)
+								{
+									parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeSnippetExpression($"[{string.Join<object>(',', paramExprs.Select(pe => Ch.CodeToString(pe)))}]"));
+								}
+								else
+								{
+									if (paren.Count > 0 && paren[paren.Count - 1].ToString() == ",")
+										paramExprs.Add(nullPrimitive);
 
-								parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), paramExprs.ToArray()));
+									parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), paramExprs.ToArray()));
+								}
 							}
 						}
 					}
