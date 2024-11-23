@@ -448,196 +448,12 @@ namespace Keysharp.Scripting
 			}
 
 			var createDummyRef = false;
-			var tsVar = DateTime.Now.ToString("__MMddyyyyHHmmssfffffff");
-			var ctrObjectArray = new CodeTypeReference(typeof(object[]));
 			var argsSnippet = new CodeSnippetExpression("args");
+			var ctrObjectArray = new CodeTypeReference(typeof(object[]));
+			var tsVar = DateTime.Now.ToString("__MMddyyyyHHmmssfffffff");
 
 			while (targetClass.Members.Cast<CodeTypeMember>().Any(ctm => ctm.Name == tsVar))
 				tsVar = "_" + tsVar;
-
-			foreach (var cmietype in allMethodCalls)
-			{
-				foreach (var cmietypefunc in cmietype.Value)
-				{
-					foreach (var cmie in cmietypefunc.Value)
-					{
-						//Handle changing myfuncobj() to myfuncobj.Call().
-						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
-						{
-							var refIndexes = ParseArguments(cmie.Parameters);
-							var callFuncName = "";
-
-							if (refIndexes.Count > 0)
-							{
-								var newParams = ConvertDirectParamsToInvoke(cmie.Parameters);
-								cmie.Parameters.Clear();
-								cmie.Parameters.AddRange(newParams);
-								callFuncName = "CallWithRefs";
-							}
-							else
-							{
-								callFuncName = "Call";
-							}
-
-							HandleAllVariadicParams(cmie);
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), callFuncName);
-						}
-						else if (GetUserDefinedTypename(cmie.Method.MethodName) is string s && s.Length > 0)//Convert myclass() to myclass.Call().
-						{
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(s), "Call");
-							HandleAllVariadicParams(cmie);
-						}
-						//Handle proper casing and refs for all method calls.
-						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
-						{
-							var methParams = cmm.Parameters;
-							cmie.Method.MethodName = cmm.Name;
-
-							for (var i = 0; i < cmie.Parameters.Count; i++)
-							{
-								var cp = cmie.Parameters[i];
-
-								if (i < methParams.Count)
-								{
-									if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
-									{
-										var mp = methParams[i];
-
-										if (mp.Direction == FieldDirection.Ref)
-										{
-											cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
-											createDummyRef = true;
-										}
-									}
-								}
-							}
-
-							//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
-							if (methParams.Count > cmie.Parameters.Count)
-							{
-								var newParams = new List<CodeExpression>(methParams.Count);
-
-								for (var i = cmie.Parameters.Count; i < methParams.Count; i++)
-								{
-									var mp = methParams[i];
-
-									if (!mp.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute"))//Ignore variadic object[] parameters.
-									{
-										if (mp.Direction == FieldDirection.Ref)
-										{
-											newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-											createDummyRef = true;
-										}
-										else
-											newParams.Add(nullPrimitive);
-									}
-								}
-
-								cmie.Parameters.AddRange(newParams.ToArray());
-							}
-
-							HandlePartialVariadicParams(cmie, cmm);
-						}
-						else if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
-						{
-							cmie.Method.MethodName = mph.mi.Name;
-
-							if (mph.mi.IsStatic)
-								cmie.Method.TargetObject = new CodeTypeReferenceExpression(mph.mi.DeclaringType);
-
-							if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, cmie.Parameters.Count) is MethodPropertyHolder mph2 && mph2.mi != null)//We know the method exists, so try to find the exact match for the number of parameters specified.
-							{
-								var methParams = mph2.mi.GetParameters();
-
-								for (var i = 0; i < cmie.Parameters.Count; i++)
-								{
-									var cp = cmie.Parameters[i];
-
-									if (i < methParams.Length)
-									{
-										if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
-										{
-											var mp = methParams[i];
-
-											if (mp.ParameterType.IsByRef && !mp.IsOut)
-											{
-												cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
-												createDummyRef = true;
-											}
-										}
-									}
-								}
-
-								//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
-								if (methParams.Length > cmie.Parameters.Count)
-								{
-									var newParams = new List<CodeExpression>(methParams.Length);
-
-									for (var i = cmie.Parameters.Count; i < methParams.Length; i++)
-									{
-										var mp = methParams[i];
-
-										if (!mp.IsOptional)
-										{
-											if (mp.ParameterType.IsByRef && !mp.IsOut)
-											{
-												newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-												createDummyRef = true;
-											}
-											else if (mp.ParameterType != typeof(object[]))//Do not pass for variadic object[] parameters.
-												newParams.Add(nullPrimitive);
-										}
-									}
-
-									cmie.Parameters.AddRange(newParams.ToArray());
-								}
-
-								HandlePartialVariadicParams(cmie, mph2.mi);
-							}
-						}
-
-						//Calling a virtual method with super will not work with regular reflection.
-						//It will always resolve to the most derived class.
-						//So to actually call the base, we need to replace it with a literal call to
-						//base._New()
-						//No other methods will ever be virtual/override so we should only ever
-						//have to do this for __New().
-						if (cmie.Method.MethodName == "Invoke"
-								&& cmie.Parameters.Count > 0
-								&& cmie.Parameters[0] is CodeMethodInvokeExpression cmieGetProperty
-								&& cmieGetProperty.Method.MethodName == "GetMethodOrProperty"
-								&& cmieGetProperty.Parameters.Count > 1
-								&& cmieGetProperty.Parameters[0] is CodeVariableReferenceExpression cvre
-								&& cvre.VariableName == "super"
-								&& cmieGetProperty.Parameters[1] is CodePrimitiveExpression cpe2
-								&& cpe2.Value.ToString() == "__New")
-						{
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression("base"), "__New");
-
-							if (cmie.Parameters.Count == 1)
-							{
-								cmie.Parameters.Clear();
-								_ = cmie.Parameters.Add(argsSnippet);
-							}
-							else
-							{
-								var superParams = cmie.Parameters.Cast<CodeExpression>().Skip(1).ToArray();
-								cmie.Parameters.Clear();
-								cmie.Parameters.AddRange(superParams);
-							}
-						}
-					}
-				}
-			}
-
-			if (createDummyRef)
-			{
-				_ = targetClass.Members.Add(new CodeSnippetTypeMember()
-				{
-					Name = name,
-					Text = $"\t\tpublic static object {tsVar};"
-				});
-			}
 
 			var ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
 			var cad = new CodeAttributeDeclaration(ctrpaa);
@@ -662,8 +478,18 @@ namespace Keysharp.Scripting
 							method.Attributes = MemberAttributes.Public;
 							method.Name = "__New";//Ensure it's properly cased.
 
-							for (var i = method.Parameters.Count - 1; i >= 0; i--)
-								method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[i].Name} = args.Length > {i} ? args[{i}] : null")));
+							if (method.Parameters.Count == 1 && method.Parameters[0].IsVariadic())
+							{
+								//When __New() is declared with an anonymous variadic parameter like __New(*),
+								//then the parameter will be named args, so don't declare another variable by the same name.
+								if (method.Parameters[0].Name != "args")
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[0].Name} = args")));
+							}
+							else
+							{
+								for (var i = method.Parameters.Count - 1; i >= 0; i--)
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[i].Name} = args.Length > {i} ? args[{i}] : null")));
+							}
 
 							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
 							method.Parameters.Clear();
@@ -869,6 +695,191 @@ namespace Keysharp.Scripting
 					foreach (var method in typeMethods.Value.Values)
 						_ = typeMethods.Key.Members.Add(method);
 				}
+			}
+
+			foreach (var cmietype in allMethodCalls)
+			{
+				foreach (var cmietypefunc in cmietype.Value)
+				{
+					foreach (var cmie in cmietypefunc.Value)
+					{
+						//Handle changing myfuncobj() to myfuncobj.Call().
+						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
+						{
+							var refIndexes = ParseArguments(cmie.Parameters);
+							var callFuncName = "";
+
+							if (refIndexes.Count > 0)
+							{
+								var newParams = ConvertDirectParamsToInvoke(cmie.Parameters);
+								cmie.Parameters.Clear();
+								cmie.Parameters.AddRange(newParams);
+								callFuncName = "CallWithRefs";
+							}
+							else
+							{
+								callFuncName = "Call";
+							}
+
+							HandleAllVariadicParams(cmie);
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), callFuncName);
+						}
+						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
+						{
+							var callMeth = ctd.Members.Cast<CodeTypeMember>().First(ctm => ctm is CodeMemberMethod cmm && cmm.Name == "Call") as CodeMemberMethod;
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(ctd.Name), "Call");
+							HandlePartialVariadicParams(cmie, callMeth);
+						}
+						//Handle proper casing and refs for all method calls.
+						else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cmie.Method.MethodName) is CodeMemberMethod cmm)//It wasn't a built in method, so check user defined methods first.
+						{
+							var methParams = cmm.Parameters;
+							cmie.Method.MethodName = cmm.Name;
+
+							for (var i = 0; i < cmie.Parameters.Count; i++)
+							{
+								var cp = cmie.Parameters[i];
+
+								if (i < methParams.Count)
+								{
+									if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
+									{
+										var mp = methParams[i];
+
+										if (mp.Direction == FieldDirection.Ref)
+										{
+											cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
+											createDummyRef = true;
+										}
+									}
+								}
+							}
+
+							//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+							if (methParams.Count > cmie.Parameters.Count)
+							{
+								var newParams = new List<CodeExpression>(methParams.Count);
+
+								for (var i = cmie.Parameters.Count; i < methParams.Count; i++)
+								{
+									var mp = methParams[i];
+
+									if (!mp.IsOptionalOrVariadic())//Ignore optional or variadic object[] parameters.
+									{
+										if (mp.Direction == FieldDirection.Ref)
+										{
+											newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
+											createDummyRef = true;
+										}
+										else
+											newParams.Add(nullPrimitive);
+									}
+								}
+
+								cmie.Parameters.AddRange(newParams.ToArray());
+							}
+
+							HandlePartialVariadicParams(cmie, cmm);
+						}
+						else if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, -1/*Don't care about paramCount here, just need the name.*/) is MethodPropertyHolder mph && mph.mi != null) //This will find the first built in method with this name, but they are all cased the same, so it should be ok.
+						{
+							cmie.Method.MethodName = mph.mi.Name;
+
+							if (mph.mi.IsStatic)
+								cmie.Method.TargetObject = new CodeTypeReferenceExpression(mph.mi.DeclaringType);
+
+							if (Reflections.FindBuiltInMethod(cmie.Method.MethodName, cmie.Parameters.Count) is MethodPropertyHolder mph2 && mph2.mi != null)//We know the method exists, so try to find the exact match for the number of parameters specified.
+							{
+								var methParams = mph2.mi.GetParameters();
+
+								for (var i = 0; i < cmie.Parameters.Count; i++)
+								{
+									var cp = cmie.Parameters[i];
+
+									if (i < methParams.Length)
+									{
+										if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
+										{
+											var mp = methParams[i];
+
+											if (mp.ParameterType.IsByRef && !mp.IsOut)
+											{
+												cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
+												createDummyRef = true;
+											}
+										}
+									}
+								}
+
+								//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+								if (methParams.Length > cmie.Parameters.Count)
+								{
+									var newParams = new List<CodeExpression>(methParams.Length);
+
+									for (var i = cmie.Parameters.Count; i < methParams.Length; i++)
+									{
+										var mp = methParams[i];
+
+										if (!mp.IsOptional)
+										{
+											if (mp.ParameterType.IsByRef && !mp.IsOut)
+											{
+												newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
+												createDummyRef = true;
+											}
+											else if (mp.ParameterType != typeof(object[]))//Do not pass for variadic object[] parameters.
+												newParams.Add(nullPrimitive);
+										}
+									}
+
+									cmie.Parameters.AddRange(newParams.ToArray());
+								}
+
+								HandlePartialVariadicParams(cmie, mph2.mi);
+							}
+						}
+
+						//Calling a virtual method with super will not work with regular reflection.
+						//It will always resolve to the most derived class.
+						//So to actually call the base, we need to replace it with a literal call to
+						//base._New()
+						//No other methods will ever be virtual/override so we should only ever
+						//have to do this for __New().
+						if (cmie.Method.MethodName == "Invoke"
+								&& cmie.Parameters.Count > 0
+								&& cmie.Parameters[0] is CodeMethodInvokeExpression cmieGetProperty
+								&& cmieGetProperty.Method.MethodName == "GetMethodOrProperty"
+								&& cmieGetProperty.Parameters.Count > 1
+								&& cmieGetProperty.Parameters[0] is CodeVariableReferenceExpression cvre
+								&& cvre.VariableName == "super"
+								&& cmieGetProperty.Parameters[1] is CodePrimitiveExpression cpe2
+								&& cpe2.Value.ToString() == "__New")
+						{
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression("base"), "__New");
+
+							if (cmie.Parameters.Count == 1)
+							{
+								cmie.Parameters.Clear();
+								_ = cmie.Parameters.Add(argsSnippet);
+							}
+							else
+							{
+								var superParams = cmie.Parameters.Cast<CodeExpression>().Skip(1).ToArray();
+								cmie.Parameters.Clear();
+								cmie.Parameters.AddRange(superParams);
+							}
+						}
+					}
+				}
+			}
+
+			if (createDummyRef)
+			{
+				_ = targetClass.Members.Add(new CodeSnippetTypeMember()
+				{
+					Name = name,
+					Text = $"\t\tpublic static object {tsVar};"
+				});
 			}
 
 			//Must explicitly mark all index operators as override if they exist in a base, and the parameter count matches.
@@ -1134,14 +1145,14 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
-		private string GetUserDefinedTypename(string typeName)
+		private CodeTypeDeclaration GetUserDefinedTypename(string typeName)
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
 				if (type is CodeTypeDeclaration ctd)
 					if (string.Compare(ctd.Name, typeName, true) == 0)
-						return ctd.Name;
+						return ctd;
 
-			return "";
+			return null;
 		}
 
 		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
@@ -1354,8 +1365,8 @@ namespace Keysharp.Scripting
 		{
 			//Method that was declared.
 			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
-			var cpde = pdes.LastOrDefault() as CodeParameterDeclarationExpression;
-			var lastDeclIsStar = cpde != null && cpde.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute");
+			var cpde = pdes.LastOrDefault();
+			var lastDeclIsStar = cpde != null && cpde.IsVariadic();
 			//Method as it was called.
 			var pces = cmie.Parameters.Cast<CodeExpression>();
 			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
@@ -1378,7 +1389,7 @@ namespace Keysharp.Scripting
 			//Method that was declared.
 			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
 			var cpde = pdes.LastOrDefault();
-			var lastDeclIsStar = cpde != null && cpde.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute");
+			var lastDeclIsStar = cpde != null && cpde.IsVariadic();
 			//Method as it was called.
 			var pces = cmie.Parameters.Cast<CodeExpression>();
 			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
@@ -1412,7 +1423,7 @@ namespace Keysharp.Scripting
 			//Method that was declared.
 			var mip = mi.GetParameters();
 			var pi = mip.LastOrDefault();
-			var lastDeclIsStar = pi != null && pi.CustomAttributes.Any(cad => cad.AttributeType == typeof(ParamArrayAttribute));
+			var lastDeclIsStar = pi.IsVariadic();
 			//Method as it was called.
 			var pces = cmie.Parameters.Cast<CodeExpression>();
 			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;

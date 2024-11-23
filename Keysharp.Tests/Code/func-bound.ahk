@@ -195,6 +195,16 @@ If (val == 30)
 else
 	FileAppend, "fail", "*"
 
+arr := [1, 2, 3]
+bf := fo.Bind(arr*)
+
+val := bf()
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 boundvarfunc1(p1, theparams*)
 {
 	temp := p1
@@ -276,6 +286,15 @@ else
 
 pcount := 0
 boundfunc5(1, 2, 3)
+
+if (pcount == 3)
+	FileAppend, "fail", "*"
+else
+	FileAppend, "pass", "*"
+
+pcount := 0
+arr := [1, 2, 3]
+boundfunc5(arr*)
 
 if (pcount == 3)
 	FileAppend, "fail", "*"

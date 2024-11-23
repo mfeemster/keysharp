@@ -73,6 +73,49 @@ If (x == true)
 else
 	FileAppend, "fail", "*"
 
+varfuncimplicit(*)
+{
+	temp := 0
+
+	for n in args
+	{
+		temp += args[A_Index]
+	}
+
+	return temp
+}
+
+arr := [1, 2, 3]
+val := varfuncimplicit(arr*)
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := varfuncimplicit()
+
+If (val == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("varfuncimplicit")
+val := fo(arr*)
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("varfuncimplicit")
+val := fo()
+
+If (val == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 varfunc2(p1, theparams*)
 {
 	temp := p1
@@ -119,6 +162,64 @@ varfunc4(*)
 val := varfunc3(1, 2, 3)
 
 If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr := [1, 2, 3]
+val := varfunc3(1, arr*)
+
+If (val == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := varfunc4(arr*)
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+varfunc5(p1, p2, theparams*)
+{
+	temp := p1 + p2
+
+	for n in theparams
+	{
+		temp += n
+	}
+
+	return temp
+}
+
+val := varfunc5(1, 2, arr*)
+
+If (val == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("varfunc3")
+val := fo(1, arr*)
+
+If (val == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("varfunc4")
+val := fo(arr*)
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("varfunc5")
+val := fo(1, 2, arr*)
+
+If (val == 9)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

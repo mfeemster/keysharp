@@ -76,6 +76,7 @@
 						{
 							object[] newobj = null;
 							object[] lastArr = null;
+							var objLength = obj.Length;
 
 							if (ParamLength == 1)
 							{
@@ -85,27 +86,38 @@
 							{
 								//The slowest case: a function is trying to be called with a different number of parameters than it actually has, or it's variadic, so manually create an array of parameters that matches the required size.
 								var oi = 0;
-								var objLength = obj.Length;
+								var pi = 0;
 								newobj = paramsPool.Rent();
 
-								for (var pi = 0; oi < objLength && pi < ParamLength; pi++)
+								for (; oi < objLength && pi < ParamLength; pi++)
 								{
 									if (pi == startVarIndex)
 									{
-										var om1 = obj[pi] == null ? 0 : (objLength - startVarIndex) - stopVarIndexDistanceFromEnd;//obj[pi] == null means null was passed for the variadic parameter.
-										lastArr = new object[om1];//Can't really use a pool here because we don't know the exact size ahead of time.
-
-										for (var i = 0; i < om1; i++)
+										if (objLength == ParamLength && obj[pi] is object[] obarr)//There was just one variadic parameter and it was already and array, usuall from a call like func(arr*).
 										{
-											lastArr[i] = obj[pi + i];
-											oi++;
+											newobj[pi] = obarr;
 										}
+										else
+										{
+											var om1 = obj[pi] == null ? 0 : (objLength - startVarIndex) - stopVarIndexDistanceFromEnd;//obj[pi] == null means null was passed for the variadic parameter.
+											lastArr = new object[om1];//Can't really use a pool here because we don't know the exact size ahead of time.
 
-										newobj[pi] = lastArr;
+											for (var i = 0; i < om1; i++)
+											{
+												lastArr[i] = obj[pi + i];
+												oi++;
+											}
+
+											newobj[pi] = lastArr;
+										}
 									}
 									else
 										newobj[pi] = obj[oi++];
 								}
+
+								for (; pi < ParamLength; pi++)
+									if (parameters[pi].IsOptional)
+										newobj[pi] = parameters[pi].DefaultValue;
 							}
 
 							//Any remaining items in newobj are null by default.
@@ -143,8 +155,15 @@
 										{
 											var arr = newobj[pi] as object[];
 
-											for (var vi = 0; pi < obj.Length && vi < arr.Length; pi++, vi++)
-												obj[pi] = arr[vi];
+											if (objLength == ParamLength)
+											{
+												obj[pi] = arr;
+											}
+											else
+											{
+												for (var vi = 0; pi < obj.Length && vi < arr.Length; pi++, vi++)
+													obj[pi] = arr[vi];
+											}
 										}
 										else
 											obj[pi] = newobj[pi];
@@ -195,6 +214,10 @@
 
 								for (; i < objLength && i < ParamLength; i++)
 									newobj[i] = obj[i];
+
+								for (; i < ParamLength; i++)
+									if (parameters[i].IsOptional)
+										newobj[i] = parameters[i].DefaultValue;
 
 								//Any remaining items in newobj are null by default.
 								if (!isGuiType)

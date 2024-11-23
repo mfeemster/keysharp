@@ -66,7 +66,7 @@ optrefvarfunc(a?, &b, c*)
 {
 	temp := a
 
-    if (c != unset)
+	if (c != unset)
 	{
 		for n in c
 		{
@@ -78,6 +78,7 @@ optrefvarfunc(a?, &b, c*)
 	return temp
 }
 
+arr := [1, 2, 3]
 val := optrefvarfunc(x, &y, z, z, z)
 
 If (y == 10)
@@ -94,8 +95,24 @@ x := 1
 y := 2
 z := 3
 
+val := optrefvarfunc(x, &y, arr*)
+
+If (y == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (val == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 1
+y := 2
+z := 3
+
 fo := FuncObj("optrefvarfunc")
-fo(x, &y, z, z, z)
+val := fo(x, &y, z, z, z)
 
 If (y == 10)
 	FileAppend, "pass", "*"
@@ -128,6 +145,38 @@ y := 2
 z := 3
 
 val := fo(x, &y,)
+
+If (y == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (val == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 1
+y := 2
+z := 3
+
+val := optrefvarfunc(x, &y)
+
+If (y == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (val == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 1
+y := 2
+z := 3
+
+val := fo(x, &y)
 
 If (y == 1)
 	FileAppend, "pass", "*"

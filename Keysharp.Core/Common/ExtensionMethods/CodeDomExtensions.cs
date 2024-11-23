@@ -61,5 +61,9 @@
 
 			return null;
 		}
+
+		internal static bool IsVariadic(this CodeParameterDeclarationExpression p) => p != null && p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "System.ParamArrayAttribute");
+
+		internal static bool IsOptionalOrVariadic(this CodeParameterDeclarationExpression p) => p != null && p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute");
 	}
 }

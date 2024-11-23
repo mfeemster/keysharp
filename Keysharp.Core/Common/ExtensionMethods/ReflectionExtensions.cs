@@ -25,6 +25,7 @@
 			return ret;
 		}
 
+		internal static bool IsVariadic(this ParameterInfo pi) => pi != null && pi.CustomAttributes.Any(cad => cad.AttributeType == typeof(ParamArrayAttribute));
 		//public static async Task<object> InvokeAsync(this MethodInfo mi, object inst, params object[] parameters)
 		//{
 		//  var tsk = mi.Invoke(inst, parameters);

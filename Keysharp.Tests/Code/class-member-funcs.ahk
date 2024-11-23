@@ -339,38 +339,68 @@ else
 class myclass2
 {
 	classfunc0()
-    {
+	{
 		program.a := 0
-    }
+		return 0
+	}
 
-    classfunc1(p1)
-    {
+	classfunc1(p1)
+	{
 		program.a := p1
-    }
-    
-    classfunc2(p1, p2)
-    {
-		program.a := p1 + p2
-    }
+		return p1
+	}
+	
+	classfunc2(p1, p2 := 5)
+	{
+		temp := p1 + p2
+		program.a := temp
+		return temp
+	}
 
-    classfunc3(p1, p2, p3*)
-    {
+	classfunc3(p1, p2 := 5, p3*)
+	{
 		temp := p1 + p2
 
-		for n in p3
+		if (p3 != unset)
 		{
-			temp += p3[A_Index]
+			for n in p3
+			{
+				temp += p3[A_Index]
+			}
 		}
 	
 		program.a := temp
-    }
+		return temp
+	}
+
+	classfuncimplicit(*)
+	{
+		temp := 0
+
+		for n in args
+		{
+			temp += args[A_Index]
+		}
+
+		program.a := temp
+		return temp
+	}
 }
 
 a := ""
+arr := [1, 2, 3]
 class2obj := myclass2()
 class2obj.classfunc0
 
 if (a == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+val := class2obj.classfunc0()
+
+if (val == 0 && a == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -392,9 +422,101 @@ else
 	FileAppend, "fail", "*"
 
 a := ""
+class2obj.classfunc3 1
+
+if (a == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
 class2obj.classfunc3 1, 2, 4, 5, 6
 
 if (a == 18)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+a := ""
+class2obj.classfunc3(1, 2, arr*) ; variadic spread operator can't be used with command style because it's mistaken for a multiplication with the next line.
+
+if (a == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := class2obj.classfuncimplicit()
+
+if (val == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("classfunc0", class2obj)
+a := ""
+val := fo()
+
+if (val == 0 && a == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("classfunc1", class2obj)
+a := ""
+val := fo(123)
+
+if (val == 123 && a == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("classfunc2", class2obj)
+a := ""
+val := fo(123)
+
+if (val == 128 && a == 128)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("classfunc3", class2obj)
+a := ""
+val := fo(1)
+
+if (val == 6 && a == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+val := fo(1, 2, 4, 5, 6)
+
+if (val == 18 && a == 18)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := FuncObj("classfuncimplicit", class2obj)
+a := ""
+val := fo()
+
+if (val == 0 && a == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+val := fo(1, 2, 4, 5, 6)
+
+if (val == 18 && a == 18)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := ""
+val := fo(arr*)
+
+if (val == 6 && a == 6)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

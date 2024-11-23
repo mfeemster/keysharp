@@ -215,6 +215,19 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		h := d
 	}
 ```
+* The parameter name for the variadic `__New()` method in classes is always `args` unless otherwise specified.
+```
+class class1
+{
+	__New() ; args is implicit.
+	{
+		for n in args
+		{
+			; Do something.
+		}
+	}
+}
+```
 * The `#Requires` directive differs in the following ways:
 	+ In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
 	+ Sub versions such as -alpha and -beta are not supported. Only the four numerical values values contained in the assembly version in the form of `0.0.0.0` are supported.	

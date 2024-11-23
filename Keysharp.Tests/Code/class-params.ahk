@@ -281,3 +281,176 @@ If (val == 9)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+class class1
+{
+	sum := 0
+
+	__New()
+	{
+		global sum
+		local temp := 0
+
+		for n in args
+		{
+			temp += n
+		}
+
+		sum := temp
+	}
+}
+
+arr := [1, 2, 3]
+c1 := class1()
+
+if (c1.sum == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c1 := class1(arr*)
+
+if (c1.sum == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c1 := class1(1, arr*)
+		
+if (c1.sum == 7)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c1 := class1(1, 2, arr*)
+
+if (c1.sum == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c1 := ""
+
+class class2
+{
+	sum := 0
+
+	__New(*)
+	{
+		global sum
+		local temp := 0
+
+		for n in args
+		{
+			temp += n
+		}
+
+		sum := temp
+	}
+}
+
+c2 := class2()
+
+if (c2.sum == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c2 := class2(1, 2, 3)
+
+if (c2.sum == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c2 := class2(arr*)
+
+if (c2.sum == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+c2 := class2(1, 2, arr*)
+
+if (c2.sum == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c2 := ""
+
+class class3
+{
+	sum := 0
+
+	__New(theparams*)
+	{
+		global sum
+		local temp := 0
+
+		for n in theparams
+		{
+			temp += n
+		}
+
+		sum := temp
+	}
+}
+
+c3 := class3(1, 2, 3)
+
+if (c3.sum == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c3 := class3(arr*)
+
+if (c3.sum == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c3 := class3(1, 2, arr*)
+
+if (c3.sum == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c3 := ""
+
+class class4
+{
+	sum := 0
+
+	__New(p1, p2, theparams*)
+	{
+		global sum
+		local temp := p1 + p2
+
+		if (theparams != unset)
+		{
+			for n in theparams
+			{
+				temp += n
+			}
+		}
+
+		sum := temp
+	}
+}
+
+c4 := class4(1, 2)
+
+if (c4.sum == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+c4 := class4(1, 2, arr*)
+
+if (c4.sum == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
