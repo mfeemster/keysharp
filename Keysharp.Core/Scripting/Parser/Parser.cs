@@ -307,13 +307,13 @@ namespace Keysharp.Scripting
 			{
 				var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 				_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
-				_ = inv.Parameters.Add(new CodeSnippetExpression("UserMainCode"));
+				_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
 				_ = main.Statements.Add(new CodeExpressionStatement(inv));
 				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 			}
 			else
 			{
-				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "UserMainCode"));
+				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "_ks_UserMainCode"));
 				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", [new CodePrimitiveExpression(-2L)]));
 			}
@@ -985,7 +985,7 @@ namespace Keysharp.Scripting
 			var userMainMethod = new CodeMemberMethod()
 			{
 				Attributes = MemberAttributes.Public | MemberAttributes.Static,
-				Name = "UserMainCode",
+				Name = "_ks_UserMainCode",
 				ReturnType = objTypeRef
 			};
 

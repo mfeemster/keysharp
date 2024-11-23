@@ -89,7 +89,7 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.Variables.InitGlobalVars();
 				Keysharp.Scripting.Script.SetName(name);
 
-				if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Force))
+				if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
 				{
 					return 0;
 				}
@@ -97,7 +97,7 @@ namespace Keysharp.CompiledMain
 				Keysharp.Core.Env.HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
 				Keysharp.Scripting.Script.SetReady();
-				UserMainCode();
+				_ks_UserMainCode();
 				Keysharp.Scripting.Script.WaitThreads();
 				Keysharp.Core.Flow.Sleep(-2);
 				Keysharp.Core.Flow.ExitApp(0);
@@ -107,9 +107,9 @@ namespace Keysharp.CompiledMain
 			{
 				if (ErrorOccurred(kserr))
 				{
-					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 				}
 
 				Keysharp.Core.Flow.ExitApp(1);
@@ -123,16 +123,16 @@ namespace Keysharp.CompiledMain
 				{
 					if (ErrorOccurred(kserr))
 					{
-						var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-						Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+						Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 					}
 				}
 				else
 				{
-					var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 				}
 
 				;
@@ -145,11 +145,11 @@ namespace Keysharp.CompiledMain
 
 		public static object x;
 
-		public static object UserMainCode()
+		public static object _ks_UserMainCode()
 		{
-			var (__pushed, __btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+			var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 			x = 123L;
-			Keysharp.Core.Common.Threading.Threads.EndThread(__pushed);
+			Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 			return "";
 		}
 	}
