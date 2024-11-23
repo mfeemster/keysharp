@@ -67,18 +67,14 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ This can be done by passing the name of the desired function as a string, and optionally an object and a parameter count like so:
 		+ `Func("functionName" [, object, paramCount])`.
 	+ Each call to these functions returns a new unique function object. For a given function, it's best to create one object and reference that throughout the script.
-	+ For functions which take a function object as a parameter, you can just pass the string name of the function rather than having to call `Func()` like so:
+	+ For built-in functions which take a function object as a parameter, you can just pass the string name of the function rather than having to call `Func()` like so:
 ```
-	Func1()
-	{
+	Func1() {
 	}
 	
-	FuncThatTakesFuncObj(p1)
-	{
-	}
-	
-	FuncThatTakesFuncObj("Func1") ; Just pass the name of the function.
+	SetTimer("Func1") ; Just pass the name of the function.
 ```
+* Closures are not supported. The current behaviour is that a nested function (including anonymous functions) is automatically converted to a normal top-level function.
 * Exception classes aren't, and can't be, derived from `KeysharpObject`.
 	+ That is because for the exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
@@ -155,7 +151,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
-* `ExitApp()` and Reload() will not immediately exit the script such that lines appearing after it within a function will not execute.
+* `ExitApp()` and `Reload()` will not immediately exit the script such that lines appearing after it within a function will not execute.
 	+ Instead of calling `ExitApp()/Reload()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited` like so:
 ```
 	ExitApp()
@@ -214,6 +210,13 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		g := c ; No question mark needed for c or d.
 		h := d
 	}
+```
+* The spread operator asterisk (`*`) can be used as a function argument only if the function parameter is variadic, for example:
+```
+	myfunc(a, b*) {
+	}
+	myfunc(c*) ; not allowed because `a` isn't variadic
+	myfunc(1, c*) ; allowed
 ```
 * The parameter name for the variadic `__New()` method in classes is always `args` unless otherwise specified.
 ```
