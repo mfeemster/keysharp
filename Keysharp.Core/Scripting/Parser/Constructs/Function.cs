@@ -221,7 +221,7 @@ namespace Keysharp.Scripting
 			{
 				int x;
 
-				while (i < code.Length && IsSpace(code[i])) i++;// preceeding space
+				while (i < code.Length && IsSpace(code[i])) i++;//Preceding space.
 
 				x = i;// name
 

@@ -457,7 +457,7 @@ namespace Keysharp.Scripting
 									case "HOTIF":
 										if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
 										{
-											var hotiffuncname = $"HotIf_{NextHotIfCount}";
+											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
 											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
 											extralines.Add(new CodeLine(name, lineNumber, "{"));
 											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
@@ -597,7 +597,7 @@ namespace Keysharp.Scripting
 
 							if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
 							{
-								//Comments within the quote preceeding a continuation ( are not part of the string.
+								//Comments within the quote preceding a continuation ( are not part of the string.
 								if (last == '"' || prevSpan.EndsWith(Quote) || prevSpan.EndsWith(":="))
 								{
 									if (list.Count == 0)

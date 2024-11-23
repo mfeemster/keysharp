@@ -26,9 +26,9 @@
 					CaseSense = StringComparison.CurrentCultureIgnoreCase;
 			}
 
-			SwitchVarTempName = $"ks_switchvar{switchCount}";
-			FinalLabelStatement = new CodeLabeledStatement($"ks_finallabel{switchCount}");
-			DefaultLabelStatement = new CodeLabeledStatement($"ks_defaultlabel{switchCount}");
+			SwitchVarTempName = $"_ks_switchvar{switchCount}";
+			FinalLabelStatement = new CodeLabeledStatement($"_ks_finallabel{switchCount}");
+			DefaultLabelStatement = new CodeLabeledStatement($"_ks_defaultlabel{switchCount}");
 		}
 	}
 }

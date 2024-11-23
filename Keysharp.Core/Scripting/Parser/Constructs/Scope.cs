@@ -2,7 +2,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		private string InternalID => "e" + internalID++;
+		private string InternalID => "_ks_e" + internalID++;
 
 		private string Scope => GetScope(blocks.Count);
 

@@ -109,7 +109,7 @@ namespace Keysharp.Scripting
 						return [ifelse];
 					}
 					else
-						throw new ParseException("Else with no preceeding if, try, for, loop or while block.", codeLine);
+						throw new ParseException("Else with no preceding if, try, for, loop or while block.", codeLine);
 				}
 				break;
 
@@ -145,7 +145,7 @@ namespace Keysharp.Scripting
 							var colonindex = parts[1].IndexOf(':');
 							var casearg = colonindex != -1 ? parts[1].Substring(0, colonindex) : throw new ParseException("Case not terminated with a colon.", codeLine);
 							var casearr = SplitStringBalanced(casearg, ',').Select(a => a.Trim()).ToArray();
-							var casename = $"ks_caselabel{caseCount++}";
+							var casename = $"_ks_caselabel{caseCount++}";
 							colonindex++;
 
 							if (colonindex < parts[1].Length)
@@ -195,7 +195,7 @@ namespace Keysharp.Scripting
 							throw new ParseException("Case with no argument.", codeLine);
 					}
 					else
-						throw new ParseException("Case with no preceeding switch block.", codeLine);
+						throw new ParseException("Case with no preceding switch block.", codeLine);
 				}
 				break;
 
@@ -900,7 +900,7 @@ namespace Keysharp.Scripting
 						tcf.CatchClauses.AddRange(catches);
 					}
 					else
-						throw new ParseException("Catch with no preceeding try block.", codeLine);
+						throw new ParseException("Catch with no preceding try block.", codeLine);
 				}
 				break;
 
@@ -914,7 +914,7 @@ namespace Keysharp.Scripting
 						blocks.Push(block);
 					}
 					else
-						throw new ParseException("Finally with no preceeding try block.", codeLine);
+						throw new ParseException("Finally with no preceding try block.", codeLine);
 				}
 				break;
 

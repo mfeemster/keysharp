@@ -240,6 +240,7 @@ class class1
 	+ `super.propname` refers to the property defined in the base class.
 	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
+* Auto-generated variables and functions will have the prefix `_ks_`, so to avoid naming collisions you shouldn't create variables/functions with that same prefix.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
 	+ The following options are different:
 		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.

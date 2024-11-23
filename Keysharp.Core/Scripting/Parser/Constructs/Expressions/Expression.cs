@@ -686,7 +686,7 @@ namespace Keysharp.Scripting
 						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
 						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
 						{
-							var hotiffuncname = $"HotIf_{PreReader.NextHotIfCount}";
+							var hotiffuncname = $"_ks_HotIf_{PreReader.NextHotIfCount}";
 							var hotifexpr = ParseExpression(codeLine, code, paren, false);
 							var hotifmethod = LocalMethod(hotiffuncname);
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
@@ -974,7 +974,7 @@ namespace Keysharp.Scripting
 							if (parts[assignIndex + 1] is List<object> lo)//Parens like member := (a) => a * 2
 							{
 								var funcParams = ParseFunctionParameters(string.Join("", lo), codeLine);
-								cmd.Name = $"anonfunc_{labelCount++:X}";
+								cmd.Name = $"_ks_anonfunc_{labelCount++:X}";
 
 								if (funcParams != null)
 									foreach (var fp in funcParams)
@@ -984,7 +984,7 @@ namespace Keysharp.Scripting
 							}
 							else if (parts[assignIndex + 1] is CodeVariableReferenceExpression cvre)//No parens like member := a => a * 2
 							{
-								cmd.Name = $"anonfunc_{labelCount++:X}";
+								cmd.Name = $"_ks_anonfunc_{labelCount++:X}";
 
 								if (parts[assignIndex + 2] as string == "*")//Account for member4 := a* => (a[1] + a[2]) * 2
 								{
@@ -1003,7 +1003,7 @@ namespace Keysharp.Scripting
 							if (parts[0] is List<object> lo)
 							{
 								var funcParams = ParseFunctionParameters(string.Join("", lo), codeLine);
-								cmd.Name = $"anonfunc_{labelCount++:X}";
+								cmd.Name = $"_ks_anonfunc_{labelCount++:X}";
 
 								if (funcParams != null)
 									foreach (var fp in funcParams)
