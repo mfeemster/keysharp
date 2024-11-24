@@ -56,7 +56,7 @@
 	/// <summary>
 	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
 	/// </summary>
-	public class Map : KeysharpObject, IEnumerable<(object, object)>, ICollection
+	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
 		/// <summary>
 		/// The underlying <see cref="Dictionary"/> that holds the values.
@@ -135,8 +135,12 @@
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element
 		/// </summary>
+		/// <param name="count">The number of items each element should contain:<br/>
+		///     1: Return the key in the first element, with the second being null.<br/>
+		///     2: Return the key in the first element, and the value in the second.
+		/// </param>
 		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
+		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -234,7 +238,7 @@
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="MapKeyValueIterator"/>.</returns>
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map);
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map, 2);
 
 		/// <summary>
 		/// Returns true if the specified key has an associated value within a map, otherwise false.
@@ -497,7 +501,7 @@
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum();
+		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -578,6 +582,13 @@
 	internal class MapKeyValueIterator : IEnumerator<(object, object)>
 	{
 		/// <summary>
+		/// The number of items to return for each iteration. Allowed values are 1 and 2:
+		/// 1: return just the key in the first position
+		/// 2: return the key in the first position and the value in the second.
+		/// </summary>
+		private readonly int count;
+
+		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
 		private readonly Dictionary<object, object> map;
@@ -597,7 +608,11 @@
 				try
 				{
 					var kv = iter.Current;
-					return (kv.Key, kv.Value);
+
+					if (count == 1)
+						return (kv.Key, null);
+					else
+						return (kv.Key, kv.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -615,8 +630,10 @@
 		/// Initializes a new instance of the <see cref="MapKeyValueIterator"/> class.
 		/// </summary>
 		/// <param name="m">The <see cref="Dictionary{object,object}"/> to iterate over.</param>
-		public MapKeyValueIterator(Dictionary<object, object> m)
+		/// <param name="c">The number of items to return for each iteration.</param>
+		public MapKeyValueIterator(Dictionary<object, object> m, int c)
 		{
+			count = c;
 			map = m;
 			iter = map.GetEnumerator();
 		}

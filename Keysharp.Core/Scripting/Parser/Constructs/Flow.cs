@@ -364,9 +364,10 @@ namespace Keysharp.Scripting
 
 						var varlist = new List<string>(varsplits.Count);
 						var enumlist = new List<string>(varsplits.Count);
+						var varCount = varsplits.Count;
 
-						if (varsplits.Count == 1)//If only one present, use second because it's the value, instead of the index/key.
-							varsplits.Insert(0, "");
+						if (varCount == 1)//If only one present, use the first because it's the value for arrays and keys for maps.
+							varsplits.Add("");
 
 						//If only one is present, it actually means discard the first one, and use the second.
 						//So in the case of a map, it would mean get the values, not the key.
@@ -394,11 +395,14 @@ namespace Keysharp.Scripting
 								varlist.Add(split?.Length == 0 ? "_" : split);
 						}
 
+						while (varlist.Count < 2)
+							varlist.Add("_");
+
 						var col = Ch.CodeToString(expr);
 						var vars = string.Join(',', varlist);
 						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
-						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid})"));
+						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varCount})"));
 						_ = parent.Add(new CodeSnippetExpression("{"));
 						_ = parent.Add(coldecl);
 						_ = parent.Add(iterdecl);

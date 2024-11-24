@@ -1127,7 +1127,7 @@ FindSecondGuiEdit() {
 }
 
 EnumCtrls() {
-	For GuiCtrlObj in MyGui {
+	For ,GuiCtrlObj in MyGui {
 		theNN := ControlGetClassNN(GuiCtrlObj, MyGui)
 		theMsg.= "Control #" A_Index " is " theNN "`n"
 	}

@@ -2,7 +2,7 @@
 
 namespace Keysharp.Core
 {
-	public class Gui : KeysharpObject, IEnumerable<(object, object)>
+	public class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
 		public TabPage CurrentTab;
 		public KeysharpForm form;
@@ -328,7 +328,7 @@ namespace Keysharp.Core
 				Script.HwndLastUsed = Hwnd;
 		}
 
-		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
+		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
 
 		public object __New(params object[] obj)
 		{
@@ -1494,7 +1494,7 @@ namespace Keysharp.Core
 
 		public void GetClientPos(ref object x, ref object y, ref object width, ref object height) => GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls);
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls, 2);
 
 		public void GetPos(ref object x, ref object y, ref object width, ref object height) => GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 
@@ -1824,7 +1824,7 @@ namespace Keysharp.Core
 		{
 			var hide = obj.Ab(true);
 			var panels = new HashSet<Panel>();
-			var ctrls = form.Controls.Flatten();
+			var ctrls = form.Controls.Flatten(true);
 			var dkt = new Dictionary<object, object>();
 
 			foreach (Control control in form.Controls)
@@ -1895,7 +1895,7 @@ namespace Keysharp.Core
 				LastContainer = form;
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() => __Enum();
+		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
 
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
 
