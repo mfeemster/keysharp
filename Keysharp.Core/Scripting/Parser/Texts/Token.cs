@@ -537,7 +537,7 @@ namespace Keysharp.Scripting
 					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
 				return false;
 
-			return (dynamic && token.Contains(Resolve)) || string.Compare(token, "this", StringComparison.OrdinalIgnoreCase) == 0 || Ch.IsValidIdentifier(token);
+			return (dynamic && token.Contains(Resolve)) || string.Compare(token, "this", StringComparison.OrdinalIgnoreCase) == 0 || Ch.IsValidIdentifier(token) || Ch.IsValidIdentifier($"@token");
 		}
 
 		internal bool IsLegacyIf(string code)
