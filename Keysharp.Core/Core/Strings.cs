@@ -1079,13 +1079,13 @@ namespace Keysharp.Core
 				if (delimiters is string d)
 					del = d;
 				else if (delimiters is IList il)
-					foreach (var id in il.Flatten())
+					foreach (var id in il.Flatten(false))
 						del += id.ToString();
 
 				if (omitChars is string t)
 					trim = t;
 				else if (omitChars is IList il)
-					foreach (var id in il.Flatten())
+					foreach (var id in il.Flatten(false))
 						trim += id.ToString();
 
 				if (del.Length == 0)

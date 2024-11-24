@@ -30,7 +30,7 @@
 			if (!Flow.AllowInterruption)
 				return false;
 
-			if (Script.totalExistingThreads == 0)//Before UserMainCode() starts to run.
+			if (Script.totalExistingThreads == 0)//Before _ks_UserMainCode() starts to run.
 				return true;
 
 			var tv = GetThreadVariables();

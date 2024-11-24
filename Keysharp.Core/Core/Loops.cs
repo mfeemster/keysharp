@@ -414,27 +414,31 @@ namespace Keysharp.Core
 		/// in the generated C# code.
 		/// </summary>
 		/// <param name="obj">The object to get the enumerator for.</param>
+		/// <param name="obj">The number of items the enumerator should return, 1 or 2.</param>
 		/// <returns>An <see cref="IEnumerator{object,object}"/> for the object.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is null or is not any of:<br/>
 		///     <see cref="IEnumerable{object,object}"/><br/>
 		///     <see cref="IEnumerator{object,object}"/><br/>
+		///     <see cref="I__Enum"/><br/>
 		///     <see cref="object[]"/><br/>
 		///     <see cref="IEnumerable"/><br/>
 		/// </exception>
-		public static IEnumerator<(object, object)> MakeEnumerator(object obj)
+		public static IEnumerator<(object, object)> MakeEnumerator(object obj, object count)
 		{
-			if (obj is IEnumerable<(object, object)> ie0)
+			if (obj is I__Enum ienum)
+				return ienum.__Enum(count.Ai());
+			else if (obj is object[] oa)
+				return new Array(oa).__Enum(count.Ai());
+			else if (obj is IEnumerable<(object, object)> ie0)
 				return ie0.GetEnumerator();
 			else if (obj is IEnumerator<(object, object)> ie1)
 				return ie1;
-			else if (obj is object[] oa)
-				return new Array(oa).GetEnumerator();
 			else if (obj is IEnumerable ie)
 				return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
 			else if (obj is null)
-				throw new Error($"Object was null and could not be converted to an IEnumerator<object, objecT>.");
+				throw new Error($"Object was null and could not be converted to an IEnumerator<object, object>.");
 			else
-				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, objecT>.");
+				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, object>.");
 		}
 
 		/// <summary>

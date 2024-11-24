@@ -844,3 +844,12 @@ if (total == 28 && arr2.Length == 13)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+a := [1,2,3]
+b := a.__Enum(1)
+c := [b*]
+
+if (c[2] == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

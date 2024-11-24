@@ -33,7 +33,7 @@ namespace Keysharp.Benchmark
 		{
 			var total = 0.0;
 			var e0 = keysharparray;
-			var e2 = MakeEnumerator(e0);
+			var e2 = MakeEnumerator(e0, 2);
 			_ = Push();
 
 			for (

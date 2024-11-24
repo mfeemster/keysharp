@@ -173,7 +173,7 @@ x := 0
 for (i in m)
 	x += i
 	
-if (x == 60)
+if (x == 6)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
