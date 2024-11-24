@@ -20,8 +20,7 @@ else
 
 z := ""
 
-switch x
-{
+switch x {
 	case 3:
 		z := 3
 	case 2:
@@ -52,8 +51,7 @@ else
 	
 z := ""
 
-switch x
-{
+switch x	{
 	default:
 		z := 1
 }
@@ -97,8 +95,7 @@ else
 x := "Tester"
 z := ""
 
-switch x, 1
-{
+switch x, 1 {
 	case "mismatch":
 		z := 3
 	case "notthis":
@@ -170,8 +167,7 @@ x := 1
 z := ""
 y := ""
 
-switch
-{
+switch {
 	case "":
 		z := 3
 	case y:
@@ -250,8 +246,7 @@ x := 3
 y := 4
 z := 0
 
-switch func(x, y)
-{   
+switch func(x, y) {   
     case 1, 2, func(3, 4): z := 1
 	default: z := 2
 }
@@ -275,8 +270,7 @@ x := 3
 y := 4
 z := 0
 
-switch myclassobj.func(x, y)
-{   
+switch myclassobj.func(x, y) {   
     case 1, 2, myclassobj.func(3, 4): z := 1
 	default: z := 2
 }

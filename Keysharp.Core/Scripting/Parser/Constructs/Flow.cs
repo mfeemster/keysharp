@@ -117,13 +117,18 @@ namespace Keysharp.Scripting
 				{
 					var snip = new CodeSnippetStatement();
 					var switchargs = new List<string>() { "" };
+					var lastPart = parts.Last();
+					var otb = lastPart.EndsWith('{');
+
+					if (otb)
+						parts[parts.Length - 1] = lastPart.TrimEnd(SpaceTabOpenBrace);
 
 					if (parts.Length > 1)
 						switchargs = SplitStringBalanced(parts[1], ',');
 
-					var switchvar = switchargs[0];
+					var switchvar = switchargs.Count > 0 ? switchargs[0] : "";
 					var cse = new CodeSwitchStatement(switchvar, switchargs.Count > 1 ? switchargs[1].Trim() : null, switchCount++);
-					var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
+					var type = otb ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 					var block = new CodeBlock(codeLine, Scope, cse.AllStatements, CodeBlock.BlockKind.Switch, blocks.PeekOrNull()) { Type = type };
 					_ = CloseTopSingleBlock();
 					blocks.Push(block);
