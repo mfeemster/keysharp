@@ -357,9 +357,10 @@
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-			//Parser.Persistent = true;
-			mainWindowGui = new Gui(null, null, null, mainWindow);
+            //Parser.Persistent = true;
+            mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
+			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				Flow.TryCatch(() =>
