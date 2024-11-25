@@ -191,3 +191,44 @@ if (x == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+evalfunc(p1)
+{
+	return p1
+}
+
+val := evalfunc(0 || 2)
+
+if (val == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := evalfunc(x := 0 || 2)
+
+if (val == 2 && x == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if ((0 || 2) == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if ((x := 0 || 2) == 2 && x == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := evalfunc(x := "" || false || 0 || unset || 123)
+
+if (val == 123 && x == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (("" || false || 0 || unset || 123) == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
