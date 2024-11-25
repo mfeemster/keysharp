@@ -20,7 +20,7 @@ namespace Keysharp.Scripting
 						assignSnippets.Add(cse);
 						return cse;
 					}
-					else
+					else//Unsure if this is even needed anymore.
 					{
 						var c2s = Ch.CodeToString(cboe);
 						var cse = new CodeSnippetExpression($"_ = ({c2s})");
@@ -714,7 +714,11 @@ namespace Keysharp.Scripting
 									tempCode = codeStrings[i1];
 									var argExpr = ParseExpression(codeLine, tempCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
 
-									if (argExpr.WasCboe() is CodeBinaryOperatorExpression cboe)
+									//If an assignment was passed to a function, separate it out like so:
+									//MsgBox(x := 123) ; becomes...
+									//x := 123
+									//MsgBox(x)
+									if (argExpr.WasCboe() is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign)
 									{
 										_ = parent.Add(argExpr);
 										argExpr = cboe.Left;
@@ -1523,7 +1527,7 @@ namespace Keysharp.Scripting
 										 (sop == Script.Operator.BooleanAnd || sop == Script.Operator.BooleanOr))//z := (x && y)
 									parts[x] = new CodeMethodInvokeExpression(boolean, "ParseObject");
 								else
-									parts[x] = BinOpToSnippet(boolean);
+									parts[x] = new CodeMethodInvokeExpression(BinOpToSnippet(boolean), "ParseObject");
 							}
 							else
 							{

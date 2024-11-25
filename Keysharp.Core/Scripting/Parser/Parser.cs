@@ -483,12 +483,12 @@ namespace Keysharp.Scripting
 								//When __New() is declared with an anonymous variadic parameter like __New(*),
 								//then the parameter will be named args, so don't declare another variable by the same name.
 								if (method.Parameters[0].Name != "args")
-									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[0].Name} = args")));
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {name = Ch.CreateEscapedIdentifier(method.Parameters[0].Name)} = args")));
 							}
 							else
 							{
 								for (var i = method.Parameters.Count - 1; i >= 0; i--)
-									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[i].Name} = args.Length > {i} ? args[{i}] : null")));
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {Ch.CreateEscapedIdentifier(method.Parameters[i].Name)} = args.Length > {i} ? args[{i}] : null")));
 							}
 
 							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
@@ -593,7 +593,7 @@ namespace Keysharp.Scripting
 					//The lines relating to args and __New() work whether any params were declared or not.
 					if (thisconstructor != null)
 					{
-						var ctorParams = origNewParams.Select(p => p.Name).ToArray();
+						var ctorParams = origNewParams.Select(p => Ch.CreateEscapedIdentifier(p.Name)).ToArray();
 						var newparamnames = string.Join(", ", ctorParams);
 
 						//First call Init() in the constructor if it was derived from a built-in type.
@@ -1021,6 +1021,7 @@ namespace Keysharp.Scripting
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
+							name = Ch.CreateEscapedIdentifier(name);
 							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
@@ -1044,6 +1045,7 @@ namespace Keysharp.Scripting
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
+							name = Ch.CreateEscapedIdentifier(name);
 							var isstatic = globalvar.Value.UserData.Contains("isstatic");
 							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							//If the property existed in a base class and is a simple assignment in this class, then assume

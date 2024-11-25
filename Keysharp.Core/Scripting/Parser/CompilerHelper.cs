@@ -385,6 +385,8 @@ using static Keysharp.Scripting.Script;
 			}
 		}
 
+		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
+
 		internal object EvaluateCode(string code)
 		{
 			var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);

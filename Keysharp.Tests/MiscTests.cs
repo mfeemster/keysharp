@@ -186,6 +186,9 @@ namespace Keysharp.Tests
 		public void MiscSyntax() => Assert.IsTrue(TestScript("misc-syntax", false));
 
 		[Test, Category("Misc"), NonParallelizable]
+		public void MiscReserved() => Assert.IsTrue(TestScript("misc-reserved", false));
+
+		[Test, Category("Misc"), NonParallelizable]
 		public void MiscTimer() => Assert.IsTrue(TestScript("misc-timer", false));
 
 		[Test, Category("Misc"), NonParallelizable]
