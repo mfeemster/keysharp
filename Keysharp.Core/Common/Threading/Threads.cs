@@ -11,10 +11,11 @@
 			return PushThreadVariables(0, skip, false, onlyIfEmpty);
 		}
 
-		public static void EndThread(bool pushed, bool checkThread = false)
+		public static object EndThread(bool pushed, bool checkThread = false)
 		{
 			PopThreadVariables(pushed, checkThread);
 			_ = Interlocked.Decrement(ref Script.totalExistingThreads);
+			return null;
 		}
 
 		[PublicForTestOnly]

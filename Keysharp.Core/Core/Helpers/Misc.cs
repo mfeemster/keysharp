@@ -10,7 +10,11 @@ namespace Keysharp.Core
 		/// Calls GC.Collect().
 		/// According to .NET design guidelines, this should never be necessary.
 		/// </summary>
-		public static void Collect() => GC.Collect();
+		public static object Collect()
+		{
+			GC.Collect();
+			return null;
+		}
 
 		/// <summary>
 		/// Used by the parser to generate code to handle reference arguments to method calls on objects.

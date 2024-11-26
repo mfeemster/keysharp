@@ -69,7 +69,7 @@
 		/// </summary>
 		/// <param name="obj">Ignored</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static void ObjSetBase(params object[] obj) => throw new Error(Any.BaseExc);
+		public static object ObjSetBase(params object[] obj) => throw new Error(Any.BaseExc);
 
 		/// <summary>
 		/// Unsupported.

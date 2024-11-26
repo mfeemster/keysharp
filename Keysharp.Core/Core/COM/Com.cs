@@ -119,7 +119,7 @@ namespace Keysharp.Core.COM
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
-		public static void ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
+		public static object ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
 		{
 			if (comObj is ComObject co)
 			{
@@ -139,6 +139,8 @@ namespace Keysharp.Core.COM
 				if (prefixOrSink != null)//obj1 not being null means add it.
 					_ = comEvents.Add(new ComEvent(new Dispatcher(co), prefixOrSink, debug != null ? debug.Ab() : false));
 			}
+
+			return null;
 		}
 
 		public static object ComObject(object clsid, object iid = null)//progId, string iid)

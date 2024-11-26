@@ -51,7 +51,11 @@ namespace Keysharp.Core
 		/// Frees the specified callback by internally setting it to null.
 		/// </summary>
 		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
-		public static void CallbackFree(object address) => (address as DelegateHolder)?.Clear();
+		public static object CallbackFree(object address)
+		{
+			(address as DelegateHolder)?.Clear();
+			return null;
+		}
 
 		/// <summary>
 		/// Calls a function inside a DLL, such as a standard Windows API function.

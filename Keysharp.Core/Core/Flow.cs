@@ -130,13 +130,14 @@ namespace Keysharp.Core
 		/// clause that wraps all threads.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void Exit(object exitCode = null)
+		public static object Exit(object exitCode = null)
 		{
 			Accessors.A_ExitReason = exitCode.Al();
 			throw new Error("Exiting thread")
 			{
 				ExcType = Keywords.Keyword_Return
 			};
+			//return null;
 		}
 
 		/// <summary>
@@ -146,7 +147,7 @@ namespace Keysharp.Core
 		/// <param name="exitCode">If omitted, it defaults to 0 (zero is traditionally used to indicate success).<br/>
 		/// Otherwise, specify an integer between -2147483648 and 2147483647 that is returned to its caller when the script exits.<br/>
 		/// This code is accessible to any program that spawned the script, such as another script (via RunWait) or a batch (.bat) file.</param>
-		public static void ExitApp(object exitCode = null)
+		public static object ExitApp(object exitCode = null)
 		{
 			Script.mainWindow.CheckedInvoke(() =>
 			{
@@ -155,7 +156,9 @@ namespace Keysharp.Core
 			var start = DateTime.Now;
 
 			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
-				Sleep(500);
+				_ = Sleep(500);
+
+			return null;
 		}
 
 		/// <summary>
@@ -163,9 +166,10 @@ namespace Keysharp.Core
 		/// This is used internally and is only public so tests can access it.
 		/// </summary>
 		[PublicForTestOnly]
-		public static void Init()
+		public static object Init()
 		{
 			hasExited = false;
+			return null;
 		}
 
 		/// <summary>
@@ -189,7 +193,11 @@ namespace Keysharp.Core
 		///    -1: Call the callback before any previously registered callbacks.<br/>
 		///     0: Remove the callback if it was already contained in the list.
 		/// </param>
-		public static void OnExit(object callback, object addRemove = null) => Script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
+		public static object OnExit(object callback, object addRemove = null)
+		{
+			Script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
+			return null;
+		}
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever the script receives the specified message.
@@ -205,7 +213,7 @@ namespace Keysharp.Core
 		/// <param name="maxThreads">If omitted, it defaults to 1, meaning the callback is limited to one thread at a time.<br/>
 		/// This is usually best because otherwise, the script would process messages out of chronological order whenever the callback interrupts itself.
 		/// </param>
-		public static void OnMessage(object msgNumber, object callback, object maxThreads = null)
+		public static object OnMessage(object msgNumber, object callback, object maxThreads = null)
 		{
 			var msg = msgNumber.Al();
 			var mt = maxThreads.Al(1);
@@ -220,6 +228,8 @@ namespace Keysharp.Core
 
 			if (mt == 0 && monitor.funcs.Count == 0)
 				_ = GuiHelper.onMessageHandlers.TryRemove(msg, out var _);
+
+			return null;
 		}
 
 		/// <summary>
@@ -242,7 +252,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Replaces the currently running instance of the program with a new one.
 		/// </summary>
-		public static void Reload()
+		public static object Reload()
 		{
 			//Just calling Application.Restart will trigger ExitAppInternal().
 			//So it doesn't need to be called directly. Further, it will cause problems if called
@@ -256,6 +266,8 @@ namespace Keysharp.Core
 
 			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 				Sleep(500);
+
+			return null;
 		}
 
 
@@ -281,7 +293,7 @@ namespace Keysharp.Core
 		/// To change the priority of an existing timer without affecting it in any other way, omit Period.
 		/// </param>
 		/// <exception cref="TypeError"></exception>
-		public static void SetTimer(object function = null, object period = null, object priority = null)
+		public static object SetTimer(object function = null, object period = null, object priority = null)
 		{
 			var f = function;
 			var p = period.Al(long.MaxValue);
@@ -329,7 +341,7 @@ namespace Keysharp.Core
 
 					timer.Stop();
 					timer.Dispose();
-					return;
+					return null;
 				}
 				else
 				{
@@ -348,7 +360,7 @@ namespace Keysharp.Core
 					else
 						timer.Interval = (int)p;
 
-					return;
+					return null;
 				}
 			}
 			else if (p != 0)
@@ -361,7 +373,7 @@ namespace Keysharp.Core
 				timer.Interval = (int)p;
 			}
 			else//They tried to stop a timer that didn't exist
-				return;
+				return null;
 
 			timer.Tick += (ss, ee) =>
 			{
@@ -402,13 +414,14 @@ namespace Keysharp.Core
 				}
 			};
 			Script.mainWindow.CheckedInvoke(timer.Start, true);
+			return null;
 		}
 
 		/// <summary>
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
 		/// <param name="delay">The amount of time to pause in milliseconds.</param>
-		public static void Sleep(object delay = null)
+		public static object Sleep(object delay = null)
 		{
 			var d = delay.Al(-1L);
 
@@ -462,6 +475,8 @@ namespace Keysharp.Core
 					System.Threading.Thread.Sleep(10);
 				}
 			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -473,13 +488,15 @@ namespace Keysharp.Core
 		///     0: Re-enables the hotkeys and hotstrings that were disable above.<br/>
 		///    -1: Changes to the opposite of its previous state (On or Off).
 		/// </param>
-		public static void Suspend(object newState)
+		public static object Suspend(object newState)
 		{
 			var state = Conversions.ConvertOnOffToggle(newState.As());
 			Suspended = state == ToggleValueType.Toggle ? !Suspended : (state == ToggleValueType.On);
 
 			if (!(bool)Accessors.A_IconFrozen && !Script.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
+
+			return null;
 		}
 
 		/// <summary>
@@ -496,7 +513,7 @@ namespace Keysharp.Core
 		///     Priority: The thread priority as an integer in the range -2147483648 and 2147483647.<br/>
 		///     Interrupt: The time in milliseconds that each newly launched thread is uninterruptible. Default: 17.
 		/// </param>
-		public static void Thread(object subFunction, object value1 = null)
+		public static object Thread(object subFunction, object value1 = null)
 		{
 			var sf = subFunction.As();
 
@@ -506,6 +523,8 @@ namespace Keysharp.Core
 				Threads.GetThreadVariables().priority = value1.Al();
 			else if (string.Compare(sf, "interrupt", true) == 0)
 				Script.uninterruptibleTime = value1.Ai(Script.uninterruptibleTime);
+
+			return null;
 		}
 
 		/// <summary>

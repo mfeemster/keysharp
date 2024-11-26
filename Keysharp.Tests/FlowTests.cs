@@ -188,6 +188,9 @@ namespace Keysharp.Tests
 		[Test, Category("Flow"), NonParallelizable]
 		public void FlowRealThreads() => Assert.IsTrue(TestScript("flow-realthreads", false));
 
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowMultiStatement() => Assert.IsTrue(TestScript("flow-multi-statement", false));
+
 		//Collections tests already test foreach in C#, so just test the script here.
 		[Test, Category("Flow")]
 		public void FlowUntil() => Assert.IsTrue(TestScript("flow-until", true));

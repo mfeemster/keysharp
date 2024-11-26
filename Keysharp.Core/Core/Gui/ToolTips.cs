@@ -158,13 +158,13 @@
 			return "";
 		}
 
-		public static void TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
+		public static object TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var filename = obj0.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(obj1);
 
 			if (Script.NoTrayIcon)
-				return;
+				return null;
 
 			if (obj2 != null)
 				Accessors.A_IconFrozen = obj2.Ab();
@@ -212,19 +212,21 @@
 					Script.Tray.Icon = Script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
 				}, false, false);
 			}
+
+			return null;
 		}
 
-		public static void TrayTip(object obj0 = null, object obj1 = null, object obj2 = null)
+		public static object TrayTip(object obj0 = null, object obj1 = null, object obj2 = null)
 		{
 			var text = obj0.As();
 			var title = obj1.As();
 			var options = obj2;
 
 			if (Script.NoTrayIcon)
-				return;
+				return null;
 
 			if ((bool)Accessors.A_IconHidden)
-				return;
+				return null;
 
 			if (Script.Tray == null)
 				Script.CreateTrayMenu();
@@ -241,7 +243,7 @@
 			{
 				Script.Tray.Visible = false;
 				Script.Tray.Visible = true;
-				return;
+				return null;
 			}
 
 			var icon = ToolTipIcon.None;
@@ -276,6 +278,7 @@
 
 			Script.Tray.Visible = true;
 			Script.Tray.ShowBalloonTip(1000, title, text, icon);//Duration is now ignored by Windows.
+			return null;
 		}
 	}
 }

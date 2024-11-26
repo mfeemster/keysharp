@@ -429,6 +429,8 @@ namespace Keysharp.Scripting
 
 		public static object OperateTernary(bool result, ExpressionDelegate x, ExpressionDelegate y) => result ? x() : y();
 
+		public static object MultiStatement(params object[] args) => args[ ^ 1];
+
 		public static object OperateUnary(Operator op, object right)
 		{
 			switch (op)

@@ -130,7 +130,10 @@
 		{
 			try
 			{
-				Clipboard.SetText(fullCode);
+				if (fullCode != "")
+					Clipboard.SetText(fullCode);
+				else
+					Clipboard.SetText(txtOut.Text);
 			}
 			catch (Exception ex)
 			{

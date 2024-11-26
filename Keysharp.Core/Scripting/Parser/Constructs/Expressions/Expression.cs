@@ -447,8 +447,34 @@ namespace Keysharp.Scripting
 							}
 							else
 							{
+								//This will be totally wrong because any CodeDOM object will try to get converted to a string which is meaningless in the context of parsing.
+								//But it still works because it's not used whenever it's wrong, only when it's right.
 								var tempCode = TokensToCode(paren);
-								parts[i] = ParseExpression(codeLine, tempCode, paren, create);
+
+								//This was done in an attempt to get multi-expressions working. It seems like brittle logic,
+								//but it appears to be working. Revisit and/or remove if it starts causing problems in other areas.
+								if (paren.All(p => p is string))//Only if all of paren is still strings and hasn't been parsed yet do we want to treat it as a multi-expression.
+								{
+									//It's important to only use ParseMultiExpressionWithoutTokenizing() and not any of the ParseMultiExpression()
+									//overloads because the later has parsing problems with quotes inside of strings.
+									var tempExprs = ParseMultiExpressionWithoutTokenizing(codeLine, tempCode, paren.ToArray(), create);
+
+									if (tempExprs.Length == 1)
+									{
+										parts[i] = tempExprs[0].Expression;
+									}
+									else
+									{
+										var invoke = (CodeMethodInvokeExpression)InternalMethods.MultiStatement;
+
+										foreach (var expr in tempExprs)
+											_ = invoke.Parameters.Add(expr.Expression);
+
+										parts[i] = invoke;
+									}
+								}
+								else
+									parts[i] = ParseExpression(codeLine, tempCode, paren, create);
 							}
 						}
 					}
@@ -1740,6 +1766,18 @@ namespace Keysharp.Scripting
 					statements[i] = new CodeExpressionStatement(result[i]);
 			}
 
+			/*
+			            if (statements.Length > 1)
+			            {
+			                var exprStatements = new List<CodeExpressionStatement>(statements.Length);
+			                var invoke = (CodeMethodInvokeExpression)InternalMethods.MultiStatement;
+
+			                foreach (var statement in statements)
+			                    _ = invoke.Parameters.Add(statement.Expression);
+
+			                statements = exprStatements.ToArray();
+			            }
+			*/
 			return statements;
 		}
 
