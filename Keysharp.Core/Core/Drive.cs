@@ -16,7 +16,11 @@ namespace Keysharp.Core
 		/// In this case the drive is not required to be assigned a drive letter.
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
-		public static void DriveEject(object drive = null) => DriveHelper(drive.As(), true);
+		public static object DriveEject(object drive = null)
+		{
+			DriveHelper(drive.As(), true);
+			return null;
+		}
 
 		/// <summary>
 		/// Returns the total capacity of the drive which contains the specified path, in megabytes.
@@ -182,7 +186,11 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
-		public static void DriveLock(object drive) => DriveProvider.CreateDrive(new DriveInfo(drive.As())).Lock();
+		public static object DriveLock(object drive)
+		{
+			DriveProvider.CreateDrive(new DriveInfo(drive.As())).Lock();
+			return null;
+		}
 
 		/// <summary>
 		/// Retracts the tray of the specified CD/DVD drive.
@@ -194,7 +202,11 @@ namespace Keysharp.Core
 		/// In this case the drive is not required to be assigned a drive letter.
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
-		public static void DriveRetract(object drive) => DriveHelper(drive.As(), false);
+		public static object DriveRetract(object drive)
+		{
+			DriveHelper(drive.As(), false);
+			return null;
+		}
 #if WINDOWS
 		/// <summary>
 		/// Changes the volume label of the specified drive.<br/>
@@ -203,12 +215,13 @@ namespace Keysharp.Core
 		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
 		/// <param name="newLabel">If omitted, the drive will have no label. Otherwise, specify the new label to set.</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
-		public static void DriveSetLabel(object drive, object newLabel = null)
+		public static object DriveSetLabel(object drive, object newLabel = null)
 		{
 			var label = newLabel.As();
 			var di = new DriveInfo(drive.As());
 			var d = DriveProvider.CreateDrive(di);
 			d.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
+			return null;
 		}
 #endif
 		/// <summary>
@@ -216,7 +229,11 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="drive">The drive letter followed by a colon and an optional backslash (might also work on UNC paths and mapped drives).</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
-		public static void DriveUnlock(object drive) => DriveProvider.CreateDrive(new DriveInfo(drive.As())).UnLock();
+		public static object DriveUnlock(object drive)
+		{
+			DriveProvider.CreateDrive(new DriveInfo(drive.As())).UnLock();
+			return null;
+		}
 
 		/// <summary>
 		/// Private helper to either eject or retract a removable drive.
@@ -224,7 +241,7 @@ namespace Keysharp.Core
 		/// <param name="dr">The drive to operate on.</param>
 		/// <param name="b">Eject if true, else retract..</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
-		private static void DriveHelper(string drive, bool b)
+		private static object DriveHelper(string drive, bool b)
 		{
 			DriveBase d = GetRemovableDrive(drive);
 
@@ -232,6 +249,8 @@ namespace Keysharp.Core
 				d.Eject();
 			else
 				d.Retract();
+
+			return null;
 		}
 
 		/// <summary>

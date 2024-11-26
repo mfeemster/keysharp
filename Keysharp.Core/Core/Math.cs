@@ -443,7 +443,11 @@
 		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
 		/// </summary>
 		/// <param name="obj">The numerical seed to create the random number generator with.</param>
-		public static void RandomSeed(object obj) => Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
+		public static object RandomSeed(object obj)
+		{
+			Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
+			return null;
+		}
 
 		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.

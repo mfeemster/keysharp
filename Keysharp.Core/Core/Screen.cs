@@ -113,7 +113,7 @@ namespace Keysharp.Core
 		///     specify -1 for one of the dimensions and a positive number for the other.<br/>
 		///     For example, specifying *w200 *h-1 would make the image 200 pixels wide and cause its height to be set automatically.<br/>
 		/// </param>
-		public static void ImageSearch(ref object outX, ref object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
+		public static object ImageSearch(ref object outX, ref object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
 		{
 			var _x1 = x1.Ai();
 			var _y1 = y1.Ai();
@@ -192,6 +192,8 @@ namespace Keysharp.Core
 				outX = "";
 				outY = "";
 			}
+
+			return null;
 		}
 
 		/// <summary>

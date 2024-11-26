@@ -76,13 +76,17 @@ namespace Keysharp.Core.Common.Invoke
 				flatPublicStaticMethods.TryAdd(method.Name, method);
 
 #if DEBUG
+			//var mlist = flatPublicStaticMethods.Where(kv => kv.Value.ReturnType == typeof(void)).Select(kv => kv.Key).ToList();
+			//mlist.Sort();
+			//System.IO.File.WriteAllText("methpropskeysharp.txt", string.Join("\n", mlist.Select(m => $"{flatPublicStaticMethods[m].DeclaringType}.{m}()").OrderBy(s => s)));
+			//
 			//var mlist = flatPublicStaticMethods.Keys.ToList();
 			//mlist.Sort();
 			//var plist = flatPublicStaticProperties.Keys.ToList();
 			//plist.Sort();
 			//System.IO.File.WriteAllText("methpropskeysharp.txt", string.Join("\n", mlist.Select(m => $"{flatPublicStaticMethods[m].DeclaringType}.{m}()").OrderBy(s => s))
-			//                          + "\n"
-			//                          + string.Join("\n", plist.Select(p => $"{flatPublicStaticProperties[p].DeclaringType}.{p}").OrderBy(s => s)));
+			//+ "\n"
+			//+ string.Join("\n", plist.Select(p => $"{flatPublicStaticProperties[p].DeclaringType}.{p}").OrderBy(s => s)));
 #endif
 		}
 

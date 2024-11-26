@@ -18,12 +18,13 @@
 		///     1/true: Overwrite existing files.However, any files or subfolders inside dest that do not have a counterpart in source will not be deleted.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
-		public static void DirCopy(object source, object dest, object overwrite = null)
+		public static object DirCopy(object source, object dest, object overwrite = null)
 		{
 			var s = Path.GetFullPath(source.As());
 			var d = Path.GetFullPath(dest.As());
 			var o = overwrite.Ab();
 			CopyDirectory(s, d, o);
+			return null;
 		}
 
 		/// <summary>
@@ -32,11 +33,12 @@
 		/// </summary>
 		/// <param name="dirName">Name of the directory to create, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
-		public static void DirCreate(object dirName)
+		public static object DirCreate(object dirName)
 		{
 			try
 			{
 				_ = Directory.CreateDirectory(dirName.As());
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -53,11 +55,12 @@
 		///     If true, all files and subdirectories are removed (like the Windows command "rmdir /S").
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
-		public static void DirDelete(object dirName, object recurse = null)
+		public static object DirDelete(object dirName, object recurse = null)
 		{
 			try
 			{
 				Directory.Delete(dirName.As(), recurse.Ab());
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -115,7 +118,7 @@
 		///         The operation will fail if dest already exists as a file or directory.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
-		public static void DirMove(object source, object dest, object overwriteOrRename = null)
+		public static object DirMove(object source, object dest, object overwriteOrRename = null)
 		{
 			var s = source.As();
 			var d = dest.As();
@@ -143,7 +146,7 @@
 				case "0":
 				default:
 					if (Directory.Exists(d))
-						return;
+						return null;
 
 					break;
 			}
@@ -158,6 +161,7 @@
 				d = Path.Combine(d, Path.GetFileName(s.TrimEnd(Path.DirectorySeparatorChar)));
 
 			MoveDirectory(s, d);
+			return null;
 		}
 
 		/// <summary>
@@ -188,61 +192,61 @@
 		/// Changes the script's current working directory.
 		/// </summary>
 		/// <param name="dirName">The name of the new working directory, which is assumed to be a subfolder of the current <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
-		public static void SetWorkingDir(object dirName) => Accessors.A_WorkingDir = dirName.As();
+		public static object SetWorkingDir(object dirName) => Accessors.A_WorkingDir = dirName.As();
 
 		/// <summary>
 		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
 		/// </summary>
-		public static void SplitPath(object obj)
+		public static object SplitPath(object obj)
 		{
 			object outFileName = null;
 			object outDir = null;
 			object outExtension = null;
 			object outNameNoExt = null;
 			object outDrive = null;
-			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
 		}
 
 		/// <summary>
 		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
 		/// </summary>
-		public static void SplitPath(object obj, ref object outFileName)
+		public static object SplitPath(object obj, ref object outFileName)
 		{
 			object outDir = null;
 			object outExtension = null;
 			object outNameNoExt = null;
 			object outDrive = null;
-			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
 		}
 
 		/// <summary>
 		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
 		/// </summary>
-		public static void SplitPath(object obj, ref object outFileName, ref object outDir)
+		public static object SplitPath(object obj, ref object outFileName, ref object outDir)
 		{
 			object outExtension = null;
 			object outNameNoExt = null;
 			object outDrive = null;
-			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
 		}
 
 		/// <summary>
 		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
 		/// </summary>
-		public static void SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension)
+		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension)
 		{
 			object outNameNoExt = null;
 			object outDrive = null;
-			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
 		}
 
 		/// <summary>
 		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
 		/// </summary>
-		public static void SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt)
+		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt)
 		{
 			object outDrive = null;
-			SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
 		}
 
 		/// <summary>
@@ -269,7 +273,7 @@
 		/// If the file is on a local or mapped drive, the variable will be set to the drive letter followed by a colon (no backslash).<br/>
 		/// If the file is on a network path (UNC), the variable will be set to the share name, e.g. \\Workstation01
 		/// </param>
-		public static void SplitPath(object path, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt, ref object outDrive)
+		public static object SplitPath(object path, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt, ref object outDrive)
 		{
 			var p = path.As();
 
@@ -331,6 +335,8 @@
 					outDrive = Path.GetPathRoot(input).TrimEnd('\\');
 				}
 			}
+
+			return null;
 		}
 
 		/// <summary>
