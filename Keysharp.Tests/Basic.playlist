@@ -621,6 +621,12 @@
                         <Property Name="DisplayName" Value="FlowWhile" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowMultiStatement" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowMultiStatement" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
