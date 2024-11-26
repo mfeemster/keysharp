@@ -8,3 +8,5 @@ global using global::System.Linq;
 global using global::System.Reflection;
 global using global::System.Text;
 global using global::System.Windows.Forms;
+global using global::System.Diagnostics;
+global using global::System.Collections.Generic;
