@@ -670,6 +670,8 @@ namespace Keysharp.Scripting
 											paramExprs.AddRange(tempexpr);
 										}
 									}
+									else
+										paramExprs.Add(nullPrimitive);
 
 									argi += tempi + 1;//Account for the comma.
 								}
