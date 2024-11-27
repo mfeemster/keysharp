@@ -357,12 +357,10 @@
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-			//Parser.Persistent = true;
-			mainWindowGui = new Gui(null, null, null, mainWindow);
-			//This combo of using Activate, the minimize, then making extra sure in the Load event handler seems to work well enough.
-			//Sometimes the form will show in the bottom left corner very quickly, but it should barely be visible to users.
-			mainWindow.WindowState = FormWindowState.Minimized;
-			mainWindow.Activate();
+            //Parser.Persistent = true;
+            mainWindowGui = new Gui(null, null, null, mainWindow);
+			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
+			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				Flow.TryCatch(() =>
@@ -376,7 +374,7 @@
 				}, true);//Pop on exception because EndThread() above won't be called.
 			});
 			Application.Run(mainWindow);
-		}
+        }
 
 		public static void SetName(string s) => scriptName = s;
 

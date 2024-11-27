@@ -77,9 +77,10 @@
 			var openfunc = new Func<object>(() =>
 			{
 				var mainWindow = Script.mainWindow;
-
-				if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
+				
+                if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
 				{
+					mainWindow.AllowShowDisplay = true;
 					mainWindow.Show();
 					mainWindow.BringToFront();
 					mainWindow.WindowState = mainWindow.lastWindowState;
