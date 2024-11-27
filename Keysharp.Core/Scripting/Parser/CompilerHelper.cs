@@ -110,9 +110,9 @@ using static Keysharp.Scripting.Script;
 		/// the main program.
 		/// </summary>
 		public static Assembly compiledasm;
-        public static byte[] compiledBytes;
+		public static byte[] compiledBytes;
 
-        private readonly CodeGeneratorOptions cgo = new CodeGeneratorOptions
+		private readonly CodeGeneratorOptions cgo = new CodeGeneratorOptions
 		{
 			IndentString = "\t",
 			VerbatimOrder = true,

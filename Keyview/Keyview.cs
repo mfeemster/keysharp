@@ -55,15 +55,15 @@
 		private bool SearchIsOpen = false;
 		private string trimmedCode = "";
 		private readonly string trimstr = "{}\t";
-        private Process scriptProcess = null;
-        private readonly Button btnRunScript = new Button();
-        private Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
-        {
-            { "Run", "▶ Run script (F9)" },
-            { "Stop", "⏹ Stop script (F9)" }
-        };
+		private Process scriptProcess = null;
+		private readonly Button btnRunScript = new Button();
+		private Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
+		{
+			{ "Run", "▶ Run script (F9)" },
+			{ "Stop", "⏹ Stop script (F9)" }
+		};
 
-        public Keyview()
+		public Keyview()
 		{
 			InitializeComponent();
 			Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
@@ -83,18 +83,17 @@
 			};
 			_ = toolStrip1.Items.Add(host);
 			Text += $" {Assembly.GetExecutingAssembly().GetName().Version}";
-
-            btnRunScript.Text = btnRunScriptText["Run"];
-            btnRunScript.Click += CopyFullCode_Click;
-            btnRunScript.Margin = new Padding(15);
-            host = new ToolStripControlHost(btnRunScript)
-            {
-                Alignment = ToolStripItemAlignment.Right
-            };
-            _ = toolStrip1.Items.Add(host);
-            btnRunScript.Enabled = false;
-            btnRunScript.Click += RunScript_Click;
-        }
+			btnRunScript.Text = btnRunScriptText["Run"];
+			btnRunScript.Click += CopyFullCode_Click;
+			btnRunScript.Margin = new Padding(15);
+			host = new ToolStripControlHost(btnRunScript)
+			{
+				Alignment = ToolStripItemAlignment.Right
+			};
+			_ = toolStrip1.Items.Add(host);
+			btnRunScript.Enabled = false;
+			btnRunScript.Click += RunScript_Click;
+		}
 
 		private static Color IntToColor(int rgb) => Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
 
@@ -278,9 +277,9 @@
 			HotKeyManager.AddHotKey(this, ZoomOut, Keys.OemMinus, true);
 			HotKeyManager.AddHotKey(this, ZoomDefault, Keys.D0, true);
 			HotKeyManager.AddHotKey(this, CloseSearch, Keys.Escape);
-            HotKeyManager.AddHotKey(this, RunStopScript, Keys.F9);
-            //Remove conflicting hotkeys from scintilla.
-            txtIn.ClearCmdKey(Keys.Control | Keys.F);
+			HotKeyManager.AddHotKey(this, RunStopScript, Keys.F9);
+			//Remove conflicting hotkeys from scintilla.
+			txtIn.ClearCmdKey(Keys.Control | Keys.F);
 			txtIn.ClearCmdKey(Keys.Control | Keys.R);
 			txtIn.ClearCmdKey(Keys.Control | Keys.H);
 			txtIn.ClearCmdKey(Keys.Control | Keys.L);
@@ -565,9 +564,9 @@
 				try
 				{
 					lastCompileTime = DateTime.Now;
-                    CompilerHelper.compiledasm = null;
-                    btnRunScript.Enabled = false;
-                    var oldIndex = txtOut.FirstVisibleLine;
+					CompilerHelper.compiledasm = null;
+					btnRunScript.Enabled = false;
+					var oldIndex = txtOut.FirstVisibleLine;
 					SetStart();
 					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
@@ -626,12 +625,11 @@
 						SetTxtOut(chkFullCode.Checked ? fullCode : trimmedCode);
 						txtOut.FirstVisibleLine = oldIndex;
 						File.WriteAllText(lastrun, txtIn.Text);
-
-                        ms.Seek(0, SeekOrigin.Begin);
-                        var arr = ms.ToArray();
-                        CompilerHelper.compiledBytes = arr;
-                        CompilerHelper.compiledasm = Assembly.Load(arr);
-                    }
+						ms.Seek(0, SeekOrigin.Begin);
+						var arr = ms.ToArray();
+						CompilerHelper.compiledBytes = arr;
+						CompilerHelper.compiledasm = Assembly.Load(arr);
+					}
 					else
 					{
 						SetFailure();
@@ -643,72 +641,71 @@
 				}
 
 				theend:
-                btnRunScript.Enabled = true;
-                timer.Enabled = true;
+				btnRunScript.Enabled = true;
+				timer.Enabled = true;
 			}
 
 			if (force)
 				force = false;
 		}
 
-        private void RunScript_Click(object sender, EventArgs e) => RunStopScript();
+		private void RunScript_Click(object sender, EventArgs e) => RunStopScript();
 
-        private void RunStopScript()
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+		private void RunStopScript()
+		{
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
 
-            if (scriptProcess != null)
-            {
-                scriptProcess.Kill();
-                scriptProcess = null;
-            }
+			if (scriptProcess != null)
+			{
+				scriptProcess.Kill();
+				scriptProcess = null;
+			}
 
-            if (btnRunScript.Text == btnRunScriptText["Stop"])
-                return;
+			if (btnRunScript.Text == btnRunScriptText["Stop"])
+				return;
 
-            if (CompilerHelper.compiledasm == null)
-            {
-                MessageBox.Show("Please wait, code is still compiling...", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+			if (CompilerHelper.compiledasm == null)
+			{
+				MessageBox.Show("Please wait, code is still compiling...", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
 
-            scriptProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "Keysharp.exe",
-                    Arguments = "--assembly *",
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
+			scriptProcess = new Process
+			{
+				StartInfo = new ProcessStartInfo
+				{
+					FileName = "Keysharp.exe",
+					Arguments = "--assembly *",
+					RedirectStandardInput = true,
+					RedirectStandardOutput = true,
+					UseShellExecute = false,
+					CreateNoWindow = true
+				}
+			};
+			scriptProcess.EnableRaisingEvents = true;
+			scriptProcess.Exited += (object sender, EventArgs e) =>
+			{
+				toolStrip1.Invoke((() =>
+				{
+					btnRunScript.Text = btnRunScriptText["Run"];
+				}));
+				scriptProcess = null;
+			};
+			scriptProcess.Start();
 
-            scriptProcess.EnableRaisingEvents = true;
-            scriptProcess.Exited += (object sender, EventArgs e) =>
-            {
-                toolStrip1.Invoke((() =>
-                {
-                    btnRunScript.Text = btnRunScriptText["Run"];
-                }));
-                scriptProcess = null;
-            };
-            scriptProcess.Start();
+			using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream))
+			{
+				writer.Write(CompilerHelper.compiledBytes.Length);
+				writer.Write(CompilerHelper.compiledBytes);
+				writer.Flush();
+			}
 
-            using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream))
-            {
-                writer.Write(CompilerHelper.compiledBytes.Length);
-                writer.Write(CompilerHelper.compiledBytes);
-                writer.Flush();
-            }
-
-            btnRunScript.Text = btnRunScriptText["Stop"];
-        }
+			btnRunScript.Text = btnRunScriptText["Stop"];
+		}
 
 
-        private void TxtIn_DragDrop(object sender, DragEventArgs e)
+		private void TxtIn_DragDrop(object sender, DragEventArgs e)
 		{
 			var data = e.Data.GetData(DataFormats.FileDrop);
 

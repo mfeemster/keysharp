@@ -344,12 +344,13 @@ namespace Keysharp.Core
 			if (!dpimodeset)
 			{
 				dpimodeset = true;
-                try
-                {
-                    Application.SetCompatibleTextRenderingDefault(false);
-                }
-                catch { } // Fails if a window already exists, like when running from Keyview
-            }
+
+				try
+				{
+					Application.SetCompatibleTextRenderingDefault(false);
+				}
+				catch { } // Fails if a window already exists, like when running from Keyview
+			}
 
 #if WINDOWS
 			_ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
