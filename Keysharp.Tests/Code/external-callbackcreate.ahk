@@ -13,6 +13,22 @@ if (val == 52.5)
 else
 	FileAppend, "fail", "*"
 
+val := ""
+CallbackFree(callback)
+callback := CallbackCreate("FuncNoParams")
+DllCall(callback)
+
+FuncNoParams()
+{
+	global val
+	val := 123
+}
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 CallbackFree(callback)
 EnumAddress := CallbackCreate("EnumWindowsProc")
 DetectHiddenWindows(True)

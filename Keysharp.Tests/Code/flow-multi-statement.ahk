@@ -170,3 +170,14 @@ if ((1, 2, 3))
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+; Dummy test that does nothing but test a very complex ternary.
+class Toggle {
+    static A := Map()
+	
+	TestFunc(a, b, c)
+	{
+	}
+
+    __New(F, P, I:=0) => (TestFunc(F, !P ? (A.Has(F) && A.Delete(F))*0 : A.Has(F) && A[F] = P ? !A.Delete(F) : (I && F.Call(), A[F] := P)))
+}

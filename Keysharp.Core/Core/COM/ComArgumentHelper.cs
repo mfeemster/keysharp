@@ -42,6 +42,7 @@ namespace Keysharp.Core.COM
 			args = new nint[len];
 			hasreturn = (parameters.Length & 1) == 1;
 
+			//Done slightly differently than in DllArgumentHelper.
 			for (var i = 0; i < parameters.Length; i++)
 			{
 				var isreturn = hasreturn && i == parameters.Length - 1;
@@ -59,8 +60,9 @@ namespace Keysharp.Core.COM
 							continue;
 					}
 				}
+				else
+					i++;
 
-				i++;
 				Type type;
 				var n = i / 2;
 				var p = parameters[i];
@@ -84,18 +86,21 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(string);
 
-						if (p is string s)
+						if (!isreturn)
 						{
-							var bstr = Marshal.StringToBSTR(s);
+							if (p is string s)
+							{
+								var bstr = Marshal.StringToBSTR(s);
 
-							if (bstrs == null)
-								bstrs = [];
+								if (bstrs == null)
+									bstrs = [];
 
-							_ = bstrs.Add(bstr);
-							args[n] = bstr;
+								_ = bstrs.Add(bstr);
+								args[n] = bstr;
+							}
+							else
+								throw new TypeError($"Argument had type {name} but was not a string.");
 						}
-						else
-							throw new TypeError($"Argument had type {name} but was not a string.");
 
 						break;
 					}
@@ -105,10 +110,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(string);
 
-						if (p is string s)
-							SetupPointerArg(i, n, Encoding.UTF8.GetBytes(s + char.MinValue));
-						else
-							throw new TypeError($"Argument had type {name} but was not a string.");
+						if (!isreturn)
+						{
+							if (p is string s)
+								SetupPointerArg(i, n, Encoding.UTF8.GetBytes(s + char.MinValue));
+							else
+								throw new TypeError($"Argument had type {name} but was not a string.");
+						}
 
 						break;
 					}
@@ -117,10 +125,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(nint);
 
-						if (p is string s)
-							SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s + char.MinValue));
-						else
-							throw new TypeError($"Argument had type {name} but was not a string.");
+						if (!isreturn)
+						{
+							if (p is string s)
+								SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s + char.MinValue));
+							else
+								throw new TypeError($"Argument had type {name} but was not a string.");
+						}
 
 						break;
 					}
@@ -129,10 +140,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(long);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint(p.Al());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint(p.Al());
+						}
 
 						break;
 					}
@@ -141,12 +155,14 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(ulong);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint(p.Al());//No real way to make an unsigned long here.
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint(p.Al());//No real way to make an unsigned long here.
+						}
 
-						//args[n] = new UIntPtr(p.Al());//No real way to make an unsigned long here.
 						break;
 					}
 
@@ -155,10 +171,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(int);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint(p.Ai());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint(p.Ai());
+						}
 
 						break;
 					}
@@ -167,10 +186,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(uint);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint(p.Aui());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint(p.Aui());
+						}
 
 						break;
 					}
@@ -179,10 +201,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(short);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint((short)p.Al());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint((short)p.Al());
+						}
 
 						break;
 					}
@@ -191,10 +216,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(ushort);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint((ushort)p.Al());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint((ushort)p.Al());
+						}
 
 						break;
 					}
@@ -203,10 +231,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(sbyte);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint((sbyte)p.Al());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint((sbyte)p.Al());
+						}
 
 						break;
 					}
@@ -215,10 +246,13 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(byte);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else
-							args[n] = new nint((byte)p.Al());
+						if (!isreturn)
+						{
+							if (p is nint ip)
+								args[n] = ip;
+							else
+								args[n] = new nint((byte)p.Al());
+						}
 
 						break;
 					}
@@ -226,18 +260,28 @@ namespace Keysharp.Core.COM
 					case "float":
 					{
 						type = typeof(float);
-						var f = p.Af();
-						var iref = (int*)&f;
-						args[n] = new nint(*iref);
+
+						if (!isreturn)
+						{
+							var f = p.Af();
+							var iref = (int*)&f;
+							args[n] = new nint(*iref);
+						}
+
 						break;
 					}
 
 					case "double":
 					{
 						type = typeof(double);
-						var d = p.Ad();
-						var lref = (long*)&d;
-						args[n] = new nint(*lref);
+
+						if (!isreturn)
+						{
+							var d = p.Ad();
+							var lref = (long*)&d;
+							args[n] = new nint(*lref);
+						}
+
 						break;
 					}
 
@@ -246,53 +290,56 @@ namespace Keysharp.Core.COM
 					{
 						type = typeof(nint);
 
-						if (p is nint ip)
-							args[n] = ip;
-						else if (p is int || p is long || p is uint)
-							args[n] = new nint((long)Convert.ChangeType(p, typeof(long)));
-						else if (p is Buffer buf)
-							args[n] = buf.Ptr;
-						else if (p is Array array)
-							SetupPointerArg(i, n, array.array);
-						else if (p is ComObject co)
+						if (!isreturn)
 						{
-							nint pUnk;
+							if (p is nint ip)
+								args[n] = ip;
+							else if (p is int || p is long || p is uint)
+								args[n] = new nint((long)Convert.ChangeType(p, typeof(long)));
+							else if (p is Buffer buf)
+								args[n] = buf.Ptr;
+							else if (p is Array array)
+								SetupPointerArg(i, n, array.array);
+							else if (p is ComObject co)
+							{
+								nint pUnk;
 
-							if (co.Ptr is nint ip2)
-								pUnk = ip2;
+								if (co.Ptr is nint ip2)
+									pUnk = ip2;
+								else
+									pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
+
+								args[n] = pUnk;
+								_ = Marshal.Release(pUnk);
+							}
+							else if (Marshal.IsComObject(p))
+							{
+								var pUnk = Marshal.GetIUnknownForObject(p);
+								args[n] = pUnk;
+								_ = Marshal.Release(pUnk);
+							}
+							//else if (p is DelegateHolder delholder)
+							//{
+							//  args[n] = delholder.delRef;
+							//}
+							//else if (p is StringBuffer sb)
+							//{
+							//  args[n] = sb.sb;
+							//  types[n] = typeof(StringBuilder);
+							//}
+							//else if (p is Delegate del)
+							//{
+							//  args[n] = del;
+							//  types[n] = del.GetType();
+							//}
+							//else if (p is System.Array arr)
+							//  //else if (p is ComObjArray arr)
+							//{
+							//  //args[n] = arr;
+							//}
 							else
-								pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
-
-							args[n] = pUnk;
-							_ = Marshal.Release(pUnk);
+								SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 						}
-						else if (Marshal.IsComObject(p))
-						{
-							var pUnk = Marshal.GetIUnknownForObject(p);
-							args[n] = pUnk;
-							_ = Marshal.Release(pUnk);
-						}
-						//else if (p is DelegateHolder delholder)
-						//{
-						//  args[n] = delholder.delRef;
-						//}
-						//else if (p is StringBuffer sb)
-						//{
-						//  args[n] = sb.sb;
-						//  types[n] = typeof(StringBuilder);
-						//}
-						//else if (p is Delegate del)
-						//{
-						//  args[n] = del;
-						//  types[n] = del.GetType();
-						//}
-						//else if (p is System.Array arr)
-						//  //else if (p is ComObjArray arr)
-						//{
-						//  //args[n] = arr;
-						//}
-						else
-							SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 
 						break;
 					}

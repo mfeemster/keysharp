@@ -2,17 +2,18 @@
 {
 	public class DelegateHolder
 	{
-		public PlaceholderFunction delRef;
+		internal PlaceholderFunction delRef;
 		internal IFuncObj funcObj;
 		protected readonly ConcurrentStackArrayPool<IntPtr> paramsPool = new ConcurrentStackArrayPool<IntPtr>(31);
 		private readonly bool fast;
-		private readonly bool reference;
+
+		internal bool Reference { get; }
 
 		public DelegateHolder(object obj, bool f, bool r)
 		{
 			funcObj = Functions.GetFuncObj(obj, null, true);
 			fast = f;
-			reference = r;
+			Reference = r;
 			delRef = (PlaceholderFunction)Delegate.CreateDelegate(typeof(PlaceholderFunction), this, "DelegatePlaceholder");
 		}
 
@@ -23,18 +24,20 @@
 
 		{
 			object val = null;
-			(bool, ThreadVariables) btv = (false, null);
+			nint[] arr = null;
 
 			if (delRef != null)
 			{
 				Flow.TryCatch(() =>
 				{
+					(bool, ThreadVariables) btv = (false, null);
+
 					if (!fast)
 						btv = Threads.BeginThread();
 
-					if (reference)
+					if (Reference)
 					{
-						var arr = paramsPool.Rent();
+						arr = paramsPool.Rent();
 						arr[0] = p1;
 						arr[1] = p2;
 						arr[2] = p3;
@@ -68,6 +71,7 @@
 						arr[30] = p31;
 						val = DelegatePlaceholderArr(arr);
 						paramsPool.Return(arr);
+						arr = null;
 					}
 					else
 						val = funcObj.Call(p1, p2, p3, p4, p5, p6, p7, p8,
@@ -80,20 +84,10 @@
 				}, !fast);//Pop on exception because EndThread() above won't be called.
 			}
 
-			if (val is int i)
-				return i;
-			else if (val is long l)
-				return (int)l;
-			else if (val is bool b)
-				return b ? 1 : 0;
-			else if (val is double d)
-				return (int)d;
-			else if (val is string s && s.Length == 0)
-				return 0L;
-			else if (val is null)
-				return 0L;
+			if (arr != null)
+				_ = paramsPool.Return(arr);
 
-			return 0L;
+			return ConvertResult(val);
 		}
 
 		public long DelegatePlaceholderArr(IntPtr[] arr)
@@ -102,7 +96,7 @@
 
 			if (delRef != null)
 			{
-				if (reference)
+				if (Reference)
 				{
 					unsafe
 					{
@@ -113,15 +107,64 @@
 						}
 					}
 				}
-				else
+				else if (arr.Length >= 31)
+				{
 					val = delRef.Invoke(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5],
 										arr[6], arr[7], arr[8], arr[9], arr[10], arr[11],
 										arr[12], arr[13], arr[14], arr[15], arr[16], arr[17],
 										arr[18], arr[19], arr[20], arr[21], arr[22], arr[23],
 										arr[24], arr[25], arr[26], arr[27], arr[28], arr[29],
 										arr[30]);
+				}
+				else
+				{
+					Flow.TryCatch(() =>
+					{
+						(bool, ThreadVariables) btv = (false, null);
+
+						if (!fast)
+							btv = Threads.BeginThread();
+
+						val = funcObj.Call(arr);
+
+						if (!fast)
+							Threads.EndThread(btv.Item1);
+					}, !fast);//Pop on exception because EndThread() above won't be called.
+				}
 			}
 
+			return ConvertResult(val);
+		}
+
+		internal long DirectCall(params object[] parameters)
+		{
+			if (Reference)
+			{
+				var helper = new ComArgumentHelper(parameters);
+				return DelegatePlaceholderArr(helper.args);
+			}
+			else
+			{
+				object val = null;
+				Flow.TryCatch(() =>
+				{
+					var helper = new DllArgumentHelper(parameters);
+					(bool, ThreadVariables) btv = (false, null);
+
+					if (!fast)
+						btv = Threads.BeginThread();
+
+					val = funcObj.Call(helper.args);
+
+					if (!fast)
+						Threads.EndThread(btv.Item1);
+				}, !fast);//Pop on exception because EndThread() above won't be called.
+				return ConvertResult(val);
+			}
+		}
+
+		private static long ConvertResult(object val)
+		{
 			if (val is int i)
 				return i;
 			else if (val is long l)

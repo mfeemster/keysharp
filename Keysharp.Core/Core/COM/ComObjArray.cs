@@ -4,8 +4,22 @@ namespace Keysharp.Core.COM
 {
 	public class ComArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
+		/// <summary>
+		/// The internal array to be iterated over.
+		/// </summary>
 		private readonly System.Array arr;
+
+		/// <summary>
+		/// The current 0-based position the iterator is at.
+		/// </summary>
 		private int position = -1;
+
+		/// <summary>
+		/// The number of items to return for each iteration. Allowed values are 1 and 2:
+		/// 1: return just the value in the first position
+		/// 2: return the index in the first position and the value in the second.
+		/// </summary>
+		private readonly int count;
 
 		public (object, object) Current
 		{
@@ -13,7 +27,10 @@ namespace Keysharp.Core.COM
 			{
 				try
 				{
-					return ((long)position, arr.GetValue(position));
+					if (count == 1)
+						return (arr.GetValue(position), null);
+					else
+						return ((long)position + 1, arr.GetValue(position));
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -24,9 +41,10 @@ namespace Keysharp.Core.COM
 
 		object IEnumerator.Current => Current;
 
-		public ComArrayIndexValueIterator(System.Array a)
+		public ComArrayIndexValueIterator(System.Array a, int c)
 		{
 			arr = a;
+			count = c;
 		}
 
 		public void Call(ref object obj0) => (obj0, _) = Current;
@@ -65,7 +83,7 @@ namespace Keysharp.Core.COM
 			array = arr;
 		}
 
-		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
+		public IEnumerator<(object, object)> __Enum(object count) => new ComArrayIndexValueIterator(array, count.Ai());
 
 		public int Add(object value) => ((IList)array).Add(value);
 
@@ -77,7 +95,7 @@ namespace Keysharp.Core.COM
 
 		public void CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
 
-		public IEnumerator<(object, object)> GetEnumerator() => new ComArrayIndexValueIterator(array);
+		public IEnumerator<(object, object)> GetEnumerator() => new ComArrayIndexValueIterator(array, 2);
 
 		public int IndexOf(object value) => ((IList)array).IndexOf(value);
 
@@ -91,7 +109,7 @@ namespace Keysharp.Core.COM
 
 		public void RemoveAt(int index) => ((IList)array).RemoveAt(index);
 
-		IEnumerator IEnumerable.GetEnumerator() => __Enum();
+		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
 
 		public object this[int index] { get => ((IList)array)[index]; set => ((IList)array)[index] = value; }
 	}

@@ -250,6 +250,9 @@
 			if (obj is float d)
 				return d;
 
+			if (obj is double dd)//Check for double here, but not the reverse in ParseDouble() because most decimal numbers will be double.
+				return (float)dd;
+
 			if (obj is long l)
 				return l;
 
