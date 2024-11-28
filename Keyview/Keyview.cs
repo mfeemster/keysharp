@@ -375,7 +375,7 @@
 			var dir = Path.GetDirectoryName(lastrun);
 
 			if (!Directory.Exists(dir))
-				Directory.CreateDirectory(dir);
+				_ = Directory.CreateDirectory(dir);
 
 			File.WriteAllText(lastrun, txtIn.Text);
 		}
@@ -625,7 +625,7 @@
 						SetTxtOut(chkFullCode.Checked ? fullCode : trimmedCode);
 						txtOut.FirstVisibleLine = oldIndex;
 						File.WriteAllText(lastrun, txtIn.Text);
-						ms.Seek(0, SeekOrigin.Begin);
+						_ = ms.Seek(0, SeekOrigin.Begin);
 						var arr = ms.ToArray();
 						CompilerHelper.compiledBytes = arr;
 						CompilerHelper.compiledasm = Assembly.Load(arr);
@@ -667,7 +667,7 @@
 
 			if (CompilerHelper.compiledasm == null)
 			{
-				MessageBox.Show("Please wait, code is still compiling...", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				_ = MessageBox.Show("Please wait, code is still compiling...", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
 
@@ -692,7 +692,7 @@
 				}));
 				scriptProcess = null;
 			};
-			scriptProcess.Start();
+			_ = scriptProcess.Start();
 
 			using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream))
 			{

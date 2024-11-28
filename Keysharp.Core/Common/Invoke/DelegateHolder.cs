@@ -28,7 +28,7 @@
 
 			if (delRef != null)
 			{
-				Flow.TryCatch(() =>
+				_ = Flow.TryCatch(() =>
 				{
 					(bool, ThreadVariables) btv = (false, null);
 
@@ -70,7 +70,7 @@
 						arr[29] = p30;
 						arr[30] = p31;
 						val = DelegatePlaceholderArr(arr);
-						paramsPool.Return(arr);
+						_ = paramsPool.Return(arr);
 						arr = null;
 					}
 					else
@@ -80,7 +80,7 @@
 										   p25, p26, p27, p28, p29, p30, p31);
 
 					if (!fast)
-						Threads.EndThread(btv.Item1);
+						_ = Threads.EndThread(btv.Item1);
 				}, !fast);//Pop on exception because EndThread() above won't be called.
 			}
 
@@ -118,7 +118,7 @@
 				}
 				else
 				{
-					Flow.TryCatch(() =>
+					_ = Flow.TryCatch(() =>
 					{
 						(bool, ThreadVariables) btv = (false, null);
 
@@ -128,7 +128,7 @@
 						val = funcObj.Call(arr);
 
 						if (!fast)
-							Threads.EndThread(btv.Item1);
+							_ = Threads.EndThread(btv.Item1);
 					}, !fast);//Pop on exception because EndThread() above won't be called.
 				}
 			}
@@ -146,7 +146,7 @@
 			else
 			{
 				object val = null;
-				Flow.TryCatch(() =>
+				_ = Flow.TryCatch(() =>
 				{
 					var helper = new DllArgumentHelper(parameters);
 					(bool, ThreadVariables) btv = (false, null);
@@ -157,7 +157,7 @@
 					val = funcObj.Call(helper.args);
 
 					if (!fast)
-						Threads.EndThread(btv.Item1);
+						_ = Threads.EndThread(btv.Item1);
 				}, !fast);//Pop on exception because EndThread() above won't be called.
 				return ConvertResult(val);
 			}

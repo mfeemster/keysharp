@@ -119,7 +119,7 @@
 			while (parent != null)
 			{
 				if (parent is T pt)
-					parents.Add(pt);
+					_ = parents.Add(pt);
 
 				parent = parent.Parent;
 			}

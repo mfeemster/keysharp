@@ -624,7 +624,7 @@ break_twice:;
 				// Must cast to int or any negative result will be lost due to DWORD type:
 				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Script.SLEEP_INTERVAL_HALF)
 				{
-					Flow.Sleep(Script.SLEEP_INTERVAL);
+					_ = Flow.Sleep(Script.SLEEP_INTERVAL);
 					//MsgSleep() might not even be needed if we use real threads//TODO
 					//if (Keysharp.Scripting.Script.MsgSleep(Keysharp.Scripting.Script.INTERVAL_UNSPECIFIED)) // INTERVAL_UNSPECIFIED performs better.
 					//{

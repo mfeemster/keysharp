@@ -64,7 +64,7 @@ namespace Keysharp.Core
 				if (File.Exists(file))
 					File.Delete(file);
 
-				Files.FileAppend("", file, "unicode");
+				_ = Files.FileAppend("", file, "unicode");
 				File.WriteAllText(file, text);
 				return null;
 			}
@@ -224,7 +224,7 @@ namespace Keysharp.Core
 				if (File.Exists(file))
 					File.Delete(file);
 
-				Files.FileAppend("", file, "unicode");
+				_ = Files.FileAppend("", file, "unicode");
 				File.WriteAllText(file, text);
 				return null;
 			}

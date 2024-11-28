@@ -184,7 +184,7 @@ namespace Keysharp.Core
 		/// </param>
 		public static object SoundSetMute(object newSetting, object component = null, object device = null)
 		{
-			DoSound(SoundCommands.SoundSetMute, newSetting, component, device);
+			_ = DoSound(SoundCommands.SoundSetMute, newSetting, component, device);
 			return null;
 		}
 
@@ -204,7 +204,7 @@ namespace Keysharp.Core
 		/// </param>
 		public static object SoundSetVolume(object newSetting, object component = null, object device = null)
 		{
-			DoSound(SoundCommands.SoundSetVolume, newSetting, component, device);
+			_ = DoSound(SoundCommands.SoundSetVolume, newSetting, component, device);
 			return null;
 		}
 

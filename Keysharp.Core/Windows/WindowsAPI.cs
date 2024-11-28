@@ -1204,7 +1204,7 @@ namespace Keysharp.Core.Windows
 				if ((DateTime.Now - dtStart).TotalMilliseconds > ms)
 					break;
 
-				Flow.Sleep(100);
+				_ = Flow.Sleep(100);
 			}
 
 			return open;

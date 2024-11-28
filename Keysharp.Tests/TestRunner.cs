@@ -111,7 +111,7 @@ namespace Keysharp.Tests
 			}
 			else if (results.Success)
 			{
-				ms.Seek(0, SeekOrigin.Begin);
+				_ = ms.Seek(0, SeekOrigin.Begin);
 				var arr = ms.ToArray();
 
 				if (exeout)

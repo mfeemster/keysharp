@@ -18,7 +18,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static object DriveEject(object drive = null)
 		{
-			DriveHelper(drive.As(), true);
+			_ = DriveHelper(drive.As(), true);
 			return null;
 		}
 
@@ -204,7 +204,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		public static object DriveRetract(object drive)
 		{
-			DriveHelper(drive.As(), false);
+			_ = DriveHelper(drive.As(), false);
 			return null;
 		}
 #if WINDOWS

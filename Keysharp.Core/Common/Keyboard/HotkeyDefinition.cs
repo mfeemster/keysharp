@@ -2320,7 +2320,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var handle = Script.MainWindowHandle;
 			Script.mainWindow?.Invoke(() =>
 			{
-				PlatformProvider.Manager.UnregisterHotKey(handle, id);
+				_ = PlatformProvider.Manager.UnregisterHotKey(handle, id);
 			});
 			return isRegistered ? ResultType.Ok : ResultType.Fail;//I've see it fail in one rare case.
 		}

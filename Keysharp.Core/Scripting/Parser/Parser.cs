@@ -822,7 +822,7 @@ namespace Keysharp.Scripting
 
 										if (!mp.IsVariadic() && mp.ParameterType.IsByRef && !mp.IsOut)
 										{
-											cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
+											_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
 											createDummyRef = true;
 										}
 										else

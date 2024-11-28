@@ -17,7 +17,7 @@ namespace Keysharp.Scripting
 						cboe.UserData["snippet"] = cse;
 						cboe.Left.UserData["snippet"] = cse;
 						cboe.Right.UserData["snippet"] = cse;
-						assignSnippets.Add(cse);
+						_ = assignSnippets.Add(cse);
 						return cse;
 					}
 					else//Unsure if this is even needed anymore.
@@ -28,7 +28,7 @@ namespace Keysharp.Scripting
 						cboe.UserData["snippet"] = cse;
 						cboe.Left.UserData["snippet"] = cse;
 						cboe.Right.UserData["snippet"] = cse;
-						assignSnippets.Add(cse);
+						_ = assignSnippets.Add(cse);
 						return cse;
 					}
 				}

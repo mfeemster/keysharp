@@ -779,7 +779,7 @@ namespace Keysharp.Core.Windows
 		{
 			_ = WindowsAPI.SetForegroundWindow(targetWindow);
 			//Need to be able to set interrupt disable here which prevents both timers and hotkeys from firing while this sleep is happening.//TODO
-			Flow.Sleep(10);//The MsgSleep() function in AHK is massive. Unsure how to duplicate here, so just use regular thread sleep.
+			_ = Flow.Sleep(10); //The MsgSleep() function in AHK is massive. Unsure how to duplicate here, so just use regular thread sleep.
 			var newForeWindow = WindowsAPI.GetForegroundWindow();
 
 			if (newForeWindow == targetWindow)

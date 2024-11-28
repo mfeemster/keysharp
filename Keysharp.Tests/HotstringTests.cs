@@ -293,7 +293,7 @@ namespace Keysharp.Tests
 			_ = Keyboard.Hotstring("SI");
 			Assert.AreEqual(Accessors.A_DefaultHotstringSendMode, SendModes.InputThenPlay.ToString());
 			//Now test a multi-option string.
-			Keyboard.Hotstring("*?CB0OSZRK123P10");
+			_ = Keyboard.Hotstring("*?CB0OSZRK123P10");
 			Assert.AreEqual(Accessors.A_DefaultHotstringEndCharRequired, false);
 			Assert.AreEqual(Accessors.A_DefaultHotstringDetectWhenInsideWord, true);
 			Assert.AreEqual(Accessors.A_DefaultHotstringCaseSensitive, true);

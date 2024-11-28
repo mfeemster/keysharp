@@ -227,7 +227,7 @@
 			{
 				case eScriptInstance.Force:
 				{
-					Window.WinClose(name, "", 2);
+					_ = Window.WinClose(name, "", 2);
 				}
 				break;
 
@@ -247,7 +247,7 @@
 					if (hwnd != 0)
 					{
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
-							Window.WinClose(hwnd, "", 2);
+							_ = Window.WinClose(hwnd, "", 2);
 						else
 							exit = true;
 					}
@@ -357,24 +357,24 @@
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-            //Parser.Persistent = true;
-            mainWindowGui = new Gui(null, null, null, mainWindow);
+			//Parser.Persistent = true;
+			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
 			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
 			_ = mainWindow.BeginInvoke(() =>
 			{
-				Flow.TryCatch(() =>
+				_ = Flow.TryCatch(() =>
 				{
 					var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
 					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
 					isReadyToExecute = true;
-					Threads.EndThread(__pushed);
+					_ = Threads.EndThread(__pushed);
 				}, true);//Pop on exception because EndThread() above won't be called.
 			});
 			Application.Run(mainWindow);
-        }
+		}
 
 		public static void SetName(string s) => scriptName = s;
 
@@ -526,7 +526,7 @@
 			//We added them, but never removed. While seemingly dangerous to have, it's a handy
 			//way to know we've found a bug.
 			while (totalExistingThreads > 1)
-				Flow.Sleep(200);
+				_ = Flow.Sleep(200);
 		}
 
 		internal static bool AnyPersistent()
@@ -567,7 +567,7 @@
 		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason)
 		{
 			if (!AnyPersistent())
-				Flow.ExitApp((int)exitReason);
+				_ = Flow.ExitApp((int)exitReason);
 		}
 
 		internal static bool InitHook()

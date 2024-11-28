@@ -357,7 +357,7 @@ namespace Keysharp.Core.Windows
 			// includes "MouseClick left" somewhere in its subroutine, the script's own main window's
 			// title bar buttons for min/max/close would not properly respond to left-clicks.
 			if (mouseDelay < 11)
-				Flow.Sleep(mouseDelay);
+				_ = Flow.Sleep(mouseDelay);
 			else
 				Flow.SleepWithoutInterruption(mouseDelay);
 		}
@@ -2901,7 +2901,7 @@ namespace Keysharp.Core.Windows
 			// causes g_script.mLastScriptRest to be reset, so it's unlikely that a sleep would occur between Send calls.
 			// To solve this, call MsgSleep(-1) now (unless no delays were performed, or the thread is uninterruptible):
 			if (sendModeOrig == SendModes.Event && Script.lastPeekTime != origLastPeekTime && Threads.IsInterruptible())
-				Flow.Sleep(0);// MsgSleep(-1);//MsgSleep() is going to be extremely hard to implement, so just do regular sleep for now until we get real threads implemented.//TODO
+				_ = Flow.Sleep(0); // MsgSleep(-1);//MsgSleep() is going to be extremely hard to implement, so just do regular sleep for now until we get real threads implemented.//TODO
 
 			// v1.0.43.03: Someone reported that when a non-autoreplace hotstring calls us to do its backspacing, the
 			// hotstring's subroutine can execute a command that activates another window owned by the script before
@@ -3589,7 +3589,7 @@ namespace Keysharp.Core.Windows
 			if ((now - Script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
 				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
-					Flow.Sleep(-1);
+					_ = Flow.Sleep(-1);
 
 				now = DateTime.Now;
 				Script.lastPeekTime = now;

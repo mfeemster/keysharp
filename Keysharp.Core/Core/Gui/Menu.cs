@@ -77,8 +77,8 @@
 			var openfunc = new Func<object>(() =>
 			{
 				var mainWindow = Script.mainWindow;
-				
-                if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
+
+				if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
 				{
 					mainWindow.AllowShowDisplay = true;
 					mainWindow.Show();
@@ -90,7 +90,7 @@
 			});
 			var reloadfunc = new Func<object>(() =>
 			{
-				Flow.Reload();
+				_ = Flow.Reload();
 				return "";
 			});
 			var suspend = new Func<object>(() =>

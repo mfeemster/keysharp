@@ -265,7 +265,7 @@ namespace Keysharp.Core
 			var start = DateTime.Now;
 
 			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
-				Sleep(500);
+				_ = Sleep(500);
 
 			return null;
 		}
@@ -334,7 +334,7 @@ namespace Keysharp.Core
 						var temptimer = timers.Where((kv) => kv.Value == timer).FirstOrDefault();
 
 						if (temptimer.Key != null)
-							_ = timers.TryRemove(temptimer.Key, out var _);
+							_ = timers.TryRemove(temptimer.Key, out _);
 					}
 					else
 						_ = timers.TryRemove(func, out _);
@@ -399,7 +399,7 @@ namespace Keysharp.Core
 							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
 							tv.currentTimer = timer;
 							var ret = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
-							Threads.EndThread(btv.Item1);
+							_ = Threads.EndThread(btv.Item1);
 						}, true);//Pop on exception because EndThread() above won't be called.
 
 						if (once || remove)
@@ -612,7 +612,7 @@ namespace Keysharp.Core
 		internal static void SleepWithoutInterruption(object duration = null)
 		{
 			AllowInterruption = false;
-			Sleep(duration);
+			_ = Sleep(duration);
 			AllowInterruption = true;
 		}
 
@@ -650,13 +650,13 @@ namespace Keysharp.Core
 			catch (Error kserr)
 			{
 				if (pop)
-					Threads.EndThread(true);
+					_ = Threads.EndThread(true);
 
 				if (ErrorOccurred(kserr))
 				{
 					var (__pushed, __btv) = Threads.BeginThread();
-					Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Threads.EndThread(__pushed);
+					_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					_ = Threads.EndThread(__pushed);
 				}
 
 				return false;
@@ -664,7 +664,7 @@ namespace Keysharp.Core
 			catch (Exception mainex)
 			{
 				if (pop)
-					Threads.EndThread(true);
+					_ = Threads.EndThread(true);
 
 				var ex = mainex.InnerException ?? mainex;
 
@@ -673,15 +673,15 @@ namespace Keysharp.Core
 					if (ErrorOccurred(kserr))
 					{
 						var (__pushed, __btv) = Threads.BeginThread();
-						Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-						Threads.EndThread(__pushed);
+						_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+						_ = Threads.EndThread(__pushed);
 					}
 				}
 				else
 				{
 					var (__pushed, __btv) = Threads.BeginThread();
-					Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Threads.EndThread(__pushed);
+					_ = Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					_ = Threads.EndThread(__pushed);
 				}
 
 				return false;
