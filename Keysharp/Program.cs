@@ -109,9 +109,13 @@ namespace Keysharp.Main
 						case "codeout":
 							codeout = true;
 							break;
+
+                        case "include":
+                            i++;
+                            break;
 #if WINDOWS
 
-						case "install"://To be called by the installer during installation.
+                        case "install"://To be called by the installer during installation.
 							InstallToPath(exeDir);
 							return 0;
 
