@@ -193,7 +193,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `MouseGetPos &mrX, &mrY ; omitting the trailing commas is supported`
 	+ `MouseGetPos(&mrX, &mrY) ; using parens is preferred`
 	+ `MouseGetPos(&mrX, &mrY, , ) ; trailing commas can be used with parens`
-* Ternary operators with multiple statements in a branch are not supported. Use an `if/else` statement instead if such functionality is needed.
 * Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
 * Dynamic variable references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
 * `Goto` statements cannot use any type of variable. They must be labels known at compile time and function just like goto statements in C#.

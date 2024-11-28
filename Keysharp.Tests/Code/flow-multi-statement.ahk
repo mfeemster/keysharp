@@ -203,7 +203,7 @@ else
 class Toggle {
     static A := Map()
 	
-	TestFunc(a, b, c)
+	TestFunc(a, b, c := "")
 	{
 	}
 

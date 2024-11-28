@@ -760,7 +760,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+							//If they supplied less than the required number of arguments, fill in only default ref params.
 							if (methParams.Count > cmie.Parameters.Count)
 							{
 								var newParams = new List<CodeExpression>(methParams.Count);
@@ -769,19 +769,14 @@ namespace Keysharp.Scripting
 								{
 									var mp = methParams[i];
 
-									if (!mp.IsOptionalOrVariadic())//Ignore optional or variadic object[] parameters.
+									if (!mp.IsVariadic() && mp.Direction == FieldDirection.Ref)
 									{
-										if (mp.Direction == FieldDirection.Ref)
-										{
-											newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-											createDummyRef = true;
-										}
-										else
-											newParams.Add(nullPrimitive);
+										createDummyRef = true;
+										_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
 									}
+									else
+										break;
 								}
-
-								cmie.Parameters.AddRange(newParams.ToArray());
 							}
 
 							HandlePartialVariadicParams(cmie, cmm);
@@ -816,7 +811,7 @@ namespace Keysharp.Scripting
 									}
 								}
 
-								//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+								//If they supplied less than the required number of arguments, fill in only default ref params.
 								if (methParams.Length > cmie.Parameters.Count)
 								{
 									var newParams = new List<CodeExpression>(methParams.Length);
@@ -825,19 +820,14 @@ namespace Keysharp.Scripting
 									{
 										var mp = methParams[i];
 
-										if (!mp.IsOptional)
+										if (!mp.IsVariadic() && mp.ParameterType.IsByRef && !mp.IsOut)
 										{
-											if (mp.ParameterType.IsByRef && !mp.IsOut)
-											{
-												newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-												createDummyRef = true;
-											}
-											else if (mp.ParameterType != typeof(object[]))//Do not pass for variadic object[] parameters.
-												newParams.Add(nullPrimitive);
+											cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
+											createDummyRef = true;
 										}
+										else
+											break;
 									}
-
-									cmie.Parameters.AddRange(newParams.ToArray());
 								}
 
 								HandlePartialVariadicParams(cmie, mph2.mi);

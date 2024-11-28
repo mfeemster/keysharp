@@ -14,7 +14,7 @@ nafunc(p)
 		FileAppend, "fail", "*"
 }
 
-nafunc()
+nafunc(unset)
 
 z :=
 y := z ?? 456
