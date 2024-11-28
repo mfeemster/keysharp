@@ -7,7 +7,9 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Env
 	{
-		private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
+        public static string[] KeysharpArgs = [];
+
+        private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
 				.Select(f => f.Name);
 
 		/// <summary>
@@ -569,10 +571,10 @@ namespace Keysharp.Core
 		internal static string FindCommandLineArg(string arg, bool startsWith = true)
 		{
 			if (startsWith)
-				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
+				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
-				return Environment.GetCommandLineArgs().FirstOrDefault(x => (x.StartsWith('-')
+				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
@@ -585,11 +587,11 @@ namespace Keysharp.Core
 		/// <returns>The matched value if found, else null.</returns>
 		internal static string FindCommandLineArgVal(string arg, bool startsWith = true)
 		{
-			var args = Environment.GetCommandLineArgs();
+			var args = KeysharpArgs;
 
 			for (var i = 0; i < args.Length; i++)
 			{
-				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && args[i].StartsWith(arg, StringComparison.OrdinalIgnoreCase))
+				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].TrimStart(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
 					if (i < args.Length - 1)
 						return args[i + 1];
 			}

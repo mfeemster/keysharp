@@ -63,7 +63,8 @@ namespace Keysharp.Main
 							script = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
 							scriptArgs = args.Skip(i + 1).ToArray();
-							continue;
+                            Env.KeysharpArgs = args.Take(i + 1).ToArray();
+                            continue;
 						}
 						else//Parameters.
 						{
