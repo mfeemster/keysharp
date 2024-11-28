@@ -83,8 +83,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Usage of the created callback will be extremely inefficient, so usage of `CallbackCreate()` is discouraged.
 * Deleting a tab via `GuiCtrl.Delete()` does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 * The size and positioning of some GUI components will be slightly different than AHK because WinForms uses different defaults.
-* Never place a key in a `Map` with the name of `"default"` because it will get confused with the Map's property named `Default`.
-	+ This applies to any other properties of `Map` as well.
 * The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
 * Using the class name with `ClassNN` on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
 	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to `CreatWindowEx()`.

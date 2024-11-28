@@ -1064,22 +1064,11 @@ namespace Keysharp.Scripting
 							if (nextOp == -1)
 								nextOp = parts.Count;
 
+							var imb = -1;
 							var ternaryParts = ExtractRange(parts, n, nextOp);
 
-							while (ternaryParts[0].ToString() == "("
-									&& ternaryParts[ternaryParts.Count - 1].ToString() != ")"
-									&& !IsBalanced(ternaryParts, "(", ")"))
-							{
-								ternaryParts.RemoveAt(0);
-							}
-
-							while (ternaryParts[0].ToString() != "("
-									&& !ternaryParts[0].ToString().EndsWith("(")
-									&& ternaryParts[ternaryParts.Count - 1].ToString() == ")"
-									&& !IsBalanced(ternaryParts, "(", ")"))
-							{
-								ternaryParts.RemoveAt(ternaryParts.Count - 1);
-							}
+							while ((imb = FindFirstImbalanced(ternaryParts, '(', ')')) != -1)
+								ternaryParts.RemoveAt(imb);
 
 							var ternaryCode = TokensToCode(ternaryParts);
 							var ternaryExpr = ParseExpression(codeLine, ternaryCode, ternaryParts, false);
