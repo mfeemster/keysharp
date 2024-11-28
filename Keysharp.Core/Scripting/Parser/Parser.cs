@@ -149,6 +149,9 @@ namespace Keysharp.Scripting
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 		internal static CodePrimitiveExpression nullPrimitive = new (null);
 		internal static CodeTypeReference objTypeRef = new (typeof(object));
+		internal static CodeTypeReference ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
+		internal static CodeTypeReference ctrdva = new CodeTypeReference(typeof(DefaultValueAttribute));
+		internal static CodeAttributeDeclaration cad;
 		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -225,6 +228,7 @@ namespace Keysharp.Scripting
 		private List<CodeLine> codeLines = [];
 		private uint exCount;
 		private string fileName;
+		private bool hardCreateOverride = true;
 		private int internalID;
 		private int labelCount;
 		private string lastHotkeyFunc = "";
@@ -243,6 +247,7 @@ namespace Keysharp.Scripting
 			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
 			targetClass = AddType(mainClassName);
 			_ = targetClass.Members.Add(main);
+			cad = new CodeAttributeDeclaration(ctrpaa);
 		}
 
 		public static string GetKeywords() => string.Join(' ', keywords);

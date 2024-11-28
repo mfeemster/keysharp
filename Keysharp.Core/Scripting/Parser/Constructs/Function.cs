@@ -343,7 +343,7 @@ namespace Keysharp.Scripting
 							else if (wasstr)
 							{
 								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("Optional"));
-								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(ValidateParameterLiteral(sub, codeLine)))));
+								_ = currParam.CustomAttributes.Add(new CodeAttributeDeclaration("DefaultParameterValue", new CodeAttributeArgument(new CodePrimitiveExpression(ValidateParameterLiteral(EscapedString(sub, false), codeLine)))));
 							}
 							else if (PrimitiveToExpression(ValidateParameterLiteral(sub, codeLine)) is CodeExpression expr)
 							{
