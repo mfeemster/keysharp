@@ -334,7 +334,7 @@
 		private static void DoDelay(long delay)
 		{
 			if (delay >= 0)
-				Flow.Sleep(delay);
+				_ = Flow.Sleep(delay);
 		}
 
 		private static bool TitleCompare(string a, string b, StringComparison comp = StringComparison.CurrentCulture)
@@ -374,7 +374,7 @@
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					return false;
 
-				Flow.Sleep(Delay);
+				_ = Flow.Sleep(Delay);
 			}
 
 			return true;

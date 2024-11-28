@@ -20,7 +20,7 @@ namespace Keysharp.Core
 		/// Otherwise, specify the name of the value to delete.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void RegDelete(object keyName = null, object valueName = null)
+		public static object RegDelete(object keyName = null, object valueName = null)
 		{
 			var keyname = keyName.As();
 			var valname = valueName.As();
@@ -49,6 +49,7 @@ namespace Keysharp.Core
 					val = string.Empty;
 
 				Conversions.ToRegKey(keyname, true).Item1.DeleteValue(val, true);
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -66,7 +67,7 @@ namespace Keysharp.Core
 		/// If the item is a subkey, the full name of that subkey is used by default.<br/>
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void RegDeleteKey(object keyName = null)
+		public static object RegDeleteKey(object keyName = null)
 		{
 			var keyname = keyName.As();
 
@@ -78,6 +79,7 @@ namespace Keysharp.Core
 
 				var (reg, comp, key) = Conversions.ToRegRootKey(keyname);
 				reg.DeleteSubKeyTree(key, true);
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -175,7 +177,7 @@ namespace Keysharp.Core
 		/// Otherwise, specify the name of the value that will be written to.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void RegWrite(object value, object valueType = null, object keyName = null, object valueName = null)
+		public static object RegWrite(object value, object valueType = null, object keyName = null, object valueName = null)
 		{
 			var val = value;
 			var valtype = valueType.As();
@@ -232,6 +234,8 @@ namespace Keysharp.Core
 
 					reg.SetValue(valname, val, regtype);
 				}
+
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -246,7 +250,12 @@ namespace Keysharp.Core
 		/// <param name="regView">Specify 32 to view the registry as a 32-bit application would, or 64 to view the registry as a 64-bit application would.<br/>
 		/// Specify the word Default to restore normal behavior.
 		/// </param>
-		public static void SetRegView(object regView) => Accessors.A_RegView = regView;
+		public static object SetRegView(object regView)
+		{
+			var oldVal = Accessors.A_RegView;
+			Accessors.A_RegView = regView;
+			return oldVal;
+		}
 
 		/// <summary>
 		/// Internal helper to return the registry view for the currently selected mode, 32 or 64 bit.

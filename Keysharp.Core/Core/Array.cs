@@ -5,7 +5,7 @@
 	/// Internally the list uses 0-based indexing, however the public interface expects 1-based indexing.<br/>
 	/// A negative index can be used to address elements in reverse, so -1 is the last element, -2 is the second last element, and so on.
 	/// </summary>
-	public class Array : KeysharpObject, IEnumerable<(object, object)>, IList
+	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
 		private int capacity = 64;
 
@@ -112,8 +112,12 @@
 		/// <summary>
 		/// Gets the enumerator object which returns a position,value tuple for each element
 		/// </summary>
+		/// <param name="count">The number of items each element should contain:<br/>
+		///     1: Return the value in the first element, with the second being null.<br/>
+		///     2: Return the index in the first element, and the value in the second.
+		/// </param>
 		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum() => ((IEnumerable<(object, object)>)this).GetEnumerator();
+		public IEnumerator<(object, object)> __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
@@ -350,7 +354,7 @@
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="ArrayIndexValueIterator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="ArrayIndexValueIterator"/>.</returns>
-		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array);
+		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array, 2);
 
 		/// <summary>
 		/// Returns a non-zero number if the index is valid and there is a value at that position.
@@ -715,7 +719,7 @@
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum();
+		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
 
 		/// <summary>
 		/// The implementation for <see cref="IList.RemoveAt"/> which just calls <see cref="RemoveAt"/>.<br/>
@@ -793,6 +797,13 @@
 	internal class ArrayIndexValueIterator : IEnumerator<(object, object)>
 	{
 		/// <summary>
+		/// The number of items to return for each iteration. Allowed values are 1 and 2:
+		/// 1: return just the value in the first position
+		/// 2: return the index in the first position and the value in the second.
+		/// </summary>
+		private readonly int count;
+
+		/// <summary>
 		/// The internal array to be iterated over.
 		/// </summary>
 		private readonly List<object> arr;
@@ -811,7 +822,10 @@
 			{
 				try
 				{
-					return ((long)position + 1, arr[position]);
+					if (count == 1)
+						return (arr[position], null);
+					else
+						return ((long)position + 1, arr[position]);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -829,9 +843,11 @@
 		/// Initializes a new instance of the <see cref="ArrayIndexValueIterator"/> class.
 		/// </summary>
 		/// <param name="a">The <see cref="List{object}"/> to iterate over.</param>
-		public ArrayIndexValueIterator(List<object> a)
+		/// <param name="c">The number of items to return for each iteration.</param>
+		public ArrayIndexValueIterator(List<object> a, int c)
 		{
 			arr = a;
+			count = c;
 		}
 
 		/// <summary>

@@ -221,3 +221,65 @@ if (C == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+evalfunc(p1)
+{
+	return p1
+}
+
+val := evalfunc(1 && 2)
+
+if (val == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := evalfunc(x := 1 && 2)
+
+if (val == 2 && x == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if ((1 && 2) == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := evalfunc(1 && true && 20 && "true")
+
+if (val == "true")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+val := evalfunc(x := 1 && true && 20 && "true")
+
+if (val == "true" && x == "true")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (x := (1 && true && 20 && "true") == "true" && x == "true")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := evalfunc(1 && true && 20 && "true" && 0)
+
+if (val == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+val := evalfunc(x := 1 && true && 20 && "true" && 0)
+
+if (val == 0 && x == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if ((1 && true && 20 && "true" && 0) == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

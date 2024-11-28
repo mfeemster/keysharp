@@ -215,7 +215,7 @@
 								}
 							}
 
-							Threads.EndThread(true);
+							_ = Threads.EndThread(true);
 						}, true);//Pop on exception because EndThread() above won't be called.
 					}
 

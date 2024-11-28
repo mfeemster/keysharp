@@ -59,7 +59,7 @@
 
 		public void SetText(string s, MainFocusedTab tab, bool focus)
 		{
-			this.BeginInvoke(() =>//These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
+			_ = this.BeginInvoke(() => //These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
 			{
 				GetText(tab).Text = s;
 
@@ -75,7 +75,7 @@
 
 		internal void ListHotkeys()
 		{
-			this.BeginInvoke(() =>
+			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys, true);
@@ -84,7 +84,7 @@
 
 		internal void ShowDebug()
 		{
-			this.BeginInvoke(() =>
+			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				tcMain.SelectedTab = tpDebug;
@@ -93,7 +93,7 @@
 
 		internal void ShowHistory()
 		{
-			this.BeginInvoke(() =>
+			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(Script.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
@@ -103,7 +103,7 @@
 		internal void ShowInternalVars(bool showTab)
 		{
 			callingInternalVars = true;//Gets called twice if called before first showing.
-			this.BeginInvoke(() =>
+			_ = this.BeginInvoke(() =>
 			{
 				try
 				{
@@ -335,7 +335,7 @@
 
 		private void userManualToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			Dialogs.MsgBox("This feature is not implemented");
+			_ = Dialogs.MsgBox("This feature is not implemented");
 		}
 
 		private void variablesAndTheirContentsToolStripMenuItem_Click(object sender, EventArgs e) => ShowInternalVars(true);

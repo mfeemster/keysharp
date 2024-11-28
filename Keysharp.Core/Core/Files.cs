@@ -33,12 +33,12 @@
 		/// If this option is not used, line endings within text are not changed.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
-		public static void FileAppend(object text, object filename = null, object options = null)
+		public static object FileAppend(object text, object filename = null, object options = null)
 		{
 			var file = filename.As();
 
 			//if (text.ToString() != "pass")
-			//	Console.WriteLine(text);
+			//  Console.WriteLine(text);
 
 			try
 			{
@@ -166,6 +166,8 @@
 					if (!string.IsNullOrEmpty(file) && !file.StartsWith("*"))
 						tw.Close();
 				}
+
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -189,7 +191,11 @@
 		/// 1: Overwrite existing files. However, any files or subfolders inside destPattern that do not have a counterpart in sourcePattern will not be deleted.
 		/// </param>
 		/// <exception cref="Error">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
-		public static void FileCopy(object sourcePattern, object destPattern, object overwrite = null) => FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), false);
+		public static object FileCopy(object sourcePattern, object destPattern, object overwrite = null)
+		{
+			FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), false);
+			return null;
+		}
 
 		/// <summary>
 		/// Creates a shortcut to a file.
@@ -250,14 +256,14 @@
 		/// </param>
 #endif
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if any errors occur.</exception>
-		public static void FileCreateShortcut(object target, object linkFile, object workingDir = null, object args = null, object description = null,
-											  object iconFile = null,
+		public static object FileCreateShortcut(object target, object linkFile, object workingDir = null, object args = null, object description = null,
+												object iconFile = null,
 #if WINDOWS
-											  object shortcutKey = null,
+												object shortcutKey = null,
 #else
-											  object shortcutType = null,
+												object shortcutType = null,
 #endif
-											  object iconNumber = null, object runState = null)
+												object iconNumber = null, object runState = null)
 		{
 			var t = target.As();
 			var l = linkFile.As();
@@ -360,6 +366,7 @@
 			shortcut.WindowStyle = (int)state;
 			shortcut.Save();
 #endif
+			return null;
 		}
 
 		/// <summary>
@@ -369,7 +376,7 @@
 		/// filePattern is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
-		public static void FileDelete(object filePattern)
+		public static object FileDelete(object filePattern)
 		{
 			var s = filePattern.As();
 			var path = Path.GetDirectoryName(s);
@@ -391,6 +398,8 @@
 
 			if (failures > 0)
 				throw new Error($"Failed {failures} times moving or copying files.", "", failures);
+
+			return null;
 		}
 
 		/// <summary>
@@ -413,12 +422,14 @@
 		/// CPnnn: A code page with numeric identifier nnn. See Code Page Identifiers.<br/>
 		/// nnn: A numeric code page identifier.
 		/// </param>
-		public static void FileEncoding(object encoding)
+		public static object FileEncoding(object encoding)
 		{
 			var s = encoding.As();
 
 			if (s != "")
 				Accessors.A_FileEncoding = s;
+
+			return null;
 		}
 
 		/// <summary>
@@ -509,7 +520,7 @@
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj)
+		public static object FileGetShortcut(object obj)
 		{
 			object outTarget = null;
 			object outDir = null;
@@ -518,21 +529,21 @@
 			object outIcon = null;
 			object outIconNum = null;
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj,
-										   ref object outTarget)
+		public static object FileGetShortcut(object obj,
+											 ref object outTarget)
 		{
 			object outDir = null;
 			object outArgs = null;
@@ -540,124 +551,124 @@
 			object outIcon = null;
 			object outIconNum = null;
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj,
-										   ref object outTarget,
-										   ref object outDir)
+		public static object FileGetShortcut(object obj,
+											 ref object outTarget,
+											 ref object outDir)
 		{
 			object outArgs = null;
 			object outDescription = null;
 			object outIcon = null;
 			object outIconNum = null;
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj,
-										   ref object outTarget,
-										   ref object outDir,
-										   ref object outArgs)
+		public static object FileGetShortcut(object obj,
+											 ref object outTarget,
+											 ref object outDir,
+											 ref object outArgs)
 		{
 			object outDescription = null;
 			object outIcon = null;
 			object outIconNum = null;
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj,
-										   ref object outTarget,
-										   ref object outDir,
-										   ref object outArgs,
-										   ref object outDescription)
+		public static object FileGetShortcut(object obj,
+											 ref object outTarget,
+											 ref object outDir,
+											 ref object outArgs,
+											 ref object outDescription)
 		{
 			object outIcon = null;
 			object outIconNum = null;
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj,
-										   ref object outTarget,
-										   ref object outDir,
-										   ref object outArgs,
-										   ref object outDescription,
-										   ref object outIcon)
+		public static object FileGetShortcut(object obj,
+											 ref object outTarget,
+											 ref object outDir,
+											 ref object outArgs,
+											 ref object outDescription,
+											 ref object outIcon)
 		{
 			object outIconNum = null;
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
-		public static void FileGetShortcut(object obj,
-										   ref object outTarget,
-										   ref object outDir,
-										   ref object outArgs,
-										   ref object outDescription,
-										   ref object outIcon,
-										   ref object outIconNum)
+		public static object FileGetShortcut(object obj,
+											 ref object outTarget,
+											 ref object outDir,
+											 ref object outArgs,
+											 ref object outDescription,
+											 ref object outIcon,
+											 ref object outIconNum)
 		{
 			object outRunState = null;
-			FileGetShortcut(obj,
-							ref outTarget,
-							ref outDir,
-							ref outArgs,
-							ref outDescription,
-							ref outIcon,
-							ref outIconNum,
-							ref outRunState);
+			return FileGetShortcut(obj,
+								   ref outTarget,
+								   ref outDir,
+								   ref outArgs,
+								   ref outDescription,
+								   ref outIcon,
+								   ref outIconNum,
+								   ref outRunState);
 		}
 
 #if WINDOWS
@@ -722,18 +733,18 @@
 		/// <param name="outRunState">Ignored</param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
 #endif
-		public static void FileGetShortcut(object linkFile,
-										   ref object outTarget,
-										   ref object outDir,
-										   ref object outArgs,
-										   ref object outDescription,
-										   ref object outIcon,
+		public static object FileGetShortcut(object linkFile,
+											 ref object outTarget,
+											 ref object outDir,
+											 ref object outArgs,
+											 ref object outDescription,
+											 ref object outIcon,
 #if WINDOWS
-										   ref object outIconNum,
+											 ref object outIconNum,
 #else
-										   ref object outType,
+											 ref object outType,
 #endif
-										   ref object outRunState)
+											 ref object outRunState)
 		{
 			var link = Path.GetFullPath(linkFile.As());
 #if LINUX
@@ -810,6 +821,7 @@
 			}
 
 #endif
+			return null;
 		}
 
 		/// <summary>
@@ -980,7 +992,11 @@
 		/// 0: Do not overwrite existing files.The operation will fail and have no effect if destPattern already exists as a file or directory.<br/>
 		/// 1: Overwrite existing files. However, any files or subfolders inside destPattern that do not have a counterpart in sourcePattern will not be deleted.
 		/// </param>
-		public static void FileMove(object sourcePattern, object destPattern, object overwrite = null) => FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), true);
+		public static object FileMove(object sourcePattern, object destPattern, object overwrite = null)
+		{
+			FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), true);
+			return null;
+		}
 
 		/// <summary>
 		/// Opens a file to read specific content from it and/or to write new content into it.
@@ -1249,7 +1265,7 @@
 		/// To recycle an entire directory, provide its name without a trailing backslash.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void FileRecycle(object filePattern)
+		public static object FileRecycle(object filePattern)
 		{
 			var s = filePattern.As();
 
@@ -1266,6 +1282,7 @@
 					FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
 #endif
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -1278,7 +1295,7 @@
 		/// </summary>
 		/// <param name="driveLetter">If omitted, the recycle bin for all drives is emptied. Otherwise, specify a drive letter such as C:\</param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void FileRecycleEmpty(object driveLetter = null)
+		public static object FileRecycleEmpty(object driveLetter = null)
 		{
 			var s = driveLetter.As();
 
@@ -1289,14 +1306,13 @@
 #elif WINDOWS
 				_ = WindowsAPI.SHEmptyRecycleBin(IntPtr.Zero, s != "" ? s : null, WindowsAPI.SHERB_NOCONFIRMATION | WindowsAPI.SHERB_NOPROGRESSUI | WindowsAPI.SHERB_NOSOUND);
 #endif
+				return null;
 			}
 			catch (Exception ex)
 			{
 				throw new OSError(ex, $"Error emptying recycle bin for drive {s}");
 			}
 		}
-
-
 
 		/// <summary>
 		/// Changes the attributes of one or more files or folders. Wildcards are supported.
@@ -1329,7 +1345,7 @@
 		/// If R is omitted, files and folders in subfolders are not included.
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static void FileSetAttrib(object attributes, object filePattern = null, object mode = null)
+		public static object FileSetAttrib(object attributes, object filePattern = null, object mode = null)
 		{
 			var attr = attributes.As();
 			var file = filePattern.As(Accessors.A_LoopFileFullPath);
@@ -1365,6 +1381,8 @@
 
 			if (failures != 0)
 				throw new Error($"Failed {failures} times setting file attributes.", "", failures);
+
+			return null;
 		}
 
 		/// <summary>
@@ -1394,7 +1412,7 @@
 		/// If R is omitted, files and folders in subfolders are not included.
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static void FileSetTime(object yyyymmddhh24miss = null, object filePattern = null, object whichTime = null, object mode = null)
+		public static object FileSetTime(object yyyymmddhh24miss = null, object filePattern = null, object whichTime = null, object mode = null)
 		{
 			var YYYYMMDDHH24MISS = yyyymmddhh24miss.As();
 			var file = filePattern.As();
@@ -1451,6 +1469,8 @@
 
 			if (failures != 0)
 				throw new Error($"Failed {failures} times setting file time.", "", failures);
+
+			return null;
 		}
 
 		/// <summary>

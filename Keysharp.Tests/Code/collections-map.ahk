@@ -490,3 +490,24 @@ if (m["t{hr)e)]e"] == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+a := Map(1, "a", 2, "b", 3, "c")
+c := [a*]
+
+if (c[2] == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m := Map("test", 1, "default", 2, "current", 3)
+m.Default := 4
+
+if (m.default == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m["default"] == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

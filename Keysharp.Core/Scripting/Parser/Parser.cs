@@ -149,6 +149,9 @@ namespace Keysharp.Scripting
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 		internal static CodePrimitiveExpression nullPrimitive = new (null);
 		internal static CodeTypeReference objTypeRef = new (typeof(object));
+		internal static CodeTypeReference ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
+		internal static CodeTypeReference ctrdva = new CodeTypeReference(typeof(DefaultValueAttribute));
+		internal static CodeAttributeDeclaration cad;
 		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -225,6 +228,7 @@ namespace Keysharp.Scripting
 		private List<CodeLine> codeLines = [];
 		private uint exCount;
 		private string fileName;
+		private bool hardCreateOverride = true;
 		private int internalID;
 		private int labelCount;
 		private string lastHotkeyFunc = "";
@@ -243,6 +247,7 @@ namespace Keysharp.Scripting
 			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
 			targetClass = AddType(mainClassName);
 			_ = targetClass.Members.Add(main);
+			cad = new CodeAttributeDeclaration(ctrpaa);
 		}
 
 		public static string GetKeywords() => string.Join(' ', keywords);
@@ -307,13 +312,13 @@ namespace Keysharp.Scripting
 			{
 				var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 				_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
-				_ = inv.Parameters.Add(new CodeSnippetExpression("UserMainCode"));
+				_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
 				_ = main.Statements.Add(new CodeExpressionStatement(inv));
 				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 			}
 			else
 			{
-				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "UserMainCode"));
+				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "_ks_UserMainCode"));
 				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", [new CodePrimitiveExpression(-2L)]));
 			}
@@ -483,12 +488,12 @@ namespace Keysharp.Scripting
 								//When __New() is declared with an anonymous variadic parameter like __New(*),
 								//then the parameter will be named args, so don't declare another variable by the same name.
 								if (method.Parameters[0].Name != "args")
-									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[0].Name} = args")));
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {name = Ch.CreateEscapedIdentifier(method.Parameters[0].Name)} = args")));
 							}
 							else
 							{
 								for (var i = method.Parameters.Count - 1; i >= 0; i--)
-									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {method.Parameters[i].Name} = args.Length > {i} ? args[{i}] : null")));
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {Ch.CreateEscapedIdentifier(method.Parameters[i].Name)} = args.Length > {i} ? args[{i}] : null")));
 							}
 
 							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
@@ -593,7 +598,7 @@ namespace Keysharp.Scripting
 					//The lines relating to args and __New() work whether any params were declared or not.
 					if (thisconstructor != null)
 					{
-						var ctorParams = origNewParams.Select(p => p.Name).ToArray();
+						var ctorParams = origNewParams.Select(p => Ch.CreateEscapedIdentifier(p.Name)).ToArray();
 						var newparamnames = string.Join(", ", ctorParams);
 
 						//First call Init() in the constructor if it was derived from a built-in type.
@@ -755,7 +760,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+							//If they supplied less than the required number of arguments, fill in only default ref params.
 							if (methParams.Count > cmie.Parameters.Count)
 							{
 								var newParams = new List<CodeExpression>(methParams.Count);
@@ -764,19 +769,14 @@ namespace Keysharp.Scripting
 								{
 									var mp = methParams[i];
 
-									if (!mp.IsOptionalOrVariadic())//Ignore optional or variadic object[] parameters.
+									if (!mp.IsVariadic() && mp.Direction == FieldDirection.Ref)
 									{
-										if (mp.Direction == FieldDirection.Ref)
-										{
-											newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-											createDummyRef = true;
-										}
-										else
-											newParams.Add(nullPrimitive);
+										createDummyRef = true;
+										_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
 									}
+									else
+										break;
 								}
-
-								cmie.Parameters.AddRange(newParams.ToArray());
 							}
 
 							HandlePartialVariadicParams(cmie, cmm);
@@ -811,7 +811,7 @@ namespace Keysharp.Scripting
 									}
 								}
 
-								//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+								//If they supplied less than the required number of arguments, fill in only default ref params.
 								if (methParams.Length > cmie.Parameters.Count)
 								{
 									var newParams = new List<CodeExpression>(methParams.Length);
@@ -820,19 +820,14 @@ namespace Keysharp.Scripting
 									{
 										var mp = methParams[i];
 
-										if (!mp.IsOptional)
+										if (!mp.IsVariadic() && mp.ParameterType.IsByRef && !mp.IsOut)
 										{
-											if (mp.ParameterType.IsByRef && !mp.IsOut)
-											{
-												newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-												createDummyRef = true;
-											}
-											else if (mp.ParameterType != typeof(object[]))//Do not pass for variadic object[] parameters.
-												newParams.Add(nullPrimitive);
+											_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
+											createDummyRef = true;
 										}
+										else
+											break;
 									}
-
-									cmie.Parameters.AddRange(newParams.ToArray());
 								}
 
 								HandlePartialVariadicParams(cmie, mph2.mi);
@@ -985,7 +980,7 @@ namespace Keysharp.Scripting
 			var userMainMethod = new CodeMemberMethod()
 			{
 				Attributes = MemberAttributes.Public | MemberAttributes.Static,
-				Name = "UserMainCode",
+				Name = "_ks_UserMainCode",
 				ReturnType = objTypeRef
 			};
 
@@ -1021,6 +1016,7 @@ namespace Keysharp.Scripting
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
+							name = Ch.CreateEscapedIdentifier(name);
 							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
@@ -1044,6 +1040,7 @@ namespace Keysharp.Scripting
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
+							name = Ch.CreateEscapedIdentifier(name);
 							var isstatic = globalvar.Value.UserData.Contains("isstatic");
 							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							//If the property existed in a base class and is a simple assignment in this class, then assume

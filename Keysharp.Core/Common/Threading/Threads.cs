@@ -11,10 +11,11 @@
 			return PushThreadVariables(0, skip, false, onlyIfEmpty);
 		}
 
-		public static void EndThread(bool pushed, bool checkThread = false)
+		public static object EndThread(bool pushed, bool checkThread = false)
 		{
 			PopThreadVariables(pushed, checkThread);
 			_ = Interlocked.Decrement(ref Script.totalExistingThreads);
+			return null;
 		}
 
 		[PublicForTestOnly]
@@ -30,7 +31,7 @@
 			if (!Flow.AllowInterruption)
 				return false;
 
-			if (Script.totalExistingThreads == 0)//Before UserMainCode() starts to run.
+			if (Script.totalExistingThreads == 0)//Before _ks_UserMainCode() starts to run.
 				return true;
 
 			var tv = GetThreadVariables();
@@ -88,7 +89,7 @@
 									ret = "";
 
 								//throw new Error("ASDf");
-								EndThread(btv.Item1);
+								_ = EndThread(btv.Item1);
 							}, true);//Pop on exception because EndThread() above won't be called.
 						}
 						else
@@ -102,7 +103,7 @@
 							else
 								ret = "";
 
-							EndThread(btv.Item1);
+							_ = EndThread(btv.Item1);
 						}
 					}
 

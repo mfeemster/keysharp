@@ -121,10 +121,10 @@ namespace Keysharp.Tests
 		{
 			var key = "dummynothing123";
 			var s = "a test value";
-			Env.EnvSet(key, s);//Add the variable.
+			_ = Env.EnvSet(key, s); //Add the variable.
 			var val = Env.EnvGet(key);
 			Assert.AreEqual(val, s);
-			Env.EnvSet(key, null);//Delete the variable.
+			_ = Env.EnvSet(key, null); //Delete the variable.
 			val = Env.EnvGet(key);//Ensure it's deleted.
 			Assert.AreEqual(val, string.Empty);
 			Assert.IsTrue(TestScript("env-envset", true));
@@ -133,7 +133,7 @@ namespace Keysharp.Tests
 		[Test, Category("Env"), NonParallelizable]
 		public void EnvUpdate()
 		{
-			Env.EnvUpdate();
+			_ = Env.EnvUpdate();
 			Assert.IsTrue(TestScript("env-envupdate", true));
 		}
 

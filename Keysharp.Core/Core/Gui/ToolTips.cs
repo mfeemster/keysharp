@@ -176,13 +176,13 @@
             return handle;
         }
 
-        public static void TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
-        {
-            var filename = obj0.As();
-            var iconnumber = ImageHelper.PrepareIconNumber(obj1);
+		public static object TraySetIcon(object obj0 = null, object obj1 = null, object obj2 = null)
+		{
+			var filename = obj0.As();
+			var iconnumber = ImageHelper.PrepareIconNumber(obj1);
 
-            if (Script.NoTrayIcon)
-                return;
+			if (Script.NoTrayIcon)
+				return null;
 
             if (obj2 != null)
                 Accessors.A_IconFrozen = obj2.Ab();
@@ -205,44 +205,46 @@
                         if (icon == null)
                             icon = Icon.FromHandle(ptr);
 
-                        if (icon != null)
-                        {
-                            Accessors.A_IconFile = filename;
-                            Accessors.A_IconNumber = obj1;
-                            Script.mainWindow.CheckedBeginInvoke(() =>
-                            {
-                                Script.Tray.Icon = Script.mainWindow.Icon = icon;
-                            }, false, false);
-                        }
-                    }
-                    finally
-                    {
-                        _ = PlatformProvider.Manager.DestroyIcon(ptr);
-                    }
-                }
-            }
-            else
-            {
-                Accessors.A_IconFile = "";
-                Accessors.A_IconNumber = 1;
-                Script.mainWindow.CheckedBeginInvoke(() =>
-                {
-                    Script.Tray.Icon = Script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
-                }, false, false);
-            }
-        }
+						if (icon != null)
+						{
+							Accessors.A_IconFile = filename;
+							Accessors.A_IconNumber = obj1;
+							Script.mainWindow.CheckedBeginInvoke(() =>
+							{
+								Script.Tray.Icon = Script.mainWindow.Icon = icon;
+							}, false, false);
+						}
+					}
+					finally
+					{
+						_ =  PlatformProvider.Manager.DestroyIcon(ptr);
+					}
+				}
+			}
+			else
+			{
+				Accessors.A_IconFile = "";
+				Accessors.A_IconNumber = 1;
+				Script.mainWindow.CheckedBeginInvoke(() =>
+				{
+					Script.Tray.Icon = Script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
+				}, false, false);
+			}
 
-        public static void TrayTip(object obj0 = null, object obj1 = null, object obj2 = null)
-        {
-            var text = obj0.As();
-            var title = obj1.As();
-            var options = obj2;
+			return null;
+		}
 
-            if (Script.NoTrayIcon)
-                return;
+		public static object TrayTip(object obj0 = null, object obj1 = null, object obj2 = null)
+		{
+			var text = obj0.As();
+			var title = obj1.As();
+			var options = obj2;
 
-            if ((bool)Accessors.A_IconHidden)
-                return;
+			if (Script.NoTrayIcon)
+				return null;
+
+			if ((bool)Accessors.A_IconHidden)
+				return null;
 
             if (Script.Tray == null)
                 Script.CreateTrayMenu();
@@ -255,12 +257,12 @@
                 text = " ";
             }
 
-            if (text.Length == 0 && title.Length == 0)
-            {
-                Script.Tray.Visible = false;
-                Script.Tray.Visible = true;
-                return;
-            }
+			if (text.Length == 0 && title.Length == 0)
+			{
+				Script.Tray.Visible = false;
+				Script.Tray.Visible = true;
+				return null;
+			}
 
             var icon = ToolTipIcon.None;
             void HandleInt(int? i)
@@ -292,8 +294,9 @@
             else if (options != null)
                 HandleInt(options.ParseInt());
 
-            Script.Tray.Visible = true;
-            Script.Tray.ShowBalloonTip(1000, title, text, icon);//Duration is now ignored by Windows.
-        }
-    }
+			Script.Tray.Visible = true;
+			Script.Tray.ShowBalloonTip(1000, title, text, icon);//Duration is now ignored by Windows.
+			return null;
+		}
+	}
 }

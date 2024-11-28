@@ -19,7 +19,7 @@
 		/// Iconn: Indicates which icon to load from a file with multiple icons (generally an EXE or DLL file). For example, "Icon2" loads the file's second icon.<br/>
 		/// Any supported image format can be converted to an icon by specifying "Icon1".
 		/// </param>
-		public static void CopyImageToClipboard(object filename, object options = null)
+		public static object CopyImageToClipboard(object filename, object options = null)
 		{
 			var file = filename.As();
 			var opts = options.As();
@@ -53,6 +53,8 @@
 			{
 				Clipboard.SetImage(new Bitmap(bmp));
 			}
+
+			return null;
 		}
 
 		/// <summary>

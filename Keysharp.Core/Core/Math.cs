@@ -182,11 +182,40 @@
 		public static double Floor(object obj) => Math.Floor(obj is double d ? d : obj.Ad());
 
 		/// <summary>
-		/// Returns the integer portion of the specified double number.
+		/// Converts a numeric string or floating-point value to an integer.
 		/// </summary>
-		/// <param name="n">A number.</param>
-		/// <returns>The integer portion of <paramref name="n"/>.</returns>
-		public static long Integer(object obj) => (long)(obj is double d ? d : obj.Ad());
+		/// <param name="obj">The object to be converted</param>
+		/// <returns>The converted value as a long.</returns>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
+		public static long Integer(object obj)
+		{
+			try
+			{
+				return (long)(obj is double d ? d : obj.Ad());
+			}
+			catch (Exception e)
+			{
+				throw new TypeError(e.Message);
+			}
+		}
+
+		/// <summary>
+		/// Converts a numeric string or integer value to a floating-point number.
+		/// </summary>
+		/// <param name="obj">The object to be converted</param>
+		/// <returns>The converted value as a double.</returns>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
+		public static double Float(object obj)
+		{
+			try
+			{
+				return obj is double d ? d : obj.Ad();
+			}
+			catch (Exception e)
+			{
+				throw new TypeError(e.Message);
+			}
+		}
 
 		/// <summary>
 		/// Returns the natural (base e) logarithm of a specified number.
@@ -414,7 +443,11 @@
 		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
 		/// </summary>
 		/// <param name="obj">The numerical seed to create the random number generator with.</param>
-		public static void RandomSeed(object obj) => Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
+		public static object RandomSeed(object obj)
+		{
+			Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
+			return null;
+		}
 
 		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.

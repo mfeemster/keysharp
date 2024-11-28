@@ -43,7 +43,7 @@ namespace Keysharp.Core
 		///     Otherwise, specify the word Rel or Relative to treat the coordinates as offsets from the current mouse position.<br/>
 		///     In other words, the cursor will be moved from its current position by X pixels to the right (left if negative) and Y pixels down(up if negative).
 		/// </param>
-		public static void Click(object options)
+		public static object Click(object options)
 		{
 			int x = 0, y = 0;
 			var vk = 0u;
@@ -55,6 +55,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(repeatCount < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
 											  , vk, x, y, 0, 0, repeatCount, eventType, ThreadAccessors.A_DefaultMouseSpeed, moveOffset);//, true, true);
+			return null;
 		}
 
 		/// <summary>
@@ -156,7 +157,7 @@ namespace Keysharp.Core
 		///     R: The X and Y coordinates will be treated as offsets from the current mouse position. In other words, the cursor will be moved from its current position<br/>
 		///     by X pixels to the right (left if negative) and Y pixels down (up if negative).
 		/// </param>
-		public static void MouseClick(object whichButton = null, object x = null, object y = null, object clickCount = null, object speed = null, object downOrUp = null, object relative = null)
+		public static object MouseClick(object whichButton = null, object x = null, object y = null, object clickCount = null, object speed = null, object downOrUp = null, object relative = null)
 		{
 			var wb = whichButton.As();
 			var ix = x.Ai(KeyboardMouseSender.CoordUnspecified);// If no starting coords are specified, mark it as "use the current mouse position".
@@ -168,6 +169,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSECLICK, wb, ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
 						 ispeed, rel, repeatCount, du);//, true, true);
+			return null;
 		}
 
 		/// <summary>
@@ -195,7 +197,7 @@ namespace Keysharp.Core
 		///     R: The X and Y coordinates will be treated as offsets from the current mouse position. In other words, the cursor will be moved from its current position<br/>
 		///     by X pixels to the right (left if negative) and Y pixels down (up if negative).
 		/// </param>
-		public static void MouseClickDrag(object whichButton, object x1, object y1, object x2, object y2, object speed = null, object relative = null)
+		public static object MouseClickDrag(object whichButton, object x1, object y1, object x2, object y2, object speed = null, object relative = null)
 		{
 			var wb = whichButton.As();
 			var ix1 = x1.Ai(KeyboardMouseSender.CoordUnspecified);//If no starting coords are specified, mark it as "use the current mouse position".
@@ -207,6 +209,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSECLICKDRAG, wb, ix1, iy1, ix2, iy2,
 						 ispeed, rel, 1, "");//, true, true);
+			return null;
 		}
 
 		/// <summary>
@@ -229,7 +232,7 @@ namespace Keysharp.Core
 		///     application such as SysEdit or TextPad. However, it is less accurate for other purposes such as detecting controls inside a GroupBox control.<br/>
 		///     2: Stores the control's HWND in OutputVarControl rather than the control's ClassNN.
 		/// </param>
-		public static void MouseGetPos(ref object outputVarX, ref object outputVarY, ref object outputVarWin, ref object outputVarControl, object flag = null)
+		public static object MouseGetPos(ref object outputVarX, ref object outputVarY, ref object outputVarWin, ref object outputVarControl, object flag = null)
 		{
 			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
@@ -241,7 +244,7 @@ namespace Keysharp.Core
 			var child = WindowProvider.Manager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == IntPtr.Zero)
-				return;
+				return null;
 
 			var parent = child.NonChildParentWindow;
 			outputVarWin = parent.Handle;
@@ -261,15 +264,16 @@ namespace Keysharp.Core
 #endif
 
 			if (child.Handle == parent.Handle)//If there's no control per se, make it blank.
-				return;
+				return null;
 
 			if ((mode & 0x02) != 0)
 			{
 				outputVarControl = child.Handle;
-				return;
+				return null;
 			}
 
 			outputVarControl = child.ClassNN;
+			return null;
 		}
 
 		/// <summary>
@@ -285,7 +289,7 @@ namespace Keysharp.Core
 		///     R: The X and Y coordinates will be treated as offsets from the current mouse position. In other words, the cursor will be moved from its current position<br/>
 		///     by X pixels to the right (left if negative) and Y pixels down (up if negative).
 		/// </param>
-		public static void MouseMove(object x, object y, object speed = null, object relative = null)
+		public static object MouseMove(object x, object y, object speed = null, object relative = null)
 		{
 			var ix = x.Ai(KeyboardMouseSender.CoordUnspecified);
 			var iy = y.Ai(KeyboardMouseSender.CoordUnspecified);
@@ -294,13 +298,18 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSEMOVE, "", ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
 						 s, r, 1, "");
+			return null;
 		}
 
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>, <see cref="MouseMove"/>, <see cref="MouseClick"/>, and <see cref="MouseClickDrag"/>.
 		/// </summary>
 		/// <param name="speed">The speed to move the mouse in the range 0 (fastest) to 100 (slowest). A speed of 0 will move the mouse instantly.</param>
-		public static void SetDefaultMouseSpeed(object speed) => Accessors.A_DefaultMouseSpeed = speed;
+		public static object SetDefaultMouseSpeed(object speed)
+		{
+			Accessors.A_DefaultMouseSpeed = speed;
+			return null;
+		}
 
 		/// <summary>
 		/// Sets the delay that will occur after each mouse movement or click.
@@ -311,7 +320,7 @@ namespace Keysharp.Core
 		/// <param name="play">If blank or omitted, the delay is applied to the traditional SendEvent mode. Otherwise, specify the word Play to apply the delay to the SendPlay mode.<br/>
 		/// If a script never uses this parameter, the delay is always -1 for SendPlay.
 		/// </param>
-		public static void SetMouseDelay(object delay, object play = null)
+		public static object SetMouseDelay(object delay, object play = null)
 		{
 			var p = play.As().ToLowerInvariant();
 			var isplay = p == "play";
@@ -324,6 +333,8 @@ namespace Keysharp.Core
 				Accessors.A_MouseDelayPlay = del;
 			else
 				Accessors.A_MouseDelay = del;
+
+			return null;
 		}
 
 		/// <summary>

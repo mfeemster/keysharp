@@ -44,14 +44,18 @@ namespace Keysharp.Core
 		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
 		{
 			var o = options.As();
-			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
+			return new DelegateHolder(Functions.GetFuncObj(function, null, true), o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
 		}
 
 		/// <summary>
 		/// Frees the specified callback by internally setting it to null.
 		/// </summary>
 		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
-		public static void CallbackFree(object address) => (address as DelegateHolder)?.Clear();
+		public static object CallbackFree(object address)
+		{
+			(address as DelegateHolder)?.Clear();
+			return null;
+		}
 
 		/// <summary>
 		/// Calls a function inside a DLL, such as a standard Windows API function.
@@ -286,8 +290,7 @@ namespace Keysharp.Core
 			}
 			else if (function is DelegateHolder dh)
 			{
-				var helper = new ComArgumentHelper(parameters);
-				return dh.DelegatePlaceholderArr(helper.args);
+				return dh.DirectCall(parameters);
 			}
 			else if (function is Delegate del)
 			{

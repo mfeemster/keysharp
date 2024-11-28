@@ -621,6 +621,12 @@
                         <Property Name="DisplayName" Value="FlowWhile" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowMultiStatement" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowMultiStatement" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
@@ -895,6 +901,12 @@
                         <Property Name="DisplayName" Value="Truncate" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.MathTests.Float" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Float" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
@@ -928,6 +940,12 @@
                       <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.Misctests.SimplePass" />
                       <Rule Match="Any">
                         <Property Name="DisplayName" Value="SimplePass" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.Misctests.MiscReserved" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="MiscReserved" />
                       </Rule>
                     </Rule>
                   </Rule>

@@ -34,7 +34,7 @@ namespace Keysharp.Benchmark
 			var hex = new StringBuilder(bytes.Length * 2);
 
 			foreach (byte b in bytes)
-				hex.Append(b.ToString("X2"));
+				_ = hex.Append(b.ToString("X2"));
 
 			return hex.ToString();
 		}
@@ -52,8 +52,8 @@ namespace Keysharp.Benchmark
 
 			foreach (byte b in bytes)
 			{
-				result.Append(hexAlphabet[b >> 4]);
-				result.Append(hexAlphabet[b & 0xF]);
+				_ = result.Append(hexAlphabet[b >> 4]);
+				_ = result.Append(hexAlphabet[b & 0xF]);
 			}
 
 			return result.ToString();

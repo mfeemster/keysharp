@@ -84,7 +84,7 @@
 		///    -1: Call the callback before any previously registered callbacks.<br/>
 		///     0: Remove the callback if it was already contained in the list.
 		/// </param>
-		public static void OnError(object callback, object addRemove = null)
+		public static object OnError(object callback, object addRemove = null)
 		{
 			var e = callback;
 			var i = addRemove.Al(1L);
@@ -94,6 +94,7 @@
 				Script.onErrorHandlers = [];
 
 			Script.onErrorHandlers.ModifyEventHandlers(del, i);
+			return null;
 		}
 
 		/// <summary>

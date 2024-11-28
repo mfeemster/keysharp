@@ -97,18 +97,21 @@
 		/// Recursively traverses the elements of an <see cref="IEnumerable"/> and returns each element.
 		/// </summary>
 		/// <param name="enumerable">The <see cref="IEnumerable"/> to traverse.</param>
+		/// <param name="recurse">True to recursively traverse through every nested element that is a collection, else false to traverse only the elements of <paramref name="enumerable"/>.</param>
 		/// <returns>Each element of the <see cref="IEnumerable"/>, including nested elements.</returns>
-		public static IEnumerable Flatten(this IEnumerable enumerable)
+		public static IEnumerable Flatten(this IEnumerable enumerable, bool recurse)
 		{
-			if (enumerable is IEnumerable<(object, object)> io)//Iterators for array and map will be this.
+			if (enumerable is I__Enum ie)//Iterators for array, gui and map will be this.
 			{
-				foreach (var el in io)
-				{
-					var element = el.Item2;
+				var en = ie.__Enum(1);
 
-					if (element is IEnumerable candidate && !(element is string))
+				while (en.MoveNext())
+				{
+					var element = en.Current.Item1;
+
+					if (recurse && element is IEnumerable candidate && !(element is string))
 					{
-						foreach (var nested in Flatten(candidate))
+						foreach (var nested in Flatten(candidate, recurse))
 							yield return nested;
 					}
 					else
@@ -119,9 +122,9 @@
 			{
 				foreach (var element in enumerable)
 				{
-					if (element is IEnumerable candidate && !(element is string))
+					if (recurse && element is IEnumerable candidate && !(element is string))
 					{
-						foreach (var nested in Flatten(candidate))
+						foreach (var nested in Flatten(candidate, recurse))
 							yield return nested;
 					}
 					else
@@ -309,7 +312,7 @@
 		/// </summary>
 		/// <param name="obj">The array of objects to flatten.</param>
 		/// <returns>The recursively flattened array as an <see cref="IList"/>.</returns>
-		public static IList L(this object[] obj) => obj.Flatten().Cast<object>().ToList();
+		public static IList L(this object[] obj) => obj.Flatten(true).Cast<object>().ToList();
 
 		/// <summary>
 		/// Returns a recursively flattened <see cref="IEnumerable"/> of objects as an <see cref="IList"/>.

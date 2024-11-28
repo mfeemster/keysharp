@@ -32,7 +32,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="frequency">If omitted, it defaults to 523. Otherwise, specify the frequency of the sound, a number between 37 and 32767.</param>
 		/// <param name="duration">If omitted, it defaults to 150. Otherwise, specify the duration of the sound, in milliseconds.</param>
-		public static void SoundBeep(object frequency = null, object duration = null)
+		public static object SoundBeep(object frequency = null, object duration = null)
 		{
 			var freq = frequency.Ai(523);
 			var time = duration.Ai(150);
@@ -42,6 +42,7 @@ namespace Keysharp.Core
 #elif WINDOWS
 			Console.Beep(freq, time);
 #endif
+			return null;
 		}
 
 #if WINDOWS
@@ -115,7 +116,7 @@ namespace Keysharp.Core
 		///     be "in use" until the script closes or until another file is played(even a nonexistent file).<br/>
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static void SoundPlay(object filename, object wait = null)
+		public static object SoundPlay(object filename, object wait = null)
 		{
 			var file = filename.As();
 			var w = wait.As();
@@ -125,22 +126,22 @@ namespace Keysharp.Core
 			{
 				if (!int.TryParse(file.AsSpan(1), out var n))
 				{
-					return;
+					return null;
 				}
 
 				switch (n)
 				{
-					case -1: SystemSounds.Beep.Play(); return;
+					case -1: SystemSounds.Beep.Play(); return null;
 
-					case 16: SystemSounds.Hand.Play(); return;
+					case 16: SystemSounds.Hand.Play(); return null;
 
-					case 32: SystemSounds.Question.Play(); return;
+					case 32: SystemSounds.Question.Play(); return null;
 
-					case 48: SystemSounds.Exclamation.Play(); return;
+					case 48: SystemSounds.Exclamation.Play(); return null;
 
-					case 64: SystemSounds.Asterisk.Play(); return;
+					case 64: SystemSounds.Asterisk.Play(); return null;
 
-					default: return;
+					default: return null;
 				}
 			}
 
@@ -160,6 +161,7 @@ namespace Keysharp.Core
 #else
 				$"aplay --quiet {filename}".Bash(doWait);
 #endif
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -180,7 +182,11 @@ namespace Keysharp.Core
 		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
 		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
 		/// </param>
-		public static void SoundSetMute(object newSetting, object component = null, object device = null) => _ = DoSound(SoundCommands.SoundSetMute, newSetting, component, device);
+		public static object SoundSetMute(object newSetting, object component = null, object device = null)
+		{
+			_ = DoSound(SoundCommands.SoundSetMute, newSetting, component, device);
+			return null;
+		}
 
 
 		/// <summary>
@@ -196,7 +202,11 @@ namespace Keysharp.Core
 		/// (which is not necessarily device 1). Otherwise, specify the device's display name and/or index,<br/>
 		/// e.g. 1, "Speakers", "Speakers:2" or "Speakers (Example HD Audio)".
 		/// </param>
-		public static void SoundSetVolume(object newSetting, object component = null, object device = null) => _ = DoSound(SoundCommands.SoundSetVolume, newSetting, component, device);
+		public static object SoundSetVolume(object newSetting, object component = null, object device = null)
+		{
+			_ = DoSound(SoundCommands.SoundSetVolume, newSetting, component, device);
+			return null;
+		}
 
 #if LINUX
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)

@@ -19,6 +19,69 @@ namespace Keysharp.Scripting
 			return ct1 == ct2;
 		}
 
+		private static int FindFirstImbalanced(List<object> list, char ch1, char ch2)
+		{
+			var escape = false;
+			var inquote = false;
+			var stack = new Stack<int>();
+			var ch1str = ch1.ToString();
+			var ch2str = ch2.ToString();
+
+			for (var i = 0; i < list.Count; i++)
+			{
+				var ch = list[i].ToString();
+
+				if (ch == "\'")
+				{
+					if (!inquote)
+					{
+						if (i == 0 || list[i - 1].ToString() != "`")
+							inquote = true;
+					}
+				}
+				else if (ch == "\"")
+				{
+					if (!inquote)
+					{
+						if (i == 0 || list[i - 1].ToString() != "`")
+							inquote = true;
+					}
+					else
+					{
+						if (i == 0 || list[i - 1].ToString() != "`" || !escape)//Checking escape accounts for ``.
+							inquote = false;
+					}
+				}
+
+				if (ch == Keywords.Escape.ToString())
+					escape = !escape;
+				else
+					escape = false;
+
+				if (!inquote)
+				{
+					if (ch.EndsWith(ch1str))
+					{
+						stack.Push(i);
+					}
+					else if (ch.EndsWith(ch2str))
+					{
+						if (!stack.TryPop(out _))
+						{
+							return i;
+						}
+					}
+				}
+			}
+
+			var ret = -1;
+
+			while (stack.TryPop(out int temp))
+				ret = temp;
+
+			return ret;
+		}
+
 		private bool IsArrayExtension(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.ExtendArray.MethodName;
 
 		private bool IsJsonObject(object item) => item is CodeMethodInvokeExpression cmie&& cmie.Method.MethodName == InternalMethods.Index.MethodName;

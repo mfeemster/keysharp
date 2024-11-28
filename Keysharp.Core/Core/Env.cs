@@ -159,11 +159,12 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="name">The name of the environment variable.</param>
 		/// <param name="value">If omitted, the environment variable will be deleted. Otherwise, specify the value to write.</param>
-		public static void EnvSet(object name, object value = null)
+		public static object EnvSet(object name, object value = null)
 		{
 			try
 			{
 				Environment.SetEnvironmentVariable(name.As(), value as string);
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -174,7 +175,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Notifies the operating system and all running applications that environment variables have changed.
 		/// </summary>
-		public static void EnvUpdate()
+		public static object EnvUpdate()
 		{
 #if LINUX
 			"source ~/.bashrc".Bash();
@@ -185,6 +186,7 @@ namespace Keysharp.Core
 			catch (Exception ex) { throw new OSError(ex, "Error updating environment variables."); }
 
 #endif
+			return null;
 		}
 
 		/// <summary>
@@ -193,7 +195,11 @@ namespace Keysharp.Core
 		/// Instead, it's used by the parser in the generated C# code.
 		/// </summary>
 		/// <param name="args">The command line arguments to process.</param>
-		public static void HandleCommandLineParams(string[] args) => Accessors.A_Args.AddRange(args);
+		public static object HandleCommandLineParams(string[] args)
+		{
+			_ = Accessors.A_Args.AddRange(args);
+			return null;
+		}
 
 		/// <summary>
 		/// The clipboard object doesn't provide a way to determine if it's truly empty or not.<br/>
@@ -217,10 +223,13 @@ namespace Keysharp.Core
 		///  0: Do not call the callback.
 		/// </param>
 		/// <exception cref="TypeError"></exception>
-		public static void OnClipboardChange(object callback, object addRemove = null)
+		public static object OnClipboardChange(object callback, object addRemove = null)
 		{
 			if (callback is IFuncObj fo)
+			{
 				Script.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
+				return null;
+			}
 			else
 				throw new TypeError("Object passed to OnClipboardChange() was not a function object.");
 		}

@@ -4,15 +4,13 @@ namespace Keysharp.Scripting
 	{
 		private static bool IsOptimizableExpression(CodeExpression expr)
 		{
-			if (!(expr is CodeMethodInvokeExpression))
-				return false;
-
-			var invoke = (CodeMethodInvokeExpression)expr;
-
-			if (invoke.Method.MethodName == InternalMethods.Operate.MethodName && invoke.Parameters.Count == 3)
+			if (expr is CodeMethodInvokeExpression invoke)
 			{
-				if (invoke.Parameters[0] is CodeFieldReferenceExpression cfe && cfe.FieldName != "RegEx")
-					return true;
+				if (invoke.Method.MethodName == InternalMethods.Operate.MethodName && invoke.Parameters.Count == 3)
+				{
+					if (invoke.Parameters[0] is CodeFieldReferenceExpression cfe && cfe.FieldName != "RegEx")
+						return true;
+				}
 			}
 
 			return false;
@@ -96,15 +94,7 @@ namespace Keysharp.Scripting
 			for (var i = 1; i < 3; i++)
 				invoke.Parameters[i] = OptimizeExpression(invoke.Parameters[i]);
 
-			bool left = invoke.Parameters[1] is CodePrimitiveExpression, right = invoke.Parameters[2] is CodeExpression;
-
-			if (!left && !right)
-				return null;
-
-			if (left)
-				return invoke.Parameters[2];
-
-			return right ? invoke.Parameters[1] : expr;
+			return invoke;
 		}
 	}
 }

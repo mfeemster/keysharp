@@ -14,14 +14,14 @@ namespace Keysharp.Core
 		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
 		/// <param name="key">If omitted, the entire section will be deleted. Otherwise, specify the key name in the .ini file.</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any file errors occur.</exception>
-		public static void IniDelete(object filename, object section, object key = null)
+		public static object IniDelete(object filename, object section, object key = null)
 		{
 			var file = filename.As();
 			var s = section.As();
 			var k = key.As();
 
 			if (!File.Exists(file))
-				return;
+				return null;
 
 			if (s != "")
 				s = string.Format(Keyword_IniSectionOpen + "{0}]", s);
@@ -64,8 +64,9 @@ namespace Keysharp.Core
 				if (File.Exists(file))
 					File.Delete(file);
 
-				Files.FileAppend("", file, "unicode");
+				_ = Files.FileAppend("", file, "unicode");
 				File.WriteAllText(file, text);
+				return null;
 			}
 			catch (Exception ex)
 			{
@@ -146,7 +147,7 @@ namespace Keysharp.Core
 		/// <param name="section">The section name in the .ini file, which is the heading phrase that appears in square brackets (do not include the brackets in this parameter).</param>
 		/// <param name="key">The key name in the .ini file.</param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void IniWrite(object value, object filename, object section, object key = null)
+		public static object IniWrite(object value, object filename, object section, object key = null)
 		{
 			var v = value.As();
 			var file = filename.As();
@@ -223,8 +224,9 @@ namespace Keysharp.Core
 				if (File.Exists(file))
 					File.Delete(file);
 
-				Files.FileAppend("", file, "unicode");
+				_ = Files.FileAppend("", file, "unicode");
 				File.WriteAllText(file, text);
+				return null;
 			}
 			catch (Exception ex)
 			{

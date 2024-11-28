@@ -166,7 +166,7 @@ namespace Keysharp.Core
 
 			while ((proc = FindProcess(name)) == null)
 			{
-				Flow.Sleep(LoopFrequency);
+				_ = Flow.Sleep(LoopFrequency);
 
 				if (t >= 0.0 && (DateTime.Now - start).TotalMilliseconds > t)
 					break;
@@ -255,7 +255,7 @@ namespace Keysharp.Core
 		/// </param>
 		/// <param name="password">If blank or omitted, it defaults to a blank password. Otherwise, specify the User's password.</param>
 		/// <param name="domain">If blank or omitted, a local account will be used. Otherwise, specify User's domain. If that fails to work, try using @YourComputerName.</param>
-		public static void RunAs(object user = null, object password = null, object domain = null)
+		public static object RunAs(object user = null, object password = null, object domain = null)
 		{
 			var u = user.As();
 			var p = password.As();
@@ -276,6 +276,8 @@ namespace Keysharp.Core
 
 				runPassword.MakeReadOnly();
 			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -312,7 +314,11 @@ namespace Keysharp.Core
 		/// The "Power down" value (8) shuts down the system and turns off the power.
 		/// </param>
 		/// </summary>
-		public static void Shutdown(object obj) => _ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
+		public static object Shutdown(object obj)
+		{
+			_ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
+			return null;
+		}
 
 		/// <summary>
 		/// Internal helper to find a process by name or ID.

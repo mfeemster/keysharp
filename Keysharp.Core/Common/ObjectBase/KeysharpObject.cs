@@ -1,5 +1,10 @@
 ﻿namespace Keysharp.Core.Common.ObjectBase
 {
+	internal interface I__Enum
+	{
+		public IEnumerator<(object, object)> __Enum(object count);
+	}
+
 	public class KeysharpObject : Any
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
@@ -199,13 +204,13 @@
 
 		public long SetCapacity(object obj) => throw new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
 
+		protected static object __StaticInit() => "";
+
 		/// <summary>
 		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
 		/// </summary>
 		protected virtual void __Init()
 		{
 		}
-
-		protected static object __StaticInit() => "";
 	}
 }

@@ -13,17 +13,33 @@ namespace Keysharp.Core
 
 		public static long ControlAddItem(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlAddItem);
 
-		public static void ControlChooseIndex(params object[] obj) => obj.I1O2S3().Splat(ControlProvider.Manager.ControlChooseIndex);
+		public static object ControlChooseIndex(params object[] obj)
+		{
+			obj.I1O2S3().Splat(ControlProvider.Manager.ControlChooseIndex);
+			return null;
+		}
 
 		public static long ControlChooseString(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlChooseString);
 
-		public static void ControlClick(params object[] obj) => obj.O2S2I1S3(null, null, "", "", 1).Splat(ControlProvider.Manager.ControlClick);
+		public static object ControlClick(params object[] obj)
+		{
+			obj.O2S2I1S3(null, null, "", "", 1).Splat(ControlProvider.Manager.ControlClick);
+			return null;
+		}
 
-		public static void ControlDeleteItem(params object[] obj) => obj.I1O2S3().Splat(ControlProvider.Manager.ControlDeleteItem);
+		public static object ControlDeleteItem(params object[] obj)
+		{
+			obj.I1O2S3().Splat(ControlProvider.Manager.ControlDeleteItem);
+			return null;
+		}
 
 		public static long ControlFindItem(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlFindItem);
 
-		public static void ControlFocus(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlFocus);
+		public static object ControlFocus(params object[] obj)
+		{
+			obj.O2S3().Splat(ControlProvider.Manager.ControlFocus);
+			return null;
+		}
 
 		public static long ControlGetChecked(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetChecked);
 
@@ -43,8 +59,11 @@ namespace Keysharp.Core
 
 		public static Array ControlGetItems(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetItems);
 
-		public static void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
-		ControlProvider.Manager.ControlGetPos(ref outX, ref outY, ref outWidth, ref outHeight, ctrl, title?.ToString(), text?.ToString(), excludeTitle?.ToString(), excludeText?.ToString());
+		public static object ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
+		{
+			ControlProvider.Manager.ControlGetPos(ref outX, ref outY, ref outWidth, ref outHeight, ctrl, title?.ToString(), text?.ToString(), excludeTitle?.ToString(), excludeText?.ToString());
+			return null;
+		}
 
 		public static long ControlGetStyle(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetStyle);
 
@@ -52,29 +71,77 @@ namespace Keysharp.Core
 
 		public static long ControlGetVisible(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetVisible);
 
-		public static void ControlHide(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlHide);
+		public static object ControlHide(params object[] obj)
+		{
+			obj.O2S3().Splat(ControlProvider.Manager.ControlHide);
+			return null;
+		}
 
-		public static void ControlHideDropDown(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlHideDropDown);
+		public static object ControlHideDropDown(params object[] obj)
+		{
+			obj.O2S3().Splat(ControlProvider.Manager.ControlHideDropDown);
+			return null;
+		}
 
-		public static void ControlMove(params object[] obj) => obj.I4O2S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue).Splat(ControlProvider.Manager.ControlMove);
+		public static object ControlMove(params object[] obj)
+		{
+			obj.I4O2S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue).Splat(ControlProvider.Manager.ControlMove);
+			return null;
+		}
 
-		public static void ControlSend(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlSend);
+		public static object ControlSend(params object[] obj)
+		{
+			obj.S1O2S3().Splat(ControlProvider.Manager.ControlSend);
+			return null;
+		}
 
-		public static void ControlSendText(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlSendText);
+		public static object ControlSendText(params object[] obj)
+		{
+			obj.S1O2S3().Splat(ControlProvider.Manager.ControlSendText);
+			return null;
+		}
 
-		public static void ControlSetChecked(params object[] obj) => obj.O3S3().Splat(ControlProvider.Manager.ControlSetChecked);
+		public static object ControlSetChecked(params object[] obj)
+		{
+			obj.O3S3().Splat(ControlProvider.Manager.ControlSetChecked);
+			return null;
+		}
 
-		public static void ControlSetEnabled(params object[] obj) => obj.O3S3().Splat(ControlProvider.Manager.ControlSetEnabled);
+		public static object ControlSetEnabled(params object[] obj)
+		{
+			obj.O3S3().Splat(ControlProvider.Manager.ControlSetEnabled);
+			return null;
+		}
 
-		public static void ControlSetExStyle(params object[] obj) => obj.O3S3().Splat(ControlProvider.Manager.ControlSetExStyle);
+		public static object ControlSetExStyle(params object[] obj)
+		{
+			obj.O3S3().Splat(ControlProvider.Manager.ControlSetExStyle);
+			return null;
+		}
 
-		public static void ControlSetStyle(params object[] obj) => obj.O3S3().Splat(ControlProvider.Manager.ControlSetStyle);
+		public static object ControlSetStyle(params object[] obj)
+		{
+			obj.O3S3().Splat(ControlProvider.Manager.ControlSetStyle);
+			return null;
+		}
 
-		public static void ControlSetText(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlSetText);
+		public static object ControlSetText(params object[] obj)
+		{
+			obj.S1O2S3().Splat(ControlProvider.Manager.ControlSetText);
+			return null;
+		}
 
-		public static void ControlShow(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlShow);
+		public static object ControlShow(params object[] obj)
+		{
+			obj.O2S3().Splat(ControlProvider.Manager.ControlShow);
+			return null;
+		}
 
-		public static void ControlShowDropDown(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlShowDropDown);
+		public static object ControlShowDropDown(params object[] obj)
+		{
+			obj.O2S3().Splat(ControlProvider.Manager.ControlShowDropDown);
+			return null;
+		}
 
 		public static object DetectHiddenText(params object[] obj)
 		{
@@ -100,7 +167,11 @@ namespace Keysharp.Core
 
 		public static string EditGetSelectedText(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.EditGetSelectedText);
 
-		public static void EditPaste(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.EditPaste);
+		public static object EditPaste(params object[] obj)
+		{
+			obj.S1O2S3().Splat(ControlProvider.Manager.EditPaste);
+			return null;
+		}
 
 		public static long GroupActivate(params object[] obj)
 		{
@@ -140,12 +211,12 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static void GroupAdd(params object[] obj)
+		public static object GroupAdd(params object[] obj)
 		{
 			var (name, winTitle, winText, excludeTitle, excludeText) = obj.S1O1S3();
 
 			if (string.IsNullOrEmpty(name))
-				return;
+				return null;
 
 			if (!windowGroups.ContainsKey(name))
 				windowGroups.Add(name, new WindowGroup());
@@ -157,9 +228,11 @@ namespace Keysharp.Core
 				group.activated.Clear();
 				group.deactivated.Clear();
 			}
+
+			return null;
 		}
 
-		public static void GroupClose(params object[] obj)
+		public static object GroupClose(params object[] obj)
 		{
 			var (name, mode) = obj.S2();
 			name = (name ?? string.Empty).ToLowerInvariant();
@@ -167,7 +240,7 @@ namespace Keysharp.Core
 			if (windowGroups.TryGetValue(name, out var group))
 			{
 				if (group.sc.Count == 0)
-					return;
+					return null;
 
 				var stack = group.lastWasDeactivate ? group.deactivated : group.activated;
 				var windows = SearchWindows($"ahk_group {name}");
@@ -200,9 +273,11 @@ namespace Keysharp.Core
 						break;
 				}
 			}
+
+			return null;
 		}
 
-		public static void GroupDeactivate(params object[] obj)
+		public static object GroupDeactivate(params object[] obj)
 		{
 			var (name, mode) = obj.S2();
 			name = (name ?? string.Empty).ToLowerInvariant();
@@ -210,7 +285,7 @@ namespace Keysharp.Core
 			if (windowGroups.TryGetValue(name, out var group))
 			{
 				if (group.sc.Count == 0)
-					return;
+					return null;
 
 				var windows = SearchWindows($"ahk_group {name}");
 				var allwindows = WindowProvider.Manager.FilterForGroups(WindowProvider.Manager.AllWindows.Where(w => !windows.Any(ww => ww.Handle.ToInt64() == w.Handle.ToInt64()))).ToList();
@@ -219,7 +294,7 @@ namespace Keysharp.Core
 					group.deactivated.Clear();
 
 				if (allwindows.Count == 1 && allwindows[0].Handle.ToInt64() == WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
-					return;
+					return null;
 
 				if (!mode.Equals(Keywords.Keyword_R, StringComparison.OrdinalIgnoreCase) && windows.Any(w => w.Active))
 					allwindows.Reverse();
@@ -233,23 +308,33 @@ namespace Keysharp.Core
 						win.Active = true;
 						group.deactivated.Push(h);
 						group.lastWasDeactivate = true;
-						return;
+						return null;
 					}
 				}
 			}
+
+			return null;
 		}
 
 		public static object ListViewGetContent(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ListViewGetContent);
 
-		public static void MenuSelect(params object[] obj) => obj.O1S10().Splat(ControlProvider.Manager.MenuSelect);
+		public static object MenuSelect(params object[] obj)
+		{
+			obj.O1S10().Splat(ControlProvider.Manager.MenuSelect);
+			return null;
+		}
 
-		public static void PostMessage(params object[] obj) => obj.I3O2S3().Splat(ControlProvider.Manager.PostMessage);
+		public static object PostMessage(params object[] obj)
+		{
+			obj.I3O2S3().Splat(ControlProvider.Manager.PostMessage);
+			return null;
+		}
 
 		public static long SendMessage(params object[] obj) => obj.I1O4S3I1(0, 0, 0, null, "", "", "", "", 5000).Splat(ControlProvider.Manager.SendMessage);
 
-		public static void SetControlDelay(object obj) => Accessors.A_ControlDelay = obj;
+		public static object SetControlDelay(object obj) => Accessors.A_ControlDelay = obj;
 
-		public static void SetProcessDPIAware()
+		public static object SetProcessDPIAware()
 		{
 #if LINUX//Don't have Gtk working on Windows yet, but just in case we ever get it working.//TODO
 			Environment.SetEnvironmentVariable("MONO_VISUAL_STYLES", "gtkplus");//This must come first.
@@ -259,13 +344,19 @@ namespace Keysharp.Core
 			if (!dpimodeset)
 			{
 				dpimodeset = true;
-				Application.SetCompatibleTextRenderingDefault(false);
+
+				try
+				{
+					Application.SetCompatibleTextRenderingDefault(false);
+				}
+				catch { } // Fails if a window already exists, like when running from Keyview
 			}
 
 #if WINDOWS
 			_ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 			//_ = Application.SetHighDpiMode(HighDpiMode.SystemAware);
 #endif
+			return null;
 		}
 
 		/// <summary>
@@ -274,7 +365,7 @@ namespace Keysharp.Core
 		/// based on the value of the parameter passed in.
 		/// </summary>
 		/// <param name="obj">String or integers 1, 2, 3, or string RegEx to set TitleMatchMode, else strings fast/slow to set TitleMatchModeSpeed.</param>
-		public static void SetTitleMatchMode(params object[] obj)
+		public static object SetTitleMatchMode(params object[] obj)
 		{
 			var val = obj.S1();
 
@@ -282,9 +373,16 @@ namespace Keysharp.Core
 				Accessors.A_TitleMatchModeSpeed = val;
 			else
 				Accessors.A_TitleMatchMode = val;
+
+			return null;
 		}
 
-		public static void SetWinDelay(object obj) => Accessors.A_WinDelay = obj;
+		public static object SetWinDelay(object obj)
+		{
+			var oldVal = Accessors.A_WinDelay = obj;
+			Accessors.A_WinDelay = obj;
+			return oldVal;
+		}
 
 		/// <summary>
 		/// Retrieves the text from a standard status bar control.
@@ -384,23 +482,27 @@ namespace Keysharp.Core
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					break;
 
-				Flow.Sleep(interval);
+				_ = Flow.Sleep(interval);
 			} while (true);
 
 			WindowItemBase.DoWinDelay();
 			return matchfound ? 1 : 0;
 		}
 
-		public static void WinActivate(params object[] obj)
+		public static object WinActivate(params object[] obj)
 		{
 			if (SearchWindow(obj, true) is WindowItem win)
 				win.Active = true;
+
+			return null;
 		}
 
-		public static void WinActivateBottom(params object[] obj)
+		public static object WinActivateBottom(params object[] obj)
 		{
 			if (SearchWindow(obj, true, true) is WindowItem win)
 				win.Active = true;
+
+			return null;
 		}
 
 		/// <summary>
@@ -426,7 +528,7 @@ namespace Keysharp.Core
 		/// <param name="text"></param>
 		/// <param name="excludeTitle"></param>
 		/// <param name="excludeText"></param>
-		public static void WinClose(params object[] obj)
+		public static object WinClose(params object[] obj)
 		{
 			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2("", "", double.MinValue);
 			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(title, text, excludeTitle, excludeText);
@@ -443,6 +545,7 @@ namespace Keysharp.Core
 			}
 
 			WindowItemBase.DoWinDelay();
+			return null;
 		}
 
 		/// <summary>
@@ -463,8 +566,11 @@ namespace Keysharp.Core
 
 		public static string WinGetClass(params object[] obj) => SearchWindow(obj, true) is WindowItem win ? win.ClassName : "";
 
-		public static void WinGetClientPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
-		WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
+		public static object WinGetClientPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
+		{
+			WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
+			return null;
+		}
 
 		public static object WinGetControls(params object[] obj) =>
 		WinGetControlsHelper(true, obj);
@@ -519,8 +625,11 @@ namespace Keysharp.Core
 
 		public static object WinGetPID(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.PID : 0L);
 
-		public static void WinGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null) =>
-		WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
+		public static object WinGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
+		{
+			WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
+			return null;
+		}
 
 		public static string WinGetProcessName(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.ProcessName : "");
 
@@ -558,9 +667,13 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public static void WinHide(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.Hide()));
+		public static object WinHide(params object[] obj)
+		{
+			DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.Hide()));
+			return null;
+		}
 
-		public static void WinKill(params object[] obj)
+		public static object WinKill(params object[] obj)
 		{
 			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2("", "", double.MinValue);
 			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(title, text, excludeTitle, excludeText);
@@ -577,19 +690,40 @@ namespace Keysharp.Core
 			}
 
 			WindowItemBase.DoWinDelay();
+			return null;
 		}
 
-		public static void WinMaximize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Maximized));
+		public static object WinMaximize(params object[] obj)
+		{
+			DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Maximized));
+			return null;
+		}
 
-		public static void WinMaximizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MaximizeAll);
+		public static object WinMaximizeAll(params object[] obj)
+		{
+			DoDelayedAction(WindowProvider.Manager.MaximizeAll);
+			return null;
+		}
 
-		public static void WinMinimize(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Minimized));
+		public static object WinMinimize(params object[] obj)
+		{
+			DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Minimized));
+			return null;
+		}
 
-		public static void WinMinimizeAll(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MinimizeAll);
+		public static object WinMinimizeAll(params object[] obj)
+		{
+			DoDelayedAction(WindowProvider.Manager.MinimizeAll);
+			return null;
+		}
 
-		public static void WinMinimizeAllUndo(params object[] obj) => DoDelayedAction(WindowProvider.Manager.MinimizeAllUndo);
+		public static object WinMinimizeAllUndo(params object[] obj)
+		{
+			DoDelayedAction(WindowProvider.Manager.MinimizeAllUndo);
+			return null;
+		}
 
-		public static void WinMove(params object[] obj)
+		public static object WinMove(params object[] obj)
 		{
 			var (x, y, width, height, title, text, excludeTitle, excludeText) = obj.I4O1S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue);
 
@@ -615,31 +749,56 @@ namespace Keysharp.Core
 				win.Size = size;
 				WindowItemBase.DoWinDelay();
 			}
+
+			return null;
 		}
 
-		public static void WinMoveBottom(params object[] obj) => DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) win.Bottom = true; });
+		public static object WinMoveBottom(params object[] obj)
+		{
+			DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) win.Bottom = true; });
+			return null;
+		}
+		public static object WinMoveTop(params object[] obj)
+		{
+			DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) win.Bottom = false; });
+			return null;
+		}
+		public static object WinRedraw(params object[] obj)
+		{
+			DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) _ = win.Redraw(); });
+			return null;
+		}
 
-		public static void WinMoveTop(params object[] obj) => DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) win.Bottom = false; });
+		public static object WinRestore(params object[] obj)
+		{
+			DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Normal));
+			return null;
+		}
 
-		public static void WinRedraw(params object[] obj) => DoDelayedAction(() => { if (SearchWindow(obj, true) is WindowItem win) _ = win.Redraw(); });
+		public static object WinSetAlwaysOnTop(params object[] obj)
+		{
+			WinSetToggleX((win, b) => win.AlwaysOnTop = b, win => win.AlwaysOnTop, obj);
+			return null;
+		}
+		public static object WinSetEnabled(params object[] obj)
+		{
+			WinSetToggleX((win, b) => win.Enabled = b, win => win.Enabled, obj);
+			return null;
+		}
 
-		public static void WinRestore(params object[] obj) => DoDelayedAction(() => SearchWindows(obj).ForEach(win => win.WindowState = FormWindowState.Normal));
-
-		public static void WinSetAlwaysOnTop(params object[] obj) => WinSetToggleX((win, b) => win.AlwaysOnTop = b, win => win.AlwaysOnTop, obj);
-
-		public static void WinSetEnabled(params object[] obj) => WinSetToggleX((win, b) => win.Enabled = b, win => win.Enabled, obj);
-
-		public static void WinSetExStyle(params object[] obj) => WinSetStyleHelper(obj, true);
-
+		public static object WinSetExStyle(params object[] obj)
+		{
+			WinSetStyleHelper(obj, true);
+			return null;
+		}
 #if WINDOWS
-
-		public static void WinSetRegion(params object[] obj)
+		public static object WinSetRegion(params object[] obj)
 		{
 			var (options, title, text, excludeTitle, excludeText) = obj.S1O1S3();
 			var winargs = new object[] { title, text, excludeTitle, excludeText };
 
 			if (!(SearchWindow(winargs, true) is WindowItem win))
-				return;
+				return null;
 
 			var w = int.MinValue;
 			var h = int.MinValue;
@@ -687,7 +846,7 @@ namespace Keysharp.Core
 					throw new OSError("", $"Could not reset window region with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoWinDelay();
-				return;
+				return null;
 			}
 			else if (w != int.MinValue && h != int.MinValue)
 			{
@@ -716,13 +875,15 @@ namespace Keysharp.Core
 				throw new ValueError($"Could not create region for window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 			WindowItemBase.DoWinDelay();
+			return null;
 		}
-
 #endif
-
-		public static void WinSetStyle(params object[] obj) => WinSetStyleHelper(obj, false);
-
-		public static void WinSetTitle(params object[] obj)
+		public static object WinSetStyle(params object[] obj)
+		{
+			WinSetStyleHelper(obj, false);
+			return null;
+		}
+		public static object WinSetTitle(params object[] obj)
 		{
 			var o = obj.Cast<object>();
 			var newtitle = obj.S1();
@@ -732,27 +893,30 @@ namespace Keysharp.Core
 				win.Title = newtitle;
 				WindowItemBase.DoWinDelay();
 			}
-		}
 
-		public static void WinSetTransColor(params object[] obj)
+			return null;
+		}
+		public static object WinSetTransColor(params object[] obj)
 		{
 			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
 			{
 				win.TransparentColor = obj[0];
 				WindowItemBase.DoWinDelay();
 			}
-		}
 
-		public static void WinSetTransparent(params object[] obj)
+			return null;
+		}
+		public static object WinSetTransparent(params object[] obj)
 		{
 			if (SearchWindow(obj.Skip(1).ToArray(), true) is WindowItem win)
 			{
 				win.Transparency = obj[0];
 				WindowItemBase.DoWinDelay();
 			}
-		}
 
-		public static void WinShow(params object[] obj)
+			return null;
+		}
+		public static object WinShow(params object[] obj)
 		{
 			var tv = Threads.GetThreadVariables();
 			var prev = tv.detectHiddenWindows;
@@ -760,8 +924,8 @@ namespace Keysharp.Core
 			SearchWindows(obj).ForEach(win => win.Show());
 			tv.detectHiddenWindows = prev;
 			WindowItemBase.DoWinDelay();
+			return null;
 		}
-
 		public static long WinWait(params object[] obj)
 		{
 			var (title, text, seconds, excludeTitle, excludeText) = obj.O1S1D1S2();
@@ -776,7 +940,7 @@ namespace Keysharp.Core
 				if (win != null || (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds))
 					break;
 
-				Flow.Sleep(50);
+				_ = Flow.Sleep(50);
 			} while (win == null);
 
 			if (win != null)
@@ -785,7 +949,6 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return win != null ? win.Handle.ToInt64() : 0L;
 		}
-
 		public static long WinWaitActive(params object[] obj)
 		{
 			var b = false;
@@ -810,13 +973,12 @@ namespace Keysharp.Core
 				}
 
 				if (!b)
-					Flow.Sleep(100);
+					_ = Flow.Sleep(100);
 			}
 
 			WindowItemBase.DoWinDelay();
 			return hwnd;
 		}
-
 		public static long WinWaitClose(params object[] obj)
 		{
 			var b = false;
@@ -837,14 +999,13 @@ namespace Keysharp.Core
 						break;
 					}
 					else
-						Flow.Sleep(100);
+						_ = Flow.Sleep(100);
 				}
 			}
 
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
-
 		public static long WinWaitNotActive(params object[] obj)
 		{
 			var b = false;
@@ -865,14 +1026,13 @@ namespace Keysharp.Core
 						break;
 					}
 
-					Flow.Sleep(100);
+					_ = Flow.Sleep(100);
 				}
 			}
 
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
-
 #if LINUX
 		[PublicForTestOnly]
 		public static long zzzLinuxTester(params object[] obj)
@@ -880,7 +1040,6 @@ namespace Keysharp.Core
 			return 1L;
 		}
 #endif
-
 		internal static (bool, IntPtr) CtrlToIntPtr(object ctrl)
 		{
 			if (ctrl == null)
@@ -923,20 +1082,17 @@ namespace Keysharp.Core
 
 			return (false, IntPtr.Zero);
 		}
-
 		internal static void DoDelayedAction(Action act)
 		{
 			act();
 			WindowItemBase.DoWinDelay();
 		}
-
 		internal static T DoDelayedFunc<T>(Func<T> func)
 		{
 			var val = func();
 			WindowItemBase.DoWinDelay();
 			return val;
 		}
-
 		internal static WindowItemBase SearchControl(object ctrl, object title, string text, string excludeTitle, string excludeText, bool throwifnull = true)
 		{
 			var (parsed, ptr) = CtrlToIntPtr(ctrl);
@@ -1010,7 +1166,6 @@ namespace Keysharp.Core
 				throw new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			return childitem;
 		}
-
 		internal static WindowItemBase SearchWindow(object[] obj, bool throwifnull, bool last = false)
 		{
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
@@ -1021,14 +1176,12 @@ namespace Keysharp.Core
 
 			return win;
 		}
-
 		internal static List<WindowItemBase> SearchWindows(params object[] obj)
 		{
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
 			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(title, text, excludeTitle, excludeText);
 			return windows;
 		}
-
 		private static object WinGetControlsHelper(bool nn, params object[] obj)
 		{
 			var (title, text, excludeTitle, excludeText) = obj.O1S3();
@@ -1062,7 +1215,6 @@ namespace Keysharp.Core
 
 			return "";
 		}
-
 		private static void WinPosHelper(bool client, ref object outX, ref object outY, ref object outWidth, ref object outHeight, object title, object text, object excludeTitle, object excludeText)
 		{
 			var obj = new[] { title, text, excludeTitle, excludeText };
@@ -1096,7 +1248,6 @@ namespace Keysharp.Core
 				}
 			}//);
 		}
-
 		private static void WinSetStyleHelper(object[] o, bool ex)
 		{
 			if (SearchWindow(o.Skip(1).ToArray(), true) is WindowItem win)
@@ -1147,7 +1298,6 @@ namespace Keysharp.Core
 				WindowItemBase.DoWinDelay();
 			}
 		}
-
 		private static void WinSetToggleX(Action<WindowItemBase, bool> set, Func<WindowItemBase, bool> get, params object[] obj)
 		{
 			var (val, title, text, excludeTitle, excludeText) = obj.I1O1S3();

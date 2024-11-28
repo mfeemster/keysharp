@@ -240,6 +240,14 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Math")]
+		public void Float()
+		{
+			foreach (var n in new object[] { -1, 1, -2.1, 0, -0, 0.5, 1.000001 })
+				Assert.AreEqual(n, Maths.Float(n));
+			Assert.IsTrue(TestScript("math-float", true));
+		}
+
+		[Test, Category("Math")]
 		public void Ln()
 		{
 			foreach (var n in new[] { 0, -0, 0.5, 1, 0.675 })

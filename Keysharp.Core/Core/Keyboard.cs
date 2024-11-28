@@ -33,7 +33,7 @@ namespace Keysharp.Core
 		///         The mouse hook will stay installed until the next use of the Suspend or Hotkey function, at which time it is removed if not required by any hotkeys or hotstrings (see #Hotstring NoMouse).<br/>
 		///     MouseMoveOff: Allows the user to move the mouse cursor.<br/>
 		/// </param>
-		public static void BlockInput(object value)
+		public static object BlockInput(object value)
 		{
 			var mode = value.As();
 			var toggle = ConvertBlockInput(mode);
@@ -65,6 +65,8 @@ namespace Keysharp.Core
 					break;
 					// default (NEUTRAL or TOGGLE_INVALID): do nothing.
 			}
+
+			return null;
 		}
 
 #if WINDOWS
@@ -225,7 +227,7 @@ namespace Keysharp.Core
 		///     In (InputLevel): Specify the letter I (or i) followed by the hotkey's input level. For example: I1.
 		/// </param>
 		/// <exception cref="Error">Throws an <see cref="Error"/> exception if an invalid function object or name is specified.</exception>
-		public static void Hotkey(object keyName, object action = null, object options = null)
+		public static object Hotkey(object keyName, object action = null, object options = null)
 		{
 			var keyname = keyName.As();
 			var label = action.As();
@@ -266,6 +268,7 @@ break_twice:;
 			}
 
 			_ = HotkeyDefinition.Dynamic(keyname, opt, fo, hook_action);
+			return null;
 		}
 
 		/// <summary>
@@ -482,7 +485,7 @@ break_twice:;
 		/// that can be recorded for display in the window (limit 500).<br/>
 		/// The key history is also reset, but the main window is not shown or refreshed.
 		/// Specify 0 to disable key history entirely.</param>
-		public static void KeyHistory(object maxEvents)
+		public static object KeyHistory(object maxEvents)
 		{
 			if (maxEvents != null)
 			{
@@ -509,6 +512,8 @@ break_twice:;
 					Script.mainWindow.ShowHistory();
 				}, false, false);
 			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -619,7 +624,7 @@ break_twice:;
 				// Must cast to int or any negative result will be lost due to DWORD type:
 				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Script.SLEEP_INTERVAL_HALF)
 				{
-					Flow.Sleep(Script.SLEEP_INTERVAL);
+					_ = Flow.Sleep(Script.SLEEP_INTERVAL);
 					//MsgSleep() might not even be needed if we use real threads//TODO
 					//if (Keysharp.Scripting.Script.MsgSleep(Keysharp.Scripting.Script.INTERVAL_UNSPECIFIED)) // INTERVAL_UNSPECIFIED performs better.
 					//{
@@ -645,14 +650,22 @@ break_twice:;
 		/// By default, Send is synonymous with <see cref="SendInput"/>; but it can be made a synonym for <see cref="SendEvent"/> or <see cref="SendPlay"/> via <see cref="SendMode"/>.
 		/// </summary>
 		/// <param name="keys">The sequence of keys to send.</param>
-		public static void Send(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+		public static object Send(object keys)
+		{
+			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			return null;
+		}
 
 		/// <summary>
 		/// SendEvent sends keystrokes using the Windows keybd_event function (search Microsoft Docs for details).<br/>
 		/// The rate at which keystrokes are sent is determined by <see cref="SetKeyDelay"/>.<br/>
 		/// <see cref="SendMode"/> can be used to make Send synonymous with <see cref="SendEvent"/> or <see cref="SendPlay"/>.
 		/// </summary>
-		public static void SendEvent(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+		public static object SendEvent(object keys)
+		{
+			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+			return null;
+		}
 
 		/// <summary>
 		/// <see cref="SendInput"/> and <see cref="SendPlay"/> use the same syntax as <see cref="SendEvent"/> but are generally faster and more reliable.<br/>
@@ -660,7 +673,11 @@ break_twice:;
 		/// user's keystrokes from being interspersed with those being sent.<br/>
 		/// <see cref="SendMode"/> can be used to make <see cref="Send"/> synonymous with <see cref="SendInput"/> or <see cref="SendPlay"/>.
 		/// </summary>
-		public static void SendInput(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+		public static object SendInput(object keys)
+		{
+			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+			return null;
+		}
 
 		/// <summary>
 		/// Controls which artificial keyboard and mouse events are ignored by hotkeys and hotstrings.
@@ -693,12 +710,20 @@ break_twice:;
 		/// user's keystrokes from being interspersed with those being sent.<br/>
 		/// <see cref="SendMode"/> can be used to make <see cref="Send"/> synonymous with <see cref="SendInput"/> or <see cref="SendPlay"/>.
 		/// </summary>
-		public static void SendPlay(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+		public static object SendPlay(object keys)
+		{
+			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+			return null;
+		}
 
 		/// <summary>
 		/// Similar to <see cref="Send"/>, except that all characters in Keys are interpreted and sent literally. See Text mode for details.
 		/// </summary>
-		public static void SendText(object keys) => Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+		public static object SendText(object keys)
+		{
+			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			return null;
+		}
 
 		/// <summary>
 		/// Sets the state of CapsLock. Can also force the key to stay on or off.
@@ -711,7 +736,11 @@ break_twice:;
 		///     AlwaysOn: Forces the key to stay on permanently.<br/>
 		///     AlwaysOff: Forces the key to stay off permanently.
 		/// </param>
-		public static void SetCapsLockState(object state = null) => SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
+		public static object SetCapsLockState(object state = null)
+		{
+			SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			return null;
+		}
 
 		/// <summary>
 		/// Sets the delay that will occur after each keystroke sent by <see cref="Send"/> or <see cref="ControlSend"/>.
@@ -732,7 +761,7 @@ break_twice:;
 		/// mode. Otherwise, specify the word Play to apply both to the <see cref="SendPlay"/> mode.<br/>
 		/// If a script never uses this parameter, both are always -1 for <see cref="SendPlay"/>.
 		/// </param>
-		public static void SetKeyDelay(object delay = null, object pressDuration = null, object play = null)
+		public static object SetKeyDelay(object delay = null, object pressDuration = null, object play = null)
 		{
 			var p = play.As().ToLowerInvariant();
 			var isPlay = p == "play";
@@ -755,17 +784,27 @@ break_twice:;
 				Accessors.A_KeyDelay = del;
 				Accessors.A_KeyDuration = dur;
 			}
+
+			return null;
 		}
 
 		/// <summary>
 		/// See <see cref="SetCapsLockState"/>, but for NumLock.
 		/// </summary>
-		public static void SetNumLockState(object state = null) => SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
+		public static object SetNumLockState(object state = null)
+		{
+			SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			return null;
+		}
 
 		/// <summary>
 		/// See <see cref="SetCapsLockState"/>, but for ScrollLock.
 		/// </summary>
-		public static void SetScrollLockState(object state = null) => SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
+		public static object SetScrollLockState(object state = null)
+		{
+			SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			return null;
+		}
 
 		/// <summary>
 		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.

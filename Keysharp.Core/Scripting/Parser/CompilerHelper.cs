@@ -110,6 +110,7 @@ using static Keysharp.Scripting.Script;
 		/// the main program.
 		/// </summary>
 		public static Assembly compiledasm;
+		public static byte[] compiledBytes;
 
 		private readonly CodeGeneratorOptions cgo = new CodeGeneratorOptions
 		{
@@ -362,7 +363,7 @@ using static Keysharp.Scripting.Script;
 					finally { }
 				}
 
-				Threads.EndThread(pushed);
+				_ = Threads.EndThread(pushed);
 			}
 
 			return (units, errors);
@@ -384,6 +385,8 @@ using static Keysharp.Scripting.Script;
 				return tx.ToString();
 			}
 		}
+
+		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
 
 		internal object EvaluateCode(string code)
 		{
@@ -429,7 +432,7 @@ namespace Dyn
 
 			if (results.Success)
 			{
-				ms.Seek(0, SeekOrigin.Begin);
+				_ = ms.Seek(0, SeekOrigin.Begin);
 				var arr = ms.ToArray();
 				var compiledasm = Assembly.Load(arr);
 				object o = compiledasm.CreateInstance("Dyn.DynamicCode");

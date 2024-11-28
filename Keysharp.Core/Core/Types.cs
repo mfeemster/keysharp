@@ -233,6 +233,6 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>The class name of value.</returns>
-		public static string Type(object value) => value.GetType().Name;
+		public static string Type(object value) => value != null ? value.GetType().Name : "unset";
 	}
 }

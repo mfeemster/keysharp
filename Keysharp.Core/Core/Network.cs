@@ -16,7 +16,7 @@ namespace Keysharp.Core
 		/// Any existing file will be overwritten by the new file.<br/>
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
-		public static void Download(object url, object filename)
+		public static object Download(object url, object filename)
 		{
 			var address = url.As();
 			var file = filename.As();
@@ -65,6 +65,7 @@ namespace Keysharp.Core
 				}
 			});
 			t.Wait();
+			return null;
 		}
 
 		/// <summary>
@@ -83,7 +84,7 @@ namespace Keysharp.Core
 		/// header: A string of additional header information.
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
-		public static void Mail(object recipients, string subject, string message, Map options = null)
+		public static object Mail(object recipients, string subject, string message, Map options = null)
 		{
 			var msg = new MailMessage { Subject = subject, Body = message };
 			msg.From = new MailAddress(string.Concat(Environment.UserName, "@", Environment.UserDomainName));
@@ -99,7 +100,7 @@ namespace Keysharp.Core
 						msg.To.Add((string)item);
 			}
 			else
-				return;
+				return null;
 
 			var smtpHost = "localhost";
 			int? smtpPort = null;
@@ -187,6 +188,7 @@ namespace Keysharp.Core
 			try
 			{
 				client.Send(msg);
+				return null;
 			}
 			catch (Exception ex)
 			{

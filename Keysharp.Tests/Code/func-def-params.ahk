@@ -260,3 +260,14 @@ funcdef3(p := 'asdf')
 }
 
 funcdef3()
+
+Test(lineBreak := "`r`n`t") {
+	return lineBreak
+}
+
+x := Test()
+
+If (x == "`r`n`t")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
