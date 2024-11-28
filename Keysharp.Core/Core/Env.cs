@@ -197,7 +197,7 @@ namespace Keysharp.Core
 		/// <param name="args">The command line arguments to process.</param>
 		public static object HandleCommandLineParams(string[] args)
 		{
-			Accessors.A_Args.AddRange(args);
+			_ = Accessors.A_Args.AddRange(args);
 			return null;
 		}
 

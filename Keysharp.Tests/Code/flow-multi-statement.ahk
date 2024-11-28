@@ -170,3 +170,42 @@ if ((1, 2, 3))
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+arr := [(1, 2), (3, 4)]
+
+if (arr.Length == 2 && arr[1] == 2 && arr[2] == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr := [func3(1, 2, 3), func3(3, 4, 5)]
+
+if (arr.Length == 2 && arr[1] == 6 && arr[2] == 12)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+arr := [func3(1, 2, 3),, func3(3, 4, 5)]
+
+if (arr.Length == 3 && arr[1] == 6 && arr[2] == unset && arr[3] == 12)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr := [,func3(1, 2, 3),]
+
+if (arr.Length == 3 && arr[1] == unset && arr[2] == 6 && arr[3] == unset)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; Dummy test that does nothing but test a very complex ternary.
+class Toggle {
+    static A := Map()
+	
+	TestFunc(a, b, c := "")
+	{
+	}
+
+    __New(F, P, I:=0) => (TestFunc(F, !P ? (A.Has(F) && A.Delete(F))*0 : A.Has(F) && A[F] = P ? !A.Delete(F) : (I && F.Call(), A[F] := P)))
+}

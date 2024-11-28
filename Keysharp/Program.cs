@@ -41,10 +41,14 @@ namespace Keysharp.Main
 				var nsname = typeof(Program).Namespace;
 				var codeout = false;
 				var exeout = false;
+				var assembly = false;
+				var assemblyType = "Keysharp.CompiledMain.program";
+				var assemblyMethod = "Main";
 				var script = string.Empty;
 				var gotscript = false;
 				var fromstdin = false;
 				var validate = false;
+				string[] scriptArgs = [];
 
 				for (var i = 0; i < args.Length; i++)
 				{
@@ -56,8 +60,9 @@ namespace Keysharp.Main
 					{
 						if (!gotscript)//Script name.
 						{
-							script = Path.GetFullPath(args[i]);
+							script = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
+							scriptArgs = args.Skip(i + 1).ToArray();
 							continue;
 						}
 						else//Parameters.
@@ -83,6 +88,18 @@ namespace Keysharp.Main
 						case "about":
 							var license = asm.GetManifestResourceStream(typeof(Program).Namespace + ".license.txt");
 							return Message(new StreamReader(license).ReadToEnd(), false);
+
+						case "assembly":
+							assembly = true;
+
+							if (i + 2 < args.Length && args[i + 1] != "*" && !File.Exists(args[i + 1]))
+							{
+								assemblyType = args[i + 1];
+								assemblyMethod = args[i + 2];
+								i += 2;
+							}
+
+							break;
 
 						case "exeout":
 							exeout = true;
@@ -123,6 +140,20 @@ namespace Keysharp.Main
 							script = dir;
 							break;
 						}
+					}
+				}
+
+				if (assembly)
+				{
+					using (var reader = new BinaryReader(script == "*" ? Console.OpenStandardInput() : File.Open(script, FileMode.Open)))
+					{
+						int length = reader.ReadInt32();
+						byte[] assemblyBytes = reader.ReadBytes(length);
+						Assembly scriptAsm = Assembly.Load(assemblyBytes);
+						Type type = scriptAsm.GetType(assemblyType);
+						MethodInfo method = type.GetMethod(assemblyMethod);
+						_ = method.Invoke(null, [scriptArgs]);
+						return 0;
 					}
 				}
 
@@ -284,7 +315,7 @@ namespace Keysharp.Main
 #if DEBUG
 				Script.OutputDebug("Running compiled code.");
 #endif
-				_ = main.Invoke(null, [args]);
+				_ = main.Invoke(null, [scriptArgs]);
 			}
 			catch (Exception ex)
 			{

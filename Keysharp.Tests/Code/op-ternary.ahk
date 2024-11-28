@@ -1,5 +1,3 @@
-
-
 z := 3 > 2 ? 1 : 10
 
 if (z = 1)
@@ -285,6 +283,35 @@ else
 y := x == 1 ?true:false
 
 if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+func(a)
+{
+	return a
+}
+
+a := ""
+x := a ? (func(123) ? 2 : 3) : 4
+
+if (x == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := ""
+x := !a ? (func(0) ? 2 : 3) : 4
+
+if (x == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := ""
+x := !a ? (func("") ? 2 : 3) : 4
+
+if (x == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

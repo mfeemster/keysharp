@@ -149,6 +149,9 @@ namespace Keysharp.Scripting
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 		internal static CodePrimitiveExpression nullPrimitive = new (null);
 		internal static CodeTypeReference objTypeRef = new (typeof(object));
+		internal static CodeTypeReference ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
+		internal static CodeTypeReference ctrdva = new CodeTypeReference(typeof(DefaultValueAttribute));
+		internal static CodeAttributeDeclaration cad;
 		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -225,6 +228,7 @@ namespace Keysharp.Scripting
 		private List<CodeLine> codeLines = [];
 		private uint exCount;
 		private string fileName;
+		private bool hardCreateOverride = true;
 		private int internalID;
 		private int labelCount;
 		private string lastHotkeyFunc = "";
@@ -243,6 +247,7 @@ namespace Keysharp.Scripting
 			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
 			targetClass = AddType(mainClassName);
 			_ = targetClass.Members.Add(main);
+			cad = new CodeAttributeDeclaration(ctrpaa);
 		}
 
 		public static string GetKeywords() => string.Join(' ', keywords);
@@ -755,7 +760,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+							//If they supplied less than the required number of arguments, fill in only default ref params.
 							if (methParams.Count > cmie.Parameters.Count)
 							{
 								var newParams = new List<CodeExpression>(methParams.Count);
@@ -764,19 +769,14 @@ namespace Keysharp.Scripting
 								{
 									var mp = methParams[i];
 
-									if (!mp.IsOptionalOrVariadic())//Ignore optional or variadic object[] parameters.
+									if (!mp.IsVariadic() && mp.Direction == FieldDirection.Ref)
 									{
-										if (mp.Direction == FieldDirection.Ref)
-										{
-											newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-											createDummyRef = true;
-										}
-										else
-											newParams.Add(nullPrimitive);
+										createDummyRef = true;
+										_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
 									}
+									else
+										break;
 								}
-
-								cmie.Parameters.AddRange(newParams.ToArray());
 							}
 
 							HandlePartialVariadicParams(cmie, cmm);
@@ -811,7 +811,7 @@ namespace Keysharp.Scripting
 									}
 								}
 
-								//If they supplied less than the required number of arguments, fill them in and take special consideration for refs.
+								//If they supplied less than the required number of arguments, fill in only default ref params.
 								if (methParams.Length > cmie.Parameters.Count)
 								{
 									var newParams = new List<CodeExpression>(methParams.Length);
@@ -820,19 +820,14 @@ namespace Keysharp.Scripting
 									{
 										var mp = methParams[i];
 
-										if (!mp.IsOptional)
+										if (!mp.IsVariadic() && mp.ParameterType.IsByRef && !mp.IsOut)
 										{
-											if (mp.ParameterType.IsByRef && !mp.IsOut)
-											{
-												newParams.Add(new CodeSnippetExpression($"ref {tsVar}"));
-												createDummyRef = true;
-											}
-											else if (mp.ParameterType != typeof(object[]))//Do not pass for variadic object[] parameters.
-												newParams.Add(nullPrimitive);
+											_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
+											createDummyRef = true;
 										}
+										else
+											break;
 									}
-
-									cmie.Parameters.AddRange(newParams.ToArray());
 								}
 
 								HandlePartialVariadicParams(cmie, mph2.mi);

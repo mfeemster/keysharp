@@ -853,3 +853,51 @@ if (c[2] == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+a := [,]
+
+if (a.Length == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (a[1] == unset && a[2] == unset)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := [,,]
+
+if (a.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (a[1] == unset && a[2] == unset && a[3] == unset)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := [1,,3]
+
+if (a.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (a[1] == 1 && a[2] == unset && a[3] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := [,2,]
+
+if (a.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (a[1] == unset && a[2] == 2 && a[3] == unset)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

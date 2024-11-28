@@ -44,7 +44,7 @@ namespace Keysharp.Core
 		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
 		{
 			var o = options.As();
-			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
+			return new DelegateHolder(Functions.GetFuncObj(function, null, true), o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
 		}
 
 		/// <summary>
@@ -290,8 +290,7 @@ namespace Keysharp.Core
 			}
 			else if (function is DelegateHolder dh)
 			{
-				var helper = new ComArgumentHelper(parameters);
-				return dh.DelegatePlaceholderArr(helper.args);
+				return dh.DirectCall(parameters);
 			}
 			else if (function is Delegate del)
 			{

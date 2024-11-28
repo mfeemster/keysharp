@@ -419,7 +419,7 @@ namespace Keysharp.Scripting
 								// by inserting a single extra IF-statement above the Send that produces the down-event:
 								var ks = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Keyboard"), "GetKeyState", [new CodePrimitiveExpression(remapDest)]);
 								var ifelse = (CodeMethodInvokeExpression)InternalMethods.IfElse;
-								ifelse.Parameters.Add(ks);
+								_ = ifelse.Parameters.Add(ks);
 								_ = method.Statements.Add(new CodeConditionStatement(new CodeBinaryOperatorExpression(ifelse, CodeBinaryOperatorType.IdentityEquality, new CodePrimitiveExpression(false)), [new CodeExpressionStatement(send)]));
 							}
 							else

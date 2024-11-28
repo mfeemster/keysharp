@@ -344,7 +344,12 @@ namespace Keysharp.Core
 			if (!dpimodeset)
 			{
 				dpimodeset = true;
-				Application.SetCompatibleTextRenderingDefault(false);
+
+				try
+				{
+					Application.SetCompatibleTextRenderingDefault(false);
+				}
+				catch { } // Fails if a window already exists, like when running from Keyview
 			}
 
 #if WINDOWS
@@ -477,7 +482,7 @@ namespace Keysharp.Core
 				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
 					break;
 
-				Flow.Sleep(interval);
+				_ = Flow.Sleep(interval);
 			} while (true);
 
 			WindowItemBase.DoWinDelay();
@@ -935,7 +940,7 @@ namespace Keysharp.Core
 				if (win != null || (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds))
 					break;
 
-				Flow.Sleep(50);
+				_ = Flow.Sleep(50);
 			} while (win == null);
 
 			if (win != null)
@@ -968,7 +973,7 @@ namespace Keysharp.Core
 				}
 
 				if (!b)
-					Flow.Sleep(100);
+					_ = Flow.Sleep(100);
 			}
 
 			WindowItemBase.DoWinDelay();
@@ -994,7 +999,7 @@ namespace Keysharp.Core
 						break;
 					}
 					else
-						Flow.Sleep(100);
+						_ = Flow.Sleep(100);
 				}
 			}
 
@@ -1021,7 +1026,7 @@ namespace Keysharp.Core
 						break;
 					}
 
-					Flow.Sleep(100);
+					_ = Flow.Sleep(100);
 				}
 			}
 

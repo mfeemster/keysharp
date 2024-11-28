@@ -454,3 +454,19 @@ if (c4.sum == 9)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+class class5
+{
+	func(a := "`r", b := "`n", c := "`t")
+	{
+		return a . b . c
+	}
+}
+
+c5 := class5()
+val := c5.func()
+
+if (val == "`r`n`t")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

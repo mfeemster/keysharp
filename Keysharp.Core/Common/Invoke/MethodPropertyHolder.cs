@@ -172,7 +172,7 @@
 								else
 									System.Array.Copy(newobj, obj, len);
 
-								paramsPool.Return(newobj, true);
+								_ = paramsPool.Return(newobj, true);
 							}
 
 							return ret;
@@ -240,7 +240,7 @@
 								}
 
 								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, objLength));//In case any params were references.
-								paramsPool.Return(newobj, true);
+								_ = paramsPool.Return(newobj, true);
 							}
 
 							return ret;

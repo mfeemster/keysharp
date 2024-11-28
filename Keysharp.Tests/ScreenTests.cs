@@ -9,11 +9,11 @@ namespace Keysharp.Tests
 		[Test, Category("Screen")]
 		public void ImageSearch()
 		{
-			CoordMode("Mouse", "Screen");
+			_ = CoordMode("Mouse", "Screen");
 			var screen = System.Windows.Forms.Screen.PrimaryScreen;
 			_ = GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp");
 			object x = null, y = null;
-			Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp");//This implies this pattern won't be present before 1000,1000.
+			_ = Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp"); //This implies this pattern won't be present before 1000,1000.
 
 			if (x is long lx && lx == 10 && y is long ly && ly == 10)
 				Assert.IsTrue(true);
@@ -27,7 +27,7 @@ namespace Keysharp.Tests
 		public void PixelGetColor()
 		{
 			int last = 0, white = 0xffffff, black = 0x000000;
-			CoordMode("Mouse", "Screen");
+			_ = CoordMode("Mouse", "Screen");
 
 			//There isn't really a sure way to tell whether this is working.
 			//So a pseudo-test is to just get pixels until the value is not white or black.
@@ -55,7 +55,7 @@ namespace Keysharp.Tests
 		public void PixelSearch()
 		{
 			int last = 0, white = 0xffffff, black = 0x000000;
-			CoordMode("Mouse", "Screen");
+			_ = CoordMode("Mouse", "Screen");
 
 			//There isn't really a sure way to tell whether this is working.
 			//So a pseudo-test is to just get pixels until the value is not white or black.

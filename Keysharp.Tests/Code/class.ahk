@@ -74,8 +74,8 @@ else
 ; created in the exact order specified.
 class membersrefeachother
 {
-    zz := 8080
-    ii := zz * 2
+	zz := 8080
+	ii := zz * 2
 }
 
 classobj := membersrefeachother()

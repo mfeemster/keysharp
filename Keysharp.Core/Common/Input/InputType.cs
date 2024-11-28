@@ -323,7 +323,7 @@ namespace Keysharp.Core.Common.Input
 			// It is possible for &input to already be in the list if AHK_INPUT_END is still
 			// in the message queue, in which case it must be removed from its current position
 			// to prevent the list from looping back on itself.
-			InputUnlinkIfStopped(this);
+			_ = InputUnlinkIfStopped(this);
 			prev = Script.input;
 			Start();
 			Script.input = this; // Signal the hook to start the input.

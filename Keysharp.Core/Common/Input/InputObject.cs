@@ -275,7 +275,7 @@
 			var tickStart = DateTime.Now;
 
 			while (input.InProgress() && (DateTime.Now - tickStart).TotalMilliseconds < ms)
-				Flow.Sleep(20);
+				_ = Flow.Sleep(20);
 		}
 	}
 }

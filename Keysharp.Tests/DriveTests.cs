@@ -97,10 +97,10 @@ namespace Keysharp.Tests
 		public void DriveGetSetLabel()
 		{
 			var origlabel = Drive.DriveGetLabel("C:\\");
-			Drive.DriveSetLabel("C:\\", "a test label");//Visual Studio needs to be running as administrator for this to work.
+			_ = Drive.DriveSetLabel("C:\\", "a test label"); //Visual Studio needs to be running as administrator for this to work.
 			var newlabel = Drive.DriveGetLabel("C:\\");
 			Assert.AreEqual("a test label", newlabel);
-			Drive.DriveSetLabel("C:\\", origlabel);
+			_ = Drive.DriveSetLabel("C:\\", origlabel);
 			newlabel = Drive.DriveGetLabel("C:\\");
 			Assert.AreEqual(origlabel, newlabel);
 			Assert.IsTrue(TestScript("drive-getsetlabel", true));

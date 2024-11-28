@@ -166,7 +166,7 @@ namespace Keysharp.Core
 
 			while ((proc = FindProcess(name)) == null)
 			{
-				Flow.Sleep(LoopFrequency);
+				_ = Flow.Sleep(LoopFrequency);
 
 				if (t >= 0.0 && (DateTime.Now - start).TotalMilliseconds > t)
 					break;
@@ -316,7 +316,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object Shutdown(object obj)
 		{
-			PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
+			_ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
 			return null;
 		}
 

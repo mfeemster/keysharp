@@ -89,7 +89,7 @@
 									ret = "";
 
 								//throw new Error("ASDf");
-								EndThread(btv.Item1);
+								_ = EndThread(btv.Item1);
 							}, true);//Pop on exception because EndThread() above won't be called.
 						}
 						else
@@ -103,7 +103,7 @@
 							else
 								ret = "";
 
-							EndThread(btv.Item1);
+							_ = EndThread(btv.Item1);
 						}
 					}
 

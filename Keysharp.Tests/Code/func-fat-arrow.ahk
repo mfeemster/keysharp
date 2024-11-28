@@ -426,3 +426,90 @@ If (z == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+lamanondef := (a := 123) => a * 2
+val := lamanondef()
+
+If (val == 246)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+lamnameddef := (a := 3) => a * 2
+val := lamnameddef()
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+myfunc10(a, b, c)
+{
+	return a() + b() + c()
+}
+
+val := myfunc10((x := 1) => x, (y := 2) => y, (z := 3) => z)
+
+If (val == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+class myclass3
+{
+	member1 := memberfunc(a, b := 2) => a * b * 2
+	member2 := (a := 2, b := 3) => a * b * 2
+	member3 := (a := 123) => a
+	member4 := memberfunc4(a, &b, c := 5, p*) => b := a * b * c * p[1]
+	member5 := (a, &b, c := 5, p*) => b := a * b * c * p[1]
+}
+
+myclassobj := myclass3()
+val := myclassobj.member1(5)
+
+If (val == 20)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+val := myclassobj.member2(5)
+
+If (val == 30)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := myclassobj.member2()
+
+If (val == 12)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := myclassobj.member3()
+
+If (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := myclassobj.member3(55)
+
+If (val == 55)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := myclassobj.member4(1, &b := 2, 3, 4)
+
+If (val == 24 && b == 24)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := myclassobj.member5(1, &b := 2, 3, 4)
+
+If (val == 24 && b == 24)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

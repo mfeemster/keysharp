@@ -17,7 +17,7 @@ namespace Keysharp.Scripting
 						cboe.UserData["snippet"] = cse;
 						cboe.Left.UserData["snippet"] = cse;
 						cboe.Right.UserData["snippet"] = cse;
-						assignSnippets.Add(cse);
+						_ = assignSnippets.Add(cse);
 						return cse;
 					}
 					else//Unsure if this is even needed anymore.
@@ -28,7 +28,7 @@ namespace Keysharp.Scripting
 						cboe.UserData["snippet"] = cse;
 						cboe.Left.UserData["snippet"] = cse;
 						cboe.Right.UserData["snippet"] = cse;
-						assignSnippets.Add(cse);
+						_ = assignSnippets.Add(cse);
 						return cse;
 					}
 				}
@@ -61,7 +61,7 @@ namespace Keysharp.Scripting
 			var braceLevel = 0;
 			var bracketLevel = 0;
 			var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
-			List<int> refIndexes = new List<int>(paren.Count);//This was to handle parameters where the caller passed & to signify it's meant to be passed by reference, but we're no longer supporting reference parameters.
+			List<int> refIndexes = new List<int>(paren.Count);
 			List<object> arg = [];
 			List<List<object>> args = new List<List<object>>(paren.Count);
 
@@ -508,6 +508,7 @@ namespace Keysharp.Scripting
 									  ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 									  //Check for function or property calls on an object, which only count as read operations.
 									  : VarIdOrConstant(codeLine, part,
+														hardCreateOverride &&//Extreme hack: see below where this is set for an explanation.
 														(i == 0 || (s.EndsWith('=') && parts[i - 1] is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign)) && //This accounts for either the left side of a single assignment like x := 0 or a multi-assignment like x := y := 0, where we create x and y.
 														(!s.StartsWith("[") || parts.Count == 1) &&
 														(create || s.EndsWith('='))//Covers :=, +=, -= etc...
@@ -670,6 +671,8 @@ namespace Keysharp.Scripting
 											paramExprs.AddRange(tempexpr);
 										}
 									}
+									else
+										paramExprs.Add(nullPrimitive);
 
 									argi += tempi + 1;//Account for the comma.
 								}
@@ -725,9 +728,10 @@ namespace Keysharp.Scripting
 							var origCode = code;
 							var passed = new List<CodeExpression>();
 							var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
+							var origParamCode = string.Join("", paren);//This is somewhat redundant, but the calls below strip out the &, := and * in the function parameters/arguments. We need to keep a verbatim copy.
 							var (refIndexes, args) = ParseArguments(paren);
-							var tempCode = TokensToCode(paren);
-							var codeStrings = SplitStringBalanced(tempCode, ',', true);//Tricky here: we need the code, not the parsed tokens.
+							var allParamsCode = TokensToCode(paren) + (lastisstar ? "*" : "");
+							var codeStrings = SplitStringBalanced(allParamsCode, ',', true);//Tricky here: we need the code, not the parsed tokens.
 							var scope = Scope.ToLower();
 
 							//Each argument must be parsed as a single expression.
@@ -737,21 +741,33 @@ namespace Keysharp.Scripting
 								for (int i1 = 0; i1 < args.Count; i1++)
 								{
 									var arg = args[i1];
-									tempCode = codeStrings[i1];
-									var argExpr = ParseExpression(codeLine, tempCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
+									var tempParamCode = codeStrings[i1];
+									//Extreme hack to determine if we're in a named lambda declaration with a default parameter like:
+									//Extreme hack because there is no way to tell the difference between a default parameter in a named lambda declaration and a normal variable declaration.
+									//lam := namedlambda(a, b := 2) => 123
+									//b := 2
+									//both are seen the same, and b will get created as a variable at this scope for both cases, when it should only be done for the bottom case.
+									hardCreateOverride = false;
+									var argExpr = ParseExpression(codeLine, tempParamCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
+									hardCreateOverride = true;//Restore the hack flag.
 
-									//If an assignment was passed to a function, separate it out like so:
-									//MsgBox(x := 123) ; becomes...
+									//If an assignment was passed to a function for a reference parameter, separate it out like so:
+									//func(&x := 123) ; becomes...
 									//x := 123
-									//MsgBox(x)
-									if (argExpr.WasCboe() is CodeBinaryOperatorExpression cboe && cboe.Operator == CodeBinaryOperatorType.Assign)
+									//func(&x)
+									if (refIndexes.Contains(i1)//Only needed if it's a reference argument.
+											&& argExpr.WasCboe() is CodeBinaryOperatorExpression cboe
+											&& cboe.Operator == CodeBinaryOperatorType.Assign)
 									{
 										_ = parent.Add(argExpr);
 										argExpr = cboe.Left;
 									}
 
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
-									if (argExpr is CodeVariableReferenceExpression cvre)
+									//But ensure it wasn't an assignment/declaration statement of a named lambda like:
+									//lam := lambdafunc(a, b) => a * b
+									if ((i == 0 || parts[i - 1] is not CodeBinaryOperatorType cbot || cbot != CodeBinaryOperatorType.Assign)
+											&& argExpr is CodeVariableReferenceExpression cvre)
 									{
 										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName)
 												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _))
@@ -823,6 +839,7 @@ namespace Keysharp.Scripting
 								invoke.Parameters.AddRange(ConvertDirectParamsToInvoke(oldInvoke.Parameters));
 							}
 
+							invoke.UserData["origparams"] = origParamCode;//Will be used below for => functions.
 							allMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(invoke);
 						}
 
@@ -916,8 +933,6 @@ namespace Keysharp.Scripting
 					{
 						var assignIndex = parts.FindIndex(0, parts.Count, o => o is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign);
 						var cmieIndex = parts.FindIndex(0, parts.Count, o => o is CodeMethodInvokeExpression cmie);
-						var ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
-						var cad = new CodeAttributeDeclaration(ctrpaa);
 						var cmd = new CodeMemberMethod
 						{
 							ReturnType = objTypeRef,
@@ -937,15 +952,14 @@ namespace Keysharp.Scripting
 							parts.Add(")");
 							i = assignIndex;//Move i back to force parsing of the tokens we just added.
 						}
-						void MakeMethod(CodeMemberMethod cmd)
+						void MakeMethod(CodeMemberMethod cmd, string funcParamStr)
 						{
 							string retstr;
 							var bodyParts = parts.Take(new Range(i + 1, parts.Count)).ToArray();
 							var arrowIndex = code.IndexOf("=>");
 							AddParts(cmd);
 							var lineNumber = codeLines.IndexOf(codeLine) + 1;
-							//Inefficient to recompose the parameters into a string, but unsure what else to do here.
-							codeLines.Insert(lineNumber, new CodeLine(codeLine.FileName, lineNumber++, $"{cmd.Name}({string.Join(',', cmd.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => (p.Direction == FieldDirection.Ref ? "&" : "") + p.Name + (p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(c => c.AttributeType.BaseType == ctrpaa.BaseType) ? "*" : "")))})"));
+							codeLines.Insert(lineNumber, new CodeLine(codeLine.FileName, lineNumber++, $"{cmd.Name}({funcParamStr})"));
 							codeLines.Insert(lineNumber, new CodeLine(codeLine.FileName, lineNumber++, "{"));
 							var subs = SplitStringBalanced(code.Substring(arrowIndex + 2), ',');
 							var ct = subs.Count - 1;
@@ -993,7 +1007,7 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							MakeMethod(cmd);
+							MakeMethod(cmd, cmie.UserData["origparams"].ToString());
 
 							//Now need to handle creating a function object and assigning.
 							if (assignIndex != -1 && assignIndex < i)
@@ -1003,43 +1017,47 @@ namespace Keysharp.Scripting
 						{
 							if (parts[assignIndex + 1] is List<object> lo)//Parens like member := (a) => a * 2
 							{
-								var funcParams = ParseFunctionParameters(string.Join("", lo), codeLine);
+								var funcParamStr = string.Join("", lo);
+								var funcParams = ParseFunctionParameters(funcParamStr, codeLine);
 								cmd.Name = $"_ks_anonfunc_{labelCount++:X}";
 
 								if (funcParams != null)
 									foreach (var fp in funcParams)
 										_ = cmd.Parameters.Add(fp);
 
-								MakeMethod(cmd);
+								MakeMethod(cmd, funcParamStr);
 							}
 							else if (parts[assignIndex + 1] is CodeVariableReferenceExpression cvre)//No parens like member := a => a * 2
 							{
 								cmd.Name = $"_ks_anonfunc_{labelCount++:X}";
+								var funcParamStr = cvre.VariableName;
 
 								if (parts[assignIndex + 2] as string == "*")//Account for member4 := a* => (a[1] + a[2]) * 2
 								{
 									var cpde = new CodeParameterDeclarationExpression(typeof(object[]), cvre.VariableName);
 									_ = cpde.CustomAttributes.Add(cad);
 									_ = cmd.Parameters.Add(cpde);
+									funcParamStr += "*";
 								}
 								else
 									_ = cmd.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), cvre.VariableName));
 
-								MakeMethod(cmd);
+								MakeMethod(cmd, funcParamStr);
 							}
 						}
 						else if (assignIndex == -1 && cmieIndex == -1)//Defined on the fly.
 						{
 							if (parts[0] is List<object> lo)
 							{
-								var funcParams = ParseFunctionParameters(string.Join("", lo), codeLine);
+								var funcParamStr = string.Join("", lo);
+								var funcParams = ParseFunctionParameters(funcParamStr, codeLine);
 								cmd.Name = $"_ks_anonfunc_{labelCount++:X}";
 
 								if (funcParams != null)
 									foreach (var fp in funcParams)
 										_ = cmd.Parameters.Add(fp);
 
-								MakeMethod(cmd);
+								MakeMethod(cmd, funcParamStr);
 							}
 						}
 						else
@@ -1062,22 +1080,11 @@ namespace Keysharp.Scripting
 							if (nextOp == -1)
 								nextOp = parts.Count;
 
+							var imb = -1;
 							var ternaryParts = ExtractRange(parts, n, nextOp);
 
-							while (ternaryParts[0].ToString() == "("
-									&& ternaryParts[ternaryParts.Count - 1].ToString() != ")"
-									&& !IsBalanced(ternaryParts, "(", ")"))
-							{
-								ternaryParts.RemoveAt(0);
-							}
-
-							while (ternaryParts[0].ToString() != "("
-									&& !ternaryParts[0].ToString().EndsWith("(")
-									&& ternaryParts[ternaryParts.Count - 1].ToString() == ")"
-									&& !IsBalanced(ternaryParts, "(", ")"))
-							{
-								ternaryParts.RemoveAt(ternaryParts.Count - 1);
-							}
+							while ((imb = FindFirstImbalanced(ternaryParts, '(', ')')) != -1)
+								ternaryParts.RemoveAt(imb);
 
 							var ternaryCode = TokensToCode(ternaryParts);
 							var ternaryExpr = ParseExpression(codeLine, ternaryCode, ternaryParts, false);
