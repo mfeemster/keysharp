@@ -63,7 +63,8 @@ namespace Keysharp.Main
 							script = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
 							scriptArgs = args.Skip(i + 1).ToArray();
-							continue;
+                            Env.KeysharpArgs = args.Take(i + 1).ToArray();
+                            continue;
 						}
 						else//Parameters.
 						{
@@ -108,9 +109,13 @@ namespace Keysharp.Main
 						case "codeout":
 							codeout = true;
 							break;
+
+                        case "include":
+                            i++;
+                            break;
 #if WINDOWS
 
-						case "install"://To be called by the installer during installation.
+                        case "install"://To be called by the installer during installation.
 							InstallToPath(exeDir);
 							return 0;
 
