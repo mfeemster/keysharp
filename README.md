@@ -160,6 +160,8 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	}
 ```
 * `Sleep()` will not do any sleeping if shutdown has been initiated.
+* `/Debug` command line switch is not implemented.
+* If a script is compiled then none of Keysharp or AutoHotkey command parameters apply. 
 	
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
@@ -501,6 +503,18 @@ class class1
 			MsgBox("True because of new definition")
 		#endif
 ```
+* Command line switches may start with either `/` (Windows-only), `-` or `--`. 
+* Command line switches
+	- `--version`, `-v`  
+	  Displays Keysharp version.
+	- `--codeout`  
+	  In addition to running the script, Keysharp outputs a .cs file with the same name as the script containing the code which was used to compile. This is the same code displayed in Keyview. 
+	- `--exeout`  
+	  In addition to running the script, Keysharp outputs a .exe file which can be ran as standalone from Keysharp (but still requires .NET 9).
+	- `--validate`  
+	  Compiles but does not run the script. Can be used to check for load-time errors.
+	- `--assembly [Type Method]`  
+	  Reads pre-compiled assembly code from the file or StdIn and runs it. Optionally also provide the entrypoint type and method, but if omitted then the default type `Keysharp.CompiledMain.program` and method `Main` are used.
 	
 ###	Removals: ###
 * Nested classes are not supported.
