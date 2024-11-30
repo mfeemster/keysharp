@@ -1492,11 +1492,11 @@ namespace Keysharp.Core
 #endif
 		}
 
-		public void GetClientPos(ref object x, ref object y, ref object width, ref object height) => GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+		public void GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls, 2);
 
-		public void GetPos(ref object x, ref object y, ref object width, ref object height) => GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+		public void GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public void Hide() => form.Hide();
 

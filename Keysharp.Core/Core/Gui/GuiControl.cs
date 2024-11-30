@@ -709,7 +709,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public void GetClientPos(ref object x, ref object y, ref object width, ref object height) => GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+		public void GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public long GetCount(object obj = null)
 		{
@@ -817,7 +817,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public void GetPos(ref object x, ref object y, ref object width, ref object height) => GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+		public void GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
 
 		public long GetPrev(object obj)
 		{

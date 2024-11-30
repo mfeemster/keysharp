@@ -315,21 +315,11 @@ namespace Keysharp.Scripting
 						_ = main.Statements.Add(ce);
 				}
 
-			if (Persistent)
-			{
-				var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
-				_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
-				_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
-				_ = main.Statements.Add(new CodeExpressionStatement(inv));
-				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
-			}
-			else
-			{
-				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "_ks_UserMainCode"));
-				_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
-				_ = main.Statements.Add(new CodeMethodInvokeExpression(null, "Keysharp.Core.Flow.Sleep", [new CodePrimitiveExpression(-2L)]));
-			}
-
+			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
+			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
+			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
+			_ = main.Statements.Add(new CodeExpressionStatement(inv));
+			_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit0.Parameters.Add(new CodePrimitiveExpression(0));
 			var exit1 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
@@ -1005,12 +995,7 @@ namespace Keysharp.Scripting
 
 			if (!Persistent)
 			{
-				var threads = new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads");
-				var btcmie = new CodeMethodInvokeExpression(threads, "BeginThread");
-				userMainMethod.Statements.Insert(0, new CodeAssignStatement(new CodeSnippetExpression("var (_ks_pushed, _ks_btv)"), btcmie));
-				var etcmie = new CodeMethodInvokeExpression(threads, "EndThread");
-				etcmie.Parameters.Add(new CodeSnippetExpression("_ks_pushed"));
-				userMainMethod.Statements.Add(etcmie);
+				userMainMethod.Statements.Add(exit0);
 			}
 
 			userMainMethod.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
@@ -1047,9 +1032,6 @@ namespace Keysharp.Scripting
 			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
 			Statements();
-
-			if (!Persistent)
-				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.SetReady));
 
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
