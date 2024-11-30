@@ -227,7 +227,7 @@ namespace Keysharp.Scripting
 		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = [];
 		private readonly Stack<CodeSwitchStatement> switches = new ();
 		private readonly CodeTypeDeclaration targetClass;
-		private readonly Stack<CodeTernaryOperatorExpression> ternaries = new ();
+		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
 		private bool blockOpen;
 		private uint caseCount;
@@ -1017,7 +1017,20 @@ namespace Keysharp.Scripting
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			targetClass.Members.Add(userMainMethod);
 
-			foreach (var assign in assignSnippets)//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments, so it shouldn't matter.
+			//Ternaries need to be re-evaluated because they are handled as snippets.
+			foreach (var tern in ternaries)
+			{
+				if (tern.UserData["orig"] is CodeTernaryOperatorExpression ctoe)
+				{
+					var ctse = MakeTernarySnippet(ctoe.Condition, ctoe.TrueBranch, ctoe.FalseBranch);
+					tern.Value = ctse.Value;
+				}
+			}
+
+			//Assignments as snippets need to be reevaluated.
+			//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments,
+			//so it shouldn't matter.
+			foreach (var assign in assignSnippets)
 				ReevaluateSnippet(assign);
 
 			return unit;

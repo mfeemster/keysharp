@@ -311,7 +311,9 @@
 			var evalstr = Ch.CodeToString(eval);
 			var tbs = Ch.CodeToString(trueBranch);
 			var fbs = Ch.CodeToString(falseBranch);
-			return new CodeSnippetExpression($"(_ = {evalstr} ? (object)({tbs}) : (object)({fbs}))");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+			var cse = new CodeSnippetExpression($"(_ = {evalstr} ? (object)({tbs}) : (object)({fbs}))");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+			cse.UserData["orig"] = new CodeTernaryOperatorExpression(eval, trueBranch, falseBranch);
+			return cse;
 		}
 	}
 }

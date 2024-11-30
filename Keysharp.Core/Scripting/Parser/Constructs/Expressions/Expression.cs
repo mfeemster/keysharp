@@ -1486,7 +1486,9 @@ namespace Keysharp.Scripting
 							var falseBranch = ParseExpression(codeLine, code, branch[1], create);
 							//CodeDOM does not have built in support for ternary operators. So we must manually create the code string for the ternary,
 							//then use a code snippet to hold the string. This is not ideal, but there is no other way.
-							parts[x] = MakeTernarySnippet(eval, trueBranch, falseBranch);
+							var ctse = MakeTernarySnippet(eval, trueBranch, falseBranch);
+							ternaries.Add(ctse);
+							parts[x] = ctse;
 							parts.RemoveRange(start, parts.Count - start);
 						}
 						else if (op == Script.Operator.NullCoalesce)
