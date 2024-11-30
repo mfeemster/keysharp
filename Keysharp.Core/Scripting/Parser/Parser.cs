@@ -200,13 +200,19 @@ namespace Keysharp.Scripting
 		private readonly tsmd getPropertyValueCalls = [];
 		private readonly Stack<List<string>> globalFuncVars = new Stack<List<string>>();
 		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = [];
-		private readonly List<CodeMethodInvokeExpression> invokes = [];
 		private readonly Stack<List<string>> localFuncVars = new Stack<List<string>>();
 
 		private readonly CodeMemberMethod main = new CodeMemberMethod()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
 			Name = "Main"
+		};
+
+		private readonly CodeMemberMethod userMainMethod = new CodeMemberMethod()
+		{
+			Attributes = MemberAttributes.Public | MemberAttributes.Static,
+			Name = "_ks_UserMainCode",
+			ReturnType = objTypeRef
 		};
 
 		private readonly CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
@@ -271,6 +277,7 @@ namespace Keysharp.Scripting
 		public CodeCompileUnit GenerateCompileUnit()
 		{
 			var unit = new CodeCompileUnit();
+			var dummyRefVarCount = 0;
 			//var space = new CodeNamespace(bcl.Namespace + ".Instance");
 			//_ = unit.Namespaces.Add(space);
 			mainNs.Imports.Add(new CodeNamespaceImport("System"));
@@ -749,12 +756,34 @@ namespace Keysharp.Scripting
 								{
 									if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
 									{
+										var refVarName = "";
 										var mp = methParams[i];
 
-										if (mp.Direction == FieldDirection.Ref)
+										//Need to check for parameters that have a default value, but were supplied null
+										//by placing a comma at their position in the argument list.
+										//Look up the default value and pass that instead, taking special action for ref params.
+										if (mp.DefaultValue() is CodeExpression defVal)
 										{
-											cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
+											var defValStr = Ch.CodeToString(defVal);
+
+											if (mp.Direction == FieldDirection.Ref)
+											{
+												var par = cmie.UserData["parentstatements"] as CodeStatementCollection;
+												var line = (int)cmie.UserData["parentline"];
+												refVarName = $"defRefVal{dummyRefVarCount++}";
+												par.Insert(line, new CodeExpressionStatement(new CodeSnippetExpression($"object {refVarName} = {defValStr}")));
+												cmie.Parameters[i] = new CodeSnippetExpression($"ref {refVarName}");
+											}
+											else
+											{
+												cmie.Parameters[i] = new CodeSnippetExpression(defValStr);
+											}
+										}
+										else if (mp.Direction == FieldDirection.Ref)//Ref with no default. Null can't be passed, so just pass a ref to a dummy variable.
+										{
+											refVarName = tsVar;
 											createDummyRef = true;
+											cmie.Parameters[i] = new CodeSnippetExpression($"ref {refVarName}");
 										}
 									}
 								}
@@ -769,13 +798,24 @@ namespace Keysharp.Scripting
 								{
 									var mp = methParams[i];
 
-									if (!mp.IsVariadic() && mp.Direction == FieldDirection.Ref)
+									if (!mp.IsVariadic() && mp.DefaultValue() is CodeExpression defVal)
 									{
-										createDummyRef = true;
-										_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
+										string refVarName;
+										var defValStr = Ch.CodeToString(defVal);
+
+										if (mp.Direction == FieldDirection.Ref)
+										{
+											var par = cmie.UserData["parentstatements"] as CodeStatementCollection;
+											var line = (int)cmie.UserData["parentline"];
+											refVarName = $"defRefVal{dummyRefVarCount++}";
+											par.Insert(line, new CodeExpressionStatement(new CodeSnippetExpression($"object {refVarName} = {defValStr}")));
+											cmie.Parameters.Add(new CodeSnippetExpression($"ref {refVarName}"));
+										}
+										else
+										{
+											cmie.Parameters.Add(new CodeSnippetExpression(defValStr));
+										}
 									}
-									else
-										break;
 								}
 							}
 
@@ -800,12 +840,34 @@ namespace Keysharp.Scripting
 									{
 										if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
 										{
+											var refVarName = "";
 											var mp = methParams[i];
 
-											if (mp.ParameterType.IsByRef && !mp.IsOut)
+											//Need to check for parameters that have a default value, but were supplied null
+											//by placing a comma at their position in the argument list.
+											//Look up the default value and pass that instead, taking special action for ref params.
+											if (mp.DefaultValue != null && mp.DefaultValue.GetType() != typeof(DBNull))
 											{
-												cmie.Parameters[i] = new CodeSnippetExpression($"ref {tsVar}");
+												var defValStr = Ch.CodeToString(new CodePrimitiveExpression(mp.DefaultValue));
+
+												if (mp.ParameterType.IsByRef && !mp.IsOut)
+												{
+													var par = cmie.UserData["parentstatements"] as CodeStatementCollection;
+													var line = (int)cmie.UserData["parentline"];
+													refVarName = $"defRefVal{dummyRefVarCount++}";
+													par.Insert(line, new CodeExpressionStatement(new CodeSnippetExpression($"object {refVarName} = {defValStr}")));
+													cmie.Parameters[i] = new CodeSnippetExpression($"ref {refVarName}");
+												}
+												else
+												{
+													cmie.Parameters[i] = new CodeSnippetExpression(defValStr);
+												}
+											}
+											else if (mp.ParameterType.IsByRef && !mp.IsOut)//Ref with no default. Null can't be passed, so just pass a ref to a dummy variable.
+											{
+												refVarName = tsVar;
 												createDummyRef = true;
+												cmie.Parameters[i] = new CodeSnippetExpression($"ref {refVarName}");
 											}
 										}
 									}
@@ -814,19 +876,27 @@ namespace Keysharp.Scripting
 								//If they supplied less than the required number of arguments, fill in only default ref params.
 								if (methParams.Length > cmie.Parameters.Count)
 								{
-									var newParams = new List<CodeExpression>(methParams.Length);
-
 									for (var i = cmie.Parameters.Count; i < methParams.Length; i++)
 									{
 										var mp = methParams[i];
 
-										if (!mp.IsVariadic() && mp.ParameterType.IsByRef && !mp.IsOut)
+										if (!mp.IsVariadic() && mp.IsOptional && mp.DefaultValue != null && mp.DefaultValue.GetType() != typeof(DBNull))
 										{
-											_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {tsVar}"));
-											createDummyRef = true;
+											var defValStr = Ch.CodeToString(new CodePrimitiveExpression(mp.DefaultValue));
+
+											if (mp.ParameterType.IsByRef && !mp.IsOut)
+											{
+												var par = cmie.UserData["parentstatements"] as CodeStatementCollection;
+												var line = (int)cmie.UserData["parentline"];
+												var refVarName = $"defRefVal{dummyRefVarCount++}";
+												par.Insert(line, new CodeExpressionStatement(new CodeSnippetExpression($"object {refVarName} = {defValStr}")));
+												cmie.Parameters.Add(new CodeSnippetExpression($"ref {refVarName}"));
+											}
+											else
+											{
+												cmie.Parameters.Add(new CodeSnippetExpression(defValStr));
+											}
 										}
-										else
-											break;
 									}
 								}
 
@@ -933,6 +1003,20 @@ namespace Keysharp.Scripting
 					gkv.Value.Statements.Insert(gotoIndex, pop);
 			}
 
+			if (!Persistent)
+			{
+				var threads = new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads");
+				var btcmie = new CodeMethodInvokeExpression(threads, "BeginThread");
+				userMainMethod.Statements.Insert(0, new CodeAssignStatement(new CodeSnippetExpression("var (_ks_pushed, _ks_btv)"), btcmie));
+				var etcmie = new CodeMethodInvokeExpression(threads, "EndThread");
+				etcmie.Parameters.Add(new CodeSnippetExpression("_ks_pushed"));
+				userMainMethod.Statements.Add(etcmie);
+			}
+
+			userMainMethod.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
+			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
+			targetClass.Members.Add(userMainMethod);
+
 			foreach (var assign in assignSnippets)//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments, so it shouldn't matter.
 				ReevaluateSnippet(assign);
 
@@ -976,29 +1060,6 @@ namespace Keysharp.Scripting
 
 			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodePrimitiveExpression(name));
 			_ = initial.Add(namevar);
-			//_ = initial.Add(new CodeSnippetExpression("Assembly assembly = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(\"C:\\\\Program Files\\\\Keysharp\\\\Keysharp.Core.dll\")"));
-			var userMainMethod = new CodeMemberMethod()
-			{
-				Attributes = MemberAttributes.Public | MemberAttributes.Static,
-				Name = "_ks_UserMainCode",
-				ReturnType = objTypeRef
-			};
-
-			if (!Persistent)
-			{
-				var threads = new CodeTypeReferenceExpression("Keysharp.Core.Common.Threading.Threads");
-				var btcmie = new CodeMethodInvokeExpression(threads, "BeginThread");
-				userMainMethod.Statements.Add(new CodeAssignStatement(new CodeSnippetExpression("var (_ks_pushed, _ks_btv)"), btcmie));
-				userMainMethod.Statements.AddRange(main.Statements);
-				var etcmie = new CodeMethodInvokeExpression(threads, "EndThread");
-				etcmie.Parameters.Add(new CodeSnippetExpression("_ks_pushed"));
-				userMainMethod.Statements.Add(etcmie);
-			}
-			else
-				userMainMethod.Statements.AddRange(main.Statements);
-
-			main.Statements.Clear();
-			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 
 			foreach (CodeStatement stmt in initial)
 				main.Statements.Insert(0, stmt);

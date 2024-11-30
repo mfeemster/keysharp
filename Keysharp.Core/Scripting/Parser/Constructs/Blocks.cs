@@ -8,7 +8,7 @@
 
 			if (top.Kind == CodeBlock.BlockKind.Switch)
 			{
-				var localparent = stack.Count > 0 ? stack.Peek().Statements : main.Statements;
+				var localparent = stack.Count > 0 ? stack.Peek().Statements : userMainMethod.Statements;
 				var origlocalparent = localparent;
 
 				if (localparent != null)

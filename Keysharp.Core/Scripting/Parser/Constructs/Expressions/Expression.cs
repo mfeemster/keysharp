@@ -298,6 +298,13 @@ namespace Keysharp.Scripting
 
 		private CodeExpression ParseExpression(CodeLine codeLine, string code, List<object> parts, bool create)
 		{
+			void AddCmie(CodeMethodInvokeExpression invoke, List<object> parts, int i)
+			{
+				invoke.UserData["parentstatements"] = parent;
+				invoke.UserData["parentline"] = parent.Count;
+				parts[i] = invoke;
+				allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
+			}
 			RemoveExcessParentheses(codeLine, parts);
 			var rescanned = false;
 			start:
@@ -351,77 +358,73 @@ namespace Keysharp.Scripting
 							{
 								var lastisstar = paren.Last().ToString() == "*";
 								var (refIndexes, args) = ParseArguments(paren);
+								var passed = new List<CodeExpression>();
+								var allParamsCode = TokensToCode(paren);//lastisstar doesn't seem to need to be appended here like it does below.
+								var codeStrings = SplitStringBalanced(allParamsCode, ',', true);//Tricky here: we need the code, not the parsed tokens.
 
-								if (paren.Count != 0)
+								//Each argument must be parsed as a single expression.
+								//They cannot all be parsed together as a multi expression because the comma delimiter conflicts.
+								if (args.Count == codeStrings.Count)
 								{
-									var passed = new List<CodeExpression>();
-									var tempCode = TokensToCode(paren);
-									var codeStrings = SplitStringBalanced(tempCode, ',');//Tricky here: we need the code, not the parsed tokens.
-
-									//Each argument must be parsed as a single expression.
-									//They cannot all be parsed together as a multi expression because the comma delimiter conflicts.
-									if (args.Count == codeStrings.Count)
+									for (int i1 = 0; i1 < args.Count; i1++)
 									{
-										for (int i1 = 0; i1 < args.Count; i1++)
-										{
-											var arg = args[i1];
-											var temp = codeStrings[i1].TrimStart('&');
-											var expr = ParseExpression(codeLine, temp, arg, true/*create false*/);//Override the value of create with true because reference arguments passed to a function should always be created automatically.
+										var arg = args[i1];
+										var temp = codeStrings[i1].TrimStart('&');
+										var expr = ParseExpression(codeLine, temp, arg, true/*create false*/);//Override the value of create with true because reference arguments passed to a function should always be created automatically.
 
-											if (expr.WasCboe() is CodeBinaryOperatorExpression cboe)
-											{
-												_ = parent.Add(expr);
-												passed.Add(cboe.Left);
-											}
-											else
-												passed.Add(expr);
+										if (expr.WasCboe() is CodeBinaryOperatorExpression cboe)
+										{
+											_ = parent.Add(expr);
+											passed.Add(cboe.Left);
 										}
+										else
+											passed.Add(expr);
 									}
-									else
-										throw new ParseException($"Error parsing function call arguments.", codeLine);
+								}
+								else
+									throw new ParseException($"Error parsing function call arguments.", codeLine);
 
-									HandleInvokeParams(refIndexes, passed.ToArray(), invoke, lastisstar, false);
+								HandleInvokeParams(refIndexes, passed.ToArray(), invoke, lastisstar, false);
 
-									if (refIndexes.Count > 0)
+								if (refIndexes.Count > 0)
+								{
+									IList list = invoke.Parameters;
+
+									//This code is to handle passing by reference to a class method call.
+									//It's a gruesome, grisly hack, but there is no other way to do this in C#.
+									for (int i1 = 0; i1 < refIndexes.Count; i1++)
 									{
-										IList list = invoke.Parameters;
+										var ri = refIndexes[i1];
 
-										//This code is to handle passing by reference to a class method call.
-										//It's a gruesome, grisly hack, but there is no other way to do this in C#.
-										for (int i1 = 0; i1 < refIndexes.Count; i1++)
+										if (list[ri] is CodeDirectionExpression cde)
 										{
-											var ri = refIndexes[i1];
+											var c2s = Ch.CodeToString(cde.Expression);
 
-											if (list[ri] is CodeDirectionExpression cde)
+											if (cde.Expression is CodeMethodInvokeExpression cmie2)
 											{
-												var c2s = Ch.CodeToString(cde.Expression);
-
-												if (cde.Expression is CodeMethodInvokeExpression cmie2)
+												if (cmie2.Method.MethodName == "Index")//It was an array access.
 												{
-													if (cmie2.Method.MethodName == "Index")//It was an array access.
-													{
-														var p1s = Ch.CodeToString(cmie2.Parameters[0]);
-														var p2s = string.Join(", ", cmie2.Parameters.Cast<CodeExpression>().Skip(1).Select(Ch.CodeToString));
-														invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => SetObject(v, {p1s}, {p2s}))");
-														continue;
-													}
-													else if (cmie2.Method.MethodName == "GetPropertyValue")
-													{
-														var p1s = Ch.CodeToString(cmie2.Parameters[0]);
-														var p2s = Ch.CodeToString(cmie2.Parameters[1]);
-														invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => SetPropertyValue({p1s}, {p2s}, v))");
-														continue;
-													}
-													else
-														throw new Error("Cannot create a reference to a value returned from a function call.");
+													var p1s = Ch.CodeToString(cmie2.Parameters[0]);
+													var p2s = string.Join(", ", cmie2.Parameters.Cast<CodeExpression>().Skip(1).Select(Ch.CodeToString));
+													invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => SetObject(v, {p1s}, {p2s}))");
+													continue;
 												}
-
-												invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
+												else if (cmie2.Method.MethodName == "GetPropertyValue")
+												{
+													var p1s = Ch.CodeToString(cmie2.Parameters[0]);
+													var p2s = Ch.CodeToString(cmie2.Parameters[1]);
+													invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => SetPropertyValue({p1s}, {p2s}, v))");
+													continue;
+												}
+												else
+													throw new Error("Cannot create a reference to a value returned from a function call.");
 											}
-										}
 
-										invoke.Method.MethodName = "InvokeWithRefs";//Change method name to handle refs. This is much less efficient.
+											invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
+										}
 									}
+
+									invoke.Method.MethodName = "InvokeWithRefs";//Change method name to handle refs. This is much less efficient.
 								}
 							}
 
@@ -430,10 +433,9 @@ namespace Keysharp.Scripting
 							if (tempinvoke != null)
 								_ = tempinvoke.Parameters.Add(new CodePrimitiveExpression(invoke.Parameters.Count - 1));
 
-							parts[i] = invoke;
+							AddCmie(invoke, parts, i);
 							parts.RemoveAt(n);
 							i--;//Do this to ensure we don't miss a token, particularly in the case of chained method calls such as: MyGui.Add("Button",, "Click Me").OnEvent("Click", "MenuHandler").
-							allMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(invoke);
 						}
 						else
 						{
@@ -840,11 +842,11 @@ namespace Keysharp.Scripting
 							}
 
 							invoke.UserData["origparams"] = origParamCode;//Will be used below for => functions.
-							allMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(invoke);
+							//allMethodCalls[typeStack.Peek()].GetOrAdd(scope).Add(invoke);
 						}
 
-						parts[i] = invoke;
-						invokes.Add(invoke);
+						AddCmie(invoke, parts, i);
+						//parts[i] = invoke;
 					}
 					//This is very strange and prevents single = from working in if statements when comparing variables such as if (x = y)
 					//Not exactly sure what an "implicit assignment" is, since it's not mentioned anywhere in the documentation

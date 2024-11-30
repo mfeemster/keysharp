@@ -597,3 +597,36 @@ If (a == 456)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+funcoptref(a, b := 5, &c := 10)
+{
+	return c := a + b + c
+}
+
+x := funcoptref(20)
+
+If (x == 35)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := funcoptref(20, 25)
+
+If (x == 55)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := funcoptref(20, ,)
+
+If (x == 35)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := funcoptref(1, ,&z := 11)
+
+If (x == 17 && z == 17)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

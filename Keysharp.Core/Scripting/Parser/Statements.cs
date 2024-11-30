@@ -62,7 +62,7 @@
 
 				fileName = codeLine.FileName;
 				parentBlock = blocks.Count > 0 ? blocks.Peek() : null;
-				parent = parentBlock != null ? parentBlock.Statements : main.Statements;
+				parent = parentBlock != null ? parentBlock.Statements : userMainMethod.Statements;
 				var blocksCount = -1;
 				CodeBlock block = null;
 				var sym = code[0];

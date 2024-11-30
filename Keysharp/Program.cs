@@ -63,8 +63,8 @@ namespace Keysharp.Main
 							script = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
 							scriptArgs = args.Skip(i + 1).ToArray();
-                            Env.KeysharpArgs = args.Take(i + 1).ToArray();
-                            continue;
+							Env.KeysharpArgs = args.Take(i + 1).ToArray();
+							continue;
 						}
 						else//Parameters.
 						{
@@ -110,12 +110,12 @@ namespace Keysharp.Main
 							codeout = true;
 							break;
 
-                        case "include":
-                            i++;
-                            break;
+						case "include":
+							i++;
+							break;
 #if WINDOWS
 
-                        case "install"://To be called by the installer during installation.
+						case "install"://To be called by the installer during installation.
 							InstallToPath(exeDir);
 							return 0;
 
@@ -271,7 +271,7 @@ namespace Keysharp.Main
 								HostWriter.CreateAppHost(
 									appHostSourceFilePath: @$"/lib/dotnet/sdk/{ver}/AppHostTemplate/apphost",
 									appHostDestinationFilePath: finalPath,
-									appBinaryFilePath: $"{path}.dll",
+									appBinaryFilePath: $"{namenoext}.dll",
 									windowsGraphicalUserInterface: false,
 									assemblyToCopyResorcesFrom: $"{path}.dll");
 #elif WINDOWS
@@ -279,7 +279,7 @@ namespace Keysharp.Main
 								HostWriter.CreateAppHost(
 									appHostSourceFilePath: @$"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\{ver}\runtimes\win-x64\native\apphost.exe",
 									appHostDestinationFilePath: finalPath,
-									appBinaryFilePath: $"{path}.dll",
+									appBinaryFilePath: $"{namenoext}.dll",
 									windowsGraphicalUserInterface: true,
 									assemblyToCopyResorcesFrom: $"{path}.dll");
 #endif

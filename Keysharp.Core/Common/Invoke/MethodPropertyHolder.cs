@@ -93,7 +93,7 @@
 								{
 									if (pi == startVarIndex)
 									{
-										if (objLength == ParamLength && obj[pi] is object[] obarr)//There was just one variadic parameter and it was already and array, usuall from a call like func(arr*).
+										if (objLength == ParamLength && obj[pi] is object[] obarr)//There was just one variadic parameter and it was already an array, usuall from a call like func(arr*).
 										{
 											newobj[pi] = obarr;
 										}
@@ -112,7 +112,15 @@
 										}
 									}
 									else
-										newobj[pi] = obj[oi++];
+									{
+										var ooi = obj[oi++];
+										var ppi = parameters[pi];
+
+										if (ooi == null && ppi.IsOptional)
+											newobj[pi] = ppi.DefaultValue;
+										else
+											newobj[pi] = ooi;
+									}
 								}
 
 								for (; pi < ParamLength; pi++)
@@ -187,6 +195,10 @@
 
 							if (ParamLength == objLength)
 							{
+								for (var i = 0; i < ParamLength; i++)
+									if (obj[i] == null && parameters[i].IsOptional)
+										obj[i] = parameters[i].DefaultValue;
+
 								if (!isGuiType)
 								{
 									ret = mi.Invoke(inst, obj);
@@ -209,11 +221,13 @@
 							else
 							{
 								var i = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
-								//var newobj = new object[paramLength];
 								var newobj = paramsPool.Rent();//Using the memory pool in this function seems to help a lot.
 
 								for (; i < objLength && i < ParamLength; i++)
-									newobj[i] = obj[i];
+									if (obj[i] == null && parameters[i].IsOptional)
+										newobj[i] = parameters[i].DefaultValue;
+									else
+										newobj[i] = obj[i];
 
 								for (; i < ParamLength; i++)
 									if (parameters[i].IsOptional)

@@ -124,11 +124,11 @@ If (y == null)
 else
 	FileAppend, "fail", "*"
 
-If (z == null)
+If (z == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 x := 1
 y := 2
 z := 3
@@ -144,11 +144,11 @@ If (y == 22)
 else
 	FileAppend, "fail", "*"
 
-If (z == null)
+If (z == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+		
 x := 1
 y := 2
 z := 3
@@ -164,7 +164,7 @@ If (y == null)
 else
 	FileAppend, "fail", "*"
 
-If (z == null)
+If (z == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -203,7 +203,7 @@ If (x == false)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 x := false
 
 func3(1, 2, 3)
@@ -230,7 +230,7 @@ If (x == false)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 funcdef1(p := '')
 {
 	if (p == "")
