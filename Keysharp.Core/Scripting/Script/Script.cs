@@ -540,7 +540,7 @@
 			if (HotstringManager.shs.Count > 0)
 				return true;
 
-			if (Flow.timers.Count > 0)
+			if (!Flow.timers.IsEmpty)
 				return true;
 
 			if (ClipFunctions.Count > 0)
@@ -564,9 +564,9 @@
 			return false;
 		}
 
-		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason)
+		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
 		{
-			if (!AnyPersistent())
+			if (!IsMainWindowClosing && !AnyPersistent())
 				_ = Flow.ExitApp((int)exitReason);
 		}
 

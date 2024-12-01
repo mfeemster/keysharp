@@ -367,7 +367,6 @@ namespace Keysharp.Scripting
 			_ = tcf.CatchClauses.Add(ctch);
 			var tempstatements = main.Statements;
 			tcf.TryStatements.AddRange(tempstatements);
-			_ = tcf.TryStatements.Add(new CodeExpressionStatement(exit0));
 			_ = tcf.TryStatements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));//Add a successful return statement at the end of the try block.
 			main.Statements.Clear();
 			_ = main.Statements.Add(tcf);

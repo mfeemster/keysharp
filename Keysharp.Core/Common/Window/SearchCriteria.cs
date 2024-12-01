@@ -62,18 +62,18 @@
 
 			var mixed = obj.ToString();
 
-			if (!mixed.Contains(Keywords.Keyword_ahk, StringComparison.OrdinalIgnoreCase))
+			if (!mixed.Contains(Keyword_ahk, StringComparison.OrdinalIgnoreCase))
 				return new SearchCriteria { Title = mixed };
 
 			var i = 0;
 
 			var t = false;
 
-			while ((i = mixed.IndexOf(Keywords.Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
+			while ((i = mixed.IndexOf(Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
 			{
 				if (!t)
 				{
-					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Keywords.Spaces);
+					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Spaces);
 
 					if (pre.Length != 0)
 						criteria.Title = pre;
@@ -81,37 +81,37 @@
 					t = true;
 				}
 
-				var z = mixed.IndexOfAny(Keywords.Spaces, i);
+				var z = mixed.IndexOfAny(Spaces, i);
 
 				if (z == -1)
 					break;
 
 				var word = mixed.Substring(i, z - i);
-				var e = mixed.IndexOf(Keywords.Keyword_ahk, ++i, StringComparison.OrdinalIgnoreCase);
+				var e = mixed.IndexOf(Keyword_ahk, ++i, StringComparison.OrdinalIgnoreCase);
 				var arg = (e == -1 ? mixed.Substring(z) : mixed.Substring(z, e - z)).Trim();
 				long n;
 
 				switch (word.ToLowerInvariant())
 				{
-					case Keywords.Keyword_ahk_class: criteria.ClassName = arg; break;
+					case Keyword_ahk_class: criteria.ClassName = arg; break;
 
-					case Keywords.Keyword_ahk_group: criteria.Group = arg; break;
+					case Keyword_ahk_group: criteria.Group = arg; break;
 
-					case Keywords.Keyword_ahk_id:
+					case Keyword_ahk_id:
 						if (long.TryParse(arg, out n))
 							criteria.ID = new IntPtr(n);
 
 						break;
 
-					case Keywords.Keyword_ahk_exe:
+					case Keyword_ahk_exe:
 						criteria.Path = arg;
 						break;
 
-					case Keywords.Keyword_A:
+					case Keyword_A:
 						criteria.Active = true;
 						break;
 
-					case Keywords.Keyword_ahk_pid:
+					case Keyword_ahk_pid:
 						if (long.TryParse(arg, out n))
 							criteria.PID = new IntPtr(n);
 

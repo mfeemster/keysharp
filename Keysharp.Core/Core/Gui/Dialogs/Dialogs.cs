@@ -283,7 +283,7 @@ namespace Keysharp.Core
 			var y = int.MinValue;
 			var pw = "";
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in options.AsSpan().SplitAny(Spaces))
 			{
 				var temp = 0;
 				var opt = options.AsSpan(r).Trim();
@@ -451,7 +451,7 @@ namespace Keysharp.Core
 				var iopt = 0;
 				var hadNumeric = false;
 
-				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in options.AsSpan().SplitAny(Spaces))
 				{
 					var opt = options.AsSpan(r).Trim();
 

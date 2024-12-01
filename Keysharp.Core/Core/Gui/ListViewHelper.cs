@@ -123,7 +123,7 @@
 		{
 			var lvco = new ListViewColumnOptions();
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in options.AsSpan().SplitAny(Spaces))
 			{
 				var opt = options.AsSpan(r).Trim();
 
@@ -162,7 +162,7 @@
 		{
 			var lvo = new ListViewOptions();
 
-			foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in options.AsSpan().SplitAny(Spaces))
 			{
 				var opt = options.AsSpan(r).Trim();
 

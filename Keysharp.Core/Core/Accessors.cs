@@ -404,7 +404,7 @@
 #if LINUX
 		cur.ToString().Trim(Keywords.BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
 #elif WINDOWS
-		cur.ToString().Trim(Keywords.BothBrackets).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
+		cur.ToString().Trim(BothBrackets).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
 #endif
 		: "Default---";
 
@@ -1797,7 +1797,7 @@
 
 					case "3": titleMatchMode = 3L; break;
 
-					case Keywords.Keyword_RegEx: titleMatchMode = 4L; break;
+					case Keyword_RegEx: titleMatchMode = 4L; break;
 				}
 			}
 		}
@@ -1807,15 +1807,15 @@
 		/// </summary>
 		public static object A_TitleMatchModeSpeed
 		{
-			get => titleMatchModeSpeed.Ab() ? Keywords.Keyword_Fast : Keywords.Keyword_Slow;
+			get => titleMatchModeSpeed.Ab() ? Keyword_Fast : Keyword_Slow;
 
 			set
 			{
 				switch (value.ToString().ToLowerInvariant())
 				{
-					case Keywords.Keyword_Fast: titleMatchModeSpeed = true; break;
+					case Keyword_Fast: titleMatchModeSpeed = true; break;
 
-					case Keywords.Keyword_Slow: titleMatchModeSpeed = false; break;
+					case Keyword_Slow: titleMatchModeSpeed = false; break;
 				}
 			}
 		}

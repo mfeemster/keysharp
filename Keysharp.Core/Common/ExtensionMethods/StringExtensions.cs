@@ -176,7 +176,7 @@
 					}
 				}
 
-				if (ch == Keywords.Escape)
+				if (ch == Escape)
 					escape = !escape;
 				else
 					escape = false;
@@ -242,7 +242,7 @@
 					}
 				}
 
-				if (ch == Keywords.Escape)
+				if (ch == Escape)
 					escape = !escape;
 				else
 					escape = false;
@@ -476,7 +476,7 @@
 		/// <param name="str">The string to trim.</param>
 		/// <param name="index">The index after which trimming will occur.</param>
 		/// <returns>The trimmed string.</returns>
-		internal static string OmitTrailingWhitespace(this string str, int index) => str.AsSpan(0, index).TrimEnd(Keywords.SpaceTab).ToString();
+		internal static string OmitTrailingWhitespace(this string str, int index) => str.AsSpan(0, index).TrimEnd(SpaceTab).ToString();
 
 		//internal static string RemoveAfter(this string str, string token)
 		//{

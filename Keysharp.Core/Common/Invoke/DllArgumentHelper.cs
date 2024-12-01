@@ -28,7 +28,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			for (var i = 0; i < parameters.Length; i++)
 			{
-				var name0 = parameters[i].ToString().ToLowerInvariant().Trim(Keywords.Spaces);
+				var name0 = parameters[i].ToString().ToLowerInvariant().Trim(Spaces);
 				var name = name0;
 				var isreturn = hasreturn && i == parameters.Length - 1;
 

@@ -318,9 +318,11 @@
 
 		private void ShowIfNeeded()
 		{
-			if (WindowState == FormWindowState.Minimized)
+			if (!AllowShowDisplay || WindowState == FormWindowState.Minimized)
 			{
+				AllowShowDisplay = true;
 				Show();
+				BringToFront();
 				WindowState = FormWindowState.Normal;
 			}
 		}

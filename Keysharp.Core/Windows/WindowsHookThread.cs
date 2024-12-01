@@ -5180,7 +5180,7 @@ namespace Keysharp.Core.Windows
 						}
 					}
 
-					System.Diagnostics.Debug.WriteLine("Exiting reader channel.");
+					Debug.WriteLine("Exiting reader channel.");
 				}
 				catch (Exception ex)
 				{

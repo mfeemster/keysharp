@@ -135,7 +135,7 @@ namespace Keysharp.Core
 			Accessors.A_ExitReason = exitCode.Al();
 			throw new Error("Exiting thread")
 			{
-				ExcType = Keywords.Keyword_Return
+				ExcType = Keyword_Return
 			};
 			//return null;
 		}
@@ -149,14 +149,17 @@ namespace Keysharp.Core
 		/// This code is accessible to any program that spawned the script, such as another script (via RunWait) or a batch (.bat) file.</param>
 		public static object ExitApp(object exitCode = null)
 		{
-			Script.mainWindow.CheckedInvoke(() =>
+			if (!hasExited)//This can be called multiple times, so ensure it only runs through once.
 			{
-				_ = ExitAppInternal(ExitReasons.Exit, exitCode);
-			}, true);
-			var start = DateTime.Now;
+				Script.mainWindow.CheckedInvoke(() =>
+				{
+					_ = ExitAppInternal(ExitReasons.Exit, exitCode);
+				}, true);
+				var start = DateTime.Now;
 
-			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
-				_ = Sleep(500);
+				while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
+					_ = Sleep(500);
+			}
 
 			return null;
 		}
@@ -341,6 +344,7 @@ namespace Keysharp.Core
 
 					timer.Stop();
 					timer.Dispose();
+					Script.ExitIfNotPersistent();
 					return null;
 				}
 				else
@@ -407,6 +411,7 @@ namespace Keysharp.Core
 							_ = timers.TryRemove(func, out _);
 							t.Stop();
 							t.Dispose();
+							Script.ExitIfNotPersistent();
 						}
 						else if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
 							existing.Enabled = true;

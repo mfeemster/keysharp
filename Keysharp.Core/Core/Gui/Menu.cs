@@ -355,7 +355,7 @@
 				else
 					clickHandlers.GetOrAdd(item).ModifyEventHandlers(Functions.GetFuncObj(funcorsub, null, true), 1);
 
-				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in options.AsSpan().SplitAny(Spaces))
 				{
 					var opt = options.AsSpan(r).Trim();
 

@@ -331,7 +331,7 @@
 			var c = Control.DefaultForeColor;
 
 			//Special processing is required to set the ForeColor that is not present in Conversions.ParseFont().
-			foreach (Range r in opts.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in opts.AsSpan().SplitAny(Spaces))
 			{
 				var opt = opts.AsSpan(r).Trim();
 

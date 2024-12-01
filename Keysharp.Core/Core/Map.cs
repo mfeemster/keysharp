@@ -318,7 +318,7 @@
 						tabLevel++;
 						_ = sb.AppendLine();
 						kso.PrintProps("", tempsb, ref tabLevel);
-						key = tempsb.ToString().TrimEnd(Keywords.CrLf);
+						key = tempsb.ToString().TrimEnd(CrLf);
 						tabLevel--;
 					}
 					else
@@ -336,7 +336,7 @@
 						key = indent + key;//Indent the line if it's an object.
 						_ = sb.AppendLine();
 						kso.PrintProps("", tempsb, ref tabLevel);
-						val = tempsb.ToString().TrimEnd(Keywords.CrLf);
+						val = tempsb.ToString().TrimEnd(CrLf);
 						tabLevel--;
 					}
 					else if (kv.Value is null)

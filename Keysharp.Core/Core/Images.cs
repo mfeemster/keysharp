@@ -105,7 +105,7 @@
 			object iconnumber = 0;
 			var disposeHandle = false;
 
-			foreach (Range r in opts.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in opts.AsSpan().SplitAny(Spaces))
 			{
 				var opt = opts.AsSpan(r).Trim();
 
