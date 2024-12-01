@@ -56,6 +56,20 @@
 
 		public static MenuBar MenuBar() => new ();
 
+		public static object MenuFromHandle(object obj)
+		{
+			var handle = new IntPtr(obj.Al());
+			var menu = Control.FromHandle(handle);
+
+			if (menu != null)
+				return menu;
+
+			if ((menu = Control.FromHandle(handle)) != null)
+				return menu;
+
+			return "";
+		}
+
 		internal static bool CallMessageHandler(Control control, ref Message m)
 		{
 			if (Control.FromHandle(m.HWnd) == control)

@@ -535,7 +535,7 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public void Choose(object obj)
+		public object Choose(object obj)
 		{
 			//The documentation says "Unlike ControlChooseIndex, this method does not raise a Change or DoubleClick event."
 			//But we don't raise click events anyway here, so it shouldn't matter.
@@ -573,6 +573,8 @@ namespace Keysharp.Core
 					cb.ResetText();
 				}
 			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -674,7 +676,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public void Focus() => _control.Focus();
+		public object Focus() => _control.Focus();
 
 		public long Get(object obj0, object obj1)
 		{
@@ -709,7 +711,11 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public void GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		{
+			GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+			return null;
+		}
 
 		public long GetCount(object obj = null)
 		{
@@ -817,7 +823,11 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public void GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		{
+			GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+			return null;
+		}
 
 		public long GetPrev(object obj)
 		{
@@ -859,7 +869,7 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public void Insert(params object[] obj)
+		public object Insert(params object[] obj)
 		{
 			if (_control is ListView lv)//Note that this index might not actually be where the row is shown, due to sorting.
 			{
@@ -868,6 +878,8 @@ namespace Keysharp.Core
 				var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : [];
 				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
 			}
+
+			return null;
 		}
 
 		public long InsertCol(object obj0, object obj1 = null, object obj2 = null)
@@ -1014,7 +1026,7 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public void Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		public object Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
 			var x = obj0.Al(long.MinValue);
 			var y = obj1.Al(long.MinValue);
@@ -1034,11 +1046,17 @@ namespace Keysharp.Core
 
 			if (height != long.MinValue)//Unsure if it's needed here too.
 				_control.Height = (int)Math.Round(height * scale) - (hasScrollBars ? SystemInformation.HorizontalScrollBarHeight : 0);
+
+			return null;
 		}
 
-		public void OnCommand(object obj0, object obj1, object obj2 = null) => HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref commandHandlers);
+		public object OnCommand(object obj0, object obj1, object obj2 = null)
+		{
+			HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref commandHandlers);
+			return null;
+		}
 
-		public void OnEvent(object obj0, object obj1, object obj2 = null)
+		public object OnEvent(object obj0, object obj1, object obj2 = null)
 		{
 			var e = obj0.As().ToLower();
 			var h = obj1;
@@ -1158,11 +1176,17 @@ namespace Keysharp.Core
 						contextMenuChangedHandlers.ModifyEventHandlers(del, i);
 				}
 			}
+
+			return null;
 		}
 
-		public void OnNotify(object obj0, object obj1, object obj2 = null) => HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref notifyHandlers);
+		public object OnNotify(object obj0, object obj1, object obj2 = null)
+		{
+			HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref notifyHandlers);
+			return null;
+		}
 
-		public void Opt(object obj)
+		public object Opt(object obj)
 		{
 			var optionsstr = obj.As();
 			var opts = Gui.ParseOpt(typename, _control.Text, optionsstr);
@@ -1501,13 +1525,27 @@ namespace Keysharp.Core
 
 			if (opts.thinborder.HasValue)
 				Reflections.SafeSetProperty(_control, "BorderStyle", opts.thinborder.Value ? BorderStyle.FixedSingle : BorderStyle.None);
+
+			return null;
 		}
 
-		public void Redraw() => _control.Refresh();
+		public object Redraw()
+		{
+			_control.Refresh();
+			return null;
+		}
 
-		public void SetFont(object obj0 = null, object obj1 = null) => _control.SetFont(obj0, obj1);
+		public object SetFont(object obj0 = null, object obj1 = null)
+		{
+			_control.SetFont(obj0, obj1);
+			return null;
+		}
 
-		public void SetFormat(object obj) => (_control as DateTimePicker)?.SetFormat(obj);
+		public object SetFormat(object obj)
+		{
+			(_control as DateTimePicker)?.SetFormat(obj);
+			return null;
+		}
 
 		public IntPtr SetIcon(object obj0, object obj1 = null, object obj2 = null)
 		{
@@ -1599,7 +1637,7 @@ namespace Keysharp.Core
 			return oldil;
 		}
 
-		public void SetParts(params object[] obj)
+		public object SetParts(params object[] obj)
 		{
 			if (_control is StatusStrip ss)
 			{
@@ -1632,9 +1670,11 @@ namespace Keysharp.Core
 				};
 				_ = ss.Items.Add(tssl);
 			}
+
+			return null;
 		}
 
-		public void SetTabIcon(object obj0, object obj1)//New function since the original required SendMessage() to do this.
+		public object SetTabIcon(object obj0, object obj1)//New function since the original required SendMessage() to do this.
 		{
 			if (_control is TabControl tc)
 			{
@@ -1646,6 +1686,8 @@ namespace Keysharp.Core
 				else
 					tc.TabPages[tabindex].ImageIndex = -1;
 			}
+
+			return null;
 		}
 
 		public bool SetText(object obj0, object obj1 = null, object obj2 = null)
@@ -1688,7 +1730,7 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public void UseTab(object obj0 = null, object obj1 = null)
+		public object UseTab(object obj0 = null, object obj1 = null)
 		{
 			if (_control is KeysharpTabControl tc)
 			{
@@ -1720,6 +1762,8 @@ namespace Keysharp.Core
 					Gui.LastContainer = tc.Parent;
 				}
 			}
+
+			return null;
 		}
 
 		internal static void GetClientPos(Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, true, ref x, ref y, ref w, ref h);

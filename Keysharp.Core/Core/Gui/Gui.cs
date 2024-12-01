@@ -1,6 +1,4 @@
-﻿using static Keysharp.Core.Flow;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
@@ -1474,7 +1472,7 @@ namespace Keysharp.Core
 
 		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keyword_WebBrowser, obj0, obj1);
 
-		public void Destroy()
+		public object Destroy()
 		{
 			closingFromDestroy = true;
 
@@ -1483,28 +1481,43 @@ namespace Keysharp.Core
 			//all open windows to close them.
 			if (!Script.IsMainWindowClosing)
 				form.Close();
+
+			return null;
 		}
 
-		public void Flash(object obj)
+		public object Flash(object obj)
 		{
 #if WINDOWS
 			_ = WindowsAPI.FlashWindow(form.Handle, obj.Ab(true));
 #endif
+			return null;
 		}
 
-		public void GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		{
+			GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+			return null;
+		}
 
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls, 2);
 
-		public void GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height) => GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		{
+			GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+			return null;
+		}
 
-		public void Hide() => form.Hide();
+		public object Hide()
+		{
+			form.Hide();
+			return null;
+		}
 
-		public void Maximize() => form.WindowState = FormWindowState.Maximized;
+		public object Maximize() => form.WindowState = FormWindowState.Maximized;
 
-		public void Minimize() => form.WindowState = FormWindowState.Minimized;
+		public object Minimize() => form.WindowState = FormWindowState.Minimized;
 
-		public void Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		public object Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
 			var x = obj0.Ai();
 			var y = obj1.Ai();
@@ -1515,9 +1528,10 @@ namespace Keysharp.Core
 			form.Left = (int)Math.Round(x * scale);
 			form.Width = (int)Math.Round(width * scale);
 			form.Height = (int)Math.Round(height * scale);
+			return null;
 		}
 
-		public void OnEvent(object obj0, object obj1, object obj2 = null)
+		public object OnEvent(object obj0, object obj1, object obj2 = null)
 		{
 			var e = obj0.As();
 			var h = obj1;
@@ -1560,9 +1574,11 @@ namespace Keysharp.Core
 
 				sizeHandlers.ModifyEventHandlers(del, i);
 			}
+
+			return null;
 		}
 
-		public void Opt(object obj)
+		public object Opt(object obj)
 		{
 			var options = obj.As();
 
@@ -1652,13 +1668,19 @@ namespace Keysharp.Core
 					}
 				}
 			}
+
+			return null;
 		}
 
-		public void Restore() => form.WindowState = FormWindowState.Normal;
+		public object Restore() => form.WindowState = FormWindowState.Normal;
 
-		public void SetFont(object obj0 = null, object obj1 = null) => form.SetFont(obj0, obj1);
+		public object SetFont(object obj0 = null, object obj1 = null)
+		{
+			form.SetFont(obj0, obj1);
+			return null;
+		}
 
-		public void Show(object obj = null)
+		public object Show(object obj = null)
 		{
 			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
@@ -1818,6 +1840,7 @@ namespace Keysharp.Core
 				form.WindowState = FormWindowState.Normal;
 
 			form.Update();//Required for the very first state of the form to always be displayed.
+			return null;
 		}
 
 		public Map Submit(object obj = null)
@@ -1887,12 +1910,14 @@ namespace Keysharp.Core
 			return new Map(dkt);
 		}
 
-		public void UseGroup(object obj0 = null)
+		public object UseGroup(object obj0 = null)
 		{
 			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
 				LastContainer = gb;
 			else
 				LastContainer = form;
+
+			return null;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
