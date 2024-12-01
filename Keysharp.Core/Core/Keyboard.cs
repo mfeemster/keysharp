@@ -6,7 +6,7 @@ namespace Keysharp.Core
 	public static class Keyboard
 	{
 		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
-		internal static readonly ToggleStates toggleStates = new ToggleStates();
+		internal static readonly ToggleStates toggleStates = new ();
 		internal static bool blockInput;
 		internal static ToggleValueType blockInputMode = ToggleValueType.Default;
 		internal static bool blockMouseMove;

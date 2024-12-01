@@ -14,7 +14,7 @@ namespace Keysharp.Core
 		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
-		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ConcurrentDictionary<string, DllCache>();
+		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ();
 
 		/// <summary>
 		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.

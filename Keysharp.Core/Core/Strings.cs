@@ -872,7 +872,7 @@ namespace Keysharp.Core
 		/// <param name="str">An initial value to place inside of the buffer. Default: empty.</param>
 		/// <param name="capacity">An initial capacity for the <see cref="StringBuffer"/>'s internal buffer. Default: 256.</param>
 		/// <returns>The newly created <see cref="StringBuffer"/>.</returns>
-		public static StringBuffer StringBuffer(object str = null, object capacity = null) => new StringBuffer(str.As(), capacity.Ai(256));
+		public static StringBuffer StringBuffer(object str = null, object capacity = null) => new (str.As(), capacity.Ai(256));
 
 		/// <summary>
 		/// Retrieves the count of how many characters are in a string.

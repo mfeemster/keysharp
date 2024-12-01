@@ -195,7 +195,7 @@
 		/// <remarks>This should only be used by the <see cref="SemVersion"/> constructor that
 		/// still accepts illegal values.</remarks>
 		[Obsolete]
-		internal static MetadataIdentifier CreateLoose(string value) => new MetadataIdentifier(value, UnsafeOverload.Marker);
+		internal static MetadataIdentifier CreateLoose(string value) => new (value, UnsafeOverload.Marker);
 
 		/// <summary>
 		/// Constructs a <see cref="MetadataIdentifier"/> without checking that any of the invariants
@@ -206,6 +206,6 @@
 		/// constructors are visible to the package users. So they see a class consistently
 		/// using constructors without any create methods.</remarks>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static MetadataIdentifier CreateUnsafe(string value) => new MetadataIdentifier(value, UnsafeOverload.Marker);
+		internal static MetadataIdentifier CreateUnsafe(string value) => new (value, UnsafeOverload.Marker);
 	}
 }

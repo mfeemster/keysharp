@@ -8,14 +8,14 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Flow
 	{
-		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ConcurrentDictionary<string, IFuncObj>();
+		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
 		internal static bool callingCritical;
 		internal static volatile bool hasExited;
 		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
-		internal static ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer> timers = new ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer>();
+		internal static ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer> timers = new ();
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.

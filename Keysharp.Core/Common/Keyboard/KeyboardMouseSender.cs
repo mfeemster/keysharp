@@ -82,7 +82,7 @@
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
-		private readonly StringBuilder caser = new StringBuilder(32);
+		private readonly StringBuilder caser = new (32);
 		private readonly List<HotkeyDefinition> hotkeys;
 		private readonly List<HotstringDefinition> hotstrings;
 		private readonly Dictionary<Keys, bool> pressed;

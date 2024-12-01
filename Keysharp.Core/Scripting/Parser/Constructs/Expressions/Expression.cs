@@ -61,9 +61,9 @@ namespace Keysharp.Scripting
 			var braceLevel = 0;
 			var bracketLevel = 0;
 			var lastisstar = paren.Count > 0 && paren.Last().ToString() == "*";
-			List<int> refIndexes = new List<int>(paren.Count);
+			List<int> refIndexes = new (paren.Count);
 			List<object> arg = [];
-			List<List<object>> args = new List<List<object>>(paren.Count);
+			List<List<object>> args = new (paren.Count);
 
 			for (var i = 0; i < paren.Count; i++)
 			{

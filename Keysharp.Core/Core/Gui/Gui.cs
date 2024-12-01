@@ -6,7 +6,7 @@ namespace Keysharp.Core
 	{
 		public TabPage CurrentTab;
 		public KeysharpForm form;
-		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ConcurrentDictionary<long, Gui>();
+		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ();
 
 		internal static Type[] GuiTypes =
 			[
@@ -24,7 +24,7 @@ namespace Keysharp.Core
 		internal MenuBar menuBar;
 		internal List<IFuncObj> sizeHandlers;
 
-		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new Dictionary<string, Action<Gui, object>>
+		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
 		{
 			{
 				"AlwaysOnTop", (f, o) => { if (o is bool b) f.form.TopMost = b; }

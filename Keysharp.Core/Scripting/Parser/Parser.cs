@@ -149,10 +149,10 @@ namespace Keysharp.Scripting
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 		internal static CodePrimitiveExpression nullPrimitive = new (null);
 		internal static CodeTypeReference objTypeRef = new (typeof(object));
-		internal static CodeTypeReference ctrpaa = new CodeTypeReference(typeof(ParamArrayAttribute));
-		internal static CodeTypeReference ctrdva = new CodeTypeReference(typeof(DefaultValueAttribute));
+		internal static CodeTypeReference ctrpaa = new (typeof(ParamArrayAttribute));
+		internal static CodeTypeReference ctrdva = new (typeof(DefaultValueAttribute));
 		internal static CodeAttributeDeclaration cad;
-		internal static CodePrimitiveExpression emptyStringPrimitive = new CodePrimitiveExpression("");
+		internal static CodePrimitiveExpression emptyStringPrimitive = new ("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -185,37 +185,37 @@ namespace Keysharp.Scripting
 			"persistent"
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
 
-		private readonly Stack<bool> allGlobalVars = new Stack<bool>();
+		private readonly Stack<bool> allGlobalVars = new ();
 		private readonly tsmd allMethodCalls = [];
-		private readonly Stack<bool> allStaticVars = new Stack<bool>();
+		private readonly Stack<bool> allStaticVars = new ();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
 		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
 		private readonly CompilerHelper Ch;
-		private readonly Stack<List<string>> currentFuncParams = new Stack<List<string>>();
+		private readonly Stack<List<string>> currentFuncParams = new ();
 		private readonly Stack<CodeStatementCollection> elses = new ();
-		private readonly Stack<HashSet<string>> excCatchVars = new Stack<HashSet<string>>();
+		private readonly Stack<HashSet<string>> excCatchVars = new ();
 		private readonly tsmd getMethodCalls = [];
 		private readonly tsmd getPropertyValueCalls = [];
-		private readonly Stack<List<string>> globalFuncVars = new Stack<List<string>>();
+		private readonly Stack<List<string>> globalFuncVars = new ();
 		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = [];
-		private readonly Stack<List<string>> localFuncVars = new Stack<List<string>>();
+		private readonly Stack<List<string>> localFuncVars = new ();
 
-		private readonly CodeMemberMethod main = new CodeMemberMethod()
+		private readonly CodeMemberMethod main = new ()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
 			Name = "Main"
 		};
 
-		private readonly CodeMemberMethod userMainMethod = new CodeMemberMethod()
+		private readonly CodeMemberMethod userMainMethod = new ()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
 			Name = "_ks_UserMainCode",
 			ReturnType = objTypeRef
 		};
 
-		private readonly CodeNamespace mainNs = new CodeNamespace("Keysharp.CompiledMain");
+		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
 		private readonly char[] ops = [Equal, Not, Greater, Less];
 		private readonly CodeStatementCollection prepend = [];
@@ -228,7 +228,7 @@ namespace Keysharp.Scripting
 		private readonly Stack<CodeSwitchStatement> switches = new ();
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly List<CodeSnippetExpression> ternaries = new ();
-		private readonly Stack<CodeTypeDeclaration> typeStack = new Stack<CodeTypeDeclaration>();
+		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
 		private bool blockOpen;
 		private uint caseCount;
 		private List<CodeLine> codeLines = [];

@@ -35,8 +35,8 @@ namespace Keysharp.Core.Windows
 		internal static DateTime thisHotkeyStartTime = DateTime.Now;
 		internal int currentEvent;
 		internal uint eventModifiersLR;
-		internal List<PlaybackEvent> eventPb = new List<PlaybackEvent>(MaxInitialEventsPB);
-		internal List<INPUT> eventSi = new List<INPUT>(MaxInitialEventsSI);
+		internal List<PlaybackEvent> eventPb = new (MaxInitialEventsPB);
+		internal List<INPUT> eventSi = new (MaxInitialEventsSI);
 
 		// sizeof(INPUT) == 28 as of 2006. Since Send is called so often, and since most Sends are short, reducing the load on the stack is also a deciding factor for these.
 		// sizeof(PlaybackEvent) == 8, so more events are justified before resorting to malloc().
@@ -71,8 +71,8 @@ namespace Keysharp.Core.Windows
 		//private static readonly byte[] state = new byte[VKMAX];
 		private static readonly IntPtr hookId = IntPtr.Zero;
 		private static bool thisEventHasBeenLogged, thisEventIsScreenCoord;
-		private readonly StringBuilder buf = new StringBuilder(4);
-		private readonly List<CachedLayoutType> cachedLayouts = new List<CachedLayoutType>(10);
+		private readonly StringBuilder buf = new (4);
+		private readonly List<CachedLayoutType> cachedLayouts = new (10);
 		//private bool dead;
 		//private List<uint> deadKeys;
 		//private bool ignore;

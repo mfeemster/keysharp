@@ -27,7 +27,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static string COMPOSITE_DELIMITER = " & ";
 		internal static uint joyHotkeyCount;
 		internal static bool[] joystickHasHotkeys = new bool[Joystick.Joystick.MaxJoysticks];
-		internal static List<HotkeyDefinition> shk = new List<HotkeyDefinition>(256);
+		internal static List<HotkeyDefinition> shk = new (256);
 		internal bool allowExtraModifiers = false;
 		internal bool constructedOK;
 		internal HotkeyVariant firstVariant, lastVariant;
@@ -1181,7 +1181,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static HotkeyDefinition FindHotkeyByTrueNature(string _name, ref uint _noSuppress, ref bool _hookIsMandatory)
 		{
-			HotkeyProperties propCandidate = new HotkeyProperties(), propExisting = new HotkeyProperties();
+			HotkeyProperties propCandidate = new (), propExisting = new ();
 			_ = TextToModifiers(_name, null, propCandidate);
 			_noSuppress = (propCandidate.prefixHasTilde ? NO_SUPPRESS_PREFIX : 0)//Set for caller.
 						  | (propCandidate.suffixHasTilde ? AT_LEAST_ONE_VARIANT_HAS_TILDE : 0);

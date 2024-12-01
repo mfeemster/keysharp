@@ -12,9 +12,9 @@
 		/// When the thread finishes, the object is popped from the thread's stack in threadVars, and returned to the object pool threadVarsPool.
 		/// </summary>
 		//internal static readonly int initialCapacity = 16;
-		internal static SlimStack<ThreadVariables> threadVars = new SlimStack<ThreadVariables>((int)Script.MaxThreadsTotal);
+		internal static SlimStack<ThreadVariables> threadVars = new ((int)Script.MaxThreadsTotal);
 
-		internal ConcurrentStackPool<ThreadVariables> threadVarsPool = new ConcurrentStackPool<ThreadVariables>((int)Script.MaxThreadsTotal);//Will start off with this many fully created/initialized objects.
+		internal ConcurrentStackPool<ThreadVariables> threadVarsPool = new ((int)Script.MaxThreadsTotal); //Will start off with this many fully created/initialized objects.
 
 		internal ThreadVariables GetThreadVariables() => threadVars.TryPeek() ?? throw new Error("Tried to get an existing thread variable object but there were none. This should never happen.");
 

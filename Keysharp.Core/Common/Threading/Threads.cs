@@ -2,7 +2,7 @@
 {
 	public static class Threads
 	{
-		private static readonly ThreadVariableManager tvm = new ThreadVariableManager();
+		private static readonly ThreadVariableManager tvm = new ();
 
 		public static (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{

@@ -57,7 +57,7 @@
 			return "";
 		}
 
-		public static Menu New() => new Menu();
+		public static Menu New() => new ();
 
 		public ToolStripMenuItem Add(object obj0 = null, object obj1 = null, object obj2 = null)
 		{

@@ -26,7 +26,7 @@ namespace Keysharp.Core
 		/// <param name="o">The value to pass to the function.</param>
 		/// <param name="r">The <see cref="Action"/> to call after the function returns to assign the value back out to the passed in variable.</param>
 		/// <returns>A <see cref="RefHolder"/> object that contains all of the passed in info, which will be passed to the method call.</returns>
-		public static RefHolder Mrh(int i, object o, Action<object> r) => new RefHolder(i, o, r);
+		public static RefHolder Mrh(int i, object o, Action<object> r) => new (i, o, r);
 
 		/// <summary>
 		/// Returns a string showing all of the properties of an object.

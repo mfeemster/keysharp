@@ -4,7 +4,7 @@
 	{
 		internal static string defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";//Should this be a platform specific newline instead of \r\n?//TODO
 		internal static uint enabledCount;      // Keep in sync with the above.
-		internal static List<char> hsBuf = new List<char>(256);
+		internal static List<char> hsBuf = new (256);
 		internal static bool hsCaseSensitive;
 		internal static bool hsConformToCase = true;
 		internal static bool hsDetectWhenInsideWord;
@@ -17,12 +17,12 @@
 		internal static SendModes hsSendMode = SendModes.Input;
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
 		internal static bool hsSuspendExempt;
-		internal static List<HotstringDefinition> shs = new List<HotstringDefinition>(256);
-		private static readonly Dictionary<char, List<HotstringDefinition>> shsDkt = new Dictionary<char, List<HotstringDefinition>>(new CharNoCaseEqualityComp());
+		internal static List<HotstringDefinition> shs = new (256);
+		private static readonly Dictionary<char, List<HotstringDefinition>> shsDkt = new (new CharNoCaseEqualityComp());
 		//private static Stopwatch sw = new Stopwatch();
 
 		[PublicForTestOnly]
-		public static string CurrentInputBuffer => new string(hsBuf.ToArray());
+		public static string CurrentInputBuffer => new (hsBuf.ToArray());
 
 		[PublicForTestOnly]
 		public static void AddChars(string s)

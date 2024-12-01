@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 
 		private bool IsVarReference(object expr) => expr is CodeArrayIndexerExpression || expr is CodeVariableReferenceExpression;
 
-		private CodeBinaryOperatorExpression VarAssign(CodeArrayIndexerExpression name, CodeExpression value) => new CodeBinaryOperatorExpression(name, CodeBinaryOperatorType.Assign, value);
+		private CodeBinaryOperatorExpression VarAssign(CodeArrayIndexerExpression name, CodeExpression value) => new (name, CodeBinaryOperatorType.Assign, value);
 
 		private CodeExpression VarId(CodeExpression name, bool create, bool dyn = false)
 		{

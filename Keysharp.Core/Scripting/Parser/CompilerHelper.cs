@@ -112,7 +112,7 @@ using static Keysharp.Scripting.Script;
 		public static Assembly compiledasm;
 		public static byte[] compiledBytes;
 
-		private readonly CodeGeneratorOptions cgo = new CodeGeneratorOptions
+		private readonly CodeGeneratorOptions cgo = new ()
 		{
 			IndentString = "\t",
 			VerbatimOrder = true,

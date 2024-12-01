@@ -12,7 +12,7 @@ namespace Keysharp.Core
 		/// <param name="key">The secret key.</param>
 		/// <param name="decrypt"><code>true</code> to decrypt the given <paramref name="value"/>, otherwise encrypt.</param>
 		/// <returns>The corresponding encrypted or decrypted data.</returns>
-		public static Array AES(object value, object key, bool decrypt = false) => new Array(Crypt.Encrypt(value, key, decrypt, Aes.Create()));
+		public static Array AES(object value, object key, bool decrypt = false) => new (Crypt.Encrypt(value, key, decrypt, Aes.Create()));
 
 		/// <summary>
 		/// Calculates the CRC32 polynomial of an object.

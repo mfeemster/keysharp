@@ -253,7 +253,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Creates a new PropVariant containing a long value
 		/// </summary>
-		internal static PropVariant FromLong(long value) => new PropVariant() { vt = (short)VarEnum.VT_I8, hVal = value };
+		internal static PropVariant FromLong(long value) => new () { vt = (short)VarEnum.VT_I8, hVal = value };
 
 		/// <summary>
 		/// Helper method to gets blob data
@@ -379,92 +379,92 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// PKEY_AudioEndpoint_Association
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_Association = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 2);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_Association = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 2);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_ControlPanelPageProvider
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_ControlPanelPageProvider = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 1);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_ControlPanelPageProvider = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 1);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_Disable_SysFx
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_Disable_SysFx = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 5);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_Disable_SysFx = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 5);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_FormFactor
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_FormFactor = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 0);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_FormFactor = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 0);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_FullRangeSpeakers
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_FullRangeSpeakers = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 6);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_FullRangeSpeakers = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 6);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_GUID
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_GUID = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 4);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_GUID = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 4);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_JackSubType
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_JackSubType = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 8);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_JackSubType = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 8);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_PhysicalSpeakers
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_PhysicalSpeakers = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 3);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_PhysicalSpeakers = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 3);
 
 		/// <summary>
 		/// PKEY_AudioEndpoint_Supports_EventDriven_Mode
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEndpoint_Supports_EventDriven_Mode = new PropertyKey(new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 7);
+		internal static readonly PropertyKey PKEY_AudioEndpoint_Supports_EventDriven_Mode = new (new Guid(0x1da5d803, unchecked((short)0xd492), 0x4edd, 0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e), 7);
 
 		/// <summary>
 		/// PKEY_AudioEngine_DeviceFormat
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEngine_DeviceFormat = new PropertyKey(new Guid(unchecked((int)0xf19f064d), 0x82c, 0x4e27, 0xbc, 0x73, 0x68, 0x82, 0xa1, 0xbb, 0x8e, 0x4c), 0);
+		internal static readonly PropertyKey PKEY_AudioEngine_DeviceFormat = new (new Guid(unchecked((int)0xf19f064d), 0x82c, 0x4e27, 0xbc, 0x73, 0x68, 0x82, 0xa1, 0xbb, 0x8e, 0x4c), 0);
 
 		/// <summary>
 		/// PKEY_AudioEngine_OEMFormat
 		/// </summary>
-		internal static readonly PropertyKey PKEY_AudioEngine_OEMFormat = new PropertyKey(new Guid(unchecked((int)0xe4870e26), 0x3cc5, 0x4cd2, 0xba, 0x46, 0xca, 0xa, 0x9a, 0x70, 0xed, 0x4), 3);
+		internal static readonly PropertyKey PKEY_AudioEngine_OEMFormat = new (new Guid(unchecked((int)0xe4870e26), 0x3cc5, 0x4cd2, 0xba, 0x46, 0xca, 0xa, 0x9a, 0x70, 0xed, 0x4), 3);
 
 		/// <summary>
 		/// Id of controller device for endpoint device property.
 		/// </summary>
-		internal static readonly PropertyKey PKEY_Device_ControllerDeviceId = new PropertyKey(new Guid(unchecked((int)0xb3f8fa53), unchecked(0x0004), 0x438e, 0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc), 2);
+		internal static readonly PropertyKey PKEY_Device_ControllerDeviceId = new (new Guid(unchecked((int)0xb3f8fa53), unchecked(0x0004), 0x438e, 0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc), 2);
 
 		/// <summary>
 		/// Device description property.
 		/// </summary>
-		internal static readonly PropertyKey PKEY_Device_DeviceDesc = new PropertyKey(new Guid(unchecked((int)0xa45c254e), unchecked((short)0xdf1c), 0x4efd, 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0), 2);
+		internal static readonly PropertyKey PKEY_Device_DeviceDesc = new (new Guid(unchecked((int)0xa45c254e), unchecked((short)0xdf1c), 0x4efd, 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0), 2);
 
 		/// <summary>
 		/// PKEY _Devie_FriendlyName
 		/// </summary>
-		internal static readonly PropertyKey PKEY_Device_FriendlyName = new PropertyKey(new Guid(unchecked((int)0xa45c254e), unchecked((short)0xdf1c), 0x4efd, 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0), 14);
+		internal static readonly PropertyKey PKEY_Device_FriendlyName = new (new Guid(unchecked((int)0xa45c254e), unchecked((short)0xdf1c), 0x4efd, 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0), 14);
 
 		/// <summary>
 		/// PKEY _Device_IconPath
 		/// </summary>
-		internal static readonly PropertyKey PKEY_Device_IconPath = new PropertyKey(new Guid(unchecked(0x259abffc), unchecked(0x50a7), 0x47ce, 0xaf, 0x8, 0x68, 0xc9, 0xa7, 0xd7, 0x33, 0x66), 12);
+		internal static readonly PropertyKey PKEY_Device_IconPath = new (new Guid(unchecked(0x259abffc), unchecked(0x50a7), 0x47ce, 0xaf, 0x8, 0x68, 0xc9, 0xa7, 0xd7, 0x33, 0x66), 12);
 
 		/// <summary>
 		/// System-supplied device instance identification string, assigned by PnP manager, persistent across system restarts.
 		/// </summary>
-		internal static readonly PropertyKey PKEY_Device_InstanceId = new PropertyKey(new Guid(0x78c34fc8, 0x104a, 0x4aca, 0x9e, 0xa4, 0x52, 0x4d, 0x52, 0x99, 0x6e, 0x57), 256);
+		internal static readonly PropertyKey PKEY_Device_InstanceId = new (new Guid(0x78c34fc8, 0x104a, 0x4aca, 0x9e, 0xa4, 0x52, 0x4d, 0x52, 0x99, 0x6e, 0x57), 256);
 
 		/// <summary>
 		/// Device interface key property.
 		/// </summary>
-		internal static readonly PropertyKey PKEY_Device_InterfaceKey = new PropertyKey(new Guid(unchecked(0x233164c8), unchecked(0x1b2c), 0x4c7d, 0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67), 1);
+		internal static readonly PropertyKey PKEY_Device_InterfaceKey = new (new Guid(unchecked(0x233164c8), unchecked(0x1b2c), 0x4c7d, 0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67), 1);
 
 		/// <summary>
 		/// PKEY_DeviceInterface_FriendlyName
 		/// </summary>
-		internal static readonly PropertyKey PKEY_DeviceInterface_FriendlyName = new PropertyKey(new Guid(0x026e516e, unchecked((short)0xb814), 0x414b, 0x83, 0xcd, 0x85, 0x6d, 0x6f, 0xef, 0x48, 0x22), 2);
+		internal static readonly PropertyKey PKEY_DeviceInterface_FriendlyName = new (new Guid(0x026e516e, unchecked((short)0xb814), 0x414b, 0x83, 0xcd, 0x85, 0x6d, 0x6f, 0xef, 0x48, 0x22), 2);
 	}
 
 	/// <summary>
@@ -862,11 +862,11 @@ namespace Keysharp.Core.Windows
 		#endregion
 
 		#region Guids
-		internal static Guid IID_IAudioMeterInformation = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064");
-		internal static Guid IID_IAudioEndpointVolume = new Guid("5CDF2C82-841E-4546-9722-0CF74078229A");
-		internal static Guid IID_IAudioClient = new Guid("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
-		internal static Guid IDD_IAudioSessionManager = new Guid("BFA971F1-4D5E-40BB-935E-967039BFBEE4");
-		internal static Guid IDD_IDeviceTopology = new Guid("2A07407E-6497-4A18-9787-32F79BD0D98F");
+		internal static Guid IID_IAudioMeterInformation = new ("C02216F6-8C67-4B5B-9D00-D008E73E0064");
+		internal static Guid IID_IAudioEndpointVolume = new ("5CDF2C82-841E-4546-9722-0CF74078229A");
+		internal static Guid IID_IAudioClient = new ("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
+		internal static Guid IDD_IAudioSessionManager = new ("BFA971F1-4D5E-40BB-935E-967039BFBEE4");
+		internal static Guid IDD_IDeviceTopology = new ("2A07407E-6497-4A18-9787-32F79BD0D98F");
 
 		#endregion
 

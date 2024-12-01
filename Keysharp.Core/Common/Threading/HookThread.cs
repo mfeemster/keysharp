@@ -70,9 +70,9 @@ namespace Keysharp.Core.Common.Threading
 		// time it's called (currently it can be only called once):
 		protected internal bool disguiseNextMenu = false;
 		protected internal bool hookSynced = false;
-		protected internal List<uint> hotkeyUp = new List<uint>(256);
+		protected internal List<uint> hotkeyUp = new (256);
 		protected internal IntPtr kbdHook = IntPtr.Zero;
-		protected internal KeyHistory keyHistory = new KeyHistory();
+		protected internal KeyHistory keyHistory = new ();
 		protected internal KeyType[] ksc;
 		protected internal uint[] kscm;
 		protected internal KeyType[] kvk;
