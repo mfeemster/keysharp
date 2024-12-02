@@ -1,3 +1,5 @@
+using System.Windows.Forms;
+
 using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core
@@ -11,53 +13,211 @@ namespace Keysharp.Core
 		/// </summary>
 		private static Dictionary<string, WindowGroup> windowGroups => WindowProvider.Manager.Groups;
 
-		public static long ControlAddItem(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlAddItem);
+		public static long ControlAddItem(object @string,
+										  object control,
+										  object winTitle = null,
+										  object winText = null,
+										  object excludeTitle = null,
+										  object excludeText = null) => ControlProvider.Manager.ControlAddItem(
+											  @string.As(),
+											  control,
+											  winTitle,
+											  winText.As(),
+											  excludeTitle.As(),
+											  excludeText.As());
 
-		public static object ControlChooseIndex(params object[] obj)
+		public static object ControlChooseIndex(object n,
+												object control,
+												object winTitle = null,
+												object winText = null,
+												object excludeTitle = null,
+												object excludeText = null)
 		{
-			obj.I1O2S3().Splat(ControlProvider.Manager.ControlChooseIndex);
+			ControlProvider.Manager.ControlChooseIndex(
+				n.Ai(),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static long ControlChooseString(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlChooseString);
+		public static long ControlChooseString(object @string,
+											   object control,
+											   object winTitle = null,
+											   object winText = null,
+											   object excludeTitle = null,
+											   object excludeText = null) => ControlProvider.Manager.ControlChooseString(
+													   @string.As(),
+													   control,
+													   winTitle,
+													   winText.As(),
+													   excludeTitle.As(),
+													   excludeText.As());
 
-		public static object ControlClick(params object[] obj)
+		public static object ControlClick(object ctrlOrPos = null,
+										  object title = null,
+										  object text = null,
+										  object whichButton = null,
+										  object clickCount = null,
+										  object options = null,
+										  object excludeTitle = null,
+										  object excludeText = null)
 		{
-			obj.O2S2I1S3(null, null, "", "", 1).Splat(ControlProvider.Manager.ControlClick);
+			ControlProvider.Manager.ControlClick(
+				ctrlOrPos,
+				title,
+				text.As(),
+				whichButton.As(),
+				clickCount.Ai(1),
+				options.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlDeleteItem(params object[] obj)
+		public static object ControlDeleteItem(object n,
+											   object control,
+											   object winTitle = null,
+											   object winText = null,
+											   object excludeTitle = null,
+											   object excludeText = null)
 		{
-			obj.I1O2S3().Splat(ControlProvider.Manager.ControlDeleteItem);
+			ControlProvider.Manager.ControlDeleteItem(
+				n.Ai(),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static long ControlFindItem(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ControlFindItem);
+		public static long ControlFindItem(object @string,
+										   object control,
+										   object winTitle = null,
+										   object winText = null,
+										   object excludeTitle = null,
+										   object excludeText = null) => ControlProvider.Manager.ControlFindItem(
+											   @string.As(),
+											   control,
+											   winTitle,
+											   winText.As(),
+											   excludeTitle.As(),
+											   excludeText.As());
 
-		public static object ControlFocus(params object[] obj)
+		public static object ControlFocus(object control,
+										  object winTitle = null,
+										  object winText = null,
+										  object excludeTitle = null,
+										  object excludeText = null)
 		{
-			obj.O2S3().Splat(ControlProvider.Manager.ControlFocus);
+			ControlProvider.Manager.ControlFocus(
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static long ControlGetChecked(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetChecked);
+		public static long ControlGetChecked(object control,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null) => ControlProvider.Manager.ControlGetChecked(
+													 control,
+													 winTitle,
+													 winText.As(),
+													 excludeTitle.As(),
+													 excludeText.As());
 
-		public static string ControlGetChoice(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetChoice);
+		public static string ControlGetChoice(object control,
+											  object winTitle = null,
+											  object winText = null,
+											  object excludeTitle = null,
+											  object excludeText = null) => ControlProvider.Manager.ControlGetChoice(
+													  control,
+													  winTitle,
+													  winText.As(),
+													  excludeTitle.As(),
+													  excludeText.As());
 
-		public static string ControlGetClassNN(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetClassNN);
+		public static string ControlGetClassNN(object control,
+											   object winTitle = null,
+											   object winText = null,
+											   object excludeTitle = null,
+											   object excludeText = null) => ControlProvider.Manager.ControlGetClassNN(
+													   control,
+													   winTitle,
+													   winText.As(),
+													   excludeTitle.As(),
+													   excludeText.As());
 
-		public static long ControlGetEnabled(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetEnabled);
+		public static long ControlGetEnabled(object control,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null) => ControlProvider.Manager.ControlGetEnabled(
+													 control,
+													 winTitle,
+													 winText.As(),
+													 excludeTitle.As(),
+													 excludeText.As());
 
-		public static long ControlGetExStyle(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetExStyle);
+		public static long ControlGetExStyle(object control,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null) => ControlProvider.Manager.ControlGetExStyle(
+													 control,
+													 winTitle,
+													 winText.As(),
+													 excludeTitle.As(),
+													 excludeText.As());
 
-		public static long ControlGetFocus(params object[] obj) => obj.O1S3().Splat(ControlProvider.Manager.ControlGetFocus);
+		public static long ControlGetFocus(object winTitle = null,
+										   object winText = null,
+										   object excludeTitle = null,
+										   object excludeText = null) => ControlProvider.Manager.ControlGetFocus(
+											   winTitle,
+											   winText.As(),
+											   excludeTitle.As(),
+											   excludeText.As());
 
-		public static long ControlGetHwnd(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetHwnd);
+		public static long ControlGetHwnd(object control,
+										  object winTitle = null,
+										  object winText = null,
+										  object excludeTitle = null,
+										  object excludeText = null) => ControlProvider.Manager.ControlGetHwnd(
+											  control,
+											  winTitle,
+											  winText.As(),
+											  excludeTitle.As(),
+											  excludeText.As());
 
-		public static long ControlGetIndex(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetIndex);
+		public static long ControlGetIndex(object control,
+										   object winTitle = null,
+										   object winText = null,
+										   object excludeTitle = null,
+										   object excludeText = null) => ControlProvider.Manager.ControlGetIndex(
+											   control,
+											   winTitle,
+											   winText.As(),
+											   excludeTitle.As(),
+											   excludeText.As());
 
-		public static Array ControlGetItems(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetItems);
+		public static Array ControlGetItems(object control,
+											object winTitle = null,
+											object winText = null,
+											object excludeTitle = null,
+											object excludeText = null) => ControlProvider.Manager.ControlGetItems(
+												control,
+												winTitle,
+												winText.As(),
+												excludeTitle.As(),
+												excludeText.As());
 
 		public static object ControlGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
 										   [Optional()][DefaultParameterValue(0)] ref object outY,
@@ -65,122 +225,346 @@ namespace Keysharp.Core
 										   [Optional()][DefaultParameterValue(0)] ref object outHeight,
 										   object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
 		{
-			ControlProvider.Manager.ControlGetPos(ref outX, ref outY, ref outWidth, ref outHeight, ctrl, title?.ToString(), text?.ToString(), excludeTitle?.ToString(), excludeText?.ToString());
+			ControlProvider.Manager.ControlGetPos(
+				ref outX,
+				ref outY,
+				ref outWidth,
+				ref outHeight,
+				ctrl,
+				title?.ToString(),
+				text?.ToString(),
+				excludeTitle?.ToString(),
+				excludeText?.ToString());
 			return null;
 		}
 
-		public static long ControlGetStyle(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetStyle);
+		public static long ControlGetStyle(object control,
+										   object winTitle = null,
+										   object winText = null,
+										   object excludeTitle = null,
+										   object excludeText = null) => ControlProvider.Manager.ControlGetStyle(
+											   control,
+											   winTitle,
+											   winText.As(),
+											   excludeTitle.As(),
+											   excludeText.As());
 
-		public static string ControlGetText(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetText);
+		public static string ControlGetText(object control,
+											object winTitle = null,
+											object winText = null,
+											object excludeTitle = null,
+											object excludeText = null) => ControlProvider.Manager.ControlGetText(
+												control,
+												winTitle,
+												winText.As(),
+												excludeTitle.As(),
+												excludeText.As());
 
-		public static long ControlGetVisible(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetVisible);
+		public static long ControlGetVisible(object control,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null) => ControlProvider.Manager.ControlGetVisible(
+													 control,
+													 winTitle,
+													 winText.As(),
+													 excludeTitle.As(),
+													 excludeText.As());
 
-		public static object ControlHide(params object[] obj)
+		public static object ControlHide(object control,
+										 object winTitle = null,
+										 object winText = null,
+										 object excludeTitle = null,
+										 object excludeText = null)
 		{
-			obj.O2S3().Splat(ControlProvider.Manager.ControlHide);
+			ControlProvider.Manager.ControlHide(
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlHideDropDown(params object[] obj)
+		public static object ControlHideDropDown(object control,
+				object winTitle = null,
+				object winText = null,
+				object excludeTitle = null,
+				object excludeText = null)
 		{
-			obj.O2S3().Splat(ControlProvider.Manager.ControlHideDropDown);
+			ControlProvider.Manager.ControlHideDropDown(
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlMove(params object[] obj)
+		public static object ControlMove(object x = null,
+										 object y = null,
+										 object width = null,
+										 object height = null,
+										 object control = null,
+										 object winTitle = null,
+										 object winText = null,
+										 object excludeTitle = null,
+										 object excludeText = null)
 		{
-			obj.I4O2S3(int.MinValue, int.MinValue, int.MinValue, int.MinValue).Splat(ControlProvider.Manager.ControlMove);
+			ControlProvider.Manager.ControlMove(
+				x.Ai(int.MinValue),
+				y.Ai(int.MinValue),
+				width.Ai(int.MinValue),
+				height.Ai(int.MinValue),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSend(params object[] obj)
+		public static object ControlSend(object keys,
+										 object control = null,
+										 object winTitle = null,
+										 object winText = null,
+										 object excludeTitle = null,
+										 object excludeText = null)
 		{
-			obj.S1O2S3().Splat(ControlProvider.Manager.ControlSend);
+			ControlProvider.Manager.ControlSend(
+				keys.As(),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSendText(params object[] obj)
+		public static object ControlSendText(object keys,
+											 object control = null,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null)
 		{
-			obj.S1O2S3().Splat(ControlProvider.Manager.ControlSendText);
+			ControlProvider.Manager.ControlSendText(
+				keys.As(),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSetChecked(params object[] obj)
+		public static object ControlSetChecked(object newSetting,
+											   object control,
+											   object winTitle = null,
+											   object winText = null,
+											   object excludeTitle = null,
+											   object excludeText = null)
 		{
-			obj.O3S3().Splat(ControlProvider.Manager.ControlSetChecked);
+			ControlProvider.Manager.ControlSetChecked(
+				newSetting,
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSetEnabled(params object[] obj)
+		public static object ControlSetEnabled(object newSetting,
+											   object control,
+											   object winTitle = null,
+											   object winText = null,
+											   object excludeTitle = null,
+											   object excludeText = null)
 		{
-			obj.O3S3().Splat(ControlProvider.Manager.ControlSetEnabled);
+			ControlProvider.Manager.ControlSetEnabled(
+				newSetting,
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSetExStyle(params object[] obj)
+		public static object ControlSetExStyle(object value,
+											   object control,
+											   object winTitle = null,
+											   object winText = null,
+											   object excludeTitle = null,
+											   object excludeText = null)
 		{
-			obj.O3S3().Splat(ControlProvider.Manager.ControlSetExStyle);
+			ControlProvider.Manager.ControlSetExStyle(
+				value,
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSetStyle(params object[] obj)
+		public static object ControlSetStyle(object value,
+											 object control,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null)
 		{
-			obj.O3S3().Splat(ControlProvider.Manager.ControlSetStyle);
+			ControlProvider.Manager.ControlSetStyle(
+				value,
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlSetText(params object[] obj)
+		public static object ControlSetText(object newText,
+											object control,
+											object winTitle = null,
+											object winText = null,
+											object excludeTitle = null,
+											object excludeText = null)
 		{
-			obj.S1O2S3().Splat(ControlProvider.Manager.ControlSetText);
+			ControlProvider.Manager.ControlSetText(
+				newText.As(),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlShow(params object[] obj)
+		public static object ControlShow(object control,
+										 object winTitle = null,
+										 object winText = null,
+										 object excludeTitle = null,
+										 object excludeText = null)
 		{
-			obj.O2S3().Splat(ControlProvider.Manager.ControlShow);
+			ControlProvider.Manager.ControlShow(
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object ControlShowDropDown(params object[] obj)
+		public static object ControlShowDropDown(object control,
+				object winTitle = null,
+				object winText = null,
+				object excludeTitle = null,
+				object excludeText = null)
 		{
-			obj.O2S3().Splat(ControlProvider.Manager.ControlShowDropDown);
+			ControlProvider.Manager.ControlShowDropDown(
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static object DetectHiddenText(params object[] obj)
+		public static object DetectHiddenText(object mode)
 		{
 			var oldVal = Accessors.A_DetectHiddenText;
-			Accessors.A_DetectHiddenText = obj.O1();
+			Accessors.A_DetectHiddenText = mode;
 			return oldVal;
 		}
 
-		public static object DetectHiddenWindows(params object[] obj)
+		public static object DetectHiddenWindows(object mode)
 		{
 			var oldVal = Accessors.A_DetectHiddenWindows;
-			Accessors.A_DetectHiddenWindows = obj.O1();
+			Accessors.A_DetectHiddenWindows = mode;
 			return oldVal;
 		}
 
-		public static long EditGetCurrentCol(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.EditGetCurrentCol);
+		public static long EditGetCurrentCol(object control,
+											 object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null) => ControlProvider.Manager.EditGetCurrentCol(
+													 control,
+													 winTitle,
+													 winText.As(),
+													 excludeTitle.As(),
+													 excludeText.As());
 
-		public static long EditGetCurrentLine(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.EditGetCurrentLine);
+		public static long EditGetCurrentLine(object control,
+											  object winTitle = null,
+											  object winText = null,
+											  object excludeTitle = null,
+											  object excludeText = null) => ControlProvider.Manager.EditGetCurrentLine(
+													  control,
+													  winTitle,
+													  winText.As(),
+													  excludeTitle.As(),
+													  excludeText.As());
 
-		public static string EditGetLine(params object[] obj) => obj.I1O2S3().Splat(ControlProvider.Manager.EditGetLine);
+		public static string EditGetLine(object n,
+										 object control,
+										 object winTitle = null,
+										 object winText = null,
+										 object excludeTitle = null,
+										 object excludeText = null) => ControlProvider.Manager.EditGetLine(
+											 n.Ai(),
+											 control,
+											 winTitle,
+											 winText.As(),
+											 excludeTitle.As(),
+											 excludeText.As());
 
-		public static long EditGetLineCount(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.EditGetLineCount);
+		public static long EditGetLineCount(object control,
+											object winTitle = null,
+											object winText = null,
+											object excludeTitle = null,
+											object excludeText = null) => ControlProvider.Manager.EditGetLineCount(
+												control,
+												winTitle,
+												winText.As(),
+												excludeTitle.As(),
+												excludeText.As());
 
-		public static string EditGetSelectedText(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.EditGetSelectedText);
+		public static string EditGetSelectedText(object control,
+				object winTitle = null,
+				object winText = null,
+				object excludeTitle = null,
+				object excludeText = null) => ControlProvider.Manager.EditGetSelectedText(
+					control,
+					winTitle,
+					winText.As(),
+					excludeTitle.As(),
+					excludeText.As());
 
-		public static object EditPaste(params object[] obj)
+		public static object EditPaste(object @string,
+									   object control,
+									   object winTitle = null,
+									   object winText = null,
+									   object excludeTitle = null,
+									   object excludeText = null)
 		{
-			obj.S1O2S3().Splat(ControlProvider.Manager.EditPaste);
+			ControlProvider.Manager.EditPaste(
+				@string.As(),
+				control,
+				winTitle,
+				winText.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
-		public static long GroupActivate(params object[] obj)
+		public static long GroupActivate(object groupName, object mode)
 		{
-			var (name, mode) = obj.S2();
-			name = (name ?? string.Empty).ToLowerInvariant();
+			var name = groupName.As().ToLowerInvariant();
+			var m = mode.As();
 
 			if (windowGroups.TryGetValue(name, out var group))
 			{
@@ -195,7 +579,7 @@ namespace Keysharp.Core
 				if (windows.Count == 1 && windows[0].Handle.ToInt64() == WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
 					return 0L;
 
-				if (!mode.Equals(Keywords.Keyword_R, StringComparison.OrdinalIgnoreCase) && !windows.Any(w => w.Active))
+				if (!m.Equals(Keywords.Keyword_R, StringComparison.OrdinalIgnoreCase) && !windows.Any(w => w.Active))
 					windows.Reverse();
 
 				foreach (var win in windows)
@@ -215,9 +599,13 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public static object GroupAdd(params object[] obj)
+		public static object GroupAdd(object groupName,
+									  object winTitle = null,
+									  object winText = null,
+									  object excludeTitle = null,
+									  object excludeText = null)
 		{
-			var (name, winTitle, winText, excludeTitle, excludeText) = obj.S1O1S3();
+			var name = groupName.As();
 
 			if (string.IsNullOrEmpty(name))
 				return null;
@@ -228,7 +616,7 @@ namespace Keysharp.Core
 			if (name != "AllWindows")
 			{
 				var group = windowGroups[name];
-				group.sc.Add(SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText));
+				group.sc.Add(SearchCriteria.FromString(winTitle, winText.As(), excludeTitle.As(), excludeText.As()));
 				group.activated.Clear();
 				group.deactivated.Clear();
 			}
@@ -236,10 +624,10 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public static object GroupClose(params object[] obj)
+		public static object GroupClose(object groupName, object mode)
 		{
-			var (name, mode) = obj.S2();
-			name = (name ?? string.Empty).ToLowerInvariant();
+			var name = groupName.As().ToLowerInvariant();
+			var m = mode.As();
 
 			if (windowGroups.TryGetValue(name, out var group))
 			{
@@ -249,7 +637,7 @@ namespace Keysharp.Core
 				var stack = group.lastWasDeactivate ? group.deactivated : group.activated;
 				var windows = SearchWindows($"ahk_group {name}");
 
-				switch (mode.ToLowerInvariant())
+				switch (m.ToLowerInvariant())
 				{
 					case Keywords.Keyword_A:
 						while (stack.Count != 0)
@@ -281,10 +669,10 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public static object GroupDeactivate(params object[] obj)
+		public static object GroupDeactivate(object groupName, object mode)
 		{
-			var (name, mode) = obj.S2();
-			name = (name ?? string.Empty).ToLowerInvariant();
+			var name = groupName.As().ToLowerInvariant();
+			var m = mode.As();
 
 			if (windowGroups.TryGetValue(name, out var group))
 			{
@@ -300,7 +688,7 @@ namespace Keysharp.Core
 				if (allwindows.Count == 1 && allwindows[0].Handle.ToInt64() == WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
 					return null;
 
-				if (!mode.Equals(Keywords.Keyword_R, StringComparison.OrdinalIgnoreCase) && windows.Any(w => w.Active))
+				if (!m.Equals(Keywords.Keyword_R, StringComparison.OrdinalIgnoreCase) && windows.Any(w => w.Active))
 					allwindows.Reverse();
 
 				foreach (var win in allwindows)
@@ -320,11 +708,43 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public static object ListViewGetContent(params object[] obj) => obj.S1O2S3().Splat(ControlProvider.Manager.ListViewGetContent);
+		public static object ListViewGetContent(object options,
+												object control,
+												object winTitle = null,
+												object winText = null,
+												object excludeTitle = null,
+												object excludeText = null) => ControlProvider.Manager.ListViewGetContent(
+														options.As(),
+														control,
+														winTitle,
+														winText.As(),
+														excludeTitle.As(),
+														excludeText.As());
 
-		public static object MenuSelect(params object[] obj)
+		public static object MenuSelect(object winTitle,
+										object winText,
+										object menu,
+										object subMenu1 = null,
+										object subMenu2 = null,
+										object subMenu3 = null,
+										object subMenu4 = null,
+										object subMenu5 = null,
+										object subMenu6 = null,
+										object excludeTitle = null,
+										object excludeText = null)
 		{
-			obj.O1S10().Splat(ControlProvider.Manager.MenuSelect);
+			ControlProvider.Manager.MenuSelect(
+				winTitle,
+				winText.As(),
+				menu.As(),
+				subMenu1.As(),
+				subMenu2.As(),
+				subMenu3.As(),
+				subMenu4.As(),
+				subMenu5.As(),
+				subMenu6.As(),
+				excludeTitle.As(),
+				excludeText.As());
 			return null;
 		}
 
