@@ -33,7 +33,7 @@ namespace Keysharp.Core.Windows
 			return 0;
 		}
 
-		internal override long ControlAddItem(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long ControlAddItem(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -75,7 +75,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override void ControlChooseIndex(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlChooseIndex(int n, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -125,7 +125,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override long ControlChooseString(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long ControlChooseString(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -181,7 +181,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override void ControlClick(object ctrlorpos, object title, string text, string whichButton, int clickCount, string options, string excludeTitle, string excludeText)
+		internal override void ControlClick(object ctrlorpos, object title, object text, string whichButton, int clickCount, string options, object excludeTitle, object excludeText)
 		{
 			var winx = int.MinValue;
 			var winy = int.MinValue;
@@ -233,7 +233,7 @@ namespace Keysharp.Core.Windows
 
 			if (ctrlorpos.IsNullOrEmpty())//No control or coordinates, so just find the window.
 			{
-				item = Window.SearchWindow([title, text, excludeTitle, excludeText], true);
+				item = Window.SearchWindow(title, text, excludeTitle, excludeText, true);
 			}
 			else if (!posoverride)//Don't override, so try ctrlorpos first, and if it doesn't work, then try as an x/y.
 			{
@@ -261,7 +261,7 @@ namespace Keysharp.Core.Windows
 
 			if (getctrlbycoords)
 			{
-				item = Window.SearchWindow([title, text, excludeTitle, excludeText], true);
+				item = Window.SearchWindow(title, text, excludeTitle, excludeText, true);
 				var rect = new Point(winx, winx);
 				_ = WindowsAPI.ClientToScreen(item.Handle, ref rect);
 				var pah = new PointAndHwnd(rect);
@@ -355,7 +355,7 @@ namespace Keysharp.Core.Windows
 				WindowsAPI.DetachThreadInput(thinfo.Item1, thinfo.Item2);
 		}
 
-		internal override void ControlDeleteItem(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlDeleteItem(int n, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -391,7 +391,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override long ControlFindItem(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long ControlFindItem(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -420,7 +420,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override void ControlFocus(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlFocus(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -431,7 +431,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override long ControlGetChecked(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long ControlGetChecked(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -447,7 +447,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override string ControlGetChoice(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override string ControlGetChoice(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -490,11 +490,11 @@ namespace Keysharp.Core.Windows
 			return "";
 		}
 
-		internal override long ControlGetExStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.ExStyle : 0L;
+		internal override long ControlGetExStyle(object ctrl, object title, object text, object excludeTitle, object excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.ExStyle : 0L;
 
-		internal override long ControlGetFocus(object title, string text, string excludeTitle, string excludeText)
+		internal override long ControlGetFocus(object title, object text, object excludeTitle, object excludeText)
 		{
-			if (Window.SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem item)
+			if (Window.SearchWindow(title, text, excludeTitle, excludeText, true) is WindowItem item)
 			{
 				var h = WindowsAPI.GetWindowThreadProcessId(item.Handle, out var pid);
 				var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
@@ -522,7 +522,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override long ControlGetIndex(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long ControlGetIndex(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -546,7 +546,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override Array ControlGetItems(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override Array ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -582,7 +582,15 @@ namespace Keysharp.Core.Windows
 			return [];
 		}
 
-		internal override void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, string title = null, string text = null, string excludeTitle = null, string excludeText = null)
+		internal override void ControlGetPos(ref object outX,
+											 ref object outY,
+											 ref object outWidth,
+											 ref object outHeight,
+											 object ctrl = null,
+											 object title = null,
+											 object text = null,
+											 object excludeTitle = null,
+											 object excludeText = null)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -608,21 +616,21 @@ namespace Keysharp.Core.Windows
 			outHeight = 0L;
 		}
 
-		internal override long ControlGetStyle(object ctrl, object title, string text, string excludeTitle, string excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.Style : 0;
+		internal override long ControlGetStyle(object ctrl, object title, object text, object excludeTitle, object excludeText) => Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.Style : 0;
 
-		internal override string ControlGetText(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override string ControlGetText(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			return Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item
 				   ? Control.FromHandle(item.Handle) is Control ctrl2 ? ctrl2.Text : WindowsAPI.GetWindowTextTimeout(item.Handle, 5000)
 				   : "";
 		}
 
-		internal override void ControlHideDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
+		internal override void ControlHideDropDown(object ctrl, object title, object text, object excludeTitle, object excludeText) =>
 		DropdownHelper(false, ctrl, title, text, excludeTitle, excludeText);
 
-		internal override void ControlSend(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.NotRaw);
+		internal override void ControlSend(string str, object ctrl, object title, object text, object excludeTitle, object excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.NotRaw);
 
-		internal void ControlSendHelper(string str, object ctrl, object title, string text, string excludeTitle, string excludeText, SendRawModes mode)
+		internal void ControlSendHelper(string str, object ctrl, object title, object text, object excludeTitle, object excludeText, SendRawModes mode)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -632,9 +640,9 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSendText(string str, object ctrl, object title, string text, string excludeTitle, string excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.RawText);
+		internal override void ControlSendText(string str, object ctrl, object title, object text, object excludeTitle, object excludeText) => ControlSendHelper(str, ctrl, title, text, excludeTitle, excludeText, SendRawModes.RawText);
 
-		internal override void ControlSetChecked(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetChecked(object val, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -669,7 +677,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSetEnabled(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetEnabled(object val, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -684,7 +692,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSetExStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetExStyle(object val, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -708,7 +716,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlSetStyle(object val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void ControlSetStyle(object val, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -732,10 +740,10 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override void ControlShowDropDown(object ctrl, object title, string text, string excludeTitle, string excludeText) =>
+		internal override void ControlShowDropDown(object ctrl, object title, object text, object excludeTitle, object excludeText) =>
 		DropdownHelper(true, ctrl, title, text, excludeTitle, excludeText);
 
-		internal override long EditGetCurrentCol(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long EditGetCurrentCol(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -759,7 +767,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override long EditGetCurrentLine(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long EditGetCurrentLine(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -772,7 +780,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override string EditGetLine(int n, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override string EditGetLine(int n, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -798,7 +806,7 @@ namespace Keysharp.Core.Windows
 			return "";
 		}
 
-		internal override long EditGetLineCount(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override long EditGetLineCount(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -812,7 +820,7 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override string EditGetSelectedText(object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override string EditGetSelectedText(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -836,7 +844,7 @@ namespace Keysharp.Core.Windows
 			return "";
 		}
 
-		internal override void EditPaste(string str, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void EditPaste(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -847,7 +855,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override object ListViewGetContent(string options, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override object ListViewGetContent(string options, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			object ret = null;
 
@@ -1117,11 +1125,12 @@ namespace Keysharp.Core.Windows
 			return "";
 		}
 
-		internal override void MenuSelect(object title, string text, string menu, string sub1, string sub2, string sub3, string sub4, string sub5, string sub6, string excludeTitle, string excludeText)
+		internal override void MenuSelect(object title, object text, object menu, object sub1, object sub2, object sub3, object sub4, object sub5, object sub6, object excludeTitle, object excludeText)
 		{
-			if (Window.SearchWindow([title, text, excludeTitle, excludeText], true) is WindowItem win)
+			if (Window.SearchWindow(title, text, excludeTitle, excludeText, true) is WindowItem win)
 			{
-				var sysMenu = menu == "0&";
+				var menuStr = menu.As();
+				var sysMenu = menuStr == "0&";
 
 				if (!sysMenu && Control.FromHandle(win.Handle) is Form form)//Winforms needs special treatment because it doesn't use an actual native main menu.
 				{
@@ -1174,11 +1183,11 @@ namespace Keysharp.Core.Windows
 				throw new TargetError($"Could not send WM_COMMAND message of {y_msg} to ${immediate_parent.ToInt64()}");
 		}
 
-		internal override void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		internal override void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
-					   : Window.SearchWindow([title, text, excludeTitle, excludeText], true);
+					   : Window.SearchWindow(title, text, excludeTitle, excludeText, true);
 
 			if (item is WindowItem)
 			{
@@ -1189,14 +1198,14 @@ namespace Keysharp.Core.Windows
 			WindowItemBase.DoControlDelay();
 		}
 
-		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, string text, string excludeTitle, string excludeText, int timeout)
+		internal override long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, object text, object excludeTitle, object excludeText, int timeout)
 		{
 			long ret;
 			var wbuf = Reflections.SafeGetProperty<Buffer>(wparam, "Ptr");
 			var wptr = wbuf != null ? wbuf.Ptr : wparam != null ? new IntPtr(wparam.ParseLong().Value) : IntPtr.Zero;
 			var item = ctrl != null
 					   ? Window.SearchControl(ctrl, title, text, excludeTitle, excludeText)
-					   : Window.SearchWindow([title, text, excludeTitle, excludeText], true);
+					   : Window.SearchWindow(title, text, excludeTitle, excludeText, true);
 			var thehandle = item.Handle;
 
 			if (lparam is string s)
@@ -1237,7 +1246,7 @@ namespace Keysharp.Core.Windows
 			return ret;
 		}
 
-		private static void DropdownHelper(bool val, object ctrl, object title, string text, string excludeTitle, string excludeText)
+		private static void DropdownHelper(bool val, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{

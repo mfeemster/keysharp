@@ -2370,9 +2370,9 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;
 		}
 
-		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Active;
+		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Core.Window.SearchWindow(title, text, null, null, false) is WindowItem win&& win.Active;
 
-		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Exists;
+		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Core.Window.SearchWindow(title, text, null, null, false) is WindowItem win&& win.Exists;
 
 		private static bool HotIfWinNotActivePrivate(object title, object text, object hotkey) => !HotIfWinActivePrivate(title, text, hotkey);
 

@@ -301,7 +301,7 @@ class class1
 	+ `FileDirName(filename) => String` to return the full path to filename, without the actual filename or trailing directory separator character.
 	+ `FileFullPath(filename) => String` to return the full path to filename.
 * A new function `WinMaximizeAll()` to maximize all windows.
-* A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText])` to determine whether a window will always stay on top of other windows.
+* A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText]) => Integer` to determine whether a window will always stay on top of other windows.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(target [, workingDir, options, &outputVarPID, args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.

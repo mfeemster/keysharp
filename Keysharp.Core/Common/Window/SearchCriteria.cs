@@ -124,12 +124,12 @@
 			return criteria;
 		}
 
-		internal static SearchCriteria FromString(object title, string text, string excludeTitle, string excludeText)
+		internal static SearchCriteria FromString(object title, object text, object excludeTitle, object excludeText)
 		{
 			var criteria = FromString(title);
-			criteria.Text = text;
-			criteria.ExcludeTitle = excludeTitle;
-			criteria.ExcludeText = excludeText;
+			criteria.Text = text.As();
+			criteria.ExcludeTitle = excludeTitle.As();
+			criteria.ExcludeText = excludeText.As();
 			return criteria;
 		}
 	}

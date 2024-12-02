@@ -641,7 +641,7 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
-		internal uint GetMenuItemId(params string[] items)
+		internal uint GetMenuItemId(params object[] items)
 		{
 			if (!IsSpecified)
 				return 0;
@@ -650,7 +650,7 @@ namespace Keysharp.Core.Windows
 			var menuid = 0xFFFFFFFF;
 			IntPtr menu = IntPtr.Zero;
 
-			if (items[0] == "0&")
+			if (items[0].As() == "0&")
 			{
 				menu = WindowsAPI.GetSystemMenu(Handle, false);
 				i1 = 1;
@@ -663,7 +663,7 @@ namespace Keysharp.Core.Windows
 
 			for (; i1 < items.Length; i1++)
 			{
-				var item = items[i1];
+				var item = items[i1].As();
 
 				if (item == null || item.Length == 0)
 					continue;
