@@ -59,7 +59,11 @@ namespace Keysharp.Core
 
 		public static Array ControlGetItems(params object[] obj) => obj.O2S3().Splat(ControlProvider.Manager.ControlGetItems);
 
-		public static object ControlGetPos([Optional()][DefaultParameterValue(0)] ref object outX, [Optional()][DefaultParameterValue(0)] ref object outY, [Optional()][DefaultParameterValue(0)] ref object outWidth, [Optional()][DefaultParameterValue(0)] ref object outHeight, object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
+		public static object ControlGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
+										   [Optional()][DefaultParameterValue(0)] ref object outY,
+										   [Optional()][DefaultParameterValue(0)] ref object outWidth,
+										   [Optional()][DefaultParameterValue(0)] ref object outHeight,
+										   object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
 		{
 			ControlProvider.Manager.ControlGetPos(ref outX, ref outY, ref outWidth, ref outHeight, ctrl, title?.ToString(), text?.ToString(), excludeTitle?.ToString(), excludeText?.ToString());
 			return null;
@@ -625,7 +629,11 @@ namespace Keysharp.Core
 
 		public static object WinGetPID(params object[] obj) => DoDelayedFunc(() => SearchWindow(obj, true) is WindowItem win ? win.PID : 0L);
 
-		public static object WinGetPos([Optional()][DefaultParameterValue(0)] ref object outX, [Optional()][DefaultParameterValue(0)] ref object outY, [Optional()][DefaultParameterValue(0)] ref object outWidth, [Optional()][DefaultParameterValue(0)] ref object outHeight, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
+		public static object WinGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
+									   [Optional()][DefaultParameterValue(0)] ref object outY,
+									   [Optional()][DefaultParameterValue(0)] ref object outWidth,
+									   [Optional()][DefaultParameterValue(0)] ref object outHeight,
+									   object title = null, object text = null, object excludeTitle = null, object excludeText = null)
 		{
 			WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, title, text, excludeTitle, excludeText);
 			return null;

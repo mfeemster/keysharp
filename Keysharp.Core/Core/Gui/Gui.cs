@@ -1493,7 +1493,10 @@
 			return null;
 		}
 
-		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
+								   [Optional()][DefaultParameterValue(0)] ref object y,
+								   [Optional()][DefaultParameterValue(0)] ref object width,
+								   [Optional()][DefaultParameterValue(0)] ref object height)
 		{
 			GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
 			return null;

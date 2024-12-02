@@ -1,5 +1,8 @@
 namespace Keysharp.Core
 {
+	/// <summary>
+	/// Public interface for dialog-related functions.
+	/// </summary>
 	public static class Dialogs
 	{
 		internal static int nFileDialogs;

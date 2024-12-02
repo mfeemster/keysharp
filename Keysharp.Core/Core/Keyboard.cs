@@ -84,7 +84,8 @@ namespace Keysharp.Core
 		/// and the output variables are made blank. It returns 1 (true) if the system returned a caret position,<br/>
 		/// but this does not necessarily mean a caret is visible.
 		/// </returns>
-		public static bool CaretGetPos([Optional()][DefaultParameterValue(0)] ref object outputVarX, [Optional()][DefaultParameterValue(0)] ref object outputVarY)
+		public static bool CaretGetPos([Optional()][DefaultParameterValue(0)] ref object outputVarX,
+									   [Optional()][DefaultParameterValue(0)] ref object outputVarY)
 		{
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
 			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.

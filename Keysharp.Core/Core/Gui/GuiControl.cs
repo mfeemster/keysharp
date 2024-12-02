@@ -535,12 +535,12 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public object Choose(object obj)
+		public object Choose(object value)
 		{
 			//The documentation says "Unlike ControlChooseIndex, this method does not raise a Change or DoubleClick event."
 			//But we don't raise click events anyway here, so it shouldn't matter.
-			var s = obj as string;
-			var i = obj.Ai() - 1;
+			var s = value as string;
+			var i = value.Ai() - 1;
 
 			if (_control is TabControl tc)
 			{
@@ -582,10 +582,10 @@ namespace Keysharp.Core
 		/// Note this differs from AHK in that deleting a tab fully removes the tab, and does not associate the controls
 		/// of an existing tab to the tab at the index that was deleted.
 		/// </summary>
-		/// <param name="obj"></param>
-		public long Delete(object obj)
+		/// <param name="value"></param>
+		public long Delete(object value = null)
 		{
-			var index = obj.Ai() - 1;
+			var index = value.Ai() - 1;
 
 			switch (_control)
 			{
@@ -626,7 +626,7 @@ namespace Keysharp.Core
 
 				case TreeView tv:
 				{
-					var id = obj.Al(long.MinValue);
+					var id = value.Al(long.MinValue);
 
 					if (id == long.MinValue)
 					{
@@ -660,11 +660,11 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public long DeleteCol(object obj)
+		public long DeleteCol(object column)
 		{
 			if (_control is ListView lv)
 			{
-				var index = obj.Ai() - 1;
+				var index = column.Ai() - 1;
 
 				if (index >= 0 && index < lv.Columns.Count)
 				{
@@ -678,12 +678,12 @@ namespace Keysharp.Core
 
 		public object Focus() => _control.Focus();
 
-		public long Get(object obj0, object obj1)
+		public long Get(object itemID, object attribute)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj0.Al();
-				var attr = obj1.As();
+				var id = itemID.Al();
+				var attr = attribute.As();
 
 				if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
@@ -699,11 +699,11 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public long GetChild(object obj)
+		public long GetChild(object itemID)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj.Al();
+				var id = itemID.Al();
 				var node = TreeViewHelper.TV_FindNode(tv, id);
 				return node == null ? 0 : node.Nodes.Count == 0 ? 0L : node.FirstNode.Handle.ToInt64();
 			}
@@ -711,23 +711,26 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
+								   [Optional()][DefaultParameterValue(0)] ref object y,
+								   [Optional()][DefaultParameterValue(0)] ref object width,
+								   [Optional()][DefaultParameterValue(0)] ref object height)
 		{
 			GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
 			return null;
 		}
 
-		public long GetCount(object obj = null)
+		public long GetCount(object mode = null)
 		{
 			if (_control is ListView lv)
 			{
-				var mode = obj.As();
+				var m = mode.As();
 
-				if (mode?.Length == 0)
+				if (m?.Length == 0)
 					return lv.Items.Count;
-				else if (mode.StartsWith("s", StringComparison.OrdinalIgnoreCase))
+				else if (m.StartsWith("s", StringComparison.OrdinalIgnoreCase))
 					return lv.SelectedItems.Count;
-				else if (mode.StartsWith("c", StringComparison.OrdinalIgnoreCase))
+				else if (m.StartsWith("c", StringComparison.OrdinalIgnoreCase))
 					return lv.Columns.Count;
 			}
 			else if (_control is TreeView tv)
@@ -736,10 +739,10 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public long GetNext(object obj0 = null, object obj1 = null)
+		public long GetNext(object startingRowNumber = null, object rowType = null)
 		{
-			var id = obj0.Al();
-			var mode = obj1.As();
+			var id = startingRowNumber.Al();
+			var mode = rowType.As();
 
 			if (_control is TreeView tv)
 			{
@@ -800,22 +803,22 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public object GetNode(object obj)
+		public object GetNode(object itemID)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj.Al();
+				var id = itemID.Al();
 				return TreeViewHelper.TV_FindNode(tv, id);
 			}
 
 			return null;
 		}
 
-		public long GetParent(object obj)
+		public long GetParent(object itemID)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj.Al();
+				var id = itemID.Al();
 				var node = TreeViewHelper.TV_FindNode(tv, id);
 				return node == null || node.Parent == null || !(node.Parent is TreeNode) ? 0L : node.Parent.Handle.ToInt64();
 			}
@@ -823,17 +826,20 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x,
+							 [Optional()][DefaultParameterValue(0)] ref object y,
+							 [Optional()][DefaultParameterValue(0)] ref object width,
+							 [Optional()][DefaultParameterValue(0)] ref object height)
 		{
 			GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
 			return null;
 		}
 
-		public long GetPrev(object obj)
+		public long GetPrev(object itemID)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj.Al();
+				var id = itemID.Al();
 				var node = TreeViewHelper.TV_FindNode(tv, id);
 				return node == null || node.PrevNode == null ? 0L : node.PrevNode.Handle.ToInt64();
 			}
@@ -843,11 +849,11 @@ namespace Keysharp.Core
 
 		public long GetSelection() => _control is TreeView tv&& tv.SelectedNode != null ? tv.SelectedNode.Handle.ToInt64() : 0L;
 
-		public string GetText(object obj0, object obj1 = null)
+		public string GetText(object rowNumber, object columnNumber = null)
 		{
 			if (_control is TreeView tv)
 			{
-				var id = obj0.Al();
+				var id = rowNumber.Al();
 				var node = TreeViewHelper.TV_FindNode(tv, id);
 
 				if (node != null)
@@ -855,8 +861,8 @@ namespace Keysharp.Core
 			}
 			else if (_control is ListView lv)
 			{
-				var row = obj0.Ai();
-				var col = obj1.Ai(1);
+				var row = rowNumber.Ai();
+				var col = columnNumber.Ai(1);
 				row--;
 				col = Math.Max(col - 1, 0);
 
@@ -869,26 +875,31 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public object Insert(params object[] obj)
+		public object Insert(object rowNumber, params object[] obj)
 		{
 			if (_control is ListView lv)//Note that this index might not actually be where the row is shown, due to sorting.
 			{
-				var (rownumber, opts, cols) = obj.Is2();
+				var rownumber = rowNumber.Ai();
+				string opts = null;
+
+				if (obj.Length > 0)
+					opts = obj[0].ToString();
+
 				var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
-				var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : [];
+				var strs = obj.Length > 1 ? obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList() : [];
 				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
 			}
 
 			return null;
 		}
 
-		public long InsertCol(object obj0, object obj1 = null, object obj2 = null)
+		public long InsertCol(object columnNumber = null, object options = null, object columnTitle = null)
 		{
 			if (_control is ListView lv)
 			{
-				var index = obj0.Ai();
-				var options = obj1.As();
-				var title = obj2.As();
+				var index = columnNumber.Ai(int.MaxValue);
+				var opts = options.As();
+				var title = columnTitle.As();
 				index--;
 				var header = new ColumnHeader
 				{
@@ -925,24 +936,28 @@ namespace Keysharp.Core
 					}
 				}
 				else
-					_ = lv.Columns.Add(header);
+					index = lv.Columns.Add(header);
 
-				ListViewHelper.ParseAndApplyListViewColumnOptions(header, options);
+				ListViewHelper.ParseAndApplyListViewColumnOptions(header, opts);
 				return index + 1L;
 			}
 
 			return -1L;
 		}
 
-		public long Modify(params object[] obj)
+		public long Modify(object rowNumber, object options = null, params object[] obj)
 		{
+			var opts = options == null ? null : options.ToString();
+			var rownumber = rowNumber.Ai();
+
 			if (_control is TreeView tv)
 			{
-				var (id, options, name) = obj.Ls2();
+				var id = rownumber;
+				var name = obj.S1();
 
 				if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
 				{
-					if (options?.Length == 0 && name?.Length == 0)
+					if (opts?.Length == 0 && name?.Length == 0)
 					{
 						node.TreeView.SelectedNode = node;
 						return node.Handle.ToInt64();
@@ -950,19 +965,17 @@ namespace Keysharp.Core
 					else if (name != "")
 						node.Text = name;
 
-					return TreeViewHelper.TV_NodeOptions(node, node.Parent != null ? node.Parent.Handle.ToInt64() : 0L, options, true);
+					return TreeViewHelper.TV_NodeOptions(node, node.Parent != null ? node.Parent.Handle.ToInt64() : 0L, opts, true);
 				}
 			}
 			else if (_control is ListView lv)
 			{
 				try
 				{
-					var (rownumber, opts, cols) = obj.Is2();
-
 					if (rownumber < lv.Items.Count)
 					{
-						var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
-						var strs = obj.Length > 2 ? obj.Cast<object>().Skip(2).Select(x => x.Str()).ToList() : [];
+						var lvo = opts is string o ? ListViewHelper.ParseListViewOptions(o) : new ListViewHelper.ListViewOptions();
+						var strs = obj.Length > 0 ? obj.Cast<object>().Select(x => x.Str()).ToList() : [];
 						var start = Math.Max(0, rownumber - 1);
 						var end = rownumber == 0 ? lv.Items.Count : Math.Min(rownumber, lv.Items.Count);
 
@@ -987,13 +1000,13 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public long ModifyCol(object obj0 = null, object obj1 = null, object obj2 = null)
+		public long ModifyCol(object columnNumber = null, object options = null, object columnTitle = null)
 		{
 			if (_control is ListView lv)
 			{
-				var colnumber = obj0.Ai();
-				var opts = obj1.As();
-				var coltitle = obj2.As();
+				var colnumber = columnNumber.Ai();
+				var opts = options.As();
+				var coltitle = columnTitle.As();
 
 				if (opts?.Length == 0 && coltitle?.Length == 0)
 				{
@@ -1026,41 +1039,41 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public object Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		public object Move(object x = null, object y = null, object width = null, object height = null)
 		{
-			var x = obj0.Al(long.MinValue);
-			var y = obj1.Al(long.MinValue);
-			var width = obj2.Al(long.MinValue);
-			var height = obj3.Al(long.MinValue);
+			var _x = x.Al(long.MinValue);
+			var _y = y.Al(long.MinValue);
+			var w = width.Al(long.MinValue);
+			var h = height.Al(long.MinValue);
 			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpEdit || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
-			if (y != long.MinValue)
-				_control.Top = (int)Math.Round(y * scale);
+			if (_y != long.MinValue)
+				_control.Top = (int)Math.Round(_y * scale);
 
-			if (x != long.MinValue)
-				_control.Left = (int)Math.Round(x * scale);
+			if (_x != long.MinValue)
+				_control.Left = (int)Math.Round(_x * scale);
 
-			if (width != long.MinValue)//Add extra if the control has scrollbars, even if they are not visible.
-				_control.Width = (int)Math.Round(width * scale) - (hasScrollBars ? SystemInformation.VerticalScrollBarWidth : 0);
+			if (w != long.MinValue)//Add extra if the control has scrollbars, even if they are not visible.
+				_control.Width = (int)Math.Round(w * scale) - (hasScrollBars ? SystemInformation.VerticalScrollBarWidth : 0);
 
-			if (height != long.MinValue)//Unsure if it's needed here too.
-				_control.Height = (int)Math.Round(height * scale) - (hasScrollBars ? SystemInformation.HorizontalScrollBarHeight : 0);
+			if (h != long.MinValue)//Unsure if it's needed here too.
+				_control.Height = (int)Math.Round(h * scale) - (hasScrollBars ? SystemInformation.HorizontalScrollBarHeight : 0);
 
 			return null;
 		}
 
-		public object OnCommand(object obj0, object obj1, object obj2 = null)
+		public object OnCommand(object notifyCode, object callback, object addRemove = null)
 		{
-			HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref commandHandlers);
+			HandleOnCommandNotify(notifyCode.Al(), callback, addRemove.Al(1L), ref commandHandlers);
 			return null;
 		}
 
-		public object OnEvent(object obj0, object obj1, object obj2 = null)
+		public object OnEvent(object eventName, object callback, object addRemove = null)
 		{
-			var e = obj0.As().ToLower();
-			var h = obj1;
-			var i = obj2.Al(1);
+			var e = eventName.As().ToLower();
+			var h = callback;
+			var i = addRemove.Al(1);
 			var del = Functions.GetFuncObj(h, Gui.form.eventObj, true);
 
 			if (del != null)
@@ -1180,16 +1193,15 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public object OnNotify(object obj0, object obj1, object obj2 = null)
+		public object OnNotify(object notifyCode, object callback, object addRemove = null)
 		{
-			HandleOnCommandNotify(obj0.Al(), obj1, obj2.Al(1L), ref notifyHandlers);
+			HandleOnCommandNotify(notifyCode.Al(), callback, addRemove.Al(1L), ref notifyHandlers);
 			return null;
 		}
 
-		public object Opt(object obj)
+		public object Opt(object options)
 		{
-			var optionsstr = obj.As();
-			var opts = Gui.ParseOpt(typename, _control.Text, optionsstr);
+			var opts = Gui.ParseOpt(typename, _control.Text, options.As());
 
 			if (opts.redraw.HasValue)
 			{
@@ -1535,25 +1547,25 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public object SetFont(object obj0 = null, object obj1 = null)
+		public object SetFont(object options = null, object fontName = null)
 		{
-			_control.SetFont(obj0, obj1);
+			_control.SetFont(options, fontName);
 			return null;
 		}
 
-		public object SetFormat(object obj)
+		public object SetFormat(object format)
 		{
-			(_control as DateTimePicker)?.SetFormat(obj);
+			(_control as DateTimePicker)?.SetFormat(format);
 			return null;
 		}
 
-		public IntPtr SetIcon(object obj0, object obj1 = null, object obj2 = null)
+		public IntPtr SetIcon(object fileName, object iconNumber = null, object partNumber = null)
 		{
 			if (_control is StatusStrip ss)
 			{
-				var filename = obj0.As();
-				var iconnumber = ImageHelper.PrepareIconNumber(obj1);
-				var part = obj2.Ai(1);
+				var filename = fileName.As();
+				var iconnumber = ImageHelper.PrepareIconNumber(iconNumber);
+				var part = partNumber.Ai(1);
 				part--;
 				(Bitmap, object) ret;
 
@@ -1567,10 +1579,10 @@ namespace Keysharp.Core
 			return IntPtr.Zero;
 		}
 
-		public long SetImageList(object obj0, object obj1 = null)
+		public long SetImageList(object imageListID, object iconType = null)
 		{
-			var id = obj0.Al();
-			var type = obj1.Al(-1);
+			var id = imageListID.Al();
+			var type = iconType.Al(-1);
 			var oldil = 0L;
 
 			if (ImageLists.IL_Get(id) is ImageList il)
@@ -1637,16 +1649,16 @@ namespace Keysharp.Core
 			return oldil;
 		}
 
-		public object SetParts(params object[] obj)
+		public object SetParts(params object[] widths)
 		{
 			if (_control is StatusStrip ss)
 			{
 				KeysharpToolStripStatusLabel tssl = null;
 				ss.Items.Clear();
 
-				for (var i = 0; i < obj.Length - 1; i++)
+				for (var i = 0; i < widths.Length - 1; i++)
 				{
-					var part = obj[i];
+					var part = widths[i];
 
 					if (part != null)
 					{
@@ -1674,12 +1686,12 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public object SetTabIcon(object obj0, object obj1)//New function since the original required SendMessage() to do this.
+		public object SetTabIcon(object tabIndex, object imageIndex)//New function since the original required SendMessage() to do this.
 		{
 			if (_control is TabControl tc)
 			{
-				var tabindex = obj0.Ai();
-				var imageindex = obj1.Ai();
+				var tabindex = tabIndex.Ai();
+				var imageindex = imageIndex.Ai();
 
 				if (tabindex < tc.TabCount && tc.ImageList != null && imageindex < tc.ImageList.Images.Count)
 					tc.TabPages[tabindex].ImageIndex = imageindex;
@@ -1690,13 +1702,13 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		public bool SetText(object obj0, object obj1 = null, object obj2 = null)
+		public bool SetText(object newText, object partNumber = null, object style = null)
 		{
 			if (_control is StatusStrip ss)
 			{
-				var text = obj0.As();
-				var part = obj1.Ai(1);
-				var style = obj2.Al(-1);
+				var text = newText.As();
+				var part = partNumber.Ai(1);
+				var s = style.Al(-1);
 				part--;
 
 				if (part < ss.Items.Count)
@@ -1706,17 +1718,17 @@ namespace Keysharp.Core
 
 					if (item is ToolStripStatusLabel tssl)
 					{
-						if (style == 0)
+						if (s == 0)
 						{
 							tssl.BorderStyle = Border3DStyle.Sunken;
 							tssl.BorderSides = ToolStripStatusLabelBorderSides.All;
 						}
-						else if (style == 1)
+						else if (s == 1)
 						{
 							tssl.BorderStyle = Border3DStyle.Flat;
 							tssl.BorderSides = ToolStripStatusLabelBorderSides.None;
 						}
-						else if (style == 2)
+						else if (s == 2)
 						{
 							tssl.BorderStyle = Border3DStyle.Raised;
 							tssl.BorderSides = ToolStripStatusLabelBorderSides.All;
@@ -1730,12 +1742,12 @@ namespace Keysharp.Core
 			return false;
 		}
 
-		public object UseTab(object obj0 = null, object obj1 = null)
+		public object UseTab(object value = null, object exactMatch = null)
 		{
 			if (_control is KeysharpTabControl tc)
 			{
-				var val = obj0;
-				var exact = obj1.Ab();
+				var val = value;
+				var exact = exactMatch.Ab();
 
 				if (val is string s)
 				{
