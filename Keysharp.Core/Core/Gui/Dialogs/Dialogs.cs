@@ -17,30 +17,36 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Displays a standard dialog that allows the user to select a folder.
-		/// The list of known supported CLSID GUIDS is here: https://docs.microsoft.com/en-us/previous-versions//bb762584(v=vs.85)
-		/// Note this does not support the following features that are defined in AHK:
-		/// -Restricting which folders the user can browse to.
-		/// -Selected folder isn't actually selected in the tree, it's just shown as text in the path text box.
-		/// -Showing an edit box, which is not needed because the user can type in the path combo box.
-		/// -The New Folder button is always shown.
-		/// -Option 7 to omit BIF_NEWDIALOGSTYLE is not supported.
 		/// </summary>
-		public static string DirSelect(object obj0 = null, object obj1 = null, object obj2 = null)
+		/// <param name="startingFolder">If blank or omitted, the dialog's initial selection will be the user's<br/>
+		/// My Documents folder or possibly This PC (formerly My Computer or Computer).<br/>
+		/// A CLSID folder such as "::{20D04FE0-3AEA-1069-A2D8-08002B30309D}" (i.e. This PC) may be specified start navigation at a specific special folder.
+		/// </param>
+		/// <param name="options">No options are supported.</param>
+		/// <param name="prompt">If blank or omitted, it defaults to "Select Folder - " <see cref="A_ScriptName"/> (i.e. the name of the current script).<br/>
+		/// Otherwise, specify the text displayed in the window to instruct the user what to do.
+		/// </param>
+		/// <returns>The full path and name of the folder chosen by the user.<br/>
+		/// If the user cancels the dialog (i.e. does not wish to select a folder), an empty string is returned.<br/>
+		/// If the user selects a root directory (such as C:\), the return value will contain a trailing backslash.
+		/// </returns>
+		public static string DirSelect(object startingFolder = null, object options = null, object prompt = null)
 		{
-			var startingFolder = obj0.As();
-			var options = obj1.Al();
-			var prompt = obj2.As();
+			var folder = startingFolder.As();
+			var opts = options.Al();
+			var p = prompt.As();
 			var str = "";
 			var select = new FolderBrowserDialog
 			{
-				ShowNewFolderButton = (options & 1) == 1//The 3 and 5 options seem to not apply to this class in C#.
+				ShowNewFolderButton = (opts & 1) == 1//The 1, 3 and 5 options seem to not apply to this class and the New Folder button will always be shown.
 			};
-			select.Description = prompt != "" ? prompt : "Select Folder - " + Accessors.A_ScriptName;
+			select.UseDescriptionForTitle = true;
+			select.Description = p != "" ? p : "Select Folder - " + Accessors.A_ScriptName;
 			select.RootFolder = Environment.SpecialFolder.MyComputer;
 
-			if (startingFolder.StartsWith("::"))
+			if (folder.StartsWith("::"))
 			{
-				var guidStr = startingFolder.Trim([':', '{', '}']).ToLower();
+				var guidStr = folder.Trim([':', '{', '}']).ToLower();
 				var guid = new Guid(guidStr);
 #if LINUX
 
@@ -70,10 +76,10 @@ namespace Keysharp.Core
 
 #endif
 			}
-			else if (Options.TryParseString(startingFolder, "*", ref str))
+			else if (Options.TryParseString(folder, "*", ref str))
 				select.SelectedPath = str;
-			else if (startingFolder.Length != 0)
-				select.SelectedPath = startingFolder;
+			else if (folder.Length != 0)
+				select.SelectedPath = folder;
 
 			nFolderDialogs++;
 			var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
@@ -82,28 +88,47 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Displays a standard dialog that allows the user to open or save files.
+		/// Displays a standard dialog that allows the user to open or save file(s).
 		/// </summary>
-		/// <param name="OutputVar">The user selected files.</param>
-		/// <param name="Options">
-		/// <list type="bullet">
-		/// <item><term>M</term>: <description>allow muliple files to be selected.</description></item>
-		/// <item><term>S</term>: <description>show a save as dialog rather than a file open dialog.</description></item>
-		/// <item><term>1</term>: <description>only allow existing file or directory paths.</description></item>
-		/// <item><term>8</term>: <description>prompt to create files.</description></item>
-		/// <item><term>16:</term>: <description>prompt to overwrite files.</description></item>
-		/// <item><term>32</term>: <description>follow the target of a shortcut rather than using the shortcut file itself.</description></item>
-		/// </list>
+		/// <param name="options">
+		/// If blank or omitted, it defaults to zero, which is the same as having none of the options below. Otherwise, specify a number or one of the letters listed below, optionally followed by a number. For example, "M", 1 and "M1" are all valid (but not equivalent).<br/>
+		///     D: Select Folder (Directory). Specify the letter D to allow the user to select a folder rather than a file. The dialog has most of the same features as when selecting a file, but does not support filters (Filter must be blank or omitted).<br/>
+		///     M: Multi-select. Specify the letter M to allow the user to select more than one file via shift-click, control-click, or other means. In this case, the return value is an Array instead of a string. To extract the individual files, see the example at the bottom of this page.<br/>
+		///     S: Save dialog. Specify the letter S to cause the dialog to always contain a Save button instead of an Open button.<br/>
+		/// <br/><br/>
+		/// The following numbers can be used. To put more than one of them into effect, add them up. For example, to use 1 and 2, specify the number 3.<br/>
+		/// <br/><br/>
+		///     1: File Must Exist<br/>
+		///     2: Path Must Exist<br/>
+		///     8: Prompt to Create New File<br/>
+		///     16: Prompt to Overwrite File<br/>
+		///     32: Shortcuts (.lnk files) are selected as-is rather than being resolved to their targets. This option also prevents navigation into a folder via a folder shortcut.
 		/// </param>
-		/// <param name="RootDir">The file path to initially select.</param>
-		/// <param name="Prompt">Text displayed in the window to instruct the user what to do.</param>
-		/// <param name="Filter">Indicates which types of files are shown by the dialog, e.g. <c>Audio (*.wav; *.mp2; *.mp3)</c>.</param>
-		public static object FileSelect(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <param name="rootDirFilename">If blank or omitted, the starting directory will be a default that might depend on the OS version (it will likely be the directory most recently selected by the user during a prior use of FileSelect). Otherwise, specify one or both of the following:<br/>
+		///     RootDir: The root (starting) directory, which is assumed to be a subfolder in A_WorkingDir if an absolute path is not specified.<br/>
+		///     Filename: The default filename to initially show in the dialog's edit field. Only the naked filename (with no path) will be shown.
+		/// </param>
+		/// <param name="title">If blank or omitted, it defaults to "Select File - " <see cref="A_ScriptName"/> (i.e. the name of the current script),<br/>
+		/// unless the "D" option is present, in which case the word "File" is replaced with "Folder".<br/>
+		/// Otherwise, specify the title of the file-selection window.
+		/// </param>
+		/// <param name="filter">If blank or omitted, the dialog will show all type of files and provide<br/>
+		/// the "All Files (*.*)" option in the "Files of type" drop-down list.<br/>
+		/// Otherwise, specify a string to indicate which types of files are shown by the dialog,<br/>
+		/// e.g. "Documents (*.txt)". To include more than one file extension in the filter,<br/>
+		/// separate them with semicolons, e.g. "Audio (*.wav; *.mp2; *.mp3)".<br/>
+		/// This parameter must be blank or omitted if the "D" option is present.
+		/// </param>
+		/// <returns>If multi-select is not in effect, this function returns the full path and name of the single file or folder chosen by the user, or an empty string if the user cancels the dialog.<br/>
+		/// If the M option (multi-select) is in effect, this function returns an array of items, where each item is the full path and name of a single file.<br/>
+		/// If the user cancels the dialog, the array is empty (has zero items).
+		/// </returns>
+		public static object FileSelect(object options = null, object rootDirFilename = null, object title = null, object filter = null)
 		{
-			var opts = obj0.As();
-			var rootdir = obj1.As();
-			var title = obj2.As();
-			var filter = FixFilters(obj3.As());
+			var opts = options.As();
+			var rootdir = rootDirFilename.As();
+			var t = title.As();
+			var f = FixFilters(filter.As());
 			bool save = false, multi = false, check = false, create = false, overwite = false, shortcuts = false, dir = false;
 			opts = opts.ToUpperInvariant();
 			object files = null;
@@ -156,13 +181,13 @@ namespace Keysharp.Core
 
 			nFileDialogs++;
 
-			if (!filter.Contains("All Files (*.*)|*.*"))
-				filter += "|All Files (*.*)|*.*";
+			if (!f.Contains("All Files (*.*)|*.*"))
+				f += "|All Files (*.*)|*.*";
 
 			if (save)
 			{
-				if (title?.Length == 0)
-					title = $"Select File - {Accessors.A_ScriptName}";
+				if (t?.Length == 0)
+					t = $"Select File - {Accessors.A_ScriptName}";
 
 				var saveas = new SaveFileDialog
 				{
@@ -170,8 +195,8 @@ namespace Keysharp.Core
 					CreatePrompt = create,
 					OverwritePrompt = overwite,
 					DereferenceLinks = shortcuts,
-					Filter = filter,
-					Title = title,
+					Filter = f,
+					Title = t,
 					InitialDirectory = Path.GetDirectoryName(rootdir),
 					FileName = Path.GetFileName(rootdir)
 				};
@@ -182,31 +207,32 @@ namespace Keysharp.Core
 			{
 				if (dir)
 				{
-					if (title?.Length == 0)
-						title = $"Select Folder - {Accessors.A_ScriptName}";
+					if (t?.Length == 0)
+						t = $"Select Folder - {Accessors.A_ScriptName}";
 
 					var select = new FolderBrowserDialog()
 					{
 						RootFolder = Environment.SpecialFolder.MyComputer,
 						SelectedPath = rootdir + Path.DirectorySeparatorChar,
-						Description = title,
-						ShowNewFolderButton = true
+						UseDescriptionForTitle = true,
+						Description = t,
+						ShowNewFolderButton = true//Seems to be visible regardless of this property.
 					};
 					var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
 					files = selected == DialogResult.OK ? select.SelectedPath : "";
 				}
 				else
 				{
-					if (title?.Length == 0)
-						title = $"Select File - {Accessors.A_ScriptName}";
+					if (t?.Length == 0)
+						t = $"Select File - {Accessors.A_ScriptName}";
 
 					var open = new OpenFileDialog
 					{
 						Multiselect = multi,
 						CheckFileExists = check,
 						DereferenceLinks = shortcuts,
-						Filter = filter,
-						Title = title,
+						Filter = f,
+						Title = t,
 						InitialDirectory = Path.GetDirectoryName(rootdir),
 						FileName = Path.GetFileName(rootdir)
 					};
@@ -252,28 +278,37 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Displays an input box to ask the user to enter a string.
 		/// </summary>
-		/// <param name="OutputVar">The name of the variable in which to store the text entered by the user.</param>
-		/// <param name="Title">The title of the input box. If blank or omitted, it defaults to the name of the script.</param>
-		/// <param name="Prompt">The text of the input box, which is usually a message to the user indicating what kind of input is expected.</param>
-		/// <param name="Hide">If this parameter is the word HIDE, the user's input will be masked, which is useful for passwords.</param>
-		/// <param name="Width">If this parameter is blank or omitted, the starting width of the window will be 375.</param>
-		/// <param name="Height">If this parameter is blank or omitted, the starting height of the window will be 189.</param>
-		/// <param name="X">The X coordinate of the window (use 0,0 to move it to the upper left corner of the desktop). If either coordinate is blank or omitted, the dialog will be centered in that dimension. Either coordinate can be negative to position the window partially or entirely off the desktop.</param>
-		/// <param name="Y">The Y coordinate of the window (see <paramref name="X"/>).</param>
-		/// <param name="Font">Not yet implemented (leave blank). In the future it might accept something like verdana:8</param>
-		/// <param name="Timeout">Timeout in seconds (can contain a decimal point).  If this value exceeds 2147483 (24.8 days), it will be set to 2147483. After the timeout has elapsed, the InputBox window will be automatically closed and ErrorLevel will be set to 2. OutputVar will still be set to what the user entered.</param>
-		/// <param name="Default">A string that will appear in the InputBox's edit field when the dialog first appears. The user can change it by backspacing or other means.</param>
-		public static DialogResultReturn InputBox(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
+		/// <param name="prompt">The text to display to the user. Default: empty string.</param>
+		/// <param name="title">If omitted, it defaults to the current value of <see cref="A_ScriptName"/>. Otherwise, specify the title of the input box.</param>
+		/// <param name="options">If blank or omitted, the input box will be centered horizontally and vertically on the screen, with a default size of about 380x200 pixels,<br/>
+		/// depending on the OS version and theme. Otherwise, specify a string of one or more of the following options, each separated from the next with a space or tab:<br/>
+		///     Xn and Yn: The X and Y coordinates of the dialog. For example, x0 y0 puts the window at the upper left corner of the desktop.<br/>
+		///         If either coordinate is omitted, the dialog will be centered in that dimension. Either coordinate can be negative to position the dialog<br/>
+		///         partially or entirely off the desktop (or on a secondary monitor in a multi-monitor setup).<br/>
+		///     Wn and Hn: The width and height of the dialog's client area, which excludes the title bar and borders. For example, w200 h100.<br/>
+		///     Tn: Specifies the timeout in seconds. For example, T10.0 is ten seconds. If this value exceeds 2147483 (24.8 days), it will be set to 2147483.<br/>
+		///         After the timeout has elapsed, the input box will be automatically closed and InputBoxObj.<br/>
+		///         Result will be set to the word Timeout. InputBoxObj.Value will still contain what the user entered.<br/>
+		///     Password: Hides the user's input (such as for password entry) by substituting masking characters for what the user types.<br/>
+		///         If a non-default masking character is desired, include it immediately after the word Password.<br/>
+		///         For example, Password* would make the masking character an asterisk rather than the black circle (bullet).
+		/// </param>
+		/// <param name="default">If blank or omitted, it defaults to no string. Otherwise, specify a string that will appear in the input box's edit field when the dialog first appears.</param>
+		/// <returns>An object with the following properties:<br/><br/>
+		///     Value (String): The text entered by the user.<br/>
+		///     Result (String): One of the following words indicating how the input box was closed: OK, Cancel, or Timeout.
+		/// </returns>
+		public static DialogResultReturn InputBox(object prompt = null, object title = null, object options = null, object @default = null)
 		{
-			var prompt = obj0.As();
-			var title = obj1.As();
-			var options = obj2.As();
-			var def = obj3.As();
+			var p = prompt.As();
+			var t = title.As();
+			var opts = options.As();
+			var def = @default.As();
 			var input = new InputDialog
 			{
 				Default = def,
-				Prompt = prompt,
-				Title = title?.Length == 0 ? Accessors.A_ScriptName : title
+				Prompt = p,
+				Title = t?.Length == 0 ? Accessors.A_ScriptName : t
 			};
 			object wl = null, wt = null, wr = null, wb = null;
 			var workarea = Monitor.MonitorGetWorkArea(null, ref wl, ref wt, ref wr, ref wb);
@@ -283,10 +318,10 @@ namespace Keysharp.Core
 			var y = int.MinValue;
 			var pw = "";
 
-			foreach (Range r in options.AsSpan().SplitAny(Spaces))
+			foreach (Range r in opts.AsSpan().SplitAny(Spaces))
 			{
 				var temp = 0;
-				var opt = options.AsSpan(r).Trim();
+				var opt = opts.AsSpan(r).Trim();
 
 				if (opt.Length > 0)
 				{
@@ -328,45 +363,38 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Show a message box.
-		/// </summary>
-		/// <param name="text">The text to show in the prompt, which can be an object of any kind.</param>
-		//public static DialogResult MsgBox(object text)
-		//{
-		//  var txt = Script.ForceString(text);
-		//  //Task.Factory.StartNew(() =>
-		//  {
-		//      var title = Environment.GetEnvironmentVariable("SCRIPT") ?? "Keysharp";
-		//
-		//      if (!string.IsNullOrEmpty(title) && System.IO.File.Exists(title))
-		//          title = Path.GetFileName(title);
-		//
-		//      var res = GuiHelper.DialogOwner != null ? MessageBox.Show(GuiHelper.DialogOwner, txt, title) : MessageBox.Show(txt, title);
-		//      return res;
-		//  }//);
-		//}
-
-		/// <summary>
 		/// Displays the specified text in a small window containing one or more buttons (such as Yes and No).
 		/// </summary>
-		/// <param name="Options">
-		/// <para>Indicates the type of message box and the possible button combinations. If blank or omitted, it defaults to 0. See the table below for allowed values.</para>
-		/// <para>This parameter will not be recognized if it contains an expression or a variable reference such as %option%. Instead, use a literal numeric value.</para>
+		/// <param name="text">If omitted and "OK" is the only button present, it defaults to the string "Press OK to continue.".<br/>
+		/// If omitted in any other case, it defaults to an empty string.<br/>
+		/// Otherwise, specify the text to display inside the message box.
 		/// </param>
-		/// <param name="Title">The title of the message box window. If omitted or blank, it defaults to the name of the script (without path).</param>
-		/// <param name="Text">
-		/// <para>If all the parameters are omitted, the MsgBox will display the text "Press OK to continue." Otherwise, this parameter is the text displayed inside the message box to instruct the user what to do, or to present information.</para>
-		/// <para>Escape sequences can be used to denote special characters. For example, `n indicates a linefeed character, which ends the current line and begins a new one. Thus, using text1`n`ntext2 would create a blank line between text1 and text2.</para>
-		/// <para>If Text is long, it can be broken up into several shorter lines by means of a continuation section, which might improve readability and maintainability.</para>
+		/// <param name="title">If omitted, it defaults to the current value of <see cref="A_ScriptName"/>.<br/>
+		/// Otherwise, specify the title of the message box.
 		/// </param>
-		/// <param name="Timeout">
-		/// <para>(optional) Timeout in seconds (can contain a decimal point but cannot be an expression).  If this value exceeds 2147483 (24.8 days), it will be set to 2147483.  After the timeout has elapsed the message box will be automatically closed and the IfMsgBox command will see the value TIMEOUT.</para>
-		/// <para>Known limitation: If the MsgBox contains only an OK button, IfMsgBox will think that the OK button was pressed if the MsgBox times out while its own thread is interrupted by another.</para>
-		/// </param>
-		public static string MsgBox(object obj0 = null, object obj1 = null, object obj2 = null)
+		/// <param name="options">If blank or omitted, it defaults to 0 (only an OK button is displayed).<br/>
+		/// Otherwise, specify a combination(sum) of values or a string of one or more options from the tables below to indicate the type of message box and the possible button combinations.<br/>
+		/// In addition, zero or more of the following options can be specified:<br/>
+		///     Owner: To specify an owner window for the message box, use the word Owner followed immediately by a HWND (window ID).<br/>
+		///     T: Timeout.To have the message box close automatically if the user has not closed it within a specified time, use the letter T followed by the timeout in seconds,<br/>
+		///         which can contain a decimal point.<br/>
+		///         If the message box times out, the return value is the word Timeout.</param>
+		/// <returns>One of the following strings to represent which button the user pressed:<br/>
+		///     OK<br/>
+		///     Cancel<br/>
+		///     Yes<br/>
+		///     No<br/>
+		///     Abort<br/>
+		///     Retry<br/>
+		///     Ignore<br/>
+		///     TryAgain<br/>
+		///     Continue<br/>
+		///     Timeout (that is, the word "timeout" is returned if the message box timed out)
+		/// </returns>
+		public static string MsgBox(object text = null, object title = null, object options = null)
 		{
-			var text = obj0.As();
-			var title = obj1.As();
+			var txt = text.As();
+			var caption = title.As();
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
@@ -375,16 +403,15 @@ namespace Keysharp.Core
 #else
 			var mbopts = MessageBoxOptions.ServiceNotification;
 #endif
-			//var help = false;
-			Control owner = GuiHelper.DialogOwner;// ?? Form.ActiveForm;
+			Control owner = GuiHelper.DialogOwner;
 			var timeout = 0.0;
 
-			if (title?.Length == 0)
+			if (caption?.Length == 0)
 			{
-				title = Accessors.A_ScriptName;
+				caption = Accessors.A_ScriptName;
 
-				if (text?.Length == 0 && obj2 == null)
-					text = "Press OK to continue.";
+				if (txt?.Length == 0 && options == null)
+					txt = "Press OK to continue.";
 			}
 
 			void HandleNumericOptions(int itemp)
@@ -441,19 +468,19 @@ namespace Keysharp.Core
 				//System modal dialogs are no longer supported in Windows.
 			}
 
-			if (Script.IsNumeric(obj2))
+			if (Script.IsNumeric(options))
 			{
-				HandleNumericOptions(obj2.Ai());
+				HandleNumericOptions(options.Ai());
 			}
 			else
 			{
-				var options = obj2.As();
+				var opts = options.As();
 				var iopt = 0;
 				var hadNumeric = false;
 
-				foreach (Range r in options.AsSpan().SplitAny(Spaces))
+				foreach (Range r in opts.AsSpan().SplitAny(Spaces))
 				{
-					var opt = options.AsSpan(r).Trim();
+					var opt = opts.AsSpan(r).Trim();
 
 					if (opt.Length > 0)
 					{
@@ -562,7 +589,7 @@ namespace Keysharp.Core
 					w.Invoke(() => w.Close());
 					timeoutclosed = true;
 				}, TaskScheduler.FromCurrentSynchronizationContext());
-				var ret = MessageBox.Show(w, text, title, buttons, icon, defaultbutton, mbopts);
+				var ret = MessageBox.Show(w, txt, caption, buttons, icon, defaultbutton, mbopts);
 				nMessageBoxes--;
 				return timeoutclosed ? "Timeout" : ret.ToString();
 			}
@@ -572,17 +599,23 @@ namespace Keysharp.Core
 				var ret = "";
 
 				if (owner != null)
-					_ = owner.Invoke(() => ret = MessageBox.Show(owner, text, title, buttons, icon, defaultbutton, mbopts).ToString());
+					_ = owner.Invoke(() => ret = MessageBox.Show(owner, txt, caption, buttons, icon, defaultbutton, mbopts).ToString());
 				else
-					ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, text, title, buttons, icon, defaultbutton, mbopts).ToString(), true);
+					ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString(), true);
 
 				nMessageBoxes--;
 				return ret;
 			}
 		}
 
+		/// <summary>
+		/// Internal helper to close all message boxes.
+		/// Only used on script exit to make sure all message boxes are closed.
+		/// Currently only able to work on Windows.
+		/// </summary>
 		internal static void CloseMessageBoxes()
 		{
+#if WINDOWS
 			//Will need a way to do this on linux.//TODO
 			var tempn = nMessageBoxes;
 
@@ -596,11 +629,23 @@ namespace Keysharp.Core
 					tempn--;
 				}
 			}
+
+#endif
 		}
 
+		/// <summary>
+		/// For returning from <see cref="InputBox(object, object, object, object)"/>
+		/// </summary>
 		public class DialogResultReturn
 		{
+			/// <summary>
+			/// The result of the input box selection: OK, Cancel or Timeout.
+			/// </summary>
 			public string Result { get; set; }
+
+			/// <summary>
+			/// The text entered by the user in the input box.
+			/// </summary>
 			public string Value { get; set; }
 		}
 	}

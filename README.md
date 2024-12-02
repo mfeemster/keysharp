@@ -307,7 +307,7 @@ class class1
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
 * Add new methods and properties to`Menu`:
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
-	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
+	+ `MenuItemName()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
 	+ `MenuItemCount` to get the number of sub items within a menu.
 * `Picture` supports clearing the picture by setting the `Value` property to empty.
@@ -536,7 +536,15 @@ class class1
 * `LoadPicture()` does not accept a `GDI+` argument as an option.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
 * `PixelGetColor()` ignores the `mode` parameter.
-* The `3` and `5` options for `DirSelect()` don't apply in C#.
+* `DirSelect()`:
+	+ The `1`, `3` and `5` options don't apply and the New Folder button will always be shown.
+	+ Modality cannot be configured with `Gui.Opt("+OwnDialogs")` because the folder select dialog is always modal.
+	+ Restricting folder navigation is not supported.
+* `MsgBox()`:
+	+ The modality options are ignored.
+	+ The message box will block the window that launched it by default. If `+OwnDialogs` is in effect, then all GUIs in the script are blocked until it is dismissed.
+	+ System modal dialog boxes are no longer supported on Windows.
+	+ The help option `16384` is ignored.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
 * Function references are supported, but the VarRef object is not supported.
