@@ -22,7 +22,7 @@ namespace Keysharp.Scripting
 
 			public static void InitGlobalVars()
 			{
-				Window.SetProcessDPIAware();
+				WindowX.SetProcessDPIAware();
 				Flow.Init();
 				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;

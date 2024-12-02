@@ -59,7 +59,7 @@ namespace Keysharp.Core.Common.Platform
 		internal WindowItemBase FindWindow(object winTitle, object winText, object excludeTitle, object excludeText, bool last = false)
 		{
 			WindowItemBase foundWindow = null;
-			var (parsed, ptr) = Core.Window.CtrlToIntPtr(winTitle);
+			var (parsed, ptr) = WindowHelper.CtrlToIntPtr(winTitle);
 
 			if (parsed)
 				if (IsWindow(ptr))

@@ -1,477 +1,14 @@
-using System.Windows.Forms;
-
+using static Keysharp.Core.WindowHelper;
+using static Keysharp.Core.WindowSearch;
 using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core
 {
-	public static class Window
+	public static class WindowX
 	{
 		private static bool dpimodeset;
 
-		/// <summary>
-		/// easy access to the window groups
-		/// </summary>
 		private static Dictionary<string, WindowGroup> windowGroups => WindowProvider.Manager.Groups;
-
-		public static long ControlAddItem(object @string,
-										  object control,
-										  object winTitle = null,
-										  object winText = null,
-										  object excludeTitle = null,
-										  object excludeText = null) => ControlProvider.Manager.ControlAddItem(
-											  @string.As(),
-											  control,
-											  winTitle,
-											  winText,
-											  excludeTitle,
-											  excludeText);
-
-		public static object ControlChooseIndex(object n,
-												object control,
-												object winTitle = null,
-												object winText = null,
-												object excludeTitle = null,
-												object excludeText = null)
-		{
-			ControlProvider.Manager.ControlChooseIndex(
-				n.Ai(),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static long ControlChooseString(object @string,
-											   object control,
-											   object winTitle = null,
-											   object winText = null,
-											   object excludeTitle = null,
-											   object excludeText = null) => ControlProvider.Manager.ControlChooseString(
-													   @string.As(),
-													   control,
-													   winTitle,
-													   winText,
-													   excludeTitle,
-													   excludeText);
-
-		public static object ControlClick(object ctrlOrPos = null,
-										  object title = null,
-										  object text = null,
-										  object whichButton = null,
-										  object clickCount = null,
-										  object options = null,
-										  object excludeTitle = null,
-										  object excludeText = null)
-		{
-			ControlProvider.Manager.ControlClick(
-				ctrlOrPos,
-				title,
-				text,
-				whichButton.As(),
-				clickCount.Ai(1),
-				options.As(),
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlDeleteItem(object n,
-											   object control,
-											   object winTitle = null,
-											   object winText = null,
-											   object excludeTitle = null,
-											   object excludeText = null)
-		{
-			ControlProvider.Manager.ControlDeleteItem(
-				n.Ai(),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static long ControlFindItem(object @string,
-										   object control,
-										   object winTitle = null,
-										   object winText = null,
-										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlFindItem(
-											   @string.As(),
-											   control,
-											   winTitle,
-											   winText,
-											   excludeTitle,
-											   excludeText);
-
-		public static object ControlFocus(object control,
-										  object winTitle = null,
-										  object winText = null,
-										  object excludeTitle = null,
-										  object excludeText = null)
-		{
-			ControlProvider.Manager.ControlFocus(
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static long ControlGetChecked(object control,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetChecked(
-													 control,
-													 winTitle,
-													 winText,
-													 excludeTitle,
-													 excludeText);
-
-		public static string ControlGetChoice(object control,
-											  object winTitle = null,
-											  object winText = null,
-											  object excludeTitle = null,
-											  object excludeText = null) => ControlProvider.Manager.ControlGetChoice(
-													  control,
-													  winTitle,
-													  winText,
-													  excludeTitle,
-													  excludeText);
-
-		public static string ControlGetClassNN(object control,
-											   object winTitle = null,
-											   object winText = null,
-											   object excludeTitle = null,
-											   object excludeText = null) => ControlProvider.Manager.ControlGetClassNN(
-													   control,
-													   winTitle,
-													   winText,
-													   excludeTitle,
-													   excludeText);
-
-		public static long ControlGetEnabled(object control,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetEnabled(
-													 control,
-													 winTitle,
-													 winText,
-													 excludeTitle,
-													 excludeText);
-
-		public static long ControlGetExStyle(object control,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetExStyle(
-													 control,
-													 winTitle,
-													 winText,
-													 excludeTitle,
-													 excludeText);
-
-		public static long ControlGetFocus(object winTitle = null,
-										   object winText = null,
-										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlGetFocus(
-											   winTitle,
-											   winText,
-											   excludeTitle,
-											   excludeText);
-
-		public static long ControlGetHwnd(object control,
-										  object winTitle = null,
-										  object winText = null,
-										  object excludeTitle = null,
-										  object excludeText = null) => ControlProvider.Manager.ControlGetHwnd(
-											  control,
-											  winTitle,
-											  winText,
-											  excludeTitle,
-											  excludeText);
-
-		public static long ControlGetIndex(object control,
-										   object winTitle = null,
-										   object winText = null,
-										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlGetIndex(
-											   control,
-											   winTitle,
-											   winText,
-											   excludeTitle,
-											   excludeText);
-
-		public static Array ControlGetItems(object control,
-											object winTitle = null,
-											object winText = null,
-											object excludeTitle = null,
-											object excludeText = null) => ControlProvider.Manager.ControlGetItems(
-												control,
-												winTitle,
-												winText,
-												excludeTitle,
-												excludeText);
-
-		public static object ControlGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
-										   [Optional()][DefaultParameterValue(0)] ref object outY,
-										   [Optional()][DefaultParameterValue(0)] ref object outWidth,
-										   [Optional()][DefaultParameterValue(0)] ref object outHeight,
-										   object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null)
-		{
-			ControlProvider.Manager.ControlGetPos(
-				ref outX,
-				ref outY,
-				ref outWidth,
-				ref outHeight,
-				ctrl,
-				title?.ToString(),
-				text?.ToString(),
-				excludeTitle?.ToString(),
-				excludeText?.ToString());
-			return null;
-		}
-
-		public static long ControlGetStyle(object control,
-										   object winTitle = null,
-										   object winText = null,
-										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlGetStyle(
-											   control,
-											   winTitle,
-											   winText,
-											   excludeTitle,
-											   excludeText);
-
-		public static string ControlGetText(object control,
-											object winTitle = null,
-											object winText = null,
-											object excludeTitle = null,
-											object excludeText = null) => ControlProvider.Manager.ControlGetText(
-												control,
-												winTitle,
-												winText,
-												excludeTitle,
-												excludeText);
-
-		public static long ControlGetVisible(object control,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetVisible(
-													 control,
-													 winTitle,
-													 winText,
-													 excludeTitle,
-													 excludeText);
-
-		public static object ControlHide(object control,
-										 object winTitle = null,
-										 object winText = null,
-										 object excludeTitle = null,
-										 object excludeText = null)
-		{
-			ControlProvider.Manager.ControlHide(
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlHideDropDown(object control,
-				object winTitle = null,
-				object winText = null,
-				object excludeTitle = null,
-				object excludeText = null)
-		{
-			ControlProvider.Manager.ControlHideDropDown(
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlMove(object x = null,
-										 object y = null,
-										 object width = null,
-										 object height = null,
-										 object control = null,
-										 object winTitle = null,
-										 object winText = null,
-										 object excludeTitle = null,
-										 object excludeText = null)
-		{
-			ControlProvider.Manager.ControlMove(
-				x.Ai(int.MinValue),
-				y.Ai(int.MinValue),
-				width.Ai(int.MinValue),
-				height.Ai(int.MinValue),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSend(object keys,
-										 object control = null,
-										 object winTitle = null,
-										 object winText = null,
-										 object excludeTitle = null,
-										 object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSend(
-				keys.As(),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSendText(object keys,
-											 object control = null,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSendText(
-				keys.As(),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSetChecked(object newSetting,
-											   object control,
-											   object winTitle = null,
-											   object winText = null,
-											   object excludeTitle = null,
-											   object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSetChecked(
-				newSetting,
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSetEnabled(object newSetting,
-											   object control,
-											   object winTitle = null,
-											   object winText = null,
-											   object excludeTitle = null,
-											   object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSetEnabled(
-				newSetting,
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSetExStyle(object value,
-											   object control,
-											   object winTitle = null,
-											   object winText = null,
-											   object excludeTitle = null,
-											   object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSetExStyle(
-				value,
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSetStyle(object value,
-											 object control,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSetStyle(
-				value,
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlSetText(object newText,
-											object control,
-											object winTitle = null,
-											object winText = null,
-											object excludeTitle = null,
-											object excludeText = null)
-		{
-			ControlProvider.Manager.ControlSetText(
-				newText.As(),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlShow(object control,
-										 object winTitle = null,
-										 object winText = null,
-										 object excludeTitle = null,
-										 object excludeText = null)
-		{
-			ControlProvider.Manager.ControlShow(
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
-
-		public static object ControlShowDropDown(object control,
-				object winTitle = null,
-				object winText = null,
-				object excludeTitle = null,
-				object excludeText = null)
-		{
-			ControlProvider.Manager.ControlShowDropDown(
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
-		}
 
 		public static object DetectHiddenText(object mode)
 		{
@@ -485,80 +22,6 @@ namespace Keysharp.Core
 			var oldVal = Accessors.A_DetectHiddenWindows;
 			Accessors.A_DetectHiddenWindows = mode;
 			return oldVal;
-		}
-
-		public static long EditGetCurrentCol(object control,
-											 object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.EditGetCurrentCol(
-													 control,
-													 winTitle,
-													 winText,
-													 excludeTitle,
-													 excludeText);
-
-		public static long EditGetCurrentLine(object control,
-											  object winTitle = null,
-											  object winText = null,
-											  object excludeTitle = null,
-											  object excludeText = null) => ControlProvider.Manager.EditGetCurrentLine(
-													  control,
-													  winTitle,
-													  winText,
-													  excludeTitle,
-													  excludeText);
-
-		public static string EditGetLine(object n,
-										 object control,
-										 object winTitle = null,
-										 object winText = null,
-										 object excludeTitle = null,
-										 object excludeText = null) => ControlProvider.Manager.EditGetLine(
-											 n.Ai(),
-											 control,
-											 winTitle,
-											 winText,
-											 excludeTitle,
-											 excludeText);
-
-		public static long EditGetLineCount(object control,
-											object winTitle = null,
-											object winText = null,
-											object excludeTitle = null,
-											object excludeText = null) => ControlProvider.Manager.EditGetLineCount(
-												control,
-												winTitle,
-												winText,
-												excludeTitle,
-												excludeText);
-
-		public static string EditGetSelectedText(object control,
-				object winTitle = null,
-				object winText = null,
-				object excludeTitle = null,
-				object excludeText = null) => ControlProvider.Manager.EditGetSelectedText(
-					control,
-					winTitle,
-					winText,
-					excludeTitle,
-					excludeText);
-
-		public static object EditPaste(object @string,
-									   object control,
-									   object winTitle = null,
-									   object winText = null,
-									   object excludeTitle = null,
-									   object excludeText = null)
-		{
-			ControlProvider.Manager.EditPaste(
-				@string.As(),
-				control,
-				winTitle,
-				winText,
-				excludeTitle,
-				excludeText);
-			return null;
 		}
 
 		public static long GroupActivate(object groupName, object mode = null)
@@ -1351,6 +814,7 @@ namespace Keysharp.Core
 			DoDelayedAction(() => { if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win) win.Bottom = true; });
 			return null;
 		}
+
 		public static object WinMoveTop(object winTitle = null,
 										object winText = null,
 										object excludeTitle = null,
@@ -1359,6 +823,7 @@ namespace Keysharp.Core
 			DoDelayedAction(() => { if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win) win.Bottom = false; });
 			return null;
 		}
+
 		public static object WinRedraw(object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
@@ -1386,6 +851,7 @@ namespace Keysharp.Core
 			WinSetToggleX((win, b) => win.AlwaysOnTop = b, win => win.AlwaysOnTop, newSetting, winTitle, winText, excludeTitle, excludeText);
 			return null;
 		}
+
 		public static object WinSetEnabled(object newSetting,
 										   object winTitle = null,
 										   object winText = null,
@@ -1405,6 +871,7 @@ namespace Keysharp.Core
 			WinSetStyleHelper(true, value, winTitle, winText, excludeTitle, excludeText);
 			return null;
 		}
+
 #if WINDOWS
 		public static object WinSetRegion(object options,
 										  object winTitle = null,
@@ -1504,6 +971,7 @@ namespace Keysharp.Core
 			WinSetStyleHelper(false, value, winTitle, winText, excludeTitle, excludeText);
 			return null;
 		}
+
 		public static object WinSetTitle(object newTitle,
 										 object winTitle = null,
 										 object winText = null,
@@ -1518,6 +986,7 @@ namespace Keysharp.Core
 
 			return null;
 		}
+
 		public static object WinSetTransColor(object color,
 											  object winTitle = null,
 											  object winText = null,
@@ -1532,6 +1001,7 @@ namespace Keysharp.Core
 
 			return null;
 		}
+
 		public static object WinSetTransparent(object n,
 											   object winTitle = null,
 											   object winText = null,
@@ -1546,6 +1016,7 @@ namespace Keysharp.Core
 
 			return null;
 		}
+
 		public static object WinShow(object winTitle = null,
 									 object winText = null,
 									 object excludeTitle = null,
@@ -1559,6 +1030,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return null;
 		}
+
 		public static long WinWait(object winTitle = null,
 								   object winText = null,
 								   object timeout = null,
@@ -1585,6 +1057,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return win != null ? win.Handle.ToInt64() : 0L;
 		}
+
 		public static long WinWaitActive(object winTitle = null,
 										 object winText = null,
 										 object timeout = null,
@@ -1619,6 +1092,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return hwnd;
 		}
+
 		public static long WinWaitClose(object winTitle = null,
 										object winText = null,
 										object timeout = null,
@@ -1650,6 +1124,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
+
 		public static long WinWaitNotActive(object winTitle = null,
 											object winText = null,
 											object timeout = null,
@@ -1681,6 +1156,7 @@ namespace Keysharp.Core
 			WindowItemBase.DoWinDelay();
 			return b ? 1L : 0L;
 		}
+
 #if LINUX
 		[PublicForTestOnly]
 		public static long zzzLinuxTester(params object[] obj)
@@ -1688,305 +1164,5 @@ namespace Keysharp.Core
 			return 1L;
 		}
 #endif
-		internal static (bool, IntPtr) CtrlToIntPtr(object ctrl)
-		{
-			if (ctrl == null)
-			{
-				return (false, IntPtr.Zero);
-			}
-			else if (ctrl is long l)
-			{
-				return (true, new IntPtr(l));
-			}
-			else if (ctrl is IntPtr ip)
-			{
-				return (true, ip);
-			}
-			else if (ctrl is int i)
-			{
-				return (true, i);
-			}
-			else if (!(ctrl is string))
-			{
-				object hwnd = null;
-
-				try
-				{
-					hwnd = GetPropertyValue(ctrl, "Hwnd");
-				}
-				catch { }
-
-				var ptr = IntPtr.Zero;
-
-				if (hwnd is long ll)
-					ptr = new IntPtr(ll);
-				else if (hwnd is IntPtr p)
-					ptr = p;
-				else if (hwnd is int ii)
-					ptr = new IntPtr(ii);
-
-				return (true, ptr);
-			}
-
-			return (false, IntPtr.Zero);
-		}
-		internal static void DoDelayedAction(Action act)
-		{
-			act();
-			WindowItemBase.DoWinDelay();
-		}
-		internal static T DoDelayedFunc<T>(Func<T> func)
-		{
-			var val = func();
-			WindowItemBase.DoWinDelay();
-			return val;
-		}
-		internal static WindowItemBase SearchControl(object ctrl, object title, object text, object excludeTitle, object excludeText, bool throwifnull = true)
-		{
-			var (parsed, ptr) = CtrlToIntPtr(ctrl);
-
-			if (parsed)
-			{
-				if (WindowProvider.Manager.IsWindow(ptr))
-					return WindowProvider.Manager.CreateWindow(ptr);
-				else if (throwifnull && !IsMainWindowClosing)
-					throw new TargetError($"Could not find child control with handle: {ptr}");
-				else
-					return null;
-			}
-
-			var parent = SearchWindow(title, text, excludeTitle, excludeText, true);
-
-			if (ctrl == null)
-				return parent;
-
-			var sc = new SearchCriteria();
-			string classortext = null;
-			string s = ctrl as string;
-
-			if (!string.IsNullOrEmpty(s))
-			{
-				var isClass = s.Length > 0 && char.IsDigit(s[ ^ 1]);
-
-				if (isClass)
-					sc.ClassName = s;
-				else
-					sc.Text = s;
-
-				classortext = s;
-			}
-
-			var childitem = parent.FirstChild(sc);
-
-			if (classortext != null && childitem == null)
-			{
-				if (string.IsNullOrEmpty(sc.Text))
-				{
-					sc.Text = sc.ClassName;
-					sc.ClassName = "";
-				}
-				else
-				{
-					sc.ClassName = sc.Text;
-					sc.Text = "";
-				}
-
-				childitem = parent.FirstChild(sc);
-
-				if (childitem == null)//Final attempt, just use title.
-				{
-					if (string.IsNullOrEmpty(sc.Text))
-					{
-						sc.Title = sc.ClassName;
-						sc.ClassName = "";
-					}
-					else
-					{
-						sc.Title = sc.Text;
-						sc.Text = "";
-					}
-
-					childitem = parent.FirstChild(sc);
-				}
-			}
-
-			if (childitem == null && throwifnull && !IsMainWindowClosing)
-				throw new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");//Can't use interpolated string here because the AStyle formatter misinterprets it.
-			return childitem;
-		}
-		internal static WindowItemBase SearchWindow(object winTitle,
-				object winText,
-				object excludeTitle,
-				object excludeText,
-				bool throwifnull,
-				bool last = false)
-		{
-			var win = WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText, last);
-
-			if (win == null && throwifnull && !IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-			return win;
-		}
-		internal static List<WindowItemBase> SearchWindows(object winTitle = null,
-				object winText = null,
-				object excludeTitle = null,
-				object excludeText = null)
-		{
-			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
-			return windows;
-		}
-		private static object WinGetControlsHelper(bool nn,
-				object winTitle,
-				object winText,
-				object excludeTitle,
-				object excludeText)
-		{
-			var win = WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText);
-
-			if (win != null)
-			{
-				var controls = win.ChildWindows;
-
-				if (controls.Count == 0)
-					return "";
-
-				var arr = new Array(controls.Count);
-
-				if (nn)
-				{
-					foreach (var ctrl in controls)
-						_ = arr.Add(ctrl.ClassNN);
-				}
-				else
-				{
-					foreach (var ctrl in controls)
-						_ = arr.Add(ctrl.Handle.ToInt64());
-				}
-
-				WindowItemBase.DoWinDelay();
-				return arr;
-			}
-			else if (!IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
-
-			return "";
-		}
-		private static void WinPosHelper(bool client,
-										 ref object outX,
-										 ref object outY,
-										 ref object outWidth,
-										 ref object outHeight,
-										 object winTitle,
-										 object winText,
-										 object excludeTitle,
-										 object excludeText)
-		{
-			//DoDelayedFunc(() =>
-			{
-				if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win)
-				{
-					var rect = client ? win.ClientLocation : win.Location;
-
-					if (client)
-					{
-						var pt = win.ClientToScreen();
-						outX = (long)(rect.Left + pt.X);
-						outY = (long)(rect.Top + pt.Y);
-					}
-					else
-					{
-						outX = (long)rect.Left;
-						outY = (long)rect.Top;
-					}
-
-					outWidth  = (long)rect.Width;
-					outHeight = (long)rect.Height;
-				}
-				else
-				{
-					outX = 0L;
-					outY = 0L;
-					outWidth = 0L;
-					outHeight = 0L;
-				}
-			}//);
-		}
-		private static void WinSetStyleHelper(bool ex,
-											  object value,
-											  object winTitle = null,
-											  object winText = null,
-											  object excludeTitle = null,
-											  object excludeText = null)
-		{
-			if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win)
-			{
-				var val = value;
-
-				if (ex)
-				{
-					if (val is int i)
-						win.ExStyle = i;
-					else if (val is uint ui)
-						win.ExStyle = ui;
-					else if (val is long l)
-						win.ExStyle = l;
-					else if (val is double d)
-						win.ExStyle = (long)d;
-					else if (val is string s)
-					{
-						long temp = 0;
-
-						if (Options.TryParse(s, "+", ref temp)) { win.ExStyle |= temp; }
-						else if (Options.TryParse(s, "-", ref temp)) { win.ExStyle &= ~temp; }
-						else if (Options.TryParse(s, "^", ref temp)) { win.ExStyle ^= temp; }
-						else win.ExStyle = val.ParseLong(true).Value;
-					}
-				}
-				else
-				{
-					if (val is int i)
-						win.Style = i;
-					else if (val is uint ui)
-						win.Style = ui;
-					else if (val is long l)
-						win.Style = l;
-					else if (val is double d)
-						win.Style = (long)d;
-					else if (val is string s)
-					{
-						long temp = 0;
-
-						if (Options.TryParse(s, "+", ref temp)) { win.Style |= temp; }
-						else if (Options.TryParse(s, "-", ref temp)) { win.Style &= ~temp; }
-						else if (Options.TryParse(s, "^", ref temp)) { win.Style ^= temp; }
-						else win.Style = val.ParseLong(true).Value;
-					}
-				}
-
-				WindowItemBase.DoWinDelay();
-			}
-		}
-		private static void WinSetToggleX(Action<WindowItemBase, bool> set, Func<WindowItemBase, bool> get,
-										  object value,
-										  object winTitle = null,
-										  object winText = null,
-										  object excludeTitle = null,
-										  object excludeText = null)
-		{
-			var val = value.Ai();
-
-			if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win)
-			{
-				if (val == 0)
-					set(win, false);
-				else if (val == 1)
-					set(win, true);
-				else if (val == -1)
-					set(win, !get(win));
-
-				WindowItemBase.DoWinDelay();
-			}
-		}
 	}
 }

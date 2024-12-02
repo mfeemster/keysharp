@@ -90,7 +90,7 @@
 			var tv = Threads.GetThreadVariables();
 			var mm = tv.titleMatchMode;
 			tv.titleMatchMode = 2L;//Match anywhere.
-			var hwnd = Window.WinExist(Accessors.A_ScriptName, "", title, "");
+			var hwnd = WindowX.WinExist(Accessors.A_ScriptName, "", title, "");
 			tv.titleMatchMode = mm;
 			var wi = new WindowItem(new IntPtr(hwnd));
 			var classname = wi.ClassName;//Logic taken from AHK.
@@ -221,18 +221,18 @@
 				inst = eScriptInstance.Force;
 
 			var exit = false;
-			var oldDetect = Window.DetectHiddenWindows(true);
+			var oldDetect = WindowX.DetectHiddenWindows(true);
 
 			switch (inst)
 			{
 				case eScriptInstance.Force:
 				{
-					_ = Window.WinClose(name, "", 2);
+					_ = WindowX.WinClose(name, "", 2);
 				}
 				break;
 
 				case eScriptInstance.Ignore:
-					if (Window.WinExist(name) != 0)
+					if (WindowX.WinExist(name) != 0)
 						exit = true;
 
 					break;
@@ -242,12 +242,12 @@
 
 				case eScriptInstance.Prompt:
 				default:
-					var hwnd = Window.WinExist(name);
+					var hwnd = WindowX.WinExist(name);
 
 					if (hwnd != 0)
 					{
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
-							_ = Window.WinClose(hwnd, "", 2);
+							_ = WindowX.WinClose(hwnd, "", 2);
 						else
 							exit = true;
 					}
@@ -255,7 +255,7 @@
 					break;
 			}
 
-			_ = Window.DetectHiddenWindows(oldDetect);
+			_ = WindowX.DetectHiddenWindows(oldDetect);
 			return exit;
 		}
 

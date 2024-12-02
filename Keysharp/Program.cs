@@ -31,7 +31,7 @@ namespace Keysharp.Main
 
 			try
 			{
-				Window.SetProcessDPIAware();
+				WindowX.SetProcessDPIAware();
 				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 				var asm = Assembly.GetExecutingAssembly();
