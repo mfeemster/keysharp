@@ -513,6 +513,8 @@ namespace Keysharp.Scripting
 
 		internal bool IsIdentifier(string token, bool dynamic)
 		{
+			var isId = false;
+
 			if (string.IsNullOrEmpty(token))
 				return false;
 
@@ -524,6 +526,13 @@ namespace Keysharp.Scripting
 				if (!IsIdentifier(sym))
 				{
 					if (dynamic && sym == Resolve)
+					{
+						isId = !isId;
+						//if (!isId)//If we've gone from true back to false it means we've completed a %% pair, so assume everything is part of it.
+						//  break;
+						continue;
+					}
+					else if (isId)//Count anything within %% to be valid, because it will be evaluated as an expression.
 						continue;
 
 					return false;
@@ -537,7 +546,7 @@ namespace Keysharp.Scripting
 					int.TryParse(token.AsSpan(2), NumberStyles.HexNumber, culture, out var _))
 				return false;
 
-			return (dynamic && token.Contains(Resolve)) || string.Compare(token, "this", StringComparison.OrdinalIgnoreCase) == 0 || Ch.IsValidIdentifier(token) || Ch.IsValidIdentifier($"@token");
+			return (dynamic && ((token.Count(ch => ch == Resolve) & 2) == 2)) || string.Compare(token, "this", StringComparison.OrdinalIgnoreCase) == 0 || Ch.IsValidIdentifier(token) || Ch.IsValidIdentifier($"@token");
 		}
 
 		internal bool IsLegacyIf(string code)
@@ -596,8 +605,28 @@ namespace Keysharp.Scripting
 				else if (IsIdentifier(sym) || sym == Resolve || (sym == Concatenate && i + 1 < code.Length && IsIdentifier(code[i + 1])))
 				{
 					var id = new StringBuilder(code.Length);
-					_ = id.Append(sym);
-					i++;
+
+					if (sym == Resolve)
+					{
+						var nextResolve = code.IndexOf(Resolve, i + 1);
+
+						if (nextResolve > i)//Same check as below, but need to do here because the first character might be a %.
+						{
+							var tokenLength = nextResolve - i + 1;
+							_ = id.Append(code.Substring(i, tokenLength));
+							i = nextResolve + 1;
+						}
+						else
+						{
+							_ = id.Append(sym);
+							i++;
+						}
+					}
+					else
+					{
+						_ = id.Append(sym);
+						i++;
+					}
 
 					for (; i < code.Length; i++)
 					{
@@ -613,7 +642,18 @@ namespace Keysharp.Scripting
 
 							_ = id.Append(sym);
 						}
-						else if (IsIdentifier(sym) || sym == Resolve || (sym == Concatenate && (i + 1 < code.Length ? code[i + 1] != Equal : true)))
+						else if (sym == Resolve && i < code.Length - 1)
+						{
+							var nextResolve = code.IndexOf(Resolve, i + 1);
+
+							if (nextResolve > i)
+							{
+								var tokenLength = nextResolve - i + 1;
+								_ = id.Append(code.Substring(i, tokenLength));
+								i = nextResolve;
+							}
+						}
+						else if (IsIdentifier(sym) || (sym == Concatenate && (i + 1 < code.Length ? code[i + 1] != Equal : true)))
 							_ = id.Append(sym);
 						else
 						{
@@ -635,31 +675,75 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
-						var ct = 0;
+						_ = id.Clear();
+						char lastDelim = (char)0;
+						var listCount = list.Count;
+						var idstr = "";
 
-						foreach (Range r in seq.AsSpan().Split(Concatenate))
+						for (var seqi = 0; seqi < seq.Length; seqi++)
 						{
-							var part = seq.AsSpan(r);
+							var ch = seq[seqi];
 
-							if (ct == 0)
+							if (ch == Concatenate)
 							{
-								if (part.Length != 0)
-									list.Add(part.ToString());
+								idstr = id.ToString();
+								lastDelim = ch;
+
+								if (list.Count == listCount)
+								{
+									if (idstr.Length != 0)
+										list.Add(idstr);
+								}
+								else
+								{
+									list.Add("[*");//Special signifier [**] that this is a property lookup and not a map[var] lookup. Without distinguishing the two, a map could never have a key that had the same name as a property, such as "Default".
+
+									if (idstr.Contains('%'))//If it was a dynamic variable, don't enclose in quotes.
+										list.Add($"{idstr}");
+									else
+										list.Add(string.Concat("\"", idstr, "\""));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+
+									list.Add("*]");
+								}
+
+								_ = id.Clear();
+							}
+							else if (ch == Resolve)
+							{
+								var nextResolve = seq.IndexOf(Resolve, seqi + 1);
+
+								if (nextResolve > seqi)
+								{
+									var tokenLength = nextResolve - seqi + 1;
+									_ = id.Append(seq.Substring(seqi, tokenLength));
+									seqi = nextResolve;
+								}
 							}
 							else
+								_ = id.Append(ch);
+						}
+
+						idstr = id.ToString();
+
+						//If the last added token was before a . then add the next token as a property.
+						if (idstr.Length > 0)
+						{
+							if (lastDelim == Concatenate)
 							{
 								list.Add("[*");//Special signifier [**] that this is a property lookup and not a map[var] lookup. Without distinguishing the two, a map could never have a key that had the same name as a property, such as "Default".
 
-								if (part.Contains('%'))//If it was a dynamic variable, don't enclose in quotes.
-									list.Add($"{part}");
+								if (idstr.Contains('%'))//If it was a dynamic variable, don't enclose in quotes.
+									list.Add($"{idstr}");
 								else
-									list.Add(string.Concat("\"", part, "\""));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+									list.Add(string.Concat("\"", idstr, "\""));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 
 								list.Add("*]");
 							}
-
-							ct++;
+							else
+								list.Add(idstr);
 						}
+
+						_ = id.Clear();
 					}
 				}
 				else if (sym == StringBound || sym == StringBoundVerbatim)
