@@ -380,8 +380,6 @@
 
 		public static void SetReady() => isReadyToExecute = true;
 
-		public static void ShowDebug() => mainWindow?.ShowDebug();
-
 		//public static void TestSomething()
 		//{
 		//  char[] SpaceTab = " \t".ToCharArray();

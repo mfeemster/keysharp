@@ -182,7 +182,8 @@ namespace Keysharp.Scripting
 			"onmessage",
 			"onclipboardchange",
 			"gui",
-			"persistent"
+			"persistent",
+			"showdebug"
 		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
 
 		private readonly Stack<bool> allGlobalVars = new ();
