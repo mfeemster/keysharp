@@ -17,6 +17,16 @@ namespace Keysharp.Core
 		internal static string runUser;
 		private const int LoopFrequency = 50;
 
+		private static readonly FrozenSet<string> verbs = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+		{
+			"find",
+			"explore",
+			"open",
+			"edit",
+			"print",
+			"properties"
+		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+
 		/// <summary>
 		/// Forces the first matching process to close.
 		/// </summary>
@@ -355,6 +365,13 @@ namespace Keysharp.Core
 			}
 		}
 
+		private static bool RunAsSpecified()
+		{
+			return (runPassword != null && runPassword.Length > 0)
+				   || (!string.IsNullOrEmpty(runUser))
+				   || (!string.IsNullOrEmpty(runDomain));
+		}
+
 		/// <summary>
 		/// Internal helper to run a process. <see cref="Run"/>, <see cref="RunAs"/>, <see cref="RunWait"/>
 		/// </summary>
@@ -362,63 +379,173 @@ namespace Keysharp.Core
 		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, string args, bool wait = false)
 		{
 			var pid = 0;
-			var isadmin = false;
+			var useRunAs = RunAsSpecified();
+
+			if (string.IsNullOrEmpty(target))//AHK returns 1 as a success for an empty run target.
+				return 1L;
+
+			if (!string.IsNullOrEmpty(workingDir))
+			{
+				workingDir = workingDir.Trim();
+
+				if (!Directory.Exists(workingDir))
+					throw new Error($"{workingDir} is not a valid directory.");
+			}
 
 			try
 			{
-				if (target.StartsWith("*runas ", StringComparison.OrdinalIgnoreCase))
+				string shellVerb = null, shellAction = target, shellParams = null;
+				args = args.Trim();
+
+				if (!string.IsNullOrEmpty(args))//Args were passed separately.
 				{
-					isadmin = true;
-					target = target.ReplaceFirst("*runas ", "", StringComparison.OrdinalIgnoreCase);
+					if (shellAction.StartsWith('*'))
+					{
+						shellAction = shellAction.TrimStart('*');
+						shellVerb = shellAction;
+						shellAction = args;
+					}
+					else if (verbs.Contains(target))
+					{
+						shellVerb = shellAction;
+						shellAction = args;
+					}
+					else
+						shellParams = args;
+				}
+				else//Try to parse args out of target.
+				{
+					var firstSpace = shellAction.IndexOfAny(SpaceTab);
+
+					if (firstSpace > 0)
+					{
+						var phrase = shellAction.Substring(0, firstSpace);
+
+						if (phrase[0] == '*')
+							shellVerb = phrase.Substring(1);
+						else if (verbs.Contains(phrase))
+							shellVerb = phrase;
+
+						if (!string.IsNullOrEmpty(shellVerb))
+							shellAction = shellAction.Substring(firstSpace + 1);
+					}
+				}
+
+				if (useRunAs && !string.IsNullOrEmpty(shellVerb))
+				{
+					throw new Error("System verbs unsupported with RunAs.");
 				}
 
 				var parsedArgs = "";
-
-				if (target.StartsWith('"'))
-				{
-					var nextQuote = target.IndexOf('"', 1);
-
-					if (nextQuote > 0)
-					{
-						parsedArgs = target.Substring(nextQuote + 1).Trim();
-						target = target.Substring(0, nextQuote + 1).Trim();
-					}
-					else
-						target += '"';//Add the quote because it was missing, which is very unlikely.
-				}
-				else
-				{
-					var nextSpace = target.IndexOf(' ', 1);
-
-					if (nextSpace > 0)
-					{
-						parsedArgs = target.Substring(nextSpace + 1).Trim();
-						target = target.Substring(0, nextSpace).Trim();
-					}
-				}
-
-				var tv = Threads.GetThreadVariables();
 				var prc = new Process//Unsure what to do about this on linux.//TODO
 				{
 					StartInfo = new ProcessStartInfo
 					{
-						FileName = target,
-						WorkingDirectory = string.IsNullOrEmpty(workingDir) ? null : workingDir.Trim(),
-						UserName = string.IsNullOrEmpty(runUser) ? null : runUser,
-#if WINDOWS
-						UseShellExecute = true,
-						Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain,
-						Password = (runPassword == null || runPassword.Length == 0) ? null : runPassword
-#else
-						UseShellExecute = false,
-#endif
+						WorkingDirectory = workingDir,
+						UseShellExecute = true
 					}
 				};
+				//MessageBox.Show(Accessors.A_WorkingDir.ToString());
 
-				if (!string.IsNullOrEmpty(args))
-					prc.StartInfo.Arguments = args.Trim();
-				else if (parsedArgs.Length > 0)
-					prc.StartInfo.Arguments = parsedArgs;
+				if (string.IsNullOrEmpty(shellVerb))
+				{
+					if (target.StartsWith('"'))
+					{
+						var nextQuote = target.IndexOf('"', 1);
+
+						if (nextQuote > 0)
+						{
+							parsedArgs = target.Substring(nextQuote + 1).Trim();
+							target = target.Substring(0, nextQuote + 1).Trim();
+						}
+						else
+							target += '"';//Add the quote because it was missing, which is very unlikely.
+					}
+					else
+					{
+						var nextSpace = target.IndexOfAny(SpaceTab, 1);
+
+						if (nextSpace > 0)
+						{
+							object oldDir = "";
+							var temp = target.Substring(0, nextSpace).Trim();
+							var setWorkingDir = !string.IsNullOrEmpty(workingDir) && System.IO.Path.Exists(workingDir);
+
+							if (setWorkingDir)
+							{
+								oldDir = Accessors.A_WorkingDir;
+								Accessors.A_WorkingDir = workingDir;
+							}
+
+							if (System.IO.Path.Exists(temp))
+							{
+								parsedArgs = target.Substring(nextSpace + 1).Trim();
+								target = temp;
+							}
+
+							if (setWorkingDir)
+								Accessors.A_WorkingDir = oldDir;
+						}
+					}
+
+					prc.StartInfo.FileName = target;
+					prc.StartInfo.UserName = string.IsNullOrEmpty(runUser) ? null : runUser;
+#if WINDOWS
+					prc.StartInfo.Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain;
+					prc.StartInfo.Password = (runPassword == null || runPassword.Length == 0) ? null : runPassword;
+#endif
+				}
+				else
+				{
+					if (string.IsNullOrEmpty(shellParams))//Attempt to parse out args.
+					{
+						if (shellAction.StartsWith('"'))
+						{
+							var nextQuote = shellAction.IndexOf('"', 1);
+
+							if (nextQuote > 0)
+							{
+								shellParams = shellAction.Substring(nextQuote + 1).Trim();
+								shellAction = shellAction.Substring(0, nextQuote + 1).Trim();
+								parsedArgs = shellParams;
+							}
+							else
+								shellAction += '"';//Add the quote because it was missing, which is very unlikely.
+						}
+						else
+						{
+							var nextSpace = shellAction.IndexOfAny(SpaceTab, 1);
+
+							if (nextSpace > 0)
+							{
+								object oldDir = "";
+								var temp = shellAction.Substring(0, nextSpace).Trim();
+								var setWorkingDir = !string.IsNullOrEmpty(workingDir) && System.IO.Path.Exists(workingDir);
+
+								if (setWorkingDir)
+								{
+									oldDir = Accessors.A_WorkingDir;
+									Accessors.A_WorkingDir = workingDir;
+								}
+
+								if (System.IO.Path.Exists(temp))
+								{
+									shellParams = shellAction.Substring(nextSpace + 1).Trim();
+									shellAction = temp;
+									parsedArgs = shellParams;
+								}
+
+								if (setWorkingDir)
+									Accessors.A_WorkingDir = oldDir;
+							}
+						}
+					}
+
+					prc.StartInfo.FileName = shellAction;
+					prc.StartInfo.Verb = shellVerb;
+				}
+
+				prc.StartInfo.Arguments = !string.IsNullOrEmpty(args) ? args : parsedArgs;
 
 				if (!string.IsNullOrEmpty(showMode))
 				{
@@ -430,20 +557,6 @@ namespace Keysharp.Core
 
 						case Keyword_Hide: prc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden; break;
 					}
-				}
-				else if (prc.StartInfo.UserName != null
-#if WINDOWS
-						 || prc.StartInfo.Domain != null
-#endif
-						)
-				{
-					prc.StartInfo.UseShellExecute = false;
-				}
-
-				if (isadmin)
-				{
-					prc.StartInfo.UseShellExecute = true;
-					prc.StartInfo.Verb = "runas";
 				}
 
 				if (prc.Start())

@@ -33,7 +33,7 @@
 		/// This exception should never be thrown or exposed outside of this
 		/// package.
 		/// </remarks>
-		private static readonly Exception ParseFailedException = new Exception("Parse Failed");
+		private static readonly Exception ParseFailedException = new ("Parse Failed");
 
 		/// <summary>
 		/// An <see cref="IEqualityComparer{T}"/> and <see cref="IComparer{T}"/>

@@ -13,14 +13,14 @@ namespace Keysharp.Tests
 			var fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/file1.txt"));
 			var files = Dialogs.FileSelect();
 			//MsgBox(files);
-			files = Dialogs.FileSelect("", fullpath, "Filename - Path and File", "");
+			files = Dialogs.FileSelect("", fullpath, "Filename - Path and file", "");
 			fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/"));
 			files = Dialogs.FileSelect("M", fullpath, "Filename - Path only - Multiselect", "");
 			//MsgBox(files);
 			fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/file1.txt"));
-			files = Dialogs.FileSelect("S16", fullpath, "", "Text files |*.txt;*.wri;*.ini");
+			files = Dialogs.FileSelect("S16", fullpath, "Filename - Path and file - Text files filter - Save & prompt for overwrite", "Text files |*.txt;*.wri;*.ini");
 			fullpath = Path.GetFullPath(string.Concat(path, "DirCopy/"));
-			files = Dialogs.FileSelect("S16", fullpath, "", "Text files |*.txt;*.wri;*.ini");
+			files = Dialogs.FileSelect("S16", fullpath, "Filename - Path only - Text files filter - Save & prompt for overwrite", "Text files |*.txt;*.wri;*.ini");
 			//MsgBox(files);
 			files = Dialogs.FileSelect("D", "D:\\", "", "");
 		}

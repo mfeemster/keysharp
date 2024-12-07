@@ -18,7 +18,7 @@
 		}
 
 		public static CombinedHashCode Create<T1>(T1 value1)
-		=> new CombinedHashCode(CombineValue(RandomSeed, value1));
+		=> new (CombineValue(RandomSeed, value1));
 
 		public static CombinedHashCode Create<T1, T2, T3>(T1 value1, T2 value2, T3 value3)
 		{

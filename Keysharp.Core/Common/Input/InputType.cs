@@ -51,7 +51,7 @@ namespace Keysharp.Core.Common.Input
 			scriptObject = io;
 			ParseOptions(options);
 			SetKeyFlags(endKeys);
-			var splits = matchList.Split(Keywords.Comma);
+			var splits = matchList.Split(Comma);
 
 			for (var i = 0; i < splits.Length; i++)
 			{

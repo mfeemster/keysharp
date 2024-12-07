@@ -1142,9 +1142,9 @@ namespace Keysharp.Core.Windows
 							  oleacc = "oleacc.dll",
 							  oleaut = "oleaut32.dll";
 
-		internal static Point ToPoint(this RECT rect) => new Point(rect.Left, rect.Top);
+		internal static Point ToPoint(this RECT rect) => new (rect.Left, rect.Top);
 
-		internal static Map ToPos(this RECT rect, double scale = 1.0) => new Map(new Dictionary<object, object>()
+		internal static Map ToPos(this RECT rect, double scale = 1.0) => new (new Dictionary<object, object>()
 		{
 			{ "X", rect.Left * scale },
 			{ "Y", rect.Top * scale },

@@ -221,3 +221,53 @@ If (a_clipboardTimeout == 2000)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+a := 1
+b := 2
+c := %Random(1,2)=1 ? "a" : "b"%
+
+hasa := false
+hasb := false
+
+while (!hasa || !hasb)
+{
+	val := %Random(1,2)=1 ? "a" : "b"%
+
+	if (val == a)
+		hasa := true
+	else if (val == b)
+		hasb := true
+}
+
+If (hasa && hasb)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+threeparts := 123
+a := "reepa"
+
+if (th%a%rts == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+l := "length"
+d := "default"
+arr := [1, 2, 3]
+arr.Default := 456
+a := true
+b := arr.%a ? l : d%
+
+if (b == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a := false
+b := arr.%a ? l : d%
+
+if (b == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

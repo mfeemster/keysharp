@@ -176,7 +176,7 @@
 					}
 				}
 
-				if (ch == Keywords.Escape)
+				if (ch == Escape)
 					escape = !escape;
 				else
 					escape = false;
@@ -242,7 +242,7 @@
 					}
 				}
 
-				if (ch == Keywords.Escape)
+				if (ch == Escape)
 					escape = !escape;
 				else
 					escape = false;
@@ -476,13 +476,28 @@
 		/// <param name="str">The string to trim.</param>
 		/// <param name="index">The index after which trimming will occur.</param>
 		/// <returns>The trimmed string.</returns>
-		internal static string OmitTrailingWhitespace(this string str, int index) => str.AsSpan(0, index).TrimEnd(Keywords.SpaceTab).ToString();
+		internal static string OmitTrailingWhitespace(this string str, int index) => str.AsSpan(0, index).TrimEnd(SpaceTab).ToString();
 
 		//internal static string RemoveAfter(this string str, string token)
 		//{
 		//  var index = str.IndexOf(token);
 		//  return index > 0 ? str.Substring(0, index) : str;
 		//}
+
+		/// <summary>
+		/// Read the span until a space, tab, or end is encountered.
+		/// </summary>
+		/// <param name="span">The span to read.</param>
+		/// <returns>A string containing all characters read.</returns>
+		internal static string ParseUntilSpace(this ReadOnlySpan<char> span)
+		{
+			var nextSpace = span.IndexOfAny(SpaceTab);
+
+			if (nextSpace != -1)
+				return span.Slice(0, nextSpace).ToString();
+			else
+				return span.ToString();
+		}
 
 		/// <summary>
 		/// Removes all instances of a specified list of characters from a string.

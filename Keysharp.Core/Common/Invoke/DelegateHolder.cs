@@ -4,7 +4,7 @@
 	{
 		internal PlaceholderFunction delRef;
 		internal IFuncObj funcObj;
-		protected readonly ConcurrentStackArrayPool<IntPtr> paramsPool = new ConcurrentStackArrayPool<IntPtr>(31);
+		protected readonly ConcurrentStackArrayPool<IntPtr> paramsPool = new (31);
 		private readonly bool fast;
 
 		internal bool Reference { get; }

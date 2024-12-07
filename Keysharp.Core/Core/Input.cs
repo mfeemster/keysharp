@@ -32,6 +32,6 @@
 		/// <param name="endKeys">A list of zero or more keys, any one of which terminates the Input when pressed (the end key itself is not written to the Input buffer). When an Input is terminated this way, EndReason is set to the word EndKey and EndKey is set to the name of the key.</param>
 		/// <param name="matchList">A comma-separated list of key phrases, any of which will cause the Input to be terminated (in which case EndReason will be set to the word Match).</param>
 		/// <returns>A newly created InputObject.</returns>
-		public static InputObject InputHook(object options = null, object endKeys = null, object matchList = null) => new InputObject(options.As(), endKeys.As(), matchList.As());
+		public static InputObject InputHook(object options = null, object endKeys = null, object matchList = null) => new (options.As(), endKeys.As(), matchList.As());
 	}
 }

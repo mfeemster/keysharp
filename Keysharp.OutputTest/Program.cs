@@ -4,10 +4,12 @@ using static Keysharp.Core.Collections;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringManager;
+using static Keysharp.Core.ControlX;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;
 using static Keysharp.Core.Dll;
 using static Keysharp.Core.Drive;
+using static Keysharp.Core.EditX;
 using static Keysharp.Core.Env;
 using static Keysharp.Core.Errors;
 using static Keysharp.Core.External;
@@ -38,7 +40,7 @@ using static Keysharp.Core.Sound;
 using static Keysharp.Core.Strings;
 using static Keysharp.Core.ToolTips;
 using static Keysharp.Core.Types;
-using static Keysharp.Core.Window;
+using static Keysharp.Core.WindowX;
 using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Script.Operator;
 using static Keysharp.Scripting.Script;
@@ -96,11 +98,8 @@ namespace Keysharp.CompiledMain
 
 				Keysharp.Core.Env.HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
-				Keysharp.Scripting.Script.SetReady();
-				_ks_UserMainCode();
+				Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
 				Keysharp.Scripting.Script.WaitThreads();
-				Keysharp.Core.Flow.Sleep(-2);
-				Keysharp.Core.Flow.ExitApp(0);
 				return 0;
 			}
 			catch (Keysharp.Core.Error kserr)
@@ -143,13 +142,9 @@ namespace Keysharp.CompiledMain
 			}
 		}
 
-		public static object x;
-
 		public static object _ks_UserMainCode()
 		{
-			var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-			x = 123L;
-			Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+			Keysharp.Core.Flow.ExitApp(0);
 			return "";
 		}
 	}

@@ -40,14 +40,14 @@
 
 		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Parser.GetKeywords();
 		private static readonly string keywords2 = Script.GetPublicStaticPropertyNames();
-		private readonly Button btnCopyFullCode = new Button();
-		private readonly CheckBox chkFullCode = new CheckBox();
+		private readonly Button btnCopyFullCode = new ();
+		private readonly CheckBox chkFullCode = new ();
 		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
-		private readonly System.Windows.Forms.Timer timer = new Timer();
+		private readonly System.Windows.Forms.Timer timer = new ();
 		private readonly char[] trimend = ['\n', '\r'];
 		private readonly double updateFreqSeconds = 1;
-		private readonly CompilerHelper ch = new CompilerHelper();
-		private readonly CSharpStyler csStyler = new CSharpStyler();
+		private readonly CompilerHelper ch = new ();
+		private readonly CSharpStyler csStyler = new ();
 		private bool force = false;
 		private string fullCode = "";
 		private DateTime lastCompileTime = DateTime.Now;
@@ -56,7 +56,7 @@
 		private string trimmedCode = "";
 		private readonly string trimstr = "{}\t";
 		private Process scriptProcess = null;
-		private readonly Button btnRunScript = new Button();
+		private readonly Button btnRunScript = new ();
 		private Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
 		{
 			{ "Run", "▶ Run script (F9)" },

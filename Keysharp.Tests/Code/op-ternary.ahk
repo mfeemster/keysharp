@@ -315,3 +315,12 @@ if (x == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; test with a ternary element which will be a code snippet, to ensure it gets reevaluated.
+fo := FuncObj("func")
+x := !a ? (fo("") ? 2 : 3) : 4
+
+if (x == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

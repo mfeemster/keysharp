@@ -7,7 +7,7 @@ namespace Keysharp.Core.COM
 		internal KeysharpObject sinkObj;
 		internal object[] thisArg;
 		private readonly bool logAll;
-		private readonly Dictionary<string, MethodPropertyHolder> methodMapper = new Dictionary<string, MethodPropertyHolder>(10, StringComparer.OrdinalIgnoreCase);
+		private readonly Dictionary<string, MethodPropertyHolder> methodMapper = new (10, StringComparer.OrdinalIgnoreCase);
 		private readonly string prefix;
 
 		internal ComEvent(Dispatcher disp, object sink, bool log)

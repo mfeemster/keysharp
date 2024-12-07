@@ -147,7 +147,7 @@
 			storeCapsLockMode = Accessors.A_StoreCapsLockMode.Ab();
 			threadId = 0;
 			titleMatchMode = Accessors.A_TitleMatchMode;
-			titleMatchModeSpeed = Accessors.A_TitleMatchModeSpeed.ToString() == Keywords.Keyword_Fast;
+			titleMatchModeSpeed = Accessors.A_TitleMatchModeSpeed.ToString() == Keyword_Fast;
 			winDelay = Accessors.A_WinDelay.Al();
 		}
 	}

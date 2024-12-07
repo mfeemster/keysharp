@@ -555,7 +555,7 @@
 						tabLevel++;
 						_ = sb.AppendLine();
 						kso.PrintProps("", tempsb, ref tabLevel);
-						str = tempsb.ToString().TrimEnd(Keywords.CrLf);
+						str = tempsb.ToString().TrimEnd(CrLf);
 						tabLevel--;
 					}
 					else if (val is null)

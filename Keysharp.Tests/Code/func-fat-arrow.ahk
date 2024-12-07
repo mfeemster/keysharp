@@ -462,6 +462,7 @@ class myclass3
 	member3 := (a := 123) => a
 	member4 := memberfunc4(a, &b, c := 5, p*) => b := a * b * c * p[1]
 	member5 := (a, &b, c := 5, p*) => b := a * b * c * p[1]
+	member6 := (a, b := 5, &c := 10) => c := a + b + c
 }
 
 myclassobj := myclass3()
@@ -510,6 +511,41 @@ else
 val := myclassobj.member5(1, &b := 2, 3, 4)
 
 If (val == 24 && b == 24)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := myclassobj.member5(1, &b := 2, , 4)
+
+If (val == 40 && b == 40)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := myclassobj.member6(20)
+
+If (x == 35)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := myclassobj.member6(20, 25)
+
+If (x == 55)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := myclassobj.member6(20, ,) ; left off here, not working. probably need work with invoking a null in place of a ref.
+
+If (x == 35)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := myclassobj.member6(1, ,&z := 11)
+
+If (x == 17 && z == 17)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

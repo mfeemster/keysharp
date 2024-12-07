@@ -30,8 +30,8 @@ namespace Keysharp.Core.COM
 		public const int vt_array = 0x2000; //SAFEARRAY
 		public const int vt_byref = 0x4000; //Pointer to another type of value
 		public const int vt_typemask = 0xfff;
-		internal static Guid IID_IDispatch = new Guid(0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
-		internal static Guid IID_IServiceProvider = new Guid("6d5140c1-7436-11ce-8034-00aa006009fa");
+		internal static Guid IID_IDispatch = new (0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+		internal static Guid IID_IServiceProvider = new ("6d5140c1-7436-11ce-8034-00aa006009fa");
 		internal const int CLSCTX_INPROC_SERVER = 0x1;
 		internal const int CLSCTX_INPROC_HANDLER = 0x2;
 		internal const int CLSCTX_LOCAL_SERVER = 0x4;
@@ -382,7 +382,7 @@ namespace Keysharp.Core.COM
 			}
 		}
 
-		public static ComObject ComValue(object varType, object value, object flags = null) => new ComObject(varType, value, flags);
+		public static ComObject ComValue(object varType, object value, object flags = null) => new (varType, value, flags);
 
 		public static object ObjAddRef(object ptr)
 		{

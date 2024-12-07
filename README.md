@@ -160,6 +160,8 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	}
 ```
 * `Sleep()` will not do any sleeping if shutdown has been initiated.
+* `/Debug` command line switch is not implemented.
+* If a script is compiled then none of Keysharp or AutoHotkey command parameters apply. 
 	
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
@@ -299,14 +301,15 @@ class class1
 	+ `FileDirName(filename) => String` to return the full path to filename, without the actual filename or trailing directory separator character.
 	+ `FileFullPath(filename) => String` to return the full path to filename.
 * A new function `WinMaximizeAll()` to maximize all windows.
-* A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText])` to determine whether a window will always stay on top of other windows.
+* A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText]) => Integer` to determine whether a window will always stay on top of other windows.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(target [, workingDir, options, &outputVarPID, args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
-* `Menu` supports several new methods:
+* Add new methods and properties to`Menu`:
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
-	+ `MenuItemId()` to get the name of a menu item, rather than having to use `DllCall()`.
+	+ `MenuItemName()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
+	+ `MenuItemCount` to get the number of sub items within a menu.
 * `Picture` supports clearing the picture by setting the `Value` property to empty.
 * `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
@@ -501,6 +504,18 @@ class class1
 			MsgBox("True because of new definition")
 		#endif
 ```
+* Command line switches may start with either `/` (Windows-only), `-` or `--`. 
+* Command line switches
+	- `--version`, `-v`  
+	  Displays Keysharp version.
+	- `--codeout`  
+	  In addition to running the script, Keysharp outputs a .cs file with the same name as the script containing the code which was used to compile. This is the same code displayed in Keyview. 
+	- `--exeout`  
+	  In addition to running the script, Keysharp outputs a .exe file which can be ran as standalone from Keysharp (but still requires .NET 9).
+	- `--validate`  
+	  Compiles but does not run the script. Can be used to check for load-time errors.
+	- `--assembly [Type Method]`  
+	  Reads pre-compiled assembly code from the file or StdIn and runs it. Optionally also provide the entrypoint type and method, but if omitted then the default type `Keysharp.CompiledMain.program` and method `Main` are used.
 	
 ###	Removals: ###
 * Nested classes are not supported.
@@ -521,7 +536,15 @@ class class1
 * `LoadPicture()` does not accept a `GDI+` argument as an option.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.
 * `PixelGetColor()` ignores the `mode` parameter.
-* The `3` and `5` options for `DirSelect()` don't apply in C#.
+* `DirSelect()`:
+	+ The `1`, `3` and `5` options don't apply and the New Folder button will always be shown.
+	+ Modality cannot be configured with `Gui.Opt("+OwnDialogs")` because the folder select dialog is always modal.
+	+ Restricting folder navigation is not supported.
+* `MsgBox()`:
+	+ The modality options are ignored.
+	+ The message box will block the window that launched it by default. If `+OwnDialogs` is in effect, then all GUIs in the script are blocked until it is dismissed.
+	+ System modal dialog boxes are no longer supported on Windows.
+	+ The help option `16384` is ignored.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
 * Function references are supported, but the VarRef object is not supported.

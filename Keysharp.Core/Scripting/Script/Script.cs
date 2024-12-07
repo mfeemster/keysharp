@@ -90,7 +90,7 @@
 			var tv = Threads.GetThreadVariables();
 			var mm = tv.titleMatchMode;
 			tv.titleMatchMode = 2L;//Match anywhere.
-			var hwnd = Window.WinExist(Accessors.A_ScriptName, "", title, "");
+			var hwnd = WindowX.WinExist(Accessors.A_ScriptName, "", title, "");
 			tv.titleMatchMode = mm;
 			var wi = new WindowItem(new IntPtr(hwnd));
 			var classname = wi.ClassName;//Logic taken from AHK.
@@ -221,18 +221,18 @@
 				inst = eScriptInstance.Force;
 
 			var exit = false;
-			var oldDetect = Window.DetectHiddenWindows(true);
+			var oldDetect = WindowX.DetectHiddenWindows(true);
 
 			switch (inst)
 			{
 				case eScriptInstance.Force:
 				{
-					_ = Window.WinClose(name, "", 2);
+					_ = WindowX.WinClose(name, "", 2);
 				}
 				break;
 
 				case eScriptInstance.Ignore:
-					if (Window.WinExist(name) != 0)
+					if (WindowX.WinExist(name) != 0)
 						exit = true;
 
 					break;
@@ -242,12 +242,12 @@
 
 				case eScriptInstance.Prompt:
 				default:
-					var hwnd = Window.WinExist(name);
+					var hwnd = WindowX.WinExist(name);
 
 					if (hwnd != 0)
 					{
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
-							_ = Window.WinClose(hwnd, "", 2);
+							_ = WindowX.WinClose(hwnd, "", 2);
 						else
 							exit = true;
 					}
@@ -255,7 +255,7 @@
 					break;
 			}
 
-			_ = Window.DetectHiddenWindows(oldDetect);
+			_ = WindowX.DetectHiddenWindows(oldDetect);
 			return exit;
 		}
 
@@ -348,7 +348,7 @@
 					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 		}
 
-		public static void RunMainWindow(string title, Func<object> userInit)
+		public static void RunMainWindow(string title, Func<object> userInit, bool persistent)
 		{
 			mainWindow = new MainWindow();
 
@@ -357,21 +357,27 @@
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-			//Parser.Persistent = true;
+			Script.persistent = persistent;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
 			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
 			_ = mainWindow.BeginInvoke(() =>
 			{
-				_ = Flow.TryCatch(() =>
-				{
-					var (__pushed, __btv) = Threads.BeginThread();
+				if (!Flow.TryCatch(() =>
+			{
+				var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
 					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
 					isReadyToExecute = true;
 					_ = Threads.EndThread(__pushed);
-				}, true);//Pop on exception because EndThread() above won't be called.
+				}, true))//Pop on exception because EndThread() above won't be called.
+				{
+					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
+					{
+						Keysharp.Core.Flow.ExitApp(0);
+					}
+				}
 			});
 			Application.Run(mainWindow);
 		}
@@ -379,8 +385,6 @@
 		public static void SetName(string s) => scriptName = s;
 
 		public static void SetReady() => isReadyToExecute = true;
-
-		public static void ShowDebug() => mainWindow?.ShowDebug();
 
 		//public static void TestSomething()
 		//{
@@ -540,7 +544,7 @@
 			if (HotstringManager.shs.Count > 0)
 				return true;
 
-			if (Flow.timers.Count > 0)
+			if (!Flow.timers.IsEmpty)
 				return true;
 
 			if (ClipFunctions.Count > 0)
@@ -564,10 +568,15 @@
 			return false;
 		}
 
-		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason)
+		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
 		{
-			if (!AnyPersistent())
-				_ = Flow.ExitApp((int)exitReason);
+			//Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
+			//so it needs to run after that thread has exited.
+			mainWindow?.CheckedBeginInvoke(new Action(() =>
+			{
+				if (!IsMainWindowClosing && !AnyPersistent())
+					_ = Flow.ExitApp((int)exitReason);
+			}), true, true);
 		}
 
 		internal static bool InitHook()

@@ -62,18 +62,18 @@
 
 			var mixed = obj.ToString();
 
-			if (!mixed.Contains(Keywords.Keyword_ahk, StringComparison.OrdinalIgnoreCase))
+			if (!mixed.Contains(Keyword_ahk, StringComparison.OrdinalIgnoreCase))
 				return new SearchCriteria { Title = mixed };
 
 			var i = 0;
 
 			var t = false;
 
-			while ((i = mixed.IndexOf(Keywords.Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
+			while (i < mixed.Length && (i = mixed.IndexOf(Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
 			{
 				if (!t)
 				{
-					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Keywords.Spaces);
+					var pre = i == 0 ? string.Empty : mixed.Substring(0, i).Trim(Spaces);
 
 					if (pre.Length != 0)
 						criteria.Title = pre;
@@ -81,55 +81,59 @@
 					t = true;
 				}
 
-				var z = mixed.IndexOfAny(Keywords.Spaces, i);
+				var span = mixed.AsSpan(i + Keyword_ahk.Length);
 
-				if (z == -1)
-					break;
-
-				var word = mixed.Substring(i, z - i);
-				var e = mixed.IndexOf(Keywords.Keyword_ahk, ++i, StringComparison.OrdinalIgnoreCase);
-				var arg = (e == -1 ? mixed.Substring(z) : mixed.Substring(z, e - z)).Trim();
-				long n;
-
-				switch (word.ToLowerInvariant())
+				if (span.StartsWith("class", StringComparison.OrdinalIgnoreCase))
 				{
-					case Keywords.Keyword_ahk_class: criteria.ClassName = arg; break;
-
-					case Keywords.Keyword_ahk_group: criteria.Group = arg; break;
-
-					case Keywords.Keyword_ahk_id:
-						if (long.TryParse(arg, out n))
-							criteria.ID = new IntPtr(n);
-
-						break;
-
-					case Keywords.Keyword_ahk_exe:
-						criteria.Path = arg;
-						break;
-
-					case Keywords.Keyword_A:
-						criteria.Active = true;
-						break;
-
-					case Keywords.Keyword_ahk_pid:
-						if (long.TryParse(arg, out n))
-							criteria.PID = new IntPtr(n);
-
-						break;
+					criteria.ClassName = span.Slice(5).TrimStart().ParseUntilSpace();
+					i += 9 + criteria.ClassName.Length;//Might be off by a space, but still reduces the next comparison.
 				}
+				else if (span.StartsWith("group", StringComparison.OrdinalIgnoreCase))
+				{
+					criteria.Group = span.Slice(5).TrimStart().ParseUntilSpace();
+					i += 9 + criteria.Group.Length;
+				}
+				else if (span.StartsWith("exe", StringComparison.OrdinalIgnoreCase))
+				{
+					criteria.Path = span.Slice(3).TrimStart().ParseUntilSpace();
+					i += 7 + criteria.Path.Length;
+				}
+				else if (span.StartsWith("id", StringComparison.OrdinalIgnoreCase))
+				{
+					var val = span.Slice(2).TrimStart().ParseUntilSpace();
 
-				i++;
+					if (long.TryParse(val, out var id))
+						criteria.ID = new IntPtr(id);
+
+					i += 6 + val.Length;
+				}
+				else if (span.StartsWith("A", StringComparison.OrdinalIgnoreCase))
+				{
+					criteria.Active = true;
+					i += 5;
+				}
+				else if (span.StartsWith("pid", StringComparison.OrdinalIgnoreCase))
+				{
+					var val = span.Slice(3).TrimStart().ParseUntilSpace();
+
+					if (long.TryParse(val, out var id))
+						criteria.PID = new IntPtr(id);
+
+					i += 7 + val.Length;
+				}
+				else
+					i++;
 			}
 
 			return criteria;
 		}
 
-		internal static SearchCriteria FromString(object title, string text, string excludeTitle, string excludeText)
+		internal static SearchCriteria FromString(object title, object text, object excludeTitle, object excludeText)
 		{
 			var criteria = FromString(title);
-			criteria.Text = text;
-			criteria.ExcludeTitle = excludeTitle;
-			criteria.ExcludeText = excludeText;
+			criteria.Text = text.As();
+			criteria.ExcludeTitle = excludeTitle.As();
+			criteria.ExcludeText = excludeText.As();
 			return criteria;
 		}
 	}

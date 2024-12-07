@@ -66,20 +66,19 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override List<WindowItemBase> ChildWindows
+		internal override HashSet<WindowItemBase> ChildWindows
 		{
 			get
 			{
-				var childs = new HashSet<IntPtr>();
+				var children = new HashSet<WindowItemBase>();
 
 				if (IsSpecified)
 				{
-					var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
+					//var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
-						if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
-							_ = childs.Add(hwnd);
-
+						//if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
+						_ = children.Add(new WindowItem(hwnd));
 						return true;
 					}, 0);
 				}
@@ -91,16 +90,11 @@ namespace Keysharp.Core.Windows
 					form.Invoke(() =>
 					{
 						foreach (var ctrl in form.GetAllControlsRecursive<Control>())
-							_ = childs.Add(ctrl.Handle);//HashSet takes care of avoiding dupes.
+							_ = children.Add(new WindowItem(ctrl.Handle));//HashSet takes care of avoiding dupes.
 					});
 				}
 
-				var childList = new List<WindowItemBase>(childs.Count);
-
-				foreach (var handle in childs)
-					childList.Add(new WindowItem(handle));
-
-				return childList;
+				return children;
 			}
 		}
 
@@ -641,7 +635,7 @@ namespace Keysharp.Core.Windows
 
 		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
-		internal uint GetMenuItemId(params string[] items)
+		internal uint GetMenuItemId(params object[] items)
 		{
 			if (!IsSpecified)
 				return 0;
@@ -650,7 +644,7 @@ namespace Keysharp.Core.Windows
 			var menuid = 0xFFFFFFFF;
 			IntPtr menu = IntPtr.Zero;
 
-			if (items[0] == "0&")
+			if (items[0].As() == "0&")
 			{
 				menu = WindowsAPI.GetSystemMenu(Handle, false);
 				i1 = 1;
@@ -663,7 +657,7 @@ namespace Keysharp.Core.Windows
 
 			for (; i1 < items.Length; i1++)
 			{
-				var item = items[i1];
+				var item = items[i1].As();
 
 				if (item == null || item.Length == 0)
 					continue;

@@ -6,7 +6,7 @@ namespace Keysharp.Scripting
 		{
 			internal static List<(string, bool)> preloadedDlls = [];
 			internal static DateTime startTime = DateTime.Now;
-			private static readonly Dictionary<string, MemberInfo> globalVars = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
+			private static readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
 #if LINUX
 			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
 			private static Encoding enc1252 = Encoding.Default;
@@ -22,7 +22,7 @@ namespace Keysharp.Scripting
 
 			public static void InitGlobalVars()
 			{
-				Window.SetProcessDPIAware();
+				WindowX.SetProcessDPIAware();
 				Flow.Init();
 				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;

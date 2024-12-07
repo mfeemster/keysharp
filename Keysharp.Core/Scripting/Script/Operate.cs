@@ -118,7 +118,7 @@ namespace Keysharp.Scripting
 			return !not ? ret : !ret;
 		}
 
-		public static BoolResult IfTest(object result) => new BoolResult(ForceBool(result), result);
+		public static BoolResult IfTest(object result) => new (ForceBool(result), result);
 
 		public static object Operate(Operator op, object left, object right)
 		{

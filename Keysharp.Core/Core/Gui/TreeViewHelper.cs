@@ -25,7 +25,7 @@
 				var expanded = 0;
 				var icon = int.MinValue;
 
-				foreach (Range r in options.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in options.AsSpan().SplitAny(Spaces))
 				{
 					var opt = options.AsSpan(r).Trim();
 

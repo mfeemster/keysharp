@@ -5,18 +5,18 @@ namespace Keysharp.Core.Common.Invoke
 {
 	public static class Reflections
 	{
-		internal static Dictionary<string, MethodInfo> flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
-		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, MethodInfo> flatPublicStaticMethods = new (500, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new (200, StringComparer.OrdinalIgnoreCase);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = [];
-		internal static sttd stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static sttd stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-		internal static sttd stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static sttd stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		internal static Dictionary<string, Type> stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeBuiltInMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeLocalMethods = new (sttcap / 10, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeProperties = new (sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, Type> stringToTypes = new (sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		internal static int sttcap = 1000;
-		internal static ttsd typeToStringMethods = new ttsd(sttcap / 5);
-		internal static ttsd typeToStringProperties = new ttsd(sttcap / 5);
+		internal static ttsd typeToStringMethods = new (sttcap / 5);
+		internal static ttsd typeToStringProperties = new (sttcap / 5);
 
 		static Reflections() => Initialize();
 

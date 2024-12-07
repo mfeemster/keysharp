@@ -67,5 +67,16 @@
 		internal static bool IsOptional(this CodeParameterDeclarationExpression p) => p != null && p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "DefaultParameterValue");
 
 		internal static bool IsOptionalOrVariadic(this CodeParameterDeclarationExpression p) => p != null && p.CustomAttributes.Cast<CodeAttributeDeclaration>().Any(cad => cad.Name == "Optional" || cad.Name == "System.ParamArrayAttribute");
+
+		internal static CodeExpression DefaultValue(this CodeParameterDeclarationExpression p)
+		{
+			if (p.CustomAttributes.Cast<CodeAttributeDeclaration>().FirstOrDefault(cad => cad.Name == "DefaultParameterValue") is CodeAttributeDeclaration def)
+			{
+				if (def.Arguments[0] is CodeAttributeArgument caa)
+					return caa.Value;
+			}
+
+			return null;
+		}
 	}
 }

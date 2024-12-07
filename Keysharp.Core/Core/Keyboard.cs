@@ -6,7 +6,7 @@ namespace Keysharp.Core
 	public static class Keyboard
 	{
 		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
-		internal static readonly ToggleStates toggleStates = new ToggleStates();
+		internal static readonly ToggleStates toggleStates = new ();
 		internal static bool blockInput;
 		internal static ToggleValueType blockInputMode = ToggleValueType.Default;
 		internal static bool blockMouseMove;
@@ -84,7 +84,8 @@ namespace Keysharp.Core
 		/// and the output variables are made blank. It returns 1 (true) if the system returned a caret position,<br/>
 		/// but this does not necessarily mean a caret is visible.
 		/// </returns>
-		public static bool CaretGetPos(ref object outputVarX, ref object outputVarY)
+		public static bool CaretGetPos([Optional()][DefaultParameterValue(0)] ref object outputVarX,
+									   [Optional()][DefaultParameterValue(0)] ref object outputVarY)
 		{
 			// I believe only the foreground window can have a caret position due to relationship with focused control.
 			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.

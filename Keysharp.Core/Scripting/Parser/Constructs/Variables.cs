@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 
 		private bool IsVarReference(object expr) => expr is CodeArrayIndexerExpression || expr is CodeVariableReferenceExpression;
 
-		private CodeBinaryOperatorExpression VarAssign(CodeArrayIndexerExpression name, CodeExpression value) => new CodeBinaryOperatorExpression(name, CodeBinaryOperatorType.Assign, value);
+		private CodeBinaryOperatorExpression VarAssign(CodeArrayIndexerExpression name, CodeExpression value) => new (name, CodeBinaryOperatorType.Assign, value);
 
 		private CodeExpression VarId(CodeExpression name, bool create, bool dyn = false)
 		{
@@ -115,7 +115,11 @@ namespace Keysharp.Scripting
 
 			var id = false;
 			var sub = new StringBuilder();
-			var parts = new List<CodeExpression>();
+
+			//var parts = new List<CodeExpression>();
+			var exprs = new List<CodeExpressionStatement>();
+			var parts = new List<string>();
+			var legacyBetween = codeLine.Code.AsSpan().IndexOf("between") >= 0;
 			var single = code.Length > 2
 						 && code[0] == Resolve
 						 && code[code.Length - 1] == Resolve
@@ -129,47 +133,47 @@ namespace Keysharp.Scripting
 				{
 					if (id)
 					{
-						if (sub.Length == 0)
-							throw new ParseException(ExEmptyVarRef, i, code);
-
-						var str = sub.ToString();
-
-						if (single)
-							parts.Add(VarRefOrPrimitive(codeLine, VarIdOrConstant(codeLine, str, false, true)));//Do double dispatching for single %variable%.
-						else if (Reflections.flatPublicStaticProperties.TryGetValue(str, out var prop))//Else it's a concatenated%variable%, so do single dispatching, but check if the concat includes an accessor.
-							parts.Add(new CodeVariableReferenceExpression(prop.Name));
-						else//Not an accessor, so just concat as is.
-							parts.Add(VarIdOrConstant(codeLine, str, false, false));
-
+						var ss = sub.ToString();
+						parts.Add(ss);
 						sub.Length = 0;
 						id = false;
 					}
 					else
 					{
-						parts.Add(new CodePrimitiveExpression(sub.ToString()));
+						var ss = sub.ToString();
+
+						if (ss.Length > 0)
+						{
+							var sstrim = ss.AsSpan().Trim();
+
+							if (IsIdentifier(ss) || legacyBetween && exprVerbalOperatorsAlt.Contains(sstrim))
+								parts.Add("\"" + ss + "\"");
+							else
+								parts.Add(ss);
+						}
+
 						sub.Length = 0;
 						id = true;
 					}
 				}
-				else if (id && !IsIdentifier(sym))
-					throw new ParseException(ExInvalidVarToken, i, code);
 				else
 					_ = sub.Append(sym);
 			}
 
 			if (sub.Length != 0)
-				parts.Add(new CodePrimitiveExpression(sub.ToString()));
+			{
+				if (!id)
+					parts.Add("\"" + sub.ToString() + "\"");
+				else
+					parts.Add(sub.ToString());
+			}
 
-			if (parts.Count == 1)
-				return new CodePrimitiveExpression(code);
+			foreach (var part in parts)
+				exprs.AddRange(ParseMultiExpression(codeLine, part, false));
 
-			var all = parts.ToArray();
-			var concat = StringConcat(all);
+			var concat = StringConcat(exprs.Select(ex => ex.Expression).ToArray());
 
-			if (all[0] is CodePrimitiveExpression cpe && cpe.Value.ToString()?.Length == 0 && code.Contains(" and ", StringComparison.OrdinalIgnoreCase))//For some reason, this is the case with legacy "between" statements where the args are enclosed in %%.
-				return concat;
-
-			if (concat is CodeArrayIndexerExpression)//If there was only one variable lookup, it will already be in the form of Vars[].
+			if (legacyBetween && exprs.Count > 2 && exprs[1].Expression is CodePrimitiveExpression cpe && cpe.Value.ToString().Contains("and"))//Extreme hack to attempt to support legacy "between" operator such as: if y "between" x and z
 			{
 				return concat;
 			}

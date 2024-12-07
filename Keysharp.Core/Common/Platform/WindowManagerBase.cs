@@ -2,8 +2,8 @@ namespace Keysharp.Core.Common.Platform
 {
 	internal class WindowGroup
 	{
-		internal Stack<long> activated = new Stack<long>();
-		internal Stack<long> deactivated = new Stack<long>();
+		internal Stack<long> activated = new ();
+		internal Stack<long> deactivated = new ();
 		internal bool lastWasDeactivate = false;
 		internal List<SearchCriteria> sc = [];
 	}
@@ -34,14 +34,6 @@ namespace Keysharp.Core.Common.Platform
 			if (criteria.IsEmpty)
 				return found;
 
-			if (criteria.HasID)
-			{
-				var temp = CreateWindow(criteria.ID);
-
-				if (temp.Exists)
-					return temp;
-			}
-
 			foreach (var window in AllWindows)
 			{
 				if (window.Equals(criteria))
@@ -56,26 +48,33 @@ namespace Keysharp.Core.Common.Platform
 			return found;
 		}
 
-		internal WindowItemBase FindWindow(object title, string text, string excludeTitle, string excludeText, bool last = false)
+		internal WindowItemBase FindWindow(object winTitle, object winText, object excludeTitle, object excludeText, bool last = false)
 		{
 			WindowItemBase foundWindow = null;
-			var (parsed, ptr) = Core.Window.CtrlToIntPtr(title);
+			var (parsed, ptr) = WindowHelper.CtrlToIntPtr(winTitle);
 
 			if (parsed)
 				if (IsWindow(ptr))
 					return LastFound = WindowProvider.Manager.CreateWindow(ptr);
 
-			if (title is Gui gui)
+			var text = winText.As();
+			var exclTitle = excludeTitle.As();
+			var exclTxt = excludeText.As();
+
+			if (winTitle is Gui gui)
 			{
 				return LastFound = CreateWindow(gui.Hwnd);
 			}
-			else if ((title == null || title is string s && string.IsNullOrEmpty(s)) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
+			else if ((winTitle == null || winTitle is string s && string.IsNullOrEmpty(s)) &&
+					 string.IsNullOrEmpty(text) &&
+					 string.IsNullOrEmpty(exclTitle) &&
+					 string.IsNullOrEmpty(exclTxt))
 			{
 				foundWindow = LastFound;
 			}
 			else
 			{
-				var criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
+				var criteria = SearchCriteria.FromString(winTitle, text, excludeTitle, excludeText);
 				foundWindow = FindWindow(criteria, last);
 			}
 
@@ -105,19 +104,29 @@ namespace Keysharp.Core.Common.Platform
 			return found;
 		}
 
-		internal (List<WindowItemBase>, SearchCriteria) FindWindowGroup(object title, string text, string excludeTitle, string excludeText, bool forceAll = false)
+		internal (List<WindowItemBase>, SearchCriteria) FindWindowGroup(object winTitle,
+				object winText,
+				object excludeTitle,
+				object excludeText,
+				bool forceAll = false)
 		{
 			SearchCriteria criteria = null;
 			var foundWindows = new List<WindowItemBase>();
+			var text = winText.As();
+			var exclTitle = excludeTitle.As();
+			var exclText = excludeText.As();
 
-			if ((title == null || title is string s && string.IsNullOrEmpty(s)) && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(excludeTitle) && string.IsNullOrEmpty(excludeText))
+			if ((winTitle == null || winTitle is string s && string.IsNullOrEmpty(s)) &&
+					string.IsNullOrEmpty(text) &&
+					string.IsNullOrEmpty(exclTitle) &&
+					string.IsNullOrEmpty(exclText))
 			{
 				if (LastFound != null)
 					foundWindows.Add(LastFound);
 			}
 			else
 			{
-				criteria = SearchCriteria.FromString(title, text, excludeTitle, excludeText);
+				criteria = SearchCriteria.FromString(winTitle, text, exclTitle, exclText);
 				foundWindows = FindWindowGroup(criteria, forceAll);
 
 				if (foundWindows != null && foundWindows.Count > 0 && foundWindows[0].IsSpecified)

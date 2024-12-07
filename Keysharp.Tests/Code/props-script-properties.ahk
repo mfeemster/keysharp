@@ -32,7 +32,7 @@ else
 
 x := A_ScriptHwnd
 
-if (x = 0) ; No window in this test, so HWND will be 0.
+if (x > 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

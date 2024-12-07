@@ -324,6 +324,6 @@
 		/// constructors are visible to the package users. So they see a class consistently
 		/// using constructors without any create methods.</remarks>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static PrereleaseIdentifier CreateUnsafe(string value, int? numericValue) => new PrereleaseIdentifier(value, numericValue);
+		internal static PrereleaseIdentifier CreateUnsafe(string value, int? numericValue) => new (value, numericValue);
 	}
 }

@@ -239,9 +239,9 @@ namespace Keysharp.Core
 		internal bool showWithoutActivation;
 		private bool beenShown = false;
 
-        public bool AllowShowDisplay = true;
+		public bool AllowShowDisplay = true;
 
-        internal bool BeenShown => beenShown;
+		internal bool BeenShown => beenShown;
 
 		[Browsable(false)]
 		protected override bool ShowWithoutActivation => showWithoutActivation;
@@ -262,13 +262,13 @@ namespace Keysharp.Core
 				beenShown = true;//Will not trigger on initial temporary show/hide in constructor, and instead will only happen after Gui.Show() completes.
 			};
 		}
-        protected override void SetVisibleCore(bool value)
-        {
-            base.SetVisibleCore(AllowShowDisplay ? value : AllowShowDisplay);
-        }
-    }
+		protected override void SetVisibleCore(bool value)
+		{
+			base.SetVisibleCore(AllowShowDisplay ? value : AllowShowDisplay);
+		}
+	}
 
-    public class KeysharpGroupBox : GroupBox
+	public class KeysharpGroupBox : GroupBox
 	{
 		private readonly int addstyle, removestyle;
 
@@ -1026,7 +1026,7 @@ namespace Keysharp.Core
 			DoubleClick += KeysharpToolStripStatusLabel_DoubleClick;
 		}
 
-		public void KeysharpToolStripStatusLabel_DoubleClick(object sender, EventArgs e) => doubleClickHandlers.InvokeEventHandlers(this, GetCurrentParent().Items.IndexOf(this) + 1);
+		private void KeysharpToolStripStatusLabel_DoubleClick(object sender, EventArgs e) => doubleClickHandlers.InvokeEventHandlers(this, GetCurrentParent().Items.IndexOf(this) + 1);
 	}
 
 	public class KeysharpTrackBar : TrackBar
@@ -1091,7 +1091,7 @@ namespace Keysharp.Core
 			removestyle = _remove;
 		}
 
-		public void DelayedExpandParent(TreeNode node)
+		internal void DelayedExpandParent(TreeNode node)
 		{
 			var parent = node.Parent ?? node;
 
@@ -1100,9 +1100,9 @@ namespace Keysharp.Core
 					parent.Expand();
 		}
 
-		public void MarkForExpansion(TreeNode node) => expandStates[node] = true;
+		internal void MarkForExpansion(TreeNode node) => expandStates[node] = true;
 
-		public void RemoveMarkForExpansion(TreeNode node) => _ = expandStates.Remove(node);
+		internal void RemoveMarkForExpansion(TreeNode node) => _ = expandStates.Remove(node);
 
 #if WINDOWS
 

@@ -82,7 +82,7 @@
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
-		private readonly StringBuilder caser = new StringBuilder(32);
+		private readonly StringBuilder caser = new (32);
 		private readonly List<HotkeyDefinition> hotkeys;
 		private readonly List<HotstringDefinition> hotstrings;
 		private readonly Dictionary<Keys, bool> pressed;
@@ -247,13 +247,13 @@
 
 			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 			// Turn it back off only if it wasn't ON before we started.
-			var blockinputPrev = Core.Keyboard.blockInput;
-			var doSelectiveBlockinput = (Core.Keyboard.blockInputMode == ToggleValueType.Mouse
-										 || Core.Keyboard.blockInputMode == ToggleValueType.SendAndMouse)
+			var blockinputPrev = Keysharp.Core.Keyboard.blockInput;
+			var doSelectiveBlockinput = (Keysharp.Core.Keyboard.blockInputMode == ToggleValueType.Mouse
+										 || Keysharp.Core.Keyboard.blockInputMode == ToggleValueType.SendAndMouse)
 										&& sendMode == SendModes.Event;
 
 			if (doSelectiveBlockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
-				_ = Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
+				_ = Keysharp.Core.Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 
 			switch (actionType)
 			{
@@ -282,7 +282,7 @@
 			}
 
 			if (doSelectiveBlockinput && !blockinputPrev)  // Turn it back off only if it was off before we started.
-				_ = Core.Keyboard.ScriptBlockInput(false);
+				_ = Keysharp.Core.Keyboard.ScriptBlockInput(false);
 		}
 
 		internal void ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)

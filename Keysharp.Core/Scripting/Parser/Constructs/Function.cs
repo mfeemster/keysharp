@@ -410,6 +410,6 @@ namespace Keysharp.Scripting
 
 	public class UnsetArg
 	{
-		public static readonly UnsetArg Default = new UnsetArg();
+		public static readonly UnsetArg Default = new ();
 	}
 }

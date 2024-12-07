@@ -372,6 +372,11 @@ class myclass2
 		program.a := temp
 		return temp
 	}
+	
+	classfunc4(p1, p2 := 5, &p3 := 10)
+	{
+		return p3 := p1 + p2 + p3
+	}
 
 	classfuncimplicit(*)
 	{
@@ -441,6 +446,27 @@ a := ""
 class2obj.classfunc3(1, 2, arr*) ; variadic spread operator can't be used with command style because it's mistaken for a multiplication with the next line.
 
 if (a == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := class2obj.classfunc4(1)
+
+if (val == 16)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+val := class2obj.classfunc4(1,,)
+
+if (val == 16)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+val := class2obj.classfunc4(1, 10, &a := 15)
+
+if (val == 26 && a == 26)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

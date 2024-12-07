@@ -110,22 +110,22 @@ namespace Keysharp.Core.Linux
 			}
 		}
 
-		internal override List<WindowItemBase> ChildWindows
+		internal override HashSet<WindowItemBase> ChildWindows
 		{
 			get
 			{
-				var windows = new List<WindowItemBase>();
+				var windows = new HashSet<WindowItemBase>();
 
 				if (!IsSpecified)
 					return windows;
 
 				var attr = new XWindowAttributes();
-				var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
+				//var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
 				var filter = (long id) =>
 				{
 					if (Xlib.XGetWindowAttributes(xwindow.XDisplay.Handle, id, ref attr) != 0)
-						if (detectHiddenText || attr.map_state == MapState.IsViewable)
-							return true;
+						//if (detectHiddenText || attr.map_state == MapState.IsViewable)
+						return true;
 
 					return false;
 				};

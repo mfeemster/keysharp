@@ -2,7 +2,7 @@
 {
 	public partial class MainWindow : KeysharpForm
 	{
-		public static Font OurDefaultFont = new Font("Microsoft Sans Serif", 9F);
+		public static Font OurDefaultFont = new ("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool success;
 		private AboutBox about;
@@ -318,9 +318,11 @@
 
 		private void ShowIfNeeded()
 		{
-			if (WindowState == FormWindowState.Minimized)
+			if (!AllowShowDisplay || WindowState == FormWindowState.Minimized)
 			{
+				AllowShowDisplay = true;
 				Show();
+				BringToFront();
 				WindowState = FormWindowState.Normal;
 			}
 		}

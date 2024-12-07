@@ -50,9 +50,9 @@
 
 				if (options.As() is string opts)
 				{
-					foreach (Range r in opts.AsSpan().SplitAny(Keywords.SpaceTabSv))
+					foreach (Range r in opts.AsSpan().SplitAny(SpaceTabSv))
 					{
-						var split = opts.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
+						var split = opts.AsSpan(r).Trim(SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
 
 						if (split.Length > 0)
 						{
@@ -1037,7 +1037,7 @@
 			var shareset = false;
 			var eolconv = 0;
 
-			foreach (Range r in f.AsSpan().SplitAny(Keywords.Spaces))
+			foreach (Range r in f.AsSpan().SplitAny(Spaces))
 			{
 				var i = 0;
 				var flag = f.AsSpan(r).Trim();
@@ -1183,9 +1183,9 @@
 			var max = -1;
 			bool binary = false, nocrlf = false;
 
-			foreach (Range r in opts.AsSpan().SplitAny(Keywords.SpaceTabSv))
+			foreach (Range r in opts.AsSpan().SplitAny(SpaceTabSv))
 			{
-				var split = opts.AsSpan(r).Trim(Keywords.SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
+				var split = opts.AsSpan(r).Trim(SpaceTab);//Need to supply chars to trim else \n would get automatically trimmed.
 
 				if (split.Length > 0)
 				{

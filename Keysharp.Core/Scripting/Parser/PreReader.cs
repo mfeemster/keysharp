@@ -5,7 +5,7 @@ namespace Keysharp.Scripting
 	internal class PreReader
 	{
 		private static readonly char[] libBrackets = ['<', '>'];
-		private static readonly string multiLineComments = new string(new[] { MultiComB, MultiComA });
+		private static readonly string multiLineComments = new (new[] { MultiComB, MultiComA });
 		private static readonly FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowCatch,
@@ -24,7 +24,7 @@ namespace Keysharp.Scripting
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 		private static int hotifcount;
-		private readonly Stack<(bool, bool)> currentDefines = new Stack<(bool, bool)>();
+		private readonly Stack<(bool, bool)> currentDefines = new ();
 		private readonly HashSet<string> defines =
 			[
 				"KEYSHARP",

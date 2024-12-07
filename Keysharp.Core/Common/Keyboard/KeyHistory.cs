@@ -39,7 +39,7 @@
 				}
 				else if (histitem.vk != 0 || histitem.sc != 0)
 				{
-					var keyname = Core.Keyboard.GetKeyNameHelper(histitem.vk, histitem.sc);
+					var keyname = Keysharp.Core.Keyboard.GetKeyNameHelper(histitem.vk, histitem.sc);
 					_ = sb.AppendLine();
 					_ = sb.Append($"{histitem.vk:X2}  {histitem.sc:X3}\t{histitem.eventType}\t{(histitem.keyUp ? 'u' : 'd')}\t{histitem.elapsedTime:F2}\t{keyname,-15}\t{((title_curr != title_prev) ? title_curr : "")}");
 				}
@@ -75,7 +75,7 @@
 				{
 					//Find the next most recent key-down.
 					if (!item.keyUp)
-						return Core.Keyboard.GetKeyNameHelper(item.vk, item.sc);
+						return Keysharp.Core.Keyboard.GetKeyNameHelper(item.vk, item.sc);
 				}
 			}
 

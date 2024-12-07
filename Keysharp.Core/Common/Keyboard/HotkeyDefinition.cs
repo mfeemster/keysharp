@@ -27,7 +27,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static string COMPOSITE_DELIMITER = " & ";
 		internal static uint joyHotkeyCount;
 		internal static bool[] joystickHasHotkeys = new bool[Joystick.Joystick.MaxJoysticks];
-		internal static List<HotkeyDefinition> shk = new List<HotkeyDefinition>(256);
+		internal static List<HotkeyDefinition> shk = new (256);
 		internal bool allowExtraModifiers = false;
 		internal bool constructedOK;
 		internal HotkeyVariant firstVariant, lastVariant;
@@ -596,14 +596,14 @@ namespace Keysharp.Core.Common.Keyboard
 			// But do this part outside of the above block because these values may have changed since
 			// this function was first called.  By design, the Num/Scroll/CapsLock AlwaysOn/Off setting
 			// stays in effect even when Suspend in ON.
-			var ts = Core.Keyboard.toggleStates;
+			var ts = Keysharp.Core.Keyboard.toggleStates;
 
 			if (HotstringManager.enabledCount != 0
 					|| Script.input != null // v1.0.91: Hook is needed for collecting input.
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
+			if (Keysharp.Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
@@ -1181,7 +1181,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static HotkeyDefinition FindHotkeyByTrueNature(string _name, ref uint _noSuppress, ref bool _hookIsMandatory)
 		{
-			HotkeyProperties propCandidate = new HotkeyProperties(), propExisting = new HotkeyProperties();
+			HotkeyProperties propCandidate = new (), propExisting = new ();
 			_ = TextToModifiers(_name, null, propCandidate);
 			_noSuppress = (propCandidate.prefixHasTilde ? NO_SUPPRESS_PREFIX : 0)//Set for caller.
 						  | (propCandidate.suffixHasTilde ? AT_LEAST_ONE_VARIANT_HAS_TILDE : 0);
@@ -2370,9 +2370,9 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;
 		}
 
-		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Active;
+		private static bool HotIfWinActivePrivate(object title, object text, object hotkey) => WindowSearch.SearchWindow(title, text, null, null, false) is WindowItem win&& win.Active;
 
-		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => Core.Window.SearchWindow([title, text, null, null], false) is WindowItem win&& win.Exists;
+		private static bool HotIfWinExistPrivate(object title, object text, object hotkey) => WindowSearch.SearchWindow(title, text, null, null, false) is WindowItem win&& win.Exists;
 
 		private static bool HotIfWinNotActivePrivate(object title, object text, object hotkey) => !HotIfWinActivePrivate(title, text, hotkey);
 
