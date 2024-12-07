@@ -98,7 +98,7 @@ namespace Keysharp.CompiledMain
 
 				Keysharp.Core.Env.HandleCommandLineParams(args);
 				Keysharp.Scripting.Script.CreateTrayMenu();
-				Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode);
+				Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
 				Keysharp.Scripting.Script.WaitThreads();
 				return 0;
 			}
