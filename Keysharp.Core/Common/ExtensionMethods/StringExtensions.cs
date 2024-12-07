@@ -485,6 +485,21 @@
 		//}
 
 		/// <summary>
+		/// Read the span until a space, tab, or end is encountered.
+		/// </summary>
+		/// <param name="span">The span to read.</param>
+		/// <returns>A string containing all characters read.</returns>
+		internal static string ParseUntilSpace(this ReadOnlySpan<char> span)
+		{
+			var nextSpace = span.IndexOfAny(SpaceTab);
+
+			if (nextSpace != -1)
+				return span.Slice(0, nextSpace).ToString();
+			else
+				return span.ToString();
+		}
+
+		/// <summary>
 		/// Removes all instances of a specified list of characters from a string.
 		/// </summary>
 		/// <param name="str">The string to remove characters from.</param>

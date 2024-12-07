@@ -34,14 +34,6 @@ namespace Keysharp.Core.Common.Platform
 			if (criteria.IsEmpty)
 				return found;
 
-			if (criteria.HasID)
-			{
-				var temp = CreateWindow(criteria.ID);
-
-				if (temp.Exists)
-					return temp;
-			}
-
 			foreach (var window in AllWindows)
 			{
 				if (window.Equals(criteria))

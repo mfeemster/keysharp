@@ -69,7 +69,7 @@
 
 			var t = false;
 
-			while ((i = mixed.IndexOf(Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
+			while (i < mixed.Length && (i = mixed.IndexOf(Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
 			{
 				if (!t)
 				{
@@ -81,44 +81,48 @@
 					t = true;
 				}
 
-				var z = mixed.IndexOfAny(Spaces, i);
+				var span = mixed.AsSpan(i + Keyword_ahk.Length);
 
-				if (z == -1)
-					break;
-
-				var word = mixed.Substring(i, z - i);
-				var e = mixed.IndexOf(Keyword_ahk, ++i, StringComparison.OrdinalIgnoreCase);
-				var arg = (e == -1 ? mixed.Substring(z) : mixed.Substring(z, e - z)).Trim();
-				long n;
-
-				switch (word.ToLowerInvariant())
+				if (span.StartsWith("class", StringComparison.OrdinalIgnoreCase))
 				{
-					case Keyword_ahk_class: criteria.ClassName = arg; break;
-
-					case Keyword_ahk_group: criteria.Group = arg; break;
-
-					case Keyword_ahk_id:
-						if (long.TryParse(arg, out n))
-							criteria.ID = new IntPtr(n);
-
-						break;
-
-					case Keyword_ahk_exe:
-						criteria.Path = arg;
-						break;
-
-					case Keyword_A:
-						criteria.Active = true;
-						break;
-
-					case Keyword_ahk_pid:
-						if (long.TryParse(arg, out n))
-							criteria.PID = new IntPtr(n);
-
-						break;
+					criteria.ClassName = span.Slice(5).TrimStart().ParseUntilSpace();
+					i += 9 + criteria.ClassName.Length;//Might be off by a space, but still reduces the next comparison.
 				}
+				else if (span.StartsWith("group", StringComparison.OrdinalIgnoreCase))
+				{
+					criteria.Group = span.Slice(5).TrimStart().ParseUntilSpace();
+					i += 9 + criteria.Group.Length;
+				}
+				else if (span.StartsWith("exe", StringComparison.OrdinalIgnoreCase))
+				{
+					criteria.Path = span.Slice(3).TrimStart().ParseUntilSpace();
+					i += 7 + criteria.Path.Length;
+				}
+				else if (span.StartsWith("id", StringComparison.OrdinalIgnoreCase))
+				{
+					var val = span.Slice(2).TrimStart().ParseUntilSpace();
 
-				i++;
+					if (long.TryParse(val, out var id))
+						criteria.ID = new IntPtr(id);
+
+					i += 6 + val.Length;
+				}
+				else if (span.StartsWith("A", StringComparison.OrdinalIgnoreCase))
+				{
+					criteria.Active = true;
+					i += 5;
+				}
+				else if (span.StartsWith("pid", StringComparison.OrdinalIgnoreCase))
+				{
+					var val = span.Slice(3).TrimStart().ParseUntilSpace();
+
+					if (long.TryParse(val, out var id))
+						criteria.PID = new IntPtr(id);
+
+					i += 7 + val.Length;
+				}
+				else
+					i++;
 			}
 
 			return criteria;
