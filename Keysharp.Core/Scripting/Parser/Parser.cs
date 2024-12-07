@@ -319,6 +319,7 @@ namespace Keysharp.Scripting
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
 			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
+			_ = inv.Parameters.Add(new CodePrimitiveExpression(Persistent));
 			_ = main.Statements.Add(new CodeExpressionStatement(inv));
 			_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;

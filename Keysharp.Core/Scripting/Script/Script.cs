@@ -348,7 +348,7 @@
 					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 		}
 
-		public static void RunMainWindow(string title, Func<object> userInit)
+		public static void RunMainWindow(string title, Func<object> userInit, bool persistent)
 		{
 			mainWindow = new MainWindow();
 
@@ -357,21 +357,27 @@
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
-			//Parser.Persistent = true;
+			Script.persistent = persistent;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
 			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
 			_ = mainWindow.BeginInvoke(() =>
 			{
-				_ = Flow.TryCatch(() =>
-				{
-					var (__pushed, __btv) = Threads.BeginThread();
+				if (!Flow.TryCatch(() =>
+			{
+				var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
 					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
 					isReadyToExecute = true;
 					_ = Threads.EndThread(__pushed);
-				}, true);//Pop on exception because EndThread() above won't be called.
+				}, true))//Pop on exception because EndThread() above won't be called.
+				{
+					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
+					{
+						Keysharp.Core.Flow.ExitApp(0);
+					}
+				}
 			});
 			Application.Run(mainWindow);
 		}
