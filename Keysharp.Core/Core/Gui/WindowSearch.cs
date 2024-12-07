@@ -118,12 +118,15 @@ namespace Keysharp.Core
 				if (controls.Count == 0)
 					return "";
 
-				var arr = new Array(controls.Count);
+				var arr = new Array()
+				{
+					Capacity = controls.Count
+				};
 
 				if (nn)
 				{
 					foreach (var ctrl in controls)
-						_ = arr.Add(ctrl.ClassNN);
+						_ = arr.Add(ctrl.GetClassNN(controls));
 				}
 				else
 				{

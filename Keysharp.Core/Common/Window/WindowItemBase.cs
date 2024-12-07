@@ -19,43 +19,21 @@
 		internal abstract bool Active { get; set; }
 		internal abstract bool AlwaysOnTop { get; set; }
 		internal abstract bool Bottom { set; }
-		internal abstract List<WindowItemBase> ChildWindows { get; }
+		internal abstract HashSet<WindowItemBase> ChildWindows { get; }
 		internal abstract string ClassName { get; }
 
 		/// <summary>
-		/// Get the ClassName + number of occurence of this window (control)
+		/// Get the ClassName + number of occurrence of this window (control)
 		/// </summary>
 		internal virtual string ClassNN
 		{
 			get
 			{
-				var className = ClassName;
-				var classNN = className;
-				// to get the classNN we must know the enumeration
-				// of our parent window:
+				var classNN = ClassName;
 				var parent = ParentWindow;
 
 				if (parent.IsSpecified)
-				{
-					var nn = 1; // Class NN counter
-
-					// now we must know the postion of our "control"
-					foreach (var c in parent.ChildWindows)
-					{
-						if (c.IsSpecified)
-						{
-							if (c.ClassName == className)
-							{
-								if (c.Equals(this))
-									break;
-								else
-									++nn;  // if its the same class but not our control
-							}
-						}
-					}
-
-					classNN += nn.ToString(); // if its the same class and our control
-				}
+					return GetClassNN(parent.ChildWindows);
 
 				return classNN;
 			}
@@ -94,7 +72,7 @@
 					{
 						var nn = 1; // Class NN counter
 
-						// now we must know the postion of our "control"
+						// now we must know the position of our "control"
 						foreach (var c in parent.GetAllControlsRecursive<Control>())
 						{
 							if (c.GetType().Name == className)
@@ -309,6 +287,33 @@
 			}
 
 			return item;
+		}
+
+		internal string GetClassNN(HashSet<WindowItemBase> childWindows)
+		{
+			var className = ClassName;
+			var classNN = className;
+			// to get the classNN we must know the enumeration
+			// of our parent window:
+			var nn = 1; // Class NN counter
+
+			// now we must know the position of our "control"
+			foreach (var c in childWindows)
+			{
+				if (c.IsSpecified)
+				{
+					if (c.ClassName == className)
+					{
+						if (c.Equals(this))
+							break;
+						else
+							++nn;  // if its the same class but not our control
+					}
+				}
+			}
+
+			classNN += nn.ToString(); // if its the same class and our control
+			return classNN;
 		}
 
 		internal abstract bool Hide();

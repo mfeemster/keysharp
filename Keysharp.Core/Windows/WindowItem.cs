@@ -66,11 +66,11 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override List<WindowItemBase> ChildWindows
+		internal override HashSet<WindowItemBase> ChildWindows
 		{
 			get
 			{
-				var childs = new HashSet<IntPtr>();
+				var children = new HashSet<WindowItemBase>();
 
 				if (IsSpecified)
 				{
@@ -78,7 +78,7 @@ namespace Keysharp.Core.Windows
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
 						if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
-							_ = childs.Add(hwnd);
+							_ = children.Add(new WindowItem(hwnd));
 
 						return true;
 					}, 0);
@@ -91,16 +91,11 @@ namespace Keysharp.Core.Windows
 					form.Invoke(() =>
 					{
 						foreach (var ctrl in form.GetAllControlsRecursive<Control>())
-							_ = childs.Add(ctrl.Handle);//HashSet takes care of avoiding dupes.
+							_ = children.Add(new WindowItem(ctrl.Handle));//HashSet takes care of avoiding dupes.
 					});
 				}
 
-				var childList = new List<WindowItemBase>(childs.Count);
-
-				foreach (var handle in childs)
-					childList.Add(new WindowItem(handle));
-
-				return childList;
+				return children;
 			}
 		}
 

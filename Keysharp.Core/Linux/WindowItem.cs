@@ -110,11 +110,11 @@ namespace Keysharp.Core.Linux
 			}
 		}
 
-		internal override List<WindowItemBase> ChildWindows
+		internal override HashSet<WindowItemBase> ChildWindows
 		{
 			get
 			{
-				var windows = new List<WindowItemBase>();
+				var windows = new HashSet<WindowItemBase>();
 
 				if (!IsSpecified)
 					return windows;
