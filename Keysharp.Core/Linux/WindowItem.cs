@@ -120,12 +120,12 @@ namespace Keysharp.Core.Linux
 					return windows;
 
 				var attr = new XWindowAttributes();
-				var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
+				//var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
 				var filter = (long id) =>
 				{
 					if (Xlib.XGetWindowAttributes(xwindow.XDisplay.Handle, id, ref attr) != 0)
-						if (detectHiddenText || attr.map_state == MapState.IsViewable)
-							return true;
+						//if (detectHiddenText || attr.map_state == MapState.IsViewable)
+						return true;
 
 					return false;
 				};

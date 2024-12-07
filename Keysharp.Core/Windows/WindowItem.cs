@@ -74,12 +74,11 @@ namespace Keysharp.Core.Windows
 
 				if (IsSpecified)
 				{
-					var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
+					//var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
 					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 					{
-						if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
-							_ = children.Add(new WindowItem(hwnd));
-
+						//if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
+						_ = children.Add(new WindowItem(hwnd));
 						return true;
 					}, 0);
 				}
