@@ -499,7 +499,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Returns the Unique ID (HWND) of the first matching window (0 if none) as a hexademinal integer.
+		/// Returns the Unique ID (HWND) of the first matching window (0 if none) as a hexadecimal integer.
 		/// </summary>
 		/// <param name="title"></param>
 		/// <param name="text"></param>
@@ -529,12 +529,12 @@ namespace Keysharp.Core
 											 [Optional()][DefaultParameterValue(0)] ref object outY,
 											 [Optional()][DefaultParameterValue(0)] ref object outWidth,
 											 [Optional()][DefaultParameterValue(0)] ref object outHeight,
-											 object wintTitle = null,
+											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
 											 object excludeText = null)
 		{
-			WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, wintTitle, winText, excludeTitle, excludeText);
+			WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);
 			return null;
 		}
 
