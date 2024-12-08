@@ -25,7 +25,7 @@
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationManifest>Keysharp.manifest</ApplicationManifest>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
