@@ -24,6 +24,7 @@ namespace Keysharp.Scripting
 			if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
 				stackedHotkeys.Add(invoke);
 
+			hotkeyHotstringCreations.Add(invoke);
 			return invoke;
 		}
 
@@ -430,7 +431,6 @@ namespace Keysharp.Scripting
 							//"Down" is finished, proceed with "Up".
 							if (AddHotkeyMethodInvoke(codeLine, remapSource, (uint)HotkeyTypeEnum.Normal, remapDest, ref suffixHasTilde, ref hookIsMandatory) is CodeMethodInvokeExpression cmie)
 							{
-								_ = parent.Add(cmie);//Normally the caller does this, but since we're adding two of them here, we need to do it manually. The second one will get added by the caller.
 								ClearParserHotState();
 								remapSource = $"{remapSource} up";//Key-up hotkey, e.g. *LButton up::
 								lastHotkeyFunc = LabelMethodName(remapSource);
@@ -638,6 +638,7 @@ namespace Keysharp.Scripting
 					if (replacement.Length == 0 && lastHotstringFunc.Length > 0)
 						stackedHotstrings.Add(invoke);
 
+					hotkeyHotstringCreations.Add(invoke);
 					lastHotkeyFunc = "";//After adding a hotstring, we must clear any hotkey state.
 					return invoke;
 				}

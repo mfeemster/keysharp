@@ -230,6 +230,7 @@ namespace Keysharp.Scripting
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
+		private readonly List<CodeMethodInvokeExpression> hotkeyHotstringCreations = new ();
 		private bool blockOpen;
 		private uint caseCount;
 		private List<CodeLine> codeLines = [];
@@ -992,6 +993,24 @@ namespace Keysharp.Scripting
 
 				for (var i = 0; i < gotoLoopDepth; i++)
 					gkv.Value.Statements.Insert(gotoIndex, pop);
+			}
+
+			if (hotkeyHotstringCreations.Count > 0)
+			{
+				//Readd rather than insert;
+				var userCodeStatements = new CodeStatementCollection
+				{
+					Capacity = hotkeyHotstringCreations.Count + userMainMethod.Statements.Count
+				};
+
+				foreach (var hkc in hotkeyHotstringCreations)
+					_ = userCodeStatements.Add(hkc);
+
+				foreach (CodeStatement s in userMainMethod.Statements)
+					_ = userCodeStatements.Add(s);
+
+				userMainMethod.Statements.Clear();
+				userMainMethod.Statements.AddRange(userCodeStatements);
 			}
 
 			if (!Persistent)

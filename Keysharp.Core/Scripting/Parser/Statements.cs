@@ -239,8 +239,6 @@
 
 						case Token.Hotkey:
 							var hotkey = ParseHotkey(codeLines, i);
-							//hotkey.LinePragma = codeline;
-							_ = parent.Add(hotkey);
 							break;
 
 						case Token.Flow:
