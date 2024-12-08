@@ -275,7 +275,7 @@ namespace Keysharp.Scripting
 
 		internal static bool IsHotkeyLabel(string code)
 		{
-			var z = code.IndexOf(HotkeySignal);
+			var z = code.FindFirstNotInQuotes(HotkeySignal);
 
 			if (z == -1)
 				return false;
@@ -319,7 +319,7 @@ namespace Keysharp.Scripting
 			return true;
 		}
 
-		internal static bool IsHotstringLabel(string code) => code.Length > 0 && code[0] == HotkeyBound&& code.Contains(HotkeySignal)&& code.Count(ch => ch == HotkeyBound) >= 4;
+		internal static bool IsHotstringLabel(string code) => code.Length > 0 && code[0] == HotkeyBound&& code.FindFirstNotInQuotes(HotkeySignal) != -1 && code.Count(ch => ch == HotkeyBound) >= 4;
 
 		internal static bool IsIdentifier(char symbol) => char.IsLetterOrDigit(symbol) || VarExt.Contains(symbol);
 
