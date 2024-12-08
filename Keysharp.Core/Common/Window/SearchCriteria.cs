@@ -69,6 +69,8 @@
 
 			var t = false;
 
+			var ahkIdCount = 0;
+
 			while (i < mixed.Length && (i = mixed.IndexOf(Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
 			{
 				if (!t)
@@ -100,10 +102,14 @@
 				}
 				else if (span.StartsWith("id", StringComparison.OrdinalIgnoreCase))
 				{
+					var oldId = criteria.ID;
 					var val = span.Slice(2).TrimStart().ParseUntilSpace();
 
 					if (long.TryParse(val, out var id))
 						criteria.ID = new IntPtr(id);
+
+					if (criteria.ID != oldId)
+						ahkIdCount++;
 
 					i += 6 + val.Length;
 				}
@@ -124,6 +130,9 @@
 				else
 					i++;
 			}
+
+			if (ahkIdCount > 1)//If they specified more than one ID, consider neither.
+				criteria.ID = IntPtr.Zero;
 
 			return criteria;
 		}
