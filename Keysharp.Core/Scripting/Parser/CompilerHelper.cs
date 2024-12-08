@@ -289,8 +289,34 @@ using static Keysharp.Scripting.Script;
 								  .AddReferences(references)
 								  .AddSyntaxTrees(tree)
 								  ;
+				// Apparently there isn't a good way to read app.manifest contents from the running process,
+				// so instead we recreate it here.
+				// Any change in the manifest should be reflected here and in Keysharp app.manifest file.
+				var manifestContents =
+					@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>
+					<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">
+						<trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
+							<security>
+								<requestedPrivileges xmlns=""urn:schemas-microsoft-com:asm.v3"">
+									<requestedExecutionLevel level=""asInvoker"" uiAccess=""false"" />
+								</requestedPrivileges>
+							</security>
+						</trustInfo>
+						<asmv3:application xmlns:asmv3=""urn:schemas-microsoft-com:asm.v3"">
+							<asmv3:windowsSettings xmlns=""http://schemas.microsoft.com/SMI/2005/WindowsSettings"">
+								<!-- Extra info: https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests -->
+								<disableWindowFiltering xmlns=""http://schemas.microsoft.com/SMI/2011/WindowsSettings"">true</disableWindowFiltering>
+								<longPathAware xmlns=""http://schemas.microsoft.com/SMI/2016/WindowsSettings"">true</longPathAware>
+							</asmv3:windowsSettings>
+						</asmv3:application>
+					</assembly>";
+				var manifestStream = new MemoryStream();
+				var writer = new StreamWriter(manifestStream);
+				writer.Write(manifestContents);
+				writer.Flush();
+				manifestStream.Position = 0;
 				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
-				var res = compilation.CreateDefaultWin32Resources(true, true, null, msi);//The first argument must be true to embed version/assembly information.
+				var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
 				var compilationResult = compilation.Emit(ms, win32Resources: res);
 				return (compilationResult, ms, null);
 			}

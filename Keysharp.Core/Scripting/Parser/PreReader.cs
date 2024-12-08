@@ -129,11 +129,13 @@ namespace Keysharp.Scripting
 				if (code.Length == 0)
 					continue;
 
-				if (code[0] == ';')
+				var isHotkeyString = IsHotkeyLabel(code) || IsHotstringLabel(code);
+
+				if (code[0] == ';' && !isHotkeyString)//Hotkey/string could have started with a ;
 					continue;
 
 				var commentIgnore = false;
-				var noCommentCode = StripComment(code);
+				var noCommentCode = isHotkeyString && code[0] == ';' ? ";" + StripComment(code.Substring(1)) : StripComment(code);
 				var span = noCommentCode.AsSpan().Trim(Spaces);
 
 				if (span.Length == 0)
@@ -883,7 +885,7 @@ namespace Keysharp.Scripting
 										StartNewLine(newOpenBrace);
 										StartNewLine(newLineRest);
 									}
-									else if (newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
+									else if (!newIsHotkey && newLineSpan.StartsWith(closeBraceSpan) && newLineSpan.Length > 1)
 									{
 										var newLineRest = newLineSpan.Slice(1).Trim(Spaces);
 										var newLineRestFirstTokenIndex = newLineRest.IndexOfAny(SpaceTabOpenParenSv);
@@ -943,7 +945,8 @@ namespace Keysharp.Scripting
 									//Previous line was imbalanced in a non-OTB manner, but the new line balanced it.
 									//x := [//Previous line.
 									//1, 2]//New line.
-									else if (lastNested && !anyNested && !isPropLine && !wasPropLine)
+									else if (!prevIsHotkey//Ensure previous line wasn't a hotkey because it could have started with [,{,(
+											 && lastNested && !anyNested && !isPropLine && !wasPropLine)
 									{
 										AddToPreviousLine(prevLine, newLineStr);
 									}
@@ -951,7 +954,8 @@ namespace Keysharp.Scripting
 									//x := [//Previous line.
 									//1//New line.
 									//...
-									else if (anyNested && !isPropLine && !wasPropLine)
+									else if (!prevIsHotkey//Ensure previous line wasn't a hotkey because it could have started with [,{,(
+											 && anyNested && !isPropLine && !wasPropLine)
 									{
 										AddToPreviousLine(prevLine, newLineStr);
 									}

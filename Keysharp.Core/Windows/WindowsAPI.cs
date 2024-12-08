@@ -634,6 +634,8 @@ namespace Keysharp.Core.Windows
 		internal const int WM_ENDSESSION = 0x0016;
 		internal const int WM_DESTROY = 0x0002;
 		internal const int WM_COPYDATA = 0x004A;
+		internal const int WM_PAINT = 0x000F;
+
 		internal const uint ENDSESSION_LOGOFF = 0x80000000;
 
 		internal const int HTERROR = -2;

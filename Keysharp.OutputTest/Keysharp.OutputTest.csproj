@@ -18,6 +18,7 @@
     <Description>A simple test program to paste generated code into for debugging</Description>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
+    <ApplicationManifest>Keysharp.OutputTest.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

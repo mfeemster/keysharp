@@ -83,5 +83,49 @@ GroupAdd("AltTabWindow", "ahk_class MultitaskingViewFrame")  ; Windows 10
 */
 }
 
+[::{
+    MsgBox("hello")
+}
+
+]::{
+    MsgBox("hello")
+}
+
+(::{
+    MsgBox("hello")
+}
+
+)::{
+    MsgBox("hello")
+}
+
+{::{
+    MsgBox("hello")
+}
+
+}::{
+    MsgBox("hello")
+}
+
+;::{
+    MsgBox("hello")
+}
+
+::btw::by the way
+::`/`*::abcd`*`/
+
+a := 123
+testfunc(p1)
+{
+	global a := p1
+}
+
+testfunc "::"
+
+if (a == "::")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 FileAppend, "pass", "*"
 ExitApp()

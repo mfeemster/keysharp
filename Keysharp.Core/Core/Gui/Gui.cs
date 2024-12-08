@@ -349,7 +349,7 @@
 				};
 				//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
 				//be done in designer-generated code. It appears to cause layout problems.
-				Opt(options);
+				_ = Opt(options);
 				//var formHandle = form.Handle;//Force the creation.
 				form.FormClosing += Form_FormClosing;
 				form.KeyDown += Form_KeyDown;
@@ -1908,7 +1908,7 @@
 			DoneAssigning:
 
 			if (hide)
-				Hide();
+				_ = Hide();
 
 			return new Map(dkt);
 		}
@@ -1934,7 +1934,7 @@
 			{
 				try
 				{
-					gui.Destroy();
+					_ = gui.Destroy();
 				}
 				catch
 				{

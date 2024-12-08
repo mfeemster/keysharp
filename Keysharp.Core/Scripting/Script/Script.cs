@@ -367,15 +367,17 @@
 			{
 				var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
-					//This has to be done here because it uses the window handle to register hotkeys, and the handle isn't valid until mainWindow.Load() is called.
-					HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//We want these active now in case auto-execute never returns (e.g. loop));
+					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
+					//must be done:
+					//  After the window handle is created and the handle isn't valid until mainWindow.Load() is called.
+					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
 					_ = Threads.EndThread(__pushed);
 				}, true))//Pop on exception because EndThread() above won't be called.
 				{
 					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
-						Keysharp.Core.Flow.ExitApp(0);
+						_ = Keysharp.Core.Flow.ExitApp(0);
 					}
 				}
 			});

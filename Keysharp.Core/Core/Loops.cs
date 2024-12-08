@@ -788,6 +788,7 @@ namespace Keysharp.Core
 		public object result;
 		public TextWriter sw;
 		public LoopType type = LoopType.Normal;
+		public DateTime lastIter = DateTime.Now;
 	}
 
 	/// <summary>

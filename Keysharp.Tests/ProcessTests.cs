@@ -53,6 +53,7 @@ namespace Keysharp.Tests
 				File.Delete("./DirTest.txt");
 
 			RunWait(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Accessors.A_ComSpec, " /c dir C:\\ >>./DirTest.txt"), null, "Min");
+			MessageBox.Show("Close everything that was opened by the process test before proceeding.");
 			Assert.IsTrue(TestScript("process-run-wait-close", false));
 			//Can't really test RunAs() or Shutdown(), but they have been manually tested individually.
 #else
