@@ -775,20 +775,20 @@ namespace Keysharp.Core
 	/// </summary>
 	public class LoopInfo
 	{
-		internal object file;
-		internal string filename = string.Empty;
-		internal long index;
-		internal string line;
-		internal string path;
-		internal object regDate;
-		internal string regKeyName;
-		internal string regName;
-		internal string regType;
-		internal object regVal;
-		internal object result;
-		internal TextWriter sw;
-		internal LoopType type = LoopType.Normal;
-		internal DateTime lastIter = DateTime.Now;
+		public object file;
+		public string filename = string.Empty;
+		public long index;
+		public string line;
+		public string path;
+		public object regDate;
+		public string regKeyName;
+		public string regName;
+		public string regType;
+		public object regVal;
+		public object result;
+		public TextWriter sw;
+		public LoopType type = LoopType.Normal;
+		public DateTime lastIter = DateTime.Now;
 	}
 
 	/// <summary>

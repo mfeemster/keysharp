@@ -24,6 +24,7 @@ $z = [System.IO.Compression.ZipFile]::Open($zfile, [System.IO.Compression.ZipArc
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.Core.dll", "Keysharp.Core.dll")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.exe", "Keysharp.exe")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.dll", "Keysharp.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.manifest", "Keysharp.manifest")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keyview.exe", "Keyview.exe")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keyview.dll", "Keyview.dll")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Interop.IWshRuntimeLibrary.dll", "Interop.IWshRuntimeLibrary.dll")

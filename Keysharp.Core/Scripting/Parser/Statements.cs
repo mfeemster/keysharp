@@ -67,131 +67,135 @@
 				CodeBlock block = null;
 				var sym = code[0];
 				var skip = false;
+				var isHotkeyString = IsHotkeyLabel(code) || IsHotstringLabel(code);
 
-				switch (sym)
+				if (!isHotkeyString)//Do not take special action on the first character if it was a hotkey or hotstring.
 				{
-					case BlockOpen:
-						if (blocks.Count == 0)
-						{
-							block = new CodeBlock(codeLine, Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
-							_ = CloseTopSingleBlock();
-							blocks.Push(block);
-						}
-
-						block = blocks.Peek();
-
-						if (block.Type == CodeBlock.BlockType.Expect)
-							block.Type = CodeBlock.BlockType.Within;
-
-						skip = true;
-						break;
-
-					case BlockClose:
-						if (blocks.Count == 0)
-							throw new ParseException(ExUnexpected, codeLine);
-
-						CloseElseBlocks();
-
-						//Case statements don't need to be enclosed in braces.
-						//But different action needs to be taken based on whether it was opened with a brace.
-						//Case opened with a brace: encountering this brace means close the case statement.
-						//Case opened without a brance: encountering this brace means close the case statement AND the switch statement.
-						if (parentBlock != null)
-						{
-							if (parentBlock.Kind == CodeBlock.BlockKind.CaseWithoutBrace)
-								CloseBlock(codeLine);
-							//If the case statement just contained empty braces, it means go do nothing and go to the end, instead of falling through which would be done when no braces or statements are present.
-							else if (parentBlock.Kind == CodeBlock.BlockKind.CaseWithBrace && parentBlock.Statements.Count == 0 && switches.PeekOrNull() is CodeSwitchStatement css)
-								_ = parentBlock.Statements.Add(new CodeGotoStatement(css.FinalLabelStatement.Label));
-							else if (parentBlock.Kind == CodeBlock.BlockKind.Catch)
+					switch (sym)
+					{
+						case BlockOpen:
+							if (blocks.Count == 0)
 							{
-								_ = excCatchVars.PopOrNull();
+								block = new CodeBlock(codeLine, Scope, null, CodeBlock.BlockKind.Dummy, blocks.PeekOrNull());
+								_ = CloseTopSingleBlock();
+								blocks.Push(block);
 							}
-							else if (parentBlock.Kind == CodeBlock.BlockKind.Function)
+
+							block = blocks.Peek();
+
+							if (block.Type == CodeBlock.BlockType.Expect)
+								block.Type = CodeBlock.BlockType.Within;
+
+							skip = true;
+							break;
+
+						case BlockClose:
+							if (blocks.Count == 0)
+								throw new ParseException(ExUnexpected, codeLine);
+
+							CloseElseBlocks();
+
+							//Case statements don't need to be enclosed in braces.
+							//But different action needs to be taken based on whether it was opened with a brace.
+							//Case opened with a brace: encountering this brace means close the case statement.
+							//Case opened without a brance: encountering this brace means close the case statement AND the switch statement.
+							if (parentBlock != null)
 							{
-								var typeMethods = methods[typeStack.Peek()];
-
-								if (typeMethods.TryGetValue(parentBlock.Method, out var meth))
+								if (parentBlock.Kind == CodeBlock.BlockKind.CaseWithoutBrace)
+									CloseBlock(codeLine);
+								//If the case statement just contained empty braces, it means go do nothing and go to the end, instead of falling through which would be done when no braces or statements are present.
+								else if (parentBlock.Kind == CodeBlock.BlockKind.CaseWithBrace && parentBlock.Statements.Count == 0 && switches.PeekOrNull() is CodeSwitchStatement css)
+									_ = parentBlock.Statements.Add(new CodeGotoStatement(css.FinalLabelStatement.Label));
+								else if (parentBlock.Kind == CodeBlock.BlockKind.Catch)
 								{
-									var vari = 0;
+									_ = excCatchVars.PopOrNull();
+								}
+								else if (parentBlock.Kind == CodeBlock.BlockKind.Function)
+								{
+									var typeMethods = methods[typeStack.Peek()];
 
-									if (meth.UserData.Contains(initParams) && meth.UserData[initParams] is CodeStatementCollection csc)
-										foreach (CodeStatement cs in csc)
-											meth.Statements.Insert(vari++, cs);
-
-									if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
+									if (typeMethods.TryGetValue(parentBlock.Method, out var meth))
 									{
-										foreach (var kv in dkt)
+										var vari = 0;
+
+										if (meth.UserData.Contains(initParams) && meth.UserData[initParams] is CodeStatementCollection csc)
+											foreach (CodeStatement cs in csc)
+												meth.Statements.Insert(vari++, cs);
+
+										if (staticFuncVars[typeStack.Peek()].PeekOrNull() is Dictionary<string, CodeExpression> dkt)
 										{
-											var scopedvar = kv.Key;
-											var cmf = new CodeMemberField(typeof(object), scopedvar)
+											foreach (var kv in dkt)
 											{
-												Attributes = MemberAttributes.Public | MemberAttributes.Static
-											};
-
-											if (kv.Value is CodeExpression ce)
-												cmf.InitExpression = ce;
-
-											_ = typeStack.Peek().Members.Add(cmf);
-										}
-									}
-
-									var scope = Scope.ToLower();
-
-									if (allVars[typeStack.Peek()].TryGetValue(scope, out var av))
-									{
-										var gfv = globalFuncVars.PeekOrNull();
-
-										foreach (var v in av)
-										{
-											if (gfv == null || !gfv.Contains(v.Key))
-											{
-												if (!InClassDefinition() || v.Key != "this")//Never create a "this" variable inside of a class definition.
+												var scopedvar = kv.Key;
+												var cmf = new CodeMemberField(typeof(object), scopedvar)
 												{
-													var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
-													meth.Statements.Insert(vari++, dec);
+													Attributes = MemberAttributes.Public | MemberAttributes.Static
+												};
+
+												if (kv.Value is CodeExpression ce)
+													cmf.InitExpression = ce;
+
+												_ = typeStack.Peek().Members.Add(cmf);
+											}
+										}
+
+										var scope = Scope.ToLower();
+
+										if (allVars[typeStack.Peek()].TryGetValue(scope, out var av))
+										{
+											var gfv = globalFuncVars.PeekOrNull();
+
+											foreach (var v in av)
+											{
+												if (gfv == null || !gfv.Contains(v.Key))
+												{
+													if (!InClassDefinition() || v.Key != "this")//Never create a "this" variable inside of a class definition.
+													{
+														var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
+														meth.Statements.Insert(vari++, dec);
+													}
 												}
 											}
 										}
 									}
-								}
 
-								EndFunction();
-							}
-							else if (parentBlock.Kind == CodeBlock.BlockKind.Class)
-							{
-								if (typeStack.PopOrNull() is CodeTypeDeclaration ctd)
+									EndFunction();
+								}
+								else if (parentBlock.Kind == CodeBlock.BlockKind.Class)
 								{
+									if (typeStack.PopOrNull() is CodeTypeDeclaration ctd)
+									{
+									}
+								}
+								else if (parentBlock.Kind == CodeBlock.BlockKind.Prop)
+								{
+									EndFunction();
+								}
+								else if (parentBlock.Kind == CodeBlock.BlockKind.PropGet)
+								{
+									AddPropStatements(CodeBlock.BlockKind.PropGet);
+								}
+								else if (parentBlock.Kind == CodeBlock.BlockKind.PropSet)
+								{
+									AddPropStatements(CodeBlock.BlockKind.PropSet);
 								}
 							}
-							else if (parentBlock.Kind == CodeBlock.BlockKind.Prop)
-							{
-								EndFunction();
-							}
-							else if (parentBlock.Kind == CodeBlock.BlockKind.PropGet)
-							{
-								AddPropStatements(CodeBlock.BlockKind.PropGet);
-							}
-							else if (parentBlock.Kind == CodeBlock.BlockKind.PropSet)
-							{
-								AddPropStatements(CodeBlock.BlockKind.PropSet);
-							}
-						}
 
-						CloseBlock(codeLine);
-						skip = true;
-						break;
+							CloseBlock(codeLine);
+							skip = true;
+							break;
 
-					default:
-						if (blocks.Count > 0 && blocks.Peek().Type == CodeBlock.BlockType.Expect)// && blocks.Peek().Kind != CodeBlock.BlockKind.Case)
-						{
-							blocksCount = blocks.Count;
-							block = blocks.Peek();
-							block.Type = CodeBlock.BlockType.Within;
-							block.Level = blocksCount;
-						}
+						default:
+							if (blocks.Count > 0 && blocks.Peek().Type == CodeBlock.BlockType.Expect)// && blocks.Peek().Kind != CodeBlock.BlockKind.Case)
+							{
+								blocksCount = blocks.Count;
+								block = blocks.Peek();
+								block.Type = CodeBlock.BlockType.Within;
+								block.Level = blocksCount;
+							}
 
-						break;
+							break;
+					}
 				}
 
 				if (skip)
