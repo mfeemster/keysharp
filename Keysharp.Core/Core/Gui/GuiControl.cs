@@ -1788,18 +1788,18 @@ namespace Keysharp.Core
 
 			if (!scaling)
 			{
-				x = rect.X;
-				y = rect.Y;
-				w = rect.Width;
-				h = rect.Height;
+				x = (long)rect.X;
+				y = (long)rect.Y;
+				w = (long)rect.Width;
+				h = (long)rect.Height;
 			}
 			else
 			{
 				var scale = Accessors.A_ScaledScreenDPI;
-				x = rect.X * scale;
-				y = rect.Y * scale;
-				w = rect.Width * scale;
-				h = rect.Height * scale;
+				x = (long)(rect.X * scale);
+				y = (long)(rect.Y * scale);
+				w = (long)(rect.Width * scale);
+				h = (long)(rect.Height * scale);
 			}
 		}
 

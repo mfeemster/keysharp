@@ -117,8 +117,8 @@ namespace Keysharp.Core
 			PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
-			outputVarX = pt.X;
-			outputVarY = pt.Y;
+			outputVarX = (long)pt.X;
+			outputVarY = (long)pt.Y;
 			return true;
 		}
 

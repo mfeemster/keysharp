@@ -179,7 +179,12 @@
 
 		internal abstract Point ClientToScreen();
 
-		internal virtual void ClientToScreen(ref Point pt) => pt = ClientToScreen();
+		internal virtual void ClientToScreen(ref Point pt)
+		{
+			var screenPt = ClientToScreen();
+			pt.X += screenPt.X;
+			pt.Y += screenPt.Y;
+		}
 
 		internal abstract bool Close();
 
