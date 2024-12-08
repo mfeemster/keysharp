@@ -403,6 +403,16 @@ namespace Keysharp.Tests
 			Assert.AreEqual(hs.Name, "::7:");
 			Assert.AreEqual(hs.Replacement, ":8");
 			_ = Keyboard.Hotstring("Reset");
+			//
+			var val = "Any text between the top and bottom parentheses is treated literally.\r\nBy default" +
+					  ", the hard carriage return (Enter) between the previous line and this one is als" +
+					  "o preserved.\r\n    By default, the indentation (tab) to the left of this line is " +
+					  "preserved.";
+			HotstringManager.AddChars("text1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::text1");
+			Assert.AreEqual(hs.Replacement, val);
+			//
 			HotstringManager.ClearHotstrings();
 		}
 
