@@ -801,11 +801,11 @@ namespace Keysharp.Scripting
 											var line = (int)cmie.UserData["parentline"];
 											refVarName = $"defRefVal{dummyRefVarCount++}";
 											par.Insert(line, new CodeExpressionStatement(new CodeSnippetExpression($"object {refVarName} = {defValStr}")));
-											cmie.Parameters.Add(new CodeSnippetExpression($"ref {refVarName}"));
+											_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {refVarName}"));
 										}
 										else
 										{
-											cmie.Parameters.Add(new CodeSnippetExpression(defValStr));
+											_ = cmie.Parameters.Add(new CodeSnippetExpression(defValStr));
 										}
 									}
 								}
@@ -882,11 +882,11 @@ namespace Keysharp.Scripting
 												var line = (int)cmie.UserData["parentline"];
 												var refVarName = $"defRefVal{dummyRefVarCount++}";
 												par.Insert(line, new CodeExpressionStatement(new CodeSnippetExpression($"object {refVarName} = {defValStr}")));
-												cmie.Parameters.Add(new CodeSnippetExpression($"ref {refVarName}"));
+												_ = cmie.Parameters.Add(new CodeSnippetExpression($"ref {refVarName}"));
 											}
 											else
 											{
-												cmie.Parameters.Add(new CodeSnippetExpression(defValStr));
+												_ = cmie.Parameters.Add(new CodeSnippetExpression(defValStr));
 											}
 										}
 									}
@@ -995,6 +995,10 @@ namespace Keysharp.Scripting
 					gkv.Value.Statements.Insert(gotoIndex, pop);
 			}
 
+			var hotkeyInitCmie = new CodeMethodInvokeExpression(
+				new CodeMethodReferenceExpression(
+					new CodeTypeReferenceExpression("Keysharp.Core.Common.Keyboard.HotkeyDefinition"), "ManifestAllHotkeysHotstringsHooks"));
+
 			if (hotkeyHotstringCreations.Count > 0)
 			{
 				//Readd rather than insert;
@@ -1006,21 +1010,25 @@ namespace Keysharp.Scripting
 				foreach (var hkc in hotkeyHotstringCreations)
 					_ = userCodeStatements.Add(hkc);
 
+				_ = userCodeStatements.Add(hotkeyInitCmie);
+
 				foreach (CodeStatement s in userMainMethod.Statements)
 					_ = userCodeStatements.Add(s);
 
 				userMainMethod.Statements.Clear();
 				userMainMethod.Statements.AddRange(userCodeStatements);
 			}
+			else
+				_ = userMainMethod.Statements.Add(hotkeyInitCmie);
 
 			if (!Persistent)
 			{
-				userMainMethod.Statements.Add(exit0);
+				_ = userMainMethod.Statements.Add(exit0);
 			}
 
-			userMainMethod.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
+			_ = userMainMethod.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
-			targetClass.Members.Add(userMainMethod);
+			_ = targetClass.Members.Add(userMainMethod);
 
 			//Ternaries need to be re-evaluated because they are handled as snippets.
 			foreach (var tern in ternaries)
