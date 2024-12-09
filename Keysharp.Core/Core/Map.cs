@@ -22,7 +22,7 @@
 			else if (caseSense == eCaseSense.Off)
 				compType = StringComparison.OrdinalIgnoreCase;
 			else
-				compType = StringComparison.CurrentCulture;
+				compType = StringComparison.CurrentCultureIgnoreCase;
 		}
 
 		/// <summary>
@@ -32,7 +32,7 @@
 		/// <param name="x">The first object to compare.</param>
 		/// <param name="y">The second object to compare.</param>
 		/// <returns>True if the two objects are equal, else false.</returns>
-		public new bool Equals(object x, object y)// => x is not null&& y is not null&& string.Compare(x.ToString(), y.ToString(), compType) == 0;
+		public new bool Equals(object x, object y)
 		{
 			if (x is string ls && y is string rs)
 				return string.Compare(ls, rs, compType) == 0;
@@ -50,7 +50,7 @@
 		/// </summary>
 		/// <param name="obj">The object to get the hash code for.</param>
 		/// <returns>The hash code for the object.</returns>
-		public int GetHashCode(object obj) => compType == StringComparison.OrdinalIgnoreCase && obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
+		public int GetHashCode(object obj) => compType != StringComparison.Ordinal && obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
 	}
 
 	/// <summary>
@@ -200,10 +200,9 @@
 		/// <exception cref="KeyError">An <see cref="KeyError"/> exception is thrown if they key was not found.</exception>
 		public object Delete(object key)
 		{
-			var k = key;// is string s && caseSense != eCaseSense.On ? s.ToLower() : key;
-			return map.Remove(k, out var val)
+			return map.Remove(key, out var val)
 				   ? val
-				   : throw new KeyError($"Key {k} was not present in the map.");
+				   : throw new KeyError($"Key {key} was not present in the map.");
 		}
 
 		/// <summary>
@@ -520,35 +519,7 @@
 		/// <param name="key">The key to search for.</param>
 		/// <param name="value">The value found.</param>
 		/// <returns>True if key was found else false.</returns>
-		private bool TryGetValue(object key, out object value)
-		{
-			//if (caseSense != eCaseSense.On && key is string s)
-			//{
-			//  if (caseSense == eCaseSense.Off)
-			//  {
-			//      if (map.TryGetValue(s.ToLower(), out var val))
-			//      {
-			//          value = val;
-			//          return true;
-			//      }
-			//  }
-			//  else if (caseSense == eCaseSense.Locale)//By far the slowest.
-			//  {
-			//      foreach (var kv in map)
-			//      {
-			//          if (string.Compare(s, kv.Key.ToString(), StringComparison.CurrentCultureIgnoreCase) == 0)
-			//          {
-			//              value = kv.Value;
-			//              return true;
-			//          }
-			//      }
-			//  }
-			//}
-			//else
-			return map.TryGetValue(key, out value);
-			//value = null;
-			//return false;
-		}
+		private bool TryGetValue(object key, out object value) => map.TryGetValue(key, out value);
 		/// <summary>
 		/// Indexer which retrieves or sets the value of an array element.
 		/// </summary>

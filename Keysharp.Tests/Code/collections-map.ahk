@@ -511,3 +511,80 @@ if (m["default"] == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+val := m["test"]
+
+if (val == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := m.test
+
+if (val == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := m["TEST"]
+
+if (val == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := m.TEST
+
+if (val == 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m.Default := unset
+
+b := false
+
+try
+{
+	val := m["TEST"]
+}
+catch
+{
+	b := true
+}
+
+if (b)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	val := m.TEST
+}
+catch
+{
+	b := true
+}
+
+if (b)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m := Map()
+m.CaseSense := "locale"
+m["à"] := 123
+m["À"] := 456
+
+if (m["à"] == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (m["À"] == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

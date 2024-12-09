@@ -57,6 +57,10 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void FormatTime()
 		{
+			var culture = new CultureInfo("en-US");
+			Thread.CurrentThread.CurrentCulture = culture;
+			Thread.CurrentThread.CurrentUICulture = culture;
+			//
 			var dt = Conversions.ToDateTime("2020");
 			Assert.IsTrue(dt == new DateTime(2020, 1, 1));
 			dt = Conversions.ToDateTime("202007");
