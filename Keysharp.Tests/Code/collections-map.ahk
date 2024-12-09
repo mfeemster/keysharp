@@ -588,3 +588,24 @@ if (m["À"] == 456)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+m := {CAPSLOCK:1}
+
+for k, v in m.OwnProps()
+	val := k
+
+if (val == "CAPSLOCK")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := ""
+m := {"CAPSLOCK":1}
+
+for k, v in m.OwnProps()
+	val := k
+
+if (val == "CAPSLOCK")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
