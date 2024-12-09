@@ -98,3 +98,16 @@ If (cloneobj.c == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+class testclass3 {
+	static Call(a) {
+		return a * 10
+	}
+}
+
+val := testclass3(10)
+
+If (val == 100)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

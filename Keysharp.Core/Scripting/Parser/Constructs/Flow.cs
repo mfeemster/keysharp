@@ -594,15 +594,15 @@ namespace Keysharp.Scripting
 
 					_ = classtype.Members.Add(constructor);
 					_ = classtype.Members.Add(staticConstructor);
-					var callmeth = new CodeMemberMethod
-					{
-						Name = "Call",
-						ReturnType = new CodeTypeReference(classtype.Name),
-						Attributes = MemberAttributes.Public | MemberAttributes.Static
-					};
-					//Body of Call() will be added later.
-					_ = classtype.Members.Add(callmeth);
-					methods[typeStack.Peek()][callmeth.Name] = callmeth;
+					//var callmeth = new CodeMemberMethod
+					//{
+					//  Name = "Call",
+					//  ReturnType = new CodeTypeReference(classtype.Name),
+					//  Attributes = MemberAttributes.Public | MemberAttributes.Static
+					//};
+					////Body of Call() will be added later.
+					//_ = classtype.Members.Add(callmeth);
+					//methods[typeStack.Peek()][callmeth.Name] = callmeth;
 					var initmeth = new CodeMemberMethod
 					{
 						Name = "__Init",
