@@ -105,3 +105,22 @@ if (str2 == "dlrow")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+code := Buffer(64)
+NumPut(
+	'Int64', 0x10ec8348e5894855, 'Int64', 0x00fc45c7104d8948,
+	'Int64', 0xfc458304eb000000, 'Int64', 0x8d489848fc458b01,
+	'Int64', 0x014810458b480014, 'Int64', 0x75c0856600b70fd0,
+	'Int64', 0x10c48348fc458be4, 'Int64', 0xc35d,
+	code
+)
+
+if (!DllCall("VirtualProtect", "Ptr", code, "Ptr", code.Size, "UInt", 0x40, "UInt*", &OldProtect := 0, "UInt"))
+	throw Error("Failed to mark MCL memory as executable")
+
+val := DllCall(code, "Str", "Hello", "Cdecl Int")
+
+if (val == 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
