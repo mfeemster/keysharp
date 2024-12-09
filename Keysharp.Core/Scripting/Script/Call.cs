@@ -94,16 +94,12 @@
 				//lastParamCount = paramCount;
 				return /*lastMph = */ (item, mph2);
 			}
-			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
-			{
-				var val = mph.callFunc(item, [key]);
-				return (item, val);
-			}
 
 #if WINDOWS
+			//COM checks must come before Item checks because they can get confused sometimes and COM should take
+			//precedence in such cases.
 			else if (item is ComObject co)
 			{
-				//return (co.Ptr, new ComMethodPropertyHolder(key));//Unwrap.
 				return GetMethodOrProperty(co.Ptr, key, paramCount);
 			}
 			else if (Marshal.IsComObject(item))
@@ -112,6 +108,12 @@
 			}
 
 #endif
+			else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
+			{
+				var val = mph.callFunc(item, [key]);
+				return (item, val);
+			}
+
 			throw new MemberError($"Attempting to get method or property {key} on object {item} failed.");
 		}
 
@@ -165,7 +167,6 @@
 #if WINDOWS
 			else if (item is ComObject co)
 			{
-				//return co.Ptr.GetType().InvokeMember(namestr, BindingFlags.GetProperty, null, item, null);//Unwrap.
 				return GetPropertyValue(co.Ptr, namestr);
 			}
 			else if (Marshal.IsComObject(item))
@@ -401,12 +402,10 @@
 						throw;
 				}
 			}
-			else if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
-			{
-				return mph1.callFunc(item, [namestr, value]);
-			}
 
 #if WINDOWS
+			//COM checks must come before Item checks because they can get confused sometimes and COM should take
+			//precedence in such cases.
 			else if (item is ComObject co)
 			{
 				//_ = co.Ptr.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });//Unwrap.
@@ -419,6 +418,10 @@
 			}
 
 #endif
+			else if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
+			{
+				return mph1.callFunc(item, [namestr, value]);
+			}
 			else if (kso != null)//No property was present, so create one and assign the value to it.
 			{
 				_ = kso.DefineProp(namestr, Collections.Map("value", value));

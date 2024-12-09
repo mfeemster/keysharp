@@ -124,3 +124,7 @@ if (val == 5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+shell := ComObject("WScript.Shell")
+exec := shell.Exec("Notepad.exe")
+exec := shell.Run("Notepad.exe")
