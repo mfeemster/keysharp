@@ -50,7 +50,7 @@
 		/// </summary>
 		/// <param name="obj">The object to get the hash code for.</param>
 		/// <returns>The hash code for the object.</returns>
-		public int GetHashCode(object obj) => obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
+		public int GetHashCode(object obj) => compType == StringComparison.OrdinalIgnoreCase && obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
 	}
 
 	/// <summary>
@@ -200,7 +200,7 @@
 		/// <exception cref="KeyError">An <see cref="KeyError"/> exception is thrown if they key was not found.</exception>
 		public object Delete(object key)
 		{
-			var k = key is string s && caseSense != eCaseSense.On ? s.ToLower() : key;
+			var k = key;// is string s && caseSense != eCaseSense.On ? s.ToLower() : key;
 			return map.Remove(k, out var val)
 				   ? val
 				   : throw new KeyError($"Key {k} was not present in the map.");
@@ -509,10 +509,10 @@
 		/// <param name="value">The value to insert.</param>
 		private void Insert(object key, object value)
 		{
-			if (caseSense != eCaseSense.On && key is string s)
-				map[s.ToLower()] = value;
-			else
-				map[key] = value;
+			//if (caseSense != eCaseSense.On && key is string s)
+			//  map[s.ToLower()] = value;
+			//else
+			map[key] = value;
 		}
 		/// <summary>
 		/// Internal helper to wrap <see cref="Dictionary{object,object}.TryGetValue(object, out object)"/>.
@@ -522,33 +522,32 @@
 		/// <returns>True if key was found else false.</returns>
 		private bool TryGetValue(object key, out object value)
 		{
-			if (caseSense != eCaseSense.On && key is string s)
-			{
-				if (caseSense == eCaseSense.Off)
-				{
-					if (map.TryGetValue(s.ToLower(), out var val))
-					{
-						value = val;
-						return true;
-					}
-				}
-				else if (caseSense == eCaseSense.Locale)//By far the slowest.
-				{
-					foreach (var kv in map)
-					{
-						if (string.Compare(s, kv.Key.ToString(), StringComparison.CurrentCultureIgnoreCase) == 0)
-						{
-							value = kv.Value;
-							return true;
-						}
-					}
-				}
-			}
-			else
-				return map.TryGetValue(key, out value);
-
-			value = null;
-			return false;
+			//if (caseSense != eCaseSense.On && key is string s)
+			//{
+			//  if (caseSense == eCaseSense.Off)
+			//  {
+			//      if (map.TryGetValue(s.ToLower(), out var val))
+			//      {
+			//          value = val;
+			//          return true;
+			//      }
+			//  }
+			//  else if (caseSense == eCaseSense.Locale)//By far the slowest.
+			//  {
+			//      foreach (var kv in map)
+			//      {
+			//          if (string.Compare(s, kv.Key.ToString(), StringComparison.CurrentCultureIgnoreCase) == 0)
+			//          {
+			//              value = kv.Value;
+			//              return true;
+			//          }
+			//      }
+			//  }
+			//}
+			//else
+			return map.TryGetValue(key, out value);
+			//value = null;
+			//return false;
 		}
 		/// <summary>
 		/// Indexer which retrieves or sets the value of an array element.
