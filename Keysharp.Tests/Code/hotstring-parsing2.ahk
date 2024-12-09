@@ -15,4 +15,10 @@ By default, the hard carriage return (Enter) between the previous line and this 
     By default, the indentation (tab) to the left of this line is preserved.
 )
 
+myfunc()
+{
+}
+
+:X:~mb::myfunc
+
 ExitApp()
