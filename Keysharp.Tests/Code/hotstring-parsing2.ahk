@@ -19,6 +19,24 @@ myfunc()
 {
 }
 
-:X:~mb::myfunc
+:X:mf1::myfunc
+
+:X:mf2::{
+  myfunc
+}
+
+:X:mf3::
+{
+  myfunc
+}
+
+::mf4::{
+  myfunc
+}
+
+::mf5::
+{
+  myfunc
+}
 
 ExitApp()

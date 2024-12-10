@@ -413,6 +413,30 @@ namespace Keysharp.Tests
 			Assert.AreEqual(hs.Name, "::text1");
 			Assert.AreEqual(hs.Replacement, val);
 			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf1");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf2 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf2");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf3 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf3");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf4 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf4");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf5 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf5");
 			HotstringManager.ClearHotstrings();
 		}
 
