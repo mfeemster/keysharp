@@ -600,7 +600,7 @@ namespace Keysharp.Scripting
 							if (span[0] == '(')//Continuation statements have to be parsed in line because they logic doesn't carry over to normal parsing.
 							{
 								//Comments within the quote preceding a continuation ( are not part of the string.
-								if (last == '"' || prevSpan.EndsWith(Quote) || prevSpan.EndsWith(":="))
+								if (last == '"' || prevSpan.EndsWith(Quote) || prevSpan.EndsWith(":=") || prevSpan.EndsWith("::"))//Might have also been a multi-line hotstring.
 								{
 									if (list.Count == 0)
 										throw new ParseException(ExUnexpected, lineNumber, code);
@@ -713,8 +713,22 @@ namespace Keysharp.Scripting
 
 						if (IsHotstringLabel(prevLine.Code))
 						{
-							StartNewLine(newLineStr);
-							goto EndLine;
+							if (!wasCont)
+							{
+								StartNewLine(newLineStr);
+								goto EndLine;
+							}
+							//Multi-line hotstring using a continuation section:
+							//::text1::
+							//(
+							//long multi line
+							//text here
+							//)
+							else if (prevLine.Code.EndsWith("::"))
+							{
+								AddToPreviousLine(prevLine, newLineStr);
+								goto EndLine;
+							}
 						}
 
 						var newLineSpan = newLineStr.AsSpan();

@@ -473,14 +473,14 @@ namespace Keysharp.Scripting
 					// hotstrings are less commonly used and also because it requires more code to find
 					// hotstring duplicates (and performs a lot worse if a script has thousands of
 					// hotstrings) because of all the hotstring options.
-					if (hotstringExecute && (hotkeyFlagIndex == -1 || hotkeyUsesOtb))
-						// Do not allow execute option with blank line or OTB.
-						// Without this check, this
-						// :X:x::
-						// {
-						// }
-						// would execute the block. But X is supposed to mean "execute this line".
-						throw new ParseException("Expected single-line action.", codeLine);
+					//if (hotstringExecute && (hotkeyFlagIndex == -1 || hotkeyUsesOtb))
+					//  // Do not allow execute option with blank line or OTB.
+					//  // Without this check, this
+					//  // :X:x::
+					//  // {
+					//  // }
+					//  // would execute the block. But X is supposed to mean "execute this line".
+					//  throw new ParseException("Expected single-line action.", codeLine);
 
 					if (hotkeyUsesOtb)
 					{
@@ -534,14 +534,22 @@ namespace Keysharp.Scripting
 
 					var funcname = "";
 					var nextIndex = index + 1;
+					var nextLine = nextIndex < lines.Count ? lines[nextIndex] : null;
+					var nextBuf = nextLine?.Code;
+					var expect = nextBuf != null ? nextBuf.StartsWith(BlockOpen) : false;
 
-					if (hotstringExecute)
+					if (hotstringExecute && !hotkeyUsesOtb && !expect)
 					{
 						if (replacement.Length > 0)
 						{
 							funcname = LabelMethodName(hotName);
 							var method = LocalMethod(funcname);
-							var expr = ParseMultiExpression(codeLine, replacement, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
+							var replacementToUse = replacement;
+
+							if (IsCommand(replacement))
+								replacementToUse = ConvertCommandToExpression(replacement);
+
+							var expr = ParseMultiExpression(codeLine, replacementToUse, true);//Original appeard to just support one function call, but it seems easy enough to support multiple statements separated by commas. All vars will be created as global.
 							method.Statements.AddRange(expr);
 							methods[targetClass].Add(method.Name, method);
 
@@ -553,9 +561,6 @@ namespace Keysharp.Scripting
 					}
 					else if (nextIndex < lines.Count)//Merge this with detecting otb, and see how X fits into this above.//TODO
 					{
-						var nextLine = lines[nextIndex];
-						var nextBuf = nextLine.Code;
-
 						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
 						{
 							funcname = ParseFunctionName(codeLine, nextBuf);
@@ -567,8 +572,6 @@ namespace Keysharp.Scripting
 						}
 						else
 						{
-							var expect = nextBuf.StartsWith(BlockOpen);
-
 							if (hotkeyUsesOtb ^ expect)//This is a hotstring that performs a custom action, so treat the body of it as the start of a new function.
 							{
 								StartNewFunction();

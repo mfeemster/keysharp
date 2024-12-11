@@ -659,7 +659,7 @@
 		internal static void SetInitialFloatFormat()
 		{
 			var t = Thread.CurrentThread;
-			var ci = new CultureInfo(t.CurrentCulture.LCID);
+			var ci = new CultureInfo(t.CurrentCulture.Name);
 			ci.NumberFormat.NumberDecimalDigits = 6;
 			t.CurrentCulture = ci;
 		}

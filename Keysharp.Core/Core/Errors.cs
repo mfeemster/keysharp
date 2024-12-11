@@ -294,6 +294,7 @@
 		{
 			var st = FixStackTrace(StackTrace);
 			var sb = new StringBuilder(512);
+			_ = sb.AppendLine($"\tException: {GetType().Name}");
 			_ = sb.AppendLine($"\tMessage: {message}");
 			_ = sb.AppendLine($"\tWhat: {What}");
 			_ = sb.AppendLine($"\tExtra/Code: {Extra}");

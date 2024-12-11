@@ -500,7 +500,7 @@ namespace Keysharp.Scripting
 							_ = method.Parameters.Add(cdpeArgs);
 							newmeth = method;
 						}
-						else if (callmeth == null && string.Compare(method.Name, "Call", true) == 0)
+						else if (callmeth == null && method.Attributes.HasFlag(MemberAttributes.Static) && string.Compare(method.Name, "Call", true) == 0)
 						{
 							method.Name = "Call";
 							callmeth = method;
@@ -570,6 +570,7 @@ namespace Keysharp.Scripting
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
 					var userDefinedBase = FindUserDefinedType(baseType);
 					var extendsUserType = userDefinedBase != null;
+					var userDefinedCall = false;
 
 					//To properly support the calling hierarchy of __New(), it must be declared differently
 					//depending on where in the hierarchy the class is defined.
@@ -592,6 +593,25 @@ namespace Keysharp.Scripting
 						_ = newmeth.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
 						_ = newmeth.Parameters.Add(cdpeArgs);
 						_ = typeMethods.Key.Members.Add(newmeth);
+					}
+
+					if (callmeth == null)
+					{
+						callmeth = new CodeMemberMethod
+						{
+							Name = "Call",
+							ReturnType = new CodeTypeReference(typeMethods.Key.Name),
+							Attributes = MemberAttributes.Public | MemberAttributes.Static
+						};
+						//Body of Call() will be added later.
+						_ = typeMethods.Key.Members.Add(callmeth);
+						methods[typeStack.Peek()][callmeth.Name] = callmeth;
+					}
+					else
+					{
+						userDefinedCall = true;
+						_ = typeMethods.Key.Members.Add(callmeth);
+						methods[typeStack.Peek()][callmeth.Name] = callmeth;
 					}
 
 					//The lines relating to args and __New() work whether any params were declared or not.
@@ -617,19 +637,23 @@ namespace Keysharp.Scripting
 
 						thisconstructor.Parameters.Clear();
 						_ = thisconstructor.Parameters.Add(cdpeArgs);
-						//Get param names and pass.
-						callmeth.Parameters.Clear();
-						callmeth.Statements.Clear();
 
-						if (origNewParams.Count > 0)
+						if (!userDefinedCall)
 						{
-							callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
-							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
-						}
-						else
-						{
-							_ = callmeth.Parameters.Add(cdpeArgs);
-							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}(args)"));
+							//Get param names and pass.
+							callmeth.Parameters.Clear();
+							callmeth.Statements.Clear();
+
+							if (origNewParams.Count > 0)
+							{
+								callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
+								_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+							}
+							else
+							{
+								_ = callmeth.Parameters.Add(cdpeArgs);
+								_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}(args)"));
+							}
 						}
 					}
 

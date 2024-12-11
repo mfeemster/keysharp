@@ -403,6 +403,40 @@ namespace Keysharp.Tests
 			Assert.AreEqual(hs.Name, "::7:");
 			Assert.AreEqual(hs.Replacement, ":8");
 			_ = Keyboard.Hotstring("Reset");
+			//
+			var val = "Any text between the top and bottom parentheses is treated literally.\r\nBy default" +
+					  ", the hard carriage return (Enter) between the previous line and this one is als" +
+					  "o preserved.\r\n    By default, the indentation (tab) to the left of this line is " +
+					  "preserved.";
+			HotstringManager.AddChars("text1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::text1");
+			Assert.AreEqual(hs.Replacement, val);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf1");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf2 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf2");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf3 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf3");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf4 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf4");
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf5 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf5");
 			HotstringManager.ClearHotstrings();
 		}
 

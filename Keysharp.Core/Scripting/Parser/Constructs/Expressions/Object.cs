@@ -187,7 +187,7 @@ namespace Keysharp.Scripting
 				if (name.Length > 2)
 				{
 					if (name[0] == StringBound && name[name.Length - 1] == StringBound)
-						name = name.Substring(1, name.Length - 2).ToLower();//If enclosed in quotes, just use as is, which will be a string in quotes.
+						name = name.Substring(1, name.Length - 2);//If enclosed in quotes, just use as is, which will be a string in quotes.
 					else if (name[0] == DefaultResolve)
 						hadResolve = true;//If enclosed in percent signs, remove them and parse the expression.
 				}
@@ -230,7 +230,7 @@ namespace Keysharp.Scripting
 					names.Add(expr);
 				}
 				else
-					names.Add(new CodePrimitiveExpression(EscapedString(name.ToLower(), false)));//Add as a quoted lowercase string.
+					names.Add(new CodePrimitiveExpression(EscapedString(name, false)));
 
 				i++;//Ensure the next token is a : char.
 
