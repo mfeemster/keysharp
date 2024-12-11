@@ -216,6 +216,9 @@
 
 			throw new PropertyError($"Attempting to get static property or field {namestr} failed.");
 		}
+		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount) => Reflections.FindAndCacheMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
+		? (null, mph)
+		: throw new MethodError($"Attempting to get method {name} failed.");
 
 		public static object Invoke((object, object) mitup, params object[] parameters)
 		{

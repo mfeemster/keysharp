@@ -540,7 +540,7 @@ namespace Keysharp.Scripting
 														break;
 
 													default:
-														list.Add(new CodeLine(name, lineNumber, "Hotstring(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+														list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 														next = false;
 														break;
 												}

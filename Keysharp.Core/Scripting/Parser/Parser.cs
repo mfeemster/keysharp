@@ -1035,6 +1035,7 @@ namespace Keysharp.Scripting
 					_ = userCodeStatements.Add(hkc);
 
 				_ = userCodeStatements.Add(hotkeyInitCmie);
+				_ = userCodeStatements.Add(new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Core.Common.Keyboard.HotstringManager"), "RestoreDefaults"));
 
 				foreach (CodeStatement s in userMainMethod.Statements)
 					_ = userCodeStatements.Add(s);
@@ -1070,6 +1071,8 @@ namespace Keysharp.Scripting
 			foreach (var assign in assignSnippets)
 				ReevaluateSnippet(assign);
 
+			//Some hotstring directives may have been parsed, which could have changed settings. So restore before building and running.
+			HotstringManager.RestoreDefaults(true);
 			return unit;
 		}
 

@@ -2,9 +2,6 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount) => Reflections.FindAndCacheMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
-		? (null, mph)
-		: throw new MethodError($"Attempting to get method {name} failed.");
 
 		public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
 

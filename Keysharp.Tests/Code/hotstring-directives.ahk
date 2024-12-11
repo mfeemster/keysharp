@@ -1,9 +1,10 @@
 #Hotstring NoMouse
 
-if (A_HotstringNoMouse)
+if (A_DefaultHotstringNoMouse)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
 
 ; Reset to what it was for the sake of other tests in this class.
 Hotstring("MouseReset", true)
@@ -14,6 +15,7 @@ if (A_DefaultHotstringEndChars == "-()[]{}':;`"/\,.?!`n`s`t")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
 
 ; End char required.
 newVal := false
@@ -23,7 +25,7 @@ if (origVal != newVal)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+		
 #hotstring *
 
 if (origVal != A_DefaultHotstringEndCharRequired)
@@ -278,7 +280,7 @@ if (newVal == A_DefaultHotstringDoReset)
 else
 	FileAppend, "fail", "*"
 
-
+		
 ; Restore reset on trigger.
 newVal := false
 origVal := A_DefaultHotstringDoReset
@@ -431,12 +433,12 @@ if (newInt == A_DefaultHotstringPriority)
 else
 	FileAppend, "fail", "*"
 	
-		
+			
 ; Send mode Event.
 newSendMode := "Event"
 origSendMode := A_DefaultHotstringSendMode
 
-if (origSendMode == "InputThenPlay")
+if (origSendMode == "Input")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
