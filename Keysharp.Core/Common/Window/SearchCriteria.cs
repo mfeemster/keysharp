@@ -69,7 +69,12 @@
 
 			var t = false;
 
-			var ahkIdCount = 0;
+			int classCount = 0
+							 , groupCount = 0
+							 , exeCount = 0
+							 , idCount = 0
+							 , pidCount = 0
+							 ;
 
 			while (i < mixed.Length && (i = mixed.IndexOf(Keyword_ahk, i, StringComparison.OrdinalIgnoreCase)) != -1)
 			{
@@ -87,17 +92,32 @@
 
 				if (span.StartsWith("class", StringComparison.OrdinalIgnoreCase))
 				{
+					var oldVal = criteria.ClassName;
 					criteria.ClassName = span.Slice(5).TrimStart().ParseUntilSpace();
+
+					if (oldVal != criteria.ClassName)
+						classCount++;
+
 					i += 9 + criteria.ClassName.Length;//Might be off by a space, but still reduces the next comparison.
 				}
 				else if (span.StartsWith("group", StringComparison.OrdinalIgnoreCase))
 				{
+					var oldVal = criteria.Group;
 					criteria.Group = span.Slice(5).TrimStart().ParseUntilSpace();
+
+					if (oldVal != criteria.Group)
+						groupCount++;
+
 					i += 9 + criteria.Group.Length;
 				}
 				else if (span.StartsWith("exe", StringComparison.OrdinalIgnoreCase))
 				{
+					var oldVal = criteria.Path;
 					criteria.Path = span.Slice(3).TrimStart().ParseUntilSpace();
+
+					if (oldVal != criteria.Path)
+						exeCount++;
+
 					i += 7 + criteria.Path.Length;
 				}
 				else if (span.StartsWith("id", StringComparison.OrdinalIgnoreCase))
@@ -109,7 +129,7 @@
 						criteria.ID = new IntPtr(id);
 
 					if (criteria.ID != oldId)
-						ahkIdCount++;
+						idCount++;
 
 					i += 6 + val.Length;
 				}
@@ -120,10 +140,14 @@
 				}
 				else if (span.StartsWith("pid", StringComparison.OrdinalIgnoreCase))
 				{
+					var oldVal = criteria.PID;
 					var val = span.Slice(3).TrimStart().ParseUntilSpace();
 
 					if (long.TryParse(val, out var id))
 						criteria.PID = new IntPtr(id);
+
+					if (criteria.PID != oldVal)
+						pidCount++;
 
 					i += 7 + val.Length;
 				}
@@ -131,10 +155,14 @@
 					i++;
 			}
 
-			if (ahkIdCount > 1)//If they specified more than one ID, consider neither.
-				criteria.ID = IntPtr.Zero;
-
-			return criteria;
+			//If they specified more than one of the same criteria, consider nothing.
+			return classCount > 1
+				   || groupCount > 1
+				   || exeCount > 1
+				   || idCount > 1
+				   || pidCount > 1
+				   ? new SearchCriteria()
+				   : criteria;
 		}
 
 		internal static SearchCriteria FromString(object title, object text, object excludeTitle, object excludeText)
