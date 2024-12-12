@@ -328,8 +328,9 @@ namespace Keysharp.Scripting
 															 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
 															 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
 						}
-						else//#HotIf doesn't need to be kept at the same place, it's fine if they run at the beginning as long as their relative position remains.
-							parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
+
+						//else//#HotIf doesn't need to be kept at the same place, it's fine if they run at the beginning as long as their relative position remains.
+						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
 					}
 				}
 

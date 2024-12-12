@@ -344,7 +344,6 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringDirectives()
 		{
-			HotstringManager.RestoreDefaults(true);
 			//First reset everything back to the default state because other tests will have changed them.
 			_ = Keyboard.Hotstring("*0");
 			_ = Keyboard.Hotstring("C0");
