@@ -577,7 +577,7 @@ namespace Keysharp.Scripting
 					if (newmeth != null)
 					{
 						//__New() will be virtual by default, which we only want to be the case for the first level down
-						//from built-in classes. After that, they must be decalred as override.
+						//from built-in classes. After that, they must be declared as override.
 						if (extendsUserType)
 							newmeth.Attributes |= MemberAttributes.Override;
 
