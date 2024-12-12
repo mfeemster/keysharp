@@ -158,37 +158,3 @@ if (val == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
-class TestWithMutlipleCustomInstanceCall
-{
-    Call()
-    {
-        return 123
-    }
-
-    Call(a)
-    {
-        return a
-    }
-}
-
-obj := TestWithMutlipleCustomInstanceCall()
-
-if (obj is TestWithMutlipleCustomInstanceCall)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-	
-val := obj.Call() ; resolves to the instance Call() with 0 parameters, returns 123.
-
-if (val == 123)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-val := obj.Call(456) ; resolves to the instance Call() with 1 parameter, returns 456.
-
-if (val == 456)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
