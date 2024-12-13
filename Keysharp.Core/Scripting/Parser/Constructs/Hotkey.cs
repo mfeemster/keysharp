@@ -84,7 +84,7 @@ namespace Keysharp.Scripting
 			if (hotstringStartIndex > 0)
 			{
 				// Check for 'X' option early since escape sequence processing depends on it.
-				hotstringExecute = false;// g_HSSameLineAction;//This appeared to always be false in AHK.
+				hotstringExecute = HotstringManager.hsSameLineAction;
 
 				for (cp = hotstringOptionsIndex; cp < hotstringStartIndex; ++cp)
 					if (char.ToUpper(buf[cp]) == 'X')
@@ -559,9 +559,9 @@ namespace Keysharp.Scripting
 							ClearParserHotstringState();
 						}
 					}
-					else if (nextIndex < lines.Count)//Merge this with detecting otb, and see how X fits into this above.//TODO
+					else if (nextIndex < lines.Count)
 					{
-						if (IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
+						if (replacement.Length == 0 && IsFunction(nextBuf, nextIndex + 1 < lines.Count ? lines[nextIndex + 1].Code : string.Empty))
 						{
 							funcname = ParseFunctionName(codeLine, nextBuf);
 

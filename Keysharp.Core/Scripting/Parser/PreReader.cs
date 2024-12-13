@@ -103,7 +103,8 @@ namespace Keysharp.Scripting
 					if (!includes.Contains(cmdinc))
 					{
 						_ = includes.AddUnique(cmdinc);
-						list.AddRange(Read(new StreamReader(cmdinc), cmdinc));
+						using var reader = new StreamReader(cmdinc);
+						list.AddRange(Read(reader, cmdinc));
 					}
 				}
 				else
@@ -376,7 +377,8 @@ namespace Keysharp.Scripting
 														break;
 
 													_ = includes.AddUnique(dir);
-													list.AddRange(Read(new StreamReader(dir), dir));
+													using var dirReader = new StreamReader(dir);
+													list.AddRange(Read(dirReader, dir));
 													break;
 												}
 											}
@@ -408,7 +410,8 @@ namespace Keysharp.Scripting
 													break;
 
 												_ = includes.AddUnique(path);
-												list.AddRange(Read(new StreamReader(path), path));
+												using var pathReader = new StreamReader(path);
+												list.AddRange(Read(pathReader, path));
 											}
 											else
 											{
@@ -540,7 +543,7 @@ namespace Keysharp.Scripting
 														break;
 
 													default:
-														list.Add(new CodeLine(name, lineNumber, "Hotstring(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+														list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 														next = false;
 														break;
 												}

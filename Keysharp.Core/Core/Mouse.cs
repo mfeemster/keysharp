@@ -243,9 +243,11 @@ namespace Keysharp.Core
 			var aX = 0;
 			var aY = 0;
 			PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
+			var child = WindowProvider.Manager.WindowFromPoint(pos);
 			outputVarX = (long)(pos.X - aX);//Convert the mouse position in screen coordinates to window coordinates.
 			outputVarY = (long)(pos.Y - aY);
-			var child = WindowProvider.Manager.WindowFromPoint(pos);
+			outputVarWin = null;
+			outputVarControl = null;
 
 			if (child == null || child.Handle == IntPtr.Zero)
 				return null;

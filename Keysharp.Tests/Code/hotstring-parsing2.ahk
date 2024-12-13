@@ -1,4 +1,4 @@
-﻿::btw::by the way
+﻿::bitw::biggest in the world
 ; 1 -> :2
 ::1:::2
 ; 3 -> ::4
@@ -38,5 +38,11 @@ myfunc()
 {
   myfunc
 }
+
+#Hotstring X
+
+::mf6::myfunc
+:X:mf7::myfunc
+::mf8::myfunc
 
 ExitApp()

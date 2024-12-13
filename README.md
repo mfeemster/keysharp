@@ -371,7 +371,7 @@ class class1
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
 	+ `A_DirSeparator` returns the directory separator character which is `\` on Windows and `/` elsewhere.
 	+ `A_HasExited` returns whether shutdown has been initiated.
-	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
+	+ `A_DefaultHotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.

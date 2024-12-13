@@ -15,10 +15,13 @@
 		//private static int lastParamCount = 0;
 		public static object FindObjectForMethod(object obj, string name, int paramCount)
 		{
-			if (Reflections.FindAndCacheMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
+			if (Reflections.FindAndCacheInstanceMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
 				return obj;
 
-			if (Reflections.FindMethod(name, paramCount) is MethodPropertyHolder mph2)
+			if (Reflections.FindAndCacheStaticMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph2)
+				return null;
+
+			if (Reflections.FindMethod(name, paramCount) is MethodPropertyHolder mph3)
 				return null;
 
 			throw new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.");
@@ -82,7 +85,7 @@
 					}
 				}
 
-				if (Reflections.FindAndCacheMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
+				if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
 				{
 					//lastItem = item;
 					//lastKey = key;
@@ -110,7 +113,7 @@
 				}
 
 #endif
-				else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
+				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
 				{
 					var val = mph.callFunc(item, [key]);
 					return (item, val);
@@ -160,7 +163,7 @@
 				}
 				//This is for the case where a Map accesses a key within the Map as if it were a property, so we try to get the indexer property, then pass the name of the passed in property as the key/index.
 				//We check for a param length of 1 so we don't accidentally grab properties named Item which have no parameters, such as is the case with ComObject.
-				else if (Reflections.FindAndCacheMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
+				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
 				{
 					return mph1.callFunc(item, [namestr]);
 				}
@@ -216,6 +219,9 @@
 
 			throw new PropertyError($"Attempting to get static property or field {namestr} failed.");
 		}
+		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount) => Reflections.FindAndCacheStaticMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
+		? (null, mph)
+		: throw new MethodError($"Attempting to get static method {name} failed.");
 
 		public static object Invoke((object, object) mitup, params object[] parameters)
 		{
@@ -421,7 +427,7 @@
 				}
 
 #endif
-				else if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
+				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
 				{
 					return mph1.callFunc(item, [namestr, value]);
 				}

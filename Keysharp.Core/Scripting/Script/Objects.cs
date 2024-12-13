@@ -2,9 +2,6 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount) => Reflections.FindAndCacheMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
-		? (null, mph)
-		: throw new MethodError($"Attempting to get method {name} failed.");
 
 		public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
 
@@ -57,7 +54,7 @@ namespace Keysharp.Scripting
 				}
 				else if (index.Length == 0)//Access brackets with no index like item.prop[] := 123.
 				{
-					if (Reflections.FindAndCacheMethod(typetouse, "set_Item", 0) is MethodPropertyHolder mph1)
+					if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 0) is MethodPropertyHolder mph1)
 					{
 						_ = mph1.callFunc(item, index.Concat([value]));
 						return value;
@@ -66,7 +63,7 @@ namespace Keysharp.Scripting
 
 				var il1 = index.Length + 1;
 
-				if (Reflections.FindAndCacheMethod(typetouse, "set_Item", il1) is MethodPropertyHolder mph2)
+				if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", il1) is MethodPropertyHolder mph2)
 				{
 					if (il1 == mph2.ParamLength || mph2.IsVariadic)
 					{
@@ -177,7 +174,7 @@ namespace Keysharp.Scripting
 					    }*/
 				}
 
-				if (Reflections.FindAndCacheMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)
+				if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)
 				{
 					if (len == mph.ParamLength || mph.IsVariadic)
 						return mph.callFunc(item, index);
