@@ -169,7 +169,7 @@ namespace Keysharp.Scripting
 		internal bool Persistent;
 		private const string args = "args";
 		private const string initParams = "initparams";
-		private const string mainClassName = "program";
+		public const string mainClassName = "program";
 		private const string mainScope = "";
 		private static readonly char[] directiveDelims = Spaces.Concat([Multicast]);
 

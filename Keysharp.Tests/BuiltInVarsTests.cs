@@ -60,12 +60,5 @@ namespace Keysharp.Tests
 
 		[Test, Category("BuiltInVars")]
 		public void ReflectionsInit() => Reflections.Initialize();
-
-		[SetUp]
-		public void Setup()
-		{
-			Reflections.Clear();
-			Reflections.Initialize();
-		}
 	}
 }
