@@ -464,6 +464,11 @@
 		public static long A_DefaultHotstringKeyDelay => HotstringManager.hsKeyDelay;
 
 		/// <summary>
+		/// Whether mouse clicks reset the hotstring recognizer.
+		/// </summary>
+		public static object A_DefaultHotstringNoMouse => !HotstringManager.hsResetUponMouseClick;
+
+		/// <summary>
 		/// The default end char omission mode of hotstrings.
 		/// </summary>
 		public static bool A_DefaultHotstringOmitEndChar => HotstringManager.hsOmitEndChar;
@@ -638,11 +643,6 @@
 			get => hotkeyModifierTimeout;
 			set => hotkeyModifierTimeout = value.Al();
 		}
-
-		/// <summary>
-		/// Whether mouse clicks reset the hotstring recognizer.
-		/// </summary>
-		public static object A_HotstringNoMouse => !Script.hsResetUponMouseClick;
 
 		/// <summary>
 		/// Current 2-digit hour (00-23) in 24-hour time (for example, 17 is 5pm).

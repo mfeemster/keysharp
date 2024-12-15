@@ -12,10 +12,12 @@ namespace Keysharp.Core.Common.Invoke
 		internal static sttd stringToTypeBuiltInMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeLocalMethods = new (sttcap / 10, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeStaticMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeProperties = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static Dictionary<string, Type> stringToTypes = new (sttcap / 4, StringComparer.OrdinalIgnoreCase);
 		internal static int sttcap = 1000;
 		internal static ttsd typeToStringMethods = new (sttcap / 5);
+		internal static ttsd typeToStringStaticMethods = new (sttcap / 5);
 		internal static ttsd typeToStringProperties = new (sttcap / 5);
 
 		static Reflections() => Initialize();
@@ -30,8 +32,10 @@ namespace Keysharp.Core.Common.Invoke
 			stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
 			stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
+			stringToTypeStaticMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			typeToStringMethods = new ttsd(sttcap / 5);
+			typeToStringStaticMethods = new (sttcap / 5);
 			typeToStringProperties = new ttsd(sttcap / 5);
 			loadedAssemblies = [];
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
@@ -139,12 +143,29 @@ namespace Keysharp.Core.Common.Invoke
 			return null;
 		}
 
-		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount, BindingFlags propType =
-					BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly, bool isSystem = false)
+		internal static MethodPropertyHolder FindAndCacheInstanceMethod(Type t, string name, int paramCount, BindingFlags propType =//probably dont even want to allow this to be passed.
+					BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly, bool isSystem = false) =>
+		FindAndCacheMethod(typeToStringMethods, t, name, paramCount, propType, isSystem);
+
+		internal static MethodPropertyHolder FindAndCacheStaticMethod(Type t, string name, int paramCount, BindingFlags propType =
+					BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly, bool isSystem = false) =>
+		FindAndCacheMethod(typeToStringStaticMethods, t, name, paramCount, propType, isSystem);
+
+		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount)
+		{
+			var mph = FindAndCacheInstanceMethod(t, name, paramCount);
+
+			if (mph != null)
+				return mph;
+
+			return FindAndCacheStaticMethod(t, name, paramCount);
+		}
+
+		private static MethodPropertyHolder FindAndCacheMethod(ttsd typeToMethods, Type t, string name, int paramCount, BindingFlags propType, bool isSystem = false)
 		{
 			do
 			{
-				if (typeToStringMethods.TryGetValue(t, out var dkt))
+				if (typeToMethods.TryGetValue(t, out var dkt))
 				{
 				}
 				else
@@ -154,19 +175,19 @@ namespace Keysharp.Core.Common.Invoke
 					if (meths.Length > 0)
 					{
 						foreach (var meth in meths)
-							typeToStringMethods.GetOrAdd(meth.ReflectedType,
-														 () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
+							typeToMethods.GetOrAdd(meth.ReflectedType,
+												   () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
 							.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
 					}
 					else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 					{
-						typeToStringMethods[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
+						typeToMethods[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
 						t = t.BaseType;
 						continue;
 					}
 				}
 
-				if (dkt == null && !typeToStringMethods.TryGetValue(t, out dkt))
+				if (dkt == null && !typeToMethods.TryGetValue(t, out dkt))
 				{
 					t = t.BaseType;
 					continue;
@@ -373,16 +394,25 @@ namespace Keysharp.Core.Common.Invoke
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
-						_ = FindAndCacheMethod(type, "", -1);
+					{
+						_ = FindAndCacheInstanceMethod(type, "", -1);
+						_ = FindAndCacheStaticMethod(type, "", -1);
+					}
 
-			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
-			_ = FindAndCacheMethod(typeof(object[]), "", -1, propType);//Needs to be done manually because many of the properties are decalred in a base class.
+			_ = FindAndCacheInstanceMethod(typeof(object[]), "", -1, BindingFlags.Public | BindingFlags.Instance);//Needs to be done manually because many of the properties are declared in a base class.
+			_ = FindAndCacheStaticMethod(typeof(object[]), "", -1, BindingFlags.Public | BindingFlags.Static);
 
 			foreach (var typekv in typeToStringMethods)
 			{
 				foreach (var methkv in typekv.Value)
-				{
 					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
+			}
+
+			foreach (var typekv in typeToStringStaticMethods)
+			{
+				foreach (var methkv in typekv.Value)
+				{
+					_ = stringToTypeStaticMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 
 					if (typekv.Key.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) || typekv.Key.FullName.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase))//Need to include Tests so that unit tests will work.
 						_ = stringToTypeLocalMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
@@ -411,7 +441,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 
 			var propType = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
-			_ = FindAndCacheProperty(typeof(object[]), "", 0, propType); //Needs to be done manually because many of the properties are decalred in a base class.
+			_ = FindAndCacheProperty(typeof(object[]), "", 0, propType); //Needs to be done manually because many of the properties are declared in a base class.
 			_ = FindAndCacheProperty(typeof(Exception), "", 0, propType); //Same.
 
 			foreach (var typekv in typeToStringProperties)

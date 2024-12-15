@@ -381,12 +381,14 @@ using static Keysharp.Scripting.Script;
 						if (File.Exists(fileNames[i]))
 						{
 							Script.scriptName = fileNames[i];
-							units[i] = parser.Parse(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
+							using var reader = new StreamReader(Script.scriptName, enc);
+							units[i] = parser.Parse(reader, Path.GetFullPath(fileNames[i]));
 						}
 						else
 						{
 							Script.scriptName = "*";
-							units[i] = parser.Parse(new StringReader(fileNames[i]), "*");//In memory.
+							using var reader = new StringReader(fileNames[i]);
+							units[i] = parser.Parse(reader, "*");//In memory.
 						}
 					}
 					catch (ParseException e)
@@ -397,7 +399,9 @@ using static Keysharp.Scripting.Script;
 					{
 						_ = errors.Add(new CompilerError { ErrorText = e.Message });
 					}
-					finally { }
+					finally
+					{
+					}
 				}
 
 				_ = Threads.EndThread(pushed);

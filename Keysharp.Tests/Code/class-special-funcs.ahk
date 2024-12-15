@@ -111,3 +111,50 @@ If (val == 100)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+
+val := TestWithCustomStaticCall() ; internally calls the custom Call() to return 123 instead of a new object
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := TestWithCustomStaticCall.Call() ; also returns 123
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; class with one custom static Call() method which replaces the default one.
+; this prevents an instance of this class from every being created.
+class TestWithCustomStaticCall
+{
+    static Call()
+    {
+        return 123
+    }
+}
+
+class TestWithCustomInstanceCall
+{
+    Call()
+    {
+        return 123
+    }
+}
+
+obj := TestWithCustomInstanceCall() ; creates an instance of the class.
+
+if (obj is TestWithCustomInstanceCall)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := obj.Call() ; intelligent enough to resolve to the instance Call() to return 123, instead of the default static one.
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

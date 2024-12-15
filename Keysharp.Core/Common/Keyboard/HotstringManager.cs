@@ -14,6 +14,8 @@
 		internal static int hsKeyDelay;
 		internal static bool hsOmitEndChar;
 		internal static int hsPriority;
+		internal static bool hsResetUponMouseClick = true;
+		internal static bool hsSameLineAction;
 		internal static SendModes hsSendMode = SendModes.Input;
 		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
 		internal static bool hsSuspendExempt;
@@ -176,6 +178,34 @@
 			//sw.Stop();
 			//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring took {sw.Elapsed.TotalMilliseconds}ms.");
 			return found ? hs : null;
+		}
+
+		[PublicForTestOnly]
+		public static void RestoreDefaults(bool doNonPositional = false)
+		{
+			if (doNonPositional)
+			{
+				defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";
+				hsResetUponMouseClick = true;
+				enabledCount = 0;
+				shs.Clear();
+				shsDkt.Clear();
+			}
+
+			hsBuf.Clear();
+			hsCaseSensitive = false;
+			hsConformToCase = true;
+			hsDetectWhenInsideWord = false;
+			hsDoBackspace = true;
+			hsDoReset = false;
+			hsSameLineAction = false;
+			hsEndCharRequired = true;
+			hsKeyDelay = 0;
+			hsOmitEndChar = false;
+			hsPriority = 0;
+			hsSendMode = SendModes.Input;
+			hsSendRaw = SendRawModes.NotRaw;
+			hsSuspendExempt = false;
 		}
 
 		internal static void ClearBuf() => hsBuf.Clear();

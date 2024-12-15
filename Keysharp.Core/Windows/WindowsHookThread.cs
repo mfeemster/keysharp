@@ -690,7 +690,7 @@ namespace Keysharp.Core.Windows
 			} // Keyboard vs. mouse hook.
 
 			// Since above didn't return, this keystroke is being passed through rather than suppressed.
-			if (Script.hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
+			if (HotstringManager.hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
 			{
 				HotstringManager.ClearBuf();
 			}

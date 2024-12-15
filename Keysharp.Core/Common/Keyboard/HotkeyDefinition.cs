@@ -603,7 +603,7 @@ namespace Keysharp.Core.Common.Keyboard
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Keysharp.Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
+			if (Keysharp.Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.

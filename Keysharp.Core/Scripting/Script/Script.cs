@@ -15,7 +15,6 @@
 		internal static List<IFuncObj> hotCriterions = [];
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 		internal static List<IFuncObj> hotExprs = [];
-		internal static bool hsResetUponMouseClick = true;
 		internal static InputType input;
 		internal static int inputBeforeHotkeysCount;
 		internal static DateTime inputTimeoutAt = DateTime.Now;
