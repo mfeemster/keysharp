@@ -90,10 +90,12 @@ namespace Keysharp.CompiledMain
                 string name = "*";
                 Keysharp.Scripting.Script.Variables.InitGlobalVars();
                 Keysharp.Scripting.Script.SetName(name);
+
                 if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
                 {
                     return 0;
                 }
+
                 Keysharp.Core.Env.HandleCommandLineParams(args);
                 Keysharp.Scripting.Script.CreateTrayMenu();
                 Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
@@ -108,6 +110,7 @@ namespace Keysharp.CompiledMain
                     MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
                     Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
                 }
+
                 Keysharp.Core.Flow.ExitApp(1);
                 return 1;
             }
@@ -130,199 +133,17 @@ namespace Keysharp.CompiledMain
                     MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
                     Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
                 }
-;
+
+                ;
+
                 Keysharp.Core.Flow.ExitApp(1);
+
                 return 1;
             }
         }
 
-        public static object x;
-
-        public static object y;
-
         public static object _ks_UserMainCode()
         {
-            x = A_YYYY;
-            y = A_Year;
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThan, x, 2000L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, y, x)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_MM;
-            y = A_Mon;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 1L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 12L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, y, x)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_DD;
-            y = A_MDay;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 1L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 31L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, y, x)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_MMMM;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "January")) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "February"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "March"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "April"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "May"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "June"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "July"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "August"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "September"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "October"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "November"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "December"))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_MMM;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Jan")) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Feb"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Mar"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Apr"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "May"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Jun"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Jul"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Aug"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Sep"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Oct"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Nov"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Dec"))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_DDDD;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Sunday")) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Monday"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Tuesday"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Wednesday"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Thursday"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Friday"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Sunday"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Saturday"))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_DDD;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Sun")) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Mon"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Tue"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Wed"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Thu"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Fri"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Sun"))).ParseObject()) || Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, x, "Sat"))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_WDay;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 1L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 7L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_YDay;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 1L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 366L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_YWeek;
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueInequality, x, "")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_Hour;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 0L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 23L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_Min;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 0L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 59L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_Sec;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 0L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 59L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_MSec;
-            if (Keysharp.Scripting.Script.IfTest(_ = (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThanOrEqual, x, 0L)) && Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.LessThanOrEqual, x, 999L))).ParseObject()))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_Now;
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueInequality, x, "")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_NowUTC;
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueInequality, x, "")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            x = A_TickCount;
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.GreaterThan, x, 0L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-            Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
             Keysharp.Core.Flow.ExitApp(0);
             return "";
         }
