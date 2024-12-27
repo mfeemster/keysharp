@@ -1924,7 +1924,7 @@ namespace Keysharp.Core.Windows
 		internal static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
 
 		internal static int ToUnicodeOrAsciiEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, uint wFlags, IntPtr dwhkl) =>
-		ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, 2, wFlags, dwhkl);
+		ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, pwszBuff.Capacity, wFlags, dwhkl);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool UnhookWindowsHookEx(IntPtr hhk);
