@@ -57,7 +57,12 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 
 ###	Behaviors/Functionality: ###
 * Keysharp follows the .NET memory model.
-* There is no variable caching with strings vs numbers. All variables are C# objects.
+	+ There is no variable caching with strings vs numbers. All variables are C# objects.
+	+ Values not stored in variables are, like regular variables, only eligible to be freed once they go out of scope.
+```
+	FileOpen("test.txt", "w").Write("hello") ; The temporary file object does not get deleted at the end of the line, only possibly at the end of the current scope.
+```
+	+ Object destructors/finalizers are called at a random point in time, and `Collect()` should be used if they need to be invoked predictably.
 * AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line".
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
