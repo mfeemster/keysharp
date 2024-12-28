@@ -52,7 +52,7 @@
 			shs.Add(hs);
 			shsDkt.GetOrAdd(_hotstring[0]).Add(hs);
 
-			if (!Script.isReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
+			if (!Script.IsReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
 				++enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
 
 			return hs;

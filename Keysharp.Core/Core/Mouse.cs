@@ -8,14 +8,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Internal helper to lazy initialize and retrieve the <see cref="CoordModes"/> for the current thread.
 		/// </summary>
-		internal static CoordModes Coords
-		{
-			get
-			{
-				var tv = Threads.GetThreadVariables();
-				return tv.coords ?? (tv.coords = new CoordModes());
-			}
-		}
+		internal static CoordModes Coords => Threads.GetThreadVariables().Coords;
 
 		/// <summary>
 		/// Clicks a mouse button at the specified coordinates. It can also hold down a mouse button, turn the mouse wheel, or move the mouse.

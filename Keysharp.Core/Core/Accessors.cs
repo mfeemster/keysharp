@@ -12,8 +12,8 @@
 		private static bool allowMainWindow = true;
 		private static long controlDelay = 20L;
 		private static long defaultMouseSpeed = 2L;
-		private static object detectHiddenText = true;
-		private static object detectHiddenWindows = false;
+		private static bool detectHiddenText = true;
+		private static bool detectHiddenWindows = false;
 		private static Encoding fileEncoding = Encoding.Default;
 		private static bool? iconFrozen;
 		private static bool iconHidden;
@@ -27,12 +27,12 @@
 		private static long mouseDelayPlay = -1L;
 		private static long peekFrequency = 5L;
 		private static Icon prevTrayIcon;
-		private static object regView = 64L;
-		private static object sendLevel = 0L;
+		private static long regView = 64L;
+		private static uint sendLevel = 0;
 		private static SendModes sendMode = SendModes.Input;
-		private static object storeCapsLockMode = true;
+		private static bool storeCapsLockMode = true;
 		private static object titleMatchMode = 2L;
-		private static object titleMatchModeSpeed = true;
+		private static bool titleMatchModeSpeed = true;
 		private static long winDelay = 100L;
 
 		/// <summary>
@@ -353,19 +353,31 @@
 		public static string A_ComputerName => Environment.MachineName;
 
 #if WINDOWS
+
 		/// <summary>
 		/// Contains the contents of the COMSPEC environment variable, which is the full path to the command line executable.
 		/// </summary>
 		public static string A_ComSpec => Environment.GetEnvironmentVariable("COMSPEC");
+
 #endif
+		internal static long ControlDelayDefault => controlDelay;
 
 		/// <summary>
 		/// The delay in milliseconds that will occur after each control-modifying command.
 		/// </summary>
 		public static object A_ControlDelay
 		{
-			get => controlDelay;
-			set => controlDelay = ThreadAccessors.A_ControlDelay = value.Al();
+			get => ThreadAccessors.A_ControlDelay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					controlDelay = val;
+
+				ThreadAccessors.A_ControlDelay = val;
+			}
 		}
 
 		/// <summary>
@@ -488,13 +500,24 @@
 		/// </summary>
 		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
 
+		internal static long DefaultMouseSpeedDefault => defaultMouseSpeed;
+
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
 		/// </summary>
 		public static object A_DefaultMouseSpeed
 		{
-			get => defaultMouseSpeed;
-			set => defaultMouseSpeed = ThreadAccessors.A_DefaultMouseSpeed = value.Al();
+			get => ThreadAccessors.A_DefaultMouseSpeed;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					defaultMouseSpeed = val;
+
+				ThreadAccessors.A_DefaultMouseSpeed = val;
+			}
 		}
 
 		/// <summary>
@@ -507,35 +530,53 @@
 		/// </summary>
 		public static string A_DesktopCommon => Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
 
+		internal static bool DetectHiddenTextDefault => detectHiddenText;
+
 		/// <summary>
 		/// Determines whether invisible text in a window is "seen" for the purpose of finding the window. This affects commands such as <see cref="WinExist"/> and <see cref="WinActivate"/>.
 		/// </summary>
 		public static object A_DetectHiddenText
 		{
-			get => detectHiddenText;
+			get => ThreadAccessors.A_DetectHiddenText;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
-					detectHiddenText = ThreadAccessors.A_DetectHiddenText = val.Value.Ab();
+				{
+					var b = val.Value.Ab();
+
+					if (!Script.IsReadyToExecute)
+						detectHiddenText = b;
+
+					ThreadAccessors.A_DetectHiddenText = b;
+				}
 			}
 		}
+
+		internal static bool DetectHiddenWindowsDefault => detectHiddenWindows;
 
 		/// <summary>
 		/// Determines whether invisible windows are "seen".
 		/// </summary>
 		public static object A_DetectHiddenWindows
 		{
-			get => detectHiddenWindows;
+			get => ThreadAccessors.A_DetectHiddenWindows;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
-					detectHiddenWindows = ThreadAccessors.A_DetectHiddenWindows = val.Value.Ab();
+				{
+					var b = val.Value.Ab();
+
+					if (!Script.IsReadyToExecute)
+						detectHiddenWindows = b;
+
+					ThreadAccessors.A_DetectHiddenWindows = b;
+				}
 			}
 		}
 
@@ -567,52 +608,24 @@
 			set => Threads.GetThreadVariables().eventInfo = value;
 		}
 
+		internal static Encoding FileEncodingDefault => fileEncoding;
+
 		/// <summary>
 		/// The default file encoding setting.
 		/// </summary>
 		public static object A_FileEncoding
 		{
-			get
-			{
-				var val = fileEncoding.BodyName;
+			get => ThreadAccessors.A_FileEncoding;
 
-				if (fileEncoding is UnicodeEncoding ue)
-				{
-					if (ue.GetPreamble().Length == 0)
-						val += "-raw";
-				}
-				else if (fileEncoding is UTF8Encoding u8)
-				{
-					if (u8.GetPreamble().Length == 0)
-						val += "-raw";
-				}
-
-				return val;
-			}
 			set
 			{
-				fileEncoding = Files.GetEncoding(value.ToString());
-				ThreadAccessors.A_FileEncoding = value;
+				var val = Files.GetEncoding(value.ToString());
+
+				if (!Script.IsReadyToExecute)
+					fileEncoding = val;
+
+				ThreadAccessors.A_FileEncoding = val;
 			}
-		}
-
-		/// <summary>
-		/// The current numeric format.
-		/// </summary>
-		public static object A_FormatNumeric
-		{
-			get
-			{
-				var tv = Threads.GetThreadVariables();
-
-				if (tv.formatNumeric != null)
-					return tv.formatNumeric;
-
-				Script.SetInitialFloatFormat();
-				return tv.formatNumeric = "f";
-			}
-
-			set => Threads.GetThreadVariables().formatNumeric = value.ToString();
 		}
 
 		/// <summary>
@@ -830,40 +843,84 @@
 		? (ht.HasKbdHook() ? 1L : 0L) | (ht.SystemHasAnotherKeybdHook() ? 2L : 0L)
 		: 0L;
 
+		internal static long KeyDelayDefault => keyDelay;
+
 		/// <summary>
 		/// The delay that will occur after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
 		public static object A_KeyDelay
 		{
-			get => keyDelay;
-			set => keyDelay = ThreadAccessors.A_KeyDelay = value.Al();
+			get => ThreadAccessors.A_KeyDelay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					keyDelay = val;
+
+				ThreadAccessors.A_KeyDelay = val;
+			}
 		}
+
+		internal static long KeyDelayPlayDefault => keyDelayPlay;
 
 		/// <summary>
 		/// The delay that will occur in SendPlay mode after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
 		public static object A_KeyDelayPlay
 		{
-			get => keyDelayPlay;
-			set => keyDelayPlay = ThreadAccessors.A_KeyDelayPlay = value.Al();
+			get => ThreadAccessors.A_KeyDelayPlay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					keyDelayPlay = val;
+
+				ThreadAccessors.A_KeyDelayPlay = val;
+			}
 		}
+
+		internal static long KeyDurationDefault => keyDuration;
 
 		/// <summary>
 		/// The delay between the press of a key and before its release, used with <see cref="A_KeyDelay"/>.
 		/// </summary>
 		public static object A_KeyDuration
 		{
-			get => keyDuration;
-			set => keyDuration = ThreadAccessors.A_KeyDuration = value.Al();
+			get => ThreadAccessors.A_KeyDuration;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					keyDuration = val;
+
+				ThreadAccessors.A_KeyDuration = val;
+			}
 		}
+
+		internal static long KeyDurationPlayDefault => keyDurationPlay;
 
 		/// <summary>
 		/// The delay in SendPlay mode between the press of a key and before its release, used with <see cref="A_KeyDelayPlay"/>.
 		/// </summary>
 		public static object A_KeyDurationPlay
 		{
-			get => keyDurationPlay;
-			set => keyDurationPlay = ThreadAccessors.A_KeyDurationPlay = value.Al();
+			get => ThreadAccessors.A_KeyDurationPlay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					keyDurationPlay = val;
+
+				ThreadAccessors.A_KeyDurationPlay = val;
+			}
 		}
 
 		/// <summary>
@@ -1377,22 +1434,44 @@
 		/// </summary>
 		public static string A_Mon => DateTime.Now.ToString("MM");
 
+		internal static long MouseDelayDefault => mouseDelay;
+
 		/// <summary>
 		/// Sets the delay that will occur after each mouse movement or click.
 		/// </summary>
 		public static object A_MouseDelay
 		{
-			get => mouseDelay;
-			set => mouseDelay = ThreadAccessors.A_MouseDelay = value.Al();
+			get => ThreadAccessors.A_MouseDelay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					mouseDelay = val;
+
+				ThreadAccessors.A_MouseDelay = val;
+			}
 		}
+
+		internal static long MouseDelayPlayDefault => mouseDelayPlay;
 
 		/// <summary>
 		/// Sets the delay that will occur in SendPlay mode after each mouse movement or click.
 		/// </summary>
 		public static object A_MouseDelayPlay
 		{
-			get => mouseDelayPlay;
-			set => mouseDelayPlay = ThreadAccessors.A_MouseDelayPlay = value.Al();
+			get => ThreadAccessors.A_MouseDelayPlay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					mouseDelayPlay = val;
+
+				ThreadAccessors.A_MouseDelayPlay = val;
+			}
 		}
 
 		/// <summary>
@@ -1448,14 +1527,25 @@
 		/// </summary>
 		public static string A_OSVersion => Environment.OSVersion.VersionString;
 
+		internal static long PeekFrequencyDefault => peekFrequency;
+
 		/// <summary>
 		/// Thread peek frequency in milliseconds.
 		/// Unused because Keysharp is compiled and not interpreted.
 		/// </summary>
 		public static object A_PeekFrequency
 		{
-			get => peekFrequency;
-			set => peekFrequency = ThreadAccessors.A_PeekFrequency = value.Al();
+			get => ThreadAccessors.A_PeekFrequency;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					peekFrequency = val;
+
+				ThreadAccessors.A_PeekFrequency = val;
+			}
 		}
 
 		/// <summary>
@@ -1500,18 +1590,23 @@
 		public static long A_PtrSize => 8L;
 
 #if WINDOWS
+		internal static long RegViewDefault => regView;
 
 		/// <summary>
 		/// The current registry view, either 32 or 64.
 		/// </summary>
 		public static object A_RegView
 		{
-			get => regView;
+			get => ThreadAccessors.A_RegView;
 
 			set
 			{
-				regView = value is string s && s.ToLower() == "default" ? 64L : value.Al() == 32L ? 32L : 64L;
-				ThreadAccessors.A_RegView = regView.Al();
+				var val = value is string s && s.Equals("default", StringComparison.CurrentCultureIgnoreCase) ? 64L : value.Al() == 32L ? 32L : 64L;
+
+				if (!Script.IsReadyToExecute)
+					regView = val;
+
+				ThreadAccessors.A_RegView = val;
 			}
 		}
 
@@ -1582,20 +1677,28 @@
 		/// </summary>
 		public static string A_Sec => DateTime.Now.ToString("ss");
 
+		internal static uint SendLevelDefault => sendLevel;
+
 		/// <summary>
 		/// The send level to use when sending keys.<br/>
 		/// The range is 0-100.
 		/// </summary>
 		public static object A_SendLevel
 		{
-			get => sendLevel;
+			get => ThreadAccessors.A_SendLevel;
 
 			set
 			{
-				sendLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
-				ThreadAccessors.A_SendLevel = sendLevel.Aui();
+				var val = (uint)Math.Clamp(value.Al(), 0L, 100L);
+
+				if (!Script.IsReadyToExecute)
+					sendLevel = val;
+
+				ThreadAccessors.A_SendLevel = val;
 			}
 		}
+
+		internal static SendModes SendModeDefault => sendMode;
 
 		/// <summary>
 		/// The send mode to use for sending keys.<br/>
@@ -1603,12 +1706,17 @@
 		/// </summary>
 		public static object A_SendMode
 		{
-			get => sendMode.ToString();
+			get => ThreadAccessors.A_SendMode.ToString();
 
 			set
 			{
-				if (Enum.TryParse<SendModes>(value.As(), out var temp))
-					sendMode = ThreadAccessors.A_SendMode = temp;
+				if (Enum.TryParse<SendModes>(value.As(), out var val))
+				{
+					if (!Script.IsReadyToExecute)
+						sendMode = val;
+
+					ThreadAccessors.A_SendMode = val;
+				}
 			}
 		}
 
@@ -1637,19 +1745,26 @@
 		/// </summary>
 		public static string A_StartupCommon => Environment.GetFolderPath(Environment.SpecialFolder.Startup);
 
+		internal static bool StoreCapsLockModeDefault => storeCapsLockMode;
+
 		/// <summary>
 		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.
 		/// </summary>
 		public static object A_StoreCapsLockMode
 		{
-			get => storeCapsLockMode;
+			get => ThreadAccessors.A_StoreCapsLockMode;
 
 			set
 			{
 				var val = Options.OnOff(value);
 
 				if (val != null)
-					storeCapsLockMode = ThreadAccessors.A_StoreCapsLockMode = val.Value;
+				{
+					if (!Script.IsReadyToExecute)
+						storeCapsLockMode = val.Value;
+
+					ThreadAccessors.A_StoreCapsLockMode = val.Value;
+				}
 			}
 		}
 
@@ -1777,46 +1892,48 @@
 		/// </summary>
 		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Script.thisHotkeyStartTime).TotalMilliseconds;
 
+		internal static object TitleMatchModeDefault => titleMatchMode;
+
 		/// <summary>
 		/// The current mode set by <see cref="SetTitleMatchMode"/>: 1, 2, 3, or RegEx.
 		/// </summary>
 		public static object A_TitleMatchMode
 		{
-			get
-			{
-				var l = titleMatchMode.Al();
-				return l == 4L ? Keywords.Keyword_RegEx : l;
-			}
+			get => ThreadAccessors.A_TitleMatchMode;
+
 			set
 			{
-				switch (value.ToString().ToLowerInvariant())
-				{
-					case "1": titleMatchMode = 1L; break;
+				if (!Script.IsReadyToExecute)
+					titleMatchMode = value;
 
-					case "2": titleMatchMode = 2L; break;
-
-					case "3": titleMatchMode = 3L; break;
-
-					case Keyword_RegEx: titleMatchMode = 4L; break;
-				}
+				ThreadAccessors.A_TitleMatchMode = value;
 			}
 		}
+
+		internal static bool TitleMatchModeSpeedDefault => titleMatchModeSpeed;
 
 		/// <summary>
 		/// The current match speed (fast or slow) set by <see cref="SetTitleMatchMode"/>.
 		/// </summary>
 		public static object A_TitleMatchModeSpeed
 		{
-			get => titleMatchModeSpeed.Ab() ? Keyword_Fast : Keyword_Slow;
+			get => ThreadAccessors.A_TitleMatchModeSpeed.Ab() ? Keyword_Fast : Keyword_Slow;
 
 			set
 			{
+				var val = false;
+
 				switch (value.ToString().ToLowerInvariant())
 				{
-					case Keyword_Fast: titleMatchModeSpeed = true; break;
+					case Keyword_Fast: val = true; break;
 
-					case Keyword_Slow: titleMatchModeSpeed = false; break;
+					case Keyword_Slow: val = false; break;
 				}
+
+				if (!Script.IsReadyToExecute)
+					titleMatchModeSpeed = val;
+
+				ThreadAccessors.A_TitleMatchModeSpeed = val;
 			}
 		}
 
@@ -1855,20 +1972,33 @@
 		/// </summary>
 		public static object A_WinActivateForce => Script.WinActivateForce;
 
+		internal static long WinDelayDefault => winDelay;
+
 		/// <summary>
 		/// The current delay set by <see cref="SetWinDelay"/>.
 		/// </summary>
 		public static object A_WinDelay
 		{
-			get => winDelay;
-			set => winDelay = ThreadAccessors.A_WinDelay = value.Al();
+			get => ThreadAccessors.A_WinDelay;
+
+			set
+			{
+				var val = value.Al();
+
+				if (!Script.IsReadyToExecute)
+					winDelay = val;
+
+				ThreadAccessors.A_WinDelay = val;
+			}
 		}
 
 #if WINDOWS
+
 		/// <summary>
 		/// The Windows directory. For example: C:\Windows.
 		/// </summary>
 		public static string A_WinDir => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
 #endif
 
 		/// <summary>
@@ -2035,7 +2165,7 @@
 			}
 			set
 			{
-				Threads.GetThreadVariables().fileEncoding = Files.GetEncoding(value.ToString());
+				Threads.GetThreadVariables().fileEncoding = value is Encoding enc ? enc : Files.GetEncoding(value.ToString());
 			}
 		}
 
@@ -2108,6 +2238,7 @@
 		}
 
 #if WINDOWS
+
 		/// <summary>
 		/// The current registry view, either 32 or 64.
 		/// </summary>
@@ -2155,6 +2286,55 @@
 		{
 			get => Threads.GetThreadVariables().winDelay;
 			set => Threads.GetThreadVariables().winDelay = value;
+		}
+
+		internal static object A_TitleMatchMode
+		{
+			get
+			{
+				var l = Threads.GetThreadVariables().titleMatchMode;
+				return l.ParseLong(false) == 4L ? Keyword_RegEx : l;
+			}
+			set
+			{
+				var vars = Threads.GetThreadVariables();
+
+				switch (value.ToString().ToLowerInvariant())
+				{
+					case "1": vars.titleMatchMode = 1L; break;
+
+					case "2": vars.titleMatchMode = 2L; break;
+
+					case "3": vars.titleMatchMode = 3L; break;
+
+					case Keyword_RegEx:
+						vars.titleMatchMode = 4L; break;
+				}
+			}
+		}
+
+		internal static object A_TitleMatchModeSpeed
+		{
+			get => Threads.GetThreadVariables().titleMatchModeSpeed;
+
+			set
+			{
+				var vars = Threads.GetThreadVariables();
+
+				if (value is bool b)
+				{
+					vars.titleMatchModeSpeed = b;
+				}
+				else
+				{
+					switch (value.ToString().ToLowerInvariant())
+					{
+						case Keyword_Fast: vars.titleMatchModeSpeed = true; break;
+
+						case Keyword_Slow: vars.titleMatchModeSpeed = false; break;
+					}
+				}
+			}
 		}
 	}
 }

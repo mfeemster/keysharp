@@ -544,7 +544,7 @@ namespace Keysharp.Core
 				return false;
 
 			Dialogs.CloseMessageBoxes();
-			var ec = Script.isReadyToExecute ? exitCode.Ai() : (int)ExitReasons.Critical;
+			var ec = Script.IsReadyToExecute ? exitCode.Ai() : (int)ExitReasons.Critical;
 			Accessors.A_ExitReason = exitReason.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;
