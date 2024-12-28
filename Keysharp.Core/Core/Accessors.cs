@@ -11,6 +11,11 @@
 		private static readonly string initialWorkingDir = Environment.CurrentDirectory;
 		private static bool allowMainWindow = true;
 		private static long controlDelay = 20L;
+		private static CoordModeType coordModeCaretDefault = CoordModeType.Client;
+		private static CoordModeType coordModeMenuDefault = CoordModeType.Client;
+		private static CoordModeType coordModeMouseDefault = CoordModeType.Client;
+		private static CoordModeType coordModePixelDefault = CoordModeType.Client;
+		private static CoordModeType coordModeToolTipDefault = CoordModeType.Client;
 		private static long defaultMouseSpeed = 2L;
 		private static bool detectHiddenText = true;
 		private static bool detectHiddenWindows = false;
@@ -382,27 +387,127 @@
 		/// <summary>
 		/// The coordinate mode for positioning the caret.
 		/// </summary>
-		public static string A_CoordModeCaret => Mouse.Coords.Caret.ToString();
+		public static object A_CoordModeCaret
+		{
+			get => Mouse.Coords.Caret.ToString();
+
+			set
+			{
+				CoordModeType val;
+
+				if (value is CoordModeType cmt)
+					val = cmt;
+				else if (Enum.TryParse(value.As(), out cmt))
+					val = cmt;
+				else
+					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+
+				if (!Script.IsReadyToExecute)
+					coordModeCaretDefault = val;
+
+				Mouse.Coords.Caret = val;
+			}
+		}
 
 		/// <summary>
 		/// The coordinate mode for positioning menus.
 		/// </summary>
-		public static string A_CoordModeMenu => Mouse.Coords.Menu.ToString();
+		public static object A_CoordModeMenu
+		{
+			get => Mouse.Coords.Menu.ToString();
+
+			set
+			{
+				CoordModeType val;
+
+				if (value is CoordModeType cmt)
+					val = cmt;
+				else if (Enum.TryParse(value.As(), out cmt))
+					val = cmt;
+				else
+					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+
+				if (!Script.IsReadyToExecute)
+					coordModeMenuDefault = val;
+
+				Mouse.Coords.Menu = val;
+			}
+		}
 
 		/// <summary>
 		/// The coordinate mode for positioning the mouse.
 		/// </summary>
-		public static string A_CoordModeMouse => Mouse.Coords.Mouse.ToString();
+		public static object A_CoordModeMouse
+		{
+			get => Mouse.Coords.Mouse.ToString();
+
+			set
+			{
+				CoordModeType val;
+
+				if (value is CoordModeType cmt)
+					val = cmt;
+				else if (Enum.TryParse(value.As(), out cmt))
+					val = cmt;
+				else
+					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+
+				if (!Script.IsReadyToExecute)
+					coordModeMouseDefault = val;
+
+				Mouse.Coords.Mouse = val;
+			}
+		}
 
 		/// <summary>
 		/// The coordinate mode for positioning pixels.
 		/// </summary>
-		public static string A_CoordModePixel => Mouse.Coords.Pixel.ToString();
+		public static object A_CoordModePixel
+		{
+			get => Mouse.Coords.Pixel.ToString();
+
+			set
+			{
+				CoordModeType val;
+
+				if (value is CoordModeType cmt)
+					val = cmt;
+				else if (Enum.TryParse(value.As(), out cmt))
+					val = cmt;
+				else
+					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+
+				if (!Script.IsReadyToExecute)
+					coordModePixelDefault = val;
+
+				Mouse.Coords.Pixel = val;
+			}
+		}
 
 		/// <summary>
 		/// The coordinate mode for positioning tooltips.
 		/// </summary>
-		public static string A_CoordModeToolTip => Mouse.Coords.Tooltip.ToString();
+		public static object A_CoordModeToolTip
+		{
+			get => Mouse.Coords.Tooltip.ToString();
+
+			set
+			{
+				CoordModeType val;
+
+				if (value is CoordModeType cmt)
+					val = cmt;
+				else if (Enum.TryParse(value.As(), out cmt))
+					val = cmt;
+				else
+					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+
+				if (!Script.IsReadyToExecute)
+					coordModeToolTipDefault = val;
+
+				Mouse.Coords.Tooltip = val;
+			}
+		}
 
 		/// <summary>
 		/// The type of mouse cursor currently being displayed. It will be one of the following words:<br/>
@@ -2051,7 +2156,11 @@
 		/// Internal helper to provide the DPI as a percentage.
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
-
+		internal static CoordModeType CoordModeCaretDefault => coordModeCaretDefault;
+		internal static CoordModeType CoordModeMenuDefault => coordModeMenuDefault;
+		internal static CoordModeType CoordModeMouseDefault => coordModeMouseDefault;
+		internal static CoordModeType CoordModePixelDefault => coordModePixelDefault;
+		internal static CoordModeType CoordModeToolTipDefault => coordModeToolTipDefault;
 		internal static long ControlDelayDefault => controlDelay;
 		internal static long DefaultMouseSpeedDefault => defaultMouseSpeed;
 		internal static bool DetectHiddenTextDefault => detectHiddenText;
