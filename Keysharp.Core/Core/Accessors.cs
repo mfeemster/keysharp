@@ -360,7 +360,6 @@
 		public static string A_ComSpec => Environment.GetEnvironmentVariable("COMSPEC");
 
 #endif
-		internal static long ControlDelayDefault => controlDelay;
 
 		/// <summary>
 		/// The delay in milliseconds that will occur after each control-modifying command.
@@ -500,8 +499,6 @@
 		/// </summary>
 		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
 
-		internal static long DefaultMouseSpeedDefault => defaultMouseSpeed;
-
 		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
 		/// </summary>
@@ -530,8 +527,6 @@
 		/// </summary>
 		public static string A_DesktopCommon => Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
 
-		internal static bool DetectHiddenTextDefault => detectHiddenText;
-
 		/// <summary>
 		/// Determines whether invisible text in a window is "seen" for the purpose of finding the window. This affects commands such as <see cref="WinExist"/> and <see cref="WinActivate"/>.
 		/// </summary>
@@ -554,8 +549,6 @@
 				}
 			}
 		}
-
-		internal static bool DetectHiddenWindowsDefault => detectHiddenWindows;
 
 		/// <summary>
 		/// Determines whether invisible windows are "seen".
@@ -607,8 +600,6 @@
 			get => Threads.GetThreadVariables().eventInfo;
 			set => Threads.GetThreadVariables().eventInfo = value;
 		}
-
-		internal static Encoding FileEncodingDefault => fileEncoding;
 
 		/// <summary>
 		/// The default file encoding setting.
@@ -843,8 +834,6 @@
 		? (ht.HasKbdHook() ? 1L : 0L) | (ht.SystemHasAnotherKeybdHook() ? 2L : 0L)
 		: 0L;
 
-		internal static long KeyDelayDefault => keyDelay;
-
 		/// <summary>
 		/// The delay that will occur after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
 		/// </summary>
@@ -862,8 +851,6 @@
 				ThreadAccessors.A_KeyDelay = val;
 			}
 		}
-
-		internal static long KeyDelayPlayDefault => keyDelayPlay;
 
 		/// <summary>
 		/// The delay that will occur in SendPlay mode after each keystroke sent by <see cref="Send"/> and <see cref="ControlSend"/>.
@@ -883,8 +870,6 @@
 			}
 		}
 
-		internal static long KeyDurationDefault => keyDuration;
-
 		/// <summary>
 		/// The delay between the press of a key and before its release, used with <see cref="A_KeyDelay"/>.
 		/// </summary>
@@ -902,8 +887,6 @@
 				ThreadAccessors.A_KeyDuration = val;
 			}
 		}
-
-		internal static long KeyDurationPlayDefault => keyDurationPlay;
 
 		/// <summary>
 		/// The delay in SendPlay mode between the press of a key and before its release, used with <see cref="A_KeyDelayPlay"/>.
@@ -1434,8 +1417,6 @@
 		/// </summary>
 		public static string A_Mon => DateTime.Now.ToString("MM");
 
-		internal static long MouseDelayDefault => mouseDelay;
-
 		/// <summary>
 		/// Sets the delay that will occur after each mouse movement or click.
 		/// </summary>
@@ -1453,8 +1434,6 @@
 				ThreadAccessors.A_MouseDelay = val;
 			}
 		}
-
-		internal static long MouseDelayPlayDefault => mouseDelayPlay;
 
 		/// <summary>
 		/// Sets the delay that will occur in SendPlay mode after each mouse movement or click.
@@ -1527,8 +1506,6 @@
 		/// </summary>
 		public static string A_OSVersion => Environment.OSVersion.VersionString;
 
-		internal static long PeekFrequencyDefault => peekFrequency;
-
 		/// <summary>
 		/// Thread peek frequency in milliseconds.
 		/// Unused because Keysharp is compiled and not interpreted.
@@ -1590,8 +1567,6 @@
 		public static long A_PtrSize => 8L;
 
 #if WINDOWS
-		internal static long RegViewDefault => regView;
-
 		/// <summary>
 		/// The current registry view, either 32 or 64.
 		/// </summary>
@@ -1677,8 +1652,6 @@
 		/// </summary>
 		public static string A_Sec => DateTime.Now.ToString("ss");
 
-		internal static uint SendLevelDefault => sendLevel;
-
 		/// <summary>
 		/// The send level to use when sending keys.<br/>
 		/// The range is 0-100.
@@ -1697,8 +1670,6 @@
 				ThreadAccessors.A_SendLevel = val;
 			}
 		}
-
-		internal static SendModes SendModeDefault => sendMode;
 
 		/// <summary>
 		/// The send mode to use for sending keys.<br/>
@@ -1744,8 +1715,6 @@
 		/// The full path and name of the Startup folder in the all-users Start Menu.
 		/// </summary>
 		public static string A_StartupCommon => Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-
-		internal static bool StoreCapsLockModeDefault => storeCapsLockMode;
 
 		/// <summary>
 		/// Whether to restore the state of CapsLock after a <see cref="Send"/>.
@@ -1892,8 +1861,6 @@
 		/// </summary>
 		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Script.thisHotkeyStartTime).TotalMilliseconds;
 
-		internal static object TitleMatchModeDefault => titleMatchMode;
-
 		/// <summary>
 		/// The current mode set by <see cref="SetTitleMatchMode"/>: 1, 2, 3, or RegEx.
 		/// </summary>
@@ -1909,8 +1876,6 @@
 				ThreadAccessors.A_TitleMatchMode = value;
 			}
 		}
-
-		internal static bool TitleMatchModeSpeedDefault => titleMatchModeSpeed;
 
 		/// <summary>
 		/// The current match speed (fast or slow) set by <see cref="SetTitleMatchMode"/>.
@@ -1971,8 +1936,6 @@
 		/// Whether #WinActivateForce was specified.
 		/// </summary>
 		public static object A_WinActivateForce => Script.WinActivateForce;
-
-		internal static long WinDelayDefault => winDelay;
 
 		/// <summary>
 		/// The current delay set by <see cref="SetWinDelay"/>.
@@ -2088,6 +2051,28 @@
 		/// Internal helper to provide the DPI as a percentage.
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
+
+		internal static long ControlDelayDefault => controlDelay;
+		internal static long DefaultMouseSpeedDefault => defaultMouseSpeed;
+		internal static bool DetectHiddenTextDefault => detectHiddenText;
+		internal static bool DetectHiddenWindowsDefault => detectHiddenWindows;
+		internal static Encoding FileEncodingDefault => fileEncoding;
+		internal static long KeyDelayDefault => keyDelay;
+		internal static long KeyDelayPlayDefault => keyDelayPlay;
+		internal static long KeyDurationDefault => keyDuration;
+		internal static long KeyDurationPlayDefault => keyDurationPlay;
+		internal static long MouseDelayDefault => mouseDelay;
+		internal static long MouseDelayPlayDefault => mouseDelayPlay;
+		internal static long PeekFrequencyDefault => peekFrequency;
+#if WINDOWS
+		internal static long RegViewDefault => regView;
+#endif
+		internal static uint SendLevelDefault => sendLevel;
+		internal static SendModes SendModeDefault => sendMode;
+		internal static bool StoreCapsLockModeDefault => storeCapsLockMode;
+		internal static object TitleMatchModeDefault => titleMatchMode;
+		internal static bool TitleMatchModeSpeedDefault => titleMatchModeSpeed;
+		internal static long WinDelayDefault => winDelay;
 
 		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
 
@@ -2279,15 +2264,6 @@
 			set => Threads.GetThreadVariables().storeCapsLockMode = value;
 		}
 
-		/// <summary>
-		/// The current delay set by <see cref="SetWinDelay"/>.
-		/// </summary>
-		internal static long A_WinDelay
-		{
-			get => Threads.GetThreadVariables().winDelay;
-			set => Threads.GetThreadVariables().winDelay = value;
-		}
-
 		internal static object A_TitleMatchMode
 		{
 			get
@@ -2335,6 +2311,15 @@
 					}
 				}
 			}
+		}
+
+		/// <summary>
+		/// The current delay set by <see cref="SetWinDelay"/>.
+		/// </summary>
+		internal static long A_WinDelay
+		{
+			get => Threads.GetThreadVariables().winDelay;
+			set => Threads.GetThreadVariables().winDelay = value;
 		}
 	}
 }
