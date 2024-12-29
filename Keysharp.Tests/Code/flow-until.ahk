@@ -138,3 +138,17 @@ if (z == 33)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+arr := [10, 20, 30]
+x := 0
+
+for in arr
+{
+	x++
+}
+until x > 1
+
+if (x == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

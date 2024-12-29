@@ -19,7 +19,6 @@
 		internal static int inputBeforeHotkeysCount;
 		internal static DateTime inputTimeoutAt = DateTime.Now;
 		internal static bool inputTimerExists;
-		internal static bool isReadyToExecute;
 		internal static DateTime lastPeekTime;
 		internal static MainWindow mainWindow;
 		internal static Gui mainWindowGui;
@@ -41,6 +40,7 @@
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
+		private static bool isReadyToExecute;
 		private static IntPtr mainWindowHandle;
 
 		public static Variables Vars { get; private set; }
@@ -54,6 +54,8 @@
 		}
 
 		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
+
+		internal static bool IsReadyToExecute => isReadyToExecute;
 
 		internal static IntPtr MainWindowHandle
 		{
