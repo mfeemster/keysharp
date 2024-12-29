@@ -390,7 +390,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			foreach (var asm in assemblies)
 				foreach (var type in asm.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || (ignoreMainAssembly && type.Name != Parser.mainClassName)) &&
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.

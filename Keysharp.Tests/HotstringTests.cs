@@ -509,23 +509,24 @@ namespace Keysharp.Tests
 			_ = Keyboard.Hotstring("MouseReset", true);
 		}
 
-        [SetUp, Category("Hotstring")]
-        public void Setup()
-        {
-            _ = Keyboard.Hotstring("*0");
-            _ = Keyboard.Hotstring("C0");
-            _ = Keyboard.Hotstring("?0");
-            _ = Keyboard.Hotstring("B");
-            _ = Keyboard.Hotstring("O0");
-            _ = Keyboard.Hotstring("R0");
-            _ = Keyboard.Hotstring("T0");
-            _ = Keyboard.Hotstring("S0");
-            //_ = Keyboard.Hotstring("SI");
-            _ = Keyboard.Hotstring("Z0");
-            _ = Keyboard.Hotstring("K0");
-            _ = Keyboard.Hotstring("P0");
-            _ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
-            HotstringManager.ClearHotstrings();
-        }
-    }
+		[SetUp, Category("Hotstring")]
+		public void Setup()
+		{
+			_ = Keyboard.Hotstring("*0");
+			_ = Keyboard.Hotstring("C0");
+			_ = Keyboard.Hotstring("?0");
+			_ = Keyboard.Hotstring("B");
+			_ = Keyboard.Hotstring("O0");
+			_ = Keyboard.Hotstring("R0");
+			_ = Keyboard.Hotstring("T0");
+			_ = Keyboard.Hotstring("S0");
+			//_ = Keyboard.Hotstring("SI");
+			_ = Keyboard.Hotstring("Z0");
+			_ = Keyboard.Hotstring("K0");
+			_ = Keyboard.Hotstring("P0");
+			_ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
+			HotstringManager.RestoreDefaults(true);
+			HotstringManager.ClearHotstrings();
+		}
+	}
 }

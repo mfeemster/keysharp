@@ -391,14 +391,6 @@ namespace Keysharp.Scripting
 								var loopvarexpr = ParseSingleExpression(codeLine, split, false);
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
 								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
-								//If this loop is inside of a class method that had declared all variables within it to be global,
-								//then the call to ParseSingleExpression() will not have created the iteration variable because it
-								//wrongly assumes it's global.
-								//So manually do it here.
-								var dkt = allVars[typeStack.Peek()].GetOrAdd(Scope);
-
-								if (!dkt.ContainsKey(loopvarstr))
-									dkt[loopvarstr] = nullPrimitive;
 							}
 							else
 								varlist.Add(split?.Length == 0 ? "_" : split);
@@ -424,7 +416,7 @@ namespace Keysharp.Scripting
 							IncrementStatement = new CodeSnippetStatement(string.Empty)
 						};
 						loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
-						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/({vars}) = {id}.Current"));
+						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/var ({vars}) = {id}.Current"));
 						var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
 						{
 							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect

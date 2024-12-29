@@ -149,7 +149,7 @@ namespace Keysharp.Tests
 						var temp = new string[] { };
 						var result = main.Invoke(null, [temp]);
 
-						if (result is int i && i != 0)//This is for when an exception is thrown protectedly in the compiled program, the catch blocks make it return 1.
+						if (result is int i && i != 0)//This is for when an exception is thrown in the compiled program, the catch blocks make it return 1.
 							Console.Write("fail");
 					}
 					catch (Exception ex)
