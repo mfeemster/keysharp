@@ -63,7 +63,6 @@ namespace Keysharp.Core
 			}
 		}
 
-
 		/// <summary>
 		/// Retrieves the specified files or folders, one at a time.
 		/// </summary>
@@ -282,8 +281,6 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
-
-
 
 #if WINDOWS
 		/// <summary>
@@ -750,15 +747,13 @@ namespace Keysharp.Core
 		{
 			var tv = Threads.GetThreadVariables();
 
-			if (tv.regsb == null)
-				tv.regsb = new StringBuilder(1024);
-			else
-				_ = tv.regsb.Clear();
+			if (tv.RegSb.Length > 0)
+				_ = tv.RegSb.Clear();
 
-			var classSize = (uint)(tv.regsb.Capacity + 1);
+			var classSize = (uint)(tv.RegSb.Capacity + 1);
 			_ = WindowsAPI.RegQueryInfoKey(
 					regkey.Handle,
-					tv.regsb,
+					tv.RegSb,
 					ref classSize,
 					IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
 					out var l);

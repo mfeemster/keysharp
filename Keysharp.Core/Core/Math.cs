@@ -11,18 +11,7 @@
 		/// <summary>
 		/// Internal helper to get a random number generator for the current thread.
 		/// </summary>
-		private static Random RandomGenerator
-		{
-			get
-			{
-				var tv = Threads.GetThreadVariables();
-
-				if (tv.randomGenerator == null)
-					tv.randomGenerator = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
-
-				return tv.randomGenerator;
-			}
-		}
+		private static Random RandomGenerator => Threads.GetThreadVariables().RandomGenerator;
 
 		/// <summary>
 		/// Returns the absolute value of a number.
@@ -445,7 +434,7 @@
 		/// <param name="obj">The numerical seed to create the random number generator with.</param>
 		public static object RandomSeed(object obj)
 		{
-			Threads.GetThreadVariables().randomGenerator = new Random(obj.Ai());
+			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
 			return null;
 		}
 

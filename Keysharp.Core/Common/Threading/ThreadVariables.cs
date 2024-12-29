@@ -5,7 +5,6 @@
 		internal Task<object> task = null;
 		internal bool allowThreadToBeInterrupted = true;
 		internal long controlDelay = 20L;
-		internal CoordModes coords;
 		internal System.Windows.Forms.Timer currentTimer;
 		internal string defaultGui;
 		internal long defaultMouseSpeed = 2L;
@@ -16,7 +15,6 @@
 		internal Form dialogOwner;
 		internal object eventInfo;
 		internal Encoding fileEncoding = Encoding.Default;
-		internal string formatNumeric;
 		internal IFuncObj hotCriterion;
 		internal IntPtr hwndLastUsed = IntPtr.Zero;
 		internal bool isCritical = false;
@@ -29,8 +27,6 @@
 		internal long mouseDelayPlay = -1L;
 		internal long peekFrequency = 5L;
 		internal long priority;
-		internal Random randomGenerator;
-		internal StringBuilder regsb = null;
 #if WINDOWS
 		internal long regView = 64L;
 #endif
@@ -43,6 +39,19 @@
 		internal bool titleMatchModeSpeed = true;
 		internal int uninterruptibleDuration = 17;
 		internal long winDelay = 100L;
+		private CoordModes coords;
+		private Random randomGenerator;
+		private StringBuilder regsb = null;
+
+		internal CoordModes Coords => coords != null ? coords : coords = new CoordModes();
+
+		internal Random RandomGenerator
+		{
+			get => randomGenerator != null ? randomGenerator : randomGenerator = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
+			set => randomGenerator = value;
+		}
+
+		internal StringBuilder RegSb => regsb != null ? regsb : regsb = new StringBuilder(1024);
 
 		internal bool IsCriticalAndRunning()
 		{
@@ -79,7 +88,6 @@
 			dialogOwner = null;
 			eventInfo = null;
 			fileEncoding = Encoding.Default;
-			formatNumeric = null;
 			hotCriterion = null;
 			hwndLastUsed = IntPtr.Zero;
 			keyDelay = 10L;
@@ -112,43 +120,42 @@
 			allowThreadToBeInterrupted = true;
 			uninterruptibleDuration = Script.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
-			controlDelay = Accessors.A_ControlDelay.Al();
+			controlDelay = Accessors.ControlDelayDefault;
 			coords = null;
 			currentTimer = null;
 			defaultGui = null;
-			defaultMouseSpeed = Accessors.A_DefaultMouseSpeed.Al();
-			detectHiddenText = Accessors.A_DetectHiddenText.Ab();
-			detectHiddenWindows = Accessors.A_DetectHiddenWindows.Ab();
+			defaultMouseSpeed = Accessors.DefaultMouseSpeedDefault;
+			detectHiddenText = Accessors.DetectHiddenTextDefault;
+			detectHiddenWindows = Accessors.DetectHiddenWindowsDefault;
 			dialogOwner = null;
 			eventInfo = null;
-			fileEncoding = Files.GetEncoding(Accessors.A_FileEncoding.ToString());
-			formatNumeric = null;
+			fileEncoding = Accessors.FileEncodingDefault;
 			hotCriterion = null;
 			hwndLastUsed = IntPtr.Zero;
-			keyDelay = Accessors.A_KeyDelay.Al();
-			keyDelayPlay = Accessors.A_KeyDelayPlay.Al();
-			keyDuration = Accessors.A_KeyDuration.Al();
-			keyDurationPlay = Accessors.A_KeyDurationPlay.Al();
+			keyDelay = Accessors.KeyDelayDefault;
+			keyDelayPlay = Accessors.KeyDelayPlayDefault;
+			keyDuration = Accessors.KeyDurationDefault;
+			keyDurationPlay = Accessors.KeyDurationPlayDefault;
 			lastFoundForm = IntPtr.Zero;
-			mouseDelay = Accessors.A_MouseDelay.Al();
-			mouseDelayPlay = Accessors.A_MouseDelayPlay.Al();
-			peekFrequency = Accessors.A_PeekFrequency.Al();
+			mouseDelay = Accessors.MouseDelayDefault;
+			mouseDelayPlay = Accessors.MouseDelayPlayDefault;
+			peekFrequency = Accessors.PeekFrequencyDefault;
 			priority = Accessors.A_Priority.Al();
 			randomGenerator = null;
 			_ = (regsb?.Clear());
 #if WINDOWS
-			regView = Accessors.A_RegView.Al();
+			regView = Accessors.RegViewDefault;
 #endif
-			sendLevel = Accessors.A_SendLevel.Aui();
+			sendLevel = Accessors.SendLevelDefault;
 
-			if (Enum.TryParse<SendModes>(Accessors.A_SendMode.As(), out var temp))
+			if (Enum.TryParse<SendModes>(Accessors.SendModeDefault.As(), out var temp))
 				sendMode = temp;
 
-			storeCapsLockMode = Accessors.A_StoreCapsLockMode.Ab();
+			storeCapsLockMode = Accessors.StoreCapsLockModeDefault;
 			threadId = 0;
-			titleMatchMode = Accessors.A_TitleMatchMode;
-			titleMatchModeSpeed = Accessors.A_TitleMatchModeSpeed.ToString() == Keyword_Fast;
-			winDelay = Accessors.A_WinDelay.Al();
+			titleMatchMode = Accessors.TitleMatchModeDefault;
+			titleMatchModeSpeed = Accessors.TitleMatchModeSpeedDefault;
+			winDelay = Accessors.WinDelayDefault;
 		}
 	}
 }

@@ -1569,7 +1569,7 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					if ((tempSc = (uint)Joystick.Joystick.ConvertJoy(text, ref joystickId, true)) == 0)  // Is there a joystick control/button?
 					{
-						if (text.Length == 1 && !Script.isReadyToExecute)
+						if (text.Length == 1 && !Script.IsReadyToExecute)
 						{
 							// At load time, single-character key names are always considered valid but show a
 							// warning if they can't be registered as hotkeys on the current keyboard layout.
