@@ -63,7 +63,6 @@ namespace Keysharp.Core
 			}
 		}
 
-
 		/// <summary>
 		/// Retrieves the specified files or folders, one at a time.
 		/// </summary>
@@ -282,8 +281,6 @@ namespace Keysharp.Core
 
 			//Caller must call Pop() after the loop exits.
 		}
-
-
 
 #if WINDOWS
 		/// <summary>

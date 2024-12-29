@@ -50,6 +50,12 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
 
+		[Test, Category("Flow")]
+		public void FlowLoopReturn() => Assert.IsTrue(TestScript("flow-loop-return", false));
+
+		[Test, Category("Flow")]
+		public void FlowLoopThrow() => Assert.IsTrue(TestScript("flow-loop-throw", false));
+
 #if WINDOWS
 		[Test, Category("Flow")]
 		public void FlowLoopReg()

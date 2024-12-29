@@ -97,16 +97,17 @@ namespace Keysharp.Scripting
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 					}
-					else if (parent.Count > 0 && parent[parent.Count - 1] is CodeExpressionStatement ces && ces.Expression is CodeMethodInvokeExpression cmie && cmie.Method.MethodName == "Pop")
+					else if (parent.Count > 1 && parent[parent.Count - 2] is CodeTryCatchFinallyStatement tcfs && tcfs.FinallyStatements.Count == 1)//This is brittle, but finally statements should only ever be populated by the parser. There is no way to make one in script code.
 					{
 						var blockOpen = parts.Length > 1 && parts[1].AsSpan().Trim().EndsWith("{");
-						parent.RemoveAt(parent.Count - 1);
+						tcfs.FinallyStatements.Clear();
 						var ifelse = new CodeConditionStatement { Condition = new CodeSnippetExpression("Pop().index == 0L") };
 						var block = new CodeBlock(codeLine, Scope, ifelse.TrueStatements, CodeBlock.BlockKind.IfElse, blocks.PeekOrNull());
 						block.Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
-						return [ifelse];
+						tcfs.FinallyStatements.Add(ifelse);
+						return null;
 					}
 					else
 						throw new ParseException("Else with no preceding if, try, for, loop or while block.", codeLine);
@@ -327,8 +328,11 @@ namespace Keysharp.Scripting
 
 					_ = CloseTopSingleBlock();
 					blocks.Push(block);
+					var tcf = new CodeTryCatchFinallyStatement();
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
-					return [loop, new CodeLabeledStatement(block.ExitLabel), pop];
+					tcf.TryStatements.Add(loop);
+					tcf.FinallyStatements.Add(pop);
+					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
 				}
 
 				case FlowFor:
@@ -351,7 +355,7 @@ namespace Keysharp.Scripting
 						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
 
 						//Extreme hack to tell the enumerator whether to return 1 or 2 values which changes
-						//the beavior when dealing with OwnProps().
+						//the behavior when dealing with OwnProps().
 						if (expr is CodeMethodInvokeExpression cmieInvoke
 								&& cmieInvoke.Method.MethodName == "Invoke"
 								&& cmieInvoke.Parameters.Count == 1
@@ -375,8 +379,8 @@ namespace Keysharp.Scripting
 							varsplits.Add("");
 
 						//If only one is present, it actually means discard the first one, and use the second.
-						//So in the case of a map, it would mean get the values, not the key.
-						//In the case of an array, it would mean get the values, not the index.
+						//So in the case of a map, it would mean get the key, not the value.
+						//In the case of an array, it would mean get the value, not the index.
 						foreach (var split in varsplits)
 						{
 							enumlist.Add("object");
@@ -408,7 +412,6 @@ namespace Keysharp.Scripting
 						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
 						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varCount})"));
-						_ = parent.Add(new CodeSnippetExpression("{"));
 						_ = parent.Add(coldecl);
 						_ = parent.Add(iterdecl);
 						var condition = new CodeMethodInvokeExpression();
@@ -430,8 +433,10 @@ namespace Keysharp.Scripting
 						blocks.Push(block);//Must add block first, before doing local variable names so that the scoping is correct and they don't conflict with function level vars.
 						var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 						var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
-						//return new CodeStatement[] { push, loop, new CodeLabeledStatement(block.ExitLabel), pop, new CodeSnippetStatement("}") };
-						return [push, loop, new CodeLabeledStatement(block.ExitLabel), pop, new CodeExpressionStatement(new CodeSnippetExpression("}"))];
+						var tcf = new CodeTryCatchFinallyStatement();
+						tcf.TryStatements.Add(loop);
+						tcf.FinallyStatements.Add(pop);
+						return [push, tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
 					}
 				}
 				break;
@@ -455,12 +460,15 @@ namespace Keysharp.Scripting
 					blocks.Push(block);
 					var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
-					return [push, loop, new CodeLabeledStatement(block.ExitLabel), pop];
+					var tcf = new CodeTryCatchFinallyStatement();
+					tcf.TryStatements.Add(loop);
+					tcf.FinallyStatements.Add(pop);
+					return [push, tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
 				}
 
 				case FlowUntil:
 				{
-					if (parent.Cast<CodeStatement>().Last(cs => cs is CodeIterationStatement) is CodeIterationStatement cis)
+					if (parent.Cast<CodeStatement>().Last(cs => cs is CodeTryCatchFinallyStatement) is CodeTryCatchFinallyStatement tcf)
 					{
 						var ccs = new CodeConditionStatement();
 						var token = StripCommentSingle(parts[1]);
@@ -469,7 +477,9 @@ namespace Keysharp.Scripting
 						_ = iftest.Parameters.Add(expr);
 						ccs.Condition = iftest;
 						_ = ccs.TrueStatements.Add(new CodeSnippetExpression("break"));
-						_ = cis.Statements.Add(ccs);
+
+						if (tcf.TryStatements.Cast<CodeStatement>().Last(ts => ts is CodeIterationStatement) is CodeIterationStatement cis)
+							cis.Statements.Add(ccs);
 					}
 				}
 				break;
@@ -507,15 +517,7 @@ namespace Keysharp.Scripting
 					if (exit == null)
 						throw new ParseException("Cannot break outside of a loop.", codeLine);
 
-					//Handle calls to Pop() here instead of in Parser.GenerateCompileUnit() where gotos are handled.
-					var codeStatements = new List<CodeStatement>(b);
-					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
-
-					for (var i = 1; i < b; i++)
-						codeStatements.Add(pop);
-
-					codeStatements.Add(new CodeGotoStatement(exit));
-					return codeStatements.ToArray();
+					return [new CodeGotoStatement(exit)];
 				}
 
 				case FlowContinue:
