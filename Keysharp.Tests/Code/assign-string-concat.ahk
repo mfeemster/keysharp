@@ -1,59 +1,60 @@
 
 
-x = hello
+x := "hello"
+y := x " world"
 y := x . " world"
 
 If x != "hello"
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 If y != "hello world"
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 If y = "hello world"
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 y := x " world"
 
 If y != "hello world"
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 If y = "hello world"
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 y := x . " world " x
 	
 If (y == "hello world hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 y := x " world " . x
 	
 If (y == "hello world hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 y := x . " world " . x
 	
 If (y == "hello world hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 y := x " world " x
 	
 If (y == "hello world hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

@@ -1,66 +1,70 @@
 x := ""
 
 If (x != "")
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 If (x = "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
+x := unset
+/*
+THIS IS NOT VALID AHK SYNTAX
 x :=
 
 If (x != "")
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
+*/
 	
 If (x = "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is null)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x = null)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x == null)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 123
 x := unset
 
 if (x is unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is null)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x = null)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x == null)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

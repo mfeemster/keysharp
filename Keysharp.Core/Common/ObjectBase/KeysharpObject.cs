@@ -5,24 +5,72 @@
 		public IEnumerator<(object, object)> __Enum(object count);
 	}
 
-	public class KeysharpObject : Any
+	public class KeysharpObject : Any, ICallable
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
 
-		public KeysharpObject()
+        MethodInfo mi;
+        private FuncObj _fo;
+        FuncObj fo
+        {
+            get
+            {
+                if (_fo == null)
+                {
+                    MethodInfo[] instanceMethods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                       .Where(m => m.Name == "Call")
+                       .ToArray();
+                    if (instanceMethods.Length < 2)
+                        throw new NotImplementedException();
+                    mi = instanceMethods[0];
+                    _fo = new FuncObj(mi, this);
+                }
+                return _fo;
+            }
+        }
+
+        public KeysharpObject()
 		{
 			__Init();
 		}
 
 		public object __New(params object[] obj) => "";
 
-		/// <summary>
-		/// Return a cloned copy of the object.
-		/// Just calling MemberwiseClone() is sufficient to clone all of the properties as well
-		/// as the OwnProps object op.
-		/// </summary>
-		/// <returns>A cloned copy of the object.</returns>
-		public virtual object Clone()
+        public object Call(params object[] args) => fo.Call(args);
+
+        public object CallWithRefs(params object[] obj)
+        {
+            var refs = new List<RefHolder>(obj.Length);
+
+            for (var i = 0; i < obj.Length; i++)
+            {
+                object p = obj[i];
+
+                if (p is RefHolder rh)
+                {
+                    refs.Add(rh);
+                    obj[i] = rh.val;
+                }
+            }
+
+            var val = fo.Call(obj);
+
+            for (var i = 0; i < refs.Count; i++)
+            {
+                var rh = refs[i];
+                rh.reassign(obj[rh.index]);
+            }
+
+            return val;
+        }
+
+        /// <summary>
+        /// Return a cloned copy of the object.
+        /// Just calling MemberwiseClone() is sufficient to clone all of the properties as well
+        /// as the OwnProps object op.
+        /// </summary>
+        /// <returns>A cloned copy of the object.</returns>
+        public virtual object Clone()
 		{
 			return MemberwiseClone();
 		}

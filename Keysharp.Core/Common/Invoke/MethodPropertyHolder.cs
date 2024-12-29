@@ -191,6 +191,8 @@
 						callFunc = (inst, obj) =>
 						{
 							object ret = null;
+							if (obj == null)
+								obj = new object[0];
 							var objLength = obj.Length;
 
 							if (ParamLength == objLength)

@@ -78,121 +78,121 @@ testclassobj := testclass()
 testsubclassobj := testsubclass()
 
 If (testclassobj is testclass)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (testsubclassobj is testclass)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (testsubclassobj is testsubclass)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclassobj.a
 
 If (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.a
 
 If (val == 321)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclassobj.b
 
 If (val == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclass.b
 
 If (val == 654)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclass.c
 
 If (val == 888)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.c
 
 If (val == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclass.d
 
 If (val == 1000)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclass.d
 
 If (val == 2000)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 testsubclassobj.setbasea()
 
 val := testsubclassobj.getbasea()
 
 If (val == 500)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.a
 
 If (val == 321)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 testsubclassobj.super.a := 777
 
 val := testsubclassobj.getbasea()
 
 If (val == 777)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.a
 
 If (val == 321)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 classname := testclassobj.__Class
 
 If (classname == "testclass")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 classname := testsubclassobj.__Class
 
 If (classname == "testsubclass")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testsubclassobj.a := ""
 testsubclassobj.super.a := ""
@@ -200,22 +200,22 @@ testsubclassobj.super.a := ""
 testsubclassobj.subcasesensitivefunc()
 
 if (testsubclassobj.super.a == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (testsubclassobj.a == 1212)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testclass.c := ""
 testsubclass.subcasesensitivefuncstatic()
 
 if (testclass.c == 3131)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class MyArray extends Array
 {
@@ -231,21 +231,21 @@ class MyArray extends Array
 classname := MyArray()
 
 If (classname is Array)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (classname is MyArray)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := classname[100]
 
 If (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class MyMap extends Map
 {
@@ -261,21 +261,21 @@ class MyMap extends Map
 classname := MyMap()
 
 If (classname is Map)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (classname is MyMap)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := classname[100]
 
 If (val == 321)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class base1
 {
@@ -318,23 +318,23 @@ obj := sub1()
 val := obj[999]
 
 If (val == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 obj := subarr2()
 
 If (obj is subarr2 && obj is subarr1 && obj is Array)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := obj[999]
 
 If (val == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class submap1 extends Map
 {
@@ -354,16 +354,16 @@ class submap2 extends submap1
 obj := submap2()
 
 If (obj is submap2 && obj is submap1 && obj is Map)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := obj[999]
 
 If (val == 4)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testclass.c := 101
 myfunc := FuncObj("basecasesensitivefuncstatic", testsubclassobj)
@@ -371,9 +371,9 @@ myfunc := FuncObj("basecasesensitivefuncstatic", testsubclassobj)
 myfunc()
 
 if (testclass.c == 3131)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testclass.c := 101
 myfunc := FuncObj("subcasesensitivefuncstatic", testsubclassobj)
@@ -381,27 +381,27 @@ myfunc := FuncObj("subcasesensitivefuncstatic", testsubclassobj)
 myfunc()
 
 if (testclass.c == 3131)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testsubclassobj.a := 0
 myfunc := FuncObj("basecasesensitivefunc", testsubclassobj)
 myfunc()
 
 if (testsubclassobj.a == 1212)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 testsubclassobj.a := 0
 myfunc := FuncObj("SubCaseSensitiveFunc", testsubclassobj)
 myfunc()
 
 if (testsubclassobj.a == 1212)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myarrayclass1 extends Array
 {
@@ -420,17 +420,17 @@ mac.Push(123)
 val := mac[1]
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 mac[1] := 999
 val := mac[1]
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myarrayclass2 extends Array
 {
@@ -448,17 +448,17 @@ mac.Push(123)
 val := mac[1]
 
 If (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 mac[1] := 999
 val := mac[1]
 
 If (val == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class mymapclass1 extends map
 {
@@ -509,25 +509,25 @@ mmp["asdf"] := 123
 val := mmp["asdf"]
 
 If (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 mmp[1, 2] := 123
 val := mmp[1, 2]
 
 If (val == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 mmp[1, 2, 3] := 123
 val := mmp[1, 2, 3]
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 class myarrayclass3 extends Array
 {
@@ -553,9 +553,9 @@ mac[1, 2, 3, 4] := 100
 val := mac[1]
 
 if (val == 110)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myarrayclass4 extends Array
 {
@@ -579,9 +579,9 @@ mac := myarrayclass4()
 val := mac[1, 2, 3, 4]
 
 if (val == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myarrayclass5 extends Array
 {
@@ -605,9 +605,9 @@ mac := myarrayclass5()
 val := mac[1, 2, 3, 4]
 
 if (val == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 	
 class myarrayclass6 extends Array
@@ -628,9 +628,9 @@ mac := myarrayclass6(1, 2, 3, 4)
 val := mac.doublecount
 
 if (val == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myinitclass
 {
@@ -641,9 +641,9 @@ mic := myinitclass()
 val := mic.p1
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 return123func()
 {
@@ -659,9 +659,9 @@ mic := myfuncinitclass()
 val := mic.p1
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class mybaseclass
 {
@@ -688,18 +688,18 @@ msc.basefunc()
 val := msc.x
 
 if (val == 124)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 msc := mysubclass()
 msc.super.basefunc()
 val := msc.x
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; Test subclasses that derive from built in types and access the base properties before either class is fully initialized.
 ; This ensures the initialization chain of __Init() and __New() work properly.
@@ -712,24 +712,24 @@ class bigarr extends Array
 mybigarr := bigarr(1, 2, 3)
 
 If (mybigarr is Array)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (mybigarr is bigarr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (mybigarr.Capacity == 10000)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (mybigarr[1] == 1 && mybigarr[2] == 2 && mybigarr[3] == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 class Mapi extends Map {
 	CaseSense := false
@@ -745,19 +745,19 @@ class Mapi extends Map {
 cim := Mapi("a", 1, "B", 2)
 
 if (cim is Map)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (cim is Mapi)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (cim["A"] == 1 && cim["b"] == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 class dupepropsbase
 {
@@ -794,26 +794,26 @@ class dupepropssub extends dupepropsbase
 classobj := dupepropssub()
 
 if (classobj.a == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (classobj.super.a == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (classobj.getglobala() == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (classobj.getthisa() == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (classobj.getsupera() == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

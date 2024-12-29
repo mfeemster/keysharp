@@ -233,7 +233,7 @@ namespace Keysharp.Core
 			var keyname = keyName.As();
 			var label = action.As();
 			var opt = options.As();
-			IFuncObj fo = null;
+			ICallable fo = null;
 			var hook_action = 0u;
 
 			if (action != null)

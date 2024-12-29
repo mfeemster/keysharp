@@ -6,9 +6,9 @@ Loop Parse "hello"
 }
 
 If (z == "hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 
@@ -17,9 +17,9 @@ Loop Parse "hello" {
 }
 
 If (z == "hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 
@@ -29,9 +29,9 @@ Loop Parse "hello", , "l"
 }
 
 If (z == "heo")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 
@@ -40,9 +40,9 @@ Loop Parse "hello", , "l" {
 }
 
 If (z == "heo")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "hello"
 z := ""
@@ -53,22 +53,23 @@ Loop Parse x
 }
 
 If (z == "hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x := "hello"
+global x := "hello"
+y := "x"
 z := ""
 
-Loop Parse %x%
+Loop Parse %y%
 {
 	z .= A_LoopField
 }
 
 If (z == "hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "hel,lo"
 z := ""
@@ -79,9 +80,9 @@ Loop Parse x, ","
 }
 
 If (z == "hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "hel,lo"
 z := ""
@@ -92,9 +93,9 @@ Loop Parse x, ",", "l"
 }
 
 If (z == "heo")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := "hel,lo"
 y := ","
@@ -106,9 +107,9 @@ Loop Parse x, y, "l" ; this is a comment
 }
 
 If (z == "heo")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 v := "l"
 x := "hel,lo"
@@ -121,9 +122,9 @@ Loop Parse x, y, v ; another comment
 }
 
 If (z == "heo")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := "`"first field`",SecondField,`"the word `"`"special`"`" is quoted literally`",,`"last field, has literal comma`""
 z := ""
@@ -134,9 +135,9 @@ Loop Parse x, "csv"
 }
 
 If (z == "first fieldSecondFieldthe word `"special`" is quoted literallylast field, has literal comma")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "h.e-l,l;o"
 y := ".-,;"
@@ -148,6 +149,6 @@ Loop Parse x, y
 }
 
 If (z == "hello")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

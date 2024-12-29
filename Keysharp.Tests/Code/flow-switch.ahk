@@ -14,9 +14,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 
@@ -30,9 +30,9 @@ switch x {
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 
@@ -45,9 +45,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 z := ""
 
@@ -57,9 +57,9 @@ switch x	{
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 
@@ -70,9 +70,9 @@ switch x
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "Tester"
 z := ""
@@ -88,9 +88,9 @@ switch x, 0
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "Tester"
 z := ""
@@ -107,9 +107,9 @@ switch x, 1 {
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "Tester"
 z := ""
@@ -123,9 +123,9 @@ switch x, 1
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 z := ""
@@ -141,9 +141,9 @@ switch
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 z := ""
@@ -159,9 +159,9 @@ switch
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 z := ""
@@ -177,9 +177,9 @@ switch {
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 123
 z := ""
@@ -198,9 +198,9 @@ switch x, 1 ; this is a comment
 }
 
 if (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 z := 0
@@ -216,9 +216,9 @@ switch z
 }
 
 if (x == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := 3
 y := 4
@@ -238,9 +238,9 @@ switch func(x, y)
 }
 
 if (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 3
 y := 4
@@ -252,9 +252,9 @@ switch func(x, y) {
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myclass
 {
@@ -276,6 +276,6 @@ switch myclassobj.func(x, y) {
 }
 
 if (z == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

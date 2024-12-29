@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 namespace Keysharp.Scripting
 {
 	internal class MethodReference
@@ -18,7 +20,13 @@ namespace Keysharp.Scripting
 			TypeArguments = typeArguments;
 		}
 
-		public static explicit operator CodeMethodInvokeExpression(MethodReference source)
+		public static explicit operator InvocationExpressionSyntax(MethodReference source)
+		{
+			return SyntaxFactory.InvocationExpression(Keysharp.Core.Scripting.Parser.Antlr.Helper.CreateQualifiedName(source.TargetObject.FullName + "." + source.MethodName));
+        }
+
+
+        public static explicit operator CodeMethodInvokeExpression(MethodReference source)
 		{
 			var method = new CodeMethodInvokeExpression();
 			method.Method = (CodeMethodReferenceExpression)source;

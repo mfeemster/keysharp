@@ -1,0 +1,8 @@
+x := 11
+y11 := 123
+z := y%x%
+
+If (z == 123)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

@@ -5044,7 +5044,7 @@ namespace Keysharp.Core.Windows
 												// keystrokes to the wrong window, or when the hotstring has become suspended.
 												continue;
 
-											if (!(string.Compare(hs.hotCriterion.Name, "HotIfWinNotActivePrivate", true) == 0 || string.Compare(hs.hotCriterion.Name, "HotIfWinNotExistPrivate", true) == 0))
+											if (hs.hotCriterion is IFuncObj fc && !(string.Compare(fc.Name, "HotIfWinNotActivePrivate", true) == 0 || string.Compare(fc.Name, "HotIfWinNotExistPrivate", true) == 0))
 												criterion_found_hwnd = IntPtr.Zero;
 											else if (hs.HotIfRequiresEval())
 												criterion_found_hwnd = Script.hotExprLFW;// For #if WinExist(WinTitle) and similar.
@@ -5123,7 +5123,7 @@ namespace Keysharp.Core.Windows
 												&& it.InputRelease() is InputType inputHook
 												&& inputHook.scriptObject is InputObject so)
 										{
-											if (so.OnEnd is IFuncObj ifo)
+											if (so.OnEnd is ICallable ifo)
 											{
 												Threads.LaunchInThread(0, false, false, ifo, [so], true);
 											}
@@ -5153,7 +5153,7 @@ namespace Keysharp.Core.Windows
 
 									if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.scriptObject.OnKeyDown
 											: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.scriptObject.OnKeyUp
-											: input_hook.scriptObject.OnChar) is IFuncObj ifo
+											: input_hook.scriptObject.OnChar) is ICallable ifo
 											&& Threads.AnyThreadsAvailable())
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.

@@ -118,8 +118,13 @@ namespace Keysharp.Scripting
 						return fi.GetValue(null);
 				}
 
-				return GetReservedVariable(key);//Last, try reserved variable.
-			}
+				var rv = GetReservedVariable(key); // Try reserved variable first, to take precedence over ICallable
+				if (rv != null)
+					return rv;
+
+				return Flow.TryGetCallable(key);
+
+            }
 
 			public object SetVariable(string key, object value)
 			{

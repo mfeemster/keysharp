@@ -26,3 +26,7 @@
 *.zip
 /Keysharp.Tests/Code/Gui/methpropskeysharp.txt
 /Keysharp.Tests/Code/test-text-file-out.txt
+/Keysharp.Core/Scripting/Parser/Antlr/.antlr
+/Keysharp.Core/bin/x64/Debug/net9.0-windows
+/Keysharp/bin/x64/Debug/net9.0-windows
+/.vs

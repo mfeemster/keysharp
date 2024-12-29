@@ -1,116 +1,116 @@
 
 
 x := true
-y :=
+y := unset
 
 If (!x = false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (x != true)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 If (!(x) = false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If ((x) != true)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 If ((!x) = false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (!(x = false))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If ((x != true))
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 If (!y = true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y != true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (not x = false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (not x = true)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 If (not (x) = false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (not (x) = true)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 If ((not x) = false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (not (x = false))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (not (x = true))
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 If (not y = true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (not (y) = true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 123
 
 if (not (x is null))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not (x is unset))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not (x = null))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not (x == null))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

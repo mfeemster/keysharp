@@ -11,7 +11,7 @@
 		/// <param name="function">The work to execute asynchronously.</param>
 		/// <returns>A task object that represents the work queued to execute on an STA thread.</returns>
 
-		internal static Task<TResult> Run<TResult>([NotNull] Func<TResult> function)
+		internal static Task<TResult> Run<TResult>([System.Diagnostics.CodeAnalysis.NotNull] Func<TResult> function)
 		{
 			var tcs = new TaskCompletionSource<TResult>();
 			var thread = new Thread(() =>
@@ -39,7 +39,7 @@
 		/// <param name="action">The work to execute asynchronously.</param>
 		/// <returns>A task object that represents the work queued to execute on an STA thread.</returns>
 
-		internal static Task Run([NotNull] Action action)
+		internal static Task Run([System.Diagnostics.CodeAnalysis.NotNull] Action action)
 		{
 			var tcs = new TaskCompletionSource<object>(); // Return type is irrelevant for an Action.
 			var thread = new Thread(() =>

@@ -16,8 +16,8 @@
 		, detectWhenInsideWord, doReset, suspendExempt, constructedOK;
 
 		internal uint existingThreads, maxThreads;
-		internal IFuncObj funcObj;
-		internal IFuncObj hotCriterion;
+		internal ICallable funcObj;
+		internal ICallable hotCriterion;
 		internal uint inputLevel;
 		internal int priority, keyDelay;
 		internal SendModes sendMode;
@@ -67,7 +67,7 @@
 			//EndChars = defEndChars;
 		}
 
-		internal HotstringDefinition(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring, string _replacement
+		internal HotstringDefinition(string _name, ICallable _funcObj, ReadOnlySpan<char> _options, string _hotstring, string _replacement
 									 , bool _hasContinuationSection, int _suspend)
 
 		{
@@ -254,7 +254,7 @@
 
 		internal bool AnyThreadsAvailable() => existingThreads < maxThreads;
 
-		internal bool CompareHotstring(ReadOnlySpan<char> _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
+		internal bool CompareHotstring(ReadOnlySpan<char> _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, ICallable _hotCriterion)
 		{
 			// hs.mEndCharRequired is not checked because although it affects the conditions for activating
 			// the hotstring, ::abbrev:: and :*:abbrev:: cannot co-exist (the latter would always take over).

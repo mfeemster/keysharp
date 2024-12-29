@@ -506,22 +506,30 @@ namespace Keysharp.Scripting
 					else if (IsIdentifier(part, true) && (!IsKeyword(part) || string.Compare(part, "default", true) == 0))//Hack to allow for default because a subclass derived from Map might need to access its Default property.
 					{
 						var s = i < parts.Count - 1 && parts[i + 1] is string s1 ? s1 : "";
-						var varexpr = Reflections.flatPublicStaticProperties.TryGetValue(part, out var pi)
-									  ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
-									  //Check for function or property calls on an object, which only count as read operations.
-									  : VarIdOrConstant(codeLine, part,
-														hardCreateOverride &&//Extreme hack: see below where this is set for an explanation.
-														(i == 0 || (s.EndsWith('=') && parts[i - 1] is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign)) && //This accounts for either the left side of a single assignment like x := 0 or a multi-assignment like x := y := 0, where we create x and y.
-														(!s.StartsWith("[") || parts.Count == 1) &&
-														(create || s.EndsWith('='))//Covers :=, +=, -= etc...
-														, false);
+                        var mph = Reflections.FindMethod(part, -1);
+                        bool defVar = (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), Scope, part.ToLowerInvariant()) && s == "" && part.ToLowerInvariant() != "value"
+							&& (Reflections.flatPublicStaticProperties.Any(n => n.Key.Equals(part, StringComparison.InvariantCultureIgnoreCase))));
+                        var varexpr = Reflections.flatPublicStaticProperties.TryGetValue(part, out var pi)
+                                      ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
+                                      : mph != null
+                                      ? new CodeVariableReferenceExpression(mph.mi.Name.ToLower())
+                                      //Check for function or property calls on an object, which only count as read operations.
+                                      : VarIdOrConstant(codeLine, part,
+                                                        hardCreateOverride &&//Extreme hack: see below where this is set for an explanation.
+                                                        (defVar || ((i == 0 || (s.EndsWith('=') && parts[i - 1] is CodeBinaryOperatorType cbot && cbot == CodeBinaryOperatorType.Assign)) && //This accounts for either the left side of a single assignment like x := 0 or a multi-assignment like x := y := 0, where we create x and y.
+                                                        (!s.StartsWith("[") || parts.Count == 1) &&
+                                                        (create || s.EndsWith('='))))//Covers :=, +=, -= etc...
+                                                        , false);
 
-						if (varexpr is CodeVariableReferenceExpression cvre && (string.Compare(cvre.VariableName, "this", true) == 0 || string.Compare(cvre.VariableName, "@this", true) == 0) && InClassDefinition())
-						{
-							varexpr = new CodeThisReferenceExpression();
-						}
+                        if (varexpr is CodeVariableReferenceExpression cvre)
+                        {
+                            if ((string.Compare(cvre.VariableName, "this", true) == 0 || string.Compare(cvre.VariableName, "@this", true) == 0) && InClassDefinition())
+                                varexpr = new CodeThisReferenceExpression();
+                            else if (defVar)
+                                allVars[typeStack.Peek()].GetOrAdd(Scope)[part.ToLowerInvariant()] = emptyStringPrimitive;
+                        }
 
-						parts[i] = varexpr;
+                        parts[i] = varexpr;
 					}
 					else if (part.Length == 1 && part[0] == BlockOpen)
 					{

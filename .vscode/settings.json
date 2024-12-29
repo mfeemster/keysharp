@@ -1,0 +1,4 @@
+{
+    "dotnet.testWindow.disableBuildOnRun": true,
+    "dotnet.unitTests.runSettingsPath": ""
+}

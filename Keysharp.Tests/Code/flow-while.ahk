@@ -1,6 +1,6 @@
 ; #Include %A_ScriptDir%/header.ahk
 
-x = 0
+x := 0
 
 while true
 {
@@ -11,12 +11,12 @@ while true
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 
-x = 0
+x := 0
 
 while true {
 	x++
@@ -26,11 +26,11 @@ while true {
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while (true)
 {
@@ -41,11 +41,11 @@ while (true)
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while (true) {
 	x++
@@ -55,11 +55,11 @@ while (true) {
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while 1
 {
@@ -70,11 +70,11 @@ while 1
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while 1 {
 	x++
@@ -84,14 +84,14 @@ while 1 {
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
-str :=
+x := 0
+str := unset
 
-while (str =) {
+while (str = unset) {
 	x++
 	
 	if (x > 4)
@@ -99,11 +99,11 @@ while (str =) {
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-x = 0
+x := 0
 
 while (x < 5)
 {
@@ -111,22 +111,22 @@ while (x < 5)
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while (x < 5) {
 	x++
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while x < 5
 {
@@ -134,20 +134,20 @@ while x < 5
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x = 0
+x := 0
 
 while x < 5 {
 	x++
 }
 
 If x = 5
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 y := 5
@@ -162,14 +162,14 @@ while z%y% ; this is a comment
 }
 
 If x = 25
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If A_Index = 0
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 y := 5
@@ -183,14 +183,14 @@ while z%y% { ; another comment
 }
 
 If x = 25
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If A_Index = 0
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 y := 5
@@ -204,14 +204,14 @@ while (z%y%) {
 }
 
 If x = 25
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If A_Index = 0
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := 1
 b := false
@@ -225,9 +225,9 @@ else
 }
 
 If (b == false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := 1
 b := false
@@ -240,7 +240,7 @@ else
 }
 
 If (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	

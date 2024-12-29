@@ -154,12 +154,5 @@ namespace Keysharp.Tests
 			Assert.IsTrue(val.Ai() > 0);
 			Assert.IsTrue(TestScript("env-sysget", true));
 		}
-
-		[SetUp]
-		public void Setup()
-		{
-			Reflections.Clear();
-			Reflections.Initialize();
-		}
 	}
 }

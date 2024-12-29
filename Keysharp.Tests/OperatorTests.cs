@@ -87,12 +87,5 @@ namespace Keysharp.Tests
 
 		[Test, Category("Operator"), NonParallelizable]
 		public void Is() => Assert.IsTrue(TestScript("op-is", true));
-
-		[SetUp]
-		public void Setup()
-		{
-			Reflections.Clear();
-			Reflections.Initialize();
-		}
 	}
 }

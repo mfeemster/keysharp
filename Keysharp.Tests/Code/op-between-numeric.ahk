@@ -1,68 +1,68 @@
 
 
-x = 1
+x := 1
 
-If x between 0 and 2
-	FileAppend, "pass", "*"
+If x > 0 and x < 2
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-If x between 2 and 0
-	FileAppend, "fail", "*"
+If x > 2 and x < 0
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
-If x between 2 and 3
-	FileAppend, "fail", "*"
+If x > 2 and x < 3
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
-If x between 0.9 and 1.1
-	FileAppend, "pass", "*"
+If x > 0.9 and x < 1.1
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-If x between 1.1 and 0.9
-	FileAppend, "fail", "*"
+If x > 1.1 and x < 0.9
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
-If x between 0.5 and 0.8
-	FileAppend, "fail", "*"
+If x > 0.5 and x < 0.8
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
-If x between -1 and 2
-	FileAppend, "pass", "*"
+If x > -1 and x < 2
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-If x between 2 and -1
-	FileAppend, "fail", "*"
+If x > 2 and x < -1
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
-If x between -3 and -2
-	FileAppend, "fail", "*"
+If x > -3 and x < -2
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
-If x between -2 and -3
-	FileAppend, "fail", "*"
+If x > -2 and x < -3
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
-If x between -0.9 and 1.1
-	FileAppend, "pass", "*"
+If x > -0.9 and x < 1.1
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-If x between 1.1 and -0.9
-	FileAppend, "fail", "*"
+If x > 1.1 and x < -0.9
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
-If x between -0.5 and -0.8
-	FileAppend, "fail", "*"
+If x > -0.5 and x < -0.8
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"

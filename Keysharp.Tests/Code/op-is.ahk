@@ -1,276 +1,276 @@
 x := 0
 
 if (x is integer)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is Integer)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is float)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is float)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is number)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is number)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is string)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is string)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is object)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 123
 
 if (x is integer)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is Integer)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is float)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is float)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is number)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is number)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is string)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is string)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is object)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := -123
 
 if (x is integer)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is Integer)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is float)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is float)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is number)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is number)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is string)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is string)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is object)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0.0
 
 if (x is float)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is float)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is integer)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (not x is Integer)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is number)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is number)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is string)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is string)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is object)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 123.0
 
 if (x is float)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is float)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is integer)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (not x is Integer)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is number)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is number)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is string)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is string)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is object)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := -123.0
 
 if (x is float)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is float)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is integer)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (not x is Integer)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x is number)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (not x is number)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x is string)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (not x is string)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

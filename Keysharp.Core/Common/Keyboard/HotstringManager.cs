@@ -180,7 +180,7 @@
 
 		internal static void ClearBuf() => hsBuf.Clear();
 
-		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
+		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, ICallable _hotCriterion)
 		{
 			if (shsDkt.TryGetValue(_hotstring[0], out var possibleHotstrings))
 				foreach (var hs in possibleHotstrings)
@@ -240,6 +240,6 @@
 	{
 		public bool Equals(char x, char y) => char.ToLower(x) == char.ToLower(y);
 
-		public int GetHashCode([DisallowNull] char obj) => char.ToLower(obj).GetHashCode();
+		public int GetHashCode([System.Diagnostics.CodeAnalysis.DisallowNull] char obj) => char.ToLower(obj).GetHashCode();
 	}
 }

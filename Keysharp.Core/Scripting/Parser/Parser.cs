@@ -1,11 +1,22 @@
 using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Antlr4.Runtime;
+using Keysharp.Core.Scripting.Parser.Antlr;
+using static System.Net.Mime.MediaTypeNames;
+using System;
+using System.Reflection.Metadata;
+using System.Security.AccessControl;
+using System.Diagnostics.Metrics;
+using Antlr4.Runtime.Atn;
 
 namespace Keysharp.Scripting
 {
-	public partial class Parser : ICodeParser
+	public partial class Parser
 	{
-		public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+        public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 		public static readonly CultureInfo inv = CultureInfo.InvariantCulture;
 
 		internal const string scopeChar = "_";
@@ -169,7 +180,7 @@ namespace Keysharp.Scripting
 		internal bool Persistent;
 		private const string args = "args";
 		private const string initParams = "initparams";
-		private const string mainClassName = "program";
+		public const string mainClassName = "program";
 		private const string mainScope = "";
 		private static readonly char[] directiveDelims = Spaces.Concat([Multicast]);
 
@@ -218,7 +229,7 @@ namespace Keysharp.Scripting
 
 		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
-		private readonly char[] ops = [Equal, Not, Greater, Less];
+		private readonly char[] ops = [Equal, Keywords.Not, Greater, Less];
 		private readonly CodeStatementCollection prepend = [];
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
 		private readonly tsmd setPropertyValueCalls = [];
@@ -416,14 +427,22 @@ namespace Keysharp.Scripting
 						{
 							var name = cvre.VariableName;
 
-							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
-									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
-							{
-								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
-								cmie.Method.TypeArguments.Add(name);
-								cmie.Parameters.RemoveAt(0);
-							}
-						}
+                            if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+                            {
+                                if (TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+                                {
+                                    cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+                                    cmie.Method.TypeArguments.Add(name);
+                                    cmie.Parameters.RemoveAt(0);
+                                }
+                                else if (GetUserDefinedTypename(name) == null)
+                                {
+                                    var mph = Reflections.FindMethod(name, -1);
+                                    if (mph != null)
+                                        AddGlobalFuncObj(mph.mi.Name.ToLower());
+                                }
+                            }
+                        }
 					}
 				}
 			}
@@ -707,8 +726,9 @@ namespace Keysharp.Scripting
 				{
 					foreach (var cmie in cmietypefunc.Value)
 					{
-						//Handle changing myfuncobj() to myfuncobj.Call().
-						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
+                        AddGlobalFuncObj(cmie.Method.MethodName);
+                        //Handle changing myfuncobj() to myfuncobj.Call().
+                        if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cmie.Method.MethodName)))
 						{
 							var refIndexes = ParseArguments(cmie.Parameters);
 							var callFuncName = "";
@@ -726,7 +746,7 @@ namespace Keysharp.Scripting
 							}
 
 							HandleAllVariadicParams(cmie);
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), callFuncName);
+							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((ICallable){cmie.Method.MethodName})"), callFuncName);
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
 						{
@@ -746,8 +766,19 @@ namespace Keysharp.Scripting
 
 								if (i < methParams.Count)
 								{
-									if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
-									{
+                                    if (cp is CodeVariableReferenceExpression cvre1)
+                                    {
+										if (GetUserDefinedTypename(cvre1.VariableName) != null)
+											cmie.Parameters[i] = new CodeSnippetExpression($"{cvre1.VariableName}.Call");
+										else if (MethodExistsInTypeOrBase(cmietype.Key.Name, cvre1.VariableName) is CodeMemberMethod cmm1)
+										{
+                                            cmie.Parameters[i] = new CodeVariableReferenceExpression(cmm1.Name.ToLower());
+                                        }
+										else if (Reflections.FindBuiltInMethod(cvre1.VariableName, -1) is MethodPropertyHolder mph1 && mph1.mi != null)
+											cmie.Parameters[i] = new CodeVariableReferenceExpression(mph1.mi.Name.ToLower());
+                                    }
+                                    else if (cp is CodePrimitiveExpression cpe && cpe.Value == null)
+                                    {
 										var refVarName = "";
 										var mp = methParams[i];
 
@@ -1047,11 +1078,72 @@ namespace Keysharp.Scripting
 				ReevaluateSnippet(assign);
 
 			return unit;
-		}
+        }
 
-		public CodeCompileUnit Parse(TextReader codeStream) => Parse(codeStream, string.Empty);
+        public SyntaxTree GenerateSyntaxTree(List<CodeLine> codeLines)
+		{
+            Helper.codeLines = codeLines; // Necessary for correct error reporting
+			Helper.fileName = fileName;
 
-		public CodeCompileUnit Parse(TextReader codeStream, string nm)
+            var code = "";
+			foreach (CodeLine line in codeLines)
+			{
+				code += line.Code + "\n";
+			}
+			code = code.Remove(code.Length - 1);
+
+            AntlrInputStream inputStream = new AntlrInputStream(code);
+            MainLexer mainLexer = new MainLexer(inputStream);
+            CommonTokenStream commonTokenStream = new CommonTokenStream(mainLexer);
+			
+			/*
+            foreach (var token in mainLexer.GetAllTokens())
+            {
+                Debug.WriteLine($"Token: {mainLexer.Vocabulary.GetSymbolicName(token.Type)}, Text: '{token.Text}'");
+            }
+			*/
+			
+
+            MainParser mainParser = new MainParser(commonTokenStream);
+			/*
+             mainParser.EnableProfiling();
+
+            mainParser.Trace = true;
+            var listener = new TraceListener();
+            mainParser.AddParseListener(listener);
+			*/
+
+
+			//mainParser.ErrorHandler = new BailErrorStrategy();
+			//mainParser.AddErrorListener(new DiagnosticErrorListener());
+			//mainParser.Interpreter.PredictionMode = PredictionMode.LL_EXACT_AMBIG_DETECTION;
+
+			//var profilingATNSimulator = new ProfilingATNSimulator(mainParser);
+
+            MainParser.ProgramContext programContext = mainParser.program();
+
+            //ProfileParser(mainParser);
+
+            MainVisitor visitor = new MainVisitor();
+
+            //var profilingATNSimulator = new ProfilingATNSimulator(mainParser);
+
+            SyntaxNode compilationUnit = visitor.Visit(programContext);
+
+			//var decisionInfo = profilingATNSimulator.getDecisionInfo();
+            //Debug.WriteLine(decisionInfo);
+
+            var parseOptions = new CSharpParseOptions(
+				languageVersion: LanguageVersion.LatestMajor,
+				documentationMode: DocumentationMode.None,
+				kind: SourceCodeKind.Regular);
+
+            return SyntaxFactory.SyntaxTree(compilationUnit, parseOptions);
+        }
+
+        public T Parse<T>(TextReader codeStream) => Parse<T>(codeStream, string.Empty);
+
+		public T Parse<T>(TextReader codeStream, string nm)
 		{
 			name = nm;
 			var reader = new PreReader(this);
@@ -1059,7 +1151,50 @@ namespace Keysharp.Scripting
 #if DEBUG
 			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
-			Statements();
+
+			if (typeof(T) == typeof(SyntaxTree))
+			{
+                var st = GenerateSyntaxTree(codeLines);
+                return (T)(object)st;
+
+                /*
+			var generatedCode = st.ToString();
+
+            var asm = Assembly.GetExecutingAssembly();
+            CompilerHelper ch = new();
+
+            var (results, ms, compileexc) = ch.CompileFromTree(st, "Test", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+            //var (results, ms, compileexc) = ch.Compile(generatedCode, "Test", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+
+            var arr = ms.ToArray();
+            CompilerHelper.compiledBytes = arr;
+            CompilerHelper.compiledasm = Assembly.Load(arr);
+
+            var scriptProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "Keysharp.exe",
+                    Arguments = "--assembly *",
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            _ = scriptProcess.Start();
+
+            using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream))
+            {
+                writer.Write(CompilerHelper.compiledBytes.Length);
+                writer.Write(CompilerHelper.compiledBytes);
+                writer.Flush();
+            }
+				*/
+            }
+
+
+            Statements();
 
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
@@ -1100,7 +1235,16 @@ namespace Keysharp.Scripting
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
-							name = Ch.CreateEscapedIdentifier(name);
+                            if (methods[typekv.Key].Any(n => n.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase)) || (Reflections.FindBuiltInMethod(name, -1) is MethodPropertyHolder mph && mph != null))
+                            {
+								AddGlobalFuncObj(name);
+                                continue;
+                            }
+
+                            if (GetUserDefinedTypename(name) != null)
+                                continue;
+
+                            name = Ch.CreateEscapedIdentifier(name);
 							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
@@ -1176,10 +1320,47 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			return GenerateCompileUnit();
+			return (T)(object)GenerateCompileUnit();
 		}
 
-		internal bool InClassDefinition() => typeStack.Count > 0 && typeStack.Peek().Name != mainClassName;
+        static void ProfileParser(MainParser parser)
+        {
+            var profilingATN = parser.GetProfiler();
+            var parseInfo = new ParseInfo(profilingATN);
+
+            Console.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
+                "Rule", "Time", "Invocations", "Lookahead", "Lookahead(Max)", "Ambiguities", "Errors"));
+
+            var ruleNames = parser.RuleNames;
+            Debug.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
+				"Rule",
+				"TimeInPrediction",
+				"Invocations",
+				"SLL_TotalLook",
+				"SLL_MaxLook",
+				"Abiguities count",
+				"Errors"));
+
+            foreach (var decisionInfo in parseInfo.getDecisionInfo())
+            {
+                var decisionState = parser.Atn.GetDecisionState(decisionInfo.decision);
+                var ruleName = ruleNames[decisionState.ruleIndex];
+
+                if (decisionInfo.timeInPrediction > 0)
+                {
+                    Debug.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
+                        ruleName,
+                        decisionInfo.timeInPrediction,
+                        decisionInfo.invocations,
+                        decisionInfo.SLL_TotalLook,
+                        decisionInfo.SLL_MaxLook,
+                        decisionInfo.ambiguities.Count,
+                        decisionInfo.errors));
+                }
+            }
+        }
+
+        internal bool InClassDefinition() => typeStack.Count > 0 && typeStack.Peek().Name != mainClassName;
 
 		private CodeTypeDeclaration AddType(string typename)
 		{
@@ -1588,5 +1769,30 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
+
+		private bool AddGlobalFuncObj(string name)
+		{
+			var lowername = name.ToLower();
+            bool found = false;
+            foreach (CodeTypeMember ctm in targetClass.Members)
+            {
+				if (!(ctm is CodeSnippetTypeMember cstm))
+					continue;
+                if (cstm.Name == lowername)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                _ = targetClass.Members.Add(new CodeSnippetTypeMember()
+                {
+                    Name = lowername,
+                    Text = $"\t\tpublic static object {name} = FuncObj(\"{lowername}\");"
+                });
+            }
+			return (!found);
+        }
 	}
 }

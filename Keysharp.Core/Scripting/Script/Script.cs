@@ -271,7 +271,7 @@
 				if (timer.Value.Enabled)
 				{
 					enabledTimers++;
-					_ = sb.Append($"{timer.Key.Name} ");
+					_ = sb.Append($"{timer.Key.ToString()} ");
 				}
 			}
 

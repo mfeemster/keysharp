@@ -1,509 +1,509 @@
 ; #Include %A_ScriptDir%/header.ahk
 
 if (A_IsSuspended == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-Suspend, 1
+Suspend 1
 
 if (A_IsSuspended == 1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 		
-Suspend, false
+Suspend false
 
 if (A_IsCritical == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 		
-Critical, true
+Critical true
 x := A_IsCritical
 
 if (x > 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-Critical, 0
+Critical 0
 x := A_IsCritical
 
 if (x == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_TitleMatchMode == 2) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, 1
+SetTitleMatchMode 1
 
 if (A_TitleMatchMode == 1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, 2
+SetTitleMatchMode 2
 
 if (A_TitleMatchMode == 2) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-SetTitleMatchMode, 3
+SetTitleMatchMode 3
 
 if (A_TitleMatchMode == 3) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-SetTitleMatchMode, "RegEx"
+SetTitleMatchMode "RegEx"
 
 if (A_TitleMatchMode == "regex") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, "dummy"
+SetTitleMatchMode "dummy"
 
 if (A_TitleMatchMode == "regex") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_TitleMatchModeSpeed == "fast") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, "fast"
+SetTitleMatchMode "fast"
 
 if (A_TitleMatchModeSpeed == "fast") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, "slow"
+SetTitleMatchMode "slow"
 
 if (A_TitleMatchModeSpeed == "slow") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, "dummy"
+SetTitleMatchMode "dummy"
 
 if (A_TitleMatchModeSpeed == "slow") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_TitleMatchMode == "regex") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetTitleMatchMode, 2 ; Reset it back for the function version of this test.
-SetTitleMatchMode, "fast"
+SetTitleMatchMode 2 ; Reset it back for the function version of this test.
+SetTitleMatchMode "fast"
 	
 if (!A_DetectHiddenWindows) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenWindows, 0
+DetectHiddenWindows 0
 
 if (!A_DetectHiddenWindows)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-DetectHiddenWindows, 1
+DetectHiddenWindows 1
 
 if (A_DetectHiddenWindows) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenWindows, "Off"
+DetectHiddenWindows "Off"
 
 if (!A_DetectHiddenWindows)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenWindows, 1
+DetectHiddenWindows 1
 
 if (A_DetectHiddenWindows) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 				
-DetectHiddenWindows, "dummy"
+DetectHiddenWindows "dummy"
 
 if (A_DetectHiddenWindows) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenWindows, 0 ; Reset it back for the function version of this test.
+DetectHiddenWindows 0 ; Reset it back for the function version of this test.
 
 if (!A_DetectHiddenWindows) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenText, 0
+DetectHiddenText 0
 
 if (!A_DetectHiddenText) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-DetectHiddenText, 1
+DetectHiddenText 1
 
 if (A_DetectHiddenText) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenText, false
+DetectHiddenText false
 
 if (!A_DetectHiddenText) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenText, true
+DetectHiddenText true
 
 if (A_DetectHiddenText) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-DetectHiddenText, 0 ; Reset it back for the function version of this test.
+DetectHiddenText 0 ; Reset it back for the function version of this test.
 
-FileEncoding, "utf-8"
+FileEncoding "utf-8"
 
 if (A_FileEncoding == "utf-8") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-FileEncoding, "utf-8-raw"
+FileEncoding "utf-8-raw"
 
 if (A_FileEncoding == "utf-8-raw") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-FileEncoding, "unicode"
+FileEncoding "unicode"
 
 if (A_FileEncoding == "utf-16") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-FileEncoding, "utf-16"
+FileEncoding "utf-16"
 
 if (A_FileEncoding == "utf-16") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-FileEncoding, "utf-16-raw"
+FileEncoding "utf-16-raw"
 
 if (A_FileEncoding == "utf-16-raw") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-FileEncoding, "ascii"
+FileEncoding "ascii"
 
 if (A_FileEncoding == "us-ascii") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-FileEncoding, "dummy"
+FileEncoding "dummy"
 
 if (A_FileEncoding == "utf-16") 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_SendLevel == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SendLevel, 0
+SendLevel 0
 
 if (A_SendLevel == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SendLevel, -1
+SendLevel -1
 
 if (A_SendLevel == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-SendLevel, 1
+SendLevel 1
 
 if (A_SendLevel == 1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SendLevel, 100
+SendLevel 100
 
 if (A_SendLevel == 100) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SendLevel, 101
+SendLevel 101
 
 if (A_SendLevel == 100) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SendLevel, 0 ; Reset it back for the function version of this test.
+SendLevel 0 ; Reset it back for the function version of this test.
 
 if (A_StoreCapsLockMode == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetStoreCapsLockMode, 0
+SetStoreCapsLockMode 0
 
 if (A_StoreCapsLockMode == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetStoreCapsLockMode, 1
+SetStoreCapsLockMode 1
 
 if (A_StoreCapsLockMode == 1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetStoreCapsLockMode, false
+SetStoreCapsLockMode false
 
 if (A_StoreCapsLockMode == 0) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetStoreCapsLockMode, 1
+SetStoreCapsLockMode 1
 
 if (A_StoreCapsLockMode == 1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetStoreCapsLockMode, "dummy"
+SetStoreCapsLockMode "dummy"
 
 if (A_StoreCapsLockMode == 1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetStoreCapsLockMode, 1 ; Reset it back for the function version of this test.
+SetStoreCapsLockMode 1 ; Reset it back for the function version of this test.
 
 if (A_KeyDelay == 10) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_KeyDelayPlay == -1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetKeyDelay, 10
+SetKeyDelay 10
 
 if (A_KeyDelay == 10) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetKeyDelay, 20, 30
+SetKeyDelay 20, 30
 
 if (A_KeyDelay == 20) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetKeyDelay, , 40
+SetKeyDelay , 40
 
 if (A_KeyDelay == 20) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetKeyDelay, 50, 60, "Play"
+SetKeyDelay 50, 60, "Play"
 
 if (A_KeyDelay == 20) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_KeyDelayPlay == 50) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetKeyDelay, 10, -1 ; Reset it back for the function version of this test.
-SetKeyDelay, -1, -1, "Play"
+SetKeyDelay 10, -1 ; Reset it back for the function version of this test.
+SetKeyDelay -1, -1, "Play"
 
 if (A_WinDelay == 100) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetWinDelay, 200
+SetWinDelay 200
 	
 if (A_WinDelay == 200) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetWinDelay, 100 ; Reset it back for the function version of this test.
+SetWinDelay 100 ; Reset it back for the function version of this test.
 
 if (A_ControlDelay == 20) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetControlDelay, 200
+SetControlDelay 200
 
 if (A_ControlDelay == 200) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetControlDelay, 20 ; Reset it back for the function version of this test.
+SetControlDelay 20 ; Reset it back for the function version of this test.
 
 if (A_MouseDelay == 10) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetMouseDelay, 200
+SetMouseDelay 200
 
 if (A_MouseDelay == 200) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_MouseDelayPlay == -1) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 								
-SetMouseDelay, 300, "Play"
+SetMouseDelay 300, "Play"
 
 if (A_MouseDelay == 200) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_MouseDelayPlay == 300) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 		
-SetMouseDelay, 10 ; Reset it back for the function version of this test.
-SetMouseDelay, -1, "Play"
+SetMouseDelay 10 ; Reset it back for the function version of this test.
+SetMouseDelay -1, "Play"
 
 if (A_DefaultMouseSpeed == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetDefaultMouseSpeed, 500
+SetDefaultMouseSpeed 500
 
 if (A_DefaultMouseSpeed == 500)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 		
-SetDefaultMouseSpeed, 2 ; Reset it back for the function version of this test.
+SetDefaultMouseSpeed 2 ; Reset it back for the function version of this test.
 
 if (A_CoordModeToolTip == "Client")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_CoordModePixel == "Client")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (A_CoordModeMouse == "Client")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (A_CoordModeCaret == "Client")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (A_CoordModeMenu == "Client")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "ToolTip", "Screen"
+CoordMode "ToolTip", "Screen"
 
 if (A_CoordModeToolTip == "Screen")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "Pixel", "Client"
+CoordMode "Pixel", "Client"
 
 if (A_CoordModePixel == "Client")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "Mouse", "Window"
+CoordMode "Mouse", "Window"
 
 if (A_CoordModeMouse == "Window")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "Caret", "Screen"
+CoordMode "Caret", "Screen"
 
 if (A_CoordModeCaret == "Screen")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "Menu", "Screen"
+CoordMode "Menu", "Screen"
 
 if (A_CoordModeMenu == "Screen")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
 try
 {
-	CoordMode, "Menu", "Dummy"
+	CoordMode "Menu", "Dummy"
 }
 catch
 {
@@ -511,91 +511,91 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_CoordModeMenu == "Screen")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "Menu", "Window"
+CoordMode "Menu", "Window"
 
 if (A_CoordModeMenu == "Window")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-CoordMode, "ToolTip", "Client" ; Reset it back for the function version of this test.
-CoordMode, "Pixel", "Client"
-CoordMode, "Mouse", "Client"
-CoordMode, "Caret", "Client"
-CoordMode, "Menu", "Client"
+CoordMode "ToolTip", "Client" ; Reset it back for the function version of this test.
+CoordMode "Pixel", "Client"
+CoordMode "Mouse", "Client"
+CoordMode "Caret", "Client"
+CoordMode "Menu", "Client"
 
 #if WINDOWS
 if (A_RegView == 64)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-SetRegView, 32
+SetRegView 32
 
 if (A_RegView == 32)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 A_RegView := "default"
 
 if (A_RegView == 64)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetRegView, 64
+SetRegView 64
 
 if (A_RegView == 64)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-SetRegView, 100
+SetRegView 100
 
 if (A_RegView == 64)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 #endif
 
 if (A_TrayMenu.Handle > 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_IconHidden == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (EndsWith(A_IconTip, "props-script-settings.ahk"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_IconFile == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (A_IconNumber == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-Suspend, true
+Suspend true
 
 if (A_IsSuspended == true) 
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

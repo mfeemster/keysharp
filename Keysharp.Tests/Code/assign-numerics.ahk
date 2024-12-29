@@ -1,25 +1,25 @@
 
 
-x = 1
+x := 1
 
 If (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (x != 1)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
-xneg = -1
+xneg := -1
 
 If (xneg == -1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (xneg != -1)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"

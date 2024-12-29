@@ -8,9 +8,9 @@ catch
 	b := true
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -22,9 +22,9 @@ catch
 	b := true
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -38,9 +38,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -51,9 +51,9 @@ try
 	b := true
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -67,9 +67,9 @@ catch Error
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -82,9 +82,9 @@ try
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -95,9 +95,9 @@ try
 	b := true
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 str := ""
@@ -113,14 +113,14 @@ catch Error as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (str == "tester")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -137,9 +137,9 @@ finally
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 str := ""
@@ -157,14 +157,14 @@ else
 }
 
 if (b == false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (str == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -178,9 +178,9 @@ catch IndexError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -194,9 +194,9 @@ catch IndexError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -210,9 +210,9 @@ catch KeyError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -226,9 +226,9 @@ catch MemberError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -242,9 +242,9 @@ catch MemoryError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -258,9 +258,9 @@ catch MethodError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -274,9 +274,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -290,9 +290,9 @@ catch OSError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -306,9 +306,9 @@ catch PropertyError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -322,9 +322,9 @@ catch TargetError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -338,9 +338,9 @@ catch TimeoutError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -353,9 +353,9 @@ catch TypeError as errex
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -367,9 +367,9 @@ catch ValueError as errex {
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -392,7 +392,7 @@ catch(propertyerror)
 {
 	b := false
 }
-catch(KeyError())
+catch(KeyError)
 {
 	b := false
 }
@@ -412,25 +412,25 @@ catch(targeterror)
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
 try b := true
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 try bb := true
 
 if (bb == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 try throw Error("test")
@@ -440,9 +440,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := true
 xx := 0
@@ -463,9 +463,9 @@ else
 	xx := 0
 	
 if (xx == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 xx := 0
@@ -486,9 +486,9 @@ else
 	xx := 123
 	
 if (xx == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 xx := 0
 
@@ -501,9 +501,9 @@ try loop
 }
 
 if (xx == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 xx := 0
 
@@ -511,25 +511,25 @@ try while (xx < 5)
 	xx++
 
 if (xx == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 xx := 0
 
 try xx++
 
 if (xx == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 try xx := StrLen("hello")
 
 if (xx == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 xx := 0
 
@@ -541,6 +541,6 @@ loop
 until xx > 2
 
 if (xx == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

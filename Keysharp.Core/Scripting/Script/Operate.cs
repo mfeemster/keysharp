@@ -420,6 +420,8 @@ namespace Keysharp.Scripting
 				}
 
 				case Operator.Is:
+					if (left == null || right == null)
+						return left == right;
 					return IfLegacy(left, "is", ForceString(right));
 
 				default:

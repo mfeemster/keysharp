@@ -35,8 +35,8 @@ namespace Keysharp.Scripting
 			if (buf.Length == 0)
 				throw new ParseException(ExUnexpected, codeLine);
 
-			name = buf.ToString();
-			buf.Length = 0;
+            name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(buf.ToString());
+            buf.Length = 0;
 
 			if (!InClassDefinition() && IsLocalMethodReference(name))
 				throw new ParseException("Duplicate function: \"" + name + "\".", codeLine);

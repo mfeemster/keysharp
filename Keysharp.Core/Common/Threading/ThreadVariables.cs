@@ -17,7 +17,7 @@
 		internal object eventInfo;
 		internal Encoding fileEncoding = Encoding.Default;
 		internal string formatNumeric;
-		internal IFuncObj hotCriterion;
+		internal ICallable hotCriterion;
 		internal IntPtr hwndLastUsed = IntPtr.Zero;
 		internal bool isCritical = false;
 		internal long keyDelay = 10L;

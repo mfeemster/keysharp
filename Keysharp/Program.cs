@@ -13,6 +13,7 @@ using Microsoft.Win32;
 using Keysharp.Core;
 using Keysharp.Scripting;
 using System.Globalization;
+using System.Xml.Linq;
 
 namespace Keysharp.Main
 {
@@ -179,12 +180,14 @@ namespace Keysharp.Main
 
 				if (!File.Exists(script))
 					return Message($"Could not find the script file {script}.", true);
-
+                /*
 #if DEBUG
 				Script.OutputDebug($"Creating DOM from {script}");
 #endif
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
-				string namenoext, path, scriptdir;
+				*/
+                var (st, errs) = ch.CreateSyntaxTreeFromFile(script);
+                string namenoext, path, scriptdir;
 
 				if (!fromstdin)
 				{
@@ -199,9 +202,10 @@ namespace Keysharp.Main
 					path = $".{Path.DirectorySeparatorChar}{namenoext}";
 				}
 
-				if (domerrs.HasErrors)
-					return HandleCompilerErrors(domerrs, script, path, "Compiling script to DOM");
+				if (errs.HasErrors)
+					return HandleCompilerErrors(errs, script, path, "Compiling script to DOM");
 
+				/*
 #if DEBUG
 				Script.OutputDebug("Creating code from DOM.");
 #endif
@@ -211,9 +215,10 @@ namespace Keysharp.Main
 					return Message($"Creating C# code from DOM: {e.Message}", true);
 
 				code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
-
-				//If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
-				if (codeout)
+				*/
+				var code = st[0].ToString();
+                //If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
+                if (codeout)
 				{
 					writeCodeTask = Task.Run(() =>
 					{
@@ -238,9 +243,10 @@ namespace Keysharp.Main
 #if DEBUG
 				Script.OutputDebug("Compiling code.");
 #endif
-				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
+				//var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
+                var (results, ms, compileexc) = ch.CompileFromTree(st[0], namenoext, exeDir);
 
-				if (results == null)
+                if (results == null)
 				{
 					return Message($"Compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}", true);
 				}

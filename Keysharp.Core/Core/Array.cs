@@ -235,7 +235,7 @@
 		{
 			var index = startIndex.Ai(1);
 
-			if (callback is IFuncObj ifo)
+			if (callback is ICallable ifo)
 			{
 				List<object> list;
 

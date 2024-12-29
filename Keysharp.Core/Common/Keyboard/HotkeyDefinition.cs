@@ -72,7 +72,7 @@ namespace Keysharp.Core.Common.Keyboard
 			Enabled = true;
 		}
 
-		internal HotkeyDefinition(uint _id, IFuncObj callback, uint _hookAction, string _name, uint _noSuppress)
+		internal HotkeyDefinition(uint _id, ICallable callback, uint _hookAction, string _name, uint _noSuppress)
 		{
 			hookAction = _hookAction;
 			var ht = Script.HookThread;
@@ -285,7 +285,7 @@ namespace Keysharp.Core.Common.Keyboard
 			_ = Unregister();
 		}
 
-		public static void AddHotkey(IFuncObj _callback, uint _hookAction, string _name)
+		public static void AddHotkey(ICallable _callback, uint _hookAction, string _name)
 		{
 			var b = 0u;
 			_ = AddHotkey(_callback, _hookAction, _name, ref b);
@@ -628,7 +628,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Returns the address of the new hotkey on success, or NULL otherwise.
 		/// The caller is responsible for calling ManifestAllHotkeysHotstringsHooks(), if appropriate.
 		/// </summary>
-		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref uint _noSuppress)
+		internal static HotkeyDefinition AddHotkey(ICallable _callback, uint _hookAction, string _name, ref uint _noSuppress)
 		{
 			HotkeyDefinition hk;
 			var hookIsMandatory = false;
@@ -891,15 +891,15 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="hookAction"></param>
 		/// <returns></returns>
 		/// <exception cref="ValueError"></exception>
-		internal static ResultType Dynamic(string hotkeyName, string options, IFuncObj callback, uint hookAction)
+		internal static ResultType Dynamic(string hotkeyName, string options, ICallable callback, uint hookAction)
 		{
 			// Caller has ensured that aCallback and _hookAction can't both be non-zero. Furthermore,
 			// both can be zero/NULL only when the caller is updating an existing hotkey to have new options
 			// (i.e. it's retaining its current callback).
 			if (callback != null)
 			{
-				if (!callback.IsValid)
-					return ResultType.Fail;
+                if (callback is IFuncObj fc && !fc.IsValid)
+                    return ResultType.Fail;
 			}
 
 			uint noSuppress = 0;
@@ -1300,7 +1300,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="criterion"></param>
 		/// <param name="hotkeyName"></param>
 		/// <returns></returns>
-		internal static long HotCriterionAllowsFiring(IFuncObj criterion, string hotkeyName)
+		internal static long HotCriterionAllowsFiring(ICallable criterion, string hotkeyName)
 		{
 			if (criterion == null)
 				return 1L;
@@ -1893,7 +1893,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="_callback"></param>
 		/// <param name="_suffixHasTilde"></param>
 		/// <returns></returns>
-		internal HotkeyVariant AddVariant(IFuncObj _callback, uint _noSuppress)
+		internal HotkeyVariant AddVariant(ICallable _callback, uint _noSuppress)
 		{
 			var vp = new HotkeyVariant
 			{
@@ -2559,17 +2559,17 @@ namespace Keysharp.Core.Common.Keyboard
 
 	internal class HotkeyVariant
 	{
-		internal IFuncObj callback;
+		internal ICallable callback;
 		internal bool enabled;
 		internal int existingThreads;
-		internal IFuncObj hotCriterion;
+		internal ICallable hotCriterion;
 		internal int index;
 		internal uint inputLevel;
 		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
 		internal uint noSuppress;
-		internal IFuncObj originalCallback;   // This is the callback set at load time.
+		internal ICallable originalCallback;   // This is the callback set at load time.
 		internal int priority;
 		internal bool runAgainAfterFinished;
 		internal DateTime runAgainTime;

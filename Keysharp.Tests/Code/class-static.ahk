@@ -1,6 +1,6 @@
 class myclass
 {
-	static a :=
+	static a := unset
 	static b := ""
 	static c := "asdf"
 	static x := 123
@@ -10,69 +10,69 @@ class myclass
 classobj := myclass.Call()
 
 If (myclass.a == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.b == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.c == "asdf")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.x == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.y == myclass.x)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 myclass.x := 456
 
 If (myclass.x == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.y == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 classobj2 := myclass.Call()
 
 If (myclass.x == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 classobj3 := myclass()
 
 If (classobj3.x == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 a := 1
 
 If (myclass.a == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 myclass.a := 123
 
 If (a == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 ; test static member initialized in a complex way.
 class TypeSizeMapper {
@@ -105,23 +105,23 @@ class TypeSizeMapper {
 val := TypeSizeMapper.NumTypeSize["char"]
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper.NumTypeSize["int64"]
 
 If (val == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper.NumTypeSize["ptr"]
 
 If (val == A_PtrSize)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; do the same, but using __StaticInit()
 class TypeSizeMapper2 {
@@ -153,20 +153,20 @@ global
 val := TypeSizeMapper2.NumTypeSize["char"]
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper2.NumTypeSize["int64"]
 
 If (val == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper2.NumTypeSize["ptr"]
 
 If (val == A_PtrSize)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

@@ -43,40 +43,40 @@ testclassobj := testclass()
 val := testclassobj.a
 
 If (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testclassobj.a := 999
 
 val := testclassobj.a
 
 If (val == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclass.b
 
 If (val == 555)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclassobj[3]
 
 If (val == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testclassobj[3] := 100
 val := testclassobj[3]
 
 If (val == 100)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class PropTestOTB
 {
@@ -98,9 +98,9 @@ otb[999] := 123
 val := otb[777]
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 class PropTestThis
 {
@@ -121,6 +121,6 @@ ptt.xprop := 123
 val := ptt.xprop
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

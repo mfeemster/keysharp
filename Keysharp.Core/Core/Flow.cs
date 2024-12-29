@@ -8,14 +8,14 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Flow
 	{
-		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
+		internal static ConcurrentDictionary<string, ICallable> cachedFuncObj = new ();
 		internal static bool callingCritical;
 		internal static volatile bool hasExited;
 		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
-		internal static ConcurrentDictionary<IFuncObj, System.Windows.Forms.Timer> timers = new ();
+		internal static ConcurrentDictionary<ICallable, System.Windows.Forms.Timer> timers = new ();
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
@@ -302,27 +302,18 @@ namespace Keysharp.Core
 			var p = period.Al(long.MaxValue);
 			var pri = priority.Al();
 			var once = p < 0;
-			IFuncObj func = null;
+			ICallable func = null;
 			System.Windows.Forms.Timer timer = null;
 
 			if (once)
 				p = -p;
 
-			if (f is string s)//Make sure they don't keep adding the same function object via string.
-			{
-				if (cachedFuncObj.TryGetValue(s, out var tempfunc))
-					func = tempfunc;
-				else
-					cachedFuncObj[s] = func = Functions.FuncObj(s);
-			}
+            func = TryGetCallable(f);
 
-			if (f != null && func == null)
-			{
-				func = f is FuncObj fo ?
-					   fo : throw new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.");
-			}
+            if (func == null)
+                throw new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.");
 
-			if (func != null && timers.TryGetValue(func, out timer))
+            if (func != null && timers.TryGetValue(func, out timer))
 			{
 			}
 			else if (f == null)
@@ -692,11 +683,35 @@ namespace Keysharp.Core
 				return false;
 			}
 		}
+        public static ICallable TryGetCallable(object f)
+        {
+            ICallable func = null;
+            if (f is ICallable fc)
+            {
+                func = fc;
+            }
+            else if (f is string s) // Cache string accesses to avoid multiple reflection calls
+            {
+                if (cachedFuncObj.TryGetValue(s, out var tempfunc))
+                    func = tempfunc;
+                else
+                    cachedFuncObj[s] = func = Functions.FuncObj(s);
+            }
+            else if (f is Delegate del) // This could happen if a string is dereferenced to a built-in function name.
+            {
+                var n = del.Method.DeclaringType.FullName;
+                if (cachedFuncObj.TryGetValue(n, out var tempfunc))
+                    func = tempfunc;
+                else
+                    cachedFuncObj[n] = func = new FuncObj(del.Method);
+            }
+            return func;
+        }
 
-		/// <summary>
-		/// The various reasons for exiting the script.
-		/// </summary>
-		internal enum ExitReasons
+        /// <summary>
+        /// The various reasons for exiting the script.
+        /// </summary>
+        internal enum ExitReasons
 		{
 			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, Single
 		}

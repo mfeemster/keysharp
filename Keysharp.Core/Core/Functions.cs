@@ -32,17 +32,19 @@
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
 		public static IFuncObj FuncObj(object funcName, object obj = null, object paramCount = null) => new FuncObj(funcName.As(), obj, paramCount);
 
-		/// <summary>
-		/// Gets a method of an object.
-		/// </summary>
-		/// <param name="value">The object to find the method on. Can't be a ComObject.</param>
-		/// <param name="name">If omitted, validation is performed on value itself and value is returned if successful.<br/>
-		/// Otherwise, specify the name of the method to retrieve.
-		/// </param>
-		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
-		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
-		public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
+        public static IFuncObj FuncObj(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
+
+        /// <summary>
+        /// Gets a method of an object.
+        /// </summary>
+        /// <param name="value">The object to find the method on. Can't be a ComObject.</param>
+        /// <param name="name">If omitted, validation is performed on value itself and value is returned if successful.<br/>
+        /// Otherwise, specify the name of the method to retrieve.
+        /// </param>
+        /// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
+        /// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
+        /// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
+        public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
 		{
 			var v = value;
 			var n = name.As();
@@ -147,7 +149,11 @@
 			}
 			else if (h is IFuncObj fo)
 				del = fo;
-			else if (throwIfBad)
+            else if (h is Delegate d)
+                del = new FuncObj(d.Method);
+            else if (h is MethodInfo mi)
+                del = new FuncObj(mi);
+            else if (throwIfBad)
 				throw new TypeError($"Improper value of {h} was supplied for a function object.");
 
 			return del;

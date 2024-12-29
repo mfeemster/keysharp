@@ -1,17 +1,19 @@
 ﻿namespace Keysharp.Core.Common.Invoke
 {
-	public interface IFuncObj
-	{
-		public object Inst { get; }
+    public interface ICallable
+    {
+        public object Call(params object[] obj);
+
+        public object CallWithRefs(params object[] obj);
+    }
+    public interface IFuncObj : ICallable
+    {
+        public object Inst { get; }
 		public bool IsBuiltIn { get; }
 		public bool IsValid { get; }
 		public string Name { get; }
 
 		public IFuncObj Bind(params object[] obj);
-
-		public object Call(params object[] obj);
-
-		public object CallWithRefs(params object[] obj);
 
 		public bool IsByRef(object obj = null);
 
@@ -130,7 +132,12 @@
 		{
 		}
 
-		internal FuncObj(MethodInfo m, object o = null)
+        internal FuncObj(Delegate m, object o = null)
+		: this(m?.GetMethodInfo(), o)
+        {
+        }
+
+        internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;
 			inst = o;

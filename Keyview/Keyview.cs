@@ -570,7 +570,8 @@
 					SetStart();
 					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
-					var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
+					var (st, domerrs) = ch.CreateSyntaxTreeFromFile(txtIn.Text);
+					//var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
 
 					if (domerrs.HasErrors)
 					{
@@ -590,6 +591,8 @@
 
 					tslCodeStatus.Text = "Creating C# code from DOM...";
 					Refresh();
+
+					/*
 					var (code, exc) = ch.CreateCodeFromDom(domunits);
 
 					if (exc is Exception ex)
@@ -600,7 +603,10 @@
 					}
 
 					code = CompilerHelper.UsingStr + code;
-					tslCodeStatus.Text = "Compiling C# code...";
+					*/
+					var code = st[0].ToString();
+
+                    tslCodeStatus.Text = "Compiling C# code...";
 					var asm = Assembly.GetExecutingAssembly();
 					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
 

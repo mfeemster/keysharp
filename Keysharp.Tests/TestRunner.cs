@@ -72,6 +72,8 @@ namespace Keysharp.Tests
 		{
 			Script.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
+
+            /*
 			var (domunits, domerrs) = ch.CreateDomFromFile(source);
 
 			if (domerrs.HasErrors)
@@ -96,11 +98,32 @@ namespace Keysharp.Tests
 			{
 				sourceWriter.WriteLine(code);
 			}
-
+			
 			var asm = Assembly.GetExecutingAssembly();
 			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+			*/
 
-			if (compileexc != null)
+            var (st, errs) = ch.CreateSyntaxTreeFromFile(source);
+
+            if (errs.HasErrors || st[0] == null)
+            {
+                foreach (CompilerError err in errs)
+                    Script.OutputDebug(err.ErrorText);
+
+                return string.Empty;
+            }
+
+            var code = st[0].ToString();
+
+            using (var sourceWriter = new StreamWriter("./" + name + ".cs"))
+            {
+                sourceWriter.WriteLine(code);
+            }
+
+            var asm = Assembly.GetExecutingAssembly();
+            var (results, ms, compileexc) = ch.CompileFromTree(st[0], name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+
+            if (compileexc != null)
 			{
 				Script.OutputDebug(compileexc.Message);
 				return string.Empty;

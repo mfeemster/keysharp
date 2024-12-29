@@ -9,9 +9,9 @@ func_bound(a, b, c)
 	global z := c
 }
 
-fo := FuncObj("func_bound")
+fo := func_bound
 
-If (fo.Name == "func_bound")
+If (fo.Name = "func_bound")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

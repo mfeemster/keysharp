@@ -2,7 +2,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		internal static bool ForceBool(object input)
+		public static bool ForceBool(object input)
 		{
 			if (input is bool b)
 				return b;
