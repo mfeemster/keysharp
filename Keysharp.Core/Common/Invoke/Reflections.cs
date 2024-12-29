@@ -52,10 +52,10 @@ namespace Keysharp.Core.Common.Invoke
 		/// when the script actually runs. On the second time, there will be an extra assembly loaded, which is the compiled script itself. More system assemblies will also be loaded.
 		/// </summary>
 		[PublicForTestOnly]
-		public static void Initialize()
+		public static void Initialize(bool ignoreMainAssembly = false)
 		{
 			loadedAssemblies = GetLoadedAssemblies();
-			CacheAllMethods();
+			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
 			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
@@ -368,7 +368,7 @@ namespace Keysharp.Core.Common.Invoke
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 
-		private static void CacheAllMethods()
+		private static void CacheAllMethods(bool ignoreMainAssembly = false)
 		{
 			List<Assembly> assemblies;
 			var loadedAssembliesList = loadedAssemblies.Values;
@@ -390,7 +390,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			foreach (var asm in assemblies)
 				foreach (var type in asm.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || (ignoreMainAssembly && type.Name != Parser.mainClassName)) &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
