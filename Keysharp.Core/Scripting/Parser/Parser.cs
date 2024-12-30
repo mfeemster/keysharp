@@ -337,12 +337,13 @@ namespace Keysharp.Scripting
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr, $\"{Accessors.A_ScriptName}: Unhandled exception\", \"iconx\")");
 			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed)");
 			var ccs = new CodeConditionStatement(cse);
+			var cmrsexit = new CodeMethodReturnStatement(new CodeSnippetExpression("Environment.ExitCode"));
 			_ = ccs.TrueStatements.Add(pushcse);
 			_ = ccs.TrueStatements.Add(msg);
 			_ = ccs.TrueStatements.Add(popcse);
 			_ = ctch2.Statements.Add(ccs);
 			_ = ctch2.Statements.Add(new CodeExpressionStatement(exit1));
-			_ = ctch2.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
+			_ = ctch2.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch2);
 			//
 			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
@@ -366,11 +367,11 @@ namespace Keysharp.Scripting
 "));
 			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));
 			_ = ctch.Statements.Add(new CodeExpressionStatement(exit1));
-			_ = ctch.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
+			_ = ctch.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch);
 			var tempstatements = main.Statements;
 			tcf.TryStatements.AddRange(tempstatements);
-			_ = tcf.TryStatements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));//Add a successful return statement at the end of the try block.
+			_ = tcf.TryStatements.Add(cmrsexit);
 			main.Statements.Clear();
 			_ = main.Statements.Add(tcf);
 
