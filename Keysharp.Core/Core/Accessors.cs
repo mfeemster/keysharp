@@ -1022,11 +1022,6 @@
 		public static string A_KeysharpPath => A_AhkPath;
 
 		/// <summary>
-		/// The system's default language code.
-		/// </summary>
-		public static long A_Language => Thread.CurrentThread.CurrentCulture.LCID;
-
-		/// <summary>
 		/// The result from the Windows GetLastError() function.
 		/// </summary>
 		public static long A_LastError => Marshal.GetLastWin32Error();//This apparently works on linux too.

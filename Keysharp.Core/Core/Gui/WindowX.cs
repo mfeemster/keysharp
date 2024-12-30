@@ -312,8 +312,17 @@ namespace Keysharp.Core
 		/// Retrieves the text from a standard status bar control.
 		/// </summary>
 		/// <param name="Part">Which part number of the bar to retrieve. Default 1, which is usually the part that contains the text of interest.</param>
-		/// <param name="WinTitle">The title or partial title of the target window (the matching behavior is determined by SetTitleMatchMode). If this and the other 3 window parameters are blank or omitted, the Last Found Window will be used. If this is the letter A and the other 3 window parameters are blank or omitted, the active window will be used. To use a window class, specify ahk_class ExactClassName (shown by Window Spy). To use a process identifier (PID), specify ahk_pid %VarContainingPID%. To use a window group, specify ahk_group GroupName. To use a window's unique ID number, specify ahk_id %VarContainingID%. The search can be narrowed by specifying multiple criteria. For example: My File.txt ahk_class Notepad</param>
-		/// <param name="WinText">If present, this parameter must be a substring from a single text element of the target window (as revealed by the included Window Spy utility). Hidden text elements are detected if DetectHiddenText is ON.</param>
+		/// <param name="WinTitle">The title or partial title of the target window (the matching behavior is determined by SetTitleMatchMode).<br/>
+		/// If this and the other 3 window parameters are blank or omitted, the Last Found Window will be used.<br/>
+		/// If this is the letter A and the other 3 window parameters are blank or omitted, the active window will be used.<br/>
+		/// To use a window class, specify ahk_class ExactClassName (shown by Window Spy).<br/>
+		/// To use a process identifier (PID), specify ahk_pid %VarContainingPID%. To use a window group, specify ahk_group GroupName.<br/>
+		/// To use a window's unique ID number, specify ahk_id %VarContainingID%.<br/>
+		/// The search can be narrowed by specifying multiple criteria. For example: My File.txt ahk_class Notepad
+		/// </param>
+		/// <param name="WinText">If present, this parameter must be a substring from a single text element of the target window (as revealed by the included Window Spy utility).<br/>
+		/// Hidden text elements are detected if DetectHiddenText is ON.
+		/// </param>
 		/// <param name="ExcludeTitle">Windows whose titles include this value will not be considered.</param>
 		/// <param name="ExcludeText">Windows whose text include this value will not be considered.</param>
 		/// <returns>The retrieved text</returns>
