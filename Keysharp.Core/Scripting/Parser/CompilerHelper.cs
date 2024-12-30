@@ -355,6 +355,7 @@ using static Keysharp.Scripting.Script;
 			// ignoring the "program" namespace.
 			Reflections.Clear();
 			Reflections.Initialize(true);
+			Flow.ResetState();
 			var units = new CodeCompileUnit[fileNames.Length];
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;

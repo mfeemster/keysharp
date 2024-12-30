@@ -1427,30 +1427,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private void HandleVariadicParams()
-		{
-			//var lastisstar =
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceeded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			//if (lastisstar)
-			//{
-			//  var argi = 0;
-			//  var oldArgs = invoke.Parameters;
-			//  //var skip = oldArgs.Count
-			//  var argStrings = new List<string>(oldArgs.Count);
-			//  var pces = invoke.Parameters.Cast<CodeExpression>();
-			//  argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-			//  var finalArgStr = $"[{string.Join(',', argStrings)}]";
-			//  invoke.Parameters.Clear();
-			//  invoke.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-			//  //for (var argi = 0; argi < oldArgs.Count; i++)
-			//  //{
-			//  //  var argStr = Ch.CodeToString(oldArgs[i]);
-			//  //  sb.Append(argStr);
-			//  //}
-			//}
-		}
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
 		{
 			var pces = cmie.Parameters.Cast<CodeExpression>();
@@ -1468,6 +1444,7 @@ namespace Keysharp.Scripting
 				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
 			}
 		}
+
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
 		{
 			//Method that was declared.

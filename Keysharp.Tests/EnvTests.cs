@@ -10,6 +10,7 @@ namespace Keysharp.Tests
 #endif
 		public void ClipboardAll()
 		{
+			Flow.ResetState();
 			Accessors.A_Clipboard = "Asdf";
 			var arr = Env.ClipboardAll();
 			var clip = Accessors.A_Clipboard as string;
@@ -32,6 +33,7 @@ namespace Keysharp.Tests
 #endif
 		public void ClipWait()
 		{
+			Flow.ResetState();
 			Clipboard.Clear();
 			var dt = DateTime.Now;
 			var b = Env.ClipWait(0.5);

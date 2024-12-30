@@ -233,7 +233,7 @@
 				{
 #if WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))//Will need a cross platform version of this.//TODO
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 #endif
@@ -290,7 +290,7 @@
 
 #elif WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
