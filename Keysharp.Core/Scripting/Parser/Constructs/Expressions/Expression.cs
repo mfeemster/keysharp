@@ -1734,7 +1734,8 @@ namespace Keysharp.Scripting
 			var fatArrow = false;
 			var sub = new List<object>();
 			var expr = new List<CodeExpression>();
-			memberVarsStatic = false;
+			var firstTokIndex = codeLine.Code.IndexOfAny(SpaceTab);
+			memberVarsStatic = firstTokIndex != -1 && codeLine.Code.AsSpan(0, firstTokIndex).Equals("static", StringComparison.OrdinalIgnoreCase);
 
 			for (var i = 0; i < parts.Length; i++)
 			{
@@ -1748,7 +1749,6 @@ namespace Keysharp.Scripting
 
 				if (i == 0 && part == FunctionStatic)
 				{
-					memberVarsStatic = true;
 					continue;
 				}
 
