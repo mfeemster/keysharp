@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Keysharp.Scripting
 {
 	public partial class Script
@@ -167,10 +169,12 @@ namespace Keysharp.Scripting
 				return set;
 			}
 
+
+
 			public object this[object key]
-			{
-				get => GetVariable(key.ToString()) ?? "";
-				set => _ = SetVariable(key.ToString(), value);
+            {
+				get => key is Misc.VarRef v ? v.__Value : GetVariable(key.ToString()) ?? "";
+				set => _ = (key is Misc.VarRef v ? v.__Value = value : SetVariable(key.ToString(), value));
 			}
 		}
 	}

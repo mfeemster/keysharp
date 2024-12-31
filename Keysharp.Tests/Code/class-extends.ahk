@@ -738,7 +738,7 @@ class Mapi extends Map {
 	__New()
 	{
 		global
-		DerivedDefault := Default
+		DerivedDefault := this.Default
 	}
 }
 

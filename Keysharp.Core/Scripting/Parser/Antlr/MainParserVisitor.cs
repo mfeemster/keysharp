@@ -911,6 +911,12 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCoalesceExpression([NotNull] MainParser.CoalesceExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.variableAssignment"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVariableAssignment([NotNull] MainParser.VariableAssignmentContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.dynamicIdentifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -935,24 +941,32 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitObjectLiteral([NotNull] MainParser.ObjectLiteralContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ArrowFunction</c>
-	/// labeled alternative in <see cref="MainParser.anonymousFunction"/>.
+	/// Visit a parse tree produced by the <c>AnonymousLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitArrowFunction([NotNull] MainParser.ArrowFunctionContext context);
+	Result VisitAnonymousLambdaFunction([NotNull] MainParser.AnonymousLambdaFunctionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.arrowFunctionParameters"/>.
+	/// Visit a parse tree produced by the <c>AnonymousFatArrowLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitArrowFunctionParameters([NotNull] MainParser.ArrowFunctionParametersContext context);
+	Result VisitAnonymousFatArrowLambdaFunction([NotNull] MainParser.AnonymousFatArrowLambdaFunctionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.arrowFunctionBody"/>.
+	/// Visit a parse tree produced by the <c>NamedLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitArrowFunctionBody([NotNull] MainParser.ArrowFunctionBodyContext context);
+	Result VisitNamedLambdaFunction([NotNull] MainParser.NamedLambdaFunctionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.lambdaFunctionBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLambdaFunctionBody([NotNull] MainParser.LambdaFunctionBodyContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.assignmentOperator"/>.
 	/// </summary>

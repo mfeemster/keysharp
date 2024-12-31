@@ -28,10 +28,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (context.classTail().Extends() != null)
             {
                 var extendsParts = context.classTail().identifier();
-                var baseClassName = extendsParts[0].GetText();
+                var baseClassName = NormalizeName(extendsParts[0].GetText());
+                if (Reflections.stringToTypes.ContainsKey(baseClassName)) {
+                    baseClassName = Reflections.stringToTypes.First(pair =>  pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
+                    currentClass.Base = baseClassName;
+                }
                 for (int i = 1; i < extendsParts.Length; i++)
                 {
-                    baseClassName += "." + extendsParts[i].GetText();
+                    baseClassName += "." + NormalizeName(extendsParts[i].GetText());
                 }
                 baseList = SyntaxFactory.BaseList(
                     SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
@@ -127,7 +131,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             AccessorDeclarationSyntax getter = null;
             if (propertyDefinition.propertyGetterDefinition() != null)
             {
-                var getterBody = Visit(propertyDefinition.propertyGetterDefinition()) as BlockSyntax;
+                var getterBody = (BlockSyntax)Visit(propertyDefinition.propertyGetterDefinition());
                 getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                     .WithBody(getterBody);
             }
@@ -136,7 +140,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             AccessorDeclarationSyntax setter = null;
             if (propertyDefinition.propertySetterDefinition() != null)
             {
-                var setterBody = Visit(propertyDefinition.propertySetterDefinition()) as BlockSyntax;
+                var setterBody = (BlockSyntax)Visit(propertyDefinition.propertySetterDefinition());
                 setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
                     .WithBody(setterBody);
             }
@@ -237,14 +241,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitPropertyGetterDefinition([Antlr4.Runtime.Misc.NotNull] PropertyGetterDefinitionContext context)
         {
             //Console.WriteLine("PropertyGetterDefinition: " + context.GetText());
-            return base.VisitPropertyGetterDefinition(context);
+            return VisitLambdaFunctionBody(context.lambdaFunctionBody());
         }
 
         public override SyntaxNode VisitClassMethodDeclaration([NotNull] ClassMethodDeclarationContext context)
         {
             var methodDefinition = context.methodDefinition();
-            var fieldName = NormalizeName(methodDefinition.propertyName().GetText());
-            var methodName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(fieldName);
+            var methodName = NormalizeName(methodDefinition.propertyName().GetText(), NameCase.Title);
+            var fieldName = methodName.ToLowerInvariant();
             var isStatic = context.Static() != null;
             var isAsync = methodDefinition.Async() != null;
 
@@ -256,11 +260,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             }
 
             // Visit method body
-            BlockSyntax methodBody = null;
-            if (methodDefinition.functionBody() != null)
-                methodBody = (BlockSyntax)Visit(methodDefinition.functionBody());
-            else
-                methodBody = (BlockSyntax)Visit(methodDefinition.arrowFunctionBody());
+            BlockSyntax methodBody = (BlockSyntax)Visit(methodDefinition.lambdaFunctionBody());
             methodBody = EnsureReturnStatement(methodBody);
 
             // Create method declaration
@@ -279,7 +279,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 .WithParameterList(parameters)
             .WithBody(methodBody);
 
-            AddFuncObjField(fieldName, methodName, isStatic);
+            AddFuncObjField(fieldName.ToLowerInvariant(), methodName, isStatic);
 
             return methodDeclaration;
         }
@@ -301,7 +301,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             )
                         ),
                         SyntaxFactory.Argument(isStatic
-                            ? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
+                            ? SyntaxFactory.TypeOfExpression(SyntaxFactory.ParseTypeName(currentClass.Name))
                             : SyntaxFactory.ThisExpression())
                     }
                     )
@@ -369,22 +369,35 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
         }
 
-        private static string NormalizeName(string name)
+        enum NameCase
+        {
+            Lower,
+            Upper,
+            Title
+        };
+
+        private static string NormalizeName(string name, NameCase nameCase = NameCase.Lower)
         {
             // Define the reserved keywords that should retain their original case
-            var reservedKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            var reservedKeywords = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
             {
-                "Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class"
+                "Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class", "__StaticInit"
             };
 
             name = name.Trim('"');
 
-            if (reservedKeywords.Contains(name))
+            if (nameCase == NameCase.Lower)
+                return name.ToLowerInvariant();
+            else if (nameCase == NameCase.Title)
             {
-                return reservedKeywords.First(keyword => string.Equals(keyword, name, StringComparison.OrdinalIgnoreCase));
+                if (reservedKeywords.Contains(name))
+                {
+                    return reservedKeywords.First(keyword => string.Equals(keyword, name, StringComparison.InvariantCultureIgnoreCase));
+                }
+                return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name);
             }
-
-            return name.ToLowerInvariant();
+            else
+                return name.ToUpperInvariant();
         }
 
 

@@ -6,6 +6,7 @@ using static Keysharp.Scripting.Parser;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Keysharp.Core.Scripting.Parser.Antlr.Helper;
 using System.Linq.Expressions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Keysharp.Core.Scripting.Parser.Antlr
 {
@@ -102,7 +103,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitIdentifierExpression([NotNull] IdentifierExpressionContext context)
         {
-            return Visit(context.identifierName());
+            return Visit(context.identifier());
         }
 
         public override SyntaxNode VisitPropertyName([NotNull] PropertyNameContext context)
@@ -519,56 +520,57 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             // Visit the left-hand side of the assignment
             var leftExpression = (ExpressionSyntax)Visit(context.singleExpression(0));
             var rightExpression = (ExpressionSyntax)Visit(context.singleExpression(1));
-
             string assignmentOperator = context.assignmentOperator().GetText();
 
-            // Handle static member assignment
-            if (leftExpression is InvocationExpressionSyntax staticMemberInvocation &&
-                IsStaticMemberAccessInvocation(staticMemberInvocation))
+            return HandleAssignment(leftExpression, rightExpression, assignmentOperator);
+        }
+
+        private ExpressionSyntax HandleAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
+        {
+            
+            if ((leftExpression is ObjectCreationExpressionSyntax objectExpression) 
+                && objectExpression.Type is IdentifierNameSyntax objectName
+                && objectName.Identifier.Text == "VarRef")
             {
-                // Handle "??=" for static members
-                if (assignmentOperator == "??=")
-                {
-                    var getStaticMemberValue = staticMemberInvocation;
-                    var setStaticMemberValue = CreateSetStaticMemberInvocation(getStaticMemberValue, rightExpression);
-
-                    // Return: left ?? (SetStaticMemberValueT<typeName>(member, right))
-                    return SyntaxFactory.BinaryExpression(
-                        SyntaxKind.CoalesceExpression,
-                        getStaticMemberValue,
-                        setStaticMemberValue
-                    );
-                }
-
-                // Handle simple assignment ":="
-                if (assignmentOperator == ":=")
-                {
-                    return CreateSetStaticMemberInvocation(staticMemberInvocation, rightExpression);
-                }
-
-                // Handle compound assignments (e.g., "+=", "-=")
-                string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
-                var binaryOperation = Helper.CreateBinaryOperatorExpression(
-                    GetOperatorToken(binaryOperator),
-                    staticMemberInvocation,
-                    rightExpression
+                leftExpression =  SyntaxFactory.MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                    leftExpression,
+                    SyntaxFactory.IdentifierName("__Value")
                 );
-
-                return CreateSetStaticMemberInvocation(staticMemberInvocation, binaryOperation);
+            }
+            // Handle static member assignment
+            if (leftExpression is InvocationExpressionSyntax invocationExpression &&
+                IsStaticMemberAccessInvocation(invocationExpression))
+            {
+                return HandleStaticMemberAssignment(invocationExpression, rightExpression, assignmentOperator);
             }
 
-            // Other existing cases (e.g., property assignments, index access)
+            // Handle ElementAccessExpression for array or indexed assignments
+            else if (leftExpression is ElementAccessExpressionSyntax elementAccess)
+            {
+                return HandleElementAccessAssignment(elementAccess, rightExpression, assignmentOperator);
+            }
+
+            // Handle MemberAccessExpression for property or field assignments
+            else if (leftExpression is MemberAccessExpressionSyntax memberAccess)
+            {
+                return HandleMemberAccessAssignment(memberAccess, rightExpression, assignmentOperator);
+            }
+
+            // Handle other cases (e.g., property assignments, index access)
             if (assignmentOperator == ":=")
             {
                 if (leftExpression is InvocationExpressionSyntax getPropertyInvocation &&
                     IsGetPropertyInvocation(getPropertyInvocation))
                 {
                     return HandlePropertyAssignment(getPropertyInvocation, rightExpression);
-                } else if (leftExpression is InvocationExpressionSyntax indexAccessInvocation &&
-                    IsIndexAccessInvocation(indexAccessInvocation))
+                }
+                else if (leftExpression is InvocationExpressionSyntax indexAccessInvocation &&
+                         IsIndexAccessInvocation(indexAccessInvocation))
                 {
                     return HandleIndexAssignment(indexAccessInvocation, rightExpression);
-                } else if (leftExpression is IdentifierNameSyntax identifierNameSyntax)
+                }
+                else if (leftExpression is IdentifierNameSyntax identifierNameSyntax)
                 {
                     leftExpression = MaybeWrapVariableDeclaration(identifierNameSyntax);
                     return SyntaxFactory.AssignmentExpression(
@@ -576,7 +578,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         leftExpression,
                         rightExpression
                     );
-                } else
+                }
+                else
                 {
                     throw new Error("Unknown left expression type");
                 }
@@ -586,7 +589,195 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return HandleCompoundAssignment(leftExpression, rightExpression, assignmentOperator);
         }
 
-        private SyntaxNode HandlePropertyAssignment(InvocationExpressionSyntax getPropertyInvocation, ExpressionSyntax rightExpression)
+        private ExpressionSyntax HandleStaticMemberAssignment(
+            InvocationExpressionSyntax staticMemberInvocation,
+            ExpressionSyntax rightExpression,
+            string assignmentOperator)
+        {
+            if (assignmentOperator == "??=")
+            {
+                var getStaticMemberValue = staticMemberInvocation;
+                var setStaticMemberValue = CreateSetStaticMemberInvocation(getStaticMemberValue, rightExpression);
+
+                // Return: left ?? (SetStaticMemberValueT<typeName>(member, right))
+                return SyntaxFactory.BinaryExpression(
+                    SyntaxKind.CoalesceExpression,
+                    getStaticMemberValue,
+                    setStaticMemberValue
+                );
+            }
+
+            if (assignmentOperator == ":=")
+            {
+                return CreateSetStaticMemberInvocation(staticMemberInvocation, rightExpression);
+            }
+
+            // Handle compound assignments (e.g., "+=", "-=")
+            string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
+            var binaryOperation = Helper.CreateBinaryOperatorExpression(
+                GetOperatorToken(binaryOperator),
+                staticMemberInvocation,
+                rightExpression
+            );
+
+            return CreateSetStaticMemberInvocation(staticMemberInvocation, binaryOperation);
+        }
+
+
+        private ExpressionSyntax HandleElementAccessAssignment(
+            ElementAccessExpressionSyntax elementAccess,
+            ExpressionSyntax rightExpression,
+            string assignmentOperator)
+        {
+            if (assignmentOperator == ":=")
+            {
+                return SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Scripting.Script"),
+                        SyntaxFactory.IdentifierName("SetObject")
+                    ),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            SyntaxFactory.Argument(rightExpression),
+                            SyntaxFactory.Argument(elementAccess.Expression),
+                            SyntaxFactory.Argument(elementAccess.ArgumentList.Arguments.First().Expression)
+                        })
+                    )
+                );
+            }
+
+            if (assignmentOperator == "??=")
+            {
+                var getIndexValue = CreateElementAccessGetterInvocation(elementAccess);
+                var setIndexValue = (ExpressionSyntax)HandleElementAccessAssignment(elementAccess, rightExpression, ":=");
+
+                // Return: left ?? (SetObject(base, index, right))
+                return SyntaxFactory.BinaryExpression(
+                    SyntaxKind.CoalesceExpression,
+                    getIndexValue,
+                    setIndexValue
+                );
+            }
+
+            // Handle compound assignments
+            string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
+            var binaryOperation = Helper.CreateBinaryOperatorExpression(
+                GetOperatorToken(binaryOperator),
+                CreateElementAccessGetterInvocation(elementAccess),
+                rightExpression
+            );
+
+            return HandleElementAccessAssignment(elementAccess, binaryOperation, ":=");
+        }
+
+        private ExpressionSyntax HandleMemberAccessAssignment(
+            MemberAccessExpressionSyntax memberAccess,
+            ExpressionSyntax rightExpression,
+            string assignmentOperator)
+        {
+            if (assignmentOperator == ":=")
+            {
+                return SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Scripting.Script"),
+                        SyntaxFactory.IdentifierName("SetPropertyValue")
+                    ),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            SyntaxFactory.Argument(memberAccess.Expression),
+                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal(memberAccess.Name.Identifier.Text)
+                            )),
+                            SyntaxFactory.Argument(rightExpression)
+                        })
+                    )
+                );
+            }
+
+            if (assignmentOperator == "??=")
+            {
+                var getPropertyValue = SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Scripting.Script"),
+                        SyntaxFactory.IdentifierName("GetPropertyValue")
+                    ),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                    SyntaxFactory.Argument(memberAccess.Expression),
+                    SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(
+                        SyntaxKind.StringLiteralExpression,
+                        SyntaxFactory.Literal(memberAccess.Name.Identifier.Text)
+                    ))
+                        })
+                    )
+                );
+
+                var setPropertyValue = (ExpressionSyntax)HandleMemberAccessAssignment(memberAccess, rightExpression, ":=");
+
+                // Return: left ?? (SetPropertyValue(base, member, right))
+                return SyntaxFactory.BinaryExpression(
+                    SyntaxKind.CoalesceExpression,
+                    getPropertyValue,
+                    setPropertyValue
+                );
+            }
+
+            // Handle compound assignments
+            string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
+            var binaryOperation = Helper.CreateBinaryOperatorExpression(
+                GetOperatorToken(binaryOperator),
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Scripting.Script"),
+                        SyntaxFactory.IdentifierName("GetPropertyValue")
+                    ),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            SyntaxFactory.Argument(memberAccess.Expression),
+                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal(memberAccess.Name.Identifier.Text)
+                            ))
+                        })
+                    )
+                ),
+                rightExpression
+            );
+
+            return HandleMemberAccessAssignment(memberAccess, binaryOperation, ":=");
+        }
+
+        private ExpressionSyntax CreateElementAccessGetterInvocation(ElementAccessExpressionSyntax elementAccess)
+        {
+            var baseExpression = elementAccess.Expression;
+            var indexExpression = elementAccess.ArgumentList.Arguments.First().Expression;
+
+            return SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    CreateQualifiedName("Keysharp.Scripting.Script"),
+                    SyntaxFactory.IdentifierName("Index")
+                ),
+                SyntaxFactory.ArgumentList(
+                    SyntaxFactory.SeparatedList(new[]
+                    {
+                SyntaxFactory.Argument(baseExpression),
+                SyntaxFactory.Argument(indexExpression)
+                    })
+                )
+            );
+        }
+
+        private ExpressionSyntax HandlePropertyAssignment(InvocationExpressionSyntax getPropertyInvocation, ExpressionSyntax rightExpression)
         {
             var baseExpression = getPropertyInvocation.ArgumentList.Arguments[0].Expression;
             var memberExpression = getPropertyInvocation.ArgumentList.Arguments[1].Expression;
@@ -608,7 +799,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             );
         }
 
-        private SyntaxNode HandleIndexAssignment(InvocationExpressionSyntax indexAccessInvocation, ExpressionSyntax rightExpression)
+        private ExpressionSyntax HandleIndexAssignment(InvocationExpressionSyntax indexAccessInvocation, ExpressionSyntax rightExpression)
         {
             var baseExpression = indexAccessInvocation.ArgumentList.Arguments[0].Expression;
             var indexExpression = indexAccessInvocation.ArgumentList.Arguments[1].Expression;
@@ -630,7 +821,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             );
         }
 
-        private SyntaxNode HandleCompoundAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
+        private ExpressionSyntax HandleCompoundAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
         {
             string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
 
@@ -822,7 +1013,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitSuperExpression([NotNull] SuperExpressionContext context)
         {
-            return SyntaxFactory.BaseExpression(); //TODO?
+            return SyntaxFactory.IdentifierName("super");
         }
 
     }

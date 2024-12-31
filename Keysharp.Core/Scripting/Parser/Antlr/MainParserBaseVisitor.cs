@@ -1458,6 +1458,16 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitCoalesceExpression([NotNull] MainParser.CoalesceExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.variableAssignment"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitVariableAssignment([NotNull] MainParser.VariableAssignmentContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.dynamicIdentifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1498,8 +1508,8 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitObjectLiteral([NotNull] MainParser.ObjectLiteralContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ArrowFunction</c>
-	/// labeled alternative in <see cref="MainParser.anonymousFunction"/>.
+	/// Visit a parse tree produced by the <c>AnonymousLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1507,9 +1517,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitArrowFunction([NotNull] MainParser.ArrowFunctionContext context) { return VisitChildren(context); }
+	public virtual Result VisitAnonymousLambdaFunction([NotNull] MainParser.AnonymousLambdaFunctionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.arrowFunctionParameters"/>.
+	/// Visit a parse tree produced by the <c>AnonymousFatArrowLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1517,9 +1528,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitArrowFunctionParameters([NotNull] MainParser.ArrowFunctionParametersContext context) { return VisitChildren(context); }
+	public virtual Result VisitAnonymousFatArrowLambdaFunction([NotNull] MainParser.AnonymousFatArrowLambdaFunctionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.arrowFunctionBody"/>.
+	/// Visit a parse tree produced by the <c>NamedLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1527,7 +1539,17 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitArrowFunctionBody([NotNull] MainParser.ArrowFunctionBodyContext context) { return VisitChildren(context); }
+	public virtual Result VisitNamedLambdaFunction([NotNull] MainParser.NamedLambdaFunctionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.lambdaFunctionBody"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitLambdaFunctionBody([NotNull] MainParser.LambdaFunctionBodyContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.assignmentOperator"/>.
 	/// <para>

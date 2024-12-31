@@ -218,8 +218,9 @@ public abstract class MainLexerBase : Lexer
         _currentDepth++;
         if (_lastToken != null 
             && _lastToken.Channel != Hidden 
-            && (_lastToken.Type == Identifier || _lastToken.Type == DerefEnd)
-            && Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_%]+$"))
+            && !lineContinuationOperators.Contains(_lastToken.Type))
+            //&& (_lastToken.Type == Identifier || _lastToken.Type == DerefEnd)
+            //&& Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_%]+$"))
             this.Type = MainLexer.OpenParenNoWS;
     }
     protected void ProcessCloseParen()

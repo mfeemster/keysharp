@@ -50,20 +50,17 @@ sourceElements
     ;
 
 sourceElement
-//    : directive
-//    | hotkeyDeclaration
-//    | hotstringDeclaration
     : classDeclaration
     | functionDeclaration // required for auto-execute section function declarations
     | statement
-    | EOL+
+    | EOL
     ;
 
 statement
     : block eos?
 //    | importStatement
 //    | exportStatement
-    | functionDeclaration eos   // required for nested functions
+    //| functionDeclaration eos   // required for nested functions
     | classDeclaration eos
     | functionStatement eos     // requires OpenBrace or LineTerminator before it
     | expressionStatement eos   // requires OpenBrace or LineTerminator before it
@@ -190,7 +187,7 @@ variableDeclarationList
     ;
 
 variableDeclaration
-    : assignable (':=' singleExpression)? // Should only be used with Local, Global, Static keywords
+    : assignable (assignmentOperator singleExpression)? // Should only be used with Local, Global, Static keywords
     ;
 
 functionStatement
@@ -292,8 +289,7 @@ finallyProduction
     ;
 
 functionDeclaration
-    : Async? identifier OpenParenNoWS formalParameterList? ')' functionBody
-    | Async? identifier arrowFunctionParameters '=>' arrowFunctionBody
+    : Async? identifier OpenParenNoWS formalParameterList? ')' lambdaFunctionBody
     ;
 
 /*
@@ -323,8 +319,7 @@ classElement
     ;
 
 methodDefinition
-    : Async? propertyName OpenParenNoWS formalParameterList? ')' functionBody
-    | Async? propertyName OpenParenNoWS formalParameterList? ')' '=>' arrowFunctionBody
+    : Async? propertyName OpenParenNoWS formalParameterList? ')' lambdaFunctionBody
     ;
 
 propertyDefinition
@@ -338,13 +333,11 @@ classPropertyName
     ;
 
 propertyGetterDefinition
-    : Get functionBody
-    | Get '=>' arrowFunctionBody EOL?
+    : Get lambdaFunctionBody EOL?
     ;
 
 propertySetterDefinition
-    : Set functionBody
-    | Set '=>' arrowFunctionBody EOL?
+    : Set lambdaFunctionBody EOL?
     ;
 
 fieldDefinition
@@ -352,7 +345,7 @@ fieldDefinition
     ;
 
 formalParameterList
-    : (formalParameterArg ',')* lastFormalParameterArg
+    : (formalParameterArg? ',')* lastFormalParameterArg
     ;
 
 formalParameterArg
@@ -425,6 +418,7 @@ dereference
 
 arguments
     : argument (',' argument?)*
+    | (',' argument?)+
     ;
 
 argument
@@ -464,16 +458,18 @@ memberIndexArguments
 
 singleExpression
     : Class Identifier? classTail                                          # ClassExpression // nested class
-    | anonymousFunction                                                    # FunctionExpression
+    | lambdaFunction                                                       # FunctionExpression
     | singleExpression '?.' singleExpression                               # OptionalChainExpression
     | singleExpression '?.'? memberIndexArguments                          # MemberIndexExpression
     | singleExpression functionCallArguments                               # FunctionCallExpression
+    | singleExpression '?'? '.' dynamicPropertyName                        # MemberDotExpression
     | singleExpression '++'                                                # PostIncrementExpression
     | singleExpression '--'                                                # PostDecreaseExpression
     | Delete singleExpression                                              # DeleteExpression
     | '++' singleExpression                                                # PreIncrementExpression
     | '--' singleExpression                                                # PreDecreaseExpression
     | <assoc = right> singleExpression '**' singleExpression               # PowerExpression
+    | BitAnd singleExpression                                              # VarRefExpression
     | '-' singleExpression                                                 # UnaryMinusExpression
     | '+' singleExpression                                                 # UnaryPlusExpression
     | '~' singleExpression                                                 # BitNotExpression
@@ -486,7 +482,6 @@ singleExpression
     | singleExpression '|' singleExpression                                # BitOrExpression
     | singleExpression DotConcat singleExpression                          # DotConcatenateExpression
     | singleExpression singleExpressionConcatenation+                      # ImplicitConcatenateExpression
-    | singleExpression '?'? '.' dynamicPropertyName                      # MemberDotExpression
     | singleExpression '~=' singleExpression                               # RegExMatchExpression
     | singleExpression ('<' | '>' | '<=' | '>=') singleExpression          # RelationalExpression
     | singleExpression ('=' | '!=' | '==' | '!==') singleExpression        # EqualityExpression
@@ -504,12 +499,15 @@ singleExpression
     | This                                                                 # ThisExpression
     | Super                                                                # SuperExpression
     | Base                                                                 # BaseExpression
-    | BitAnd singleExpression                                              # VarRefExpression
     | dynamicIdentifier                                                    # DynamicIdentifierExpression
-    | identifierName                                                       # IdentifierExpression
+    | identifier                                                       # IdentifierExpression
     | literal                                                              # LiteralExpression
     | arrayLiteral                                                         # ArrayLiteralExpression
     | objectLiteral                                                        # ObjectLiteralExpression
+    ;
+
+variableAssignment
+    :
     ;
 
 dynamicIdentifier
@@ -532,18 +530,14 @@ objectLiteral
     : '{' (propertyAssignment (',' propertyAssignment)* EOL?)? '}'
     ;
 
-anonymousFunction
-    : Async? arrowFunctionParameters '=>' arrowFunctionBody           # ArrowFunction
-    // | functionDeclaration                                             # NamedFunction
-    // | Async? '(' formalParameterList? ')' functionBody                # AnonymousFunctionDecl
+lambdaFunction
+    : Async? '(' formalParameterList? ')' lambdaFunctionBody                     # AnonymousLambdaFunction
+    | Async? (identifier? Multiply | BitAnd? identifier QuestionMark?) '=>' singleExpression    # AnonymousFatArrowLambdaFunction
+    | functionDeclaration                                                        # NamedLambdaFunction
     ;
 
-arrowFunctionParameters
-    : OpenParenNoWS formalParameterList? ')'
-    ;
-
-arrowFunctionBody
-    : singleExpression
+lambdaFunctionBody
+    : '=>' singleExpression
     | functionBody
     ;
 
@@ -627,6 +621,7 @@ identifier
     : Identifier
     | Async
     | Yield
+    | Default
     ;
 
 reservedWord

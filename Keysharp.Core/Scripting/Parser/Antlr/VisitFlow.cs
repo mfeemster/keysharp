@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis;
 using System.Drawing.Imaging;
 using Antlr4.Runtime;
 using System.IO;
+using System.Collections;
 
 namespace Keysharp.Core.Scripting.Parser.Antlr
 {
@@ -102,23 +103,26 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Generate the `for` loop
             var forLoop = SyntaxFactory.ForStatement(
-                enumeratorDeclaration,
+                null,
                 SyntaxFactory.SeparatedList<ExpressionSyntax>(), // No initializer
                 loopCondition,
                 SyntaxFactory.SeparatedList<ExpressionSyntax>(), // No incrementor
                 loopBody
             );
 
-            // Generate the `_ks_eX_end:` label and Pop statement
+            // Generate the `_ks_eX_end:` label
             var endLabel = SyntaxFactory.LabeledStatement(
                 loopEnumeratorName + "_end",
-                SyntaxFactory.ExpressionStatement(
-                    SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Core.Loops"),
-                            SyntaxFactory.IdentifierName("Pop")
-                        )
+                SyntaxFactory.EmptyStatement()
+            );
+
+            // Generate the Pop() call
+            var popStatement = SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Core.Loops"),
+                        SyntaxFactory.IdentifierName("Pop")
                     )
                 )
             );
@@ -150,14 +154,23 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
             }
 
-            // Combine all components
-            var statements = new List<StatementSyntax> { forLoop };
-            if (elseClause != null)
-                statements.Add(elseClause);
-            else
-                statements.Add(endLabel);
+            // Create the finally block with Pop() and end label
+            var finallyBlock = elseClause == null 
+                ? SyntaxFactory.Block(popStatement)
+                : SyntaxFactory.Block(elseClause);
 
-            return SyntaxFactory.Block(statements);
+            // Wrap the loop in a try-finally statement
+            var tryFinallyStatement = SyntaxFactory.TryStatement(
+                SyntaxFactory.Block(forLoop), // Try block containing the loop
+                SyntaxFactory.List<CatchClauseSyntax>(), // No catch clauses
+                SyntaxFactory.FinallyClause(finallyBlock) // Finally block
+            );
+
+            return SyntaxFactory.Block(
+                SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration), 
+                tryFinallyStatement,
+                endLabel
+            );
         }
 
         public override SyntaxNode VisitLoopStatement([NotNull] LoopStatementContext context)
@@ -367,16 +380,30 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 )
             );
 
+            var incStatement = SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Core.Loops"),
+                        SyntaxFactory.IdentifierName("Inc")
+                    )
+                )
+            );
+
             // Add the `Current` assignment to the loop body
             loopBody = loopBody.WithStatements(
-                loopBody.Statements.Insert(0, currentAssignment)
+                SyntaxFactory.List(
+                    new[] { 
+                        incStatement, 
+                        currentAssignment }
+                    .Concat(loopBody.Statements))
             );
 
             // Handle the `Else` clause, if present
             SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
 
             // Generate the final loop structure using `VisitLoopGeneric`
-            var loopSyntax = VisitLoopGeneric(
+            BlockSyntax loopSyntax = (BlockSyntax)VisitLoopGeneric(
                 null,
                 loopBody,
                 null, // No `Until` condition for standard `for` loops
@@ -394,6 +421,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             loopDepth--;
 
+            // Add the Push and variable declarations
             var pushStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
@@ -418,12 +446,11 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     )
                 );
 
-            // Prepend the Push statement and variable declarations to the loop block
-            var updatedStatements = new List<StatementSyntax> { pushStatement };
-            updatedStatements.AddRange(variableDeclarations);
-            updatedStatements.AddRange(((BlockSyntax)loopSyntax).Statements);
+            loopSyntax = SyntaxFactory.Block(variableDeclarations.ToArray())
+                .AddStatements(pushStatement)
+                .AddStatements(loopSyntax.Statements.ToArray());
 
-            return SyntaxFactory.Block(updatedStatements);
+            return loopSyntax;
         }
 
 
@@ -459,22 +486,23 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             SyntaxNode loopBodyNode = Visit(context.statement(0));
             BlockSyntax loopBody = EnsureBlockSyntax(loopBodyNode);
 
-            // Add Keysharp.Core.Loops.Inc() at the start of the loop body
-            loopBody = loopBody.InsertNodesBefore(
-                loopBody.Statements.FirstOrDefault(),
-                new[]
-                {
-            SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Inc")
+            var incStatement = SyntaxFactory.ExpressionStatement(
+                    SyntaxFactory.InvocationExpression(
+                        SyntaxFactory.MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            CreateQualifiedName("Keysharp.Core.Loops"),
+                            SyntaxFactory.IdentifierName("Inc")
+                        )
                     )
-                )
-            )
-                }
-            );
+                );
+
+            // Add Keysharp.Core.Loops.Inc() at the start of the loop body
+            if (loopBody.Statements.Count > 0)
+                loopBody = loopBody.InsertNodesBefore(
+                    loopBody.Statements.FirstOrDefault(), new[] { incStatement }
+                );
+            else
+                loopBody = SyntaxFactory.Block(incStatement);
 
             StatementSyntax untilStatement;
             if (context.Until() != null)
@@ -517,13 +545,16 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             // Generate `_ks_e1_end:` label and Pop statement
             var endLabel = SyntaxFactory.LabeledStatement(
                 loopEnumeratorName + "_end",
-                SyntaxFactory.ExpressionStatement(
-                    SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Core.Loops"),
-                            SyntaxFactory.IdentifierName("Pop")
-                        )
+                SyntaxFactory.EmptyStatement()
+            );
+
+            // Generate the Pop() call
+            var popStatement = SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Core.Loops"),
+                        SyntaxFactory.IdentifierName("Pop")
                     )
                 )
             );
@@ -570,15 +601,20 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 )
             );
 
-            // Combine all components
-            var statements = new List<StatementSyntax> { startLoopStatement, forLoop };
-            if (elseClause != null)
-                statements.Add(elseClause);
-            else
-                statements.Add(endLabel);
+            // Create the finally block
+            var finallyBlock = elseClause == null
+                ? SyntaxFactory.Block(popStatement)
+                : SyntaxFactory.Block(elseClause);
+
+            // Wrap the for loop in a try-finally statement
+            var tryFinallyStatement = SyntaxFactory.TryStatement(
+                SyntaxFactory.Block(forLoop), // Try block containing the loop
+                SyntaxFactory.List<CatchClauseSyntax>(), // No catch clauses
+                SyntaxFactory.FinallyClause(finallyBlock) // Finally block
+            );
 
             // Wrap everything in a block and return
-            return SyntaxFactory.Block(statements);
+            return SyntaxFactory.Block(startLoopStatement, tryFinallyStatement, endLabel);
         }
 
 

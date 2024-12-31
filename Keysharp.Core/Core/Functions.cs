@@ -32,6 +32,8 @@
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
 		public static IFuncObj FuncObj(object funcName, object obj = null, object paramCount = null) => new FuncObj(funcName.As(), obj, paramCount);
 
+        public static IFuncObj FuncObj(object funcName, Type t, object paramCount = null) => new FuncObj(funcName.As(), t, paramCount);
+
         public static IFuncObj FuncObj(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
 
         /// <summary>

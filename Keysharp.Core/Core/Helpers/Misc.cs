@@ -28,17 +28,37 @@ namespace Keysharp.Core
 		/// <returns>A <see cref="RefHolder"/> object that contains all of the passed in info, which will be passed to the method call.</returns>
 		public static RefHolder Mrh(int i, object o, Action<object> r) => new (i, o, r);
 
-		/// <summary>
-		/// Returns a string showing all of the properties of an object.
-		/// The string is also appended to sbuf.
-		/// The traversal is recursive through all of the object's properties.
-		/// </summary>
-		/// <param name="obj">The object whose properties will be listed.</param>
-		/// <param name="name">The name of the object.</param>
-		/// <param name="sbuf">The <see cref="StringBuffer"/> to place the property info in.</param>
-		/// <param name="tabLevel">The number of tabs to use for indenting the property tree.</param>
-		/// <returns>sbuf.ToString()</returns>
-		internal static string PrintProps(object obj, string name, StringBuffer sbuf, ref int tabLevel)
+		public static VarRef EmptyVarRef = new VarRef(() => 0, x => x = 0);
+
+        public class VarRef
+        {
+            private readonly Func<object> Get;
+            private readonly Action<object> Set;
+
+            public VarRef(Func<object> getter, Action<object> setter)
+            {
+                this.Get = getter;
+                this.Set = setter;
+            }
+
+            public object __Value
+            {
+                get => Get();
+                set => Set(value);
+            }
+        }
+
+        /// <summary>
+        /// Returns a string showing all of the properties of an object.
+        /// The string is also appended to sbuf.
+        /// The traversal is recursive through all of the object's properties.
+        /// </summary>
+        /// <param name="obj">The object whose properties will be listed.</param>
+        /// <param name="name">The name of the object.</param>
+        /// <param name="sbuf">The <see cref="StringBuffer"/> to place the property info in.</param>
+        /// <param name="tabLevel">The number of tabs to use for indenting the property tree.</param>
+        /// <returns>sbuf.ToString()</returns>
+        internal static string PrintProps(object obj, string name, StringBuffer sbuf, ref int tabLevel)
 		{
 			var sb = sbuf.sb;
 			var indent = new string('\t', tabLevel);

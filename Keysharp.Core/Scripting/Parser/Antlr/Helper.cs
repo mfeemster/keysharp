@@ -32,6 +32,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public static Function autoExecFunc;
         public static Function currentFunc;
 
+        public static Stack<(Function, HashSet<string>)> FunctionStack = new();
+
         public static Class currentClass;
 
         public static HashSet<string> globalVars = [];
@@ -52,6 +54,27 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public static NameSyntax ScriptOperateName = CreateQualifiedName("Keysharp.Scripting.Script.Operate");
         public static NameSyntax ScriptOperateUnaryName = CreateQualifiedName("Keysharp.Scripting.Script.OperateUnary");
 
+        public static class Types
+        {
+            public static TypeSyntax Object = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+
+            public static TypeSyntax ObjectArray = SyntaxFactory.ArrayType(
+                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                .WithRankSpecifiers(
+                    SyntaxFactory.SingletonList(
+                        SyntaxFactory.ArrayRankSpecifier(
+                            SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                SyntaxFactory.OmittedArraySizeExpression()))));
+
+            public static TypeSyntax StringArray = SyntaxFactory.ArrayType(
+                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)))
+                .WithRankSpecifiers(
+                    SyntaxFactory.SingletonList(
+                        SyntaxFactory.ArrayRankSpecifier(
+                            SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                SyntaxFactory.OmittedArraySizeExpression()))));
+        }
+
         public class Function
         {
 
@@ -62,7 +85,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             public HashSet<string> Locals = new HashSet<string>();
             public HashSet<string> Globals = new HashSet<string>();
             public HashSet<string> Statics = new HashSet<string>();
+            public HashSet<string> VarRefs = new HashSet<string>();
             public Scope Scope = Scope.Local;
+
+            public bool Async = false;
 
             public Function(string name, TypeSyntax returnType = null)
             {
@@ -80,6 +106,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public class Class
         {
             public string Name = null;
+            public string Base = "KeysharpObject";
             public List<MemberDeclarationSyntax> Body = new List<MemberDeclarationSyntax>();
             public ClassDeclarationSyntax Declaration = null;
 
@@ -106,6 +133,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public static List<ClassDeclarationContext> GetClassDeclarationsRecursive(ParserRuleContext context)
         {
+            if (context == null || context.children == null) return new List<ClassDeclarationContext>();
             return context.children
                 .OfType<ClassDeclarationContext>()
                 .Concat(
@@ -115,6 +143,31 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 )
                 .ToList();
         }
+
+        public static List<FunctionDeclarationContext> GetScopeFunctions(ParserRuleContext context)
+        {
+            if (context == null || context.children == null)
+                return new List<FunctionDeclarationContext>();
+
+            var result = new List<FunctionDeclarationContext>();
+
+            foreach (var child in context.children)
+            {
+                // Add FunctionDeclarationContext directly
+                if (child is FunctionDeclarationContext functionDeclaration)
+                {
+                    result.Add(functionDeclaration);
+                }
+                // Recurse into children only if the current node is not a FunctionDeclarationContext
+                else if (child is ParserRuleContext parserRuleContext && child is not FunctionDeclarationContext && child is not ClassDeclarationContext)
+                {
+                    result.AddRange(GetScopeFunctions(parserRuleContext));
+                }
+            }
+
+            return result;
+        }
+
 
         public static ParameterSyntax VariadicParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("args")) // Default name for spread argument
                         .WithType(SyntaxFactory.ArrayType(
@@ -320,6 +373,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var builtIn = IsBuiltInProperty(name, caseSense);
             if (builtIn != null) return builtIn;
 
+            if (currentFunc.Params != null)
+            {
+                var parameterMatch = currentFunc.Params.Parameters.FirstOrDefault(param =>
+                    caseSense ? param.Identifier.Text == name
+                              : param.Identifier.Text.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                if (parameterMatch != null)
+                    return parameterMatch.Identifier.Text;
+            }
+
             var variableDeclarations = currentFunc.Body.DescendantNodes().OfType<LocalDeclarationStatementSyntax>();
             if (variableDeclarations != null)
             {
@@ -382,6 +444,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 return name;
             else
                 match = Reflections.flatPublicStaticProperties.FirstOrDefault(v => v.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+
+            if (match.Key == null 
+                && currentClass != null 
+                && Reflections.stringToTypeProperties.ContainsKey(name)
+                && Reflections.stringToTypeProperties[name].Keys.Any(item => item.Name == currentClass.Base || item.Name == "KeysharpObject"))
+            {
+                return Reflections.stringToTypeProperties.FirstOrDefault(item => item.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase)).Key;
+            }
             return match.Key;
         }
 
@@ -484,19 +554,26 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         )
                         .WithInitializer(
                             SyntaxFactory.EqualsValueClause(
-                                SyntaxFactory.InvocationExpression(
-                                    SyntaxFactory.IdentifierName("FuncObj"),
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SingletonSeparatedList(
-                                            SyntaxFactory.Argument(
-                                                SyntaxFactory.CastExpression(
-                                                    SyntaxFactory.IdentifierName("Delegate"),
-                                                    SyntaxFactory.IdentifierName(functionName)
-                                                )
-                                            )
-                                        )
+                                CreateFuncObj(
+                                    SyntaxFactory.CastExpression(
+                                        SyntaxFactory.IdentifierName("Delegate"),
+                                        SyntaxFactory.IdentifierName(functionName)
                                     )
                                 )
+                            )
+                        )
+                    )
+                );
+        }
+
+        public static InvocationExpressionSyntax CreateFuncObj(ExpressionSyntax funcArg)
+        {
+            return SyntaxFactory.InvocationExpression(
+                SyntaxFactory.IdentifierName("FuncObj"),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Argument(
+                                funcArg
                             )
                         )
                     )
@@ -513,17 +590,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         )
                         .WithInitializer(
                             SyntaxFactory.EqualsValueClause(
-                                SyntaxFactory.InvocationExpression(
-                                    SyntaxFactory.IdentifierName("FuncObj"),
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SingletonSeparatedList(
-                                            SyntaxFactory.Argument(
-                                                SyntaxFactory.LiteralExpression(
-                                                    SyntaxKind.StringLiteralExpression,
-                                                    SyntaxFactory.Literal(functionName)
-                                                )
-                                            )
-                                        )
+                                CreateFuncObj(
+                                    SyntaxFactory.LiteralExpression(
+                                        SyntaxKind.StringLiteralExpression,
+                                        SyntaxFactory.Literal(functionName)
                                     )
                                 )
                             )
@@ -558,7 +628,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             // 1. Built-in functions: Directly invoke the built-in method
             if (!string.IsNullOrEmpty(methodName) &&
-                Reflections.flatPublicStaticMethods.TryGetValue(methodName, out var mi))
+                Reflections.flatPublicStaticMethods.TryGetValue(methodName, out var mi) && !UserFuncs.Contains(methodName))
             {
                 // Fully qualified method invocation
                 return SyntaxFactory.InvocationExpression(
@@ -827,6 +897,26 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                    expression is DefaultExpressionSyntax ||
                    expression is IdentifierNameSyntax identifier &&
                    char.IsUpper(identifier.Identifier.Text[0]); // Assume constants are upper-case
+        }
+
+        public static ParameterSyntax AddOptionalParamValue(ParameterSyntax parameter, ExpressionSyntax value)
+        {
+            return parameter.WithAttributeLists(SyntaxFactory.SingletonList(
+                SyntaxFactory.AttributeList(
+                    SyntaxFactory.SeparatedList(new[]
+                    {
+                        SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("Optional")),
+                        SyntaxFactory.Attribute(
+                            SyntaxFactory.IdentifierName("DefaultParameterValue"),
+                            SyntaxFactory.AttributeArgumentList(
+                                SyntaxFactory.SingletonSeparatedList(
+                                    SyntaxFactory.AttributeArgument(value)
+                                )
+                            )
+                        )
+                    })
+                )
+            ));
         }
 
     }

@@ -127,7 +127,17 @@
 		{
 		}
 
-		internal FuncObj(MethodPropertyHolder m, object o = null)
+        internal FuncObj(string s, string t, object paramCount = null)
+		: this(Reflections.FindAndCacheMethod(Reflections.stringToTypes[t], s, paramCount.Ai(-1)))
+        {
+        }
+
+        internal FuncObj(string s, Type t, object paramCount = null)
+		: this(Reflections.FindAndCacheMethod(t, s, paramCount.Ai(-1)))
+        {
+        }
+
+        internal FuncObj(MethodPropertyHolder m, object o = null)
 			: this(m?.mi, o)
 		{
 		}
