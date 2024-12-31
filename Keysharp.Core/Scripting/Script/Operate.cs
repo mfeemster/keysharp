@@ -29,6 +29,12 @@ namespace Keysharp.Scripting
 			{
 				case Between:
 				{
+					if (subject == null)
+						_ = Dialogs.MsgBox("Left side operand of between was null.");
+
+					if (test == null)
+						_ = Dialogs.MsgBox("Right side operand of between was null.");
+
 					var z = test.IndexOf(And, StringComparison.OrdinalIgnoreCase);
 
 					if (z == -1)
@@ -47,6 +53,12 @@ namespace Keysharp.Scripting
 				break;
 
 				case In:
+					if (subject == null)
+						_ = Dialogs.MsgBox("Left side operand of in was null.");
+
+					if (test == null)
+						_ = Dialogs.MsgBox("Right side operand of in was null.");
+
 					foreach (Range r in test.AsSpan().Split(Delimiter))
 					{
 						var sub = test.AsSpan(r);
@@ -58,6 +70,12 @@ namespace Keysharp.Scripting
 					break;
 
 				case Contains:
+					if (subject == null)
+						_ = Dialogs.MsgBox("Left side operand of contains was null.");
+
+					if (test == null)
+						_ = Dialogs.MsgBox("Right side operand of contains was null.");
+
 					foreach (Range r in test.AsSpan().Split(Delimiter))
 					{
 						var sub = test.AsSpan(r);
@@ -126,6 +144,12 @@ namespace Keysharp.Scripting
 			{
 				case Operator.Add:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of addition was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of addition was null.");
+
 					if (left is long l && right is long r)
 						return l + r;
 
@@ -140,6 +164,12 @@ namespace Keysharp.Scripting
 
 				case Operator.BitShiftLeft:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of arithmetic left shift was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of arithmetic left shift was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of arithmetic left shift was not an integer, and instead was of type {left.GetType()}.");
 
@@ -156,6 +186,12 @@ namespace Keysharp.Scripting
 
 				case Operator.BitShiftRight:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of arithmetic right shift was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of arithmetic right shift was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of arithmetic right shift was not an integer, and instead was of type {left.GetType()}.");
 
@@ -172,6 +208,12 @@ namespace Keysharp.Scripting
 
 				case Operator.LogicalBitShiftRight:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of logical right shift was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of logical right shift was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of logical right shift was not an integer, and instead was of type {left.GetType()}.");
 
@@ -188,6 +230,12 @@ namespace Keysharp.Scripting
 
 				case Operator.BitwiseAnd:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of bitwise and was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of bitwise and was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of bitwise and was not an integer, and instead was of type {left.GetType()}.");
 
@@ -199,6 +247,12 @@ namespace Keysharp.Scripting
 
 				case Operator.BitwiseOr:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of bitwise or was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of bitwise or was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of bitwise or was not an integer, and instead was of type {left.GetType()}.");
 
@@ -210,6 +264,12 @@ namespace Keysharp.Scripting
 
 				case Operator.BitwiseXor:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of bitwise xor was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of bitwise xor was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of bitwise xor was not an integer, and instead was of type {left.GetType()}.");
 
@@ -221,31 +281,67 @@ namespace Keysharp.Scripting
 
 				case Operator.BooleanAnd:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of boolean and was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of boolean and was null.");
+
+					if (left == null)
+						throw new TypeError("Left side operand of boolean and was null.");
+
+					if (right == null)
+						throw new TypeError("Right side operand of boolean and was null.");
+
 					var b1 = ForceBool(left);
 
 					if (!b1)
 						return left;
 
 					return right;
-					//return ForceBool(left) && ForceBool(right);
 				}
 
 				case Operator.BooleanOr:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of boolean or was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of boolean or was null.");
+
+					if (left == null)
+						throw new TypeError("Left side operand of boolean or was null.");
+
+					if (right == null)
+						throw new TypeError("Right side operand of boolean or was null.");
+
 					var b1 = ForceBool(left);
 
 					if (b1)
 						return left;
 
 					return right;
-					//return ForceBool(left) || ForceBool(right);
 				}
 
 				case Operator.Concat:
+				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of concat was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of concat was null.");
+
 					return string.Concat(ForceString(left), ForceString(right));
+				}
 
 				case Operator.RegEx:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of regular expression was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of regular expression was null.");
+
 					object outvar = null;
 					_ = RegEx.RegExMatch(ForceString(left), ForceString(right), ref outvar, 1);
 					return outvar;
@@ -253,6 +349,12 @@ namespace Keysharp.Scripting
 
 				case Operator.FloorDivide:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of floor divide was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of floor divide was null.");
+
 					if (left is double)
 						throw new TypeError($"Left side operand of integer divide was not an integer, and instead was of type {left.GetType()}.");
 
@@ -265,10 +367,13 @@ namespace Keysharp.Scripting
 
 				case Operator.IdentityInequality:
 				{
-					_ = MatchTypes(ref left, ref right);
-
 					if (left == null)
 						return right != null;
+
+					if (right == null)
+						return left != null;
+
+					_ = MatchTypes(ref left, ref right);
 
 					if (left is string s1 && right is string s2)
 						return Strings.StrCmp(s1, s2, true) != 0;
@@ -278,10 +383,13 @@ namespace Keysharp.Scripting
 
 				case Operator.IdentityEquality://This is for a double equal sign in a conditional, and uses case sensitive comparison for strings.
 				{
-					_ = MatchTypes(ref left, ref right);
-
 					if (left == null)
 						return right == null;
+
+					if (right == null)
+						return left == null;
+
+					_ = MatchTypes(ref left, ref right);
 
 					if (left is string s1 && right is string s2)
 						return Strings.StrCmp(s1, s2, true) == 0;
@@ -291,6 +399,12 @@ namespace Keysharp.Scripting
 
 				case Operator.ValueEquality://This is for a single equal sign in a conditional, and uses the case insensitive comparison type for strings.
 				{
+					if (left == null)
+						return right == null;
+
+					if (right == null)
+						return left == null;
+
 					_ = MatchTypes(ref left, ref right);
 
 					if (left is string s1 && right is string s2)
@@ -336,11 +450,17 @@ namespace Keysharp.Scripting
 						return true;
 					}
 					else
-						return left == null ? right == null : left.Equals(right);//Will go here if both are double or decimal.
+						return left.Equals(right);//Will go here if both are double or decimal.
 				}
 
 				case Operator.LessThan:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of less than was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of less than was null.");
+
 					if (left is string s1 && right is string s2)
 						return Strings.StrCmp(s1, s2, true) < 0;
 					else
@@ -349,6 +469,12 @@ namespace Keysharp.Scripting
 
 				case Operator.LessThanOrEqual:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of less than or equal was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of less than or equal was null.");
+
 					if (left is string s1 && right is string s2)
 						return Strings.StrCmp(s1, s2, true) <= 0;
 					else
@@ -357,6 +483,12 @@ namespace Keysharp.Scripting
 
 				case Operator.GreaterThan:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of greater than was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of greater than was null.");
+
 					if (left is string s1 && right is string s2)
 						return Strings.StrCmp(s1, s2, true) > 0;
 					else
@@ -365,6 +497,12 @@ namespace Keysharp.Scripting
 
 				case Operator.GreaterThanOrEqual:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of greater than or equal was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of greater than or equal was null.");
+
 					if (left is string s1 && right is string s2)
 						return Strings.StrCmp(s1, s2, true) >= 0;
 					else
@@ -373,6 +511,12 @@ namespace Keysharp.Scripting
 
 				case Operator.ValueInequality://This is for != or <> in a conditional.
 				{
+					if (left == null)
+						return right != null;
+
+					if (right == null)
+						return left != null;
+
 					_ = MatchTypes(ref left, ref right);
 
 					if (left is string s1 && right is string s2)
@@ -383,6 +527,12 @@ namespace Keysharp.Scripting
 
 				case Operator.Modulus:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of modulo was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of modulo was null.");
+
 					if (left is long l && right is long r)
 						return l % r;
 
@@ -390,11 +540,25 @@ namespace Keysharp.Scripting
 				}
 
 				case Operator.Power:
+				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of modulus was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of modulus was null.");
+
 					return Math.Pow(ForceDouble(left), ForceDouble(right));
+				}
 
 				case Operator.Minus:
 				case Operator.Subtract:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of subtraction or minus was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of subtraction or minus was null.");
+
 					if (left is long l && right is long r)
 						return l - r;
 
@@ -403,6 +567,12 @@ namespace Keysharp.Scripting
 
 				case Operator.Multiply:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of multiply was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of multiply was null.");
+
 					if (left is long l && right is long r)
 						return l * r;
 
@@ -411,6 +581,12 @@ namespace Keysharp.Scripting
 
 				case Operator.Divide:
 				{
+					if (left == null)
+						_ = Dialogs.MsgBox("Left side operand of divide was null.");
+
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of divide was null.");
+
 					var r = ForceDouble(right);
 
 					if (r == 0.0)
@@ -420,7 +596,9 @@ namespace Keysharp.Scripting
 				}
 
 				case Operator.Is:
+				{
 					return IfLegacy(left, "is", ForceString(right));
+				}
 
 				default:
 					throw new ValueError($"Operator {op} cannot be applied to: {left} and {right}");
@@ -438,6 +616,9 @@ namespace Keysharp.Scripting
 				case Operator.Minus:
 				case Operator.Subtract:
 				{
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of contains was null.");
+
 					if (right is long l)
 					{
 						return -l;
@@ -455,6 +636,9 @@ namespace Keysharp.Scripting
 
 				case Operator.BitwiseNot:
 				{
+					if (right == null)
+						_ = Dialogs.MsgBox("Right side operand of bitwise not was null.");
+
 					if (right is double)
 						throw new TypeError($"Unary operand of logical not was not an integer, and instead was of type {right.GetType()}.");
 

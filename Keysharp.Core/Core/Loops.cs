@@ -42,7 +42,7 @@ namespace Keysharp.Core
 			if (!(obj is string ss) || ss != string.Empty)
 			{
 				var n = obj.Al();
-				var info = Push();
+				var info = Peek(LoopType.Normal);//The calling code must have called Push() with this type.
 
 				if (n != -1)
 				{
@@ -84,7 +84,7 @@ namespace Keysharp.Core
 		public static IEnumerable LoopFile(object filePattern, object mode = null)
 		{
 			bool d = false, f = true, r = false;
-			var info = Push(LoopType.Directory);
+			var info = Peek(LoopType.Directory);//The calling code must have called Push() with this type.
 			var path = filePattern.As();
 			var m = mode.As();
 			//Dialogs.MsgBox(Path.GetFullPath(path));
@@ -150,7 +150,7 @@ namespace Keysharp.Core
 			var i = input.As();
 			var delimiters = delimiterChars.As();
 			var omit = omitChars.As();
-			var info = Push(LoopType.Parse);
+			var info = Peek(LoopType.Parse);//The calling code must have called Push() with this type.
 
 			if (delimiters.ToLowerInvariant() == Keywords.Keyword_CSV)
 			{
@@ -255,7 +255,7 @@ namespace Keysharp.Core
 		{
 			var input = inputFile.As();
 			var output = outputFile.As();
-			var info = Push(LoopType.File);
+			var info = Peek(LoopType.File);//The calling code must have called Push() with this type.
 			//Dialogs.MsgBox(Path.GetFullPath(input));
 
 			if (output.Length > 0)
@@ -311,7 +311,7 @@ namespace Keysharp.Core
 			if (!k && !v)
 				v = true;
 
-			var info = Push(LoopType.Registry);
+			var info = Peek(LoopType.Registry);//The calling code must have called Push() with this type.
 			var (reg, compname, key) = Conversions.ToRegRootKey(keyname);
 
 			if (reg != null)

@@ -27,7 +27,20 @@ namespace Keysharp.Core
 		/// </summary>
 		internal static bool Suspended { get; set; }
 
-
+		[PublicForTestOnly]
+		public static void ResetState()
+		{
+			cachedFuncObj = new ();
+			callingCritical = false;
+			hasExited = false;
+			IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
+			mainTimer = null;
+			NoSleep = -1;
+			persistentValueSetByUser = false;
+			timers = new ();
+			AllowInterruption = true;
+			Suspended = false;
+		}
 
 		/// <summary>
 		/// Prevents the current thread from being interrupted by other threads, or enables it to be interrupted.
@@ -544,7 +557,7 @@ namespace Keysharp.Core
 				return false;
 
 			Dialogs.CloseMessageBoxes();
-			var ec = Script.IsReadyToExecute ? exitCode.Ai() : (int)ExitReasons.Critical;
+			var ec = exitCode.Ai();
 			Accessors.A_ExitReason = exitReason.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;

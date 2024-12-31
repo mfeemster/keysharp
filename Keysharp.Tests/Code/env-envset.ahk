@@ -6,7 +6,7 @@ EnvSet(key, s)
 val := EnvGet(key)
 
 if (val == s) 
- 	FileAppend, "pass", "*"
+	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 	

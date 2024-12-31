@@ -248,9 +248,10 @@ namespace Keysharp.Scripting
 					var blockOpen = trimmed.EndsWith(BlockOpen);
 
 					if (blockOpen)
-						parts[parts.Length - 1] = trimmed.Trim(new char[] { BlockOpen, ' ' });
-					//var checkBrace = true;
+						parts[parts.Length - 1] = trimmed.Trim([BlockOpen, ' ']);
+
 					CodeMethodInvokeExpression iterator;
+					var lt = LoopType.Normal;
 
 					if (parts.Length > 1 && parts.Last() != string.Empty)//If the last char was a {, then it was trimmed and replaced with a "".
 					{
@@ -264,25 +265,30 @@ namespace Keysharp.Scripting
 						switch (sub[0].ToUpperInvariant())
 						{
 							case "READ":
+								lt = LoopType.File;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRead;
 								break;
 
 							case "PARSE":
+								lt = LoopType.Parse;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopParse;
 								break;
 #if WINDOWS
 
 							case "REG":
+								lt = LoopType.Registry;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRegistry;
 								break;
 #endif
 
 							case "FILES":
+								lt = LoopType.Directory;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopFile;
 								break;
 
 							default:
 								skip = false;
+								lt = LoopType.Normal;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.Loop;
 								break;
 						}
@@ -330,6 +336,9 @@ namespace Keysharp.Scripting
 					blocks.Push(block);
 					var tcf = new CodeTryCatchFinallyStatement();
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
+					var push = (CodeMethodInvokeExpression)InternalMethods.Push;
+					push.Parameters.Add(new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(LoopType)), lt.ToString()));
+					tcf.TryStatements.Add(new CodeExpressionStatement(push));
 					tcf.TryStatements.Add(loop);
 					tcf.FinallyStatements.Add(pop);
 					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
@@ -391,14 +400,6 @@ namespace Keysharp.Scripting
 								var loopvarexpr = ParseSingleExpression(codeLine, split, false);
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
 								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
-								//If this loop is inside of a class method that had declared all variables within it to be global,
-								//then the call to ParseSingleExpression() will not have created the iteration variable because it
-								//wrongly assumes it's global.
-								//So manually do it here.
-								var dkt = allVars[typeStack.Peek()].GetOrAdd(Scope);
-
-								if (!dkt.ContainsKey(loopvarstr))
-									dkt[loopvarstr] = nullPrimitive;
 							}
 							else
 								varlist.Add(split?.Length == 0 ? "_" : split);
@@ -424,7 +425,7 @@ namespace Keysharp.Scripting
 							IncrementStatement = new CodeSnippetStatement(string.Empty)
 						};
 						loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
-						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/({vars}) = {id}.Current"));
+						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/var ({vars}) = {id}.Current"));
 						var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
 						{
 							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
@@ -461,9 +462,10 @@ namespace Keysharp.Scripting
 					var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
 					var tcf = new CodeTryCatchFinallyStatement();
+					tcf.TryStatements.Add(push);
 					tcf.TryStatements.Add(loop);
 					tcf.FinallyStatements.Add(pop);
-					return [push, tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
+					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
 				}
 
 				case FlowUntil:

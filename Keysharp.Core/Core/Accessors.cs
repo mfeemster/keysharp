@@ -233,7 +233,7 @@
 				{
 #if WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))//Will need a cross platform version of this.//TODO
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 #endif
@@ -290,7 +290,7 @@
 
 #elif WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
@@ -1020,11 +1020,6 @@
 		/// <see cref="A_AhkPath"/>.
 		/// </summary>
 		public static string A_KeysharpPath => A_AhkPath;
-
-		/// <summary>
-		/// The system's default language code.
-		/// </summary>
-		public static long A_Language => Thread.CurrentThread.CurrentCulture.LCID;
 
 		/// <summary>
 		/// The result from the Windows GetLastError() function.

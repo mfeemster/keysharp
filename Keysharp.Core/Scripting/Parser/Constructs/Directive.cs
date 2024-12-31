@@ -111,7 +111,7 @@ namespace Keysharp.Scripting
 				{
 					if (numeric)
 					{
-						Accessors.A_ClipboardTimeout = value;
+						Accessors.A_ClipboardTimeout = (long)value;
 						var clipvar = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_ClipboardTimeout");
 						var clipset = new CodeAssignStatement(clipvar, new CodePrimitiveExpression(value));
 						initial.Insert(0, clipset);

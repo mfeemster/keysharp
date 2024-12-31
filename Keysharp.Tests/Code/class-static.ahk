@@ -1,15 +1,17 @@
 class myclass
 {
-	static a :=
+	static a := unset
 	static b := ""
 	static c := "asdf"
 	static x := 123
 	static y := x
+	static arr := [1, 2, 3]
+	static m := {one : 1, two : 2, three : 3}
 }
 
 classobj := myclass.Call()
 
-If (myclass.a == "")
+If (myclass.a == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -62,7 +64,7 @@ else
 
 a := 1
 
-If (myclass.a == "")
+If (myclass.a == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -70,6 +72,16 @@ else
 myclass.a := 123
 
 If (a == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (myclass.arr is Array && myclass.arr.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (myclass.m is Map && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

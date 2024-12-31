@@ -29,10 +29,12 @@
 		private void MergeAssignmentAt(CodeLine codeLine, List<object> parts, int i)
 		{
 			int x = i - 1, y = i + 1;
-			var right = y < parts.Count;
 
 			if ((parts[i] as CodeBinaryOperatorType? ) != CodeBinaryOperatorType.Assign)
 				return;
+
+			if (!(y < parts.Count))
+				throw new ParseException("Empty assignment.", codeLine);
 
 			if (i > 0 && IsJsonObject(parts[x]))//Unsure why anything using Index() is considered JSON, but this appears to work.
 			{
@@ -42,11 +44,8 @@
 			else if (i > 0 && IsArrayExtension(parts[x]))
 			{
 				var extend = (CodeMethodInvokeExpression)parts[x];
-				_ = extend.Parameters.Add(right ? VarMixedExpr(codeLine, parts[y]) : nullPrimitive);
-
-				if (right)
-					parts.RemoveAt(y);
-
+				_ = extend.Parameters.Add(VarMixedExpr(codeLine, parts[y]));
+				parts.RemoveAt(y);
 				parts.RemoveAt(i);
 				return;
 			}
@@ -66,12 +65,9 @@
 								   ? caie
 								   : parts[x] is CodePropertyReferenceExpression cpre ? cpre : VarId(parts[x] as CodeExpression, false);
 
-			assign.Right = right ? (parts[y] is CodeVariableReferenceExpression cvre2 ? cvre2 : VarMixedExpr(codeLine, parts[y])) : nullPrimitive;
+			assign.Right = parts[y] is CodeVariableReferenceExpression cvre2 ? cvre2 : VarMixedExpr(codeLine, parts[y]);
 			parts[x] = BinOpToSnippet(assign);
-
-			if (right)
-				parts.RemoveAt(y);
-
+			parts.RemoveAt(y);
 			parts.RemoveAt(i);
 		}
 
