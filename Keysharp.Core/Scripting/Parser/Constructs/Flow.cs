@@ -248,9 +248,10 @@ namespace Keysharp.Scripting
 					var blockOpen = trimmed.EndsWith(BlockOpen);
 
 					if (blockOpen)
-						parts[parts.Length - 1] = trimmed.Trim(new char[] { BlockOpen, ' ' });
-					//var checkBrace = true;
+						parts[parts.Length - 1] = trimmed.Trim([BlockOpen, ' ']);
+
 					CodeMethodInvokeExpression iterator;
+					var lt = LoopType.Normal;
 
 					if (parts.Length > 1 && parts.Last() != string.Empty)//If the last char was a {, then it was trimmed and replaced with a "".
 					{
@@ -264,25 +265,30 @@ namespace Keysharp.Scripting
 						switch (sub[0].ToUpperInvariant())
 						{
 							case "READ":
+								lt = LoopType.File;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRead;
 								break;
 
 							case "PARSE":
+								lt = LoopType.Parse;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopParse;
 								break;
 #if WINDOWS
 
 							case "REG":
+								lt = LoopType.Registry;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRegistry;
 								break;
 #endif
 
 							case "FILES":
+								lt = LoopType.Directory;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopFile;
 								break;
 
 							default:
 								skip = false;
+								lt = LoopType.Normal;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.Loop;
 								break;
 						}
@@ -330,6 +336,9 @@ namespace Keysharp.Scripting
 					blocks.Push(block);
 					var tcf = new CodeTryCatchFinallyStatement();
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
+					var push = (CodeMethodInvokeExpression)InternalMethods.Push;
+					push.Parameters.Add(new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(LoopType)), lt.ToString()));
+					tcf.TryStatements.Add(new CodeExpressionStatement(push));
 					tcf.TryStatements.Add(loop);
 					tcf.FinallyStatements.Add(pop);
 					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
@@ -453,9 +462,10 @@ namespace Keysharp.Scripting
 					var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
 					var tcf = new CodeTryCatchFinallyStatement();
+					tcf.TryStatements.Add(push);
 					tcf.TryStatements.Add(loop);
 					tcf.FinallyStatements.Add(pop);
-					return [push, tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
+					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
 				}
 
 				case FlowUntil:
