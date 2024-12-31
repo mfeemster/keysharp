@@ -1,6 +1,6 @@
 class myclass
 {
-	static a :=
+	static a := unset
 	static b := ""
 	static c := "asdf"
 	static x := 123
@@ -11,7 +11,7 @@ class myclass
 
 classobj := myclass.Call()
 
-If (myclass.a == "")
+If (myclass.a == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -64,7 +64,7 @@ else
 
 a := 1
 
-If (myclass.a == "")
+If (myclass.a == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

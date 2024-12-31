@@ -84,26 +84,26 @@ else
 	FileAppend, "fail", "*"
 }
 
-if x =
+if x = unset
 	FileAppend, "fail", "*"
-else if x !=
+else if x != unset
 	FileAppend, "pass", "*"
 	
-if x ==
+if x == unset
 	FileAppend, "fail", "*"
-else if x !=
+else if x != unset
 	FileAppend, "pass", "*"
 
-if (x =)
+if (x = unset)
 	FileAppend, "fail", "*"
-else if (x != )
+else if (x != unset)
 	FileAppend, "pass", "*"
 	
-if (x ==)
+if (x == unset)
 	FileAppend, "fail", "*"
-else if (x !=)
+else if (x != unset)
 	FileAppend, "pass", "*"
-
+	
 x := ""
 b := true
 c := false

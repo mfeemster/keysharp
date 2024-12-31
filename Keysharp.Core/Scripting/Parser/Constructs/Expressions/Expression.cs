@@ -188,7 +188,7 @@ namespace Keysharp.Scripting
 							continue;
 						}
 						else
-							throw new Error("Cannot create a reference to a value returned from a function call.");
+							throw new ParseException("Cannot create a reference to a value returned from a function call.");
 					}
 
 					_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
@@ -448,7 +448,7 @@ namespace Keysharp.Scripting
 													continue;
 												}
 												else
-													throw new Error("Cannot create a reference to a value returned from a function call.");
+													throw new ParseException("Cannot create a reference to a value returned from a function call.", codeLine);
 											}
 
 											invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
@@ -1094,7 +1094,7 @@ namespace Keysharp.Scripting
 							}
 						}
 						else
-							throw new Exception($"Unsupported tokens surrounding a fat arrow function definition at line {codeLine}");
+							throw new ParseException($"Unsupported tokens surrounding a fat arrow function definition.", codeLine);
 					}
 					else if (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] as string != "=>"))//Allow for a single no parentheses fat arrow function variadic parameter declaration: x := a* => 123.
 					{
@@ -1437,11 +1437,11 @@ namespace Keysharp.Scripting
 			var scan = true;
 			var level = -1;
 
-			//Support implicit comparison to empty string statements such as if (x !=)
+			//Disallow implicit comparison to empty string statements such as if (x !=)
 			//by detecting that the last token was an operator with nothing following it.
 			if (parts[parts.Count - 1] is Script.Operator opend)
 			{
-				parts.Add(emptyStringPrimitive);
+				throw new ParseException("Implicit comparisons not supported.", codeLine);
 			}
 
 			//Unsure what this final loop actually does.
