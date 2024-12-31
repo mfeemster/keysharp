@@ -18,6 +18,7 @@ namespace Keysharp.Tests
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);
+			_ = Push();
 
 			foreach (long i in Loop(n))
 			{
@@ -29,6 +30,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(x, n);
 			Assert.AreEqual(0L, Accessors.A_Index);
 			x = 0;
+			_ = Push();
 
 			foreach (long i in Loop(n))
 			{
@@ -49,6 +51,12 @@ namespace Keysharp.Tests
 
 		[Test, Category("Flow")]
 		public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
+
+		[Test, Category("Flow")]
+		public void FlowLoopReturn() => Assert.IsTrue(TestScript("flow-loop-return", false));
+
+		[Test, Category("Flow")]
+		public void FlowLoopThrow() => Assert.IsTrue(TestScript("flow-loop-throw", false));
 
 #if WINDOWS
 		[Test, Category("Flow")]
@@ -90,8 +98,8 @@ namespace Keysharp.Tests
 			Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
 			//
 			var i = 0;
+			_ = Push(LoopType.Registry);
 
-			//
 			foreach (var reg in LoopRegistry(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr"))
 			{
 				val = Registrys.RegRead(null, null, "testdefault");
@@ -164,7 +172,6 @@ namespace Keysharp.Tests
 			}
 
 			_ = Pop();
-			//
 			_ = Registrys.RegDelete(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "testval");
 			_ = Registrys.RegDelete(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
 			_ = Registrys.RegDelete(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
@@ -202,6 +209,7 @@ namespace Keysharp.Tests
 			const long n = 10L;
 			var x = 0L;
 			Assert.AreEqual(0L, Accessors.A_Index);
+			_ = Push();
 
 			foreach (long i in Loop(n))
 			{

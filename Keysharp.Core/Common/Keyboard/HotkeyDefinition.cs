@@ -603,7 +603,7 @@ namespace Keysharp.Core.Common.Keyboard
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Keysharp.Core.Keyboard.blockMouseMove || (Script.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
+			if (Keysharp.Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
@@ -1569,7 +1569,7 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					if ((tempSc = (uint)Joystick.Joystick.ConvertJoy(text, ref joystickId, true)) == 0)  // Is there a joystick control/button?
 					{
-						if (text.Length == 1 && !Script.isReadyToExecute)
+						if (text.Length == 1 && !Script.IsReadyToExecute)
 						{
 							// At load time, single-character key names are always considered valid but show a
 							// warning if they can't be registered as hotkeys on the current keyboard layout.

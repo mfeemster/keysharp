@@ -75,7 +75,7 @@
 				if (persistentTooltips[id] == null)
 					persistentTooltips[id] = new ToolTip
 				{
-					Active = true,
+					Active = false,
 #if WINDOWS
 					AutomaticDelay = 0,//Delay of 0 throws an exception on linux.
 #endif
@@ -104,14 +104,21 @@
 
 #endif
 			}, false);
+			// CheckedBeginInvoke might run in a different thread with a different CoordMode
+			var coordModeToolTip = Mouse.Coords.Tooltip;
 			tooltipInvokerForm.CheckedBeginInvoke(() =>
 			{
-				tt.Active = true;
 #if LINUX
+				tt.Active = true;
 				tt.SetToolTip(tooltipInvokerForm, text);//Setting position is not possible on linux.
 #elif WINDOWS
 				var mSetTrackPosition = tt.GetType().GetMethod("SetTrackPosition", BindingFlags.Instance | BindingFlags.NonPublic);
 				var mSetTool = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+
+				if (!tt.Active) // If this is the first run then invoke the ToolTip once before displaying it, otherwise it shows at the mouse position
+					_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, new Point(0, 0)]);
+
+				tt.Active = true;
 
 				if (one_or_both_coords_unspecified)
 				{
@@ -142,7 +149,7 @@
 						if (_y != int.MinValue)
 							tempy = _y;
 
-						if (Mouse.Coords.Tooltip == CoordModeType.Screen)
+						if (coordModeToolTip == CoordModeType.Screen)
 						{
 							if (ttp != null && ttp?.X == tempx && ttp?.Y == tempy && tt.GetToolTip(tooltipInvokerForm) == t)
 								return;

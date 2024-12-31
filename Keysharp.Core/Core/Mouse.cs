@@ -10,14 +10,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Internal helper to lazy initialize and retrieve the <see cref="CoordModes"/> for the current thread.
 		/// </summary>
-		internal static CoordModes Coords
-		{
-			get
-			{
-				var tv = Threads.GetThreadVariables();
-				return tv.coords ?? (tv.coords = new CoordModes());
-			}
-		}
+		internal static CoordModes Coords => Threads.GetThreadVariables().Coords;
 
 		/// <summary>
 		/// Clicks a mouse button at the specified coordinates. It can also hold down a mouse button, turn the mouse wheel, or move the mouse.
@@ -78,7 +71,7 @@ namespace Keysharp.Core
 		/// </param>
 		/// <returns>The previous setting; either Screen, Window or Client.</returns>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if targetType or relativeTo do not contain a valid values.</exception>
-		public static CoordModeType CoordMode(object targetType, object relativeTo = null)
+		public static object CoordMode(object targetType, object relativeTo = null)
 		{
 			var target = targetType.As();
 			var mode = relativeTo.As(Keyword_Screen);
@@ -97,33 +90,33 @@ namespace Keysharp.Core
 			else
 				throw new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().");
 
-			CoordModeType prev;
+			object prev;
 
 			switch (target.ToLowerInvariant())
 			{
 				case Keyword_ToolTip:
-					prev = Coords.Tooltip;
-					Coords.Tooltip = rel;
+					prev = Accessors.A_CoordModeToolTip;
+					Accessors.A_CoordModeToolTip = rel;
 					break;
 
 				case Keyword_Pixel:
-					prev = Coords.Pixel;
-					Coords.Pixel = rel;
+					prev = Accessors.A_CoordModePixel;
+					Accessors.A_CoordModePixel = rel;
 					break;
 
 				case Keyword_Mouse:
-					prev = Coords.Mouse;
-					Coords.Mouse = rel;
+					prev = Accessors.A_CoordModeMouse;
+					Accessors.A_CoordModeMouse = rel;
 					break;
 
 				case Keyword_Caret:
-					prev = Coords.Caret;
-					Coords.Caret = rel;
+					prev = Accessors.A_CoordModeCaret;
+					Accessors.A_CoordModeCaret = rel;
 					break;
 
 				case Keyword_Menu:
-					prev = Coords.Menu;
-					Coords.Menu = rel;
+					prev = Accessors.A_CoordModeMenu;
+					Accessors.A_CoordModeMenu = rel;
 					break;
 
 				default:
@@ -490,33 +483,47 @@ namespace Keysharp.Core
 
 	/// <summary>
 	/// Class to hold the coordinate modes for various operations.
+	/// The properties will start with the default values set in the auto exec section.
+	/// A new instance of this class will be lazily instantiated in each thread.
 	/// </summary>
 	internal class CoordModes
 	{
 		/// <summary>
+		/// Constructor that starts each field off with the global default set by the auto exec section.
+		/// </summary>
+		internal CoordModes()
+		{
+			Caret = Accessors.CoordModeCaretDefault;
+			Menu = Accessors.CoordModeMenuDefault;
+			Mouse = Accessors.CoordModeMouseDefault;
+			Pixel = Accessors.CoordModePixelDefault;
+			Tooltip = Accessors.CoordModeToolTipDefault;
+		}
+
+		/// <summary>
 		/// The coordinate mode for caret operations.
 		/// </summary>
-		public CoordModeType Caret { get; set; } = CoordModeType.Client;
+		internal CoordModeType Caret { get; set; }
 
 		/// <summary>
 		/// The coordinate mode for menu operations.
 		/// </summary>
-		public CoordModeType Menu { get; set; } = CoordModeType.Client;
+		internal CoordModeType Menu { get; set; }
 
 		/// <summary>
 		/// The coordinate mode for mouse operations.
 		/// </summary>
-		public CoordModeType Mouse { get; set; } = CoordModeType.Client;
+		internal CoordModeType Mouse { get; set; }
 
 		/// <summary>
 		/// The coordinate mode for pixel operations.
 		/// </summary>
-		public CoordModeType Pixel { get; set; } = CoordModeType.Client;
+		internal CoordModeType Pixel { get; set; }
 
 		/// <summary>
 		/// The coordinate mode for tool tip operations.
 		/// </summary>
-		public CoordModeType Tooltip { get; set; } = CoordModeType.Client;
+		internal CoordModeType Tooltip { get; set; }
 
 		/// <summary>
 		/// Retrieves the coordinate mode for the specified operation.

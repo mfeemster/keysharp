@@ -3,7 +3,7 @@ func0() {
 
 x := func0()
 
-If (x == )
+If (x == "")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -68,4 +68,3 @@ If (x.two == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	

@@ -24,6 +24,7 @@ namespace Keysharp.Tests
 			var hotstrings = File.ReadLines(filename);
 			var delimiters = new char[] { ',' };
 			HotstringManager.ClearHotstrings();
+			HotstringManager.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
 
 			foreach (var hotstring in hotstrings)
@@ -83,6 +84,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ChangeDefaultOptions()
 		{
+			HotstringManager.RestoreDefaults(true);
 			//End char required.
 			var newVal = false;
 			var origVal = Accessors.A_DefaultHotstringEndCharRequired;
@@ -309,6 +311,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ChangeEndChars()
 		{
+			HotstringManager.RestoreDefaults(true);
 			var newVal = "newendchars";
 			var origVal = Accessors.A_DefaultHotstringEndChars;
 			Assert.AreEqual(origVal, "-()[]{}:;'\"/\\,.?!\r\n \t");
@@ -324,6 +327,7 @@ namespace Keysharp.Tests
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
 			btwtyped = false;
 			HotstringManager.ClearHotstrings();
+			HotstringManager.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
 			_ = HotstringManager.AddHotstring("::btw", Functions.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
 			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
@@ -357,10 +361,10 @@ namespace Keysharp.Tests
 			//After the script exits, the hotstrings are still kept in memory in the global list.
 			//So query them below to ensure they were properly parsed.
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("btw ");
+			HotstringManager.AddChars("bitw ");
 			var hs = HotstringManager.MatchHotstring();
-			Assert.AreEqual(hs.Name, "::btw");
-			Assert.AreEqual(hs.Replacement, "by the way");
+			Assert.AreEqual(hs.Name, "::bitw");
+			Assert.AreEqual(hs.Replacement, "biggest in the world");
 			_ = Keyboard.Hotstring("Reset");
 			//
 			HotstringManager.AddChars("1 ");
@@ -386,6 +390,64 @@ namespace Keysharp.Tests
 			Assert.AreEqual(hs.Name, "::7:");
 			Assert.AreEqual(hs.Replacement, ":8");
 			_ = Keyboard.Hotstring("Reset");
+			//
+			var val = "Any text between the top and bottom parentheses is treated literally.\r\nBy default" +
+					  ", the hard carriage return (Enter) between the previous line and this one is als" +
+					  "o preserved.\r\n    By default, the indentation (tab) to the left of this line is " +
+					  "preserved.";
+			HotstringManager.AddChars("text1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::text1");
+			Assert.AreEqual(hs.Replacement, val);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf1 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf1");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf2 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf2");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf3 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf3");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf4 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf4");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf5 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf5");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf6 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf6");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf7 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, ":X:mf7");
+			Assert.AreEqual(hs.Replacement, null);
+			//
+			_ = Keyboard.Hotstring("Reset");
+			HotstringManager.AddChars("mf8 ");
+			hs = HotstringManager.MatchHotstring();
+			Assert.AreEqual(hs.Name, "::mf8");
+			Assert.AreEqual(hs.Replacement, null);
+			//
 			HotstringManager.ClearHotstrings();
 		}
 
@@ -435,34 +497,36 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ResetOnMouseClick()
 		{
+			HotstringManager.RestoreDefaults(true);
 			var newVal = false;
-			var origVal = Accessors.A_HotstringNoMouse;
+			var origVal = Accessors.A_DefaultHotstringNoMouse;
 			Assert.AreEqual(origVal, false);
 			var oldVal = Keyboard.Hotstring("MouseReset", newVal);
-			Assert.AreNotEqual(origVal, Accessors.A_HotstringNoMouse);
-			Assert.AreEqual(Accessors.A_HotstringNoMouse, !newVal);
+			Assert.AreNotEqual(origVal, Accessors.A_DefaultHotstringNoMouse);
+			Assert.AreEqual(Accessors.A_DefaultHotstringNoMouse, !newVal);
 			Assert.AreEqual(origVal.Ab(), !oldVal.Ab());
 			//Reset to what it was for the sake of other tests in this class.
 			_ = Keyboard.Hotstring("MouseReset", true);
 		}
 
-        [SetUp, Category("Hotstring")]
-        public void Setup()
-        {
-            _ = Keyboard.Hotstring("*0");
-            _ = Keyboard.Hotstring("C0");
-            _ = Keyboard.Hotstring("?0");
-            _ = Keyboard.Hotstring("B");
-            _ = Keyboard.Hotstring("O0");
-            _ = Keyboard.Hotstring("R0");
-            _ = Keyboard.Hotstring("T0");
-            _ = Keyboard.Hotstring("S0");
-            //_ = Keyboard.Hotstring("SI");
-            _ = Keyboard.Hotstring("Z0");
-            _ = Keyboard.Hotstring("K0");
-            _ = Keyboard.Hotstring("P0");
-            _ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
-            HotstringManager.ClearHotstrings();
-        }
+		[SetUp, Category("Hotstring")]
+		public void Setup()
+		{
+			_ = Keyboard.Hotstring("*0");
+			_ = Keyboard.Hotstring("C0");
+			_ = Keyboard.Hotstring("?0");
+			_ = Keyboard.Hotstring("B");
+			_ = Keyboard.Hotstring("O0");
+			_ = Keyboard.Hotstring("R0");
+			_ = Keyboard.Hotstring("T0");
+			_ = Keyboard.Hotstring("S0");
+			//_ = Keyboard.Hotstring("SI");
+			_ = Keyboard.Hotstring("Z0");
+			_ = Keyboard.Hotstring("K0");
+			_ = Keyboard.Hotstring("P0");
+			_ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
+			HotstringManager.RestoreDefaults(true);
+			HotstringManager.ClearHotstrings();
+		}
 	}
 }

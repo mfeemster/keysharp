@@ -15,12 +15,10 @@
 		internal static List<IFuncObj> hotCriterions = [];
 		internal static IntPtr hotExprLFW = IntPtr.Zero;
 		internal static List<IFuncObj> hotExprs = [];
-		internal static bool hsResetUponMouseClick = true;
 		internal static InputType input;
 		internal static int inputBeforeHotkeysCount;
 		internal static DateTime inputTimeoutAt = DateTime.Now;
 		internal static bool inputTimerExists;
-		internal static bool isReadyToExecute;
 		internal static DateTime lastPeekTime;
 		internal static MainWindow mainWindow;
 		internal static Gui mainWindowGui;
@@ -42,6 +40,7 @@
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
+		private static bool isReadyToExecute;
 		private static IntPtr mainWindowHandle;
 
 		public static Variables Vars { get; private set; }
@@ -55,6 +54,8 @@
 		}
 
 		internal static bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
+
+		internal static bool IsReadyToExecute => isReadyToExecute;
 
 		internal static IntPtr MainWindowHandle
 		{
@@ -659,7 +660,7 @@
 		internal static void SetInitialFloatFormat()
 		{
 			var t = Thread.CurrentThread;
-			var ci = new CultureInfo(t.CurrentCulture.LCID);
+			var ci = new CultureInfo(t.CurrentCulture.Name);
 			ci.NumberFormat.NumberDecimalDigits = 6;
 			t.CurrentCulture = ci;
 		}

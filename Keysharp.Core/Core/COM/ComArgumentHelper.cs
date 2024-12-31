@@ -113,7 +113,7 @@ namespace Keysharp.Core.COM
 						if (!isreturn)
 						{
 							if (p is string s)
-								SetupPointerArg(i, n, Encoding.UTF8.GetBytes(s + char.MinValue));
+								SetupPointerArg(i, n, Encoding.Unicode.GetBytes(s));
 							else
 								throw new TypeError($"Argument had type {name} but was not a string.");
 						}
@@ -128,7 +128,7 @@ namespace Keysharp.Core.COM
 						if (!isreturn)
 						{
 							if (p is string s)
-								SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s + char.MinValue));
+								SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s));
 							else
 								throw new TypeError($"Argument had type {name} but was not a string.");
 						}

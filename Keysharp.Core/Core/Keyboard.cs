@@ -314,7 +314,7 @@ break_twice:;
 			}
 			else if (string.Compare(name, "MouseReset", true) == 0) // "MouseReset, true" seems more intuitive than "NoMouse, false"
 			{
-				var previousValue = Script.hsResetUponMouseClick;
+				var previousValue = HotstringManager.hsResetUponMouseClick;
 
 				if (replacement != null)
 				{
@@ -322,9 +322,9 @@ break_twice:;
 
 					if (val != null)
 					{
-						Script.hsResetUponMouseClick = val.Value;
+						HotstringManager.hsResetUponMouseClick = val.Value;
 
-						if (Script.hsResetUponMouseClick != previousValue && HotstringManager.enabledCount != 0) // No need if there aren't any hotstrings.
+						if (HotstringManager.hsResetUponMouseClick != previousValue && HotstringManager.enabledCount != 0) // No need if there aren't any hotstrings.
 							HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // Install the hook if needed, or uninstall if no longer needed.
 					}
 				}
@@ -383,8 +383,9 @@ break_twice:;
 
 			if (replacement != null)
 			{
-				if (xOption)
-					ifunc = Functions.GetFuncObj(replacement, null);
+				if ((ifunc = Functions.GetFuncObj(replacement, null, false)) is not null)
+				{
+				}
 				else if (executeAction)
 					throw new ValueError("The 'X' option must be used together with a function object.");
 			}
@@ -478,6 +479,7 @@ break_twice:;
 			return existing;
 		}
 
+		public static object HotstringOptions(object options) => Hotstring(options);
 		/// <summary>
 		/// Displays script info and a history of the most recent keystrokes and mouse clicks.
 		/// </summary>

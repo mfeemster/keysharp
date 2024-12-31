@@ -690,7 +690,7 @@ namespace Keysharp.Core.Windows
 			} // Keyboard vs. mouse hook.
 
 			// Since above didn't return, this keystroke is being passed through rather than suppressed.
-			if (Script.hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
+			if (HotstringManager.hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
 			{
 				HotstringManager.ClearBuf();
 			}
@@ -1845,7 +1845,7 @@ namespace Keysharp.Core.Windows
 			// might still be holding down a modifier, such as :*:<t>::Test (if '>' requires shift key).
 			// It might also fix other issues.
 			if ((kbdMsSender.modifiersLRLogical & ~(MOD_LSHIFT | MOD_RSHIFT)) != 0 // At least one non-Shift modifier is down (Shift may also be down).
-					&& ((kbdMsSender.modifiersLRLogical & (MOD_LALT | MOD_RALT)) == 0 && (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) != 0))
+					&& !((kbdMsSender.modifiersLRLogical & (MOD_LALT | MOD_RALT)) != 0 && (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) != 0))
 			{
 				// Since in some keybd layouts, AltGr (Ctrl+Alt) will produce valid characters (such as the @ symbol,
 				// which is Ctrl+Alt+Q in the German/IBM layout and Ctrl+Alt+2 in the Spanish layout), an attempt
@@ -1860,7 +1860,7 @@ namespace Keysharp.Core.Windows
 				// normally be excluded from the input (except those rare ones that have only SHIFT as a modifier).
 				// Note that ToAsciiEx() will translate ^i to a tab character, !i to plain i, and many other modified
 				// letters as just the plain letter key, which we don't want.
-				for (var input = Script.input; input != null; input = input.prev)
+				for (var input = Script.input; ; input = input.prev)
 				{
 					if (input == null) // No inputs left, and none were found that meet the conditions below.
 					{
@@ -1925,8 +1925,6 @@ namespace Keysharp.Core.Windows
 			}
 			else if (transcribeKey && vk != VK_MENU)
 			{
-				//charCount = ToUnicodeOrAsciiEx(vk, ev.scanCode  // Uses the original scan code, not the adjusted "sc" one.
-				//                             , keyState, sb, Script.menuIsVisible != MenuType.None ? 1u : 0u, activeWindowKeybdLayout);
 				var keyState = new byte[physicalKeyState.Length];
 				bool interfere = pendingDeadKeys.Count > 0 && (pendingDeadKeyInvisible || uwpAppFocused);
 
@@ -1962,7 +1960,7 @@ namespace Keysharp.Core.Windows
 				keyState[VK_CAPITAL] = (byte)(IsKeyToggledOn(VK_CAPITAL) ? 1 : 0);
 				_ = sb.Clear();
 				sb.Capacity = 8;
-				charCount = ToUnicodeOrAsciiEx(vk, ev.scanCode, keyState, sb, 0, activeWindowKeybdLayout);
+				charCount = ToUnicodeOrAsciiEx(vk, scanCode, keyState, sb, flags, activeWindowKeybdLayout);
 
 				if (charCount == 0 && (kbdMsSender.modifiersLRLogical & (MOD_LALT | MOD_RALT)) != 0 && (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0u && !interfere)
 				{
@@ -5229,9 +5227,7 @@ namespace Keysharp.Core.Windows
 				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
 					if (HasKbdHook())
 						if (UnhookWindowsHookEx(kbdHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
-						{
 							kbdHook = IntPtr.Zero;
-						}
 
 				if (((uint)hooksToBeActive & (uint)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
 				{

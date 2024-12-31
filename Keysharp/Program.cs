@@ -178,7 +178,7 @@ namespace Keysharp.Main
 				if (string.IsNullOrEmpty(script))
 					return Message("No script was specified, no text was read from stdin, and no script named keysharp.ahk was found in the current folder or your documents folder.", true);
 
-				if (!File.Exists(script))
+				if (!fromstdin && !File.Exists(script))
 					return Message($"Could not find the script file {script}.", true);
                 /*
 #if DEBUG

@@ -416,14 +416,14 @@ using static Keysharp.Scripting.Script;
 
         public (CodeCompileUnit[], CompilerErrorCollection) CreateDomFromFile(params string[] fileNames)
 		{
-            // Creating the DOM relies on querying methods form Reflections, but if previously
-            // a script assembly has been loaded (eg when running tests) then unwanted methods
-            // may be found from there. Thus clear all cached methods here, and reinitialize while
-            // ignoring the "program" namespace.
-            Reflections.Clear();
-            Reflections.Initialize(true);
-
-            var units = new CodeCompileUnit[fileNames.Length];
+			// Creating the DOM relies on querying methods from Reflections, but if previously
+			// a script assembly has been loaded (eg when running tests) then unwanted methods
+			// may be found from there. Thus clear all cached methods here, and reinitialize while
+			// ignoring the "program" namespace.
+			Reflections.Clear();
+			Reflections.Initialize(true);
+			Flow.ResetState();
+			var units = new CodeCompileUnit[fileNames.Length];
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
 			var x = Env.FindCommandLineArg("cp");
@@ -448,12 +448,14 @@ using static Keysharp.Scripting.Script;
 						if (File.Exists(fileNames[i]))
 						{
 							Script.scriptName = fileNames[i];
-							units[i] = parser.Parse<CodeCompileUnit>(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
+							using var reader = new StreamReader(Script.scriptName, enc);
+							units[i] = parser.Parse(reader, Path.GetFullPath(fileNames[i]));
 						}
 						else
 						{
 							Script.scriptName = "*";
-							units[i] = parser.Parse<CodeCompileUnit>(new StringReader(fileNames[i]), "*");//In memory.
+							using var reader = new StringReader(fileNames[i]);
+							units[i] = parser.Parse(reader, "*");//In memory.
 						}
 					}
 					catch (ParseException e)
@@ -464,7 +466,9 @@ using static Keysharp.Scripting.Script;
 					{
 						_ = errors.Add(new CompilerError { ErrorText = e.Message });
 					}
-					finally { }
+					finally
+					{
+					}
 				}
 
 				_ = Threads.EndThread(pushed);

@@ -224,19 +224,8 @@ namespace Keysharp.CompiledMain
                 base.__Init();
             }
 
-            static typesizemapper2()
-            {
-                numtypesize = "";
-                __StaticInit();
-            }
-
-            public static typesizemapper2 Call(params object[] args)
-            {
-                return new typesizemapper2(args);
-            }
-
-            public object __init { get; set; }
-        }
+    public class program
+    {
 
         [System.STAThreadAttribute()]
         public static int Main(string[] args)
@@ -246,6 +235,7 @@ namespace Keysharp.CompiledMain
                 string name = "*";
                 Keysharp.Scripting.Script.Variables.InitGlobalVars();
                 Keysharp.Scripting.Script.SetName(name);
+
                 if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
                 {
                     return 0;
@@ -272,6 +262,7 @@ namespace Keysharp.CompiledMain
             catch (System.Exception mainex)
             {
                 var ex = mainex.InnerException ?? mainex;
+
                 if (ex is Keysharp.Core.Error kserr)
                 {
                     if (ErrorOccurred(kserr))
@@ -286,17 +277,19 @@ namespace Keysharp.CompiledMain
                     var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
                     MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
                     Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                };
+                }
+
+                ;
+
                 Keysharp.Core.Flow.ExitApp(1);
+
                 return 1;
             }
         }
 
         public static object _ks_UserMainCode()
         {
-            var test = Reflections.stringToTypeProperties["Map"];
-
-            Keysharp.Core.Flow.ExitApp(0L);
+            Keysharp.Core.Flow.ExitApp(0);
             return "";
         }
     }

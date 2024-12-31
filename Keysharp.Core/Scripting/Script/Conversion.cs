@@ -247,8 +247,8 @@ namespace Keysharp.Scripting
 				var t = input.GetType();
 				var simple = t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(byte) || t == typeof(char);
 				var integer = simple || (t == typeof(double) && Math.IEEERemainder((double)input, 1) == 0);
-				var format = Accessors.A_FormatNumeric as string;
-				var hex = format.Contains('x');
+				var format = "f";
+				var hex = false;// format.Contains('x');
 				const string hexpre = "0x";
 
 				if (integer)
@@ -268,9 +268,7 @@ namespace Keysharp.Scripting
 
 				if (hex)
 				{
-					Accessors.A_FormatNumeric = "X";
-					var result = d.ToString(Accessors.A_FormatNumeric as string);
-					Accessors.A_FormatNumeric = format;
+					var result = d.ToString("X");
 					return hexpre + result;
 				}
 

@@ -88,10 +88,10 @@ If x = 5
 else
 	FileAppend "fail", "*"
 
-x := 0
-str := unset
+x = 0
+str := ""
 
-while (str = unset) {
+while (str = "") {
 	x++
 	
 	if (x > 4)

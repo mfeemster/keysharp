@@ -348,12 +348,13 @@ namespace Keysharp.Scripting
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr, $\"{Accessors.A_ScriptName}: Unhandled exception\", \"iconx\")");
 			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed)");
 			var ccs = new CodeConditionStatement(cse);
+			var cmrsexit = new CodeMethodReturnStatement(new CodeSnippetExpression("Environment.ExitCode"));
 			_ = ccs.TrueStatements.Add(pushcse);
 			_ = ccs.TrueStatements.Add(msg);
 			_ = ccs.TrueStatements.Add(popcse);
 			_ = ctch2.Statements.Add(ccs);
 			_ = ctch2.Statements.Add(new CodeExpressionStatement(exit1));
-			_ = ctch2.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
+			_ = ctch2.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch2);
 			//
 			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
@@ -377,11 +378,11 @@ namespace Keysharp.Scripting
 "));
 			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));
 			_ = ctch.Statements.Add(new CodeExpressionStatement(exit1));
-			_ = ctch.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
+			_ = ctch.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch);
 			var tempstatements = main.Statements;
 			tcf.TryStatements.AddRange(tempstatements);
-			_ = tcf.TryStatements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));//Add a successful return statement at the end of the try block.
+			_ = tcf.TryStatements.Add(cmrsexit);
 			main.Statements.Clear();
 			_ = main.Statements.Add(tcf);
 
@@ -519,7 +520,7 @@ namespace Keysharp.Scripting
 							_ = method.Parameters.Add(cdpeArgs);
 							newmeth = method;
 						}
-						else if (callmeth == null && string.Compare(method.Name, "Call", true) == 0)
+						else if (callmeth == null && method.Attributes.HasFlag(MemberAttributes.Static) && string.Compare(method.Name, "Call", true) == 0)
 						{
 							method.Name = "Call";
 							callmeth = method;
@@ -589,13 +590,14 @@ namespace Keysharp.Scripting
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
 					var userDefinedBase = FindUserDefinedType(baseType);
 					var extendsUserType = userDefinedBase != null;
+					var userDefinedCall = false;
 
 					//To properly support the calling hierarchy of __New(), it must be declared differently
 					//depending on where in the hierarchy the class is defined.
 					if (newmeth != null)
 					{
 						//__New() will be virtual by default, which we only want to be the case for the first level down
-						//from built-in classes. After that, they must be decalred as override.
+						//from built-in classes. After that, they must be declared as override.
 						if (extendsUserType)
 							newmeth.Attributes |= MemberAttributes.Override;
 
@@ -611,6 +613,25 @@ namespace Keysharp.Scripting
 						_ = newmeth.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
 						_ = newmeth.Parameters.Add(cdpeArgs);
 						_ = typeMethods.Key.Members.Add(newmeth);
+					}
+
+					if (callmeth == null)
+					{
+						callmeth = new CodeMemberMethod
+						{
+							Name = "Call",
+							ReturnType = new CodeTypeReference(typeMethods.Key.Name),
+							Attributes = MemberAttributes.Public | MemberAttributes.Static
+						};
+						//Body of Call() will be added later.
+						_ = typeMethods.Key.Members.Add(callmeth);
+						methods[typeStack.Peek()][callmeth.Name] = callmeth;
+					}
+					else
+					{
+						userDefinedCall = true;
+						_ = typeMethods.Key.Members.Add(callmeth);
+						methods[typeStack.Peek()][callmeth.Name] = callmeth;
 					}
 
 					//The lines relating to args and __New() work whether any params were declared or not.
@@ -636,19 +657,23 @@ namespace Keysharp.Scripting
 
 						thisconstructor.Parameters.Clear();
 						_ = thisconstructor.Parameters.Add(cdpeArgs);
-						//Get param names and pass.
-						callmeth.Parameters.Clear();
-						callmeth.Statements.Clear();
 
-						if (origNewParams.Count > 0)
+						if (!userDefinedCall)
 						{
-							callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
-							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
-						}
-						else
-						{
-							_ = callmeth.Parameters.Add(cdpeArgs);
-							_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}(args)"));
+							//Get param names and pass.
+							callmeth.Parameters.Clear();
+							callmeth.Statements.Clear();
+
+							if (origNewParams.Count > 0)
+							{
+								callmeth.Parameters.AddRange(new CodeParameterDeclarationExpressionCollection(origNewParams.ToArray()));
+								_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}({newparamnames})"));
+							}
+							else
+							{
+								_ = callmeth.Parameters.Add(cdpeArgs);
+								_ = callmeth.Statements.Add(new CodeSnippetExpression($"return new {typeMethods.Key.Name}(args)"));
+							}
 						}
 					}
 
@@ -1077,6 +1102,8 @@ namespace Keysharp.Scripting
 			foreach (var assign in assignSnippets)
 				ReevaluateSnippet(assign);
 
+			//Some hotstring directives may have been parsed, which could have changed settings. So restore before building and running.
+			HotstringManager.RestoreDefaults(true);
 			return unit;
         }
 
@@ -1582,30 +1609,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private void HandleVariadicParams()
-		{
-			//var lastisstar =
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceeded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			//if (lastisstar)
-			//{
-			//  var argi = 0;
-			//  var oldArgs = invoke.Parameters;
-			//  //var skip = oldArgs.Count
-			//  var argStrings = new List<string>(oldArgs.Count);
-			//  var pces = invoke.Parameters.Cast<CodeExpression>();
-			//  argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-			//  var finalArgStr = $"[{string.Join(',', argStrings)}]";
-			//  invoke.Parameters.Clear();
-			//  invoke.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-			//  //for (var argi = 0; argi < oldArgs.Count; i++)
-			//  //{
-			//  //  var argStr = Ch.CodeToString(oldArgs[i]);
-			//  //  sb.Append(argStr);
-			//  //}
-			//}
-		}
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
 		{
 			var pces = cmie.Parameters.Cast<CodeExpression>();
@@ -1623,6 +1626,7 @@ namespace Keysharp.Scripting
 				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
 			}
 		}
+
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
 		{
 			//Method that was declared.

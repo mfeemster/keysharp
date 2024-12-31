@@ -41,7 +41,7 @@ namespace Keysharp.Core.COM
 			{
 				if (!Reflections.typeToStringMethods.TryGetValue(ko.GetType(), out var methDkt))
 				{
-					_ = Reflections.FindAndCacheMethod(ko.GetType(), "", 0);
+					_ = Reflections.FindAndCacheInstanceMethod(ko.GetType(), "", 0);
 					_ = Reflections.typeToStringMethods.TryGetValue(ko.GetType(), out methDkt);
 				}
 

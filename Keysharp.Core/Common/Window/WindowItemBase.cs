@@ -194,9 +194,10 @@
 				return false;
 
 			if (criteria.Active)
-			{
 				return Active;
-			}
+
+			if (criteria.IsEmpty)
+				return false;
 
 			if (!string.IsNullOrEmpty(criteria.Group))
 			{

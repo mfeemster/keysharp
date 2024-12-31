@@ -5,12 +5,14 @@ class myclass
 	static c := "asdf"
 	static x := 123
 	static y := x
+	static arr := [1, 2, 3]
+	static m := {one : 1, two : 2, three : 3}
 }
 
 classobj := myclass.Call()
 
-If (myclass.a == "")
-	FileAppend "pass", "*"
+If (myclass.a == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -62,8 +64,8 @@ else
 
 a := 1
 
-If (myclass.a == "")
-	FileAppend "pass", "*"
+If (myclass.a == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -73,6 +75,16 @@ If (a == 1)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+	
+if (myclass.arr is Array && myclass.arr.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (myclass.m is Map && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 	
 ; test static member initialized in a complex way.
 class TypeSizeMapper {

@@ -188,7 +188,7 @@ namespace Keysharp.Scripting
 							continue;
 						}
 						else
-							throw new Error("Cannot create a reference to a value returned from a function call.");
+							throw new ParseException("Cannot create a reference to a value returned from a function call.");
 					}
 
 					_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
@@ -303,6 +303,37 @@ namespace Keysharp.Scripting
 				invoke.UserData["parentstatements"] = parent;
 				invoke.UserData["parentline"] = parent.Count;
 				parts[i] = invoke;
+
+				//Calls to Hotstring() and other similar functions were done because the parser encountered a
+				//#Hotstring directive and converted it into a function call. Because some of these are positional,
+				//they must be placed inline with when the hotkeys/hotstrings were discovered.
+				if (invoke.Method.TargetObject == null)
+				{
+					var hso = invoke.Method.MethodName == "HotstringOptions";
+
+					if (hso || invoke.Method.MethodName == "HotIf")
+					{
+						//Note that in addition to adding this to the beginning, we also leave it
+						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
+						//This is because the position must be kept consistent with hotkey/string declarations,
+						//but also kept in place for other usage of global hotstring settings like A_DefaultHotstring*.
+						hotkeyHotstringCreations.Add(invoke);
+
+						if (hso)
+						{
+							//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
+							//to find out which defaults should be in place for subsequently parsed hotstrings.
+							HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
+															 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
+															 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
+															 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
+						}
+
+						//else//#HotIf doesn't need to be kept at the same place, it's fine if they run at the beginning as long as their relative position remains.
+						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
+					}
+				}
+
 				allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
 			}
 			RemoveExcessParentheses(codeLine, parts);
@@ -417,7 +448,7 @@ namespace Keysharp.Scripting
 													continue;
 												}
 												else
-													throw new Error("Cannot create a reference to a value returned from a function call.");
+													throw new ParseException("Cannot create a reference to a value returned from a function call.", codeLine);
 											}
 
 											invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
@@ -1071,7 +1102,7 @@ namespace Keysharp.Scripting
 							}
 						}
 						else
-							throw new Exception($"Unsupported tokens surrounding a fat arrow function definition at line {codeLine}");
+							throw new ParseException($"Unsupported tokens surrounding a fat arrow function definition.", codeLine);
 					}
 					else if (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] as string != "=>"))//Allow for a single no parentheses fat arrow function variadic parameter declaration: x := a* => 123.
 					{
@@ -1414,11 +1445,11 @@ namespace Keysharp.Scripting
 			var scan = true;
 			var level = -1;
 
-			//Support implicit comparison to empty string statements such as if (x !=)
+			//Disallow implicit comparison to empty string statements such as if (x !=)
 			//by detecting that the last token was an operator with nothing following it.
 			if (parts[parts.Count - 1] is Script.Operator opend)
 			{
-				parts.Add(emptyStringPrimitive);
+				throw new ParseException("Implicit comparisons not supported.", codeLine);
 			}
 
 			//Unsure what this final loop actually does.
@@ -1692,18 +1723,27 @@ namespace Keysharp.Scripting
 			if (parts.Count != 1)
 				throw new ParseException($"parts count of {parts.Count} was not 1.", codeLine);
 
-			return BinOpToSnippet(parts[0] as CodeExpression);
-		}
+			var p0ce = parts[0] as CodeExpression;
 
+			if (p0ce != null)
+			{
+				var binop = BinOpToSnippet(p0ce);
+
+				if (binop != null)
+					return binop;
+			}
+
+			return p0ce;//Last ditch attempt to return something.
+		}
 		private CodeExpressionStatement[] ParseMultiExpression(CodeLine codeLine, string code, bool create, List<List<object>> subs = null)
 		=> ParseMultiExpressionWithoutTokenizing(codeLine, code, SplitTokens(codeLine, code).ToArray(), create, subs);
-
 		private CodeExpression[] ParseMultiExpression(CodeLine codeLine, string code, object[] parts, bool create, List<List<object>> subs = null)
 		{
 			var fatArrow = false;
 			var sub = new List<object>();
 			var expr = new List<CodeExpression>();
-			memberVarsStatic = false;
+			var firstTokIndex = codeLine.Code.IndexOfAny(SpaceTab);
+			memberVarsStatic = firstTokIndex != -1 && codeLine.Code.AsSpan(0, firstTokIndex).Equals("static", StringComparison.OrdinalIgnoreCase);
 
 			for (var i = 0; i < parts.Length; i++)
 			{
@@ -1717,7 +1757,6 @@ namespace Keysharp.Scripting
 
 				if (i == 0 && part == FunctionStatic)
 				{
-					memberVarsStatic = true;
 					continue;
 				}
 
@@ -1771,7 +1810,6 @@ namespace Keysharp.Scripting
 
 			return expr.ToArray();
 		}
-
 		private CodeExpressionStatement[] ParseMultiExpressionWithoutTokenizing(CodeLine codeLine, string code, object[] parts, bool create, List<List<object>> subs = null)
 		{
 			var result = ParseMultiExpression(codeLine, code, parts, create, subs);
@@ -1799,13 +1837,11 @@ namespace Keysharp.Scripting
 			*/
 			return statements;
 		}
-
 		private CodeExpression ParseSingleExpression(CodeLine codeLine, string code, bool create)
 		{
 			var tokens = SplitTokens(codeLine, code);
 			return ParseExpression(codeLine, code, tokens, create);
 		}
-
 		private CodeExpression PrimitiveToExpression(string code)
 		{
 			if (IsPrimitiveObject(code, out var result))

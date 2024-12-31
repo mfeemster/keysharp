@@ -359,7 +359,7 @@ else
 	FileAppend "fail", "*"
 	
 gval := 0
-lam := () => gval += 123
+lam := () => local gval, gval := 0, gval += 123
 x := lam()
 
 If (x == 123)

@@ -7,9 +7,9 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Env
 	{
-        public static string[] KeysharpArgs = [];
+		public static string[] KeysharpArgs = [];
 
-        private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
+		private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
 				.Select(f => f.Name);
 
 		/// <summary>
@@ -572,10 +572,10 @@ namespace Keysharp.Core
 		{
 			if (startsWith)
 				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+												   || x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
 				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+												   || x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>
@@ -612,7 +612,7 @@ namespace Keysharp.Core
 		{
 			if (format != 0)
 			{
-				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))
+				if (WindowsAPI.OpenClipboard(Accessors.A_ClipboardTimeout.Al()))
 				{
 					byte[] buf;
 					var gLock = IntPtr.Zero;
@@ -759,7 +759,7 @@ namespace Keysharp.Core
 
 				try
 				{
-					if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
+					if (WindowsAPI.OpenClipboard(Accessors.A_ClipboardTimeout.Al()))//Need to leave it open for it to work when using the Windows API.
 					{
 						wasOpened = true;
 						var ptr = clip.Ptr;

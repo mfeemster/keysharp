@@ -101,7 +101,7 @@ else
 
 x := 1
 y := 5
-str := unset
+str := ""
 
 Loop y
 {
@@ -110,7 +110,7 @@ Loop y
 	If A_Index = 5
 		break
 }
-Until (str != unset)
+Until (str != "")
 
 if (x == 6)
 	FileAppend "pass", "*"
@@ -139,4 +139,18 @@ else
 if (z == 33)
 	FileAppend "pass", "*"
 else
-	FileAppend "fail", "*"
+	FileAppend, "fail", "*"
+
+arr := [10, 20, 30]
+x := 0
+
+for in arr
+{
+	x++
+}
+until x > 1
+
+if (x == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

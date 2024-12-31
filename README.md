@@ -57,7 +57,12 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 
 ###	Behaviors/Functionality: ###
 * Keysharp follows the .NET memory model.
-* There is no variable caching with strings vs numbers. All variables are C# objects.
+	+ There is no variable caching with strings vs numbers. All variables are C# objects.
+	+ Values not stored in variables are, like regular variables, only eligible to be freed once they go out of scope.
+```
+	FileOpen("test.txt", "w").Write("hello") ; The temporary file object does not get deleted at the end of the line, only possibly at the end of the current scope.
+```
+	+ Object destructors/finalizers are called at a random point in time, and `Collect()` should be used if they need to be invoked predictably.
 * AHK says about the inc/dec ++/-- operators on empty variables: "Due to backward compatibility, the operators ++ and -- treat blank variables as zero, but only when they are alone on a line".
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
@@ -146,6 +151,18 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
 * `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
+* Loop counter variables for `for in` loops declared inside of a function cannot have the same name as a local variable declared inside of that same function.
+```
+testfunc()
+{
+    arr := [10, 20, 30]
+    loopvar := 0 ; Either change the name of this variable, the loop variable, or move this declaration outside of the function.
+
+    for (loopvar in arr)
+    {
+    }
+}
+```
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
@@ -371,7 +388,7 @@ class class1
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
 	+ `A_DirSeparator` returns the directory separator character which is `\` on Windows and `/` elsewhere.
 	+ `A_HasExited` returns whether shutdown has been initiated.
-	+ `A_HotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
+	+ `A_DefaultHotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.

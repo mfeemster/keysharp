@@ -49,8 +49,8 @@ If (x == 1)
 else
 	FileAppend "fail", "*"
 
-If (y == "")
-	FileAppend "pass", "*"
+If (y == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -95,13 +95,13 @@ If (x == 5)
 else
 	FileAppend "fail", "*"
 
-If (y == "")
-	FileAppend "pass", "*"
+If (y == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
-If (z == "")
-	FileAppend "pass", "*"
+If (z == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -118,8 +118,8 @@ If (x == 5)
 else
 	FileAppend "fail", "*"
 
-If (y == "")
-	FileAppend "pass", "*"
+If (y == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -146,8 +146,8 @@ If (y == 123)
 else
 	FileAppend "fail", "*"
 
-If (z == "")
-	FileAppend "pass", "*"
+If (z == unset)
+	FileAppend, "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -250,7 +250,7 @@ if (arr1 == arr2)
 else
 	FileAppend "pass", "*"
 
-o :=
+o := unset
 pcount := ""
 varfunc5(p1, pvar*)
 {
