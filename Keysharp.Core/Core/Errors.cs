@@ -26,7 +26,7 @@
 				{
 					var result = handler.Call(err, err.ExcType);
 
-					if (result.IsCallbackResultNonEmpty() && result.ParseLong(false) == 1L)
+					if (result.IsCallbackResultNonEmpty())// && result.ParseLong(false) != -1L)//If non empty, return false and the calling code will not display a message box.
 						return false;
 				}
 			}
