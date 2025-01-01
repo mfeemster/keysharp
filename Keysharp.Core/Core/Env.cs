@@ -572,10 +572,10 @@ namespace Keysharp.Core
 		{
 			if (startsWith)
 				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-												   || x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+												   || x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
 				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-												   || x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+												   || x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>
@@ -591,7 +591,7 @@ namespace Keysharp.Core
 
 			for (var i = 0; i < args.Length; i++)
 			{
-				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].TrimStart(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
+				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].TrimStart(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
 					if (i < args.Length - 1)
 						return args[i + 1];
 			}
@@ -655,7 +655,7 @@ namespace Keysharp.Core
 			var count = long.MaxValue;
 			var inputStr = "xinput list --long".Bash();
 
-			foreach (Range r in inputStr.AsSpan().SplitAny(Keywords.CrLf))
+			foreach (Range r in inputStr.AsSpan().SplitAny(CrLf))
 			{
 				var split = inputStr.AsSpan(r).Trim();
 
@@ -713,7 +713,7 @@ namespace Keysharp.Core
 					if (!deviceNames[i].Contains("xtest", StringComparison.OrdinalIgnoreCase))
 					{
 						var buttonStr = $"xinput get-button-map {deviceIds[i]}".Bash();
-						var buttonStrSplits = buttonStr.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+						var buttonStrSplits = buttonStr.Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 						if (buttonStrSplits.All(sp => int.TryParse(sp, out var _)))
 						{

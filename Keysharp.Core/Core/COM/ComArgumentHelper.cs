@@ -46,7 +46,7 @@ namespace Keysharp.Core.COM
 			for (var i = 0; i < parameters.Length; i++)
 			{
 				var isreturn = hasreturn && i == parameters.Length - 1;
-				var name = parameters[i].ToString().ToLowerInvariant().Trim(Keywords.Spaces);
+				var name = parameters[i].ToString().ToLowerInvariant().Trim(Spaces);
 
 				if (isreturn)
 				{

@@ -152,7 +152,7 @@ namespace Keysharp.Core
 			var omit = omitChars.As();
 			var info = Peek(LoopType.Parse);//The calling code must have called Push() with this type.
 
-			if (delimiters.ToLowerInvariant() == Keywords.Keyword_CSV)
+			if (delimiters.ToLowerInvariant() == Keyword_CSV)
 			{
 				var reader = new StringReader(i);
 				var part = new StringBuilder();
@@ -319,7 +319,7 @@ namespace Keysharp.Core
 				info.regVal = string.Empty;
 				info.regName = reg.Name;
 				info.regKeyName = keyname;
-				info.regType = Keywords.Keyword_Key;
+				info.regType = Keyword_Key;
 				var subkey = reg.OpenSubKey(key, false);
 				var l = QueryInfoKey(subkey);
 				var dt = DateTime.FromFileTimeUtc(l);
@@ -369,7 +369,7 @@ namespace Keysharp.Core
 								info.regVal = string.Empty;
 								info.regName = subKeyName.Substring(subKeyName.LastIndexOf('\\') + 1);
 								info.regKeyName = tempKey.Name;//The full key path.
-								info.regType = Keywords.Keyword_Key;
+								info.regType = Keyword_Key;
 								l = QueryInfoKey(tempKey);
 								dt = DateTime.FromFileTimeUtc(l);
 								info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
@@ -683,7 +683,7 @@ namespace Keysharp.Core
 									info.regVal = string.Empty;
 									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
 									info.regKeyName = key2.Name;//The full key path.
-									info.regType = Keywords.Keyword_Key;
+									info.regType = Keyword_Key;
 									var l = QueryInfoKey(key2);
 									var dt = DateTime.FromFileTimeUtc(l);
 									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);

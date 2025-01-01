@@ -14,7 +14,7 @@ namespace Keysharp.Core
 
 			foreach (var line in str.SplitLines())
 			{
-				var splits = line.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+				var splits = line.Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 				if (splits.Length > 1)
 				{

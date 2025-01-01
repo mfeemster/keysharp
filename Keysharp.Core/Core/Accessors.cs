@@ -518,7 +518,7 @@
 		public static string A_Cursor =>
 		Cursor.Current is Cursor cur ?
 #if LINUX
-		cur.ToString().Trim(Keywords.BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
+		cur.ToString().Trim(BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
 #elif WINDOWS
 		cur.ToString().Trim(BothBrackets).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
 #endif

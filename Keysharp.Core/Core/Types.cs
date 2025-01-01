@@ -155,7 +155,7 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if only spaces are found, else 0.</returns>
-		public static long IsSpace(object value) => value.ToString().AsSpan().IndexOfAnyExcept(Keywords.SpacesSv) != -1 ? 0L : 1L;
+		public static long IsSpace(object value) => value.ToString().AsSpan().IndexOfAnyExcept(SpacesSv) != -1 ? 0L : 1L;
 
 		/// <summary>
 		/// 1 if value is a valid date-time stamp, which can be all or just the leading part of the YYYYMMDDHH24MISS format.<br/>

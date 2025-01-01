@@ -763,7 +763,7 @@
 				{
 					if (s[0] != '"' && s[0] != '\'')
 					{
-						var splits = s.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+						var splits = s.Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 						if (splits.Length > 1)
 							outArgs = splits[1];

@@ -31,10 +31,10 @@
 				}
 			}
 
-			if (err.ExcType == Keywords.Keyword_ExitApp)
+			if (err.ExcType == Keyword_ExitApp)
 				_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical);
 
-			return err.ExcType != Keywords.Keyword_Return;//Don't report an error if it was just an exit from a thread.
+			return err.ExcType != Keyword_Return;//Don't report an error if it was just an exit from a thread.
 		}
 
 		/// <summary>
@@ -214,7 +214,7 @@
 		/// This is used to determine whether the script should exit or not after an exception is thrown.
 		/// Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
 		/// </summary>
-		public string ExcType { get; internal set; } = Keywords.Keyword_Exit;
+		public string ExcType { get; internal set; } = Keyword_Exit;
 
 		/// <summary>
 		/// Gets or sets the extra text.
