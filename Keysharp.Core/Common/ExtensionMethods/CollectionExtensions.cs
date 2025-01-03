@@ -80,12 +80,14 @@
 		/// <param name="x">The array to append the elements of y to.</param>
 		/// <param name="y">The array whose elements will be appended to x.</param>
 		/// <returns>x</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if either array is null.</exception>
+		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if either array is null.</exception>
 		public static T[] Concat<T>(this T[] x, T[] y)
 		{
-			if (x == null) throw new Error("x is null");
+			Error err;
 
-			if (y == null) throw new Error("y is null");
+			if (x == null) _ = Errors.ErrorOccurred(err = new UnsetError("x is null")) ? throw err : "";
+
+			if (y == null) _ = Errors.ErrorOccurred(err = new UnsetError("y is null")) ? throw err : "";
 
 			var oldLen = x.Length;
 			Array.Resize(ref x, x.Length + y.Length);

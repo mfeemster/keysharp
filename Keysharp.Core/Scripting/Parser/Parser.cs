@@ -332,16 +332,18 @@ namespace Keysharp.Scripting
 			var tcf = new CodeTryCatchFinallyStatement();
 			//
 			var ctch2 = new CodeCatchClause("kserr", new CodeTypeReference("Keysharp.Core.Error"));
-			var cse = new CodeSnippetExpression("ErrorOccurred(kserr)");
 			var pushcse = new CodeSnippetExpression("var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread()");
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr, $\"{Accessors.A_ScriptName}: Unhandled exception\", \"iconx\")");
 			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed)");
-			var ccs = new CodeConditionStatement(cse);
+			var ccsHandled = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Handled"));
+			var ccsProcessed = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Processed"));
+			ccsProcessed.TrueStatements.Add(new CodeSnippetExpression("_ = ErrorOccurred(kserr, kserr.ExcType)"));
 			var cmrsexit = new CodeMethodReturnStatement(new CodeSnippetExpression("Environment.ExitCode"));
-			_ = ccs.TrueStatements.Add(pushcse);
-			_ = ccs.TrueStatements.Add(msg);
-			_ = ccs.TrueStatements.Add(popcse);
-			_ = ctch2.Statements.Add(ccs);
+			_ = ccsHandled.TrueStatements.Add(pushcse);
+			_ = ccsHandled.TrueStatements.Add(msg);
+			_ = ccsHandled.TrueStatements.Add(popcse);
+			_ = ctch2.Statements.Add(ccsProcessed);
+			_ = ctch2.Statements.Add(ccsHandled);
 			_ = ctch2.Statements.Add(new CodeExpressionStatement(exit1));
 			_ = ctch2.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch2);
@@ -351,7 +353,10 @@ namespace Keysharp.Scripting
 
 				if (ex is Keysharp.Core.Error kserr)
 				{
-					if (ErrorOccurred(kserr))
+					if (!kserr.Processed)
+						_ = ErrorOccurred(kserr, kserr.ExcType);
+
+					if (!kserr.Handled)
 					{
 						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 						MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");

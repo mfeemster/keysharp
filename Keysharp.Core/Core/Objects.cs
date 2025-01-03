@@ -36,7 +36,15 @@
 		/// <param name="obj">Ignored.</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static object ObjGetCapacity(object obj) => obj is KeysharpObject kso ? kso.GetCapacity() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
+		public static object ObjGetCapacity(object obj)
+		{
+			Error err;
+
+			if (obj is KeysharpObject kso)
+				return kso.GetCapacity();
+
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+		}
 
 		/// <summary>
 		/// Returns whether an object contains an OwnProp by the specified name.
@@ -53,7 +61,15 @@
 		/// <param name="obj">The object to get the OwnProps count for.</param>
 		/// <returns>The number of properties owned by an obj.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if obj was not of type KeysharpObject.</exception>
-		public static long ObjOwnPropCount(object obj) => obj is KeysharpObject kso ? kso.OwnPropCount() : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
+		public static long ObjOwnPropCount(object obj)
+		{
+			Error err;
+
+			if (obj is KeysharpObject kso)
+				return kso.OwnPropCount();
+
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : 0L;
+		}
 
 		/// <summary>
 		/// Returns an OwnProps iterator for the given object.
@@ -62,14 +78,26 @@
 		/// <param name="userOnly">Optionally pass true to specify only user props, else false return all. Default: true.</param>
 		/// <returns>An <see cref="OwnPropsIterator"/> object for obj.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if obj was not of type KeysharpObject.</exception>
-		public static object ObjOwnProps(object obj, object userOnly = null) => obj is KeysharpObject kso ? kso.OwnProps(userOnly) : throw new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.");
+		public static object ObjOwnProps(object obj, object userOnly = null)
+		{
+			Error err;
+
+			if (obj is KeysharpObject kso)
+				return kso.OwnProps(userOnly);
+
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+		}
 
 		/// <summary>
 		/// Unsupported.
 		/// </summary>
 		/// <param name="obj">Ignored</param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static object ObjSetBase(params object[] obj) => throw new Error(Any.BaseExc);
+		public static object ObjSetBase(params object[] obj)
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error(Any.BaseExc)) ? throw err : null;
+		}
 
 		/// <summary>
 		/// Unsupported.
@@ -78,6 +106,14 @@
 		/// <param name="obj1">Ignored</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static object ObjSetCapacity(object obj0, object obj1) => obj0 is KeysharpObject kso ? kso.SetCapacity(obj1) : throw new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
+		public static object ObjSetCapacity(object obj0, object obj1)
+		{
+			Error err;
+
+			if (obj0 is KeysharpObject kso)
+				return kso.SetCapacity(obj1);
+
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+		}
 	}
 }

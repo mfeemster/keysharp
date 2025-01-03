@@ -49,8 +49,10 @@
 		/// For example, the position of "abc" in "123abc789" is always 4.
 		/// </param>
 		/// <returns>The <see cref="RegExResults"/> object which contains the matches, if any.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static long RegExMatch(object haystack, object needle, ref object outputVar, object startingPos)
 		{
+			Error err;
 			var input = haystack.As();
 			var n = needle.As();
 			var index = startingPos.Ai(1);
@@ -68,7 +70,7 @@
 					}
 					catch (Exception ex)
 					{
-						throw new Error("Regular expression compile error", "", ex.Message);
+						return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : 0L;
 					}
 
 					exp.tag = str;
@@ -97,7 +99,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new Error("Regular expression execution error", "", ex.Message);
+				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : 0L;
 			}
 		}
 
@@ -155,8 +157,10 @@
 		/// more of its left side might be unaltered compared to what would have happened with a startingPos of 1.
 		/// </param>
 		/// <returns>A version of haystack whose contents have been replaced by the operation. If no replacements are needed, haystack is returned unaltered.</returns>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit, object startingPos)
 		{
+			Error err;
 			var input = haystack.As();
 			var needle = needleRegEx.As();
 			var replace = replacement.As();
@@ -177,7 +181,7 @@
 					}
 					catch (ArgumentException ex)
 					{
-						throw new Error("Regular expression compile error", "", ex.Message);
+						return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : null;
 					}
 
 					exp.tag = str;
@@ -215,7 +219,7 @@
 			}
 			catch (Exception ex)
 			{
-				throw new Error("Regular expression execution error", "", ex.Message);
+				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : null;
 			}
 		}
 

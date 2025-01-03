@@ -23,15 +23,20 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
+				Error err;
 				var sb = new StringBuilder(128);
 				var str = $"open {drive.Name} type cdaudio alias cd wait shareable";
 
 				if (WindowsAPI.mciSendString(str, sb, sb.Capacity, IntPtr.Zero) != 0)
-					throw new Error($"Opening CD {drive.Name} failed.");
+					return Errors.ErrorOccurred(err = new Error($"Opening CD {drive.Name} failed.")) ? throw err : null;
 
 				var res = WindowsAPI.mciSendString("status cdaudio mode", sb, sb.Capacity, IntPtr.Zero);
 				_ = WindowsAPI.mciSendString("close cd wait", null, 0, IntPtr.Zero);
-				return res != 0 ? throw new Error($"Obtaining status for CD {drive.Name} failed.") : sb.ToString();
+
+				if (res == 0)
+					return sb.ToString();
+
+				return Errors.ErrorOccurred(err = new Error($"Obtaining status for CD {drive.Name} failed.")) ? throw err : null;
 			}
 		}
 
@@ -49,6 +54,7 @@ namespace Keysharp.Core.Windows
 		private void EjectRetract(uint control, long l, long lo)
 		{
 			var fileHandle = IntPtr.Zero;
+			Exception exception = null;
 
 			try
 			{
@@ -71,13 +77,19 @@ namespace Keysharp.Core.Windows
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, "Error ejecting, retracting, locking or unlocking the drive.");
+				exception = ex;
 			}
 			finally
 			{
 				//Close Drive Handle.
 				_ = WindowsAPI.CloseHandle(fileHandle);
 				fileHandle = IntPtr.Zero;
+			}
+
+			if (exception != null)
+			{
+				Error err;
+				_ = Errors.ErrorOccurred(err = new OSError(exception, "Error ejecting, retracting, locking or unlocking the drive.")) ? throw err : "";
 			}
 		}
 	}

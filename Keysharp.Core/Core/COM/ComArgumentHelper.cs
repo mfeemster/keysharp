@@ -38,6 +38,7 @@ namespace Keysharp.Core.COM
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
 			}
+			Error err;
 			var len = parameters.Length / 2;
 			args = new nint[len];
 			hasreturn = (parameters.Length & 1) == 1;
@@ -63,7 +64,7 @@ namespace Keysharp.Core.COM
 				else
 					i++;
 
-				Type type;
+				Type type = null;
 				var n = i / 2;
 				var p = parameters[i];
 				//var usePtr = false;
@@ -99,7 +100,10 @@ namespace Keysharp.Core.COM
 								args[n] = bstr;
 							}
 							else
-								throw new TypeError($"Argument had type {name} but was not a string.");
+							{
+								_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {name} but was not a string.")) ? throw err : "";
+								return;
+							}
 						}
 
 						break;
@@ -115,7 +119,10 @@ namespace Keysharp.Core.COM
 							if (p is string s)
 								SetupPointerArg(i, n, Encoding.Unicode.GetBytes(s));
 							else
-								throw new TypeError($"Argument had type {name} but was not a string.");
+							{
+								_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {name} but was not a string.")) ? throw err : "";
+								return;
+							}
 						}
 
 						break;
@@ -130,7 +137,10 @@ namespace Keysharp.Core.COM
 							if (p is string s)
 								SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s));
 							else
-								throw new TypeError($"Argument had type {name} but was not a string.");
+							{
+								_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {name} but was not a string.")) ? throw err : "";
+								return;
+							}
 						}
 
 						break;
@@ -345,7 +355,10 @@ namespace Keysharp.Core.COM
 					}
 
 					default:
-						throw new ValueError($"Arg or return type of {name} is invalid.");
+					{
+						_ = Errors.ErrorOccurred(err = new ValueError($"Arg or return type of {name} is invalid.")) ? throw err : "";
+						return;
+					}
 				}
 
 				TypeDetermined:

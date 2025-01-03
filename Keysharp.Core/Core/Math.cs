@@ -28,10 +28,11 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
 		public static double ACos(object obj)
 		{
+			Error err;
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < -1 || n > 1)
-				throw new Error($"ACos() argument of {n} was not between -1 and 1.");
+				return Errors.ErrorOccurred(err = new Error($"ACos() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
 
 			return Math.Acos(n);
 		}
@@ -44,10 +45,11 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
 		public static double ASin(object obj)
 		{
+			Error err;
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < -1 || n > 1)
-				throw new Error($"ASin() argument of {n} was not between -1 and 1.");
+				return Errors.ErrorOccurred(err = new Error($"ASin() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
 
 			return Math.Asin(n);
 		}
@@ -184,7 +186,8 @@
 			}
 			catch (Exception e)
 			{
-				throw new TypeError(e.Message);
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0L;
 			}
 		}
 
@@ -202,7 +205,8 @@
 			}
 			catch (Exception e)
 			{
-				throw new TypeError(e.Message);
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0.0;
 			}
 		}
 
@@ -214,10 +218,11 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
 		public static double Ln(object obj)
 		{
+			Error err;
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < 0)
-				throw new Error($"Ln() argument {n} was negative.");
+				return Errors.ErrorOccurred(err = new Error($"Ln() argument {n} was negative.")) ? throw err : 0.0;
 
 			return Math.Log(n);
 		}
@@ -231,11 +236,12 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
 		public static double Log(object obj0, object obj1 = null)
 		{
+			Error err;
 			var n = obj0.Ad(double.MinValue);
 			var b = obj1.Ad(double.MinValue);
 
 			if (n < 0)
-				throw new Error($"Log() argument {n} was negative.");
+				return Errors.ErrorOccurred(err = new Error($"Log() argument {n} was negative.")) ? throw err : 0.0;
 
 			if (b != double.MinValue)
 				return b == 10 ? Math.Log10(n) : Math.Log(n, b);
@@ -323,13 +329,15 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the divisor == 0.</exception>
 		public static object Mod(object obj0, object obj1)
 		{
+			Error err;
+
 			if (obj0 is double || obj1 is double)
 			{
 				var dividend = obj0.Ad();
 				var divisor = obj1.Ad();
 
 				if (divisor == 0)
-					throw new ZeroDivisionError($"Mod() divisor argument of {divisor} was 0.");
+					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divisor} was 0.")) ? throw err : null;
 
 				//return Math.IEEERemainder(dividend, divisor);
 				return dividend % divisor;
@@ -340,7 +348,7 @@
 				var divisor = obj1.Al();
 
 				if (divisor == 0)
-					throw new Error($"Mod() divisor argument of {divisor} was 0.");
+					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divisor} was 0.")) ? throw err : null;
 
 				return dividend % divisor;
 			}
@@ -362,6 +370,7 @@
 				return d;
 			else
 			{
+				Error err;
 				var s = value.As();
 
 				if (s.Contains('.'))
@@ -379,7 +388,7 @@
 						return val.Value;
 				}
 
-				throw new TypeError($"Could not convert {s} to an integer or float.");
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert {s} to an integer or float.")) ? throw err : null;
 			}
 		}
 
@@ -474,10 +483,11 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the value is negative.</exception>
 		public static double Sqrt(object obj)
 		{
+			Error err;
 			var n = obj is double d ? d : obj.Ad();
 
 			if (n < 0)
-				throw new Error($"Sqrt() argument of {n} was negative.");
+				return Errors.ErrorOccurred(err = new Error($"Sqrt() argument of {n} was negative.")) ? throw err : 0.0;
 
 			return Math.Sqrt(n);
 		}

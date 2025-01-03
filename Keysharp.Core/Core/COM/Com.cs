@@ -53,13 +53,14 @@ namespace Keysharp.Core.COM
 
 		public static object ComObjArray(object varType, object count1, params object[] args)
 		{
+			Error err;
 			var vt = varType.Ai();//Need a switch statement on type.
 			var dim1Size = count1.Ai();
 			var lengths = new int[args != null ? args.Length + 1 : 1];
 			var t = typeof(object);
 
 			if (lengths.Length > 8)
-				throw new KeysharpException($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.");
+				_ = Errors.ErrorOccurred(err = new Error($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.")) ? throw err : "";
 
 			lengths[0] = dim1Size;
 
@@ -113,7 +114,7 @@ namespace Keysharp.Core.COM
 				case vt_variant: t = typeof(object); break;
 
 				default:
-					throw new KeysharpException($"The supplied COM type of {varType} is not supported.");
+					return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : null;
 			}
 
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
@@ -125,7 +126,8 @@ namespace Keysharp.Core.COM
 			{
 				if (co.VarType != vt_dispatch && co.VarType != vt_unknown)// || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
 				{
-					throw new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.");
+					Error err;
+					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
 				}
 
 				//If it existed, whether obj1 was null or not, remove it.
@@ -232,6 +234,8 @@ namespace Keysharp.Core.COM
 
 		public static ComObject ComObjFromPtr(object dispPtr)
 		{
+			Error err;
+
 			if (dispPtr is IntPtr ip)
 				dispPtr = Marshal.GetObjectForIUnknown(ip);
 			else if (dispPtr is long l)
@@ -242,13 +246,14 @@ namespace Keysharp.Core.COM
 			else if (Marshal.IsComObject(dispPtr))
 				return new ComObject(vt_unknown, dispPtr);
 
-			throw new ValueError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.");
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.")) ? throw err : null;
 		}
 
 		public static object ComObjGet(object name) => Marshal.BindToMoniker(name.As());
 
 		public static object ComObjQuery(object comObj, object sidiid = null, object iid = null)
 		{
+			Error err;
 			object ptr;
 
 			if (comObj is ComObject co)
@@ -260,7 +265,7 @@ namespace Keysharp.Core.COM
 			else if (comObj is long l)
 				ptr = Marshal.GetObjectForIUnknown(new IntPtr(l));
 			else
-				throw new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.");
+				return Errors.ErrorOccurred(err = new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.")) ? throw err : null;
 
 			if (sidiid != null && iid != null)
 			{
@@ -304,7 +309,7 @@ namespace Keysharp.Core.COM
 				}
 			}
 
-			throw new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.");
+			return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
 		}
 
 		public static object ComObjType(object comObj, object infoType = null)
@@ -424,11 +429,12 @@ namespace Keysharp.Core.COM
 		/// </summary>
 		public static object ComCall(object index, object comObj, params object[] parameters)
 		{
+			Error err;
 			var idx = index.Ai();
 			var indexPlus1 = idx + 1;//Index is zero based, so add 1.
 
 			if (idx < 0)
-				throw new ValueError($"Index value of {idx} was less than zero.");
+				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : null;
 
 			object ptr = null;
 			var pUnk = IntPtr.Zero;
@@ -440,7 +446,7 @@ namespace Keysharp.Core.COM
 			else if (comObj is IntPtr ip)
 				ptr = ip;
 			else
-				throw new ValueError($"The passed in object was not a ComObject or a raw COM interface.");
+				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
 
 			if (ptr is IntPtr ip2)
 				pUnk = ip2;

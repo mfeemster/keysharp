@@ -7,6 +7,7 @@ namespace Keysharp.Core
 	{
 		internal static WindowItemBase SearchControl(object ctrl, object title, object text, object excludeTitle, object excludeText, bool throwifnull = true)
 		{
+			Error err;
 			var (parsed, ptr) = CtrlToIntPtr(ctrl);
 
 			if (parsed)
@@ -14,7 +15,7 @@ namespace Keysharp.Core
 				if (WindowProvider.Manager.IsWindow(ptr))
 					return WindowProvider.Manager.CreateWindow(ptr);
 				else if (throwifnull && !IsMainWindowClosing)
-					throw new TargetError($"Could not find child control with handle: {ptr}");
+					return Errors.ErrorOccurred(err = new TargetError($"Could not find child control with handle: {ptr}")) ? throw err : null;
 				else
 					return null;
 			}
@@ -75,7 +76,7 @@ namespace Keysharp.Core
 			}
 
 			if (childitem == null && throwifnull && !IsMainWindowClosing)
-				throw new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+				return Errors.ErrorOccurred(err = new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			return childitem;
 		}
 
@@ -86,10 +87,11 @@ namespace Keysharp.Core
 				bool throwifnull,
 				bool last = false)
 		{
+			Error err;
 			var win = WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText, last);
 
 			if (win == null && throwifnull && !IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			return win;
 		}
@@ -109,6 +111,7 @@ namespace Keysharp.Core
 				object excludeTitle,
 				object excludeText)
 		{
+			Error err;
 			var win = WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText);
 
 			if (win != null)
@@ -138,7 +141,7 @@ namespace Keysharp.Core
 				return arr;
 			}
 			else if (!IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			return "";
 		}

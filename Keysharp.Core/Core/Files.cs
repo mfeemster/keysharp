@@ -5,6 +5,8 @@
 	/// </summary>
 	public static class Files
 	{
+		private static readonly SearchValues<char> wildcardsSv = SearchValues.Create("*?");
+
 		/// <summary>
 		/// Writes text to the end of a file, creating it first if necessary.
 		/// </summary>
@@ -171,7 +173,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error appending text to file {file}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error appending text to file {file}")) ? throw err : null;
 			}
 		}
 
@@ -265,6 +268,7 @@
 #endif
 												object iconNumber = null, object runState = null)
 		{
+			Error err;
 			var t = target.As();
 			var l = linkFile.As();
 			var w = workingDir.As();
@@ -273,7 +277,7 @@
 			var icon = iconFile.As();
 
 			if (t == "")
-				throw new ValueError("Shortcut target cannot be an empty string.");
+				return Errors.ErrorOccurred(err = new ValueError("Shortcut target cannot be an empty string.")) ? throw err : null;
 
 #if LINUX
 			var type = shortcutType.As();
@@ -378,6 +382,7 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
 		public static object FileDelete(object filePattern)
 		{
+			Error err;
 			var s = filePattern.As();
 			var path = Path.GetDirectoryName(s);
 			var dir = new DirectoryInfo(path?.Length == 0 ? "./" : path);
@@ -397,7 +402,7 @@
 			}
 
 			if (failures > 0)
-				throw new Error($"Failed {failures} times moving or copying files.", "", failures);
+				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times moving or copying files.", "", failures)) ? throw err : null;
 
 			return null;
 		}
@@ -511,7 +516,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error getting file attributes for file {s}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file attributes for file {s}")) ? throw err : null;
 			}
 
 			return string.Empty;
@@ -817,7 +823,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error getting shortcut information for {link}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting shortcut information for {link}")) ? throw err : null;
 			}
 
 #endif
@@ -884,7 +891,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error getting file size for file {file}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file size for file {file}")) ? throw err : 0L;
 			}
 
 			return result;
@@ -944,7 +952,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error getting file time for file {file}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file time for file {file}")) ? throw err : null;
 			}
 		}
 
@@ -970,7 +979,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error getting file version for file {file}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file version for file {file}")) ? throw err : null;
 			}
 		}
 
@@ -978,7 +988,11 @@
 		/// Unsupported functionality which always throws an exception.
 		/// </summary>
 		/// <exception cref="Error">An <see cref="Error"/> is always thrown.</exception>
-		public static string FileInstall(object obj0, object obj1, object obj2 = null) => throw new Error("Compiling files into an executable is not supported in Keysharp");
+		public static string FileInstall(object obj0, object obj1, object obj2 = null)
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error("Compiling files into an executable is not supported in Keysharp")) ? throw err : null;
+		}
 
 		/// <summary>
 		/// Moves or renames one or more files.
@@ -1143,7 +1157,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error opening file {file}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error opening file {file}")) ? throw err : null;
 			}
 		}
 
@@ -1172,6 +1187,7 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
 		public static object FileRead(object filename, object options = null)
 		{
+			Error err;
 			object output = null;
 			var file = filename.As();
 			var opts = options.As();
@@ -1216,7 +1232,7 @@
 				}
 				catch (Exception ex)
 				{
-					throw new OSError(ex, $"Error reading file {file}");
+					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : null;
 				}
 			}
 			else
@@ -1241,7 +1257,7 @@
 				}
 				catch (Exception ex)
 				{
-					throw new OSError(ex, $"Error reading file {file}");
+					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : null;
 				}
 
 				if (max != -1)
@@ -1286,7 +1302,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error recycling file(s) with pattern {s}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error recycling file(s) with pattern {s}")) ? throw err : null;
 			}
 		}
 
@@ -1310,7 +1327,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error emptying recycle bin for drive {s}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error emptying recycle bin for drive {s}")) ? throw err : null;
 			}
 		}
 
@@ -1380,7 +1398,10 @@
 			}
 
 			if (failures != 0)
-				throw new Error($"Failed {failures} times setting file attributes.", "", failures);
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file attributes.", "", failures)) ? throw err : null;
+			}
 
 			return null;
 		}
@@ -1414,6 +1435,7 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static object FileSetTime(object yyyymmddhh24miss = null, object filePattern = null, object whichTime = null, object mode = null)
 		{
+			Error err;
 			var YYYYMMDDHH24MISS = yyyymmddhh24miss.As();
 			var file = filePattern.As();
 			var whichtime = whichTime.As("M");
@@ -1458,7 +1480,7 @@
 							break;
 
 						default:
-							throw new ArgumentOutOfRangeException();
+							return Errors.ErrorOccurred(err = new Error($"WhichTime value of {whichTime} was not m, c or a.")) ? throw err : null;
 					}
 
 					if (set != time)
@@ -1468,7 +1490,7 @@
 			}
 
 			if (failures != 0)
-				throw new Error($"Failed {failures} times setting file time.", "", failures);
+				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file time.", "", failures)) ? throw err : null;
 
 			return null;
 		}
@@ -1551,6 +1573,7 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static void FileCopyMove(string source, string dest, bool flag, bool move)
 		{
+			Error err;
 			var failures = 0;
 			var dfull = Path.GetFullPath(dest).TrimEnd(Path.DirectorySeparatorChar);
 			var sfull = Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar);
@@ -1567,11 +1590,17 @@
 			var ddname = Path.GetDirectoryName(dfull);
 			var files = Directory.GetFiles(sdname, sfname, System.IO.SearchOption.TopDirectoryOnly);
 
-			if (files.Length == 0 && sfull.IndexOfAny("*?".ToCharArray()) == -1)
-				throw new Error($"{sfull} did not contain any files.");
+			if (files.Length == 0 && sfull.AsSpan().IndexOfAny(wildcardsSv) == -1)
+			{
+				_ = Errors.ErrorOccurred(err = new Error($"{sfull} did not contain any files.")) ? throw err : "";
+				return;
+			}
 
 			if (!Directory.Exists(ddname))
-				throw new Error($"Folder {ddname} did not exist.");
+			{
+				_ = Errors.ErrorOccurred(err = new Error($"Folder {ddname} did not exist.")) ? throw err : "";
+				return;
+			}
 
 			foreach (var f in files)
 			{
@@ -1594,7 +1623,10 @@
 			}
 
 			if (failures > 0)
-				throw new Error($"Failed {failures} times moving or copying files.", "", failures);
+			{
+				_ = Errors.ErrorOccurred(err = new Error($"Failed {failures} times moving or copying files.", "", failures)) ? throw err : "";
+				return;
+			}
 		}
 	}
 

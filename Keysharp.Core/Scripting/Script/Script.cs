@@ -318,7 +318,11 @@
 			return sb.ToString();
 		}
 
-		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+		public static void ListLines(params object[] obj)
+		{
+			Error err;
+			_ = Errors.ErrorOccurred(err = new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.")) ? throw err : "";
+		}
 
 		public static void ListVars() => mainWindow?.ShowInternalVars(true);
 

@@ -436,10 +436,6 @@
 				{
 					throw new ParseException(e.RawMessage, codeLine);
 				}
-				//catch (Exception ex)
-				//{
-				//  throw new ParseException(ex.Message, codeline);
-				//}
 				finally { }
 
 				if (blocks.Count == blocksCount && blocks.Peek().IsSingle)

@@ -1942,6 +1942,7 @@ namespace Keysharp.Core.Windows
 			if (keys?.Length == 0)
 				return;
 
+			Error err;
 			var origLastPeekTime = Script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
 			var i = 0;
@@ -2644,7 +2645,10 @@ namespace Keysharp.Core.Windows
 									DoKeyDelay();
 								}
 								else
-									throw new Error($"Could not parse {hexsub} as a hexadecimal number when trying to send a unicode character.");
+								{
+									_ = Errors.ErrorOccurred(err = new Error($"Could not parse {hexsub} as a hexadecimal number when trying to send a unicode character.")) ? throw err : "";
+									return;
+								}
 							}
 
 							//else do nothing since it isn't recognized as any of the above "else if" cases (see below).

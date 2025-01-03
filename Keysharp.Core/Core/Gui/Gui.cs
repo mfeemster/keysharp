@@ -2252,6 +2252,7 @@
 		{
 			get
 			{
+				Error err;
 				var handle = controlname.ParseLong(false);
 
 				if (handle.HasValue)
@@ -2294,7 +2295,7 @@
 					}
 				}
 
-				throw new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.");
+				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
 			}
 		}
 

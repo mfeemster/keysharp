@@ -23,7 +23,8 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new Error($"Error decoding base64 string {s}: {ex.Message}");
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Error decoding base64 string {s}: {ex.Message}")) ? throw err : null;
 			}
 		}
 
@@ -301,6 +302,7 @@ namespace Keysharp.Core
 		/// </returns>
 		public static long InStr(object haystack, object needle, object caseSensitive = null, object startingPos = null, object occurrence = null)
 		{
+			Error err;
 			var input = haystack.As();
 			var n = needle.As();
 			var comp = caseSensitive.As();
@@ -310,7 +312,7 @@ namespace Keysharp.Core
 			if (input != "")
 			{
 				if (string.IsNullOrEmpty(n))
-					throw new ValueError("Search string was empty");
+					return Errors.ErrorOccurred(err = new ValueError("Search string was empty")) ? throw err : 0L;
 
 				// 1   1 =>  1
 				//-1   1 =>  1
@@ -792,6 +794,7 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">Throws a <see cref="ValueError"/> exception if source is null or 0.</exception>
 		public static string StrGet(object source, object length = null, object enc = null)
 		{
+			Error err;
 			var hasThree = enc != null;
 			var encoding = Encoding.Unicode;
 			var len = long.MinValue;
@@ -824,9 +827,9 @@ namespace Keysharp.Core
 				ptr = p;
 
 			if (ptr == IntPtr.Zero)
-				throw new ValueError($"No valid address or buffer was supplied.");
+				return Errors.ErrorOccurred(err = new ValueError($"No valid address or buffer was supplied.")) ? throw err : null;
 			else if (ptr.ToInt64() < 65536)//65536 is the first valid address.
-				throw new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.");
+				return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : null;
 
 			unsafe
 			{
@@ -894,7 +897,11 @@ namespace Keysharp.Core
 		/// <param name="obj">Ignored</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long StrPtr(object obj) => throw new Error("Cannot take the address of a string in C#, so just use the string as is.");
+		public static long StrPtr(object obj)
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error("Cannot take the address of a string in C#, so just use the string as is.")) ? throw err : 0L;
+		}
 
 		/// <summary>
 		/// Copies a string to a memory address or buffer, optionally converting it to a given code page.
@@ -917,6 +924,7 @@ namespace Keysharp.Core
 		{
 			if (obj.Length > 0 && obj[0] != null)
 			{
+				Error err;
 				var s = obj.As(0);
 				var len = long.MinValue;
 				var encoding = Encoding.Unicode;
@@ -934,7 +942,7 @@ namespace Keysharp.Core
 				}
 
 				if (ptr != IntPtr.Zero && ptr.ToInt64() < 65536)//65536 is the first valid address.
-					throw new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.");
+					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : 0L;
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
 					len = Math.Abs(obj.Al(2));
@@ -955,12 +963,12 @@ namespace Keysharp.Core
 					if (len != long.MinValue)
 					{
 						if (len < s.Length || len < bytes.Length)
-							throw new ValueError($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.");
+							return Errors.ErrorOccurred(err = new ValueError($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.")) ? throw err : 0L;
 					}
 					else if (ptr == IntPtr.Zero)
 						return bytes.Length;
 					else if (len == long.MinValue)
-						throw new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.");
+						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;
 
 					Marshal.Copy(bytes, 0, ptr, Math.Min((int)len, bytes.Length));
 				}
@@ -1216,7 +1224,11 @@ namespace Keysharp.Core
 		/// <param name="obj">Ignored</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long VarSetStrCapacity(params object[] obj) => throw new Error("VarSetStrCapacity() not supported or necessary.");
+		public static long VarSetStrCapacity(params object[] obj)
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error("VarSetStrCapacity() not supported or necessary.")) ? throw err : 0L;
+		}
 
 		/// <summary>
 		/// Compares two version strings.

@@ -86,6 +86,7 @@
 
 			set
 			{
+				Error err;
 				var oldVal = caseSense;
 				var str = value.ToString().ToLower();
 				var val = Options.OnOff(str);
@@ -99,7 +100,10 @@
 					return;
 
 				if (Count > 0)
-					throw new PropertyError("Attempted to change case sensitivity of a map which was not empty.");
+				{
+					_ = Errors.ErrorOccurred(err = new PropertyError("Attempted to change case sensitivity of a map which was not empty.")) ? throw err : "";
+					return;
+				}
 
 				if (caseSense != oldVal)
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -200,9 +204,12 @@
 		/// <exception cref="KeyError">An <see cref="KeyError"/> exception is thrown if they key was not found.</exception>
 		public object Delete(object key)
 		{
-			return map.Remove(key, out var val)
-				   ? val
-				   : throw new KeyError($"Key {key} was not present in the map.");
+			Error err;
+
+			if (map.Remove(key, out var val))
+				return val;
+
+			return Errors.ErrorOccurred(err = new KeyError($"Key {key} was not present in the map.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -218,6 +225,7 @@
 		/// <exception cref="UnsetItemError">Throws an <see cref="UnsetItemError"/> if key is not found and no defaults are supplied.</exception>
 		public object Get(object key, object @default = null)
 		{
+			Error err;
 			var k = key;
 			var def = @default;
 
@@ -230,7 +238,7 @@
 			if (Default != null)
 				return Default;
 
-			throw new UnsetItemError($"Key {k} was not present in the map.");
+			return Errors.ErrorOccurred(err = new UnsetItemError($"Key {k} was not present in the map.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -405,6 +413,8 @@
 			}
 			else
 			{
+				Error err;
+
 				if (values.Length == 1)
 				{
 					if (values[0] is Map m)
@@ -440,7 +450,10 @@
 							Insert(kv.Key, kv.Value);
 					}
 					else
-						throw new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.");
+					{
+						_ = Errors.ErrorOccurred(err = new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.")) ? throw err : "";
+						return;
+					}
 				}
 				else
 				{
@@ -536,10 +549,12 @@
 		{
 			get
 			{
+				Error err;
+
 				if (TryGetValue(key, out var val))
 					return val;
 
-				return Default ?? throw new UnsetItemError($"Key {key} was not present in the map.");
+				return Default ?? (Errors.ErrorOccurred(err = new UnsetItemError($"Key {key} was not present in the map.")) ? throw err : null);
 			}
 
 			set => Insert(key, value);
@@ -586,7 +601,7 @@
 				}
 				catch (IndexOutOfRangeException)
 				{
-					throw new InvalidOperationException();
+					throw new InvalidOperationException();//Should never happen when using regular loops.
 				}
 			}
 		}

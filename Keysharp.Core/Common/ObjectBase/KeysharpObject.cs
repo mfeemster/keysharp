@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.ObjectBase
+﻿using System.Xml.Linq;
+
+namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
@@ -64,10 +66,15 @@
 			return "";
 		}
 
-		public long GetCapacity() => throw new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+		public long GetCapacity()
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.")) ? throw err : 0L;
+		}
 
 		public object GetOwnPropDesc(object obj)
 		{
+			Error err;
 			var name = obj.As().ToLower();
 
 			if (this is Map map)
@@ -89,7 +96,7 @@
 			{
 			}
 
-			throw new PropertyError($"Object did not have an OwnProp named {name}.");
+			return Errors.ErrorOccurred(err = new PropertyError($"Object did not have an OwnProp named {name}.")) ? throw err : null;
 		}
 
 		public long HasOwnProp(object obj)
@@ -200,9 +207,17 @@
 			tabLevel--;
 		}
 
-		public void SetBase(params object[] obj) => throw new Exception(BaseExc);
+		public void SetBase(params object[] obj)
+		{
+			Error err;
+			_ = Errors.ErrorOccurred(err = new Error(BaseExc)) ? throw err : "";
+		}
 
-		public long SetCapacity(object obj) => throw new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+		public long SetCapacity(object obj)
+		{
+			var err = new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+			return Errors.ErrorOccurred(err) ? throw err : 0L;
+		}
 
 		protected static object __StaticInit() => "";
 

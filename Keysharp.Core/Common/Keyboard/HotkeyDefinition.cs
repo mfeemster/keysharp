@@ -630,6 +630,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref uint _noSuppress)
 		{
+			Error err;
 			HotkeyDefinition hk;
 			var hookIsMandatory = false;
 
@@ -650,10 +651,7 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					// Detect duplicate hotkey variants to help spot bugs in scripts.
 					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-					{
-						//mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
-						throw new Error($"Duplicate hotkey: {_name}");
-					}
+						return Errors.ErrorOccurred(err = new Error($"Duplicate hotkey: {_name}")) ? throw err : null;
 
 					if (hk.AddVariant(_callback, _noSuppress) == null)
 						return null;// ScriptError(ERR_OUTOFMEM, buf);
@@ -2129,7 +2127,6 @@ namespace Keysharp.Core.Common.Keyboard
 				var ok = Flow.TryCatch(() =>
 				{
 					ret = variant.callback.Call(o);
-					//throw new Error("ASDf");
 				}, false);
 
 				if (!ok)

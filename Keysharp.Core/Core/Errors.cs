@@ -15,26 +15,45 @@
 		/// <summary>
 		/// Calls all registered error handlers, passing in the exception object to each.
 		/// If any callback returns a non-empty result, then no further callbacks are called.
+		/// If any callback returns -1 and err.ExcType == "Return", then the thread continues because
+		/// the calling code won't throw an exception.
 		/// </summary>
 		/// <param name="err">The exception object to pass to each callback.</param>
 		/// <returns>True if err.ExcType is not "Return", else false.</returns>
-		public static bool ErrorOccurred(Error err)
+		public static bool ErrorOccurred(Error err, string excType = Keyword_Return)
 		{
-			if (Script.onErrorHandlers != null)
-			{
-				foreach (var handler in Script.onErrorHandlers)
-				{
-					var result = handler.Call(err, err.ExcType);
+			var exitThread = true;
 
-					if (result.IsCallbackResultNonEmpty())// && result.ParseLong(false) != -1L)//If non empty, return false and the calling code will not display a message box.
-						return false;
+			if (!err.Processed)
+			{
+				if (Script.onErrorHandlers != null)
+				{
+					err.ExcType = excType;
+
+					foreach (var handler in Script.onErrorHandlers)
+					{
+						var result = handler.Call(err, err.ExcType);
+
+						if (result.IsCallbackResultNonEmpty())
+						{
+							err.Handled = true;
+
+							//Calling code will not throw if this is true.
+							if (result.ParseLong(false) == -1L && err.ExcType == Keyword_Return)
+								exitThread = false;
+
+							break;
+						}
+					}
 				}
+
+				err.Processed = true;
 			}
 
 			if (err.ExcType == Keyword_ExitApp)
 				_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical);
-
-			return err.ExcType != Keyword_Return;//Don't report an error if it was just an exit from a thread.
+				
+			return exitThread;
 		}
 
 		/// <summary>
@@ -253,6 +272,22 @@
 		public string What { get; set; }
 
 		/// <summary>
+		/// Whether this exception has been handled yet.
+		/// If true, further error messages will not be shown.
+		/// This should only ever be used internally or by the generated script code.
+		/// </summary>
+		public bool Handled { get; set; }
+
+		/// <summary>
+		/// Whether the global error event handlers have been called as a result
+		/// of this exception yet.
+		/// If true, they won't be called again for this error.
+		/// Note, this is separate from Handled above.
+		/// This should only ever be used internally or by the generated script code.
+		/// </summary>
+		public bool Processed { get; set; }
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="KeysharpException"/> class.
 		/// </summary>
 		/// <param name="msg">A message describing the error that occurred.</param>
@@ -292,7 +327,8 @@
 		/// <returns>A summary of the exception.</returns>
 		public override string ToString()
 		{
-			var st = FixStackTrace(StackTrace);
+			var trace = StackTrace ?? new StackTrace(new StackFrame(1)).ToString();
+			var st = FixStackTrace(trace);
 			var sb = new StringBuilder(512);
 			_ = sb.AppendLine($"\tException: {GetType().Name}");
 			_ = sb.AppendLine($"\tMessage: {message}");
@@ -517,7 +553,7 @@
 	}
 
 	/// <summary>
-	/// An exception class for when an attempt is made to read an empty value.
+	/// An exception class for when an attempt is made to perform an operation on an empty value.
 	/// </summary>
 	public class UnsetError : Error
 	{

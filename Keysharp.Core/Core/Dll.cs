@@ -93,6 +93,8 @@ namespace Keysharp.Core
 		public static object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
+			Error err;
+
 			if (function is string path)
 			{
 				string name;
@@ -127,16 +129,14 @@ namespace Keysharp.Core
 					}
 
 					if (path.Length == 0)
-					{
-						throw new Error($"Unable to locate dll with path {name}.");
-					}
+						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {name}.")) ? throw err : null;
 				}
 				else
 				{
 					z++;
 
 					if (z >= path.Length)
-						throw new Error($"Improperly formatted path of {path}.");
+						return Errors.ErrorOccurred(err = new Error($"Improperly formatted path of {path}.")) ? throw err : null;
 
 					name = path.Substring(z);
 					path = path.Substring(0, z - 1);
@@ -209,7 +209,7 @@ namespace Keysharp.Core
 						method = created.GetMethod(name);
 
 						if (method == null)
-							throw new Error($"Method {name} could not be found.");
+							return Errors.ErrorOccurred(err = new Error($"Method {name} could not be found.")) ? throw err : null;
 
 						dllCache[id] = new DllCache()
 						{
@@ -225,14 +225,13 @@ namespace Keysharp.Core
 					{
 						var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
 
-						if (e.InnerException is Error err)
-							inner += " " + err.Message;
+						if (e.InnerException is Error ie)
+							inner += " " + ie.Message;
 
-						var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
+						return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
 						{
 							Extra = "0x" + Accessors.A_LastError.ToString("X")
-						};
-						throw error;
+						}) ? throw err : null;
 					}
 				}
 
@@ -278,14 +277,13 @@ namespace Keysharp.Core
 				{
 					var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
 
-					if (e.InnerException is Error err)
-						inner += " " + err.Message;
+					if (e.InnerException is Error ie)
+						inner += " " + ie.Message;
 
-					var error = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
+					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
 					{
 						Extra = "0x" + Accessors.A_LastError.ToString("X")
-					};
-					throw error;
+					}) ? throw err : null;
 				}
 			}
 			else if (function is DelegateHolder dh)
@@ -312,9 +310,11 @@ namespace Keysharp.Core
 				else
 				{
 					var val = Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
-					address = val == IntPtr.Zero
-							  ? throw new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.")
-							  : val;
+
+					if (val == IntPtr.Zero)
+						return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.")) ? throw err : null;
+
+					address = val;
 				}
 
 				try
@@ -323,13 +323,12 @@ namespace Keysharp.Core
 					var val = CallDel(address, comHelper.args);
 					return val;
 				}
-				catch (Exception e)
+				catch (Exception ex)
 				{
-					var error = new Error($"An error occurred when calling {function}(): {e.Message}")
+					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
 					{
 						Extra = "0x" + Accessors.A_LastError.ToString("X")
-					};
-					throw error;
+					}) ? throw err : null;
 				}
 			}
 		}

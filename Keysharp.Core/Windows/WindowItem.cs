@@ -263,11 +263,12 @@ namespace Keysharp.Core.Windows
 				}
 				else
 				{
+					Error err;
 					var alpha = Math.Clamp((int)value.Al(), 0, 255);
 
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero ||
 							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)alpha, WindowsAPI.LWA_ALPHA))
-						throw new OSError("", $"Could not assign transparency with alpha value of {alpha}.");
+						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency with alpha value of {alpha}.")) ? throw err : "";
 				}
 			}
 		}
@@ -284,6 +285,7 @@ namespace Keysharp.Core.Windows
 			}
 			set
 			{
+				Error err;
 				var splits = value.As().Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 				var colorstr = splits[0];
 				var exstyle = WindowsAPI.GetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE);
@@ -291,7 +293,7 @@ namespace Keysharp.Core.Windows
 				if (colorstr.ToLower() == "off")
 				{
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle.ToInt64() & ~WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero)
-						throw new OSError("", $"Could not turn transparency off.");
+						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not turn transparency off.")) ? throw err : "";
 				}
 				else
 				{
@@ -311,10 +313,10 @@ namespace Keysharp.Core.Windows
 							color = Color.FromArgb(color.A, color.B, color.G, color.R);//Flip RGB to BGR.
 
 							if (!WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)color.ToArgb() & 0x00FFFFFF, (byte)val, (uint)flags))//Make top byte of color zero.
-								throw new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.");
+								_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.")) ? throw err : "";
 						}
 						else
-							throw new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.");
+							_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.")) ? throw err : "";
 					}
 				}
 			}

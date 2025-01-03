@@ -397,12 +397,14 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is not an <see cref="IEnumerable"/> or an <see cref="IEnumerator"/>.</exception>
 		public static IEnumerator MakeBaseEnumerator(object obj)
 		{
+			Error err;
+
 			if (obj is IEnumerable ie)
 				return ie.GetEnumerator();
 			else if (obj is IEnumerator ie2)
 				return ie2;
 			else
-				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.");
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -413,15 +415,18 @@ namespace Keysharp.Core
 		/// <param name="obj">The object to get the enumerator for.</param>
 		/// <param name="obj">The number of items the enumerator should return, 1 or 2.</param>
 		/// <returns>An <see cref="IEnumerator{object,object}"/> for the object.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is null or is not any of:<br/>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is not any of:<br/>
 		///     <see cref="IEnumerable{object,object}"/><br/>
 		///     <see cref="IEnumerator{object,object}"/><br/>
 		///     <see cref="I__Enum"/><br/>
 		///     <see cref="object[]"/><br/>
 		///     <see cref="IEnumerable"/><br/>
 		/// </exception>
+		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if the object is null.</exception>
 		public static IEnumerator<(object, object)> MakeEnumerator(object obj, object count)
 		{
+			Error err;
+
 			if (obj is I__Enum ienum)
 				return ienum.__Enum(count.Ai());
 			else if (obj is object[] oa)
@@ -433,9 +438,9 @@ namespace Keysharp.Core
 			else if (obj is IEnumerable ie)
 				return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
 			else if (obj is null)
-				throw new Error($"Object was null and could not be converted to an IEnumerator<object, object>.");
+				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to an IEnumerator<object, object>.")) ? throw err : null;
 			else
-				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, object>.");
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, object>.")) ? throw err : null;
 		}
 
 		/// <summary>
