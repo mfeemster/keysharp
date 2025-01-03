@@ -34,4 +34,31 @@ if (x == 1)
 else
 	FileAppend, "fail", "*"
 
+x := 0
+
+fo1 := FuncObj("TimerHandler")
+SetTimer(fo1, 100)
+
+TimerHandler()
+{
+global
+	x++
+
+	if (x == 1)
+	{
+		SetTimer(fo1, 0)
+	}
+
+	Exit()
+	x := 123
+}
+
+Sleep(1000)
+
+if (x == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 OnError("LogError3", 0)
+ExitApp()

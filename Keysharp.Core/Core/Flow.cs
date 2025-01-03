@@ -143,11 +143,15 @@ namespace Keysharp.Core
 		/// clause that wraps all threads.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static object Exit(object exitCode = null)
+		public static void Exit(object exitCode = null)
 		{
-			Error err;
 			Accessors.A_ExitReason = exitCode.Al();
-			return Errors.ErrorOccurred(err = new Error("Exiting thread")) ? throw err : null;
+			var err = new Error(Keyword_ExitThread)
+			{
+				Handled = true,//Do not call any error handlers. Just exit the thread.
+				Processed = true
+			};
+			throw err;
 		}
 
 		/// <summary>
