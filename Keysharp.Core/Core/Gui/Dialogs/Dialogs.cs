@@ -601,11 +601,15 @@ namespace Keysharp.Core
 				nMessageBoxes++;
 				var ret = "";
 
+				//If owner is null, then the message boxes will not be modal between threads, meaning it's possible to show
+				//more than one message box simultaneously and switch between them. However, within a thread, a message box always
+				//blocks that thread.
 				if (owner != null)
 					_ = owner.Invoke(() => ret = MessageBox.Show(owner, txt, caption, buttons, icon, defaultbutton, mbopts).ToString());
 				else
-					ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString(), true);
+					ret = MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString();
 
+				//ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString(), true);
 				nMessageBoxes--;
 				return ret;
 			}
