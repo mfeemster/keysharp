@@ -1151,6 +1151,9 @@ namespace Keysharp.Scripting
 
 						foreach (var globalvar in scopekv.Value)
 						{
+							if (globalvar.Value == null)
+								continue;
+
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
 
 							if (name == "this")//Never create a "this" variable inside of a class definition.

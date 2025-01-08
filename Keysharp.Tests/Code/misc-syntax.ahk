@@ -373,6 +373,55 @@ if (x == 4)
 else
 	FileAppend, "fail", "*"
 
+; Function with loop whose variables get passed to another function.
+; Ensure they are not defined as function variables outside of the loop scope.
+m := Map("one", 1)
+
+mapfunc()
+{
+	for k, v in m
+	{
+		afunc(k, v)
+	}
+}
+
+afunc(kk, vv)
+{
+}
+
+; Same, but inside of a class property.
+class mylooppropclass
+{
+	__item[p1*]
+	{
+		set
+		{
+			temp := 0
+
+			for n in p1
+			{
+				temp += n
+			}
+		}
+	
+		get
+		{
+			m := Map("one", 1)
+			
+			for k,v in m
+			{
+				afunc(k, v)
+			}
+
+			return 1
+		}
+	}
+
+	afunc(kk, vv)
+	{
+	}
+}
+
 ;Test ending a file with a multiline comment.
 ExitApp()/*
 asdf
