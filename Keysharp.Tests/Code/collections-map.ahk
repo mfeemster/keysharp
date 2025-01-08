@@ -2,24 +2,82 @@
 
 x := "one"
 m := { %x% : 1, "two" : 2, "three" : 3 }
+val := m.%x%
+
+if (val = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m := Map(x, 1, "two", 2, "three", 3)
 val := m[x]
 
 if (val = 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 x := "one"
 y := 1
 m := { %x% : y, "two" : 2, "three" : 3 }
+val := m.one
+
+if (val = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+b := false
+
+try
+{
+	val := m["one"] ; Can't access object literal properties via index notation.
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := "one"
+y := 1
+m := Map(x, y, "two", 2, "three", 3)
 val := m[x]
 
 if (val = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+b := false
+
+try
+{
+	val := m.one ; Can't access map keys with property notation without first adding as an OwnProp.
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
+val := m.one
+
+if (val = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m := Map("one", 1, "two", 2, "three", 3)
 val := m["one"]
 
 if (val = 1)
@@ -27,29 +85,14 @@ if (val = 1)
 else
 	FileAppend, "fail", "*"
 
-m := { one : 1, two : 2, three : 3 }
-val := m["one"]
-
-if (val = 1)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-val := m.two
-
-if (val = 2)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-	
-val := m.TWO
+val := m["two"]
 
 if (val = 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-val := m.three
+val := m["three"]
 
 if (val = 3)
 	FileAppend, "pass", "*"
@@ -100,8 +143,15 @@ str2 := "two"
 str3 := "three"
 
 m := { %str1% : 1, %str2% : 2, %str3% : 3 }
-val := m[str1]
 val := m.one
+
+if (val = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m := Map(str1, 1, %str2%, 2, %str3%, 3)
+val := m[str1]
 
 if (val = 1)
 	FileAppend, "pass", "*"
@@ -268,7 +318,7 @@ m1 := { one : 1, two : 2, three : 3 }
 m2 := { four : 4, five : 5, six : 6 }
 m3 := { seven : 7, eight : 8, nine : 9 }
 
-m := { %m1% : "mapone", %m2% : "maptwo", %m3% : "mapthree" }
+m := Map(m1, "mapone", m2, "maptwo", m3, "mapthree")
 
 val := m.Count
 
@@ -345,7 +395,7 @@ if (val == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 m := Map()
 m.CaseSense := "on"
 m.Set("one", 1, "two", 2, "three", 3)
@@ -376,7 +426,7 @@ else
 m.Capacity := 1000
 val := m.Capacity
 
-if (val >= 1000) ; Capacity will internall be made to be at least as big as we specified.
+if (val >= 1000) ; Capacity will internally be made to be at least as big as we specified.
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -387,20 +437,44 @@ if (m.one == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 m.one := 123
 
 if (m.one == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+m := Map("one", 1, "two", 2, "three", 3)
+
+if (m["one"] == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+m["one"] := 123
 
 if (m["one"] == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 m := { one : [1, 1, 1], two : [2, 2, 2], three : [3, 3, 3] }
+val := m.one[1]
+
+if (val == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+m.one[1] := 123
+
+if (m.one[1] == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+m := Map("one", [1, 1, 1], "two", [2, 2, 2], "three", [3, 3, 3])
 val := m["one"][1]
 
 if (val == 1)
@@ -414,11 +488,6 @@ if (m["one"][1] == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
-if (m.one[1] == 123)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
 
 val := m["one"][1]
 
@@ -427,15 +496,24 @@ if (val == 123)
 else
 	FileAppend, "fail", "*"
 
-val := m["ONE"][1]
+b := false
 
-if (val == 123)
+try
+{
+	val := m["ONE"][1]
+}
+catch
+{
+	b := true
+}
+
+if (b == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 m := { one : [[1, 1, 1], [2, 2, 2], [3, 3, 3]] }
-val := m["one"][3][1]
+val := m.one[3][1]
 
 if (val == 3)
 	FileAppend, "pass", "*"
@@ -444,7 +522,7 @@ else
 
 m.one[3][1] := 123
 
-if (m["one"][3][1] == 123)
+if (m.one[3][1] == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -455,7 +533,7 @@ if (val == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 m := {
 	one : 1
 }
@@ -474,7 +552,7 @@ if (m.one.oneone == 11)
 else
 	FileAppend, "fail", "*"
 
-m := { "{o]ne" : 1, "[t{w{0" : 2, "t{hr)e)]e" : 3 }
+m := Map("{o]ne", 1, "[t{w{0", 2, "t{hr)e)]e", 3)
 
 if (m["{o]ne"] == 1)
 	FileAppend, "pass", "*"
@@ -518,14 +596,8 @@ if (val == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
-val := m.test
-
-if (val == 1)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
+	
+b := false
 val := m["TEST"]
 
 if (val == 4)
@@ -533,15 +605,7 @@ if (val == 4)
 else
 	FileAppend, "fail", "*"
 
-val := m.TEST
-
-if (val == 4)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
 m.Default := unset
-
 b := false
 
 try

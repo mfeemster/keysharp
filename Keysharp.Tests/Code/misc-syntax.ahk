@@ -155,7 +155,7 @@ m := { ;This is a comment.
 one : 1
 }
 
-if (m["one"] == 1)
+if (m.one == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -169,7 +169,7 @@ a
 b
 }
 
-if (m["a"] == 100)
+if (m.a == 100)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -184,7 +184,7 @@ a
 b
 }
 
-if (m["a"] == 200)
+if (m.a == 200)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -238,7 +238,7 @@ else
 
 x := 0
 
-if (x == {}.Count)
+if (x == {}.OwnPropCount())
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -274,7 +274,7 @@ m := func1({ ;This is a comment.
 one : 1 /*This is a multiline comment.*/
 })
 
-if (m["one"] == 1)
+if (m.one == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -297,7 +297,7 @@ else
 if (func1({ ; continuation
 	a
 	: "two"
-}).Count == 1) {
+}).OwnPropCount() == 1) {
 	FileAppend, "pass", "*"
 }
 else

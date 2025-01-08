@@ -97,10 +97,6 @@
 			{
 				if (kso.op != null && kso.op.ContainsKey(n))
 					return 1L;
-
-				if (value is Map map)
-					if (map.map.ContainsKey(n))
-						return 1L;
 			}
 
 			var mph = Reflections.FindAndCacheProperty(val.GetType(), n, count);

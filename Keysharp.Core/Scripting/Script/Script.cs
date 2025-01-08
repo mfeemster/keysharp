@@ -382,7 +382,7 @@
 				{
 					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
-						_ = Keysharp.Core.Flow.ExitApp(0);
+						_ = Keysharp.Core.Flow.ExitApp(1);
 					}
 				}
 			});

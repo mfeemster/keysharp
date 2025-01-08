@@ -2,17 +2,6 @@
 {
 	public partial class Script
 	{
-		//[ThreadStatic]
-		//private static object lastItem = null;
-
-		//[ThreadStatic]
-		//private static string lastKey = null;
-
-		//[ThreadStatic]
-		//private static (object, object) lastMph = (null, null);
-
-		//[ThreadStatic]
-		//private static int lastParamCount = 0;
 		public static object FindObjectForMethod(object obj, string name, int paramCount)
 		{
 			Error err;
@@ -30,8 +19,6 @@
 		}
 		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
 		{
-			//if (ReferenceEquals(item, lastItem) && ReferenceEquals(key, lastKey) && paramCount == lastParamCount)
-			//  return lastMph;
 			Error err;
 			Type typetouse = null;
 
@@ -48,40 +35,21 @@
 				if (item == null)
 				{
 					if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
-					{
-						//lastItem = item;
-						//lastKey = key;
-						//lastParamCount = paramCount;
-						return /*lastMph = */ (item, mph0);
-					}
+						return (item, mph0);
 				}
 				else if (item is KeysharpObject kso && kso.op != null)
 				{
 					if (kso.op.TryGetValue(key, out var val) && val is OwnPropsMap map)
 					{
 						//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
-						if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifo1)//Call must come first.
-						{
-							//lastItem = item;
-							//lastKey = key;
-							//lastParamCount = paramCount;
-							return /*lastMph = */ (map, ifo1);
-						}
-						else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo3)
-						{
-							//lastItem = item;
-							//lastKey = key;
-							//lastParamCount = paramCount;
-							var getret = ifo3.Call();//No params passed in, just call as is.
-							return /*lastMph =*/ (map, getret);
-						}
-						else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifo2)
-						{
-							//lastItem = item;
-							//lastKey = key;
-							//lastParamCount = paramCount;
-							return /*lastMph = */ (map, ifo2);
-						}
+						if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)//Call must come first.
+							return (map, ifocall);
+						else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifoget)
+							return (map, ifoget.Call());//No params passed in, just call as is.
+						else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifoval)
+							return (map, ifoval);
+						else if (map.map.TryGetValue("set", out var setval) && setval is IFuncObj ifoset)
+							return (map, ifoset);
 
 						return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
 					}
@@ -89,17 +57,11 @@
 
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
 				{
-					//lastItem = item;
-					//lastKey = key;
-					//lastParamCount = paramCount;
-					return /*lastMph = */ (item, mph1);
+					return (item, mph1);
 				}
 				else if (Reflections.FindAndCacheProperty(typetouse, key, paramCount) is MethodPropertyHolder mph2)
 				{
-					//lastItem = item;
-					//lastKey = key;
-					//lastParamCount = paramCount;
-					return /*lastMph = */ (item, mph2);
+					return (item, mph2);
 				}
 
 #if WINDOWS
@@ -164,13 +126,13 @@
 				{
 					return mph.callFunc(item, null);
 				}
+
 				//This is for the case where a Map accesses a key within the Map as if it were a property, so we try to get the indexer property, then pass the name of the passed in property as the key/index.
 				//We check for a param length of 1 so we don't accidentally grab properties named Item which have no parameters, such as is the case with ComObject.
-				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
-				{
-					return mph1.callFunc(item, [namestr]);
-				}
-
+				//else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
+				//{
+				//  return mph1.callFunc(item, [namestr]);
+				//}
 #if WINDOWS
 				else if (item is ComObject co)
 				{
@@ -443,10 +405,10 @@
 				}
 
 #endif
-				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
-				{
-					return mph1.callFunc(item, [namestr, value]);
-				}
+				//else if (kso is Map m && Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
+				//{
+				//  return mph1.callFunc(item, [namestr, value]);
+				//}
 				else if (kso != null)//No property was present, so create one and assign the value to it.
 				{
 					_ = kso.DefineProp(namestr, Collections.Map("value", value));

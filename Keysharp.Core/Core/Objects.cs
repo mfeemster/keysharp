@@ -20,14 +20,32 @@
 		///     An object[] of key,value pairs.
 		/// </param>
 		/// <returns>A new <see cref="Map"/> object.</returns>
-		public static Map Object(params object[] values)
+		public static KeysharpObject Object(params object[] values)
 		{
-			var map = new Map
+			var kso = new KeysharpObject();
+			var count = (values.Length / 2) * 2;
+
+			for (var i = 0; i < count; i += 2)
 			{
-				CaseSense = false
-			};
-			map.Set(values);
-			return map;
+				var map = new Map
+				{
+					CaseSense = false
+				};
+				var key = values[i].ToString();
+
+				if (string.Compare(key, "get", true) == 0
+						|| string.Compare(key, "set", true) == 0
+						|| string.Compare(key, "call", true) == 0)
+				{
+					map[key.ToLower()] = values[i + 1];
+				}
+				else
+					map["value"] = values[i + 1];
+
+				kso.DefineProp(key, map);
+			}
+
+			return kso;
 		}
 
 		/// <summary>

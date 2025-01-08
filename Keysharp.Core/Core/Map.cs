@@ -367,7 +367,7 @@
 				else
 					_ = sb.AppendLine($"{indent}{name}: {{}} ({GetType().Name})");
 			}
-			var opi = (OwnPropsIterator)OwnProps(true, false, true);
+			var opi = (OwnPropsIterator)OwnProps(true, false);
 			tabLevel++;
 			indent = new string('\t', tabLevel);
 
