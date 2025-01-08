@@ -648,6 +648,7 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static (RegistryKey, string, string) ToRegRootKey(string name)
 		{
+			Error err;
 			var computername = "";
 
 			if (name.StartsWith("\\\\"))
@@ -688,7 +689,7 @@ namespace Keysharp.Core.Common.Strings
 					return (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key);
 
 				default:
-					throw new ValueError($"{root} was not a valid registry type.");
+					return Errors.ErrorOccurred(err = new ValueError($"{root} was not a valid registry type.")) ? throw err : (null, null, null);
 			}
 		}
 #endif

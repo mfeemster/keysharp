@@ -215,8 +215,10 @@
 		/// <returns></returns>
 		internal static List<Icon> SplitIcon(Icon icon)
 		{
+			Error err;
+
 			if (icon == null)
-				throw new ArgumentNullException("icon");
+				return Errors.ErrorOccurred(err = new UnsetError("Icon was null")) ? throw err : null;
 
 			try
 			{
@@ -273,7 +275,7 @@
 			}
 			catch (Exception e)
 			{
-				throw new Error($"Error splitting icon: {e.Message}");
+				return Errors.ErrorOccurred(err = new Error($"Error splitting icon: {e.Message}")) ? throw err : null;
 			}
 		}
 

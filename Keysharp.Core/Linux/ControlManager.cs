@@ -390,6 +390,7 @@ namespace Keysharp.Core.Linux
 		{
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
+				Error err;
 				var ctrl2 = Control.FromHandle(item.Handle);
 				n--;
 
@@ -398,7 +399,7 @@ namespace Keysharp.Core.Linux
 					var lines = txt.Lines;
 
 					if (n >= lines.Length)
-						throw new ValueError($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+						return Errors.ErrorOccurred(err = new ValueError($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 					return lines[n];
 				}
@@ -455,6 +456,7 @@ namespace Keysharp.Core.Linux
 
 			if (Window.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
+				Error err;
 				var focused = false;
 				var count = false;
 				var sel = false;
@@ -499,7 +501,7 @@ namespace Keysharp.Core.Linux
 						if (col >= 0)
 						{
 							if (col >= lv.Columns.Count)
-								throw new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+								return Errors.ErrorOccurred(err = new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 							items.ForEach(templvi => sb.AppendLine(templvi.SubItems[col].Text));
 						}
@@ -528,10 +530,12 @@ namespace Keysharp.Core.Linux
 				{
 					if (form.MainMenuStrip is MenuStrip strip)
 					{
+						Error err;
+
 						if (GetMenuItem(strip, menu, sub1, sub2, sub3, sub4, sub5, sub6) is ToolStripMenuItem item)
 							item.PerformClick();
 						else
-							throw new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
+							_ = Errors.ErrorOccurred(err = new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}")) ? throw err : "";
 					}
 				}
 			}

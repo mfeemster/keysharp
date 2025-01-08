@@ -234,6 +234,7 @@
 		internal const string Keyword_Exist = "exist";
 		internal const string Keyword_Exit = "Exit";
 		internal const string Keyword_ExitApp = "ExitApp";
+		internal const string Keyword_ExitThread = "ExitThread";
 		internal const string Keyword_Exp = "exp";
 		internal const string Keyword_Expand = "expand";
 		internal const string Keyword_Expanded = "expanded";

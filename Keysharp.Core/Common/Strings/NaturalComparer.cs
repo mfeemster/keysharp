@@ -14,11 +14,13 @@
 
 		public int Compare(object left, object right)
 		{
+			Error err;
+
 			if (!(left is string s1))
-				throw new ArgumentException("Parameter type is not string", "left");
+				return Errors.ErrorOccurred(err = new TypeError($"Left comparison parameter of type {left.GetType()} instead of type string.")) ? throw err : 0;
 
 			if (!(right is string s2))
-				throw new ArgumentException("Parameter type is not string", "right");
+				return Errors.ErrorOccurred(err = new TypeError($"Right comparison parameter of type {right.GetType()} instead of type string.")) ? throw err : 0;
 
 			return Compare(s1, s2);
 		}

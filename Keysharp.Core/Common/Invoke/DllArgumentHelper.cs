@@ -21,6 +21,7 @@ namespace Keysharp.Core.Common.Invoke
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
 			}
+			Error err;
 			types = new Type[parameters.Length / 2];
 			args = new object[types.Length];
 			names = new string[types.Length];
@@ -89,7 +90,8 @@ namespace Keysharp.Core.Common.Invoke
 					case "ptr": type = typeof(IntPtr); break;
 
 					default:
-						throw new ValueError($"Arg or return type of {name} is invalid.");
+						_ = Errors.ErrorOccurred(err = new ValueError($"Arg or return type of {name} is invalid.")) ? throw err : "";
+						return;
 				}
 
 				TypeDetermined:
@@ -170,7 +172,10 @@ namespace Keysharp.Core.Common.Invoke
 										_ = Marshal.Release(pUnk);
 									}
 									else
-										throw new TypeError($"COM object with ptr type {co.Ptr.GetType()} could not be converted into a DLL argument.");
+									{
+										_ = Errors.ErrorOccurred(err = new TypeError($"COM object with ptr type {co.Ptr.GetType()} could not be converted into a DLL argument.")) ? throw err : "";
+										return;
+									}
 								}
 								else if (Marshal.IsComObject(p))
 								{
@@ -220,7 +225,8 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					catch (Exception e)
 					{
-						throw new TypeError($"Argument type conversion failed: {e.Message}");
+						_ = Errors.ErrorOccurred(err = new TypeError($"Argument type conversion failed: {e.Message}")) ? throw err : "";
+						return;
 					}
 				}
 			}

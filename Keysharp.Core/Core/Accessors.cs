@@ -387,20 +387,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning the caret.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeCaret
 		{
 			get => Mouse.Coords.Caret.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeCaretDefault = val;
@@ -412,20 +417,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning menus.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMenu
 		{
 			get => Mouse.Coords.Menu.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeMenuDefault = val;
@@ -437,20 +447,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning the mouse.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMouse
 		{
 			get => Mouse.Coords.Mouse.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeMouseDefault = val;
@@ -462,20 +477,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning pixels.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModePixel
 		{
 			get => Mouse.Coords.Pixel.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModePixelDefault = val;
@@ -487,20 +507,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning tooltips.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeToolTip
 		{
 			get => Mouse.Coords.Tooltip.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeToolTipDefault = val;
@@ -518,7 +543,7 @@
 		public static string A_Cursor =>
 		Cursor.Current is Cursor cur ?
 #if LINUX
-		cur.ToString().Trim(Keywords.BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
+		cur.ToString().Trim(BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
 #elif WINDOWS
 		cur.ToString().Trim(BothBrackets).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
 #endif

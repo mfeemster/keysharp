@@ -331,7 +331,7 @@
 
 			if (opts is string s)
 			{
-				foreach (Range r in s.AsSpan().SplitAny(Keywords.Spaces))
+				foreach (Range r in s.AsSpan().SplitAny(Spaces))
 				{
 					var opt = s.AsSpan(r).Trim();
 

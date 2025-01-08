@@ -318,7 +318,11 @@
 			return sb.ToString();
 		}
 
-		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+		public static void ListLines(params object[] obj)
+		{
+			Error err;
+			_ = Errors.ErrorOccurred(err = new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.")) ? throw err : "";
+		}
 
 		public static void ListVars() => mainWindow?.ShowInternalVars(true);
 
@@ -378,7 +382,7 @@
 				{
 					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
-						_ = Keysharp.Core.Flow.ExitApp(0);
+						_ = Keysharp.Core.Flow.ExitApp(1);
 					}
 				}
 			});
@@ -402,7 +406,7 @@
 		//  var val = "*w100 *h200 *icon2 C:\a filename.jpg";
 
 		//  //for (var i = 0; i < splits.Length - 1; i++)
-		//  foreach (Range r in val.AsSpan().SplitAny(Keywords.SpaceTabSv))
+		//  foreach (Range r in val.AsSpan().SplitAny(SpaceTabSv))
 		//  {
 		//      var opt = val.AsSpan(r).Trim();
 

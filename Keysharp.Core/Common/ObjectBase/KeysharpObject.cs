@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.ObjectBase
+﻿using System.Xml.Linq;
+
+namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
@@ -29,21 +31,34 @@
 
 		public KeysharpObject DefineProp(object obj0, object obj1)
 		{
-			var name = obj0.As().ToLower();
+			var name = obj0.As();
 
 			if (obj1 is Map map)
 			{
 				if (op == null)
 					op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
 
-				var mapCopy = new OwnPropsMap(this, map);
-				//if (mapCopy.map.TryGetValue("get", out var getprop) && getprop is FuncObj getfo)
-				//  mapCopy.map["get"] = getfo is BoundFunc ? getfo : getfo.Bind(this);
-				//if (mapCopy.map.TryGetValue("set", out var setprop) && setprop is FuncObj setfo)
-				//  mapCopy.map["set"] = setfo is BoundFunc ? setfo : setfo.Bind(this);
-				//if (mapCopy.map.TryGetValue("call", out var callprop) && callprop is FuncObj callfo)
-				//  mapCopy.map["call"] = callfo is BoundFunc ? callfo : callfo.Bind(this);
-				op[name] = mapCopy;
+				op[name] = new OwnPropsMap(this, map);
+			}
+			else if (obj1 is KeysharpObject kso)
+			{
+				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
+				{
+					if (op == null)
+						op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
+
+					_ = op.Remove(name);//Clear, but this will prevent defining the property across multiple calls such as first adding value, then get, then set.
+
+					foreach (var kv in kso.op)
+					{
+						if (op.TryGetValue(name, out var currProp))
+							currProp.map[kv.Key] = kv.Value[kv.Key];//Merge.
+						else
+							op[name] = new OwnPropsMap(this, new Map(kv.Value.map));//Create new.
+					}
+
+					kso.op.Clear();
+				}
 			}
 
 			return this;
@@ -64,41 +79,53 @@
 			return "";
 		}
 
-		public long GetCapacity() => throw new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+		public long GetCapacity()
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.")) ? throw err : 0L;
+		}
 
 		public object GetOwnPropDesc(object obj)
 		{
+			Error err;
 			var name = obj.As().ToLower();
 
-			if (this is Map map)
-			{
-				if (map.map.TryGetValue(name, out var mapVal))
-				{
-					return new OwnPropsMap(this, Collections.Map(["Value", mapVal]));
-				}
-			}
-
 			if (op != null && op.TryGetValue(name, out var dynProp))
-				return dynProp.Clone();
+			{
+				var kso = new KeysharpObject();
+				var list = new List<object>();
+				kso.op = new Dictionary<string, OwnPropsMap>();
+
+				foreach (var kv in dynProp.map)
+				{
+					list.Add(kv.Key);
+
+					//Must wrap in a function so that when GetMethodOrProperty() unwraps it, it just returns the property and
+					//doesn't actually call get().
+					if (string.Compare(kv.Key.ToString(), "get", true) == 0)
+						list.Add(new FuncObj("Wrap", this).Bind(kv.Value));
+					else
+						list.Add(kv.Value);
+				}
+
+				return Keysharp.Core.Objects.Object(list.ToArray());
+			}
 
 			try
 			{
-				return Script.GetPropertyValue(this, name);
+				var val = Script.GetPropertyValue(this, name);
+				return Keysharp.Core.Objects.Object(["value", val]);
 			}
 			catch
 			{
 			}
 
-			throw new PropertyError($"Object did not have an OwnProp named {name}.");
+			return Errors.ErrorOccurred(err = new PropertyError($"Object did not have an OwnProp named {name}.")) ? throw err : null;
 		}
 
 		public long HasOwnProp(object obj)
 		{
 			var name = obj.As().ToLower();
-
-			if (this is Map map)
-				if (map.map.ContainsKey(name))
-					return 1L;
 
 			if (op != null && op.ContainsKey(name))
 				return 1L;
@@ -110,9 +137,6 @@
 		{
 			var ct = 0L;
 			var isMapOnly = GetType() == typeof(Map);
-
-			if (this is Map map)
-				ct += map.map.Count;
 
 			if (op != null)
 				ct += op.Count;
@@ -126,37 +150,39 @@
 			return ct;
 		}
 
-		public object OwnProps(object obj0 = null, object obj1 = null, object obj2 = null)
+		public object OwnProps(object getValues = null, object userOnly = null)
 		{
-			var getVals = obj0.Ab();
-			var userOnly = obj1.Ab(true);
-			var skipMap = obj2.Ab(false);
+			var vals = getValues.Ab();
+			var user = userOnly.Ab(true);
 			var props = new Dictionary<object, object>();
 
-			if (!skipMap)
-				if (this is Map map && map.map.Count > 0)
-					foreach (var kv in map.map)
-						if (!getVals
-								|| kv.Value is not FuncObj fo
-								|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
-							props[kv.Key] = kv.Value;
-
 			if (op != null)
+			{
 				foreach (var kv in op)
-					if (kv.Value.map.TryGetValue("get", out var dynprop))
-						if (!getVals
-								|| dynprop is not FuncObj fo
-								|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
-							props[kv.Key] = dynprop;
+				{
+					foreach (var propkv in kv.Value.map)
+					{
+						var prop = propkv.Value;
+
+						if (prop != null)
+						{
+							if (!vals
+									|| prop is not FuncObj fo
+									|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
+								props[kv.Key] = prop;
+						}
+					}
+				}
+			}
 
 			_ = Reflections.FindAndCacheProperty(GetType(), "", -1);
-			var valProps = Reflections.GetOwnProps(GetType(), userOnly);
+			var valProps = Reflections.GetOwnProps(GetType(), user);
 
 			foreach (var mph in valProps)
-				if (!getVals || (mph.pi != null && mph.ParamLength == 0))
+				if (!vals || (mph.pi != null && mph.ParamLength == 0))
 					props[mph.pi.Name] = mph;
 
-			return new OwnPropsIterator(this, props, getVals);
+			return new OwnPropsIterator(this, props, vals);
 		}
 
 		public virtual void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
@@ -200,9 +226,19 @@
 			tabLevel--;
 		}
 
-		public void SetBase(params object[] obj) => throw new Exception(BaseExc);
+		public void SetBase(params object[] obj)
+		{
+			Error err;
+			_ = Errors.ErrorOccurred(err = new Error(BaseExc)) ? throw err : "";
+		}
 
-		public long SetCapacity(object obj) => throw new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+		public long SetCapacity(object obj)
+		{
+			var err = new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
+			return Errors.ErrorOccurred(err) ? throw err : 0L;
+		}
+
+		public object Wrap(object obj) => obj;
 
 		protected static object __StaticInit() => "";
 

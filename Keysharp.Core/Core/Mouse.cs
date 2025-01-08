@@ -71,6 +71,7 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if targetType or relativeTo do not contain a valid values.</exception>
 		public static object CoordMode(object targetType, object relativeTo = null)
 		{
+			Error err;
 			var target = targetType.As();
 			var mode = relativeTo.As(Keyword_Screen);
 			CoordModeType rel;
@@ -86,7 +87,7 @@ namespace Keysharp.Core
 			else if (Options.IsOption(mode, Keyword_Screen))
 				rel = CoordModeType.Screen;
 			else
-				throw new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().");
+				return Errors.ErrorOccurred(err = new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().")) ? throw err : null;
 
 			object prev;
 
@@ -118,7 +119,7 @@ namespace Keysharp.Core
 					break;
 
 				default:
-					throw new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().");
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().")) ? throw err : null;
 			}
 
 			return prev;
@@ -422,13 +423,17 @@ namespace Keysharp.Core
 		private static void PerformMouse(Actions actionType, string button, int x1, int y1, int x2, int y2
 										 , int speed, string relative, long repeatCount, string downUp)
 		{
+			Error err;
 			uint vk;
 			var ht = Script.HookThread;
 
 			if (actionType == Actions.ACT_MOUSEMOVE)
 				vk = 0;
 			else if ((vk = ht.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
-				throw new ValueError($"Invalid mouse button type of {button}.");
+			{
+				_ = Errors.ErrorOccurred(err = new ValueError($"Invalid mouse button type of {button}.")) ? throw err : "";
+				return;
+			}
 
 			// v1.0.43: Seems harmless (due to rarity) to treat invalid button names as "Left" (keeping in
 			// mind that due to loadtime validation, invalid buttons are possible only when the button name is
@@ -436,7 +441,7 @@ namespace Keysharp.Core
 			var eventType = KeyEventTypes.KeyDownAndUp;  // Set defaults.
 
 			if (repeatCount < 0)
-				throw new ValueError($"Invalid repeat count of {repeatCount}. It must be >= 0.");
+				_ = Errors.ErrorOccurred(err = new ValueError($"Invalid repeat count of {repeatCount}. It must be >= 0.")) ? throw err : "";
 
 			//if (actionType == Actions.ACT_MOUSECLICK)
 			{
@@ -456,13 +461,19 @@ namespace Keysharp.Core
 							break;
 
 						default:
-							throw new ValueError($"Invalid down/up value of {downUp[0]}. It must be 'u' or 'd'.");
+						{
+							_ = Errors.ErrorOccurred(err = new ValueError($"Invalid down/up value of {downUp[0]}. It must be 'u' or 'd'.")) ? throw err : "";
+							return;
+						}
 					}
 				}
 			}
 
 			if (!string.IsNullOrEmpty(relative) && relative != "R")
-				throw new ValueError($"Invalid relative value of {relative}. It must be empty or 'R'.");
+			{
+				_ = Errors.ErrorOccurred(err = new ValueError($"Invalid relative value of {relative}. It must be empty or 'R'.")) ? throw err : "";
+				return;
+			}
 
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(actionType
@@ -530,6 +541,8 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if an invalid coordinate operation is specified.</exception>
 		internal CoordModeType GetCoordMode(CoordMode mode)
 		{
+			Error err;
+
 			switch (mode)
 			{
 				case CoordMode.Caret:
@@ -548,7 +561,7 @@ namespace Keysharp.Core
 					return Tooltip;
 
 				default:
-					throw new ValueError($"Invalid coordinate mode type: {mode}");
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid coordinate mode type: {mode}")) ? throw err : CoordModeType.Client;
 			}
 		}
 	}

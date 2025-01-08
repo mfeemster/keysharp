@@ -469,6 +469,7 @@ class class1
 			+ The only properties which can have parameters are the `__Item[]` indexer properties.
 	+ This is needed to resolve the proper overloaded method.
 	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
+* `KeysharpObject` has a new method `OwnPropCount()` which corresponds to the global function `ObjOwnPropCount()`.
 * `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
 * New function `Mail(recipients, subject, message, options)` to send an email.
 	+ `recipients`: A list of receivers of the message.

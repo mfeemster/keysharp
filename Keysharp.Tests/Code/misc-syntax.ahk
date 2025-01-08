@@ -155,7 +155,7 @@ m := { ;This is a comment.
 one : 1
 }
 
-if (m["one"] == 1)
+if (m.one == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -169,7 +169,7 @@ a
 b
 }
 
-if (m["a"] == 100)
+if (m.a == 100)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -184,7 +184,7 @@ a
 b
 }
 
-if (m["a"] == 200)
+if (m.a == 200)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -238,7 +238,7 @@ else
 
 x := 0
 
-if (x == {}.Count)
+if (x == {}.OwnPropCount())
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -274,7 +274,7 @@ m := func1({ ;This is a comment.
 one : 1 /*This is a multiline comment.*/
 })
 
-if (m["one"] == 1)
+if (m.one == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -297,7 +297,7 @@ else
 if (func1({ ; continuation
 	a
 	: "two"
-}).Count == 1) {
+}).OwnPropCount() == 1) {
 	FileAppend, "pass", "*"
 }
 else
@@ -372,6 +372,55 @@ if (x == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Function with loop whose variables get passed to another function.
+; Ensure they are not defined as function variables outside of the loop scope.
+m := Map("one", 1)
+
+mapfunc()
+{
+	for k, v in m
+	{
+		afunc(k, v)
+	}
+}
+
+afunc(kk, vv)
+{
+}
+
+; Same, but inside of a class property.
+class mylooppropclass
+{
+	__item[p1*]
+	{
+		set
+		{
+			temp := 0
+
+			for n in p1
+			{
+				temp += n
+			}
+		}
+	
+		get
+		{
+			m := Map("one", 1)
+			
+			for k,v in m
+			{
+				afunc(k, v)
+			}
+
+			return 1
+		}
+	}
+
+	afunc(kk, vv)
+	{
+	}
+}
 
 ;Test ending a file with a multiline comment.
 ExitApp()/*

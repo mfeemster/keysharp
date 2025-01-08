@@ -17,10 +17,14 @@
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null)
 		{
+			Error err;
 			var name = funcName.As();
 			var fo = new FuncObj(name, obj, paramCount);
-			return fo.Name != "" ? fo
-				   : throw new MethodError($"Unable to retrieve method {name} from object of type {(obj != null ? obj.GetType() : "")} with parameter count {paramCount.Ai(-1)}.");
+
+			if (fo.Name != "")
+				return fo;
+
+			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} from object of type {(obj != null ? obj.GetType() : "")} with parameter count {paramCount.Ai(-1)}.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -40,16 +44,20 @@
 		/// Otherwise, specify the name of the method to retrieve.
 		/// </param>
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
+		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
 		{
+			Error err;
 			var v = value;
 			var n = name.As();
 			var count = paramCount.Ai(-1);
 			var mph = Reflections.FindAndCacheMethod(v.GetType(), n.Length > 0 ? n : "Call", count);
-			return mph != null && mph.mi != null ? new FuncObj(mph.mi, v)
-				   : throw new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.");
+
+			if (mph != null && mph.mi != null)
+				return new FuncObj(mph.mi, v);
+
+			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -89,10 +97,6 @@
 			{
 				if (kso.op != null && kso.op.ContainsKey(n))
 					return 1L;
-
-				if (value is Map map)
-					if (map.map.ContainsKey(n))
-						return 1L;
 			}
 
 			var mph = Reflections.FindAndCacheProperty(val.GetType(), n, count);
@@ -131,6 +135,7 @@
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if h was not a string or existing function object.</exception>
 		internal static IFuncObj GetFuncObj(object h, object eventObj, bool throwIfBad = false)
 		{
+			Error err;
 			IFuncObj del = null;
 
 			if (h is string s)
@@ -142,13 +147,13 @@
 					if (tempdel.IsValid)
 						del = tempdel;
 					else if (throwIfBad)
-						throw new MethodError($"Unable to retrieve method {s} when creating a function object.");
+						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
 				}//Empty string will just return null, which is a valid value in some cases.
 			}
 			else if (h is IFuncObj fo)
 				del = fo;
 			else if (throwIfBad)
-				throw new TypeError($"Improper value of {h} was supplied for a function object.");
+				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
 
 			return del;
 		}

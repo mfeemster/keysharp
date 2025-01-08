@@ -184,7 +184,7 @@
 		{
 			object result = null;
 
-			if (handlers.Count() > 0)
+			if (handlers.Any())
 			{
 				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
 				//lock (ehLock)
@@ -206,9 +206,6 @@
 								if (handler != null)
 								{
 									result = handler.Call(obj);
-
-									if (result == null)
-										continue;
 
 									if (result.IsCallbackResultNonEmpty())
 										break;

@@ -143,14 +143,15 @@ namespace Keysharp.Core
 		/// clause that wraps all threads.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static object Exit(object exitCode = null)
+		public static void Exit(object exitCode = null)
 		{
 			Accessors.A_ExitReason = exitCode.Al();
-			throw new Error("Exiting thread")
+			var err = new Error(Keyword_ExitThread)
 			{
-				ExcType = Keyword_Return
+				Handled = true,//Do not call any error handlers. Just exit the thread.
+				Processed = true
 			};
-			//return null;
+			throw err;
 		}
 
 		/// <summary>
@@ -331,8 +332,13 @@ namespace Keysharp.Core
 
 			if (f != null && func == null)
 			{
-				func = f is FuncObj fo ?
-					   fo : throw new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.");
+				func = f as FuncObj;
+
+				if (func == null)
+				{
+					Error err;
+					_ = Errors.ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : "";
+				}
 			}
 
 			if (func != null && timers.TryGetValue(func, out timer))
@@ -667,28 +673,33 @@ namespace Keysharp.Core
 			}
 			catch (Error kserr)
 			{
-				if (pop)
-					_ = Threads.EndThread(true);
+				//Processed would still be false of the user did a throw statement in the script.
+				//But if we're throwing from inside of Keysharp, Processed should always be true.
+				if (!kserr.Processed)
+					_ = ErrorOccurred(kserr, kserr.ExcType);
 
-				if (ErrorOccurred(kserr))
+				if (!kserr.Handled)
 				{
 					var (__pushed, __btv) = Threads.BeginThread();
 					_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
 					_ = Threads.EndThread(__pushed);
 				}
 
+				if (pop)
+					_ = Threads.EndThread(true);
+
 				return false;
 			}
 			catch (Exception mainex)
 			{
-				if (pop)
-					_ = Threads.EndThread(true);
-
 				var ex = mainex.InnerException ?? mainex;
 
 				if (ex is Error kserr)
 				{
-					if (ErrorOccurred(kserr))
+					if (!kserr.Processed)
+						_ = ErrorOccurred(kserr, kserr.ExcType);
+
+					if (!kserr.Handled)
 					{
 						var (__pushed, __btv) = Threads.BeginThread();
 						_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
@@ -701,6 +712,9 @@ namespace Keysharp.Core
 					_ = Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
 					_ = Threads.EndThread(__pushed);
 				}
+
+				if (pop)
+					_ = Threads.EndThread(true);
 
 				return false;
 			}

@@ -70,7 +70,8 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new Error(ex.Message);
+				Error err;
+				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : null;
 			}
 		}
 
@@ -84,6 +85,7 @@ namespace Keysharp.Core
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if the key can't be found and no default is supplied.</exception>
 		public static string IniRead(object filename, object section = null, object key = null, object @default = null)
 		{
+			Error err;
 			var file = filename.As();
 			var s = section.As();
 			var k = key.As();
@@ -118,7 +120,7 @@ namespace Keysharp.Core
 				else if (def.Length > 0)
 					_ = sb.Append(def);
 				else
-					throw new OSError("", $"Failed to find key {k} in section {s} in INI file {file}.");
+					return Errors.ErrorOccurred(err = new OSError("", $"Failed to find key {k} in section {s} in INI file {file}.")) ? throw err : null;
 			}
 			else if (hassec)
 			{
@@ -230,7 +232,8 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.")) ? throw err : null;
 			}
 		}
 
