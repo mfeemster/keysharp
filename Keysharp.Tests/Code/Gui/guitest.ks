@@ -2296,7 +2296,7 @@ MoveGui() {
 	MyGui.UseGroup(gb2_TabTwo)
 	guiToUse := MoveEdit.Text != "" ? MoveEdit.Text : MyGui ; Either search for the text the user entered, or just use this Gui directly.
 	WinGetPos(&winposx, &winposy, &winposw, &winposh, guiToUse)
-	WinMove(100, 100, 200, 200, guiToUse)
+	WinMove(100, 100, , , guiToUse)
 	; MyGui.Move(100, 100, 200, 200)
 }
 
