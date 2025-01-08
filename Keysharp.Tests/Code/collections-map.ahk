@@ -673,3 +673,17 @@ if (val == "CAPSLOCK")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+a := Map() ; Map with a key and property each with the same name.
+a["test"] := 3
+a.test := 2
+
+if (a["test"] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (a.test == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
