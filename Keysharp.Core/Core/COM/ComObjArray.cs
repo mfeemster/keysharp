@@ -34,7 +34,7 @@ namespace Keysharp.Core.COM
 				}
 				catch (IndexOutOfRangeException)
 				{
-					throw new InvalidOperationException();
+					throw new InvalidOperationException();//Should never happen when using regular loops.
 				}
 			}
 		}

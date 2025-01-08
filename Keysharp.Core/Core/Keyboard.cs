@@ -165,6 +165,7 @@ namespace Keysharp.Core
 		/// <param name="Mode"></param>
 		public static object GetKeyState(object obj0, object obj1 = null)
 		{
+			Error err;
 			var keyname = obj0.As();
 			var mode = obj1.As();
 			var ht = Script.HookThread;
@@ -176,7 +177,7 @@ namespace Keysharp.Core
 			if (vk == 0)
 			{
 				if ((joy = Joystick.ConvertJoy(keyname, ref joystickid)) == 0)
-					throw new ValueError("Invalid value.");//It is neither a key name nor a joystick button/axis.
+					return Errors.ErrorOccurred(err = new ValueError("Invalid value.")) ? throw err : null;//It is neither a key name nor a joystick button/axis.
 
 				return Joystick.ScriptGetJoyState(joy, joystickid.Value);
 			}
@@ -230,6 +231,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">Throws an <see cref="Error"/> exception if an invalid function object or name is specified.</exception>
 		public static object Hotkey(object keyName, object action = null, object options = null)
 		{
+			Error err;
 			var keyname = keyName.As();
 			var label = action.As();
 			var opt = options.As();
@@ -261,7 +263,7 @@ namespace Keysharp.Core
 break_twice:;
 
 					if (fo == null)
-						throw new Error($"Unable to find existing hotkey handler: {label}");
+						return Errors.ErrorOccurred(err = new Error($"Unable to find existing hotkey handler: {label}")) ? throw err : null;
 				}
 
 				if (fo == null)
@@ -296,6 +298,7 @@ break_twice:;
 		/// <exception cref="TargetError">A <see cref="TargetError"/> exception is thrown if the hotstring cannot be found.</exception>
 		public static object Hotstring(object obj0, object obj1 = null, object obj2 = null)
 		{
+			Error err;
 			var name = obj0.As();
 			var replacement = obj1;
 			var ht = Script.HookThread;
@@ -368,7 +371,7 @@ break_twice:;
 			}
 
 			if (hotstringStart.Length == 0)
-				throw new ValueError("Hotstring definition did not contain a hotstring.");
+				return Errors.ErrorOccurred(err = new ValueError("Hotstring definition did not contain a hotstring.")) ? throw err : null;
 
 			// Determine options which affect hotstring identity/uniqueness.
 			var caseSensitive = HotstringManager.hsCaseSensitive;
@@ -387,13 +390,13 @@ break_twice:;
 				{
 				}
 				else if (executeAction)
-					throw new ValueError("The 'X' option must be used together with a function object.");
+					return Errors.ErrorOccurred(err = new ValueError("The 'X' option must be used together with a function object.")) ? throw err : null;
 			}
 
 			var toggle = ToggleValueType.Neutral;
 
 			if (obj2 != null && (toggle = Conversions.ConvertOnOffToggle(obj2)) == ToggleValueType.Invalid)
-				throw new ValueError($"Invalid value of {obj2} for parameter 3.");
+				return Errors.ErrorOccurred(err = new ValueError($"Invalid value of {obj2} for parameter 3.")) ? throw err : null;
 
 			bool wasAlreadyEnabled;
 			var tv = Threads.GetThreadVariables();
@@ -438,7 +441,7 @@ break_twice:;
 			else // No matching hotstring yet.
 			{
 				if (ifunc == null && string.IsNullOrEmpty(action))
-					throw new TargetError("Nonexistent hotstring.", name);
+					return Errors.ErrorOccurred(err = new TargetError("Nonexistent hotstring.", name)) ? throw err : null;
 
 				var initialSuspendState = (toggle == ToggleValueType.Off) ? HotstringDefinition.HS_TURNED_OFF : 0;
 
@@ -548,6 +551,7 @@ break_twice:;
 		/// <exception cref="ValueError">Throws a <see cref="ValueError"/> exception if an invalid joystick button is specified.</exception>
 		public static bool KeyWait(object keyName, object options = null)
 		{
+			Error err;
 			var keyname = keyName.As();
 			var opts = options.As();
 			bool waitIndefinitely;
@@ -566,9 +570,8 @@ break_twice:;
 			{
 				joy = Joystick.ConvertJoy(keyname, ref joystickId);
 
-				if (!Joystick.IsJoystickButton(joy)) // Currently, only buttons are supported.
-					// It's either an invalid key name or an unsupported Joy-something.
-					throw new ValueError($"Invalid keyname parameter: {keyname}");
+				if (!Joystick.IsJoystickButton(joy))//Currently, only buttons are supported.
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid keyname parameter: {keyname}")) ? throw err : false;// It's either an invalid key name or an unsupported Joy-something.
 			}
 
 			// Set defaults:

@@ -61,7 +61,8 @@ namespace Keysharp.Core
 				}
 				catch (Exception ex)
 				{
-					throw new Error(ex.Message);
+					Error err;
+					return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : false;
 				}
 			});
 			t.Wait();
@@ -192,7 +193,8 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new Error(ex.Message);
+				Error err;
+				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : null;
 			}
 		}
 

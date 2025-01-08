@@ -378,6 +378,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, string args, bool wait = false)
 		{
+			Error err;
 			var pid = 0;
 			var useRunAs = RunAsSpecified();
 
@@ -389,7 +390,7 @@ namespace Keysharp.Core
 				workingDir = workingDir.Trim();
 
 				if (!Directory.Exists(workingDir))
-					throw new Error($"{workingDir} is not a valid directory.");
+					return Errors.ErrorOccurred(err = new Error($"{workingDir} is not a valid directory.")) ? throw err : 0L;
 			}
 
 			try
@@ -432,9 +433,7 @@ namespace Keysharp.Core
 				}
 
 				if (useRunAs && !string.IsNullOrEmpty(shellVerb))
-				{
-					throw new Error("System verbs unsupported with RunAs.");
-				}
+					return Errors.ErrorOccurred(err = new Error("System verbs unsupported with RunAs.")) ? throw err : 0L;
 
 				var parsedArgs = "";
 				var prc = new Process//Unsure what to do about this on linux.//TODO
@@ -573,7 +572,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new Error(ex.Message);
+				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : 0L;
 			}
 
 			outputVarPID = pid;

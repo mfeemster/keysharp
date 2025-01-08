@@ -34,11 +34,14 @@
 				{
 					var gfv = globalFuncVars.PeekOrNull();
 
-					foreach (var v in av)
+					foreach (var kv in av)
 					{
-						if (gfv == null || !gfv.Contains(v.Key))
+						//If kv.Value is null, it means it was just a placeholder for loop variables
+						//so they don't get recreated.
+						if (kv.Value != null &&
+								(gfv == null || !gfv.Contains(kv.Key)))
 						{
-							var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));
+							var dec = new CodeVariableDeclarationStatement(typeof(object), kv.Key, new CodeSnippetExpression("null"));
 							_ = statements.Add(dec);
 						}
 					}
@@ -145,13 +148,16 @@
 										{
 											var gfv = globalFuncVars.PeekOrNull();
 
-											foreach (var v in av)
+											foreach (var kv in av)
 											{
-												if (gfv == null || !gfv.Contains(v.Key))
+												//If kv.Value is null, it means it was just a placeholder for loop variables
+												//so they don't get recreated.
+												if (kv.Value != null &&
+														(gfv == null || !gfv.Contains(kv.Key)))
 												{
-													if (!InClassDefinition() || v.Key != "this")//Never create a "this" variable inside of a class definition.
+													if (!InClassDefinition() || kv.Key != "this")//Never create a "this" variable inside of a class definition.
 													{
-														var dec = new CodeVariableDeclarationStatement(typeof(object), v.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
+														var dec = new CodeVariableDeclarationStatement(typeof(object), kv.Key, new CodeSnippetExpression("null"));//Ensure everything is initialized to null so the compiler won't complain about uninitialized variables.
 														meth.Statements.Insert(vari++, dec);
 													}
 												}
@@ -436,10 +442,6 @@
 				{
 					throw new ParseException(e.RawMessage, codeLine);
 				}
-				//catch (Exception ex)
-				//{
-				//  throw new ParseException(ex.Message, codeline);
-				//}
 				finally { }
 
 				if (blocks.Count == blocksCount && blocks.Peek().IsSingle)

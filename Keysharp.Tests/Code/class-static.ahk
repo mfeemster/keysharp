@@ -81,11 +81,11 @@ if (myclass.arr is Array && myclass.arr.Length == 3)
 else
 	FileAppend, "fail", "*"
 	
-if (myclass.m is Map && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
+if (myclass.m is KeysharpObject && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 ; test static member initialized in a complex way.
 class TypeSizeMapper {
 	static NumTypeSize := MapInit()

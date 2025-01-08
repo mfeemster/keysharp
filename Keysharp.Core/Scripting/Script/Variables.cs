@@ -24,6 +24,7 @@ namespace Keysharp.Scripting
 
 			public static void InitGlobalVars()
 			{
+				Error err;
 				WindowX.SetProcessDPIAware();
 				Flow.Init();
 				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
@@ -72,13 +73,19 @@ namespace Keysharp.Scripting
 					{
 						if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
 							if (!dll.Item2)
-								throw new Error("PlatformProvider.Manager.SetDllDirectory(null) failed.");
+							{
+								_ = Errors.ErrorOccurred(err = new Error("PlatformProvider.Manager.SetDllDirectory(null) failed."), Keyword_ExitApp) ? throw err : "";
+								return;
+							}
 					}
 					else if (Directory.Exists(dll.Item1))
 					{
 						if (!mgr.SetDllDirectory(dll.Item1))
 							if (!dll.Item2)
-								throw new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed.");
+							{
+								_ = Errors.ErrorOccurred(err = new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed."), Keyword_ExitApp) ? throw err : "";
+								return;
+							}
 					}
 					else
 					{
@@ -101,7 +108,10 @@ namespace Keysharp.Scripting
 #endif
 						}
 						else if (!dll.Item2)
-							throw new Error($"Failed to load DLL {dllname}.");
+						{
+							_ = Errors.ErrorOccurred(err = new Error($"Failed to load DLL {dllname}."), Keyword_ExitApp) ? throw err : "";
+							return;
+						}
 					}
 				}
 

@@ -276,7 +276,8 @@ namespace Keysharp.Core.Windows
 
 			if (blobByteLength % structSize != 0)
 			{
-				throw new InvalidDataException(string.Format("Blob size {0} not a multiple of struct size {1}", blobByteLength, structSize));
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Blob size {blobByteLength} not a multiple of struct size {structSize}.")) ? throw err : null;
 			}
 
 			var items = blobByteLength / structSize;
@@ -303,6 +304,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
+				Error err;
 				var ve = DataType;
 
 				switch (ve)
@@ -348,14 +350,14 @@ namespace Keysharp.Core.Windows
 								return false;
 
 							default:
-								throw new NotSupportedException("PropVariant VT_BOOL must be either -1 or 0");
+								return Errors.ErrorOccurred(err = new Error("PropVariant VT_BOOL must be either -1 or 0")) ? throw err : null;
 						}
 
 					case VarEnum.VT_FILETIME:
 						return DateTime.FromFileTime((((long)filetime.dwHighDateTime) << 32) + filetime.dwLowDateTime);
 				}
 
-				throw new NotImplementedException("PropVariant " + ve);
+				return Errors.ErrorOccurred(err = new Error("PropVariant " + ve)) ? throw err : null;
 			}
 		}
 
@@ -1215,7 +1217,9 @@ namespace Keysharp.Core.Windows
 		{
 			if (Environment.OSVersion.Version.Major < 6)
 			{
-				throw new NotSupportedException("This functionality is only supported on Windows Vista or newer.");
+				Error err;
+				_ = Errors.ErrorOccurred(err = new Error("This functionality is only supported on Windows Vista or newer.")) ? throw err : "";
+				return;
 			}
 
 			realEnumerator = new MMDeviceEnumeratorComObject() as IMMDeviceEnumerator;

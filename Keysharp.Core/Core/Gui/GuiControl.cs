@@ -75,14 +75,15 @@ namespace Keysharp.Core
 					return Strings.NormalizeEol(rtf.Rtf);
 
 				return "";
-				//throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
 			}
 			set
 			{
+				Error err;
+
 				if (_control is RichTextBox rtf)
 					rtf.Rtf = Strings.NormalizeEol(value);
 				else
-					throw new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.");
+					_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
 			}
 		}
 

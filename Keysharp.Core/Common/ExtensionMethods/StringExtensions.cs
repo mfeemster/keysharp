@@ -90,7 +90,7 @@
 			{
 				string result = process.StandardOutput.ReadToEnd();
 				process.WaitForExit();
-				return result.Trim(Keywords.CrLf);
+				return result.Trim(CrLf);
 			}
 			else
 				return "";

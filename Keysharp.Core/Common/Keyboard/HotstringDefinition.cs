@@ -426,7 +426,6 @@
 				var ok = Flow.TryCatch(() =>
 				{
 					ret = funcObj.Call(o);
-					//throw new Error("ASDf");
 				}, false);
 				_ = Interlocked.Decrement(ref existingThreads);
 				return ret;

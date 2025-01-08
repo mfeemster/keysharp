@@ -113,7 +113,11 @@
 		/// <param name="name">Unused.</param>
 		/// <returns>Unused.</returns>
 		/// <exception cref="Error">Throws an <see cref="Error"/> exception because Keysharp does not support querying labels at runtime.</exception>
-		public static long IsLabel(object name) => throw new Error("C# does not allow querying labels at runtime.");
+		public static long IsLabel(object name)
+		{
+			Error err;
+			return Errors.ErrorOccurred(err = new Error("C# does not allow querying labels at runtime.")) ? throw err : 0L;
+		}
 
 		/// <summary>
 		/// Returns 1 if value is a string and is empty or contains only lowercase characters.<br/>
@@ -155,7 +159,7 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if only spaces are found, else 0.</returns>
-		public static long IsSpace(object value) => value.ToString().AsSpan().IndexOfAnyExcept(Keywords.SpacesSv) != -1 ? 0L : 1L;
+		public static long IsSpace(object value) => value.ToString().AsSpan().IndexOfAnyExcept(SpacesSv) != -1 ? 0L : 1L;
 
 		/// <summary>
 		/// 1 if value is a valid date-time stamp, which can be all or just the leading part of the YYYYMMDDHH24MISS format.<br/>

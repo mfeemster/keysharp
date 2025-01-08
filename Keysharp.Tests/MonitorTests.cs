@@ -32,7 +32,7 @@ namespace Keysharp.Tests
 			var ct = Core.Monitor.MonitorGetCount();
 
 			for (var i = 1; i <= ct; i++)
-				names += Core.Monitor.MonitorGetName(i) + Keywords.newlineToUse;
+				names += Core.Monitor.MonitorGetName(i) + newlineToUse;
 
 			Assert.IsTrue(names != "");
 			Assert.IsTrue(TestScript("monitor-monitorgetname", true));

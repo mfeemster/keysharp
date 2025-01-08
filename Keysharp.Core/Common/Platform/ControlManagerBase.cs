@@ -15,7 +15,10 @@
 				if (n < strip.Items.Count)
 					menuItem = strip.Items[n] as ToolStripMenuItem;
 				else
-					throw new ValueError($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel);
+				{
+					Error err;
+					return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel)) ? throw err : null;
+				}
 			}
 			else
 			{
@@ -46,7 +49,10 @@
 						continue;
 					}
 					else
-						throw new ValueError($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item);
+					{
+						Error err;
+						return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item)) ? throw err : null;
+					}
 				}
 				else
 				{

@@ -14,7 +14,7 @@ namespace Keysharp.Core
 
 			foreach (var line in str.SplitLines())
 			{
-				var splits = line.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+				var splits = line.Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 				if (splits.Length > 1)
 				{
@@ -116,7 +116,7 @@ namespace Keysharp.Core
 		///     be "in use" until the script closes or until another file is played(even a nonexistent file).<br/>
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static object SoundPlay(object filename, object wait = null)
+		public static void SoundPlay(object filename, object wait = null)
 		{
 			var file = filename.As();
 			var w = wait.As();
@@ -126,22 +126,22 @@ namespace Keysharp.Core
 			{
 				if (!int.TryParse(file.AsSpan(1), out var n))
 				{
-					return null;
+					return;
 				}
 
 				switch (n)
 				{
-					case -1: SystemSounds.Beep.Play(); return null;
+					case -1: SystemSounds.Beep.Play(); return;
 
-					case 16: SystemSounds.Hand.Play(); return null;
+					case 16: SystemSounds.Hand.Play(); return;
 
-					case 32: SystemSounds.Question.Play(); return null;
+					case 32: SystemSounds.Question.Play(); return;
 
-					case 48: SystemSounds.Exclamation.Play(); return null;
+					case 48: SystemSounds.Exclamation.Play(); return;
 
-					case 64: SystemSounds.Asterisk.Play(); return null;
+					case 64: SystemSounds.Asterisk.Play(); return;
 
-					default: return null;
+					default: return;
 				}
 			}
 
@@ -161,11 +161,11 @@ namespace Keysharp.Core
 #else
 				$"aplay --quiet {filename}".Bash(doWait);
 #endif
-				return null;
 			}
 			catch (Exception ex)
 			{
-				throw new Error(ex.Message);
+				Error err;
+				_ = Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : "";
 			}
 		}
 
@@ -211,6 +211,7 @@ namespace Keysharp.Core
 #if LINUX
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
+			Error err;
 			var soundSet = false;
 			var device = obj1;
 			SoundControlType type;
@@ -267,7 +268,7 @@ namespace Keysharp.Core
 				}
 
 				if (!found)
-					throw new TargetError($"{sinkStr} device {device} not found.");
+					return Errors.ErrorOccurred(err = new TargetError($"{sinkStr} device {device} not found.")) ? throw err : null;
 			}
 
 			sinkStr = sinkStr.ToLower();
@@ -295,7 +296,7 @@ namespace Keysharp.Core
 								var val1 = lines0.AsSpan(val1Index + 1, (firstPercent - val1Index) - 1);
 
 								if (!double.TryParse(val1, out prc1))
-									throw new OSError("", $"Could not parse first volume value of {val1}.");
+									return Errors.ErrorOccurred(err = new OSError("", $"Could not parse first volume value of {val1}.")) ? throw err : null;
 							}
 						}
 
@@ -308,7 +309,7 @@ namespace Keysharp.Core
 								var val2 = lines0.AsSpan(val2Index + 1, (lastPercent - val2Index) - 1);
 
 								if (!double.TryParse(val2, out prc2))
-									throw new OSError("", $"Could not parse second volume value of {val2}.");
+									return Errors.ErrorOccurred(err = new OSError("", $"Could not parse second volume value of {val2}.")) ? throw err : null;
 							}
 						}
 
@@ -332,12 +333,12 @@ namespace Keysharp.Core
 					else if (int.TryParse(devStr, out var deviceIndex))
 					{
 						if (!devices.TryGetValue(deviceIndex, out var deviceName))
-							throw new TargetError($"{sinkStr} device {device} not found.");
+							return Errors.ErrorOccurred(err = new TargetError($"{sinkStr} device {device} not found.")) ? throw err : null;
 						else
 							return deviceName;
 					}
 					else
-						throw new TargetError($"{devStr} was not a valid integer.");
+						return Errors.ErrorOccurred(err = new TargetError($"{devStr} was not a valid integer.")) ? throw err : null;
 				}
 
 				case SoundCommands.SoundSetVolume:
@@ -380,6 +381,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the channels, levels or range cannot not found.</exception>
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
+			Error err;
 			var soundSet = false;
 			var search = new SoundComponentSearch();
 			var comp = obj0;
@@ -426,7 +428,7 @@ namespace Keysharp.Core
 			var mmDev = GetDevice(dev);
 
 			if (mmDev == null)
-				throw new TargetError($"Component {comp}, device {dev} not found.");
+				return Errors.ErrorOccurred(err = new TargetError($"Component {comp}, device {dev} not found.")) ? throw err : null;
 
 			if (comp == null || comp.ToString().Length == 0)//Component is Master (omitted).
 			{
@@ -507,7 +509,7 @@ namespace Keysharp.Core
 
 				if (!FindComponent(mmDev, search))
 				{
-					throw new TargetError($"Component {comp} not found.");
+					return Errors.ErrorOccurred(err = new TargetError($"Component {comp} not found.")) ? throw err : null;
 				}
 				else if (search.targetControl == SoundControlType.IID)
 				{
@@ -528,7 +530,7 @@ namespace Keysharp.Core
 					if (comobj is IAudioVolumeLevel avl)
 					{
 						if (avl.GetChannelCount(out var channelCount) < 0)
-							throw new Error("Could not get channel count.");
+							return Errors.ErrorOccurred(err = new Error("Could not get channel count.")) ? throw err : null;
 
 						float[] level = new float[3 * channelCount];
 						float f, maxLevel = 0;
@@ -537,7 +539,7 @@ namespace Keysharp.Core
 						{
 							if (avl.GetLevel(ii, out var db) < 0 ||
 									avl.GetLevelRange(ii, out var minDb, out var maxDb, out f) < 0)
-								throw new Error("Could not get level or level range.");
+								return Errors.ErrorOccurred(err = new Error("Could not get level or level range.")) ? throw err : null;
 
 							//Convert dB to scalar.
 							var levelMin = 0 + ii;

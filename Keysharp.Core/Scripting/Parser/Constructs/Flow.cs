@@ -400,9 +400,17 @@ namespace Keysharp.Scripting
 								var loopvarexpr = ParseSingleExpression(codeLine, split, false);
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
 								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
+								//Create entries in the allVars map so these don't get recreated if they are used, such
+								//as being passed to a function. However, set the Value to null to prevent them from actually
+								//being created because we create them manually with a snippet below.
+								//See: case BlockClose and dAddPropStatements() in Statements.cs.
+								var dkt = allVars[typeStack.Peek()].GetOrAdd(Scope);
+
+								if (!dkt.ContainsKey(loopvarstr))
+									dkt[loopvarstr] = null;
 							}
 							else
-								varlist.Add(split?.Length == 0 ? "_" : split);
+								varlist.Add("_");
 						}
 
 						while (varlist.Count < 2)

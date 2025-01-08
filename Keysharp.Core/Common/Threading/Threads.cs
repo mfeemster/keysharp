@@ -88,7 +88,6 @@
 								else
 									ret = "";
 
-								//throw new Error("ASDf");
 								_ = EndThread(btv.Item1);
 							}, true);//Pop on exception because EndThread() above won't be called.
 						}
