@@ -320,7 +320,7 @@ namespace Keysharp.Main
 #if DEBUG
 				Script.OutputDebug("Running compiled code.");
 #endif
-				_ = main.Invoke(null, [scriptArgs]);
+				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
 			}
 			catch (Exception ex)
 			{
@@ -351,12 +351,12 @@ namespace Keysharp.Main
 					writeCodeTask?.Wait();
 				}
 
-				return Message(msg, true);
+				Environment.ExitCode = Message(msg, true);
 			}
 
 			writeExeTask?.Wait();
 			writeCodeTask?.Wait();
-			return 0;
+			return Environment.ExitCode;
 		}
 
 		internal static string GetLatestDotNetVersion()
