@@ -291,14 +291,21 @@ namespace Keysharp.Core
 		/// <param name="obj">String or integers 1, 2, 3, or string RegEx to set TitleMatchMode, else strings fast/slow to set TitleMatchModeSpeed.</param>
 		public static object SetTitleMatchMode(object matchModeSpeed)
 		{
+			object oldVal = null;
 			var val = matchModeSpeed.As();
 
 			if (string.Compare(val, "fast", true) == 0 || string.Compare(val, "slow", true) == 0)
+			{
+				oldVal = Accessors.A_TitleMatchModeSpeed;
 				Accessors.A_TitleMatchModeSpeed = val;
+			}
 			else
+			{
+				oldVal = Accessors.A_TitleMatchMode;
 				Accessors.A_TitleMatchMode = val;
+			}
 
-			return null;
+			return oldVal;
 		}
 
 		public static object SetWinDelay(object delay)

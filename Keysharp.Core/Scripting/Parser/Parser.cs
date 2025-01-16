@@ -202,7 +202,7 @@ namespace Keysharp.Scripting
 		private readonly Stack<List<string>> globalFuncVars = new ();
 		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = [];
 		private readonly Stack<List<string>> localFuncVars = new ();
-
+		private readonly List<CodeSnippetTypeMember> codeSnippetTypeMembers = new ();
 		private readonly CodeMemberMethod main = new ()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
@@ -760,6 +760,7 @@ namespace Keysharp.Scripting
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
 						{
+							//This is also done below when snippets are reevaluated because property initializers are implemented as snippets.
 							var callMeth = ctd.Members.Cast<CodeTypeMember>().First(ctm => ctm is CodeMemberMethod cmm && cmm.Name == "Call") as CodeMemberMethod;
 							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(ctd.Name), "Call");
 							HandlePartialVariadicParams(cmie, callMeth);
@@ -1076,6 +1077,10 @@ namespace Keysharp.Scripting
 			foreach (var assign in assignSnippets)
 				ReevaluateSnippet(assign);
 
+			//Static member properties need to be reevaluated.
+			foreach (var member in codeSnippetTypeMembers)
+				ReevaluateStaticProperties(member);
+
 			//Some hotstring directives may have been parsed, which could have changed settings. So restore before building and running.
 			HotstringManager.RestoreDefaults(true);
 			return unit;
@@ -1154,14 +1159,15 @@ namespace Keysharp.Scripting
 							if (globalvar.Value == null)
 								continue;
 
+							var ce = globalvar.Value;
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
 
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
 							name = Ch.CreateEscapedIdentifier(name);
-							var isstatic = globalvar.Value.UserData.Contains("isstatic");
-							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
+							var isstatic = ce.UserData.Contains("isstatic");
+							var init = Ch.CodeToString(ce);
 							//If the property existed in a base class and is a simple assignment in this class, then assume
 							//they meant to reference the base property rather than create a new one.
 							(bool, string) bn;
@@ -1174,12 +1180,21 @@ namespace Keysharp.Scripting
 							}
 							else
 							{
-								_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
+								var cstm = new CodeSnippetTypeMember()
 								{
-									Name = name,
-									Text = isstatic ? $"\t\t\tpublic static object {name} {{ get; set; }} = {init};"
-										   : $"\t\t\tpublic object {name} {{ get; set; }}"
-								});
+									Name = name
+								};
+
+								if (isstatic)
+								{
+									cstm.UserData["orig"] = ce;
+									cstm.Text = $"\t\t\tpublic static object {name} {{ get; set; }} = {init};";
+									codeSnippetTypeMembers.Add(cstm);
+								}
+								else
+									cstm.Text = $"\t\t\tpublic object {name} {{ get; set; }}";
+
+								_ = typekv.Key.Members.Add(cstm);
 							}
 
 							if (init.Length > 0 && !isstatic)
@@ -1199,9 +1214,17 @@ namespace Keysharp.Scripting
 								if (initcmm != null)
 								{
 									if (string.Compare(init, "null", true) != 0)
-										_ = initcmm.Statements.Add(new CodeSnippetExpression($"{name} = {init}"));
+									{
+										var tempcboe = new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(name),
+												CodeBinaryOperatorType.Assign,
+												ce);
+										var tempsnippet = BinOpToSnippet(tempcboe);//Snippet is needed here and elsewhere because a CBOE generates too many parens which causes a compile error.
+										//This will get reevaluated at the end of GenerateCompileUnit() which will convert any calls like
+										//classname() to classname.Call().
+										_ = initcmm.Statements.Add(tempsnippet);
+									}
 
-									foreach (DictionaryEntry kv in globalvar.Value.UserData)
+									foreach (DictionaryEntry kv in ce.UserData)
 										if (kv.Key is CodeExpressionStatement ces2)
 											_ = initcmm.Statements.Add(ces2);
 								}

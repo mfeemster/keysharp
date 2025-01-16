@@ -42,15 +42,25 @@ namespace Keysharp.Scripting
 		internal void ReevaluateSnippet(CodeSnippetExpression cse)
 		{
 			var orig = cse.UserData["orig"] as CodeExpression;
+			var cboe = orig as CodeBinaryOperatorExpression;
 			var c2s = Ch.CodeToString(orig);
 			c2s = c2s.Substring(1, c2s.Length - 2);
 
-			if (orig is CodeBinaryOperatorExpression cboe)
+			if (cboe != null)
 			{
 				if (cboe.Operator == CodeBinaryOperatorType.Assign)
-					cse.Value = $"{c2s}";
+					cse.Value = c2s;
 				else
 					cse.Value = $"_ = ({c2s})";
+			}
+		}
+
+		internal void ReevaluateStaticProperties(CodeSnippetTypeMember cstm)
+		{
+			if (cstm.UserData["orig"] is CodeExpression ce)
+			{
+				var init = Ch.CodeToString(ce);
+				cstm.Text = $"\t\t\tpublic static object {cstm.Name} {{ get; set; }} = {init};";
 			}
 		}
 
@@ -905,7 +915,7 @@ namespace Keysharp.Scripting
 						// (x += y) => (x = x + y)
 						parts[i] = CodeBinaryOperatorType.Assign;
 
-						if (part[0] != AssignPre && part.Length != 1)
+						if (part[0] != AssignPre && part.Length != 1)//Compound assignment.
 						{
 							parts.Insert(++i, ParenOpen.ToString());
 							parts.Insert(++i, parts[i - 3]);
@@ -932,11 +942,26 @@ namespace Keysharp.Scripting
 							{
 								var propobj = cmie.Parameters[0];
 								var propname = cmie.Parameters[1];
+								var tempprop = $"{InternalID}";
+								var temppropdec = new CodeVariableDeclarationStatement(typeof(object), tempprop, propobj);
+								var temppropref = new CodeVariableReferenceExpression(tempprop);
+								parent.Add(temppropdec);
 								var invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
-								_ = invoke.Parameters.Add(propobj);
+								_ = invoke.Parameters.Add(temppropref);
 								_ = invoke.Parameters.Add(propname);
 								var extract = ExtractRange(parts, 2, parts.Count);
 								var val = ParseMultiExpression(codeLine, code, extract.ToArray(), create);
+
+								if (val[0] is CodeMethodInvokeExpression cmie2
+										&& cmie2.Parameters.Count > 1
+										&& cmie2.Parameters[1] is CodeMethodInvokeExpression cmie3
+										&& cmie3.Method.MethodName == "GetPropertyValue"
+										&& cmie3.Parameters.Count > 0
+								   )
+								{
+									cmie3.Parameters[0] = temppropref;
+								}
+
 								_ = invoke.Parameters.Add(val[0]);
 								parts[0] = invoke;
 								setPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
@@ -1126,25 +1151,43 @@ namespace Keysharp.Scripting
 						else if (opValid && (ops == Script.Operator.Increment || ops == Script.Operator.Decrement))
 						{
 							int z = -1, x = i - 1, y = i + 1;
-							var d = 1L;
+							var d = ops == Script.Operator.Increment ? 1L : -1L;
+							var dl = $"{d}L";
 							CodeMethodInvokeExpression shadow = null;
 
-							if (x > -1 && parts[x] is CodeMethodInvokeExpression)
+							if (x > -1 && parts[x] is CodeMethodInvokeExpression cmie)
 							{
-								var sub = new List<object>(5)
+								CodeMethodInvokeExpression leftSide;
+
+								if (cmie.Method.MethodName == "GetPropertyValue"
+										&& cmie.Parameters.Count > 1)
 								{
-									parts[x],
-										  CodeBinaryOperatorType.Assign,
-										  parts[x],
-										  Script.Operator.Add,
-										  d
-								};
-								parts.RemoveAt(i);
-								parts[x] = ParseExpression(codeLine, code, sub, create);
+									leftSide = (CodeMethodInvokeExpression)InternalMethods.PostfixIncDecProp;
+									leftSide.Parameters.Add(cmie.Parameters[0]);
+									leftSide.Parameters.Add(cmie.Parameters[1]);
+									leftSide.Parameters.Add(new CodeSnippetExpression(dl));
+									parts.RemoveAt(i);
+									parts[x] = leftSide;
+								}
+								else
+								{
+									var sub = new List<object>(5)//Unsure if this ever gets called.
+									{
+										parts[x],
+											  CodeBinaryOperatorType.Assign,
+											  parts[x],
+											  Script.Operator.Add,
+											  d
+									};
+									parts.RemoveAt(i);
+									parts[x] = ParseExpression(codeLine, code, sub, create);
+								}
+
 								i = x;
 								continue;
 							}
 
+							//Unsure what anything does from here...
 							if (LaxExpressions)
 							{
 								while (y < parts.Count)
@@ -1263,12 +1306,25 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							var list = new List<object>(9)
+							//...to here.
+							//Attempting to determine whether this was prefix is difficult and uncertain.
+							//This seems to work though.
+							var list = new List<object>(9);
+							var wasPrefix = i == 0 || parts[i - 1] is CodeBinaryOperatorType || parts[i - 1].ToString() == "(";
+
+							if (wasPrefix)
 							{
-								parts[z],
-									  "+=",
-									  new CodeSnippetExpression($"{(ops == Script.Operator.Increment ? d : -d)}L")
-							};
+								var tempRange = parts.Skip(z).TakeWhile((element) => element.ToString() != ")").ToList();
+								list.AddRange(tempRange);
+								parts.RemoveRange(z, tempRange.Count);
+							}
+							else
+							{
+								list.Add(parts[z]);
+							}
+
+							list.Add("+=");
+							list.Add(new CodeSnippetExpression(dl));
 
 							if (shadow != null)
 							{
@@ -1276,7 +1332,7 @@ namespace Keysharp.Scripting
 								list.Add(shadow);
 							}
 
-							if (z < i) // postfix, so adjust
+							if (!wasPrefix)//Postfix, so adjust.
 							{
 								list.Insert(0, ParenOpen.ToString());
 								list.Add(ParenClose.ToString());
@@ -1284,11 +1340,20 @@ namespace Keysharp.Scripting
 								list.Add(new CodePrimitiveExpression(d));
 							}
 
-							x = Math.Min(i, z);
-							y = Math.Max(i, z);
-							parts[x] = ParseExpression(codeLine, code, list, create);
-							parts.RemoveAt(y);
-							i = x;
+							var tempExpr = ParseMultiExpressionWithoutTokenizing(codeLine, code, list.ToArray(), create);
+
+							if (wasPrefix)
+							{
+								parts[i] = tempExpr[0].Expression;
+							}
+							else
+							{
+								x = Math.Min(i, z);
+								y = Math.Max(i, z);
+								parts[x] = tempExpr[0].Expression;
+								parts.RemoveAt(y);
+								i = x;
+							}
 						}
 						else if (part == "&" && i > 0 && parts[i - 1] is CodeBinaryOperatorType op && op == CodeBinaryOperatorType.Assign &&
 								 i < parts.Count - 1 && parts[i + 1] is string s2)

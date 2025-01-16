@@ -182,3 +182,25 @@ If (val == A_PtrSize)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+class sclass1
+{
+	static c2 := sclass2()
+}
+
+class sclass2
+{
+	x := 1
+}
+
+sc1 := sclass1()
+
+If (sc1.c2.x == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (sclass1.c2.x == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

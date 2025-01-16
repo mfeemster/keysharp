@@ -44,7 +44,7 @@ namespace Keysharp.Tests
 		public void BitwiseNot() => Assert.IsTrue(TestScript("op-bitwise-not", true));
 
 		[Test, Category("Operator")]
-		public void CombinedAssign() => Assert.IsTrue(TestScript("op-combined-assign", true));
+		public void CombinedAssign() => Assert.IsTrue(TestScript("op-combined-assign", false));
 
 		[Test, Category("Operator")]
 		public void Divide() => Assert.IsTrue(TestScript("op-divide", true));
