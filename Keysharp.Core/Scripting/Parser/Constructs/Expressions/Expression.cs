@@ -1226,6 +1226,10 @@ namespace Keysharp.Scripting
 							{
 								if (z != -1)
 								{
+									//Previous element will be caie if a postfix was done on a dynamic variable like: y%x%++
+									if (parts[z] is CodeArrayIndexerExpression)
+										goto keepgoing;
+
 									if (LaxExpressions)
 									{
 										parts.Insert(y, Script.Operator.Concat);
@@ -1260,6 +1264,8 @@ namespace Keysharp.Scripting
 									}
 								}
 							}
+
+							keepgoing:
 
 							if (z == -1)
 							{
@@ -1336,8 +1342,8 @@ namespace Keysharp.Scripting
 							{
 								list.Insert(0, ParenOpen.ToString());
 								list.Add(ParenClose.ToString());
-								list.Add(ops == Script.Operator.Increment ? Script.Operator.Minus : Script.Operator.Add);
-								list.Add(new CodePrimitiveExpression(d));
+								list.Add(Script.Operator.Add);
+								list.Add(new CodeSnippetExpression($"{-d}L"));
 							}
 
 							var tempExpr = ParseMultiExpressionWithoutTokenizing(codeLine, code, list.ToArray(), create);

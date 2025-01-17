@@ -47,7 +47,7 @@ If (y == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 y := 2
 z := --y
 
@@ -57,6 +57,123 @@ else
 	FileAppend, "fail", "*"
 
 If (y == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := 11
+y11 := 123
+z := y%x%++
+
+if (z == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := 11
+y11 := 123
+z := ++y%x%
+
+if (z == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := 11
+y11 := 123
+z := y%x%--
+
+if (z == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := 11
+y11 := 123
+z := --y%x%
+
+if (z == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+myfunc(xx)
+{
+	return xx
+}
+
+x := 11
+y11 := 123
+z := myfunc(y%x%++)
+
+if (y%x% == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (z == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 11
+y11 := 123
+z := myfunc(++y%x%)
+
+if (y%x% == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (z == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 11
+y11 := 123
+z := myfunc(y%x%--)
+
+if (y%x% == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (z == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 11
+y11 := 123
+z := myfunc(--y%x%)
+
+if (y%x% == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (z == 122)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

@@ -457,3 +457,63 @@ if (x == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+x := 11
+y11 := 123
+z := 2
+z *= y%x%++
+
+if (z == 246)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 11
+y11 := 123
+z := 2
+z *= ++y%x%
+
+if (z == 248)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 124)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+x := 11
+y11 := 123
+z := 2
+z *= y%x%--
+
+if (z == 246)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := 11
+y11 := 123
+z := 2
+z *= --y%x%
+
+if (z == 244)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (y%x% == 122)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
