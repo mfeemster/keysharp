@@ -670,10 +670,10 @@ namespace Keysharp.Scripting
 						_ = thisStaticConstructor.Statements.Add(new CodeSnippetExpression($"__StaticInit()"));
 					}
 
-					if (baseType != "KeysharpObject" && thisconstructor != null)
-					{
-						var rawBaseTypeName = "";
+					var rawBaseTypeName = typeof(KeysharpObject).Name;
 
+					if (baseType != rawBaseTypeName && thisconstructor != null)
+					{
 						if (userDefinedBase != null)
 						{
 							rawBaseTypeName = userDefinedBase.Name;
@@ -723,6 +723,17 @@ namespace Keysharp.Scripting
 						if (rawBaseTypeName.Length != 0)
 							typeMethods.Key.BaseTypes[0].BaseType = rawBaseTypeName;//Make sure it's properly cased, so we can, for example, derive from map or Map.
 					}
+
+					//Once we have the properly cased base type, add a super property to every class.
+					//This is done because we can't just do it once in Any because GetType() always resolves to the most derived type which is not what we want.
+					var superprop = new CodeMemberProperty
+					{
+						Name = "super",
+						Type = new CodeTypeReference(typeof((Type, object))),
+						Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final
+					};
+					_ = superprop.GetStatements.Add(new CodeSnippetExpression($"return (typeof({rawBaseTypeName}), this)"));
+					_ = typeMethods.Key.Members.Add(superprop);
 				}
 				else
 				{

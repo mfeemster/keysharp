@@ -172,13 +172,13 @@
 			set => input.visibleText = value.Ab();
 		}
 
-		public InputObject(params object[] obj) => _ = __New(obj);
+		public InputObject(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] obj)
+		public object __New(params object[] args)
 		{
-			var options = obj[0].ToString();
-			var endKeys = obj[1].ToString();
-			var matchList = obj[2].ToString();
+			var options = args[0].ToString();
+			var endKeys = args[1].ToString();
+			var matchList = args[2].ToString();
 			input = new InputType(this, options, endKeys, matchList);
 			return "";
 		}

@@ -1,6 +1,4 @@
-﻿using System.Xml.Linq;
-
-namespace Keysharp.Core.Common.ObjectBase
+﻿namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
@@ -11,12 +9,20 @@ namespace Keysharp.Core.Common.ObjectBase
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
 
+		public new (Type, object) super
+		{
+			get
+			{
+				return (typeof(Any), this);
+			}
+		}
+
 		public KeysharpObject()
 		{
 			__Init();
 		}
 
-		public object __New(params object[] obj) => "";
+		public object __New(params object[] args) => "";
 
 		/// <summary>
 		/// Return a cloned copy of the object.

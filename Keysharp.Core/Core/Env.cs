@@ -818,9 +818,9 @@ namespace Keysharp.Core
 		IDataObject dataObject = Clipboard.GetDataObject();
 		string[] formats;
 
-		public ClipboardAll() => __New();
+		public ClipboardAll() => _ = __New();
 
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
 			Save();
 			return "";
@@ -858,10 +858,12 @@ namespace Keysharp.Core
 		/// Constructor that just passes the data to the base.
 		/// </summary>
 		/// <param name="obj">The data to pass to the base.</param>
-		public ClipboardAll(byte[] obj)
-			: base(obj)
-		{
-		}
+		//public ClipboardAll(byte[] obj)
+		//  : base(obj)
+		//{
+		//}
+
+		public ClipboardAll(params object[] args) => _ = __New(args);
 	}
 
 #endif

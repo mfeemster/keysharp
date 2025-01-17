@@ -10,7 +10,7 @@
 		{
 			get
 			{
-				return (GetType().BaseType, this);
+				return (typeof(object), this);
 			}
 		}
 
