@@ -86,15 +86,9 @@
 
 		public string Input => input.buffer;
 
-		public string Match
-		{
-			get
-			{
-				return input.status == InputStatusType.TerminatedByMatch && input.endingMatchIndex < input.match.Count
-					   ? input.match[input.endingMatchIndex]
-					   : "";
-			}
-		}
+		public string Match => input.status == InputStatusType.TerminatedByMatch && input.endingMatchIndex < input.match.Count
+		? input.match[input.endingMatchIndex]
+		: "";
 
 		public object MinSendLevel
 		{
@@ -140,6 +134,8 @@
 			get => onKeyUp;
 			set => onKeyUp = Functions.GetFuncObj(value, null, true);
 		}
+
+		public new (Type, object) super => (typeof(InputObject), this);
 
 		public object Timeout
 		{

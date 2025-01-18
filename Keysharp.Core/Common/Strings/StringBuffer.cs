@@ -4,6 +4,8 @@
 	{
 		internal StringBuilder sb;
 
+		public new (Type, object) super => (typeof(StringBuffer), this);
+
 		public StringBuffer(params object[] args) => _ = __New(args);
 
 		public static implicit operator string(StringBuffer s) => s.sb.ToString();

@@ -22,6 +22,8 @@
 	{
 		internal object[] boundargs;
 
+		public new (Type, object) super => (typeof(BoundFunc), this);
+
 		internal BoundFunc(MethodInfo m, object[] ba, object o = null)
 			: base(m, o)
 		{
@@ -119,6 +121,8 @@
 
 		internal long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 		internal MethodPropertyHolder Mph => mph;
+
+		public new (Type, object) super => (typeof(FuncObj), this);
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
 			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)

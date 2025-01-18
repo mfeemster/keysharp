@@ -87,6 +87,8 @@ namespace Keysharp.Core
 			}
 		}
 
+		public new (Type, object) super => (typeof(GuiControl), this);
+
 		public object Text
 		{
 			get

@@ -60,6 +60,8 @@
 			set => Seek(value);
 		}
 
+		public new (Type, object) super => (typeof(KeysharpFile), this);
+
 		public KeysharpFile(params object[] args) => _ = __New(args);
 
 		public object __New(params object[] args)

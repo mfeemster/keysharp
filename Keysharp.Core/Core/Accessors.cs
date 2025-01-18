@@ -1936,29 +1936,17 @@
 		/// If the keyboard hook is installed, this is the number of milliseconds that have elapsed since the system last received physical keyboard input.<br/>
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
-		public static long A_TimeIdleKeyboard
-		{
-			get
-			{
-				return Script.HookThread is HookThread ht && ht.HasKbdHook()
-					   ? (long)(DateTime.Now - Script.timeLastInputKeyboard).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
+		public static long A_TimeIdleKeyboard => Script.HookThread is HookThread ht && ht.HasKbdHook()
+		? (long)(DateTime.Now - Script.timeLastInputKeyboard).TotalMilliseconds
+		: A_TimeIdle;
 
 		/// <summary>
 		/// If the mouse hook is installed, this is the number of milliseconds that have elapsed since the system last received physical mouse input.<br/>
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
-		public static long A_TimeIdleMouse
-		{
-			get
-			{
-				return Script.HookThread is HookThread ht && ht.HasMouseHook()
-					   ? (long)(DateTime.Now - Script.timeLastInputMouse).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
+		public static long A_TimeIdleMouse => Script.HookThread is HookThread ht && ht.HasMouseHook()
+		? (long)(DateTime.Now - Script.timeLastInputMouse).TotalMilliseconds
+		: A_TimeIdle;
 
 		/// <summary>
 		/// Similar to above but ignores artificial keystrokes and/or mouse clicks whenever the corresponding hook (keyboard or mouse) is installed;<br/>
@@ -1966,15 +1954,9 @@
 		/// If neither hook is installed, this variable is equivalent to <see cref="A_TimeIdle"/>.<br/>
 		/// If only one hook is installed, only its type of physical input affects A_TimeIdlePhysical (the other/non-installed hook's input, both physical and artificial, has no effect).
 		/// </summary>
-		public static long A_TimeIdlePhysical
-		{
-			get
-			{
-				return Script.HookThread is HookThread ht && ht.HasEitherHook()
-					   ? (long)(DateTime.Now - Script.timeLastInputPhysical).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
+		public static long A_TimeIdlePhysical => Script.HookThread is HookThread ht && ht.HasEitherHook()
+		? (long)(DateTime.Now - Script.timeLastInputPhysical).TotalMilliseconds
+		: A_TimeIdle;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.

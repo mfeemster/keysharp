@@ -306,6 +306,8 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
+		public new (Type, object) super => (typeof(Gui), this);
+
 		public Gui(params object[] args) => _ = __New(args);
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.

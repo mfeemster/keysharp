@@ -9,13 +9,7 @@
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
 
-		public new (Type, object) super
-		{
-			get
-			{
-				return (typeof(Any), this);
-			}
-		}
+		public new (Type, object) super => (typeof(Any), this);
 
 		public KeysharpObject()
 		{

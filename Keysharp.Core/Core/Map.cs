@@ -126,6 +126,11 @@
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Map), this);
+
+		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which just calls map.SyncRoot.
 		/// </summary>
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;

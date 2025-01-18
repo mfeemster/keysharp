@@ -48,6 +48,8 @@ namespace Keysharp.Core.COM
 			}
 		}
 
+		public new (Type, object) super => (typeof(ComObject), this);
+
 		public int VarType { get; set; }
 
 		public ComObject(params object[] args) => _ = __New(args);

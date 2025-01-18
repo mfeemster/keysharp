@@ -7,6 +7,8 @@
 		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public object Success => match.Success;
 
+		public new (Type, object) super => (typeof(RegExResults), this);
+
 		public RegExResults(params object[] args) => _ = __New(args);
 
 		public static implicit operator long(RegExResults r) => r.Pos();
