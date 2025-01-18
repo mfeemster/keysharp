@@ -1112,10 +1112,13 @@ namespace Keysharp.Scripting
 			return unit;
         }
 
-        public SyntaxTree GenerateSyntaxTree(List<CodeLine> codeLines)
+        internal SyntaxTree GenerateSyntaxTree(List<CodeLine> codeLines, PreReader reader)
 		{
-            Helper.codeLines = codeLines; // Necessary for correct error reporting
-			Helper.fileName = fileName;
+			Helper.state = new Helper();
+
+            Helper.state.codeLines = codeLines; // Necessary for correct error reporting
+            Helper.state.fileName = Script.scriptName ?? "*";
+			Helper.state.reader = reader;
 
             var code = "";
 			foreach (CodeLine line in codeLines)
@@ -1134,7 +1137,6 @@ namespace Keysharp.Scripting
                 Debug.WriteLine($"Token: {mainLexer.Vocabulary.GetSymbolicName(token.Type)}, Text: '{token.Text}'");
             }
 			*/
-			
 
             MainParser mainParser = new MainParser(commonTokenStream);
 			/*
@@ -1186,7 +1188,7 @@ namespace Keysharp.Scripting
 
 			if (typeof(T) == typeof(SyntaxTree))
 			{
-                var st = GenerateSyntaxTree(codeLines);
+                var st = GenerateSyntaxTree(codeLines, reader);
                 return (T)(object)st;
 
                 /*

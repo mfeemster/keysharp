@@ -978,22 +978,22 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
+		/// <see cref="StrReplace(object, object, object, object, VarRef, object)"/>
 		/// </summary>
 		public static string StrReplace(object haystack, object needle, object replaceText = null, object caseSense = null)
 		{
 			object obj4 = null;
-			object outputVarCount = null;
-			return StrReplace(haystack, needle, replaceText, caseSense, ref outputVarCount, obj4);
+			object outputVarCount = new Misc.VarRef(null);
+			return StrReplace(haystack, needle, replaceText, caseSense, outputVarCount, obj4);
 		}
 
 		/// <summary>
-		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
+		/// <see cref="StrReplace(object, object, object, object, VarRef, object)"/>
 		/// </summary>
-		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, ref object outputVarCount)
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, object outputVarCount)
 		{
 			object obj4 = null;
-			return StrReplace(haystack, needle, replaceText, caseSense, ref outputVarCount, obj4);
+			return StrReplace(haystack, needle, replaceText, caseSense, outputVarCount, obj4);
 		}
 
 		/// <summary>
@@ -1017,7 +1017,7 @@ namespace Keysharp.Core
 		/// Otherwise, specify the maximum number of replacements to allow.
 		/// </param>
 		/// <returns>The newly modified string.</returns>
-		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, ref object outputVarCount, object limit)
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, object outputVarCount, object limit)
 		{
 			var input = haystack.As();
 			var search = needle.As();
@@ -1027,8 +1027,8 @@ namespace Keysharp.Core
 
 			if (IsAnyBlank(input, search))
 			{
-				outputVarCount = 0L;
-				return "";
+                Script.SetPropertyValue(outputVarCount, "__Value", 0L);
+                return "";
 			}
 
 			var compare = Conversions.ParseComparisonOption(comp);
@@ -1052,7 +1052,7 @@ namespace Keysharp.Core
 			if (n < input.Length)
 				_ = buf.Append(input, n, input.Length - n);
 
-			outputVarCount = ct;
+			Script.SetPropertyValue(outputVarCount, "__Value", ct);
 			return buf.ToString();
 		}
 

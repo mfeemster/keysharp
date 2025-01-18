@@ -364,6 +364,10 @@ using static Keysharp.Scripting.Script;
 
 		public (SyntaxTree[], CompilerErrorCollection) CreateSyntaxTreeFromFile(params string[] fileNames)
         {
+            Reflections.Clear();
+            Reflections.Initialize(true);
+            Flow.ResetState();
+
             var units = new SyntaxTree[fileNames.Length];
             var errors = new CompilerErrorCollection();
             var enc = Encoding.Default;
@@ -449,13 +453,13 @@ using static Keysharp.Scripting.Script;
 						{
 							Script.scriptName = fileNames[i];
 							using var reader = new StreamReader(Script.scriptName, enc);
-							units[i] = parser.Parse(reader, Path.GetFullPath(fileNames[i]));
+							units[i] = parser.Parse<CodeCompileUnit>(reader, Path.GetFullPath(fileNames[i]));
 						}
 						else
 						{
 							Script.scriptName = "*";
 							using var reader = new StringReader(fileNames[i]);
-							units[i] = parser.Parse(reader, "*");//In memory.
+							units[i] = parser.Parse<CodeCompileUnit>(reader, "*");//In memory.
 						}
 					}
 					catch (ParseException e)

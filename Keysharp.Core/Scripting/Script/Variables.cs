@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Reflection;
+using Keysharp.Core.Scripting.Parser.Antlr;
 
 namespace Keysharp.Scripting
 {
@@ -6,7 +8,9 @@ namespace Keysharp.Scripting
 	{
 		public class Variables
 		{
-			internal static List<(string, bool)> preloadedDlls = [];
+            public static Dictionary<Type, KeysharpObject> Prototypes = new();
+			public static Dictionary<Type, KeysharpObject> Statics = new();
+            internal static List<(string, bool)> preloadedDlls = [];
 			internal static DateTime startTime = DateTime.Now;
 			private static readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
 #if LINUX
@@ -43,13 +47,39 @@ namespace Keysharp.Scripting
 				if (path != "testhost.exe" && path != "testhost.dll" && !Accessors.A_IsCompiled)
 					Dir.SetWorkingDir(Accessors.A_ScriptDir);
 
+                Prototypes = new();
+				Statics = new();
+
 				for (var i = stack.Length - 1; i >= 0; i--)
 				{
 					var type = stack[i].GetMethod().DeclaringType;
 
 					if (type != null && type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
 					{
-						var fields = type.GetFields(BindingFlags.Static |
+						// Initialize prototypes 
+						Dictionary<Type, KeysharpObject> protos = new();
+
+                        var anyType = typeof(Any);
+                        var types = AppDomain.CurrentDomain.GetAssemblies()
+                            .SelectMany(assembly => assembly.GetTypes())
+                            .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
+
+						// Initiate necessary base types in specific order
+                        InitStaticInstance(typeof(Any), typeof(KeysharpObject));
+                        InitStaticInstance(typeof(FuncObj));
+                        InitStaticInstance(typeof(KeysharpObject));
+						Statics[typeof(KeysharpObject)] = (KeysharpObject)Prototypes[typeof(KeysharpObject)].Clone();
+                        Statics[typeof(KeysharpObject)].DefineProp("prototype", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
+                        Prototypes[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
+                        Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(KeysharpObject)]));
+
+                        var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject) });
+                        foreach (var t in types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth))
+						{
+							Script.InitStaticInstance(t);
+                        }
+
+                        var fields = type.GetFields(BindingFlags.Static |
 													BindingFlags.NonPublic |
 													BindingFlags.Public);
 						var props = type.GetProperties(BindingFlags.Static |
@@ -120,7 +150,18 @@ namespace Keysharp.Scripting
 				Application.AddMessageFilter(new MessageFilter());
 			}
 
-			public object GetVariable(string key)
+            private static int GetInheritanceDepth(Type type)
+            {
+                int depth = 0;
+                while (type.BaseType != null)
+                {
+                    depth++;
+                    type = type.BaseType;
+                }
+                return depth;
+            }
+
+            public object GetVariable(string key)
 			{
 				if (globalVars.TryGetValue(key, out var field))
 				{
@@ -183,8 +224,8 @@ namespace Keysharp.Scripting
 
 			public object this[object key]
             {
-				get => key is Misc.VarRef v ? v.__Value : GetVariable(key.ToString()) ?? "";
-				set => _ = (key is Misc.VarRef v ? v.__Value = value : SetVariable(key.ToString(), value));
+				get => GetPropertyValue(key, "__Value", false) ?? GetVariable(key.ToString()) ?? "";
+				set => _ = (key is KeysharpObject kso && Functions.HasProp(kso, "__Value") == 1) ? Script.SetPropertyValue(kso, "__Value", value) : SetVariable(key.ToString(), value);
 			}
 		}
 	}

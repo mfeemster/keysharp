@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Threading
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Keysharp.Core.Common.Threading
 {
 	internal static class StaTask
 	{

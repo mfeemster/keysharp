@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Antlr4.Runtime.Misc;
+using static Keysharp.Scripting.Parser;
 using static Keysharp.Core.Scripting.Parser.Antlr.Helper;
 using static MainParser;
 using Microsoft.CodeAnalysis;
@@ -17,12 +18,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 {
     public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
-
         private SyntaxNode VisitLoopGeneric(
             ExpressionSyntax loopExpression,
             SyntaxNode loopBodyNode,
             ExpressionSyntax untilCondition,
             SyntaxNode elseNode,
+            string loopType,
             string loopEnumeratorName,
             string enumeratorType,
             string enumeratorMethodName,
@@ -55,6 +56,29 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                                     SyntaxKind.SimpleMemberAccessExpression,
                                     loopFunction, 
                                     SyntaxFactory.IdentifierName("GetEnumerator")
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+
+            // Generate the Push statement with the loopType
+            var pushStatement = SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Core.Loops"),
+                        SyntaxFactory.IdentifierName("Push")
+                    ),
+                    loopType == null ? SyntaxFactory.ArgumentList() :
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.MemberAccessExpression(
+                                    SyntaxKind.SimpleMemberAccessExpression,
+                                    CreateQualifiedName("Keysharp.Core.LoopType"),
+                                    SyntaxFactory.IdentifierName(loopType)
                                 )
                             )
                         )
@@ -167,7 +191,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             );
 
             return SyntaxFactory.Block(
-                SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration), 
+                SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
+                pushStatement,
                 tryFinallyStatement,
                 endLabel
             );
@@ -175,10 +200,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitLoopStatement([NotNull] LoopStatementContext context)
         {
-            loopDepth++;
-            var loopEnumeratorName = LoopEnumeratorBaseName + loopDepth;
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
             // Determine the loop expression (or -1 for infinite loops)
-            ExpressionSyntax loopExpression = context.singleExpression()?.Length == 1
+            ExpressionSyntax loopExpression = ((context.singleExpression()?.Length == 1 && context.Until() == null) || context.singleExpression()?.Length == 2)
                 ? (ExpressionSyntax)Visit(context.singleExpression(0))
                 : SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(-1));
 
@@ -192,13 +216,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Visit the `Else` clause, if present
             SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
-            loopDepth--;
             // Invoke the generic loop handler
             return VisitLoopGeneric(
                 loopExpression,
                 loopBodyNode,
                 untilCondition,
                 elseNode,
+                "Normal",
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "Loop",
@@ -208,8 +232,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitLoopParseStatement([NotNull] LoopParseStatementContext context)
         {
-            loopDepth++;
-            var loopEnumeratorName = LoopEnumeratorBaseName + loopDepth;
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
             var singleExprCount = context.singleExpression().Length;
             // Determine the `Until` condition
             ExpressionSyntax untilCondition = null;
@@ -234,13 +257,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             // Visit the `Else` clause, if present
             SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
 
-            loopDepth--;
             // Invoke the generic loop handler
             return VisitLoopGeneric(
                 null,
                 loopBodyNode,
                 untilCondition,
                 elseNode,
+                "Parse",
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopParse",
@@ -250,8 +273,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitLoopFilesStatement([NotNull] LoopFilesStatementContext context)
         {
-            loopDepth++;
-            var loopEnumeratorName = LoopEnumeratorBaseName + loopDepth;
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
             var singleExprCount = context.singleExpression().Length;
             // Determine the `Until` condition
             ExpressionSyntax untilCondition = null;
@@ -269,13 +291,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             SyntaxNode loopBodyNode = Visit(context.statement(0));
             SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
 
-            loopDepth--;
             // Invoke the generic loop handler
             return VisitLoopGeneric(
                 null,
                 loopBodyNode,
                 untilCondition,
                 elseNode,
+                "Directory",
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopFile",
@@ -283,10 +305,43 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             );
         }
 
+        public override SyntaxNode VisitLoopReadStatement([NotNull] LoopReadStatementContext context)
+        {
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
+            var singleExprCount = context.singleExpression().Length;
+            // Determine the `Until` condition
+            ExpressionSyntax untilCondition = null;
+            if (context.Until() != null)
+            {
+                singleExprCount--;
+                untilCondition = (ExpressionSyntax)Visit(context.singleExpression(singleExprCount));
+            }
+
+            var InputFile = (ExpressionSyntax)Visit(context.singleExpression(0));
+            var OutputFile = singleExprCount > 1
+                ? (ExpressionSyntax)Visit(context.singleExpression(1))
+                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+
+            SyntaxNode loopBodyNode = Visit(context.statement(0));
+            SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
+
+            // Invoke the generic loop handler
+            return VisitLoopGeneric(
+                null,
+                loopBodyNode,
+                untilCondition,
+                elseNode,
+                "File",
+                loopEnumeratorName,
+                "System.Collections.IEnumerator",
+                "LoopRead",
+                InputFile, OutputFile
+            );
+        }
+
         public override SyntaxNode VisitLoopRegStatement([NotNull] LoopRegStatementContext context)
         {
-            loopDepth++;
-            var loopEnumeratorName = LoopEnumeratorBaseName + loopDepth;
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
             var singleExprCount = context.singleExpression().Length;
             // Determine the `Until` condition
             ExpressionSyntax untilCondition = null;
@@ -304,13 +359,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             SyntaxNode loopBodyNode = Visit(context.statement(0));
             SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
 
-            loopDepth--;
             // Invoke the generic loop handler
             return VisitLoopGeneric(
                 null,
                 loopBodyNode,
                 untilCondition,
                 elseNode,
+                "Registry",
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopRegistry",
@@ -320,8 +375,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitForInStatement([NotNull] ForInStatementContext context)
         {
-            loopDepth++;
-            var loopEnumeratorName = LoopEnumeratorBaseName + loopDepth;
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
 
             // Get the loop expression (e.g., `arr` in `for x in arr`)
             var loopExpression = (ExpressionSyntax)Visit(context.forInParameters().singleExpression());
@@ -346,7 +400,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     if (lastParamText == ",")
                         variableNames.Add("_");
                 } else
-                    variableNames.Add(paramText);
+                    variableNames.Add(NormalizeIdentifier(paramText));
                 lastParamText = paramText;
             }
             var variableNameCount = variableNames.Count;
@@ -359,16 +413,17 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             // Ensure the loop body is a block
             BlockSyntax loopBody = EnsureBlockSyntax(loopBodyNode);
 
-            // Add the assignment of `Current` to loop variables
             var currentAssignment = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    SyntaxFactory.TupleExpression(
-                        SyntaxFactory.SeparatedList(
-                            variableNames.Select(varName =>
-                                SyntaxFactory.Argument(
-                                    SyntaxFactory.IdentifierName(varName)
-                                )
+                    SyntaxFactory.DeclarationExpression(
+                        SyntaxFactory.IdentifierName("var"),
+                        SyntaxFactory.ParenthesizedVariableDesignation(
+                            SyntaxFactory.SeparatedList<VariableDesignationSyntax>(
+                                variableNames.Select<string, VariableDesignationSyntax>(name =>
+                                    name == "_"
+                                    ? SyntaxFactory.DiscardDesignation()
+                                    : SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier(name)))
                             )
                         )
                     ),
@@ -393,11 +448,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             // Add the `Current` assignment to the loop body
             loopBody = loopBody.WithStatements(
                 SyntaxFactory.List(
-                    new[] { 
+                    new StatementSyntax[] { 
                         incStatement, 
                         currentAssignment }
                     .Concat(loopBody.Statements))
             );
+
+            ExpressionSyntax untilCondition = null;
+            if (context.Until() != null)
+                untilCondition = (ExpressionSyntax)Visit(context.singleExpression());
 
             // Handle the `Else` clause, if present
             SyntaxNode elseNode = context.Else() != null ? Visit(context.statement(1)) : null;
@@ -406,8 +465,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             BlockSyntax loopSyntax = (BlockSyntax)VisitLoopGeneric(
                 null,
                 loopBody,
-                null, // No `Until` condition for standard `for` loops
+                untilCondition,
                 elseNode,
+                null,
                 loopEnumeratorName,
                 "var",
                 "MakeEnumerator",
@@ -419,45 +479,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             );
 
-            loopDepth--;
-
-            // Add the Push and variable declarations
-            var pushStatement = SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Push")
-                    )
-                )
-            );
-
-            // Add variable declarations for all assignables
-            var variableDeclarations = variableNames.ToHashSet()
-                .Select(varName =>
-                    SyntaxFactory.LocalDeclarationStatement(
-                        SyntaxFactory.VariableDeclaration(
-                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword))
-                        ).WithVariables(
-                            SyntaxFactory.SingletonSeparatedList(
-                                SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(varName))
-                            )
-                        )
-                    )
-                );
-
-            loopSyntax = SyntaxFactory.Block(variableDeclarations.ToArray())
-                .AddStatements(pushStatement)
-                .AddStatements(loopSyntax.Statements.ToArray());
-
             return loopSyntax;
         }
 
 
         public override SyntaxNode VisitWhileStatement([NotNull] WhileStatementContext context)
         {
-            loopDepth++;
-            var loopEnumeratorName = LoopEnumeratorBaseName + loopDepth.ToString();
+            var loopEnumeratorName = LoopEnumeratorBaseName + state.loopLabel;
 
             // Visit the singleExpression (loop condition)
             var conditionExpression = (ExpressionSyntax)Visit(context.singleExpression(0));
@@ -530,8 +558,6 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     untilStatement
                 )
             );
-
-            loopDepth--;
 
             // Generate the `for` loop structure
             var forLoop = SyntaxFactory.ForStatement(
@@ -620,7 +646,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitContinueStatement([NotNull] ContinueStatementContext context)
         {
-            var targetLabel = loopDepth.ToString();
+            var targetLabel = state.loopLabel;
             if (context.propertyName() != null)
                 targetLabel = context.propertyName().GetText().Trim('"');
             targetLabel = LoopEnumeratorBaseName + targetLabel + "_next";
@@ -634,9 +660,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitBreakStatement([NotNull] BreakStatementContext context)
         {
-            var targetLabel = loopDepth.ToString();
+            var targetLabel = state.loopDepth.ToString();
             if (context.propertyName() != null)
+            {
                 targetLabel = context.propertyName().GetText().Trim('"');
+                if (int.TryParse(targetLabel, out int result) && result <= state.loopDepth && result > 0)
+                {
+                    targetLabel = (state.loopDepth + 1 - result).ToString();
+                }
+            }
             targetLabel = LoopEnumeratorBaseName + targetLabel + "_end";
 
             // Generate the goto statement
@@ -650,8 +682,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitTryStatement([NotNull] TryStatementContext context)
         {
-            Helper.tryDepth++;
-            var elseClaudeIdentifier = "_ks_trythrew_" + tryDepth.ToString();
+            Helper.state.tryDepth++;
+            var elseClaudeIdentifier = "_ks_trythrew_" + state.tryDepth.ToString();
             // Generate the try block
             var tryBlock = EnsureBlockSyntax(Visit(context.statement()));
 
@@ -721,15 +753,32 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             foreach (var catchProduction in context.catchProduction())
             {
                 i++;
-                exceptionIdentifierName = "_ks_ex_" + tryDepth.ToString() + "_" + i.ToString();
+                exceptionIdentifierName = "_ks_ex_" + state.tryDepth.ToString() + "_" + i.ToString();
                 catchClauses.Add((CatchClauseSyntax)VisitCatchProduction(catchProduction));
+            }
+
+            // Ensure a catch clause for `Keysharp.Core.Error` exists
+            if (!catchClauses.Any(c =>
+                    c.Declaration != null &&
+                    c.Declaration.Type.ToString().Equals("Keysharp.Core.Error", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var keysharpErrorCatch = SyntaxFactory.CatchClause()
+                    .WithDeclaration(
+                        SyntaxFactory.CatchDeclaration(
+                            SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
+                            SyntaxFactory.Identifier("_ks_ex_" + state.tryDepth.ToString() + "_0")
+                        )
+                    )
+                    .WithBlock(SyntaxFactory.Block());
+
+                catchClauses.Add(keysharpErrorCatch);
             }
 
             catchClauses.Sort(
                 (c1, c2) =>
                   {
-                      var t1 = Type.GetType(c1.Declaration.Type.ToString(), false, true);
-                      var t2 = Type.GetType(c2.Declaration.Type.ToString(), false, true);
+                      var t1 = Type.GetType(c1.Declaration?.Type.ToString() ?? "", false, true);
+                      var t2 = Type.GetType(c2.Declaration?.Type.ToString() ?? "", false, true);
 
                       if (t1 == t2)
                           return 0;
@@ -745,16 +794,6 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                           return -1;
                   });
 
-            // Add a default empty Catch if no Catch or Finally exists
-            if (catchClauses.Count == 0 && finallyClause == null)
-            {
-                catchClauses.Add(
-                    SyntaxFactory.CatchClause()
-                        .WithDeclaration(SyntaxFactory.CatchDeclaration(SyntaxFactory.IdentifierName("Exception")))
-                        .WithBlock(SyntaxFactory.Block())
-                );
-            }
-
             // Construct the TryStatementSyntax
             var tryStatement = SyntaxFactory.TryStatement()
                 .WithBlock(tryBlock)
@@ -765,7 +804,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 tryStatement = tryStatement.WithFinally(finallyClause);
             }
 
-            Helper.tryDepth--;
+            Helper.state.tryDepth--;
 
             if (exceptionVariableDeclaration != null)
             {
@@ -792,27 +831,33 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         catchAssignableText = t.FullName;
                     else//This should never happen, but keep in case.
                         catchAssignableText = "Keysharp.Core." + catchAssignableText;
-                    exceptionType = CreateQualifiedName(catchAssignableText);
+                    exceptionType = SyntaxFactory.ParseTypeName(catchAssignableText);
                 } 
                 else
-                    exceptionType = SyntaxFactory.IdentifierName("Exception");
+                    exceptionType = SyntaxFactory.ParseTypeName("Keysharp.Core.Error");
 
                 // Handle optional `As` and `identifier`
                 if (catchAssignable.identifier() != null)
-                    exceptionIdentifier = SyntaxFactory.Identifier(catchAssignable.identifier().GetText());
+                    exceptionIdentifier = SyntaxFactory.Identifier(NormalizeFunctionIdentifier(catchAssignable.identifier().GetText()));
                 else
                     exceptionIdentifier = SyntaxFactory.Identifier(exceptionIdentifierName);
 
                 return SyntaxFactory.CatchClause()
                     .WithDeclaration(
-                        SyntaxFactory.CatchDeclaration(exceptionType)
-                            .WithIdentifier(exceptionIdentifier)
+                        SyntaxFactory.CatchDeclaration(exceptionType, exceptionIdentifier)
                     )
                     .WithBlock(block);
             }
 
             // Catch-all clause
-            return SyntaxFactory.CatchClause().WithBlock(block);
+            return SyntaxFactory.CatchClause()
+                .WithDeclaration(
+                    SyntaxFactory.CatchDeclaration(
+                        SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
+                        SyntaxFactory.Identifier(exceptionIdentifierName)
+                    )
+                )
+                .WithBlock(block);
         }
 
         public override SyntaxNode VisitElseProduction([NotNull] ElseProductionContext context)
@@ -826,29 +871,48 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         }
 
         private bool switchCaseSense = true;
+        private uint caseClauseCount = 0;
+        private bool switchValueExists = true;
         public override SyntaxNode VisitSwitchStatement([NotNull] SwitchStatementContext context)
         {
+            caseClauseCount = 0;
             // Extract the switch value (SwitchValue)
-            var switchValue = context.singleExpression() != null
+            switchValueExists = context.singleExpression() != null;
+            var switchValue = switchValueExists
                 ? (ExpressionSyntax)Visit(context.singleExpression())
-                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+                : SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression);
 
             // Extract case sensitivity (CaseSense)
             LiteralExpressionSyntax caseSense = context.literal() != null
                 ? (LiteralExpressionSyntax)Visit(context.literal())
                 : SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1)); // Default: case-sensitive
-            switchCaseSense = (caseSense.Token.Text == "1" || caseSense.Token.Text.Equals("on", StringComparison.InvariantCultureIgnoreCase));
+            switchCaseSense = (caseSense.Token.Text == "1L" || caseSense.Token.Text == "1" || caseSense.Token.Text.Equals("on", StringComparison.InvariantCultureIgnoreCase));
 
             // Visit the case block
             var caseBlock = (SwitchStatementSyntax)VisitCaseBlock(context.caseBlock());
 
-            var switchValueToString = SyntaxFactory.InvocationExpression(
-                SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    switchValue,
-                    SyntaxFactory.IdentifierName("ToString")
-                )
-            );
+            ExpressionSyntax switchValueToString;
+            if (switchValueExists)
+            {
+                switchValueToString = SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        switchValue,
+                        SyntaxFactory.IdentifierName("ToString")
+                    )
+                );
+                switchValueToString = !switchCaseSense
+                    ? SyntaxFactory.InvocationExpression(
+                        SyntaxFactory.MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            switchValueToString,
+                            SyntaxFactory.IdentifierName("ToLower")
+                        )
+                    )
+                    : switchValueToString;
+            }
+            else
+                switchValueToString = switchValue;
 
             var switchInvocation = SyntaxFactory.LocalDeclarationStatement(
                 SyntaxFactory.VariableDeclaration(
@@ -877,7 +941,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             {
                 var allCaseClauses = context.caseClauses(0)?.caseClause()
                     .Concat(context.caseClauses(1)?.caseClause() ?? Enumerable.Empty<CaseClauseContext>())
-                    .ToList();
+                    .ToList() ?? Enumerable.Empty<CaseClauseContext>();
                 foreach (var caseClause in allCaseClauses)
                 {
                     var caseSection = (SwitchSectionSyntax)VisitCaseClause(caseClause);
@@ -911,16 +975,17 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 .singleExpression()
                 .Select(expr =>
                 {
+                    ++caseClauseCount;
                     var exprSyntax = (ExpressionSyntax)Visit(expr);
 
                     // Convert the case expression to string
-                    var toStringExpr = SyntaxFactory.InvocationExpression(
+                    var toStringExpr = switchValueExists ? SyntaxFactory.InvocationExpression(
                         SyntaxFactory.MemberAccessExpression(
                             SyntaxKind.SimpleMemberAccessExpression,
                             exprSyntax,
                             SyntaxFactory.IdentifierName("ToString")
                         )
-                    );
+                    ) : exprSyntax;
 
                     // Handle case-sensitivity by applying ToLower if switchCaseSense is false
                     var comparisonExpr = !switchCaseSense
@@ -933,30 +998,56 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         )
                         : toStringExpr;
 
-                    // Create a condition for the `when` clause
-                    var whenClause = SyntaxFactory.WhenClause(
-                        SyntaxFactory.InvocationExpression(
-                            SyntaxFactory.MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                SyntaxFactory.IdentifierName("s"),
-                                SyntaxFactory.IdentifierName("Equals")
+                    // Generate either `case true when ...` or `case ...` based on `switchValueExists`
+                    if (!switchValueExists)
+                    {
+                        // Create a `case true when ...` label
+                        return SyntaxFactory.CasePatternSwitchLabel(
+                            SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
+                            SyntaxFactory.ConstantPattern(
+                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+                            ), // case true
+                            SyntaxFactory.WhenClause(
+                                SyntaxFactory.CastExpression(
+                                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),
+                                    ((InvocationExpressionSyntax)InternalMethods.ForceBool)
+                                    .WithArgumentList(
+                                        SyntaxFactory.ArgumentList(
+                                            SyntaxFactory.SeparatedList(new[] {
+                                                SyntaxFactory.Argument(comparisonExpr) }))
+                                    )
+                                )
                             ),
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(comparisonExpr))
+                            SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
+                        );
+                    }
+                    else
+                    {
+                        // Create a condition for the `when` clause
+                        var whenClause = SyntaxFactory.WhenClause(
+                            SyntaxFactory.InvocationExpression(
+                                SyntaxFactory.MemberAccessExpression(
+                                    SyntaxKind.SimpleMemberAccessExpression,
+                                    SyntaxFactory.IdentifierName("_ks_string_" + caseClauseCount),
+                                    SyntaxFactory.IdentifierName("Equals")
+                                ),
+                                SyntaxFactory.ArgumentList(
+                                    SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(comparisonExpr))
+                                )
                             )
-                        )
-                    );
+                        );
 
-                    // Return a `case string s when` label
-                    return SyntaxFactory.CasePatternSwitchLabel(
-                        SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
-                        SyntaxFactory.DeclarationPattern(
-                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
-                            SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("s"))
-                        ),
-                        whenClause, // when condition
-                        SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
-                    );
+                        // Create a `case string s when ...` label
+                        return SyntaxFactory.CasePatternSwitchLabel(
+                            SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
+                            SyntaxFactory.DeclarationPattern(
+                                SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
+                                SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("_ks_string_" + caseClauseCount))
+                            ),
+                            whenClause, // when condition
+                            SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
+                        );
+                    }
                 })
                 .ToArray();
 
@@ -994,14 +1085,18 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 SyntaxFactory.SingletonList<SwitchLabelSyntax>(
                     SyntaxFactory.DefaultSwitchLabel()
                 ),
-                SyntaxFactory.SingletonList(statements)
+                SyntaxFactory.List<StatementSyntax>(
+                    statements is BlockSyntax blockSyntax
+                        ? blockSyntax.Statements // Unwrap block statements
+                        : new[] { statements }   // Wrap single statement in an array
+                )
             );
         }
 
         public override SyntaxNode VisitLabelledStatement([NotNull] LabelledStatementContext context)
         {
             // Get the label identifier
-            var labelName = context.propertyName().GetText().Trim('"');
+            var labelName = context.Identifier().GetText().Trim('"');
 
             // Return a labeled statement with an empty statement as the body
             return SyntaxFactory.LabeledStatement(

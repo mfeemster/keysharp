@@ -1,8 +1,22 @@
-﻿namespace Keysharp.Core.Common.ObjectBase
+﻿using System.Collections.Generic;
+
+namespace Keysharp.Core.Common.ObjectBase
 {
 	public class Any
 	{
-		public static string BaseExc = "Changing a class base property at runtime cannot be implemented in C#.";
+		public static object __Static
+		{
+			get => Script.Variables.Statics.GetValueOrDefault(GetCallingType());
+			set => Script.Variables.Statics[GetCallingType()] = (KeysharpObject)value;
+        }
+
+        private static Type GetCallingType()
+        {
+            var frame = new System.Diagnostics.StackTrace().GetFrame(3); // Get the caller two levels up
+            return frame?.GetMethod()?.DeclaringType;
+        }
+
+        public static string BaseExc = "Changing a class base property at runtime cannot be implemented in C#.";
 
 		public object Base => GetType().BaseType;//Documentation says this can be set, but C# doesn't support changing a base at runtime.
 
@@ -10,7 +24,7 @@
 		{
 			get
 			{
-				return (GetType().BaseType, this);
+				return ((Type)Base, this);
 			}
 		}
 

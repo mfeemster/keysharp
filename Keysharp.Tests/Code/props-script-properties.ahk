@@ -63,7 +63,7 @@ myfunc()
 {
 	y := A_ThisFunc
 
-	if (y == "myfunc")
+	if (y = "myfunc")
 		FileAppend "pass", "*"
 	else
 		FileAppend "fail", "*"

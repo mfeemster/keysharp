@@ -18,7 +18,7 @@ public class MainParserErrorListener : IAntlrErrorListener<IToken>
         string msg,
         RecognitionException e)
     {
-        var codeLine = codeLines[line-1];
+        var codeLine = state.codeLines[line-1];
 
         // Handle syntax errors here
 #if DEBUG
@@ -119,7 +119,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         {
             var prevToken = TokenStream.Get(i);
             if (prevToken.Channel != Lexer.Hidden) {
-                if (prevToken.Type == OpenBrace)
+                if (prevToken.Type == OpenBrace || prevToken.Type == EOL)
                     return true;
                 return false;
             }
@@ -153,7 +153,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         if (CurrentToken.TokenIndex+1 >= InputStream.Size) return true;
         IToken next = ((ITokenStream)InputStream).Get(CurrentToken.TokenIndex+1);
 
-        return next.Channel == Lexer.Hidden;
+        return next.Channel == Lexer.Hidden || next.Type == EOL;
     }
 
     protected bool isNextAndPrevWS() {

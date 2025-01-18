@@ -65,7 +65,7 @@ class testsubclass extends testclass
 
 	SubCaseSensitiveFunc()
 	{
-		basecasesensitivefunc()
+		this.basecasesensitivefunc()
 	}
 	
 	static SubCaseSensitiveFuncStatic()
@@ -366,7 +366,7 @@ else
 	FileAppend "fail", "*"
 
 testclass.c := 101
-myfunc := FuncObj("basecasesensitivefuncstatic", testsubclassobj)
+myfunc := FuncObj("basecasesensitivefuncstatic", testsubclassobj.__Static)
 
 myfunc()
 
@@ -376,7 +376,7 @@ else
 	FileAppend "fail", "*"
 
 testclass.c := 101
-myfunc := FuncObj("subcasesensitivefuncstatic", testsubclassobj)
+myfunc := FuncObj("subcasesensitivefuncstatic", testsubclassobj.__Static)
 
 myfunc()
 
@@ -761,7 +761,9 @@ else
 	
 class dupepropsbase
 {
-	a := 123
+	a {
+		get => 123
+	}
 }
 
 class dupepropssub extends dupepropsbase

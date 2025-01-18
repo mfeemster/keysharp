@@ -6,6 +6,7 @@ namespace Keysharp.Core.COM
 		internal static char[] pointerChars = [' ', '*', 'p', 'P'];
 		internal nint[] args;
 		internal HashSet<nint> bstrs;
+		internal Dictionary<int, object> refs = new();
 		internal ComArgumentHelper(object[] parameters)
 			: base(parameters)
 		{
@@ -64,7 +65,13 @@ namespace Keysharp.Core.COM
 				else
 					i++;
 
-				Type type = null;
+                if (parameters[i] is KeysharpObject kso && kso.HasProp("__Value") == 1)
+                {
+                    refs[i] = parameters[i];
+                    parameters[i] = Script.GetPropertyValue(kso, "__Value");
+                }
+
+                Type type = null;
 				var n = i / 2;
 				var p = parameters[i];
 				//var usePtr = false;

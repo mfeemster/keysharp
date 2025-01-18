@@ -41,7 +41,7 @@ namespace Keysharp.Core.Common.Invoke
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 			stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
-		}
+        }
 
 		/// <summary>
 		/// This must be manually called before any program is run.
@@ -253,8 +253,8 @@ namespace Keysharp.Core.Common.Invoke
 							return mph;
 					}
 
-					t = t.BaseType;
-				} while (t.Assembly == typeof(Any).Assembly
+                    t = t.BaseType;
+                } while (t.Assembly == typeof(Any).Assembly
 
 						 || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
 						 || isSystem);
@@ -317,7 +317,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						foreach (var kv in dkt)
-							if (kv.Key != "__Class" && kv.Value.Count > 0)
+							if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "__Static")
 							{
 								var mph = kv.Value.First().Value;
 
@@ -349,7 +349,7 @@ namespace Keysharp.Core.Common.Invoke
 						break;
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
-						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
+						ct += dkt.Count - 2; // Subtract 2 because of the auto generated __Class and __Static properties.
 
 					t = t.BaseType;
 				}
@@ -485,7 +485,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			return dkt;
 		}
-	}
+    }
 
 	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext
 	{
@@ -498,5 +498,5 @@ namespace Keysharp.Core.Common.Invoke
 			var assemblyPath = resolver.ResolveAssemblyToPath(name);
 			return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
 		}
-	}
+    }
 }

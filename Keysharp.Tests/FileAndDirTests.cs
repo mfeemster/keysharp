@@ -1,6 +1,8 @@
 ﻿using Array = Keysharp.Core.Array;
 using Buffer = Keysharp.Core.Buffer;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
+using Keysharp.Core;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Keysharp.Tests
 {
@@ -456,13 +458,13 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Dir.DirCopy(dir, "./FileGetShortcut/");
 			var patharg = Path.GetDirectoryName(Path.GetFullPath("./FileGetShortcut/file1.txt"));
-			object outTarget = null;
-			object outDir = null;
-			object outArgs = null;
-			object outDescription = null;
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
+			Misc.VarRef outTarget = new(null);
+            Misc.VarRef outDir = new(null);
+            Misc.VarRef outArgs = new(null);
+            Misc.VarRef outDescription = new(null);
+            Misc.VarRef outIcon = new(null);
+            Misc.VarRef outIconNum = new(null);
+            Misc.VarRef outRunState = new(null);
 #if LINUX
 			//Test creating a basic symlink first on linux.
 			Keysharp.Core.Files.FileCreateShortcut
@@ -471,33 +473,33 @@ namespace Keysharp.Tests
 				"./testshortcut.lnk"
 			);
 			Keysharp.Core.Files.FileGetShortcut("./testshortcut.lnk",
-												ref outTarget,
-												ref outDir,
-												ref outArgs,
-												ref outDescription,
-												ref outIcon,
-												ref outIconNum,
-												ref outRunState);
-			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), outTarget.ToString().ToLower());
-			Assert.AreEqual(patharg, outDir.ToString());
-			Assert.AreEqual("", outDescription.ToString());
-			Assert.AreEqual("", outArgs.ToString());
-			Assert.AreEqual("", outIcon.ToString());
-			Assert.AreEqual("", outIconNum.ToString());
-			Assert.AreEqual("", outRunState.ToString());
+												outTarget,
+												outDir,
+												outArgs,
+												outDescription,
+												outIcon,
+												outIconNum,
+												outRunState);
+			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), outTarget.__Value.ToString().ToLower());
+			Assert.AreEqual(patharg, outDir.__Value.ToString());
+			Assert.AreEqual("", outDescription.__Value.ToString());
+			Assert.AreEqual("", outArgs.__Value.ToString());
+			Assert.AreEqual("", outIcon.__Value.ToString());
+			Assert.AreEqual("", outIconNum.__Value.ToString());
+			Assert.AreEqual("", outRunState.__Value.ToString());
 
 			if (System.IO.File.Exists("./testshortcut.lnk"))
 				System.IO.File.Delete("./testshortcut.lnk");
 
-			outTarget = null;
-			outDir = null;
-			outArgs = null;
-			outDescription = null;
-			outIcon = null;
-			outIconNum = null;
-			outRunState = null;
+			Misc.VarRef outTarget = new(null);
+            Misc.VarRef outDir = new(null);
+            Misc.VarRef outArgs = new(null);
+            Misc.VarRef outDescription = new(null);
+            Misc.VarRef outIcon = new(null);
+            Misc.VarRef outIconNum = new(null);
+            Misc.VarRef outRunState = new(null);
 #endif
-			Files.FileCreateShortcut
+            Files.FileCreateShortcut
 			(
 				"./FileGetShortcut/file1.txt",
 				"./testshortcut.lnk",
@@ -512,27 +514,27 @@ namespace Keysharp.Tests
 #endif
 			);
 			Files.FileGetShortcut("./testshortcut.lnk",
-								  ref outTarget,
-								  ref outDir,
-								  ref outArgs,
-								  ref outDescription,
-								  ref outIcon,
-								  ref outIconNum,
-								  ref outRunState);
-			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), outTarget.ToString().ToLower());
-			Assert.AreEqual(patharg, outDir.ToString());
-			Assert.AreEqual("TestDescription", outDescription.ToString());
-			Assert.AreEqual("", outArgs.ToString());
-			Assert.AreEqual(Path.GetFullPath("../../../Keysharp.ico"), outIcon.ToString());
+								  outTarget,
+								  outDir,
+								  outArgs,
+								  outDescription,
+								  outIcon,
+								  outIconNum,
+								  outRunState);
+			Assert.AreEqual(Path.GetFullPath("./FileGetShortcut/file1.txt").ToLower(), outTarget.__Value.ToString().ToLower());
+			Assert.AreEqual(patharg, outDir.__Value.ToString());
+			Assert.AreEqual("TestDescription", outDescription.__Value.ToString());
+			Assert.AreEqual("", outArgs.__Value.ToString());
+			Assert.AreEqual(Path.GetFullPath("../../../Keysharp.ico"), outIcon.__Value.ToString());
 #if WINDOWS
-			Assert.AreEqual("0", outIconNum.ToString());
-			Assert.AreEqual("1", outRunState.ToString());
+			Assert.AreEqual("0", outIconNum.__Value.ToString());
+			Assert.AreEqual("1", outRunState.__Value.ToString());
 #else
-			Assert.AreEqual("Link", outIconNum.ToString());
-			Assert.AreEqual("", outRunState.ToString());
+			Assert.AreEqual("Link", outIconNum.__Value.ToString());
+			Assert.AreEqual("", outRunState.__Value.ToString());
 #endif
 
-			if (File.Exists("./testshortcut.lnk"))
+            if (File.Exists("./testshortcut.lnk"))
 				File.Delete("./testshortcut.lnk");
 
 			Assert.IsTrue(TestScript("file-filegetshortcut", false));
@@ -1078,73 +1080,73 @@ groupkey13=groupval13
 		public void SplitPath()
 		{
 			var fullpath = string.Concat(path, "DirCopy/file1.txt");
-			object filename = null;
-			object dir = null;
-			object ext = null;
-			object namenoext = null;
-			object drive = null;
-			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("file1.txt", filename);
-			Assert.AreEqual("txt", ext);
-			Assert.AreEqual("file1", namenoext);
+			Misc.VarRef filename = new(null);
+            Misc.VarRef dir = new(null);
+            Misc.VarRef ext = new(null);
+            Misc.VarRef namenoext = new(null);
+            Misc.VarRef drive = new(null);
+			Dir.SplitPath(fullpath, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("file1.txt", filename.__Value);
+			Assert.AreEqual("txt", ext.__Value);
+			Assert.AreEqual("file1", namenoext.__Value);
 #if WINDOWS
-			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.ToString().ToLower());//This will be different on other dev machines.
-			Assert.AreEqual("D:", drive);
-			Keysharp.Core.Dir.SplitPath("C:\\Windows", ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("C:", drive);
-			Assert.AreEqual("C:", dir);
+			Assert.AreEqual("D:\\Dev\\keysharp\\Keysharp.Tests\\Code\\DirCopy".ToLower(), dir.__Value.ToString().ToLower());//This will be different on other dev machines.
+			Assert.AreEqual("D:", drive.__Value);
+			Keysharp.Core.Dir.SplitPath("C:\\Windows", filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("C:", drive.__Value);
+			Assert.AreEqual("C:", dir.__Value);
 #else
 			var user = Accessors.A_UserName;
-			Assert.AreEqual($"/home/{user}/Dev/Keysharp/Keysharp.Tests/Code/DirCopy".ToLower(), dir.ToString().ToLower());
-			Assert.AreEqual("/", drive);
+			Assert.AreEqual($"/home/{user}/Dev/Keysharp/Keysharp.Tests/Code/DirCopy".ToLower(), dir.__Value.ToString().ToLower());
+			Assert.AreEqual("/", drive.__Value);
 #endif
-			var url = "https://domain.com";
-			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("", filename);
-			Assert.AreEqual("https://domain.com", dir);
-			Assert.AreEqual("", ext);
-			Assert.AreEqual("", namenoext);
-			Assert.AreEqual("https://domain.com", drive);
+            var url = "https://domain.com";
+			Dir.SplitPath(url, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("", filename.__Value);
+			Assert.AreEqual("https://domain.com", dir.__Value);
+			Assert.AreEqual("", ext.__Value);
+			Assert.AreEqual("", namenoext.__Value);
+			Assert.AreEqual("https://domain.com", drive.__Value);
 			//
 			url = "https://domain.com/images";
-			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("", filename);
-			Assert.AreEqual("https://domain.com/images", dir);
-			Assert.AreEqual("", ext);
-			Assert.AreEqual("", namenoext);
-			Assert.AreEqual("https://domain.com", drive);
+			Dir.SplitPath(url, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("", filename.__Value);
+			Assert.AreEqual("https://domain.com/images", dir.__Value);
+			Assert.AreEqual("", ext.__Value);
+			Assert.AreEqual("", namenoext.__Value);
+			Assert.AreEqual("https://domain.com", drive.__Value);
 			//
 			url = "https://domain.com/images/afile.jpg";
-			Dir.SplitPath(url, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("afile.jpg", filename);
-			Assert.AreEqual("https://domain.com/images", dir);
-			Assert.AreEqual("jpg", ext);
-			Assert.AreEqual("afile", namenoext);
-			Assert.AreEqual("https://domain.com", drive);
+			Dir.SplitPath(url, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("afile.jpg", filename.__Value);
+			Assert.AreEqual("https://domain.com/images", dir.__Value);
+			Assert.AreEqual("jpg", ext.__Value);
+			Assert.AreEqual("afile", namenoext.__Value);
+			Assert.AreEqual("https://domain.com", drive.__Value);
 			//
 			fullpath = "\\\\machinename";
-			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("", filename);
-			Assert.AreEqual("\\\\machinename", dir);
-			Assert.AreEqual("", ext);
-			Assert.AreEqual("", namenoext);
-			Assert.AreEqual("\\\\machinename", drive);
+			Dir.SplitPath(fullpath, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("", filename.__Value);
+			Assert.AreEqual("\\\\machinename", dir.__Value);
+			Assert.AreEqual("", ext.__Value);
+			Assert.AreEqual("", namenoext.__Value);
+			Assert.AreEqual("\\\\machinename", drive.__Value);
 			//
 			fullpath = "\\\\machinename\\dir";
-			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("", filename);
-			Assert.AreEqual("\\\\machinename\\dir", dir);
-			Assert.AreEqual("", ext);
-			Assert.AreEqual("", namenoext);
-			Assert.AreEqual("\\\\machinename", drive);
+			Dir.SplitPath(fullpath, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("", filename.__Value);
+			Assert.AreEqual("\\\\machinename\\dir", dir.__Value);
+			Assert.AreEqual("", ext.__Value);
+			Assert.AreEqual("", namenoext.__Value);
+			Assert.AreEqual("\\\\machinename", drive.__Value);
 			//
 			fullpath = "\\\\machinename\\dir\\filename.txt";
-			Dir.SplitPath(fullpath, ref filename, ref dir, ref ext, ref namenoext, ref drive);
-			Assert.AreEqual("filename.txt", filename);
-			Assert.AreEqual("\\\\machinename\\dir", dir);
-			Assert.AreEqual("txt", ext);
-			Assert.AreEqual("filename", namenoext);
-			Assert.AreEqual("\\\\machinename", drive);
+			Dir.SplitPath(fullpath, filename, dir, ext, namenoext, drive);
+			Assert.AreEqual("filename.txt", filename.__Value);
+			Assert.AreEqual("\\\\machinename\\dir", dir.__Value);
+			Assert.AreEqual("txt", ext.__Value);
+			Assert.AreEqual("filename", namenoext.__Value);
+			Assert.AreEqual("\\\\machinename", drive.__Value);
 			Assert.IsTrue(TestScript("file-filesplitpath", false));
 		}
 	}

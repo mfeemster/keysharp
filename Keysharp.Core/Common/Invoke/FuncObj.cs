@@ -8,7 +8,7 @@
     }
     public interface IFuncObj : ICallable
     {
-        public object Inst { get; }
+        public object Inst { get; set; }
 		public bool IsBuiltIn { get; }
 		public bool IsValid { get; }
 		public string Name { get; }
@@ -32,7 +32,7 @@
 
 		public override object Call(params object[] obj) => base.Call(CreateArgs(obj).ToArray());
 
-		public override object CallWithRefs(params object[] obj)
+        public override object CallWithRefs(params object[] obj)
 		{
 			var argsList = CreateArgs(obj);
 			var refs = new List<RefHolder>(obj.Length);
@@ -111,8 +111,16 @@
 		protected bool isVariadic;
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
-		public object Inst => inst;
-		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
+        new public static object __Static { get; set; }
+        public object Inst
+		{
+			get => inst;
+			set => inst = value;
+		}
+		public Type DeclaringType => mi.DeclaringType;
+		public bool IsClosure => inst != null && mi.DeclaringType?.DeclaringType == inst.GetType();
+
+        public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
 		public string Name => mi != null ? mi.Name : "";
 		internal bool IsVariadic => isVariadic;
@@ -123,9 +131,30 @@
 		internal MethodPropertyHolder Mph => mph;
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
-			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)
+			: this(GetMethodInfo(s, o, paramCount), o)
 		{
 		}
+
+        private static MethodInfo GetMethodInfo(string s, object o, object paramCount)
+        {
+            if (o != null)
+            {
+				var mitup = Script.GetMethodOrProperty(o, s, paramCount.Ai(-1));
+				if (mitup.Item2 is FuncObj fo)
+					return fo.mph.mi;
+				else if (mitup.Item2 is MethodPropertyHolder mph)
+					return mph.mi;
+                // Try to find and cache the method
+                var method = Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1));
+                if (method != null)
+                    return method.mi;
+
+				throw new TargetError("Unable to find a method object for the requested method " + s);
+            }
+
+            // Fallback to finding the method without an object
+            return Reflections.FindMethod(s, paramCount.Ai(-1))?.mi;
+        }
 
         internal FuncObj(string s, string t, object paramCount = null)
 		: this(Reflections.FindAndCacheMethod(Reflections.stringToTypes[t], s, paramCount.Ai(-1)))
@@ -145,6 +174,7 @@
         internal FuncObj(Delegate m, object o = null)
 		: this(m?.GetMethodInfo(), o)
         {
+			this.Inst = m.Target;
         }
 
         internal FuncObj(MethodInfo m, object o = null)
@@ -152,16 +182,49 @@
 			mi = m;
 			inst = o;
 
-			if (mi != null)
+            if (mi != null)
 				Init();
 		}
 
 		public IFuncObj Bind(params object[] obj)
 		=> new BoundFunc(mi, obj, inst);
 
-		public virtual object Call(params object[] obj) => mph.callFunc(inst, obj);
+		public virtual object Call(params object[] obj)
+		{
+			// No `this` is required
+			if (mph.IsStaticFunc)
+				return mph.callFunc(null, obj);
+			// No other choice but to use `inst`
+			else if (obj.Length == 0)
+				return mph.callFunc(inst, obj);
+			// `this` is required but not present
+			else if (inst == null)
+				return mph.callFunc(obj[0], obj.Skip(1).ToArray());
+			// `this` is present in FuncObj but the user-provided `this` does not match the required type
+			else if (!DeclaringType.IsAssignableFrom(obj[0].GetType()))
+                return mph.callFunc(inst, obj.ToArray());
+			// Not sure if this should use `obj[0]` or `inst`
+            else
+				return mph.callFunc(obj[0], obj.Skip(1).ToArray());
+        }
 
-		public virtual object CallWithRefs(params object[] obj)
+		/*
+		public virtual object CallWithInst(object inst, params object[] obj) {
+			var decl = mph.mi.DeclaringType;
+			var instt = inst.GetType();
+
+			// If we have a compiler-generated closure *and* its type matches inst, then call it without 
+			// passing inst as `this`
+            if (Inst != null && mph.mi.DeclaringType?.DeclaringType == inst.GetType())
+                return mph.callFunc(Inst, obj);
+            else if (mph.IsStaticFunc || (Inst != null && mph.mi.DeclaringType != inst.GetType()))
+				return mph.callFunc(Inst, new[] { inst }.Concat(obj).ToArray());
+			else 
+				return mph.callFunc(inst, obj);
+		}
+		*/
+
+        public virtual object CallWithRefs(params object[] obj)
 		{
 			var refs = new List<RefHolder>(obj.Length);
 
@@ -197,12 +260,12 @@
 				index--;
 
 				if (index < funcParams.Length)
-					return funcParams[index].ParameterType.IsByRef;
+					return funcParams[index].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(Misc.VarRef);
 			}
 			else
 			{
 				for (var i = 0; i < funcParams.Length; i++)
-					if (funcParams[i].ParameterType.IsByRef)
+					if (funcParams[i].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(Misc.VarRef))
 						return true;
 			}
 

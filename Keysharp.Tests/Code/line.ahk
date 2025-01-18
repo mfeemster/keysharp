@@ -1,15 +1,15 @@
 #Include %A_ScriptDir%/header.ahk
 
 ;
-n = %A_LineNumber%
+n := A_LineNumber
 If n != 4
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-path = %A_LineFile%
-SplitPath, path, name
+path := A_LineFile
+SplitPath path, name
 If name != line.ahk
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1 + A_LineNumber
 If x > 2
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"

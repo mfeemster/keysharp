@@ -10,16 +10,16 @@ if (FileExist("./continuation.txt"))
 FileAppend(str, "./continuation.txt")
 
 if (FileExist("./continuation.txt"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 text := FileRead("./continuation.txt")
 
 if (text == "A line of text." . A_NewLine . "By default, the hard carriage return (Enter) between the previous line and this one will be stored.")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (FileExist("./continuation.txt"))
 	FileDelete("./continuation.txt")
@@ -38,16 +38,16 @@ if (FileExist("./continuation.txt"))
 FileAppend(str, "./continuation.txt")
 
 if (FileExist("./continuation.txt"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 text := FileRead("./continuation.txt")
 
 if (text == "A line of text." . A_NewLine . "By default, the hard carriage return (Enter) between the previous line and this one will be stored." . A_NewLine . "`tThis line is indented with a tab; by default, that tab will also be stored." . A_NewLine . "Additionally, `"quote marks`" are automatically escaped when appropriate.")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (FileExist("./continuation.txt"))
 	FileDelete("./continuation.txt")

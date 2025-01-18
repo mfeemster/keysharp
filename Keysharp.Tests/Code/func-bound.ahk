@@ -50,7 +50,7 @@ else
 	FileAppend "fail", "*"
 
 If (y == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -96,12 +96,12 @@ else
 	FileAppend "fail", "*"
 
 If (y == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
 If (z == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -119,7 +119,7 @@ else
 	FileAppend "fail", "*"
 
 If (y == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -147,7 +147,7 @@ else
 	FileAppend "fail", "*"
 
 If (z == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 

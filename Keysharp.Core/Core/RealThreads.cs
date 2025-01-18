@@ -19,7 +19,7 @@
 			lock (lockObj)
 			{
 				var funcObj = Functions.GetFuncObj(obj1, null, true);
-				return funcObj.Call(args);
+				return funcObj.Call(funcObj.Inst == null ? args : new[] { funcObj.Inst }.Concat(args));
 			}
 		}
 

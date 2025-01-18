@@ -1,22 +1,142 @@
+using System.Reflection;
+using Keysharp.Core.Scripting.Parser.Antlr;
+
 namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
+		public static void InitStaticInstance(Type t, Type alias = null)
+		{
+            var isBuiltin = !t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase);
 
-		public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
+            Variables.Prototypes[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
+            object inst = Script.Variables.Statics[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
+			KeysharpObject staticInst = (KeysharpObject)inst;
+
+            var proto = Variables.Prototypes[t];
+
+            // Get all instance methods
+            var methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            foreach (var method in methods)
+            {
+                var methodName = method.Name;
+                if (!isBuiltin && methodName.StartsWith(Helper.Keywords.ClassStaticPrefix))
+                {
+					methodName = methodName.Substring(Helper.Keywords.ClassStaticPrefix.Length);
+                    staticInst.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
+					continue;
+                }
+
+                // Wrap method in FuncObj
+                proto.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
+            }
+
+            // Get all static methods
+            methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            foreach (var method in methods)
+			{
+                SetPropertyValue(staticInst, method.Name, new FuncObj(method));
+            }
+
+            // Get all instance properties
+            var properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            foreach (var prop in properties)
+            {
+                var propertyName = prop.Name;
+				OwnPropsMap propertyMap = null;
+                if (!isBuiltin && propertyName.StartsWith(Helper.Keywords.ClassStaticPrefix))
+				{
+                    propertyName = propertyName.Substring(Helper.Keywords.ClassStaticPrefix.Length);
+                    propertyMap = staticInst.op.TryGetValue(propertyName, out OwnPropsMap staticPropDesc) ? staticPropDesc : new OwnPropsMap(null, Collections.Map());
+
+                    if (prop.GetMethod != null)
+                    {
+                        propertyMap["get"] = new FuncObj(prop.GetMethod);
+                    }
+
+                    if (prop.SetMethod != null)
+                    {
+                        propertyMap["set"] = new FuncObj(prop.SetMethod);
+                    }
+
+                    if (propertyMap.Count > 0)
+                        staticInst.op[propertyName] = propertyMap;
+
+					continue;
+                }
+
+                propertyMap = proto.op.TryGetValue(propertyName, out OwnPropsMap propDesc) ? propDesc : new OwnPropsMap(null, Collections.Map());
+
+                if (prop.GetMethod != null)
+                {
+                    propertyMap["get"] = new FuncObj(prop.GetMethod);
+                }
+
+                if (prop.SetMethod != null)
+                {
+                    propertyMap["set"] = new FuncObj(prop.SetMethod);
+                }
+
+                if (propertyMap.Count > 0)
+                    proto.op[propertyName] = propertyMap;
+            }
+
+
+            // Get all static properties
+            properties = t.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            foreach (var prop in properties)
+            {
+                var propertyName = prop.Name;
+                var propertyMap = staticInst.op.TryGetValue(propertyName, out OwnPropsMap propDesc) ? propDesc : new OwnPropsMap(null, Collections.Map());
+
+                if (prop.GetMethod != null)
+                {
+                    propertyMap["get"] = new FuncObj(prop.GetMethod);
+                }
+
+                if (prop.SetMethod != null)
+                {
+                    propertyMap["set"] = new FuncObj(prop.SetMethod);
+                }
+
+				if (propertyMap.Count > 0)
+					staticInst.op[propertyName] = propertyMap;
+            }
+
+            if (!(t == typeof(Any) || t == typeof(FuncObj)))
+                proto.DefineProp("base", Collections.MapWithoutBase("value", Variables.Prototypes[t.BaseType]));
+
+            staticInst.DefineProp("prototype", Collections.Map("value", Variables.Prototypes[t]));
+
+			if (t != typeof(FuncObj) && t != typeof(Any))
+				staticInst.DefineProp("base", Collections.MapWithoutBase("value", Variables.Statics[t.BaseType]));
+
+			if (!isBuiltin)
+			{
+                Script.Invoke(Script.Variables.Statics[t], "__Init");
+                Script.Invoke(Script.Variables.Statics[t], "__New");
+            }
+        }
+        public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
 
 		public static object SetObject(object value, object item, params object[] index)
 		{
 			object key = null;
 			Error err;
-			Type typetouse;
+			Type typetouse = null;
 
 			try
 			{
-				if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+				if (item is ITuple otup && otup.Length > 1)
 				{
-					typetouse = t;
-					item = o;
+					if (otup[0] is Type t && otup[1] is object o)
+					{
+						typetouse = t;
+						item = o;
+					} else if (otup[0] is KeysharpObject kso && otup[1] is object ob)
+					{
+                        item = kso; typetouse = ob.GetType();
+                    }
 				}
 				else
 					typetouse = item.GetType();
@@ -102,12 +222,18 @@ namespace Keysharp.Scripting
 				else
 					len = 1;
 
-				Type typetouse;
+				Type typetouse = null;
 
-				if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+				if (item is ITuple otup && otup.Length > 1)
 				{
-					typetouse = t;
-					item = o;
+					if (otup[0] is Type t && otup[1] is object o)
+					{
+						typetouse = t;
+						item = o;
+					} else if (otup[0] is KeysharpObject kso && otup[1] is object ob)
+					{
+						item = kso; typetouse = ob.GetType();
+					}
 				}
 				else
 					typetouse = item.GetType();

@@ -387,6 +387,7 @@ namespace Keysharp.Core
 
 		public object __New(params object[] obj)
 		{
+			if (obj.Length == 0) return null;
 			var gui = obj[0] as Gui;
 			var control = obj[1] as Control;
 			var name = obj[2].ToString();

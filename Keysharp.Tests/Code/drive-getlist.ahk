@@ -5,6 +5,6 @@ val := DriveGetList()
 #else
 	if (SubStr(val, 1, 1) == "/")
 #endif
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

@@ -1,4 +1,6 @@
-﻿namespace System.Drawing
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace System.Drawing
 {
 	/// <summary>
 	/// An improved color structure that allows the values to be set after construction.<br/>

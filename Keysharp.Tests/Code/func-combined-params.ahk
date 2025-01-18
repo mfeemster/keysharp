@@ -1,4 +1,4 @@
-optreffunc(a?, &b)
+optreffunc(a?, &b?)
 {
 	b := a
 }

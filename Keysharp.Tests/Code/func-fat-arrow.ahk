@@ -13,11 +13,11 @@ class myclass
 
 	myprop
 	{
-		get => t
+		get => this.t
 		? 1
 		: 0
 
-		set => {
+		set {
 			global x := 10 * value
 		}
 	}
@@ -26,7 +26,7 @@ class myclass
 	
 	callmember1(a, b)
 	{
-		return member1(a, b)
+		return this.member1.Call(a, b)
 	}
 }
 
@@ -60,35 +60,35 @@ If (x == 40)
 else
 	FileAppend "fail", "*"
 	
-x := myclassobj.member2(1, 2)
+x := myclassobj.member2.Call(1, 2)
 
 If (x == 4)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-x := myclassobj.member3(3)
+x := myclassobj.member3.Call(3)
 
 If (x == 6)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-x := myclassobj.member4(3, 4)
+x := myclassobj.member4.Call(3, 4)
 
 If (x == 14)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-x := myclassobj.member5()
+x := myclassobj.member5.Call()
 
 If (x == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-x := myclassobj.member6(3, 4)
+x := myclassobj.member6.Call(3, 4)
 
 If (x == 14)
 	FileAppend "pass", "*"
@@ -96,7 +96,7 @@ else
 	FileAppend "fail", "*"
 	
 myclassobj.x := 123
-x := myclassobj.member7(2)
+x := myclassobj.member7.Call(2)
 
 If (x == 246)
 	FileAppend "pass", "*"
@@ -104,7 +104,7 @@ else
 	FileAppend "fail", "*"
 
 myclassobj.x := 123
-x := myclassobj.member8(2)
+x := myclassobj.member8.Call(2)
 
 If (x == 200)
 	FileAppend "pass", "*"
@@ -209,7 +209,7 @@ x := 0
 myfunc8 := () => x := 123
 y := myfunc8()
 
-If (x == 0)
+If (x == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -219,7 +219,7 @@ If (y == 123)
 else
 	FileAppend "fail", "*"
 
-myfunc9 := () => a := 123, b := 456, c := 789
+myfunc9 := () => (a := 123, b := 456, c := 789)
 x := myfunc9()
 
 If (x == 789)
@@ -359,7 +359,7 @@ else
 	FileAppend "fail", "*"
 	
 gval := 0
-lam := () => local gval, gval := 0, gval += 123
+lam := () => gval += 123
 x := lam()
 
 If (x == 123)
@@ -367,7 +367,7 @@ If (x == 123)
 else
 	FileAppend "fail", "*"
 
-If (gval == 0)
+If (gval == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -450,7 +450,7 @@ myfunc10(a, b, c)
 	return a() + b() + c()
 }
 
-val := myfunc10((x := 1) => (x, (y := 2) => y, (z := 3) => z))
+val := myfunc10((x := 1) => x, (y := 2) => y, (z := 3) => z)
 
 If (val == 6)
 	FileAppend "pass", "*"
@@ -468,84 +468,84 @@ class myclass3
 }
 
 myclassobj := myclass3()
-val := myclassobj.member1(5)
+val := myclassobj.member1.Call(5)
 
 If (val == 20)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-val := myclassobj.member2(5)
+val := myclassobj.member2.Call(5)
 
 If (val == 30)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-val := myclassobj.member2()
+val := myclassobj.member2.Call()
 
 If (val == 12)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-val := myclassobj.member3()
+val := myclassobj.member3.Call()
 
 If (val == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-val := myclassobj.member3(55)
+val := myclassobj.member3.Call(55)
 
 If (val == 55)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-val := myclassobj.member4(1, &b := 2, 3, 4)
+val := myclassobj.member4.Call(1, &b := 2, 3, 4)
 
 If (val == 24 && b == 24)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-val := myclassobj.member5(1, &b := 2, 3, 4)
+val := myclassobj.member5.Call(1, &b := 2, 3, 4)
 
 If (val == 24 && b == 24)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-val := myclassobj.member5(1, &b := 2, , 4)
+val := myclassobj.member5.Call(1, &b := 2, , 4)
 
 If (val == 40 && b == 40)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-x := myclassobj.member6(20)
+x := myclassobj.member6.Call(20)
 
 If (x == 35)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-x := myclassobj.member6(20, 25)
+x := myclassobj.member6.Call(20, 25)
 
 If (x == 55)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-x := myclassobj.member6(20, ,) ; left off here, not working. probably need work with invoking a null in place of a ref.
+x := myclassobj.member6.Call(20, ,) ; left off here, not working. probably need work with invoking a null in place of a ref.
 
 If (x == 35)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-x := myclassobj.member6(1, ,&z := 11)
+x := myclassobj.member6.Call(1, ,&z := 11)
 
 If (x == 17 && z == 17)
 	FileAppend "pass", "*"

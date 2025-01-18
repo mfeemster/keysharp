@@ -123,7 +123,10 @@
 									}
 								}
 
-								for (; pi < ParamLength; pi++)
+                                if (objLength < ParamLength)
+                                    newobj[^1] = new object[] { };
+
+                                for (; pi < ParamLength; pi++)
 									if (parameters[pi].IsOptional)
 										newobj[pi] = parameters[pi].DefaultValue;
 							}

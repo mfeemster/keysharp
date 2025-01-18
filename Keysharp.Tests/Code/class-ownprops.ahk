@@ -19,14 +19,14 @@ o1.a := 100
 val := o1.a
 
 If (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 If (o1.b == 100)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1.DefineProp("a", { ; Redefine a dynamic property over previously declared dynamic property on a class with a declared property of the same name.
 		set: (this, v) => this.b := v
@@ -35,14 +35,14 @@ o1.DefineProp("a", { ; Redefine a dynamic property over previously declared dyna
 o1.a := 200
 
 If (o1.a == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (o1.b == 200)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class extestclass extends testclass
 {
@@ -56,14 +56,14 @@ eo1.DefineProp("a", { ; Define dynamic property in a derived class where the bas
 eo1.a := 200
 
 If (eo1.a == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (eo1.b == 200)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := 100
 o1 := testclass()
@@ -74,9 +74,9 @@ o1.DefineProp("a", { ; Define a dynamic Call property that takes a reference par
 o1.a(&val)
 
 If (val == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1 := testclass()
 o1.DefineProp("c", {
@@ -95,48 +95,48 @@ try
 	val := o1.GetOwnPropDesc("a") ; Get a value property object for a declared property.
 
 	if (val.Value == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	o1.a := 999
 
 	if (o1.GetOwnPropDesc("a").Value == o1.a && o1.a == 999)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	val := o1.GetOwnPropDesc("c") ; Get a value property object for a dynamic property.
 
 	if (val.Value == 123)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	val := o1.GetOwnPropDesc("getsetprop") ; Get a get property object for a dynamic property. Note that get must be called like a method().
 
 	if (val.get() == 456)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	val := o1.GetOwnPropDesc("getsetprop") ; Get a get property object for a dynamic property. Note that get must be called like a method().
 	val.set()
 
 	if (o1.b == 0) ; val was considered "this" inside of set(), so it never set o1.b.
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	if (ObjHasOwnProp(o1, "a")) ; 
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	if (o1.HasOwnProp("c"))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 catch
 {
@@ -144,9 +144,9 @@ catch
 }
 
 if (b)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1 := { a : 1, c : 123 }
 b := true
@@ -156,26 +156,26 @@ try
 	val := o1.GetOwnPropDesc("a") ; Get a value property object for a declared property in an object literal.
 
 	if (val.Value == 1)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	val := o1.GetOwnPropDesc("c")
 
 	if (val.Value == 123)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	if (ObjHasOwnProp(o1, "a"))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	if (o1.HasOwnProp("c"))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 catch
 {
@@ -183,21 +183,21 @@ catch
 }
 
 if (b)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 o1 := testclass()
 
 if (ObjOwnPropCount(o1) == 2) ; Count all declared properties.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (ObjHasOwnProp(o1, "a") && o1.HasOwnProp("a")) ; Call both forms of *HasOwnProp().
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 class extclass2 extends testclass
 {
@@ -207,61 +207,61 @@ class extclass2 extends testclass
 o1 := extclass2()
 
 if (ObjOwnPropCount(o1) == 3) ; Count all declared properties in base and derived class.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1.DefineProp("d", {
 		call : () => 123
 	})
 
 if (ObjOwnPropCount(o1) == 4) ; Count all declared and dynamic properties in base and derived class.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (ObjHasOwnProp(o1, "a") && o1.HasOwnProp("b") && o1.HasOwnProp("c") && o1.HasOwnProp("d"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1 := { one : 1}
 
 if (o1.OwnPropCount(o1) == 1) ; Count all declared properties in object literal.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (ObjHasOwnProp(o1, "One") && !o1.HasOwnProp("two"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1.DefineProp("d", {
 		call : () => 123
 	})
 	
 if (o1.OwnPropCount(o1) == 2) ; Count all declared and dynamic properties in object literal.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (ObjHasOwnProp(o1, "one") && o1.HasOwnProp("d"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1 := [1, 2, 3]
 
 if (o1.OwnPropCount(o1) == 0 && ObjOwnPropCount(o1) == 0) ; Declared properties for built in types are not counted.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (!ObjHasOwnProp(o1, "capacity") && !o1.HasOwnProp("Count") && !o1.HasOwnProp("Length"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1 := testclass()
 o1.DefineProp("c", { ; Dynamically property with getter and setter.
@@ -288,9 +288,9 @@ For Name, Value in o1.OwnProps() ; Enumerator inline with a for loop. Retrieve v
 }
 
 If (b && i == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 o1.a := 100
 o1.b := 200
@@ -313,9 +313,9 @@ For Name,Value in op ; Enumerator variable with a for loop.
 }
 
 If (b && i == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 i := 0
 b := false
@@ -336,9 +336,9 @@ for name in m.OwnProps() { ; Enumerator inline with a for loop, names only.
 }
 
 If (b && i == 3 && o1.a == 0) ; Ensure the last prop didn't get called.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 testfunc(testclassobj)
 {
@@ -349,9 +349,9 @@ testfunc(testclassobj)
 	val := testclassobj.prop
 	
 	If (val == 123)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined property with getter and setter.
 		get: (this) => 123,
@@ -362,9 +362,9 @@ testfunc(testclassobj)
 	val := testclassobj.a
 
 	If (val == 100)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined property with getter, setter and call.
 		get: (this) => 123,
@@ -376,17 +376,17 @@ testfunc(testclassobj)
 	val := testclassobj.a
 
 	If (val == 200)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop()
 	val := testclassobj.a
 
 	If (val == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined call.
 		value: 123,
@@ -396,47 +396,47 @@ testfunc(testclassobj)
 	val := testclassobj.prop
 
 	If (val == 123)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop := "123"
 
 	val := testclassobj.prop
 
 	If (val == "123")
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	testclassobj.prop(1, 2)
 
 	If (testclassobj.a == 2)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop := (this, p*) => this.a := p.Length ; Overwrite previous with dynamically defined value property with direct fat arrow function assignment.
 	testclassobj.prop()
 
 	If (testclassobj.a == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop(1, 2)
 
 	If (testclassobj.a == 2)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop(1, 2, 3)
 
 	If (testclassobj.a == 3)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined get property which returns another fat arrow function.
 		get: (*) => ((this, p*) => this.a := p.Length)
@@ -445,28 +445,28 @@ testfunc(testclassobj)
 	testclassobj.prop() ; Retrieve value from get, which will be a FuncObj(), then call it using ().
 
 	If (testclassobj.a == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop(1)
 
 	If (testclassobj.a == 1)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop(1, 2)
 
 	If (testclassobj.a == 2)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	testclassobj.prop(1, 2, 3)
 
 	If (testclassobj.a == 3)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }

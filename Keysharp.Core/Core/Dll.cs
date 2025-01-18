@@ -1,4 +1,6 @@
 #if WINDOWS
+using Keysharp.Core.Scripting.Parser.Antlr;
+
 namespace Keysharp.Core
 {
 	/// <summary>
@@ -239,7 +241,7 @@ namespace Keysharp.Core
 				{
 					var value = method.Invoke(null, helper.args);
 
-					if (helper.ReturnName == "HRESULT" && value is int retval && retval < 0)
+                    if (helper.ReturnName == "HRESULT" && value is int retval && retval < 0)
 					{
 						var ose = new OSError($"DllCall with return type of HRESULT returned {retval}.");
 						ose.Extra = "0x" + ose.Number.ToString("X");
@@ -266,7 +268,10 @@ namespace Keysharp.Core
 						}
 					}
 
-					if (value is int i)
+                    foreach (var refIndex in helper.refs)
+                        Script.SetPropertyValue(refIndex.Value, "__Value", parameters[refIndex.Key]);
+
+                    if (value is int i)
 						return (long)i;
 					else if (value is uint ui)
 						return (long)ui;
@@ -321,7 +326,9 @@ namespace Keysharp.Core
 				{
 					var comHelper = new ComArgumentHelper(parameters);
 					var val = CallDel(address, comHelper.args);
-					return val;
+                    foreach (var refIndex in comHelper.refs)
+                        Script.SetPropertyValue(refIndex.Value, "__Value", parameters[refIndex.Key]);
+                    return val;
 				}
 				catch (Exception ex)
 				{

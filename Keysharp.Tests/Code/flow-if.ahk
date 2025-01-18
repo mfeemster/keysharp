@@ -87,24 +87,24 @@ else
 }
 
 if x = unset
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else if x != unset
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if x == unset
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else if x != unset
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
 if (x = unset)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else if (x != unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 if (x == unset)
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else if (x != unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
 x := ""
 b := true

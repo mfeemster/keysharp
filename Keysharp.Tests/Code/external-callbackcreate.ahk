@@ -9,9 +9,9 @@ TheFunc(args)
 }
 
 if (val == 52.5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := ""
 CallbackFree(callback)
@@ -25,9 +25,9 @@ FuncNoParams()
 }
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 CallbackFree(callback)
 EnumAddress := CallbackCreate("EnumWindowsProc")
@@ -49,8 +49,8 @@ EnumWindowsProc(hwnd, lParam)
 }
 
 if (ct == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 CallbackFree(EnumAddress)

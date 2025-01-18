@@ -28,12 +28,18 @@ namespace Keysharp.Core
 		/// <returns>A <see cref="RefHolder"/> object that contains all of the passed in info, which will be passed to the method call.</returns>
 		public static RefHolder Mrh(int i, object o, Action<object> r) => new (i, o, r);
 
-		public static VarRef EmptyVarRef = new VarRef(() => 0, x => x = 0);
+        public static VarRef EmptyVarRef = new VarRef(() => null, x => x = null);
 
-        public class VarRef
+        public class VarRef : KeysharpObject
         {
             private readonly Func<object> Get;
             private readonly Action<object> Set;
+
+            public VarRef(object x)
+            {
+                this.Get = () => x;
+                this.Set = (value) => x = value;
+            }
 
             public VarRef(Func<object> getter, Action<object> setter)
             {

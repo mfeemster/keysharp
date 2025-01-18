@@ -44,6 +44,8 @@
 
 			try
 			{
+				if (text == null)
+					throw new Keysharp.Core.ValueError("Missing a required parameter: Text");
 				var t = text;
 				var encoding = ThreadAccessors.A_FileEncodingRaw;
 				var raw = false;
@@ -419,7 +421,7 @@
 		/// Sets the default encoding for <see cref="FileRead"/>, <see cref="LoopRead"/>, <see cref="FileAppend"/>, and <see cref="FileOpen"/>.
 		/// </summary>
 		/// <param name="encoding">Specify one of the following values:<br/>
-		/// CP0 or empty string: The system default ANSI code page.See remarks below.<br/>
+		/// or empty string: The system default ANSI code page.See remarks below.<br/>
 		/// UTF-8: Unicode UTF-8, equivalent to CP65001.<br/>
 		/// UTF-8-RAW: As above, but no byte order mark is written when a new file is created.<br/>
 		/// UTF-16: Unicode UTF-16 with little endian byte order, equivalent to CP1200.<br/>
@@ -528,153 +530,153 @@
 		/// </summary>
 		public static object FileGetShortcut(object obj)
 		{
-			object outTarget = null;
-			object outDir = null;
-			object outArgs = null;
-			object outDescription = null;
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
+			object outTarget = Misc.EmptyVarRef;
+			object outDir = Misc.EmptyVarRef;
+			object outArgs = Misc.EmptyVarRef;
+			object outDescription = Misc.EmptyVarRef;
+			object outIcon = Misc.EmptyVarRef;
+			object outIconNum = Misc.EmptyVarRef;
+			object outRunState = Misc.EmptyVarRef;
 			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 ref object outTarget)
+											 object outTarget)
 		{
-			object outDir = null;
-			object outArgs = null;
-			object outDescription = null;
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
+			object outDir = Misc.EmptyVarRef;
+			object outArgs = Misc.EmptyVarRef;
+			object outDescription = Misc.EmptyVarRef;
+			object outIcon = Misc.EmptyVarRef;
+			object outIconNum = Misc.EmptyVarRef;
+			object outRunState = Misc.EmptyVarRef;
 			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 ref object outTarget,
-											 ref object outDir)
+											 object outTarget,
+											 object outDir)
 		{
-			object outArgs = null;
-			object outDescription = null;
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
-			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+            object outArgs = Misc.EmptyVarRef;
+            object outDescription = Misc.EmptyVarRef;
+            object outIcon = Misc.EmptyVarRef;
+            object outIconNum = Misc.EmptyVarRef;
+            object outRunState = Misc.EmptyVarRef;
+            return FileGetShortcut(obj,
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 ref object outTarget,
-											 ref object outDir,
-											 ref object outArgs)
+											 object outTarget,
+											 object outDir,
+											 object outArgs)
 		{
-			object outDescription = null;
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
-			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+            object outDescription = Misc.EmptyVarRef;
+            object outIcon = Misc.EmptyVarRef;
+            object outIconNum = Misc.EmptyVarRef;
+            object outRunState = Misc.EmptyVarRef;
+            return FileGetShortcut(obj,
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 ref object outTarget,
-											 ref object outDir,
-											 ref object outArgs,
-											 ref object outDescription)
+											 object outTarget,
+											 object outDir,
+											 object outArgs,
+											 object outDescription)
 		{
-			object outIcon = null;
-			object outIconNum = null;
-			object outRunState = null;
-			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+            object outIcon = Misc.EmptyVarRef;
+            object outIconNum = Misc.EmptyVarRef;
+            object outRunState = Misc.EmptyVarRef;
+            return FileGetShortcut(obj,
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 ref object outTarget,
-											 ref object outDir,
-											 ref object outArgs,
-											 ref object outDescription,
-											 ref object outIcon)
+											 object outTarget,
+											 object outDir,
+											 object outArgs,
+											 object outDescription,
+											 object outIcon)
 		{
-			object outIconNum = null;
-			object outRunState = null;
-			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+            object outIconNum = Misc.EmptyVarRef;
+            object outRunState = Misc.EmptyVarRef;
+            return FileGetShortcut(obj,
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 		/// <summary>
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 ref object outTarget,
-											 ref object outDir,
-											 ref object outArgs,
-											 ref object outDescription,
-											 ref object outIcon,
-											 ref object outIconNum)
+											 object outTarget,
+											 object outDir,
+											 object outArgs,
+											 object outDescription,
+											 object outIcon,
+											 object outIconNum)
 		{
-			object outRunState = null;
-			return FileGetShortcut(obj,
-								   ref outTarget,
-								   ref outDir,
-								   ref outArgs,
-								   ref outDescription,
-								   ref outIcon,
-								   ref outIconNum,
-								   ref outRunState);
+            object outRunState = Misc.EmptyVarRef;
+            return FileGetShortcut(obj,
+								   outTarget,
+								   outDir,
+								   outArgs,
+								   outDescription,
+								   outIcon,
+								   outIconNum,
+								   outRunState);
 		}
 
 #if WINDOWS
@@ -740,17 +742,17 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
 #endif
 		public static object FileGetShortcut(object linkFile,
-											 ref object outTarget,
-											 ref object outDir,
-											 ref object outArgs,
-											 ref object outDescription,
-											 ref object outIcon,
+											 object outTarget,
+											 object outDir,
+											 object outArgs,
+											 object outDescription,
+											 object outIcon,
 #if WINDOWS
-											 ref object outIconNum,
+											 object outIconNum,
 #else
-											 ref object outType,
+											 object outType,
 #endif
-											 ref object outRunState)
+											 object outRunState)
 		{
 			var link = Path.GetFullPath(linkFile.As());
 #if LINUX
@@ -759,48 +761,48 @@
 			if (link == dest)//Was not just a simple symlink.
 			{
 				var sc = new ShortcutCreator(link);
-				outTarget = sc.Get("Exec");
-				outDir = sc.Get("Path");
-				outDescription = sc.Get("Comment");
-				outIcon = sc.Get("Icon");
-				outType = sc.Get("Type");
+				Script.SetPropertyValue(outTarget, "__Value", sc.Get("Exec"));
+				Script.SetPropertyValue(outDir, "__Value", sc.Get("Path"));
+				Script.SetPropertyValue(outDescription, "__Value", sc.Get("Comment"));
+				Script.SetPropertyValue(outIcon, "__Value", sc.Get("Icon"));
+				Script.SetPropertyValue(outType, "__Value", sc.Get("Type"));
 
-				if (outTarget is string s && s.Length > 0)
+				if ((GetPropertyValue(outTarget, "__Value") is string s && s.Length > 0)
 				{
 					if (s[0] != '"' && s[0] != '\'')
 					{
 						var splits = s.Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 						if (splits.Length > 1)
-							outArgs = splits[1];
+							Script.SetPropertyValue(outArgs, "__Value", splits[1]);
 						else
-							outArgs = "";
+							Script.SetPropertyValue(outArgs, "__Value", "");
 					}
 					else//It was quoted.
 					{
 						var firstArgIndex = s.FindFirstNotInQuotes(" ");
 						var tempArgs = firstArgIndex != -1 && firstArgIndex < s.Length - 1 ? s.Substring(firstArgIndex + 1) : "";
-						outArgs = tempArgs.Trim();
+						Script.SetPropertyValue(outArgs, "__Value", tempArgs.Trim());
 					}
 				}
 				else
-					outArgs = "";//No way to determine args.
+					Script.SetPropertyValue(outArgs, "__Value", "");//No way to determine args.
 			}
 			else
 			{
-				outTarget = dest;
-				outDir = Path.GetDirectoryName(dest);
-				outArgs = "";
-				outDescription = "";
-				outIcon = "";
-				outType = "";
+				Script.SetPropertyValue(outTarget, "__Value", dest);
+				Script.SetPropertyValue(outDir, "__Value", Path.GetDirectoryName(dest));
+				Script.SetPropertyValue(outArgs, "__Value", "");
+				Script.SetPropertyValue(outDescription, "__Value", "");
+				Script.SetPropertyValue(outIcon, "__Value", "");
+				Script.SetPropertyValue(outType, "__Value", "");
 			}
 
-			outRunState = "";
+			Script.SetPropertyValue(outRunState, "__Value", "");
 #elif WINDOWS
 
-			try
-			{
+            try
+            {
 				var shell = new IWshRuntimeLibrary.WshShell();
 				var shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(Path.GetFullPath(link));
 				var commaindex = shortcut.IconLocation.LastIndexOf(',');
@@ -813,13 +815,13 @@
 					iconno = shortcut.IconLocation.Substring(commaindex + 1).Trim();
 				}
 
-				outTarget = shortcut.TargetPath;
-				outDir = shortcut.WorkingDirectory;
-				outArgs = shortcut.Arguments;
-				outDescription = shortcut.Description;
-				outIcon = iconstr;
-				outIconNum = iconno;//How to get this?
-				outRunState = shortcut.WindowStyle;//How to get this?
+                Script.SetPropertyValue(outTarget, "__Value", shortcut.TargetPath);
+                Script.SetPropertyValue(outDir, "__Value", shortcut.WorkingDirectory);
+                Script.SetPropertyValue(outArgs, "__Value", shortcut.Arguments);
+                Script.SetPropertyValue(outDescription, "__Value", shortcut.Description);
+                Script.SetPropertyValue(outIcon, "__Value", iconstr);
+                Script.SetPropertyValue(outIconNum, "__Value", iconno);//How to get this?
+                Script.SetPropertyValue(outRunState, "__Value", shortcut.WindowStyle);//How to get this?
 			}
 			catch (Exception ex)
 			{

@@ -88,7 +88,7 @@ If x = 5
 else
 	FileAppend "fail", "*"
 
-x = 0
+x := 0
 str := ""
 
 while (str = "") {

@@ -12,7 +12,7 @@ using System.Runtime.ConstrainedExecution;
 /// </summary>
 public abstract class MainLexerBase : Lexer
 {
-
+    private readonly ICharStream _input;
     private IToken _lastToken = null;
     private IToken _lastVisibleToken = null;
 
@@ -34,6 +34,7 @@ public abstract class MainLexerBase : Lexer
     public MainLexerBase(ICharStream input)
         : base(input)
     {
+        _input = input;
     }
 
     public MainLexerBase(ICharStream input, TextWriter output, TextWriter errorOutput) : this(input)
@@ -87,7 +88,7 @@ public abstract class MainLexerBase : Lexer
                 else if (this.Type == MainLexer.DerefStart && (Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_]+$") || (_lastToken.Type == MainLexer.DerefEnd)))
                     this.Type = MainLexer.DerefContinuation;
                 
-                if (lineContinuationOperators.Contains(this.Type))
+                if (lineContinuationOperators.Contains(this.Type) && this.Type != MainLexer.Colon)
                     _ignoreNextEOL = true;
                 else
                     _ignoreNextEOL = false;
@@ -123,7 +124,7 @@ public abstract class MainLexerBase : Lexer
     protected void ProcessHotstringOptions() {
         int intermediate = _processHotstringOptions(base.Text);
         if (intermediate != -1)
-            _hotstringIsLiteral = intermediate == 1;
+            _hotstringIsLiteral = intermediate == 0;
     }
 
     protected bool NoCommentAhead() {
@@ -146,6 +147,13 @@ public abstract class MainLexerBase : Lexer
     {
         _currentDepth--;
     }
+
+    private HashSet<int> unaryOperators = new HashSet<int> {
+        MainLexer.BitNot,
+        MainLexer.Not,
+        MainLexer.PlusPlus,
+        MainLexer.MinusMinus
+    };
 
     private HashSet<int> lineContinuationOperators = new HashSet<int> {
         MainLexer.OpenBracket,
@@ -218,10 +226,16 @@ public abstract class MainLexerBase : Lexer
         _currentDepth++;
         if (_lastToken != null 
             && _lastToken.Channel != Hidden 
-            && !lineContinuationOperators.Contains(_lastToken.Type))
-            //&& (_lastToken.Type == Identifier || _lastToken.Type == DerefEnd)
+            && !lineContinuationOperators.Contains(_lastToken.Type)
+            && !unaryOperators.Contains(_lastToken.Type)
+            && (Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_%]+$") || _lastToken.Type == DerefEnd || _lastToken.Type == CloseBracket || _lastToken.Type == CloseParen))
             //&& Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_%]+$"))
             this.Type = MainLexer.OpenParenNoWS;
+    }
+    protected void ProcessHotstringOpenBrace()
+    {
+        this.Type = MainLexer.OpenBrace;
+        ProcessOpenBrace();
     }
     protected void ProcessCloseParen()
     {
@@ -262,9 +276,33 @@ public abstract class MainLexerBase : Lexer
     }
 
     protected bool IgnoreEOL() {
-        if (_ignoreNextEOL || (_lastVisibleToken != null && lineContinuationOperators.Contains(_lastVisibleToken.Type))) 
+        if (_ignoreNextEOL || (_lastVisibleToken != null && lineContinuationOperators.Contains(_lastVisibleToken.Type) && _lastVisibleToken.Type != MainLexer.Colon)) 
             return true;
-        return _currentDepth != 0;
+        return false;
+    }
+
+    protected bool IsBOS() {
+        return _lastVisibleToken == null || _lastVisibleToken.Type == MainLexer.EOL;
+    }
+
+    protected bool IsValidRemap() {
+        if (!(_lastVisibleToken != null && _lastVisibleToken.Type == MainLexer.HotkeyTrigger))
+            return false;
+        if (this.Text == "{")
+            return false;
+        for (var i = 1; true; i++) {
+            var next = _input.LA(i);
+            if (next == '\r' || next == '\n' || next == Eof || next == ';')
+                return true;
+            else if (next == ' ' || next == '\t')
+                continue;
+            else
+                return false;
+        }
+    }
+
+    protected bool IsCommentPossible() {
+        return _lastToken == null || _lastToken.Type == EOL || _lastToken.Type == MainLexer.IgnoreEOL || _lastToken.Type == WhiteSpaces || _lastToken.Type == MultiLineComment;
     }
 
     /// <summary>
@@ -322,7 +360,7 @@ public class MainLexerErrorListener : IAntlrErrorListener<int>
         string msg,
         RecognitionException e)
     {
-        var codeLine = codeLines[line-1];
+        var codeLine = state.codeLines[line-1];
         string sourceName = recognizer.InputStream.SourceName;
 #if DEBUG
         Console.Error.WriteLine($"Error at line {codeLine.LineNumber}, column {charPositionInLine}, source {sourceName}: {msg}");

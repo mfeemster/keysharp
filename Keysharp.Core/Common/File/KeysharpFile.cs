@@ -62,6 +62,9 @@
 
 		public object __New(params object[] values)
 		{
+			if (values == null || values.Length == 0)
+				return "";
+
 			var filename = values[0].As();
 			var m = (FileMode)values[1];
 			var a = (FileAccess)values[2];

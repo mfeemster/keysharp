@@ -63,7 +63,7 @@ else
 	FileAppend "fail", "*"
 
 if (arr[3] == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 

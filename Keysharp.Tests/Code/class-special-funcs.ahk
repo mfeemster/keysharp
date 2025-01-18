@@ -24,9 +24,9 @@ while (gval != 999)
 }
 
 If (gval == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class enumclass
 {
@@ -47,9 +47,9 @@ for i,v in testclassobj
 }
 
 If (gval == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class subenumclass extends enumclass
 {
@@ -70,9 +70,9 @@ for i,v in testclassobj
 }
 
 If (gval == 15)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class testclass2
 {
@@ -85,19 +85,19 @@ testclassobj := testclass2()
 cloneobj := testclassobj.Clone()
 
 If (cloneobj.a == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (cloneobj.b == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (cloneobj.c == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class testclass3 {
 	static Call(a) {
@@ -108,24 +108,24 @@ class testclass3 {
 val := testclass3(10)
 
 If (val == 100)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 
 val := TestWithCustomStaticCall() ; internally calls the custom Call() to return 123 instead of a new object
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TestWithCustomStaticCall.Call() ; also returns 123
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; class with one custom static Call() method which replaces the default one.
 ; this prevents an instance of this class from every being created.
@@ -148,13 +148,13 @@ class TestWithCustomInstanceCall
 obj := TestWithCustomInstanceCall() ; creates an instance of the class.
 
 if (obj is TestWithCustomInstanceCall)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := obj.Call() ; intelligent enough to resolve to the instance Call() to return 123, instead of the default static one.
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

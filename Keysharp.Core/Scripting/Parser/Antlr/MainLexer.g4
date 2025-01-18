@@ -53,13 +53,39 @@ tokens {
     OpenBracketWithWS
 }
 
-// Insert here @header for C++ lexer.
-
 MultiLineComment  : '/*' .*? '*/'             -> channel(HIDDEN);
-SingleLineComment : ';' ~[\r\n\u2028\u2029]* -> channel(HIDDEN);
+SingleLineComment : ';' ~[\r\n\u2028\u2029]* {this.IsCommentPossible()}? -> channel(HIDDEN);
 RegularExpressionLiteral:
     '/' RegularExpressionFirstChar RegularExpressionChar* {this.IsRegexPossible()}? '/' IdentifierPart*
 ;
+
+/*
+HotstringLiteral:
+    HotstringTrigger {this.IsHotstringLiteral()}? (LineBreak HotstringTrigger)* RawString;  //| LineBreak '(' ~[\r\n]+ LineBreak (EscapeCharacter | .)*? LineBreak ')');
+*/
+
+// First try consuming a hotstring trigger
+HotstringLiteralTrigger
+    : HotstringTriggerPart {this.IsHotstringLiteral()}? -> pushMode(HOTSTRING_MODE), type(HotstringTrigger)
+    ;
+// These two are separated because I couldn't figure out how to conditionally pushMode(HOTSTRING_MODE)
+HotstringTrigger
+    : HotstringTriggerPart
+    ;
+
+// If no hotstring is matchable, try matching a remap
+RemapKey:
+    HotkeyModifier* HotkeyCharacter {this.IsValidRemap()}?;
+
+// Otherwise just match a hotkey trigger
+HotkeyTrigger:
+    HotkeyModifier* HotkeyCharacter (WS+ '&' WS+ HotkeyCharacter)? (WS+ 'up')? '::' {this.IsBOS()}?;
+
+/*
+HotkeyLiteral:
+    NonColonStringCharacter+ DoubleColon;
+*/
+
 
 OpenBracket                : '[' {this.ProcessOpenBracket();};
 CloseBracket               : ']' {this.ProcessCloseBracket();};
@@ -171,6 +197,7 @@ While      : 'while';
 Loop       : 'loop';
 Until      : 'until';
 Files      : 'files';
+Read       : 'read';
 Reg        : 'reg';
 Parse      : 'parse';
 This       : 'this';
@@ -191,8 +218,6 @@ Goto       : 'goto';
 /// Future Reserved Words
 
 Class   : 'class';
-Get     : 'get';
-Set     : 'set';
 Enum    : 'enum';
 Extends : 'extends';
 Super   : 'super';
@@ -209,43 +234,34 @@ Static : 'static';
 Global : 'global';
 Local  : 'local';
 
-Include : '#include';
-IncludeAgain : 'includeagain';
+Include : '#include' -> pushMode(DIRECTIVE_MODE);
+IncludeAgain : '#includeagain' -> pushMode(DIRECTIVE_MODE);
 HotIf : '#hotif';
 HotIfTimeout : '#hotiftimeout';
 ClipboardTimeout : '#clipboardtimeout';
-DllLoad : '#dllload';
-ErrorStdOut : '#errorstdout';
-Hotstring : '#hotstring';
+DllLoad : '#dllload' -> pushMode(DIRECTIVE_MODE);
+ErrorStdOut : '#errorstdout' -> pushMode(DIRECTIVE_MODE);
 InputLevel : '#inputlevel';
 MaxThreads : '#maxthreads';
 MaxThreadsBuffer : '#maxthreadsbuffer';
 MaxThreadsPerHotkey : '#maxthreadsperhotkey';
 NoTrayIcon : '#notrayicon';
-Requires : '#requires';
-SingleInstance : '#singleinstance';
+Requires : '#requires' -> pushMode(DIRECTIVE_MODE);
+SingleInstance : '#singleinstance' -> pushMode(DIRECTIVE_MODE);
 SuspendExempt : '#suspendexempt';
 UseHook : '#usehook';
 Warn : '#warn';
 WinActivateForce : '#winactivateforce';
+HotstringOptions : '#hotstring' WS+ RawString {this.ProcessHotstringOptions();};
+AssemblyTitle : '#assemblytitle' -> pushMode(DIRECTIVE_MODE);
+AssemblyDescription : '#assemblydescription' -> pushMode(DIRECTIVE_MODE);
+AssemblyConfiguration : '#assemblyconfiguration' -> pushMode(DIRECTIVE_MODE);
+AssemblyCompany : '#assemblycompany' -> pushMode(DIRECTIVE_MODE);
+AssemblyProduct : '#assemblyproduct' -> pushMode(DIRECTIVE_MODE);
+AssemblyCopyright : '#assemblycopyright' -> pushMode(DIRECTIVE_MODE);
+AssemblyTrademark : '#assemblytrademark' -> pushMode(DIRECTIVE_MODE);
+AssemblyVersion : '#assemblyversion' -> pushMode(DIRECTIVE_MODE);
 
-GeneralDirective
-    : ClipboardTimeout WhiteSpaces IntegerLiteral
-    | DllLoad WhiteSpaces RawString
-    | ErrorStdOut WhiteSpaces RawString
-    | HotIfTimeout WhiteSpaces IntegerLiteral
-    | Hotstring WhiteSpaces ('nomouse' | 'endchars' WhiteSpaces RawString)
-    | Include WhiteSpaces RawString
-    | IncludeAgain WhiteSpaces RawString
-    | MaxThreads WhiteSpaces IntegerLiteral
-    | MaxThreadsBuffer WhiteSpaces (BooleanLiteral | IntegerLiteral)?
-    | NoTrayIcon
-    | Requires WhiteSpaces RawString
-    | SingleInstance WhiteSpaces ('force' | 'ignore' | 'prompt' | 'off')
-    | WinActivateForce
-    ;
-
-//HotstringOptions : Hotstring WhiteSpaces RawString {this.ProcessHotstringOptions();};
 
 /// Identifier Names and Identifiers
 
@@ -259,40 +275,47 @@ StringLiteral:
     ('"' DoubleStringCharacter* '"' | '\'' SingleStringCharacter* '\'') {this.ProcessStringLiteral();}
 ;
 
-/*
-HotstringLiteral:
-    HotstringTrigger {this.IsHotstringLiteral()}? (LineBreak HotstringTrigger)* (RawString | LineBreak '(' ~[\r\n]+ LineBreak (EscapeCharacter | .)*? LineBreak ')');
+fragment HotstringTriggerPart:
+    Colon Options? Colon Trigger DoubleColon;
 
-HotstringTriggers:
-   HotstringTrigger (LineBreak HotstringTrigger)*;
-
-HotkeyLiteral:
-    NonColonStringCharacter+ DoubleColon;
-
-fragment HotstringTrigger:
-    (Colon Options? Colon Trigger DoubleColon (WhiteSpaces SingleLineComment)?);
-    */
-
+fragment HotstringOptionCharacter
+    : [*?bcortsxz] ' '* '0'?
+    | 'c1' 
+    | 'si' | 'sp' | 'se' 
+    | 'p' [0-9]+ 
+    | 'k' ' '* '-' ' '* [0-9]+
+    ;
 fragment Options:
-    NonColonStringCharacter+;
+    HotstringOptionCharacter+;
 fragment Trigger:
     NonColonStringCharacter+;
 
-WhiteSpaces: [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN);
+WhiteSpaces: WS+ -> channel(HIDDEN);
 
-IgnoreEOL: [\r\n\u2028\u2029]+ {this.IgnoreEOL()}? -> channel(HIDDEN);
-EOL: [\r\n\u2028\u2029]+ {!this.IgnoreEOL()}?;
+IgnoreEOL: LineBreak+ {this.IgnoreEOL()}? -> channel(HIDDEN);
+EOL: LineBreak+ {!this.IgnoreEOL()}?;
 
 /// Comments
 
-HtmlComment         : '<!--' .*? '-->'      -> channel(HIDDEN);
-CDataComment        : '<![CDATA[' .*? ']]>' -> channel(HIDDEN);
 UnexpectedCharacter : .                     -> channel(ERROR);
 
-mode NOWHITESPACE;
-NowhitespaceWhiteSpaces: [\t\u000B\u000C\u0020\u00A0]+ -> popMode; // End mode if whitespace is detected.
+mode HOTSTRING_MODE;
+HotstringEOL: LineBreak -> type(EOL), popMode;
+HotstringOpenBrace: '{' {this.ProcessHotstringOpenBrace();} -> type(OpenBrace), popMode;
+HotstringWhitespaces: WS+ -> channel(HIDDEN);
+HotstringExpansion: (~[;`\r\n {] | '`' EscapeSequence) RawString?;
+HotstringUnexpectedCharacter: . -> channel(ERROR);
+
+mode DIRECTIVE_MODE;
+DirectiveEOL: LineBreak -> type(EOL), popMode;
+DirectiveWhitespaces: WS+ -> channel(HIDDEN);
+DirectiveContent: (~[;`\r\n ] | '`' EscapeSequence) RawString?;
+DirectiveUnexpectedCharacter: . -> channel(ERROR);
+
 
 // Fragment rules
+
+fragment WS: [\t\u000B\u000C\u0020\u00A0];
 
 fragment DoubleStringCharacter: ~["`] | '`' EscapeSequence;
 
@@ -300,7 +323,11 @@ fragment SingleStringCharacter: ~['`] | '`' EscapeSequence;
 
 fragment NonColonStringCharacter: ~[;:`\r\n] | '`' EscapeSequence;
 
-fragment RawStringCharacter: ~[;`\r\n] | '`' EscapeSequence;
+fragment RawStringCharacter
+    : ~[\t\n\r\u2028\u2029\f ] ';'         // Match semicolon only if not preceded by whitespace
+    | ~[;\r\n\u2028\u2029]                 // Match any character except semicolon, newline, or carriage return
+    | '`' EscapeSequence       // Match escape sequences starting with backtick
+    ;
 
 fragment AnyCharacter: .;
 
@@ -361,3 +388,136 @@ fragment RegularExpressionChar:
 fragment RegularExpressionClassChar: ~[\r\n\u2028\u2029\]\\] | RegularExpressionBackslashSequence;
 
 fragment RegularExpressionBackslashSequence: '\\' ~[\r\n\u2028\u2029];
+
+fragment HotkeyModifierKey: [#!^+<>];
+
+fragment HotkeyModifier: HotkeyModifierKey | [*~$];
+
+fragment HotkeyCharacter 
+    : 'NumpadEnter'
+    | 'Delete'
+    | 'Del'
+    | 'Insert'
+    | 'Ins'
+    | 'Clear'
+    | 'Up'
+    | 'Down'
+    | 'Left'
+    | 'Right'
+    | 'Home'
+    | 'End'
+    | 'PgUp'
+    | 'PgDn'
+    | 'Numpad0'
+    | 'Numpad1'
+    | 'Numpad2'
+    | 'Numpad3'
+    | 'Numpad4'
+    | 'Numpad5'
+    | 'Numpad6'
+    | 'Numpad7'
+    | 'Numpad8'
+    | 'Numpad9'
+    | 'NumpadMult'
+    | 'NumpadDiv'
+    | 'NumpadAdd'
+    | 'NumpadSub'
+    | 'NumpadDot'
+    | 'Numlock'
+    | 'ScrollLock'
+    | 'CapsLock'
+    | 'Escape'
+    | 'Esc'
+    | 'Tab'
+    | 'Space'
+    | 'Backspace'
+    | 'BS'
+    | 'Enter'
+    | 'NumpadDel'
+    | 'NumpadIns'
+    | 'NumpadClear'
+    | 'NumpadUp'
+    | 'NumpadDown'
+    | 'NumpadLeft'
+    | 'NumpadRight'
+    | 'NumpadHome'
+    | 'NumpadEnd'
+    | 'NumpadPgUp'
+    | 'NumpadPgDn'
+    | 'PrintScreen'
+    | 'CtrlBreak'
+    | 'Pause'
+    | 'Help'
+    | 'Sleep'
+    | 'AppsKey'
+    | 'LControl'
+    | 'RControl'
+    | 'LCtrl'
+    | 'RCtrl'
+    | 'LShift'
+    | 'RShift'
+    | 'LAlt'
+    | 'RAlt'
+    | 'LWin'
+    | 'RWin'
+    | 'Control'
+    | 'Ctrl'
+    | 'Alt'
+    | 'Shift'
+    | 'F1'
+    | 'F2'
+    | 'F3'
+    | 'F4'
+    | 'F5'
+    | 'F6'
+    | 'F7'
+    | 'F8'
+    | 'F9'
+    | 'F10'
+    | 'F11'
+    | 'F12'
+    | 'F13'
+    | 'F14'
+    | 'F15'
+    | 'F16'
+    | 'F17'
+    | 'F18'
+    | 'F19'
+    | 'F20'
+    | 'F21'
+    | 'F22'
+    | 'F23'
+    | 'F24'
+    | 'LButton'
+    | 'RButton'
+    | 'MButton'
+    | 'XButton1'
+    | 'XButton2'
+    | 'WheelDown'
+    | 'WheelUp'
+    | 'WheelLeft'
+    | 'WheelRight'
+    | 'Browser_Back'
+    | 'Browser_Forward'
+    | 'Browser_Refresh'
+    | 'Browser_Stop'
+    | 'Browser_Search'
+    | 'Browser_Favorites'
+    | 'Browser_Home'
+    | 'Volume_Mute'
+    | 'Volume_Down'
+    | 'Volume_Up'
+    | 'Media_Next'
+    | 'Media_Prev'
+    | 'Media_Stop'
+    | 'Media_Play_Pause'
+    | 'Launch_Mail'
+    | 'Launch_Media'
+    | 'Launch_App1'
+    | 'Launch_App2'
+    | 'AltTab'
+    | 'ShiftAltTab'
+    | RawStringCharacter
+    ;
+
+fragment HotkeyCombinatorCharacter: '&';

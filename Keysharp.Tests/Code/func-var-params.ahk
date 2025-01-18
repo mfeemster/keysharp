@@ -11,33 +11,33 @@ x := false
 varfunc1()
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfunc1("firstparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfunc1("firstparam", "secondparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfunc1("firstparam", ,"thirdparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfo1 := FuncObj("varfunc1")
 
@@ -45,33 +45,33 @@ x := false
 varfo1()
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfo1("firstparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfo1("firstparam", "secondparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfo1("firstparam", ,"thirdparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfuncimplicit(*)
 {
@@ -89,32 +89,32 @@ arr := [1, 2, 3]
 val := varfuncimplicit(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := varfuncimplicit()
 
 If (val == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := FuncObj("varfuncimplicit")
 val := fo(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := FuncObj("varfuncimplicit")
 val := fo()
 
 If (val == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc2(p1, theparams*)
 {
@@ -131,9 +131,9 @@ varfunc2(p1, theparams*)
 val := varfunc2(1, 2, 3)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc3(p1, theparams*)
 {
@@ -150,9 +150,9 @@ varfunc3(p1, theparams*)
 val := varfunc3(1, 2, 3)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc4(*)
 {
@@ -162,24 +162,24 @@ varfunc4(*)
 val := varfunc3(1, 2, 3)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 arr := [1, 2, 3]
 val := varfunc3(1, arr*)
 
 If (val == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := varfunc4(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc5(p1, p2, theparams*)
 {
@@ -196,30 +196,30 @@ varfunc5(p1, p2, theparams*)
 val := varfunc5(1, 2, arr*)
 
 If (val == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := FuncObj("varfunc3")
 val := fo(1, arr*)
 
 If (val == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := FuncObj("varfunc4")
 val := fo(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := FuncObj("varfunc5")
 val := fo(1, 2, arr*)
 
 If (val == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

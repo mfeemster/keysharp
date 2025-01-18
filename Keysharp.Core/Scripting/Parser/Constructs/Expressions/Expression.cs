@@ -1,3 +1,6 @@
+using Antlr4.Runtime;
+using Keysharp.Core.Scripting.Parser.Antlr;
+
 namespace Keysharp.Scripting
 {
 	public partial class Parser
@@ -774,6 +777,36 @@ namespace Keysharp.Scripting
 							var allParamsCode = TokensToCode(paren) + (lastisstar ? "*" : "");
 							var codeStrings = SplitStringBalanced(allParamsCode, ',', true);//Tricky here: we need the code, not the parsed tokens.
 							var scope = Scope.ToLower();
+
+							AntlrInputStream inputStream = new AntlrInputStream("(" + origParamCode + ")");
+							MainLexer lexer1 = new MainLexer(inputStream);
+							CommonTokenStream commonTokenStream = new CommonTokenStream(lexer1);
+							MainParser parser1 = new MainParser(commonTokenStream);
+							MainParser.ArgumentsContext exprContext = parser1.arguments();
+
+							List<List<string>> argList = [];
+
+							for (var child_i = 0; child_i < exprContext.ChildCount; child_i++) {
+								var child = exprContext.GetChild(child_i);
+								List<string> childList = [];
+								Helper.FlattenContext(child, ref childList);
+								if (childList.Count != 0) {
+									if (childList[^1] == "*")
+										childList.RemoveAt(childList.Count - 1);
+									if (childList[0] == "&")
+										childList.RemoveAt(0);
+									if (((childList[0] == ",") && (argList[^1][0] == "," || child_i == 1)) || (childList[0] == ")") && (argList[^1][0] == ","))
+										argList.Add(["null"]);
+								}
+								argList.Add(childList);
+							}
+							
+							var customArgs = argList.ToList().FindAll(a => a.Count != 0 && (a.Count == 1 ? a[0] != "(" && a[0] != ")" : true) && a[0] != ",");
+
+							if (customArgs.Count != args.Count || (customArgs.Count != 0 && !args.Zip(customArgs).All(a => a.First.SequenceEqual(a.Second, EqualityComparer<object>.Create((c,d) => c.ToString() == d.ToString()))))) {
+								Console.WriteLine("Not equal");
+							}
+								
 
 							//Each argument must be parsed as a single expression.
 							//They cannot all be parsed together as a multi expression because the comma delimiter conflicts.

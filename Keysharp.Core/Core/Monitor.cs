@@ -6,48 +6,48 @@
 	public static class Monitor
 	{
 		/// <summary>
-		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
 		public static object MonitorGet()
 		{
 			object left = null, top = null, right = null, bottom = null;
-			return MonitorGet(null, ref left, ref top, ref right, ref bottom);
+			return MonitorGet(null, left, top, right, bottom);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
 		public static object MonitorGet(object obj)
 		{
 			object left = null, top = null, right = null, bottom = null;
-			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
+			return MonitorGet(obj, left, top, right, bottom);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, ref object left)
+		public static object MonitorGet(object obj, object left)
 		{
 			object top = null, right = null, bottom = null;
-			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
+			return MonitorGet(obj, left, top, right, bottom);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, ref object left, ref object top)
+		public static object MonitorGet(object obj, object left, object top)
 		{
 			object right = null, bottom = null;
-			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
+			return MonitorGet(obj, left, top, right, bottom);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGet(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, ref object left, ref object top, ref object right)
+		public static object MonitorGet(object obj, object left, object top, object right)
 		{
 			object bottom = null;
-			return MonitorGet(obj, ref left, ref top, ref right, ref bottom);
+			return MonitorGet(obj, left, top, right, bottom);
 		}
 
 		/// <summary>
@@ -59,8 +59,9 @@
 		/// <param name="right">The right bounding coordinate of the specified monitor.</param>
 		/// <param name="bottom">The bottom bounding coordinate of the specified monitor.</param>
 		/// <returns>The monitor number which is the same as n unless n was omitted.</returns>
-		public static object MonitorGet(object n, ref object left, ref object top, ref object right, ref object bottom)
+		public static object MonitorGet(object n, object left, object top, object right, object bottom)
 		{
+			left ??= Misc.EmptyVarRef; top ??= Misc.EmptyVarRef; right ??= Misc.EmptyVarRef; bottom ??= Misc.EmptyVarRef;
 			var monitorIndex = n.Al(-1L);
 			System.Windows.Forms.Screen screen;
 
@@ -69,10 +70,10 @@
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			left  = (long)screen.Bounds.Left;
-			top  = (long)screen.Bounds.Top;
-			right  = (long)screen.Bounds.Right;
-			bottom  = (long)screen.Bounds.Bottom;
+			Script.SetPropertyValue(left, "__Value", (long)screen.Bounds.Left);
+            Script.SetPropertyValue(top, "__Value", (long)screen.Bounds.Top);
+            Script.SetPropertyValue(right, "__Value", (long)screen.Bounds.Right);
+            Script.SetPropertyValue(bottom, "__Value", (long)screen.Bounds.Bottom);
 			return monitorIndex > 0L ? monitorIndex : 1L;
 		}
 
@@ -115,48 +116,48 @@
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGetWorkArea(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
 		public static object MonitorGetWorkArea()
 		{
 			object l = null, t = null, r = null, b = null;
-			return MonitorGetWorkArea(null, ref l, ref t, ref r, ref b);
+			return MonitorGetWorkArea(null, l, t, r, b);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGetWorkArea(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
 		public static object MonitorGetWorkArea(object n)
 		{
 			object l = null, t = null, r = null, b = null;
-			return MonitorGetWorkArea(n, ref l, ref t, ref r, ref b);
+			return MonitorGetWorkArea(n, l, t, r, b);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGetWorkArea(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGetWorkArea(object obj, ref object left)
+		public static object MonitorGetWorkArea(object obj, object left)
 		{
 			object t = null, r = null, b = null;
-			return MonitorGetWorkArea(obj, ref left, ref t, ref r, ref b);
+			return MonitorGetWorkArea(obj, left, t, r, b);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGetWorkArea(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGetWorkArea(object obj, ref object left, ref object top)
+		public static object MonitorGetWorkArea(object obj, object left, object top)
 		{
 			object r = null, b = null;
-			return MonitorGetWorkArea(obj, ref left, ref top, ref r, ref b);
+			return MonitorGetWorkArea(obj, left, top, r, b);
 		}
 
 		/// <summary>
-		/// <see cref="MonitorGetWorkArea(object, ref object, ref object, ref object, ref object)"/>
+		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGetWorkArea(object obj, ref object left, ref object top, ref object right)
+		public static object MonitorGetWorkArea(object obj, object left, object top, object right)
 		{
 			object b = null;
-			return MonitorGetWorkArea(obj, ref left, ref top, ref right, ref b);
+			return MonitorGetWorkArea(obj, left, top, right, b);
 		}
 
 		/// <summary>
@@ -168,7 +169,7 @@
 		/// <param name="right">The right bounding coordinate of the work area of the specified monitor.</param>
 		/// <param name="bottom">The bottom bounding coordinate of the work area of the specified monitor.</param>
 		/// <returns>The monitor number which is the same as n unless n was omitted.</returns>
-		public static object MonitorGetWorkArea(object n, ref object left, ref object top, ref object right, ref object bottom)
+		public static object MonitorGetWorkArea(object n, object left, object top, object right, object bottom)
 		{
 			var monitorIndex = n.Al(-1L);
 			System.Windows.Forms.Screen screen;
@@ -178,10 +179,10 @@
 			else
 				screen = System.Windows.Forms.Screen.PrimaryScreen;
 
-			left = (long)screen.WorkingArea.Left;
-			top = (long)screen.WorkingArea.Top;
-			right = (long)screen.WorkingArea.Right;
-			bottom = (long)screen.WorkingArea.Bottom;
+			Script.SetPropertyValue(left, "__Value", (long)screen.WorkingArea.Left);
+            Script.SetPropertyValue(top, "__Value", (long)screen.WorkingArea.Top);
+            Script.SetPropertyValue(right, "__Value", (long)screen.WorkingArea.Right);
+            Script.SetPropertyValue(bottom, "__Value", (long)screen.WorkingArea.Bottom);
 			return monitorIndex > 0L ? monitorIndex : 1L;
 		}
 	}

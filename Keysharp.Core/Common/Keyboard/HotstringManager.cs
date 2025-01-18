@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Keyboard
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Keysharp.Core.Common.Keyboard
 {
 	public static class HotstringManager
 	{

@@ -10,6 +10,6 @@ val := FileExist(dir)
 #else
 	if ("N" == val)
 #endif
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

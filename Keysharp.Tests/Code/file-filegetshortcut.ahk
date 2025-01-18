@@ -23,14 +23,14 @@ fullpath := FileDirName("./FileGetShortcut/file1.txt")
 												&outRunState)
 
 if (StrLower(FileFullPath("./FileGetShortcut/file1.txt")) == StrLower(outTarget))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (fullpath == outDir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (outDescription == "" &&
 	outArgs == "" &&
@@ -38,9 +38,9 @@ if (outDescription == "" &&
 	outIconNum == "" &&
 	outRunState == ""
 )
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (FileExist("./testshortcut.lnk"))
 	FileDelete("./testshortcut.lnk")
@@ -54,9 +54,9 @@ if (FileExist("./testshortcut.lnk"))
 #endif
 
 if (FileExist("./testshortcut.lnk"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 outTarget :=
 outDir :=
@@ -75,50 +75,50 @@ FileGetShortcut("./testshortcut.lnk",
 	&outRunState)
 
 if (StrLower(FileFullPath("./FileGetShortcut/file1.txt")) == StrLower(outTarget))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (fullpath == outDir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("TestDescription" == outDescription)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == outArgs)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (FileFullPath("../../../Keysharp.ico") == outIcon)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 #if WINDOWS
 	if ("0" == outIconNum)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	if ("1" == outRunState)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 #else
 	if ("Link" == outIconNum)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	if ("" == outRunState)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 #endif
 
 if (DirExist("./FileGetShortcut"))

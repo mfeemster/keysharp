@@ -38,9 +38,9 @@ if (found == true)
 	PixelSearch(&outx, &outy, x, y, x + 1, y + 1, pix)
 	
 	if (outx == x && outy == y)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

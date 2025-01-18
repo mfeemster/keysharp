@@ -460,7 +460,10 @@ namespace Keysharp.Scripting
 									break;
 
 									case "HOTIF":
-										if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
+                                        list.Add(new CodeLine(name, lineNumber, span.ToString()));
+
+										/*
+                                        if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
 										{
 											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
 											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
@@ -480,6 +483,7 @@ namespace Keysharp.Scripting
 										}
 										else
 											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
+										*/
 
 										break;
 
@@ -543,7 +547,8 @@ namespace Keysharp.Scripting
 														break;
 
 													default:
-														list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+                                                        list.Add(new CodeLine(name, lineNumber, span.ToString()));
+                                                        //list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
 														next = false;
 														break;
 												}

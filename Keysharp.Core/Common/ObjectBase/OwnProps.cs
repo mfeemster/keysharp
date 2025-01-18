@@ -54,10 +54,11 @@
 	{
 		public KeysharpObject Parent { get; private set; }
 
-		public OwnPropsMap(KeysharpObject kso, Map map) => __New(kso, map);
+		public OwnPropsMap(KeysharpObject kso, Map map) : base(skipLogic: true) => __New(kso, map);
 
 		public object __New(params object[] values)
 		{
+			if (values.Length == 0) return null;
 			var kso = (KeysharpObject)values[0];
 			var map = (Map)values[1];
 			Parent = kso;

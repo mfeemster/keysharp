@@ -51,11 +51,12 @@ d::
 }
 
 g::
-h::
+h::{
 	ToolTip(A_ThisHotkey . " is being pressed")
 	KeyWait(A_ThisHotkey)
 	ToolTip()
 	return
+}
 
 ^+o::
 ^+e::
@@ -107,7 +108,7 @@ GroupAdd("AltTabWindow", "ahk_class MultitaskingViewFrame")  ; Windows 10
     MsgBox("hello")
 }
 
-;::{
+`;::{
     MsgBox("hello")
 }
 
@@ -123,9 +124,9 @@ testfunc(p1)
 testfunc "::"
 
 if (a == "::")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-FileAppend, "pass", "*"
+FileAppend "pass", "*"
 ExitApp()

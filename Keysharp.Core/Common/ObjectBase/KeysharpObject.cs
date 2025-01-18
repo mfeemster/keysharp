@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+﻿using Antlr4.Runtime.Misc;
 
 namespace Keysharp.Core.Common.ObjectBase
 {
@@ -9,10 +9,11 @@ namespace Keysharp.Core.Common.ObjectBase
 
 	public class KeysharpObject : Any, ICallable
 	{
-		protected internal Dictionary<string, OwnPropsMap> op;
+        protected internal Dictionary<string, OwnPropsMap> op;
 
         MethodInfo mi;
         private FuncObj _fo;
+        protected bool SkipConstructorLogic { get; }
         FuncObj fo
         {
             get
@@ -31,12 +32,54 @@ namespace Keysharp.Core.Common.ObjectBase
             }
         }
 
-        public KeysharpObject()
+        public KeysharpObject(params object[] args)
 		{
-			__Init();
+			var t = GetType();
+            // Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
+			// (if the property doesn't exist then a new Map is created which calls this function again)
+            if (Script.Variables.Prototypes == null || SkipConstructorLogic) // || !GetType().Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
+				return;
+			// Hack way to check that Prototypes/Statics are initialized
+            if (Script.Variables.Statics.Count < 20)
+                return;
+            Script.Variables.Statics.TryGetValue(t, out KeysharpObject value);
+			if (value == null)
+				return;
+            Script.SetPropertyValue(this, "base", Script.GetPropertyValue(value, "prototype"));
+            Script.Invoke(this, "__Init");
+            Script.Invoke(this, "__New", args);
+        }
+
+        protected KeysharpObject(bool skipLogic)
+        {
+            SkipConstructorLogic = skipLogic;
+        }
+
+        public object __New(params object[] obj) => "";
+
+		public object Super
+		{
+			get
+			{
+				var declaringType = GetDeclaringTypeFromStack();
+                return (this, Script.GetPropertyValue(Script.Variables.Prototypes[GetType().IsAssignableTo(declaringType) ? declaringType : GetType()], "base"));
+			}
 		}
 
-		public object __New(params object[] obj) => "";
+        private static Type GetDeclaringTypeFromStack()
+        {
+            var stackTrace = new System.Diagnostics.StackTrace();
+            for (int i = 2; i < stackTrace.FrameCount; i++) // Start at 2 to skip the current property
+            {
+                var frame = stackTrace.GetFrame(i);
+                var method = frame?.GetMethod();
+                if (method?.DeclaringType != null)
+                {
+                    return method.DeclaringType;
+                }
+            }
+            return null;
+        }
 
         public object Call(params object[] args) => fo.Call(args);
 
@@ -99,10 +142,12 @@ namespace Keysharp.Core.Common.ObjectBase
 
 					foreach (var kv in kso.op)
 					{
+						if (kv.Key == "base" && name != "base")
+							continue;
 						if (op.TryGetValue(name, out var currProp))
 							currProp.map[kv.Key] = kv.Value[kv.Key];//Merge.
 						else
-							op[name] = new OwnPropsMap(this, new Map(kv.Value.map));//Create new.
+							op[name] = new OwnPropsMap(this, Collections.MapWithoutBase(kv.Value.map));//Create new.
 					}
 
 					kso.op.Clear();
@@ -151,7 +196,7 @@ namespace Keysharp.Core.Common.ObjectBase
 					//Must wrap in a function so that when GetMethodOrProperty() unwraps it, it just returns the property and
 					//doesn't actually call get().
 					if (string.Compare(kv.Key.ToString(), "get", true) == 0)
-						list.Add(new FuncObj("Wrap", this).Bind(kv.Value));
+						list.Add(new FuncObj("Wrap", this).Bind(this, kv.Value));
 					else
 						list.Add(kv.Value);
 				}
@@ -187,7 +232,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			var isMapOnly = GetType() == typeof(Map);
 
 			if (op != null)
-				ct += op.Count;
+				ct += op.Count - 1; // Substract 1 to account for the auto-generated base property
 
 			if (!isMapOnly)
 			{
@@ -208,8 +253,14 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				foreach (var kv in op)
 				{
+					if (kv.Key == "base")
+						continue;
+
 					foreach (var propkv in kv.Value.map)
 					{
+						if (propkv.Key.ToString() == "set" || propkv.Key.ToString() == "call")
+							continue;
+
 						var prop = propkv.Value;
 
 						if (prop != null)
@@ -293,7 +344,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		/// <summary>
 		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
 		/// </summary>
-		protected virtual void __Init()
+		public virtual void __Init()
 		{
 		}
 	}

@@ -122,16 +122,16 @@
 				//catch
 				//{
 				//}
-				object pid = null;
+				object pid = Misc.EmptyVarRef;
 
 				if (!string.IsNullOrEmpty(ed))
 				{
 					var prcIndex = ed.IndexOf('%');
 					ed = prcIndex != -1 ? ed.Substring(0, prcIndex) : ed;
-					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
+					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", pid, Accessors.A_ScriptFullPath);
 				}
 				else
-					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
+					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", pid, Accessors.A_ScriptFullPath);
 
 #endif
 			}

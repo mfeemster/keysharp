@@ -366,9 +366,9 @@
 
 				case Keyword_RegEx:
 				{
-					object outvar = null;
-					_ = RegEx.RegExMatch(a, b, ref outvar, 1);
-					RegExResults output = (RegExResults)outvar;
+                    Misc.VarRef outvar = new Misc.VarRef(null);
+					_ = RegEx.RegExMatch(a, b, outvar, 1);
+					RegExResults output = (RegExResults)(outvar.__Value);
 					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);
 				}
 			}

@@ -9,31 +9,31 @@ DirCopy(dir, "./FileDelete")
 FileDelete("./FileDelete/*.txt")
 
 if (DirExist("./FileDelete/"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 	
 if (!FileExist("./FileDelete/file1.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (!FileExist("./FileDelete/file2.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (FileExist("./FileDelete/file3txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 FileDelete("./FileDelete/*")
 
 if (!FileExist("./FileDelete/file3txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 	
 if (DirExist("./FileDelete"))
 	DirDelete("./FileDelete", true)

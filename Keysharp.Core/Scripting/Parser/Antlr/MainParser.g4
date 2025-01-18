@@ -52,8 +52,73 @@ sourceElements
 sourceElement
     : classDeclaration
     | functionDeclaration // required for auto-execute section function declarations
+    | generalDirective
+    | positionalDirective
+    | remap
+    | hotstring
+    | hotkey
     | statement
     | EOL
+    ;
+
+
+generalDirective
+    : ClipboardTimeout numericLiteral eos   # ClipboardTimeoutDirective
+    | DllLoad DirectiveContent eos          # DllLoadDirective
+    | ErrorStdOut DirectiveContent? eos     # ErrorStdOutDirective
+    | HotIfTimeout numericLiteral eos       # HotIfTimeoutDirective
+    | Include DirectiveContent eos          # IncludeDirective
+    | IncludeAgain DirectiveContent eos     # IncludeAgainDirective
+    | MaxThreads numericLiteral eos         # MaxThreadsDirective
+    | MaxThreadsBuffer (numericLiteral | boolean)? eos    # MaxThreadsBufferDirective
+    | MaxThreadsPerHotkey numericLiteral eos # MaxThreadsPerHotkeyDirective
+    | NoTrayIcon eos                        # NoTrayIconDirective
+    | Requires DirectiveContent eos         # RequiresDirective
+    | SingleInstance DirectiveContent eos   # SingleInstanceDirective
+    | WinActivateForce eos                  # WinActivateForceDirective
+    | (AssemblyTitle
+        | AssemblyDescription
+        | AssemblyConfiguration
+        | AssemblyCompany
+        | AssemblyProduct
+        | AssemblyCopyright
+        | AssemblyTrademark
+        | AssemblyVersion) DirectiveContent eos # AssemblyDirective
+    ;
+/*
+        : ClipboardTimeout WhiteSpaces IntegerLiteral
+    | DllLoad WhiteSpaces RawString
+    | ErrorStdOut WhiteSpaces RawString
+    | HotIfTimeout WhiteSpaces IntegerLiteral
+    | Hotstring WhiteSpaces ('nomouse' | 'endchars' WhiteSpaces RawString)
+    | Include WhiteSpaces RawString
+    | IncludeAgain WhiteSpaces RawString
+    | MaxThreads WhiteSpaces IntegerLiteral
+    | MaxThreadsBuffer WhiteSpaces (BooleanLiteral | IntegerLiteral)?
+    | NoTrayIcon
+    | Requires WhiteSpaces RawString
+    | SingleInstance // WhiteSpaces ('force' | 'ignore' | 'prompt' | 'off')
+    | WinActivateForce
+     */
+
+positionalDirective
+    : HotIf singleExpression? eos       # HotIfDirective
+    | HotstringOptions eos              # HotstringDirective
+    | InputLevel numericLiteral? eos     # InputLevelDirective
+    | UseHook (numericLiteral | boolean)? eos          # UseHookDirective
+    | SuspendExempt (numericLiteral | boolean)? eos    # SuspendExemptDirective
+    ;
+
+remap
+    : HotkeyTrigger RemapKey eos
+    ;
+
+hotstring
+    : HotstringTrigger (EOL HotstringTrigger)* (HotstringExpansion eos | functionDeclaration eos | statement)
+    ;
+
+hotkey
+    : HotkeyTrigger (EOL HotkeyTrigger)* EOL? (functionDeclaration eos | statement)
     ;
 
 statement
@@ -63,9 +128,10 @@ statement
     //| functionDeclaration eos   // required for nested functions
     | classDeclaration eos
     | functionStatement eos     // requires OpenBrace or LineTerminator before it
+    | variableStatement eos
     | expressionStatement eos   // requires OpenBrace or LineTerminator before it
     | ifStatement // always followed by a statement which requires eos
-    | iterationStatement
+    | (labelledStatement EOL)? iterationStatement
     | continueStatement eos
     | breakStatement eos
     | returnStatement eos
@@ -75,7 +141,6 @@ statement
     | switchStatement eos
     | throwStatement eos
     | tryStatement  // always followed by a statement which requires eos
-    | variableStatement eos
     ;
 
 /*
@@ -191,7 +256,7 @@ variableDeclaration
     ;
 
 functionStatement
-    : identifier arguments?
+    : {this.isNextWS()}? identifier arguments?
     ;
 
 expressionStatement
@@ -205,25 +270,26 @@ ifStatement
 iterationStatement
     : Loop singleExpression? EOL? statement (Until singleExpression EOL)? (Else statement)?      # LoopStatement
     | Loop Files singleExpression (',' singleExpression)? statement (Until singleExpression EOL)? (Else statement)?  # LoopFilesStatement
+    | Loop Read singleExpression (',' singleExpression)? statement (Until singleExpression EOL)? (Else statement)?  # LoopReadStatement
     | Loop Reg singleExpression (',' singleExpression)? statement (Until singleExpression EOL)? (Else statement)?    # LoopRegStatement
     | Loop Parse singleExpression (',' singleExpression?)* statement (Until singleExpression EOL)? (Else statement)? # LoopParseStatement
     | While singleExpression EOL? statement (Until singleExpression EOL)? (Else statement)?      # WhileStatement
-    | For forInParameters EOL? statement (Else statement)?                                       # ForInStatement
+    | For forInParameters EOL? statement (Until singleExpression EOL)? (Else statement)?         # ForInStatement
     ;
 
 forInParameters
     : assignable? (',' assignable?)* In singleExpression
-    | '(' assignable? (',' assignable?)* In singleExpression ')'
+    | openParen assignable? (',' assignable?)* In singleExpression ')'
     ;
 
 continueStatement
     : Continue propertyName?
-    | Continue ('(' propertyName ')')?
+    | Continue (openParen propertyName ')')?
     ;
 
 breakStatement
     : Break propertyName?
-    | Break ('(' propertyName ')')?
+    | Break (openParen propertyName ')')?
     ;
 
 returnStatement
@@ -247,20 +313,20 @@ caseClauses
     ;
 
 caseClause
-    : Case expressionSequence ':' statementList? EOL?
+    : Case expressionSequence ':' EOL? statementList? EOL?
     ;
 
 defaultClause
-    : Default ':' statementList?
+    : Default ':' EOL? statementList?
     ;
 
 labelledStatement
-    : propertyName ':'
+    : Identifier ':' 
     ;
 
 gotoStatement
     : Goto propertyName
-    | Goto '(' propertyName ')'
+    | Goto openParen propertyName ')'
     ;
 
 throwStatement
@@ -277,7 +343,7 @@ catchProduction
 
 catchAssignable
     : assignable (As identifier)?
-    | '(' assignable (As identifier)? ')'
+    | openParen assignable (As identifier)? ')'
     ;
 
 elseProduction
@@ -324,7 +390,7 @@ methodDefinition
 
 propertyDefinition
     : classPropertyName '=>' singleExpression
-    | classPropertyName EOL? '{' propertyGetterDefinition? propertySetterDefinition? '}' EOL?
+    | classPropertyName EOL? '{' (propertyGetterDefinition | propertySetterDefinition)* '}' EOL?
     ;
 
 classPropertyName
@@ -333,11 +399,11 @@ classPropertyName
     ;
 
 propertyGetterDefinition
-    : Get lambdaFunctionBody EOL?
+    : {this.n("get")}? identifier lambdaFunctionBody EOL?
     ;
 
 propertySetterDefinition
-    : Set lambdaFunctionBody EOL?
+    : {this.n("set")}? identifier lambdaFunctionBody EOL?
     ;
 
 fieldDefinition
@@ -358,7 +424,7 @@ lastFormalParameterArg
     ;
 
 functionBody
-    : EOL? '{' statementList? '}' EOL?
+    : EOL? '{' statementList? '}'
     ;
 
 arrayLiteral
@@ -385,11 +451,11 @@ mapElementList
 
 mapElement
     : singleExpression Multiply? // Spread
-    | singleExpression ':' singleExpression // Map element
+    | singleExpression EOL? ':' EOL? singleExpression // Map element
     ;
 
 propertyAssignment
-    : propertyName ':' singleExpression                                  # PropertyExpressionAssignment
+    : dynamicPropertyName EOL? ':' EOL? singleExpression                           # PropertyExpressionAssignment
     | Async? '*'? propertyName OpenParenNoWS formalParameterList? ')' functionBody # FunctionProperty
     | getter OpenParenNoWS ')' functionBody                                        # PropertyGetter
     | setter OpenParenNoWS formalParameterArg ')' functionBody                     # PropertySetter
@@ -457,7 +523,7 @@ memberIndexArguments
     ;
 
 singleExpression
-    : Class Identifier? classTail                                          # ClassExpression // nested class
+    : Class Identifier classTail                                           # ClassExpression // nested class
     | lambdaFunction                                                       # FunctionExpression
     | singleExpression '?.' singleExpression                               # OptionalChainExpression
     | singleExpression '?.'? memberIndexArguments                          # MemberIndexExpression
@@ -493,9 +559,9 @@ singleExpression
     | singleExpression ('&&' | VerbalAnd) singleExpression                 # LogicalAndExpression
     | singleExpression ('||' | VerbalOr) singleExpression                  # LogicalOrExpression
     | singleExpression '??' singleExpression                               # CoalesceExpression
-    | singleExpression '?' singleExpression ':' singleExpression           # TernaryExpression
+    | singleExpression '?' singleExpression EOL? ':' EOL? singleExpression           # TernaryExpression
     | <assoc = right> singleExpression assignmentOperator singleExpression # AssignmentOperatorExpression
-    | '(' expressionSequence ')'                                           # ParenthesizedExpression
+    | openParen expressionSequence ')'                                           # ParenthesizedExpression
     | This                                                                 # ThisExpression
     | Super                                                                # SuperExpression
     | Base                                                                 # BaseExpression
@@ -531,8 +597,8 @@ objectLiteral
     ;
 
 lambdaFunction
-    : Async? '(' formalParameterList? ')' lambdaFunctionBody                     # AnonymousLambdaFunction
-    | Async? (identifier? Multiply | BitAnd? identifier QuestionMark?) '=>' singleExpression    # AnonymousFatArrowLambdaFunction
+    : Async? openParen formalParameterList? ')' lambdaFunctionBody                     # AnonymousLambdaFunction
+    | Async? (assignable? Multiply | BitAnd? assignable QuestionMark?) '=>' singleExpression    # AnonymousFatArrowLambdaFunction
     | functionDeclaration                                                        # NamedLambdaFunction
     ;
 
@@ -563,13 +629,15 @@ assignmentOperator
 literal
     : NullLiteral
     | Unset
-    | BooleanLiteral
+    | boolean
     | MultilineStringLiteral
     | StringLiteral
     | RegularExpressionLiteral
     | numericLiteral
     | bigintLiteral
     ;
+
+boolean : BooleanLiteral;
 
 numericLiteral
     : DecimalLiteral
@@ -628,7 +696,12 @@ reservedWord
     : keyword
     | NullLiteral
     | Unset
-    | BooleanLiteral
+    | boolean
+    ;
+
+openParen
+    : OpenParen
+    | OpenParenNoWS
     ;
 
 keyword

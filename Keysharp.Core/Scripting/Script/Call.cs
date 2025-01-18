@@ -1,4 +1,7 @@
-﻿namespace Keysharp.Scripting
+﻿using System;
+using Keysharp.Core;
+
+namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
@@ -17,42 +20,54 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.")) ? throw err : null;
 		}
-		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
+		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true)//This has to be public because the script will emit it in Main().
 		{
 			Error err;
 			Type typetouse = null;
+			object inst = item;
 
 			try
 			{
-				if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
-				{
-					typetouse = t;
-					item = o;
-				}
-				else if (item != null)
-					typetouse = item.GetType();
+                if (item is ITuple otup && otup.Length > 1)
+                {
+                    if (otup[0] is Type t && otup[1] is object o)
+                    {
+                        typetouse = t; item = o; inst = item;
+                    }
+                    else if (otup[0] is KeysharpObject k && otup[1] is KeysharpObject ob)
+                    {
+                        inst = k; item = ob; typetouse = item.GetType();
+                    }
+                }
+                if (typetouse == null)
+                    typetouse = item.GetType();
 
-				if (item == null)
+                if (item == null)
 				{
 					if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
 						return (item, mph0);
 				}
 				else if (item is KeysharpObject kso && kso.op != null)
 				{
-					if (kso.op.TryGetValue(key, out var val) && val is OwnPropsMap map)
+                    // If not found in OwnPropsMap, check the base chain
+                    object Base = kso;
+					do
 					{
-						//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
-						if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)//Call must come first.
-							return (map, ifocall);
-						else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifoget)
-							return (map, ifoget.Call());//No params passed in, just call as is.
-						else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifoval)
-							return (map, ifoval);
-						else if (map.map.TryGetValue("set", out var setval) && setval is IFuncObj ifoset)
-							return (map, ifoset);
+						if (Base != null && ((KeysharpObject)Base).op.TryGetValue(key, out var val) && val is OwnPropsMap map)
+						{
+							//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
+							if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)//Call must come first.
+								return (map, ifocall);
+							else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifoget)
+								return (map, ifoget.Call(inst));//No params passed in, just call as is.
+							else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifoval)
+								return (map, ifoval);
+							else if (map.map.TryGetValue("set", out var setval) && setval is IFuncObj ifoset)
+								return (map, ifoset);
 
-						return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
-					}
+							return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
+						}
+					} while (GetObjectPropertyValue(inst, Base, "base", out Base) && Base != null);
 				}
 
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
@@ -94,33 +109,52 @@
 			return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {item} failed.")) ? throw err : (null, null);
 		}
 
-		public static object GetPropertyValue(object item, object name, bool throwOnError = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
+		public static object GetPropertyValue(object item, object name, bool throwOnError = true, bool checkBase = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
+		
 		{
 			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
+			object inst = item;
 
 			try
 			{
-				if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+				if (item is ITuple otup && otup.Length > 1)
 				{
-					typetouse = t;
-					item = o;
+					if (otup[0] is Type t && otup[1] is object o)
+					{
+						typetouse = t;
+						item = o;
+						inst = item;
+					} else if (otup[0] is KeysharpObject k && otup[1] is KeysharpObject ob)
+					{
+						inst = k; item = ob; typetouse = item.GetType();
+					}
 				}
 				else if (item != null)
 					typetouse = item.GetType();
 
-				if (item is KeysharpObject kso && kso.op != null)
+				if (item is KeysharpObject kso)
 				{
-					if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap map)
-					{
-						if (map.map.TryGetValue("value", out var valval))
-							return valval;
+					if (GetObjectPropertyValue(inst, kso, namestr, out var value))
+						return value;
 
-						if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo)
-							return ifo.Call(kso);
-					}
-				}
+                    if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
+                    {
+                        return mph2.callFunc(inst, null);
+                    }
+
+                    // If not found in OwnPropsMap, check the base chain
+                    var Base = kso;
+                    while (GetObjectPropertyValue(inst, Base, "base", out var nextBase) && nextBase != null && nextBase is KeysharpObject)
+                    {
+						Base = (KeysharpObject)nextBase;
+						if (Base != null && GetObjectPropertyValue(kso, Base, namestr, out value))
+						{
+							return value;
+						}
+                    }
+                }
 
 				if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph)
 				{
@@ -159,6 +193,26 @@
 				return null;
 		}
 
+        public static bool GetObjectPropertyValue(object inst, object obj, string namestr, out object returnValue)
+		{
+			returnValue = null;
+			if (!(obj is KeysharpObject kso))
+				return false;
+			if (kso.op == null)
+				return false;
+			if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap map)
+			{
+				if (map.map.TryGetValue("value", out var valval))
+					returnValue = valval;
+				else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo && ifo != null)
+					returnValue = ifo.Call(inst);
+				else
+					return false;
+				return true;
+			}
+			return false;
+        }
+
 		public static object GetStaticMemberValueT<T>(object name)
 		{
 			Error err;
@@ -195,6 +249,44 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Attempting to get static method {name} failed.")) ? throw err : (null, null);
 		}
+
+		public static object Invoke(object obj, object meth, params object[] parameters)
+		{
+            try
+            {
+				(object, object) mitup = (null, null);
+                IFuncObj f;
+				if (meth is IFuncObj fo1)
+					mitup = (obj, fo1);
+				else if (obj is ITuple otup && otup.Length > 1)
+				{
+					mitup = GetMethodOrProperty(otup, (string)meth, -1);
+					if (otup[0] is object o && !(o is ComObject))
+						mitup.Item1 = o;
+				}
+				else if (meth is string methName && methName.Equals("Call", StringComparison.InvariantCultureIgnoreCase) && obj is IFuncObj fo2)
+				{
+					return fo2.Call(fo2.Inst == null ? parameters : new object[] { fo2.Inst }.Concat(parameters));
+				}
+				else
+				{
+					mitup = GetMethodOrProperty(obj, (string)meth, -1);
+					if (!(obj is ComObject))
+						mitup.Item1 = obj;
+				}
+
+                return Invoke(mitup, parameters);
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException is KeysharpException ke)
+                    throw ke;
+                else
+                    throw;
+            }
+
+            throw new MemberError($"Attempting to invoke method or property {meth} failed.");
+        }
 
 		public static object Invoke((object, object) mitup, params object[] parameters)
 		{
@@ -234,7 +326,7 @@
 						{
 							var arr = new object[2];
 							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
-							return ifo2.Call(arr);
+							return ifo2.Call(arr[0]);
 						}
 						else
 						{
@@ -247,7 +339,7 @@
 						}
 					}
 					else
-						return ifo2.Call(parameters);
+						return ifo2.Call(new[] { mitup.Item1 }.Concat(parameters));
 				}
 			}
 			catch (Exception e)
@@ -351,18 +443,27 @@
 			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
+			object inst = item;
 
 			try
 			{
-				if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t && otup[1] is object o)
+				if (item is ITuple otup && otup.Length > 1)
 				{
-					typetouse = t;
-					item = o;
-				}
-				else if (item != null)
-					typetouse = item.GetType();
+					if (otup[0] is Type t && otup[1] is object o)
+					{
+						typetouse = t;
+						item = o;
+						inst = item;
+					}
+					else if (otup[0] is KeysharpObject k && otup[1] is KeysharpObject ob)
+					{
+						inst = k; item = ob; typetouse = item.GetType();
+					}
+                }
+                else if (item != null)
+                    typetouse = item.GetType();
 
-				KeysharpObject kso = null;
+                KeysharpObject kso = null;
 
 				if ((kso = item as KeysharpObject) != null && kso.op != null)
 				{
@@ -379,21 +480,21 @@
 							var arr = new object[2];
 							arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
 							arr[1] = value;
-							return ifo.Call(arr);
+							return ifo.Call(inst, value);
 						}
 					}
 				}
 
-				if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph)
+				if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph && namestr.ToLower() != "base")
 				{
 					mph.setPropFunc(item, value);
-					return value;
+                    return value;
 				}
 
 #if WINDOWS
 				//COM checks must come before Item checks because they can get confused sometimes and COM should take
 				//precedence in such cases.
-				else if (item is ComObject co)
+				else if (item is ComObject co && co.Ptr != null)
 				{
 					//_ = co.Ptr.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });//Unwrap.
 					return SetPropertyValue(co.Ptr, namestr, value);
@@ -405,16 +506,16 @@
 				}
 
 #endif
-				//else if (kso is Map m && Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
-				//{
-				//  return mph1.callFunc(item, [namestr, value]);
-				//}
 				else if (kso != null)//No property was present, so create one and assign the value to it.
 				{
-					_ = kso.DefineProp(namestr, Collections.Map("value", value));
+					_ = kso.DefineProp(namestr, Collections.MapWithoutBase("value", value));
 					return value;
 				}
-			}
+				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
+				{
+					return mph1.callFunc(item, [namestr, value]);
+				}
+            }
 			catch (Exception e)
 			{
 				if (e.InnerException is KeysharpException ke)
@@ -454,5 +555,5 @@
 
 			_ = Errors.ErrorOccurred(err = new Error($"Attempting to set static property or field {namestr} to value {value} failed.")) ? throw err : "";
 		}
-	}
+    }
 }

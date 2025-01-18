@@ -58,10 +58,10 @@
 	/// </summary>
 	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
-		/// <summary>
-		/// The underlying <see cref="Dictionary"/> that holds the values.
-		/// </summary>
-		internal Dictionary<object, object> map;
+        /// <summary>
+        /// The underlying <see cref="Dictionary"/> that holds the values.
+        /// </summary>
+        internal Dictionary<object, object> map;
 
 		/// <summary>
 		/// The case comparison to use for string keys.
@@ -135,6 +135,8 @@
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
 		public Map(params object[] obj) => _ = __New(obj);
+
+		public Map(bool skipLogic) : base(skipLogic: skipLogic) => _ = __New();
 
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element

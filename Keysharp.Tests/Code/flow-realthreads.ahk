@@ -29,9 +29,9 @@ Loop 100
 tharr.Clear()
 
 If tot == 5150
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 tharr := []
 tharr.Length := 100
@@ -69,6 +69,6 @@ Loop 100
 tharr.Clear()
 
 If tot == 10000
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

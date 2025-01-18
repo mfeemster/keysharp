@@ -198,58 +198,58 @@
 		public static object SetWorkingDir(object dirName) => Accessors.A_WorkingDir = dirName.As();
 
 		/// <summary>
-		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
+		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
 		public static object SplitPath(object obj)
 		{
-			object outFileName = null;
-			object outDir = null;
-			object outExtension = null;
-			object outNameNoExt = null;
-			object outDrive = null;
-			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+			Misc.VarRef outFileName = new(null);
+            Misc.VarRef outDir = new(null);
+            Misc.VarRef outExtension = new(null);
+            Misc.VarRef outNameNoExt = new(null);
+            Misc.VarRef outDrive = new(null);
+			return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
 		/// <summary>
-		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
+		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName)
 		{
-			object outDir = null;
-			object outExtension = null;
-			object outNameNoExt = null;
-			object outDrive = null;
-			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+            Misc.VarRef outDir = new(null);
+            Misc.VarRef outExtension = new(null);
+            Misc.VarRef outNameNoExt = new(null);
+            Misc.VarRef outDrive = new(null);
+            return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
 		/// <summary>
-		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
+		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName, ref object outDir)
 		{
-			object outExtension = null;
-			object outNameNoExt = null;
-			object outDrive = null;
-			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+            Misc.VarRef outExtension = new(null);
+            Misc.VarRef outNameNoExt = new(null);
+            Misc.VarRef outDrive = new(null);
+            return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
 		/// <summary>
-		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
+		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension)
 		{
-			object outNameNoExt = null;
-			object outDrive = null;
-			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+            Misc.VarRef outNameNoExt = new(null);
+            Misc.VarRef outDrive = new(null);
+            return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
 		/// <summary>
-		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>
+		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt)
 		{
-			object outDrive = null;
-			return SplitPath(obj, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive);
+            Misc.VarRef outDrive = new(null);
+            return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
 		/// <summary>
@@ -276,14 +276,16 @@
 		/// If the file is on a local or mapped drive, the variable will be set to the drive letter followed by a colon (no backslash).<br/>
 		/// If the file is on a network path (UNC), the variable will be set to the share name, e.g. \\Workstation01
 		/// </param>
-		public static object SplitPath(object path, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt, ref object outDrive)
+		public static object SplitPath(object path, object outFileName, object outDir, object outExtension, object outNameNoExt, object outDrive)
 		{
-			var p = path.As();
+			outFileName ??= Misc.EmptyVarRef; outDir ??= Misc.EmptyVarRef; outExtension ??= Misc.EmptyVarRef; outNameNoExt ??= Misc.EmptyVarRef; outDrive ??= Misc.EmptyVarRef;
+
+            var p = path.As();
 
 			if (p.Contains("://"))
 			{
 				var uri = new Uri(p);
-				outDrive = uri.Scheme + "://" + uri.Host;
+                Script.SetPropertyValue(outDrive, "__Value", uri.Scheme + "://" + uri.Host);
 				var lastSlash = uri.LocalPath.LastIndexOf('/');
 				var localPath = uri.LocalPath;
 
@@ -293,23 +295,27 @@
 
 					if (tempFilename.Contains('.'))
 					{
-						outFileName = tempFilename;
-						outExtension = Path.GetExtension(tempFilename).Trim('.');
-						outNameNoExt = Path.GetFileNameWithoutExtension(tempFilename);
+						Script.SetPropertyValue(outFileName, "__Value", tempFilename);
+                        Script.SetPropertyValue(outExtension, "__Value", Path.GetExtension(tempFilename).Trim('.'));
+                        Script.SetPropertyValue(outNameNoExt, "__Value", Path.GetFileNameWithoutExtension(tempFilename));
 						localPath = localPath.Substring(0, lastSlash);
 					}
 					else
-						outFileName = outExtension = outNameNoExt = "";
+					{
+						Script.SetPropertyValue(outFileName, "__Value", "");
+                        Script.SetPropertyValue(outExtension, "__Value", "");
+                        Script.SetPropertyValue(outNameNoExt, "__Value", "");
+                    }
 				}
 
-				outDir = (outDrive + localPath).TrimEnd('/');
+				Script.SetPropertyValue(outDir, "__Value", (Script.GetPropertyValue(outDrive, "__Value") + localPath).TrimEnd('/'));
 			}
 			else
 			{
 				var input = Path.GetFullPath(p);
-				outFileName = Path.GetFileName(input);
-				outExtension = Path.GetExtension(input).Trim('.');
-				outNameNoExt = Path.GetFileNameWithoutExtension(input);
+                Script.SetPropertyValue(outFileName, "__Value", Path.GetFileName(input));
+                Script.SetPropertyValue(outExtension, "__Value", Path.GetExtension(input).Trim('.'));
+                Script.SetPropertyValue(outNameNoExt, "__Value", Path.GetFileNameWithoutExtension(input));
 
 				if (p.StartsWith(@"\\"))
 				{
@@ -318,24 +324,24 @@
 					var lastSlash = input.LastIndexOf('\\');
 
 					if (nextSlash == -1)
-						outDrive = p;
+                        Script.SetPropertyValue(outDrive, "__Value", p);
 					else
-						outDrive = input.Substring(0, nextSlash);
+                        Script.SetPropertyValue(outDrive, "__Value", input.Substring(0, nextSlash));
 
 					if (input.Contains('.'))
 					{
 						if (lastSlash == -1)
-							outDir = input;
+                            Script.SetPropertyValue(outDir, "__Value", input);
 						else
-							outDir = input.AsSpan().Slice(0, lastSlash).TrimEnd('\\').ToString();
+                            Script.SetPropertyValue(outDir, "__Value", input.AsSpan().Slice(0, lastSlash).TrimEnd('\\').ToString());
 					}
 					else
-						outDir = input.TrimEnd('\\');
+                        Script.SetPropertyValue(outDir, "__Value", input.TrimEnd('\\'));
 				}
 				else
 				{
-					outDir = Path.GetDirectoryName(input).TrimEnd('\\');
-					outDrive = Path.GetPathRoot(input).TrimEnd('\\');
+                    Script.SetPropertyValue(outDir, "__Value", Path.GetDirectoryName(input).TrimEnd('\\'));
+                    Script.SetPropertyValue(outDrive, "__Value", Path.GetPathRoot(input).TrimEnd('\\'));
 				}
 			}
 

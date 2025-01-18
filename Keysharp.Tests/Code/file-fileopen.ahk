@@ -12,14 +12,14 @@ f.Seek(0) ; Test seeking from beginning.
 r := f.ReadLine()
 
 if (r == "testing")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (count == 8) ; Add one for the newline.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 f.Close()
 
@@ -33,14 +33,14 @@ f.Seek(0)
 r := f.ReadUInt()
 
 if (val == r)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (count == 4)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val2 := -12345678
 count := f.WriteInt(val2)
@@ -48,14 +48,14 @@ f.Seek(-4, 1) ; Test seeking from current.
 r2 := f.ReadInt()
 
 if (val2 == r2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (count == 4)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 f.Close()
 		
@@ -75,9 +75,9 @@ Loop (buf.Size)
 	p2 := buf2[A_Index]
 
 	if (p1 == p2)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f.Seek(0)
@@ -96,9 +96,9 @@ Loop (buf.Size)
 	p2 := buf2[A_Index]
 
 	if (p1 == p2)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f.Close()
@@ -113,19 +113,19 @@ f.Seek(2) ; A unicode file will have a 2 byte long byte order mark.
 r := f.ReadLine()
 
 if (r == "testing")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (count == 14) ; Unicode is two bytes per char.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (f.Length == 16) ; BOM plus 2 bytes per char.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 f.Close()
 
@@ -134,14 +134,14 @@ w := "testing"
 r := f.ReadLine()
 
 if (r == "testing")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (w.Length == r.Length)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 f.Close()
 
@@ -156,30 +156,30 @@ pos := f.Pos
 len := StrLen(w)
 
 if (len == pos)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 eof := f.AtEOF
 
 if (eof == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 len := f.Length
 
 if (len == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 enc := f.Encoding
 
 if (enc == "utf-8")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 f.Close()
 
@@ -191,21 +191,21 @@ pos := f.Pos
 eof := f.AtEOF
 
 if (eof == 0) ; With append mode, you're never really at the "end" of the file.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 len := f.Length
 
 if (pos == 14)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (len == 14)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 f.Close()
 
@@ -223,19 +223,19 @@ eof := f.AtEOF
 len := f.Length
 
 if (eof == 1) ; Overwrite should cause it to be an empty file.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (pos == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (len == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 			
 f.Close()
 
@@ -253,19 +253,19 @@ eof := f.AtEOF
 len := f.Length
 
 if (eof == 0) ; At position zero, so not at EOF.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (pos == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (len == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 			
 f.Close()
 
@@ -282,9 +282,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b := false
 
@@ -299,9 +299,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 #endif
 
 b := false
@@ -309,7 +309,7 @@ b := false
 try
 {
 	f := FileOpen(path, "r -r")
-	handle = f.Handle;
+	handle := f.Handle;
 	FileOpen(handle, "r h")
 }
 catch
@@ -318,9 +318,9 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (FileExist(path) != "")
 	FileDelete(path)
@@ -337,6 +337,6 @@ catch
 }
 
 if (b == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

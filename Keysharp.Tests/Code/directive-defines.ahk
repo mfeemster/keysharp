@@ -12,9 +12,9 @@ x := 10
 #elif LINUX
 	if (x == 10)
 #endif
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -27,9 +27,9 @@ x := 10
 #elif LINUX
 	if (x == 20)
 #endif
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -40,9 +40,9 @@ x := 10
 #endif
 
 if (x == 100)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -53,9 +53,9 @@ x := 10
 #endif
 
 if (x == 200)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -64,9 +64,9 @@ x := 10
 #endif
 
 if (x == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -75,9 +75,9 @@ x := 10
 #endif
 
 if (x == 20)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; False outer with true inner.
 x := 10
@@ -95,9 +95,9 @@ x := 10
 #elif LINUX
 	if (x == 20)
 #endif
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; True outer with false inner.
 x := 10
@@ -115,9 +115,9 @@ x := 10
 #elif LINUX
 	if (x == 10)
 #endif
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 str := ""
 
@@ -140,9 +140,9 @@ str := ""
 #elif LINUX
 	if (str == "linux")
 #endif
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 str := ""
 
@@ -159,9 +159,9 @@ str := ""
 #else
 	if (str == "not windows")
 #endif
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -170,9 +170,9 @@ x := 10
 #endif
 
 if (x == 20)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 10
 
@@ -181,9 +181,9 @@ x := 10
 #endif
 
 if (x == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := 10
 
@@ -192,9 +192,9 @@ x := 10
 #endif
 
 if (x == 20)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; Test undefining something that has been predefined.
 x := false
@@ -206,9 +206,9 @@ x := false
 #endif
 
 if (!x)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 
@@ -219,6 +219,6 @@ x := false
 #endif
 
 if (x)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

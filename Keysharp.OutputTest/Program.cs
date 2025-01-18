@@ -44,7 +44,6 @@ using static Keysharp.Core.WindowX;
 using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Script.Operator;
 using static Keysharp.Scripting.Script;
-using static Keysharp.Core.Common.Invoke.Reflections;
 
 [assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.8")]
 namespace Keysharp.CompiledMain
@@ -72,170 +71,389 @@ namespace Keysharp.CompiledMain
 
     public class program
     {
-        public static object classobj;
-        public static object classobj2;
-        public static object classobj3;
-        public static object a;
-        public static object temp;
-        public static object val;
-        public static object numtypesize;
-        public class myclass : KeysharpObject
+        public static object namedhotkeyfunction = FuncObj("namedhotkeyfunction");
+        public static object testfunc = FuncObj("testfunc");
+        public static object _ks_Hotkey_1()
         {
-            public myclass(params object[] args)
-            {
-                __New(args);
-            }
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind<^>^}b{b DownR}");
+            return "";
+        }
 
-            public static string __Class
-            {
-                get
-                {
-                    return "myclass";
-                }
-            }
+        public static object _ks_Hotkey_2()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{b Up}");
+            return "";
+        }
 
-            static public object a { get; set; }
-            static public object b { get; set; }
-            static public object c { get; set; }
-            static public object x { get; set; }
-            static public object y { get; set; }
+        public static object _ks_Hotkey_3(object thishotkey)
+        {
+            Keysharp.Core.ToolTips.ToolTip(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "You pressed ", thishotkey));
+            return "";
+        }
 
-            protected override void __Init()
-            {
-                base.__Init();
-            }
+        public static object _ks_Hotkey_4()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}b{b DownR}");
+            return "";
+        }
 
-            static myclass()
+        public static object _ks_Hotkey_5()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{b Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_6()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}b{b DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_7()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{b Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_8()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind<^>^}c{^c DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_9()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{^c Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_10()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}Shift{Shift DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_11()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{Shift Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_12()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}LButton{LButton DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_13()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{LButton Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_14()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}RButton{RButton DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_15()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{RButton Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_16()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}Ctrl{Ctrl DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_17()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{Ctrl Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_18()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}LButton{^LButton DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_19()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{^LButton Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_20()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}AppsKey{AppsKey DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_21()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{AppsKey Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_22()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}RWin{RWin DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_23()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{RWin Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_24()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}Alt{Alt DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_25()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{Alt Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_26(object thishotkey)
+        {
+            return "";
+        }
+
+        public static object _ks_HotIf_1()
+        {
+            return Keysharp.Core.WindowX.WinActive("ahk_class Notepad");
+        }
+
+        public static object _ks_Hotkey_27()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}d{d DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_28()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{d Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_29()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}b{b DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_30()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{b Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_31(object thishotkey)
+        {
+            Keysharp.Core.ToolTips.ToolTip(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "You pressed ", thishotkey));
+            return "";
+        }
+
+        public static object _ks_Hotkey_32(object thishotkey)
+        {
+            Keysharp.Core.Keyboard.SendEvent("{Blind}{Click Down}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_33(object thishotkey)
+        {
+            Keysharp.Core.Keyboard.SendEvent("{Blind}{Click Up}");
+            return "";
+        }
+
+        public static object x = null;
+        public static object _ks_Hotkey_34(object thishotkey)
+        {
+            object x = null;
+            x = 999L;
+            return "";
+        }
+
+        public static object _ks_Hotkey_35(object thishotkey)
+        {
+            Keysharp.Core.ToolTips.ToolTip(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, A_ThisHotkey, " is being pressed"));
+            Keysharp.Core.Keyboard.KeyWait(A_ThisHotkey);
+            Keysharp.Core.ToolTips.ToolTip();
+            return "";
+        }
+
+        public static object _ks_Hotkey_36(object thishotkey)
+        {
+            Keysharp.Core.ToolTips.ToolTip(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, A_ThisHotkey, " is being pressed"));
+            Keysharp.Core.Keyboard.KeyWait(A_ThisHotkey);
+            Keysharp.Core.ToolTips.ToolTip();
+            return "";
+        }
+
+        public static object _ks_Hotkey_37(object thishotkey)
+        {
+            object Namedhotkeyfunction(object hk)
             {
-                a = null;
-                b = "";
-                c = "asdf";
+                object x = null;
                 x = 123L;
-                y = x;
-                __StaticInit();
-            }
-
-            public static myclass Call(params object[] args)
-            {
-                return new myclass(args);
-            }
-
-            public object __init { get; set; }
-        }
-
-        public class typesizemapper : KeysharpObject
-        {
-            public typesizemapper(params object[] args)
-            {
-                __New(args);
-            }
-
-            public static string __Class
-            {
-                get
-                {
-                    return "typesizemapper";
-                }
-            }
-
-            static public object numtypesize { get; set; }
-
-            static public object Mapinit()
-            {
-                temp = Keysharp.Core.Collections.Map();
-                {
-                    Keysharp.Core.Loops.Push();
-                    object t;
-                    object _;
-                    for (var _ks_e1 = Keysharp.Core.Loops.MakeEnumerator(new Keysharp.Core.Array(new object[] { new Keysharp.Core.Array(new object[] { 1L, "Int8", "char" }), new Keysharp.Core.Array(new object[] { 1L, "UInt8", "uchar" }), new Keysharp.Core.Array(new object[] { 2L, "Int16", "short" }), new Keysharp.Core.Array(new object[] { 2L, "UInt16", "ushort" }), new Keysharp.Core.Array(new object[] { 4L, "Int32", "int" }), new Keysharp.Core.Array(new object[] { 4L, "UInt32", "uint" }), new Keysharp.Core.Array(new object[] { 8L, "Int64", "int64" }), new Keysharp.Core.Array(new object[] { 8L, "UInt64", "uint64" }), new Keysharp.Core.Array(new object[] { 4L, "Single", "float" }), new Keysharp.Core.Array(new object[] { 8L, "Double", "double" }), new Keysharp.Core.Array(new object[] { A_PtrSize, "IntPtr", "ptr" }), new Keysharp.Core.Array(new object[] { A_PtrSize, "UIntPtr", "uptr" }) }), 1); IsTrueAndRunning(_ks_e1.MoveNext());)
-                    {
-                        (t, _) = _ks_e1.Current;
-                        Keysharp.Scripting.Script.SetObject(Keysharp.Scripting.Script.Index(t, 1L), temp, Keysharp.Scripting.Script.Index(t, 3L));
-                    _ks_e1_next:
-                        ;
-                    }
-
-                _ks_e1_end:
-                    Keysharp.Core.Loops.Pop();
-                }
-
-                return temp;
-            }
-
-            protected override void __Init()
-            {
-                base.__Init();
-            }
-
-            static typesizemapper()
-            {
-                __StaticInit();
-            }
-
-            public static typesizemapper Call(params object[] args)
-            {
-                return new typesizemapper(args);
-            }
-
-            public object __init { get; set; }
-        }
-
-        public class typesizemapper2 : KeysharpObject
-        {
-            public typesizemapper2(params object[] args)
-            {
-                __New(args);
-            }
-
-            public static string __Class
-            {
-                get
-                {
-                    return "typesizemapper2";
-                }
-            }
-
-            static public object numtypesize { get; set; }
-
-            static public object __Staticinit()
-            {
-                numtypesize = Keysharp.Core.Collections.Map();
-                {
-                    Keysharp.Core.Loops.Push();
-                    object t;
-                    object _;
-                    for (var _ks_e1 = Keysharp.Core.Loops.MakeEnumerator(new Keysharp.Core.Array(new object[] { new Keysharp.Core.Array(new object[] { 1L, "Int8", "char" }), new Keysharp.Core.Array(new object[] { 1L, "UInt8", "uchar" }), new Keysharp.Core.Array(new object[] { 2L, "Int16", "short" }), new Keysharp.Core.Array(new object[] { 2L, "UInt16", "ushort" }), new Keysharp.Core.Array(new object[] { 4L, "Int32", "int" }), new Keysharp.Core.Array(new object[] { 4L, "UInt32", "uint" }), new Keysharp.Core.Array(new object[] { 8L, "Int64", "int64" }), new Keysharp.Core.Array(new object[] { 8L, "UInt64", "uint64" }), new Keysharp.Core.Array(new object[] { 4L, "Single", "float" }), new Keysharp.Core.Array(new object[] { 8L, "Double", "double" }), new Keysharp.Core.Array(new object[] { A_PtrSize, "IntPtr", "ptr" }), new Keysharp.Core.Array(new object[] { A_PtrSize, "UIntPtr", "uptr" }) }), 1); IsTrueAndRunning(_ks_e1.MoveNext());)
-                    {
-                        (t, _) = _ks_e1.Current;
-                        Keysharp.Scripting.Script.SetObject(Keysharp.Scripting.Script.Index(t, 1L), numtypesize, Keysharp.Scripting.Script.Index(t, 3L));
-                    _ks_e1_next:
-                        ;
-                    }
-
-                _ks_e1_end:
-                    Keysharp.Core.Loops.Pop();
-                }
-
                 return "";
             }
 
-            protected override void __Init()
-            {
-                base.__Init();
-            }
+            object namedhotkeyfunction = FuncObj((Delegate)Namedhotkeyfunction);
+            Keysharp.Scripting.Script.MultiStatement(namedhotkeyfunction);
+            return "";
+        }
 
-    public class program
-    {
+        public static object _ks_Hotkey_38()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind>!}AltTab{AltTab DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_39()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{AltTab Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_40()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind>!}ShiftAltTab{ShiftAltTab DownR}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_41()
+        {
+            Keysharp.Core.Keyboard.SetKeyDelay(-1);
+            Keysharp.Core.Keyboard.Send("{Blind}{ShiftAltTab Up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_42(object thishotkey)
+        {
+            Keysharp.Core.Keyboard.Send("{Alt down}{tab}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_43(object thishotkey)
+        {
+            Keysharp.Core.Keyboard.Send("{Alt up}");
+            return "";
+        }
+
+        public static object _ks_HotIf_2()
+        {
+            return Keysharp.Core.WindowX.WinExist("ahk_group AltTabWindow");
+        }
+
+        public static object _ks_Hotkey_44(object thishotkey)
+        {
+            Keysharp.Core.Keyboard.Send("{Alt up}");
+            return "";
+        }
+
+        public static object _ks_Hotkey_45(object thishotkey)
+        {
+            return "";
+        }
+
+        public static object _ks_Hotkey_46(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object _ks_Hotkey_47(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object _ks_Hotkey_48(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object _ks_Hotkey_49(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object _ks_Hotkey_50(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object _ks_Hotkey_51(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object _ks_Hotkey_52(object thishotkey)
+        {
+            Keysharp.Core.Dialogs.MsgBox("hello");
+            return "";
+        }
+
+        public static object a = null;
+        public static object Testfunc(object p1)
+        {
+            a = p1;
+            return "";
+        }
 
         [System.STAThreadAttribute()]
         public static int Main(string[] args)
         {
             try
             {
-                string name = "*";
+                string name = @"C:\Users\minip\Source\Repos\Keysharp_clone\bin\debug\net9.0-windows\Keysharp.ks";
                 Keysharp.Scripting.Script.Variables.InitGlobalVars();
                 Keysharp.Scripting.Script.SetName(name);
-
                 if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
                 {
                     return 0;
@@ -245,7 +463,7 @@ namespace Keysharp.CompiledMain
                 Keysharp.Scripting.Script.CreateTrayMenu();
                 Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
                 Keysharp.Scripting.Script.WaitThreads();
-                return 0;
+                return Environment.ExitCode;
             }
             catch (Keysharp.Core.Error kserr)
             {
@@ -257,12 +475,11 @@ namespace Keysharp.CompiledMain
                 }
 
                 Keysharp.Core.Flow.ExitApp(1);
-                return 1;
+                return Environment.ExitCode;
             }
             catch (System.Exception mainex)
             {
                 var ex = mainex.InnerException ?? mainex;
-
                 if (ex is Keysharp.Core.Error kserr)
                 {
                     if (ErrorOccurred(kserr))
@@ -277,19 +494,93 @@ namespace Keysharp.CompiledMain
                     var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
                     MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
                     Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                }
-
-                ;
-
+                };
                 Keysharp.Core.Flow.ExitApp(1);
-
-                return 1;
+                return Environment.ExitCode;
             }
         }
 
         public static object _ks_UserMainCode()
         {
-            Keysharp.Core.Flow.ExitApp(0);
+            Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", null, ":btw", "btw", "by the way", false);
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_1"), 0U, "**^a");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_2"), 0U, "*^a up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_3), 0U, "^!a");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_3), 0U, "^!b");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_4"), 0U, "**a");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_5"), 0U, "*a up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_6"), 0U, "**+A");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_7"), 0U, "*+A up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_8"), 0U, "**^x");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_9"), 0U, "*^x up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_10"), 0U, "**MButton");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_11"), 0U, "*MButton up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_12"), 0U, "**XButton1");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_13"), 0U, "*XButton1 up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_14"), 0U, "**RAlt");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_15"), 0U, "*RAlt up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_16"), 0U, "**CapsLock");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_17"), 0U, "*CapsLock up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_18"), 0U, "**XButton2");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_19"), 0U, "*XButton2 up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_20"), 0U, "**LAlt");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_21"), 0U, "*LAlt up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_22"), 0U, "**RCtrl");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_23"), 0U, "*RCtrl up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_24"), 0U, "**Ctrl");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_25"), 0U, "*Ctrl up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_26), 0U, "RWin");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.HotIf(Keysharp.Core.Functions.FuncObj("_ks_HotIf_1"));
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_27"), 0U, "**c");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_28"), 0U, "*c up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.HotIf("");
+            Keysharp.Core.Accessors.A_UseHook = 1;
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_29"), 0U, "**e");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_30"), 0U, "*e up");
+            Keysharp.Core.Accessors.A_UseHook = 0;
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_31), 0U, "^!f");
+            Keysharp.Core.Accessors.A_UseHook = 1;
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_32), 0U, "*Numpad0");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_33), 0U, "*Numpad0 up");
+            Keysharp.Core.Accessors.A_UseHook = 0;
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_34), 0U, "~LButton");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_35), 0U, "c");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_35), 0U, "d");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_36), 0U, "g");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_36), 0U, "h");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_37), 0U, "^+o");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_37), 0U, "^+e");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_38"), 0U, "*RAlt & j");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_39"), 0U, "RAlt & j up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_40"), 0U, "*RAlt & k");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj("_ks_Hotkey_41"), 0U, "RAlt & k up");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_42), 0U, "*F1");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_43), 0U, "!F2");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.HotIf(Keysharp.Core.Functions.FuncObj("_ks_HotIf_2"));
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_44), 0U, "~*Esc");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.HotIf("");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_45), 0U, "#h");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_46), 0U, "[");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_47), 0U, "]");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_48), 0U, "(");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_49), 0U, ")");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_50), 0U, "{");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_51), 0U, "}");
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.FuncObj(_ks_Hotkey_52), 0U, "`;");
+            Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", null, ":btw", "btw", "by the way", false);
+            Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::`/`*", null, ":`/`*", "`/`*", "abcd`*`/", false);
+            x = 0L;
+            Invoke(namedhotkeyfunction, "Call", "");
+            Keysharp.Core.WindowX.GroupAdd("AltTabWindow", "ahk_class MultitaskingViewFrame");
+            a = 123L;
+            ((ICallable)testfunc).Call("::");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, a, "::")))
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            else
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            Keysharp.Core.Files.FileAppend("pass", "*");
+            Keysharp.Core.Flow.ExitApp();
+            Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
             return "";
         }
     }

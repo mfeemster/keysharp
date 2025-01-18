@@ -6,6 +6,7 @@ namespace Keysharp.Core.Common.Invoke
 		internal object[] args;
 		internal string[] names;
 		internal Type[] types;
+		internal Dictionary<int, object> refs = new();
 
 		internal DllArgumentHelper(object[] parameters)
 			: base(parameters)
@@ -97,14 +98,20 @@ namespace Keysharp.Core.Common.Invoke
 				TypeDetermined:
 				i++;
 
-				if (isreturn)
+                if (isreturn)
 				{
 					returnType = name.EndsWith("str") ? typeof(IntPtr) : type;//Native functions that return strings should be treated as pointers which will be converted manually after the call is done.
 					returnName = name;
 				}
 				else if (!isreturn && i < parameters.Length)
 				{
-					var n = i / 2;
+                    if (parameters[i] is KeysharpObject kso && kso.HasProp("__Value") == 1)
+                    {
+                        refs[i] = parameters[i];
+                        parameters[i] = Script.GetPropertyValue(kso, "__Value");
+                    }
+
+                    var n = i / 2;
 					var p = parameters[i];
 					names[n] = name0;
 					types[n] = type;
@@ -150,7 +157,7 @@ namespace Keysharp.Core.Common.Invoke
 									args[n] = del;
 									types[n] = del.GetType();
 								}
-								else if (p is System.Array arr)
+                                else if (p is System.Array arr)
 									//else if (p is ComObjArray arr)
 								{
 									args[n] = arr;

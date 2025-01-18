@@ -36,17 +36,21 @@
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
 		public static IFuncObj FuncObj(object funcName, object obj = null, object paramCount = null) => new FuncObj(funcName.As(), obj, paramCount);
 
-		/// <summary>
-		/// Gets a method of an object.
-		/// </summary>
-		/// <param name="value">The object to find the method on. Can't be a ComObject.</param>
-		/// <param name="name">If omitted, validation is performed on value itself and value is returned if successful.<br/>
-		/// Otherwise, specify the name of the method to retrieve.
-		/// </param>
-		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
-		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
-		public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
+        public static IFuncObj FuncObj(object funcName, Type t, object paramCount = null) => new FuncObj(funcName.As(), t, paramCount);
+
+        public static IFuncObj FuncObj(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
+
+        /// <summary>
+        /// Gets a method of an object.
+        /// </summary>
+        /// <param name="value">The object to find the method on. Can't be a ComObject.</param>
+        /// <param name="name">If omitted, validation is performed on value itself and value is returned if successful.<br/>
+        /// Otherwise, specify the name of the method to retrieve.
+        /// </param>
+        /// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
+        /// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
+        /// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
+        public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
 		{
 			Error err;
 			var v = value;
@@ -87,7 +91,7 @@
 		/// This is used for indexers which can take 1 or more parameters. Default: 0.
 		/// </param>
 		/// <returns>1 if the property was found on the object, else 0.</returns>
-		public static long HasProp(object value, object name, object paramCount = null)
+		public static long HasProp(object value, object name, object paramCount = null, bool checkBase = true)
 		{
 			var val = value;
 			var n = name.As();
@@ -97,6 +101,17 @@
 			{
 				if (kso.op != null && kso.op.ContainsKey(n))
 					return 1L;
+
+				if (checkBase)
+				{
+                    var Base = kso;
+                    while (Script.GetObjectPropertyValue(kso, Base, "base", out var nextBase) && nextBase != null && nextBase is KeysharpObject)
+                    {
+                        Base = (KeysharpObject)nextBase;
+						if (Base != null && Base.op.ContainsKey(n))
+							return 1L;
+                    }
+                }
 			}
 
 			var mph = Reflections.FindAndCacheProperty(val.GetType(), n, count);
@@ -152,7 +167,11 @@
 			}
 			else if (h is IFuncObj fo)
 				del = fo;
-			else if (throwIfBad)
+            else if (h is Delegate d)
+                del = new FuncObj(d.Method);
+            else if (h is MethodInfo mi)
+                del = new FuncObj(mi);
+            else if (throwIfBad)
 				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
 
 			return del;

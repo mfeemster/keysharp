@@ -24,6 +24,8 @@ using System.ComponentModel;
 using static Keysharp.Core.Misc;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.AxHost;
 
 namespace Keysharp.Core.Scripting.Parser.Antlr
 {
@@ -33,35 +35,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             var t = Keysharp.Core.Common.Invoke.Reflections.stringToTypes["Map"];
 
-            var allClassDeclarations = GetClassDeclarationsRecursive(context);
-            foreach (var classDeclaration in allClassDeclarations)
-                Helper.UserTypes.Add(classDeclaration.identifier().GetText());
-
-            var scopeFunctionDeclarations = GetScopeFunctions(context);
-            foreach (var scopeFunctionDeclaration in scopeFunctionDeclarations)
-                Helper.UserFuncs.Add(scopeFunctionDeclaration.identifier().GetText());
-
             // Add CompilationUnit usings 
             var usingSyntaxTree = CSharpSyntaxTree.ParseText(CompilerHelper.UsingStr);
             var root = usingSyntaxTree.GetRoot() as CompilationUnitSyntax;
             var usingDirectives = root?.Usings ?? new SyntaxList<UsingDirectiveSyntax>();
 
-            // Generating a single assembly entry is not pretty
-            var assemblyAttribute = SyntaxFactory.Attribute(
-                CreateQualifiedName("Keysharp.Scripting.AssemblyBuildVersionAttribute"))
-                .AddArgumentListArguments(
-                    SyntaxFactory.AttributeArgument(
-                        SyntaxFactory.LiteralExpression(
-                            SyntaxKind.StringLiteralExpression,
-                            SyntaxFactory.Literal(Accessors.A_AhkVersion))));
-            var separatedAttributeList = new SeparatedSyntaxList<AttributeSyntax>();
-            separatedAttributeList = separatedAttributeList.Add(assemblyAttribute);
-            var attributeList = SyntaxFactory.AttributeList(separatedAttributeList)
-                .WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword)));
+            state.AddAssembly("Keysharp.Scripting.AssemblyBuildVersionAttribute", Accessors.A_AhkVersion);
 
-            compilationUnit = SyntaxFactory.CompilationUnit()
-                .AddUsings(usingDirectives.ToArray())
-                .AddAttributeLists(attributeList);
+            state.compilationUnit = SyntaxFactory.CompilationUnit()
+                .AddUsings(usingDirectives.ToArray());
 
             var imports = new[]
             {
@@ -94,10 +76,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 usings.Add(CreateUsingDirective(import));
             }
 
-            namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(CreateQualifiedName("Keysharp.CompiledMain"))
+            state.namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(CreateQualifiedName("Keysharp.CompiledMain"))
                 .AddUsings(usings.ToArray());
 
-            mainClass = SyntaxFactory.ClassDeclaration("program")
+            state.mainClass = SyntaxFactory.ClassDeclaration("program")
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
 
             var mainFunc = new Helper.Function("Main", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)));
@@ -123,10 +105,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 			{
 					try
 					{
-						string name = ""*"";
+						string name = SCRIPT_NAME_PLACEHOLDER;
 						Keysharp.Scripting.Script.Variables.InitGlobalVars();
 						Keysharp.Scripting.Script.SetName(name);
-						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
+						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.SINGLEINSTANCE_PLACEHOLDER))
 						{
 							return 0;
 						}
@@ -134,7 +116,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 						Keysharp.Scripting.Script.CreateTrayMenu();
 						Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
 						Keysharp.Scripting.Script.WaitThreads();
-						return 0;
+						return Environment.ExitCode;
 					}
 					catch (Keysharp.Core.Error kserr)
 					{
@@ -145,7 +127,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 							Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 						}
 						Keysharp.Core.Flow.ExitApp(1);
-						return 1;
+						return Environment.ExitCode;
 					}
 					catch (System.Exception mainex)
 					{
@@ -168,48 +150,90 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 						}
 		;
 						Keysharp.Core.Flow.ExitApp(1);
-						return 1;
+						return Environment.ExitCode;
 					}
 			}
 		";
+            mainBodyCode = mainBodyCode.ReplaceFirst("SCRIPT_NAME_PLACEHOLDER", "@\"" + Path.GetFullPath(state.fileName) + "\"");
+            mainBodyCode = mainBodyCode.ReplaceFirst("SINGLEINSTANCE_PLACEHOLDER", System.Enum.GetName(typeof(eScriptInstance), state.reader.SingleInstance));
 
             mainFunc.Body = SyntaxFactory.ParseStatement(mainBodyCode) as BlockSyntax;
 
-            autoExecFunc = new Helper.Function("_ks_UserMainCode", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)));
-            currentFunc = autoExecFunc;
-            autoExecFunc.Scope = Scope.Global;
-            autoExecFunc.Method = autoExecFunc.Method
+            state.autoExecFunc = new Helper.Function("_ks_UserMainCode", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)));
+            state.currentFunc = state.autoExecFunc;
+            state.autoExecFunc.Scope = Scope.Global;
+            state.autoExecFunc.Method = state.autoExecFunc.Method
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+            var allClassDeclarations = GetClassDeclarationsRecursive(context);
+            foreach (var classDeclaration in allClassDeclarations)
+            {
+                var className = classDeclaration.identifier().GetText();
+                var classBase = classDeclaration.classTail().identifier(0)?.GetText() ?? "KeysharpObject";
+                state.UserTypes[className] = classBase;
+                state.AllTypes[className] = classBase;
+                while (Reflections.stringToTypes.TryGetValue(classBase, out Type baseType))
+                {
+                    classBase = state.AllTypes[baseType.Name] = baseType.BaseType.Name;
+                }
+            }
+
+            var scopeFunctionDeclarations = GetScopeFunctions(context);
+            foreach (var scopeFunctionDeclaration in scopeFunctionDeclarations)
+            {
+                var funcName = scopeFunctionDeclaration.identifier().GetText();
+                state.UserFuncs.Add(funcName);
+                state.AddGlobalFuncObjVariable(funcName.ToLowerInvariant());
+            }
 
             if (context.sourceElements() != null)
                 VisitSourceElements(context.sourceElements());
 
-            autoExecFunc.Method = autoExecFunc.Method.WithBody(autoExecFunc.Body.AddStatements(
-                SyntaxFactory.ExpressionStatement(
-                    SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotkeyDefinition"),
-                            SyntaxFactory.IdentifierName("ManifestAllHotkeysHotstringsHooks")
+            // Merge positional directives, hotkeys, hotstrings to the beginning of the auto-execute section
+            state.autoExecFunc.Body = SyntaxFactory.Block(
+                state.generalDirectives.Concat(state.DHHR)
+                .Concat(state.autoExecFunc.Body.Statements)
+                .Append(
+                    SyntaxFactory.ExpressionStatement(
+                        SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotkeyDefinition"),
+                                SyntaxFactory.IdentifierName("ManifestAllHotkeysHotstringsHooks")
+                            )
                         )
                     )
-                ),
-            SyntaxFactory.ExpressionStatement(((InvocationExpressionSyntax)InternalMethods.ExitApp)
+                ));
+
+            if (!state.isPersistent)
+            {
+                state.autoExecFunc.Body = state.autoExecFunc.Body.AddStatements(
+                    SyntaxFactory.ExpressionStatement(((InvocationExpressionSyntax)InternalMethods.ExitApp)
                     .WithArgumentList(
                         SyntaxFactory.ArgumentList(
                             SyntaxFactory.SeparatedList(new[] {
-                                SyntaxFactory.Argument(Helper.NumericLiteralExpression("0")) }))))
-                ,
+                            SyntaxFactory.Argument(Helper.NumericLiteralExpression("0")) })))));
+            }
+
+            state.autoExecFunc.Method = state.autoExecFunc.Method.WithBody(state.autoExecFunc.Body.AddStatements(
                 SyntaxFactory.ReturnStatement(
                     SyntaxFactory.LiteralExpression(
-                        SyntaxKind.StringLiteralExpression, 
+                        SyntaxKind.StringLiteralExpression,
                         SyntaxFactory.Literal("")))));
-            mainFunc.Method = mainFunc.Method.WithBody(mainFunc.Body);
-            mainClass = mainClass.AddMembers(mainFunc.Method, autoExecFunc.Method);
-            namespaceDeclaration = namespaceDeclaration.AddMembers(mainClass);
-            compilationUnit = compilationUnit.AddMembers(namespaceDeclaration).NormalizeWhitespace();
 
-            return compilationUnit;
+            mainFunc.Method = mainFunc.Method.WithBody(mainFunc.Body);
+            state.mainClass = state.mainClass.AddMembers(mainFunc.Method, state.autoExecFunc.Method);
+            state.namespaceDeclaration = state.namespaceDeclaration.AddMembers(state.mainClass);
+
+            var attributeList = SyntaxFactory.AttributeList(state.assemblies)
+                .WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword)));
+
+            state.compilationUnit = state.compilationUnit
+                .AddMembers(state.namespaceDeclaration)
+                .AddAttributeLists(attributeList)
+                .NormalizeWhitespace();
+
+            return state.compilationUnit;
         }
 
         public override SyntaxNode VisitSourceElements([NotNull] SourceElementsContext context)
@@ -228,9 +252,20 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 var txt = child.GetText();
                 SyntaxNode element = Visit(child);
 
-
                 if (element == null)
-                    throw new NoNullAllowedException();
+                {
+                    switch (ruleNode.RuleContext.RuleIndex)
+                    {
+                        case RULE_generalDirective:
+                        case RULE_positionalDirective:
+                        case RULE_remap:
+                        case RULE_hotkey:
+                        case RULE_hotstring:
+                            continue;
+                        default:
+                            throw new NoNullAllowedException();
+                    }
+                }
 
                 var ruleContext = ruleNode.RuleContext;
 
@@ -258,9 +293,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 }
             }
 
-            autoExecFunc.Body = autoExecFunc.Body.AddStatements(autoExecStatements.ToArray());
-            mainClass = mainClass.AddMembers(memberList.ToArray());
-            return mainClass;
+            state.autoExecFunc.Body = state.autoExecFunc.Body.AddStatements(autoExecStatements.ToArray());
+            state.mainClass = state.mainClass.AddMembers(memberList.ToArray());
+            return state.mainClass;
         }
 
         public override SyntaxNode VisitStatementList(StatementListContext context)
@@ -286,6 +321,11 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         statements.AddRange(block.WithoutAnnotations("MergeEnd").Statements);
                     else
                         statements.Add(EnsureStatementSyntax(visited));
+                } 
+                else if (visited is ClassDeclarationSyntax classDeclarationSyntax)
+                {
+                    // In case a class is declared inside a function (such as some unit tests)
+                    state.mainClass = state.mainClass.AddMembers(classDeclarationSyntax);
                 } else
                     statements.Add(EnsureStatementSyntax(visited));
             }
@@ -301,61 +341,88 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitStatement([NotNull] MainParser.StatementContext context)
         {
+            if (context.iterationStatement() != null)
+            {
+                var prevLabel = state.loopLabel;
+                state.loopDepth++;
+                // May label an iterationStatement
+                LabeledStatementSyntax label = null;
+                if (context.labelledStatement() != null)
+                {
+                    state.loopLabel = context.labelledStatement().Identifier().GetText();
+                    label = (LabeledStatementSyntax)VisitLabelledStatement(context.labelledStatement());
+                }
+                else
+                    state.loopLabel = state.loopDepth.ToString();
+
+                BlockSyntax result = (BlockSyntax)Visit(context.iterationStatement());
+                if (label != null)
+                    result = result.WithStatements(result.Statements.Insert(0, label));
+                state.loopDepth--;
+                state.loopLabel = prevLabel;
+                return result;
+            }
+
             return Visit(context.GetChild(0));
         }
 
+        // This should always return the identifier in the exact case needed
+        // Built-in properties: a_scriptdir -> A_ScriptDir
+        // Variables are turned lowercase: HellO -> hello
+        // Static variables get the function name added in upper-case: a -> FUNCNAME_a
+        // Special keywords get @ added: this -> @this
         public override SyntaxNode VisitIdentifier([NotNull] IdentifierContext context)
         {
             var text = context.GetText();
 
-            if (IsVarDeclaredGlobally(text) == null)
+            // Handle special built-ins
+            if (state.IsVarDeclaredGlobally(text) == null)
             {
                 switch (text.ToLowerInvariant())
                 {
                     case "a_linenumber":
                         var contextLineNumber = context.Start.Line;
-                        var realLineNumber = Helper.codeLines[contextLineNumber - 1].LineNumber;
+                        var realLineNumber = state.codeLines[contextLineNumber - 1].LineNumber;
                         return SyntaxFactory.CastExpression(
                             SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.LongKeyword)),
                             SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(realLineNumber))
                         );
                     case "a_linefile":
-                        mainClass = mainClass.AddMembers(CreatePublicConstant("a_linefile", typeof(string), Path.GetFullPath(Helper.fileName)));
-                        break;
-
-                    case "a_scriptdir":
-                        mainClass = mainClass.AddMembers(CreatePublicConstant("A_ScriptDir", typeof(string), Path.GetDirectoryName(Path.GetFullPath(Helper.fileName))));
-                        break;
+                        return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(state.codeLines[context.Start.Line].FileName));
 
                     case "a_scriptfullpath":
-                        mainClass = mainClass.AddMembers(CreatePublicConstant("A_ScriptFullPath", typeof(string), Path.GetFullPath(Helper.fileName)));
-                        break;
-
-                    case "a_scriptname":
-                        mainClass = mainClass.AddMembers(CreatePublicConstant("A_ScriptName", typeof(string), Path.GetFileName(Path.GetFullPath(Helper.fileName))));
-                        break;
-
-                    case "a_thisfunc":
-                        //return new CodePrimitiveExpression(Scope);
-                        //TODO
+                        state.mainClass = state.mainClass.AddMembers(CreatePublicConstant("A_ScriptFullPath", typeof(string), Path.GetFullPath(state.fileName)));
                         break;
                 }
             }
 
-            if (currentFunc.VarRefs.Contains(text))
+            return HandleIdentifierName(text);
+        }
+
+        private SyntaxNode HandleIdentifierName(string text)
+        {
+            text = NormalizeFunctionIdentifier(text);
+
+            if (state.currentFunc.VarRefs.Contains(text))
             {
+                var debug = state.currentFunc;
                 // If it's a VarRef, access the __Value member
                 return SyntaxFactory.MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,
-                    SyntaxFactory.CastExpression(
-                        SyntaxFactory.IdentifierName("VarRef"),
-                        SyntaxFactory.IdentifierName(currentFunc.VarRefs.First(item => string.Equals(item, text, StringComparison.InvariantCultureIgnoreCase)))), // Identifier name
+                    SyntaxFactory.ParenthesizedExpression(
+                        SyntaxFactory.CastExpression(
+                            SyntaxFactory.IdentifierName("VarRef"),
+                            SyntaxFactory.IdentifierName(state.currentFunc.VarRefs.First(item => string.Equals(item, text, StringComparison.InvariantCultureIgnoreCase))))), // Identifier name
                     SyntaxFactory.IdentifierName("__Value")       // Member access
                 );
             }
 
-            var name = IsBuiltInProperty(text);
-            return SyntaxFactory.IdentifierName(name ?? text.ToLower());
+            return SyntaxFactory.IdentifierName(text);
+        }
+
+        public override SyntaxNode VisitKeyword([NotNull] KeywordContext context)
+        {
+            return HandleIdentifierName(context.GetText().ToLower());
         }
 
         public override SyntaxNode VisitIdentifierName([NotNull] IdentifierNameContext context)
@@ -374,7 +441,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (targetExpression is IdentifierNameSyntax identifierName)
             {
                 // Case: Variable identifier
-                MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                state.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
                 return SyntaxFactory.ObjectCreationExpression(
                     SyntaxFactory.IdentifierName("VarRef"),
                     SyntaxFactory.ArgumentList(
@@ -494,17 +561,127 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     null
                 );
             }
-            else if (targetExpression is InvocationExpressionSyntax invocationExpression 
-                && invocationExpression.ArgumentList.Arguments.Count == 3 
-                && invocationExpression.ArgumentList.Arguments[1].Expression is LiteralExpressionSyntax argumentName 
-                && argumentName.Token.Text == "\"__Value\"")
+            else if (targetExpression is InvocationExpressionSyntax invocationExpression)
             {
-                return invocationExpression;
+                // Handle Keysharp.Scripting.Script.Index(varname, index)
+                if (invocationExpression.Expression is MemberAccessExpressionSyntax invocationMemberAccess &&
+                    invocationMemberAccess.Name.Identifier.Text == "Index" &&
+                    invocationExpression.ArgumentList.Arguments.Count == 2)
+                {
+                    var varName = invocationExpression.ArgumentList.Arguments[0].Expression;
+                    var index = invocationExpression.ArgumentList.Arguments[1].Expression;
+
+                    return SyntaxFactory.ObjectCreationExpression(
+                        SyntaxFactory.IdentifierName("VarRef"),
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[]
+                            {
+                        // Getter lambda: () => Keysharp.Scripting.Script.Index(varname, index)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(),
+                                ((InvocationExpressionSyntax)InternalMethods.Index)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(varName),
+                                            SyntaxFactory.Argument(index)
+                                        })
+                                    )
+                                )
+                            )
+                        ),
+                        // Setter lambda: value => Keysharp.Scripting.Script.SetObject(value, varname, index)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(
+                                    SyntaxFactory.SingletonSeparatedList(
+                                        SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                    )
+                                ),
+                                ((InvocationExpressionSyntax)InternalMethods.SetObject)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")),
+                                            SyntaxFactory.Argument(varName),
+                                            SyntaxFactory.Argument(index)
+                                        })
+                                    )
+                                )
+                            )
+                        )
+                            })
+                        ),
+                        null
+                    );
+                }
+                // Handle Keysharp.Scripting.Script.GetPropertyValue(obj, field)
+                else if (invocationExpression.Expression is MemberAccessExpressionSyntax getPropertyAccess &&
+                         getPropertyAccess.Name.Identifier.Text == "GetPropertyValue" &&
+                         invocationExpression.ArgumentList.Arguments.Count == 2)
+                {
+                    var obj = invocationExpression.ArgumentList.Arguments[0].Expression;
+                    var field = invocationExpression.ArgumentList.Arguments[1].Expression;
+
+                    return SyntaxFactory.ObjectCreationExpression(
+                        SyntaxFactory.IdentifierName("VarRef"),
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[]
+                            {
+                        // Getter lambda: () => Keysharp.Scripting.Script.GetPropertyValue(obj, field)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(),
+                                ((InvocationExpressionSyntax)InternalMethods.GetPropertyValue)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(obj),
+                                            SyntaxFactory.Argument(field)
+                                        })
+                                    )
+                                )
+                            )
+                        ),
+                        // Setter lambda: value => Keysharp.Scripting.Script.SetPropertyValue(obj, field, value)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(
+                                    SyntaxFactory.SingletonSeparatedList(
+                                        SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                    )
+                                ),
+                                ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(obj),
+                                            SyntaxFactory.Argument(field),
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value"))
+                                        })
+                                    )
+                                )
+                            )
+                        )
+                            })
+                        ),
+                        null
+                    );
+                }
+                else if (invocationExpression.ArgumentList.Arguments.Count == 3 &&
+                         invocationExpression.ArgumentList.Arguments[1].Expression is LiteralExpressionSyntax argumentName &&
+                         argumentName.Token.Text == "\"__Value\"")
+                {
+                    return invocationExpression;
+                }
             }
-            else
-            {
-                throw new InvalidOperationException("Unsupported singleExpression type for VarRefExpression.");
-            }
+
+            throw new InvalidOperationException("Unsupported singleExpression type for VarRefExpression.");
         }
 
 
@@ -516,26 +693,41 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitDynamicIdentifier([NotNull] DynamicIdentifierContext context)
         {
             // In this case we have a identifier composed of identifier parts and dereference expressions
-            // such as a%b%. CreateDynamicVariableAccessor will return Keysharp.Scripting.Script.Vars[string.Concat<object>(new object[] {"a", b)]
-            return CreateDynamicVariableAccessor(context);
+            // such as a%b%. CreateDynamicVariableAccessor will return string.Concat<object>(new object[] {"a", b), so
+            // to turn it into an identifier we need to wrap it in Keysharp.Scripting.Script.Vars[]
+            return SyntaxFactory.ElementAccessExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    CreateQualifiedName("Keysharp.Scripting.Script"),
+                    SyntaxFactory.IdentifierName("Vars")
+                ),
+                SyntaxFactory.BracketedArgumentList(
+                    SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.Argument((ExpressionSyntax)CreateDynamicVariableString(context))
+                    )
+                )
+            );
         }
 
         public override SyntaxNode VisitDynamicPropertyName([NotNull] DynamicPropertyNameContext context)
         {
-            return CreateDynamicVariableAccessor(context);
+            return CreateDynamicVariableString(context);
         }
 
         public override SyntaxNode VisitVariableStatement([NotNull] VariableStatementContext context)
         {
-            var prevScope = currentFunc.Scope;
+            var prevScope = state.currentFunc.Scope;
             
             switch (context.GetChild(0).GetText().ToLower())
             {
                 case "local":
-                    currentFunc.Scope = Scope.Local;
+                    state.currentFunc.Scope = Scope.Local;
                     break;
                 case "global":
-                    currentFunc.Scope = Scope.Global;
+                    state.currentFunc.Scope = Scope.Global;
+                    break;
+                case "static":
+                    state.currentFunc.Scope = Scope.Static;
                     break;
             }
 
@@ -543,12 +735,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 var result = VisitVariableDeclarationList(context.variableDeclarationList());
                 if (((BlockSyntax)result).Statements.Count != 0)
                 {
-                    if (prevScope == Scope.Global && prevScope != currentFunc.Scope)
-                        throw new Error("Multiple differing scope declarations are not allowed");
-                    currentFunc.Scope = prevScope;
+                    state.currentFunc.Scope = prevScope;
                 }
                 return result;
             }
+
+            if (prevScope == Scope.Global && prevScope != state.currentFunc.Scope)
+                throw new Error("Multiple differing scope declarations are not allowed");
 
             // Do nothing, but don't return null
             return SyntaxFactory.Block().WithAdditionalAnnotations(new SyntaxAnnotation("MergeEnd"));
@@ -570,27 +763,44 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitVariableDeclaration([NotNull] VariableDeclarationContext context)
         {
-            var assignableText = context.assignable().GetText();
-            var name = MaybeAddVariableDeclaration(assignableText);
-
-            if (currentFunc.Scope == Scope.Global)
+            SyntaxNode node = Visit(context.assignable());
+            if (!(node is IdentifierNameSyntax))
             {
-                currentFunc.Body = RemoveLocalVariable(currentFunc.Body, name);
-                currentFunc.Globals.Add(name);
-                currentFunc.Locals.Remove(name);
+                throw new Error();
+            }
+            IdentifierNameSyntax identifier = (IdentifierNameSyntax)node;
+
+            if (state.currentFunc.Scope == Scope.Static)
+            {
+                state.currentFunc.Statics.Add(identifier.Identifier.Text);
+                var normalizedName = NormalizeFunctionIdentifier(identifier.Identifier.Text);
+                state.currentFunc.Statics.Add(normalizedName);
+                identifier = SyntaxFactory.IdentifierName(normalizedName);
+            }
+
+            var name = identifier.Identifier.Text;
+
+            state.MaybeAddVariableDeclaration(name);
+
+            if (state.currentFunc.Scope == Scope.Global)
+            {
+                state.currentFunc.Body = RemoveLocalVariable(state.currentFunc.Body, name);
+                state.currentFunc.Globals.Add(name);
+                state.currentFunc.Locals.Remove(name);
                 if (context.assignmentOperator() != null)
                 {
                     var initializerValue = (ExpressionSyntax)Visit(context.singleExpression());
 
                     return SyntaxFactory.ExpressionStatement(HandleAssignment(
-                        SyntaxFactory.IdentifierName(name ?? assignableText.ToLowerInvariant()),
+                        identifier,
                         initializerValue,
                         context.assignmentOperator().GetText()));
                 }
             }
 
-            currentFunc.Globals.Remove(name);
-            currentFunc.Locals.Add(name);
+            state.currentFunc.Globals.Remove(name);
+            if (state.currentFunc.Scope == Scope.Local)
+                state.currentFunc.Locals.Add(name);
 
             // Check if there is an initializer (e.g., ':= singleExpression')
             if (context.assignmentOperator() != null)
@@ -598,7 +808,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 var initializerValue = (ExpressionSyntax)Visit(context.singleExpression());
 
                 return SyntaxFactory.ExpressionStatement(HandleAssignment(
-                    SyntaxFactory.IdentifierName(name),
+                    identifier,
                     initializerValue,
                     context.assignmentOperator().GetText()));
             }
@@ -674,6 +884,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return base.VisitAssignmentOperator(context);
         }
 
+        public override SyntaxNode VisitBoolean([NotNull] BooleanContext context)
+        {
+            bool.TryParse(context.GetText(), out bool result);
+            return SyntaxFactory.LiteralExpression(
+                result ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression
+            );
+        }
+
         public override SyntaxNode VisitLiteral([NotNull] LiteralContext context)
         {
             if (context.NullLiteral() != null || context.Unset() != null)
@@ -683,12 +901,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     SyntaxFactory.Token(SyntaxKind.NullKeyword)
                 );
             }
-            else if (context.BooleanLiteral() != null)
+            else if (context.boolean() != null)
             {
-                bool.TryParse(context.GetText(), out bool result);
-                return SyntaxFactory.LiteralExpression(
-                    result ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression
-                );
+                return Visit(context.boolean());
             }
             else if (context.StringLiteral() != null)
             {
@@ -785,7 +1000,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitPropertyExpressionAssignment([NotNull] PropertyExpressionAssignmentContext context)
         {
             // Visit propertyName and singleExpression
-            var propertyName = (ExpressionSyntax)Visit(context.propertyName());
+            var propertyName = (ExpressionSyntax)Visit(context.dynamicPropertyName());
             var propertyValue = (ExpressionSyntax)Visit(context.singleExpression());
 
             // Return an initializer combining the property name and value
@@ -903,14 +1118,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitFormalParameterArg([Antlr4.Runtime.Misc.NotNull] FormalParameterArgContext context)
         {
             // Treat as a regular parameter
-            var parameterName = context.assignable().GetText().Trim().ToLowerInvariant();
+            var parameterName = Helper.ToValidIdentifier(context.assignable().GetText().Trim().ToLowerInvariant());
 
             TypeSyntax parameterType;
             if (context.BitAnd() == null)
                 parameterType = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
             else
             {
-                currentFunc.VarRefs.Add(parameterName);
+                state.currentFunc.VarRefs.Add(parameterName);
                 parameterType = SyntaxFactory.ParseTypeName("VarRef");
             }
 
@@ -923,13 +1138,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 var defaultValue = (ExpressionSyntax)Visit(context.singleExpression());
 
                 // Add [Optional] and [DefaultParameterValue(defaultValue)] attributes
-                parameter = AddOptionalParamValue(parameter, defaultValue);
+                parameter = state.AddOptionalParamValue(parameter, defaultValue);
             }
             // Handle optional parameter
             else if (context.QuestionMark() != null)
             {
                 // If QuestionMark is present, mark the parameter as optional with null default value
-                parameter = AddOptionalParamValue(parameter, SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
+                parameter = state.AddOptionalParamValue(parameter, SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
             }
 
             return parameter;
@@ -941,7 +1156,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (context.Multiply() != null)
             {
                 var lastFormalParam = context.formalParameterArg();
-                var parameterName = lastFormalParam?.assignable()?.GetText().Trim() ?? "args";
+                var parameterName = Helper.ToValidIdentifier(lastFormalParam?.assignable()?.GetText().Trim() ?? "args");
 
                 // Handle 'Multiply' for variadic arguments (params object[])
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
@@ -1022,23 +1237,20 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         private void PushFunction(string funcName)
         {
-            FunctionStack.Push((currentFunc, Helper.UserFuncs));
+            state.FunctionStack.Push((state.currentFunc, state.UserFuncs));
 
             // Create shallow copy
-            Helper.UserFuncs = new HashSet<string>(Helper.UserFuncs, Helper.UserFuncs.Comparer);
+            state.UserFuncs = new HashSet<string>(state.UserFuncs, state.UserFuncs.Comparer);
 
-            functionDepth++;
+            state.functionDepth++;
 
-            currentFunc = new Helper.Function(funcName);
-
-            if (functionDepth == 1 && currentClass == null && !funcName.StartsWith("_ks_Anon"))
-                Helper.AddGlobalFuncObjVariable(currentFunc.Name);
+            state.currentFunc = new Helper.Function(funcName);
         }
 
         private void PopFunction()
         {
-            (currentFunc, Helper.UserFuncs) = FunctionStack.Pop();
-            functionDepth--;
+            (state.currentFunc, state.UserFuncs) = state.FunctionStack.Pop();
+            state.functionDepth--;
         }
 
         public override SyntaxNode VisitFunctionDeclaration([NotNull] FunctionDeclarationContext context)
@@ -1047,26 +1259,27 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             var scopeFunctionDeclarations = GetScopeFunctions(context);
             foreach (var scopeFunctionDeclaration in scopeFunctionDeclarations)
-                Helper.UserFuncs.Add(scopeFunctionDeclaration.identifier().GetText());
+                state.UserFuncs.Add(scopeFunctionDeclaration.identifier().GetText());
 
             if (context.formalParameterList() != null)
-                currentFunc.Params = (ParameterListSyntax)VisitFormalParameterList(context.formalParameterList());
+                state.currentFunc.Params = (ParameterListSyntax)VisitFormalParameterList(context.formalParameterList());
 
             BlockSyntax functionBody = (BlockSyntax)VisitLambdaFunctionBody(context.lambdaFunctionBody());
-            currentFunc.Body = EnsureReturnStatement(currentFunc.Body.AddStatements(functionBody.Statements.ToArray()));
+            state.currentFunc.Body = EnsureReturnStatement(state.currentFunc.Body.AddStatements(functionBody.Statements.ToArray()));
 
-            if (functionDepth > 1)
+            /*
+            if (state.functionDepth > 1)
             {
                 var block = SyntaxFactory.Block(
                     SyntaxFactory.LocalDeclarationStatement(
-                        CreateFuncObjDelegateVariable(currentFunc.Name)
+                        CreateFuncObjDelegateVariable(state.currentFunc.Name)
                     ),
                     SyntaxFactory.LocalFunctionStatement(
                         SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Assuming return type is void
-                        SyntaxFactory.Identifier(currentFunc.Name) // Function name
+                        SyntaxFactory.Identifier(state.currentFunc.Name) // Function name
                     )
-                    .WithParameterList(currentFunc.Params)
-                    .WithBody(currentFunc.Body)
+                    .WithParameterList(state.currentFunc.Params)
+                    .WithBody(state.currentFunc.Body)
                     .WithModifiers(
                     SyntaxFactory.TokenList(
                         SyntaxFactory.Token(SyntaxKind.StaticKeyword)
@@ -1075,10 +1288,11 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 PopFunction();
                 return block;
             }
+            */
 
-            var methodDeclaration = currentFunc.Method
-                .WithParameterList(currentFunc.Params)
-                .WithBody(currentFunc.Body)
+            var methodDeclaration = state.currentFunc.Method
+                .WithParameterList(state.currentFunc.Params)
+                .WithBody(state.currentFunc.Body)
                 .WithModifiers(
                     SyntaxFactory.TokenList(
                         SyntaxFactory.Token(SyntaxKind.PublicKeyword),
@@ -1094,35 +1308,6 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return Visit(context.lambdaFunction());
         }
 
-        /*
-        public override SyntaxNode VisitNamedFunction([NotNull] NamedFunctionContext context)
-        {
-            return VisitFunctionDeclaration(context.functionDeclaration());
-        }
-
-        public override SyntaxNode VisitAnonymousFunctionDecl([NotNull] AnonymousFunctionDeclContext context)
-        {
-            var isAsync = context.Async() != null;
-
-            // Visit parameters
-            ParameterListSyntax formalParams = context.formalParameterList() != null
-                ? (ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())
-                : SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>());
-
-            // Visit the function body
-            BlockSyntax functionBody = (BlockSyntax)VisitFunctionBody(context.functionBody());
-            functionBody = EnsureReturnStatement(functionBody);
-
-            // Generate the anonymous method
-            var lambda = SyntaxFactory.ParenthesizedLambdaExpression()
-                .WithAsyncKeyword(isAsync ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default)
-                .WithParameterList(formalParams)
-                .WithBlock(functionBody);
-
-            return lambda;
-        }
-        */
-
         public override SyntaxNode VisitNamedLambdaFunction([NotNull] NamedLambdaFunctionContext context)
         {
             // Visit the function declaration
@@ -1130,8 +1315,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Case 1: If we are not inside a class declaration OR we are inside a class
             // declaration method declaration then add it as a closure
-            if (currentClass == null || currentFunc.Name != "_ks_UserMainCode")
+            if (state.currentClass == null || state.currentFunc.Name != "_ks_UserMainCode")
             {
+                var methodName = methodDeclaration.Identifier.Text;
+                var variableName = methodName.ToLowerInvariant();
                 // Create a delegate or closure and add it to the current function's body
                 var delegateSyntax = SyntaxFactory.LocalFunctionStatement(
                         methodDeclaration.ReturnType,
@@ -1139,41 +1326,40 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     .WithParameterList(methodDeclaration.ParameterList)
                     .WithBody(methodDeclaration.Body);
 
-                // Add the delegate to the current function's body
-                currentFunc.Body = currentFunc.Body.AddStatements(delegateSyntax);
-
                 InvocationExpressionSyntax funcObj = CreateFuncObj(
                     SyntaxFactory.CastExpression(
                         SyntaxFactory.IdentifierName("Delegate"),
-                        SyntaxFactory.IdentifierName(methodDeclaration.Identifier.Text)
+                        SyntaxFactory.IdentifierName(methodName)
                     )
                 );
+
+                List<StatementSyntax> statements = [];
+                statements.Add(delegateSyntax);
+
                 // If we are creating a closure in the auto-execute section then also add a global
                 // variable for the delegate and assign it's value at the beginning of _ks_UserMainCode
-                if (currentFunc.Name == "_ks_UserMainCode")
+                if (state.currentFunc.Name == "_ks_UserMainCode")
                 {
-                    var variableName = methodDeclaration.Identifier.Text.ToLowerInvariant();
-                    MaybeAddGlobalVariableDeclaration(variableName, true);
-
-                    // Create an assignment statement
-                    var variableAssignment = SyntaxFactory.ExpressionStatement(
+                    state.MaybeAddGlobalVariableDeclaration(variableName, true);
+                    statements.Add(SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName(variableName), // Target variable
                             funcObj // Value to assign
                         )
-                    );
-
-                    // Add the assignment statement to the beginning of the function body
-                    currentFunc.Body = currentFunc.Body.WithStatements(
-                        currentFunc.Body.Statements.Insert(0, variableAssignment)
-                    );
-
-                    return SyntaxFactory.IdentifierName(variableName);
+                    ));
+                } 
+                else
+                {
+                    statements.Add(SyntaxFactory.LocalDeclarationStatement(CreateFuncObjDelegateVariable(methodName)));
                 }
 
-                // Return a FuncObj wrapping the delegate
-                return funcObj;
+                // Add the statements to the beginning of the function body
+                state.currentFunc.Body = state.currentFunc.Body.WithStatements(
+                    SyntaxFactory.List(statements.Concat(state.currentFunc.Body.Statements)));
+
+                // Return the FuncObj variable wrapping the delegate
+                return SyntaxFactory.IdentifierName(variableName);
             } else
 
             // Case 2: If inside a class declaration and not inside a method
@@ -1197,28 +1383,27 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             }
         }
 
-
         public override SyntaxNode VisitAnonymousLambdaFunction([NotNull] AnonymousLambdaFunctionContext context)
         {
-            PushFunction("_ks_AnonLambda_" + functionDepth.ToString());
+            PushFunction(Helper.Keywords.AnonymousLambdaPrefix + state.functionDepth.ToString());
             var isAsync = context.Async() != null;
 
             // Visit parameters
             if (context.formalParameterList() != null)
-                currentFunc.Params = (ParameterListSyntax)VisitFormalParameterList(context.formalParameterList());
+                state.currentFunc.Params = (ParameterListSyntax)VisitFormalParameterList(context.formalParameterList());
 
             // Determine the arrow function body
             if (context.lambdaFunctionBody().functionBody() != null)
             {
                 // If it's a function body, wrap it in a block
-                currentFunc.Body = (BlockSyntax)VisitFunctionBody(context.lambdaFunctionBody().functionBody());
-                currentFunc.Body = EnsureReturnStatement(currentFunc.Body);
+                state.currentFunc.Body = state.currentFunc.Body.AddStatements(((BlockSyntax)VisitFunctionBody(context.lambdaFunctionBody().functionBody())).Statements.ToArray());
+                state.currentFunc.Body = EnsureReturnStatement(state.currentFunc.Body);
             }
             else
             {
                 // If it's a single expression, directly visit it
                 var lambdaExpression = (ExpressionSyntax)Visit(context.lambdaFunctionBody().singleExpression());
-                currentFunc.Body = SyntaxFactory.Block(SyntaxFactory.ReturnStatement(lambdaExpression));
+                state.currentFunc.Body = state.currentFunc.Body.AddStatements(SyntaxFactory.ReturnStatement(lambdaExpression));
             }
 
             var result = SyntaxFactory.InvocationExpression(
@@ -1228,8 +1413,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             SyntaxFactory.Argument(
                                 SyntaxFactory.ParenthesizedLambdaExpression()
                                     .WithAsyncKeyword(isAsync ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default)
-                                    .WithParameterList(currentFunc.Params)
-                                    .WithBlock(currentFunc.Body)
+                                    .WithParameterList(state.currentFunc.Params)
+                                    .WithBlock(state.currentFunc.Body)
                             )
                         )
                     )
@@ -1240,10 +1425,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitAnonymousFatArrowLambdaFunction([NotNull] AnonymousFatArrowLambdaFunctionContext context)
         {
-            PushFunction("_ks_AnonFatArrowLambda_" + functionDepth.ToString());
+            PushFunction(Helper.Keywords.AnonymousFatArrowLambdaPrefix + state.functionDepth.ToString());
             var isAsync = context.Async() != null;
 
-            var parameterName = context.identifier()?.GetText().Trim() ?? "args";
+            var parameterName = Helper.ToValidIdentifier(context.assignable()?.GetText().Trim() ?? "args");
             ParameterSyntax parameter;
             if (context.Multiply() != null)
             {
@@ -1257,7 +1442,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 TypeSyntax parameterType;
                 if (context.BitAnd() != null)
                 {
-                    currentFunc.VarRefs.Add(parameterName);
+                    state.currentFunc.VarRefs.Add(parameterName);
                     parameterType = SyntaxFactory.ParseTypeName("VarRef");
                 } else
                     parameterType = Helper.Types.Object;
@@ -1266,10 +1451,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     .WithType(parameterType);
 
                 if (context.QuestionMark() != null)
-                    parameter = AddOptionalParamValue(parameter, SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
+                    parameter = state.AddOptionalParamValue(parameter, SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
             }
 
-            currentFunc.Params = SyntaxFactory.ParameterList(
+            state.currentFunc.Params = SyntaxFactory.ParameterList(
                 SyntaxFactory.SeparatedList(
                     new List<ParameterSyntax> {
                                         parameter
@@ -1278,7 +1463,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             );
 
             var lambdaExpression = (ExpressionSyntax)Visit(context.singleExpression());
-            currentFunc.Body = SyntaxFactory.Block(SyntaxFactory.ReturnStatement(lambdaExpression));
+            state.currentFunc.Body = state.currentFunc.Body.AddStatements(SyntaxFactory.ReturnStatement(lambdaExpression));
 
             var result = SyntaxFactory.InvocationExpression(
                 SyntaxFactory.IdentifierName("FuncObj"),
@@ -1287,8 +1472,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             SyntaxFactory.Argument(
                                 SyntaxFactory.ParenthesizedLambdaExpression()
                                     .WithAsyncKeyword(isAsync ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default)
-                                    .WithParameterList(currentFunc.Params)
-                                    .WithBlock(currentFunc.Body)
+                                    .WithParameterList(state.currentFunc.Params)
+                                    .WithBlock(state.currentFunc.Body)
                             )
                         )
                     )
@@ -1315,6 +1500,22 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             }
 
             return SyntaxFactory.Block(statements);
+        }
+
+        private BlockSyntax EnsureNoReturnStatement(BlockSyntax functionBody)
+        {
+            var updatedStatements = functionBody.Statements.Select(statement =>
+            {
+                if (statement is ReturnStatementSyntax returnStatement && returnStatement.Expression != null)
+                {
+                    // Replace the return statement with its expression
+                    return SyntaxFactory.ExpressionStatement(returnStatement.Expression);
+                }
+
+                return statement;
+            });
+
+            return SyntaxFactory.Block(updatedStatements);
         }
 
         public override SyntaxNode VisitFormalParameterList([NotNull] FormalParameterListContext context)
@@ -1379,18 +1580,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 SyntaxFactory.ArgumentList(
                     SyntaxFactory.SingletonSeparatedList(
                         SyntaxFactory.Argument(
-                            SyntaxFactory.ArrayCreationExpression(
-                                SyntaxFactory.ArrayType(
-                                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // object[]
-                                    SyntaxFactory.SingletonList(
-                                        SyntaxFactory.ArrayRankSpecifier(
-                                            SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
-                                                SyntaxFactory.OmittedArraySizeExpression()
-                                            )
-                                        )
-                                    )
-                                ),
-                                elementsInitializer
+                            SyntaxFactory.CollectionExpression(
+                            SyntaxFactory.SeparatedList<CollectionElementSyntax>(
+                                elementsInitializer.Expressions.Select(expression =>
+                                {
+                                    return expression is CollectionExpressionSyntax spread
+                                        ? spread.Elements.First()
+                                        : SyntaxFactory.ExpressionElement((ExpressionSyntax)expression);
+                                })
+                            )
                             )
                         )
                     )
@@ -1419,8 +1617,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 if (child is ArrayElementContext arrayElementContext)
                 {
                     // Visit non-empty array elements
-                    var element = (ExpressionSyntax)VisitArrayElement(arrayElementContext);
-                    expressions.Add(element);
+                    var element = VisitArrayElement(arrayElementContext);
+                    expressions.Add((ExpressionSyntax)element);
                 }
                 else if (childText == ",")
                 {
@@ -1457,12 +1655,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     )
                 );
 
-                // Add the spread operator `..` using a PrefixUnaryExpression
-                return SyntaxFactory.PrefixUnaryExpression(
-                    SyntaxKind.SpreadElement, // Custom Roslyn spread operator syntax kind
-                    flattenInvocation
+                // Add the spread operator `..`
+                return SyntaxFactory.CollectionExpression(
+                    SyntaxFactory.SeparatedList(
+                        new[] { (CollectionElementSyntax)SyntaxFactory.SpreadElement(flattenInvocation) }
+                    )
                 );
-
             }
 
             // Return the element as is

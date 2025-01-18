@@ -4,9 +4,9 @@ path := "../../../Keysharp.Tests/Code/DirCopy"
 val := FileGetAttrib(path)
 
 if (val == "D")
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 val := FileGetAttrib(path . "/file1.txt")
 
@@ -15,9 +15,9 @@ val := FileGetAttrib(path . "/file1.txt")
 #else
 	if ("N" == val)
 #endif
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 val := FileGetAttrib(path . "/file2.txt")
 
@@ -26,9 +26,9 @@ val := FileGetAttrib(path . "/file2.txt")
 #else
 	if ("N" == val)
 #endif
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 val := FileGetAttrib(path . "/file3txt")
 
@@ -37,6 +37,6 @@ val := FileGetAttrib(path . "/file3txt")
 #else
 	if ("N" == val)
 #endif
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

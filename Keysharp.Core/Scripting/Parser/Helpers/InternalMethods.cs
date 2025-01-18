@@ -12,12 +12,14 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExitApp => new (typeof(Flow), "ExitApp");
 			internal static MethodReference ExtendArray => new (typeof(Script), "ExtendArray");
 			internal static MethodReference ForceBool => new (typeof(Script), "ForceBool");
+			internal static MethodReference FuncObj => new(typeof(Functions), "FuncObj");
 			internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
 			internal static MethodReference GetPropertyValue => new (typeof(Script), "GetPropertyValue");
 			internal static MethodReference HandleSingleInstance => new (typeof(Script), "HandleSingleInstance");
 			internal static MethodReference Hotkey => new (typeof(Keyboard), "Hotkey");
 			internal static MethodReference Hotstring => new (typeof(Keyboard), "Hotstring");
-			internal static MethodReference IfElse => new (typeof(Script), "IfTest");
+            internal static MethodReference HotIf => new(typeof(HotkeyDefinition), "HotIf");
+            internal static MethodReference IfElse => new (typeof(Script), "IfTest");
 			internal static MethodReference IfLegacy => new (typeof(Script), "IfLegacy");
 			internal static MethodReference Inc => new (typeof(Loops), "Inc");
 			internal static MethodReference Index => new (typeof(Script), "Index");

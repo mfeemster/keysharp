@@ -153,17 +153,17 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of addition was null.")) ? throw err : "";
 
-					if (left is long l && right is long r)
-						return l + r;
+						if (left is long l && right is long r)
+							return l + r;
 
-					if (left is IntPtr ipl)
-						return new IntPtr(ipl + ForceLong(right));
+						if (left is IntPtr ipl)
+							return new IntPtr(ipl + ForceLong(right));
 
-					if (right is IntPtr ipr)
-						return new IntPtr(ipr + ForceLong(left));
+						if (right is IntPtr ipr)
+							return new IntPtr(ipr + ForceLong(left));
 
-					return ForceDouble(left) + ForceDouble(right);
-				}
+						return ForceDouble(left) + ForceDouble(right);
+					}
 
 				case Operator.BitShiftLeft:
 				{
@@ -179,13 +179,13 @@ namespace Keysharp.Scripting
 					if (right is double)
 						_ = Errors.ErrorOccurred(err = new TypeError($"Right side operand of arithmetic left shift was not an integer, and instead was of type {left.GetType()}.")) ? throw err : "";
 
-					var r = (int)ForceLong(right);
+						var r = (int)ForceLong(right);
 
 					if (r < 0 || r > 63)
 						return Errors.ErrorOccurred(err = new Error($"Shift operand of {r} for arithmetic left shift was not in the range of [0-63].")) ? throw err : null;
 
-					return ForceLong(left) << r;
-				}
+						return ForceLong(left) << r;
+					}
 
 				case Operator.BitShiftRight:
 				{
@@ -201,13 +201,13 @@ namespace Keysharp.Scripting
 					if (right is double)
 						_ = Errors.ErrorOccurred(err = new TypeError($"Right side operand of arithmetic right shift was not an integer, and instead was of type {left.GetType()}.")) ? throw err : "";
 
-					var r = (int)ForceLong(right);
+						var r = (int)ForceLong(right);
 
 					if (r < 0 || r > 63)
 						return Errors.ErrorOccurred(err = new Error($"Shift operand of {r} for arithmetic right shift was not in the range of [0-63].")) ? throw err : null;
 
-					return ForceLong(left) >> r;
-				}
+						return ForceLong(left) >> r;
+					}
 
 				case Operator.LogicalBitShiftRight:
 				{
@@ -223,13 +223,13 @@ namespace Keysharp.Scripting
 					if (right is double)
 						_ = Errors.ErrorOccurred(err = new TypeError($"Right side operand of logical right shift was not an integer, and instead was of type {left.GetType()}.")) ? throw err : "";
 
-					var r = (int)ForceLong(right);
+						var r = (int)ForceLong(right);
 
 					if (r < 0 || r > 63)
 						return Errors.ErrorOccurred(err = new Error($"Shift operand of {r} for logical right shift was not in the range of [0-63].")) ? throw err : null;
 
-					return (long)((ulong)ForceLong(left) >> r);
-				}
+						return (long)((ulong)ForceLong(left) >> r);
+					}
 
 				case Operator.BitwiseAnd:
 				{
@@ -245,8 +245,8 @@ namespace Keysharp.Scripting
 					if (right is double)
 						_ = Errors.ErrorOccurred(err = new TypeError($"Right side operand of bitwise and was not an integer, and instead was of type {left.GetType()}.")) ? throw err : "";
 
-					return ForceLong(left) & ForceLong(right);
-				}
+						return ForceLong(left) & ForceLong(right);
+					}
 
 				case Operator.BitwiseOr:
 				{
@@ -262,8 +262,8 @@ namespace Keysharp.Scripting
 					if (right is double)
 						_ = Errors.ErrorOccurred(err = new TypeError($"Right side operand of bitwise or was not an integer, and instead was of type {left.GetType()}.")) ? throw err : "";
 
-					return ForceLong(left) | ForceLong(right);
-				}
+						return ForceLong(left) | ForceLong(right);
+					}
 
 				case Operator.BitwiseXor:
 				{
@@ -279,8 +279,8 @@ namespace Keysharp.Scripting
 					if (right is double)
 						_ = Errors.ErrorOccurred(err = new TypeError($"Right side operand of bitwise xor was not an integer, and instead was of type {left.GetType()}.")) ? throw err : "";
 
-					return ForceLong(left) ^ ForceLong(right);
-				}
+						return ForceLong(left) ^ ForceLong(right);
+					}
 
 				case Operator.BooleanAnd:
 				{
@@ -292,11 +292,11 @@ namespace Keysharp.Scripting
 
 					var b1 = ForceBool(left);
 
-					if (!b1)
-						return left;
+						if (!b1)
+							return left;
 
-					return right;
-				}
+						return right;
+					}
 
 				case Operator.BooleanOr:
 				{
@@ -306,13 +306,13 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of boolean or was null.")) ? throw err : "";
 
-					var b1 = ForceBool(left);
+						var b1 = ForceBool(left);
 
-					if (b1)
-						return left;
+						if (b1)
+							return left;
 
-					return right;
-				}
+						return right;
+					}
 
 				case Operator.Concat:
 				{
@@ -322,8 +322,8 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of concat was null.")) ? throw err : "";
 
-					return string.Concat(ForceString(left), ForceString(right));
-				}
+						return string.Concat(ForceString(left), ForceString(right));
+					}
 
 				case Operator.RegEx:
 				{
@@ -333,10 +333,10 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of regular expression was null.")) ? throw err : "";
 
-					object outvar = null;
-					_ = RegEx.RegExMatch(ForceString(left), ForceString(right), ref outvar, 1);
-					return outvar;
-				}
+                        Misc.VarRef outvar = new Misc.VarRef(null);
+						_ = RegEx.RegExMatch(ForceString(left), ForceString(right), outvar, 1);
+						return outvar.__Value;
+					}
 
 				case Operator.FloorDivide:
 				{
@@ -361,92 +361,92 @@ namespace Keysharp.Scripting
 				}
 
 				case Operator.IdentityInequality:
-				{
-					if (left == null)
-						return right != null;
+					{
+						if (left == null)
+							return right != null;
 
-					if (right == null)
-						return left != null;
+						if (right == null)
+							return left != null;
 
-					_ = MatchTypes(ref left, ref right);
+						_ = MatchTypes(ref left, ref right);
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) != 0;
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) != 0;
 
-					return !left.Equals(right);
-				}
+						return !left.Equals(right);
+					}
 
 				case Operator.IdentityEquality://This is for a double equal sign in a conditional, and uses case sensitive comparison for strings.
-				{
-					if (left == null)
-						return right == null;
+					{
+						if (left == null)
+							return right == null;
 
-					if (right == null)
-						return left == null;
+						if (right == null)
+							return left == null;
 
-					_ = MatchTypes(ref left, ref right);
+						_ = MatchTypes(ref left, ref right);
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) == 0;
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) == 0;
 
-					return left.Equals(right);
-				}
+						return left.Equals(right);
+					}
 
 				case Operator.ValueEquality://This is for a single equal sign in a conditional, and uses the case insensitive comparison type for strings.
-				{
-					if (left == null)
-						return right == null;
-
-					if (right == null)
-						return left == null;
-
-					_ = MatchTypes(ref left, ref right);
-
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) == 0;
-					else if (left is Core.Array al1 && right is Core.Array al2)
 					{
-						var len1 = (long)al1.Length;
-						var len2 = (long)al2.Length;
+						if (left == null)
+							return right == null;
 
-						if (len1 != len2)
-							return false;
+						if (right == null)
+							return left == null;
 
-						for (var i = 1; i <= len1; i++)
+						_ = MatchTypes(ref left, ref right);
+
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, false) == 0;
+						else if (left is Core.Array al1 && right is Core.Array al2)
 						{
-							if (IsNumeric(al1[i]) && IsNumeric(al2[i]))
-							{
-								var d1 = Convert.ToDouble(al1[i]);
-								var d2 = Convert.ToDouble(al2[i]);
+							var len1 = (long)al1.Length;
+							var len2 = (long)al2.Length;
 
-								if (d1 != d2)
+							if (len1 != len2)
+								return false;
+
+							for (var i = 1; i <= len1; i++)
+							{
+								if (IsNumeric(al1[i]) && IsNumeric(al2[i]))
+								{
+									var d1 = Convert.ToDouble(al1[i]);
+									var d2 = Convert.ToDouble(al2[i]);
+
+									if (d1 != d2)
+										return false;
+								}
+								else if (!al1[i].Equals(al2[i]))
 									return false;
 							}
-							else if (!al1[i].Equals(al2[i]))
-								return false;
+
+							return true;
 						}
-
-						return true;
-					}
-					else if (left is Core.Buffer buf1 && right is Core.Buffer buf2)
-					{
-						var len1 = (long)buf1.Size;
-						var len2 = (long)buf2.Size;
-
-						if (len1 != len2)
-							return false;
-
-						for (var i = 1; i <= len1; i++)
+						else if (left is Core.Buffer buf1 && right is Core.Buffer buf2)
 						{
-							if (buf1[i] != buf2[i])
-								return false;
-						}
+							var len1 = (long)buf1.Size;
+							var len2 = (long)buf2.Size;
 
-						return true;
+							if (len1 != len2)
+								return false;
+
+							for (var i = 1; i <= len1; i++)
+							{
+								if (buf1[i] != buf2[i])
+									return false;
+							}
+
+							return true;
+						}
+						else
+							return left.Equals(right);//Will go here if both are double or decimal.
 					}
-					else
-						return left.Equals(right);//Will go here if both are double or decimal.
-				}
 
 				case Operator.LessThan:
 				{
@@ -456,11 +456,11 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of less than was null.")) ? throw err : "";
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) < 0;
-					else
-						return left == null ? right == null : ForceDouble(left) < ForceDouble(right);
-				}
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) < 0;
+						else
+							return left == null ? right == null : ForceDouble(left) < ForceDouble(right);
+					}
 
 				case Operator.LessThanOrEqual:
 				{
@@ -470,11 +470,11 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of less than or equal was null.")) ? throw err : "";
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) <= 0;
-					else
-						return left == null ? right == null : ForceDouble(left) <= ForceDouble(right);
-				}
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) <= 0;
+						else
+							return left == null ? right == null : ForceDouble(left) <= ForceDouble(right);
+					}
 
 				case Operator.GreaterThan:
 				{
@@ -484,11 +484,11 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of greater than was null.")) ? throw err : "";
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) > 0;
-					else
-						return left == null ? right == null : ForceDouble(left) > ForceDouble(right);
-				}
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) > 0;
+						else
+							return left == null ? right == null : ForceDouble(left) > ForceDouble(right);
+					}
 
 				case Operator.GreaterThanOrEqual:
 				{
@@ -498,27 +498,27 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of greater than or equal was null.")) ? throw err : "";
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) >= 0;
-					else
-						return left == null ? right == null : ForceDouble(left) >= ForceDouble(right);
-				}
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) >= 0;
+						else
+							return left == null ? right == null : ForceDouble(left) >= ForceDouble(right);
+					}
 
 				case Operator.ValueInequality://This is for != or <> in a conditional.
-				{
-					if (left == null)
-						return right != null;
+					{
+						if (left == null)
+							return right != null;
 
-					if (right == null)
-						return left != null;
+						if (right == null)
+							return left != null;
 
-					_ = MatchTypes(ref left, ref right);
+						_ = MatchTypes(ref left, ref right);
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) != 0;
-					else
-						return left == null ? right != null : !left.Equals(right);//Will go here if both are double or decimal.
-				}
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, false) != 0;
+						else
+							return left == null ? right != null : !left.Equals(right);//Will go here if both are double or decimal.
+					}
 
 				case Operator.Modulus:
 				{
@@ -528,11 +528,11 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of modulo was null.")) ? throw err : "";
 
-					if (left is long l && right is long r)
-						return l % r;
+						if (left is long l && right is long r)
+							return l % r;
 
-					return ForceDouble(left) % ForceDouble(right);
-				}
+						return ForceDouble(left) % ForceDouble(right);
+					}
 
 				case Operator.Power:
 				{
@@ -542,8 +542,8 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of modulus was null.")) ? throw err : "";
 
-					return Math.Pow(ForceDouble(left), ForceDouble(right));
-				}
+						return Math.Pow(ForceDouble(left), ForceDouble(right));
+					}
 
 				case Operator.Minus:
 				case Operator.Subtract:
@@ -554,11 +554,11 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of subtraction or minus was null.")) ? throw err : "";
 
-					if (left is long l && right is long r)
-						return l - r;
+						if (left is long l && right is long r)
+							return l - r;
 
-					return ForceDouble(left) - ForceDouble(right);
-				}
+						return ForceDouble(left) - ForceDouble(right);
+					}
 
 				case Operator.Multiply:
 				{
@@ -568,11 +568,11 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of multiply was null.")) ? throw err : "";
 
-					if (left is long l && right is long r)
-						return l * r;
+						if (left is long l && right is long r)
+							return l * r;
 
-					return ForceDouble(left) * ForceDouble(right);
-				}
+						return ForceDouble(left) * ForceDouble(right);
+					}
 
 				case Operator.Divide:
 				{
@@ -582,15 +582,16 @@ namespace Keysharp.Scripting
 					if (right == null)
 						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of divide was null.")) ? throw err : "";
 
-					var r = ForceDouble(right);
+						var r = ForceDouble(right);
 
 					if (r == 0.0)
 						return Errors.ErrorOccurred(err = new ZeroDivisionError($"Right side operand of floating point divide was 0.0")) ? throw err : null;
 
-					return ForceDouble(left) / r;
-				}
+						return ForceDouble(left) / r;
+					}
 
 				case Operator.Is:
+				{ 
 					if (left == null || right == null)
 						return left == right;
 					return IfLegacy(left, "is", ForceString(right));

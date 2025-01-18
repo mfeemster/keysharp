@@ -7,7 +7,9 @@
 	/// </summary>
 	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
-		private int capacity = 64;
+        new public static object __Static { get; set; }
+
+        private int capacity = 64;
 
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.

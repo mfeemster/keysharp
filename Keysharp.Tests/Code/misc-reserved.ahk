@@ -1,9 +1,9 @@
 char := 123
 
 if (char == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 func(short, float, double)
 {
@@ -13,9 +13,9 @@ func(short, float, double)
 int := func(1, 2, 3)
 
 if (int == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myclass
 {
@@ -42,6 +42,6 @@ mc := myclass(4, 5, 6)
 sbyte := mc.GetSum()
 
 if (sbyte == 15)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

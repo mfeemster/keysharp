@@ -13,14 +13,14 @@
 		/// </summary>
 		public static long RegExMatch(object haystack, object needle)
 		{
-			object outvar = null;
-			return RegExMatch(haystack, needle, ref outvar, null);
+			object outvar = new Misc.VarRef(null);
+			return RegExMatch(haystack, needle, outvar, null);
 		}
 
 		/// <summary>
 		/// <see cref="RegExMatch(object, object, ref object, object)"/>
 		/// </summary>
-		public static long RegExMatch(object haystack, object needle, ref object outvar) => RegExMatch(haystack, needle, ref outvar, null);
+		public static long RegExMatch(object haystack, object needle, object outvar) => RegExMatch(haystack, needle, outvar, null);
 
 		/// <summary>
 		/// Determines whether a string contains a pattern (regular expression).
@@ -50,7 +50,7 @@
 		/// </param>
 		/// <returns>The <see cref="RegExResults"/> object which contains the matches, if any.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static long RegExMatch(object haystack, object needle, ref object outputVar, object startingPos)
+		public static long RegExMatch(object haystack, object needle, object outputVar, object startingPos)
 		{
 			Error err;
 			var input = haystack.As();
@@ -94,8 +94,8 @@
 			try
 			{
 				var res = new RegExResults(exp.Match(input, index));
-				outputVar = res;
-				return res.Pos();
+                Script.SetPropertyValue(outputVar, "__Value", res);
+                return res.Pos();
 			}
 			catch (Exception ex)
 			{
@@ -104,23 +104,23 @@
 		}
 
 		/// <summary>
-		/// <see cref="RegExReplace(object, object, object, ref object, object, object)"/>
+		/// <see cref="RegExReplace(object, object, object, VarRef, object, object)"/>
 		/// </summary>
 		public static string RegExReplace(object haystack, object needleRegEx, object replacement = null)
 		{
-			object outputVarCount = null;
-			return RegExReplace(haystack, needleRegEx, replacement, ref outputVarCount);
+			object outputVarCount = new Misc.VarRef(null);
+			return RegExReplace(haystack, needleRegEx, replacement, outputVarCount);
 		}
 
 		/// <summary>
 		/// <see cref="RegExReplace(object, object, object, ref object, object, object)"/>
 		/// </summary>
-		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount) => RegExReplace(haystack, needleRegEx, replacement, ref outputVarCount, null, null);
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement, object outputVarCount) => RegExReplace(haystack, needleRegEx, replacement, outputVarCount, null, null);
 
 		/// <summary>
 		/// <see cref="RegExReplace(object, object, object, ref object, object, object)"/>
 		/// </summary>
-		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit) => RegExReplace(haystack, needleRegEx, replacement, ref outputVarCount, limit, null);
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement, object outputVarCount, object limit) => RegExReplace(haystack, needleRegEx, replacement, outputVarCount, limit, null);
 
 		/// <summary>
 		/// Replaces occurrences of a pattern (regular expression) inside a string.
@@ -158,7 +158,7 @@
 		/// </param>
 		/// <returns>A version of haystack whose contents have been replaced by the operation. If no replacements are needed, haystack is returned unaltered.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit, object startingPos)
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement, object outputVarCount, object limit, object startingPos)
 		{
 			Error err;
 			var input = haystack.As();
@@ -214,7 +214,7 @@
 			try
 			{
 				var result = exp.Replace(input, match, l, index);
-				outputVarCount = (long)n;
+                Script.SetPropertyValue(outputVarCount, "__Value", (long)n);
 				return result;
 			}
 			catch (Exception ex)

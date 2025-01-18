@@ -8,9 +8,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f1() {
@@ -30,9 +30,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f2() {
@@ -54,9 +54,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f3()
@@ -80,9 +80,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f4()
@@ -123,9 +123,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 i := 0
@@ -138,9 +138,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 tw1() {
@@ -160,9 +160,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 tw2() {
@@ -181,9 +181,9 @@ Loop 5 {
 	ftc1()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 ftc1() {
@@ -204,9 +204,9 @@ Loop 5 {
 	ftc2()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 ftc2() {
@@ -229,9 +229,9 @@ Loop 5 {
 	ftc3()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 ftc3()
@@ -255,9 +255,9 @@ Loop 5 {
 	ftc4()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 ftc4()
@@ -282,9 +282,9 @@ Loop 5 {
 	wtc1()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 wtc1() {
@@ -305,9 +305,9 @@ Loop 5 {
 	wtc2()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 wtc2() {
@@ -334,9 +334,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 flut1() {
@@ -357,9 +357,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 fwut1() {
@@ -380,9 +380,9 @@ try
 }
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 ffu1()

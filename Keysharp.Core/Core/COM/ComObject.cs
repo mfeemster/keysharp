@@ -52,12 +52,14 @@ namespace Keysharp.Core.COM
 
 		public ComObject(object varType, object value, object flags = null) => __New(varType, value, flags);
 
-		internal ComObject()
+		internal ComObject() : base(skipLogic: true)
 		{
 		}
 
 		~ComObject()
 		{
+			if (Ptr == null)
+				return;
 			if (Marshal.IsComObject(Ptr))
 				_ = Marshal.ReleaseComObject(Ptr);
 			else if (Ptr is IntPtr ip)

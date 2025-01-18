@@ -12,7 +12,7 @@ class myclass
 classobj := myclass.Call()
 
 If (myclass.a == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -65,7 +65,7 @@ else
 a := 1
 
 If (myclass.a == unset)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -77,14 +77,14 @@ else
 	FileAppend "fail", "*"
 	
 if (myclass.arr is Array && myclass.arr.Length == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (myclass.m is KeysharpObject && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; test static member initialized in a complex way.
 class TypeSizeMapper {

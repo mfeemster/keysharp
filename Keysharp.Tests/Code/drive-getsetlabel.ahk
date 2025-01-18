@@ -7,14 +7,14 @@ DriveSetLabel("C:\", "a test label")
 newlabel := DriveGetLabel("C:\")
 			
 if (newlabel == "a test label")
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 DriveSetLabel("C:\", origlabel)
 newlabel := DriveGetLabel("C:\")
 
 if (origlabel = newlabel)
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
