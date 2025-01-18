@@ -1,11 +1,13 @@
-﻿namespace Keysharp.Core.Common.Threading
+﻿using Timer = Keysharp.Core.Common.Threading.TimerWithTag;
+
+namespace Keysharp.Core.Common.Threading
 {
 	public class ThreadVariables : IClearable
 	{
 		internal Task<object> task = null;
 		internal bool allowThreadToBeInterrupted = true;
 		internal long controlDelay = 20L;
-		internal System.Windows.Forms.Timer currentTimer;
+		internal Timer currentTimer;
 		internal string defaultGui;
 		internal long defaultMouseSpeed = 2L;
 		internal static long DefaultPeekFrequency = 5L;

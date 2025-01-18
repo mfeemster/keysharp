@@ -57,95 +57,109 @@ using static Keysharp.Scripting.Script;
 
 namespace Keysharp.CompiledMain
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.IO;
-    using System.Reflection;
-    using System.Runtime.InteropServices;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Windows.Forms;
-    using Keysharp.Core;
-    using Keysharp.Core.Common;
-    using Keysharp.Core.Common.File;
-    using Keysharp.Core.Common.Invoke;
-    using Keysharp.Core.Common.ObjectBase;
-    using Keysharp.Core.Common.Strings;
-    using Keysharp.Core.Common.Threading;
-    using Keysharp.Scripting;
-    using Array = Keysharp.Core.Array;
-    using Buffer = Keysharp.Core.Buffer;
+	using System;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.Data;
+	using System.IO;
+	using System.Reflection;
+	using System.Runtime.InteropServices;
+	using System.Text;
+	using System.Threading.Tasks;
+	using System.Windows.Forms;
+
+	using Keysharp.Core;
+	using Keysharp.Core.Common;
+	using Keysharp.Core.Common.File;
+	using Keysharp.Core.Common.Invoke;
+	using Keysharp.Core.Common.ObjectBase;
+	using Keysharp.Core.Common.Strings;
+	using Keysharp.Core.Common.Threading;
+	using Keysharp.Scripting;
+
+	using Array = Keysharp.Core.Array;
+	using Buffer = Keysharp.Core.Buffer;
 
 
-    public class program
-    {
+	public class program
+	{
 
-        [System.STAThreadAttribute()]
-        public static int Main(string[] args)
-        {
-            try
-            {
-                string name = "*";
-                Keysharp.Scripting.Script.Variables.InitGlobalVars();
-                Keysharp.Scripting.Script.SetName(name);
+		[System.STAThreadAttribute()]
+		public static int Main(string[] args)
+		{
+			try
+			{
+				string name = "*";
+				Keysharp.Scripting.Script.Variables.InitGlobalVars();
+				Keysharp.Scripting.Script.SetName(name);
 
-                if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
-                {
-                    return 0;
-                }
+				if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
+				{
+					return 0;
+				}
 
-                Keysharp.Core.Env.HandleCommandLineParams(args);
-                Keysharp.Scripting.Script.CreateTrayMenu();
-                Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
-                Keysharp.Scripting.Script.WaitThreads();
-                return 0;
-            }
-            catch (Keysharp.Core.Error kserr)
-            {
-                if (ErrorOccurred(kserr))
-                {
-                    var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-                    MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-                    Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                }
+				Keysharp.Core.Env.HandleCommandLineParams(args);
+				Keysharp.Scripting.Script.CreateTrayMenu();
+				Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
+				Keysharp.Scripting.Script.WaitThreads();
+				return Environment.ExitCode;
+			}
+			catch (Keysharp.Core.Error kserr)
+			{
+				if (!kserr.Processed)
+				{
+					_ = ErrorOccurred(kserr, kserr.ExcType);
+				}
 
-                Keysharp.Core.Flow.ExitApp(1);
-                return 1;
-            }
-            catch (System.Exception mainex)
-            {
-                var ex = mainex.InnerException ?? mainex;
+				if (!kserr.Handled)
+				{
+					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+				}
 
-                if (ex is Keysharp.Core.Error kserr)
-                {
-                    if (ErrorOccurred(kserr))
-                    {
-                        var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-                        MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-                        Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                    }
-                }
-                else
-                {
-                    var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-                    MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-                    Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                }
+				Keysharp.Core.Flow.ExitApp(1);
+				return Environment.ExitCode;
+			}
+			catch (System.Exception mainex)
+			{
+				var ex = mainex.InnerException ?? mainex;
 
-                ;
+				if (ex is Keysharp.Core.Error kserr)
+				{
+					if (!kserr.Processed)
+						_ = ErrorOccurred(kserr, kserr.ExcType);
 
-                Keysharp.Core.Flow.ExitApp(1);
+					if (!kserr.Handled)
+					{
+						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+						Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+					}
+				}
+				else
+				{
+					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+				}
 
-                return 1;
-            }
-        }
+				;
 
-        public static object _ks_UserMainCode()
-        {
-            Keysharp.Core.Flow.ExitApp(0);
-            return "";
-        }
-    }
+				Keysharp.Core.Flow.ExitApp(1);
+
+				return Environment.ExitCode;
+			}
+		}
+
+		public static object x;
+
+		public static object _ks_UserMainCode()
+		{
+			x = 123L;
+			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+			Keysharp.Core.Flow.ExitApp(0);
+			return "";
+		}
+	}
 }

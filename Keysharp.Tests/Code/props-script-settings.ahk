@@ -577,12 +577,12 @@ if (A_IconHidden == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 if (EndsWith(A_IconTip, "props-script-settings.ahk"))
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 if (A_IconFile == "")
 	FileAppend, "pass", "*"
 else

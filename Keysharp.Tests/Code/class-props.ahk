@@ -124,3 +124,43 @@ if (val == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Ensure the special super property is properly implemented.
+x := 0
+
+class Test1 extends Test2 {
+    Meth1()
+     {
+        global x++
+        return super.Meth1()
+    }
+}
+
+class Test2 extends Test3 {
+    Meth1()
+    {
+        global x++
+        return super.Meth1()
+    }
+}
+
+class Test3 {
+    Meth1()
+	{
+		global x
+		return x++
+	}
+}
+
+t1 := test1()
+y := t1.Meth1()
+
+if (y == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (x == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

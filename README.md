@@ -128,7 +128,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	class myclass
 	{
 		static simplevar := 123
-		static complexvar :=
+		static complexvar := ""
 						
 		static __StaticInit()
 		{
@@ -139,10 +139,12 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		}
 	}
 ```
-	+ If static variables are initialized in `__New()` instead of inline, then they won't contain valid values until an instance of the class is created. Further, they will be reinitialized for every instance of the class created.
+	+ If static variables are initialized in `__New()` instead of inline, they won't contain valid values until an instance of the class is created. Further, they will be reinitialized for every instance of the class created.
 * The parameters for `__New()` in a class definition will be not be automatically passed to the base class.
 	+ To pass the values as is to the base, change the values passed, or the order they are passed in, call `super.__New(arg1, arg2, ...)` in `__New()` with the arguments in the needed order.
 	+ This is not needed for classes derived from built-in types.
+* Because `__Init()`, `__New()` and `Call()` are auto-generated methods, users must not also define functions with these same names.
+	+ This also applies to the auto-generated `__Class` property and constructors with the same name as the class they are defined in.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.

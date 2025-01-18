@@ -437,7 +437,7 @@ else
 	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
-val := myclassobj.member2(&m.one., m.two)
+val := myclassobj.member2(&m.one, m.two)
 
 If (val == 4)
 	FileAppend, "pass", "*"

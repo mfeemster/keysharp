@@ -13,17 +13,17 @@
 		/// Note that the map must be case insensitive so that property lookups like:
 		/// val.one and val.One both work.
 		/// </summary>
-		/// <param name="obj">The optional data to initialize the <see cref="Map"/> with. This can be:
+		/// <param name="args">The optional data to initialize the <see cref="Map"/> with. This can be:
 		///     An existing <see cref="Map"/> object.
 		///     An <see cref="Array"/> of key,value pairs.
 		///     An existing <see cref="Dictionary{string, object}"/> object.
 		///     An object[] of key,value pairs.
 		/// </param>
 		/// <returns>A new <see cref="Map"/> object.</returns>
-		public static KeysharpObject Object(params object[] values)
+		public static KeysharpObject Object(params object[] args)
 		{
 			var kso = new KeysharpObject();
-			var count = (values.Length / 2) * 2;
+			var count = (args.Length / 2) * 2;
 
 			for (var i = 0; i < count; i += 2)
 			{
@@ -31,16 +31,16 @@
 				{
 					CaseSense = false
 				};
-				var key = values[i].ToString();
+				var key = args[i].ToString();
 
 				if (string.Compare(key, "get", true) == 0
 						|| string.Compare(key, "set", true) == 0
 						|| string.Compare(key, "call", true) == 0)
 				{
-					map[key.ToLower()] = values[i + 1];
+					map[key.ToLower()] = args[i + 1];
 				}
 				else
-					map["value"] = values[i + 1];
+					map["value"] = args[i + 1];
 
 				kso.DefineProp(key, map);
 			}

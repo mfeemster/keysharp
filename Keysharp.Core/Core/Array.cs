@@ -99,6 +99,11 @@
 		bool ICollection.IsSynchronized => ((ICollection)array).IsSynchronized;
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Array), this);
+
+		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which returns array.SyncRoot.
 		/// </summary>
 		object ICollection.SyncRoot => ((ICollection)array).SyncRoot;
@@ -107,7 +112,7 @@
 		/// Initializes a new instance of the <see cref="Array"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Array(params object[] values) => _ = __New(values);
+		public Array(params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Gets the enumerator object which returns a position,value tuple for each element
@@ -122,7 +127,7 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
 		/// </summary>
-		/// <param name="values">An array of values to initialize the array with.<br/>
+		/// <param name="args">An array of values to initialize the array with.<br/>
 		/// This can be one of several values:<br/>
 		///     null: creates an empty array.<br/>
 		///     object[]: adds each element to the underlying list.<br/>
@@ -130,28 +135,28 @@
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
 
-			if (values == null || values.Length == 0)
+			if (args == null || args.Length == 0)
 			{
 			}
-			else if (values.Length == 1 && values[0] is object[] objarr)
+			else if (args.Length == 1 && args[0] is object[] objarr)
 			{
 				array.AddRange(objarr);
 			}
-			else if (values.Length == 1 && values[0] is List<object> objlist)
+			else if (args.Length == 1 && args[0] is List<object> objlist)
 			{
 				array.AddRange(objlist);
 			}
-			else if (values.Length == 1 && values[0] is ICollection c)
+			else if (args.Length == 1 && args[0] is ICollection c)
 			{
 				array.AddRange(c.Cast<object>().ToList());
 			}
 			else
 			{
-				Push(values);
+				Push(args);
 			}
 
 			return "";
@@ -409,12 +414,12 @@
 		/// Inserts one or more values at a given position.
 		/// </summary>
 		/// <param name="index">The index to insert at. Specifying an index of 0 is the same as specifying Length + 1.</param>
-		/// <param name="values">The values to insert at the given index.</param>
+		/// <param name="args">The values to insert at the given index.</param>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if index is out of bounds.</exception>
-		public void InsertAt(params object[] values)
+		public void InsertAt(params object[] args)
 		{
 			Error err;
-			var o = values;
+			var o = args;
 
 			if (o.Length > 1)
 			{
@@ -433,8 +438,8 @@
 					return;
 				}
 
-				for (i = 1; i < values.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
-					array.Insert(index++, values[i]);
+				for (i = 1; i < args.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
+					array.Insert(index++, args[i]);
 			}
 		}
 
@@ -622,8 +627,8 @@
 		/// <summary>
 		/// Appends values to the end of an array.
 		/// </summary>
-		/// <param name="values">One or more values to append.</param>
-		public void Push(params object[] values) => array.AddRange(values);
+		/// <param name="args">One or more values to append.</param>
+		public void Push(params object[] args) => array.AddRange(args);
 
 		/// <summary>
 		/// Implementation of <see cref="IList.Remove"/> which removes the first occurrence of value
@@ -640,10 +645,10 @@
 		/// <param name="length">The number of items to remove. Default: 1.</param>
 		/// <returns>The item removed if length equals 1, else unset.</returns>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if index or index + length is out of bounds.</exception>
-		public object RemoveAt(params object[] values)
+		public object RemoveAt(params object[] args)
 		{
 			Error err;
-			var o = values;
+			var o = args;
 
 			if (array.Count > 0 && o.Length > 0)
 			{

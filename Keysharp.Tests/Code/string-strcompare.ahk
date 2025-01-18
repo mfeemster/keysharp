@@ -45,7 +45,7 @@ if (z = 0)
 else
 	FileAppend, "fail", "*"
 
-z := StrCompare(x, y, 0L)
+z := StrCompare(x, y, 0)
 
 if (z = 0)
 	FileAppend, "pass", "*"

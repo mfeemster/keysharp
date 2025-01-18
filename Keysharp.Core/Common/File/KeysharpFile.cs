@@ -60,14 +60,18 @@
 			set => Seek(value);
 		}
 
-		public object __New(params object[] values)
+		public new (Type, object) super => (typeof(KeysharpFile), this);
+
+		public KeysharpFile(params object[] args) => _ = __New(args);
+
+		public object __New(params object[] args)
 		{
-			var filename = values[0].As();
-			var m = (FileMode)values[1];
-			var a = (FileAccess)values[2];
-			var s = (FileShare)values[3];
-			enc = (Encoding)values[4];
-			eolconv = (int)values[5].Al();
+			var filename = args[0].As();
+			var m = (FileMode)args[1];
+			var a = (FileAccess)args[2];
+			var s = (FileShare)args[3];
+			enc = (Encoding)args[4];
+			eolconv = (int)args[5].Al();
 
 			if (filename == "*")
 			{
@@ -144,7 +148,7 @@
 			return "";
 		}
 
-		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) => __New(filename, mode, access, share, encoding, eol);
+		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) => _ = __New(filename, mode, access, share, encoding, eol);
 
 		~KeysharpFile() => Dispose(false);
 

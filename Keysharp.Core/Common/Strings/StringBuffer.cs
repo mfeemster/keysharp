@@ -4,14 +4,16 @@
 	{
 		internal StringBuilder sb;
 
-		public StringBuffer(params object[] obj) => __New(obj);
+		public new (Type, object) super => (typeof(StringBuffer), this);
+
+		public StringBuffer(params object[] args) => _ = __New(args);
 
 		public static implicit operator string(StringBuffer s) => s.sb.ToString();
 
-		public object __New(params object[] obj)
+		public object __New(params object[] args)
 		{
-			var str = obj.Length > 0 ? obj[0].ToString() : "";
-			var capacity = obj.Length > 1 ? obj[1].Ai() : 256;
+			var str = args.Length > 0 ? args[0].ToString() : "";
+			var capacity = args.Length > 1 ? args[1].Ai() : 256;
 			sb = new StringBuilder(str, capacity);
 			return "";
 		}

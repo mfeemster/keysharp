@@ -61,10 +61,15 @@
 		}
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Buffer), this);
+
+		/// <summary>
 		/// Calls <see cref="__New"/> to initialize a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
-		/// <param name="obj">The data to initially store in the buffer</param>
-		public Buffer(params object[] obj) => __New(obj);
+		/// <param name="args">The data to initially store in the buffer</param>
+		public Buffer(params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.

@@ -818,9 +818,17 @@ namespace Keysharp.Core
 		IDataObject dataObject = Clipboard.GetDataObject();
 		string[] formats;
 
-		public ClipboardAll() => __New();
+		public new (Type, object) super
+		{
+			get
+			{
+				return (typeof(ClipboardAll), this);
+			}
+		}
 
-		public object __New(params object[] values)
+		public ClipboardAll() => _ = __New();
+
+		public object __New(params object[] args)
 		{
 			Save();
 			return "";
@@ -858,10 +866,17 @@ namespace Keysharp.Core
 		/// Constructor that just passes the data to the base.
 		/// </summary>
 		/// <param name="obj">The data to pass to the base.</param>
-		public ClipboardAll(byte[] obj)
-			: base(obj)
-		{
-		}
+		//public ClipboardAll(byte[] obj)
+		//  : base(obj)
+		//{
+		//}
+
+		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(ClipboardAll), this);
+
+		public ClipboardAll(params object[] args) => _ = __New(args);
 	}
 
 #endif

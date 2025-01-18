@@ -186,10 +186,16 @@
 				if (decimal.TryParse(s.Slice(0, s.Length - 1), out m))
 					return m;
 
-			if (doconvert)
-				return Convert.ToDecimal(obj);
+			Error err;
 
-			return new decimal? ();
+			try
+			{
+				return doconvert ? Convert.ToDecimal(obj) : new decimal? ();
+			}
+			catch
+			{
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a decimal.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>
@@ -230,10 +236,16 @@
 				if (double.TryParse(s.Slice(0, s.Length - 1), out d))
 					return d;
 
-			if (doconvert)
-				return Convert.ToDouble(obj);
+			Error err;
 
-			return new double? ();
+			try
+			{
+				return doconvert ? Convert.ToDouble(obj) : new double? ();
+			}
+			catch
+			{
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a double.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>
@@ -277,10 +289,16 @@
 				if (float.TryParse(s.Slice(0, s.Length - 1), out d))
 					return d;
 
-			if (doconvert)
-				return (float)Convert.ToDouble(obj);
+			Error err;
 
-			return new float? ();
+			try
+			{
+				return doconvert ? (float)Convert.ToDouble(obj) : new float? ();
+			}
+			catch
+			{
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a float.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>
@@ -331,7 +349,16 @@
 				if (int.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
 					return neg ? -ii : ii;
 
-			return doconvert ? Convert.ToInt32(obj) : new int? ();
+			Error err;
+
+			try
+			{
+				return doconvert ? Convert.ToInt32(obj) : new int? ();
+			}
+			catch
+			{
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to an integer.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>
@@ -379,7 +406,16 @@
 				if (long.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
 					return neg ? -ii : ii;
 
-			return doconvert ? Convert.ToInt64(obj) : new long? ();
+			Error err;
+
+			try
+			{
+				return doconvert ? Convert.ToInt64(obj) : new long? ();
+			}
+			catch
+			{
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a long.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>
@@ -426,7 +462,16 @@
 				if (uint.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
 					return ii;
 
-			return doconvert ? Convert.ToUInt32(obj) : new uint? ();
+			Error err;
+
+			try
+			{
+				return doconvert ? Convert.ToUInt32(obj) : new uint? ();
+			}
+			catch
+			{
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to an unsigned integer.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>

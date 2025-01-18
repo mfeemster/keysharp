@@ -113,6 +113,7 @@
 				//Such as clipboard and window functions.
 				//CancellationToken.None, TaskCreationOptions.None,
 				//SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current);
+				//tsk.Wait();
 			}
 			//catch (AggregateException aex)
 			catch (Exception ex)

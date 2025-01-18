@@ -24,7 +24,7 @@ else
 	FileAppend, "fail", "*"
 
 d1 := "20230210020000"
-val := DateAdd(d2, -5L, "h")
+val := DateAdd(d2, -5, "h")
 
 if (d1 == val)
 	FileAppend, "pass", "*"
@@ -33,7 +33,7 @@ else
 
 d1 := "202302100225"
 d2 := "20230210023000"
-val := DateAdd(d1, 5L, "m")
+val := DateAdd(d1, 5, "m")
 
 if (d2 == val)
 	FileAppend, "pass", "*"
@@ -41,7 +41,7 @@ else
 	FileAppend, "fail", "*"
 
 d1 := "20230210022500"
-val := DateAdd(d2, -5L, "m")
+val := DateAdd(d2, -5, "m")
 
 if (d1 == val)
 	FileAppend, "pass", "*"
@@ -50,14 +50,14 @@ else
 
 d1 := "20230210022510"
 d2 := "20230210022515"
-val := DateAdd(d1, 5L, "s")
+val := DateAdd(d1, 5, "s")
 
 if (d2 == val)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-val := DateAdd(d2, -5L, "s")
+val := DateAdd(d2, -5, "s")
 
 if (d1 == val)
 	FileAppend, "pass", "*"

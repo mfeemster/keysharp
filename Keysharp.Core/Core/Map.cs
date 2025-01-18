@@ -126,6 +126,11 @@
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Map), this);
+
+		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which just calls map.SyncRoot.
 		/// </summary>
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
@@ -134,7 +139,7 @@
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Map(params object[] obj) => _ = __New(obj);
+		public Map(params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element
@@ -149,7 +154,7 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// </summary>
-		/// <param name="values">An array of values to initialize the map with.<br/>
+		/// <param name="args">An array of values to initialize the map with.<br/>
 		/// This can be one of several values:<br/>
 		///     null: creates an empty map.<br/>
 		///     object[] or <see cref="Array"/>: adds every two elements as a key,value pair to the underlying map.<br/>
@@ -157,9 +162,9 @@
 		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
-			Set(values);
+			Set(args);
 			return "";
 		}
 
@@ -400,11 +405,11 @@
 		/// Sets zero or more items.
 		/// The items can be either an <see cref="Array"/>, a <see cref="DictionaryBase{object,object}"/>, or an object[].
 		/// </summary>
-		/// <param name="values">The values to set, arranged as key,value,key2,value2,etc...</param>
+		/// <param name="args">The values to set, arranged as key,value,key2,value2,etc...</param>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
-		public void Set(params object[] values)
+		public void Set(params object[] args)
 		{
-			if (values == null || values.Length == 0)
+			if (args == null || args.Length == 0)
 			{
 				if (map == null)
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -415,19 +420,19 @@
 			{
 				Error err;
 
-				if (values.Length == 1)
+				if (args.Length == 1)
 				{
-					if (values[0] is Map m)
+					if (args[0] is Map m)
 					{
 						map = m.map;
 						caseSense = m.caseSense;
 						return;
 					}
-					else if (values[0] is Dictionary<object, object> dkt)
+					else if (args[0] is Dictionary<object, object> dkt)
 					{
 						map = dkt;
 					}
-					else if (values[0] is Array temp)
+					else if (args[0] is Array temp)
 					{
 						var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 
@@ -439,7 +444,7 @@
 						for (var i = 0; i < count - 1; i += 2)
 							Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
 					}
-					else if (values[0] is Dictionary<string, object> tempm)
+					else if (args[0] is Dictionary<string, object> tempm)
 					{
 						if (map == null)
 							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -451,19 +456,19 @@
 					}
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.")) ? throw err : "";
+						_ = Errors.ErrorOccurred(err = new ValueError($"Improper object type of {args[0].GetType()} passed to Map constructor.")) ? throw err : "";
 						return;
 					}
 				}
 				else
 				{
-					var count = (values.Length / 2) * 2;
+					var count = (args.Length / 2) * 2;
 
 					if (map == null)
 						map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 
 					for (var i = 0; i < count; i += 2)
-						Insert(values[i], values[i + 1]);
+						Insert(args[i], args[i + 1]);
 				}
 			}
 		}
