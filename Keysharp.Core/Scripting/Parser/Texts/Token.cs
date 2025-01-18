@@ -297,6 +297,7 @@ namespace Keysharp.Scripting
 					case '*':
 					case '~':
 					case '$':
+					case ';':
 						break;
 
 					case '&':
