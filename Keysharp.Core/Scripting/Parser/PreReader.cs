@@ -126,17 +126,17 @@ namespace Keysharp.Scripting
 			while ((code = source.ReadLine()) != null)
 			{
 				lineNumber++;
+				var trimmedStartSpan = code.AsSpan().TrimStart();
 
-				if (code.Length == 0)
+				if (trimmedStartSpan.Length == 0)
+					continue;
+
+				if (trimmedStartSpan[0] == ';')
 					continue;
 
 				var isHotkeyString = IsHotkeyLabel(code) || IsHotstringLabel(code);
-
-				if (code[0] == ';' && !isHotkeyString)//Hotkey/string could have started with a ;
-					continue;
-
 				var commentIgnore = false;
-				var noCommentCode = isHotkeyString && code[0] == ';' ? ";" + StripComment(code.Substring(1)) : StripComment(code);
+				var noCommentCode = StripComment(code);
 				var span = noCommentCode.AsSpan().Trim(Spaces);
 
 				if (span.Length == 0)

@@ -857,10 +857,27 @@ namespace Keysharp.Scripting
 									exctypename = "Keysharp.Core." + exctype;
 							}
 
-							var subtract = rest[rest.Length - 1] == "{" ? 3 : 2;
+							var tokenCount = rest[rest.Length - 1] == "{" ? 4 : 3;
 
-							if (rest.Length >= subtract && rest[rest.Length - subtract] == "as")
-								excname = rest[rest.Length - (subtract - 1)];
+							//Possible scenarios:
+							//Error as errorname {
+							//Error as errorname
+							//Error errorname {
+							//Error errorname
+							//Error {
+							//Error
+
+							if (rest.Length == tokenCount)
+							{
+								if (string.Compare(rest[1], "as", true) != 0)
+									throw new ParseException($"Unrecognized token '{rest[1]}' between exception type and name.", codeLine);
+
+								excname = rest[2];
+							}
+							else if (rest.Length == tokenCount - 1)
+								excname = rest[1];
+							else if (rest.Length > 2)//No variable name declared. So either Error or Error {
+								throw new ParseException($"Invalid number of tokens ({rest.Length}) in catch statement", codeLine);
 						}
 
 						CodeCatchClause ctch;
@@ -883,7 +900,7 @@ namespace Keysharp.Scripting
 							tcf.CatchClauses.Insert(0, ctch);
 						}
 
-						var catchVars = new HashSet<string>();
+						var catchVars = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 						_ = catchVars.Add(excname);
 						excCatchVars.Push(catchVars);
 						var type = parts.Length > 1 && parts[1].EndsWith(BlockOpen) ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
@@ -891,8 +908,6 @@ namespace Keysharp.Scripting
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 						var left = VarId(codeLine, excname, false);
-						var result = new CodeSnippetExpression(excname);
-						//var cas = new CodeAssignStatement(left, result);
 						ctch.LocalName = excname;
 						ctch.CatchExceptionType = new CodeTypeReference(exctypename);
 						//ctch.Statements.Insert(0, cas);

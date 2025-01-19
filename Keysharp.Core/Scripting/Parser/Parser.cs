@@ -1149,11 +1149,9 @@ namespace Keysharp.Scripting
 								continue;
 
 							name = Ch.CreateEscapedIdentifier(name);
-							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
 								Name = name,
-								//Text = $"\t\tpublic static object {name} = {init};"
 								Text = $"\t\tpublic static object {name};"
 							});
 						}
@@ -1604,6 +1602,10 @@ namespace Keysharp.Scripting
 						return true;
 				}
 			}
+
+			if (excCatchVars.TryPeek(out var exc))
+				if (exc.Contains(varName))
+					return true;
 
 			if (currentFuncParams.TryPeek(out var pl))
 				if (pl.Contains(varName))
