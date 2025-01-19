@@ -30,6 +30,12 @@
 			boundargs = ba;
 		}
 
+		public override IFuncObj Bind(params object[] args)
+		{
+			boundargs = boundargs.Concat(args);
+			return this;
+		}
+
 		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
 
 		public override object CallWithRefs(params object[] args)
@@ -143,7 +149,7 @@
 				Init();
 		}
 
-		public IFuncObj Bind(params object[] args)
+		public virtual IFuncObj Bind(params object[] args)
 		=> new BoundFunc(mi, args, inst);
 
 		public virtual object Call(params object[] args) => mph.callFunc(inst, args);

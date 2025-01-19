@@ -826,7 +826,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public ClipboardAll() => _ = __New();
+		public ClipboardAll(params object[] args) => _ = __New(args);
 
 		public object __New(params object[] args)
 		{
