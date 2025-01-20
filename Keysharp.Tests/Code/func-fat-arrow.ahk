@@ -549,3 +549,51 @@ If (x == 17 && z == 17)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Test fat arrow properties with parens in them.
+class propclass
+{
+	m := {b:1}
+
+	myfunc(xx)
+	{
+		return xx
+	}
+
+	a
+	{
+		get => (123)
+	}
+
+	b
+	{
+		get => (true ? 456 : 789)
+	}
+	
+	c
+	{
+		get => (1 ? (myfunc("eval"), this.m) : (myfunc("eval"), this.m)).b *= 2
+	}
+}
+
+pc := propclass()
+x := pc.a
+
+If (x == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := pc.b
+
+If (x == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := pc.c
+
+If (x == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
