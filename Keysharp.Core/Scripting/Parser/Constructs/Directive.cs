@@ -47,23 +47,13 @@ namespace Keysharp.Scripting
 			}
 
 			var cmd = parts[0].Substring(1);
-			const string res = "__IFWIN";
-			/*
-			    Warn
-			*/
 			var upper = cmd.ToUpperInvariant();
 
-			switch (upper)//Should sort all of these after first commit.//TODO
+			switch (upper)
 			{
-				case "ASSEMBLYTITLE":
+				case "ASSEMBLYCOMPANY":
 					if (!string.IsNullOrEmpty(parts[1]))
-						AddAssemblyAttribute(typeof(AssemblyTitleAttribute), parts[1]);
-
-					break;
-
-				case "ASSEMBLYDESCRIPTION":
-					if (!string.IsNullOrEmpty(parts[1]))
-						AddAssemblyAttribute(typeof(AssemblyDescriptionAttribute), parts[1]);
+						AddAssemblyAttribute(typeof(AssemblyCompanyAttribute), parts[1]);
 
 					break;
 
@@ -73,9 +63,15 @@ namespace Keysharp.Scripting
 
 					break;
 
-				case "ASSEMBLYCOMPANY":
+				case "ASSEMBLYCOPYRIGHT":
 					if (!string.IsNullOrEmpty(parts[1]))
-						AddAssemblyAttribute(typeof(AssemblyCompanyAttribute), parts[1]);
+						AddAssemblyAttribute(typeof(AssemblyCopyrightAttribute), parts[1]);
+
+					break;
+
+				case "ASSEMBLYDESCRIPTION":
+					if (!string.IsNullOrEmpty(parts[1]))
+						AddAssemblyAttribute(typeof(AssemblyDescriptionAttribute), parts[1]);
 
 					break;
 
@@ -85,9 +81,9 @@ namespace Keysharp.Scripting
 
 					break;
 
-				case "ASSEMBLYCOPYRIGHT":
+				case "ASSEMBLYTITLE":
 					if (!string.IsNullOrEmpty(parts[1]))
-						AddAssemblyAttribute(typeof(AssemblyCopyrightAttribute), parts[1]);
+						AddAssemblyAttribute(typeof(AssemblyTitleAttribute), parts[1]);
 
 					break;
 
@@ -121,30 +117,9 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				case "INPUTLEVEL":
+				case "ERRORSTDOUT":
 				{
-					Accessors.A_InputLevel = numeric ? value : 0L;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_InputLevel");
-					var propset = new CodeAssignStatement(prop, new CodeSnippetExpression($"{Accessors.A_InputLevel}L"));
-					_ = topStatements.Add(propset);
-				}
-				break;
-
-				case "SUSPENDEXEMPT":
-				{
-					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_SuspendExempt");
-					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
-					_ = topStatements.Add(propset);
-				}
-				break;
-
-				case "WINACTIVATEFORCE":
-				{
-					Script.WinActivateForce = true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "WinActivateForce");
-					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(Script.WinActivateForce));
-					initial.Insert(0, propset);
+					ErrorStdOut = true;
 				}
 				break;
 
@@ -201,17 +176,11 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				case "ERRORSTDOUT":
+				case "INPUTLEVEL":
 				{
-					ErrorStdOut = true;
-				}
-				break;
-
-				case "USEHOOK":
-				{
-					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "ForceKeybdHook");
-					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
+					Accessors.A_InputLevel = numeric ? value : 0L;
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_InputLevel");
+					var propset = new CodeAssignStatement(prop, new CodeSnippetExpression($"{Accessors.A_InputLevel}L"));
 					_ = topStatements.Add(propset);
 				}
 				break;
@@ -262,13 +231,32 @@ namespace Keysharp.Scripting
 				}
 				break;
 
-				//case res:
-				//  var cond = (CodeMethodInvokeExpression)InternalMethods.Hotkey;
-				//  _ = cond.Parameters.Add(new CodePrimitiveExpression(cmd));
-				//  _ = cond.Parameters.Add(new CodePrimitiveExpression(sub[0]));
-				//  _ = cond.Parameters.Add(new CodePrimitiveExpression(sub[1]));
-				//  _ = prepend.Add(cond);
-				//  break;
+				case "SUSPENDEXEMPT":
+				{
+					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_SuspendExempt");
+					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
+					_ = topStatements.Add(propset);
+				}
+				break;
+
+				case "USEHOOK":
+				{
+					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "ForceKeybdHook");
+					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
+					_ = topStatements.Add(propset);
+				}
+				break;
+
+				case "WINACTIVATEFORCE":
+				{
+					Script.WinActivateForce = true;
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "WinActivateForce");
+					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(Script.WinActivateForce));
+					initial.Insert(0, propset);
+				}
+				break;
 
 				default:
 					throw new ParseException(ExUnknownDirv, codeLine);

@@ -148,10 +148,13 @@
 					break;
 
 				case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
-					//Sadly, we cannot make this method async, so this will just be fire and forget.
-					var tv = Threads.GetThreadVariables();
-					tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
-					Script.HookThread.kbdMsSender.ProcessHotkey(m.WParam.ToInt32(), m.LParam.ToInt32(), null, WindowsAPI.WM_HOTKEY);
+					_ = HookThread.channel.Writer.TryWrite(new KeysharpMsg()
+					{
+						hwnd = m.HWnd,//Unused, but probably still good to assign.
+						message = WindowsAPI.WM_HOTKEY,
+						wParam = new IntPtr(m.WParam.ToInt32()),
+						lParam = m.LParam.ToInt32()
+					});
 					handled = true;
 					break;
 			}
