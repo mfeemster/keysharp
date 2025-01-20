@@ -2027,7 +2027,7 @@
 		/// <summary>
 		/// The value specified by #UseHook.
 		/// </summary>
-		public static object A_UseHook { get; set; }
+		public static object A_UseHook => Script.ForceKeybdHook;
 
 		/// <summary>
 		/// The logon name of the current user.

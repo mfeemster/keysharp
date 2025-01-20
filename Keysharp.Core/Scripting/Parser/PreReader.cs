@@ -576,9 +576,8 @@ namespace Keysharp.Scripting
 									case "ERRORSTDOUT":
 									case "USEHOOK":
 									case "MAXTHREADS":
-
-									//case "MAXTHREADSBUFFER":
-									//case "MAXTHREADSPERHOTKEY":
+									case "MAXTHREADSBUFFER":
+									case "MAXTHREADSPERHOTKEY":
 									case "NOTRAYICON":
 									case "SUSPENDEXEMPT":
 									case "WINACTIVATEFORCE":
